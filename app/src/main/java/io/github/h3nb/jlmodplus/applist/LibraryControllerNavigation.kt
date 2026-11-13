@@ -21,18 +21,18 @@ internal data class LibraryControllerFocus(
 )
 
 internal fun reconcileLibraryControllerFocus(
-    apps: List<LibraryAppUiItem>,
+    projectedAppIds: List<Long>,
     focusedDatabaseId: Long?,
     fallbackIndex: Int,
 ): LibraryControllerFocus {
-    if (apps.isEmpty()) return LibraryControllerFocus(0, null)
-    val nearestIndex = fallbackIndex.coerceIn(0, apps.lastIndex)
+    if (projectedAppIds.isEmpty()) return LibraryControllerFocus(0, null)
+    val nearestIndex = fallbackIndex.coerceIn(0, projectedAppIds.lastIndex)
     val retainedIndex = focusedDatabaseId?.let { id ->
-        if (apps[nearestIndex].databaseId == id) nearestIndex
-        else apps.indexOfFirst { it.databaseId == id }.takeIf { it >= 0 }
+        if (projectedAppIds[nearestIndex] == id) nearestIndex
+        else projectedAppIds.indexOf(id).takeIf { it >= 0 }
     }
     val index = retainedIndex ?: nearestIndex
-    return LibraryControllerFocus(index, apps[index].databaseId)
+    return LibraryControllerFocus(index, projectedAppIds[index])
 }
 
 internal fun moveLibraryControllerFocusIndex(

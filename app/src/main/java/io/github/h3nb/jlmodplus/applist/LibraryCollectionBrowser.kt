@@ -101,6 +101,7 @@ internal fun LibraryCollectionBrowser(
     collection: LibraryCollectionUiItem,
     members: List<LibraryAppUiItem>,
     memberIds: Set<Long> = members.mapTo(LinkedHashSet()) { it.databaseId },
+    membersRevision: Long = 0L,
     allApps: List<LibraryAppUiItem>,
     allAppsPrepared: Boolean = true,
     allAppsRevision: Long = 0L,
@@ -135,7 +136,7 @@ internal fun LibraryCollectionBrowser(
         mutableStateOf<Map<Long, Boolean>>(emptyMap())
     }
     val committedMemberIds = memberIds
-    LaunchedEffect(committedMemberIds) {
+    LaunchedEffect(membersRevision.takeIf { it != 0L } ?: committedMemberIds) {
         val unresolved = pendingMemberships.filter { (appId, desiredIncluded) ->
             (appId in committedMemberIds) != desiredIncluded
         }
@@ -230,8 +231,13 @@ internal fun LibraryCollectionBrowser(
     }
     val openApp: (Int) -> Unit = { if (currentInteractionActive) onOpenApp(it) }
     val openActions: (LibraryAppUiItem) -> Unit = { if (currentInteractionActive) onOpenActions(it) }
-    val projected = rememberCollectionAppsProjection(viewportState, members, libraryState.sortVariant)
-    val projectedIds = remember(projected, selectionState.isActive) {
+    val projected = rememberCollectionAppsProjection(
+        viewportState, members, libraryState.sortVariant,
+        sourceRevision = membersRevision.takeIf { it != 0L },
+    )
+    val projectedIds = remember(
+        viewportState.collectionProjection, projected == null, selectionState.isActive,
+    ) {
         if (selectionState.isActive) projected?.map(LibraryAppUiItem::databaseId).orEmpty()
         else emptyList()
     }

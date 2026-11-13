@@ -282,7 +282,7 @@ internal fun LibraryCollectionsDestination(
         selectionState,
         selectedCollectionId,
         state.members?.collectionId,
-        state.members?.members,
+        state.members?.revision,
         libraryState.generation,
     ) {
         val members = state.members
@@ -451,6 +451,7 @@ internal fun LibraryCollectionsDestination(
                                 collection = collection,
                                 members = members.members,
                                 memberIds = members.memberIds,
+                                membersRevision = members.revision,
                                 allApps = state.allApps,
                                 allAppsPrepared = state.allAppsPrepared,
                                 allAppsRevision = state.allAppsRevision,

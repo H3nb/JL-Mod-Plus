@@ -4,6 +4,7 @@ package io.github.h3nb.jlmodplus.applist
 import org.junit.jupiter.api.Assertions.assertEquals
 import org.junit.jupiter.api.Assertions.assertTrue
 import org.junit.jupiter.api.Assertions.assertThrows
+import io.github.h3nb.jlmodplus.librarydb.LibraryCollectionRow
 import org.junit.jupiter.api.Test
 
 class LibraryMappedListTest {
@@ -44,6 +45,30 @@ class LibraryMappedListTest {
         assertEquals("Game 0", items[0])
         assertEquals("Game 49999", items[49_999])
         assertEquals(2, mapped)
+    }
+
+    @Test fun updatingCollectionMembersDoesNotCompareMappedRows() {
+        val store = LibraryCollectionsUiStore()
+        store.publishCollections(listOf(
+            LibraryCollectionRow(id = 1L, name = "Games", sortOrder = 0, createdAt = 0L, appCount = 20_000),
+        ))
+        val memberIds = (1L..20_000L).toSet()
+        val source = object : AbstractList<Long>() {
+            override val size = 20_000
+            override fun get(index: Int) = index.toLong() + 1
+        }
+        var mapped = 0
+        fun members() = LibraryMappedList(source) { id: Long ->
+            mapped++
+            LibraryAppUiItem(id = 0, databaseId = id, title = "Game $id",
+                author = "Vendor", version = "1.0", iconPath = null, canReinstall = true)
+        }
+        store.showMembers(1L, members(), memberIds)
+        val firstRevision = store.state.value.members!!.revision
+        store.showMembers(1L, members(), memberIds)
+
+        assertTrue(store.state.value.members!!.revision > firstRevision)
+        assertEquals(0, mapped)
     }
 
     @Test fun indexedMappingOnlyMaterializesRequestedMembers() {

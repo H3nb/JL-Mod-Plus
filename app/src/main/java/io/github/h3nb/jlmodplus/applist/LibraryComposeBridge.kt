@@ -928,7 +928,7 @@ fun LibraryScreen(
     ) {
         if (state.apps.isEmpty()) return@LaunchedEffect
         val focus = reconcileLibraryControllerFocus(
-            state.apps,
+            state.projectedAppIds,
             controllerFocusedAppId,
             controllerFocusedAppIndex,
         )
@@ -943,7 +943,7 @@ fun LibraryScreen(
         ) return
         val apps = currentState.apps
         val currentFocus = reconcileLibraryControllerFocus(
-            apps,
+            currentState.projectedAppIds,
             controllerFocusedAppId,
             controllerFocusedAppIndex,
         )
@@ -967,7 +967,7 @@ fun LibraryScreen(
             columnCount = columns,
         )
         controllerFocusedAppIndex = nextIndex
-        controllerFocusedAppId = apps[nextIndex].databaseId
+        controllerFocusedAppId = currentState.projectedAppIds[nextIndex]
         // A controller command takes over from the preceding touch gesture or fling.
         if (currentState.layout == LibraryLayout.List) {
             appsListState.stopScroll(MutatePriority.UserInput)
@@ -1132,7 +1132,7 @@ fun LibraryScreen(
                             currentState.apps.isEmpty()
                         ) return@collect
                         val focus = reconcileLibraryControllerFocus(
-                            currentState.apps,
+                            currentState.projectedAppIds,
                             controllerFocusedAppId,
                             controllerFocusedAppIndex,
                         )
@@ -1151,7 +1151,7 @@ fun LibraryScreen(
                             currentState.apps.isEmpty() || currentControllerSelectionActive
                         ) return@collect
                         val focus = reconcileLibraryControllerFocus(
-                            currentState.apps,
+                            currentState.projectedAppIds,
                             controllerFocusedAppId,
                             controllerFocusedAppIndex,
                         )
