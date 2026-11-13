@@ -298,7 +298,10 @@ internal class MemoryEditorComposeController(
             // A Saved mutation may have committed while the UI was backgrounded and
             // its callback was discarded. Reconcile from the authority on return.
             if (state.variablesTab && savedAuthority != null) refreshSavedVariables()
-            if (state.scriptsTab && savedAuthority != null) refreshMemoryScripts()
+            if (state.scriptsTab && savedAuthority != null) {
+                refreshMemoryScripts()
+                refreshSavedVariables()
+            }
             composeView.postDelayed(liveRefreshRunnable, LIVE_REFRESH_INITIAL_DELAY_MS)
         } else {
             // If backgrounding interrupts the queued binding snapshot, no dialog
