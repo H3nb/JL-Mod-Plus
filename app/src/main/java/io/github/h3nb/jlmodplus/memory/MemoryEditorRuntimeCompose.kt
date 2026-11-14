@@ -266,14 +266,21 @@ internal fun MemoryEditorRuntimeRoot(
             }
             Unit
         }
+        val existingDraftMessage = stringResource(R.string.memory_scripts_draft_in_progress)
+        val createFailedMessage = stringResource(R.string.memory_scripts_create_failed)
         val createScriptFromSaved: (List<SavedVariableRow>) -> String? = { bookmarks ->
-            runCatching {
-                val targets = actions.captureMemoryScriptBuilderActions(bookmarks)
-                require(targets.size == bookmarks.size)
-                scriptTargets = targets
-                choosingScriptType = true
-                actions.setScriptsTab()
-            }.exceptionOrNull()?.localizedMessage
+            if (scriptBuilder != null || scriptDraft != null) {
+                existingDraftMessage
+            } else {
+                runCatching {
+                    val targets = actions.captureMemoryScriptBuilderActions(bookmarks)
+                    require(targets.size == bookmarks.size)
+                    scriptTargets = targets
+                    choosingScriptType = true
+                    actions.setScriptsTab()
+                }.exceptionOrNull()?.localizedMessage?.takeIf(String::isNotBlank)
+                    ?: if (choosingScriptType) null else createFailedMessage
+            }
         }
         val selectTab: (MemoryEditorTab) -> Unit = {
             when (it) {
@@ -996,7 +1003,7 @@ private fun RuntimeVariablesTab(
     val scriptBookmarks = selectedEntries.mapNotNull { it.saved }
     val canCreateScript = selectedEntries.isNotEmpty() &&
         scriptBookmarks.size == selectedEntries.size &&
-        scriptBookmarks.all { it.hasLocator } && !state.busy
+        scriptBookmarks.all { it.hasLocator } && state.supported && !state.busy
     fun select(entry: MemoryListEntry) {
         onSelectionChange(if (entry.key in selectedKeys) selectedKeys - entry.key
             else selectedKeys + entry.key)
