@@ -3,6 +3,7 @@
  */
 package io.github.h3nb.jlmodplus.memory
 
+import androidx.compose.animation.AnimatedVisibility
 import androidx.compose.foundation.clickable
 import androidx.compose.foundation.horizontalScroll
 import androidx.compose.foundation.layout.Arrangement
@@ -149,7 +150,7 @@ internal fun MemoryScriptTypeChooser(
             Row(Modifier.fillMaxWidth().padding(16.dp),
                 verticalAlignment = Alignment.CenterVertically,
                 horizontalArrangement = Arrangement.spacedBy(16.dp)) {
-                Icon(painterResource(R.drawable.ic_auto_mode), contentDescription = null)
+                Icon(painterResource(R.drawable.ic_memory_editor_inspector), contentDescription = null)
                 Text(stringResource(R.string.memory_builder_json_editor),
                     style = MaterialTheme.typography.titleMedium)
             }
@@ -173,6 +174,9 @@ internal fun MemoryScriptBuilderScreen(
     var preview by remember(draft) { mutableStateOf<String?>(null) }
     var error by remember { mutableStateOf<String?>(null) }
     var saving by remember { mutableStateOf(false) }
+    var showDescription by remember(draft.id) {
+        mutableStateOf(draft.description.isNotBlank())
+    }
     fun generate(onReady: (String) -> Unit) {
         error = null
         actions.generateMemoryScript(draft) { document, failure ->
@@ -223,13 +227,20 @@ internal fun MemoryScriptBuilderScreen(
                 singleLine = true, modifier = Modifier.fillMaxWidth()
                     .testTag("memory-builder-name"),
             )
-            OutlinedTextField(
-                value = draft.description,
-                onValueChange = { if (it.length <= 2048) onDraft(draft.copy(description = it)) },
-                label = { Text(stringResource(R.string.memory_scripts_description)) },
-                enabled = !saving,
-                minLines = 1, maxLines = 3, modifier = Modifier.fillMaxWidth(),
-            )
+            if (!showDescription && draft.description.isBlank()) {
+                TextButton(onClick = { showDescription = true }, enabled = !saving) {
+                    Text(stringResource(R.string.memory_builder_add_description))
+                }
+            }
+            AnimatedVisibility(showDescription || draft.description.isNotBlank()) {
+                OutlinedTextField(
+                    value = draft.description,
+                    onValueChange = { if (it.length <= 2048) onDraft(draft.copy(description = it)) },
+                    label = { Text(stringResource(R.string.memory_scripts_description)) },
+                    enabled = !saving,
+                    minLines = 1, maxLines = 3, modifier = Modifier.fillMaxWidth(),
+                )
+            }
             Text(stringResource(when (draft.mode) {
                 MemoryScriptBuilderMode.FREEZE -> R.string.memory_builder_freeze_hint
                 MemoryScriptBuilderMode.FORM -> R.string.memory_builder_form_hint
