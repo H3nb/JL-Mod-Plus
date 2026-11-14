@@ -486,8 +486,8 @@
     <string name="memory_editor_engine_unavailable">Mesin editor memori tidak tersedia.</string>
     <string name="memory_editor_engine_reconnecting">Editor memori sedang menyambung ulang…</string>
     <string name="memory_editor_refresh">Segarkan</string>
-    <string name="memory_editor_undo">Urungkan</string>
-    <string name="memory_variables_tab">Daftar</string>
+    <string name="memory_editor_undo">Urungkan pencarian</string>
+    <string name="memory_variables_tab">Tersimpan</string>
     <string name="memory_editor_back">Kembali</string>
     <string name="memory_list_keep">Simpan untuk sesi berikutnya</string>
     <string name="memory_list_stop_keeping">Berhenti menyimpan</string>
@@ -1256,8 +1256,11 @@
 <string name="memory_recipes_target_unavailable">Target Bookmark belum tersedia. Segarkan atau tautkan ulang sebelum menjalankan.</string>
 <string name="memory_recipes_preview_values">Nilai saat ini: %1$s</string>
 <string name="memory_scripts_title">Skrip</string>
+    <string name="memory_scripts_create_from_bookmarks">Buat skrip</string>
+    <string name="memory_builder_open_saved">Buka Tersimpan</string>
+    <string name="memory_builder_find_values">Cari nilai</string>
     <string name="memory_scripts_description">Deskripsi</string>
-<string name="memory_scripts_new">Tambah skrip</string>
+<string name="memory_scripts_new">Skrip baru</string>
 <string name="memory_scripts_back">Kembali</string>
 <string name="memory_scripts_edit">Edit</string>
 <string name="memory_scripts_save">Simpan</string>
@@ -1283,7 +1286,7 @@
 <string name="memory_scripts_mode_toggle">Freeze Nilai</string>
 <string name="memory_scripts_mode_form">Editor Nilai</string>
 <string name="memory_scripts_mode_once">Tindakan Cepat</string>
-<string name="memory_scripts_mode_legacy">Recipe</string>
+<string name="memory_scripts_mode_legacy">Skrip lanjutan</string>
 <string name="memory_scripts_edit_values">Ubah nilai</string>
 <string name="memory_scripts_apply">Terapkan perubahan</string>
 <string name="memory_scripts_refresh_required">Perbarui untuk memeriksa nilai aktual sebelum menerapkan perubahan.</string>
@@ -1310,7 +1313,7 @@
     <string name="memory_builder_view_json">Lihat JSON</string>
     <string name="memory_builder_edit_json">Edit JSON</string>
     <string name="memory_builder_search_bookmarks">Cari Bookmark</string>
-    <string name="memory_builder_no_bookmarks">Belum ada Bookmark yang tersedia. Tambahkan atau tautkan ulang di tab List.</string>
+    <string name="memory_builder_no_bookmarks">Belum ada Bookmark terverifikasi. Simpan nilai dari Search atau tautkan ulang di Tersimpan.</string>
     <string name="memory_builder_needs_relink">Perlu taut ulang</string>
     <string name="memory_builder_add_selected">Tambah pilihan</string>
     <string name="memory_builder_min">Minimum (opsional)</string>
