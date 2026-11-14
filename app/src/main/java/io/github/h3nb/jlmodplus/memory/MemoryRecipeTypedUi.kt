@@ -162,8 +162,8 @@ internal fun TypedMemoryRecipeDetail(
                     style = MaterialTheme.typography.bodySmall)
             }
             HorizontalDivider()
-            if (metadata.mode == "form") {
-                Text(stringResource(R.string.memory_scripts_new_values),
+            if (metadata.mode != "toggle" && metadata.fields.isNotEmpty()) {
+                Text(stringResource(R.string.memory_scripts_inputs),
                     style = MaterialTheme.typography.titleSmall)
             }
             if (metadata.mode != "toggle") metadata.fields.forEach { field ->
