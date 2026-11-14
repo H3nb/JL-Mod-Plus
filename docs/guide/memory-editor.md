@@ -10,13 +10,26 @@ A MIDlet can run from a converted DEX without the JL-Mod Plus bytecode transform
 
 ## Start with an observation
 
-Open a MIDlet, then launch **Memory Editor** from its runtime controls when available. The tabs are **Search**, **List**, and **Inspector**. Inspector is always visible but becomes available when one inspectable result or List entry is selected; it can also be opened from a row's action menu. The List shows editable values regardless of whether their underlying reference is session-only or kept across launches. Wide workspaces show values and locations together, while narrower ones stack the details. When results span multiple pages, the bottom pager moves between result ranges alongside the **Peek** control.
+Open a MIDlet, then launch **Memory Editor** from its runtime controls when available. The three destinations are **Search**, **Saved**, and **Scripts**. Open **Inspector** for one selected inspectable result or Saved entry; it is a detail page rather than a permanent tab. Saved combines persistent Bookmarks and relevant session values. Wider workspaces show values and locations together, while narrower ones stack details. The bottom pager navigates Search result pages alongside **Peek**.
 
-Closing and reopening the bubble editor during the same running MIDlet returns to the last area. Inspector rechecks its last target rather than displaying an old memory snapshot; if the target is unavailable, the editor returns to its source tab. A new MIDlet session starts at Search.
+Minimizing and reopening Memory Editor during the same running MIDlet returns to the last area. Inspector rechecks its last target rather than displaying an old memory snapshot; if the target is unavailable, the editor returns to its source tab. A new MIDlet session starts at Search. The top Minimize control is not a command to discard an unfinished Script.
 
 A good search begins with something you can reproduce in the game: a counter that increases, health that falls, or a value that stays constant while other numbers change. The editor cannot tell you which candidate is “health” merely from the number alone.
 
-### Search for a known value
+#### Action Scripts
+
+To create a Script from known targets, select one or more verified Bookmarks in
+**Saved** and choose **Create script**, then choose Freeze Values, Value Editor,
+or Quick Actions. The builder already contains those targets. You can also open
+**Scripts → New script**, choose a type, and add Bookmarks manually. If no
+verified Bookmark exists, go to Search or Saved from the builder and return
+without losing the draft.
+
+For advanced targets, choose **JSON Editor** directly; it does not require
+Bookmarks. Saving a Script does not run it. Run, Apply, or enable Freeze only
+when ready, and use Refresh to verify the latest values before applying a form.
+
+## Search for a known value
 
 Use **Search known values** when you can read the current number on screen.
 
@@ -42,15 +55,15 @@ If an exact-value search finds nothing, inspect the selected type and try a sear
 
 The editor reports **candidates**, not confirmed game variables. Treat them as hypotheses until an edit produces the expected in-game effect.
 
-## Edit, List, Freeze, and Inspector
+## Edit, Saved, Freeze, and Inspector
 
 Select Search results and choose **Bookmark**, or bookmark a primitive field/array
-element from Inspector. The List contains one persistent Bookmark collection per
+element from Inspector. Saved contains one persistent Bookmark collection per
 installed MIDlet. Freeze automatically bookmarks its target before activation.
 No separate Watch, Keep or Stop keeping action is required.
 
 Tap an available Bookmark to edit, or use its menu to Inspect, Freeze/Unfreeze,
-Rename, Relink or Remove. A missing or incompatible target stays in the List
+Rename, Relink or Remove. A missing or incompatible target stays in Saved
 without being editable. A Bookmark is never removed automatically when a game
 changes scene, an object is collected or a MIDlet restarts.
 
@@ -58,7 +71,7 @@ changes scene, an object is collected or a MIDlet restarts.
 
 A rooted field/index locator can be resolved again during bounded foreground
 polling. An untraced variable can still be bookmarked and frozen in the current
-session, but after relaunch it needs an explicit **Relink**. From its List row
+session, but after relaunch it needs an explicit **Relink**. From its Saved row
 choose Relink, select the corresponding Search result, then confirm. The old
 Freeze is stopped before the new association is published. Matching names,
 values, or diagnostic addresses are never proof of identity.
