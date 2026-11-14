@@ -117,7 +117,7 @@ class MemoryEditorAdaptiveComposeTest {
         rule.onNodeWithText("Hit points").assertIsDisplayed()
     }
 
-    @Test fun inspectorTabRemainsVisibleAndReturnsToItsOriginOnBack() {
+    @Test fun inspectorIsAContextualDetailAndReturnsOnBack() {
         val state = mutableStateOf(MemoryEditorUiState(
             visible = true, connected = true, supported = true, variablesTab = true,
         ))
@@ -128,10 +128,11 @@ class MemoryEditorAdaptiveComposeTest {
         val context = InstrumentationRegistry.getInstrumentation().targetContext
         val inspector = context.getString(R.string.memory_editor_inspector)
         rule.setContent { JLModPlusTheme { MemoryEditorRuntimeRoot(state.value, actions) } }
-        rule.onNodeWithContentDescription(inspector).assertIsDisplayed().assertIsNotEnabled()
+        rule.onNodeWithText(inspector).assertDoesNotExist()
         rule.runOnIdle { state.value = state.value.copy(inspectorLoading = true) }
-        rule.onNodeWithContentDescription(inspector).assertIsDisplayed()
-            .assertIsEnabled().assertIsSelected()
+        rule.onNodeWithText(inspector).assertIsDisplayed()
+        rule.onNodeWithContentDescription(context.getString(R.string.memory_variables_tab))
+            .assertDoesNotExist()
         pressBack()
         rule.runOnIdle { assertEquals(1, backCount) }
     }
@@ -410,7 +411,7 @@ class MemoryEditorAdaptiveComposeTest {
                 useUnmergedTree = true,
             ).getUnclippedBoundsInRoot()
             val close = rule.onNodeWithContentDescription(
-                context.getString(R.string.memory_editor_close),
+                context.getString(R.string.memory_editor_minimize),
                 useUnmergedTree = true,
             ).getUnclippedBoundsInRoot()
             val peek = rule.onNodeWithTag("memory-editor-peek").getUnclippedBoundsInRoot()
@@ -517,7 +518,7 @@ class MemoryEditorAdaptiveComposeTest {
         val context = InstrumentationRegistry.getInstrumentation().targetContext
         val inspector = context.getString(R.string.memory_editor_inspector)
         rule.setContent { JLModPlusTheme { MemoryEditorRuntimeRoot(state, actions) } }
-        rule.onNodeWithContentDescription(inspector).assertIsNotEnabled()
+        rule.onNodeWithContentDescription(inspector).assertDoesNotExist()
         rule.onNodeWithContentDescription(
             context.getString(R.string.memory_editor_select_result_value)
         ).assertIsDisplayed().performClick()
@@ -526,7 +527,9 @@ class MemoryEditorAdaptiveComposeTest {
         rule.onNodeWithContentDescription(
             context.getString(R.string.memory_editor_edit)
         ).assertIsDisplayed().assertIsEnabled()
-        rule.onNodeWithContentDescription(inspector).assertIsEnabled().performClick()
+        rule.onNodeWithContentDescription(
+            context.getString(R.string.memory_editor_inspect_memory)
+        ).assertIsEnabled().performClick()
         rule.runOnIdle {
             assertEquals(1L, inspectedId)
             assertTrue(inspectedAsWatch)
