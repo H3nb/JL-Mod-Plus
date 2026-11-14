@@ -1338,6 +1338,6 @@
     <string name="bitmap_upscaling_description" tools:ignore="MissingTranslation">Enhances immutable 2D sprites and opaque Micro3D model textures. M3G textures are unchanged; restart to apply.</string>
     <string name="bitmap_upscaling_nearest" tools:ignore="MissingTranslation">Nearest Neighbor</string>
     <string name="bitmap_upscaling_bilinear" tools:ignore="MissingTranslation">Bilinear</string>
-    <string name="bitmap_upscaling_mmpx" tools:ignore="MissingTranslation">MMPX (pixel art)</string>
-    <string name="bitmap_upscaling_edge_aware" tools:ignore="MissingTranslation">Smooth HD</string>
+    <string name="bitmap_upscaling_mmpx" tools:ignore="MissingTranslation">MMPX</string>
+    <string name="bitmap_upscaling_edge_aware" tools:ignore="MissingTranslation">xBR Lv3</string>
 </resources>

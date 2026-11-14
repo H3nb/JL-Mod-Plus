@@ -163,7 +163,7 @@ exceeding the GPU texture limit waits for a changed surface or GL context.
 Any runtime downgrade is reported through the existing nonmodal host notice
 with suggested action, leaving the saved profile unchanged.
 Bitmap upscaling mode 3 retains its stored `EDGE_AWARE` ID and appears as
-Smooth HD. Its xBR Lv3-derived, MIT-licensed CPU scaler classifies 15-, 30-,
+xBR Lv3. Its MIT-licensed CPU scaler classifies 15-, 30-,
 45-, 60- and 75-degree edge candidates once per source pixel. Rotated and
 reflected decisions use an alpha-aware color difference, with scale-dependent
 subpixel coverage. Output is written in row blocks to avoid a full temporary
