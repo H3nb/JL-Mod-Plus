@@ -36,7 +36,7 @@ design and UI architecture; no corresponding source was copied.
   (Morgan McGuire and Mara Gagiu, copyright 2020).
   License: `app/src/main/assets/bitmap-scaler-licenses/MMPX-MIT.txt`.
 - `app/src/main/java/io/github/h3nb/jlmodplus/graphics/XbrFreeScaler.java` adapts
-  the MIT-licensed [xBR Lv3 shader by Hyllian](https://github.com/libretro/glsl-shaders/blob/d798c673f8884bc5ba4cf437f92c6bf266861e66/xbr/shaders/xbr-lv3.glsl)
+  the MIT-licensed [xBR Lv3 shader by Hyllian](https://github.com/libretro/glsl-shaders/blob/dd8e4fa8e8ddca41e17280d85cc0a67fde125a37/xbr/shaders/xbr-lv3.glsl)
   (Copyright 2011-2015 Hyllian), with CPU-oriented edge classification,
   free-scale subpixel coverage, mirrored decisions and alpha-aware blending.
   License: `app/src/main/assets/bitmap-scaler-licenses/xBR-MIT.txt`.

@@ -4,8 +4,8 @@
  *
  * Adapted for JL-Mod Plus from Hyllian's xBR Lv3 shader:
  * https://github.com/libretro/glsl-shaders/blob/master/xbr/shaders/xbr-lv3.glsl
- * The four rotated edge rules are classified once per source pixel and
- * reconstructed at the requested integer scale. No xBRZ code is used.
+ * Edge rules are evaluated per source pixel, not per output subpixel.
+ * The original shader credits SABR ideas by Joshua Street. No xBRZ code is used.
  */
 package io.github.h3nb.jlmodplus.graphics;
 
@@ -24,6 +24,7 @@ public final class XbrFreeScaler {
 
     private XbrFreeScaler() {}
 
+    /** Consumes reusable output rows before the next block overwrites them. */
     @FunctionalInterface
     public interface RowWriter {
         void write(int firstRow, int[] argb, int rows);
@@ -180,9 +181,9 @@ public final class XbrFreeScaler {
     }
 
     private static int mirrorMask(int mask) {
-        return (mask & LINE_45) | (mask & LINE_30) << 1
-                | (mask & LINE_60) >> 1 | (mask & LINE_15) << 1
-                | (mask & LINE_75) >> 1;
+        return (mask & LINE_45) | ((mask & LINE_30) << 1)
+                | ((mask & LINE_60) >> 1) | ((mask & LINE_15) << 1)
+                | ((mask & LINE_75) >> 1);
     }
 
     private static int classify(int[] p, int c, boolean transpose) {
