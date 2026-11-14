@@ -193,10 +193,13 @@ internal fun RuntimeScriptsTab(
         return
     }
 
-    BackHandler(enabled = choosingType) {
+    val cancelTypeChoice = {
+        val fromSaved = initialTargets.isNotEmpty()
         onChoosingTypeChange(false)
         onTargetsUsed()
+        if (fromSaved) actions.setVariablesTab(true)
     }
+    BackHandler(enabled = choosingType, onBack = cancelTypeChoice)
     if (choosingType) {
         MemoryScriptTypeChooser(
             onChoose = {
@@ -211,10 +214,7 @@ internal fun RuntimeScriptsTab(
                 onDraft(MemoryScriptDraft(null, "", ""))
                 onTargetsUsed()
             },
-            onBack = {
-                onChoosingTypeChange(false)
-                onTargetsUsed()
-            },
+            onBack = cancelTypeChoice,
             modifier = modifier,
         )
         return
