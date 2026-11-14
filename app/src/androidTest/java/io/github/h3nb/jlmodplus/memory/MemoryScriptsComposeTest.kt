@@ -20,7 +20,9 @@ import androidx.compose.ui.test.onNodeWithTag
 import androidx.compose.ui.test.onNodeWithText
 import androidx.compose.ui.test.performClick
 import androidx.compose.ui.test.performTextReplacement
+import io.github.h3nb.jlmodplus.R
 import io.github.h3nb.jlmodplus.ui.JLModPlusTheme
+import androidx.test.platform.app.InstrumentationRegistry
 import org.junit.Assert.assertEquals
 import org.junit.Assert.assertFalse
 import org.junit.Assert.assertTrue
@@ -308,7 +310,9 @@ class MemoryScriptsComposeTest {
         }
         rule.setContent { JLModPlusTheme { MemoryEditorRuntimeRoot(ui.value, actions) } }
         rule.onNodeWithContentDescription(
-            "Select result value",
+            InstrumentationRegistry.getInstrumentation().targetContext.getString(
+                R.string.memory_editor_select_result_value,
+            ),
         ).performClick()
         val directAction = rule.onAllNodesWithContentDescription("Create script")
         if (directAction.fetchSemanticsNodes().isNotEmpty()) {
