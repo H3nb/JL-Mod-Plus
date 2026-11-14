@@ -58,7 +58,7 @@ internal data class MemoryScriptBuilderAction(
     val operation: String = "set",
     val min: String = "",
     val max: String = "",
-    val originalTarget: JsonObject? = null,
+    val originalTarget: JsonObject,
 )
 
 internal data class MemoryScriptBuilderSnapshot(
@@ -187,6 +187,11 @@ internal fun MemoryScriptBuilderScreen(
                 },
                 enabled = !saving && draft.name.isNotBlank() && draft.actions.isNotEmpty(),
             ) { Text(stringResource(R.string.memory_scripts_save)) }
+        }
+        error?.let {
+            Text(it, color = MaterialTheme.colorScheme.error,
+                style = MaterialTheme.typography.bodySmall,
+                modifier = Modifier.fillMaxWidth())
         }
         Column(Modifier.weight(1f).verticalScroll(rememberScrollState()),
             verticalArrangement = Arrangement.spacedBy(12.dp)) {
@@ -326,10 +331,6 @@ internal fun MemoryScriptBuilderScreen(
                     }
                 }
             }
-            error?.let {
-                Text(it, color = MaterialTheme.colorScheme.error,
-                    style = MaterialTheme.typography.bodySmall)
-            }
         }
         OutlinedButton(enabled = !saving && draft.actions.isNotEmpty(),
             onClick = { generate { preview = it } }) {
@@ -339,10 +340,10 @@ internal fun MemoryScriptBuilderScreen(
     if (picking) BookmarkPicker(state, draft.actions.mapTo(HashSet()) { it.bookmarkId },
         onDismiss = { picking = false },
         onAdd = { added ->
-            onDraft(draft.copy(actions = draft.actions + added.map { row ->
-                MemoryScriptBuilderAction(bookmarkId = row.id, label = row.label)
-            }))
-            picking = false
+            runCatching {
+                val captured = actions.captureMemoryScriptBuilderActions(added)
+                onDraft(draft.copy(actions = draft.actions + captured))
+            }.exceptionOrNull()?.let { it.message ?: "Could not add Bookmarks" }
         })
     preview?.let { json ->
         AlertDialog(
@@ -375,10 +376,11 @@ private fun BookmarkPicker(
     state: MemoryEditorUiState,
     used: Set<String>,
     onDismiss: () -> Unit,
-    onAdd: (List<SavedVariableRow>) -> Unit,
+    onAdd: (List<SavedVariableRow>) -> String?,
 ) {
     var query by remember { mutableStateOf("") }
     var selected by remember { mutableStateOf(emptySet<String>()) }
+    var error by remember { mutableStateOf<String?>(null) }
     val matches = state.savedVariables.filter {
         (query.isBlank() || it.label.contains(query, ignoreCase = true)) && it.id !in used
     }
@@ -392,6 +394,10 @@ private fun BookmarkPicker(
                     singleLine = true, modifier = Modifier.fillMaxWidth())
                 if (matches.isEmpty()) Text(stringResource(R.string.memory_builder_no_bookmarks),
                     style = MaterialTheme.typography.bodySmall)
+                error?.let {
+                    Text(it, color = MaterialTheme.colorScheme.error,
+                        style = MaterialTheme.typography.bodySmall)
+                }
                 LazyColumn(modifier = Modifier.heightIn(max = 320.dp)) {
                     items(matches, key = SavedVariableRow::id) { row ->
                         Row(
@@ -422,7 +428,10 @@ private fun BookmarkPicker(
         },
         confirmButton = {
             TextButton(enabled = selected.isNotEmpty(),
-                onClick = { onAdd(state.savedVariables.filter { it.id in selected && it.hasLocator }) }) {
+                onClick = {
+                    error = onAdd(state.savedVariables.filter { it.id in selected && it.hasLocator })
+                    if (error == null) onDismiss()
+                }) {
                 Text(stringResource(R.string.memory_builder_add_selected))
             }
         },

@@ -1926,6 +1926,17 @@ internal class MemoryEditorComposeController(
         }
     }
 
+    override fun captureMemoryScriptBuilderActions(
+        bookmarks: List<SavedVariableRow>,
+    ): List<MemoryScriptBuilderAction> {
+        val midletClass = savedTarget().third
+        return bookmarks.map { bookmark ->
+            val locator = savedLocators[bookmark.id]
+                ?: error("Bookmark " + bookmark.label + " has no verified locator")
+            MemoryRecipeGenerator.fromBookmark(bookmark, locator, midletClass)
+        }
+    }
+
     override fun generateMemoryScript(
         draft: MemoryScriptBuilderDraft, onReady: (String?, String?) -> Unit,
     ) {
@@ -1943,8 +1954,14 @@ internal class MemoryEditorComposeController(
         }.getOrNull()
 
     override fun generateSimpleMemoryRecipe(savedId: String, value: String, freeze: Boolean) {
-        if (state.busy || !state.writeSupported ||
-            state.savedValues[savedId]?.resolved != true) return
+        if (state.busy || !state.writeSupported) return
+        if (state.savedValues[savedId]?.resolved != true) {
+            state = state.copy(
+                message = context.getString(R.string.memory_recipes_target_unavailable),
+                messageIsError = true,
+            )
+            return
+        }
         val document = runCatching {
             val locator = savedLocators[savedId] ?: error("Saved locator unavailable")
             MemoryRecipeGenerator.fromSaved(

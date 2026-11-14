@@ -595,6 +595,8 @@ internal interface MemoryEditorActions {
     fun setVariablesTab(variables: Boolean)
     fun setScriptsTab() = Unit
     fun refreshMemoryScripts() = Unit
+    fun captureMemoryScriptBuilderActions(bookmarks: List<SavedVariableRow>): List<MemoryScriptBuilderAction> =
+        error("Script Builder unavailable")
     fun generateMemoryScript(
         draft: MemoryScriptBuilderDraft, onReady: (String?, String?) -> Unit,
     ) = onReady(null, "Script Builder unavailable")

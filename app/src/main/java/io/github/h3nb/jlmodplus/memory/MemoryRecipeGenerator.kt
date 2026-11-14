@@ -104,6 +104,23 @@ internal object MemoryRecipeGenerator {
     }
 
 
+    private fun targetFromSaved(locator: Bundle, midletClass: String, id: String): JsonObject {
+        val source = Json.parseToJsonElement(fromSaved(locator, midletClass, id, "0")) as JsonObject
+        val action = (source["actions"] as JsonArray).single() as JsonObject
+        return JsonObject(mapOf(
+            "root" to (source["root"] ?: error("Missing Bookmark root")),
+            "path" to (action["path"] ?: error("Missing Bookmark path")),
+        ))
+    }
+
+    fun fromBookmark(
+        bookmark: SavedVariableRow, locator: Bundle, midletClass: String,
+    ): MemoryScriptBuilderAction = MemoryScriptBuilderAction(
+        bookmarkId = bookmark.id,
+        label = bookmark.label,
+        originalTarget = targetFromSaved(locator, midletClass, bookmark.id),
+    )
+
     fun fromBuilder(
         draft: MemoryScriptBuilderDraft,
         midletClass: String,
@@ -118,17 +135,12 @@ internal object MemoryRecipeGenerator {
         val actions = draft.actions.mapIndexed { index, item ->
             val locator = locators[item.bookmarkId]
                 ?: error("Bookmark " + item.label + " has no verified locator")
-            val source = Json.parseToJsonElement(
-                fromSaved(locator, midletClass, item.bookmarkId, "0")
-            ) as JsonObject
-            val original = (source["actions"] as JsonArray).single() as JsonObject
-            val path = original["path"] as JsonArray
-            val root = source["root"] ?: error("Missing Bookmark root")
-            item.originalTarget?.let { originalTarget ->
-                require(originalTarget["root"] == root && originalTarget["path"] == path) {
-                    "Bookmark " + item.label + " was relinked. Remove and add it again to use its new target."
-                }
+            val target = targetFromSaved(locator, midletClass, item.bookmarkId)
+            require(target == item.originalTarget) {
+                "Bookmark " + item.label + " was relinked. Remove and add it again to use its new target."
             }
+            val root = target.getValue("root")
+            val path = target.getValue("path") as JsonArray
             val bounds = primitiveBounds(path)
             val min = bounds.first
             val max = bounds.last
@@ -228,10 +240,9 @@ internal object MemoryRecipeGenerator {
         val lookup = HashMap<Pair<kotlinx.serialization.json.JsonElement, kotlinx.serialization.json.JsonElement>, String?>()
         for ((savedId, locator) in locators) {
             val saved = runCatching {
-                Json.parseToJsonElement(fromSaved(locator, midletClass, savedId, "0")) as JsonObject
+                targetFromSaved(locator, midletClass, savedId)
             }.getOrNull() ?: continue
-            val target = (saved["root"] ?: continue) to
-                (((saved["actions"] as JsonArray).single() as JsonObject)["path"] ?: continue)
+            val target = saved.getValue("root") to saved.getValue("path")
             if (target in lookup) lookup[target] = null else lookup[target] = savedId
         }
         val labels = bookmarks.associate { it.id to it.label }
