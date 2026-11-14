@@ -1955,9 +1955,6 @@ internal class MemoryEditorComposeController(
             state = state.copy(message = it.message ?: "Cannot generate automation", messageIsError = true)
             return
         }
-        context.getSystemService(ClipboardManager::class.java)?.setPrimaryClip(
-            ClipData.newPlainText("Memory Recipe", document)
-        )
         runMemoryRecipe(document, emptyMap(), freeze, false)
     }
 

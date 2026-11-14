@@ -16,11 +16,11 @@ import org.junit.runner.RunWith
 
 @RunWith(AndroidJUnit4::class)
 class MemoryScriptBuilderTest {
-    private fun locator(): Bundle {
+    private fun locator(fieldName: String = "coins"): Bundle {
         val field = Bundle().apply {
             putInt("kind", 1)
             putString("owner", "sample/Game")
-            putString("name", "coins")
+            putString("name", fieldName)
             putString("type", "int")
         }
         return Bundle().apply {
@@ -139,6 +139,36 @@ class MemoryScriptBuilderTest {
         assertEquals(original, Json.parseToJsonElement(
             MemoryRecipeGenerator.fromBuilder(restored!!, "sample/Game", locators),
         ))
+    }
+
+    @Test fun visualEditingRejectsSilentBookmarkRetargeting() {
+        val existing = document(MemoryScriptBuilderMode.FREEZE)
+        val currentLocator = mapOf("coins" to locator())
+        val saved = MemoryRecipeGenerator.forEditing(
+            existing.toString(), "sample/Game", currentLocator,
+            listOf(SavedVariableRow("coins", "Coins", "coins", true)),
+        )!!
+        val edited = saved.copy(name = "More Coins")
+        val unchanged = Json.parseToJsonElement(MemoryRecipeGenerator.fromBuilder(
+            edited, "sample/Game", currentLocator,
+        )) as JsonObject
+        assertEquals(JsonPrimitive("More Coins"), unchanged["name"])
+
+        val relinkedLocator = mapOf("coins" to locator("health"))
+        val failure = runCatching {
+            MemoryRecipeGenerator.fromBuilder(edited, "sample/Game", relinkedLocator)
+        }.exceptionOrNull()
+        assertTrue(failure?.message?.contains("relinked") == true)
+
+        val reselected = edited.copy(actions = listOf(
+            MemoryScriptBuilderAction("coins", "Coins", value = "100"),
+        ))
+        val retargeted = Json.parseToJsonElement(MemoryRecipeGenerator.fromBuilder(
+            reselected, "sample/Game", relinkedLocator,
+        )) as JsonObject
+        val action = (retargeted["actions"] as JsonArray).single() as JsonObject
+        val path = (action["path"] as JsonArray).single() as JsonObject
+        assertEquals(JsonPrimitive("health"), path["name"])
     }
 
     @Test fun missingBookmarkLocatorCannotGenerateAWriteTarget() {

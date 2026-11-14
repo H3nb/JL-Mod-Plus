@@ -43,6 +43,7 @@ import androidx.compose.ui.unit.dp
 import androidx.compose.foundation.text.selection.SelectionContainer
 import io.github.h3nb.jlmodplus.R
 import java.util.UUID
+import kotlinx.serialization.json.JsonObject
 
 internal enum class MemoryScriptBuilderMode(val recipeMode: String) {
     FREEZE("toggle"),
@@ -57,6 +58,7 @@ internal data class MemoryScriptBuilderAction(
     val operation: String = "set",
     val min: String = "",
     val max: String = "",
+    val originalTarget: JsonObject? = null,
 )
 
 internal data class MemoryScriptBuilderSnapshot(

@@ -64,10 +64,10 @@ catalog versions are not overwritten. Bookmarks and Search histories
 continue to use their own existing contracts. The script catalog is currently
 local-only; do not assume backup/export of scripts is implemented.
 
-The existing **Automation** action on a verified Saved variable remains a
-simple generator: it builds a primitive `set` recipe, copies its JSON and
-can run the edit. Advanced authors can paste that JSON into the Scripts editor
-to retain a reusable document. Scripts never auto-run on application startup.
+The existing **Automation** action on a verified Saved variable can apply
+a primitive edit or Freeze directly, without saving a script or changing the
+clipboard. For a reusable script, select the Bookmark in **Scripts → Add script**.
+Scripts never auto-run on application startup.
 
 The optional top-level `"description"` field is available in both v1 and v2 recipes
 for instructions, compatibility notes, and warnings. It is plain text (not
@@ -120,6 +120,8 @@ without an unreliable automatic conversion back to the visual builder.
 
 Existing scripts produced by the builder can be reopened visually through **Edit**
 while their original Bookmark locators are still available and unambiguous.
+If a Bookmark is relinked while editing, Save rejects the changed target.
+Remove and re-add the Bookmark in the builder to deliberately use its new target.
 Unsupported or advanced documents continue in **JSON Editor**, without dropping
 unknown fields. Value Editor fields can optionally set minimum and maximum input
 bounds; leaving them empty uses the primitive type's full numeric range.

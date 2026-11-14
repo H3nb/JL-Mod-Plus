@@ -123,13 +123,19 @@ internal object MemoryRecipeGenerator {
             ) as JsonObject
             val original = (source["actions"] as JsonArray).single() as JsonObject
             val path = original["path"] as JsonArray
+            val root = source["root"] ?: error("Missing Bookmark root")
+            item.originalTarget?.let { originalTarget ->
+                require(originalTarget["root"] == root && originalTarget["path"] == path) {
+                    "Bookmark " + item.label + " was relinked. Remove and add it again to use its new target."
+                }
+            }
             val bounds = primitiveBounds(path)
             val min = bounds.first
             val max = bounds.last
             val key = "value" + (index + 1)
             val fields = linkedMapOf<String, kotlinx.serialization.json.JsonElement>(
                 "kind" to JsonPrimitive("set"),
-                "root" to (source["root"] ?: error("Missing Bookmark root")),
+                "root" to root,
                 "path" to path,
             )
             when (draft.mode) {
@@ -235,6 +241,7 @@ internal object MemoryRecipeGenerator {
             val root = action["root"] ?: error("Missing root")
             val path = action["path"] as? JsonArray ?: error("Missing path")
             val savedId = lookup[root to path] ?: error("Bookmark unavailable or ambiguous")
+            val originalTarget = JsonObject(mapOf("root" to root, "path" to path))
             val key = "value" + (index + 1)
             val operand = (action["value"] as? JsonPrimitive)?.content?.toLongOrNull()
             val savedLabel = labels[savedId] ?: savedId
@@ -242,6 +249,7 @@ internal object MemoryRecipeGenerator {
                 MemoryScriptBuilderMode.FREEZE -> MemoryScriptBuilderAction(
                     bookmarkId = savedId, label = savedLabel,
                     value = operand?.toString() ?: error("Missing Freeze value"),
+                    originalTarget = originalTarget,
                 )
                 MemoryScriptBuilderMode.FORM -> {
                     val specification = declaredInputs[key] as? JsonObject
@@ -257,6 +265,7 @@ internal object MemoryRecipeGenerator {
                         bookmarkId = savedId, label = fieldLabel,
                         min = if (minimum == nativeRange.first) "" else minimum.toString(),
                         max = if (maximum == nativeRange.last) "" else maximum.toString(),
+                        originalTarget = originalTarget,
                     )
                 }
                 MemoryScriptBuilderMode.ACTIONS -> {
@@ -272,6 +281,7 @@ internal object MemoryRecipeGenerator {
                         bookmarkId = savedId, label = savedLabel,
                         value = if (operation == "subtract") (-value).toString() else value.toString(),
                         operation = operation,
+                        originalTarget = originalTarget,
                     )
                 }
             }
