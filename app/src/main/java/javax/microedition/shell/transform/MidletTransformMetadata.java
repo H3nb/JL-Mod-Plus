@@ -29,8 +29,8 @@ import java.util.Map;
  * are then rebuilt by the normal app reconversion path when their retained source is available.</p>
  */
 public final class MidletTransformMetadata {
-	/** Version 2 also publishes managed-memory static-initializer tails. */
-	public static final int TRANSFORM_VERSION = 2;
+	/** Version 3 requires the corrected CLDC Thread method transformation. */
+	public static final int TRANSFORM_VERSION = 3;
 	public static final String TRANSFORM_VERSION_ATTRIBUTE = "JLMod-Transform-Version";
 	/** Fingerprint of the published DEX, not the retained source JAR. */
 	public static final String DEX_SHA256_ATTRIBUTE = "JLMod-Dex-SHA256";
