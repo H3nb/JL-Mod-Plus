@@ -216,6 +216,26 @@ public class BitmapUpscalingScalersTest {
     }
 
 
+    @Test public void xbrUsesReferenceWeightedEdgeDirection() {
+        String[] pattern = {
+                "00011",
+                "01111",
+                "01100",
+                "00011",
+                "01111"
+        };
+        int[] source = new int[25];
+        for (int y = 0; y < 5; y++) {
+            for (int x = 0; x < 5; x++) {
+                source[y * 5 + x] = pattern[y].charAt(x) == '1'
+                        ? 0xffffffff : 0xff000000;
+            }
+        }
+        int[] enlarged = XbrFreeScaler.scale(source, 5, 5, 4);
+        assertEquals(0xffffffff, enlarged[8 * 20 + 8]);
+        assertEquals(0xff000000, enlarged[11 * 20 + 11]);
+    }
+
     @Test public void xbrPreservesIsolatedOnePixelDetail() {
         int[] source = new int[25];
         java.util.Arrays.fill(source, 0xfff0f5fa);

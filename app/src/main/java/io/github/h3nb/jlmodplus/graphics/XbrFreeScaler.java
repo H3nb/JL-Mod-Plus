@@ -203,10 +203,10 @@ public final class XbrFreeScaler {
                 || difference(e, g) < NEAR || difference(e, cc) < NEAR;
         if (!cornerRule) return 0;
 
-        int first = difference(e, cc) + difference(g, i) + difference(h5, f4)
-                + 4 * difference(h, f);
-        int second = difference(h, d) + difference(i5, f) + difference(i4, b)
-                + 4 * difference(e, i);
+        int first = difference(e, cc) + difference(e, g)
+                + difference(i, h5) + difference(i, f4) + 4 * difference(h, f);
+        int second = difference(h, d) + difference(h, i5)
+                + difference(f, i4) + difference(f, b) + 4 * difference(e, i);
         if (first >= second) return 0;
         int result = LINE_45;
         boolean shallow = 2 * difference(f, g) <= difference(h, cc)

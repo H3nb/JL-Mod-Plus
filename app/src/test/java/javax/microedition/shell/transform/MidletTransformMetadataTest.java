@@ -39,7 +39,7 @@ public class MidletTransformMetadataTest {
 		MidletTransformMetadata.recordPayload(attributes, payload);
 		assertTrue(MidletTransformMetadata.isRuntimeCompatible(attributes, payload));
 
-		// A second emulator may overwrite only the DEX, leaving version 2 in the descriptor.
+		// A second emulator may overwrite only the DEX, leaving the current version in the descriptor.
 		Files.write(payload.toPath(), new byte[]{4, 5, 6});
 		assertFalse(MidletTransformMetadata.isRuntimeCompatible(attributes, payload));
 		assertTrue(MidletTransformMetadata.isCompatible(attributes));
@@ -49,6 +49,16 @@ public class MidletTransformMetadataTest {
 		Map<String, String> attributes = new HashMap<>();
 		MidletTransformMetadata.mark(attributes);
 
+		assertTrue(MidletTransformMetadata.isCompatible(attributes));
+	}
+
+	@Test
+	public void previousThreadTransformationVersionRequiresReconversion() {
+		Map<String, String> attributes = new HashMap<>();
+		attributes.put(MidletTransformMetadata.TRANSFORM_VERSION_ATTRIBUTE, "2");
+		assertFalse(MidletTransformMetadata.isCompatible(attributes));
+
+		MidletTransformMetadata.mark(attributes);
 		assertTrue(MidletTransformMetadata.isCompatible(attributes));
 	}
 
