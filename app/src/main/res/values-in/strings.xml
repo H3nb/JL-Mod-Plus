@@ -1262,6 +1262,7 @@
     <string name="memory_scripts_create_failed">Gagal membuat skrip baru</string>
     <string name="memory_scripts_draft_in_progress">Selesaikan atau buang draf skrip saat ini terlebih dahulu.</string>
     <string name="memory_builder_open_saved">Buka Tersimpan</string>
+    <string name="memory_builder_add_description">Tambah deskripsi</string>
     <string name="memory_builder_find_values">Cari nilai</string>
     <string name="memory_scripts_description">Deskripsi</string>
 <string name="memory_scripts_new">Skrip baru</string>
