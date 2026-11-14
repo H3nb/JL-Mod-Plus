@@ -100,7 +100,7 @@ class MemoryScriptsComposeTest {
             }
         }
         rule.setContent { JLModPlusTheme { MemoryEditorRuntimeRoot(ui.value, actions) } }
-        rule.onAllNodesWithText("Add script")[0].performClick()
+        rule.onAllNodesWithText("New script")[0].performClick()
         rule.onNodeWithText("JSON Editor").performClick()
         rule.onNodeWithTag("memory-script-editor").performTextReplacement(sample)
         rule.onNodeWithText("Save").performClick()
@@ -135,7 +135,7 @@ class MemoryScriptsComposeTest {
                 if (showing.value) MemoryEditorRuntimeRoot(state, actions)
             }
         }
-        rule.onAllNodesWithText("Add script")[0].performClick()
+        rule.onAllNodesWithText("New script")[0].performClick()
         rule.onNodeWithText("JSON Editor").performClick()
         rule.onNodeWithTag("memory-script-editor").performTextReplacement(sample)
         rule.onNodeWithContentDescription("Minimize Memory Editor").performClick()
@@ -320,7 +320,7 @@ class MemoryScriptsComposeTest {
             ) = throw AssertionError("Saving a builder script must not execute it")
         }
         rule.setContent { JLModPlusTheme { MemoryEditorRuntimeRoot(state, actions) } }
-        rule.onAllNodesWithText("Add script")[0].performClick()
+        rule.onAllNodesWithText("New script")[0].performClick()
         rule.onNodeWithText("Quick Actions").performClick()
         rule.onNodeWithTag("memory-builder-name").performTextReplacement("Add coins")
         rule.onNodeWithText("Add from Bookmarks").performClick()
@@ -396,7 +396,7 @@ class MemoryScriptsComposeTest {
                 ), actions)
             }
         }
-        rule.onAllNodesWithText("Add script")[0].performClick()
+        rule.onAllNodesWithText("New script")[0].performClick()
         rule.onNodeWithText("JSON Editor").performClick()
         rule.onNodeWithTag("memory-script-editor").performTextReplacement(sample)
         rule.onNodeWithText("Save").performClick()
