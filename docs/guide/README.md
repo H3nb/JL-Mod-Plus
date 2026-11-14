@@ -14,6 +14,7 @@ The [README](../../README.md) introduces the project. If you have already instal
 | [Creating screen skins](creating-screen-skins.md) | You're designing a frame around the MIDlet display |
 | [Creating virtual-control skins](creating-control-skins.md) | You're making artwork for buttons, the D-pad, or the analog stick |
 | [Memory Editor](memory-editor.md) | You need to find or change a value in a running game |
+| [Memory Recipes (experimental)](memory-recipes.md) | You want to generate a simple automation or author a bounded JSON recipe from JAR bytecode |
 | [Emulation Speed](emulation-speed.md) | You want to slow down or accelerate compatible game timing |
 | [Audio and camera](media.md) | You're configuring soundbanks or troubleshooting camera and recording |
 | [Troubleshooting](troubleshooting.md) | Something does not install, render, play, or behave as expected |

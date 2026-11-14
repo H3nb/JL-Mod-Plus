@@ -1,9 +1,10 @@
 # Memory Editor UI
 
 The editor is a fullscreen inspection workspace hosted in `MemoryEditorActivity`.
-Search, List and Inspector share a full-bleed surface; Inspector remains a tab with
-checked, target-specific content; short search/edit operations use
-`MemoryEditorDialog`, which reuses the shared adaptive dialog body and sizing.
+Search, Saved, and Scripts are the three primary workspace destinations.
+Inspector is a checked, target-specific detail opened from Search or Saved,
+not a permanent tab. Short search/edit operations use `MemoryEditorDialog`,
+which reuses the shared adaptive dialog body and sizing.
 A bottom sheet would reduce the data viewport in short
 landscape windows without simplifying these workflows.
 
@@ -48,21 +49,23 @@ freeze timing or polling cadence. It makes no frame-time or allocation claim.
   opening the editor (non-Canvas forms show both; Canvas follows its status-bar setting
   and hides navigation). Keep that same policy in nested dialogs and on focus changes;
   no editor window may independently force fullscreen.
-- Show three labeled tabs: Search, List, and Inspector. Inspector remains visible
-  but disabled until exactly one eligible Search result or List entry is selected.
-  An already-open Inspector stays enabled, including while loading. Opening it
-  never bypasses the checked target identity and revision rules.
-- Keep the editor title and labeled navigation visible. Place them in one row when
-  width permits; stack them otherwise. In short windows with large text, retain the
-  labeled tabs and omit the redundant app title to protect the data viewport.
+- Show three labeled primary tabs: Search, Saved, and Scripts. Inspector opens only
+  for an eligible target, as a dedicated detail page with Back to the origin.
+  Hide primary tabs while Inspector or a Script subpage is open to preserve room
+  and avoid nested navigation. Keep target identity/revision verification unchanged.
+- Keep the editor title and labeled primary tabs visible on root destinations.
+  Place them in one row when width permits; stack them otherwise. In short windows
+  with large text, retain the labeled tabs and omit the redundant title.
+  Subpages own their Back/title and retain a global Minimize action.
 - The workspace remains fullscreen even before the first scan. Present two
   labeled search actions for empty results, without adding an empty floating
   dialog; keep undo/menu access after a scan returns no results.
 - Frequent icon actions retain localized accessibility descriptions and long-press
   tooltips; do not shrink text to fit.
-- Keep Search and Variables list states in the workspace. Returning from Inspector or
-  changing window width should not reset their positions. Back from Inspector
-  returns to its origin tab; the close action still closes the editor.
+- Keep Search and Saved list states in the workspace. Returning from Inspector or
+  changing window width must not reset their positions. Back from Inspector
+  returns to its origin. The top control explicitly minimizes the editor without
+  discarding an active Script draft; it is not an ambiguous close X.
 - Pack toolbar actions according to the available width in 48 dp touch slots,
   reserving room for result counts in wide layouts. Show all five frequent
   actions and enabled Inspector/Save/Undo/Remove actions directly whenever they fit;
@@ -70,16 +73,18 @@ freeze timing or polling cadence. It makes no frame-time or allocation claim.
   search/edit/refresh and keep the remaining actions in More. Selection changes
   availability, not the relative order of the frequent actions. More uses two
   columns when its actual dialog width and font scale permit, otherwise a
-  scrolling single column. Inspector still requires exactly one selected candidate.
+  scrolling single column. Inspect requires exactly one eligible target; the
+  Search overflow action is labeled Undo scan to distinguish it from undoing writes.
 - Search retains its select-page checkbox, limited to the current result page
-  (up to 100 candidates). List also has a persistent select-all checkbox in
+  (up to 100 candidates). Saved also has a select-all checkbox in
   its toolbar and a checkbox on every row; long-press remains an optional
-  selection shortcut. List stays one combined Saved/Watch collection.
-- List toolbar keeps Edit and Refresh in a stable order, followed by enabled
-  Inspector, Keep/Stop keeping, Freeze/Unfreeze, Rename and Remove actions
-  when a selection makes them relevant. Available width determines which
-  actions fit directly and which move to More. Batch Edit is available for
-  session-only Watch entries; mixed or kept selections support Remove.
+  selection shortcut. Saved stays one combined persistent/Watch collection.
+- Saved toolbar keeps Edit and Refresh in a stable order, followed by enabled
+  Inspect, Relink, Freeze/Unfreeze, Rename, Remove and Create script actions.
+  Create script is eligible only when every selected item is a Bookmark with a
+  verified locator; capture those locators before entering the type chooser.
+  Available width determines direct versus overflow actions. Batch Edit remains
+  available for session-only Watch entries; mixed selections support Remove.
   The toolbar retains its selection/count area at all times.
 - Put result counts/selection and Inspector provenance in the scrolling list, so
   growing text does not reserve the entire viewport. Keep full numeric values
@@ -93,42 +98,54 @@ freeze timing or polling cadence. It makes no frame-time or allocation claim.
 - Inspector is a snapshot. Initial positioning uses actual row size; passive changes
   must not repeatedly move the reader back to the anchor. Refresh remains explicit.
 
-## List interaction contract
+## Saved (Bookmark) interaction contract
 
-List is one alphabetically ordered collection of entries, not two Saved/Watch
-sections. A row shows a persistent selection checkbox, its name, current value,
-compact location/type, an optional Keep marker, and a contextual actions menu.
-Tap the row to edit, or tap its checkbox to select without a long-press; while
-selection is active, tapping other rows extends that selection. The toolbar
-provides select-all, context-specific Edit, Inspect, Keep, Freeze, Rename and
-Remove actions. Freeze is also available from the row's action menu; it never
-starts merely because a kept reference resolves. A missing or incompatible
-target cannot be edited. If a kept Saved locator is temporarily unresolved,
-a still-valid, explicitly linked Watch can remain inspectable and editable
-through its session identity; this never authorizes rebinding or restarting Freeze.
+Saved is one alphabetically sorted persistent collection. Search and Inspector
+can add Bookmarks directly; enabling Freeze first ensures durable Bookmark
+storage. Every row has a selection checkbox, name, current verified value or
+unavailable state, compact source/type and contextual actions. The toolbar and
+row menu provide Edit, Refresh, Inspect, Freeze, Relink, Rename and Remove.
+There are no separate Keep/Stop keeping or Watch actions.
 
-Keep is opt-in and requires a verified rooted locator; the existing Saved authority
-persists it. Stopping Keep requires a valid session Watch or a safely resolved
-target that can become one. Remove is one user-facing operation that deletes
-the kept definition and requests Watch/Freeze removal, reporting partial
-failures rather than treating an asynchronous operation ID as success.
+A Bookmark may have a portable verified rooted locator or a null locator.
+Null locators remain in storage and track only an explicitly selected runtime
+target in the same MIDlet session. After relaunch they require relinking. Rooted
+locators are retried through the existing bounded foreground polling, never
+through a new scanner. Relink detaches the old Freeze before changing the
+persisted locator. No passive action writes a value or starts Freeze.
 
-The underlying Saved authority and session Watch engine keep separate
-identity, storage, lifecycle and mutation contracts. A List entry folds a
-Saved definition and a Watch only when the engine provides their explicit
-Saved-origin association. Never infer identity from equal names, paths or
-values. Keeping an already-watched target attaches the verified association
-without duplicating Watch or restarting Freeze. Saved editing still pins its
-binding, and background resolution never restores values or activates Freeze.
-The existing foreground refresh coordinator updates the List without a new
-idle traversal or polling worker.
+The main-process catalog remains the sole persistent List owner; the managed
+engine's Watch array is an internal session mechanism for tracking and Freeze.
+An in-place upgrade can briefly expose legacy orphan active Freezes solely so
+they can still be stopped. Missing or incompatible targets cannot be edited,
+but their Bookmark can always be renamed or removed.
 
-Boolean remains explicit true/false; numeric Auto excludes it. Inspector
-remains a checked snapshot within its persistent tab, with Back returning to
-the previous List or Search scroll position. A single workspace-level Back
-owner prioritizes Peek recovery, then Inspector, then clearing List selection.
-Tab transitions use the same ordered horizontal page motion as other app-owned
-pages, while state refreshes do not restart a page animation.
+Boolean is explicit true/false; numeric Auto excludes it. Inspector remains a
+checked snapshot in a contextual detail page. Scroll state survives tab and
+width changes. Primary tabs use short directional motion.
+
+
+## Action Script authoring
+
+- Scripts contains saved Action Scripts and their active runtime state. In the UI,
+  use Script/Action Script terminology; the existing Memory Recipe v1/v2 JSON
+  format and persistence identifiers remain backward compatible.
+- New script opens the type chooser (Freeze Values, Value Editor, Quick Actions,
+  or JSON Editor). Selecting verified Bookmarks in Saved and choosing Create script
+  preloads them into the visual builder, without scanning or executing anything.
+- A builder with no targets links directly to Search and Saved. Leaving for either
+  destination preserves the in-session builder draft; returning to Scripts resumes it.
+  The Bookmark picker also provides Open Saved when no eligible targets exist.
+- The visual builder never silently guesses a target. It captures verified rooted
+  locators and must keep save-time revalidation, empty initial write values, and
+  lossless JSON round-trip checks. JSON Editor remains independent of Bookmarks
+  and supports advanced codecs/selectors without a lossy visual conversion.
+- Script Save never runs the engine or enables Freeze. Running, applying a checked
+  form snapshot, and enabling/disabling Freeze remain separate deliberate actions.
+  Show active Freeze state and distinguish last-read values from proposed edits.
+- An open Script subpage hides primary tabs while preserving its own Back and
+  the global Minimize/Peek controls. Drafts survive minimize within the MIDlet
+  session, and dirty Back asks before discarding.
 
 ## Overlay visibility and modal ownership
 
@@ -173,8 +190,8 @@ on every movement. This does not modify game rendering or the runtime configurat
 ## Regression coverage
 
 `MemoryEditorAdaptiveComposeTest` covers gesture scrolling with large text, keypad
-editing/validation and action reachability in a short window, and leaving both
-loaded and pending Inspector through the real controller. It also checks Back and
+editing/validation and action reachability in a short window, contextual Inspector
+navigation, and leaving both loaded and pending Inspector through the controller. It also checks Back and
 retaining an open form across window-width changes. The old arithmetic-only
 centering test was removed with the heuristic it asserted. Existing input-model
 and engine tests remain relevant. `MemoryEditorOverlayComposeTest` exercises nested

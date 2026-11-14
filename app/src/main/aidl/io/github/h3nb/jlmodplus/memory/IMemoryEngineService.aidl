@@ -60,6 +60,11 @@ interface IMemoryEngineService {
     void clearSearch(long runtimeToken);
 
     Bundle captureSavedLocator(long runtimeToken, long expectedRevision, long candidateId);
+    /** Attach a persistent Bookmark to the exact current candidate without retargeting. */
+    Bundle attachBookmark(long runtimeToken, long expectedRevision, long candidateId,
+            String bookmarkId, String label);
+    /** Unlink the old session target and stop its Freeze before an explicit relink. */
+    Bundle detachBookmark(long runtimeToken, String bookmarkId);
     Bundle inspectSaved(long runtimeToken, String savedId, int radius);
     Bundle captureInspectorLocator(long runtimeToken, long expectedRevision,
                                   long candidateId, boolean watchAnchor, int relativeOffset);
@@ -75,8 +80,20 @@ interface IMemoryEngineService {
     Bundle watchInspector(long runtimeToken, String savedId, long expectedRevision,
                           long anchorCandidateId, boolean watchAnchor, int relativeOffset,
                           int type, long expectedBits);
+    Bundle bookmarkInspector(long runtimeToken, String savedId, long expectedRevision,
+                          long anchorCandidateId, boolean watchAnchor, int relativeOffset,
+                          int type, long expectedBits, String bookmarkId);
     Bundle editInspectorAndFreeze(long runtimeToken, String savedId, long expectedRevision,
                                   long anchorCandidateId, boolean watchAnchor, int relativeOffset,
                                   int type, long expectedBits, String replacement);
+    Bundle editInspectorAndFreezeBookmark(long runtimeToken, String savedId, long expectedRevision,
+                                  long anchorCandidateId, boolean watchAnchor, int relativeOffset,
+                                  int type, long expectedBits, String replacement, String bookmarkId);
+
+    // Recipe operations never use Search candidate IDs or mutate Search history.
+    Bundle runMemoryRecipe(long runtimeToken, String document, in Bundle parameters,
+            boolean freeze, boolean preview);
+    Bundle clearMemoryRecipeFreeze(long runtimeToken, String recipeId);
+
     void cancelOperation(long runtimeToken);
 }

@@ -1,0 +1,93 @@
+{
+  "formatVersion": 1,
+  "id": "kingdoms.coins.freeze",
+  "name": "Kingdoms and Lords coins",
+  "game": {
+    "mainClass": "GloftKLMP",
+    "sourceJarSha256": "a11b059a54f643aef028a22755da80e8397ccdf4ab14878d3acbdda679f55d70"
+  },
+  "inputs": {
+    "coins": {
+      "min": 0,
+      "max": 999999
+    }
+  },
+  "root": {
+    "kind": "initializedStatic",
+    "class": "a"
+  },
+  "actions": [
+    {
+      "kind": "encoded32le",
+      "path": [
+        {
+          "kind": "field",
+          "owner": "a",
+          "name": "h",
+          "descriptor": "[B"
+        },
+        {
+          "kind": "slice",
+          "descriptor": "[B",
+          "start": 0,
+          "length": 4
+        }
+      ],
+      "constant": "58279306",
+      "valueInput": "coins"
+    },
+    {
+      "kind": "encoded32le",
+      "path": [
+        {
+          "kind": "field",
+          "owner": "a",
+          "name": "g",
+          "descriptor": "[B"
+        },
+        {
+          "kind": "slice",
+          "descriptor": "[B",
+          "start": 0,
+          "length": 4
+        }
+      ],
+      "constant": "58279306",
+      "valueInput": "coins"
+    },
+    {
+      "kind": "set",
+      "path": [
+        {
+          "kind": "field",
+          "owner": "a",
+          "name": "aW",
+          "descriptor": "[I"
+        },
+        {
+          "kind": "index",
+          "descriptor": "[I",
+          "index": 0
+        }
+      ],
+      "valueInput": "coins"
+    },
+    {
+      "kind": "set",
+      "path": [
+        {
+          "kind": "field",
+          "owner": "a",
+          "name": "c",
+          "descriptor": "[I"
+        },
+        {
+          "kind": "index",
+          "descriptor": "[I",
+          "index": 0
+        }
+      ],
+      "valueInput": "coins"
+    }
+  ]
+}

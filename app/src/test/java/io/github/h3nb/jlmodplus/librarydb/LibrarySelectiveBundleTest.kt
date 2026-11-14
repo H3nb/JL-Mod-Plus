@@ -62,7 +62,7 @@ class LibrarySelectiveBundleTest {
         val savedBytes = File(config, "saved-variables.json").readBytes()
         SavedVariablesDocument.validate(savedBytes)
         val savedDoc = Json.parseToJsonElement(savedBytes.toString(Charsets.UTF_8)).jsonObject
-        assertEquals("3", savedDoc["schema"]!!.jsonPrimitive.content)
+        assertEquals("4", savedDoc["schema"]!!.jsonPrimitive.content)
         assertEquals(listOf("Coins", "HP"), savedDoc["items"]!!.jsonArray
             .map { it.jsonObject["label"]!!.jsonPrimitive.content })
         assertFalse(File(config, "saved-variables.json.bak").exists())

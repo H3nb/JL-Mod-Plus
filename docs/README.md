@@ -16,7 +16,7 @@ This is a navigation index, not an additional source of behavior or architecture
 ## Current behavior and data contracts
 
 - **Library/config:** [Library data and migrations](library-data-contract.md); [preset, configuration, and installed identity](preset-config-contract.md).
-- **Runtime and input:** [runtime UI](runtime-ui.md); [virtual control skin sets](control-skin-sets.md); [static SVG artwork](svg-artwork.md); [emulation speed](emulation-speed.md); [performance overlay](performance-overlay.md); [Memory Editor candidate identity](memory-editor-identity.md).
+- **Runtime and input:** [runtime UI](runtime-ui.md); [virtual control skin sets](control-skin-sets.md); [static SVG artwork](svg-artwork.md); [emulation speed](emulation-speed.md); [performance overlay](performance-overlay.md); [Memory Editor candidate identity](memory-editor-identity.md); [Action Scripts authoring and runtime limits](guide/memory-recipes.md).
 - **Guest APIs/media:** [Java ME compatibility](java-me-compatibility.md); [audio runtime](audio-runtime.md); [MMAPI camera](mmapi-camera.md); [MMAPI recording](mmapi-recording.md).
 - **Diagnostics:** [diagnostic bundles](diagnostic-bundles.md).
 

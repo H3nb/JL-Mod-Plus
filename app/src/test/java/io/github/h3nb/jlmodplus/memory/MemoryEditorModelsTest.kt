@@ -254,32 +254,36 @@ class MemoryEditorModelsTest {
 
     @Test fun listCombinesOnlyVerifiedSavedWatchRelationships() {
         val saved = listOf(SavedVariableRow("kept", "Coins", "player.coins"))
-        fun watch(id: Long, sourceId: String?) = MemoryWatchRow(
+        fun watch(id: Long, sourceId: String?, frozen: Boolean = false) = MemoryWatchRow(
             id, MemoryEngineContract.TYPE_INT, MemoryEngineContract.CANDIDATE_STABLE, 0,
-            "50", "50", "50", "player.coins", "Coins", savedSourceId = sourceId,
+            "50", "50", "50", "player.coins", "Coins",
+            freezeMode = if (frozen) MemoryEngineContract.FREEZE_LOCK else -1,
+            savedSourceId = sourceId,
         )
-        val rows = memoryListEntries(saved, listOf(watch(1L, "kept"), watch(2L, null)))
+        val rows = memoryListEntries(saved,
+            listOf(watch(1L, "kept"), watch(2L, null), watch(3L, null, frozen = true)))
         assertEquals(2, rows.size)
         assertEquals(1L, rows.single { it.saved != null }.watch?.id)
-        assertEquals(2L, rows.single { it.saved == null }.watch?.id)
-        assertEquals(listOf("saved:kept", "watch:2"), rows.map { it.key })
+        // Orphan session tracking is hidden; legacy Freeze remains reachable to stop.
+        assertEquals(3L, rows.single { it.saved == null }.watch?.id)
+        assertEquals(listOf("saved:kept", "watch:3"), rows.map { it.key })
     }
 
     @Test fun mixedRemovalFeedbackPreservesIndependentBackendFailures() {
         val success = memoryListRemovalOutcome(null, null)
         assertFalse(success.isError)
-        assertEquals("Saved removed; Watch removed", success.message)
+        assertEquals("Bookmark removed; Session tracking removed", success.message)
         val savedFailed = memoryListRemovalOutcome("Storage refused", null)
         assertTrue(savedFailed.isError)
-        assertTrue(savedFailed.message.contains("Saved removal failed: Storage refused"))
-        assertTrue(savedFailed.message.contains("Watch removed"))
+        assertTrue(savedFailed.message.contains("Bookmark removal failed: Storage refused"))
+        assertTrue(savedFailed.message.contains("Session tracking removed"))
         val watchFailed = memoryListRemovalOutcome(null, "Owner missing")
         assertTrue(watchFailed.isError)
-        assertTrue(watchFailed.message.contains("Saved removed"))
-        assertTrue(watchFailed.message.contains("Watch removal failed: Owner missing"))
+        assertTrue(watchFailed.message.contains("Bookmark removed"))
+        assertTrue(watchFailed.message.contains("Session tracking removal failed: Owner missing"))
         val bothFailed = memoryListRemovalOutcome("I/O", "Session ended")
         assertTrue(bothFailed.isError)
-        assertTrue(bothFailed.message.contains("Saved removal failed: I/O"))
-        assertTrue(bothFailed.message.contains("Watch removal failed: Session ended"))
+        assertTrue(bothFailed.message.contains("Bookmark removal failed: I/O"))
+        assertTrue(bothFailed.message.contains("Session tracking removal failed: Session ended"))
     }
 }
