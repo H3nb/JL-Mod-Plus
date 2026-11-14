@@ -506,7 +506,7 @@ private fun RuntimeMemoryHeader(
             }
             RuntimeIconTooltip(stringResource(R.string.memory_editor_minimize)) {
                 IconButton(onClick = onMinimize) {
-                    Icon(painterResource(R.drawable.ic_memory_editor_minimize),
+                    Icon(painterResource(R.drawable.ic_remove),
                         stringResource(R.string.memory_editor_minimize))
                 }
             }
