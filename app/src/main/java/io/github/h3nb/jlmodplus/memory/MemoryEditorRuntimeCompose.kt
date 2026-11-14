@@ -278,8 +278,11 @@ internal fun MemoryEditorRuntimeRoot(
                     scriptTargets = targets
                     choosingScriptType = true
                     actions.setScriptsTab()
-                }.exceptionOrNull()?.localizedMessage?.takeIf(String::isNotBlank)
-                    ?: if (choosingScriptType) null else createFailedMessage
+                }.fold(
+                    onSuccess = { null },
+                    onFailure = { it.localizedMessage?.takeIf(String::isNotBlank)
+                        ?: createFailedMessage },
+                )
             }
         }
         val selectTab: (MemoryEditorTab) -> Unit = {
