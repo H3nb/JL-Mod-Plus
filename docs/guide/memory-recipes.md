@@ -118,6 +118,14 @@ The builder retains its unsaved draft while the editor is minimized in the same
 MIDlet session. Existing and advanced JSON recipes remain editable in JSON,
 without an unreliable automatic conversion back to the visual builder.
 
+Existing scripts produced by the builder can be reopened visually through **Edit**
+while their original Bookmark locators are still available and unambiguous.
+Unsupported or advanced documents continue in **JSON Editor**, without dropping
+unknown fields. Value Editor fields can optionally set minimum and maximum input
+bounds; leaving them empty uses the primitive type's full numeric range.
+Freeze Values and Quick Actions start with no numeric amount, rather than
+silently treating an unread Bookmark as zero.
+
 The builder deliberately covers ordinary primitive operations. Bitfields,
 encoded values, dynamic array selectors, and mirrored data layouts still
 require the JSON editor.

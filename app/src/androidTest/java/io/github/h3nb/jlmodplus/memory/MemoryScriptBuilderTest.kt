@@ -66,6 +66,81 @@ class MemoryScriptBuilderTest {
         assertEquals(JsonPrimitive(-20), change["value"])
     }
 
+    @Test fun newValueActionsRequireAnExplicitAmount() {
+        for (mode in listOf(MemoryScriptBuilderMode.FREEZE, MemoryScriptBuilderMode.ACTIONS)) {
+            val draft = MemoryScriptBuilderDraft(
+                id = "builder.test", mode = mode, name = "Coins",
+                actions = listOf(MemoryScriptBuilderAction("coins", "Coins")),
+            )
+            assertTrue(runCatching {
+                MemoryRecipeGenerator.fromBuilder(draft, "sample/Game", mapOf("coins" to locator()))
+            }.isFailure)
+            val withZero = draft.copy(actions = draft.actions.map { it.copy(value = "0") })
+            assertEquals(JsonPrimitive(0), (
+                (Json.parseToJsonElement(MemoryRecipeGenerator.fromBuilder(
+                    withZero, "sample/Game", mapOf("coins" to locator()),
+                )) as JsonObject)["actions"] as JsonArray).single()
+                .let { it as JsonObject }["value"])
+        }
+    }
+
+    @Test fun visualEditingKeepsCustomFormBoundsAndDoesNotDiscardJsonFields() {
+        val draft = MemoryScriptBuilderDraft(
+            id = "builder.form", mode = MemoryScriptBuilderMode.FORM, name = "Health",
+            actions = listOf(MemoryScriptBuilderAction(
+                bookmarkId = "coins", label = "Editable health", min = "10", max = "200",
+            )),
+        )
+        val locators = mapOf("coins" to locator())
+        val document = MemoryRecipeGenerator.fromBuilder(draft, "sample/Game", locators)
+        val restored = MemoryRecipeGenerator.forEditing(
+            document, "sample/Game", locators,
+            listOf(SavedVariableRow("coins", "Coins", "coins", true)),
+        )
+        assertTrue(restored != null)
+        assertEquals("10", restored?.actions?.single()?.min)
+        assertEquals("200", restored?.actions?.single()?.max)
+        assertEquals("builder.form", restored?.replacingId)
+        assertEquals(false, restored?.hasChanges)
+        assertEquals(
+            Json.parseToJsonElement(document),
+            Json.parseToJsonElement(MemoryRecipeGenerator.fromBuilder(
+                restored!!, "sample/Game", locators,
+            )),
+        )
+        assertTrue(restored.copy(actions = restored.actions.map { it.copy(max = "150") }).hasChanges)
+
+        val invalid = draft.copy(actions = draft.actions.map { it.copy(min = "300") })
+        assertTrue(runCatching {
+            MemoryRecipeGenerator.fromBuilder(invalid, "sample/Game", locators)
+        }.isFailure)
+
+        val json = Json.parseToJsonElement(document) as JsonObject
+        val advanced = JsonObject(json + mapOf(
+            "root" to JsonObject(mapOf(
+                "kind" to JsonPrimitive("midlet"), "class" to JsonPrimitive("sample/Game"),
+            )),
+        ))
+        assertEquals(null, MemoryRecipeGenerator.forEditing(
+            advanced.toString(), "sample/Game", locators,
+            listOf(SavedVariableRow("coins", "Coins", "coins", true)),
+        ))
+    }
+
+    @Test fun quickActionsRestoreSubtractWithoutChangingRuntimeSemantics() {
+        val original = document(MemoryScriptBuilderMode.ACTIONS, "subtract", "20")
+        val locators = mapOf("coins" to locator())
+        val restored = MemoryRecipeGenerator.forEditing(
+            original.toString(), "sample/Game", locators,
+            listOf(SavedVariableRow("coins", "Coins", "coins", true)),
+        )
+        assertEquals("subtract", restored?.actions?.single()?.operation)
+        assertEquals("20", restored?.actions?.single()?.value)
+        assertEquals(original, Json.parseToJsonElement(
+            MemoryRecipeGenerator.fromBuilder(restored!!, "sample/Game", locators),
+        ))
+    }
+
     @Test fun missingBookmarkLocatorCannotGenerateAWriteTarget() {
         val draft = MemoryScriptBuilderDraft(
             id = "builder.test", mode = MemoryScriptBuilderMode.ACTIONS, name = "Coins",

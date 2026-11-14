@@ -1,7 +1,12 @@
 // SPDX-License-Identifier: Apache-2.0
 package io.github.h3nb.jlmodplus.memory
 
+import androidx.compose.foundation.layout.Box
+import androidx.compose.foundation.layout.height
 import androidx.compose.runtime.mutableStateOf
+import androidx.compose.ui.Modifier
+import androidx.compose.ui.test.performScrollTo
+import androidx.compose.ui.unit.dp
 import androidx.compose.ui.platform.testTag
 import androidx.compose.ui.semantics.SemanticsProperties
 import androidx.compose.ui.test.assertIsDisplayed
@@ -260,6 +265,19 @@ class MemoryScriptsComposeTest {
         rule.runOnIdle { assertEquals(2, calls) }
     }
 
+
+    @Test fun newScriptModesRemainReachableOnShortLandscape() {
+        rule.setContent {
+            JLModPlusTheme {
+                Box(Modifier.height(160.dp)) {
+                    MemoryScriptTypeChooser(
+                        onChoose = {}, onJson = {}, onBack = {},
+                    )
+                }
+            }
+        }
+        rule.onNodeWithText("JSON Editor").performScrollTo().assertIsDisplayed()
+    }
 
     @Test fun builderCreatesQuickActionFromBookmarkWithoutExecutingOnSave() {
         val state = MemoryEditorUiState(
