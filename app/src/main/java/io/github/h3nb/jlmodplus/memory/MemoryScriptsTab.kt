@@ -489,9 +489,14 @@ internal fun RuntimeScriptsTab(
                             Column(Modifier.weight(1f),
                                 verticalArrangement = Arrangement.spacedBy(4.dp)) {
                                 Text(script.name, style = MaterialTheme.typography.titleSmall)
-                                Text(scriptMetadata?.mode?.let { recipeModeLabel(it, context) }
-                                    ?: script.id, style = MaterialTheme.typography.bodySmall,
-                                    color = MaterialTheme.colorScheme.onSurfaceVariant)
+                                val modeLabel = scriptMetadata?.mode?.let {
+                                    recipeModeLabel(it, context)
+                                } ?: script.id
+                                val status = if (active) stringResource(R.string.memory_scripts_active) else null
+                                Text(if (status == null) modeLabel else "$modeLabel · $status",
+                                    style = MaterialTheme.typography.bodySmall,
+                                    color = if (active) MaterialTheme.colorScheme.primary
+                                        else MaterialTheme.colorScheme.onSurfaceVariant)
                                 scriptMetadata?.description?.takeIf(String::isNotBlank)?.let {
                                     Text(it, style = MaterialTheme.typography.bodySmall,
                                         color = MaterialTheme.colorScheme.onSurfaceVariant,
