@@ -162,6 +162,10 @@ internal fun TypedMemoryRecipeDetail(
                     style = MaterialTheme.typography.bodySmall)
             }
             HorizontalDivider()
+            if (metadata.mode == "form") {
+                Text(stringResource(R.string.memory_scripts_new_values),
+                    style = MaterialTheme.typography.titleSmall)
+            }
             if (metadata.mode != "toggle") metadata.fields.forEach { field ->
                 OutlinedTextField(
                     value = inputs[field.name].orEmpty(),
