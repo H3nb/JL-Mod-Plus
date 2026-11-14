@@ -31,12 +31,19 @@ class MemoryScriptBuilderTest {
         }
     }
 
+    private fun action(
+        value: String = "", operation: String = "set", fieldName: String = "coins",
+    ): MemoryScriptBuilderAction = MemoryRecipeGenerator.fromBookmark(
+        SavedVariableRow("coins", "Coins", fieldName, true),
+        locator(fieldName), "sample/Game",
+    ).copy(value = value, operation = operation)
+
     private fun document(
         mode: MemoryScriptBuilderMode, operation: String = "set", value: String = "100",
     ): JsonObject {
         val draft = MemoryScriptBuilderDraft(
             id = "builder.test", mode = mode, name = "Coins",
-            actions = listOf(MemoryScriptBuilderAction("coins", "Coins", value, operation)),
+            actions = listOf(action(value, operation)),
         )
         val json = MemoryRecipeGenerator.fromBuilder(
             draft, "sample/Game", mapOf("coins" to locator()),
@@ -70,7 +77,7 @@ class MemoryScriptBuilderTest {
         for (mode in listOf(MemoryScriptBuilderMode.FREEZE, MemoryScriptBuilderMode.ACTIONS)) {
             val draft = MemoryScriptBuilderDraft(
                 id = "builder.test", mode = mode, name = "Coins",
-                actions = listOf(MemoryScriptBuilderAction("coins", "Coins")),
+                actions = listOf(action()),
             )
             assertTrue(runCatching {
                 MemoryRecipeGenerator.fromBuilder(draft, "sample/Game", mapOf("coins" to locator()))
@@ -87,8 +94,8 @@ class MemoryScriptBuilderTest {
     @Test fun visualEditingKeepsCustomFormBoundsAndDoesNotDiscardJsonFields() {
         val draft = MemoryScriptBuilderDraft(
             id = "builder.form", mode = MemoryScriptBuilderMode.FORM, name = "Health",
-            actions = listOf(MemoryScriptBuilderAction(
-                bookmarkId = "coins", label = "Editable health", min = "10", max = "200",
+            actions = listOf(action().copy(
+                label = "Editable health", min = "10", max = "200",
             )),
         )
         val locators = mapOf("coins" to locator())
@@ -161,7 +168,7 @@ class MemoryScriptBuilderTest {
         assertTrue(failure?.message?.contains("relinked") == true)
 
         val reselected = edited.copy(actions = listOf(
-            MemoryScriptBuilderAction("coins", "Coins", value = "100"),
+            action(value = "100", fieldName = "health"),
         ))
         val retargeted = Json.parseToJsonElement(MemoryRecipeGenerator.fromBuilder(
             reselected, "sample/Game", relinkedLocator,
@@ -171,10 +178,35 @@ class MemoryScriptBuilderTest {
         assertEquals(JsonPrimitive("health"), path["name"])
     }
 
+    @Test fun newlySelectedBookmarkCannotSilentlyRetargetBeforeFirstSave() {
+        val selected = action(value = "20")
+        val draft = MemoryScriptBuilderDraft(
+            id = "builder.new", mode = MemoryScriptBuilderMode.ACTIONS,
+            name = "Add coins", actions = listOf(selected.copy(operation = "add")),
+        )
+        val current = mapOf("coins" to locator())
+        val original = Json.parseToJsonElement(
+            MemoryRecipeGenerator.fromBuilder(draft, "sample/Game", current),
+        ) as JsonObject
+        assertEquals(JsonPrimitive("oneShot"), original["mode"])
+
+        val relinked = mapOf("coins" to locator("health"))
+        val failure = runCatching {
+            MemoryRecipeGenerator.fromBuilder(draft, "sample/Game", relinked)
+        }.exceptionOrNull()
+        assertTrue(failure?.message?.contains("relinked") == true)
+        val explicitlyReselected = draft.copy(actions = listOf(
+            action(value = "20", operation = "add", fieldName = "health"),
+        ))
+        assertTrue(runCatching {
+            MemoryRecipeGenerator.fromBuilder(explicitlyReselected, "sample/Game", relinked)
+        }.isSuccess)
+    }
+
     @Test fun missingBookmarkLocatorCannotGenerateAWriteTarget() {
         val draft = MemoryScriptBuilderDraft(
             id = "builder.test", mode = MemoryScriptBuilderMode.ACTIONS, name = "Coins",
-            actions = listOf(MemoryScriptBuilderAction("missing", "Coins")),
+            actions = listOf(action().copy(bookmarkId = "missing")),
         )
         assertTrue(runCatching {
             MemoryRecipeGenerator.fromBuilder(draft, "sample/Game", emptyMap())

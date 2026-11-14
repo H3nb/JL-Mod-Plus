@@ -1351,6 +1351,7 @@
 <string name="memory_recipes_freeze" tools:ignore="MissingTranslation">Keep value frozen while this game runs</string>
 <string name="memory_recipes_run" tools:ignore="MissingTranslation">Run</string>
 <string name="memory_recipes_active_freezes" tools:ignore="MissingTranslation">Active recipe Freeze</string>
+<string name="memory_recipes_target_unavailable" tools:ignore="MissingTranslation">Bookmark target is unavailable. Refresh or relink it before running.</string>
 <string name="memory_recipes_preview_values" tools:ignore="MissingTranslation">Current values: %1$s</string>
 <string name="memory_scripts_title" tools:ignore="MissingTranslation">Scripts</string>
     <string name="memory_scripts_description" tools:ignore="MissingTranslation">Description</string>

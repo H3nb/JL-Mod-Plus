@@ -1253,6 +1253,7 @@
 <string name="memory_recipes_freeze">Pertahankan nilai selama game ini berjalan</string>
 <string name="memory_recipes_run">Jalankan</string>
 <string name="memory_recipes_active_freezes">Freeze recipe aktif</string>
+<string name="memory_recipes_target_unavailable">Target Bookmark belum tersedia. Segarkan atau tautkan ulang sebelum menjalankan.</string>
 <string name="memory_recipes_preview_values">Nilai saat ini: %1$s</string>
 <string name="memory_scripts_title">Skrip</string>
     <string name="memory_scripts_description">Deskripsi</string>

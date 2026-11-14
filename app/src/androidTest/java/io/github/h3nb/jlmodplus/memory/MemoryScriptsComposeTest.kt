@@ -24,6 +24,9 @@ import io.github.h3nb.jlmodplus.ui.JLModPlusTheme
 import org.junit.Assert.assertEquals
 import org.junit.Assert.assertFalse
 import org.junit.Assert.assertTrue
+import kotlinx.serialization.json.Json
+import kotlinx.serialization.json.JsonArray
+import kotlinx.serialization.json.JsonObject
 import org.junit.Rule
 import org.junit.Test
 
@@ -287,7 +290,17 @@ class MemoryScriptsComposeTest {
         )
         var generated: MemoryScriptBuilderDraft? = null
         var saved: String? = null
+        val sampleJson = Json.parseToJsonElement(sample) as JsonObject
+        val target = JsonObject(mapOf(
+            "root" to sampleJson.getValue("root"),
+            "path" to ((sampleJson["actions"] as JsonArray).single() as JsonObject).getValue("path"),
+        ))
         val actions = object : TestMemoryEditorActions() {
+            override fun captureMemoryScriptBuilderActions(
+                bookmarks: List<SavedVariableRow>,
+            ): List<MemoryScriptBuilderAction> = bookmarks.map {
+                MemoryScriptBuilderAction(it.id, it.label, originalTarget = target)
+            }
             override fun generateMemoryScript(
                 draft: MemoryScriptBuilderDraft, onReady: (String?, String?) -> Unit,
             ) {
@@ -318,8 +331,26 @@ class MemoryScriptsComposeTest {
             assertEquals(MemoryScriptBuilderMode.ACTIONS, generated?.mode)
             assertEquals("add", generated?.actions?.single()?.operation)
             assertEquals("coin-id", generated?.actions?.single()?.bookmarkId)
+            assertEquals(target, generated?.actions?.single()?.originalTarget)
             assertEquals(sample, saved)
         }
+    }
+
+    @Test fun unavailableBookmarkDisablesAutomationRunWithFeedback() {
+        val saved = SavedVariableRow("coin-id", "Coins", "coins", true)
+        rule.setContent {
+            JLModPlusTheme {
+                MemoryRecipeDialog(
+                    saved = saved, savedValue = "", writeSupported = true,
+                    targetReady = false, actions = TestMemoryEditorActions(),
+                    onDismiss = {},
+                )
+            }
+        }
+        rule.onNodeWithText("Run").assertIsNotEnabled()
+        rule.onNodeWithText(
+            "Bookmark target is unavailable. Refresh or relink it before running.",
+        ).assertIsDisplayed()
     }
 
     @Test fun failedSaveLeavesTheJsonEditorOpenForCorrection() {

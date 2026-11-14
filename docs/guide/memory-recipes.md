@@ -105,11 +105,12 @@ The visual builder supports multiple verified Bookmarks in one script:
   Press **Run** whenever the changes are needed. A Run does not keep Freeze
   active; Subtract compiles to a signed addition.
 
-The builder uses the Bookmark's verified root-relative locator, not its current
-value, session candidate ID, or label as an execution target. A Bookmark without
-a locator must be relinked in the List tab before it can be added. Once generated,
-the script contains its own locator snapshot: renaming or relinking the Bookmark
-does not silently change an existing script's target.
+The builder captures the Bookmark's verified root-relative locator when it is
+added, not its current value, session candidate ID, or label as an execution
+target. A Bookmark without a locator must be relinked in the List tab before it
+can be added. Relinking while a draft is open prevents Save until the Bookmark
+is removed and added again explicitly. Saved scripts retain their own locator
+snapshot; renaming or relinking a Bookmark never retargets them silently.
 
 **View JSON** shows the generated v2 document; **Edit JSON** opens the regular
 JSON editor. **Save** adds the script to the current MIDlet's catalog without

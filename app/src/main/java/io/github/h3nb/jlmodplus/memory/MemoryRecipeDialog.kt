@@ -10,6 +10,7 @@ import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.heightIn
 import androidx.compose.foundation.rememberScrollState
 import androidx.compose.foundation.verticalScroll
+import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Checkbox
 import androidx.compose.material3.OutlinedTextField
 import androidx.compose.material3.Text
@@ -31,6 +32,7 @@ internal fun MemoryRecipeDialog(
     saved: SavedVariableRow,
     savedValue: String,
     writeSupported: Boolean,
+    targetReady: Boolean,
     actions: MemoryEditorActions,
     onDismiss: () -> Unit,
 ) {
@@ -50,6 +52,11 @@ internal fun MemoryRecipeDialog(
                 verticalArrangement = Arrangement.spacedBy(8.dp),
             ) {
                 Text(stringResource(R.string.memory_recipes_simple_from_saved, saved.label))
+                if (!targetReady) Text(
+                    stringResource(R.string.memory_recipes_target_unavailable),
+                    color = MaterialTheme.colorScheme.error,
+                    style = MaterialTheme.typography.bodySmall,
+                )
                 OutlinedTextField(
                     value = generatedValue,
                     onValueChange = { if (it.length <= 32) generatedValue = it },
@@ -83,7 +90,7 @@ internal fun MemoryRecipeDialog(
                     actions.generateSimpleMemoryRecipe(saved.id, generatedValue, freeze)
                     onDismiss()
                 },
-                enabled = writeSupported,
+                enabled = writeSupported && targetReady,
             ) {
                 Text(stringResource(R.string.memory_recipes_run))
             }

@@ -1181,6 +1181,7 @@ private fun RuntimeVariablesTab(
             saved = saved,
             savedValue = state.savedValues[saved.id]?.value.orEmpty(),
             writeSupported = state.writeSupported && !state.busy,
+            targetReady = state.savedValues[saved.id]?.resolved == true,
             actions = actions,
             onDismiss = { recipeDialog = false },
         )
