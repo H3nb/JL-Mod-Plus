@@ -40,12 +40,10 @@ void main() {
         filteredGridBorder(logicalPixel.y, uGameSize.y / uOutputSize.y));
     float grid = 1.0 - uGridStrength *
         (1.0 - (1.0 - border.x) * (1.0 - border.y));
-    // On mediump-only GLES2, a logical-pixel triad avoids large coordinates
-    // while keeping this setting functional instead of silently disabling it.
 #ifdef GL_FRAGMENT_PRECISION_HIGH
-    float stripe = mod(floor(screenUv.x * uOutputSize.x), 3.0);
+    float stripe = mod(floor(logicalPixel.x * 3.0), 3.0);
 #else
-    float stripe = mod(floor(screenUv.x * uGameSize.x), 3.0);
+    float stripe = mod(floor(logicalPixel.x), 3.0);
 #endif
     float maskVisibility = clamp((uOutputSize.x / uGameSize.x - 1.0) * 0.5, 0.0, 1.0);
     vec3 subpixel = stripe < 1.0 ? vec3(1.0, 0.68, 0.68) :

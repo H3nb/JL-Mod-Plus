@@ -50,6 +50,12 @@ class RgbaTextureEnhancerTest {
                 RgbaTextureEnhancer.putArgbPixels(ByteBuffer.allocate(3), new int[] {0xff000000}));
     }
 
+    @Test void rejectsUnrepresentableOutputBeforeAllocating() {
+        assertThrows(IllegalArgumentException.class, () ->
+                RgbaTextureEnhancer.reconstruct(ByteBuffer.allocate(4),
+                        Integer.MAX_VALUE, Integer.MAX_VALUE, 10, 2));
+    }
+
     @Test void alphaAwareReconstructionNeverCreatesInvisibleSourceColorFringesOnUniformInput() {
         ByteBuffer src = ByteBuffer.allocate(2 * 2 * 4);
         for (int i = 0; i < 4; i++) src.put(new byte[] {0, 0, (byte) 255, (byte) 255});

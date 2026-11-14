@@ -37,6 +37,7 @@ import kotlinx.coroutines.delay
 internal data class TransientNotice(
     val id: Long,
     val message: String,
+    val durationMillis: Long,
 )
 
 internal class TransientNoticeState {
@@ -44,8 +45,8 @@ internal class TransientNoticeState {
     var notice by mutableStateOf<TransientNotice?>(null)
         private set
 
-    fun show(message: String) {
-        notice = TransientNotice(++nextId, message)
+    fun show(message: String, durationMillis: Long = 3_500L) {
+        notice = TransientNotice(++nextId, message, durationMillis)
     }
 
     fun dismiss(id: Long) {
@@ -60,7 +61,7 @@ internal fun TransientNoticeHost(
 ) {
     val current = state.notice ?: return
     LaunchedEffect(current.id) {
-        delay(3_500)
+        delay(current.durationMillis)
         state.dismiss(current.id)
     }
     Box(
@@ -98,5 +99,9 @@ class TransientNoticeComposeController(composeView: ComposeView) {
 
     fun show(message: String) {
         state.show(message)
+    }
+
+    fun show(message: String, durationMillis: Long) {
+        state.show(message, durationMillis)
     }
 }

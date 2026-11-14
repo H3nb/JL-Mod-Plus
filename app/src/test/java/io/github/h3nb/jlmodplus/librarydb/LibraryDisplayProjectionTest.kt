@@ -6,6 +6,7 @@
  */
 package io.github.h3nb.jlmodplus.librarydb
 
+import io.github.h3nb.jlmodplus.config.Config
 import java.io.File
 import java.util.Locale
 import java.util.concurrent.CountDownLatch
@@ -27,12 +28,55 @@ import kotlinx.coroutines.runBlocking
 import kotlinx.coroutines.withTimeout
 import kotlinx.coroutines.yield
 import org.junit.jupiter.api.Assertions.assertEquals
+import org.junit.jupiter.api.Assertions.assertFalse
 import org.junit.jupiter.api.Assertions.assertNotSame
 import org.junit.jupiter.api.Assertions.assertSame
 import org.junit.jupiter.api.Assertions.assertTrue
 import org.junit.jupiter.api.Test
+import org.junit.jupiter.api.io.TempDir
 
 class LibraryDisplayProjectionTest {
+    @field:TempDir lateinit var workdir: File
+
+    @Test fun iconFilePresenceFollowsLatestSourceAndWorkdir() = runBlocking {
+        val first = File(workdir, "first").apply { mkdirs() }
+        val second = File(workdir, "second").apply { mkdirs() }
+        val icon = File(File(first, "converted/app-1").absolutePath + Config.MIDLET_ICON_FILE)
+        icon.parentFile!!.mkdirs()
+        icon.writeText("icon")
+
+        val initialSource = LibraryRepository.State.Ready(1, first, listOf(row(1, "Game")))
+        val repository = MutableStateFlow<LibraryRepository.State>(initialSource)
+        val query = MutableStateFlow("")
+        val results = Channel<LibraryViewModel.DisplayState>(Channel.UNLIMITED)
+        val collector = launch {
+            libraryDisplayStates(repository, query, MutableStateFlow(0),
+                MutableStateFlow(LibraryQuickView.All), MutableStateFlow(Locale.US))
+                .collect { results.send(it) }
+        }
+        try {
+            val initial = results.ready()
+            assertTrue(initial.iconFiles.getValue(1L).mainIconPresent)
+
+            query.value = "game"
+            assertSame(initial.iconFiles, results.ready().iconFiles)
+
+            icon.delete()
+            repository.value = initialSource.copy(
+                apps = listOf(row(1, "Game").copy(iconRevision = 1)))
+            val replaced = results.ready()
+            assertFalse(replaced.iconFiles.getValue(1L).mainIconPresent)
+
+            repository.value = initialSource.copy(generation = 2, emulatorDir = second)
+            val switched = results.ready()
+            assertEquals(second, switched.emulatorDir)
+            assertFalse(switched.iconFiles.getValue(1L).mainIconPresent)
+        } finally {
+            collector.cancelAndJoin()
+            results.close()
+        }
+    }
+
     @Test fun queriesAndCollectionUpdatesReuseOrderWithoutNarrowingAuthoritativeIds() = runBlocking {
         val source = LibraryRepository.State.Ready(1, File("first"), listOf(
             row(1, "Zulu", favorite = true), row(2, "Alpha")))
@@ -61,13 +105,18 @@ class LibraryDisplayProjectionTest {
             assertSame(initial.apps, collectionUpdate.apps)
             assertSame(initial.availableAppIds, collectionUpdate.availableAppIds)
             assertEquals(listOf(collection), collectionUpdate.collections)
+            repository.value = source.copy(collections = listOf(collection.copy(name = "Renamed")))
+            val renamedCollection = results.ready()
+            repository.value = source.copy(collections = listOf(collection.copy(name = "Renamed twice")))
+            val secondRename = results.ready()
+            assertSame(renamedCollection.localizedDescriptions, secondRename.localizedDescriptions)
             assertTrue(collectionUpdate.sourceRevision > initial.sourceRevision)
 
             quickView.value = LibraryQuickView.Favorites
             val favorites = results.ready()
             assertEquals(listOf(1L), favorites.apps.map { it.id })
             assertSame(initial.availableAppIds, favorites.availableAppIds)
-            assertEquals(collectionUpdate.sourceRevision, favorites.sourceRevision)
+            assertEquals(secondRename.sourceRevision, favorites.sourceRevision)
             quickView.value = LibraryQuickView.All
             assertSame(initial.apps, results.ready().apps)
 

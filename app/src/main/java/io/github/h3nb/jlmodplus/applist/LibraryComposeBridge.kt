@@ -318,6 +318,7 @@ data class LibraryAppUiItem(
     val defaultDescription: String = description,
     val portraitIconPath: String? = null,
     val hasCustomIcon: Boolean = false,
+    val addedAt: Long? = null,
 )
 
 private data class MetadataRestoreRequest(
@@ -340,8 +341,14 @@ internal data class LibraryViewportSnapshot(
     val firstVisibleItemOffsetPx: Int,
 )
 
+private data class LibraryProjectionKey(
+    val revision: Long,
+    val apps: List<LibraryAppUiItem>,
+)
+
 data class LibraryUiState(
     val loading: Boolean = true,
+    val projectionRevision: Long = 0L,
     val apps: List<LibraryAppUiItem> = emptyList(),
     val appliedFilter: String = "",
     val layout: LibraryLayout = LibraryLayout.List,
@@ -361,6 +368,7 @@ data class LibraryUiState(
     val errorMessage: String? = null,
     val generation: Long = 0L,
     val availableAppIds: Set<Long> = apps.mapTo(LinkedHashSet()) { it.databaseId },
+    val projectedAppIds: List<Long> = apps.map(LibraryAppUiItem::databaseId),
     /** Stable identity of the active Library workdir; database ids are only meaningful inside it. */
     val libraryScope: String = "",
 )
@@ -445,6 +453,7 @@ class LibraryComposeController(
     @Volatile
     private var controllerBackAvailable = false
     private var controllerEventSequence = 0L
+    private var nextProjectionRevision = 0L
     private var pendingBundleExport by mutableStateOf<LibraryBundleExportHandler?>(null)
     private var state by mutableStateOf(
         LibraryUiState(
@@ -504,12 +513,15 @@ class LibraryComposeController(
         quickView: LibraryQuickView,
         generation: Long,
         availableAppIds: Set<Long>,
+        projectedAppIds: List<Long> = items.map(LibraryAppUiItem::databaseId),
         libraryScope: String = state.libraryScope,
     ) {
         state = state.copy(
             loading = false,
+            projectionRevision = ++nextProjectionRevision,
             apps = items,
             availableAppIds = availableAppIds,
+            projectedAppIds = projectedAppIds,
             appliedFilter = appliedFilter,
             quickView = quickView,
             databaseControlsReady = true,
@@ -904,16 +916,19 @@ fun LibraryScreen(
         if (retained != selectionState) selectionState = retained
     }
 
+    val projectionKey = remember(state) {
+        LibraryProjectionKey(state.projectionRevision, state.apps)
+    }
     LaunchedEffect(
         state.generation,
-        state.apps,
+        projectionKey,
         state.appliedFilter,
         state.sortVariant,
         state.layout,
     ) {
         if (state.apps.isEmpty()) return@LaunchedEffect
         val focus = reconcileLibraryControllerFocus(
-            state.apps,
+            state.projectedAppIds,
             controllerFocusedAppId,
             controllerFocusedAppIndex,
         )
@@ -928,7 +943,7 @@ fun LibraryScreen(
         ) return
         val apps = currentState.apps
         val currentFocus = reconcileLibraryControllerFocus(
-            apps,
+            currentState.projectedAppIds,
             controllerFocusedAppId,
             controllerFocusedAppIndex,
         )
@@ -952,7 +967,7 @@ fun LibraryScreen(
             columnCount = columns,
         )
         controllerFocusedAppIndex = nextIndex
-        controllerFocusedAppId = apps[nextIndex].databaseId
+        controllerFocusedAppId = currentState.projectedAppIds[nextIndex]
         // A controller command takes over from the preceding touch gesture or fling.
         if (currentState.layout == LibraryLayout.List) {
             appsListState.stopScroll(MutatePriority.UserInput)
@@ -1006,20 +1021,24 @@ fun LibraryScreen(
 
 
     val currentEditorIdentity by rememberUpdatedState(state.libraryScope to metadataTarget?.databaseId)
-    val metadataApp = metadataTarget?.let { target ->
-        state.apps.firstOrNull { it.databaseId == target.databaseId } ?: target
+    val metadataApp = remember(projectionKey, metadataTarget) {
+        metadataTarget?.let { target ->
+            state.apps.getOrNull(state.projectedAppIds.indexOf(target.databaseId)) ?: target
+        }
     }
-    val metadataRestoreReady = metadataRestoreRequest?.let { request ->
-        val current = state.apps.firstOrNull { it.databaseId == request.databaseId }
-        // A filtered-out/deleted target cannot be measured, so the stable-id/fallback anchor
-        // is already the best possible restoration. Otherwise wait until the database projection
-        // contains the values submitted by the editor and the row has been remeasured.
-        !state.loading && (current == null || (
-            current.title == request.title &&
-                current.author == request.author &&
-                current.defaultDescription == request.description
-            ))
-    } ?: false
+    val metadataRestoreReady = remember(projectionKey, metadataRestoreRequest, state.loading) {
+        metadataRestoreRequest?.let { request ->
+            val current = state.apps.getOrNull(state.projectedAppIds.indexOf(request.databaseId))
+            // A filtered-out/deleted target cannot be measured, so the stable-id/fallback anchor
+            // is already the best possible restoration. Otherwise wait until the database projection
+            // contains the values submitted by the editor and the row has been remeasured.
+            !state.loading && (current == null || (
+                current.title == request.title &&
+                    current.author == request.author &&
+                    current.defaultDescription == request.description
+                ))
+        } ?: false
+    }
 
     fun captureAppsAnchor(excludedDatabaseId: Long? = null): LibraryScrollAnchor? {
         val visible: Pair<Int, Int>? = if (state.layout == LibraryLayout.List) {
@@ -1113,7 +1132,7 @@ fun LibraryScreen(
                             currentState.apps.isEmpty()
                         ) return@collect
                         val focus = reconcileLibraryControllerFocus(
-                            currentState.apps,
+                            currentState.projectedAppIds,
                             controllerFocusedAppId,
                             controllerFocusedAppIndex,
                         )
@@ -1132,7 +1151,7 @@ fun LibraryScreen(
                             currentState.apps.isEmpty() || currentControllerSelectionActive
                         ) return@collect
                         val focus = reconcileLibraryControllerFocus(
-                            currentState.apps,
+                            currentState.projectedAppIds,
                             controllerFocusedAppId,
                             controllerFocusedAppIndex,
                         )
@@ -1535,13 +1554,13 @@ fun LibraryScreen(
                             onSelectAll = {
                                 selectionState = selectionState.selectVisible(
                                     state.generation,
-                                    state.apps.asSequence().map(LibraryAppUiItem::databaseId).toList(),
+                                    state.projectedAppIds,
                                 )
                             },
                             onUnselectAll = {
                                 selectionState = selectionState.unselectVisible(
                                     state.generation,
-                                    state.apps.asSequence().map(LibraryAppUiItem::databaseId).toList(),
+                                    state.projectedAppIds,
                                 )
                             },
                             onSort = actions::onSort,
@@ -2295,8 +2314,7 @@ internal fun LibraryAppsDestination(
         // Room projection readiness does not imply that the changed row has completed its
         // final measure. Wait for two bounded frames before taking the viewport snapshot.
         repeat(LIBRARY_RETURN_ANCHOR_SETTLE_FRAMES) { withFrameNanos { } }
-        val availableIds = state.apps.map(LibraryAppUiItem::databaseId)
-        val anchor = resolveLibraryScrollAnchor(returnAnchor, availableIds)
+        val anchor = resolveLibraryScrollAnchor(returnAnchor, state.projectedAppIds)
         // A raw viewport snapshot is the exact visual contract for returning from an overlay.
         // Prefer it over the stable-id resolution because a Room projection can remeasure or
         // reorder rows after the editor closes, before the stable anchor has been consumed.
@@ -2740,9 +2758,10 @@ private fun LibraryAppsHeader(
     interactive: Boolean = true,
 ) {
     val sortEntries = stringArrayResource(R.array.pref_app_sort_entries).toList()
-    val visibleAppIds = remember(state.apps) {
-        state.apps.map(LibraryAppUiItem::databaseId)
+    val projectionKey = remember(state) {
+        LibraryProjectionKey(state.projectionRevision, state.apps)
     }
+    val visibleAppIds = if (selectionState.isActive) state.projectedAppIds else emptyList()
     val selectedSort = state.sortVariant and Int.MAX_VALUE
     val ascending = state.sortVariant >= 0
     val titleGate = rememberLibraryHeaderActionGate(headerOffsetPx)
@@ -2826,7 +2845,9 @@ private fun LibraryAppsHeader(
                 }
             }
             if (selectionState.isActive) {
-                val allVisibleSelected = selectionState.isAllVisibleSelected(visibleAppIds)
+                val allVisibleSelected = remember(projectionKey, selectionState.selectedAppIds) {
+                    selectionState.isAllVisibleSelected(visibleAppIds)
+                }
                 val selectionToggleLabel = stringResource(
                     if (allVisibleSelected) {
                         R.string.library_selection_unselect_all

@@ -56,8 +56,7 @@ final class EffectTargetPlan {
     }
 
     static EffectTargetPlan create(List<Pass> passes, int contentW, int contentH,
-                                   int viewportW, int viewportH, int maxTextureSize,
-                                   long budgetBytes) {
+                                   int viewportW, int viewportH, int maxTextureSize) {
         if (contentW <= 0 || contentH <= 0 || viewportW <= 0 || viewportH <= 0) {
             throw new IllegalArgumentException("Invalid effect render dimensions");
         }
@@ -66,7 +65,6 @@ final class EffectTargetPlan {
         int current = DISPLAY, effectBase = DISPLAY;
         int visibleW = contentW, visibleH = contentH;
         double reducedScale = bloomScale(viewportW, viewportH, contentW, contentH);
-        long allocatedBytes = 0L;
         for (int i = 0; i < passes.size(); i++) {
             Pass pass = passes.get(i);
             if (pass.first) {
@@ -98,10 +96,8 @@ final class EffectTargetPlan {
                     }
                 }
                 if (next == DISPLAY) {
-                    allocatedBytes += 4L * outW * outH;
-                    if (outW > maxTextureSize || outH > maxTextureSize
-                            || allocatedBytes > budgetBytes) {
-                        throw new IllegalStateException("Post-processing target budget exceeded");
+                    if (outW > maxTextureSize || outH > maxTextureSize) {
+                        throw new IllegalStateException("Post-processing target exceeds GPU texture limit");
                     }
                     next = slots.size();
                     slots.add(new Slot(outW, outH));

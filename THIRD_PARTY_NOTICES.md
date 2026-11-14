@@ -35,10 +35,13 @@ design and UI architecture; no corresponding source was copied.
   [ITotalJustice/mmpx](https://github.com/ITotalJustice/mmpx/tree/cce39009dbccfab8b70cb1c3bdcbf30a38ea351b)
   (Morgan McGuire and Mara Gagiu, copyright 2020).
   License: `app/src/main/assets/bitmap-scaler-licenses/MMPX-MIT.txt`.
-- `app/src/main/java/io/github/h3nb/jlmodplus/graphics/EdgeAwareScaler.java` implements
-  a locally authored corner-aware filter, under Apache-2.0. It replaces the
-  Azahar-derived GPL xBRZ port, is not xBRZ and does not promise matching
-  output. Historical commits retain the previous source attribution.
+- `app/src/main/java/io/github/h3nb/jlmodplus/graphics/XbrFreeScaler.java` adapts
+  the MIT-licensed [xBR Lv3 shader by Hyllian](https://github.com/libretro/glsl-shaders/blob/d798c673f8884bc5ba4cf437f92c6bf266861e66/xbr/shaders/xbr-lv3.glsl)
+  (Copyright 2011-2015 Hyllian), with CPU-oriented edge classification,
+  free-scale subpixel coverage, mirrored decisions and alpha-aware blending.
+  License: `app/src/main/assets/bitmap-scaler-licenses/xBR-MIT.txt`.
+  This does not use GPL xBRZ code or claim pixel-equivalent xBRZ output.
+  Historical commits retain the original Azahar-derived GPL xBRZ attribution.
 - Nearest-neighbor and bilinear use Android Canvas filtering. No external
   interpolation code is bundled for those choices.
 

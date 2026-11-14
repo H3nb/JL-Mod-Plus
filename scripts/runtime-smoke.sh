@@ -22,6 +22,7 @@ selectors=(
   'io.github.h3nb.jlmodplus.applist.LibraryIconNormalizationTest'
   'io.github.h3nb.jlmodplus.applist.LibraryComposeTest#compactHeightAppActionsKeepLastActionReachable'
   'io.github.h3nb.jlmodplus.applist.LibraryComposeTest#selectionSurvivesFilteredProjectionUntilAppLeavesLibrary'
+  'io.github.h3nb.jlmodplus.applist.LibraryComposeTest#twentyThousandAppsRemainVirtualizedInListAndGrid'
   'io.github.h3nb.jlmodplus.applist.LibraryCollectionsNavigationTest#selectedCollectionRestoresAndBackReturnsToOverview'
   'io.github.h3nb.jlmodplus.applist.LibraryCollectionsNavigationTest#inactiveCollectionPagePreservesSelectedDetailForPagerReturn'
   'io.github.h3nb.jlmodplus.applist.LibraryCollectionsNavigationTest#collectionRouteDoesNotCrossLibraryWorkdirWithReusedDatabaseId'

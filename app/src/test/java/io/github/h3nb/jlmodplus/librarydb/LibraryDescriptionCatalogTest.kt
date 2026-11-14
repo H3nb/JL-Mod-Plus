@@ -105,6 +105,28 @@ class LibraryDescriptionCatalogTest {
             catalog.resolve(root, listOf(game), "en-GB")[game.id])
     }
 
+    @Test fun userTranslationAfterUnlocalizedScanReadsGuestConfiguration() {
+        val root = TempFiles.newFolder(temporaryFolder, "late-translation")
+        val descriptor = File(root, "converted/game/converted.dex.conf")
+        descriptor.parentFile!!.mkdirs()
+        descriptor.writeText(
+            "MIDlet-Name: Adventure\nMIDlet-Vendor: Example\nMIDlet-Version: 1.0\n",
+        )
+        val catalog = LibraryDescriptionCatalog()
+        val game = app("Default")
+        assertTrue(catalog.resolve(root, listOf(game), "id-ID").isEmpty())
+
+        val config = File(root, "configs/game/config.json")
+        config.parentFile!!.mkdirs()
+        config.writeText(
+            """{"Version":7,"SystemProperties":"microedition.locale: en-US"}""",
+        )
+        val overrides = mapOf(game.id to mapOf("en" to "User English"))
+        assertEquals("User English",
+            catalog.resolve(root, listOf(game), "id-ID", overrides)[game.id])
+        assertTrue(catalog.resolve(root, listOf(game), "id-ID").isEmpty())
+    }
+
     @Test fun userTranslationWithoutDescriptorUsesConfiguredGuestLocale() {
         val root = TempFiles.newFolder(temporaryFolder, "user-only")
         File(root, "converted/game").apply { mkdirs() }

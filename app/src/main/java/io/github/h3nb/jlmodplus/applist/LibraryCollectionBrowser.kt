@@ -84,9 +84,9 @@ import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.text.style.TextOverflow
 import androidx.compose.ui.unit.Dp
 import androidx.compose.ui.unit.dp
-import java.text.Collator
-import java.util.Locale
 import kotlinx.coroutines.Dispatchers
+import kotlinx.coroutines.currentCoroutineContext
+import kotlinx.coroutines.ensureActive
 import kotlinx.coroutines.launch
 import kotlinx.coroutines.withContext
 import io.github.h3nb.jlmodplus.R
@@ -100,8 +100,11 @@ import io.github.h3nb.jlmodplus.ui.GlassSystemBarScrim
 internal fun LibraryCollectionBrowser(
     collection: LibraryCollectionUiItem,
     members: List<LibraryAppUiItem>,
+    memberIds: Set<Long> = members.mapTo(LinkedHashSet()) { it.databaseId },
+    membersRevision: Long = 0L,
     allApps: List<LibraryAppUiItem>,
     allAppsPrepared: Boolean = true,
+    allAppsRevision: Long = 0L,
     libraryState: LibraryUiState,
     scaffoldPadding: PaddingValues,
     viewportState: LibraryViewportState = rememberLibraryViewportState(libraryState.libraryScope, collection.id),
@@ -113,7 +116,7 @@ internal fun LibraryCollectionBrowser(
     onSelectionStateChanged: (LibrarySelectionState) -> Unit = {},
     manageApps: Boolean,
     onManageAppsChanged: (Boolean) -> Unit,
-    onSetMembership: (Int, Boolean, CollectionMembershipResultCallback) -> Unit,
+    onSetMembership: (Long, Boolean, CollectionMembershipResultCallback) -> Unit,
     onPrepareAppPicker: () -> Unit,
     onSort: (Int) -> Unit,
     onNavigationVisibilityChanged: (Boolean) -> Unit = {},
@@ -130,12 +133,10 @@ internal fun LibraryCollectionBrowser(
         }
     }
     var pendingMemberships by remember(collection.id) {
-        mutableStateOf<Map<Int, Boolean>>(emptyMap())
+        mutableStateOf<Map<Long, Boolean>>(emptyMap())
     }
-    val committedMemberIds = remember(members) {
-        members.mapTo(LinkedHashSet()) { it.id }
-    }
-    LaunchedEffect(committedMemberIds) {
+    val committedMemberIds = memberIds
+    LaunchedEffect(membersRevision.takeIf { it != 0L } ?: committedMemberIds) {
         val unresolved = pendingMemberships.filter { (appId, desiredIncluded) ->
             (appId in committedMemberIds) != desiredIncluded
         }
@@ -171,6 +172,7 @@ internal fun LibraryCollectionBrowser(
         LibraryCollectionAppPicker(
             collection = collection,
             allApps = allApps,
+            sourceRevision = allAppsRevision,
             memberIds = committedMemberIds,
             pendingMemberships = pendingMemberships,
             sortVariant = libraryState.sortVariant,
@@ -229,9 +231,15 @@ internal fun LibraryCollectionBrowser(
     }
     val openApp: (Int) -> Unit = { if (currentInteractionActive) onOpenApp(it) }
     val openActions: (LibraryAppUiItem) -> Unit = { if (currentInteractionActive) onOpenActions(it) }
-    val projected = rememberCollectionAppsProjection(viewportState, members, libraryState.sortVariant)
-    val projectedIds = remember(projected) {
-        projected?.map(LibraryAppUiItem::databaseId).orEmpty()
+    val projected = rememberCollectionAppsProjection(
+        viewportState, members, libraryState.sortVariant,
+        sourceRevision = membersRevision.takeIf { it != 0L },
+    )
+    val projectedIds = remember(
+        viewportState.collectionProjection, projected == null, selectionState.isActive,
+    ) {
+        if (selectionState.isActive) projected?.map(LibraryAppUiItem::databaseId).orEmpty()
+        else emptyList()
     }
     val listState = viewportState.listState
     val gridState = viewportState.gridState
@@ -484,7 +492,9 @@ private fun LibraryCollectionHeader(
     val selectedSort = sortVariant and Int.MAX_VALUE
     val ascending = sortVariant >= 0
     val selectionMode = selectionState.isActive
-    val allVisibleSelected = selectionState.isAllVisibleSelected(visibleAppIds)
+    val allVisibleSelected = remember(selectionMode, visibleAppIds, selectionState.selectedAppIds) {
+        selectionMode && selectionState.isAllVisibleSelected(visibleAppIds)
+    }
     val titleGate = rememberLibraryHeaderActionGate(headerOffsetPx)
     val searchGate = rememberLibraryHeaderActionGate(headerOffsetPx)
     val titleActionsEnabled = interactive && titleGate.enabled.value
@@ -799,8 +809,9 @@ private fun LibraryCollectionGridItem(
 internal fun LibraryCollectionAppPicker(
     collection: LibraryCollectionUiItem,
     allApps: List<LibraryAppUiItem>,
-    memberIds: Set<Int>,
-    pendingMemberships: Map<Int, Boolean> = emptyMap(),
+    sourceRevision: Long = 0L,
+    memberIds: Set<Long>,
+    pendingMemberships: Map<Long, Boolean> = emptyMap(),
     sortVariant: Int,
     iconRatio: LibraryIconRatio,
     iconShape: LibraryIconShape,
@@ -810,11 +821,14 @@ internal fun LibraryCollectionAppPicker(
     loading: Boolean = false,
     active: Boolean = true,
     onBack: () -> Unit,
-    onSetMembership: (Int, Boolean) -> Unit,
+    onSetMembership: (Long, Boolean) -> Unit,
 ) {
     var query by viewportState.queryState
     val searchScope = rememberCoroutineScope()
-    val visibleApps = rememberCollectionAppsProjection(viewportState, allApps, sortVariant, ready = !loading)
+    val visibleApps = rememberCollectionAppsProjection(
+        viewportState, allApps, sortVariant, ready = !loading,
+        sourceRevision = sourceRevision.takeIf { it != 0L },
+    )
     val searchDismissFocus = remember { FocusRequester() }
     Column(
         modifier = Modifier
@@ -891,18 +905,18 @@ internal fun LibraryCollectionAppPicker(
         }
         LazyColumn(modifier = Modifier.fillMaxSize(), state = viewportState.listState) {
             items(visibleApps, key = { it.databaseId }) { app ->
-                val pending = pendingMemberships[app.id]
-                val checked = pending ?: (app.id in memberIds)
+                val pending = pendingMemberships[app.databaseId]
+                val checked = pending ?: (app.databaseId in memberIds)
                 val enabled = pending == null
                 Row(
                     modifier = Modifier
                         .fillMaxWidth()
-                        .testTag("collection-membership-${app.id}")
+                        .testTag("collection-membership-${app.databaseId}")
                         .toggleable(
                             value = checked,
                             enabled = enabled,
                             role = Role.Checkbox,
-                            onValueChange = { next -> onSetMembership(app.id, next) },
+                            onValueChange = { next -> onSetMembership(app.databaseId, next) },
                         )
                         .padding(horizontal = 16.dp, vertical = 8.dp),
                     verticalAlignment = Alignment.CenterVertically,
@@ -953,61 +967,20 @@ private fun rememberCollectionAppsProjection(
     source: List<LibraryAppUiItem>,
     sortVariant: Int,
     ready: Boolean = true,
+    sourceRevision: Long? = null,
 ): List<LibraryAppUiItem>? {
     val query = viewportState.query
-    LaunchedEffect(viewportState, source, query, sortVariant, ready) {
+    LaunchedEffect(viewportState, sourceRevision ?: source, query, sortVariant, ready) {
         if (!ready) return@LaunchedEffect
         if (viewportState.collectionProjection?.matches(source, query, sortVariant) == true) {
             return@LaunchedEffect
         }
         val apps = withContext(Dispatchers.Default) {
-            projectCollectionApps(source, query, sortVariant)
+            val context = currentCoroutineContext()
+            projectCollectionApps(source, query, sortVariant) { context.ensureActive() }
         }
         viewportState.collectionProjection = LibraryCollectionProjection(source, query, sortVariant, apps)
     }
     return viewportState.collectionProjection?.takeIf { it.matches(source, query, sortVariant) }?.apps
 }
 
-private fun projectCollectionApps(
-    rows: List<LibraryAppUiItem>,
-    filter: String,
-    sortVariant: Int,
-    locale: Locale = Locale.getDefault(),
-): List<LibraryAppUiItem> {
-    val needle = filter.trim().lowercase(Locale.ROOT)
-    val ranked = rows.mapNotNull { row ->
-        val rank = if (needle.isEmpty()) 0 else collectionSearchRank(row, needle) ?: return@mapNotNull null
-        rank to row
-    }
-    if (ranked.size < 2) return ranked.map { it.second }
-
-    val collator = Collator.getInstance(locale).apply { strength = Collator.SECONDARY }
-    val sortIndex = sortVariant and Int.MAX_VALUE
-    val descending = sortVariant < 0
-    val fallback = Comparator<LibraryAppUiItem> { left, right ->
-        val primary = when (sortIndex) {
-            1 -> left.id.compareTo(right.id)
-            2 -> collator.compare(left.author, right.author)
-            else -> collator.compare(left.title, right.title)
-        }
-        val ordered = if (descending) -primary else primary
-        if (ordered != 0) ordered else left.id.compareTo(right.id)
-    }
-    return ranked.sortedWith { left, right ->
-        val rankOrder = left.first.compareTo(right.first)
-        if (rankOrder != 0) rankOrder else fallback.compare(left.second, right.second)
-    }.map { it.second }
-}
-
-private fun collectionSearchRank(row: LibraryAppUiItem, needle: String): Int? {
-    val title = row.title.lowercase(Locale.ROOT)
-    return when {
-        title == needle -> 0
-        title.startsWith(needle) -> 1
-        title.contains(needle) -> 2
-        row.author.lowercase(Locale.ROOT).contains(needle) -> 3
-        row.version.lowercase(Locale.ROOT).contains(needle) -> 4
-        row.description.lowercase(Locale.ROOT).contains(needle) -> 5
-        else -> null
-    }
-}

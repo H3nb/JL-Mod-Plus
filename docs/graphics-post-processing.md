@@ -74,25 +74,17 @@ effect chain. Normal rendering without active effects goes through the stock
 presenter. Shader compilation failures should not crash the guest; the
 renderer reports the failure and falls back to the stock presentation.
 
-The present renderer supports at most 16 active GPU passes. `EffectTargetPlan`
-computes full-chain FBO slot sizes and source/composite lifetime protection
-before allocating textures, reusing same-size slots where safe. The temporary
-RGBA8 target budget is chosen once per GLES renderer session from Android's
-reported total system RAM: below 3 GiB -> 32 MiB, 3-5 GiB -> 64 MiB,
-5-10 GiB -> 128 MiB, and at least 10 GiB -> 256 MiB. Android low-RAM
-devices or an active system low-memory signal are capped at 32 MiB; missing
-memory information defaults to 64 MiB. These values are conservative **project
-policies**, not measurements of GPU VRAM, free memory or rendering performance.
-The budget limits only planned temporary FBO textures, excluding the source
-texture, Android UI, drivers and other GPU allocations. The GLES maximum
-texture size independently constrains each target. Allocation/attachment errors release partial targets and fall back to stock
-presentation, without changing the stored shader configuration. The user
-is notified once per renderer instance when the effect stack cannot run. The final viewport-sized pass writes
-directly to the display, so a single-pass effect requires no intermediate FBO.
-Planning and texture creation repeat only when source content size or viewport
-changes, not for every steady-state frame. The budget is not dynamically
-resampled during a running GL session. The stock GLES2 context remains the
-minimum supported device configuration.
+The renderer supports at most 16 active GPU passes. `EffectTargetPlan`
+computes full-chain FBO sizes and source/composite lifetimes, reusing
+same-size targets where safe. It does not reject valid plans based on
+estimated total RAM or a fixed intermediate-texture budget. Each target
+must fit `GL_MAX_TEXTURE_SIZE`. OpenGL allocation or attachment failure
+releases partial resources and returns to stock presentation without
+changing the saved effect stack. The user receives an actionable host
+notice, once per renderer instance. The final viewport pass draws directly
+to the display, so a single-pass effect needs no intermediate FBO.
+Targets are replanned only when source content or viewport size changes.
+The stock GLES2 context remains the minimum supported configuration.
 
 ## Built-in effects and separation of responsibilities
 
@@ -104,18 +96,21 @@ round-to-nearest posterization. This avoids artificial 1/levels jumps
 across smooth 2D backgrounds, while leaving the existing outline strength
 contract unchanged; output RGB gamut clipping can still affect saturated colors. CRT Classic
 is independently authored under Apache-2.0 as a one-sample CRT-inspired
-presentation effect with guest-grid scanlines and an RGB triad. It is not
+presentation effect. Its luminance-dependent beam is centered on guest
+pixel rows, and the RGB triad remains a separate output-space mask. It is not
 derived from the former GPL EasyMode shader. The unreleased prototype ID
 `crt-easymode` maps to CRT Classic at lookup time to preserve local test
 profiles; old unsupported advanced settings are ignored.
 Color correction includes gamma, temperature/tint and monochrome.
-LCD and Scanlines Lite intentionally depend on logical game resolution rather
-than the texture resolution of the preceding pass. LCD integrates both harmonics of its squared-cosine grid analytically over
-each output pixel. Grid visibility deliberately fades to zero near 1x.
-Scanlines Lite uses three-point Gauss-Legendre quadrature on its raised-cosine
-profile and also fades at 1x; very narrow lines remain approximations. On GLES2 devices without fragment highp, LCD RGB triads use the smaller
-logical-pixel coordinate space to keep the mask functional, with coarser
-spatial detail than on highp devices.
+CRT, LCD and Scanlines Lite anchor their display patterns to logical game
+resolution rather than the preceding pass's texture resolution. LCD positions
+its RGB subpixels within guest pixel cells on highp devices. Its squared-cosine
+grid integrates both harmonics analytically over each output pixel, with grid
+visibility fading to zero near 1x. Scanlines Lite uses three-point
+Gauss-Legendre quadrature on its raised-cosine profile and also fades at 1x;
+very narrow lines remain approximations. On GLES2 devices without fragment
+highp, LCD retains a coarse guest-column RGB triad instead of unresolved
+within-pixel subpixels.
 
 Bloom extracts highlights before downsampling with a 2x2 sampling footprint
 up to 2:1 minification, or a 4x4 footprint at larger reduction ratios. Bloom intermediates use one shared scale on both axes: one-third of the
@@ -153,14 +148,29 @@ Temporal LCD response-time simulation is deliberately not included: it
 requires history textures, explicit timing and surface/context lifecycle
 handling beyond the current stateless pass contract.
 
-Pixel-art reconstruction, bitmap/texture filters, internal resolution and
-final display scaling have separate responsibilities. Bitmap upscaling mode 3
-retains its saved `EDGE_AWARE` identity but appears as Smooth HD. The
-project-authored edge reconstruction rounds corners with alpha-aware blending
-while preserving flat areas and isolated details; it is not an xBRZ port.
-Immutable LCDUI image regions and opaque Micro3D textures share the scaler
-before composition. Mutable guest images, M3G textures and guest-visible
-pixels are not changed.
+Pixel-art reconstruction (xBRZ, MMPX, HQ-style), bitmap/texture filters,
+internal resolution and final display scaling have separate responsibilities.
+Bitmap enhancement may use the selected internal scale up to the scaler's
+supported 10x factor; Java array and RGBA buffer representation limits still
+apply. A Java allocation failure falls back to the original bitmap/texture
+and reduces subsequent oversized reconstruction attempts for the session.
+Successful large immutable regions may enlarge the bounded LRU cache so
+repeated draws do not reconstruct every frame. Display-target allocation
+tries lower scales after failure; the GLES presenter additionally checks
+the actual GPU texture limit before uploading a game frame. At 1×, temporary
+upload failures retry after 500 ms through a host-only redraw; an image
+exceeding the GPU texture limit waits for a changed surface or GL context.
+Any runtime downgrade is reported through the existing nonmodal host notice
+with suggested action, leaving the saved profile unchanged.
+Bitmap upscaling mode 3 retains its stored `EDGE_AWARE` ID and appears as
+Smooth HD. Its xBR Lv3-derived, MIT-licensed CPU scaler classifies 15-, 30-,
+45-, 60- and 75-degree edge candidates once per source pixel. Rotated and
+reflected decisions use an alpha-aware color difference, with scale-dependent
+subpixel coverage. Output is written in row blocks to avoid a full temporary
+magnified pixel array. This is not an xBRZ implementation.
+Only immutable LCDUI source regions and opaque Mascot Capsule model textures
+use the enhancement before composition. Mutable guest images, M3G textures,
+guest-visible pixel data and framebuffer post-effects are unchanged.
 FXAA/SMAA are future anti-aliasing options, **not** additional entries in this
 effect catalogue. The underlying GPU may reuse the same full-screen pass
 machinery without presenting these controls as user-orderable decorative
@@ -174,7 +184,7 @@ particular test the 2D softbar content crop, portrait and landscape viewport
 alignment, legacy vertex/fragment compatibility, Bloom source preservation,
 sRGB/gamma assumptions and CRT pixel mask visual output.
 
-JVM tests verify FBO slot lifetime/budget planning and bundled resource/parameter
+JVM tests verify FBO slot lifetime and GPU-size planning and bundled resource/parameter
 contracts. GLSL compilation, visual fidelity and frame pacing still require a
 real GLES2+ context or device. Test CRT/LCD/scanlines before and after other
 full-viewport effects with both padded inputs and higher internal resolution;
