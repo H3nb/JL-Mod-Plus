@@ -22,7 +22,7 @@ runtime ID rather than a field-path string. Provenance never authorizes a write.
 Closing the bubble editor remembers its last tab and Search page only in the
 `:memory_engine` process for the current MIDlet runtime token. Inspector remembers
 only its target identity and origin tab; reopening fetches a fresh, checked
-snapshot. Missing or changed Inspector targets return to Search or List, never to an old snapshot. A new MIDlet token starts at Search. No tab
+snapshot. Missing or changed Inspector targets return to Search or Saved, never to an old snapshot. A new MIDlet token starts at Search. No tab
 preference, Inspector value, or guest object is written to persistent storage.
 
 ## Bookmark ownership and session linkage
