@@ -1257,7 +1257,7 @@
 <string name="memory_recipes_preview_values">Nilai saat ini: %1$s</string>
 <string name="memory_scripts_title">Skrip</string>
     <string name="memory_scripts_active">Aktif</string>
-    <string name="memory_scripts_new_values">Nilai baru</string>
+    <string name="memory_scripts_inputs">Masukan</string>
     <string name="memory_scripts_create_from_bookmarks">Buat skrip</string>
     <string name="memory_scripts_create_failed">Gagal membuat skrip baru</string>
     <string name="memory_scripts_draft_in_progress">Selesaikan atau buang draf skrip saat ini terlebih dahulu.</string>
