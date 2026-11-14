@@ -248,6 +248,8 @@ internal fun MemoryEditorRuntimeRoot(
         LaunchedEffect(listEntries.map(MemoryListEntry::key)) {
             listSelection = listSelection.intersect(listEntries.mapTo(HashSet()) { it.key })
         }
+        val selectedListEntry = listEntries.singleOrNull { it.key in listSelection }
+            ?.takeIf { listSelection.size == 1 }
         val inspectSelected = {
             if (state.variablesTab) {
                 selectedListEntry?.let { entry ->
