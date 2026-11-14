@@ -216,7 +216,7 @@ class MemoryEditorOverlayComposeTest {
         rule.onNodeWithContentDescription("More").performClick()
         val menuBounds = rule.onNodeWithTag("adaptive-dialog-surface").getUnclippedBoundsInRoot()
         assertTrue(menuBounds.right - menuBounds.left <= 400.dp)
-        rule.onNodeWithText("Undo").performScrollTo().assertIsEnabled()
+        rule.onNodeWithText("Undo scan").performScrollTo().assertIsEnabled()
     }
 
     @Test fun unsupportedRuntimeExplainsUnavailabilityAndDisablesBothSearches() {
