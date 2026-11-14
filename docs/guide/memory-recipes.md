@@ -1,6 +1,6 @@
-# Memory Recipes v1 and v2 (experimental)
+# Action Scripts — JSON v1 and v2 (experimental)
 
-Memory Recipes are **data**, not Lua, JavaScript, or executable Java bytecode. The app
+Action Scripts use the existing **Memory Recipe** JSON format. They are **data**, not Lua, JavaScript, or executable Java bytecode. The app
 performs a bounded set of typed guest-memory operations. Advanced recipes may be
 authored from the **original Java ME JAR** without knowing a runtime candidate ID.
 The editor's Search, History, Watch and Saved data are never used as implicit
@@ -8,6 +8,17 @@ recipe targets or changed by recipe execution.
 
 The experimental runtime is present on the `feature/memory-recipes-engine` branch.
 This is not a stable public API until Android runtime acceptance testing is complete.
+
+The user-facing feature is called **Action Scripts** (shown as **Scripts** in
+navigation). The internal JSON schema, `memory-recipes.json` catalog filename,
+engine methods, and previous v1/v2 documents keep their compatibility identity.
+This naming change does not introduce a scripting interpreter.
+
+For a direct flow, select one or more verified Bookmarks in **Saved → Create
+script**. Their verified locators are captured before the visual type chooser;
+the builder opens with those targets already added. A builder with no eligible
+Bookmark links to Search and Saved without discarding its in-session draft.
+The JSON Editor can be opened directly without a Bookmark.
 
 ## Authoring from a JAR
 
@@ -30,7 +41,7 @@ This is not a stable public API until Android runtime acceptance testing is comp
 ## Trying scripts in the draft app
 
 1. Open Memory Editor and select the **Scripts** tab.
-2. Select **Add script**, paste a **Memory Recipe v1 JSON** document into the
+2. Select **New script → JSON Editor**, paste a **Memory Recipe v1 JSON** document into the
    full editor (long-press Paste or use the dedicated **Paste** action).
 3. Select **Save**. This stores the document for the **current installed MIDlet**
    only; saving never changes guest memory or automatically starts a Freeze.
@@ -48,7 +59,7 @@ This is not a stable public API until Android runtime acceptance testing is comp
    the catalog change is rejected. If a later storage write fails, the old
    script remains saved but its Freeze may already be stopped. A draft with
    unsaved changes prompts before being discarded.
-   The top X **minimizes** the editor without discarding the script page,
+   The top Minimize icon minimizes the editor without discarding the script page,
    selected parameters, or an unsaved JSON draft. Reopen the editor during
    the same MIDlet session to continue; Back from the editor still asks
    before discarding a changed draft.
@@ -67,7 +78,8 @@ local-only; do not assume backup/export of scripts is implemented.
 The existing **Automation** action on a verified Saved variable can apply
 a primitive edit or Freeze directly, without saving a script or changing the
 clipboard. Invalid values leave the dialog open for correction. For a reusable
-script, select the Bookmark in **Scripts → Add script**.
+script, select a verified Bookmark in **Saved → Create script**, or use
+**Scripts → New script**.
 Scripts never auto-run on application startup.
 
 The optional top-level `"description"` field is available in both v1 and v2 recipes
@@ -91,7 +103,7 @@ Examples:
 
 ## Build scripts from Bookmarks
 
-In **Memory Editor → Scripts → Add script**, choose **Freeze Values**, **Value
+In **Memory Editor → Scripts → New script**, choose **Freeze Values**, **Value
 Editor**, **Quick Actions**, or **JSON Editor**.
 
 The visual builder supports multiple verified Bookmarks in one script:
@@ -108,7 +120,7 @@ The visual builder supports multiple verified Bookmarks in one script:
 
 The builder captures the Bookmark's verified root-relative locator when it is
 added, not its current value, session candidate ID, or label as an execution
-target. A Bookmark without a locator must be relinked in the List tab before it
+target. A Bookmark without a locator must be relinked in Saved before it
 can be added. Relinking while a draft is open prevents Save until the Bookmark
 is removed and added again explicitly. Saved scripts retain their own locator
 snapshot; renaming or relinking a Bookmark never retargets them silently.
