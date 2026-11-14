@@ -1935,6 +1935,13 @@ internal class MemoryEditorComposeController(
         onReady(generated.getOrNull(), generated.exceptionOrNull()?.message)
     }
 
+    override fun restoreMemoryScriptBuilder(document: String): MemoryScriptBuilderDraft? =
+        runCatching {
+            MemoryRecipeGenerator.forEditing(
+                document, savedTarget().third, savedLocators, state.savedVariables,
+            )
+        }.getOrNull()
+
     override fun generateSimpleMemoryRecipe(savedId: String, value: String, freeze: Boolean) {
         if (state.busy || !state.writeSupported ||
             state.savedValues[savedId]?.resolved != true) return

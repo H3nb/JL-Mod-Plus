@@ -598,6 +598,7 @@ internal interface MemoryEditorActions {
     fun generateMemoryScript(
         draft: MemoryScriptBuilderDraft, onReady: (String?, String?) -> Unit,
     ) = onReady(null, "Script Builder unavailable")
+    fun restoreMemoryScriptBuilder(document: String): MemoryScriptBuilderDraft? = null
     fun saveMemoryScript(document: String, replacingId: String?,
                          onComplete: (Boolean) -> Unit) = onComplete(false)
     fun deleteMemoryScript(id: String, onComplete: (Boolean) -> Unit) = onComplete(false)

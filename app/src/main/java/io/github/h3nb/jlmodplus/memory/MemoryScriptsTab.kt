@@ -148,6 +148,11 @@ internal fun RuntimeScriptsTab(
     var readGeneration by remember(selectedId, state.runtimeToken) { mutableStateOf(0L) }
     val selected = state.scripts.firstOrNull { it.id == selectedId }
     val metadata = selected?.let { runCatching { memoryScriptMetadata(it.document) }.getOrNull() }
+    fun editScript(script: MemoryScriptRow) {
+        val visual = actions.restoreMemoryScriptBuilder(script.document)
+        if (visual != null) onBuilder(visual)
+        else onDraft(MemoryScriptDraft(script.id, script.document, script.document))
+    }
 
     LaunchedEffect(state.scripts, selectedId) {
         if (state.scriptsLoaded && selectedId != null && selected == null && draft == null)
@@ -174,7 +179,10 @@ internal fun RuntimeScriptsTab(
                 onBuilder(null)
             },
             onEditJson = {
-                onDraft(MemoryScriptDraft(null, "", it))
+                val original = builder.replacingId?.let { id ->
+                    state.scripts.firstOrNull { script -> script.id == id }?.document
+                }.orEmpty()
+                onDraft(MemoryScriptDraft(builder.replacingId, original, it))
                 onBuilder(null)
             },
             modifier = modifier,
@@ -284,7 +292,7 @@ internal fun RuntimeScriptsTab(
         TypedMemoryRecipeDetail(
             script = selected, metadata = metadata, state = state, actions = actions,
             onBack = { onSelectedId(null) },
-            onEdit = { onDraft(MemoryScriptDraft(selected.id, selected.document, selected.document)) },
+            onEdit = { editScript(selected) },
             onDeleted = { onSelectedId(null) },
             modifier = modifier,
         )
@@ -301,9 +309,9 @@ internal fun RuntimeScriptsTab(
                 Text(selected.name, modifier = Modifier.weight(1f),
                     maxLines = 1, overflow = TextOverflow.Ellipsis,
                     style = MaterialTheme.typography.titleSmall)
-                TextButton(onClick = {
-                    onDraft(MemoryScriptDraft(selected.id, selected.document, selected.document))
-                }) { Text(stringResource(R.string.memory_scripts_edit)) }
+                TextButton(onClick = { editScript(selected) }) {
+                    Text(stringResource(R.string.memory_scripts_edit))
+                }
             }
             Text(selected.id, style = MaterialTheme.typography.labelSmall,
                 color = MaterialTheme.colorScheme.onSurfaceVariant)
