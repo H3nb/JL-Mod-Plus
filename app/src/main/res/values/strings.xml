@@ -545,8 +545,8 @@
     <string name="memory_editor_engine_unavailable">The Memory Editor engine is unavailable.</string>
     <string name="memory_editor_engine_reconnecting">Memory Editor is reconnecting…</string>
     <string name="memory_editor_refresh">Refresh</string>
-    <string name="memory_editor_undo">Undo</string>
-    <string name="memory_variables_tab">List</string>
+    <string name="memory_editor_undo">Undo scan</string>
+    <string name="memory_variables_tab">Saved</string>
     <string name="memory_editor_back" tools:ignore="MissingTranslation">Back</string>
     <string name="memory_list_keep" tools:ignore="MissingTranslation">Keep for next launch</string>
     <string name="memory_list_stop_keeping" tools:ignore="MissingTranslation">Stop keeping</string>
@@ -1344,7 +1344,7 @@
     <string name="bitmap_upscaling_bilinear" tools:ignore="MissingTranslation">Bilinear</string>
     <string name="bitmap_upscaling_mmpx" tools:ignore="MissingTranslation">MMPX</string>
     <string name="bitmap_upscaling_edge_aware" tools:ignore="MissingTranslation">xBR Lv3</string>
-<string name="memory_recipes_title" tools:ignore="MissingTranslation">Automation</string>
+<string name="memory_recipes_title" tools:ignore="MissingTranslation">Quick action</string>
 <string name="memory_recipes_simple_from_saved" tools:ignore="MissingTranslation">Generate from %1$s</string>
 <string name="memory_recipes_preview" tools:ignore="MissingTranslation">Preview targets</string>
 <string name="memory_recipes_stop_freeze" tools:ignore="MissingTranslation">Stop recipe Freeze</string>
@@ -1354,19 +1354,22 @@
 <string name="memory_recipes_target_unavailable" tools:ignore="MissingTranslation">Bookmark target is unavailable. Refresh or relink it before running.</string>
 <string name="memory_recipes_preview_values" tools:ignore="MissingTranslation">Current values: %1$s</string>
 <string name="memory_scripts_title" tools:ignore="MissingTranslation">Scripts</string>
+    <string name="memory_scripts_create_from_bookmarks" tools:ignore="MissingTranslation">Create script</string>
+    <string name="memory_builder_open_saved" tools:ignore="MissingTranslation">Open Saved</string>
+    <string name="memory_builder_find_values" tools:ignore="MissingTranslation">Find values</string>
     <string name="memory_scripts_description" tools:ignore="MissingTranslation">Description</string>
-<string name="memory_scripts_new" tools:ignore="MissingTranslation">Add script</string>
+<string name="memory_scripts_new" tools:ignore="MissingTranslation">New script</string>
 <string name="memory_scripts_back" tools:ignore="MissingTranslation">Back</string>
 <string name="memory_scripts_edit" tools:ignore="MissingTranslation">Edit</string>
 <string name="memory_scripts_save" tools:ignore="MissingTranslation">Save</string>
 <string name="memory_scripts_saved" tools:ignore="MissingTranslation">Script saved</string>
 <string name="memory_scripts_deleted" tools:ignore="MissingTranslation">Script deleted</string>
 <string name="memory_scripts_save_failed" tools:ignore="MissingTranslation">Could not save script</string>
-<string name="memory_scripts_editor_hint" tools:ignore="MissingTranslation">Paste a Memory Recipe v1 or v2 JSON document. Saving does not execute it.</string>
+<string name="memory_scripts_editor_hint" tools:ignore="MissingTranslation">Paste an Action Script JSON document. Saving does not run it.</string>
 <string name="memory_scripts_paste_hint" tools:ignore="MissingTranslation">Paste JSON from a guide or an AI agent</string>
 <string name="memory_scripts_paste" tools:ignore="MissingTranslation">Paste</string>
 <string name="memory_scripts_clipboard_invalid" tools:ignore="MissingTranslation">Clipboard is empty or the document exceeds 64 KiB</string>
-<string name="memory_scripts_invalid" tools:ignore="MissingTranslation">Recipe format is invalid</string>
+<string name="memory_scripts_invalid" tools:ignore="MissingTranslation">Invalid script format</string>
 <string name="memory_scripts_freeze_active" tools:ignore="MissingTranslation">Freeze active for this script</string>
 <string name="memory_scripts_delete" tools:ignore="MissingTranslation">Delete</string>
 <string name="memory_scripts_delete_confirm" tools:ignore="MissingTranslation">Delete %1$s? Its active Freeze will be stopped.</string>
@@ -1381,7 +1384,7 @@
 <string name="memory_scripts_mode_toggle" tools:ignore="MissingTranslation">Freeze Values</string>
 <string name="memory_scripts_mode_form" tools:ignore="MissingTranslation">Value Editor</string>
 <string name="memory_scripts_mode_once" tools:ignore="MissingTranslation">Quick Actions</string>
-<string name="memory_scripts_mode_legacy" tools:ignore="MissingTranslation">Recipe</string>
+<string name="memory_scripts_mode_legacy" tools:ignore="MissingTranslation">Advanced script</string>
 <string name="memory_scripts_edit_values" tools:ignore="MissingTranslation">Edit values</string>
 <string name="memory_scripts_apply" tools:ignore="MissingTranslation">Apply changes</string>
 <string name="memory_scripts_refresh_required" tools:ignore="MissingTranslation">Refresh to verify the current values before applying.</string>
@@ -1408,7 +1411,7 @@
     <string name="memory_builder_view_json" tools:ignore="MissingTranslation">View JSON</string>
     <string name="memory_builder_edit_json" tools:ignore="MissingTranslation">Edit JSON</string>
     <string name="memory_builder_search_bookmarks" tools:ignore="MissingTranslation">Search Bookmarks</string>
-    <string name="memory_builder_no_bookmarks" tools:ignore="MissingTranslation">No available Bookmarks. Add or relink one in the List tab.</string>
+    <string name="memory_builder_no_bookmarks" tools:ignore="MissingTranslation">No verified Bookmarks. Save a value from Search or relink one in Saved.</string>
     <string name="memory_builder_needs_relink" tools:ignore="MissingTranslation">Needs relink</string>
     <string name="memory_builder_add_selected" tools:ignore="MissingTranslation">Add selected</string>
     <string name="memory_builder_min" tools:ignore="MissingTranslation">Minimum (optional)</string>
