@@ -112,8 +112,8 @@ the script contains its own locator snapshot: renaming or relinking the Bookmark
 does not silently change an existing script's target.
 
 **View JSON** shows the generated v2 document; **Edit JSON** opens the regular
-JSON editor. **Export JSON** saves a file using the Android document picker.
-**Save** adds the script to the current MIDlet's catalog without running it.
+JSON editor. **Save** adds the script to the current MIDlet's catalog without
+running it.
 The builder retains its unsaved draft while the editor is minimized in the same
 MIDlet session. Existing and advanced JSON recipes remain editable in JSON,
 without an unreliable automatic conversion back to the visual builder.
@@ -271,5 +271,5 @@ are intentionally not supported. They require evidence-driven extensions,
 not speculative general-purpose scripting.
 
 The Memory Editor's Saved locators remain a separate, backward-compatible
-contract. Importing a recipe does not implicitly save, Watch or Freeze its
-target. Data-only recipes must be explicitly invoked; no auto-run at import.
+contract. Saving a recipe does not automatically run it, Watch or Freeze its
+target. Data-only recipes must be explicitly invoked.

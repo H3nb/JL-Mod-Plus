@@ -1248,7 +1248,6 @@
     <string name="bitmap_upscaling_edge_aware">Tepi halus (edge-aware)</string>
 <string name="memory_recipes_title">Otomatisasi</string>
 <string name="memory_recipes_simple_from_saved">Buat dari %1$s</string>
-<string name="memory_recipes_import">Impor recipe (JSON)</string>
 <string name="memory_recipes_preview">Pratinjau target</string>
 <string name="memory_recipes_stop_freeze">Hentikan Freeze recipe</string>
 <string name="memory_recipes_freeze">Pertahankan nilai selama game ini berjalan</string>
@@ -1309,7 +1308,6 @@
     <string name="memory_builder_subtract">Kurangi</string>
     <string name="memory_builder_view_json">Lihat JSON</string>
     <string name="memory_builder_edit_json">Edit JSON</string>
-    <string name="memory_builder_export_json">Ekspor JSON</string>
     <string name="memory_builder_search_bookmarks">Cari Bookmark</string>
     <string name="memory_builder_no_bookmarks">Belum ada Bookmark yang tersedia. Tambahkan atau tautkan ulang di tab List.</string>
     <string name="memory_builder_needs_relink">Perlu taut ulang</string>

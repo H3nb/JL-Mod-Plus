@@ -107,7 +107,7 @@ internal fun memoryScriptMetadata(document: String): MemoryScriptMetadata {
     }, description)
 }
 
-/** Scripts are JSON recipes: no arbitrary code execution and no auto-run on Save or Import. */
+/** Scripts are JSON recipes: no arbitrary code execution and no auto-run on Save. */
 @Composable
 internal fun RuntimeScriptsTab(
     state: MemoryEditorUiState,

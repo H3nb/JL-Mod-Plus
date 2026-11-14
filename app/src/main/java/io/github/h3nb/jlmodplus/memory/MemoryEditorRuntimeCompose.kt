@@ -1152,10 +1152,6 @@ private fun RuntimeVariablesTab(
                     Text(stringResource(R.string.memory_list_empty_hint),
                         color = MaterialTheme.colorScheme.onSurfaceVariant,
                         style = MaterialTheme.typography.bodySmall)
-                    TextButton(enabled = !state.busy, onClick = {
-                        recipeSourceKey = null
-                        recipeDialog = true
-                    }) { Text(stringResource(R.string.memory_recipes_import)) }
                 }
             }
             items(entries, key = MemoryListEntry::key) { entry ->
@@ -1181,9 +1177,9 @@ private fun RuntimeVariablesTab(
 
     if (recipeDialog) {
         val saved = entries.firstOrNull { it.key == recipeSourceKey }?.saved
-        MemoryRecipeDialog(
+        if (saved != null) MemoryRecipeDialog(
             saved = saved,
-            savedValue = saved?.let { state.savedValues[it.id]?.value }.orEmpty(),
+            savedValue = state.savedValues[saved.id]?.value.orEmpty(),
             writeSupported = state.writeSupported && !state.busy,
             actions = actions,
             onDismiss = { recipeDialog = false },
@@ -1196,7 +1192,7 @@ private fun RuntimeVariablesTab(
         val savedReady = saved != null && state.savedValues[saved.id]?.resolved == true
         val ready = savedReady ||
             watch?.let { it.state != MemoryEngineContract.CANDIDATE_LOST } == true
-        val actionsInMenu = listOf(
+        val actionsInMenu = listOfNotNull(
             RuntimeToolbarAction(R.drawable.ic_memory_editor_edit_value, R.string.memory_editor_edit,
                 state.writeSupported && ready && !state.busy) { edit(menuEntry) },
             RuntimeToolbarAction(R.drawable.ic_memory_editor_inspector, R.string.memory_editor_inspect_memory,
@@ -1217,12 +1213,13 @@ private fun RuntimeVariablesTab(
                 !state.busy) { renameKey = menuEntry.key },
             RuntimeToolbarAction(R.drawable.ic_delete, R.string.memory_editor_remove,
                 !state.busy) { removeKeys = setOf(menuEntry.key) },
-            RuntimeToolbarAction(R.drawable.ic_auto_mode,
-                if (saved != null) R.string.memory_recipes_title else R.string.memory_recipes_import,
-                !state.busy) {
-                recipeSourceKey = menuEntry.key
-                recipeDialog = true
-                menuKey = null
+            saved?.let {
+                RuntimeToolbarAction(R.drawable.ic_auto_mode,
+                    R.string.memory_recipes_title, !state.busy) {
+                    recipeSourceKey = menuEntry.key
+                    recipeDialog = true
+                    menuKey = null
+                }
             },
         )
         RuntimeOverflowActionsDialog(actionsInMenu) { menuKey = null }

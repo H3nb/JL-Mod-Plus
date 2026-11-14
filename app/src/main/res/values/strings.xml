@@ -1346,7 +1346,6 @@
     <string name="bitmap_upscaling_edge_aware" tools:ignore="MissingTranslation">Edge-aware (smooth)</string>
 <string name="memory_recipes_title" tools:ignore="MissingTranslation">Automation</string>
 <string name="memory_recipes_simple_from_saved" tools:ignore="MissingTranslation">Generate from %1$s</string>
-<string name="memory_recipes_import" tools:ignore="MissingTranslation">Import recipe (JSON)</string>
 <string name="memory_recipes_preview" tools:ignore="MissingTranslation">Preview targets</string>
 <string name="memory_recipes_stop_freeze" tools:ignore="MissingTranslation">Stop recipe Freeze</string>
 <string name="memory_recipes_freeze" tools:ignore="MissingTranslation">Keep value frozen while this game runs</string>
@@ -1407,7 +1406,6 @@
     <string name="memory_builder_subtract" tools:ignore="MissingTranslation">Subtract</string>
     <string name="memory_builder_view_json" tools:ignore="MissingTranslation">View JSON</string>
     <string name="memory_builder_edit_json" tools:ignore="MissingTranslation">Edit JSON</string>
-    <string name="memory_builder_export_json" tools:ignore="MissingTranslation">Export JSON</string>
     <string name="memory_builder_search_bookmarks" tools:ignore="MissingTranslation">Search Bookmarks</string>
     <string name="memory_builder_no_bookmarks" tools:ignore="MissingTranslation">No available Bookmarks. Add or relink one in the List tab.</string>
     <string name="memory_builder_needs_relink" tools:ignore="MissingTranslation">Needs relink</string>
