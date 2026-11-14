@@ -151,10 +151,18 @@ internal object MemoryRecipeGenerator {
                 MemoryScriptBuilderMode.FORM -> {
                     fields["field"] = JsonPrimitive(key)
                     fields["valueInput"] = JsonPrimitive(key)
+                    val minimum = if (item.min.isBlank()) min else item.min.trim().toLongOrNull()
+                        ?: error("Invalid minimum for " + item.label)
+                    val maximum = if (item.max.isBlank()) max else item.max.trim().toLongOrNull()
+                        ?: error("Invalid maximum for " + item.label)
+                    require(minimum >= min && maximum <= max && minimum <= maximum) {
+                        "Value range is invalid for " + item.label
+                    }
+                    val initial = if (0L in minimum..maximum) 0L else minimum
                     inputs[key] = JsonObject(mapOf(
-                        "min" to JsonPrimitive(min),
-                        "max" to JsonPrimitive(max),
-                        "default" to JsonPrimitive(0),
+                        "min" to JsonPrimitive(minimum),
+                        "max" to JsonPrimitive(maximum),
+                        "default" to JsonPrimitive(initial),
                         "label" to JsonPrimitive(item.label),
                     ))
                 }

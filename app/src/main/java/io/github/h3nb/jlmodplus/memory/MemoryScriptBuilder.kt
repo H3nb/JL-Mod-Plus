@@ -60,8 +60,10 @@ internal enum class MemoryScriptBuilderMode(val recipeMode: String) {
 internal data class MemoryScriptBuilderAction(
     val bookmarkId: String,
     val label: String,
-    val value: String = "0",
+    val value: String = "",
     val operation: String = "set",
+    val min: String = "",
+    val max: String = "",
 )
 
 internal data class MemoryScriptBuilderDraft(
@@ -94,7 +96,10 @@ internal fun MemoryScriptTypeChooser(
     onBack: () -> Unit,
     modifier: Modifier = Modifier,
 ) {
-    Column(modifier.padding(12.dp), verticalArrangement = Arrangement.spacedBy(12.dp)) {
+    Column(
+        modifier.fillMaxSize().verticalScroll(rememberScrollState()).padding(12.dp),
+        verticalArrangement = Arrangement.spacedBy(12.dp),
+    ) {
         Row(verticalAlignment = Alignment.CenterVertically) {
             TextButton(onClick = onBack) { Text(stringResource(R.string.memory_scripts_back)) }
             Text(stringResource(R.string.memory_scripts_choose_type),
@@ -246,19 +251,49 @@ internal fun MemoryScriptBuilderScreen(
                             }) { Text(stringResource(R.string.memory_editor_remove)) }
                         }
                         when (draft.mode) {
-                            MemoryScriptBuilderMode.FORM -> OutlinedTextField(
-                                value = item.label,
-                                onValueChange = { changed ->
-                                    if (changed.length <= 80) onDraft(draft.copy(
-                                        actions = draft.actions.map {
-                                            if (it.bookmarkId == item.bookmarkId)
-                                                it.copy(label = changed) else it
+                            MemoryScriptBuilderMode.FORM -> {
+                                OutlinedTextField(
+                                    value = item.label,
+                                    onValueChange = { changed ->
+                                        if (changed.length <= 80) onDraft(draft.copy(
+                                            actions = draft.actions.map {
+                                                if (it.bookmarkId == item.bookmarkId)
+                                                    it.copy(label = changed) else it
+                                            },
+                                        ))
+                                    },
+                                    label = { Text(stringResource(R.string.memory_builder_field_label)) },
+                                    singleLine = true, modifier = Modifier.fillMaxWidth(),
+                                )
+                                Row(horizontalArrangement = Arrangement.spacedBy(8.dp)) {
+                                    OutlinedTextField(
+                                        value = item.min,
+                                        onValueChange = { changed ->
+                                            if (changed.length <= 20) onDraft(draft.copy(
+                                                actions = draft.actions.map {
+                                                    if (it.bookmarkId == item.bookmarkId)
+                                                        it.copy(min = changed) else it
+                                                },
+                                            ))
                                         },
-                                    ))
-                                },
-                                label = { Text(stringResource(R.string.memory_builder_field_label)) },
-                                singleLine = true, modifier = Modifier.fillMaxWidth(),
-                            )
+                                        label = { Text(stringResource(R.string.memory_builder_min)) },
+                                        singleLine = true, modifier = Modifier.weight(1f),
+                                    )
+                                    OutlinedTextField(
+                                        value = item.max,
+                                        onValueChange = { changed ->
+                                            if (changed.length <= 20) onDraft(draft.copy(
+                                                actions = draft.actions.map {
+                                                    if (it.bookmarkId == item.bookmarkId)
+                                                        it.copy(max = changed) else it
+                                                },
+                                            ))
+                                        },
+                                        label = { Text(stringResource(R.string.memory_builder_max)) },
+                                        singleLine = true, modifier = Modifier.weight(1f),
+                                    )
+                                }
+                            }
                             MemoryScriptBuilderMode.FREEZE,
                             MemoryScriptBuilderMode.ACTIONS -> {
                                 if (draft.mode == MemoryScriptBuilderMode.ACTIONS) {
@@ -334,11 +369,7 @@ internal fun MemoryScriptBuilderScreen(
         onDismiss = { picking = false },
         onAdd = { added ->
             onDraft(draft.copy(actions = draft.actions + added.map { row ->
-                val raw = state.savedValues[row.id]?.takeIf { it.resolved }?.value.orEmpty()
-                MemoryScriptBuilderAction(
-                    bookmarkId = row.id, label = row.label,
-                    value = raw.toLongOrNull()?.toString() ?: "0",
-                )
+                MemoryScriptBuilderAction(bookmarkId = row.id, label = row.label)
             }))
             picking = false
         })

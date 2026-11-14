@@ -1314,4 +1314,6 @@
     <string name="memory_builder_no_bookmarks">Belum ada Bookmark yang tersedia. Tambahkan atau tautkan ulang di tab List.</string>
     <string name="memory_builder_needs_relink">Perlu taut ulang</string>
     <string name="memory_builder_add_selected">Tambah pilihan</string>
+    <string name="memory_builder_min">Minimum (opsional)</string>
+    <string name="memory_builder_max">Maksimum (opsional)</string>
 </resources>

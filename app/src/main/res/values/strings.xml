@@ -1412,4 +1412,6 @@
     <string name="memory_builder_no_bookmarks" tools:ignore="MissingTranslation">No available Bookmarks. Add or relink one in the List tab.</string>
     <string name="memory_builder_needs_relink" tools:ignore="MissingTranslation">Needs relink</string>
     <string name="memory_builder_add_selected" tools:ignore="MissingTranslation">Add selected</string>
+    <string name="memory_builder_min" tools:ignore="MissingTranslation">Minimum (optional)</string>
+    <string name="memory_builder_max" tools:ignore="MissingTranslation">Maximum (optional)</string>
 </resources>
