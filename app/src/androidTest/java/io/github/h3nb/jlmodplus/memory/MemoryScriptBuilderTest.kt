@@ -76,11 +76,11 @@ class MemoryScriptBuilderTest {
                 MemoryRecipeGenerator.fromBuilder(draft, "sample/Game", mapOf("coins" to locator()))
             }.isFailure)
             val withZero = draft.copy(actions = draft.actions.map { it.copy(value = "0") })
-            assertEquals(JsonPrimitive(0), (
-                (Json.parseToJsonElement(MemoryRecipeGenerator.fromBuilder(
-                    withZero, "sample/Game", mapOf("coins" to locator()),
-                )) as JsonObject)["actions"] as JsonArray).single()
-                .let { it as JsonObject }["value"])
+            val result = Json.parseToJsonElement(MemoryRecipeGenerator.fromBuilder(
+                withZero, "sample/Game", mapOf("coins" to locator()),
+            )) as JsonObject
+            val action = (result["actions"] as JsonArray).single() as JsonObject
+            assertEquals(JsonPrimitive(0), action["value"])
         }
     }
 
