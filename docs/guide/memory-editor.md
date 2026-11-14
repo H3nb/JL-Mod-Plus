@@ -16,19 +16,6 @@ Minimizing and reopening Memory Editor during the same running MIDlet returns to
 
 A good search begins with something you can reproduce in the game: a counter that increases, health that falls, or a value that stays constant while other numbers change. The editor cannot tell you which candidate is “health” merely from the number alone.
 
-#### Action Scripts
-
-To create a Script from known targets, select one or more verified Bookmarks in
-**Saved** and choose **Create script**, then choose Freeze Values, Value Editor,
-or Quick Actions. The builder already contains those targets. You can also open
-**Scripts → New script**, choose a type, and add Bookmarks manually. If no
-verified Bookmark exists, go to Search or Saved from the builder and return
-without losing the draft.
-
-For advanced targets, choose **JSON Editor** directly; it does not require
-Bookmarks. Saving a Script does not run it. Run, Apply, or enable Freeze only
-when ready, and use Refresh to verify the latest values before applying a form.
-
 ## Search for a known value
 
 Use **Search known values** when you can read the current number on screen.
@@ -66,6 +53,19 @@ Tap an available Bookmark to edit, or use its menu to Inspect, Freeze/Unfreeze,
 Rename, Relink or Remove. A missing or incompatible target stays in Saved
 without being editable. A Bookmark is never removed automatically when a game
 changes scene, an object is collected or a MIDlet restarts.
+
+## Action Scripts
+
+To create a Script from known targets, select one or more verified Bookmarks in
+**Saved** and choose **Create script**, then choose Freeze Values, Value Editor,
+or Quick Actions. The builder already contains those targets. You can also open
+**Scripts → New script**, choose a type, and add Bookmarks manually. If no
+verified Bookmark exists, go to Search or Saved from the builder and return
+without losing the draft.
+
+For advanced targets, choose **JSON Editor** directly; it does not require
+Bookmarks. Saving a Script does not run it. Run, Apply, or enable Freeze only
+when ready, and use Refresh to verify the latest values before applying a form.
 
 ## Finding the target again
 
