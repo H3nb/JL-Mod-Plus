@@ -290,6 +290,7 @@ class MemoryScriptsComposeTest {
         )
         var generated: MemoryScriptBuilderDraft? = null
         var saved: String? = null
+        var completeSave: ((Boolean) -> Unit)? = null
         val sampleJson = Json.parseToJsonElement(sample) as JsonObject
         val target = JsonObject(mapOf(
             "root" to sampleJson.getValue("root"),
@@ -311,7 +312,7 @@ class MemoryScriptsComposeTest {
                 document: String, replacingId: String?, onComplete: (Boolean) -> Unit,
             ) {
                 saved = document
-                onComplete(true)
+                completeSave = onComplete
             }
             override fun runMemoryRecipe(
                 document: String, inputs: Map<String, String>,
@@ -327,12 +328,16 @@ class MemoryScriptsComposeTest {
         rule.onNodeWithText("Add selected").performClick()
         rule.onNodeWithText("Add").performClick()
         rule.onNodeWithText("Save").performClick()
+        rule.onNodeWithTag("memory-builder-name").assertIsNotEnabled()
+        rule.onNodeWithTag("memory-builder-value").assertIsNotEnabled()
+        rule.onNodeWithText("Subtract").assertIsNotEnabled()
         rule.runOnIdle {
             assertEquals(MemoryScriptBuilderMode.ACTIONS, generated?.mode)
             assertEquals("add", generated?.actions?.single()?.operation)
             assertEquals("coin-id", generated?.actions?.single()?.bookmarkId)
             assertEquals(target, generated?.actions?.single()?.originalTarget)
             assertEquals(sample, saved)
+            completeSave?.invoke(true)
         }
     }
 

@@ -331,7 +331,8 @@ internal fun MemoryScriptBuilderScreen(
                                         else R.string.memory_builder_amount,
                                     )) },
                                     enabled = !saving,
-                                    singleLine = true, modifier = Modifier.fillMaxWidth(),
+                                    singleLine = true, modifier = Modifier.fillMaxWidth()
+                                        .testTag("memory-builder-value"),
                                 )
                             }
                         }
