@@ -1244,8 +1244,8 @@
     <string name="bitmap_upscaling_description">Memperhalus sprite 2D immutable dan tekstur model Micro3D opak. Tekstur M3G tidak berubah; mulai ulang untuk menerapkan.</string>
     <string name="bitmap_upscaling_nearest">Nearest Neighbor</string>
     <string name="bitmap_upscaling_bilinear">Bilinear</string>
-    <string name="bitmap_upscaling_mmpx">MMPX (pixel art)</string>
-    <string name="bitmap_upscaling_edge_aware">Tepi halus (edge-aware)</string>
+    <string name="bitmap_upscaling_mmpx">MMPX</string>
+    <string name="bitmap_upscaling_edge_aware">xBR Lv3</string>
 <string name="memory_recipes_title">Otomatisasi</string>
 <string name="memory_recipes_simple_from_saved">Buat dari %1$s</string>
 <string name="memory_recipes_preview">Pratinjau target</string>

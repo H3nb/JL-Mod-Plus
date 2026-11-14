@@ -2,7 +2,7 @@
 package javax.microedition.lcdui;
 
 import io.github.h3nb.jlmodplus.graphics.MmpxScaler;
-import io.github.h3nb.jlmodplus.graphics.EdgeAwareScaler;
+import io.github.h3nb.jlmodplus.graphics.XbrFreeScaler;
 
 import static org.junit.jupiter.api.Assertions.*;
 import org.junit.jupiter.api.Test;
@@ -31,31 +31,31 @@ public class BitmapUpscalingScalersTest {
         } catch(IllegalArgumentException expected) { }
     }
 
-    @Test public void edgeAwareSolidColorRemainsUniformAndPreservesAlpha() {
+    @Test public void xbrSolidColorRemainsUniformAndPreservesAlpha() {
         int red=0x80ff2200;
         int[] source=new int[16];
         java.util.Arrays.fill(source,red);
-        int[] enlarged=EdgeAwareScaler.scale(source, 4, 4, 4);
+        int[] enlarged=XbrFreeScaler.scale(source, 4, 4, 4);
         assertEquals(256,enlarged.length);
         for(int pixel:enlarged)assertEquals(red,pixel);
         int[] opaque={0xff000000,0xffffffff,0xffffffff,0xff000000};
-        for(int pixel:EdgeAwareScaler.scale(opaque, 2, 2, 4)) {
+        for(int pixel:XbrFreeScaler.scale(opaque, 2, 2, 4)) {
             assertEquals(255,pixel>>>24);
         }
     }
 
-    @Test public void edgeAwarePremultipliedAlphaAvoidsTransparentColorFringes() {
+    @Test public void xbrPremultipliedAlphaAvoidsTransparentColorFringes() {
         int[] source = new int[25];
         for (int y = 0; y < 5; y++) for (int x = 0; x < 5; x++) {
             source[y * 5 + x] = x == 2 ? 0xff0000ff : 0x00ff0000;
         }
-        for (int pixel : EdgeAwareScaler.scale(source, 5, 5, 4)) {
+        for (int pixel : XbrFreeScaler.scale(source, 5, 5, 4)) {
             if ((pixel >>> 24) != 0) {
                 assertEquals(0x000000ff, pixel & 0x00ffffff);
             }
         }
         assertThrows(IllegalArgumentException.class,
-                () -> EdgeAwareScaler.scale(new int[4], 3, 3, 4));
+                () -> XbrFreeScaler.scale(new int[4], 3, 3, 4));
     }
     @Test public void mmpxDirectIntegerScalesPreserveReferencePaletteAndSource() {
         int[] source = {
@@ -113,7 +113,7 @@ public class BitmapUpscalingScalersTest {
         }
     }
 
-    @Test public void edgeAwareDirectIntegerScalesStayOpaqueAndRespectSource() {
+    @Test public void xbrDirectIntegerScalesStayOpaqueAndRespectSource() {
         int[] source = {
             0xff000000, 0xff000000, 0xffffffff,
             0xff000000, 0xffffffff, 0xffffffff,
@@ -121,14 +121,14 @@ public class BitmapUpscalingScalersTest {
         };
         int[] unchanged = source.clone();
         for (int factor = 2; factor <= 10; factor++) {
-            int[] output = EdgeAwareScaler.scale(source, 3, 3, factor);
+            int[] output = XbrFreeScaler.scale(source, 3, 3, factor);
             assertEquals(9 * factor * factor, output.length);
             for (int color : output) assertEquals(255, color >>> 24);
         }
         assertArrayEquals(unchanged, source);
     }
 
-    @Test public void edgeAwareCornerChoicesAreRotationConsistent() {
+    @Test public void xbrCornerChoicesAreRotationConsistent() {
         int black=0xff080808, white=0xfffafafa, blue=0xff2060ff;
         int[] source={
             black,black,white,
@@ -141,8 +141,8 @@ public class BitmapUpscalingScalersTest {
         }
         for(int factor: new int[]{2,3,4,5,10}) {
             int side=3*factor;
-            int[] original=EdgeAwareScaler.scale(source,3,3,factor);
-            int[] turned=EdgeAwareScaler.scale(rotated,3,3,factor);
+            int[] original=XbrFreeScaler.scale(source,3,3,factor);
+            int[] turned=XbrFreeScaler.scale(rotated,3,3,factor);
             for(int y=0;y<side;y++) for(int x=0;x<side;x++) {
                 int a=original[y*side+x];
                 int b=turned[x*side+(side-1-y)];
@@ -154,14 +154,14 @@ public class BitmapUpscalingScalersTest {
         }
     }
 
-    @Test public void edgeAwareProducesScaleIndependentSmoothDiagonal() {
+    @Test public void xbrProducesScaleIndependentSmoothDiagonal() {
         int black=0xff080808, white=0xfffafafa;
         int[] input=new int[25];
         for(int y=0;y<5;y++) for(int x=0;x<5;x++) {
             input[y*5+x] = x>=y ? white : black;
         }
         for(int factor: new int[]{2,3,5,10}) {
-            int[] pixels=EdgeAwareScaler.scale(input,5,5,factor);
+            int[] pixels=XbrFreeScaler.scale(input,5,5,factor);
             boolean hasReconstructedEdge=false;
             for(int pixel:pixels) {
                 assertEquals(0xff,pixel>>>24);
@@ -200,19 +200,86 @@ public class BitmapUpscalingScalersTest {
                 sha256Argb(MmpxScaler.scale2x(junction, 7, 7)));
     }
 
-    @Test public void edgeAwareCornersBlendWithoutChangingOpaqueAlpha() {
+    @Test public void xbrCornersBlendWithoutChangingOpaqueAlpha() {
         int[] source = {
                 0xff000000, 0xff000000, 0xffffffff,
                 0xff000000, 0xffffffff, 0xffffffff,
                 0xffffffff, 0xffffffff, 0xffffffff
         };
-        int[] output = EdgeAwareScaler.scale(source, 3, 3, 4);
+        int[] output = XbrFreeScaler.scale(source, 3, 3, 4);
         int blended = 0;
         for (int pixel : output) {
             assertEquals(255, pixel >>> 24);
             if (pixel != 0xff000000 && pixel != 0xffffffff) blended++;
         }
         assertTrue(blended > 0, "A diagonal should blend at its corners");
+    }
+
+
+    @Test public void xbrUsesReferenceWeightedEdgeDirection() {
+        String[] pattern = {
+                "00011",
+                "01111",
+                "01100",
+                "00011",
+                "01111"
+        };
+        int[] source = new int[25];
+        for (int y = 0; y < 5; y++) {
+            for (int x = 0; x < 5; x++) {
+                source[y * 5 + x] = pattern[y].charAt(x) == '1'
+                        ? 0xffffffff : 0xff000000;
+            }
+        }
+        int[] enlarged = XbrFreeScaler.scale(source, 5, 5, 4);
+        assertEquals(0xffffffff, enlarged[8 * 20 + 8]);
+        assertEquals(0xff000000, enlarged[11 * 20 + 11]);
+    }
+
+    @Test public void xbrPreservesIsolatedOnePixelDetail() {
+        int[] source = new int[25];
+        java.util.Arrays.fill(source, 0xfff0f5fa);
+        source[12] = 0xff0b1220;
+        for (int factor : new int[]{2, 3, 4, 10}) {
+            int[] output = XbrFreeScaler.scale(source, 5, 5, factor);
+            int center = 2 * factor + factor / 2;
+            assertEquals(0xff0b1220, output[center * 5 * factor + center]);
+            assertEquals(0xfff0f5fa, output[0]);
+        }
+    }
+
+    @Test public void xbrStreamingMatchesFullOutputAndMirrors() {
+        int width = 6, height = 5;
+        int[] colors = {0xff000000, 0xffffffff, 0xffff0033, 0xff22bbaa,
+                0x804466ff, 0x00ff0000};
+        int[] source = new int[width * height];
+        java.util.Random random = new java.util.Random(245);
+        for (int i = 0; i < source.length; i++) {
+            source[i] = colors[random.nextInt(colors.length)];
+        }
+        int[] mirroredSource = new int[source.length];
+        for (int y = 0; y < height; y++) for (int x = 0; x < width; x++) {
+            mirroredSource[y * width + width - 1 - x] = source[y * width + x];
+        }
+        for (int factor : new int[]{2, 3, 5, 10}) {
+            int scaledWidth = width * factor;
+            int scaledHeight = height * factor;
+            int[] full = XbrFreeScaler.scale(source, width, height, factor);
+            int[] streamed = new int[full.length];
+            int[] nextRow = {0};
+            XbrFreeScaler.scaleRows(source, width, height, factor, (start, row, count) -> {
+                assertEquals(nextRow[0], start);
+                System.arraycopy(row, 0, streamed, start * scaledWidth, count * scaledWidth);
+                nextRow[0] += count;
+            });
+            assertEquals(scaledHeight, nextRow[0]);
+            assertArrayEquals(full, streamed);
+            int[] mirrored = XbrFreeScaler.scale(mirroredSource, width, height, factor);
+            for (int y = 0; y < scaledHeight; y++) for (int x = 0; x < scaledWidth; x++) {
+                assertEquals(full[y * scaledWidth + x],
+                        mirrored[y * scaledWidth + scaledWidth - 1 - x]);
+            }
+        }
     }
 
     private static String sha256Argb(int[] pixels) throws Exception {
@@ -229,8 +296,8 @@ public class BitmapUpscalingScalersTest {
     @Test public void directScalersRejectUnsupportedScaleAndArrayBounds() {
         assertThrows(IllegalArgumentException.class, () -> MmpxScaler.scale(new int[4], 2, 2, 1));
         assertThrows(IllegalArgumentException.class, () -> MmpxScaler.scale(new int[4], 2, 2, 11));
-        assertThrows(IllegalArgumentException.class, () -> EdgeAwareScaler.scale(new int[4], 2, 2, 0));
-        assertThrows(IllegalArgumentException.class, () -> EdgeAwareScaler.scale(new int[3], 2, 2, 5));
+        assertThrows(IllegalArgumentException.class, () -> XbrFreeScaler.scale(new int[4], 2, 2, 0));
+        assertThrows(IllegalArgumentException.class, () -> XbrFreeScaler.scale(new int[3], 2, 2, 5));
     }
 
     @Test public void uniformCellsDoNotChangeAcrossEnhancementScales() {
@@ -241,7 +308,7 @@ public class BitmapUpscalingScalersTest {
                 for (int output : MmpxScaler.scale(pixels, 5, 5, factor)) {
                     assertEquals(color, output);
                 }
-                for (int output : EdgeAwareScaler.scale(pixels, 5, 5, factor)) {
+                for (int output : XbrFreeScaler.scale(pixels, 5, 5, factor)) {
                     assertEquals(color, output);
                 }
             }
