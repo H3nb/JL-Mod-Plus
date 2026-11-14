@@ -282,6 +282,46 @@ class MemoryScriptsComposeTest {
         rule.onNodeWithText("JSON Editor").performScrollTo().assertIsDisplayed()
     }
 
+    @Test fun selectedBookmarkOpensBuilderWithItsVerifiedTarget() {
+        val bookmark = SavedVariableRow("coin-id", "Coins", "coins", true)
+        val ui = mutableStateOf(MemoryEditorUiState(
+            visible = true, connected = true, supported = true, writeSupported = true,
+            variablesTab = true, scriptsLoaded = true, runtimeToken = 92504L,
+            savedVariables = listOf(bookmark),
+        ))
+        val sampleJson = Json.parseToJsonElement(sample) as JsonObject
+        val target = JsonObject(mapOf(
+            "root" to sampleJson.getValue("root"),
+            "path" to ((sampleJson["actions"] as JsonArray).single() as JsonObject).getValue("path"),
+        ))
+        val actions = object : TestMemoryEditorActions() {
+            override fun captureMemoryScriptBuilderActions(
+                bookmarks: List<SavedVariableRow>,
+            ): List<MemoryScriptBuilderAction> {
+                assertEquals(listOf(bookmark), bookmarks)
+                return listOf(MemoryScriptBuilderAction(bookmark.id, bookmark.label,
+                    originalTarget = target))
+            }
+            override fun setScriptsTab() {
+                ui.value = ui.value.copy(variablesTab = false, scriptsTab = true)
+            }
+        }
+        rule.setContent { JLModPlusTheme { MemoryEditorRuntimeRoot(ui.value, actions) } }
+        rule.onNodeWithContentDescription(
+            "Select result value",
+        ).performClick()
+        val directAction = rule.onAllNodesWithContentDescription("Create script")
+        if (directAction.fetchSemanticsNodes().isNotEmpty()) {
+            directAction[0].performClick()
+        } else {
+            rule.onNodeWithContentDescription("More").performClick()
+            rule.onNodeWithText("Create script").performClick()
+        }
+        rule.onNodeWithText("Quick Actions").performClick()
+        rule.onNodeWithText("Coins").assertIsDisplayed()
+        rule.onNodeWithTag("memory-builder-value").performScrollTo().assertIsDisplayed()
+    }
+
     @Test fun builderCreatesQuickActionFromBookmarkWithoutExecutingOnSave() {
         val state = MemoryEditorUiState(
             visible = true, connected = true, supported = true, writeSupported = true,
