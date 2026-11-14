@@ -6,7 +6,7 @@ import androidx.test.ext.junit.runners.AndroidJUnit4;
 import javax.microedition.lcdui.game.Sprite;
 import io.github.h3nb.jlmodplus.graphics.ImageEnhancementPolicy;
 import io.github.h3nb.jlmodplus.graphics.MmpxScaler;
-import io.github.h3nb.jlmodplus.graphics.EdgeAwareScaler;
+import io.github.h3nb.jlmodplus.graphics.XbrFreeScaler;
 import org.junit.Test;
 import org.junit.runner.RunWith;
 
@@ -56,7 +56,7 @@ public class BitmapUpscalingGraphicsTest {
                 for(int mode: new int[]{BitmapUpscaling.MMPX,BitmapUpscaling.EDGE_AWARE}) {
                     int[] expected=mode==BitmapUpscaling.MMPX
                             ?MmpxScaler.scale(raw,2,2,factor)
-                            :EdgeAwareScaler.scale(raw,2,2,factor);
+                            :XbrFreeScaler.scale(raw,2,2,factor);
                     Graphics.configureBitmapUpscaling(mode);
                     Image target=Image.createDisplayTarget(2,2,factor);
                     try {

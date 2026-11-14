@@ -17,7 +17,7 @@ import javax.microedition.util.ContextHolder;
 
 import io.github.h3nb.jlmodplus.graphics.ImageEnhancementPolicy;
 import io.github.h3nb.jlmodplus.graphics.MmpxScaler;
-import io.github.h3nb.jlmodplus.graphics.EdgeAwareScaler;
+import io.github.h3nb.jlmodplus.graphics.XbrFreeScaler;
 
 /**
  * Immutable source-region enhancement for LCDUI's HD screen target.
@@ -83,7 +83,7 @@ final class BitmapUpscaling {
         while (factor > 1 && regionPixels > (failedOutputPixels - 1)
                 / ((long) factor * factor)) factor--;
         Bitmap enhanced = factor == 1 ? null : prepare(bitmap, sourceRect, factor);
-        // Edge-aware reconstruction is already antialiased; smooth only the remaining
+        // xBR reconstruction is already antialiased; smooth only the remaining
         // non-integer resampling. MMPX retains hard source-palette transitions.
         Paint paint = mode == EDGE_AWARE && factor != targetScale && enhanced != null
                 ? BILINEAR_PAINT : NEAREST_PAINT;
@@ -111,11 +111,19 @@ final class BitmapUpscaling {
         try {
             int[] pixels = new int[width * height];
             bitmap.getPixels(pixels, 0, width, rect.left, rect.top, width, height);
-            int[] reconstructed = scale == 1 ? pixels
-                    : mode == MMPX ? MmpxScaler.scale(pixels, width, height, scale)
-                    : EdgeAwareScaler.scale(pixels, width, height, scale);
-            output = Bitmap.createBitmap(reconstructed, width * scale, height * scale,
-                    Bitmap.Config.ARGB_8888);
+            if (mode == EDGE_AWARE && scale > 1) {
+                output = Bitmap.createBitmap(width * scale, height * scale,
+                        Bitmap.Config.ARGB_8888);
+                Bitmap target = output;
+                XbrFreeScaler.scaleRows(pixels, width, height, scale,
+                        (firstRow, argb, rows) -> target.setPixels(argb, 0,
+                                width * scale, 0, firstRow, width * scale, rows));
+            } else {
+                int[] reconstructed = scale == 1 ? pixels
+                        : MmpxScaler.scale(pixels, width, height, scale);
+                output = Bitmap.createBitmap(reconstructed, width * scale, height * scale,
+                        Bitmap.Config.ARGB_8888);
+            }
         } catch (OutOfMemoryError error) {
             failedOutputPixels = Math.min(failedOutputPixels, outputPixels);
             synchronized (cache) {
