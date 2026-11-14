@@ -17,7 +17,6 @@ import androidx.compose.foundation.lazy.LazyColumn
 import androidx.compose.foundation.lazy.items
 import androidx.compose.foundation.selection.toggleable
 import androidx.compose.foundation.verticalScroll
-import androidx.compose.material3.AlertDialog
 import androidx.compose.material3.Button
 import androidx.compose.material3.Checkbox
 import androidx.compose.material3.FilterChip
@@ -28,6 +27,8 @@ import androidx.compose.material3.OutlinedTextField
 import androidx.compose.material3.Surface
 import androidx.compose.material3.Text
 import androidx.compose.material3.TextButton
+import androidx.compose.material3.Icon
+import androidx.compose.ui.res.painterResource
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateOf
@@ -118,21 +119,40 @@ internal fun MemoryScriptTypeChooser(
                 MemoryScriptBuilderMode.FORM -> R.string.memory_builder_form_hint
                 MemoryScriptBuilderMode.ACTIONS -> R.string.memory_builder_actions_hint
             }
+            val icon = when (mode) {
+                MemoryScriptBuilderMode.FREEZE -> R.drawable.ic_lock
+                MemoryScriptBuilderMode.FORM -> R.drawable.ic_memory_editor_edit_value
+                MemoryScriptBuilderMode.ACTIONS -> R.drawable.ic_auto_mode
+            }
             Surface(
                 modifier = Modifier.fillMaxWidth().clickable { onChoose(mode) },
-                shape = MaterialTheme.shapes.medium,
+                shape = MaterialTheme.shapes.large,
                 color = MaterialTheme.colorScheme.surfaceContainer,
             ) {
-                Column(Modifier.padding(16.dp), verticalArrangement = Arrangement.spacedBy(4.dp)) {
-                    Text(modeTitle(mode), style = MaterialTheme.typography.titleSmall)
-                    Text(stringResource(description), style = MaterialTheme.typography.bodySmall,
-                        color = MaterialTheme.colorScheme.onSurfaceVariant)
+                Row(Modifier.fillMaxWidth().padding(16.dp),
+                    verticalAlignment = Alignment.CenterVertically,
+                    horizontalArrangement = Arrangement.spacedBy(16.dp)) {
+                    Icon(painterResource(icon), contentDescription = null)
+                    Column(verticalArrangement = Arrangement.spacedBy(4.dp)) {
+                        Text(modeTitle(mode), style = MaterialTheme.typography.titleMedium)
+                        Text(stringResource(description), style = MaterialTheme.typography.bodySmall,
+                            color = MaterialTheme.colorScheme.onSurfaceVariant)
+                    }
                 }
             }
         }
-        HorizontalDivider()
-        TextButton(onClick = onJson, modifier = Modifier.fillMaxWidth()) {
-            Text(stringResource(R.string.memory_builder_json_editor))
+        Surface(
+            modifier = Modifier.fillMaxWidth().clickable(onClick = onJson),
+            shape = MaterialTheme.shapes.large,
+            color = MaterialTheme.colorScheme.surfaceContainerLow,
+        ) {
+            Row(Modifier.fillMaxWidth().padding(16.dp),
+                verticalAlignment = Alignment.CenterVertically,
+                horizontalArrangement = Arrangement.spacedBy(16.dp)) {
+                Icon(painterResource(R.drawable.ic_auto_mode), contentDescription = null)
+                Text(stringResource(R.string.memory_builder_json_editor),
+                    style = MaterialTheme.typography.titleMedium)
+            }
         }
     }
 }
@@ -224,9 +244,19 @@ internal fun MemoryScriptBuilderScreen(
                 }
             }
             if (draft.actions.isEmpty()) {
-                Text(stringResource(R.string.memory_builder_empty),
-                    color = MaterialTheme.colorScheme.onSurfaceVariant,
-                    style = MaterialTheme.typography.bodySmall)
+                Column(verticalArrangement = Arrangement.spacedBy(4.dp)) {
+                    Text(stringResource(R.string.memory_builder_empty),
+                        color = MaterialTheme.colorScheme.onSurfaceVariant,
+                        style = MaterialTheme.typography.bodySmall)
+                    Row(horizontalArrangement = Arrangement.spacedBy(8.dp)) {
+                        TextButton(onClick = { actions.setVariablesTab(false) }) {
+                            Text(stringResource(R.string.memory_builder_find_values))
+                        }
+                        TextButton(onClick = { actions.setVariablesTab(true) }) {
+                            Text(stringResource(R.string.memory_builder_open_saved))
+                        }
+                    }
+                }
             }
             draft.actions.forEach { item ->
                 Surface(color = MaterialTheme.colorScheme.surfaceContainer,
@@ -347,6 +377,10 @@ internal fun MemoryScriptBuilderScreen(
     }
     if (picking) BookmarkPicker(state, draft.actions.mapTo(HashSet()) { it.bookmarkId },
         onDismiss = { picking = false },
+        onOpenSaved = {
+            picking = false
+            actions.setVariablesTab(true)
+        },
         onAdd = { added ->
             runCatching {
                 val captured = actions.captureMemoryScriptBuilderActions(added)
@@ -354,7 +388,7 @@ internal fun MemoryScriptBuilderScreen(
             }.exceptionOrNull()?.let { it.message ?: "Could not add Bookmarks" }
         })
     preview?.let { json ->
-        AlertDialog(
+        MemoryEditorDialog(
             onDismissRequest = { preview = null },
             title = { Text(stringResource(R.string.memory_builder_view_json)) },
             text = {
@@ -384,6 +418,7 @@ private fun BookmarkPicker(
     state: MemoryEditorUiState,
     used: Set<String>,
     onDismiss: () -> Unit,
+    onOpenSaved: () -> Unit,
     onAdd: (List<SavedVariableRow>) -> String?,
 ) {
     var query by remember { mutableStateOf("") }
@@ -392,7 +427,7 @@ private fun BookmarkPicker(
     val matches = state.savedVariables.filter {
         (query.isBlank() || it.label.contains(query, ignoreCase = true)) && it.id !in used
     }
-    AlertDialog(
+    MemoryEditorDialog(
         onDismissRequest = onDismiss,
         title = { Text(stringResource(R.string.memory_builder_add_bookmarks)) },
         text = {
@@ -400,8 +435,13 @@ private fun BookmarkPicker(
                 OutlinedTextField(query, onValueChange = { query = it },
                     label = { Text(stringResource(R.string.memory_builder_search_bookmarks)) },
                     singleLine = true, modifier = Modifier.fillMaxWidth())
-                if (matches.isEmpty()) Text(stringResource(R.string.memory_builder_no_bookmarks),
-                    style = MaterialTheme.typography.bodySmall)
+                if (matches.isEmpty()) {
+                    Text(stringResource(R.string.memory_builder_no_bookmarks),
+                        style = MaterialTheme.typography.bodySmall)
+                    TextButton(onClick = onOpenSaved) {
+                        Text(stringResource(R.string.memory_builder_open_saved))
+                    }
+                }
                 error?.let {
                     Text(it, color = MaterialTheme.colorScheme.error,
                         style = MaterialTheme.typography.bodySmall)
