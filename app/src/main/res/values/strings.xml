@@ -1357,6 +1357,8 @@
     <string name="memory_scripts_active" tools:ignore="MissingTranslation">Active</string>
     <string name="memory_scripts_new_values" tools:ignore="MissingTranslation">New values</string>
     <string name="memory_scripts_create_from_bookmarks" tools:ignore="MissingTranslation">Create script</string>
+    <string name="memory_scripts_create_failed" tools:ignore="MissingTranslation">Could not start a new script</string>
+    <string name="memory_scripts_draft_in_progress" tools:ignore="MissingTranslation">Finish or discard the current script draft first.</string>
     <string name="memory_builder_open_saved" tools:ignore="MissingTranslation">Open Saved</string>
     <string name="memory_builder_find_values" tools:ignore="MissingTranslation">Find values</string>
     <string name="memory_scripts_description" tools:ignore="MissingTranslation">Description</string>
