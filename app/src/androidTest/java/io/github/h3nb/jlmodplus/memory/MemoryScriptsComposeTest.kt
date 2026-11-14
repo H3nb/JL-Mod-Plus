@@ -12,6 +12,7 @@ import androidx.compose.ui.semantics.SemanticsProperties
 import androidx.compose.ui.test.assertIsDisplayed
 import androidx.compose.ui.test.assertIsEnabled
 import androidx.compose.ui.test.assertIsNotEnabled
+import androidx.compose.ui.test.assertIsSelected
 import androidx.compose.ui.test.assertTextContains
 import androidx.compose.ui.test.junit4.v2.createComposeRule
 import androidx.compose.ui.test.onAllNodesWithText
@@ -307,6 +308,9 @@ class MemoryScriptsComposeTest {
             override fun setScriptsTab() {
                 ui.value = ui.value.copy(variablesTab = false, scriptsTab = true)
             }
+            override fun setVariablesTab(variables: Boolean) {
+                ui.value = ui.value.copy(variablesTab = variables, scriptsTab = false)
+            }
         }
         rule.setContent { JLModPlusTheme { MemoryEditorRuntimeRoot(ui.value, actions) } }
         rule.onNodeWithContentDescription(
@@ -314,13 +318,23 @@ class MemoryScriptsComposeTest {
                 R.string.memory_editor_select_result_value,
             ),
         ).performClick()
-        val directAction = rule.onAllNodesWithContentDescription("Create script")
-        if (directAction.fetchSemanticsNodes().isNotEmpty()) {
-            directAction[0].performClick()
-        } else {
-            rule.onNodeWithContentDescription("More").performClick()
-            rule.onNodeWithText("Create script").performClick()
+        fun openChooser() {
+            val directAction = rule.onAllNodesWithContentDescription("Create script")
+            if (directAction.fetchSemanticsNodes().isNotEmpty()) {
+                directAction[0].performClick()
+            } else {
+                rule.onNodeWithContentDescription("More").performClick()
+                rule.onNodeWithText("Create script").performClick()
+            }
         }
+        openChooser()
+        rule.onNodeWithText("Back").performClick()
+        rule.onNodeWithContentDescription(
+            InstrumentationRegistry.getInstrumentation().targetContext.getString(
+                R.string.memory_variables_tab,
+            ),
+        ).assertIsSelected()
+        openChooser()
         rule.onNodeWithText("Quick Actions").performClick()
         rule.onNodeWithText("Coins").assertIsDisplayed()
         rule.onNodeWithTag("memory-builder-value").performScrollTo().assertIsDisplayed()
