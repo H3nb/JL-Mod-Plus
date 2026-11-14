@@ -66,7 +66,8 @@ local-only; do not assume backup/export of scripts is implemented.
 
 The existing **Automation** action on a verified Saved variable can apply
 a primitive edit or Freeze directly, without saving a script or changing the
-clipboard. For a reusable script, select the Bookmark in **Scripts → Add script**.
+clipboard. Invalid values leave the dialog open for correction. For a reusable
+script, select the Bookmark in **Scripts → Add script**.
 Scripts never auto-run on application startup.
 
 The optional top-level `"description"` field is available in both v1 and v2 recipes

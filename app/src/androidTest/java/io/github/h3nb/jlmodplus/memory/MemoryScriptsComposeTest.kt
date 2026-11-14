@@ -353,6 +353,31 @@ class MemoryScriptsComposeTest {
         ).assertIsDisplayed()
     }
 
+    @Test fun invalidAutomationAmountKeepsDialogOpenForCorrection() {
+        var dismissed = 0
+        val actions = object : TestMemoryEditorActions() {
+            override fun generateSimpleMemoryRecipe(
+                savedId: String, value: String, freeze: Boolean,
+            ): String? = if (value == "100") null else "Enter an integer value"
+        }
+        rule.setContent {
+            JLModPlusTheme {
+                MemoryRecipeDialog(
+                    saved = SavedVariableRow("coin-id", "Coins", "coins", true),
+                    savedValue = "", writeSupported = true, targetReady = true,
+                    actions = actions, onDismiss = { dismissed++ },
+                )
+            }
+        }
+        rule.onNodeWithTag("memory-recipe-value").performTextReplacement("invalid")
+        rule.onNodeWithText("Run").performClick()
+        rule.onNodeWithText("Enter an integer value").assertIsDisplayed()
+        rule.runOnIdle { assertEquals(0, dismissed) }
+        rule.onNodeWithTag("memory-recipe-value").performTextReplacement("100")
+        rule.onNodeWithText("Run").performClick()
+        rule.runOnIdle { assertEquals(1, dismissed) }
+    }
+
     @Test fun failedSaveLeavesTheJsonEditorOpenForCorrection() {
         val actions = object : TestMemoryEditorActions() {
             override fun saveMemoryScript(document: String, replacingId: String?,

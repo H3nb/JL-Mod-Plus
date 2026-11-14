@@ -679,7 +679,8 @@ internal interface MemoryEditorActions {
         document: String, inputs: Map<String, String>,
         onReady: (List<MemoryRecipeReadValue>?, String?) -> Unit,
     ) = onReady(null, "Memory Recipe reading unavailable")
-    fun generateSimpleMemoryRecipe(savedId: String, value: String, freeze: Boolean) = Unit
+    fun generateSimpleMemoryRecipe(savedId: String, value: String, freeze: Boolean): String? =
+        "Automation is unavailable"
     fun clearMemoryRecipeFreeze(recipeId: String) = Unit
     fun listActiveMemoryRecipeFreezes(onReady: (List<Pair<String, String>>) -> Unit) =
         onReady(emptyList())

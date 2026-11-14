@@ -1953,26 +1953,19 @@ internal class MemoryEditorComposeController(
             )
         }.getOrNull()
 
-    override fun generateSimpleMemoryRecipe(savedId: String, value: String, freeze: Boolean) {
-        if (state.busy || !state.writeSupported) return
-        if (state.savedValues[savedId]?.resolved != true) {
-            state = state.copy(
-                message = context.getString(R.string.memory_recipes_target_unavailable),
-                messageIsError = true,
-            )
-            return
-        }
+    override fun generateSimpleMemoryRecipe(savedId: String, value: String, freeze: Boolean): String? {
+        if (state.busy || !state.writeSupported) return "MIDlet memory is not available"
+        if (state.savedValues[savedId]?.resolved != true)
+            return context.getString(R.string.memory_recipes_target_unavailable)
         val document = runCatching {
             val locator = savedLocators[savedId] ?: error("Saved locator unavailable")
             MemoryRecipeGenerator.fromSaved(
                 locator, savedTarget().third, savedId, value.trim(),
                 state.savedVariables.firstOrNull { it.id == savedId }?.label.orEmpty()
             )
-        }.getOrElse {
-            state = state.copy(message = it.message ?: "Cannot generate automation", messageIsError = true)
-            return
-        }
+        }.getOrElse { return it.message ?: "Cannot generate automation" }
         runMemoryRecipe(document, emptyMap(), freeze, false)
+        return null
     }
 
     override fun readCurrentMemoryRecipe(

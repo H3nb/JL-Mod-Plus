@@ -8,6 +8,7 @@ import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.heightIn
+import androidx.compose.ui.platform.testTag
 import androidx.compose.foundation.rememberScrollState
 import androidx.compose.foundation.verticalScroll
 import androidx.compose.material3.MaterialTheme
@@ -38,6 +39,7 @@ internal fun MemoryRecipeDialog(
 ) {
     var generatedValue by remember(saved.id) { mutableStateOf(savedValue) }
     var freeze by remember { mutableStateOf(false) }
+    var validationError by remember(saved.id) { mutableStateOf<String?>(null) }
     var activeFreezeIds by remember { mutableStateOf<List<Pair<String, String>>>(emptyList()) }
 
     LaunchedEffect(Unit) {
@@ -59,11 +61,20 @@ internal fun MemoryRecipeDialog(
                 )
                 OutlinedTextField(
                     value = generatedValue,
-                    onValueChange = { if (it.length <= 32) generatedValue = it },
+                    onValueChange = {
+                        if (it.length <= 32) {
+                            generatedValue = it
+                            validationError = null
+                        }
+                    },
                     label = { Text(stringResource(R.string.memory_editor_edit)) },
                     singleLine = true,
-                    modifier = Modifier.fillMaxWidth(),
+                    modifier = Modifier.fillMaxWidth().testTag("memory-recipe-value"),
                 )
+                validationError?.let {
+                    Text(it, color = MaterialTheme.colorScheme.error,
+                        style = MaterialTheme.typography.bodySmall)
+                }
                 if (activeFreezeIds.isNotEmpty()) {
                     Text(stringResource(R.string.memory_recipes_active_freezes))
                     activeFreezeIds.forEach { (recipeId, name) ->
@@ -87,8 +98,8 @@ internal fun MemoryRecipeDialog(
         confirmButton = {
             TextButton(
                 onClick = {
-                    actions.generateSimpleMemoryRecipe(saved.id, generatedValue, freeze)
-                    onDismiss()
+                    validationError = actions.generateSimpleMemoryRecipe(saved.id, generatedValue, freeze)
+                    if (validationError == null) onDismiss()
                 },
                 enabled = writeSupported && targetReady,
             ) {

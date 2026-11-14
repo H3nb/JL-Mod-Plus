@@ -199,6 +199,7 @@ internal fun MemoryScriptBuilderScreen(
                 value = draft.name,
                 onValueChange = { if (it.length <= 80) onDraft(draft.copy(name = it)) },
                 label = { Text(stringResource(R.string.memory_builder_name)) },
+                enabled = !saving,
                 singleLine = true, modifier = Modifier.fillMaxWidth()
                     .testTag("memory-builder-name"),
             )
@@ -206,6 +207,7 @@ internal fun MemoryScriptBuilderScreen(
                 value = draft.description,
                 onValueChange = { if (it.length <= 2048) onDraft(draft.copy(description = it)) },
                 label = { Text(stringResource(R.string.memory_scripts_description)) },
+                enabled = !saving,
                 minLines = 1, maxLines = 3, modifier = Modifier.fillMaxWidth(),
             )
             Text(stringResource(when (draft.mode) {
@@ -254,6 +256,7 @@ internal fun MemoryScriptBuilderScreen(
                                         ))
                                     },
                                     label = { Text(stringResource(R.string.memory_builder_field_label)) },
+                                    enabled = !saving,
                                     singleLine = true, modifier = Modifier.fillMaxWidth(),
                                 )
                                 Row(horizontalArrangement = Arrangement.spacedBy(8.dp)) {
@@ -268,6 +271,7 @@ internal fun MemoryScriptBuilderScreen(
                                             ))
                                         },
                                         label = { Text(stringResource(R.string.memory_builder_min)) },
+                                        enabled = !saving,
                                         singleLine = true, modifier = Modifier.weight(1f),
                                     )
                                     OutlinedTextField(
@@ -281,6 +285,7 @@ internal fun MemoryScriptBuilderScreen(
                                             ))
                                         },
                                         label = { Text(stringResource(R.string.memory_builder_max)) },
+                                        enabled = !saving,
                                         singleLine = true, modifier = Modifier.weight(1f),
                                     )
                                 }
@@ -298,6 +303,7 @@ internal fun MemoryScriptBuilderScreen(
                                             }
                                             FilterChip(
                                                 selected = item.operation == operation,
+                                                enabled = !saving,
                                                 onClick = { onDraft(draft.copy(
                                                     actions = draft.actions.map {
                                                         if (it.bookmarkId == item.bookmarkId)
@@ -324,6 +330,7 @@ internal fun MemoryScriptBuilderScreen(
                                             R.string.memory_builder_keep_at
                                         else R.string.memory_builder_amount,
                                     )) },
+                                    enabled = !saving,
                                     singleLine = true, modifier = Modifier.fillMaxWidth(),
                                 )
                             }
