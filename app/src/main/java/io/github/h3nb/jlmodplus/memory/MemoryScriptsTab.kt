@@ -120,6 +120,10 @@ internal fun RuntimeScriptsTab(
     builder: MemoryScriptBuilderDraft?,
     onBuilder: (MemoryScriptBuilderDraft?) -> Unit,
     onBackFromBuilder: () -> Unit,
+    choosingType: Boolean,
+    onChoosingTypeChange: (Boolean) -> Unit,
+    initialTargets: List<MemoryScriptBuilderAction>,
+    onTargetsUsed: () -> Unit,
     modifier: Modifier = Modifier,
 ) {
     val context = LocalContext.current
@@ -137,7 +141,6 @@ internal fun RuntimeScriptsTab(
         mutableStateOf(cachedDetail?.detailFreeze ?: false)
     }
     var deleting by remember { mutableStateOf(false) }
-    var choosingType by remember(state.runtimeToken) { mutableStateOf(false) }
     var saving by remember { mutableStateOf(false) }
     var localError by remember { mutableStateOf<String?>(null) }
     var currentValues by remember(selectedId, state.runtimeToken) {
@@ -190,20 +193,28 @@ internal fun RuntimeScriptsTab(
         return
     }
 
-    BackHandler(enabled = choosingType) { choosingType = false }
+    BackHandler(enabled = choosingType) {
+        onChoosingTypeChange(false)
+        onTargetsUsed()
+    }
     if (choosingType) {
         MemoryScriptTypeChooser(
             onChoose = {
-                choosingType = false
+                onChoosingTypeChange(false)
                 onSelectedId(null)
-                onBuilder(MemoryScriptBuilderDraft.create(it))
+                onBuilder(MemoryScriptBuilderDraft.create(it).copy(actions = initialTargets))
+                onTargetsUsed()
             },
             onJson = {
-                choosingType = false
+                onChoosingTypeChange(false)
                 onSelectedId(null)
                 onDraft(MemoryScriptDraft(null, "", ""))
+                onTargetsUsed()
             },
-            onBack = { choosingType = false },
+            onBack = {
+                onChoosingTypeChange(false)
+                onTargetsUsed()
+            },
             modifier = modifier,
         )
         return
@@ -440,7 +451,7 @@ internal fun RuntimeScriptsTab(
         Row(modifier = Modifier.fillMaxWidth(), verticalAlignment = Alignment.CenterVertically) {
             Text(stringResource(R.string.memory_scripts_title),
                 style = MaterialTheme.typography.titleMedium, modifier = Modifier.weight(1f))
-            Button(onClick = { choosingType = true }) {
+            Button(onClick = { onChoosingTypeChange(true) }) {
                 Text(stringResource(R.string.memory_scripts_new))
             }
         }
@@ -456,7 +467,7 @@ internal fun RuntimeScriptsTab(
                 Text(stringResource(R.string.memory_scripts_paste_hint),
                     color = MaterialTheme.colorScheme.onSurfaceVariant,
                     style = MaterialTheme.typography.bodySmall)
-                OutlinedButton(onClick = { choosingType = true }) {
+                OutlinedButton(onClick = { onChoosingTypeChange(true) }) {
                     Text(stringResource(R.string.memory_scripts_new))
                 }
             }
