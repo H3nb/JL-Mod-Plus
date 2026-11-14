@@ -123,18 +123,9 @@ internal object MemoryRecipeGenerator {
             ) as JsonObject
             val original = (source["actions"] as JsonArray).single() as JsonObject
             val path = original["path"] as JsonArray
-            val terminal = path.last() as JsonObject
-            val descriptor = (terminal["descriptor"] as JsonPrimitive).content
-                .let { if (terminal["kind"] == JsonPrimitive("index")) it.removePrefix("[") else it }
-            val (min, max) = when (descriptor) {
-                "B" -> Byte.MIN_VALUE.toLong() to Byte.MAX_VALUE.toLong()
-                "S" -> Short.MIN_VALUE.toLong() to Short.MAX_VALUE.toLong()
-                "I" -> Int.MIN_VALUE.toLong() to Int.MAX_VALUE.toLong()
-                "J" -> Long.MIN_VALUE to Long.MAX_VALUE
-                "C" -> 0L to 65535L
-                "Z" -> 0L to 1L
-                else -> error("Bookmark " + item.label + " does not contain an editable integer")
-            }
+            val bounds = primitiveBounds(path)
+            val min = bounds.first
+            val max = bounds.last
             val key = "value" + (index + 1)
             val fields = linkedMapOf<String, kotlinx.serialization.json.JsonElement>(
                 "kind" to JsonPrimitive("set"),
@@ -203,6 +194,112 @@ internal object MemoryRecipeGenerator {
         }).toString()
         MemoryRecipeRuntime.validateDocument(document)
         return document
+    }
+
+
+    /**
+     * Only restore documents that the Builder can regenerate byte-for-byte semantically.
+     * Advanced JSON must remain editable without silently discarding its metadata or guards.
+     */
+    fun forEditing(
+        document: String,
+        midletClass: String,
+        locators: Map<String, Bundle>,
+        bookmarks: List<SavedVariableRow>,
+    ): MemoryScriptBuilderDraft? = runCatching {
+        val original = Json.parseToJsonElement(document) as? JsonObject
+            ?: error("Not a recipe object")
+        if (original["formatVersion"] != JsonPrimitive(2)) error("Not a Builder recipe")
+        val mode = MemoryScriptBuilderMode.entries.firstOrNull {
+            original["mode"] == JsonPrimitive(it.recipeMode)
+        } ?: error("Unsupported Builder mode")
+        val id = (original["id"] as? JsonPrimitive)?.content
+            ?: error("Missing recipe ID")
+        val name = (original["name"] as? JsonPrimitive)?.content
+            ?: error("Missing recipe name")
+        val description = (original["description"] as? JsonPrimitive)?.content.orEmpty()
+        val declaredInputs = original["inputs"] as? JsonObject ?: error("Missing Builder inputs")
+        val lookup = HashMap<Pair<kotlinx.serialization.json.JsonElement, kotlinx.serialization.json.JsonElement>, String?>()
+        for ((savedId, locator) in locators) {
+            val saved = runCatching {
+                Json.parseToJsonElement(fromSaved(locator, midletClass, savedId, "0")) as JsonObject
+            }.getOrNull() ?: continue
+            val target = (saved["root"] ?: continue) to
+                (((saved["actions"] as JsonArray).single() as JsonObject)["path"] ?: continue)
+            if (target in lookup) lookup[target] = null else lookup[target] = savedId
+        }
+        val labels = bookmarks.associate { it.id to it.label }
+        val actionObjects = original["actions"] as? JsonArray ?: error("Missing actions")
+        val entries = actionObjects.mapIndexed { index, element ->
+            val action = element as? JsonObject ?: error("Invalid action")
+            val root = action["root"] ?: error("Missing root")
+            val path = action["path"] as? JsonArray ?: error("Missing path")
+            val savedId = lookup[root to path] ?: error("Bookmark unavailable or ambiguous")
+            val key = "value" + (index + 1)
+            val operand = (action["value"] as? JsonPrimitive)?.content?.toLongOrNull()
+            val savedLabel = labels[savedId] ?: savedId
+            when (mode) {
+                MemoryScriptBuilderMode.FREEZE -> MemoryScriptBuilderAction(
+                    bookmarkId = savedId, label = savedLabel,
+                    value = operand?.toString() ?: error("Missing Freeze value"),
+                )
+                MemoryScriptBuilderMode.FORM -> {
+                    val specification = declaredInputs[key] as? JsonObject
+                        ?: error("Missing editable field")
+                    val fieldLabel = (specification["label"] as? JsonPrimitive)?.content
+                        ?: error("Missing field label")
+                    val nativeRange = primitiveBounds(path)
+                    val minimum = (specification["min"] as? JsonPrimitive)?.content?.toLongOrNull()
+                        ?: error("Missing minimum")
+                    val maximum = (specification["max"] as? JsonPrimitive)?.content?.toLongOrNull()
+                        ?: error("Missing maximum")
+                    MemoryScriptBuilderAction(
+                        bookmarkId = savedId, label = fieldLabel,
+                        min = if (minimum == nativeRange.first) "" else minimum.toString(),
+                        max = if (maximum == nativeRange.last) "" else maximum.toString(),
+                    )
+                }
+                MemoryScriptBuilderMode.ACTIONS -> {
+                    val value = operand ?: error("Missing Quick Action amount")
+                    val operation = when ((action["operation"] as? JsonPrimitive)?.content) {
+                        null, "set" -> "set"
+                        "add" -> if (value < 0L) "subtract" else "add"
+                        else -> error("Unsupported operation")
+                    }
+                    if (operation == "subtract" && value == Long.MIN_VALUE)
+                        error("Cannot display subtraction amount")
+                    MemoryScriptBuilderAction(
+                        bookmarkId = savedId, label = savedLabel,
+                        value = if (operation == "subtract") (-value).toString() else value.toString(),
+                        operation = operation,
+                    )
+                }
+            }
+        }
+        val draft = MemoryScriptBuilderDraft(
+            id = id, mode = mode, name = name, description = description,
+            actions = entries, replacingId = id,
+            baseline = MemoryScriptBuilderSnapshot(name, description, entries),
+        )
+        if (Json.parseToJsonElement(fromBuilder(draft, midletClass, locators)) != original) {
+            error("Recipe uses advanced settings")
+        }
+        draft
+    }.getOrNull()
+
+    private fun primitiveBounds(path: JsonArray): LongRange {
+        val terminal = path.last() as JsonObject
+        val descriptor = (terminal["descriptor"] as JsonPrimitive).content
+            .let { if (terminal["kind"] == JsonPrimitive("index")) it.removePrefix("[") else it }
+        return when (descriptor) {
+            "B" -> Byte.MIN_VALUE.toLong()..Byte.MAX_VALUE.toLong()
+            "S" -> Short.MIN_VALUE.toLong()..Short.MAX_VALUE.toLong()
+            "I" -> Int.MIN_VALUE.toLong()..Int.MAX_VALUE.toLong()
+            "J" -> Long.MIN_VALUE..Long.MAX_VALUE
+            "C" -> 0L..65535L
+            "Z" -> 0L..1L
+            else -> error("Bookmark does not contain an editable integer")
+        }
     }
 
     private fun descriptor(type: String): String = when (type) {

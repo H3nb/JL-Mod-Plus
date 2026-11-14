@@ -66,14 +66,24 @@ internal data class MemoryScriptBuilderAction(
     val max: String = "",
 )
 
+internal data class MemoryScriptBuilderSnapshot(
+    val name: String,
+    val description: String,
+    val actions: List<MemoryScriptBuilderAction>,
+)
+
 internal data class MemoryScriptBuilderDraft(
     val id: String,
     val mode: MemoryScriptBuilderMode,
     val name: String = "",
     val description: String = "",
     val actions: List<MemoryScriptBuilderAction> = emptyList(),
+    val replacingId: String? = null,
+    val baseline: MemoryScriptBuilderSnapshot? = null,
 ) {
-    val hasChanges: Boolean get() = name.isNotEmpty() || description.isNotEmpty() || actions.isNotEmpty()
+    val hasChanges: Boolean get() = baseline?.let {
+        name != it.name || description != it.description || actions != it.actions
+    } ?: (name.isNotEmpty() || description.isNotEmpty() || actions.isNotEmpty())
 
     companion object {
         fun create(mode: MemoryScriptBuilderMode) = MemoryScriptBuilderDraft(
@@ -192,7 +202,7 @@ internal fun MemoryScriptBuilderScreen(
                 onClick = {
                     generate { document ->
                         saving = true
-                        actions.saveMemoryScript(document, null) { saved ->
+                        actions.saveMemoryScript(document, draft.replacingId) { saved ->
                             saving = false
                             if (saved) onSaved(draft.id)
                             else error = saveFailedText
