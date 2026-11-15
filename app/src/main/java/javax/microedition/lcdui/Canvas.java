@@ -999,6 +999,17 @@ public abstract class Canvas extends Displayable {
 		active.capturePixels(callback);
 	}
 
+	private boolean checkSizeChanged() {
+		int tmpWidth = width;
+		int tmpHeight = height;
+		updateSize();
+		return width != tmpWidth || height != tmpHeight;
+	}
+
+	/**
+	 * Update the size and position of the virtual screen relative to the real one.
+	 */
+
 	public void updateSize() {
 		// We turn the sizes of the virtual screen into the sizes of the visible canvas.
 		// At the same time, we take into account that one or both virtual sizes can be less
