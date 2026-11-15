@@ -28,7 +28,7 @@ The Library remains **game-first**, not a dashboard of emulator settings:
 2. **Game secondary action** should be visible where the item has room. The List prototype in PR #251 adds a 48dp overflow affordance beside Favorite, reserving trailing width during selection to avoid row reflow. A Grid corner-overlay variant was **rejected**: with the existing 88dp minimum cell width, a 48dp hit region occupies over half the tile horizontally, risking unintended menu activation and obscuring JAR art. Dense Grid retains tap-to-play and long-press actions for now; future discoverability options must preserve both.
 3. **Selection mode** takes precedence over launching, Favorite and overflow. The whole item selects/toggles; selection indicators and toolbar remain legible and accessible. Do not create duplicate focus targets or conflicting click regions.
 4. **Game action menu** retains every existing supported operation: selection, metadata/rename, shortcut, add/remove collection, per-game settings, reinstall, share, bundle export, delete. Put the most common non-destructive actions first and destructive delete last. A grouped presentation is optional if it improves scanning *without* breaking controller index/navigation.
-5. **Collections** remains a primary tab. Preserve selection, management, picker state, active collection identity, list/grid scroll and route restoration. **More** contains global actions; avoid adding extra root destinations for functions already reachable there.
+5. **Collections** is currently a primary tab, but its placement is **under reconsideration**, not a frozen design requirement. See the integrated-Library/Search exploration below. Preserve its selection, management, membership editing, workdir identity, and list/grid restoration regardless of entry point. **More** continues to host global actions.
 6. **Install** preserves existing single-file/folder flows, source menu semantics, and the distinction between installer review and batch installation. Avoid adding a second install route solely for visual symmetry.
 
 ### Library visual behavior
@@ -177,11 +177,70 @@ Use a small representative fixture with real/simulated low-res Java ME art, long
 
 Stop experimenting when one design meets user tasks and technical gates sufficiently; do not force multiple component swaps or chase unmeasured cosmetic micro-optimizations.
 
+## Information-architecture exploration: Collections inside Library, Search in the middle
+
+**Status: design hypothesis, not an approved navigation change.** The maintainer seldom opens the current Collections destination with a small installed library. That is legitimate feedback but does not establish that existing users with hundreds of games or curated collections behave the same way. Do not infer adoption or conversion percentages without evidence. Keep PR #251 focused on its existing List action/FAB changes; do not merge a navigation rewrite into it.
+
+### Problem and candidate models
+
+Today's primary destinations are \`Apps | Collections | More\`, with a prominent search field inside Apps and separate quick views (All, Favorites, Recently added, Recently played). A distinct Collections landing page requires a root navigation step even when the user only wants to view one collection. The large search field consumes vertical space at the top of Apps despite being a temporary task for some users.
+
+| Candidate | Primary navigation | Collections entry | Search entry | Trade-off |
+| --- | --- | --- | --- | --- |
+| **A — three meaningful destinations (prototype first)** | **Library / Search / More** | A single collection selector inside Library; selected collection is a contextual Library view | Search **destination** with its own field/results, opening the keyboard when explicitly tapped | Preserves a familiar three-item bar, one-tap search, and cleaner main Library; search needs its own viewport and an explicit scope contract |
+| **B — Library-centric actions** | Library with global More access, not necessarily a two-item M3 NavigationBar | Same collection selector | Search icon/action in Library top bar opens focused search mode or a search view | Less global navigation, no dedicated Search screen; may hide search and require rethinking the entire root chrome rather than simply using two bottom-nav destinations |
+| Existing reference | Apps / Collections / More | Full Collections destination | Persistent Apps search field | Existing state/gesture behavior is known; low-frequency Collections occupies a permanent slot and search consumes header space |
+
+**Provisional direction:** build a *bounded interaction prototype of A* alongside a cheap visual/task comparison with B, not a full database/navigation implementation of both. A is promising **only if Search is a real place for results and navigation**, not a tab item that behaves as a keyboard-only button. Material's root navigation is for durable destinations; tapping a Search icon in a nav bar should select a Search destination. Opening the keyboard is a contextual side effect of **explicit touch activation**, never the purpose of a phantom destination.
+
+### Collections as a contextual Library view
+
+- Keep the existing **All, Favorites, Recently added/played** quick-view semantics. Expose **Collections** as a **single stable selector**, not one horizontal chip for each user-created collection. Examples: a compact "Collections ▾" chip after the quick views, or a library-scope control "All games ▾" that opens an organized selection list. Select the less crowded layout in narrow/200% text prototypes.
+- Selecting a collection changes the visible game set under the **Library** destination and provides an unmistakable scope label (e.g. collection name with a clear return to All), without permanently inserting its games into the unfiltered Apps list. The current list/grid appearance and item actions should continue to apply.
+- Keep **create, rename, delete and manage members** reachable through the selector's **Manage collections** action, the app actions (Add to collection), and/or More if it genuinely helps discoverability. No per-collection permanent bottom-nav entries; do not make a full management screen the default experience.
+- For users with **zero collections**, do not waste a large empty tab or row. But do not make creating the first collection undiscoverable either; leave a small discoverable entry in the Library selector or More. **If no collection exists**, Library still opens directly to All games with no mandatory empty-state interception.
+- Preserve host-owned collection persistence, the \`LibraryCollectionsHost\` and \`LibraryCollectionsUiStore\`, the \`ListDetailPaneScaffold\` behavior on larger windows where useful, the collection membership editor and the \`selectedCollectionId\` + \`selectedCollectionScope\` identity contract. A new location in the UI is not a mandate to flatten this model into one giant list or to duplicate projection logic.
+
+### What a Search destination must do
+
+- **Explicitly tapping Search:** navigate to the Search screen, focus its search field and request the software keyboard *after the field is composed and focusable*. The field is visible and search results are accessible; input actions are not delayed behind an animation.
+- **Swiping across/to Search, controller NextTab, Activity/process restoration, returning from external activities:** **do not automatically open the soft keyboard**. Focus can remain on navigation or a suitable non-text target until the user intentionally types/taps. This prevents surprise IME appearances when swiping from Library to More through the middle page.
+- **Pressing Android Back with the IME shown:** close the keyboard/focus first while preserving the query and results; a later Back returns to Library according to the selected navigation contract. Tab changes should hide IME and preserve search text only within its explicit state lifetime. Avoid duplicated system-Back interception.
+- **Search scope:** default to **all installed apps**, with scope visible to the user; optionally allow a selected collection scope using the existing collection identifier. Avoid silently searching only the last viewed collection.
+- **Library state isolation:** unfiltered Library must remain unfiltered after leaving Search. Keep independent query and viewport states by workdir, but reuse underlying Room/repository data and common search/projection algorithms; never copy the entire Library data or create another persistent database. The current \`LibraryViewModel\` owns one global \`filter: MutableStateFlow<String>\`; a real Search destination must explicitly resolve this ownership before code changes. Do not assume wrapping the existing Apps text field in another pager page is safe.
+- **Search result actions:** tap launches; per-game action menu and Favorite have the same accessible semantics as the main Library. Maintain result scroll and search query through modal actions where relevant. Empty query may show a calm prompt and/or recent search shortcuts, but do not invent histories, recommendations, or telemetry solely to fill the page.
+- **Keyboard and screen height:** avoid bottom nav/IME overlap, clipped search results, and jumping chrome. Preserve controller/hardware keyboard navigation; IME should not steal focus on non-touch navigation. Respect existing Android 6 support and adaptive rail/landscape behavior.
+
+### Existing architecture that this proposal affects
+
+- \`LibraryDestination\` and saved \`LibraryDestinationKey\` currently expose \`Apps, Collections, More\` and initialize the \`HorizontalPager\` from a saved ordinal. Introducing Search changes the destination identity; migrate **saved names**, not just ordinal positions, so an old \`Collections\` saved route resolves to Library with its collection context, not an unintended Search selection.
+- \`LibraryNavigationState\` already owns \`selectedCollectionId\`, workdir scope and \`collectionManageApps\`; keep this single owner. The current root logic also keys selection actions and controller Back/NextTab to the old destination, so update these consciously.
+- \`LibraryAppsDestination\` owns the current search field/focus and \`LibraryViewportState\` keeps a query and scroll state per workdir/collection. Moved search should not leak IME or filter into Library's base viewport and should preserve collection result anchors on return.
+- \`LibraryCollectionsDestination\` currently has list/detail adaptive presentation and membership editor logic. Prefer rerouting/reusing these screens from a contextual Library entry rather than copying their components and callback paths.
+- \`LibraryViewModel.setFilter\` drives the single global Room-backed projection. Separate Browse and Search presentation intent **without** creating two competing persistent state owners or redundant sorts; determine the minimal projection API after reviewing actual consumers.
+- The UI contract currently specifies Apps/Collections/More, quick filters only in Apps and search/chrome restoration. Those observable contracts must be **intentionally updated together with the approved design**, rather than silently broken by the prototype.
+
+### How to decide without product analytics
+
+Use the current screenshots plus **small, task-based feedback**, not arbitrary popularity claims. Compare A versus B with representative fixtures of ~5–10 games and ~200–500 games with several user collections. Ask a small number of people who have not worked on JL-Mod Plus to perform four tasks without coaching: (1) launch a game, (2) find a game by name, (3) create/use a collection, (4) adjust game Settings. Include one frequent controller/power user. Record where they look/tap, wrong turns, and task steps. Feedback is qualitative and does not represent usage prevalence.
+
+Reject A if it simply replaces one underused destination with another without reducing confusion, requires extra taps for frequent actions, causes surprise IME on swipe/restoration, compromises library query/scroll isolation, or burdens startup/performance. Favor it if dedicated Search and contextual Collections demonstrably improve flow for both small and large libraries. Do **not** add analytics collection or remote telemetry solely to settle a local redesign decision.
+
+### List item coherence: Favorite, overflow and description
+
+The PR #251 screenshot shows Favorite and More as two equally visible trailing controls, while description is an independent text block under the title/vendor row. This is a genuine hierarchy/density question, not just familiarity.
+
+Compare **two bounded designs** instead of immediately removing the direct Favorite action:
+- **Direct action model:** keep Favorite and More at 48dp touch sizes, use weaker visual weight for the overflow, clearly align description under the title, cap preview lines and preserve the optional expanded-description setting. Avoid reducing the title to a narrow strip; keep button geometry stable while loading/favoriting.
+- **Status + menu model:** show favorite state as a small non-interactive marker next to the title, place Favorite toggle in the contextual action menu, and keep only one clear overflow control on the row. This improves title space but adds a step for frequent Favorite changes; reject if power-user task costs rise unacceptably. If needed, consider a single visible direct Favorite shortcut in a dedicated Favorites quick-view rather than a global settings toggle.
+
+Do not add horizontal swipe-to-reveal actions to a root \`HorizontalPager\` without proving gesture competition is harmless. Keep descriptions tied to the game metadata and the existing expand/collapse accessibility behavior. The user preference to show/hide descriptions must continue to work. Measure the result at 320–360dp, 200% font, long titles, Indonesian/English strings and actual mixed-size MIDlet icons.
+
 ## Implementation sequence and refactoring rules
 
 1. **Foundation**: record the minSdk-23 failure in the dedicated RC experiment (PR #249). Continue with the stable Material 3 foundation and app-owned expressive-inspired tokens; re-qualify 1.5 only when its transitive Android 6 support is proven. Inspect compilation, lint, screenshots and representative devices. Separately qualify theme tokens on a contained preview before widespread restyling.
 2. **Library vertical slice**: Apps list/grid item, visible actions, game actions and return-to-Library path. Make directly affected composables easier to read and test. Keep existing projection, icon cache and viewport owners unless evidence requires otherwise.
-3. **Library consistency**: search, filters, Collections, More, empty/loading/error states, navigation/chrome and adaptive widths; fix interaction inconsistencies surfaced by the slice.
+3. **Library consistency and navigation prototype**: compare integrated Collections + a real Search destination versus contextual Search on Library; settle Search focus/IME/Back, saved-state migration and result scope before editing the root pager. Address empty/loading/error states and responsive chrome afterwards.
 4. **Config vertical slice**: choose A/B using task prototype, then redesign Basic/Quick setup and shared preference rows, followed by Display/Media/Controls/System. Refactor form-to-UI projection only when profiling or ownership problems justify it.
 5. **Supporting surfaces**: Profiles, installer/batch installer, Settings, File Picker, Key Mapper/skins and runtime host menu; preserve each host's lifecycle/compatibility contracts. Memory Editor deserves a distinct risk-focused review.
 6. **Final consolidation**: remove superseded in-scope components, check locale/contrast, accessibility, device performance, and independent effective-diff review. Ship only after the relevant gates are satisfied.
@@ -202,5 +261,6 @@ Refactor **with** the affected screen, not in one preparatory rewrite of the And
 2. **List or Grid initial presentation:** compare game recognizability, artwork fidelity, density and speed on representative game libraries. Existing users keep their chosen layout.
 3. **Config A vs B:** compare completion steps and confusion for a novice adjusting resolution and an expert changing shaders, profiles and controls. Prefer A unless B demonstrates meaningful advantage.
 4. **Motion and typography:** select the smallest set of Expressive tokens that genuinely clarifies hierarchy and transitions on both low-end and modern Android.
+5. **Collections/Search placement:** compare three-destination search against a Library action/search view with small and large libraries, including IME-on-tap vs swipe, selection, saved state and workdir identity.
 
 Do not resolve these choices with speculative implementation. The first Library slice and focused Config prototype supply the evidence.
