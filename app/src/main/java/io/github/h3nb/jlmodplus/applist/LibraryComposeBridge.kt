@@ -111,6 +111,9 @@ import androidx.compose.foundation.text.input.setTextAndPlaceCursorAtEnd
 import androidx.compose.material3.Icon
 import androidx.compose.material3.IconButton
 import androidx.compose.material3.ListItem
+import androidx.compose.material3.HorizontalDivider
+import androidx.compose.material3.rememberModalBottomSheetState
+import androidx.compose.material3.ModalBottomSheet
 import androidx.compose.material3.ListItemDefaults
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.NavigationBar
@@ -2761,7 +2764,7 @@ private fun LibraryAppsHeader(
     onOpenGlobalSettings: () -> Unit = {},
     interactive: Boolean = true,
 ) {
-    var scopeMenuVisible by remember { mutableStateOf(false) }
+    var scopePickerVisible by remember { mutableStateOf(false) }
     val sortEntries = stringArrayResource(R.array.pref_app_sort_entries).toList()
     val projectionKey = remember(state) {
         LibraryProjectionKey(state.projectionRevision, state.apps)
@@ -2902,7 +2905,7 @@ private fun LibraryAppsHeader(
             Box(modifier = Modifier.weight(1f)) {
                 TextButton(
                     enabled = searchActionsEnabled,
-                    onClick = { scopeMenuVisible = true },
+                    onClick = { scopePickerVisible = true },
                 ) {
                     if (!compactHeaderActions) {
                         Icon(
@@ -2922,43 +2925,7 @@ private fun LibraryAppsHeader(
                         contentDescription = null,
                     )
                 }
-                DropdownMenu(
-                    expanded = scopeMenuVisible && searchActionsEnabled,
-                    onDismissRequest = { scopeMenuVisible = false },
-                ) {
-                    DropdownMenuItem(
-                        text = { Text(stringResource(R.string.library_filter_all)) },
-                        onClick = {
-                            scopeMenuVisible = false
-                            if (state.quickView != LibraryQuickView.All) onQuickView(LibraryQuickView.All)
-                        },
-                        leadingIcon = {
-                            Icon(painterResource(R.drawable.ic_apps), contentDescription = null)
-                        },
-                    )
-                    DropdownMenuItem(
-                        text = { Text(stringResource(R.string.library_destination_collections)) },
-                        onClick = {
-                            scopeMenuVisible = false
-                            onManageCollections()
-                        },
-                        leadingIcon = {
-                            Icon(painterResource(R.drawable.ic_settings), contentDescription = null)
-                        },
-                    )
-                    collections.forEach { collection ->
-                        DropdownMenuItem(
-                            text = { Text(collection.name, maxLines = 1, overflow = TextOverflow.Ellipsis) },
-                            onClick = {
-                                scopeMenuVisible = false
-                                onSelectCollection(collection.id)
-                            },
-                            leadingIcon = {
-                                Icon(painterResource(R.drawable.ic_folder), contentDescription = null)
-                            },
-                        )
-                    }
-                }
+
             }
             if (compactHeaderActions) {
                 LibraryHeaderActions(
@@ -3040,6 +3007,74 @@ private fun LibraryAppsHeader(
             }
         }
     }
+    if (scopePickerVisible) {
+        ModalBottomSheet(
+            onDismissRequest = { scopePickerVisible = false },
+            sheetState = rememberModalBottomSheetState(skipPartiallyExpanded = true),
+        ) {
+            Column(
+                modifier = Modifier
+                    .fillMaxWidth()
+                    .heightIn(max = availableWindowHeightDp() * 0.76f),
+            ) {
+                Text(
+                    text = stringResource(R.string.library_destination_collections),
+                    style = MaterialTheme.typography.titleLarge,
+                    modifier = Modifier.padding(horizontal = 24.dp, vertical = 12.dp),
+                )
+                LazyColumn(modifier = Modifier.weight(1f, fill = false)) {
+                    item(key = "all") {
+                        ListItem(
+                            headlineContent = { Text(stringResource(R.string.library_destination_apps)) },
+                            modifier = Modifier.clickable {
+                                scopePickerVisible = false
+                                if (state.quickView != LibraryQuickView.All) onQuickView(LibraryQuickView.All)
+                            },
+                            leadingContent = {
+                                Icon(painterResource(R.drawable.ic_apps), contentDescription = null)
+                            },
+                            trailingContent = {
+                                Icon(painterResource(R.drawable.ic_check), contentDescription = null)
+                            },
+                        )
+                    }
+                    items(collections, key = { it.id }) { collection ->
+                        ListItem(
+                            headlineContent = {
+                                Text(collection.name, maxLines = 2, overflow = TextOverflow.Ellipsis)
+                            },
+                            modifier = Modifier.clickable {
+                                scopePickerVisible = false
+                                onSelectCollection(collection.id)
+                            },
+                            leadingContent = {
+                                Icon(painterResource(R.drawable.ic_folder), contentDescription = null)
+                            },
+                        )
+                    }
+                }
+                HorizontalDivider()
+                TextButton(
+                    onClick = {
+                        scopePickerVisible = false
+                        onManageCollections()
+                    },
+                    modifier = Modifier
+                        .align(Alignment.End)
+                        .padding(horizontal = 16.dp, vertical = 8.dp),
+                ) {
+                    Icon(
+                        painter = painterResource(R.drawable.ic_collections),
+                        contentDescription = null,
+                        modifier = Modifier.size(20.dp),
+                    )
+                    Spacer(Modifier.width(8.dp))
+                    Text(stringResource(R.string.library_collection_manage))
+                }
+            }
+        }
+    }
+
 }
 
 @Composable
