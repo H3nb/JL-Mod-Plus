@@ -355,6 +355,12 @@ public class AppsListFragment extends Fragment {
                 return collectionsUiStore;
             }
 
+            @Nullable
+            @Override
+            public Integer resolveAppUiId(long databaseId) {
+                return resolveSearchUiId(databaseId);
+            }
+
             @Override
             public void onSearch(@NonNull String query) {
                 libraryViewModel.setFilter(query);
@@ -1230,6 +1236,19 @@ public class AppsListFragment extends Fragment {
                 row, uiId, activeWorkdir, localizedDescriptions, iconFiles);
         cachedUiItemsByDatabaseId.put(row.getId(), new CachedUiItem(row, item));
         return item;
+    }
+
+    @Nullable
+    private Integer resolveSearchUiId(long databaseId) {
+        if (activeWorkdir == null) return null;
+        for (LibraryAppRow row : currentAllReadyRows()) {
+            if (row.getId() == databaseId) {
+                int uiId = uiIdFor(databaseId);
+                rowsByUiId.put(uiId, databaseId);
+                return uiId;
+            }
+        }
+        return null;
     }
 
     private int uiIdFor(long databaseId) {
