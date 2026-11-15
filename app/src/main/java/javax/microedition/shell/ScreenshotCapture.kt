@@ -12,7 +12,6 @@ import java.io.IOException
 import java.text.SimpleDateFormat
 import java.util.Date
 import java.util.Locale
-import java.util.function.Consumer
 import javax.microedition.lcdui.Canvas
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.Dispatchers
@@ -27,8 +26,12 @@ import kotlin.coroutines.resumeWithException
 
 /** Copies the canvas without blocking the UI or doing pixel conversion on the GL thread. */
 object ScreenshotCapture {
+    fun interface Callback<T> {
+        fun accept(value: T)
+    }
+
     @JvmStatic
-    fun save(canvas: Canvas, completed: Consumer<String>, failed: Consumer<Throwable>): Job =
+    fun save(canvas: Canvas, completed: Callback<String>, failed: Callback<Throwable>): Job =
         CoroutineScope(SupervisorJob() + Dispatchers.Main.immediate).launch {
             val savedPath = try {
                 val bitmap = capture(canvas)
