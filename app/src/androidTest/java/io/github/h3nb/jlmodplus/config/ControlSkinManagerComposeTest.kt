@@ -148,4 +148,29 @@ class ControlSkinManagerComposeTest {
         } finally { folder.deleteRecursively() }
     }
 
+
+    @Test fun skinLibraryOffersZipImportAndSetExport() {
+        val context = InstrumentationRegistry.getInstrumentation().targetContext
+        val workdir = File(context.cacheDir, "skin-transfer-ui-" + System.nanoTime())
+        val set = ControlSkinStore.create(workdir, "Shareable skin")
+        val intent = Intent(context, ControlSkinManagerActivity::class.java)
+            .putExtra(ControlSkinManagerActivity.EXTRA_WORKDIR, workdir.absolutePath)
+        try {
+            ActivityScenario.launch<ControlSkinManagerActivity>(intent).use {
+                rule.waitUntil(10_000) {
+                    rule.onAllNodesWithText(set.name).fetchSemanticsNodes().isNotEmpty()
+                }
+                rule.onNodeWithContentDescription(context.getString(R.string.control_skin_import_zip))
+                    .assertIsDisplayed()
+                rule.onNodeWithContentDescription(
+                    context.getString(R.string.control_skin_manage_named, set.name),
+                ).performClick()
+                rule.onNodeWithText(context.getString(R.string.control_skin_export_zip))
+                    .assertIsDisplayed()
+            }
+        } finally {
+            workdir.deleteRecursively()
+        }
+    }
+
 }
