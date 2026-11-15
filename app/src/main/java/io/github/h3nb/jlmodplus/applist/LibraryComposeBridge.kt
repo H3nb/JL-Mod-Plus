@@ -716,12 +716,10 @@ fun LibraryScreen(
     var navigationState by rememberSaveable(stateSaver = LibraryNavigationState.Saver) {
         mutableStateOf(LibraryNavigationState())
     }
-    val pagerState = rememberPagerState(
-        initialPage = navigationState.destination.ordinal.coerceIn(0, LibraryDestination.entries.lastIndex),
-        pageCount = { LibraryDestination.entries.size },
-    )
-    val coroutineScope = rememberCoroutineScope()
-    val tabMotion = remember { PagerTabMotion() }
+    val destination = LibraryDestination.valueOf(navigationState.destination.name)
+    val selectDestination: (LibraryDestination) -> Unit = { section ->
+        navigationState = navigationState.copy(destination = LibraryDestinationKey.valueOf(section.name))
+    }
     val context = LocalContext.current.applicationContext
     // Screenshot previews have no persistent preferences or active network stack.
     val isInspection = LocalInspectionMode.current
@@ -763,13 +761,7 @@ fun LibraryScreen(
             delay(repository.nextAutomaticDelayMillis())
         }
     }
-    val selectDestination: (LibraryDestination) -> Unit = { section ->
-        coroutineScope.launch { pagerState.navigateToTab(section.ordinal, tabMotion) }
-    }
-    val initialNavigationFocus = remember { FocusRequester() }
-    // Indicators may follow the gesture; state-changing navigation commits only after settling.
-    val destination = LibraryDestination.entries[pagerState.settledPage]
-    val indicatedDestination = LibraryDestination.entries[pagerState.currentPage]
+
     var appActions by remember { mutableStateOf<LibraryAppUiItem?>(null) }
     var renameTarget by remember { mutableStateOf<LibraryAppUiItem?>(null) }
     var metadataTarget by remember { mutableStateOf<LibraryAppUiItem?>(null) }
@@ -812,23 +804,12 @@ fun LibraryScreen(
     val appsListState = appsViewport.listState
     val appsGridState = appsViewport.gridState
     val showInstallFab = appsViewport.chromeVisible
-    val showNavigationBar = when (destination) {
-        LibraryDestination.Apps -> appsViewport.chromeVisible
-        LibraryDestination.Collections -> if (navigationState.selectedCollectionId == null) {
-            collectionsViewport.chromeVisible
-        } else {
-            collectionViewport.chromeVisible
-        }
-        LibraryDestination.More -> true
-    }
     val isImeVisible = WindowInsets.isImeVisible
-    val useNavigationRail = availableWindowWidthDp() >= 600.dp
     val scaffoldInsets = WindowInsets.safeDrawing
         .exclude(WindowInsets.ime)
         .only(WindowInsetsSides.Bottom)
     val density = LocalDensity.current
     val layoutDirection = LocalLayoutDirection.current
-    var navigationBarHeightPx by rememberSaveable { mutableIntStateOf(0) }
     val collectionsHost = actions as? LibraryCollectionsHost
     val collectionDialogState = collectionsHost?.collectionsStore()?.state?.collectAsState()?.value
     val collectionDialogVisible = collectionDialogState?.addTarget != null ||
@@ -877,15 +858,6 @@ fun LibraryScreen(
             updatePrompt != null,
     )
 
-    LaunchedEffect(pagerState) {
-        snapshotFlow { pagerState.settledPage }
-            .collectLatest { page ->
-                val key = LibraryDestinationKey.valueOf(LibraryDestination.entries[page].name)
-                if (currentNavigationState.destination != key) {
-                    navigationState = currentNavigationState.copy(destination = key)
-                }
-            }
-    }
     LaunchedEffect(state.generation, state.databaseControlsReady) {
         if (!state.databaseControlsReady) return@LaunchedEffect
         val retained = selectionState.retainGeneration(state.generation)
@@ -1169,20 +1141,13 @@ fun LibraryScreen(
                         currentControllerAboutPageVisible -> aboutPageVisible = false
                         currentControllerUpdatesPageVisible -> updatesPageVisible = false
                         currentControllerSelectionActive -> selectionState = selectionState.clear()
+                        currentControllerDestination != LibraryDestination.Apps ->
+                            selectDestination(LibraryDestination.Apps)
                         else -> Unit
                     }
                     LibraryControllerCommand.NextTab,
                     LibraryControllerCommand.PreviousTab,
-                    -> {
-                        val delta = if (event.command == LibraryControllerCommand.NextTab) 1 else -1
-                        pagerState.navigateToTab(
-                            (pagerState.currentPage + delta).coerceIn(
-                                0,
-                                LibraryDestination.entries.lastIndex,
-                            ),
-                            tabMotion,
-                        )
-                    }
+                    -> Unit
                 }
             } catch (interrupted: CancellationException) {
                 // Touch may interrupt a scroll without cancelling the controller subscription.
@@ -1241,19 +1206,7 @@ fun LibraryScreen(
     LaunchedEffect(libraryModalVisible, selectionActiveHere) {
         onControllerBackAvailabilityChanged(libraryModalVisible || selectionActiveHere)
     }
-    // Keep an eligible, non-text focus owner when the destination or workdir changes.
-    // Releasing focus alone can return it to the search editor on pre-API-28 Android.
-    // Do not re-request focus for ordinary Library data/projection updates.
-    LaunchedEffect(destination, state.libraryScope, libraryModalVisible) {
-        if (!libraryModalVisible && (useNavigationRail ||
-                (showNavigationBar && !imeHidesLibraryChrome && !selectionActiveHere &&
-                    !collectionManageAppsActive))
-        ) {
-            initialNavigationFocus.requestFocus()
-        }
-    }
     val updateDialogReady = hostResumed && destination == LibraryDestination.Apps &&
-        pagerState.currentPage == pagerState.settledPage &&
         state.databaseControlsReady && !isImeVisible &&
         hostActivity?.isHostDialogVisible() == false && !fragmentDialogVisible &&
         !collectionDialogVisible && !installSourceMenuVisible &&
@@ -1283,19 +1236,8 @@ fun LibraryScreen(
             .clearNavigationFocusOnTouch { controllerFocusVisible = false }
             .showNavigationFocusForKey { controllerFocusVisible = true },
     ) {
-        Row(modifier = libraryContentModifier.fillMaxSize()) {
-        if (useNavigationRail) {
-            LibraryNavigationRail(
-                selected = indicatedDestination,
-                onSelected = selectDestination,
-                initialFocusRequester = initialNavigationFocus,
-            )
-        }
-
         Scaffold(
-            modifier = Modifier
-                .weight(1f)
-                .fillMaxSize(),
+            modifier = libraryContentModifier.fillMaxSize(),
             contentWindowInsets = scaffoldInsets,
             snackbarHost = noticeHost,
             bottomBar = {
@@ -1336,47 +1278,8 @@ fun LibraryScreen(
                         onReinstall = { bulkActions.onReinstallSelected(selectionState.selectedAppIds) },
                         onExport = { bulkActions.onExportSelectedBundle(selectionState.selectedAppIds) },
                     )
-                } else if (
-                    !useNavigationRail &&
-                    !imeHidesLibraryChrome &&
-                    !selectionActiveHere
-                ) {
-                    AnimatedVisibility(
-                        visible = showNavigationBar && !collectionManageAppsActive,
-                        enter = fadeIn(
-                            animationSpec = tween(
-                                durationMillis = LIBRARY_CHROME_ANIMATION_MILLIS,
-                                easing = FastOutSlowInEasing,
-                            ),
-                        ) + slideInVertically(
-                            animationSpec = tween(
-                                durationMillis = LIBRARY_CHROME_ANIMATION_MILLIS,
-                                easing = FastOutSlowInEasing,
-                            ),
-                            initialOffsetY = { it / 2 },
-                        ),
-                        exit = fadeOut(
-                            animationSpec = tween(
-                                durationMillis = LIBRARY_CHROME_ANIMATION_MILLIS,
-                                easing = FastOutSlowInEasing,
-                            ),
-                        ) + slideOutVertically(
-                            animationSpec = tween(
-                                durationMillis = LIBRARY_CHROME_ANIMATION_MILLIS,
-                                easing = FastOutSlowInEasing,
-                            ),
-                            targetOffsetY = { it / 2 },
-                        ),
-                    ) {
-                        Box(Modifier.onSizeChanged { navigationBarHeightPx = it.height }) {
-                            LibraryNavigationBar(
-                                selected = indicatedDestination,
-                                onSelected = selectDestination,
-                                initialFocusRequester = initialNavigationFocus,
-                            )
-                        }
-                    }
                 }
+
             },
             floatingActionButton = {
                 if (
@@ -1459,58 +1362,8 @@ fun LibraryScreen(
                 }
             },
         ) { padding ->
-            // Navigation overlays a stable viewport. Keep its trailing content inset even when
-            // hidden: the last row stays reachable on return, without resizing lazy containers.
-            fun viewportPadding(reserveNavigation: Boolean = true): PaddingValues {
-                if (imeHidesLibraryChrome) return padding
-                val bottom = if (reserveNavigation && !useNavigationRail) {
-                    if (navigationBarHeightPx > 0) with(density) { navigationBarHeightPx.toDp() }
-                    else padding.calculateBottomPadding()
-                } else {
-                    with(density) { scaffoldInsets.getBottom(density).toDp() }
-                }
-                return PaddingValues.Absolute(
-                    left = padding.calculateLeftPadding(layoutDirection),
-                    top = padding.calculateTopPadding(),
-                    right = padding.calculateRightPadding(layoutDirection),
-                    bottom = bottom,
-                )
-            }
-            Box(
-                Modifier.fillMaxSize()
-                    .then(if (tabMotion.isJumping) Modifier.clearAndSetSemantics {} else Modifier),
-            ) {
-                HorizontalPager(
-                    state = pagerState,
-                    // Retain the three bounded destinations; their own lists remain lazy.
-                    // Viewport state alone cannot avoid rebuilding a page on every tab return.
-                    beyondViewportPageCount = LibraryDestination.entries.lastIndex,
-                    modifier = Modifier.fillMaxSize().graphicsLayer {
-                        alpha = tabMotion.alpha
-                        translationX = tabMotion.translationDp * density.density
-                    },
-                    verticalAlignment = Alignment.Top,
-                ) { page ->
-                val pageModifier = if (page == pagerState.currentPage) {
-                    Modifier
-                } else {
-                    // Pages can overlap during a swipe. Only the indicated page owns semantics;
-                    // viewport state lives outside the pager and survives page disposal.
-                    Modifier.clearAndSetSemantics { }
-                }
-                Box(
-                    modifier = pageModifier
-                        .fillMaxSize()
-                        .focusProperties {
-                            onEnter = {
-                                if (page != pagerState.currentPage || page != pagerState.settledPage) {
-                                    cancelFocusChange()
-                                }
-                            }
-                        }
-                        .focusGroup(),
-                ) {
-                    when (LibraryDestination.entries[page]) {
+            fun viewportPadding(): PaddingValues = padding
+            when (destination) {
                         LibraryDestination.Apps -> LibraryAppsDestination(
                             state = state,
                             scaffoldPadding = if (selectionActiveHere && destination == LibraryDestination.Apps) {
@@ -1574,13 +1427,18 @@ fun LibraryScreen(
                                 collectionScaffoldPadding = if (selectionActiveHere && destination == LibraryDestination.Collections) {
                                     padding
                                 } else {
-                                    viewportPadding(reserveNavigation = !navigationState.collectionManageApps)
+                                    viewportPadding()
                                 },
                                 navigationState = navigationState,
                                 overviewViewport = collectionsViewport,
                                 collectionViewport = collectionViewport,
                                 pickerViewport = collectionPickerViewport,
-                                onNavigationStateChanged = { navigationState = it },
+                                onNavigationStateChanged = { next ->
+                                    navigationState = if (
+                                        navigationState.selectedCollectionId != null &&
+                                        next.selectedCollectionId == null
+                                    ) next.copy(destination = LibraryDestinationKey.Apps) else next
+                                },
                                 onOpenActions = { app, collectionId ->
                                     appActions = app
                                     appActionsCollectionId = collectionId
@@ -1622,19 +1480,7 @@ fun LibraryScreen(
                                 if (currentControllerDestination == LibraryDestination.More) actions.onOpenCrashReports()
                             },
                         )
-                    }
-                }
             }
-                if (tabMotion.isJumping) {
-                    Box(
-                        Modifier.matchParentSize().clickable(
-                            interactionSource = remember { MutableInteractionSource() },
-                            indication = null,
-                        ) {},
-                    )
-                }
-            }
-        }
         }
 
         val auxiliaryPageOffset = with(density) { PAGE_TRAVEL_DP.dp.roundToPx() }
