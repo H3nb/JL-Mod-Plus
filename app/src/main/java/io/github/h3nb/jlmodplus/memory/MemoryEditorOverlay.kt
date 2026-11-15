@@ -256,12 +256,11 @@ internal fun MemoryEditorPeekDock(
     leadingContent: (@Composable () -> Unit)? = null,
     centerContent: (@Composable () -> Unit)? = null,
 ) {
-    // Match the workspace opacity without stacking two tinted surfaces.
-    // Dialogs keep the footer transparent so Peek does not introduce a second panel.
+    // The workspace already paints behind this dock; another tint would compound opacity.
+    // Dialog windows use the same transparent dock so Peek needs no second panel.
     Surface(
         modifier = modifier.fillMaxWidth(),
-        color = if (overlay.peeking || centerContent == null) Color.Transparent
-            else MaterialTheme.colorScheme.surfaceContainerHigh.copy(alpha = overlay.opacity),
+        color = Color.Transparent,
         contentColor = MaterialTheme.colorScheme.onSurface,
     ) {
         Row(Modifier.fillMaxWidth(), verticalAlignment = Alignment.CenterVertically) {
