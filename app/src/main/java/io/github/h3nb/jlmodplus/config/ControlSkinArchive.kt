@@ -41,14 +41,22 @@ internal object ControlSkinArchive {
                 FileOutputStream(temporary).use { output ->
                     ZipOutputStream(BufferedOutputStream(output)).use { zip ->
                         for (source in entries) {
+                            if (Thread.currentThread().isInterrupted) {
+                                throw IOException("Control skin export was interrupted")
+                            }
                             zip.putNextEntry(ZipEntry(set.name + "/" + source.name))
                             FileInputStream(source).buffered().use { input ->
                                 input.copyTo(zip, BUFFER_SIZE)
                             }
                             zip.closeEntry()
                         }
+                        zip.finish()
+                        zip.flush()
+                        output.fd.sync()
                     }
-                    output.fd.sync()
+                }
+                if (Thread.currentThread().isInterrupted) {
+                    throw IOException("Control skin export was interrupted")
                 }
                 publishUnique(temporary, destination, set.name)
             } finally {
@@ -92,6 +100,9 @@ internal object ControlSkinArchive {
         var entries = 0
         ZipInputStream(BufferedInputStream(FileInputStream(archive))).use { zip ->
             while (true) {
+                if (Thread.currentThread().isInterrupted) {
+                    throw IOException("Control skin import was interrupted")
+                }
                 val entry = zip.nextEntry ?: break
                 if (++entries > MAX_ENTRIES) throw IOException("Control skin ZIP has too many entries")
                 val path = entry.name
@@ -128,6 +139,9 @@ internal object ControlSkinArchive {
                         val buffer = ByteArray(BUFFER_SIZE)
                         var total = 0L
                         while (true) {
+                            if (Thread.currentThread().isInterrupted) {
+                                throw IOException("Control skin import was interrupted")
+                            }
                             val n = zip.read(buffer)
                             if (n < 0) break
                             total += n
