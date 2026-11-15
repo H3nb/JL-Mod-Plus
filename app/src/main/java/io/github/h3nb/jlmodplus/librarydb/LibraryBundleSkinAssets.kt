@@ -7,7 +7,6 @@ package io.github.h3nb.jlmodplus.librarydb
 import io.github.h3nb.jlmodplus.config.ConfigAssetFiles
 import io.github.h3nb.jlmodplus.config.ControlSkinSetTransfer
 import java.io.File
-import java.io.IOException
 import kotlinx.serialization.json.Json
 import kotlinx.serialization.json.JsonNull
 import kotlinx.serialization.json.JsonObject
@@ -138,6 +137,9 @@ internal object LibraryBundleSkinAssets {
             matches()
         }
     }
+
+    private fun JsonObject.string(key: String): String? =
+        (get(key) as? JsonPrimitive)?.contentOrNull?.takeIf(String::isNotBlank)
 
     private fun validLeaf(name: String): Boolean =
         name.isNotBlank() && name.length <= 120 &&
