@@ -754,7 +754,8 @@ private fun RuntimeSearchResultsTab(
                 deleteSnapshot = state.revision to selectedRows.map(MemoryResultRow::id)
             },
         )
-        if (state.sessionStage != MemorySessionStage.EMPTY || state.results.isNotEmpty()) {
+        if (state.sessionStage != MemorySessionStage.EMPTY || state.results.isNotEmpty() ||
+            state.canUndo) {
             BoxWithConstraints(Modifier.fillMaxWidth().windowInsetsPadding(
                 WindowInsets.safeGestures.only(WindowInsetsSides.Horizontal),
             )) {
