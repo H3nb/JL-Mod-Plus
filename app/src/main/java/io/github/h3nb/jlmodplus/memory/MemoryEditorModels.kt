@@ -375,6 +375,9 @@ internal data class MemoryEditorNavigationState(
         }
 }
 
+/** The exact document allows a reopened editor to resolve an interrupted Save from the catalog. */
+internal data class MemoryEditorPendingScriptSave(val id: String, val document: String)
+
 /** Transient per-MIDlet workspace. Minimize must not turn an editable draft into a new session. */
 internal data class MemoryEditorScriptWorkspace(
     val selectedId: String? = null,
@@ -386,6 +389,7 @@ internal data class MemoryEditorScriptWorkspace(
     val detailInputs: Map<String, String> = emptyMap(),
     val detailFreeze: Boolean = false,
     val builder: MemoryScriptBuilderDraft? = null,
+    val pendingSave: MemoryEditorPendingScriptSave? = null,
 )
 
 /** Held only in :memory_engine memory. A different MIDlet token starts with Search. */
@@ -424,6 +428,12 @@ internal object MemoryEditorSessionNavigation {
                 text = update.text,
                 builder = update.builder,
             )
+        }
+    }
+
+    @Synchronized fun rememberPendingScriptSave(token: Long, pending: MemoryEditorPendingScriptSave?) {
+        if (token != 0L && token == runtimeToken) {
+            scriptWorkspace = scriptWorkspace.copy(pendingSave = pending)
         }
     }
 
