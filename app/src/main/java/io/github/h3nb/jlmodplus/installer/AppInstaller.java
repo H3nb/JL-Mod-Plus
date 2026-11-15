@@ -50,7 +50,6 @@ import java.util.Locale;
 import java.util.Set;
 import java.util.jar.JarFile;
 
-import io.reactivex.SingleEmitter;
 import io.github.h3nb.jlmodplus.config.Config;
 import io.github.h3nb.jlmodplus.config.FreshInstalledMidletInitializer;
 import io.github.h3nb.jlmodplus.config.ProfileModel;
@@ -245,7 +244,7 @@ public class AppInstaller {
     }
 
     /** Load and check app info from source against one captured READY Library generation. */
-    void loadInfo(SingleEmitter<Integer> emitter) throws IOException, ConverterException {
+    int loadInfo() throws IOException, ConverterException {
         checkCancelled();
         stage(Stage.READING);
         bindReadyGeneration();
@@ -263,8 +262,7 @@ public class AppInstaller {
             File retainedJad = new File(targetDir, AppReconverter.RETAINED_JAD);
             srcJad = retainedJad.isFile() ? scratch.copy(retainedJad, "reviewed.jad") : null;
             srcJar = scratch.copy(srcJar, "reviewed.jar");
-            emitLoadedStatus(emitter, STATUS_EQUAL);
-            return;
+            return emitLoadedStatus(STATUS_EQUAL);
         }
 
         boolean isLocal = srcFile != null;
@@ -293,24 +291,20 @@ public class AppInstaller {
                 srcJar = resolvedJar;
                 manifest = loadManifest(resolvedJar);
                 if (!manifest.equals(newDesc)) {
-                    emitLoadedStatus(emitter, STATUS_UNMATCHED);
-                    return;
+                    return emitLoadedStatus(STATUS_UNMATCHED);
                 }
             } else if (isLocal && scheme == null && host == null) {
                 if (this.uri != null && "content".equals(this.uri.getScheme())) {
                     // ContentProvider grants apply to individual documents, not URI path siblings.
                     // The matching JAR must be chosen explicitly by the user.
-                    emitLoadedStatus(emitter, STATUS_NEED_JAR);
-                    return;
+                    return emitLoadedStatus(STATUS_NEED_JAR);
                 }
                 if (!checkJarFile(srcFile)) {
-                    emitLoadedStatus(emitter, STATUS_UNMATCHED);
-                    return;
+                    return emitLoadedStatus(STATUS_UNMATCHED);
                 }
             } else if (isLocal && "content".equals(scheme)) {
                 if (!checkContentUriJar(jarUri)) {
-                    emitLoadedStatus(emitter, STATUS_UNMATCHED);
-                    return;
+                    return emitLoadedStatus(STATUS_UNMATCHED);
                 }
             }
         } else if (TextUtils.endsWithIgnoreCase(name, ".kjx")) {
@@ -319,8 +313,7 @@ public class AppInstaller {
             newDesc = new Descriptor(srcJad, true);
             manifest = loadManifest(srcJar);
             if (!manifest.equals(newDesc)) {
-                emitLoadedStatus(emitter, STATUS_UNMATCHED);
-                return;
+                return emitLoadedStatus(STATUS_UNMATCHED);
             }
         } else {
             srcJar = useSourceDirectly ? srcFile : scratch.copy(srcFile, "reviewed.jar");
@@ -329,16 +322,16 @@ public class AppInstaller {
         if (srcJar != null && resolvedJar == null && !useSourceDirectly) {
             srcJar = scratch.copy(srcJar, "reviewed.jar");
         }
-        emitLoadedStatus(emitter, checkDescriptor());
+        return emitLoadedStatus(checkDescriptor());
     }
 
-    private void emitLoadedStatus(SingleEmitter<Integer> emitter, int status) {
+    private int emitLoadedStatus(int status) {
         loadedStatus = status;
         loadedIdentity = matchedIdentity;
-        emitter.onSuccess(status);
+        return status;
     }
 
-    void useJarOnly(SingleEmitter<Integer> emitter) throws IOException {
+    int useJarOnly() throws IOException {
         checkCancelled();
         if (srcJar == null || manifest == null) throw new IOException("JAR fallback is unavailable");
         newDesc = manifest;
@@ -346,7 +339,7 @@ public class AppInstaller {
         if (srcJar != null && resolvedJar == null) {
             srcJar = scratch.copy(srcJar, "reviewed.jar");
         }
-        emitLoadedStatus(emitter, checkDescriptor());
+        return emitLoadedStatus(checkDescriptor());
     }
 
     private void bindReadyGeneration() throws IOException {
@@ -473,8 +466,91 @@ public class AppInstaller {
         // JAD relative MIDlet-Jar-URL values resolve against the final HTTP redirect target.
         uri = Uri.parse(finalUri.toString());
     }
-    /** Finalize converted files first, then publish a generation-bound Room3 mutation asynchronously. */
-    void install(SingleEmitter<Integer> emitter) throws ConverterException, IOException {
+    static final class InstallStep {
+        private final int status;
+        private final Publication publication;
+
+        private InstallStep(int status, Publication publication) {
+            this.status = status;
+            this.publication = publication;
+        }
+
+        static InstallStep review(int status) { return new InstallStep(status, null); }
+        static InstallStep published(Publication publication) {
+            return new InstallStep(STATUS_SUCCESS, publication);
+        }
+
+        int getStatus() { return status; }
+        Publication getPublication() { return publication; }
+    }
+
+    /**
+     * Owns the permit and runtime lease after filesystem publication. The suspending
+     * installer operation must close this even when Room commit or visibility fails.
+     */
+    static final class Publication implements AutoCloseable {
+        private final AppInstaller installer;
+        private final InstallerExecutionCoordinator.Permit permit;
+        private final RuntimeStorageLease replacementLease;
+        private final File recoveryBackup;
+        private final Long existingId;
+        private final String sourceTitle;
+        private final String sourceVendor;
+        private final String sourceVersion;
+        private final String sourceDescription;
+        private final long iconRevision;
+        private final long addedAt;
+
+        private Publication(AppInstaller installer, InstallerExecutionCoordinator.Permit permit,
+                RuntimeStorageLease replacementLease, File recoveryBackup, Long existingId,
+                String sourceTitle, String sourceVendor, String sourceVersion,
+                String sourceDescription, long iconRevision) {
+            this.installer = installer;
+            this.permit = permit;
+            this.replacementLease = replacementLease;
+            this.recoveryBackup = recoveryBackup;
+            this.existingId = existingId;
+            this.sourceTitle = sourceTitle;
+            this.sourceVendor = sourceVendor;
+            this.sourceVersion = sourceVersion;
+            this.sourceDescription = sourceDescription;
+            this.iconRevision = iconRevision;
+            this.addedAt = System.currentTimeMillis();
+        }
+
+        LibraryViewModel getLibrary() { return installer.libraryViewModel; }
+        long getGeneration() { return installer.expectedGeneration; }
+        File getWorkdir() { return installer.expectedWorkdir; }
+        Long getExistingId() { return existingId; }
+        String getStorageKey() { return installer.appDirName; }
+        String getSourceTitle() { return sourceTitle; }
+        String getSourceVendor() { return sourceVendor; }
+        String getSourceVersion() { return sourceVersion; }
+        String getSourceDescription() { return sourceDescription; }
+        long getIconRevision() { return iconRevision; }
+        long getAddedAt() { return addedAt; }
+
+        void committed(long id) {
+            installer.installedId = id;
+            if (recoveryBackup != null &&
+                    !LibraryInstallRecovery.discardBackup(installer.expectedWorkdir, installer.appDirName)) {
+                Log.w(TAG, "Installed app committed but recovery backup cleanup failed: " +
+                        installer.appDirName);
+            }
+        }
+
+        @Override
+        public void close() {
+            try {
+                releaseReplacementLock(replacementLease);
+            } finally {
+                permit.close();
+            }
+        }
+    }
+
+    /** Convert and publish on the worker; transfer owned leases to the suspending commit phase. */
+    InstallStep installPrepared() throws ConverterException, IOException {
         if (inspectionIndex != null) {
             throw new InstallerFailure("Read-only batch review cannot publish an installation");
         }
@@ -492,8 +568,7 @@ public class AppInstaller {
                 throw error;
             }
             if (!manifest.equals(newDesc)) {
-                emitLoadedStatus(emitter, STATUS_UNMATCHED);
-                return;
+                return InstallStep.review(emitLoadedStatus(STATUS_UNMATCHED));
             }
         }
         stage(Stage.WAITING);
@@ -515,8 +590,7 @@ public class AppInstaller {
                         !filesHaveSameContents(srcJar, currentJar)) {
                     newDesc = currentDescriptor;
                     srcJar = scratch.copy(currentJar, "reviewed.jar");
-                    emitLoadedStatus(emitter, STATUS_EQUAL);
-                    return;
+                    return InstallStep.review(emitLoadedStatus(STATUS_EQUAL));
                 }
             } else {
                 int currentStatus = checkDescriptor();
@@ -525,8 +599,7 @@ public class AppInstaller {
                     // Source inspection and user confirmation happen outside the global permit. If a
                     // previous installer changed the Library while this request was pending, surface
                     // the new classification instead of applying a stale NEW/UPDATE/REINSTALL decision.
-                    emitLoadedStatus(emitter, currentStatus);
-                    return;
+                    return InstallStep.review(emitLoadedStatus(currentStatus));
                 }
             }
 
@@ -672,57 +745,11 @@ public class AppInstaller {
 
             clearCache();
             deleteTemp();
-            libraryViewModel.recordInstalledApp(
-                    expectedGeneration,
-                    expectedWorkdir,
-                    existingId,
-                    appDirName,
-                    sourceTitle,
-                    sourceVendor,
-                    sourceVersion,
-                    sourceDescription,
-                    iconRevision,
-                    System.currentTimeMillis(),
-                    (value, error) -> {
-                        if (error != null) {
-                            releaseReplacementLock(heldReplacementLock);
-                            executionPermit.close();
-                            // Keep recoveryBackup. Startup reconciliation will refresh this exact storage key
-                            // without deleting the successfully published replacement.
-                            if (!emitter.isDisposed()) emitter.onError(new InstallerFailure(
-                                    "Installed files need Library recovery", error));
-                            return;
-                        }
-                        if (value == null) {
-                            releaseReplacementLock(heldReplacementLock);
-                            executionPermit.close();
-                            if (!emitter.isDisposed()) {
-                                emitter.onError(new IllegalStateException(
-                                        "Library install mutation returned no app id"));
-                            }
-                            return;
-                        }
-                        installedId = value;
-                        if (recoveryBackup != null &&
-                                !LibraryInstallRecovery.discardBackup(expectedWorkdir, appDirName)) {
-                            Log.w(TAG, "Installed app committed but recovery backup cleanup failed: " + appDirName);
-                        }
-                        InstallerExecutionCoordinator.awaitVisible(
-                                libraryViewModel,
-                                expectedGeneration,
-                                expectedWorkdir,
-                                installedId,
-                                appDirName,
-                                visibilityError -> {
-                                    releaseReplacementLock(heldReplacementLock);
-                                    executionPermit.close();
-                                    if (emitter.isDisposed()) return;
-                                    if (visibilityError != null) emitter.onError(new InstallerFailure(
-                                            "Installed files need Library recovery", visibilityError));
-                                    else emitter.onSuccess(STATUS_SUCCESS);
-                                });
-                    });
+            Publication publication = new Publication(this, executionPermit, heldReplacementLock,
+                    recoveryBackup, existingId, sourceTitle, sourceVendor, sourceVersion,
+                    sourceDescription, iconRevision);
             handedOff = true;
+            return InstallStep.published(publication);
         } catch (IOException error) {
             if (!(error instanceof java.io.InterruptedIOException) &&
                     (stage == Stage.WAITING || stage == Stage.SAVING)) {
@@ -774,7 +801,7 @@ public class AppInstaller {
      * Resume the same reviewed JAD request after an external content provider has supplied an
      * explicit JAR URI. Never install metadata from an unmatched JAR.
      */
-    void loadSelectedExternalJar(Uri jarUri, SingleEmitter<Integer> emitter)
+    int loadSelectedExternalJar(Uri jarUri)
             throws IOException, ConverterException {
         checkCancelled();
         if ((loadedStatus != STATUS_NEED_JAR && loadedStatus != STATUS_WRONG_COMPANION_JAR)
@@ -786,10 +813,9 @@ public class AppInstaller {
         srcJar = scratch.copy(source, "reviewed.jar");
         manifest = loadManifest(srcJar);
         if (!manifest.equals(newDesc)) {
-            emitLoadedStatus(emitter, STATUS_WRONG_COMPANION_JAR);
-            return;
+            return emitLoadedStatus(STATUS_WRONG_COMPANION_JAR);
         }
-        emitLoadedStatus(emitter, checkDescriptor());
+        return emitLoadedStatus(checkDescriptor());
     }
 
     private int checkDescriptor() throws IOException {
