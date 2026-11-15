@@ -111,11 +111,6 @@ internal fun MemoryScriptTypeChooser(
             .padding(horizontal = 16.dp, vertical = 12.dp),
         verticalArrangement = Arrangement.spacedBy(12.dp),
     ) {
-        Row(verticalAlignment = Alignment.CenterVertically) {
-            TextButton(onClick = onBack) { Text(stringResource(R.string.memory_scripts_back)) }
-            Text(stringResource(R.string.memory_scripts_choose_type),
-                style = MaterialTheme.typography.titleLarge)
-        }
         Text(
             stringResource(R.string.memory_scripts_choose_hint),
             style = MaterialTheme.typography.bodyMedium,
@@ -205,14 +200,6 @@ internal fun MemoryScriptBuilderScreen(
     }
     Column(modifier.fillMaxSize().padding(horizontal = 12.dp),
         verticalArrangement = Arrangement.spacedBy(8.dp)) {
-        Row(verticalAlignment = Alignment.CenterVertically) {
-            TextButton(onClick = onBack, enabled = !saving) {
-                Text(stringResource(R.string.memory_scripts_back))
-            }
-            Text(modeTitle(draft.mode), modifier = Modifier.weight(1f),
-                style = MaterialTheme.typography.titleMedium,
-                maxLines = 1, overflow = TextOverflow.Ellipsis)
-        }
         error?.let {
             Text(it, color = MaterialTheme.colorScheme.error,
                 style = MaterialTheme.typography.bodySmall,
