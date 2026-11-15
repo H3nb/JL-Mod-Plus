@@ -148,7 +148,7 @@
     <string name="library_destination_more">More</string>
     <string name="library_search_placeholder">Search apps…</string>
     <string name="library_filter_all">All</string>
-    <string name="library_filter_recently_opened">Recently played</string>
+    <string name="library_filter_recently_opened">Recently opened</string>
     <string name="library_filter_recently_added">Recently added</string>
     <string name="library_filter_favorites">Favorites</string>
     <string name="library_add_to_favorites_action">Add to favorites</string>
@@ -508,7 +508,7 @@
     <string name="library_import_invalid_bundle">The selected app bundle is invalid, damaged, or unsupported. Choose a valid JL-Mod Plus app bundle and try again.</string>
     <string name="library_import_restore_existing">This app is already installed. Any settings or save data included in the bundle will replace the corresponding existing data.</string>
     <string name="library_import_restore_failed">The app is installed, but its bundle data could not be restored. Retry the restore?</string>
-    <string name="library_play_stats_summary">Plays: %1$d · Total time: %2$s</string>
+    <string name="library_play_stats_summary">Opens: %1$d · Total time: %2$s</string>
     <string name="library_share_chooser_title">Share app</string>
     <string name="library_export_chooser_title">Export app bundle</string>
     <string name="library_export_progress">Exporting… %1$d/%2$d</string>
