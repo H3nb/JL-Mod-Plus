@@ -797,7 +797,11 @@ fun LibraryScreen(
     var controllerFocusVisible by rememberSaveable { mutableStateOf(false) }
     var controllerFocusedAppId by rememberSaveable { mutableStateOf<Long?>(null) }
     var controllerFocusedAppIndex by rememberSaveable { mutableIntStateOf(0) }
-    val appsViewport = rememberLibraryViewportState(state.libraryScope, initialQuery = state.appliedFilter)
+    val appsViewport = rememberLibraryViewportState(state.libraryScope)
+    // Queries belong to the independent Search surface, not the underlying Library.
+    LaunchedEffect(state.libraryScope, state.appliedFilter) {
+        if (state.appliedFilter.isNotEmpty()) actions.onSearch("")
+    }
     val collectionsViewport = rememberLibraryViewportState(state.libraryScope)
     val collectionViewport = rememberLibraryViewportState(state.libraryScope, navigationState.selectedCollectionId)
     val collectionPickerViewport = rememberLibraryViewportState(state.libraryScope, navigationState.selectedCollectionId)
@@ -1411,7 +1415,6 @@ fun LibraryScreen(
                                 appActions = it
                                 appActionsCollectionId = null
                             },
-                            onSearch = actions::onSearch,
                             onQuickView = actions::onQuickView,
                             onFavorite = actions::onFavorite,
                             onToggleSelection = { app ->
@@ -2243,7 +2246,7 @@ private fun LibrarySearchOverlay(
 internal fun LibraryAppsDestination(
     state: LibraryUiState,
     scaffoldPadding: PaddingValues,
-    viewportState: LibraryViewportState = rememberLibraryViewportState(initialQuery = state.appliedFilter),
+    viewportState: LibraryViewportState = rememberLibraryViewportState(),
     returnAnchor: LibraryScrollAnchor? = null,
     returnViewport: LibraryViewportSnapshot? = null,
     returnAnchorKey: Any? = Unit,
@@ -2253,7 +2256,6 @@ internal fun LibraryAppsDestination(
     controllerFocusedDatabaseId: Long? = null,
     onOpenApp: (Int) -> Unit,
     onOpenActions: (LibraryAppUiItem) -> Unit,
-    onSearch: (String) -> Unit,
     onQuickView: (LibraryQuickView) -> Unit,
     onFavorite: (Int, Boolean) -> Unit,
     onToggleSelection: (LibraryAppUiItem) -> Unit = {},
@@ -2276,37 +2278,12 @@ internal fun LibraryAppsDestination(
     preserveImePaddingWhileFrozen: Boolean = false,
     active: Boolean = true,
 ) {
-    var query by viewportState.queryState
-    var searchFocused by remember { mutableStateOf(false) }
-    val searchDismissFocus = remember { FocusRequester() }
-    val searchKeyboard = LocalSoftwareKeyboardController.current
-    val searchImeVisible = WindowInsets.ime.getBottom(LocalDensity.current) > 0
-    var searchImeWasVisible by remember { mutableStateOf(false) }
-    // On Android the IME consumes the first system Back before the app's BackHandler runs.
-    // Dismiss focus when that same Back finishes hiding the keyboard, rather than leaving
-    // an invisible-but-focused field that lets the next Back exit the Library.
-    LaunchedEffect(active, searchFocused, searchImeVisible) {
-        when {
-            !active || !searchFocused -> searchImeWasVisible = false
-            searchImeVisible -> searchImeWasVisible = true
-            searchImeWasVisible -> {
-                searchDismissFocus.requestFocus()
-                searchImeWasVisible = false
-            }
-        }
-    }
-    BackHandler(enabled = active && searchFocused) {
-        searchKeyboard?.hide()
-        searchDismissFocus.requestFocus()
-    }
+    val sortFocus = remember { FocusRequester() }
     val listState = viewportState.listState
     val gridState = viewportState.gridState
     var sortVisible by remember { mutableStateOf(false) }
     LaunchedEffect(active) {
-        if (!active) {
-            sortVisible = false
-            searchFocused = false
-        }
+        if (!active) sortVisible = false
     }
     val currentActive by rememberUpdatedState(active)
     // Read eligibility when an action arrives, retaining callback identity across tab changes.
@@ -2332,10 +2309,6 @@ internal fun LibraryAppsDestination(
             viewportState.chromeVisible = visible
             if (currentActive) currentOnNavigationVisibilityChanged(visible)
         }
-    }
-
-    LaunchedEffect(query) {
-        onSearch(query)
     }
 
     // The list/grid stays mounted while metadata and other overlays are open. A save request is
@@ -2405,36 +2378,11 @@ internal fun LibraryAppsDestination(
             },
         )
         .windowInsetsPadding(WindowInsets.safeDrawing.only(WindowInsetsSides.Horizontal))
-    val searchScope = rememberCoroutineScope()
-    fun revealSearchResults() {
-        viewportState.headerOffsetPx.floatValue = 0f
-        viewportState.chromeVisible = true
-        searchScope.launch {
-            if (state.layout == LibraryLayout.List) {
-                if (listState.firstVisibleItemIndex != 0 || listState.firstVisibleItemScrollOffset != 0) {
-                    listState.scrollToItem(0)
-                }
-            } else if (gridState.firstVisibleItemIndex != 0 || gridState.firstVisibleItemScrollOffset != 0) {
-                gridState.scrollToItem(0)
-            }
-        }
-    }
-    LaunchedEffect(searchFocused) {
-        if (searchFocused) revealSearchResults()
-    }
     val renderHeader: @Composable (Modifier, Boolean) -> Unit = { headerModifier, interactive ->
         LibraryAppsHeader(
             modifier = headerModifier,
-            query = query,
             headerOffsetPx = headerOffsetPx,
-            onQueryChange = {
-                if (currentActive) {
-                    query = it
-                    revealSearchResults()
-                }
-            },
-            onSearchFocusChanged = { if (interactive) searchFocused = it },
-            dismissFocusRequester = searchDismissFocus,
+            dismissFocusRequester = sortFocus,
             state = state,
             sortVisible = active && sortVisible,
             onSortVisibilityChanged = { sortVisible = currentActive && it },
@@ -2467,7 +2415,7 @@ internal fun LibraryAppsDestination(
         viewport = viewportState,
         layout = state.layout,
         headerHeightPx = headerHeightPx,
-        enabled = active && !freezeViewport && !searchFocused,
+        enabled = active && !freezeViewport,
         onVisibilityChanged = { visible ->
             activeFabVisibilityChanged(visible)
             activeNavigationVisibilityChanged(visible)
@@ -2782,10 +2730,7 @@ private fun JlModPlusWordmark(
 @Composable
 private fun LibraryAppsHeader(
     modifier: Modifier = Modifier,
-    query: String,
     headerOffsetPx: MutableFloatState,
-    onQueryChange: (String) -> Unit,
-    onSearchFocusChanged: (Boolean) -> Unit = {},
     dismissFocusRequester: FocusRequester,
     state: LibraryUiState,
     sortVisible: Boolean,
