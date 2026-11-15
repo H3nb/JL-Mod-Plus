@@ -42,7 +42,6 @@ import java.nio.charset.Charset;
 import java.security.MessageDigest;
 import java.util.LinkedHashMap;
 import java.util.Locale;
-import java.util.function.Consumer;
 import java.util.Map;
 import java.util.concurrent.atomic.AtomicLong;
 
@@ -567,7 +566,8 @@ public class MicroLoader {
 		}
 	}
 
-	void takeScreenshot(Object target, Consumer<String> completed, Consumer<Throwable> failed) {
+	void takeScreenshot(Object target, ScreenshotCapture.Callback<String> completed,
+			ScreenshotCapture.Callback<Throwable> failed) {
 		if (target instanceof Canvas canvas) {
 			ScreenshotCapture.save(canvas, completed, failed);
 		}
