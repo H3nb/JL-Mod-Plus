@@ -1557,6 +1557,8 @@ fun LibraryScreen(
                 },
                 onFavorite = actions::onFavorite,
                 resolveUiId = actions::resolveAppUiId,
+                controllerEvents = controllerEvents,
+                actionsBlocked = libraryOverlayVisible || updatePrompt != null,
                 modifier = Modifier.fillMaxSize().zIndex(2f),
             )
         }
@@ -2136,6 +2138,8 @@ internal fun LibrarySearchOverlay(
     onOpenActions: (LibraryAppUiItem) -> Unit,
     onFavorite: (Int, Boolean) -> Unit,
     resolveUiId: (Long) -> Int? = { null },
+    controllerEvents: Flow<LibraryControllerEvent>? = null,
+    actionsBlocked: Boolean = false,
     modifier: Modifier = Modifier,
 ) {
     var query by rememberSaveable(state.libraryScope) { mutableStateOf("") }
@@ -2192,6 +2196,61 @@ internal fun LibrarySearchOverlay(
     }
 
     val visibleResults = results
+    val searchListState = rememberLazyListState()
+    var focusedDatabaseId by remember { mutableStateOf<Long?>(null) }
+    var controllerFocusVisible by remember { mutableStateOf(false) }
+    val currentResults by rememberUpdatedState(visibleResults.orEmpty())
+    val currentActionsBlocked by rememberUpdatedState(actionsBlocked)
+    val currentOpenApp by rememberUpdatedState(onOpenApp)
+    val currentOpenActions by rememberUpdatedState(onOpenActions)
+    val currentResolveUiId by rememberUpdatedState(resolveUiId)
+
+    LaunchedEffect(visibleResults) {
+        val readyResults = visibleResults.orEmpty()
+        if (readyResults.none { it.databaseId == focusedDatabaseId }) {
+            focusedDatabaseId = readyResults.firstOrNull()?.databaseId
+        }
+    }
+    LaunchedEffect(controllerEvents) {
+        controllerEvents?.collect { event ->
+            if (currentActionsBlocked) return@collect
+            val entries = currentResults
+            if (entries.isEmpty()) return@collect
+            val currentIndex = entries.indexOfFirst { it.databaseId == focusedDatabaseId }
+                .coerceAtLeast(0)
+            when (event.command) {
+                LibraryControllerCommand.MoveUp,
+                LibraryControllerCommand.MoveLeft,
+                LibraryControllerCommand.MoveDown,
+                LibraryControllerCommand.MoveRight -> {
+                    controllerFocusVisible = true
+                    val delta = if (event.command == LibraryControllerCommand.MoveUp ||
+                        event.command == LibraryControllerCommand.MoveLeft) -1 else 1
+                    val nextIndex = (currentIndex + delta).coerceIn(0, entries.lastIndex)
+                    focusedDatabaseId = entries[nextIndex].databaseId
+                    if (searchListState.layoutInfo.visibleItemsInfo.any { it.index == nextIndex }) {
+                        searchListState.animateScrollToItem(nextIndex)
+                    } else {
+                        searchListState.scrollToItem(nextIndex)
+                    }
+                }
+                LibraryControllerCommand.Activate -> {
+                    val app = entries[currentIndex]
+                    val id = currentResolveUiId(app.databaseId) ?: app.id.takeIf { it != 0 }
+                    if (id != null) currentOpenApp(id)
+                }
+                LibraryControllerCommand.OpenActions -> {
+                    val app = entries[currentIndex]
+                    val id = currentResolveUiId(app.databaseId) ?: app.id.takeIf { it != 0 }
+                    if (id != null) currentOpenActions(app.copy(id = id))
+                }
+                LibraryControllerCommand.Back,
+                LibraryControllerCommand.NextTab,
+                LibraryControllerCommand.PreviousTab -> Unit
+            }
+        }
+    }
+
     Column(
         modifier = modifier
             .background(MaterialTheme.colorScheme.background)
@@ -2244,6 +2303,7 @@ internal fun LibrarySearchOverlay(
             visibleResults.isEmpty() -> LibraryEmptyState(query)
             else -> LazyColumn(
                 modifier = Modifier.fillMaxSize(),
+                state = searchListState,
                 contentPadding = PaddingValues(bottom = 24.dp),
             ) {
                 items(visibleResults, key = { it.databaseId }) { app ->
@@ -2261,7 +2321,8 @@ internal fun LibrarySearchOverlay(
                             val resolved = resolveUiId(app.databaseId) ?: id.takeIf { it != 0 }
                             if (resolved != null) onFavorite(resolved, favorite)
                         },
-                        controllerFocused = false,
+                        controllerFocused = controllerFocusVisible &&
+                            focusedDatabaseId == app.databaseId,
                         favoriteEnabled = state.databaseControlsReady,
                         selectionMode = false,
                         selected = false,
