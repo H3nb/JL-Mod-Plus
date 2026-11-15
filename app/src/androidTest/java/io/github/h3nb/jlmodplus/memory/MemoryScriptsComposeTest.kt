@@ -278,7 +278,7 @@ class MemoryScriptsComposeTest {
             JLModPlusTheme {
                 Box(Modifier.height(160.dp)) {
                     MemoryScriptTypeChooser(
-                        onChoose = {}, onJson = {}, onBack = {},
+                        onChoose = {}, onJson = {},
                     )
                 }
             }
@@ -329,7 +329,7 @@ class MemoryScriptsComposeTest {
             }
         }
         openChooser()
-        rule.onNodeWithText("Back").performClick()
+        rule.onNodeWithContentDescription("Back").performClick()
         rule.onNodeWithContentDescription(
             InstrumentationRegistry.getInstrumentation().targetContext.getString(
                 R.string.memory_variables_tab,
