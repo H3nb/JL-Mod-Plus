@@ -53,8 +53,8 @@ A **skin set is shared artwork**, not a copy of the game's touch configuration. 
 
 Use **Export ZIP** in a skin set's menu to save or share the complete set. Use
 **Import ZIP** in the skin library toolbar to restore it. ZIP import does not
-automatically select a set for a MIDlet. A backup of a game can also optionally
-include its referenced skin; exporting only the skin does not include the game.
+automatically select a set for a MIDlet. App bundles do not include screen layout or virtual control skin artwork;
+transfer those assets separately when needed.
 
 Creating or duplicating a set opens it for editing but **does not select it automatically**. Tap its row to choose it for the current MIDlet. Renaming a set does not change its identity; deleting a set makes MIDlets that still refer to it use built-in artwork.
 

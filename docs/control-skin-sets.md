@@ -112,8 +112,8 @@ modify any keyboard layout or mapping.
 Export selects a destination directory using the app-owned picker and writes a
 unique filename such as `Fantasy.zip` or `Fantasy (2).zip`. Import selects one
 `.zip` file. Both operations validate boundaries before publication, work off
-the UI thread, and clean up temporary files on failure. Existing app bundle
-imports continue using the same shared skin installation rules.
+the UI thread, and clean up temporary files on failure. App bundles do not
+include global screen layout or virtual control skin files.
 
 ## Editing and ownership
 

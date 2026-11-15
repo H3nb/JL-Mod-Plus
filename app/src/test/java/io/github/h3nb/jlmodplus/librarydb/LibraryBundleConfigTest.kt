@@ -56,6 +56,36 @@ class LibraryBundleConfigTest {
         assertFalse(File(target, "skins").exists())
     }
 
+    @Test fun appBundleReaderRejectsSkinNamespaces() {
+        val source = File(temp, "rejected-source").apply { mkdirs() }
+        File(source, "converted/game").apply { mkdirs() }.resolve("res.jar")
+            .writeBytes(byteArrayOf(1, 2, 3))
+        val base = File(temp, "base.zip")
+        LibraryUniversalBundleExporter.exportToZip(
+            listOf(LibraryUniversalBundleExporter.AppSource(
+                "a0001", "Game", "Vendor", "1", source, "game",
+            )), base,
+        )
+        for (extra in listOf("skin-layout/frame.png", "control-skin/skin.json")) {
+            val modified = File(temp, extra.substringBefore('/') + ".zip")
+            ZipFile(base).use { input ->
+                java.util.zip.ZipOutputStream(modified.outputStream()).use { output ->
+                    input.entries().asSequence().forEach { entry ->
+                        output.putNextEntry(java.util.zip.ZipEntry(entry.name))
+                        input.getInputStream(entry).use { it.copyTo(output) }
+                        output.closeEntry()
+                    }
+                    output.putNextEntry(java.util.zip.ZipEntry("apps/a0001/" + extra))
+                    output.write(byteArrayOf(1, 2, 3))
+                    output.closeEntry()
+                }
+            }
+            org.junit.jupiter.api.Assertions.assertThrows(java.io.IOException::class.java) {
+                LibraryAppBundleReader.read(modified.inputStream())
+            }
+        }
+    }
+
     @Test fun existingSharedAssetReferencesRemainValid() {
         val id = UUID.randomUUID().toString()
         val dir = File(temp, "available").apply { mkdirs() }
