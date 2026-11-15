@@ -2013,7 +2013,7 @@ internal class LibraryChromeScrollHysteresis(
     }
 }
 
-@OptIn(ExperimentalMaterial3Api::class)
+@OptIn(ExperimentalMaterial3Api::class, ExperimentalLayoutApi::class)
 @Composable
 internal fun LibrarySearchOverlay(
     state: LibraryUiState,
@@ -2062,13 +2062,6 @@ internal fun LibrarySearchOverlay(
             }
         }
     }
-    BackHandler {
-        if (imeVisible || fieldFocused) {
-            keyboard?.hide()
-            closeFocus.requestFocus()
-        } else closeSearch()
-    }
-
     val results by key(query, apps, state.sortVariant) {
         produceState<List<LibraryAppUiItem>?>(
             initialValue = null,
@@ -2198,6 +2191,12 @@ internal fun LibrarySearchOverlay(
         modifier = modifier,
         properties = DialogProperties(dismissOnBackPress = false, dismissOnClickOutside = false),
     ) {
+        BackHandler {
+            if (imeVisible || fieldFocused) {
+                keyboard?.hide()
+                closeFocus.requestFocus()
+            } else closeSearch()
+        }
         when {
             query.isBlank() -> Box(
                 modifier = Modifier.fillMaxSize().padding(24.dp),
