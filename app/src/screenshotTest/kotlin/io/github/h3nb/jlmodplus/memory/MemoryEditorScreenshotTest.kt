@@ -363,17 +363,12 @@ fun MemorySearchLargeTextScreenshot() {
 @PreviewTest
 @Preview(name = "Memory overlay light underlay", widthDp = 360, heightDp = 640)
 @Composable
-fun MemoryOverlayLightUnderlayScreenshot() = MemoryOverlayUnderlay(dark = false)
+fun MemoryOverlayLightUnderlayScreenshot() = MemoryOverlayUnderlay(dark = false, opacity = 0f)
 
 @PreviewTest
 @Preview(name = "Memory overlay dark underlay", widthDp = 720, heightDp = 360)
 @Composable
 fun MemoryOverlayDarkUnderlayScreenshot() = MemoryOverlayUnderlay(dark = true)
-
-@PreviewTest
-@Preview(name = "Memory overlay fully transparent", widthDp = 360, heightDp = 640)
-@Composable
-fun MemoryOverlayTransparentScreenshot() = MemoryOverlayUnderlay(dark = false, opacity = 0f)
 
 @Composable
 private fun MemoryOverlayUnderlay(dark: Boolean, opacity: Float? = null) {
