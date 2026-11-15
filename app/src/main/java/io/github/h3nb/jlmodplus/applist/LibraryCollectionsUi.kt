@@ -223,6 +223,7 @@ interface LibraryCollectionsHost : LibraryActions, LibraryBulkActions {
     fun onDeleteCollection(collectionId: Long)
     fun onOpenCollection(collectionId: Long)
     fun onPrepareCollectionAppPicker()
+    fun onPrepareSearchApps() = Unit
     fun onDismissCollectionMembers()
     fun onRequestAddToCollection(appId: Int)
     fun onDismissAddToCollection()
