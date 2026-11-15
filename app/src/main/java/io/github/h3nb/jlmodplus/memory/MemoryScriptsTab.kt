@@ -233,17 +233,6 @@ internal fun RuntimeScriptsTab(
         val compactEditor = maxHeight < 280.dp
         Column(Modifier.fillMaxSize().padding(horizontal = 8.dp),
             verticalArrangement = Arrangement.spacedBy(if (compactEditor) 4.dp else 8.dp)) {
-            Row(verticalAlignment = Alignment.CenterVertically, modifier = Modifier.fillMaxWidth()) {
-                TextButton(enabled = !saving, onClick = onBackFromEditor) {
-                    Text(stringResource(R.string.memory_scripts_back))
-                }
-                Text(
-                    stringResource(if (draft.replacingId == null) R.string.memory_scripts_new
-                        else R.string.memory_scripts_edit),
-                    style = MaterialTheme.typography.titleMedium,
-                    modifier = Modifier.weight(1f),
-                )
-            }
             if (!compactEditor) Text(stringResource(R.string.memory_scripts_editor_hint),
                 style = MaterialTheme.typography.bodySmall,
                 color = MaterialTheme.colorScheme.onSurfaceVariant)
@@ -325,13 +314,7 @@ internal fun RuntimeScriptsTab(
     if (selected != null) {
         Column(modifier.fillMaxSize().padding(8.dp),
             verticalArrangement = Arrangement.spacedBy(8.dp)) {
-            Row(modifier = Modifier.fillMaxWidth(), verticalAlignment = Alignment.CenterVertically) {
-                TextButton(onClick = { onSelectedId(null) }) {
-                    Text(stringResource(R.string.memory_scripts_back))
-                }
-                Text(selected.name, modifier = Modifier.weight(1f),
-                    maxLines = 1, overflow = TextOverflow.Ellipsis,
-                    style = MaterialTheme.typography.titleSmall)
+            Row(Modifier.fillMaxWidth(), horizontalArrangement = Arrangement.End) {
                 TextButton(onClick = { editScript(selected) }) {
                     Text(stringResource(R.string.memory_scripts_edit))
                 }
@@ -462,8 +445,10 @@ internal fun RuntimeScriptsTab(
     Column(modifier.fillMaxSize().padding(horizontal = 12.dp, vertical = 8.dp),
         verticalArrangement = Arrangement.spacedBy(12.dp)) {
         Row(modifier = Modifier.fillMaxWidth(), verticalAlignment = Alignment.CenterVertically) {
-            Text(stringResource(R.string.memory_scripts_title),
-                style = MaterialTheme.typography.titleLarge, modifier = Modifier.weight(1f))
+            Text(stringResource(R.string.memory_scripts_saved_count, state.scripts.size),
+                style = MaterialTheme.typography.titleSmall,
+                color = MaterialTheme.colorScheme.onSurfaceVariant,
+                modifier = Modifier.weight(1f))
             FilledTonalButton(
                 onClick = { onChoosingTypeChange(true) },
                 modifier = Modifier.heightIn(min = 48.dp),
