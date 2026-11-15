@@ -130,7 +130,7 @@ class ControlSkinArchiveTest {
         ZipFile(output).use { zip ->
             val restored = zip.getInputStream(zip.getEntry("Legacy/skin.json"))
                 .bufferedReader().use { it.readText() }
-            assertTrue(restored.contains("\\"version\\":1"))
+            assertEquals(1, org.json.JSONObject(restored).getInt("version"))
         }
         val imported = ControlSkinArchive.importZip(
             temporary.newFolder("restored-legacy"), output, temporary.root,
