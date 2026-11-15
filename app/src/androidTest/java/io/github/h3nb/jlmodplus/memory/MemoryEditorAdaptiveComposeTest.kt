@@ -549,7 +549,9 @@ class MemoryEditorAdaptiveComposeTest {
             watches = listOf(watch),
         )
         rule.setContent { JLModPlusTheme { MemoryEditorRuntimeRoot(state, TestMemoryEditorActions()) } }
+        val rowBounds = rule.onNodeWithText("Coins").getUnclippedBoundsInRoot()
         rule.onNodeWithText("Coins").performTouchInput { longClick() }
+        assertEquals(rowBounds, rule.onNodeWithText("Coins").getUnclippedBoundsInRoot())
         val context = InstrumentationRegistry.getInstrumentation().targetContext
         val selected = context.resources.getQuantityString(R.plurals.memory_editor_selected, 1, 1)
         rule.onNodeWithText(selected).assertIsDisplayed()
