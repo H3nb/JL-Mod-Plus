@@ -59,7 +59,7 @@ import org.junit.Rule
 import org.junit.Test
 import org.junit.runner.RunWith
 
-/** Observe the real pager's displayed row bounds; no private navigation or viewport test hooks. */
+/** Verify rendered Library viewport, search, selection and collection behavior. */
 @RunWith(AndroidJUnit4::class)
 @OptIn(ExperimentalTestApi::class)
 class LibraryViewportNavigationTest {
@@ -67,7 +67,7 @@ class LibraryViewportNavigationTest {
     val composeRule = createComposeRule()
 
     @Test
-    fun aboutBackKeepsLibraryOnMoreTab() {
+    fun aboutBackReturnsToContextualSettings() {
         val host = ViewportHost()
         composeRule.setContent {
             DeviceConfigurationOverride(
@@ -77,49 +77,12 @@ class LibraryViewportNavigationTest {
             }
         }
 
-        swipeToNextPage()
-        swipeToNextPage()
+        composeRule.onNodeWithContentDescription(uiString(R.string.action_settings)).performClick()
         composeRule.onNodeWithText(uiString(R.string.about)).performClick()
         composeRule.waitForIdle()
         composeRule.onNodeWithContentDescription(uiString(R.string.action_back)).performClick()
         composeRule.waitForIdle()
-        composeRule.onNodeWithText(uiString(R.string.action_settings)).assertIsDisplayed()
-    }
-
-    @Test
-    fun listViewportsSurvivePagerRoundTrip() = verifyPagerRoundTrip(LibraryLayout.List)
-
-    @Test
-    fun gridViewportsSurvivePagerRoundTrip() = verifyPagerRoundTrip(LibraryLayout.Grid)
-
-    private fun verifyPagerRoundTrip(layout: LibraryLayout) {
-        val host = ViewportHost()
-        composeRule.setContent {
-            DeviceConfigurationOverride(
-                DeviceConfigurationOverride.WindowSize(DpSize(360.dp, 640.dp)),
-            ) {
-                JLModPlusTheme { LibraryScreen(state = libraryState(layout), actions = host) }
-            }
-        }
-
-        scrollAwayFromTop(APP_PREFIX)
-        val apps = visibleRow(APP_PREFIX)
-        swipeToNextPage()
-        composeRule.onNodeWithText(COLLECTION_NAME).performClick()
-        composeRule.waitUntil(timeoutMillis = 5_000) {
-            composeRule.onAllNodes(rowMatcher(MEMBER_PREFIX)).fetchSemanticsNodes().isNotEmpty()
-        }
-        scrollAwayFromTop(MEMBER_PREFIX)
-        val members = visibleRow(MEMBER_PREFIX)
-        swipeToNextPage()
-        composeRule.onNodeWithText(uiString(R.string.action_settings)).assertIsDisplayed()
-
-        swipeToPreviousPage()
-        composeRule.onNode(navigationMatcher(uiString(R.string.library_destination_apps))).assertIsDisplayed()
-        assertViewport(members, MEMBER_PREFIX)
-        swipeToPreviousPage()
-        composeRule.onNode(navigationMatcher(uiString(R.string.library_destination_apps))).assertIsDisplayed()
-        assertViewport(apps, APP_PREFIX)
+        composeRule.onNodeWithText(uiString(R.string.updates_title)).assertIsDisplayed()
     }
 
     @Test
@@ -129,12 +92,11 @@ class LibraryViewportNavigationTest {
             DeviceConfigurationOverride(
                 DeviceConfigurationOverride.WindowSize(DpSize(360.dp, 640.dp)),
             ) {
-                JLModPlusTheme {
-                    LibraryScreen(state = libraryState(LibraryLayout.List), actions = host)
-                }
+                JLModPlusTheme { LibraryScreen(state = libraryState(LibraryLayout.List), actions = host) }
             }
         }
-        swipeToNextPage()
+
+        openCollectionManagement()
         composeRule.onNodeWithText(COLLECTION_NAME).performClick()
         composeRule.waitUntil(timeoutMillis = 5_000) {
             composeRule.onAllNodes(rowMatcher(MEMBER_PREFIX)).fetchSemanticsNodes().isNotEmpty()
@@ -151,30 +113,7 @@ class LibraryViewportNavigationTest {
     }
 
     @Test
-    fun retainedAppsDoesNotRedispatchSearchOnDistantTabReturn() {
-        val host = ViewportHost()
-        composeRule.setContent {
-            DeviceConfigurationOverride(
-                DeviceConfigurationOverride.WindowSize(DpSize(360.dp, 640.dp)),
-            ) {
-                JLModPlusTheme { LibraryScreen(state = libraryState(LibraryLayout.List), actions = host) }
-            }
-        }
-        composeRule.waitForIdle()
-        assertEquals(listOf(""), host.searches)
-
-        composeRule.onNode(navigationMatcher(uiString(R.string.library_destination_more)))
-            .performClick()
-        composeRule.onNodeWithText(uiString(R.string.action_settings)).assertIsDisplayed()
-        composeRule.onNode(navigationMatcher(uiString(R.string.library_destination_apps)))
-            .performClick()
-        composeRule.onNodeWithText(rowTitle(APP_PREFIX, 0), useUnmergedTree = true)
-            .assertIsDisplayed()
-        assertEquals(listOf(""), host.searches)
-    }
-
-    @Test
-    fun distantNavigationBarTapSkipsCollectionInBothDirections() {
+    fun contextualSettingsDoesNotReplaceLibraryWithCollections() {
         val host = ViewportHost()
         composeRule.setContent {
             DeviceConfigurationOverride(
@@ -184,59 +123,16 @@ class LibraryViewportNavigationTest {
             }
         }
 
-        // Freeze frame advancement while tapping, then inspect every transition frame.
-        // An animated Apps -> More transition incorrectly makes Collections visible.
-        composeRule.mainClock.autoAdvance = false
-        try {
-            composeRule.onNode(navigationMatcher(uiString(R.string.library_destination_more)))
-                .performClick()
-            repeat(18) {
-                composeRule.mainClock.advanceTimeByFrame()
-                composeRule.onAllNodesWithText(COLLECTION_NAME).assertCountEquals(0)
-            }
-        } finally {
-            composeRule.mainClock.autoAdvance = true
-        }
-        composeRule.waitForIdle()
-        composeRule.onNodeWithText(uiString(R.string.action_settings)).assertIsDisplayed()
-
-        composeRule.mainClock.autoAdvance = false
-        try {
-            composeRule.onNode(navigationMatcher(uiString(R.string.library_destination_apps)))
-                .performClick()
-            repeat(18) {
-                composeRule.mainClock.advanceTimeByFrame()
-                composeRule.onAllNodesWithText(COLLECTION_NAME).assertCountEquals(0)
-            }
-        } finally {
-            composeRule.mainClock.autoAdvance = true
-        }
-        composeRule.waitForIdle()
+        composeRule.onNodeWithContentDescription(uiString(R.string.action_settings)).performClick()
+        composeRule.onNodeWithText(uiString(R.string.updates_title)).assertIsDisplayed()
+        composeRule.onAllNodesWithText(COLLECTION_NAME).assertCountEquals(0)
+        composeRule.onNodeWithContentDescription(uiString(R.string.action_back)).performClick()
         composeRule.onNodeWithText(rowTitle(APP_PREFIX, 0), useUnmergedTree = true)
             .assertIsDisplayed()
     }
 
     @Test
-    fun collectionOverviewViewportSurvivesPagerRoundTrip() {
-        val host = ViewportHost()
-        composeRule.setContent {
-            DeviceConfigurationOverride(
-                DeviceConfigurationOverride.WindowSize(DpSize(360.dp, 640.dp)),
-            ) {
-                JLModPlusTheme { LibraryScreen(state = libraryState(LibraryLayout.List), actions = host) }
-            }
-        }
-        swipeToNextPage()
-        scrollAwayFromTop(FOLDER_PREFIX)
-        val folders = visibleRow(FOLDER_PREFIX)
-        swipeToNextPage()
-        composeRule.onNodeWithText(uiString(R.string.action_settings)).assertIsDisplayed()
-        swipeToPreviousPage()
-        assertViewport(folders, FOLDER_PREFIX)
-    }
-
-    @Test
-    fun endOfLibraryViewportSurvivesDifferentFooterPagerRoundTrip() {
+    fun lastMidletRemainsReachableWithoutNavigationFooter() {
         val host = ViewportHost()
         val restoration = StateRestorationTester(composeRule)
         restoration.setContent {
@@ -246,54 +142,18 @@ class LibraryViewportNavigationTest {
                 JLModPlusTheme { LibraryScreen(state = libraryState(LibraryLayout.List), actions = host) }
             }
         }
-        activeList(APP_PREFIX).performScrollToNode(hasText(rowTitle(APP_PREFIX, 70)))
-        composeRule.waitForIdle()
-        activeList(APP_PREFIX).performTouchInput {
-            down(Offset(width * 0.5f, height * 0.85f))
-            moveSmoothlyTo(Offset(width * 0.5f, height * 0.15f), durationMillis = 600)
-            advanceEventTime(150)
-            up()
-        }
-        composeRule.waitForIdle()
-        val appsNavigation = uiString(R.string.library_destination_apps)
-        composeRule.onAllNodes(navigationMatcher(appsNavigation)).assertCountEquals(0)
-        // Reach the actual end, including its trailing inset. Scroll-to-node only makes the row
-        // visible and can stop with part of it inside the area revealed by hidden navigation.
+
         activeList(APP_PREFIX).performScrollToIndex(80)
         composeRule.waitForIdle()
-        composeRule.onAllNodes(navigationMatcher(appsNavigation)).assertCountEquals(0)
-        composeRule.onNodeWithText(rowTitle(APP_PREFIX, 79), useUnmergedTree = true).assertIsDisplayed()
-        val hiddenApps = visibleRow(APP_PREFIX)
-        swipeToNextPage()
-        composeRule.onNodeWithText(COLLECTION_NAME).assertIsDisplayed()
-        composeRule.onNode(navigationMatcher(appsNavigation)).assertIsDisplayed()
-        activeList(FOLDER_PREFIX).performScrollToIndex(80)
-        composeRule.waitForIdle()
-        val folders = visibleRow(FOLDER_PREFIX)
-        swipeToNextPage()
-        composeRule.onNodeWithText(uiString(R.string.action_settings)).assertIsDisplayed()
-        swipeToPreviousPage()
-        assertViewport(folders, FOLDER_PREFIX)
-        composeRule.onNode(navigationMatcher(appsNavigation)).assertIsDisplayed()
-        swipeToPreviousPage()
-
-        // Returning reveals navigation over the same viewport. The final app remains reachable
-        // above it, without replaying an obsolete hidden-bar anchor.
-        composeRule.onNode(navigationMatcher(appsNavigation)).assertIsDisplayed()
-        val lastApp = composeRule.onNodeWithText(rowTitle(APP_PREFIX, 79), useUnmergedTree = true)
-        lastApp.assertIsDisplayed()
-        val navigationTop = composeRule.onNode(navigationMatcher(appsNavigation)).fetchSemanticsNode().boundsInRoot.top
-        assertTrue("Returning navigation covered the final app", lastApp.fetchSemanticsNode().boundsInRoot.bottom <= navigationTop)
-        assertViewport(hiddenApps, APP_PREFIX)
-        val apps = visibleRow(APP_PREFIX)
+        val last = composeRule.onNodeWithText(rowTitle(APP_PREFIX, 79), useUnmergedTree = true)
+            .assertIsDisplayed().fetchSemanticsNode().boundsInRoot
+        val viewport = activeList(APP_PREFIX).fetchSemanticsNode().boundsInRoot
+        assertTrue("The last MIDlet is clipped by the lower chrome", last.bottom <= viewport.bottom)
+        val visible = visibleRow(APP_PREFIX)
 
         restoration.emulateSavedInstanceStateRestore()
         composeRule.waitForIdle()
-        composeRule.onNode(navigationMatcher(appsNavigation)).assertIsDisplayed()
-        assertViewport(apps, APP_PREFIX)
-        swipeToNextPage()
-        composeRule.onNode(navigationMatcher(appsNavigation)).assertIsDisplayed()
-        assertViewport(folders, FOLDER_PREFIX)
+        assertViewport(visible, APP_PREFIX)
     }
 
     @Test
@@ -453,7 +313,7 @@ class LibraryViewportNavigationTest {
         )
 
         // The same chrome position survives switching back to the larger projection.
-        composeRule.onNodeWithText(uiString(R.string.library_filter_all)).performClick()
+        composeRule.onNodeWithText(uiString(R.string.library_filter_favorites)).performClick()
         composeRule.waitForIdle()
         assertEquals(LibraryQuickView.All, visibleState.value.quickView)
         composeRule.onAllNodes(hasSetTextAction()).assertCountEquals(0)
@@ -526,69 +386,14 @@ class LibraryViewportNavigationTest {
         composeRule.onNodeWithText(rowTitle(APP_PREFIX, 60), useUnmergedTree = true).assertIsDisplayed()
         assertEquals(chipTop, favorites.fetchSemanticsNode().boundsInRoot.top, 1f)
 
-        composeRule.onNodeWithText(uiString(R.string.library_filter_all)).performClick()
+        composeRule.onNodeWithText(uiString(R.string.library_filter_favorites)).performClick()
         composeRule.waitForIdle()
         composeRule.onNodeWithText(rowTitle(APP_PREFIX, 0), useUnmergedTree = true).assertIsDisplayed()
         assertEquals(chipTop, favorites.fetchSemanticsNode().boundsInRoot.top, 1f)
     }
 
     @Test
-    fun backDismissesFocusedLibrarySearchBeforeLeavingScreen() {
-        val host = ViewportHost()
-        composeRule.setContent {
-            DeviceConfigurationOverride(
-                DeviceConfigurationOverride.WindowSize(DpSize(360.dp, 640.dp)),
-            ) {
-                JLModPlusTheme {
-                    LibraryScreen(
-                        state = libraryState(LibraryLayout.List).copy(appliedFilter = "Library"),
-                        actions = host,
-                    )
-                }
-            }
-        }
-        composeRule.onNode(hasSetTextAction()).performClick()
-        composeRule.onNode(hasSetTextAction()).assertIsFocused()
-        pressBack()
-        composeRule.waitForIdle()
-        composeRule.waitUntil(timeoutMillis = 5_000) {
-            composeRule.onNode(hasSetTextAction())
-                .fetchSemanticsNode().config[SemanticsProperties.Focused] == false
-        }
-        composeRule.onNode(hasSetTextAction()).assertIsNotFocused()
-        composeRule.onNode(hasSetTextAction()).assertTextEquals("Library")
-        composeRule.onNodeWithText(rowTitle(APP_PREFIX, 0), useUnmergedTree = true).assertIsDisplayed()
-    }
-
-    @Test
-    fun backDismissesLibrarySearchAfterImeBecomesVisible() {
-        val host = ViewportHost()
-        val imeVisible = mutableStateOf(false)
-        composeRule.setContent {
-            DeviceConfigurationOverride(
-                DeviceConfigurationOverride.WindowSize(DpSize(360.dp, 640.dp)),
-            ) {
-                val imeBottom = WindowInsets.ime.getBottom(LocalDensity.current)
-                SideEffect { imeVisible.value = imeBottom > 0 }
-                JLModPlusTheme { LibraryScreen(state = libraryState(LibraryLayout.List), actions = host) }
-            }
-        }
-        composeRule.onNode(hasSetTextAction()).performClick()
-        composeRule.onNode(hasSetTextAction()).assertIsFocused()
-        composeRule.waitUntil(timeoutMillis = 5_000) { imeVisible.value }
-        composeRule.waitForIdle()
-
-        pressBack()
-        composeRule.waitUntil(timeoutMillis = 5_000) {
-            !imeVisible.value && composeRule.onNode(hasSetTextAction())
-                .fetchSemanticsNode().config[SemanticsProperties.Focused] == false
-        }
-        composeRule.onNode(hasSetTextAction()).assertIsNotFocused()
-        composeRule.onNodeWithText(rowTitle(APP_PREFIX, 0), useUnmergedTree = true).assertIsDisplayed()
-    }
-
-    @Test
-    fun searchRevealsCompleteHeaderAndStartsResultsAtTop() {
+    fun expandedSearchBackDismissesInputBeforeLeaving() {
         val host = ViewportHost()
         composeRule.setContent {
             DeviceConfigurationOverride(
@@ -597,41 +402,25 @@ class LibraryViewportNavigationTest {
                 JLModPlusTheme { LibraryScreen(state = libraryState(LibraryLayout.List), actions = host) }
             }
         }
-        scrollAwayFromTop(APP_PREFIX)
-        activeList(APP_PREFIX).performTouchInput {
-            down(Offset(width * 0.5f, height * 0.25f))
-            moveSmoothlyTo(Offset(width * 0.5f, height * 0.8f), durationMillis = 500)
-            advanceEventTime(150)
-            up()
-        }
+        composeRule.onNodeWithContentDescription(uiString(R.string.library_search_placeholder))
+            .performClick()
+        composeRule.onNode(hasSetTextAction()).performTextInput("Library")
         composeRule.waitForIdle()
-        composeRule.onNode(hasSetTextAction()).performClick().performTextInput("Library")
-        composeRule.waitForIdle()
-        composeRule.onNodeWithContentDescription(uiString(R.string.app_name)).assertIsDisplayed()
-        composeRule.onNodeWithText(rowTitle(APP_PREFIX, 0), useUnmergedTree = true).assertIsDisplayed()
         composeRule.onNode(hasSetTextAction()).assertIsFocused()
-        val searchBottom = composeRule.onNode(hasSetTextAction()).fetchSemanticsNode().boundsInRoot.bottom
-        val resultTop = composeRule.onNodeWithText(rowTitle(APP_PREFIX, 0), useUnmergedTree = true)
-            .fetchSemanticsNode().boundsInRoot.top
-        val gapPx = resultTop - searchBottom
-        val maximumGapPx = with(composeRule.density) { 100.dp.toPx() }
-        assertTrue("Search gap $gapPx px must be within 0..$maximumGapPx px",
-            gapPx in 0f..maximumGapPx)
-        // Settled tab navigation closes search focus/IME so another surface remains usable.
-        swipeToNextPage()
-        composeRule.onNodeWithText(COLLECTION_NAME).assertIsDisplayed()
-        composeRule.waitUntil(timeoutMillis = 5_000) {
-            composeRule.onNode(navigationMatcher(uiString(R.string.library_destination_apps))).isDisplayed()
-        }
-        composeRule.onNode(navigationMatcher(uiString(R.string.library_destination_apps))).assertIsDisplayed()
-        swipeToPreviousPage()
-        // The pager retains the Apps page; returning must not revive the editor's focus.
+
+        pressBack()
+        composeRule.waitForIdle()
         composeRule.onNode(hasSetTextAction()).assertIsNotFocused()
         composeRule.onNode(hasSetTextAction()).assertTextEquals("Library")
+        composeRule.onNodeWithText(rowTitle(APP_PREFIX, 0), useUnmergedTree = true)
+            .assertIsDisplayed()
+
+        composeRule.onNodeWithContentDescription(uiString(R.string.action_back)).performClick()
+        composeRule.onAllNodes(hasSetTextAction()).assertCountEquals(0)
     }
 
     @Test
-    fun reversedPagerDragPreservesSelection() {
+    fun horizontalGestureDoesNotNavigateAwayFromSelectedMidlet() {
         val host = ViewportHost()
         composeRule.setContent {
             DeviceConfigurationOverride(
@@ -644,24 +433,12 @@ class LibraryViewportNavigationTest {
         composeRule.onNodeWithText(title).performTouchInput { longClick() }
         composeRule.onNodeWithText(uiString(R.string.library_action_select)).performClick()
         val checkbox = uiString(R.string.library_selection_checkbox_description, title)
-        composeRule.onNodeWithContentDescription(checkbox).assertIsOn()
+        composeRule.onNodeWithContentDescription(checkbox).assertIsDisplayed().assertIsOn()
 
-        // Hold beyond the midpoint so currentPage changes and Compose observes that transient page.
-        // Returning before release leaves settledPage unchanged and must retain selection.
-        composeRule.onRoot().performTouchInput {
-            down(Offset(width * 0.85f, height * 0.55f))
-            moveSmoothlyTo(Offset(width * 0.15f, height * 0.55f), durationMillis = 400)
-        }
-        composeRule.waitForIdle()
-        // Offscreen pages clear their semantics, so this proves the indicated page changed.
-        composeRule.onNodeWithText(COLLECTION_NAME).assertExists()
-        composeRule.onRoot().performTouchInput {
-            moveSmoothlyTo(Offset(width * 0.85f, height * 0.55f), durationMillis = 400)
-            advanceEventTime(150)
-            up()
-        }
+        composeRule.onRoot().performTouchInput { swipeLeft(durationMillis = 500) }
         composeRule.waitForIdle()
         composeRule.onNodeWithContentDescription(checkbox).assertIsDisplayed().assertIsOn()
+        composeRule.onAllNodesWithText(COLLECTION_NAME).assertCountEquals(0)
     }
 
     @Test
@@ -690,6 +467,11 @@ class LibraryViewportNavigationTest {
         composeRule.onNode(hasSetTextAction()).assertIsDisplayed()
     }
 
+    private fun openCollectionManagement() {
+        composeRule.onNodeWithText(uiString(R.string.library_filter_all)).performClick()
+        composeRule.onNodeWithText(uiString(R.string.library_destination_collections)).performClick()
+    }
+
     private fun scrollAwayFromTop(prefix: String) {
         activeList(prefix).performScrollToNode(hasText(rowTitle(prefix, 25)))
         composeRule.waitForIdle()
@@ -710,9 +492,6 @@ class LibraryViewportNavigationTest {
             moveTo(start + (end - start) * (step / 25f), delayMillis = durationMillis / 25)
         }
     }
-
-    private fun navigationMatcher(label: String) =
-        hasClickAction() and (hasText(label) or hasContentDescription(label))
 
     private fun rowMatcher(prefix: String) = SemanticsMatcher("row title starts with $prefix") { node ->
         SemanticsProperties.Text in node.config &&
@@ -757,16 +536,6 @@ class LibraryViewportNavigationTest {
         val actual = visibleRow(prefix)
         assertEquals("First visible row changed after returning to $prefix", expected.title, actual.title)
         assertEquals("Displayed row moved after returning to $prefix", expected.top, actual.top, 1f)
-    }
-
-    private fun swipeToNextPage() {
-        composeRule.onRoot().performTouchInput { swipeLeft(durationMillis = 500) }
-        composeRule.waitForIdle()
-    }
-
-    private fun swipeToPreviousPage() {
-        composeRule.onRoot().performTouchInput { swipeRight(durationMillis = 500) }
-        composeRule.waitForIdle()
     }
 
     private class ViewportHost : LibraryCollectionsHost {
