@@ -28,6 +28,7 @@ import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.FlowRow
 import androidx.compose.foundation.layout.PaddingValues
 import androidx.compose.foundation.layout.Row
+import androidx.compose.foundation.layout.RowScope
 import androidx.compose.foundation.layout.Spacer
 import androidx.compose.foundation.layout.WindowInsets
 import androidx.compose.foundation.layout.WindowInsetsSides
@@ -777,11 +778,7 @@ private fun RuntimeSearchResultsTab(
             )) {
                 val showExtra = maxWidth >=
                     480.dp * LocalDensity.current.fontScale.coerceAtLeast(1f)
-                Row(
-                    Modifier.fillMaxWidth().padding(horizontal = 12.dp, vertical = 4.dp),
-                    verticalAlignment = Alignment.CenterVertically,
-                    horizontalArrangement = Arrangement.spacedBy(4.dp),
-                ) {
+                val summary: @Composable RowScope.() -> Unit = {
                     RuntimePageSelectionCheckbox(
                         checked = allVisibleSelected,
                         enabled = state.results.isNotEmpty() && !state.busy,
@@ -796,6 +793,8 @@ private fun RuntimeSearchResultsTab(
                     ), style = MaterialTheme.typography.titleSmall,
                         maxLines = 1, overflow = TextOverflow.Ellipsis,
                         modifier = Modifier.weight(1f))
+                }
+                val controls: @Composable RowScope.() -> Unit = {
                     FilledTonalButton(
                         onClick = { knownDialog = true }, enabled = state.canSearch,
                         modifier = Modifier.heightIn(min = 48.dp),
@@ -819,6 +818,27 @@ private fun RuntimeSearchResultsTab(
                     }
                     RuntimeActionIcon(R.drawable.ic_more_vert, R.string.more) {
                         moreMenu = true
+                    }
+                }
+                val largeTextCompact = maxWidth < 400.dp &&
+                    LocalDensity.current.fontScale >= 1.5f
+                val rowModifier = Modifier.fillMaxWidth()
+                    .padding(horizontal = 12.dp, vertical = 4.dp)
+                if (largeTextCompact) {
+                    Column {
+                        Row(rowModifier, verticalAlignment = Alignment.CenterVertically) {
+                            summary()
+                        }
+                        Row(rowModifier, verticalAlignment = Alignment.CenterVertically,
+                            horizontalArrangement = Arrangement.End) {
+                            controls()
+                        }
+                    }
+                } else {
+                    Row(rowModifier, verticalAlignment = Alignment.CenterVertically,
+                        horizontalArrangement = Arrangement.spacedBy(4.dp)) {
+                        summary()
+                        controls()
                     }
                 }
                 if (moreMenu) RuntimeOverflowActionsDialog(
