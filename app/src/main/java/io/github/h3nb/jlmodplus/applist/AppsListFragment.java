@@ -660,11 +660,12 @@ public class AppsListFragment extends Fragment {
             @Override
             public void onPrepareCollectionAppPicker() {
                 pickerGeneration = libraryViewModel.readyGeneration();
-                if (pickerGeneration != null && activeGeneration == pickerGeneration.getGeneration()
-                        && activeWorkdir != null
-                        && activeWorkdir.equals(pickerGeneration.getEmulatorDir())) {
-                    publishCollectionAllApps(currentAllReadyRows());
-                }
+                publishCurrentAllAppsIfReady();
+            }
+
+            @Override
+            public void onPrepareSearchApps() {
+                publishCurrentAllAppsIfReady();
             }
 
             @Override
@@ -1181,6 +1182,14 @@ public class AppsListFragment extends Fragment {
         rows = libraryViewModel.getAllApps();
         cachedAllReadyRows = rows;
         return rows;
+    }
+
+    private void publishCurrentAllAppsIfReady() {
+        LibraryGenerationToken ready = libraryViewModel.readyGeneration();
+        if (ready != null && activeGeneration == ready.getGeneration()
+                && activeWorkdir != null && activeWorkdir.equals(ready.getEmulatorDir())) {
+            publishCollectionAllApps(currentAllReadyRows());
+        }
     }
 
     private void publishCollectionAllApps(List<LibraryAppRow> rows) {
