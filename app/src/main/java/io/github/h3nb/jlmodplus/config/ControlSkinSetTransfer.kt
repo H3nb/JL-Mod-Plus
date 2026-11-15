@@ -10,8 +10,8 @@ import kotlinx.serialization.json.contentOrNull
 import kotlinx.serialization.json.jsonObject
 
 /**
- * One authority for installing shared control-skin sets, independent of whether the source is
- * an app bundle or a standalone ZIP. A set's ID is stable unless it conflicts with local content.
+ * Shared helpers for importing standalone ZIP skin sets and resolving local set references.
+ * A set's ID stays stable unless it conflicts with different local content.
  */
 internal object ControlSkinSetTransfer {
     const val MAX_METADATA_BYTES = 65_536L
