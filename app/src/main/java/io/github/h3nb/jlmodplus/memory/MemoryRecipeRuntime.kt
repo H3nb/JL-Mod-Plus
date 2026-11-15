@@ -119,6 +119,7 @@ class MemoryRecipeRuntime {
     private data class FormSnapshot(
         val ticket: String, val token: Long, val recipe: Recipe,
         val selectors: Map<String, Long>, val owners: List<WeakReference<Any>>,
+        val readValues: List<String>,
     )
     private val frozen = LinkedHashMap<String, Hold>()
     private var frozenToken = 0L
@@ -185,8 +186,9 @@ class MemoryRecipeRuntime {
                     throw Problem(MemoryEngineContract.RESULT_IDENTITY_UNSAFE,
                         "Form target changed since Refresh; refresh before applying")
                 }
-                if (expected.size != prepared.readValues.size ||
-                    !expected.contentEquals(prepared.readValues.toTypedArray())) {
+                if (expected.size != read.readValues.size ||
+                    !expected.contentEquals(read.readValues.toTypedArray()) ||
+                    prepared.readValues != read.readValues) {
                     throw Problem(MemoryEngineContract.RESULT_IDENTITY_UNSAFE,
                         "Values changed since Refresh; refresh before applying")
                 }
@@ -204,6 +206,7 @@ class MemoryRecipeRuntime {
                     formSnapshot = FormSnapshot(
                         ticket, token, recipe, values,
                         prepared.owners.map { WeakReference(it) },
+                        prepared.readValues.toList(),
                     )
                     result.putString(READ_TICKET, ticket)
                 }
