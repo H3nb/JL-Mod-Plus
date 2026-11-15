@@ -269,9 +269,23 @@ public final class MemoryTargetBridgeService extends Service {
         }
 
         @Override
-        public Bundle detachBookmark(long runtimeToken, String bookmarkId, long epoch) {
-            return managedResult(runtimeToken,
-                    managedEngine.detachBookmark(runtimeToken, bookmarkId, epoch));
+        public synchronized Bundle detachBookmark(long runtimeToken, String bookmarkId, long epoch) {
+            ManagedJavaMemoryEngine.ManagedOperationResult detached =
+                    managedEngine.detachBookmark(runtimeToken, bookmarkId, epoch);
+            if (detached.code != MemoryEngineContract.RESULT_OK) {
+                return managedResult(runtimeToken, detached);
+            }
+
+            Bundle stopped = recipes.clear(runtimeToken, "saved." + bookmarkId);
+            Bundle result = managedResult(runtimeToken, detached);
+            int stopCode = stopped.getInt(MemoryEngineContract.KEY_MANAGED_OPERATION_RESULT,
+                    MemoryEngineContract.RESULT_TARGET_LOST);
+            if (stopCode != MemoryEngineContract.RESULT_OK) {
+                result.putInt(MemoryEngineContract.KEY_MANAGED_OPERATION_RESULT, stopCode);
+                result.putString(MemoryEngineContract.KEY_DIAGNOSTIC_DETAIL,
+                        stopped.getString(MemoryEngineContract.KEY_DIAGNOSTIC_DETAIL));
+            }
+            return result;
         }
 
         @Override
