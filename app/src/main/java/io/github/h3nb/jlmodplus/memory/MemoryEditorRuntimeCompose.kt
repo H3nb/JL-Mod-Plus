@@ -590,7 +590,22 @@ private fun RuntimeMemoryTabs(
                 selected = state.activeTab == tab,
                 onClick = { onTab(tab) },
                 modifier = Modifier.semantics { contentDescription = description },
-                text = { Text(description) },
+                text = {
+                    Row(verticalAlignment = Alignment.CenterVertically,
+                        horizontalArrangement = Arrangement.spacedBy(6.dp)) {
+                        if (LocalDensity.current.fontScale <= 1.3f) {
+                            val icon = when (tab) {
+                                MemoryEditorTab.RESULTS -> R.drawable.ic_search
+                                MemoryEditorTab.VARIABLES -> R.drawable.ic_memory_editor_watch
+                                MemoryEditorTab.SCRIPTS -> R.drawable.ic_auto_mode
+                                MemoryEditorTab.INSPECTOR -> error("Not a tab")
+                            }
+                            Icon(painterResource(icon), contentDescription = null,
+                                modifier = Modifier.size(18.dp))
+                        }
+                        Text(description, maxLines = 1)
+                    }
+                },
             )
         }
     }
