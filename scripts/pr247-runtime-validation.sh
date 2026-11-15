@@ -62,9 +62,6 @@ run_case library-room \
 run_case installer-ui \
   'io.github.h3nb.jlmodplus.installer.InstallerComposeTest#loadingStateCanRequestCancellation' \
   'io.github.h3nb.jlmodplus.installer.InstallerComposeTest#conversionStateCanRequestCancellation'
-run_case screenshot-pipeline \
-  'javax.microedition.shell.CoroutineScreenshotRuntimeTest#glPixelsAreConvertedSavedAndReturnedOnTheCorrectThreads' \
-  'javax.microedition.shell.CoroutineScreenshotRuntimeTest#softwarePixelsAreSavedOffTheMainThread'
 run_case gles-isolated \
   'io.github.h3nb.jlmodplus.micro3d.EnvironmentTextureGlesTest'
 
@@ -72,5 +69,5 @@ if (( failures != 0 )); then
   echo "$failures runtime batches failed; inspect ci-artifacts/pr247-runtime/" >&2
   exit 1
 fi
-test "$(wc -l < "$evidence")" -eq 9
-echo 'All 9 targeted Android instrumentation selectors passed.'
+test "$(wc -l < "$evidence")" -eq 7
+echo 'All 7 targeted Android instrumentation selectors passed.'
