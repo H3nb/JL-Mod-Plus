@@ -85,7 +85,7 @@ Scripts never auto-run on application startup.
 The optional top-level `"description"` field is available in both v1 and v2 recipes
 for instructions, compatibility notes, and warnings. It is plain text (not
 executable code or Markdown), supports multiple lines, and accepts up to 2,048
-characters. The Scripts list shows a two-line preview and the detail page
+characters. The Scripts list shows a brief preview and the detail page
 shows the full description. A recipe without a description behaves as before.
 Descriptions do not affect target resolution, validation of memory values, or
 execution. The JSON document is persisted unchanged with the recipe.
@@ -103,8 +103,11 @@ Examples:
 
 ## Build scripts from Bookmarks
 
-In **Memory Editor → Scripts → New script**, choose **Freeze Values**, **Value
-Editor**, **Quick Actions**, or **JSON Editor**.
+In **Memory Editor → Scripts → New script**, choose **Freeze values**, **Value
+editor**, **Quick actions**, or **JSON editor**. The editor uses a single
+Back/title/Minimize header, a scrollable target list, and a persistent Save
+button. Script descriptions and value limits are optional; expanded settings
+do not change the underlying script data until Save.
 
 The visual builder supports multiple verified Bookmarks in one script:
 
