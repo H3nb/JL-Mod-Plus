@@ -14,7 +14,6 @@ import androidx.test.platform.app.InstrumentationRegistry
 import io.github.h3nb.jlmodplus.jar.Descriptor
 import io.github.h3nb.jlmodplus.librarydb.LibraryViewModel
 import io.github.h3nb.jlmodplus.util.Constants
-import io.reactivex.Single
 import java.io.File
 import java.util.zip.ZipEntry
 import java.util.zip.ZipOutputStream
@@ -62,24 +61,18 @@ class ExternalContentJadImportTest {
 
             val installer = AppInstaller(null as File?, uri, library)
             assertEquals(AppInstaller.STATUS_NEED_JAR,
-                Single.create<Int>(installer::loadInfo).blockingGet())
+                installer.loadInfo())
             assertNotNull(installer.newDescriptor)
-            assertEquals(AppInstaller.STATUS_NEW, Single.create<Int> { emitter ->
-                installer.loadSelectedExternalJar(jarUri, emitter)
-            }.blockingGet())
+            assertEquals(AppInstaller.STATUS_NEW, installer.loadSelectedExternalJar(jarUri))
             assertEquals("Fixture", installer.newDescriptor.name)
             assertEquals("Fixture", installer.manifest.name)
 
             val wrong = AppInstaller(null as File?, uri, library)
             assertEquals(AppInstaller.STATUS_NEED_JAR,
-                Single.create<Int>(wrong::loadInfo).blockingGet())
+                wrong.loadInfo())
             val reviewedDescriptor = wrong.newDescriptor
-            assertEquals(AppInstaller.STATUS_WRONG_COMPANION_JAR, Single.create<Int> { emitter ->
-                wrong.loadSelectedExternalJar(wrongJarUri, emitter)
-            }.blockingGet())
-            assertEquals(AppInstaller.STATUS_NEW, Single.create<Int> { emitter ->
-                wrong.loadSelectedExternalJar(jarUri, emitter)
-            }.blockingGet())
+            assertEquals(AppInstaller.STATUS_WRONG_COMPANION_JAR, wrong.loadSelectedExternalJar(wrongJarUri))
+            assertEquals(AppInstaller.STATUS_NEW, wrong.loadSelectedExternalJar(jarUri))
             assertEquals(reviewedDescriptor, wrong.newDescriptor)
             assertEquals("Fixture", wrong.manifest.name)
             assertEquals("retained", wrong.newDescriptor.attrs["X-JL-Import-Property"])
