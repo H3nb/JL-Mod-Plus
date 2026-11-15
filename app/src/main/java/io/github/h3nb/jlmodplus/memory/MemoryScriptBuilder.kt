@@ -103,7 +103,6 @@ private fun modeTitle(mode: MemoryScriptBuilderMode): String = stringResource(wh
 internal fun MemoryScriptTypeChooser(
     onChoose: (MemoryScriptBuilderMode) -> Unit,
     onJson: () -> Unit,
-    onBack: () -> Unit,
     modifier: Modifier = Modifier,
 ) {
     Column(
@@ -173,7 +172,6 @@ internal fun MemoryScriptBuilderScreen(
     state: MemoryEditorUiState,
     actions: MemoryEditorActions,
     onDraft: (MemoryScriptBuilderDraft) -> Unit,
-    onBack: () -> Unit,
     onSaved: (String) -> Unit,
     onEditJson: (String) -> Unit,
     modifier: Modifier = Modifier,
