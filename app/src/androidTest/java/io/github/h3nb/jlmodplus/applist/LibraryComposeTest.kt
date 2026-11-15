@@ -861,7 +861,7 @@ class LibraryComposeTest {
         val actions = RecordingLibraryActions()
         setLibraryContent(actions = actions)
 
-        composeRule.onNodeWithText(uiString(R.string.library_destination_apps)).performClick()
+        composeRule.onNodeWithText(uiString(R.string.library_filter_all)).performClick()
         composeRule.onNodeWithText(uiString(R.string.library_destination_collections)).performClick()
         composeRule.onNodeWithText(uiString(R.string.library_collections_empty_message))
             .assertIsDisplayed()
@@ -944,7 +944,7 @@ class LibraryComposeTest {
         }
         composeRule.waitForIdle()
         composeRule.onAllNodesWithContentDescription(uiString(R.string.install)).assertCountEquals(0)
-        composeRule.onAllNodesWithText(uiString(R.string.library_destination_apps)).assertCountEquals(0)
+        composeRule.onAllNodesWithText(uiString(R.string.library_filter_all)).assertCountEquals(0)
         composeRule.onAllNodesWithContentDescription(uiString(R.string.app_name)).assertCountEquals(0)
         composeRule.onAllNodesWithContentDescription(uiString(R.string.library_sort)).assertCountEquals(0)
 
@@ -953,7 +953,7 @@ class LibraryComposeTest {
         }
         composeRule.waitForIdle()
         composeRule.onNodeWithContentDescription(uiString(R.string.install)).assertIsDisplayed()
-        composeRule.onNodeWithText(uiString(R.string.library_destination_apps)).assertIsDisplayed()
+        composeRule.onNodeWithText(uiString(R.string.library_filter_all)).assertIsDisplayed()
         composeRule.onNodeWithContentDescription(uiString(R.string.app_name)).assertIsDisplayed()
         composeRule.onNodeWithContentDescription(uiString(R.string.library_sort)).assertIsDisplayed()
     }
@@ -977,10 +977,11 @@ class LibraryComposeTest {
         }
         composeRule.waitForIdle()
         composeRule.onNodeWithContentDescription(uiString(R.string.install)).assertIsDisplayed()
-        composeRule.onNodeWithText(uiString(R.string.library_destination_apps)).assertIsDisplayed()
+        composeRule.onNodeWithText(uiString(R.string.library_filter_all)).assertIsDisplayed()
         composeRule.onNodeWithContentDescription(uiString(R.string.app_name)).assertIsDisplayed()
         composeRule.onNodeWithContentDescription(uiString(R.string.library_sort)).assertIsDisplayed()
-        composeRule.onNode(hasSetTextAction()).assertIsDisplayed()
+        composeRule.onNodeWithContentDescription(uiString(R.string.library_search_placeholder))
+            .assertIsDisplayed()
         composeRule.onNodeWithText(uiString(R.string.library_filter_all)).assertIsDisplayed()
     }
 
@@ -1016,14 +1017,16 @@ class LibraryComposeTest {
             .fetchSemanticsNode().boundsInRoot
         assertEquals("Short overflow moved the wordmark", initialWordmark.top, settledWordmark.top, 1f)
         assertEquals("Short overflow clipped the wordmark", initialWordmark.bottom, settledWordmark.bottom, 1f)
-        composeRule.onNode(hasSetTextAction()).assertIsDisplayed()
+        composeRule.onNodeWithContentDescription(uiString(R.string.library_search_placeholder))
+            .assertIsDisplayed()
         composeRule.onNodeWithContentDescription(uiString(R.string.library_sort)).assertIsDisplayed()
         composeRule.onNodeWithText(uiString(R.string.library_filter_all)).assertIsDisplayed()
         composeRule.onNodeWithText(uiString(R.string.library_filter_favorites)).assertIsDisplayed()
         composeRule.onNodeWithContentDescription(uiString(R.string.install)).assertIsDisplayed()
-        navigationItem(R.string.library_destination_apps).assertIsDisplayed()
-        navigationItem(R.string.library_destination_collections).assertIsDisplayed()
-        navigationItem(R.string.library_destination_more).assertIsDisplayed()
+        composeRule.onNodeWithContentDescription(uiString(R.string.action_settings))
+            .assertIsDisplayed()
+        composeRule.onAllNodesWithText(uiString(R.string.library_destination_more))
+            .assertCountEquals(0)
     }
 
     @Test
