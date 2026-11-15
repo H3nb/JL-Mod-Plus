@@ -801,7 +801,11 @@ private fun RuntimeSearchResultsTab(
                     ) {
                         Icon(painterResource(R.drawable.ic_search), contentDescription = null)
                         Spacer(Modifier.width(6.dp))
-                        Text(stringResource(R.string.memory_editor_refine_scan))
+                        Text(stringResource(
+                            if (state.sessionStage == MemorySessionStage.EMPTY)
+                                R.string.memory_editor_new_search
+                            else R.string.memory_editor_refine_scan,
+                        ))
                     }
                     if (showExtra) {
                         RuntimeActionIcon(R.drawable.ic_memory_editor_search_unknown,
@@ -1602,28 +1606,28 @@ private fun RuntimeSelectedActionBar(
                 verticalAlignment = Alignment.CenterVertically,
                 horizontalArrangement = Arrangement.spacedBy(4.dp),
             ) {
-            direct.forEach { action ->
-                val description = stringResource(action.label)
-                val compactLabel = when (action.label) {
-                    R.string.memory_editor_inspect_memory ->
-                        stringResource(R.string.memory_editor_inspector)
-                    R.string.memory_scripts_create_from_bookmarks ->
-                        stringResource(R.string.memory_scripts_title)
-                    else -> description
-                }
-                TextButton(
+                direct.forEach { action ->
+                    val description = stringResource(action.label)
+                    val compactLabel = when (action.label) {
+                        R.string.memory_editor_inspect_memory ->
+                            stringResource(R.string.memory_editor_inspector)
+                        R.string.memory_scripts_create_from_bookmarks ->
+                            stringResource(R.string.memory_scripts_title)
+                        else -> description
+                    }
+                    TextButton(
                     onClick = action.onClick, enabled = action.enabled,
                     modifier = Modifier.heightIn(min = 48.dp)
                         .semantics { contentDescription = description },
                 ) {
                     Icon(painterResource(action.icon), contentDescription = null)
                     Spacer(Modifier.width(4.dp))
-                    Text(compactLabel, maxLines = 1)
+                        Text(compactLabel, maxLines = 1)
+                    }
                 }
-            }
-            if (overflow.isNotEmpty()) RuntimeActionIcon(
-                R.drawable.ic_more_vert, R.string.more,
-            ) { showMore = true }
+                if (overflow.isNotEmpty()) RuntimeActionIcon(
+                    R.drawable.ic_more_vert, R.string.more,
+                ) { showMore = true }
             }
         }
         if (showMore && overflow.isNotEmpty()) {
