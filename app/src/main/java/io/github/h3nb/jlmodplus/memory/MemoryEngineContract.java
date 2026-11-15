@@ -87,6 +87,7 @@ public final class MemoryEngineContract {
 	public static final int FREEZE_RANGE = 3;
 	public static final int MAX_MULTI_WRITE = 32;
 	public static final int MAX_FREEZE_RECORDS = 32;
+	public static final int MAX_RECIPE_BYTES = 65_536;
 	public static final int MAX_WATCH_RECORDS = 128;
 	public static final int MAX_GROUP_VALUES = 8;
 	/** Input values crossing either Memory Editor Binder boundary are deliberately short. */

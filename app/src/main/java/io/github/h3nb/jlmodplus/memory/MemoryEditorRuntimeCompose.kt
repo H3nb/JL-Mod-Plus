@@ -23,6 +23,7 @@ import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.FlowRow
 import androidx.compose.foundation.layout.PaddingValues
 import androidx.compose.foundation.layout.Row
+import androidx.compose.foundation.layout.RowScope
 import androidx.compose.foundation.layout.Spacer
 import androidx.compose.foundation.layout.WindowInsets
 import androidx.compose.foundation.layout.WindowInsetsSides
@@ -56,6 +57,7 @@ import androidx.compose.material3.CircularProgressIndicator
 import androidx.compose.material3.DropdownMenu
 import androidx.compose.material3.DropdownMenuItem
 import androidx.compose.material3.FilterChip
+import androidx.compose.material3.FilledTonalButton
 import androidx.compose.material3.HorizontalDivider
 import androidx.compose.material3.Icon
 import androidx.compose.material3.IconButton
@@ -81,6 +83,8 @@ import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.mutableIntStateOf
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
+import androidx.compose.runtime.SideEffect
+import androidx.compose.runtime.saveable.rememberSaveable
 import androidx.compose.runtime.snapshotFlow
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
@@ -150,10 +154,11 @@ private fun runtimeMemoryControlTextStyle() = MaterialTheme.typography.labelLarg
 @Composable
 private fun runtimeMemoryDataTextStyle() = MaterialTheme.typography.bodyLarge.copy(
     fontFamily = FontFamily.Monospace,
+    fontWeight = FontWeight.Medium,
 )
 
 @Composable
-private fun runtimeMemoryMetaTextStyle() = MaterialTheme.typography.bodySmall.copy(
+private fun runtimeMemoryMetaTextStyle() = MaterialTheme.typography.bodyMedium.copy(
     fontFamily = FontFamily.Monospace,
 )
 
@@ -171,11 +176,120 @@ internal fun MemoryEditorRuntimeRoot(
 ) {
     if (!state.visible) return
     MemoryEditorOverlayScope(overlayState) { overlay ->
+        val controlsBackdrop = MaterialTheme.colorScheme.surface.copy(
+            alpha = (MemoryEditorOverlayState.DEFAULT_OPACITY - overlay.opacity).coerceAtLeast(0f),
+        )
         val tab = state.activeTab
         val tabTravelPx = with(LocalDensity.current) { PAGE_TRAVEL_DP.dp.roundToPx() }
         var opacityDialog by remember { mutableStateOf(false) }
+        // The Activity must finish to return input to the game. These fields survive its
+        // destruction in the memory-engine process, scoped to this MIDlet runtime token.
+        // Draft JSON stays here rather than entering the Activity saved-state Bundle.
+        val savedScript = remember(state.runtimeToken) {
+            MemoryEditorSessionNavigation.script(state.runtimeToken)
+        }
+        var scriptEditing by rememberSaveable(state.runtimeToken) {
+            mutableStateOf(savedScript.editing)
+        }
+        var scriptReplacingId by rememberSaveable(state.runtimeToken) {
+            mutableStateOf(savedScript.replacingId)
+        }
+        var scriptInitialText by remember(state.runtimeToken) {
+            mutableStateOf(savedScript.initialText)
+        }
+        var scriptText by remember(state.runtimeToken) {
+            mutableStateOf(savedScript.text)
+        }
+        var selectedScriptId by rememberSaveable(state.runtimeToken) {
+            mutableStateOf(savedScript.selectedId)
+        }
+        var scriptBuilder by remember(state.runtimeToken) {
+            mutableStateOf(savedScript.builder)
+        }
+        var pendingScriptSave by remember(state.runtimeToken) {
+            mutableStateOf(savedScript.pendingSave)
+        }
+        var saveStartedHere by remember(state.runtimeToken) { mutableStateOf(false) }
+        var choosingScriptType by remember(state.runtimeToken) { mutableStateOf(false) }
+        var scriptTargets by remember(state.runtimeToken) {
+            mutableStateOf(emptyList<MemoryScriptBuilderAction>())
+        }
+        SideEffect {
+            MemoryEditorSessionNavigation.rememberScript(
+                state.runtimeToken,
+                MemoryEditorScriptWorkspace(
+                    selectedId = selectedScriptId,
+                    editing = scriptEditing,
+                    replacingId = scriptReplacingId,
+                    initialText = scriptInitialText,
+                    text = scriptText,
+                    builder = scriptBuilder,
+                ),
+            )
+        }
+        val scriptDraft = if (scriptEditing) {
+            MemoryScriptDraft(scriptReplacingId, scriptInitialText, scriptText)
+        } else null
+        val setScriptDraft: (MemoryScriptDraft?) -> Unit = { draft ->
+            scriptEditing = draft != null
+            scriptReplacingId = draft?.replacingId
+            scriptInitialText = draft?.initialText.orEmpty()
+            scriptText = draft?.text.orEmpty()
+        }
+        LaunchedEffect(state.scriptsLoaded, state.scriptsError, state.scripts,
+            pendingScriptSave, saveStartedHere) {
+            val pending = pendingScriptSave
+            if (pending != null && !saveStartedHere &&
+                (state.scriptsLoaded || state.scriptsError != null)) {
+                if (state.scripts.any { it.id == pending.id && it.document == pending.document }) {
+                    selectedScriptId = pending.id
+                    setScriptDraft(null)
+                    scriptBuilder = null
+                }
+                pendingScriptSave = null
+                MemoryEditorSessionNavigation.rememberPendingScriptSave(state.runtimeToken, null)
+            }
+        }
+        val saveScript: (String, String?, (Boolean) -> Unit) -> Unit =
+            { document, replacingId, onComplete ->
+                if (pendingScriptSave == null) {
+                    val id = runCatching { memoryScriptMetadata(document).id }.getOrNull()
+                    if (id == null) {
+                        onComplete(false)
+                    } else {
+                        val pending = MemoryEditorPendingScriptSave(id, document)
+                        pendingScriptSave = pending
+                        saveStartedHere = true
+                        MemoryEditorSessionNavigation.rememberPendingScriptSave(state.runtimeToken, pending)
+                        actions.saveMemoryScript(document, replacingId) { success ->
+                            saveStartedHere = false
+                            pendingScriptSave = null
+                            MemoryEditorSessionNavigation.rememberPendingScriptSave(state.runtimeToken, null)
+                            onComplete(success)
+                        }
+                    }
+                }
+            }
+        val scriptSavePending = pendingScriptSave != null
+        var scriptDiscardMode by remember { mutableStateOf<String?>(null) }
+        val backFromScriptEditor = {
+            if (pendingScriptSave == null) {
+                if (scriptDraft?.dirty == true) scriptDiscardMode = "json"
+                else setScriptDraft(null)
+            }
+        }
+        val backFromScriptBuilder = {
+            if (pendingScriptSave == null) {
+                if (scriptBuilder?.hasChanges == true) scriptDiscardMode = "builder"
+                else scriptBuilder = null
+            }
+        }
+        val closeWorkspace = { if (pendingScriptSave == null) actions.close() }
         val resultsListState = rememberLazyListState()
         val variablesListState = rememberLazyListState()
+        var relinkingBookmarkId by rememberSaveable(state.runtimeToken) {
+            mutableStateOf<String?>(null)
+        }
         val listEntries = remember(state.savedVariables, state.watches) {
             memoryListEntries(state.savedVariables, state.watches)
         }
@@ -185,14 +299,6 @@ internal fun MemoryEditorRuntimeRoot(
         }
         val selectedListEntry = listEntries.singleOrNull { it.key in listSelection }
             ?.takeIf { listSelection.size == 1 }
-        val canInspect = if (state.variablesTab) {
-            selectedListEntry != null && !state.busy &&
-                (selectedListEntry.saved?.let {
-                    state.savedValues[it.id]?.resolved == true
-                } == true || selectedListEntry.watch?.let {
-                    it.state != MemoryEngineContract.CANDIDATE_LOST
-                } == true)
-        } else state.selected.size == 1 && !state.busy
         val inspectSelected = {
             if (state.variablesTab) {
                 selectedListEntry?.let { entry ->
@@ -211,18 +317,47 @@ internal fun MemoryEditorRuntimeRoot(
             }
             Unit
         }
-        val selectTab: (MemoryEditorTab) -> Unit = {
-            when (it) {
-                MemoryEditorTab.RESULTS -> actions.setVariablesTab(false)
-                MemoryEditorTab.VARIABLES -> actions.setVariablesTab(true)
-                MemoryEditorTab.INSPECTOR -> if (state.activeTab != it) inspectSelected()
+        val existingDraftMessage = stringResource(R.string.memory_scripts_draft_in_progress)
+        val createFailedMessage = stringResource(R.string.memory_scripts_create_failed)
+        val createScriptFromSaved: (List<SavedVariableRow>) -> String? = { bookmarks ->
+            if (scriptBuilder != null || scriptDraft != null) {
+                existingDraftMessage
+            } else {
+                runCatching {
+                    val targets = actions.captureMemoryScriptBuilderActions(bookmarks)
+                    require(targets.size == bookmarks.size)
+                    scriptTargets = targets
+                    selectedScriptId = null
+                    choosingScriptType = true
+                    actions.setScriptsTab()
+                }.fold(
+                    onSuccess = { null },
+                    onFailure = { it.localizedMessage?.takeIf(String::isNotBlank)
+                        ?: createFailedMessage },
+                )
             }
         }
-        BackHandler(enabled = tab == MemoryEditorTab.INSPECTOR || overlay.peeking ||
+        val selectTab: (MemoryEditorTab) -> Unit = {
+            if (pendingScriptSave == null) when (it) {
+                MemoryEditorTab.RESULTS -> actions.setVariablesTab(false)
+                MemoryEditorTab.VARIABLES -> actions.setVariablesTab(true)
+                MemoryEditorTab.SCRIPTS -> actions.setScriptsTab()
+                MemoryEditorTab.INSPECTOR -> Unit
+            }
+        }
+        BackHandler(enabled = scriptSavePending || tab == MemoryEditorTab.INSPECTOR || overlay.peeking ||
+            scriptDraft?.dirty == true || scriptBuilder?.hasChanges == true ||
+            (tab == MemoryEditorTab.SCRIPTS &&
+                (scriptDraft != null || scriptBuilder != null || selectedScriptId != null)) ||
             (state.variablesTab && listSelection.isNotEmpty())) {
             when {
+                pendingScriptSave != null -> Unit
                 overlay.peeking -> overlay.peeking = false
                 tab == MemoryEditorTab.INSPECTOR -> actions.closeInspector()
+                tab == MemoryEditorTab.SCRIPTS && scriptDraft != null -> backFromScriptEditor()
+                tab == MemoryEditorTab.SCRIPTS && scriptBuilder != null -> backFromScriptBuilder()
+                tab == MemoryEditorTab.SCRIPTS -> selectedScriptId = null
+                scriptDraft?.dirty == true || scriptBuilder?.hasChanges == true -> actions.close()
                 else -> listSelection = emptySet()
             }
         }
@@ -252,15 +387,49 @@ internal fun MemoryEditorRuntimeRoot(
                     val compactResults = wideWorkspace
                     val showLabels = wideWorkspace
                     val showTitle = maxHeight >= 360.dp || LocalDensity.current.fontScale <= 1.3f
+                    val inspectorPage = tab == MemoryEditorTab.INSPECTOR
+                    val detailTitle = when {
+                        inspectorPage -> stringResource(R.string.memory_editor_inspector)
+                        tab != MemoryEditorTab.SCRIPTS -> null
+                        scriptBuilder != null -> stringResource(when (scriptBuilder!!.mode) {
+                            MemoryScriptBuilderMode.FREEZE -> R.string.memory_scripts_mode_toggle
+                            MemoryScriptBuilderMode.FORM -> R.string.memory_scripts_mode_form
+                            MemoryScriptBuilderMode.ACTIONS -> R.string.memory_scripts_mode_once
+                        })
+                        scriptDraft != null -> stringResource(R.string.memory_builder_json_editor)
+                        choosingScriptType -> stringResource(R.string.memory_scripts_new)
+                        selectedScriptId != null -> state.scripts.firstOrNull {
+                            it.id == selectedScriptId
+                        }?.name ?: stringResource(R.string.memory_scripts_title)
+                        else -> null
+                    }
                     Column(
                         Modifier.fillMaxSize().padding(bottom = 48.dp)
                             .then(if (overlay.peeking) Modifier.clearAndSetSemantics {} else Modifier),
                     ) {
-                        Column(Modifier.fillMaxWidth().windowInsetsPadding(
+                        Column(Modifier.fillMaxWidth().background(controlsBackdrop).windowInsetsPadding(
                             WindowInsets.safeGestures.only(WindowInsetsSides.Horizontal),
                         )) {
-                            RuntimeMemoryHeader(state, showLabels || !showTitle, selectTab, canInspect,
-                                actions::close, showTitle)
+                            RuntimeMemoryHeader(
+                                state = state, inlineNavigation = showLabels || !showTitle,
+                                onTab = selectTab, onMinimize = closeWorkspace,
+                                navigationLocked = scriptSavePending,
+                                showTitle = showTitle, detailTitle = detailTitle,
+                                onDetailBack = {
+                                    if (pendingScriptSave == null) when {
+                                        inspectorPage -> actions.closeInspector()
+                                        scriptBuilder != null -> backFromScriptBuilder()
+                                        scriptDraft != null -> backFromScriptEditor()
+                                        choosingScriptType -> {
+                                            val fromSaved = scriptTargets.isNotEmpty()
+                                            choosingScriptType = false
+                                            scriptTargets = emptyList()
+                                            if (fromSaved) actions.setVariablesTab(true)
+                                        }
+                                        selectedScriptId != null -> selectedScriptId = null
+                                    }
+                                },
+                            )
                         }
                         if (state.busy) RuntimeOperationStrip(state, actions)
                         state.message?.takeIf(String::isNotBlank)?.let {
@@ -289,12 +458,28 @@ internal fun MemoryEditorRuntimeRoot(
                             ) {
                                 when (shownState.activeTab) {
                                     MemoryEditorTab.RESULTS -> RuntimeSearchResultsTab(
-                                        shownState, actions, inspectSelected, resultsListState,
+                                        shownState, actions, inspectSelected, relinkingBookmarkId,
+                                        { relinkingBookmarkId = null }, resultsListState,
                                         compactResults, Modifier.fillMaxSize(),
                                     )
                                     MemoryEditorTab.VARIABLES -> RuntimeVariablesTab(
                                         shownState, actions, listEntries, listSelection,
-                                        { listSelection = it }, variablesListState, compactResults,
+                                        { listSelection = it },
+                                        { id ->
+                                            relinkingBookmarkId = id
+                                            actions.setVariablesTab(false)
+                                        },
+                                        createScriptFromSaved,
+                                        variablesListState, compactResults, Modifier.fillMaxSize(),
+                                    )
+                                    MemoryEditorTab.SCRIPTS -> RuntimeScriptsTab(
+                                        shownState, actions, selectedScriptId,
+                                        { if (pendingScriptSave == null) selectedScriptId = it }, scriptDraft,
+                                        { if (pendingScriptSave == null) setScriptDraft(it) },
+                                        scriptBuilder, { if (pendingScriptSave == null) scriptBuilder = it },
+                                        scriptSavePending, saveScript,
+                                        choosingScriptType, { choosingScriptType = it },
+                                        scriptTargets, { scriptTargets = emptyList() },
                                         Modifier.fillMaxSize(),
                                     )
                                     MemoryEditorTab.INSPECTOR -> RuntimeInspectorTab(
@@ -321,10 +506,6 @@ internal fun MemoryEditorRuntimeRoot(
                 Box(
                     modifier = Modifier.align(Alignment.BottomCenter)
                         .fillMaxWidth()
-                        .background(
-                            if (overlay.peeking) Color.Transparent
-                            else MaterialTheme.colorScheme.surfaceContainerHigh,
-                        )
                         .windowInsetsPadding(
                             WindowInsets.safeDrawing.only(WindowInsetsSides.Horizontal)
                                 .union(WindowInsets.navigationBars.only(WindowInsetsSides.Bottom)),
@@ -333,6 +514,9 @@ internal fun MemoryEditorRuntimeRoot(
                 ) {
                     MemoryEditorPeekDock(
                         overlay = overlay,
+                        modifier = Modifier.background(
+                            if (overlay.peeking) Color.Transparent else controlsBackdrop,
+                        ),
                         leadingContent = {
                             RuntimeActionIcon(R.drawable.ic_settings, R.string.memory_editor_panel_opacity) {
                                 opacityDialog = true
@@ -346,6 +530,27 @@ internal fun MemoryEditorRuntimeRoot(
             }
         }
         if (opacityDialog) MemoryEditorOpacityDialog(overlay) { opacityDialog = false }
+        if (scriptDiscardMode != null) {
+            AlertDialog(
+                onDismissRequest = { scriptDiscardMode = null },
+                title = { Text(stringResource(R.string.memory_scripts_unsaved_title)) },
+                text = { Text(stringResource(R.string.memory_scripts_unsaved_message)) },
+                confirmButton = {
+                    TextButton(onClick = {
+                        if (pendingScriptSave == null) {
+                            if (scriptDiscardMode == "builder") scriptBuilder = null
+                            else setScriptDraft(null)
+                        }
+                        scriptDiscardMode = null
+                    }) { Text(stringResource(R.string.memory_scripts_discard)) }
+                },
+                dismissButton = {
+                    TextButton(onClick = { scriptDiscardMode = null }) {
+                        Text(stringResource(android.R.string.cancel))
+                    }
+                },
+            )
+        }
     }
 }
 
@@ -354,71 +559,102 @@ private fun RuntimeMemoryHeader(
     state: MemoryEditorUiState,
     inlineNavigation: Boolean,
     onTab: (MemoryEditorTab) -> Unit,
-    canInspect: Boolean,
-    onClose: () -> Unit,
-    showTitle: Boolean = true,
+    onMinimize: () -> Unit,
+    navigationLocked: Boolean,
+    showTitle: Boolean,
+    detailTitle: String?,
+    onDetailBack: () -> Unit,
 ) {
     val density = LocalDensity.current
     val topPadding = if (inlineNavigation) {
         with(density) { WindowInsets.safeDrawing.getTop(density).toDp() }
     } else memoryEditorTitleTopPadding()
-    BoxWithConstraints(Modifier.fillMaxWidth()) {
-        val stackedTitleMaxWidth = (maxWidth * 0.44f - 16.dp).coerceAtLeast(0.dp)
-        Row(
-            modifier = Modifier.fillMaxWidth().padding(start = 16.dp, end = 4.dp, top = topPadding),
-            verticalAlignment = Alignment.CenterVertically,
-        ) {
-            if (showTitle) Text(
-                stringResource(R.string.memory_editor),
-                style = MaterialTheme.typography.titleMedium,
-                maxLines = 1,
-                overflow = TextOverflow.Ellipsis,
-                modifier = if (inlineNavigation) Modifier.padding(end = 16.dp)
-                    else Modifier.widthIn(max = stackedTitleMaxWidth),
-            )
-            if (inlineNavigation) {
-                RuntimeMemoryTabs(state, onTab, canInspect, Modifier.weight(1f))
-            } else {
-                Spacer(Modifier.weight(1f))
-            }
-            IconButton(onClick = onClose) {
-                Icon(painterResource(R.drawable.ic_close), stringResource(R.string.memory_editor_close))
+    Column(Modifier.fillMaxWidth()) {
+        BoxWithConstraints(Modifier.fillMaxWidth()) {
+            val titleMaxWidth = (maxWidth * 0.44f - 16.dp).coerceAtLeast(0.dp)
+            Row(
+                Modifier.fillMaxWidth().padding(start = 16.dp, end = 4.dp, top = topPadding),
+                verticalAlignment = Alignment.CenterVertically,
+            ) {
+                if (detailTitle != null) {
+                    RuntimeIconTooltip(stringResource(R.string.memory_scripts_back)) {
+                        IconButton(onClick = onDetailBack, enabled = !navigationLocked) {
+                            Icon(painterResource(R.drawable.ic_arrow_back),
+                                stringResource(R.string.memory_scripts_back))
+                        }
+                    }
+                    Text(detailTitle, modifier = Modifier.weight(1f).padding(start = 4.dp),
+                        style = MaterialTheme.typography.titleMedium, maxLines = 1,
+                        overflow = TextOverflow.Ellipsis)
+                } else {
+                    if (showTitle) Text(
+                        stringResource(R.string.memory_editor),
+                        style = MaterialTheme.typography.titleMedium,
+                        maxLines = 1,
+                        overflow = TextOverflow.Ellipsis,
+                        modifier = if (inlineNavigation) Modifier.padding(end = 12.dp)
+                            else Modifier.widthIn(max = titleMaxWidth),
+                    )
+                    if (inlineNavigation) {
+                        RuntimeMemoryTabs(state, onTab, Modifier.weight(1f), navigationLocked)
+                    } else Spacer(Modifier.weight(1f))
+                }
+                RuntimeIconTooltip(stringResource(R.string.memory_editor_minimize)) {
+                    IconButton(onClick = onMinimize, enabled = !navigationLocked) {
+                        Icon(painterResource(R.drawable.ic_remove),
+                            stringResource(R.string.memory_editor_minimize))
+                    }
+                }
             }
         }
+        if (detailTitle == null && !inlineNavigation)
+            RuntimeMemoryTabs(state, onTab, navigationLocked = navigationLocked)
     }
-    if (!inlineNavigation) RuntimeMemoryTabs(state, onTab, canInspect)
 }
 
 @Composable
 private fun RuntimeMemoryTabs(
     state: MemoryEditorUiState,
     onTab: (MemoryEditorTab) -> Unit,
-    canInspect: Boolean,
     modifier: Modifier = Modifier,
+    navigationLocked: Boolean = false,
 ) {
+    val destinations = listOf(
+        MemoryEditorTab.RESULTS, MemoryEditorTab.VARIABLES, MemoryEditorTab.SCRIPTS,
+    )
     SecondaryScrollableTabRow(
-        selectedTabIndex = state.activeTab.ordinal,
+        selectedTabIndex = destinations.indexOf(state.activeTab).coerceAtLeast(0),
         modifier = modifier.fillMaxWidth(),
         edgePadding = 0.dp,
         containerColor = Color.Transparent,
     ) {
-        MemoryEditorTab.entries.forEach { tab ->
-            val label = when (tab) {
+        destinations.forEach { tab ->
+            val description = stringResource(when (tab) {
                 MemoryEditorTab.RESULTS -> R.string.memory_editor_search_tab
                 MemoryEditorTab.VARIABLES -> R.string.memory_variables_tab
-                MemoryEditorTab.INSPECTOR -> R.string.memory_editor_inspector
-            }
-            val enabled = tab != MemoryEditorTab.INSPECTOR ||
-                state.activeTab == tab || canInspect
-            val description = stringResource(label)
+                MemoryEditorTab.SCRIPTS -> R.string.memory_scripts_title
+                MemoryEditorTab.INSPECTOR -> error("Inspector is a detail, not a destination")
+            })
             Tab(
                 selected = state.activeTab == tab,
-                enabled = enabled,
+                enabled = !navigationLocked,
                 onClick = { onTab(tab) },
                 modifier = Modifier.semantics { contentDescription = description },
                 text = {
-                    Text(description, color = if (enabled) Color.Unspecified
-                        else MaterialTheme.colorScheme.onSurface.copy(alpha = 0.38f))
+                    Row(verticalAlignment = Alignment.CenterVertically,
+                        horizontalArrangement = Arrangement.spacedBy(6.dp)) {
+                        if (LocalDensity.current.fontScale <= 1.3f) {
+                            val icon = when (tab) {
+                                MemoryEditorTab.RESULTS -> R.drawable.ic_search
+                                MemoryEditorTab.VARIABLES -> R.drawable.ic_memory_editor_watch
+                                MemoryEditorTab.SCRIPTS -> R.drawable.ic_auto_mode
+                                MemoryEditorTab.INSPECTOR -> error("Not a tab")
+                            }
+                            Icon(painterResource(icon), contentDescription = null,
+                                modifier = Modifier.size(18.dp))
+                        }
+                        Text(description, maxLines = 1)
+                    }
                 },
             )
         }
@@ -514,13 +750,15 @@ private fun RuntimeSearchResultsTab(
     state: MemoryEditorUiState,
     actions: MemoryEditorActions,
     onInspectSelected: () -> Unit,
+    relinkingBookmarkId: String?,
+    onRelinkComplete: () -> Unit,
     listState: LazyListState,
     compactRows: Boolean,
     modifier: Modifier = Modifier,
 ) {
     var knownDialog by remember { mutableStateOf(false) }
     var unknownDialog by remember { mutableStateOf(false) }
-    var saveDialog by remember { mutableStateOf(false) }
+    var relinkCandidate by remember { mutableStateOf<Long?>(null) }
     var editTargets by remember { mutableStateOf<List<MemoryEditTarget>?>(null) }
     var editRevision by remember { mutableStateOf(0L) }
     var deleteSnapshot by remember { mutableStateOf<Pair<Long, List<Long>>?>(null) }
@@ -535,151 +773,152 @@ private fun RuntimeSearchResultsTab(
     )
     Column(modifier = modifier.fillMaxWidth()) {
         var moreMenu by remember { mutableStateOf(false) }
+        if (relinkingBookmarkId != null) {
+            Row(Modifier.fillMaxWidth().padding(horizontal = 12.dp),
+                verticalAlignment = Alignment.CenterVertically) {
+                Text(stringResource(R.string.memory_bookmark_relink_hint),
+                    modifier = Modifier.weight(1f),
+                    style = MaterialTheme.typography.bodySmall)
+                TextButton(onClick = onRelinkComplete) {
+                    Text(stringResource(android.R.string.cancel))
+                }
+            }
+        }
         val quickActions = listOf(
-            RuntimeToolbarAction(R.drawable.ic_search, R.string.memory_editor_search_known_values, state.canSearch) {
+            RuntimeToolbarAction(R.drawable.ic_search,
+                R.string.memory_editor_search_known_values, state.canSearch) {
                 knownDialog = true
             },
             RuntimeToolbarAction(R.drawable.ic_memory_editor_search_unknown,
                 R.string.memory_editor_search_unknown_values, state.canSearch) {
                 unknownDialog = true
             },
-            RuntimeToolbarAction(R.drawable.ic_memory_editor_edit_value, R.string.memory_editor_edit, selectedWriteSupported && !state.busy) {
-                editTargets = selectedRows.map { MemoryEditTarget(it.id, it.primaryType, it.valueText, it.aliasTypes) }
+        )
+        val selectedActions = listOf(
+            RuntimeToolbarAction(R.drawable.ic_memory_editor_edit_value,
+                R.string.memory_editor_edit, selectedWriteSupported && !state.busy) {
+                editTargets = selectedRows.map {
+                    MemoryEditTarget(it.id, it.primaryType, it.valueText, it.aliasTypes)
+                }
                 editRevision = state.revision
             },
-            RuntimeToolbarAction(R.drawable.ic_memory_editor_watch_add, R.string.memory_list_add,
-                selectedRows.isNotEmpty() && !state.busy) { actions.watchSelected(true) },
-            RuntimeToolbarAction(R.drawable.ic_refresh, R.string.memory_editor_refresh,
-                state.results.isNotEmpty() && !state.busy, actions::refresh),
-        )
-        val extraActions = listOf(
-            RuntimeToolbarAction(R.drawable.ic_memory_editor_inspector, R.string.memory_editor_inspect_memory,
-                selectedRows.size == 1 && !state.busy, onInspectSelected),
-            RuntimeToolbarAction(R.drawable.ic_save, R.string.memory_saved_save,
-                selectedRows.size == 1 && !state.busy && state.supported) {
-                saveDialog = true
+            RuntimeToolbarAction(R.drawable.ic_memory_editor_watch_add,
+                R.string.memory_list_add, selectedRows.isNotEmpty() && !state.busy) {
+                actions.watchSelected(true)
             },
-            RuntimeToolbarAction(R.drawable.ic_undo, R.string.memory_editor_undo,
-                state.canUndo && !state.busy, actions::undo),
+            RuntimeToolbarAction(R.drawable.ic_memory_editor_inspector,
+                R.string.memory_editor_inspect_memory, selectedRows.size == 1 && !state.busy,
+                onInspectSelected),
+            RuntimeToolbarAction(R.drawable.ic_memory_editor_watch_add,
+                R.string.memory_bookmark_relink,
+                relinkingBookmarkId != null && selectedRows.size == 1 && !state.busy) {
+                relinkCandidate = selectedRows.single().id
+            },
             RuntimeToolbarAction(R.drawable.ic_delete, R.string.memory_editor_remove,
                 selectedRows.isNotEmpty() && !unknownBaseline && !state.busy) {
                 deleteSnapshot = state.revision to selectedRows.map(MemoryResultRow::id)
             },
         )
-        // Pack actions from the real toolbar width. A 48 dp button is always
-        // preferred over More when it fits; selected actions may appear directly
-        // without moving the five frequent actions in a spacious window.
-        BoxWithConstraints(Modifier.fillMaxWidth().windowInsetsPadding(
-            WindowInsets.safeGestures.only(WindowInsetsSides.Horizontal),
-        )) {
-            val showSummary = compactRows && (state.results.isNotEmpty() || state.resultCount > 0L)
-            val summaryReserve = if (showSummary) {
-                160.dp * LocalDensity.current.fontScale.coerceAtLeast(1f)
-            } else 0.dp
-            val slotCount = ((maxWidth - 16.dp - summaryReserve).value / 48f)
-                .toInt().coerceAtLeast(2)
-            val availableActions = quickActions + extraActions.filter { it.enabled }
-            val directLimit = if (availableActions.size > slotCount) slotCount - 1 else slotCount
-            val primaryActions = if (directLimit >= quickActions.size) {
-                availableActions.take(directLimit)
-            } else {
-                // Prioritize known search, edit and refresh when space is scarce.
-                val priority = listOf(0, 2, 4, 1, 3).take(directLimit)
-                quickActions.filterIndexed { index, _ -> index in priority }
-            }
-            val overflowActions = availableActions.filterNot { it in primaryActions }
-            Row(
-                modifier = Modifier.fillMaxWidth().padding(horizontal = 8.dp),
-                horizontalArrangement = if (compactRows) Arrangement.End else Arrangement.SpaceEvenly,
-                verticalAlignment = Alignment.CenterVertically,
-            ) {
-                if (showSummary) {
+        if (state.sessionStage != MemorySessionStage.EMPTY || state.results.isNotEmpty() ||
+            state.canUndo) {
+            BoxWithConstraints(Modifier.fillMaxWidth().windowInsetsPadding(
+                WindowInsets.safeGestures.only(WindowInsetsSides.Horizontal),
+            )) {
+                val showExtra = maxWidth >=
+                    480.dp * LocalDensity.current.fontScale.coerceAtLeast(1f)
+                val summary: @Composable RowScope.() -> Unit = {
                     RuntimePageSelectionCheckbox(
                         checked = allVisibleSelected,
                         enabled = state.results.isNotEmpty() && !state.busy,
                         description = visibleSelectionDescription,
                         onToggle = { if (it) actions.selectVisible() else actions.clearSelection() },
                     )
-                    Column(
-                        modifier = Modifier.weight(1f).padding(start = 4.dp),
+                    Text(pluralStringResource(
+                        if (unknownBaseline) R.plurals.memory_editor_candidates
+                        else R.plurals.memory_editor_results,
+                        state.resultCount.coerceAtMost(Int.MAX_VALUE.toLong()).toInt(),
+                        state.resultCount,
+                    ), style = MaterialTheme.typography.titleSmall,
+                        maxLines = 1, overflow = TextOverflow.Ellipsis,
+                        modifier = Modifier.weight(1f))
+                }
+                val controls: @Composable RowScope.() -> Unit = {
+                    FilledTonalButton(
+                        onClick = { knownDialog = true }, enabled = state.canSearch,
+                        modifier = Modifier.heightIn(min = 48.dp),
                     ) {
-                        Text(
-                            pluralStringResource(
-                                if (unknownBaseline) R.plurals.memory_editor_candidates
-                                else R.plurals.memory_editor_results,
-                                state.resultCount.coerceAtMost(Int.MAX_VALUE.toLong()).toInt(),
-                                state.resultCount,
-                            ),
-                            style = MaterialTheme.typography.labelLarge,
-                            maxLines = 1,
-                            overflow = TextOverflow.Ellipsis,
-                        )
-                        if (state.selected.isNotEmpty()) {
-                            Text(
-                                pluralStringResource(
-                                    R.plurals.memory_editor_selected,
-                                    state.selected.size, state.selected.size,
-                                ),
-                                style = MaterialTheme.typography.labelSmall,
-                                color = MaterialTheme.colorScheme.primary,
-                                maxLines = 1,
-                                overflow = TextOverflow.Ellipsis,
-                            )
-                        }
+                        Icon(painterResource(R.drawable.ic_search), contentDescription = null)
+                        Spacer(Modifier.width(6.dp))
+                        Text(stringResource(
+                            if (state.sessionStage == MemorySessionStage.EMPTY)
+                                R.string.memory_editor_new_search
+                            else R.string.memory_editor_refine_scan,
+                        ))
                     }
-                } else if (compactRows) {
-                    Spacer(Modifier.weight(1f))
-                }
-                primaryActions.forEach { action ->
-                    RuntimeActionIcon(action.icon, action.label, action.enabled, action.onClick)
-                }
-                if (overflowActions.isNotEmpty()) {
-                    RuntimeActionIcon(R.drawable.ic_more_vert, R.string.more, enabled = !state.busy) {
+                    if (showExtra) {
+                        RuntimeActionIcon(R.drawable.ic_memory_editor_search_unknown,
+                            R.string.memory_editor_search_unknown_values, state.canSearch) {
+                            unknownDialog = true
+                        }
+                        RuntimeActionIcon(R.drawable.ic_refresh,
+                            R.string.memory_editor_refresh,
+                            state.results.isNotEmpty() && !state.busy, actions::refresh)
+                    }
+                    RuntimeActionIcon(R.drawable.ic_more_vert, R.string.more) {
                         moreMenu = true
                     }
                 }
-            }
-            LaunchedEffect(overflowActions.isEmpty()) {
-                if (overflowActions.isEmpty()) moreMenu = false
-            }
-            if (moreMenu && overflowActions.isNotEmpty()) {
-                RuntimeOverflowActionsDialog(overflowActions) { moreMenu = false }
-            }
-        }
-        HorizontalDivider()
-
-        LazyColumn(state = listState, modifier = Modifier.weight(1f).fillMaxWidth()) {
-            if (!compactRows && (state.results.isNotEmpty() || state.resultCount > 0)) item(key = "summary") {
-                Row(
-                    modifier = Modifier.fillMaxWidth()
-                        .windowInsetsPadding(WindowInsets.safeGestures.only(WindowInsetsSides.Horizontal))
-                        .padding(horizontal = 12.dp),
-                    verticalAlignment = Alignment.CenterVertically,
-                ) {
-                    RuntimePageSelectionCheckbox(
-                        checked = allVisibleSelected,
-                        enabled = state.results.isNotEmpty() && !state.busy,
-                        description = visibleSelectionDescription,
-                        onToggle = { if (it) actions.selectVisible() else actions.clearSelection() },
-                    )
-                    Column(Modifier.weight(1f)) {
-                        Text(
-                            pluralStringResource(
-                                if (unknownBaseline) R.plurals.memory_editor_candidates else R.plurals.memory_editor_results,
-                                state.resultCount.coerceAtMost(Int.MAX_VALUE.toLong()).toInt(), state.resultCount,
-                            ),
-                            style = MaterialTheme.typography.labelLarge,
-                        )
-                        if (state.selected.isNotEmpty()) {
-                            Text(
-                                pluralStringResource(R.plurals.memory_editor_selected, state.selected.size, state.selected.size),
-                                style = MaterialTheme.typography.labelMedium,
-                                color = MaterialTheme.colorScheme.primary,
-                            )
+                val largeTextCompact = maxWidth < 400.dp &&
+                    LocalDensity.current.fontScale >= 1.5f
+                val rowModifier = Modifier.fillMaxWidth()
+                    .padding(horizontal = 12.dp, vertical = 4.dp)
+                if (largeTextCompact) {
+                    Column {
+                        Row(rowModifier, verticalAlignment = Alignment.CenterVertically) {
+                            summary()
+                        }
+                        Row(rowModifier, verticalAlignment = Alignment.CenterVertically,
+                            horizontalArrangement = Arrangement.End) {
+                            controls()
                         }
                     }
+                } else {
+                    Row(rowModifier, verticalAlignment = Alignment.CenterVertically,
+                        horizontalArrangement = Arrangement.spacedBy(4.dp)) {
+                        summary()
+                        controls()
+                    }
                 }
+                if (moreMenu) RuntimeOverflowActionsDialog(
+                    listOf(
+                        RuntimeToolbarAction(R.drawable.ic_search,
+                            R.string.memory_editor_search_known_values, state.canSearch) {
+                            knownDialog = true
+                        },
+                        RuntimeToolbarAction(R.drawable.ic_memory_editor_search_unknown,
+                            R.string.memory_editor_search_unknown_values, state.canSearch) {
+                            unknownDialog = true
+                        },
+                        RuntimeToolbarAction(R.drawable.ic_refresh,
+                            R.string.memory_editor_refresh,
+                            state.results.isNotEmpty() && !state.busy, actions::refresh),
+                        RuntimeToolbarAction(R.drawable.ic_undo, R.string.memory_editor_undo,
+                            state.canUndo && !state.busy, actions::undo),
+                    ),
+                ) { moreMenu = false }
             }
+            HorizontalDivider()
+        }
+
+        Box(Modifier.fillMaxWidth().weight(1f)) {
+            LazyColumn(
+                state = listState,
+                modifier = Modifier.fillMaxSize(),
+                contentPadding = PaddingValues(
+                    bottom = if (selectedRows.isNotEmpty())
+                        96.dp * LocalDensity.current.fontScale.coerceAtLeast(1f) else 0.dp,
+                ),
+            ) {
             if (state.results.isEmpty()) {
                 item(key = "empty") {
                     Column(
@@ -732,6 +971,17 @@ private fun RuntimeSearchResultsTab(
                 }
             }
         }
+            if (selectedRows.isNotEmpty()) {
+                Box(Modifier.align(Alignment.BottomCenter)) {
+                    RuntimeSelectedActionBar(
+                        label = pluralStringResource(
+                            R.plurals.memory_editor_selected, selectedRows.size, selectedRows.size,
+                        ),
+                        actions = selectedActions,
+                    )
+                }
+            }
+        }
     }
 
     if (knownDialog) {
@@ -774,26 +1024,22 @@ private fun RuntimeSearchResultsTab(
             },
         )
     }
-    if (saveDialog) {
-        var name by remember { mutableStateOf("") }
+    val bookmarkToRelink = relinkingBookmarkId
+    if (bookmarkToRelink != null && relinkCandidate != null) {
+        val candidate = relinkCandidate!!
         AlertDialog(
-            onDismissRequest = { saveDialog = false },
-            title = { Text(stringResource(R.string.memory_saved_save)) },
-            text = {
-                OutlinedTextField(
-                    value = name, onValueChange = { if (it.length <= 64) name = it },
-                    label = { Text(stringResource(R.string.memory_saved_name)) },
-                    singleLine = true, modifier = Modifier.fillMaxWidth(),
-                )
-            },
+            onDismissRequest = { relinkCandidate = null },
+            title = { Text(stringResource(R.string.memory_bookmark_relink)) },
+            text = { Text(stringResource(R.string.memory_bookmark_relink_confirm)) },
             confirmButton = {
-                TextButton(enabled = name.isNotBlank() && !state.busy, onClick = {
-                    actions.saveSelectedVariable(name.trim())
-                    saveDialog = false
-                }) { Text(stringResource(R.string.memory_saved_save)) }
+                TextButton(onClick = {
+                    actions.relinkBookmark(bookmarkToRelink, candidate, state.revision)
+                    relinkCandidate = null
+                    onRelinkComplete()
+                }) { Text(stringResource(R.string.memory_bookmark_relink)) }
             },
             dismissButton = {
-                TextButton(onClick = { saveDialog = false }) {
+                TextButton(onClick = { relinkCandidate = null }) {
                     Text(stringResource(android.R.string.cancel))
                 }
             },
@@ -847,6 +1093,8 @@ private fun RuntimeVariablesTab(
     entries: List<MemoryListEntry>,
     selectedKeys: Set<String>,
     onSelectionChange: (Set<String>) -> Unit,
+    onRelink: (String) -> Unit,
+    onCreateScript: (List<SavedVariableRow>) -> String?,
     listState: LazyListState,
     compactRows: Boolean,
     modifier: Modifier = Modifier,
@@ -856,8 +1104,13 @@ private fun RuntimeVariablesTab(
     var removeKeys by remember { mutableStateOf(emptySet<String>()) }
     var savedDraft by remember { mutableStateOf<SavedEditDraft?>(null) }
     var watchDraft by remember { mutableStateOf<List<MemoryEditTarget>?>(null) }
+    var createScriptError by remember { mutableStateOf<String?>(null) }
 
     val selectedEntries = entries.filter { it.key in selectedKeys }
+    val scriptBookmarks = selectedEntries.mapNotNull { it.saved }
+    val canCreateScript = selectedEntries.isNotEmpty() &&
+        scriptBookmarks.size == selectedEntries.size &&
+        scriptBookmarks.all { it.hasLocator } && state.supported && !state.busy
     fun select(entry: MemoryListEntry) {
         onSelectionChange(if (entry.key in selectedKeys) selectedKeys - entry.key
             else selectedKeys + entry.key)
@@ -893,7 +1146,8 @@ private fun RuntimeVariablesTab(
         val saved = entry.saved
         val watch = entry.watch
         val active = (watch?.freezeMode ?: -1) >= 0
-        val value = saved?.let { state.savedValues[it.id]?.value } ?: watch?.valueText
+        val value = saved?.let { state.savedValues[it.id]?.takeIf { value -> value.resolved }?.value }
+            ?: watch?.takeIf { it.state != MemoryEngineContract.CANDIDATE_LOST }?.valueText
         if (active) {
             if (saved != null) actions.clearSavedWatchFreeze(saved.id)
             else watch?.let { actions.setListWatchFreeze(it.id, "", false) }
@@ -916,9 +1170,10 @@ private fun RuntimeVariablesTab(
     val editEnabled = state.writeSupported && !state.busy && (singleReady || canBatchEdit)
     val freezeEnabled = single != null && !state.busy &&
         ((single.watch?.freezeMode ?: -1) >= 0 ||
-            (state.writeSupported && (single?.saved == null || savedReady) &&
-                (single?.saved?.let { state.savedValues[it.id]?.value }
-                    ?: single?.watch?.valueText)?.isNotBlank() == true))
+            (state.writeSupported && singleReady &&
+                (single.saved?.let { state.savedValues[it.id]?.takeIf { value ->
+                    value.resolved
+                }?.value } ?: single.watch?.valueText)?.isNotBlank() == true))
     fun editSelection() {
         if (single != null) edit(single)
         else if (canBatchEdit && editEnabled) {
@@ -930,37 +1185,19 @@ private fun RuntimeVariablesTab(
             }
         }
     }
-    val keepName = single?.let { entry ->
-        entry.watch?.let { watch ->
-            entry.label.ifBlank { runtimeTypeShort(watch.type) }
-        }
-    }.orEmpty()
     var moreActions by remember { mutableStateOf(false) }
-    val primaryActions = listOf(
+    var recipeDialog by remember { mutableStateOf(false) }
+    var recipeSourceKey by remember { mutableStateOf<String?>(null) }
+    val selectionActions = listOf(
         RuntimeToolbarAction(R.drawable.ic_memory_editor_edit_value,
             R.string.memory_editor_edit, editEnabled, ::editSelection),
-        RuntimeToolbarAction(R.drawable.ic_refresh,
-            R.string.memory_editor_refresh, !state.busy) {
-            actions.refresh()
-            actions.refreshSavedVariables()
+        RuntimeToolbarAction(R.drawable.ic_auto_mode,
+            R.string.memory_scripts_create_from_bookmarks, canCreateScript) {
+            createScriptError = onCreateScript(scriptBookmarks)
         },
-    )
-    val contextualActions = listOf(
         RuntimeToolbarAction(R.drawable.ic_memory_editor_inspector,
             R.string.memory_editor_inspect_memory, singleReady && !state.busy) {
             single?.let(::inspect)
-        },
-        RuntimeToolbarAction(R.drawable.ic_save,
-            if (single?.saved != null) R.string.memory_list_stop_keeping
-            else R.string.memory_list_keep,
-            single != null && !state.busy &&
-                (single.saved == null || single.watch != null || singleReady)) {
-            single?.let { entry ->
-                entry.saved?.let { actions.unkeepListSaved(it.id) }
-                    ?: entry.watch?.let {
-                        actions.keepListWatch(it.id, keepName)
-                    }
-            }
         },
         RuntimeToolbarAction(
             if ((single?.watch?.freezeMode ?: -1) >= 0) R.drawable.ic_unlock
@@ -969,6 +1206,11 @@ private fun RuntimeVariablesTab(
             else R.string.memory_editor_freeze,
             freezeEnabled,
         ) { single?.let(::toggleFreeze) },
+        RuntimeToolbarAction(R.drawable.ic_memory_editor_watch_add,
+            R.string.memory_bookmark_relink,
+            single?.saved != null && !state.busy) {
+            single?.saved?.let { onRelink(it.id) }
+        },
         RuntimeToolbarAction(R.drawable.ic_memory_editor_rename,
             R.string.memory_saved_rename, single != null && !state.busy) {
             renameKey = single?.key
@@ -977,62 +1219,53 @@ private fun RuntimeVariablesTab(
             R.string.memory_editor_remove, selectedEntries.isNotEmpty() && !state.busy) {
             removeKeys = selectedKeys
         },
-    ).filter { it.enabled }
-
+    )
     Column(modifier.fillMaxWidth()) {
-        BoxWithConstraints(Modifier.fillMaxWidth().windowInsetsPadding(
-            WindowInsets.safeGestures.only(WindowInsetsSides.Horizontal),
-        )) {
-            // Reserve touch space for select-all and the count; keep frequent actions
-            // in a stable order and move extras to More only when width requires it.
-            val slots = ((maxWidth - 152.dp).value / 48f).toInt().coerceAtLeast(2)
-            val available = primaryActions + contextualActions
-            val directCount = if (available.size > slots) (slots - 1).coerceAtLeast(1)
-                else slots
-            val direct = available.take(directCount)
-            val overflow = available.drop(directCount)
-            Row(
-                Modifier.fillMaxWidth().padding(horizontal = 8.dp),
-                verticalAlignment = Alignment.CenterVertically,
-            ) {
-                val allSelected = entries.isNotEmpty() &&
-                    entries.all { it.key in selectedKeys }
-                RuntimePageSelectionCheckbox(
-                    checked = allSelected,
-                    enabled = entries.isNotEmpty() && !state.busy,
-                    description = stringResource(if (allSelected)
-                        R.string.memory_editor_clear_selection
-                        else R.string.library_selection_select_all),
-                    onToggle = { checked ->
-                        onSelectionChange(if (checked) entries.mapTo(HashSet()) { it.key }
-                            else emptySet())
-                    },
-                )
-                Text(
-                    if (selectedEntries.isNotEmpty()) pluralStringResource(
-                        R.plurals.memory_editor_selected, selectedEntries.size, selectedEntries.size,
-                    ) else stringResource(R.string.memory_variables_tab) + " · " + entries.size,
-                    style = MaterialTheme.typography.titleSmall,
-                    modifier = Modifier.weight(1f).padding(start = 4.dp),
-                    maxLines = 1,
-                    overflow = TextOverflow.Ellipsis,
-                )
-                direct.forEach { RuntimeActionIcon(it.icon, it.label, it.enabled, it.onClick) }
-                if (overflow.isNotEmpty()) {
-                    RuntimeActionIcon(R.drawable.ic_more_vert, R.string.more, !state.busy) {
-                        moreActions = true
-                    }
-                }
-            }
-            LaunchedEffect(overflow.isEmpty()) {
-                if (overflow.isEmpty()) moreActions = false
-            }
-            if (moreActions && overflow.isNotEmpty()) {
-                RuntimeOverflowActionsDialog(overflow) { moreActions = false }
+        Row(
+            Modifier.fillMaxWidth().windowInsetsPadding(
+                WindowInsets.safeGestures.only(WindowInsetsSides.Horizontal),
+            ).padding(horizontal = 8.dp, vertical = 4.dp),
+            verticalAlignment = Alignment.CenterVertically,
+        ) {
+            val allSelected = entries.isNotEmpty() &&
+                entries.all { it.key in selectedKeys }
+            RuntimePageSelectionCheckbox(
+                checked = allSelected,
+                enabled = entries.isNotEmpty() && !state.busy,
+                description = stringResource(if (allSelected)
+                    R.string.memory_editor_clear_selection
+                    else R.string.library_selection_select_all),
+                onToggle = { checked ->
+                    onSelectionChange(if (checked) entries.mapTo(HashSet()) { it.key }
+                        else emptySet())
+                },
+            )
+            Text(
+                stringResource(R.string.memory_variables_tab) + " · " + entries.size,
+                style = MaterialTheme.typography.titleSmall,
+                modifier = Modifier.weight(1f).padding(start = 4.dp),
+                maxLines = 1, overflow = TextOverflow.Ellipsis,
+            )
+            RuntimeActionIcon(R.drawable.ic_refresh, R.string.memory_editor_refresh,
+                enabled = !state.busy) {
+                actions.refresh()
+                actions.refreshSavedVariables()
             }
         }
         HorizontalDivider()
-        LazyColumn(state = listState, modifier = Modifier.fillMaxWidth().weight(1f)) {
+        createScriptError?.let {
+            Text(it, color = MaterialTheme.colorScheme.error,
+                style = MaterialTheme.typography.bodySmall, modifier = Modifier.padding(12.dp))
+        }
+        Box(Modifier.fillMaxWidth().weight(1f)) {
+            LazyColumn(
+                state = listState,
+                modifier = Modifier.fillMaxSize(),
+                contentPadding = PaddingValues(
+                    bottom = if (selectedEntries.isNotEmpty())
+                        96.dp * LocalDensity.current.fontScale.coerceAtLeast(1f) else 0.dp,
+                ),
+            ) {
             if (state.savedError != null) item(key = "list-error") {
                 Text(state.savedError,
                     color = MaterialTheme.colorScheme.error,
@@ -1068,6 +1301,29 @@ private fun RuntimeVariablesTab(
                 )
             }
         }
+            if (selectedEntries.isNotEmpty()) {
+                Box(Modifier.align(Alignment.BottomCenter)) {
+                    RuntimeSelectedActionBar(
+                        label = pluralStringResource(
+                            R.plurals.memory_editor_selected, selectedEntries.size, selectedEntries.size,
+                        ),
+                        actions = selectionActions,
+                    )
+                }
+            }
+        }
+    }
+
+    if (recipeDialog) {
+        val saved = entries.firstOrNull { it.key == recipeSourceKey }?.saved
+        if (saved != null) MemoryRecipeDialog(
+            saved = saved,
+            savedValue = state.savedValues[saved.id]?.value.orEmpty(),
+            writeSupported = state.writeSupported && !state.busy,
+            targetReady = state.savedValues[saved.id]?.resolved == true,
+            actions = actions,
+            onDismiss = { recipeDialog = false },
+        )
     }
 
     if (menuEntry != null) {
@@ -1076,19 +1332,14 @@ private fun RuntimeVariablesTab(
         val savedReady = saved != null && state.savedValues[saved.id]?.resolved == true
         val ready = savedReady ||
             watch?.let { it.state != MemoryEngineContract.CANDIDATE_LOST } == true
-        val keepName = watch?.let {
-            menuEntry.label.ifBlank { runtimeTypeShort(it.type) }
-        }.orEmpty()
-        val actionsInMenu = listOf(
+        val actionsInMenu = listOfNotNull(
             RuntimeToolbarAction(R.drawable.ic_memory_editor_edit_value, R.string.memory_editor_edit,
                 state.writeSupported && ready && !state.busy) { edit(menuEntry) },
             RuntimeToolbarAction(R.drawable.ic_memory_editor_inspector, R.string.memory_editor_inspect_memory,
                 ready && !state.busy) { inspect(menuEntry) },
-            RuntimeToolbarAction(R.drawable.ic_save,
-                if (saved != null) R.string.memory_list_stop_keeping else R.string.memory_list_keep,
-                !state.busy && (saved == null || watch != null || ready)) {
-                if (saved != null) actions.unkeepListSaved(saved.id)
-                else if (watch != null) actions.keepListWatch(watch.id, keepName)
+            RuntimeToolbarAction(R.drawable.ic_memory_editor_watch_add,
+                R.string.memory_bookmark_relink, saved != null && !state.busy) {
+                saved?.let { onRelink(it.id) }
             },
             RuntimeToolbarAction(
                 if ((watch?.freezeMode ?: -1) >= 0) R.drawable.ic_unlock
@@ -1096,12 +1347,27 @@ private fun RuntimeVariablesTab(
                 if ((watch?.freezeMode ?: -1) >= 0) R.string.memory_editor_unfreeze
                 else R.string.memory_editor_freeze,
                 !state.busy && ((watch?.freezeMode ?: -1) >= 0 ||
-                    (state.writeSupported && (saved == null || savedReady) && ready)),
+                    (state.writeSupported && ready)),
             ) { toggleFreeze(menuEntry) },
             RuntimeToolbarAction(R.drawable.ic_memory_editor_rename, R.string.memory_saved_rename,
                 !state.busy) { renameKey = menuEntry.key },
             RuntimeToolbarAction(R.drawable.ic_delete, R.string.memory_editor_remove,
                 !state.busy) { removeKeys = setOf(menuEntry.key) },
+            saved?.let {
+                RuntimeToolbarAction(R.drawable.ic_auto_mode,
+                    R.string.memory_recipes_title, !state.busy) {
+                    recipeSourceKey = menuEntry.key
+                    recipeDialog = true
+                    menuKey = null
+                }
+            },
+            saved?.takeIf { it.hasLocator }?.let { bookmark ->
+                RuntimeToolbarAction(R.drawable.ic_auto_mode,
+                    R.string.memory_scripts_create_from_bookmarks, !state.busy) {
+                    createScriptError = onCreateScript(listOf(bookmark))
+                    menuKey = null
+                }
+            },
         )
         RuntimeOverflowActionsDialog(actionsInMenu) { menuKey = null }
     }
@@ -1232,13 +1498,6 @@ private fun RuntimeListRow(
                     Text(name, maxLines = 1, overflow = TextOverflow.Ellipsis,
                         style = MaterialTheme.typography.titleSmall,
                         modifier = Modifier.weight(1f, fill = false))
-                    if (entry.saved != null) {
-                        Spacer(Modifier.width(6.dp))
-                        Icon(painterResource(R.drawable.ic_save),
-                            contentDescription = stringResource(R.string.memory_list_kept),
-                            modifier = Modifier.size(16.dp),
-                            tint = MaterialTheme.colorScheme.primary)
-                    }
                     if ((watch?.freezeMode ?: -1) >= 0) {
                         Spacer(Modifier.width(6.dp))
                         Icon(painterResource(R.drawable.ic_lock),
@@ -1248,9 +1507,9 @@ private fun RuntimeListRow(
                                 else MaterialTheme.colorScheme.primary)
                     }
                 }
-                val location = entry.saved?.path ?: watch?.let {
-                    runtimeCandidateLocation(it.id, it.source, it.locationText)
-                }.orEmpty()
+                val location = entry.saved?.path?.takeUnless { it == "Needs relink" }
+                    ?: watch?.let { runtimeCandidateLocation(it.id, it.source, it.locationText) }
+                    ?: entry.saved?.path.orEmpty()
                 Text(location, maxLines = 1, overflow = TextOverflow.Ellipsis,
                     style = runtimeMemoryMetaTextStyle(),
                     color = MaterialTheme.colorScheme.onSurfaceVariant)
@@ -1258,9 +1517,10 @@ private fun RuntimeListRow(
                     stringResource(R.string.memory_editor_freeze_paused),
                     style = MaterialTheme.typography.labelSmall,
                     color = MaterialTheme.colorScheme.error)
-                if (entry.saved != null && value?.resolved != true) {
+                if (entry.saved != null && value?.resolved != true &&
+                    (watch == null || watch.state == MemoryEngineContract.CANDIDATE_LOST)) {
                     Text(value?.detail?.takeIf { it.isNotBlank() }
-                        ?: stringResource(R.string.memory_saved_not_ready),
+                        ?: stringResource(R.string.memory_bookmark_unavailable),
                         style = MaterialTheme.typography.labelSmall,
                         color = MaterialTheme.colorScheme.onSurfaceVariant,
                         maxLines = 2)
@@ -1398,6 +1658,65 @@ private fun RuntimePageSelectionCheckbox(
         onCheckedChange = onToggle,
         modifier = Modifier.semantics { contentDescription = description },
     )
+}
+
+@Composable
+private fun RuntimeSelectedActionBar(
+    label: String,
+    actions: List<RuntimeToolbarAction>,
+) {
+    var showMore by remember { mutableStateOf(false) }
+    BoxWithConstraints(
+        Modifier.fillMaxWidth().background(MaterialTheme.colorScheme.secondaryContainer)
+            .padding(horizontal = 12.dp, vertical = 4.dp),
+    ) {
+        val fontScale = LocalDensity.current.fontScale.coerceAtLeast(1f)
+        val slots = when {
+            maxWidth >= 720.dp * fontScale -> 5
+            maxWidth >= 460.dp * fontScale -> 4
+            maxWidth >= 320.dp * fontScale -> 3
+            else -> 2
+        }
+        val available = actions.filter(RuntimeToolbarAction::enabled)
+        val directCount = if (available.size > slots) slots - 1 else slots
+        val direct = available.take(directCount)
+        val overflow = available.drop(directCount)
+        Row(
+            Modifier.fillMaxWidth(),
+            verticalAlignment = Alignment.CenterVertically,
+            horizontalArrangement = Arrangement.spacedBy(4.dp),
+        ) {
+            Text(label, style = MaterialTheme.typography.labelMedium,
+                color = MaterialTheme.colorScheme.onSecondaryContainer,
+                modifier = Modifier.weight(1f), maxLines = 1,
+                overflow = TextOverflow.Ellipsis)
+            direct.forEach { action ->
+                val description = stringResource(action.label)
+                val compactLabel = when (action.label) {
+                    R.string.memory_editor_inspect_memory ->
+                        stringResource(R.string.memory_editor_inspector)
+                    R.string.memory_scripts_create_from_bookmarks ->
+                        stringResource(R.string.memory_scripts_title)
+                    else -> description
+                }
+                TextButton(
+                    onClick = action.onClick, enabled = action.enabled,
+                    modifier = Modifier.heightIn(min = 48.dp)
+                        .semantics { contentDescription = description },
+                ) {
+                    Icon(painterResource(action.icon), contentDescription = null)
+                    Spacer(Modifier.width(4.dp))
+                    Text(compactLabel, maxLines = 1)
+                }
+            }
+            if (overflow.isNotEmpty()) RuntimeActionIcon(
+                R.drawable.ic_more_vert, R.string.more,
+            ) { showMore = true }
+        }
+        if (showMore && overflow.isNotEmpty()) {
+            RuntimeOverflowActionsDialog(overflow) { showMore = false }
+        }
+    }
 }
 
 @Composable
@@ -2139,7 +2458,7 @@ internal fun RuntimeInspectorTab(
     modifier: Modifier = Modifier,
 ) {
     var editLogicalRow by remember { mutableStateOf<MemoryInspectorLogicalRow?>(null) }
-    var saveLogicalRow by remember { mutableStateOf<MemoryInspectorLogicalRow?>(null) }
+
     when {
         state.inspectorLoading -> Box(modifier.fillMaxSize(), contentAlignment = Alignment.Center) {
             Column(horizontalAlignment = Alignment.CenterHorizontally) {
@@ -2306,7 +2625,7 @@ internal fun RuntimeInspectorTab(
                                     onDismissRequest = { rowMenuOpen = false },
                                 ) {
                                     DropdownMenuItem(
-                                        text = { Text(stringResource(R.string.memory_editor_add_to_watch)) },
+                                        text = { Text(stringResource(R.string.memory_list_add)) },
                                         enabled = row.editable && !state.busy,
                                         leadingIcon = {
                                             Icon(painterResource(R.drawable.ic_memory_editor_watch_add),
@@ -2315,17 +2634,6 @@ internal fun RuntimeInspectorTab(
                                         onClick = {
                                             rowMenuOpen = false
                                             actions.watchInspectorVariable(row.relativeOffset)
-                                        },
-                                    )
-                                    DropdownMenuItem(
-                                        text = { Text(stringResource(R.string.memory_saved_save)) },
-                                        enabled = row.editable && !state.busy,
-                                        leadingIcon = {
-                                            Icon(painterResource(R.drawable.ic_save), contentDescription = null)
-                                        },
-                                        onClick = {
-                                            rowMenuOpen = false
-                                            saveLogicalRow = row
                                         },
                                     )
                                 }
@@ -2347,36 +2655,7 @@ internal fun RuntimeInspectorTab(
                     },
                 )
             }
-            saveLogicalRow?.let { row ->
-                var name by remember(row.id) { mutableStateOf("") }
-                AlertDialog(
-                    onDismissRequest = { saveLogicalRow = null },
-                    title = { Text(stringResource(R.string.memory_saved_save)) },
-                    text = {
-                        Column(verticalArrangement = Arrangement.spacedBy(8.dp)) {
-                            Text(stringResource(R.string.memory_saved_explanation))
-                            Text(row.label, style = MaterialTheme.typography.bodySmall)
-                            OutlinedTextField(
-                                value = name,
-                                onValueChange = { if (it.length <= 64) name = it },
-                                label = { Text(stringResource(R.string.memory_saved_name)) },
-                                singleLine = true, modifier = Modifier.fillMaxWidth(),
-                            )
-                        }
-                    },
-                    confirmButton = {
-                        TextButton(enabled = name.isNotBlank(), onClick = {
-                            actions.saveInspectorVariable(name.trim(), row.relativeOffset)
-                            saveLogicalRow = null
-                        }) { Text(stringResource(R.string.memory_saved_save)) }
-                    },
-                    dismissButton = {
-                        TextButton(onClick = { saveLogicalRow = null }) {
-                            Text(stringResource(android.R.string.cancel))
-                        }
-                    },
-                )
-            }
+
         }
     }
 }
