@@ -9,9 +9,6 @@ package io.github.h3nb.jlmodplus.memory
 
 import androidx.activity.compose.BackHandler
 import androidx.compose.animation.AnimatedContent
-import androidx.compose.animation.AnimatedVisibility
-import androidx.compose.animation.fadeIn
-import androidx.compose.animation.fadeOut
 import androidx.compose.animation.togetherWith
 import androidx.compose.foundation.BorderStroke
 import androidx.compose.foundation.background
@@ -916,18 +913,15 @@ private fun RuntimeSearchResultsTab(
                 }
             }
         }
-            AnimatedVisibility(
-                visible = selectedRows.isNotEmpty(),
-                modifier = Modifier.align(Alignment.BottomCenter),
-                enter = fadeIn(),
-                exit = fadeOut(),
-            ) {
-                RuntimeSelectedActionBar(
-                    label = pluralStringResource(
-                        R.plurals.memory_editor_selected, selectedRows.size, selectedRows.size,
-                    ),
-                    actions = selectedActions,
-                )
+            if (selectedRows.isNotEmpty()) {
+                Box(Modifier.align(Alignment.BottomCenter)) {
+                    RuntimeSelectedActionBar(
+                        label = pluralStringResource(
+                            R.plurals.memory_editor_selected, selectedRows.size, selectedRows.size,
+                        ),
+                        actions = selectedActions,
+                    )
+                }
             }
         }
     }
@@ -1249,18 +1243,15 @@ private fun RuntimeVariablesTab(
                 )
             }
         }
-            AnimatedVisibility(
-                visible = selectedEntries.isNotEmpty(),
-                modifier = Modifier.align(Alignment.BottomCenter),
-                enter = fadeIn(),
-                exit = fadeOut(),
-            ) {
-                RuntimeSelectedActionBar(
-                    label = pluralStringResource(
-                        R.plurals.memory_editor_selected, selectedEntries.size, selectedEntries.size,
-                    ),
-                    actions = selectionActions,
-                )
+            if (selectedEntries.isNotEmpty()) {
+                Box(Modifier.align(Alignment.BottomCenter)) {
+                    RuntimeSelectedActionBar(
+                        label = pluralStringResource(
+                            R.plurals.memory_editor_selected, selectedEntries.size, selectedEntries.size,
+                        ),
+                        actions = selectionActions,
+                    )
+                }
             }
         }
     }
