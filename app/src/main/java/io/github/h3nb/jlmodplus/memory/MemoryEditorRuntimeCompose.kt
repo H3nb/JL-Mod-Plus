@@ -176,6 +176,9 @@ internal fun MemoryEditorRuntimeRoot(
 ) {
     if (!state.visible) return
     MemoryEditorOverlayScope(overlayState) { overlay ->
+        val controlsBackdrop = MaterialTheme.colorScheme.surface.copy(
+            alpha = (MemoryEditorOverlayState.DEFAULT_OPACITY - overlay.opacity).coerceAtLeast(0f),
+        )
         val tab = state.activeTab
         val tabTravelPx = with(LocalDensity.current) { PAGE_TRAVEL_DP.dp.roundToPx() }
         var opacityDialog by remember { mutableStateOf(false) }
@@ -404,7 +407,7 @@ internal fun MemoryEditorRuntimeRoot(
                         Modifier.fillMaxSize().padding(bottom = 48.dp)
                             .then(if (overlay.peeking) Modifier.clearAndSetSemantics {} else Modifier),
                     ) {
-                        Column(Modifier.fillMaxWidth().windowInsetsPadding(
+                        Column(Modifier.fillMaxWidth().background(controlsBackdrop).windowInsetsPadding(
                             WindowInsets.safeGestures.only(WindowInsetsSides.Horizontal),
                         )) {
                             RuntimeMemoryHeader(
@@ -511,6 +514,9 @@ internal fun MemoryEditorRuntimeRoot(
                 ) {
                     MemoryEditorPeekDock(
                         overlay = overlay,
+                        modifier = Modifier.background(
+                            if (overlay.peeking) Color.Transparent else controlsBackdrop,
+                        ),
                         leadingContent = {
                             RuntimeActionIcon(R.drawable.ic_settings, R.string.memory_editor_panel_opacity) {
                                 opacityDialog = true
@@ -1665,10 +1671,11 @@ private fun RuntimeSelectedActionBar(
             .padding(horizontal = 12.dp, vertical = 4.dp),
     ) {
         val fontScale = LocalDensity.current.fontScale.coerceAtLeast(1f)
+        val compactActions = maxWidth < 520.dp * fontScale
         val slots = when {
             maxWidth >= 720.dp * fontScale -> 5
-            maxWidth >= 460.dp * fontScale -> 4
-            maxWidth >= 320.dp * fontScale -> 3
+            maxWidth >= 520.dp * fontScale -> 4
+            maxWidth >= 280.dp * fontScale -> 3
             else -> 2
         }
         val available = actions.filter(RuntimeToolbarAction::enabled)
@@ -1699,8 +1706,10 @@ private fun RuntimeSelectedActionBar(
                         .semantics { contentDescription = description },
                 ) {
                     Icon(painterResource(action.icon), contentDescription = null)
-                    Spacer(Modifier.width(4.dp))
-                    Text(compactLabel, maxLines = 1)
+                    if (!compactActions) {
+                        Spacer(Modifier.width(4.dp))
+                        Text(compactLabel, maxLines = 1)
+                    }
                 }
             }
             if (overflow.isNotEmpty()) RuntimeActionIcon(
