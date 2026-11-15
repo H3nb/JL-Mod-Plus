@@ -25,7 +25,7 @@ Success requires better task clarity, consistent visual hierarchy, robust touch/
 The Library remains **game-first**, not a dashboard of emulator settings:
 
 1. **Apps** remains the initial destination. Primary tap on an unselected game launches it. Long press continues to show its actions. Search, sort, quick views (All, Favorites, Recently added, Recently played), list/grid choice and install remain discoverable without navigating elsewhere.
-2. **Game secondary action** becomes visible in the item when selection mode is inactive. In List view, evaluate placing an overflow affordance beside the existing Favorite action; preserve Favorite's quick access. In Grid, evaluate a consistently located affordance that does not obscure small JAR artwork or conflict with the selection checkbox. Confirm the exact placement in a compact-width prototype before coding.
+2. **Game secondary action** should be visible where the item has room. The List prototype in PR #251 adds a 48dp overflow affordance beside Favorite, reserving trailing width during selection to avoid row reflow. A Grid corner-overlay variant was **rejected**: with the existing 88dp minimum cell width, a 48dp hit region occupies over half the tile horizontally, risking unintended menu activation and obscuring JAR art. Dense Grid retains tap-to-play and long-press actions for now; future discoverability options must preserve both.
 3. **Selection mode** takes precedence over launching, Favorite and overflow. The whole item selects/toggles; selection indicators and toolbar remain legible and accessible. Do not create duplicate focus targets or conflicting click regions.
 4. **Game action menu** retains every existing supported operation: selection, metadata/rename, shortcut, add/remove collection, per-game settings, reinstall, share, bundle export, delete. Put the most common non-destructive actions first and destructive delete last. A grouped presentation is optional if it improves scanning *without* breaking controller index/navigation.
 5. **Collections** remains a primary tab. Preserve selection, management, picker state, active collection identity, list/grid scroll and route restoration. **More** contains global actions; avoid adding extra root destinations for functions already reachable there.
@@ -104,6 +104,12 @@ This is a **source-informed design review**, not a measured claim about a new im
 The current UI is already dark/light themed, adaptive in many places, and reasonably consistent. Its main weakness is **low visual differentiation between important actions and secondary explanatory data**, not a complete absence of Material components. The recorded Library displays relatively small title/vendor text and frequent descriptions in compact rows; the Config recording shows long blocks of setting title, help, and value stacked together. Five compact Config destinations and small game artwork add pressure at phone widths. These are design hypotheses for controlled visual prototypes, not a blanket justification for larger cards, larger icons, or hiding essential settings.
 
 The goal is an *understandable content hierarchy*: clear task/action at the top of each screen, generous touch targets but efficient vertical density, subdued metadata, prominent current values, consistent contrast, and refined surfaces. Do not add multiple nested card backgrounds or glass layers just to increase the number of visual effects.
+
+### First interaction prototype findings (PR #251)
+
+The first stable-Material-3 prototype deliberately tests **visible actions in List** and a **labeled Install** control. CI screenshot comparison showed an initial Grid overlay hiding game artwork. A smaller indicator cannot repair the underlying 48dp clickable-region conflict on dense tiles, so this approach was removed rather than adding arbitrary focus/touch exceptions. The Install label is now displayed only when window width, height and font scale provide sufficient room; otherwise the icon FAB retains its accessible label.
+
+These are design observations, not device performance qualification. The List layout still requires review at 200% text, navigation and selection transitions, and realistic long/multilingual titles. No global Compose component swaps are justified by these screenshots alone.
 
 ### Component-level decisions
 
