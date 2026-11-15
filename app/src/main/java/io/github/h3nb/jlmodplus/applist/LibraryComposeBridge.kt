@@ -106,6 +106,7 @@ import androidx.compose.material3.DropdownMenuItem
 import androidx.compose.material3.ExperimentalMaterial3Api
 import androidx.compose.material3.FilterChip
 import androidx.compose.material3.ExtendedFloatingActionButton
+import androidx.compose.material3.FloatingActionButton
 import androidx.compose.material3.Icon
 import androidx.compose.material3.IconButton
 import androidx.compose.material3.ListItem
@@ -228,6 +229,7 @@ import io.github.h3nb.jlmodplus.ui.rememberLazyListCanScrollForward
 import io.github.h3nb.jlmodplus.input.HostCommand
 import io.github.h3nb.jlmodplus.ui.TransientNoticeHost
 import io.github.h3nb.jlmodplus.ui.TransientNoticeState
+import io.github.h3nb.jlmodplus.ui.availableWindowHeightDp
 import io.github.h3nb.jlmodplus.ui.availableWindowWidthDp
 import io.github.h3nb.jlmodplus.ui.navigateToTab
 import io.github.h3nb.jlmodplus.ui.PagerTabMotion
@@ -1431,17 +1433,28 @@ fun LibraryScreen(
                     ) {
                         Box {
                             val installLabel = stringResource(R.string.install)
-                            ExtendedFloatingActionButton(
-                                onClick = { installSourceMenuVisible = true },
-                                modifier = Modifier.semantics { contentDescription = installLabel },
-                                icon = {
+                            val showInstallText = availableWindowWidthDp() >= 360.dp &&
+                                availableWindowHeightDp() >= 480.dp && density.fontScale < 1.5f
+                            if (showInstallText) {
+                                ExtendedFloatingActionButton(
+                                    onClick = { installSourceMenuVisible = true },
+                                    modifier = Modifier.semantics { contentDescription = installLabel },
+                                    icon = {
+                                        Icon(
+                                            painter = painterResource(R.drawable.ic_add),
+                                            contentDescription = null,
+                                        )
+                                    },
+                                    text = { Text(installLabel) },
+                                )
+                            } else {
+                                FloatingActionButton(onClick = { installSourceMenuVisible = true }) {
                                     Icon(
                                         painter = painterResource(R.drawable.ic_add),
-                                        contentDescription = null,
+                                        contentDescription = installLabel,
                                     )
-                                },
-                                text = { Text(installLabel) },
-                            )
+                                }
+                            }
                             DropdownMenu(
                                 expanded = installSourceMenuVisible,
                                 onDismissRequest = { installSourceMenuVisible = false },
@@ -3569,9 +3582,9 @@ private fun LibraryAppActionsButton(
         if (overArtwork) {
             Box(
                 modifier = Modifier
-                    .size(36.dp)
+                    .size(24.dp)
                     .background(
-                        MaterialTheme.colorScheme.surface.copy(alpha = 0.92f),
+                        MaterialTheme.colorScheme.surface.copy(alpha = 0.88f),
                         CircleShape,
                     ),
                 contentAlignment = Alignment.Center,
@@ -3579,7 +3592,8 @@ private fun LibraryAppActionsButton(
                 Icon(
                     painter = painterResource(R.drawable.ic_more_vert),
                     contentDescription = label,
-                    modifier = Modifier.size(20.dp),
+                    modifier = Modifier.size(16.dp),
+                    tint = MaterialTheme.colorScheme.onSurface,
                 )
             }
         } else {
