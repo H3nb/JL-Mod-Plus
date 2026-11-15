@@ -27,6 +27,8 @@ import android.view.KeyEvent
 import androidx.activity.compose.BackHandler
 import androidx.activity.compose.LocalActivity
 import androidx.compose.animation.AnimatedVisibility
+import androidx.compose.animation.AnimatedContent
+import androidx.compose.animation.togetherWith
 import androidx.compose.animation.core.MutableTransitionState
 import androidx.compose.animation.fadeIn
 import androidx.compose.animation.fadeOut
@@ -1423,7 +1425,17 @@ fun LibraryScreen(
             },
         ) { padding ->
             fun viewportPadding(): PaddingValues = padding
-            when (destination) {
+            val travelPx = with(density) { PAGE_TRAVEL_DP.dp.roundToPx() }
+            AnimatedContent(
+                targetState = destination,
+                modifier = Modifier.fillMaxSize(),
+                transitionSpec = {
+                    val direction = if (targetState == LibraryDestination.Apps) -1 else 1
+                    pageEnter(direction, travelPx) togetherWith pageExit(direction, travelPx)
+                },
+                label = "Library context",
+            ) { displayedDestination ->
+                when (displayedDestination) {
                         LibraryDestination.Apps -> LibraryAppsDestination(
                             state = state,
                             scaffoldPadding = if (selectionActiveHere && destination == LibraryDestination.Apps) {
@@ -1557,6 +1569,7 @@ fun LibraryScreen(
                                 if (currentControllerDestination == LibraryDestination.More) actions.onOpenCrashReports()
                             },
                         )
+                }
             }
         }
 
