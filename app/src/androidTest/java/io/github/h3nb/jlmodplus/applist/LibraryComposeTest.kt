@@ -757,6 +757,23 @@ class LibraryComposeTest {
         composeRule.onNodeWithContentDescription(uiString(R.string.library_sort)).performClick()
         composeRule.onNodeWithText(uiString(R.string.pref_app_sort_vendor)).performClick()
         assertEquals(2, actions.sortIndex)
+        composeRule.onNodeWithContentDescription(uiString(R.string.library_view_grid)).performClick()
+        assertEquals(LibraryLayout.Grid, actions.layout)
+    }
+
+    @Test
+    fun gridLayoutSwitchCanReturnToList() {
+        val actions = RecordingLibraryActions()
+        setLibraryContent(
+            state = LibraryUiState(
+                loading = false,
+                layout = LibraryLayout.Grid,
+                apps = listOf(LibraryAppUiItem(7, "Demo MIDlet", "Vendor", "1.0", null, true)),
+            ),
+            actions = actions,
+        )
+        composeRule.onNodeWithContentDescription(uiString(R.string.library_view_list)).performClick()
+        assertEquals(LibraryLayout.List, actions.layout)
     }
 
     @Test
@@ -862,7 +879,7 @@ class LibraryComposeTest {
         setLibraryContent(actions = actions)
 
         composeRule.onNodeWithText(uiString(R.string.library_filter_all)).performClick()
-        composeRule.onNodeWithText(uiString(R.string.library_destination_collections)).performClick()
+        composeRule.onNodeWithText(uiString(R.string.library_collection_manage)).performClick()
         composeRule.onNodeWithText(uiString(R.string.library_collections_empty_message))
             .assertIsDisplayed()
     }
