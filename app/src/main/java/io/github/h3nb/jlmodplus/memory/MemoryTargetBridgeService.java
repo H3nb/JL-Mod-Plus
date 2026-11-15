@@ -188,8 +188,10 @@ public final class MemoryTargetBridgeService extends Service {
 					cancellationEpoch));
 		}
 
+		// Binder calls can overlap. All operations that add a Freeze synchronize on this
+		// Stub so both target engines share one atomic capacity check.
 		@Override
-		public Bundle managedSetFreezeLock(long runtimeToken, long expectedRevision, long[] ids,
+		public synchronized Bundle managedSetFreezeLock(long runtimeToken, long expectedRevision, long[] ids,
 				int replacement, boolean allowWatchOnly, long cancellationEpoch) {
 			return managedResult(runtimeToken, managedEngine.setFreezeLockTyped(runtimeToken,
                     expectedRevision, ids, Integer.toString(replacement), allowWatchOnly,
@@ -197,7 +199,7 @@ public final class MemoryTargetBridgeService extends Service {
 		}
 
 		@Override
-		public Bundle managedSetFreezeLockTyped(long runtimeToken, long expectedRevision, long[] ids,
+		public synchronized Bundle managedSetFreezeLockTyped(long runtimeToken, long expectedRevision, long[] ids,
 				String replacement, boolean allowWatchOnly, long cancellationEpoch) {
 			return managedResult(runtimeToken, managedEngine.setFreezeLockTyped(runtimeToken,
 					expectedRevision, ids, replacement, allowWatchOnly, cancellationEpoch,
@@ -324,7 +326,7 @@ public final class MemoryTargetBridgeService extends Service {
         }
 
         @Override
-        public Bundle freezeSaved(long runtimeToken, String savedId, String label,
+        public synchronized Bundle freezeSaved(long runtimeToken, String savedId, String label,
                                   String expectedValue, long cancellationEpoch) {
             return managedResult(runtimeToken, managedEngine.freezeSaved(
                     runtimeToken, savedId, label, expectedValue, cancellationEpoch,
@@ -332,7 +334,7 @@ public final class MemoryTargetBridgeService extends Service {
         }
 
         @Override
-        public Bundle watchInspector(long runtimeToken, String savedId, long expectedRevision,
+        public synchronized Bundle watchInspector(long runtimeToken, String savedId, long expectedRevision,
                                      long anchorId, boolean watchAnchor, int offset,
                                      int type, long expectedBits, boolean freeze, long epoch) {
             return managedResult(runtimeToken, managedEngine.watchInspector(runtimeToken,
@@ -341,7 +343,7 @@ public final class MemoryTargetBridgeService extends Service {
         }
 
         @Override
-        public Bundle bookmarkInspector(long runtimeToken, String savedId, long expectedRevision,
+        public synchronized Bundle bookmarkInspector(long runtimeToken, String savedId, long expectedRevision,
                 long anchorCandidateId, boolean watchAnchor, int offset, int type,
                 long expectedBits, boolean freeze, String bookmarkId, long epoch) {
             return managedResult(runtimeToken, managedEngine.watchInspector(runtimeToken,
@@ -351,7 +353,7 @@ public final class MemoryTargetBridgeService extends Service {
         }
 
         @Override
-        public Bundle editInspectorAndFreezeBookmark(long runtimeToken, String savedId,
+        public synchronized Bundle editInspectorAndFreezeBookmark(long runtimeToken, String savedId,
                 long expectedRevision, long anchorCandidateId, boolean watchAnchor,
                 int offset, int type, long expectedBits, String replacement,
                 String bookmarkId, long epoch) {
@@ -362,7 +364,7 @@ public final class MemoryTargetBridgeService extends Service {
         }
 
         @Override
-        public Bundle editInspectorAndFreeze(long runtimeToken, String savedId,
+        public synchronized Bundle editInspectorAndFreeze(long runtimeToken, String savedId,
                                              long expectedRevision, long anchorId,
                                              boolean watchAnchor, int offset, int type,
                                              long expectedBits, String replacement, long epoch) {
@@ -383,7 +385,7 @@ public final class MemoryTargetBridgeService extends Service {
         }
 
 		@Override
-		public Bundle runMemoryRecipe(long runtimeToken, String document, Bundle parameters,
+		public synchronized Bundle runMemoryRecipe(long runtimeToken, String document, Bundle parameters,
 		                             boolean freeze, boolean preview) {
             int ordinaryFreezeCount = managedEngine.capabilities(runtimeToken).freezeCount;
 			Bundle result = recipes.run(runtimeToken, document, parameters, freeze, preview,
