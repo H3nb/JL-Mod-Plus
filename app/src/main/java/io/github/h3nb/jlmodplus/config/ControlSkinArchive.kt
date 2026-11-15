@@ -34,6 +34,9 @@ internal object ControlSkinArchive {
             val entries = ControlSkinSetTransfer.files(set.folder)
             checkSlotFormats(entries)
             requireVersion(File(set.folder, "skin.json"))
+            entries.filterNot { it.name == "skin.json" }.forEach {
+                ControlSkinStore.validateImage(it, "." + it.extension)
+            }
             if (!destination.isDirectory || !destination.canWrite()) {
                 throw IOException("Export folder is not writable")
             }
