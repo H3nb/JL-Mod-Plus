@@ -94,8 +94,6 @@ import javax.microedition.shell.timing.EmulationSpeed;
 import javax.microedition.shell.timing.TimingSession;
 import javax.microedition.util.ContextHolder;
 
-import io.reactivex.SingleObserver;
-import io.reactivex.disposables.Disposable;
 import io.github.h3nb.jlmodplus.BuildConfig;
 import io.github.h3nb.jlmodplus.MainActivity;
 import io.github.h3nb.jlmodplus.R;
@@ -1797,24 +1795,13 @@ public class MicroActivity extends AppCompatActivity {
 				getResources().getDisplayMetrics()));
 	}
 
-	@SuppressLint("CheckResult")
 	private void takeScreenshot() {
-		microLoader.takeScreenshot(current, new SingleObserver<>() {
-			@Override
-			public void onSubscribe(@NonNull Disposable d) {
-			}
-
-			@Override
-			public void onSuccess(@NonNull String s) {
-				toast(getString(R.string.screenshot_saved_path, s));
-				MediaScannerConnection.scanFile(MicroActivity.this, new String[]{s}, null, null);
-			}
-
-			@Override
-			public void onError(@NonNull Throwable e) {
-				e.printStackTrace();
-				toast(R.string.screenshot_save_failed);
-			}
+		microLoader.takeScreenshot(current, path -> {
+			toast(getString(R.string.screenshot_saved_path, path));
+			MediaScannerConnection.scanFile(MicroActivity.this, new String[]{path}, null, null);
+		}, error -> {
+			error.printStackTrace();
+			toast(R.string.screenshot_save_failed);
 		});
 	}
 
