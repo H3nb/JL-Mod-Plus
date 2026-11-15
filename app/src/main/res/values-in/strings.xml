@@ -1140,6 +1140,15 @@
     <string name="control_skin_rename">Ganti nama</string>
     <string name="control_skin_duplicate">Duplikat</string>
     <string name="control_skin_delete">Hapus</string>
+    <string name="control_skin_import_zip">Impor ZIP</string>
+    <string name="control_skin_export_zip">Ekspor ZIP</string>
+    <string name="control_skin_select_export_folder">Pilih folder ekspor</string>
+    <string name="control_skin_imported">Berhasil mengimpor %1$s</string>
+    <string name="control_skin_already_available">%1$s sudah tersedia</string>
+    <string name="control_skin_exported">Berhasil menyimpan %1$s</string>
+    <string name="control_skin_archive_invalid_path">Lokasi yang dipilih tidak tersedia.</string>
+    <string name="control_skin_archive_import_failed">Gagal mengimpor skin. Pastikan ZIP berisi satu set skin yang valid.</string>
+    <string name="control_skin_archive_export_failed">Gagal mengekspor skin. Pilih folder yang dapat ditulis di luar pustaka skin.</string>
     <string name="control_skin_name">Nama set</string>
     <string name="control_skin_icon">Hanya ikon</string>
     <string name="control_skin_full">Seluruh tombol</string>

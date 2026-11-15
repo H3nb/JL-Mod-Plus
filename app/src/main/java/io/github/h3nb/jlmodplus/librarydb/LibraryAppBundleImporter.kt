@@ -22,7 +22,6 @@ import java.util.UUID
 import java.util.zip.ZipInputStream
 import io.github.h3nb.jlmodplus.jar.Descriptor
 import io.github.h3nb.jlmodplus.config.FreshInstalledMidletInitializer
-import io.github.h3nb.jlmodplus.config.ConfigAssetFiles
 import io.github.h3nb.jlmodplus.memory.SavedVariablesDocument
 
 /** Validates an exported JL-Mod Plus bundle and restores only authoritative app-owned state. */
@@ -53,9 +52,6 @@ object LibraryAppBundleImporter {
         internal val configDir: File?,
         internal val dataDir: File?,
         internal val savedVariablesFile: File? = null,
-        internal val layoutSkinFile: File? = null,
-        internal val controlSkinDir: File? = null,
-        internal val controlSkinName: String? = null,
         internal val formatVersion: Int,
         internal val preflightSourceMetadata: SourceMetadata? = null,
     )
@@ -140,8 +136,6 @@ object LibraryAppBundleImporter {
         val configDir = File(canonicalRoot, "config")
         val dataDir = File(canonicalRoot, "data")
         val savedFile = File(canonicalRoot, "saved-variables.json")
-        val layoutSkinDir = File(canonicalRoot, "skin-layout")
-        val controlSkinDir = File(canonicalRoot, "control-skin")
         val seen = HashSet<String>()
         val buffer = ByteArray(COPY_BUFFER_SIZE)
         var entryCount = 0
@@ -150,8 +144,6 @@ object LibraryAppBundleImporter {
         var hasConfig = false
         var hasData = false
         var hasSaved = false
-        var hasLayoutSkin = false
-        var hasControlSkin = false
         var hasConvertedConfig = false
 
         ZipInputStream(BufferedInputStream(input)).use { zip ->
@@ -187,16 +179,6 @@ object LibraryAppBundleImporter {
                         hasSaved = true
                         savedFile
                     }
-                    relative.startsWith("skin-layout/") &&
-                        LibraryBundleSkinAssets.validScreenName(relative.removePrefix("skin-layout/")) -> {
-                        hasLayoutSkin = true
-                        safeChild(layoutSkinDir, relative.removePrefix("skin-layout/"))
-                    }
-                    relative.startsWith("control-skin/") &&
-                        LibraryBundleSkinAssets.validControlName(relative.removePrefix("control-skin/")) -> {
-                        hasControlSkin = true
-                        safeChild(controlSkinDir, relative.removePrefix("control-skin/"))
-                    }
                     relative == "config/" -> {
                         hasConfig = true
                         ensureDirectory(configDir)
@@ -225,16 +207,9 @@ object LibraryAppBundleImporter {
 
                 var entryBytes = 0L
                 val entryLimit = when (relative) {
-                    "saved/saved-variables.json", "control-skin/skin.json" ->
-                        LibraryBundleSkinAssets.MAX_META
+                    "saved/saved-variables.json" -> SavedVariablesDocument.MAX_BYTES.toLong()
                     "app/converted.dex.conf" -> MAX_DESCRIPTOR_BYTES
-                    else -> when {
-                        relative.startsWith("control-skin/") ->
-                            LibraryBundleSkinAssets.MAX_CONTROL_SKIN_BYTES
-                        relative.startsWith("skin-layout/") ->
-                            LibraryBundleSkinAssets.MAX_LAYOUT_SKIN_BYTES
-                        else -> MAX_ENTRY_BYTES
-                    }
+                    else -> MAX_ENTRY_BYTES
                 }
                 val output = target?.let {
                     ensureDirectory(it.parentFile ?: throw IOException("Bundle entry has no parent"))
@@ -274,12 +249,6 @@ object LibraryAppBundleImporter {
             configDir = configDir.takeIf { hasConfig && it.isDirectory },
             dataDir = dataDir.takeIf { hasData && it.isDirectory },
             savedVariablesFile = savedFile.takeIf { hasSaved && it.isFile },
-            layoutSkinFile = layoutSkinDir.listFiles()?.singleOrNull()
-                ?.takeIf { hasLayoutSkin && it.isFile },
-            controlSkinDir = controlSkinDir.takeIf {
-                hasControlSkin && File(it, "skin.json").isFile
-            },
-            controlSkinName = app.controlSkinName,
             formatVersion = formatVersion,
             preflightSourceMetadata = sourceMetadata,
         )
@@ -343,16 +312,6 @@ object LibraryAppBundleImporter {
                         state.hasSaved = true
                         File(state.root, "saved-variables.json")
                     }
-                    relative.startsWith("skin-layout/") &&
-                        LibraryBundleSkinAssets.validScreenName(relative.removePrefix("skin-layout/")) -> {
-                        state.hasLayoutSkin = true
-                        safeChild(File(state.root, "skin-layout"), relative.removePrefix("skin-layout/"))
-                    }
-                    relative.startsWith("control-skin/") &&
-                        LibraryBundleSkinAssets.validControlName(relative.removePrefix("control-skin/")) -> {
-                        state.hasControlSkin = true
-                        safeChild(File(state.root, "control-skin"), relative.removePrefix("control-skin/"))
-                    }
                     relative == "config/" -> {
                         state.hasConfig = true
                         ensureDirectory(File(state.root, "config"))
@@ -381,16 +340,9 @@ object LibraryAppBundleImporter {
 
                 var entryBytes = 0L
                 val entryLimit = when (relative) {
-                    "saved/saved-variables.json", "control-skin/skin.json" ->
-                        LibraryBundleSkinAssets.MAX_META
+                    "saved/saved-variables.json" -> SavedVariablesDocument.MAX_BYTES.toLong()
                     "app/converted.dex.conf" -> MAX_DESCRIPTOR_BYTES
-                    else -> when {
-                        relative.startsWith("control-skin/") ->
-                            LibraryBundleSkinAssets.MAX_CONTROL_SKIN_BYTES
-                        relative.startsWith("skin-layout/") ->
-                            LibraryBundleSkinAssets.MAX_LAYOUT_SKIN_BYTES
-                        else -> MAX_ENTRY_BYTES
-                    }
+                    else -> MAX_ENTRY_BYTES
                 }
                 val output = target?.let {
                     ensureDirectory(it.parentFile ?: throw IOException("Bundle entry has no parent"))
@@ -443,12 +395,6 @@ object LibraryAppBundleImporter {
                     dataDir = dataDir.takeIf { state.hasData && it.isDirectory },
                     savedVariablesFile = File(state.root, "saved-variables.json")
                         .takeIf { state.hasSaved && it.isFile },
-                    layoutSkinFile = File(state.root, "skin-layout").listFiles()?.singleOrNull()
-                        ?.takeIf { state.hasLayoutSkin && it.isFile },
-                    controlSkinDir = File(state.root, "control-skin").takeIf {
-                        state.hasControlSkin && File(it, "skin.json").isFile
-                    },
-                    controlSkinName = state.app.controlSkinName,
                     formatVersion = formatVersion,
                     preflightSourceMetadata = sourceMetadata,
                 ),
@@ -685,11 +631,9 @@ object LibraryAppBundleImporter {
         var savedAdded: Int? = null
         var savedSkipped: Int? = null
         val configTarget = File(File(root, "configs"), storageKey)
-        // Partial Saved/skin imports preserve the existing config directory, then change
-        // only the requested components in one recoverable directory publication.
+        // Saved-only imports preserve existing configuration via recoverable publication.
         val partialConfig = if (prepared.configDir == null &&
-            (prepared.savedVariablesFile != null || prepared.layoutSkinFile != null ||
-                prepared.controlSkinDir != null)) {
+            prepared.savedVariablesFile != null) {
             val scratch = File(prepared.stagingDir, "saved-config-replacement")
             deleteIfExists(scratch, "previous Saved import staging")
             if (configTarget.exists()) {
@@ -730,14 +674,6 @@ object LibraryAppBundleImporter {
                 transactionId = transactionId,
             )
         }
-        // Shared assets are non-overwriting publications. They may remain available even
-        // if a later per-app restore rolls back; no existing global skin is replaced.
-        val importedLayoutSkin = prepared.layoutSkinFile?.let {
-            ConfigAssetFiles.importFile(root, ConfigAssetFiles.Kind.SKIN, it).name
-        }
-        val importedControlSkin = prepared.controlSkinDir?.let {
-            LibraryBundleSkinAssets.importControlSkin(root, it, prepared.controlSkinName)
-        }
         if (replacements.isEmpty()) return RestoreResult(null)
 
         val transactionRoot = transactionRoot(root)
@@ -762,12 +698,8 @@ object LibraryAppBundleImporter {
                     )
                 }
                 if (prepared.formatVersion == LibraryAppBundleFormat.SELECTIVE_VERSION &&
-                    (prepared.configDir != null || importedLayoutSkin != null ||
-                        importedControlSkin != null)) {
-                    LibraryBundleSkinAssets.normalizeConfig(
-                        configReplacement.staged, root, importedLayoutSkin, importedControlSkin,
-                        fallbackMissingAssets = prepared.configDir != null,
-                    )
+                    prepared.configDir != null) {
+                    LibraryBundleConfigNormalizer.normalizeConfig(configReplacement.staged, root)
                 }
                 if (prepared.formatVersion == LibraryAppBundleFormat.SELECTIVE_VERSION) {
                     val savedNames = listOf("saved-variables.json", "saved-variables.json.new",
@@ -839,8 +771,7 @@ object LibraryAppBundleImporter {
             "Prepared import JAR is unavailable"
         }
         listOfNotNull(prepared.convertedConfigFile, prepared.configDir, prepared.dataDir,
-            prepared.savedVariablesFile, prepared.layoutSkinFile,
-            prepared.controlSkinDir).forEach { candidate ->
+            prepared.savedVariablesFile).forEach { candidate ->
             check(insideRoot(root, candidate.canonicalFile)) { "Prepared import escaped its staging directory" }
         }
     }
@@ -1145,8 +1076,6 @@ object LibraryAppBundleImporter {
         var hasConfig: Boolean = false,
         var hasData: Boolean = false,
         var hasSaved: Boolean = false,
-        var hasLayoutSkin: Boolean = false,
-        var hasControlSkin: Boolean = false,
     )
 
     private fun normalizeEntryName(raw: String): String {

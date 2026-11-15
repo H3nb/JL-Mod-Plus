@@ -334,6 +334,28 @@ public final class ControlSkinStore {
         return count;
     }
 
+    /** Shared image contract for interactive asset edits and full-set ZIP imports. */
+    public static void validateImage(File file, String suffix) throws IOException {
+        if (file.length() < 1 || file.length() > MAX_IMAGE_BYTES) {
+            throw new IOException("Image must be between 1 byte and 8 MiB");
+        }
+        if (".svg".equals(suffix)) {
+            SvgRasterizer.read(file);
+        } else if (".png".equals(suffix) || ".webp".equals(suffix)) {
+            BitmapFactory.Options options = new BitmapFactory.Options();
+            options.inJustDecodeBounds = true;
+            BitmapFactory.decodeFile(file.getAbsolutePath(), options);
+            if (options.outWidth < 1 || options.outHeight < 1
+                    || options.outWidth > MAX_DIMENSION || options.outHeight > MAX_DIMENSION
+                    || !("image/png".equals(options.outMimeType) && ".png".equals(suffix)
+                        || "image/webp".equals(options.outMimeType) && ".webp".equals(suffix))) {
+                throw new IOException("Invalid or oversized PNG/WebP");
+            }
+        } else {
+            throw new IOException("Unsupported image format");
+        }
+    }
+
     public static synchronized void importImage(File workdir, String setId, String key,
             boolean pressed, InputStream source, String suffix) throws IOException {
         if (!validKey(key)) throw new IOException("Unsupported image");
@@ -359,19 +381,7 @@ public final class ControlSkinStore {
                 }
                 out.getFD().sync();
             }
-            if (".svg".equals(suffix)) {
-                SvgRasterizer.read(temp);
-            } else {
-                BitmapFactory.Options options = new BitmapFactory.Options();
-                options.inJustDecodeBounds = true;
-                BitmapFactory.decodeFile(temp.getAbsolutePath(), options);
-                if (options.outWidth < 1 || options.outHeight < 1
-                        || options.outWidth > MAX_DIMENSION || options.outHeight > MAX_DIMENSION
-                        || !("image/png".equals(options.outMimeType) && ".png".equals(suffix)
-                            || "image/webp".equals(options.outMimeType) && ".webp".equals(suffix))) {
-                    throw new IOException("Invalid or oversized PNG/WebP");
-                }
-            }
+            validateImage(temp, suffix);
             // Publish the complete new asset before removing alternate formats.
             // A crash must not move the previously usable source out of its slot.
             File target = new File(folder, stem + suffix);

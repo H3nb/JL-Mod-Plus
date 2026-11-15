@@ -126,7 +126,17 @@ Each slot should have **one source format**—do not place `key_fire.png` and `k
 
 A manually created folder can be discovered by the skin manager; you do not need to hand-write `skin.json` just to begin. The manager assigns the set its own stable identity on scan. Rename, duplicate, and select sets from the app so linked MIDlets remain consistent.
 
-There is **no direct ZIP import of an entire control-skin set** in this manager. If you share a set as a ZIP, it is a convenient way to transfer the folder and source artwork; the recipient must extract it into the appropriate location or import the images into a set through the app.
+To share a complete set, open its menu in the skin library and choose **Export ZIP**.
+Choose a folder with the app's file picker. JL-Mod Plus saves the set's original
+images and metadata as `Set name.zip` without overwriting an existing archive;
+a numbered name is used if needed.
+
+To restore or install a shared set, choose **Import ZIP** in the library toolbar
+and select its ZIP file. The set is added without replacing existing skins.
+Importing does **not** apply it to the current MIDlet: tap its row to select it.
+If the same set is already installed, no duplicate is created. An archive
+must contain one named folder with `skin.json` and supported control images;
+a general ZIP of unrelated pictures is not accepted.
 
 ## Check the finished result
 

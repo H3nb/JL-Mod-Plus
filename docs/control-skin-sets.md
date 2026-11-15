@@ -97,6 +97,24 @@ fallbacks; if the complete set cannot fit safely, the runtime uses built-in
 controls rather than silently dropping whichever skin slots load last.
 The image snapshot remains stable through orientation/layout changes.
 
+## ZIP transfer
+
+The skin manager can export one set as a standard ZIP with exactly one named root
+folder containing its existing `skin.json` and source image files. Import accepts
+this layout through the app-owned file picker; it does not import arbitrary image
+collections or multiple sets in one archive. Slot artwork and metadata are
+preserved, including the stable UUID unless that UUID conflicts with different
+local content. Duplicate content is reused without creating another set, and
+name collisions receive a numbered suffix. Existing global sets are never
+overwritten. Importing a set does not select it for the current MIDlet or
+modify any keyboard layout or mapping.
+
+Export selects a destination directory using the app-owned picker and writes a
+unique filename such as `Fantasy.zip` or `Fantasy (2).zip`. Import selects one
+`.zip` file. Both operations validate boundaries before publication, work off
+the UI thread, and clean up temporary files on failure. App bundles do not
+include global screen layout or virtual control skin files.
+
 ## Editing and ownership
 
 The Compose manager opens from MIDlet virtual-controls settings. Its compact

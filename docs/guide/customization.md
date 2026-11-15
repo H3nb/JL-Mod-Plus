@@ -51,6 +51,11 @@ You can mix PNG/WebP and SVG within a set. Static SVG files are converted into b
 
 A **skin set is shared artwork**, not a copy of the game's touch configuration. Each MIDlet or profile selects a set; changes to that set's images appear in every MIDlet using it at the next launch.
 
+Use **Export ZIP** in a skin set's menu to save or share the complete set. Use
+**Import ZIP** in the skin library toolbar to restore it. ZIP import does not
+automatically select a set for a MIDlet. App bundles do not include screen layout or virtual control skin artwork;
+transfer those assets separately when needed.
+
 Creating or duplicating a set opens it for editing but **does not select it automatically**. Tap its row to choose it for the current MIDlet. Renaming a set does not change its identity; deleting a set makes MIDlets that still refer to it use built-in artwork.
 
 The skin manager saves each successful edit as you perform it. There is no separate Save action for its images. This is different from the **Edit metadata** screen, where icon and text edits are reviewed and saved together.

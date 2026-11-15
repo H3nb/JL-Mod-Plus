@@ -9,6 +9,4 @@ data class LibraryBundleComponents(
     val configuration: Boolean = true,
     val saveData: Boolean = true,
     val savedVariables: Boolean = true,
-    val layoutSkin: Boolean = false,
-    val controlSkin: Boolean = false,
 )
