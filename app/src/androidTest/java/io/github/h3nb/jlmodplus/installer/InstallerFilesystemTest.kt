@@ -8,7 +8,6 @@ import androidx.lifecycle.ViewModelStore
 import androidx.preference.PreferenceManager
 import androidx.test.ext.junit.runners.AndroidJUnit4
 import androidx.test.platform.app.InstrumentationRegistry
-import io.reactivex.Single
 import java.io.File
 import java.util.zip.ZipEntry
 import java.util.zip.ZipOutputStream
@@ -65,11 +64,11 @@ class InstallerFilesystemTest {
             }
             assertFalse(File(workdir, "converted").exists())
             val installer = AppInstaller(jad, Uri.fromFile(jad), library)
-            assertEquals(AppInstaller.STATUS_NEW, Single.create<Int>(installer::loadInfo).blockingGet())
+            assertEquals(AppInstaller.STATUS_NEW, installer.loadInfo())
             // Confirmation refers to the reviewed snapshot even if external sources change.
             jad.writeText("changed after review")
             jar.writeText("changed after review")
-            assertEquals(AppInstaller.STATUS_SUCCESS, Single.create<Int>(installer::install).blockingGet())
+            assertEquals(AppInstaller.STATUS_SUCCESS, installer.installAwait())
             assertEquals("Unavailable", installer.defaultProfileFallbackName)
             assertFalse(preferences.contains(Constants.PREF_DEFAULT_PROFILE))
             val id = installer.installedId
@@ -89,8 +88,8 @@ class InstallerFilesystemTest {
             preferences.edit().putString(Constants.PREF_DEFAULT_PROFILE, "Unavailable").commit()
 
             val reinstall = AppInstaller(id, generation.generation, workdir, installed.name, library)
-            assertEquals(AppInstaller.STATUS_EQUAL, Single.create<Int>(reinstall::loadInfo).blockingGet())
-            assertEquals(AppInstaller.STATUS_SUCCESS, Single.create<Int>(reinstall::install).blockingGet())
+            assertEquals(AppInstaller.STATUS_EQUAL, reinstall.loadInfo())
+            assertEquals(AppInstaller.STATUS_SUCCESS, reinstall.installAwait())
             assertEquals(id, reinstall.installedId)
             assertTrue(FreshInstalledMidletInitializer.needsReview(installedConfigDir))
             assertArrayEquals(originalJad, File(installed, AppReconverter.RETAINED_JAD).readBytes())
@@ -124,8 +123,8 @@ class InstallerFilesystemTest {
                 .remove(ProfileModel.builtInThemePreferenceKey(installedConfigDir))
                 .commit())
             val customBytes = installedConfig.readBytes()
-            assertEquals(AppInstaller.STATUS_NEWER, Single.create<Int>(update::loadInfo).blockingGet())
-            assertEquals(AppInstaller.STATUS_SUCCESS, Single.create<Int>(update::install).blockingGet())
+            assertEquals(AppInstaller.STATUS_NEWER, update.loadInfo())
+            assertEquals(AppInstaller.STATUS_SUCCESS, update.installAwait())
             assertEquals(id, update.installedId)
             assertFalse(File(installed, AppReconverter.RETAINED_JAD).exists())
             assertNull(Descriptor(File(installed, "converted.dex.conf"), false).attrs["Vendor-Option"])
@@ -144,9 +143,9 @@ class InstallerFilesystemTest {
             val linkedBytes = installedConfig.readBytes()
             val linkedReinstall = AppInstaller(id, generation.generation, workdir, installed.name, library)
             assertEquals(AppInstaller.STATUS_EQUAL,
-                Single.create<Int>(linkedReinstall::loadInfo).blockingGet())
+                linkedReinstall.loadInfo())
             assertEquals(AppInstaller.STATUS_SUCCESS,
-                Single.create<Int>(linkedReinstall::install).blockingGet())
+                linkedReinstall.installAwait())
             assertArrayEquals(linkedBytes, installedConfig.readBytes())
             assertEquals("K800i", preferences.getString(originKey, null))
             assertTrue(preferences.getBoolean(linkedKey, false))

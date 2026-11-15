@@ -31,7 +31,6 @@ kotlin = "2.4.20"
 kotlinx-coroutines = "1.11.0"
 ksp = "2.3.12"
 pngj = "2.2.3"
-rx-android = "2.1.1"
 zip4j = "2.11.6"
 
 [libraries]
@@ -78,7 +77,6 @@ junit-jupiter = { module = "org.junit.jupiter:junit-jupiter" }
 junit-platform-launcher = { module = "org.junit.platform:junit-platform-launcher" }
 kotlinx-coroutines-android = { module = "org.jetbrains.kotlinx:kotlinx-coroutines-android", version.ref = "kotlinx-coroutines" }
 pngj = { module = "com.github.nikita36078:pngj", version.ref = "pngj" }
-rx-android = { module = "io.reactivex.rxjava2:rxandroid", version.ref = "rx-android" }
 zip4j = { module = "net.lingala.zip4j:zip4j", version.ref = "zip4j" }
 
 [plugins]

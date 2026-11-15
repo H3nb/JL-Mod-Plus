@@ -1,0 +1,117 @@
+/*
+ * Licensed under the Apache License, Version 2.0 (the "License");
+ */
+package io.github.h3nb.jlmodplus.installer
+
+import android.content.Context
+import android.net.Uri
+import androidx.lifecycle.LifecycleOwner
+import androidx.lifecycle.lifecycleScope
+import com.android.dx.command.dexer.ConversionResult
+import io.github.h3nb.jlmodplus.librarydb.LibraryAppBundleImporter
+import java.io.File
+import kotlinx.coroutines.CancellationException
+import kotlinx.coroutines.CoroutineScope
+import kotlinx.coroutines.Dispatchers
+import kotlinx.coroutines.Job
+import kotlinx.coroutines.SupervisorJob
+import kotlinx.coroutines.launch
+import kotlinx.coroutines.withContext
+
+/** Java-facing entry points keep asynchronous work independent of a disposable UI subscription. */
+object InstallerAsync {
+    fun interface Callback<T> {
+        fun accept(value: T)
+    }
+
+    fun interface Task {
+        suspend fun execute(): Int
+    }
+
+    @JvmStatic fun loadInfo(installer: AppInstaller): Task = Task { installer.loadInfoAwait() }
+    @JvmStatic fun useJarOnly(installer: AppInstaller): Task = Task { installer.useJarOnlyAwait() }
+    @JvmStatic fun selectedJar(installer: AppInstaller, uri: Uri): Task =
+        Task { installer.loadSelectedExternalJarAwait(uri) }
+    @JvmStatic fun install(installer: AppInstaller): Task = Task { installer.installAwait() }
+
+    @JvmStatic
+    fun run(task: Task, completed: Callback<Int>, failed: Callback<Throwable>): Job =
+        launchWorker {
+            val result = try {
+                task.execute()
+            } catch (error: Exception) {
+                failed.accept(error)
+                return@launchWorker
+            }
+            completed.accept(result)
+        }
+
+    @JvmStatic
+    fun prepareBundle(
+        context: Context,
+        uri: Uri,
+        completed: Callback<LibraryAppBundleImporter.PreparedImport>,
+        failed: Callback<Throwable>,
+    ): Job = launchWorker {
+        val prepared = try {
+            withContext(Dispatchers.IO) {
+                LibraryAppBundleImporter.prepare(context.applicationContext, uri)
+            }
+        } catch (error: Exception) {
+            failed.accept(error)
+            return@launchWorker
+        }
+        completed.accept(prepared)
+    }
+
+    @JvmStatic
+    fun routeBundle(
+        owner: LifecycleOwner,
+        context: Context,
+        uri: Uri,
+        completed: Callback<Boolean>,
+        failed: Callback<Throwable>,
+    ): Job = owner.lifecycleScope.launch {
+        val requiresBulk = try {
+            withContext(Dispatchers.IO) {
+                LibraryAppBundleImporter.requiresBulkImport(context.applicationContext, uri)
+            }
+        } catch (cancelled: CancellationException) {
+            throw cancelled
+        } catch (error: Exception) {
+            failed.accept(error)
+            return@launch
+        }
+        completed.accept(requiresBulk)
+    }
+
+    @JvmStatic
+    fun cleanupBundle(prepared: LibraryAppBundleImporter.PreparedImport): Job = launchWorker {
+        withContext(Dispatchers.IO) { LibraryAppBundleImporter.cleanup(prepared) }
+    }
+
+    @JvmStatic
+    fun reconvert(
+        appDir: File,
+        cancellation: InstallerExecutionCoordinator.Cancellation,
+        completed: Callback<ConversionResult>,
+        failed: Callback<Throwable>,
+    ): Job = launchWorker {
+        val result = try {
+            withContext(Dispatchers.IO) {
+                AppReconverter.reconvert(appDir, cancellation).also {
+                    check(!AppReconverter.needsReconversion(appDir)) {
+                        "Reconversion completed without a compatible marker"
+                    }
+                }
+            }
+        } catch (error: Exception) {
+            failed.accept(error)
+            return@launchWorker
+        }
+        completed.accept(result)
+    }
+
+    private fun launchWorker(block: suspend () -> Unit): Job =
+        CoroutineScope(SupervisorJob() + Dispatchers.Main.immediate).launch { block() }
+}

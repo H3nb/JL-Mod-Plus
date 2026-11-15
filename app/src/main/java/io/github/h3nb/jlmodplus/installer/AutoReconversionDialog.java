@@ -20,10 +20,6 @@ import com.android.dx.command.dexer.ConversionResult;
 import java.io.File;
 import java.io.IOException;
 
-import io.reactivex.Single;
-import io.reactivex.android.schedulers.AndroidSchedulers;
-import io.reactivex.disposables.CompositeDisposable;
-import io.reactivex.schedulers.Schedulers;
 import io.github.h3nb.jlmodplus.R;
 import io.github.h3nb.jlmodplus.config.Config;
 import io.github.h3nb.jlmodplus.config.ConfigActivity;
@@ -36,7 +32,6 @@ public final class AutoReconversionDialog extends DialogFragment {
     private static final String ARG_NAME = "name";
     private static final String ARG_PATH = "path";
 
-    private final CompositeDisposable disposables = new CompositeDisposable();
     private InstallerComposeController controller;
     private String appName;
     private Uri appUri;
@@ -123,12 +118,8 @@ public final class AutoReconversionDialog extends DialogFragment {
 
     @Override
     public void onDestroy() {
+        // DX is stopped cooperatively at its safe filesystem boundary, not interrupted on teardown.
         cancelRequested = true;
-        // Do not interrupt an in-flight DX conversion by disposing its subscription. The
-        // converter owns a worker pool and is cancellation-aware at safe filesystem boundaries;
-        // disposing here would make a late conversion failure undeliverable during Activity
-        // teardown. The completed callback releases the subscription normally.
-        if (!running) disposables.dispose();
         controller = null;
         super.onDestroy();
     }
@@ -147,38 +138,29 @@ public final class AutoReconversionDialog extends DialogFragment {
         cancelRequested = false;
         controller.showConverting(appName, getString(R.string.reconverting_wait),
                 getString(R.string.converting_wait));
-        disposables.add(Single.fromCallable(() -> {
-            ConversionResult result = AppReconverter.reconvert(appDir, () -> cancelRequested);
-            if (AppReconverter.needsReconversion(appDir)) {
-                throw new IllegalStateException("Reconversion completed without a compatible marker");
+        InstallerAsync.reconvert(appDir, () -> cancelRequested, result -> {
+            running = false;
+            if (cancelRequested) {
+                if (isAdded()) dismissAllowingStateLoss();
+                return;
             }
-            return result;
-        })
-                .subscribeOn(Schedulers.io())
-                .observeOn(AndroidSchedulers.mainThread())
-                .subscribe(result -> {
-                    running = false;
-                    if (cancelRequested) {
-                        if (isAdded()) dismissAllowingStateLoss();
-                        return;
-                    }
-                    if (!isAdded() || controller == null) return;
-                    ConversionWarningFormatter.Presentation warning =
-                            ConversionWarningFormatter.forResult(requireContext(), result);
-                    if (warning == null) {
-                        launchMidlet();
-                        return;
-                    }
-                    controller.showSuccess(
-                            appName,
-                            getString(R.string.reconversion_done_with_warning),
-                            getString(R.string.START_CMD),
-                            getString(R.string.close),
-                            null,
-                            warning.getSummary(),
-                            warning.getDetails(),
-                            warning.getCopyDetails());
-                }, this::showError));
+            if (!isAdded() || controller == null) return;
+            ConversionWarningFormatter.Presentation warning =
+                    ConversionWarningFormatter.forResult(requireContext(), result);
+            if (warning == null) {
+                launchMidlet();
+                return;
+            }
+            controller.showSuccess(
+                    appName,
+                    getString(R.string.reconversion_done_with_warning),
+                    getString(R.string.START_CMD),
+                    getString(R.string.close),
+                    null,
+                    warning.getSummary(),
+                    warning.getDetails(),
+                    warning.getCopyDetails());
+        }, this::showError);
     }
 
     private void launchMidlet() {

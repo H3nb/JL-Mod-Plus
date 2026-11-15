@@ -39,12 +39,6 @@ import androidx.lifecycle.ViewModelProvider;
 import java.io.File;
 import java.io.IOException;
 
-import io.reactivex.Single;
-import io.reactivex.android.schedulers.AndroidSchedulers;
-import io.reactivex.disposables.CompositeDisposable;
-import io.reactivex.disposables.Disposable;
-import io.reactivex.exceptions.Exceptions;
-import io.reactivex.schedulers.Schedulers;
 import io.github.h3nb.jlmodplus.MainActivity;
 import io.github.h3nb.jlmodplus.R;
 import io.github.h3nb.jlmodplus.config.Config;
@@ -61,7 +55,6 @@ public class InstallerDialog extends DialogFragment {
 	private static final String ARG_WORKDIR = "InstallerDialog.workdir";
 	private static final String ARG_STORAGE_KEY = "InstallerDialog.storageKey";
 	private static final long NO_GENERATION = Long.MIN_VALUE;
-	private final CompositeDisposable compositeDisposable = new CompositeDisposable();
 	private LibraryViewModel libraryViewModel;
 	private AppInstaller installer;
 	private InstallerComposeController composeController;
@@ -84,7 +77,7 @@ public class InstallerDialog extends DialogFragment {
 						|| cancelRequested || operationRunning || destroyed) return;
 				AppInstaller active = installer;
 				composeController.showLoading(installerTitle, getString(R.string.loading_info));
-				runInstaller(emitter -> active.loadSelectedExternalJar(selected, emitter));
+				runInstaller(InstallerAsync.selectedJar(active, selected));
 			});
 
 
@@ -171,7 +164,6 @@ public class InstallerDialog extends DialogFragment {
 	public void onDestroy() {
 		destroyed = true;
 		if (installer != null && operationRunning) installer.cancel();
-		compositeDisposable.dispose();
 		if (installer != null && !workerExecuting) installer.clearCache();
 		if (!bundleWorkerInFlight) cleanupBundleImport();
 		super.onDestroy();
@@ -234,31 +226,22 @@ public class InstallerDialog extends DialogFragment {
 		if (composeController != null) {
 			composeController.showLoading(installerTitle, getString(R.string.library_import_preparing));
 		}
-		Context applicationContext = requireContext().getApplicationContext();
 		bundleWorkerInFlight = true;
-		Disposable disposable = Single.<LibraryAppBundleImporter.PreparedImport>create(emitter -> {
-			try {
-				LibraryAppBundleImporter.PreparedImport prepared = LibraryAppBundleImporter.prepare(
-						applicationContext, uri);
-				if (emitter.isDisposed()) {
-					LibraryAppBundleImporter.cleanup(prepared);
-					return;
-				}
-				emitter.onSuccess(prepared);
-			} catch (Throwable error) {
-				Exceptions.throwIfFatal(error);
-				if (!emitter.isDisposed()) emitter.onError(error);
+		InstallerAsync.prepareBundle(requireContext().getApplicationContext(), uri, prepared -> {
+			bundleWorkerInFlight = false;
+			if (destroyed) {
+				InstallerAsync.cleanupBundle(prepared);
+				return;
 			}
-		})
-				.subscribeOn(Schedulers.io())
-				.observeOn(AndroidSchedulers.mainThread())
-				.subscribe(prepared -> {
-				operationRunning = false;
-				bundleImport = prepared;
-				if (cancelRequested) { closeInstaller(); return; }
-				installApp(prepared.getJarFile(), null);
-			}, this::onError);
-		compositeDisposable.add(disposable);
+			operationRunning = false;
+			bundleImport = prepared;
+			if (cancelRequested) { closeInstaller(); return; }
+			installApp(prepared.getJarFile(), null);
+		}, error -> {
+			bundleWorkerInFlight = false;
+			if (destroyed) return;
+			onError(error);
+		});
 	}
 
 	private void installApp(File jar, Uri uri) {
@@ -267,7 +250,7 @@ public class InstallerDialog extends DialogFragment {
 		primaryAction = this::convert;
 		if (isBundleRequest()) bundleWorkerInFlight = true;
 		showLoading();
-		runInstaller(installer::loadInfo);
+		runInstaller(InstallerAsync.loadInfo(installer));
 	}
 
 	private void reinstallApp(long id, long expectedGeneration, File expectedWorkdir,
@@ -281,31 +264,32 @@ public class InstallerDialog extends DialogFragment {
 		observeInstallerStage();
 		primaryAction = this::convert;
 		showLoading();
-		runInstaller(installer::loadInfo);
+		runInstaller(InstallerAsync.loadInfo(installer));
 	}
 
-	private void runInstaller(io.reactivex.SingleOnSubscribe<Integer> work) {
+	private void runInstaller(InstallerAsync.Task work) {
 		operationRunning = true;
 		AppInstaller active = installer;
-		Disposable disposable = Single.<Integer>create(emitter -> {
-			workerExecuting = true;
-			try {
-				if (!destroyed) work.subscribe(emitter);
-			} catch (Throwable error) {
-				Exceptions.throwIfFatal(error);
-				// Activity teardown can dispose the subscription while DX is unwinding after
-				// cancellation. Do not turn that expected terminal state into a process-level
-				// undeliverable RxJava error.
-				if (!emitter.isDisposed()) emitter.onError(error);
+		workerExecuting = true;
+		InstallerAsync.run(work, status -> {
+			workerExecuting = false;
+			if (destroyed) {
+				active.clearCache();
+				active.deleteTemp();
+				cleanupBundleImport();
+				return;
 			}
-			finally {
-				workerExecuting = false;
-				if (destroyed) active.clearCache();
+			onProgress(status);
+		}, error -> {
+			workerExecuting = false;
+			if (destroyed) {
+				active.clearCache();
+				active.deleteTemp();
+				cleanupBundleImport();
+				return;
 			}
-		}).subscribeOn(Schedulers.io())
-				.observeOn(AndroidSchedulers.mainThread())
-				.subscribe(this::onProgress, this::onError);
-		compositeDisposable.add(disposable);
+			onError(error);
+		});
 	}
 
 	private void observeInstallerStage() {
@@ -339,7 +323,7 @@ public class InstallerDialog extends DialogFragment {
 				currentTitle,
 				nd.getInfo(requireActivity()).toString(),
 				getString(R.string.converting_wait));
-		runInstaller(installer::install);
+		runInstaller(InstallerAsync.install(installer));
 	}
 
 	private void onProgress(@NonNull Integer status) {
@@ -411,7 +395,7 @@ public class InstallerDialog extends DialogFragment {
 			case AppInstaller.STATUS_UNMATCHED -> {
 				SpannableStringBuilder info = installer.getManifest().getInfo(requireActivity());
 				info.append(getString(R.string.install_jar_non_matched_jad));
-				primaryAction = () -> runInstaller(installer::useJarOnly);
+				primaryAction = () -> runInstaller(InstallerAsync.useJarOnly(installer));
 				showConfirmation(installerTitle, info.toString(), null);
 				return;
 			}
@@ -564,7 +548,7 @@ public class InstallerDialog extends DialogFragment {
 		LibraryAppBundleImporter.PreparedImport prepared = bundleImport;
 		bundleImport = null;
 		if (prepared != null) {
-			Schedulers.io().scheduleDirect(() -> LibraryAppBundleImporter.cleanup(prepared));
+			InstallerAsync.cleanupBundle(prepared);
 		}
 	}
 

@@ -50,10 +50,6 @@ import java.util.Iterator;
 import java.util.Set;
 import java.util.UUID;
 
-import io.reactivex.Single;
-import io.reactivex.disposables.Disposable;
-import io.reactivex.android.schedulers.AndroidSchedulers;
-import io.reactivex.schedulers.Schedulers;
 import io.github.h3nb.jlmodplus.applist.AppsListFragment;
 import io.github.h3nb.jlmodplus.config.Config;
 import io.github.h3nb.jlmodplus.crashes.CrashReporter;
@@ -69,8 +65,9 @@ import io.github.h3nb.jlmodplus.util.FileUtils;
 import io.github.h3nb.jlmodplus.util.PickDirResultContract;
 import io.github.h3nb.jlmodplus.util.StoragePermissionHelper;
 import io.github.h3nb.jlmodplus.installer.InstallerDialog;
+import io.github.h3nb.jlmodplus.installer.InstallerAsync;
+import kotlinx.coroutines.Job;
 import io.github.h3nb.jlmodplus.installer.BulkInstallerDialog;
-import io.github.h3nb.jlmodplus.librarydb.LibraryAppBundleImporter;
 import io.github.h3nb.jlmodplus.input.ControllerHostSink;
 import io.github.h3nb.jlmodplus.input.ControllerHostTarget;
 import io.github.h3nb.jlmodplus.input.ControllerInputRouter;
@@ -114,7 +111,7 @@ public class MainActivity extends AppCompatActivity {
 	private boolean diagnosticRecoveryRetryScheduled;
 	private boolean installerStateSnapshotExists;
 	private boolean bundleRoutingInFlight;
-	private Disposable bundleRouting;
+	private Job bundleRouting;
 
 	@Override
 	public void onCreate(@Nullable Bundle savedInstanceState) {
@@ -314,7 +311,7 @@ public class MainActivity extends AppCompatActivity {
 			controllerInputRouter = null;
 		}
 		if (bundleRouting != null) {
-			bundleRouting.dispose();
+			bundleRouting.cancel(null);
 			bundleRouting = null;
 		}
 		bundleRoutingInFlight = false;
@@ -468,11 +465,7 @@ public class MainActivity extends AppCompatActivity {
 		}
 
 		bundleRoutingInFlight = true;
-		bundleRouting = Single.fromCallable(() ->
-				LibraryAppBundleImporter.requiresBulkImport(getApplicationContext(), request.uri))
-				.subscribeOn(Schedulers.io())
-				.observeOn(AndroidSchedulers.mainThread())
-				.subscribe(requiresBulk -> {
+		bundleRouting = InstallerAsync.routeBundle(this, getApplicationContext(), request.uri, requiresBulk -> {
 					bundleRoutingInFlight = false;
 					bundleRouting = null;
 					if (isFinishing() || isDestroyed() ||

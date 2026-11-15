@@ -24,7 +24,6 @@ import static android.os.Build.VERSION_CODES.UPSIDE_DOWN_CAKE;
 import static javax.microedition.shell.MicroActivity.ORIENTATION_PORTRAIT;
 import static javax.microedition.shell.MicroActivity.ORIENTATION_LANDSCAPE;
 
-import android.graphics.Bitmap;
 import android.os.Environment;
 import android.os.StrictMode;
 import android.util.Log;
@@ -33,19 +32,14 @@ import android.view.KeyEvent;
 
 import androidx.core.content.ContextCompat;
 
-import java.io.BufferedOutputStream;
 import java.io.File;
 import java.io.FileInputStream;
-import java.io.FileOutputStream;
 import java.io.IOException;
 import java.io.InputStream;
 import java.lang.reflect.Constructor;
 import java.lang.reflect.InvocationTargetException;
 import java.nio.charset.Charset;
 import java.security.MessageDigest;
-import java.text.SimpleDateFormat;
-import java.util.Calendar;
-import java.util.Date;
 import java.util.LinkedHashMap;
 import java.util.Locale;
 import java.util.Map;
@@ -64,9 +58,6 @@ import javax.microedition.m3g.Graphics3D;
 import javax.microedition.midlet.MIDlet;
 import javax.microedition.util.ContextHolder;
 
-import io.reactivex.SingleObserver;
-import io.reactivex.android.schedulers.AndroidSchedulers;
-import io.reactivex.schedulers.Schedulers;
 import kotlin.io.ConstantsKt;
 import kotlin.io.FilesKt;
 import io.github.h3nb.jlmodplus.BuildConfig;
@@ -575,31 +566,11 @@ public class MicroLoader {
 		}
 	}
 
-	void takeScreenshot(Object target, SingleObserver<String> observer) {
-		if (!(target instanceof Canvas canvas)) {
-			return;
+	void takeScreenshot(Object target, ScreenshotCapture.Callback<String> completed,
+			ScreenshotCapture.Callback<Throwable> failed) {
+		if (target instanceof Canvas canvas) {
+			ScreenshotCapture.save(canvas, completed, failed);
 		}
-		canvas.getScreenshot()
-				.subscribeOn(Schedulers.computation())
-				.observeOn(Schedulers.io())
-				.map(bitmap -> {
-					Calendar calendar = Calendar.getInstance();
-					Date now = calendar.getTime();
-					//noinspection SpellCheckingInspection
-					SimpleDateFormat simpleDateFormat = new SimpleDateFormat("yyyyMMdd-HHmmss", Locale.US);
-					String fileName = "Screenshot_" + simpleDateFormat.format(now) + ".png";
-					File screenshotDir = new File(Config.SCREENSHOTS_DIR);
-					File screenshotFile = new File(screenshotDir, fileName);
-					if (!screenshotDir.exists() && !screenshotDir.mkdirs()) {
-						throw new IOException("Can't create directory: " + screenshotDir);
-					}
-					try (BufferedOutputStream out = new BufferedOutputStream(new FileOutputStream(screenshotFile))) {
-						bitmap.compress(Bitmap.CompressFormat.PNG, 100, out);
-					}
-					return screenshotFile.getAbsolutePath();
-				})
-				.observeOn(AndroidSchedulers.mainThread())
-				.subscribe(observer);
 	}
 
 	public int getMenuKeyCode() {
