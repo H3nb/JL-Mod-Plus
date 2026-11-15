@@ -26,6 +26,7 @@ import androidx.compose.ui.test.performTextReplacement
 import io.github.h3nb.jlmodplus.R
 import io.github.h3nb.jlmodplus.ui.JLModPlusTheme
 import androidx.test.platform.app.InstrumentationRegistry
+import androidx.test.espresso.Espresso.pressBack
 import org.junit.Assert.assertEquals
 import org.junit.Assert.assertFalse
 import org.junit.Assert.assertTrue
@@ -177,6 +178,8 @@ class MemoryScriptsComposeTest {
         rule.onNodeWithText("Save").performClick()
         rule.onNodeWithContentDescription("Back").assertIsNotEnabled()
         rule.onNodeWithContentDescription("Minimize Memory Editor").assertIsNotEnabled()
+        pressBack()
+        rule.onNodeWithTag("memory-script-editor").assertIsDisplayed()
         rule.runOnIdle {
             assertFalse(closed)
             assertEquals(sample, MemoryEditorSessionNavigation.script(token).pendingSave?.document)
