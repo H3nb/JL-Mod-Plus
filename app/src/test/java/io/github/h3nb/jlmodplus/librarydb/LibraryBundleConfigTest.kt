@@ -22,6 +22,8 @@ class LibraryBundleConfigTest {
         val source = File(temp, "source").apply { mkdirs() }
         File(source, "converted/game").apply { mkdirs() }.resolve("res.jar")
             .writeBytes(byteArrayOf(1, 2, 3))
+        File(source, "converted/game")
+            .resolve("converted.dex.conf").writeText("MIDlet-Name: Game\\nMIDlet-Vendor: Vendor\\nMIDlet-Version: 1\\n")
         File(source, "configs/game").apply { mkdirs() }.resolve("config.json")
             .writeText("""{"ScreenBackgroundImage":"frame.png","ControlSkinSetId":"$id","SoundBank":"absent.sf2"}""")
         File(source, "skins").apply { mkdirs() }.resolve("frame.png").writeBytes(byteArrayOf(1))
@@ -47,6 +49,8 @@ class LibraryBundleConfigTest {
         val target = File(temp, "target").apply { mkdirs() }
         File(target, "converted/game").apply { mkdirs() }.resolve("res.jar")
             .writeBytes(byteArrayOf(1, 2, 3))
+        File(target, "converted/game")
+            .resolve("converted.dex.conf").writeText("MIDlet-Name: Game\\nMIDlet-Vendor: Vendor\\nMIDlet-Version: 1\\n")
         LibraryAppBundleImporter.restore(prepared, target, "game")
         val restored = Json.parseToJsonElement(File(target, "configs/game/config.json").readText())
             .jsonObject
