@@ -2965,12 +2965,12 @@ private fun LibraryAppsHeader(
                         onSort(index)
                     },
                 )
+            }
             LibraryLayoutButton(
                 layout = state.layout,
                 onLayoutChange = onLayoutChange,
                 enabled = searchActionsEnabled,
             )
-            }
         }
         if (showQuickViews) {
             Row(
