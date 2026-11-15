@@ -1421,4 +1421,8 @@
     <string name="memory_builder_add_selected" tools:ignore="MissingTranslation">Add selected</string>
     <string name="memory_builder_min" tools:ignore="MissingTranslation">Minimum (optional)</string>
     <string name="memory_builder_max" tools:ignore="MissingTranslation">Maximum (optional)</string>
+    <string name="memory_builder_add_target" tools:ignore="MissingTranslation">Add target</string>
+    <string name="memory_builder_freeze_short" tools:ignore="MissingTranslation">Keep selected values at fixed amounts</string>
+    <string name="memory_builder_form_short" tools:ignore="MissingTranslation">Adjust several values in one place</string>
+    <string name="memory_builder_actions_short" tools:ignore="MissingTranslation">Run one-time Set, Add, or Subtract actions</string>
 </resources>
