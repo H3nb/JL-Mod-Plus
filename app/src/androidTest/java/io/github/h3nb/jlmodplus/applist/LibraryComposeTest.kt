@@ -387,7 +387,7 @@ class LibraryComposeTest {
     }
 
     @Test
-    fun gridMoreActionsRemainAvailableWhenTitlesAreHidden() {
+    fun iconOnlyGridKeepsLongPressActionsWithoutAccidentalLaunch() {
         val actions = RecordingLibraryActions()
         setLibraryContent(
             state = LibraryUiState(
@@ -399,14 +399,15 @@ class LibraryComposeTest {
             actions = actions,
         )
 
-        composeRule.onNodeWithContentDescription(
+        composeRule.onAllNodesWithContentDescription(
             uiString(R.string.profile_more_actions, "Demo MIDlet"),
-        ).performClick()
+        ).assertCountEquals(0)
+        composeRule.onNodeWithContentDescription("Demo MIDlet")
+            .performTouchInput { longClick() }
         assertEquals(null, actions.openedId)
 
         composeRule.onNodeWithText(uiString(R.string.action_settings)).performClick()
         assertEquals(7, actions.openedConfigId)
-        assertEquals(null, actions.openedId)
     }
 
     @Test
