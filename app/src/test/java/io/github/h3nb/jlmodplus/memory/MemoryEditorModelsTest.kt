@@ -240,6 +240,22 @@ class MemoryEditorModelsTest {
         assertEquals(MemoryEditorTab.RESULTS, MemoryEditorSessionNavigation.read(0L).tab)
     }
 
+    @Test fun pendingScriptSaveSurvivesWorkspaceUpdatesUntilTheRuntimeChanges() {
+        val token = 91_101L
+        MemoryEditorSessionNavigation.read(token)
+        val pending = MemoryEditorPendingScriptSave("coins", "{\"id\":\"coins\"}")
+        MemoryEditorSessionNavigation.rememberPendingScriptSave(token, pending)
+        MemoryEditorSessionNavigation.rememberScript(
+            token, MemoryEditorScriptWorkspace(editing = true, text = pending.document),
+        )
+
+        assertEquals(pending, MemoryEditorSessionNavigation.script(token).pendingSave)
+        assertEquals(pending.document, MemoryEditorSessionNavigation.script(token).text)
+
+        MemoryEditorSessionNavigation.read(token + 1)
+        assertEquals(null, MemoryEditorSessionNavigation.script(token + 1).pendingSave)
+    }
+
     @Test fun inspectorNavigationRetainsItsOriginForSafeFallback() {
         val result = MemoryEditorNavigationState(
             MemoryEditorTab.INSPECTOR,
