@@ -666,6 +666,9 @@ class LibraryComposeTest {
         composeRule.onAllNodesWithText("Favorites").assertCountEquals(0)
         composeRule.onAllNodesWithContentDescription(uiString(R.string.library_favorite_coming_soon))
             .assertCountEquals(0)
+        composeRule.onAllNodesWithContentDescription(
+            uiString(R.string.profile_more_actions, "Demo MIDlet"),
+        ).assertCountEquals(0)
         composeRule.onNodeWithContentDescription("Select all").performClick()
         composeRule.onNodeWithText("2 apps").assertIsDisplayed()
         composeRule.onNodeWithContentDescription("Deselect all").performClick()
