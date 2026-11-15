@@ -141,6 +141,39 @@ internal fun LibrarySearchField(
     )
 }
 
+/** A compact view-mode action, paired visually with Sort in the Library toolbar. */
+@Composable
+internal fun LibraryLayoutButton(
+    layout: LibraryLayout,
+    onLayoutChange: (LibraryLayout) -> Unit,
+    enabled: Boolean = true,
+) {
+    val nextLayout = if (layout == LibraryLayout.List) LibraryLayout.Grid else LibraryLayout.List
+    val label = stringResource(
+        if (nextLayout == LibraryLayout.Grid) R.string.library_view_grid
+        else R.string.library_view_list,
+    )
+    Surface(
+        onClick = { onLayoutChange(nextLayout) },
+        enabled = enabled,
+        modifier = Modifier.size(librarySearchControlHeight()),
+        shape = MaterialTheme.shapes.large,
+        color = MaterialTheme.colorScheme.surfaceContainerHigh,
+        contentColor = if (enabled) MaterialTheme.colorScheme.onSurfaceVariant
+            else MaterialTheme.colorScheme.onSurface.copy(alpha = 0.38f),
+    ) {
+        Box(contentAlignment = Alignment.Center) {
+            Icon(
+                painter = painterResource(
+                    if (nextLayout == LibraryLayout.Grid) R.drawable.ic_apps
+                    else R.drawable.ic_view_list,
+                ),
+                contentDescription = label,
+            )
+        }
+    }
+}
+
 @Composable
 internal fun LibrarySortButton(
     onClick: () -> Unit,
