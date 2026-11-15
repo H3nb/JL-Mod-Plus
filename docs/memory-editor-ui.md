@@ -18,7 +18,7 @@ The October 2026 UI reassessment prioritizes these findings:
 | Inspector scrolling depended on an assumed 55 dp row height | `userScrollEnabled` was disabled by a row-count estimate, independent of actual text/layout height | Always permit scrolling and center the initial anchor using measured list geometry |
 | Large text could outgrow numeric fields and keys | Read-only fields had fixed heights and custom cursor measurement; keypad keys could shrink below 48 dp | Use an editable Compose field with the platform IME intercepted, intrinsic field height and keys at least 48 dp tall |
 | Landscape and portrait used different content composition branches | Width/orientation changes could recreate local forms; the landscape rail occupied 176 dp | Keep the workspace content at one composition location and adapt only its header |
-| Toolbar and metadata consumed scarce space | Eight actions could wrap; status text competed with location text | Keep a fixed row of frequent actions, duplicate them in a labeled menu, and let metadata/status flow onto separate lines |
+| Toolbar and metadata consumed scarce space | Icon-only commands competed with results and selection counts | Keep scan/refresh in a stable top row; reveal labeled edit actions only on selection and place secondary actions in More |
 | Peek could disappear behind a nested menu | Native dialogs and dropdowns have separate input windows; an eye inside a scrolling form is not globally reachable | Give every editor modal the same fixed footer and one shared visibility owner |
 | An opaque workspace obscured the value being searched in the game | The editor overlays a live runtime; the user must compare its values with results | Default the panel background to 97% opacity, preserve foreground contrast, and persist an adjustable opacity |
 
@@ -53,10 +53,11 @@ freeze timing or polling cadence. It makes no frame-time or allocation claim.
   for an eligible target, as a dedicated detail page with Back to the origin.
   Hide primary tabs while Inspector or a Script subpage is open to preserve room
   and avoid nested navigation. Keep target identity/revision verification unchanged.
-- Keep the editor title and labeled primary tabs visible on root destinations.
-  Place them in one row when width permits; stack them otherwise. In short windows
-  with large text, retain the labeled tabs and omit the redundant title.
-  Subpages own their Back/title and retain a global Minimize action.
+- Keep one header owner for root and detail pages. The root shows the editor title
+  and Search/Saved/Scripts navigation, inline when width permits and stacked otherwise.
+  Details replace the tabs with one Back control and a contextual title; they must
+  not insert a second nested Back/title row. The Minimize control stays in the header.
+  Short windows with large text can omit the redundant editor title.
 - The workspace remains fullscreen even before the first scan. Present two
   labeled search actions for empty results, without adding an empty floating
   dialog; keep undo/menu access after a scan returns no results.
@@ -66,29 +67,30 @@ freeze timing or polling cadence. It makes no frame-time or allocation claim.
   changing window width must not reset their positions. Back from Inspector
   returns to its origin. The top control explicitly minimizes the editor without
   discarding an active Script draft; it is not an ambiguous close X.
-- Pack toolbar actions according to the available width in 48 dp touch slots,
-  reserving room for result counts in wide layouts. Show all five frequent
-  actions and enabled Inspector/Save/Undo/Remove actions directly whenever they fit;
-  use More only for genuine overflow. On especially narrow windows prioritize
-  search/edit/refresh and keep the remaining actions in More. Selection changes
-  availability, not the relative order of the frequent actions. More uses two
-  columns when its actual dialog width and font scale permit, otherwise a
-  scrolling single column. Inspect requires exactly one eligible target; the
-  Search overflow action is labeled Undo scan to distinguish it from undoing writes.
+- Search shows a stable Refine action and a result count when a scan session
+  exists; it keeps Select all and recovery actions available after an empty scan.
+  Its labeled contextual actions appear only when results are selected, without
+  moving the scan controls. Saved keeps Select all/count and Refresh stable while
+  selection reveals labeled Edit, Create script, Inspect, Freeze and other
+  eligible actions. Both use More for genuine overflow and avoid icon-only
+  command strips. Inspect still requires exactly one eligible target.
+  Undo scan names the search-history operation, not a memory-write rollback.
+  More adapts to window width and font scale.
 - Search retains its select-page checkbox, limited to the current result page
   (up to 100 candidates). Saved also has a select-all checkbox in
   its toolbar and a checkbox on every row; long-press remains an optional
   selection shortcut. Saved stays one combined persistent/Watch collection.
-- Saved toolbar keeps Edit and Refresh in a stable order, followed by enabled
-  Inspect, Relink, Freeze/Unfreeze, Rename, Remove and Create script actions.
-  Create script is eligible only when every selected item is a Bookmark with a
-  verified locator; capture those locators before entering the type chooser.
-  Available width determines direct versus overflow actions. Batch Edit remains
-  available for session-only Watch entries; mixed selections support Remove.
-  The toolbar retains its selection/count area at all times.
-- Put result counts/selection and Inspector provenance in the scrolling list, so
-  growing text does not reserve the entire viewport. Keep full numeric values
-  readable; source summaries may truncate, with provenance available in Inspector.
+- Saved's primary toolbar retains Refresh, while the contextual bar provides
+  Edit, Create script, Inspect, Freeze/Unfreeze, Relink, Rename and Remove when
+  applicable. Create script is eligible only when every selected item is a Bookmark
+  with a verified locator; capture those locators before entering the type chooser.
+  Batch Edit remains limited to compatible session-only Watch entries; mixed
+  selections support Remove. The stable top row preserves selection/count affordances.
+- Place result counts and scan controls above the scrolling results, while
+  target provenance remains with its row or Inspector. The data viewport uses a
+  mostly opaque themed surface over the live game to maintain readability even
+  when the configurable outer workspace background is transparent. Keep numeric
+  values legible and truncate only secondary source summaries.
 - Input dialogs use one scroll owner. In wide windows, title/controls and keypad
   sit side by side. Otherwise they stack. The title participates in body scrolling;
   confirmation/cancel remain outside it. Large fonts favor scrolling over smaller keys.
@@ -143,9 +145,14 @@ width changes. Primary tabs use short directional motion.
 - Script Save never runs the engine or enables Freeze. Running, applying a checked
   form snapshot, and enabling/disabling Freeze remain separate deliberate actions.
   Show active Freeze state and distinguish last-read values from proposed edits.
-- An open Script subpage hides primary tabs while preserving its own Back and
-  the global Minimize/Peek controls. Drafts survive minimize within the MIDlet
-  session, and dirty Back asks before discarding.
+- An open Script subpage replaces tabs with the shared Back/title/Minimize header;
+  Peek remains global. Script type choices use concise icon-supported rows.
+  The visual builder puts targets and their operations first, keeps description
+  and form limits optional, and pins the primary Save action outside the
+  scrolling form. JSON editor likewise keeps Paste and Save reachable beside
+  the editor rather than burying Save in a small header link. A Scripts empty state
+  must not duplicate the New script button. Drafts survive minimize within the
+  MIDlet session, and dirty Back asks before discarding.
 
 ## Overlay visibility and modal ownership
 
@@ -181,8 +188,10 @@ Tooltips dismiss when Peek starts. Input dialogs keep opaque surfaces for legibi
 
 The workspace footer paints edge-to-edge with a solid Material surface and matching foreground colors to keep pagination and controls readable over changing game pixels, including at reduced panel opacity. Its touch targets stay within system-safe bounds. Dialog footer space remains transparent; the workspace dock backdrop also becomes transparent during Peek.
 
-Panel opacity affects the workspace background only. The default is 97%, adjustable
-from 0% to 100% in its footer setting. The memory-engine process owns the small
+Panel opacity affects the outer workspace background. The default is 97%, adjustable
+from 0% to 100% in its footer setting. The content viewport and header retain
+stronger tonal coverage so game graphics do not compete with form fields and
+memory data; Peek provides a fully unobstructed view of the game. The memory-engine process owns the small
 `memory_editor_ui` preference file; format percentages for the active locale and
 save on slider release or dialog dismissal, not
 on every movement. This does not modify game rendering or the runtime configuration.
