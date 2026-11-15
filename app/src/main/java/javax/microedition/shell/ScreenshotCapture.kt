@@ -26,7 +26,7 @@ import kotlin.coroutines.resume
 import kotlin.coroutines.resumeWithException
 
 /** Copies the canvas without blocking the UI or doing pixel conversion on the GL thread. */
-internal object ScreenshotCapture {
+object ScreenshotCapture {
     @JvmStatic
     fun save(canvas: Canvas, completed: Consumer<String>, failed: Consumer<Throwable>): Job =
         CoroutineScope(SupervisorJob() + Dispatchers.Main.immediate).launch {
