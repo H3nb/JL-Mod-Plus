@@ -2106,6 +2106,7 @@ private fun RowScope.LibraryNavigationItem(
     )
 }
 
+@OptIn(ExperimentalLayoutApi::class)
 @Composable
 private fun LibrarySearchOverlay(
     state: LibraryUiState,
