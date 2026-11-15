@@ -52,7 +52,6 @@ import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.BoxWithConstraints
 import androidx.compose.foundation.layout.Column
-import androidx.compose.foundation.layout.ColumnScope
 import androidx.compose.foundation.layout.ExperimentalLayoutApi
 import androidx.compose.foundation.layout.FlowRow
 import androidx.compose.foundation.layout.PaddingValues
@@ -88,8 +87,6 @@ import androidx.compose.foundation.lazy.grid.items
 import androidx.compose.foundation.lazy.grid.rememberLazyGridState
 import androidx.compose.foundation.lazy.items
 import androidx.compose.foundation.lazy.rememberLazyListState
-import androidx.compose.foundation.pager.HorizontalPager
-import androidx.compose.foundation.pager.rememberPagerState
 import androidx.compose.foundation.rememberScrollState
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.foundation.verticalScroll
@@ -136,7 +133,6 @@ import androidx.compose.runtime.rememberCoroutineScope
 import androidx.compose.runtime.rememberUpdatedState
 import androidx.compose.runtime.saveable.rememberSaveable
 import androidx.compose.runtime.setValue
-import androidx.compose.runtime.snapshotFlow
 import androidx.compose.runtime.withFrameNanos
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.focus.FocusRequester
@@ -198,7 +194,6 @@ import kotlinx.coroutines.delay
 import kotlinx.coroutines.CancellationException
 import kotlinx.coroutines.currentCoroutineContext
 import kotlinx.coroutines.ensureActive
-import kotlinx.coroutines.flow.collectLatest
 import kotlinx.coroutines.flow.Flow
 import kotlinx.coroutines.launch
 import kotlinx.coroutines.sync.Semaphore
@@ -222,16 +217,12 @@ import io.github.h3nb.jlmodplus.ui.GlassSystemBarScrim
 import io.github.h3nb.jlmodplus.ui.ScrollableContentHint
 import io.github.h3nb.jlmodplus.ui.rememberScrollCanScrollForward
 import io.github.h3nb.jlmodplus.ui.jlModPlusFilterChipColors
-import io.github.h3nb.jlmodplus.ui.jlModPlusNavigationRailItemColors
-import io.github.h3nb.jlmodplus.ui.jlModPlusNavigationBarItemColors
 import io.github.h3nb.jlmodplus.ui.rememberLazyListCanScrollForward
 import io.github.h3nb.jlmodplus.input.HostCommand
 import io.github.h3nb.jlmodplus.ui.TransientNoticeHost
 import io.github.h3nb.jlmodplus.ui.TransientNoticeState
 import io.github.h3nb.jlmodplus.ui.availableWindowWidthDp
 import io.github.h3nb.jlmodplus.ui.availableWindowHeightDp
-import io.github.h3nb.jlmodplus.ui.navigateToTab
-import io.github.h3nb.jlmodplus.ui.PagerTabMotion
 import io.github.h3nb.jlmodplus.ui.PAGE_TRAVEL_DP
 import io.github.h3nb.jlmodplus.ui.pageEnter
 import io.github.h3nb.jlmodplus.ui.pageExit
@@ -844,7 +835,6 @@ fun LibraryScreen(
             navigationState.collectionManageApps
     val selectionActiveHere =
         selectionState.isActive && selectionMatchesDestination && !collectionManageAppsActive && !searchOpen
-    val currentNavigationState by rememberUpdatedState(navigationState)
     val currentControllerState by rememberUpdatedState(state)
     val currentControllerDestination by rememberUpdatedState(destination)
     val currentControllerAppActions by rememberUpdatedState(appActions)
@@ -1993,138 +1983,6 @@ internal class LibraryChromeScrollHysteresis(
         }
         return null
     }
-}
-
-@Composable
-private fun LibraryNavigationRail(
-    selected: LibraryDestination,
-    onSelected: (LibraryDestination) -> Unit,
-    initialFocusRequester: FocusRequester,
-) {
-    NavigationRail(containerColor = MaterialTheme.colorScheme.surfaceContainer) {
-        LibraryNavigationRailItem(
-            destination = LibraryDestination.Apps,
-            selected = selected,
-            label = R.string.library_destination_apps,
-            icon = R.drawable.ic_apps,
-            onSelected = onSelected,
-            initialFocusRequester = initialFocusRequester,
-        )
-        LibraryNavigationRailItem(
-            destination = LibraryDestination.Collections,
-            selected = selected,
-            label = R.string.library_destination_collections,
-            icon = R.drawable.ic_collections,
-            onSelected = onSelected,
-            initialFocusRequester = initialFocusRequester,
-        )
-        LibraryNavigationRailItem(
-            destination = LibraryDestination.More,
-            selected = selected,
-            label = R.string.library_destination_more,
-            icon = R.drawable.ic_more,
-            onSelected = onSelected,
-            initialFocusRequester = initialFocusRequester,
-        )
-    }
-}
-
-@Composable
-private fun ColumnScope.LibraryNavigationRailItem(
-    destination: LibraryDestination,
-    selected: LibraryDestination,
-    label: Int,
-    icon: Int,
-    onSelected: (LibraryDestination) -> Unit,
-    initialFocusRequester: FocusRequester,
-) {
-    val labelText = stringResource(label)
-    NavigationRailItem(
-        selected = destination == selected,
-        onClick = { onSelected(destination) },
-        modifier = if (destination == selected) {
-            Modifier.focusRequester(initialFocusRequester).focusProperties { canFocus = true }
-        } else Modifier,
-        colors = jlModPlusNavigationRailItemColors(),
-        icon = {
-            Icon(
-                painter = painterResource(icon),
-                contentDescription = labelText,
-            )
-        },
-        label = { Text(labelText) },
-        alwaysShowLabel = false,
-    )
-}
-
-@Composable
-private fun LibraryNavigationBar(
-    selected: LibraryDestination,
-    onSelected: (LibraryDestination) -> Unit,
-    initialFocusRequester: FocusRequester,
-) {
-    NavigationBar(
-        containerColor = MaterialTheme.colorScheme.surfaceContainer,
-    ) {
-        LibraryNavigationItem(
-            destination = LibraryDestination.Apps,
-            selected = selected,
-            label = R.string.library_destination_apps,
-            icon = R.drawable.ic_apps,
-            onSelected = onSelected,
-            initialFocusRequester = initialFocusRequester,
-        )
-        LibraryNavigationItem(
-            destination = LibraryDestination.Collections,
-            selected = selected,
-            label = R.string.library_destination_collections,
-            icon = R.drawable.ic_collections,
-            onSelected = onSelected,
-            initialFocusRequester = initialFocusRequester,
-        )
-        LibraryNavigationItem(
-            destination = LibraryDestination.More,
-            selected = selected,
-            label = R.string.library_destination_more,
-            icon = R.drawable.ic_more,
-            onSelected = onSelected,
-            initialFocusRequester = initialFocusRequester,
-        )
-    }
-}
-
-@Composable
-private fun RowScope.LibraryNavigationItem(
-    destination: LibraryDestination,
-    selected: LibraryDestination,
-    label: Int,
-    icon: Int,
-    onSelected: (LibraryDestination) -> Unit,
-    initialFocusRequester: FocusRequester,
-) {
-    val labelText = stringResource(label)
-    NavigationBarItem(
-        selected = destination == selected,
-        onClick = { onSelected(destination) },
-        modifier = if (destination == selected) {
-            Modifier.focusRequester(initialFocusRequester).focusProperties { canFocus = true }
-        } else Modifier,
-        colors = jlModPlusNavigationBarItemColors(),
-        icon = {
-            Icon(
-                painter = painterResource(icon),
-                contentDescription = null,
-            )
-        },
-        label = {
-            Text(
-                text = labelText,
-                maxLines = 1,
-                softWrap = false,
-                overflow = TextOverflow.Ellipsis,
-            )
-        },
-    )
 }
 
 @OptIn(ExperimentalLayoutApi::class)
