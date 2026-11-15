@@ -159,10 +159,11 @@ private fun runtimeMemoryControlTextStyle() = MaterialTheme.typography.labelLarg
 @Composable
 private fun runtimeMemoryDataTextStyle() = MaterialTheme.typography.bodyLarge.copy(
     fontFamily = FontFamily.Monospace,
+    fontWeight = FontWeight.Medium,
 )
 
 @Composable
-private fun runtimeMemoryMetaTextStyle() = MaterialTheme.typography.bodySmall.copy(
+private fun runtimeMemoryMetaTextStyle() = MaterialTheme.typography.bodyMedium.copy(
     fontFamily = FontFamily.Monospace,
 )
 
@@ -397,8 +398,7 @@ internal fun MemoryEditorRuntimeRoot(
                         AnimatedContent(
                             targetState = state,
                             contentKey = { it.activeTab },
-                            modifier = Modifier.weight(1f).fillMaxWidth().clipToBounds()
-                                .background(MaterialTheme.colorScheme.surface.copy(alpha = 0.94f)),
+                            modifier = Modifier.weight(1f).fillMaxWidth().clipToBounds(),
                             transitionSpec = {
                                 val direction = pageMotionDirection(
                                     0, 0, initialState.activeTab.ordinal, targetState.activeTab.ordinal,
@@ -462,10 +462,6 @@ internal fun MemoryEditorRuntimeRoot(
                 Box(
                     modifier = Modifier.align(Alignment.BottomCenter)
                         .fillMaxWidth()
-                        .background(
-                            if (overlay.peeking) Color.Transparent
-                            else MaterialTheme.colorScheme.surfaceContainerHigh,
-                        )
                         .windowInsetsPadding(
                             WindowInsets.safeDrawing.only(WindowInsetsSides.Horizontal)
                                 .union(WindowInsets.navigationBars.only(WindowInsetsSides.Bottom)),
@@ -523,8 +519,7 @@ private fun RuntimeMemoryHeader(
     val topPadding = if (inlineNavigation) {
         with(density) { WindowInsets.safeDrawing.getTop(density).toDp() }
     } else memoryEditorTitleTopPadding()
-    Column(Modifier.fillMaxWidth()
-        .background(MaterialTheme.colorScheme.surfaceContainerHigh.copy(alpha = 0.96f))) {
+    Column(Modifier.fillMaxWidth()) {
         BoxWithConstraints(Modifier.fillMaxWidth()) {
             val titleMaxWidth = (maxWidth * 0.44f - 16.dp).coerceAtLeast(0.dp)
             Row(
