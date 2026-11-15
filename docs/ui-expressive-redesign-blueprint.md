@@ -4,7 +4,7 @@ Status: design proposal, not an active UI contract. Confirm interaction changes 
 
 ## Goals and scope
 
-Make common tasks immediately discoverable without removing expert capability: find and launch a game, install/import, open its settings, adjust presentation/controls, and return to the same place. Use Material 3 Expressive deliberately, preserve the app's own color palettes and the emulator's View/Surface/Java ME boundaries, and avoid adding navigation stacks or state owners solely for appearance.
+Make common tasks immediately discoverable without removing expert capability: find and launch a game, install/import, open its settings, adjust presentation/controls, and return to the same place. Use stable Material 3 1.4 with deliberate Expressive-inspired visual and interaction design, preserve the app's own color palettes and the emulator's View/Surface/Java ME boundaries, and avoid adding navigation stacks or state owners solely for appearance.
 
 Success requires better task clarity, consistent visual hierarchy, robust touch/controller/keyboard access, and no material degradation in UI latency or resource usage. Do not use library upgrades, Kotlin migration, or fewer lines of code as proxies for these outcomes.
 
@@ -86,12 +86,90 @@ Test row density at 320–360dp width, large font scale, landscape, dialog with 
 ## Decision 3: design-system and engineering boundaries
 
 - Material 3 `1.5.0-rc01` is **currently blocked** for production: PR #249 CI reports that the transitive `material3-ripple-android:1.5.0-rc01` requires minSdk 24, while JL-Mod Plus requires API 23. Keep the current stable BOM-managed Material 3 for implementation unless a properly supported API-23-compatible release is verified or product support policy is explicitly changed. Do not use `tools:overrideLibrary`, force an older ripple artifact, or silently raise minSdk.
+- **Product choice (2026-11-15): Material 3 1.4 stable is the active baseline.** Expressive is a visual/interaction design direction, not a requirement for the unavailable `MaterialExpressiveTheme`, 1.5-only components, or an imitation of their private APIs. Prefer official 1.4 components; add small app-owned styling only when necessary.
 - Extend `JlModPlusTheme` with Expressive typography, shape/motion tokens and app-owned colors. Preserve accent selection and dark/light contrast; Expressive must not force Android dynamic colors.
 - Evaluate new controls (e.g., split buttons, button groups, expressive menu/list variants) per interaction, not as a blanket replacement. Prefer real labels over icon-only actions when discovery would otherwise suffer.
 - Follow established short directional page transitions and existing controller/Back/IME ownership; do not apply global Expressive animation to the guest renderer or runtime inputs.
 - Use intentional soft surface layering; avoid mandatory dynamic blur or live glass effects for API 23 and slow devices.
 - Preserve localization/resource ownership and sentence case. Do not hardcode new user-visible English strings in Compose.
 - Keep one authoritative navigation and state owner per flow. The Java/Fragment/Activity hosts continue to own persistence, installers, Activity Results and runtime contracts until a demonstrated design need justifies migration.
+
+
+## Compose components, visual hierarchy and motion audit (2026-11-15)
+
+This is a **source-informed design review**, not a measured claim about a new implementation. Source reference: `alpha` at `9f86251186f010995f8370e7a6546f2ff5a4492a`. The earlier user-provided UI recording additionally shows the presentational symptoms; it may not represent the final code after intervening merges. No code or runtime behavior was changed by this review.
+
+### Visual findings
+
+The current UI is already dark/light themed, adaptive in many places, and reasonably consistent. Its main weakness is **low visual differentiation between important actions and secondary explanatory data**, not a complete absence of Material components. The recorded Library displays relatively small title/vendor text and frequent descriptions in compact rows; the Config recording shows long blocks of setting title, help, and value stacked together. Five compact Config destinations and small game artwork add pressure at phone widths. These are design hypotheses for controlled visual prototypes, not a blanket justification for larger cards, larger icons, or hiding essential settings.
+
+The goal is an *understandable content hierarchy*: clear task/action at the top of each screen, generous touch targets but efficient vertical density, subdued metadata, prominent current values, consistent contrast, and refined surfaces. Do not add multiple nested card backgrounds or glass layers just to increase the number of visual effects.
+
+### Component-level decisions
+
+| Current component / code | Why reconsider it | Proposed direction | Novice impact | Advanced-user impact | Risk and gate |
+| --- | --- | --- | --- | --- | --- |
+| `FloatingActionButton` + `DropdownMenu` in Library | The icon-only plus requires users to infer installation; menu already correctly distinguishes file and folder | Prototype a labeled/extended Install FAB at rest; retain existing two source actions, responsive collapse only if needed | More recognizable entry to install | Existing file/folder access and minimum steps retained | Ensure no collisions with nav chrome, IME, scrolling; test available width and header visibility before changing animation |
+| `LibraryListItem` custom row + Favorite | Existing Favorite occupies a 48dp trailing slot; actions require long press | Prototype visible game-actions affordance while preserving Favorite in List; allow adaptive trailing layout instead of cramming both controls at every width | Settings and metadata become discoverable | Direct Favorite and long-press remain; no more taps for common tasks | Two 48dp controls may squeeze title, especially at 320dp; test real title widths and separate clickable/focus semantics |
+| `LibraryGridItem` custom column | Grid tap to play is good but no visible action control; small JAR art is sensitive to overlays | Prototype a consistent action affordance **outside** art where possible; compare minimal corner affordance with a layout that reserves a small controls row | Discoverable settings in Grid | Fast tap and selection mode unchanged | Never overlap action with selection checkbox; preserve 1:1/3:4 art and optional hidden titles; test 2/3/4-column configurations |
+| `AppActionsDialog` bounded list | Long undifferentiated action list, especially in landscape and large text | Keep shared adaptive modal initially; consider a visually grouped action list with prominent Settings/Metadata, contextual collection actions, destructive Delete separated. Only compare bottom sheet if it proves a better full interaction | Quicker scanning and fewer ambiguous choices | Stable controller traversal, keyboard focus and actions must remain | Group labels affect controller indices; maintain logical focus order, modal Back, scroll bounds and selectable actions |
+| Library `NavigationBar`/`NavigationRail` + `HorizontalPager` | Existing model already solves two device widths, gestures and selection | Retain; refine selected-state styling, text hierarchy and icon/label affordance rather than installing a second navigation framework | Familiar bottom destinations | Swipe, direct jump and controller navigation preserved | Existing all-pages retention has startup trade-off; do not drop retention to save memory without matched profiling |
+| `ConfigSection`, `ConfigValuePreference`, `ConfigCompactValuePreference` | Long stacked title/help/value makes each entry visually equally important and costly to scan | Prototype two row densities: selected value trailing at sufficient width, below title on narrow widths; one-line helpful description when needed, detail/help affordance for genuinely long guidance. Preserve warnings/errors and destructive separation | Understands what is adjustable and what is currently selected | More rows visible, values easier to compare; all advanced settings remain directly reachable | No hidden essential compatibility explanations, no truncated values without a way to inspect, one semantic click target per row |
+| `ConfigChoicePreference` / number / slider dialogs | Editors have local `remember(value)` visibility/draft semantics and host-owned save behavior | Retain editor ownership, customize presentation selectively. Do not mechanically move all sections to `LazyColumn` or swap every dialog for a menu | Consistent editing and cancellation | No loss of precise numerical entry, bounded values or profile draft behavior | Revisit the prior rejected lazy-Config trial before changing layout; test open dialog across parent state update, IME and Back |
+| `AdaptiveAlertDialog` backed by `BasicAlertDialog` | Already provides bounded width/height and routes controller input/focus | Keep as a shared compatibility boundary; refine surface shape, spacing and action emphasis without replacing it globally | Predictable confirmation choices | Controller and keyboard navigation remain intact | Screen-height, 200% text, forced rotation, window ownership and dismissal must still work |
+| `JlModPlusTheme` semantic typography/shapes/accent | Present shape scale 4/8/12/16/24dp and default semantic typography form a sound foundation but offer limited hierarchy variation | Design a small **stable-1.4-compatible** visual token set for title emphasis, density, surface levels, selected controls, and interaction feedback; avoid per-screen hard-coded color/size | Coherent and more legible appearance | Values and status remain precise; user accents retained | Check all accent variants, dark/light, Android default fonts, localization and contrast |
+| Settings/Installer/File Picker/Runtime Menu | Already use Compose presentation with separately owned platform and emulator contracts | Defer component replacement until the Library/Config design system proves reusable. Consistency work must respect each surface's action, preview and state rules | Less fragmented experience | Existing machine-oriented tools remain available | Do not fold renderer, MIDP input, installer transactions or file picker lifecycle into a generic Compose abstraction |
+
+A component **may be replaced** when its current API or structure obstructs the intended interaction, introduces concrete layout/focus/performance problems, or when the alternative reduces total state/ownership complexity. Standard Material `ListItem` is not universally better than a focused custom row; a bottom sheet is not universally better than a custom dialog; a `LazyColumn` is not automatically faster than a bounded `Column`. Evaluate by task semantics and measured behavior.
+
+### Motion and responsiveness audit
+
+Observed source:
+- `NavigationMotion.kt`: existing full-screen transition uses **220ms** horizontal movement over **16dp** with **180ms** fade. Keep this as a coherent initial baseline, not a universal fixed rule.
+- `LibraryComposeBridge.kt`: sibling tabs use `HorizontalPager` and `PagerTabMotion`; the finger swipe follows the gesture. Direct nav jumps use alpha/translation via `graphicsLayer`. Nav chrome uses fade + short slide; Install FAB uses fade + scale + slide. These are real implementations; they should not be replaced blindly with heavier animations.
+- `ConfigComposeBridge.kt`: hierarchical `AnimatedContent` uses shared directional page motion. Preserves System Properties and Rendering subpage Back behavior.
+- `LibraryScrollChrome.kt`: header placeholder height is read in Layout measurement rather than composition; nested scroll synchronizes header with list/grid displacement. This prevents actual viewport gaps/jumps and is not redundant complexity.
+- `AdaptiveDialog.kt`: dialog input/focus routing is more than decoration; replacing the modal without that behavior would be a regression.
+
+Proposed **motion language**, subject to a focused interaction trial:
+
+| Interaction | Motion behavior | Reason and acceptance condition |
+| --- | --- | --- |
+| Press/click feedback | Immediate ripple/pressed/selected state using Material 3 1.4 controls; optional subtle scale/color feedback only if it does not delay action | Make input acknowledgment instantaneous; never animate before dispatching the action |
+| Switching root tabs | Preserve gesture-tracking swipes and short direct-jump transition; selected indicator tracks the actual indicated destination | Maintain spatial continuity without animating through every intermediate destination |
+| Opening hierarchical Config page | Short directional enter with reverse Back; retain 220/180ms baseline unless trial shows a better fit | Helps navigation orientation; avoid duplicate transition owners |
+| Library chrome hide/reveal | Existing fade/slide baseline; compare simpler draw-only transition if profiling shows cost or if visual critique finds stacked motion distracting | Preserve header/list alignment and reachable controls; no invisible interactive targets |
+| Install FAB appear/disappear | Existing fade+scale+slide is a candidate for simplification to a less busy combined motion; retain only if screenshot/video + traces support it | Distinct but not noisy, especially with bottom navigation animating |
+| Filter/search results | Give immediate selected/working feedback, update content when state is ready; avoid full-list staggered entrance and artificial delays | Perceived response is more important than motion flourish |
+| Modal open/close and destructive actions | Use short platform/Material transitions, keep focus scrim and dismissal semantics | Never let outgoing UI accept commands or show duplicate accessibility content |
+| Selection and Favorite | Visible local state feedback; optional lightweight state-change motion, no whole-row reflow | Preserve list position and fast repeated operations |
+| Runtime overlay over game | Minimal host-only transitions, no blur or repeated opacity/layer work over guest frames unless proven safe | Prioritize game frames/input and overlay transparency contract |
+
+Animation policy: use motion to explain state changes, not to hide latency. Prefer draw-phase `graphicsLayer { ... }` for frequently changing alpha/translation and correctly keyed state reads, and avoid changing size/constraints every frame without a strong UX reason. This is a direction for measurement—not a reason to micro-optimize every animation. Respect system animation-duration settings, interruption/reversal, first frame, rotation and IME; never delay click handlers while awaiting an animation. In any motion, guard background focus/semantics and input through exit as existing contracts require.
+
+### Performance evidence and experiment order
+
+Existing physical/debug evidence in `docs/app-ui-performance-2026-10-08.md` and `docs/interaction-performance-trials-2026-10-08.md` is specific, not a guarantee for the new design:
+- A recorded 60.429ms frame spent **43.438ms in measure/layout** after the most recent icon normalization had already completed; do not claim icon cache or animation is proven responsible for that stall.
+- A Library pager-retention trial reduced an extreme navigation callback stall (~125.615 to ~36.437ms) but increased cold-start latency (~635 to 710ms) and had mixed frame results. Retention is a trade-off to validate if changing the pager.
+- A rejected Config lazy-row experiment introduced recurring ~157–158ms layout blocks and **+12.1% Controls main CPU**. Do not repeat that structure as a generic modernization.
+- A separately attempted chrome retention had no convincing scroll P95/CPU improvement and was rejected.
+
+For the new design, measure in this order: **(1)** perception and task discoverability using a bounded prototype, **(2)** interaction correctness, **(3)** matched device timing and frame health, **(4)** state/refactoring simplicity. Collect first input response, callback duration, Compose layout/draw, FrameTimeline app deadline misses, warm scroll, startup, and memory where relevant. Do not infer overall responsiveness from average FPS or one warm device trace. Keep comparison artifacts local/CI and avoid adding permanent profiling machinery without an ongoing requirement.
+
+### Prototype comparison and impact rubric
+
+Use a small representative fixture with real/simulated low-res Java ME art, long mixed-language titles, loaded and unloaded metadata, a few empty states, and a collection. Compare at narrow portrait, compact landscape, larger window, light/dark, one or two contrasting accents, and 200% font only where the proposed component is sensitive.
+
+| Design question | Novice success | Advanced success | Reject when |
+| --- | --- | --- | --- |
+| List/Grid secondary action | Finds per-game settings without instruction or long-press knowledge | Launch remains one tap; direct Favorite and controller flow still work | Consumes too much title space, overlaps artwork/selection, increases accidental launches |
+| Labeled Install affordance | Understands how to add a file or folder | File and folder tasks remain no harder | Obscures games or interferes with list/nav chrome |
+| Compact preference row | Can identify setting, current value and effect | Dense but precise; long values and advanced dialogs accessible | Essential help lost; 200% text or translated values clipped |
+| Config navigation A vs B | Common orientation/screen-size and control tasks are easy to discover | Shader/profile/system paths require no gratuitous extra steps | Duplicate state, broken Back or significant extra expert navigation |
+| Revised motion | State changes are clear; actions seem immediate | Fast repeat actions and controller interrupts remain smooth | Observable latency increase, lost focus, stale viewport, jank spike or gratuitous motion |
+
+Stop experimenting when one design meets user tasks and technical gates sufficiently; do not force multiple component swaps or chase unmeasured cosmetic micro-optimizations.
 
 ## Implementation sequence and refactoring rules
 
