@@ -10,8 +10,6 @@ package io.github.h3nb.jlmodplus.memory
 import androidx.activity.compose.BackHandler
 import androidx.compose.animation.AnimatedContent
 import androidx.compose.animation.AnimatedVisibility
-import androidx.compose.animation.expandVertically
-import androidx.compose.animation.shrinkVertically
 import androidx.compose.animation.fadeIn
 import androidx.compose.animation.fadeOut
 import androidx.compose.animation.togetherWith
@@ -854,22 +852,18 @@ private fun RuntimeSearchResultsTab(
                     ),
                 ) { moreMenu = false }
             }
-            AnimatedVisibility(
-                visible = selectedRows.isNotEmpty(),
-                enter = fadeIn() + expandVertically(),
-                exit = fadeOut() + shrinkVertically(),
-            ) {
-                RuntimeSelectedActionBar(
-                    label = pluralStringResource(
-                        R.plurals.memory_editor_selected, selectedRows.size, selectedRows.size,
-                    ),
-                    actions = selectedActions,
-                )
-            }
             HorizontalDivider()
         }
 
-        LazyColumn(state = listState, modifier = Modifier.weight(1f).fillMaxWidth()) {
+        Box(Modifier.fillMaxWidth().weight(1f)) {
+            LazyColumn(
+                state = listState,
+                modifier = Modifier.fillMaxSize(),
+                contentPadding = PaddingValues(
+                    bottom = if (selectedRows.isNotEmpty())
+                        96.dp * LocalDensity.current.fontScale.coerceAtLeast(1f) else 0.dp,
+                ),
+            ) {
             if (state.results.isEmpty()) {
                 item(key = "empty") {
                     Column(
@@ -920,6 +914,20 @@ private fun RuntimeSearchResultsTab(
                         },
                     )
                 }
+            }
+        }
+            AnimatedVisibility(
+                visible = selectedRows.isNotEmpty(),
+                modifier = Modifier.align(Alignment.BottomCenter),
+                enter = fadeIn(),
+                exit = fadeOut(),
+            ) {
+                RuntimeSelectedActionBar(
+                    label = pluralStringResource(
+                        R.plurals.memory_editor_selected, selectedRows.size, selectedRows.size,
+                    ),
+                    actions = selectedActions,
+                )
             }
         }
     }
@@ -1192,24 +1200,20 @@ private fun RuntimeVariablesTab(
                 actions.refreshSavedVariables()
             }
         }
-        AnimatedVisibility(
-            visible = selectedEntries.isNotEmpty(),
-            enter = fadeIn() + expandVertically(),
-            exit = fadeOut() + shrinkVertically(),
-        ) {
-            RuntimeSelectedActionBar(
-                label = pluralStringResource(
-                    R.plurals.memory_editor_selected, selectedEntries.size, selectedEntries.size,
-                ),
-                actions = selectionActions,
-            )
-        }
         HorizontalDivider()
         createScriptError?.let {
             Text(it, color = MaterialTheme.colorScheme.error,
                 style = MaterialTheme.typography.bodySmall, modifier = Modifier.padding(12.dp))
         }
-        LazyColumn(state = listState, modifier = Modifier.fillMaxWidth().weight(1f)) {
+        Box(Modifier.fillMaxWidth().weight(1f)) {
+            LazyColumn(
+                state = listState,
+                modifier = Modifier.fillMaxSize(),
+                contentPadding = PaddingValues(
+                    bottom = if (selectedEntries.isNotEmpty())
+                        96.dp * LocalDensity.current.fontScale.coerceAtLeast(1f) else 0.dp,
+                ),
+            ) {
             if (state.savedError != null) item(key = "list-error") {
                 Text(state.savedError,
                     color = MaterialTheme.colorScheme.error,
@@ -1242,6 +1246,20 @@ private fun RuntimeVariablesTab(
                     onSelect = { select(entry) },
                     onEdit = { edit(entry) },
                     onMore = { menuKey = entry.key },
+                )
+            }
+        }
+            AnimatedVisibility(
+                visible = selectedEntries.isNotEmpty(),
+                modifier = Modifier.align(Alignment.BottomCenter),
+                enter = fadeIn(),
+                exit = fadeOut(),
+            ) {
+                RuntimeSelectedActionBar(
+                    label = pluralStringResource(
+                        R.plurals.memory_editor_selected, selectedEntries.size, selectedEntries.size,
+                    ),
+                    actions = selectionActions,
                 )
             }
         }
