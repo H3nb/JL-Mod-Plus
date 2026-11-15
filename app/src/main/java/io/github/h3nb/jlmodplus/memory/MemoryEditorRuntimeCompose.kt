@@ -1671,11 +1671,10 @@ private fun RuntimeSelectedActionBar(
             .padding(horizontal = 12.dp, vertical = 4.dp),
     ) {
         val fontScale = LocalDensity.current.fontScale.coerceAtLeast(1f)
-        val compactActions = maxWidth < 520.dp * fontScale
         val slots = when {
             maxWidth >= 720.dp * fontScale -> 5
-            maxWidth >= 520.dp * fontScale -> 4
-            maxWidth >= 280.dp * fontScale -> 3
+            maxWidth >= 460.dp * fontScale -> 4
+            maxWidth >= 320.dp * fontScale -> 3
             else -> 2
         }
         val available = actions.filter(RuntimeToolbarAction::enabled)
@@ -1706,10 +1705,8 @@ private fun RuntimeSelectedActionBar(
                         .semantics { contentDescription = description },
                 ) {
                     Icon(painterResource(action.icon), contentDescription = null)
-                    if (!compactActions) {
-                        Spacer(Modifier.width(4.dp))
-                        Text(compactLabel, maxLines = 1)
-                    }
+                    Spacer(Modifier.width(4.dp))
+                    Text(compactLabel, maxLines = 1)
                 }
             }
             if (overflow.isNotEmpty()) RuntimeActionIcon(
