@@ -674,7 +674,7 @@ class LibraryComposeTest {
         composeRule.onNodeWithText("Select").performClick()
 
         composeRule.onNodeWithText("1 app").assertIsDisplayed()
-        composeRule.onAllNodesWithText("Recently played").assertCountEquals(0)
+        composeRule.onAllNodesWithText(uiString(R.string.library_filter_recently_opened)).assertCountEquals(0)
         composeRule.onAllNodesWithText("Favorites").assertCountEquals(0)
         composeRule.onAllNodesWithContentDescription(uiString(R.string.library_favorite_coming_soon))
             .assertCountEquals(0)
