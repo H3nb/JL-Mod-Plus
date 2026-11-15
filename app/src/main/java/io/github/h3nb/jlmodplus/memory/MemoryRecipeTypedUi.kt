@@ -115,17 +115,17 @@ internal fun TypedMemoryRecipeDetail(
     Column(modifier.fillMaxSize().padding(8.dp),
         verticalArrangement = Arrangement.spacedBy(8.dp)) {
         Row(Modifier.fillMaxWidth(), verticalAlignment = Alignment.CenterVertically) {
-            TextButton(onClick = onBack) { Text(stringResource(R.string.memory_scripts_back)) }
-            Text(script.name, modifier = Modifier.weight(1f), maxLines = 1,
-                overflow = TextOverflow.Ellipsis, style = MaterialTheme.typography.titleSmall)
-            TextButton(onClick = onEdit) { Text(stringResource(R.string.memory_scripts_edit)) }
+            Text(stringResource(when (metadata.mode) {
+                "toggle" -> R.string.memory_scripts_mode_toggle
+                "form" -> R.string.memory_scripts_mode_form
+                else -> R.string.memory_scripts_mode_once
+            }), modifier = Modifier.weight(1f),
+                style = MaterialTheme.typography.labelLarge,
+                color = MaterialTheme.colorScheme.onSurfaceVariant)
+            TextButton(onClick = onEdit) {
+                Text(stringResource(R.string.memory_scripts_edit))
+            }
         }
-        Text(stringResource(when (metadata.mode) {
-            "toggle" -> R.string.memory_scripts_mode_toggle
-            "form" -> R.string.memory_scripts_mode_form
-            else -> R.string.memory_scripts_mode_once
-        }), style = MaterialTheme.typography.labelSmall,
-            color = MaterialTheme.colorScheme.onSurfaceVariant)
         HorizontalDivider()
         Column(Modifier.fillMaxWidth().weight(1f).verticalScroll(rememberScrollState()),
             verticalArrangement = Arrangement.spacedBy(8.dp)) {
