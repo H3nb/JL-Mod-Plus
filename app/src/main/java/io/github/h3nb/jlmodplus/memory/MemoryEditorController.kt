@@ -1929,11 +1929,10 @@ internal class MemoryEditorComposeController(
     override fun captureMemoryScriptBuilderActions(
         bookmarks: List<SavedVariableRow>,
     ): List<MemoryScriptBuilderAction> {
-        val midletClass = savedTarget().third
         return bookmarks.map { bookmark ->
             val locator = savedLocators[bookmark.id]
                 ?: error("Bookmark " + bookmark.label + " has no verified locator")
-            MemoryRecipeGenerator.fromBookmark(bookmark, locator, midletClass)
+            MemoryRecipeGenerator.fromBookmark(bookmark, locator)
         }
     }
 
