@@ -167,51 +167,63 @@ class LibraryComposeTest {
     }
 
     @Test
-    fun searchDispatchesCurrentTextWithoutArtificialDebounce() {
+    fun expandedSearchFiltersResultsWithoutMutatingBrowseProjection() {
         val actions = RecordingLibraryActions()
-        setLibraryContent(actions = actions)
-        composeRule.waitForIdle()
-        actions.searches.clear()
+        setLibraryContent(
+            state = LibraryUiState(
+                loading = false,
+                apps = listOf(
+                    LibraryAppUiItem(7, "Demo MIDlet", "Example Vendor", "1.0", null, true),
+                    LibraryAppUiItem(8, "Second MIDlet", "Example Vendor", "1.0", null, true),
+                ),
+            ),
+            actions = actions,
+        )
 
+        composeRule.onNodeWithContentDescription(uiString(R.string.library_search_placeholder)).performClick()
         composeRule.onNode(hasSetTextAction()).performTextInput("Demo")
-        composeRule.waitForIdle()
+        composeRule.waitUntil(5_000) {
+            composeRule.onAllNodesWithText("Demo MIDlet").fetchSemanticsNodes().isNotEmpty()
+        }
+        composeRule.onAllNodesWithText("Second MIDlet").assertCountEquals(0)
+        assertEquals(emptyList<String>(), actions.searches)
 
-        assertEquals(listOf("Demo"), actions.searches)
+        composeRule.onNodeWithContentDescription(uiString(R.string.action_back)).performClick()
+        composeRule.onNodeWithText("Second MIDlet").assertIsDisplayed()
+        composeRule.onNodeWithText("Demo MIDlet").assertIsDisplayed()
     }
-
     @Test
-    fun libraryInitiallyFocusesNavigationAndDirectionalKeyMovesToAnotherTab() {
+    fun singleLibraryRootExposesSearchAndSettingsWithoutTabNavigation() {
         val actions = RecordingLibraryActions()
         setLibraryContent(actions = actions)
-        composeRule.waitForIdle()
 
-        val apps = navigationItem(R.string.library_destination_apps)
-        apps.assertIsFocused()
-        composeRule.onNode(hasSetTextAction()).assertIsNotFocused()
+        composeRule.onNodeWithContentDescription(uiString(R.string.library_search_placeholder))
+            .assertHasClickAction()
+        composeRule.onNodeWithContentDescription(uiString(R.string.action_settings))
+            .assertHasClickAction()
+        composeRule.onAllNodesWithText(uiString(R.string.library_destination_more)).assertCountEquals(0)
 
-        apps.performKeyInput { pressKey(Key.DirectionRight) }
-        navigationItem(R.string.library_destination_collections).assertIsFocused()
+        composeRule.onNodeWithContentDescription(uiString(R.string.action_settings)).performClick()
+        composeRule.onNodeWithText(uiString(R.string.updates_title)).assertIsDisplayed()
+        composeRule.onNodeWithContentDescription(uiString(R.string.action_back)).performClick()
+        composeRule.onNodeWithText("Demo MIDlet").assertIsDisplayed()
     }
-
     @Test
-    fun searchDoneReleasesFocusButRetainsTheQuery() {
+    fun searchImeDoneReleasesFocusButRetainsQuery() {
         val actions = RecordingLibraryActions()
         setLibraryContent(actions = actions)
+        composeRule.onNodeWithContentDescription(uiString(R.string.library_search_placeholder)).performClick()
 
         val search = composeRule.onNode(hasSetTextAction())
-        search.performClick()
-        search.assertIsFocused()
         search.performTextInput("Demo")
         search.performImeAction()
         composeRule.waitForIdle()
 
         search.assertIsNotFocused()
-        assertEquals("Demo", actions.searches.last())
-
+        composeRule.onNodeWithText("Demo MIDlet").assertIsDisplayed()
         search.performClick()
         search.assertIsFocused()
     }
-
     @Test
     fun searchDoneTransfersFocusAfterTouchAndCanBeReopened() {
         val actions = RecordingLibraryActions()
@@ -231,6 +243,7 @@ class LibraryComposeTest {
             }
         }
 
+        composeRule.onNodeWithContentDescription(uiString(R.string.library_search_placeholder)).performClick()
         val search = composeRule.onNode(hasSetTextAction())
         search.performClick()
         search.performTextInput("Demo")
@@ -265,22 +278,20 @@ class LibraryComposeTest {
         composeRule.waitForIdle()
 
         search.assertIsNotFocused()
-        assertEquals("Demo", actions.searches.last())
+        assertEquals(emptyList<String>(), actions.searches)
         search.performTouchInput { click() }
         search.assertIsFocused()
     }
 
     @Test
-    fun loadingLibraryScopeChangeKeepsSearchUnfocused() {
+    fun libraryScopeChangeDoesNotAutomaticallyOpenSearch() {
         val actions = RecordingLibraryActions()
         val libraryState = mutableStateOf(LibraryUiState(loading = true))
         composeRule.setContent {
-            JLModPlusTheme {
-                LibraryScreen(state = libraryState.value, actions = actions)
-            }
+            JLModPlusTheme { LibraryScreen(state = libraryState.value, actions = actions) }
         }
         composeRule.waitForIdle()
-        composeRule.onNode(hasSetTextAction()).assertIsNotFocused()
+        composeRule.onAllNodes(hasSetTextAction()).assertCountEquals(0)
 
         composeRule.runOnIdle {
             libraryState.value = LibraryUiState(
@@ -290,11 +301,10 @@ class LibraryComposeTest {
             )
         }
         composeRule.waitForIdle()
-
-        composeRule.onNode(hasSetTextAction()).assertIsNotFocused()
-        navigationItem(R.string.library_destination_apps).assertIsFocused()
+        composeRule.onAllNodes(hasSetTextAction()).assertCountEquals(0)
+        composeRule.onNodeWithContentDescription(uiString(R.string.library_search_placeholder))
+            .assertIsDisplayed()
     }
-
     @Test
     fun libraryExposesLoadingState() {
         val actions = RecordingLibraryActions()
@@ -710,51 +720,35 @@ class LibraryComposeTest {
     }
 
     @Test
-    fun moreTabExposesFlatLibraryActions() {
+    fun settingsHubRetainsGlobalPreferencesAndUpdates() {
         val actions = RecordingLibraryActions()
         setLibraryContent(actions = actions)
 
-        composeRule.onNodeWithText("More").performClick()
-        composeRule.onNodeWithText("Settings").performClick()
-
+        composeRule.onNodeWithContentDescription(uiString(R.string.action_settings)).performClick()
+        composeRule.onNodeWithText(uiString(R.string.updates_title)).assertIsDisplayed()
+        composeRule.onAllNodesWithText(uiString(R.string.action_settings)).onLast().performClick()
         assertEquals(1, actions.settingsCount)
-        composeRule.onAllNodesWithText("Exit Emulator").assertCountEquals(0)
     }
-
     @Test
-    fun moreKeepsDonationVisibleWithoutOldLogAndHelpMenus() {
+    fun settingsHubKeepsDiagnosticsAndSupportWithoutDuplicateImport() {
         val actions = RecordingLibraryActions()
         setLibraryContent(actions = actions)
 
-        composeRule.onNodeWithText(uiString(R.string.library_destination_more)).performClick()
+        composeRule.onNodeWithContentDescription(uiString(R.string.action_settings)).performClick()
         composeRule.onAllNodesWithText(uiString(R.string.save_log)).assertCountEquals(0)
         composeRule.onAllNodesWithText(uiString(R.string.help)).assertCountEquals(0)
-
-        val importTop = composeRule.onNodeWithText(
-            uiString(R.string.library_action_import_bundle),
-        ).fetchSemanticsNode().boundsInRoot.top
-        val donationTop = composeRule.onNodeWithText(
-            uiString(R.string.library_donation_action),
-        ).fetchSemanticsNode().boundsInRoot.top
-        val aboutTop = composeRule.onNodeWithText(
-            uiString(R.string.about),
-        ).fetchSemanticsNode().boundsInRoot.top
-        assertTrue(importTop < donationTop)
-        assertTrue(donationTop < aboutTop)
-        val crashTop = composeRule.onNodeWithText(
-            uiString(R.string.crash_reports),
-        ).fetchSemanticsNode().boundsInRoot.top
-        assertTrue(crashTop < aboutTop)
-        composeRule.onAllNodesWithText(uiString(R.string.licenses)).assertCountEquals(0)
+        composeRule.onAllNodesWithText(uiString(R.string.library_action_import_bundle)).assertCountEquals(0)
+        composeRule.onNodeWithText(uiString(R.string.library_donation_action)).assertIsDisplayed()
+        composeRule.onNodeWithText(uiString(R.string.crash_reports)).assertIsDisplayed()
+        composeRule.onNodeWithText(uiString(R.string.about)).assertIsDisplayed()
     }
-
     @Test
     fun moreDonationIsVoluntaryAndOpensViaExplicitHostAction() {
         val actions = RecordingLibraryActions()
         setLibraryContent(actions = actions)
         composeRule.onAllNodesWithText(uiString(R.string.library_donation_title)).assertCountEquals(0)
 
-        composeRule.onNodeWithText(uiString(R.string.library_destination_more)).performClick()
+        composeRule.onNodeWithContentDescription(uiString(R.string.action_settings)).performClick()
         composeRule.onNodeWithText(uiString(R.string.library_donation_action)).performClick()
         composeRule.onNodeWithText(uiString(R.string.library_donation_title)).assertIsDisplayed()
         composeRule.onNodeWithText(uiString(R.string.library_donation_message)).assertIsDisplayed()
@@ -772,7 +766,7 @@ class LibraryComposeTest {
     fun aboutIsASeparatePageWithLicensesAndGitHubLink() {
         val actions = RecordingLibraryActions()
         setLibraryContent(actions = actions)
-        composeRule.onNodeWithText(uiString(R.string.library_destination_more)).performClick()
+        composeRule.onNodeWithContentDescription(uiString(R.string.action_settings)).performClick()
         composeRule.onNodeWithText(uiString(R.string.about)).performClick()
 
         composeRule.onNodeWithText(uiString(R.string.about_compatibility))
@@ -796,16 +790,14 @@ class LibraryComposeTest {
     }
 
     @Test
-    fun moreExposesImportAppBundleCallback() {
+    fun importBundleIsAvailableFromTheAddMenu() {
         val actions = RecordingLibraryActions()
         setLibraryContent(actions = actions)
 
-        composeRule.onNodeWithText("More").performClick()
+        composeRule.onNodeWithContentDescription(uiString(R.string.install)).performClick()
         composeRule.onNodeWithText(uiString(R.string.library_action_import_bundle)).performClick()
-
         assertEquals(1, actions.importCount)
     }
-
     @Test
     fun moreDoesNotExposeFormerInlineLibraryDisplayOptions() {
         val actions = RecordingLibraryActions()
@@ -817,33 +809,23 @@ class LibraryComposeTest {
             actions = actions,
         )
 
-        composeRule.onNodeWithText("More").performClick()
-        composeRule.onNodeWithText("Settings").assertIsDisplayed()
+        composeRule.onNodeWithContentDescription(uiString(R.string.action_settings)).performClick()
+        composeRule.onAllNodesWithText(uiString(R.string.action_settings)).onLast().assertIsDisplayed()
         composeRule.onAllNodesWithText("3:4").assertCountEquals(0)
         composeRule.onAllNodesWithText("Compact (4 dp)").assertCountEquals(0)
         composeRule.onAllNodesWithContentDescription("Hide titles in grid").assertCountEquals(0)
     }
 
     @Test
-    fun destinationsAndDeferredFilterShellAreVisible() {
+    fun collectionManagementRemainsAvailableFromLibraryScope() {
         val actions = RecordingLibraryActions()
         setLibraryContent(actions = actions)
 
-        composeRule.onAllNodesWithText(uiString(R.string.library_filter_recently_opened)).assertCountEquals(1)
-        composeRule.onAllNodesWithText(uiString(R.string.library_filter_recently_added)).assertCountEquals(1)
-        composeRule.onAllNodesWithText(uiString(R.string.library_filter_favorites)).assertCountEquals(1)
-        composeRule.onNodeWithContentDescription(uiString(R.string.library_favorite_coming_soon))
-            .assertIsDisplayed().assertIsNotEnabled()
-        composeRule.onAllNodesWithContentDescription(uiString(R.string.library_remove_from_favorites_action))
-            .assertCountEquals(0)
-
-        composeRule.onNodeWithText("Collections").performClick()
+        composeRule.onNodeWithText(uiString(R.string.library_destination_apps)).performClick()
+        composeRule.onNodeWithText(uiString(R.string.library_destination_collections)).performClick()
         composeRule.onNodeWithText(uiString(R.string.library_collections_empty_message))
             .assertIsDisplayed()
-        composeRule.onNodeWithText("More").performClick()
-        composeRule.onNodeWithText("Settings").assertIsDisplayed()
     }
-
     @Test
     fun gridUsesTilesWithoutFavoritePlaceholder() {
         val actions = RecordingLibraryActions()
