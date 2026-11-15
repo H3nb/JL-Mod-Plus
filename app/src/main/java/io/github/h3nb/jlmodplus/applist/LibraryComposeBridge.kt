@@ -659,8 +659,6 @@ private fun BundleComponentsDialog(
     var config by remember { mutableStateOf(false) }
     var saveData by remember { mutableStateOf(false) }
     var saved by remember { mutableStateOf(false) }
-    var layoutSkin by remember { mutableStateOf(false) }
-    var controlSkin by remember { mutableStateOf(false) }
     val layout = libraryDialogLayout()
     AlertDialog(
         modifier = layout.modifier,
@@ -674,8 +672,6 @@ private fun BundleComponentsDialog(
                     Triple(R.string.library_bundle_config, config) { checked: Boolean -> config = checked },
                     Triple(R.string.library_bundle_save_data, saveData) { checked: Boolean -> saveData = checked },
                     Triple(R.string.library_bundle_saved_variables, saved) { checked: Boolean -> saved = checked },
-                    Triple(R.string.library_bundle_layout_skin, layoutSkin) { checked: Boolean -> layoutSkin = checked },
-                    Triple(R.string.library_bundle_control_skin, controlSkin) { checked: Boolean -> controlSkin = checked },
                 ).forEach { (label, checked, toggle) ->
                     Row(
                         modifier = Modifier.fillMaxWidth()
@@ -691,7 +687,7 @@ private fun BundleComponentsDialog(
         },
         confirmButton = {
             TextButton(onClick = {
-                onConfirm(LibraryBundleComponents(config, saveData, saved, layoutSkin, controlSkin))
+                onConfirm(LibraryBundleComponents(config, saveData, saved))
             }) { Text(stringResource(R.string.library_bundle_export)) }
         },
         dismissButton = {

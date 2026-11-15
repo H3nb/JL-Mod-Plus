@@ -136,41 +136,6 @@ internal object LibraryUniversalBundleExporter {
         addOptionalFile(entries, workdirRoot, File(convertedRoot, "icon.png"), "${payloadRoot}app/icon.png")
 
         val configRoot = File(File(source.emulatorDir, "configs"), source.storageKey)
-        val references = if (source.components.layoutSkin || source.components.controlSkin) {
-            LibraryBundleSkinAssets.references(configRoot)
-        } else LibraryBundleSkinAssets.References(null, null)
-        val layoutSkin = if (source.components.layoutSkin) {
-            LibraryBundleSkinAssets.screenSkin(source.emulatorDir, references.screenSkin)
-        } else null
-        val layoutSkinState = when {
-            !source.components.layoutSkin -> BundleNamespaceState.Excluded
-            layoutSkin == null -> BundleNamespaceState.Absent
-            else -> {
-                if (layoutSkin.length() > LibraryBundleSkinAssets.MAX_LAYOUT_SKIN_BYTES) {
-                    throw IOException("Screen skin exceeds the 16 MiB bundle import limit")
-                }
-                addOptionalFile(entries, workdirRoot, layoutSkin,
-                    "${payloadRoot}skin-layout/${layoutSkin.name}")
-                BundleNamespaceState.Present
-            }
-        }
-        val controlSkin = if (source.components.controlSkin) {
-            LibraryBundleSkinAssets.controlSkin(source.emulatorDir, references.controlSkinId)
-        } else null
-        val controlSkinState = when {
-            !source.components.controlSkin -> BundleNamespaceState.Excluded
-            controlSkin == null -> BundleNamespaceState.Absent
-            else -> {
-                LibraryBundleSkinAssets.selectedControlFiles(controlSkin).forEach { asset ->
-                    entries += SourceEntry(
-                        path = "${payloadRoot}control-skin/${asset.name}",
-                        file = requiredFile(workdirRoot, asset, "Control skin"),
-                        directory = false,
-                    )
-                }
-                BundleNamespaceState.Present
-            }
-        }
         val configState = if (source.components.configuration) addNamespace(
             entries = entries,
             workdirRoot = workdirRoot,
@@ -208,9 +173,6 @@ internal object LibraryUniversalBundleExporter {
             configState = configState,
             dataState = dataState,
             savedState = savedState,
-            layoutSkinState = layoutSkinState,
-            controlSkinState = controlSkinState,
-            controlSkinName = controlSkin?.name?.takeIf(LibraryBundleSkinAssets::validSetName),
             entries = entries,
         )
     }
@@ -336,9 +298,6 @@ internal object LibraryUniversalBundleExporter {
             record["configState"] = JsonPrimitive(app.configState.manifestValue())
             record["dataState"] = JsonPrimitive(app.dataState.manifestValue())
             record["savedState"] = JsonPrimitive(app.savedState.manifestValue())
-            record["layoutSkinState"] = JsonPrimitive(app.layoutSkinState.manifestValue())
-            record["controlSkinState"] = JsonPrimitive(app.controlSkinState.manifestValue())
-            app.controlSkinName?.let { record["controlSkinName"] = JsonPrimitive(it) }
             records.add(JsonObject(record))
         }
         root["apps"] = JsonArray(records)
@@ -425,9 +384,6 @@ internal object LibraryUniversalBundleExporter {
         val configState: BundleNamespaceState,
         val dataState: BundleNamespaceState,
         val savedState: BundleNamespaceState,
-        val layoutSkinState: BundleNamespaceState,
-        val controlSkinState: BundleNamespaceState,
-        val controlSkinName: String?,
         val entries: List<SourceEntry>,
     )
 
