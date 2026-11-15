@@ -347,6 +347,21 @@ internal fun MemoryEditorRuntimeRoot(
                         (selectedScriptId != null || scriptDraft != null ||
                             scriptBuilder != null || choosingScriptType)
                     val inspectorPage = tab == MemoryEditorTab.INSPECTOR
+                    val detailTitle = when {
+                        inspectorPage -> stringResource(R.string.memory_editor_inspector)
+                        tab != MemoryEditorTab.SCRIPTS -> null
+                        scriptBuilder != null -> stringResource(when (scriptBuilder!!.mode) {
+                            MemoryScriptBuilderMode.FREEZE -> R.string.memory_scripts_mode_toggle
+                            MemoryScriptBuilderMode.FORM -> R.string.memory_scripts_mode_form
+                            MemoryScriptBuilderMode.ACTIONS -> R.string.memory_scripts_mode_once
+                        })
+                        scriptDraft != null -> stringResource(R.string.memory_builder_json_editor)
+                        choosingScriptType -> stringResource(R.string.memory_scripts_new)
+                        selectedScriptId != null -> state.scripts.firstOrNull {
+                            it.id == selectedScriptId
+                        }?.name ?: stringResource(R.string.memory_scripts_title)
+                        else -> null
+                    }
                     Column(
                         Modifier.fillMaxSize().padding(bottom = 48.dp)
                             .then(if (overlay.peeking) Modifier.clearAndSetSemantics {} else Modifier),
@@ -355,11 +370,23 @@ internal fun MemoryEditorRuntimeRoot(
                             WindowInsets.safeGestures.only(WindowInsetsSides.Horizontal),
                         )) {
                             RuntimeMemoryHeader(
-                                state, showLabels || !showTitle, selectTab,
-                                closeWorkspace, showTitle && !scriptPage,
-                                showTabs = !scriptPage && !inspectorPage,
-                                inspectorPage = inspectorPage,
-                                onBackFromInspector = actions::closeInspector,
+                                state = state, inlineNavigation = showLabels || !showTitle,
+                                onTab = selectTab, onMinimize = closeWorkspace,
+                                showTitle = showTitle, detailTitle = detailTitle,
+                                onDetailBack = {
+                                    when {
+                                        inspectorPage -> actions.closeInspector()
+                                        scriptBuilder != null -> backFromScriptBuilder()
+                                        scriptDraft != null -> backFromScriptEditor()
+                                        choosingScriptType -> {
+                                            val fromSaved = scriptTargets.isNotEmpty()
+                                            choosingScriptType = false
+                                            scriptTargets = emptyList()
+                                            if (fromSaved) actions.setVariablesTab(true)
+                                        }
+                                        selectedScriptId != null -> selectedScriptId = null
+                                    }
+                                },
                             )
                         }
                         if (state.busy) RuntimeOperationStrip(state, actions)
@@ -491,48 +518,54 @@ private fun RuntimeMemoryHeader(
     onTab: (MemoryEditorTab) -> Unit,
     onMinimize: () -> Unit,
     showTitle: Boolean,
-    showTabs: Boolean,
-    inspectorPage: Boolean,
-    onBackFromInspector: () -> Unit,
+    detailTitle: String?,
+    onDetailBack: () -> Unit,
 ) {
     val density = LocalDensity.current
     val topPadding = if (inlineNavigation) {
         with(density) { WindowInsets.safeDrawing.getTop(density).toDp() }
     } else memoryEditorTitleTopPadding()
-    BoxWithConstraints(Modifier.fillMaxWidth()) {
-        val stackedTitleMaxWidth = (maxWidth * 0.44f - 16.dp).coerceAtLeast(0.dp)
-        Row(
-            modifier = Modifier.fillMaxWidth().padding(start = 16.dp, end = 4.dp, top = topPadding),
-            verticalAlignment = Alignment.CenterVertically,
-        ) {
-            if (inspectorPage) {
-                TextButton(onClick = onBackFromInspector) {
-                    Text(stringResource(R.string.memory_scripts_back))
+    Column(Modifier.fillMaxWidth()
+        .background(MaterialTheme.colorScheme.surfaceContainerHigh.copy(alpha = 0.96f))) {
+        BoxWithConstraints(Modifier.fillMaxWidth()) {
+            val titleMaxWidth = (maxWidth * 0.44f - 16.dp).coerceAtLeast(0.dp)
+            Row(
+                Modifier.fillMaxWidth().padding(start = 12.dp, end = 4.dp, top = topPadding),
+                verticalAlignment = Alignment.CenterVertically,
+            ) {
+                if (detailTitle != null) {
+                    RuntimeIconTooltip(stringResource(R.string.memory_scripts_back)) {
+                        IconButton(onClick = onDetailBack) {
+                            Icon(painterResource(R.drawable.ic_arrow_back),
+                                stringResource(R.string.memory_scripts_back))
+                        }
+                    }
+                    Text(detailTitle, modifier = Modifier.weight(1f).padding(start = 4.dp),
+                        style = MaterialTheme.typography.titleMedium, maxLines = 1,
+                        overflow = TextOverflow.Ellipsis)
+                } else {
+                    if (showTitle) Text(
+                        stringResource(R.string.memory_editor),
+                        style = MaterialTheme.typography.titleMedium,
+                        maxLines = 1,
+                        overflow = TextOverflow.Ellipsis,
+                        modifier = if (inlineNavigation) Modifier.padding(end = 12.dp)
+                            else Modifier.widthIn(max = titleMaxWidth),
+                    )
+                    if (inlineNavigation) {
+                        RuntimeMemoryTabs(state, onTab, Modifier.weight(1f))
+                    } else Spacer(Modifier.weight(1f))
                 }
-            }
-            if (showTitle) Text(
-                stringResource(if (inspectorPage) R.string.memory_editor_inspector
-                    else R.string.memory_editor),
-                style = MaterialTheme.typography.titleMedium,
-                maxLines = 1,
-                overflow = TextOverflow.Ellipsis,
-                modifier = if (inlineNavigation) Modifier.padding(end = 16.dp)
-                    else Modifier.widthIn(max = stackedTitleMaxWidth),
-            )
-            if (showTabs && inlineNavigation) {
-                RuntimeMemoryTabs(state, onTab, Modifier.weight(1f))
-            } else {
-                Spacer(Modifier.weight(1f))
-            }
-            RuntimeIconTooltip(stringResource(R.string.memory_editor_minimize)) {
-                IconButton(onClick = onMinimize) {
-                    Icon(painterResource(R.drawable.ic_remove),
-                        stringResource(R.string.memory_editor_minimize))
+                RuntimeIconTooltip(stringResource(R.string.memory_editor_minimize)) {
+                    IconButton(onClick = onMinimize) {
+                        Icon(painterResource(R.drawable.ic_remove),
+                            stringResource(R.string.memory_editor_minimize))
+                    }
                 }
             }
         }
+        if (detailTitle == null && !inlineNavigation) RuntimeMemoryTabs(state, onTab)
     }
-    if (showTabs && !inlineNavigation) RuntimeMemoryTabs(state, onTab)
 }
 
 @Composable
