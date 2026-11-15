@@ -343,9 +343,6 @@ internal fun MemoryEditorRuntimeRoot(
                     val compactResults = wideWorkspace
                     val showLabels = wideWorkspace
                     val showTitle = maxHeight >= 360.dp || LocalDensity.current.fontScale <= 1.3f
-                    val scriptPage = tab == MemoryEditorTab.SCRIPTS &&
-                        (selectedScriptId != null || scriptDraft != null ||
-                            scriptBuilder != null || choosingScriptType)
                     val inspectorPage = tab == MemoryEditorTab.INSPECTOR
                     val detailTitle = when {
                         inspectorPage -> stringResource(R.string.memory_editor_inspector)
@@ -434,8 +431,8 @@ internal fun MemoryEditorRuntimeRoot(
                                     MemoryEditorTab.SCRIPTS -> RuntimeScriptsTab(
                                         shownState, actions, selectedScriptId,
                                         { selectedScriptId = it }, scriptDraft,
-                                        { setScriptDraft(it) }, backFromScriptEditor,
-                                        scriptBuilder, { scriptBuilder = it }, backFromScriptBuilder,
+                                        { setScriptDraft(it) },
+                                        scriptBuilder, { scriptBuilder = it },
                                         choosingScriptType, { choosingScriptType = it },
                                         scriptTargets, { scriptTargets = emptyList() },
                                         Modifier.fillMaxSize(),
@@ -530,7 +527,7 @@ private fun RuntimeMemoryHeader(
         BoxWithConstraints(Modifier.fillMaxWidth()) {
             val titleMaxWidth = (maxWidth * 0.44f - 16.dp).coerceAtLeast(0.dp)
             Row(
-                Modifier.fillMaxWidth().padding(start = 12.dp, end = 4.dp, top = topPadding),
+                Modifier.fillMaxWidth().padding(start = 16.dp, end = 4.dp, top = topPadding),
                 verticalAlignment = Alignment.CenterVertically,
             ) {
                 if (detailTitle != null) {
