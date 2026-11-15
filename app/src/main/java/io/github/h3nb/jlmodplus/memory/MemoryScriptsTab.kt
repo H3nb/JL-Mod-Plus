@@ -125,6 +125,8 @@ internal fun RuntimeScriptsTab(
     onDraft: (MemoryScriptDraft?) -> Unit,
     builder: MemoryScriptBuilderDraft?,
     onBuilder: (MemoryScriptBuilderDraft?) -> Unit,
+    saving: Boolean,
+    onSaveScript: (String, String?, (Boolean) -> Unit) -> Unit,
     choosingType: Boolean,
     onChoosingTypeChange: (Boolean) -> Unit,
     initialTargets: List<MemoryScriptBuilderAction>,
@@ -146,7 +148,6 @@ internal fun RuntimeScriptsTab(
         mutableStateOf(cachedDetail?.detailFreeze ?: false)
     }
     var deleting by remember { mutableStateOf(false) }
-    var saving by remember { mutableStateOf(false) }
     var localError by remember { mutableStateOf<String?>(null) }
     var currentValues by remember(selectedId, state.runtimeToken) {
         mutableStateOf<List<MemoryRecipeReadValue>?>(null)
@@ -180,6 +181,7 @@ internal fun RuntimeScriptsTab(
     if (builder != null) {
         MemoryScriptBuilderScreen(
             draft = builder, state = state, actions = actions,
+            saving = saving, onSaveScript = onSaveScript,
             onDraft = { onBuilder(it) },
             onSaved = {
                 onSelectedId(it)
@@ -271,10 +273,8 @@ internal fun RuntimeScriptsTab(
                         parsed.isSuccess &&
                         (draft.replacingId == null || parsed.getOrNull()?.id == draft.replacingId),
                     onClick = {
-                        saving = true
                         localError = null
-                        actions.saveMemoryScript(draft.text, draft.replacingId) { success ->
-                            saving = false
+                        onSaveScript(draft.text, draft.replacingId) { success ->
                             if (success) {
                                 onSelectedId(parsed.getOrNull()?.id)
                                 onDraft(null)
