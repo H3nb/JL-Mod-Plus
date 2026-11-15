@@ -158,7 +158,7 @@ internal fun MemoryScriptTypeChooser(
         }
         HorizontalDivider(color = MaterialTheme.colorScheme.outlineVariant)
         TextButton(onClick = onJson, modifier = Modifier.fillMaxWidth()) {
-            Icon(painterResource(R.drawable.ic_memory_editor_inspector),
+            Icon(painterResource(R.drawable.ic_file_picker_file),
                 contentDescription = null)
             Spacer(Modifier.width(8.dp))
             Text(stringResource(R.string.memory_builder_json_editor))
