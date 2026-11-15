@@ -469,7 +469,7 @@ class LibraryViewportNavigationTest {
 
     private fun openCollectionManagement() {
         composeRule.onNodeWithText(uiString(R.string.library_filter_all)).performClick()
-        composeRule.onNodeWithText(uiString(R.string.library_destination_collections)).performClick()
+        composeRule.onNodeWithText(uiString(R.string.library_collection_manage)).performClick()
     }
 
     private fun scrollAwayFromTop(prefix: String) {
