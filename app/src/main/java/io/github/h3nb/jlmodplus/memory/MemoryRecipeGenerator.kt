@@ -48,16 +48,8 @@ internal object MemoryRecipeGenerator {
                 ?: error("Enter an integer value")
             else -> error("This value type is not supported by simple automation")
         }
-        // Avoid accepting values that the typed write itself cannot represent.
         val numeric = normalized.toLong()
-        val bounds = when (type) {
-            "byte" -> Byte.MIN_VALUE.toLong()..Byte.MAX_VALUE.toLong()
-            "short" -> Short.MIN_VALUE.toLong()..Short.MAX_VALUE.toLong()
-            "int" -> Int.MIN_VALUE.toLong()..Int.MAX_VALUE.toLong()
-            "char" -> 0L..65535L
-            "boolean" -> 0L..1L
-            else -> Long.MIN_VALUE..Long.MAX_VALUE
-        }
+        val bounds = primitiveBounds(steps)
         require(numeric in bounds) { "Value exceeds the selected variable type" }
 
         val root = target.getValue("root")
@@ -79,6 +71,7 @@ internal object MemoryRecipeGenerator {
     }
 
 
+    @Suppress("DEPRECATION")
     private fun targetFromSaved(locator: Bundle): JsonObject {
         require(locator.getInt("savedSchema") == 2) { "Unsupported Saved descriptor version" }
         val rootKind = when (locator.getInt("savedRootKind")) {
