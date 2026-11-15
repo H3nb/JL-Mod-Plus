@@ -193,6 +193,46 @@ class LibraryComposeTest {
         composeRule.onNodeWithText("Demo MIDlet").assertIsDisplayed()
     }
     @Test
+    fun searchActionsResolveTheCorrectHostIdForUnprojectedApps() {
+        var openedId: Int? = null
+        var actionsAppId: Int? = null
+        var favoriteId: Int? = null
+        composeRule.setContent {
+            JLModPlusTheme {
+                LibrarySearchOverlay(
+                    state = LibraryUiState(loading = false, databaseControlsReady = true),
+                    apps = listOf(
+                        LibraryAppUiItem(
+                            id = 0,
+                            title = "Demo MIDlet",
+                            author = "Example Vendor",
+                            version = "1.0",
+                            iconPath = null,
+                            canReinstall = true,
+                            databaseId = 70L,
+                        ),
+                    ),
+                    appsPrepared = true,
+                    onDismiss = {},
+                    onOpenApp = { openedId = it },
+                    onOpenActions = { actionsAppId = it.id },
+                    onFavorite = { id, _ -> favoriteId = id },
+                    resolveUiId = { databaseId -> if (databaseId == 70L) 7 else null },
+                )
+            }
+        }
+
+        composeRule.onNode(hasSetTextAction()).performTextInput("Demo")
+        composeRule.onNodeWithText("Demo MIDlet").assertIsDisplayed().performClick()
+        assertEquals(7, openedId)
+        composeRule.onNodeWithText("Demo MIDlet").performTouchInput { longClick() }
+        assertEquals(7, actionsAppId)
+        composeRule.onNodeWithContentDescription(uiString(R.string.library_add_to_favorites_action))
+            .performClick()
+        assertEquals(7, favoriteId)
+    }
+
+    @Test
     fun singleLibraryRootExposesSearchAndSettingsWithoutTabNavigation() {
         val actions = RecordingLibraryActions()
         setLibraryContent(actions = actions)
