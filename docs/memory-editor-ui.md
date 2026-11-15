@@ -20,7 +20,7 @@ The October 2026 UI reassessment prioritizes these findings:
 | Landscape and portrait used different content composition branches | Width/orientation changes could recreate local forms; the landscape rail occupied 176 dp | Keep the workspace content at one composition location and adapt only its header |
 | Toolbar and metadata consumed scarce space | Icon-only commands competed with results and selection counts | Keep scan/refresh in a stable top row; reveal labeled edit actions only on selection and place secondary actions in More |
 | Peek could disappear behind a nested menu | Native dialogs and dropdowns have separate input windows; an eye inside a scrolling form is not globally reachable | Give every editor modal the same fixed footer and one shared visibility owner |
-| An opaque workspace obscured the value being searched in the game | The editor overlays a live runtime; the user must compare its values with results | Default the panel background to 97% opacity, preserve foreground contrast, and persist an adjustable opacity |
+| An opaque workspace obscured the value being searched in the game | The editor overlays a live runtime; the user must compare its values with results | Default the panel background to 72% opacity, preserve foreground contrast, and persist an adjustable opacity |
 
 The default opacity, typography and icon density are presentation choices, not
 measured performance improvements. This work does not
@@ -148,6 +148,10 @@ width changes. Primary tabs use short directional motion.
   and supports advanced codecs/selectors without a lossy visual conversion.
 - Script Save never runs the engine or enables Freeze. Running, applying a checked
   form snapshot, and enabling/disabling Freeze remain separate deliberate actions.
+  While Save is pending, editor navigation, Discard and Minimize are disabled.
+  If the Activity is recreated before its callback arrives, the current MIDlet
+  workspace reconciles the pending exact document against the reloaded catalog:
+  a matching saved script opens its detail; otherwise the draft remains editable.
   Show active Freeze state and distinguish last-read values from proposed edits.
 - An open Script subpage replaces tabs with the shared Back/title/Minimize header;
   Peek remains global. Script type choices use concise icon-supported rows.
@@ -199,8 +203,10 @@ inspect or edit inputs.
 Panel opacity controls the workspace backdrop, including its header, data
 viewport and footer, without fading text or icons. The initial default is 72%,
 adjustable from 0% to 100%; previously saved preferences remain unchanged.
-At 0%, the backdrop is transparent and the game remains visible behind editor
-controls. At 100%, the backdrop is opaque. Local action surfaces may remain
+At 0%, the main backdrop is transparent and the game remains visible behind
+editor controls. The header and bottom navigation receive a small local backing
+as opacity decreases, keeping controls legible without obscuring the data viewport.
+At 100%, the backdrop is opaque. Local action surfaces may remain
 solid for usability, but must not cover the entire data viewport. Do not blur the
 live game: players need to read its numbers while comparing results. Peek still
 provides a fully unobstructed game view. The memory-engine process owns the
