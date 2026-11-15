@@ -2710,6 +2710,9 @@ private fun LibraryAppsHeader(
     val visibleAppIds = if (selectionState.isActive) state.projectedAppIds else emptyList()
     val selectedSort = state.sortVariant and Int.MAX_VALUE
     val ascending = state.sortVariant >= 0
+    val compactHeaderActions = LocalDensity.current.fontScale >= 1.5f &&
+        availableWindowWidthDp() < 600.dp &&
+        !selectionState.isActive && title == null && onBack == null
     val titleGate = rememberLibraryHeaderActionGate(headerOffsetPx)
     val searchGate = rememberLibraryHeaderActionGate(headerOffsetPx)
     val filtersGate = rememberLibraryHeaderActionGate(headerOffsetPx)
@@ -2788,16 +2791,11 @@ private fun LibraryAppsHeader(
                         showDebugMark = BuildConfig.DEBUG,
                         modifier = Modifier.weight(1f),
                     )
-                    IconButton(onClick = onOpenSearch, enabled = titleActionsEnabled) {
-                        Icon(
-                            painter = painterResource(R.drawable.ic_search),
-                            contentDescription = stringResource(R.string.library_search_placeholder),
-                        )
-                    }
-                    IconButton(onClick = onOpenGlobalSettings, enabled = titleActionsEnabled) {
-                        Icon(
-                            painter = painterResource(R.drawable.ic_settings),
-                            contentDescription = stringResource(R.string.action_settings),
+                    if (!compactHeaderActions) {
+                        LibraryHeaderActions(
+                            onOpenSearch = onOpenSearch,
+                            onOpenSettings = onOpenGlobalSettings,
+                            enabled = titleActionsEnabled,
                         )
                     }
                 }
@@ -2847,13 +2845,19 @@ private fun LibraryAppsHeader(
                     enabled = searchActionsEnabled,
                     onClick = { scopeMenuVisible = true },
                 ) {
-                    Icon(
-                        painter = painterResource(R.drawable.ic_apps),
-                        contentDescription = null,
-                        modifier = Modifier.size(20.dp),
+                    if (!compactHeaderActions) {
+                        Icon(
+                            painter = painterResource(R.drawable.ic_apps),
+                            contentDescription = null,
+                            modifier = Modifier.size(20.dp),
+                        )
+                        Spacer(Modifier.width(8.dp))
+                    }
+                    Text(
+                        text = stringResource(R.string.library_filter_all),
+                        maxLines = 1,
+                        overflow = TextOverflow.Ellipsis,
                     )
-                    Spacer(Modifier.width(8.dp))
-                    Text(stringResource(R.string.library_destination_apps))
                     Icon(
                         painter = painterResource(R.drawable.ic_keyboard_arrow_down),
                         contentDescription = null,
@@ -2864,8 +2868,11 @@ private fun LibraryAppsHeader(
                     onDismissRequest = { scopeMenuVisible = false },
                 ) {
                     DropdownMenuItem(
-                        text = { Text(stringResource(R.string.library_destination_apps)) },
-                        onClick = { scopeMenuVisible = false },
+                        text = { Text(stringResource(R.string.library_filter_all)) },
+                        onClick = {
+                            scopeMenuVisible = false
+                            if (state.quickView != LibraryQuickView.All) onQuickView(LibraryQuickView.All)
+                        },
                         leadingIcon = {
                             Icon(painterResource(R.drawable.ic_apps), contentDescription = null)
                         },
@@ -2893,6 +2900,13 @@ private fun LibraryAppsHeader(
                         },
                     )
                 }
+            }
+            if (compactHeaderActions) {
+                LibraryHeaderActions(
+                    onOpenSearch = onOpenSearch,
+                    onOpenSettings = onOpenGlobalSettings,
+                    enabled = searchActionsEnabled,
+                )
             }
             Box {
                 LibrarySortButton(
@@ -2927,35 +2941,60 @@ private fun LibraryAppsHeader(
                 horizontalArrangement = Arrangement.spacedBy(8.dp),
             ) {
                 LibraryQuickFilter(
-                    label = R.string.library_filter_all,
-                    icon = R.drawable.ic_apps,
-                    selected = state.quickView == LibraryQuickView.All,
-                    enabled = filterActionsEnabled,
-                    onClick = { onQuickView(LibraryQuickView.All) },
-                )
-                LibraryQuickFilter(
                     label = R.string.library_filter_favorites,
                     icon = R.drawable.ic_star,
                     selected = state.quickView == LibraryQuickView.Favorites,
                     enabled = filterActionsEnabled && state.databaseControlsReady,
-                    onClick = { onQuickView(LibraryQuickView.Favorites) },
+                    onClick = {
+                        onQuickView(if (state.quickView == LibraryQuickView.Favorites) {
+                            LibraryQuickView.All
+                        } else LibraryQuickView.Favorites)
+                    },
                 )
                 LibraryQuickFilter(
                     label = R.string.library_filter_recently_added,
                     icon = R.drawable.ic_recently_added,
                     selected = state.quickView == LibraryQuickView.RecentlyAdded,
                     enabled = filterActionsEnabled && state.databaseControlsReady,
-                    onClick = { onQuickView(LibraryQuickView.RecentlyAdded) },
+                    onClick = {
+                        onQuickView(if (state.quickView == LibraryQuickView.RecentlyAdded) {
+                            LibraryQuickView.All
+                        } else LibraryQuickView.RecentlyAdded)
+                    },
                 )
                 LibraryQuickFilter(
                     label = R.string.library_filter_recently_opened,
                     icon = R.drawable.ic_history,
                     selected = state.quickView == LibraryQuickView.RecentlyPlayed,
                     enabled = filterActionsEnabled && state.databaseControlsReady,
-                    onClick = { onQuickView(LibraryQuickView.RecentlyPlayed) },
+                    onClick = {
+                        onQuickView(if (state.quickView == LibraryQuickView.RecentlyPlayed) {
+                            LibraryQuickView.All
+                        } else LibraryQuickView.RecentlyPlayed)
+                    },
                 )
             }
         }
+    }
+}
+
+@Composable
+private fun LibraryHeaderActions(
+    onOpenSearch: () -> Unit,
+    onOpenSettings: () -> Unit,
+    enabled: Boolean,
+) {
+    IconButton(onClick = onOpenSearch, enabled = enabled) {
+        Icon(
+            painter = painterResource(R.drawable.ic_search),
+            contentDescription = stringResource(R.string.library_search_placeholder),
+        )
+    }
+    IconButton(onClick = onOpenSettings, enabled = enabled) {
+        Icon(
+            painter = painterResource(R.drawable.ic_settings),
+            contentDescription = stringResource(R.string.action_settings),
+        )
     }
 }
 
