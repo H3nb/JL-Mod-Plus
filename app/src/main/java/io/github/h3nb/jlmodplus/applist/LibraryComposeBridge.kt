@@ -1212,7 +1212,7 @@ fun LibraryScreen(
     val libraryOverlayVisible = appActions != null || renameTarget != null || metadataApp != null
         || deleteTarget != null || infoDialog != null || pendingBulkDeleteIds != null
         || auxiliaryPageOnScreen
-    val libraryModalVisible = libraryOverlayVisible || updatePrompt != null
+    val libraryModalVisible = libraryOverlayVisible || updatePrompt != null || searchOpen
     LaunchedEffect(libraryModalVisible, selectionActiveHere, searchOpen, destination) {
         onControllerBackAvailabilityChanged(
             libraryModalVisible || selectionActiveHere || searchOpen ||
@@ -2104,6 +2104,142 @@ private fun RowScope.LibraryNavigationItem(
 }
 
 @Composable
+private fun LibrarySearchOverlay(
+    state: LibraryUiState,
+    apps: List<LibraryAppUiItem>,
+    appsPrepared: Boolean,
+    onDismiss: () -> Unit,
+    onOpenApp: (Int) -> Unit,
+    onOpenActions: (LibraryAppUiItem) -> Unit,
+    onFavorite: (Int, Boolean) -> Unit,
+    modifier: Modifier = Modifier,
+) {
+    var query by rememberSaveable(state.libraryScope) { mutableStateOf("") }
+    val inputFocus = remember { FocusRequester() }
+    val closeFocus = remember { FocusRequester() }
+    val keyboard = LocalSoftwareKeyboardController.current
+    val imeVisible = WindowInsets.isImeVisible
+    var fieldFocused by remember { mutableStateOf(false) }
+    var imeWasVisible by remember { mutableStateOf(false) }
+
+    LaunchedEffect(Unit) {
+        withFrameNanos { }
+        inputFocus.requestFocus()
+        keyboard?.show()
+    }
+    LaunchedEffect(imeVisible, fieldFocused) {
+        when {
+            imeVisible -> imeWasVisible = true
+            imeWasVisible && !imeVisible -> {
+                closeFocus.requestFocus()
+                imeWasVisible = false
+            }
+        }
+    }
+    BackHandler {
+        if (imeVisible || fieldFocused) {
+            keyboard?.hide()
+            closeFocus.requestFocus()
+        } else {
+            onDismiss()
+        }
+    }
+
+    val results by key(query, apps, state.sortVariant) {
+        produceState<List<LibraryAppUiItem>>(
+            initialValue = emptyList(),
+            query,
+            apps,
+            state.sortVariant,
+            appsPrepared,
+        ) {
+            if (appsPrepared && query.isNotBlank()) {
+                value = withContext(Dispatchers.Default) {
+                    val context = currentCoroutineContext()
+                    projectCollectionApps(
+                        rows = apps,
+                        filter = query,
+                        sortVariant = state.sortVariant,
+                        checkActive = { context.ensureActive() },
+                    )
+                }
+            }
+        }
+    }
+
+    Column(
+        modifier = modifier
+            .background(MaterialTheme.colorScheme.background)
+            .windowInsetsPadding(WindowInsets.safeDrawing.only(WindowInsetsSides.Horizontal))
+            .windowInsetsPadding(WindowInsets.safeDrawing.only(WindowInsetsSides.Top))
+            .imePadding(),
+    ) {
+        Row(
+            modifier = Modifier
+                .fillMaxWidth()
+                .padding(horizontal = 8.dp, vertical = 8.dp),
+            verticalAlignment = Alignment.CenterVertically,
+            horizontalArrangement = Arrangement.spacedBy(4.dp),
+        ) {
+            IconButton(
+                onClick = onDismiss,
+                modifier = Modifier.focusRequester(closeFocus),
+            ) {
+                Icon(
+                    painter = painterResource(R.drawable.ic_arrow_back),
+                    contentDescription = stringResource(R.string.action_back),
+                )
+            }
+            LibrarySearchField(
+                query = query,
+                onQueryChange = { query = it },
+                modifier = Modifier.weight(1f).focusRequester(inputFocus),
+                onFocusChanged = { fieldFocused = it },
+                onDismissInput = { closeFocus.requestFocus() },
+            )
+        }
+
+        when {
+            query.isBlank() -> Box(
+                modifier = Modifier.fillMaxSize().padding(24.dp),
+                contentAlignment = Alignment.TopCenter,
+            ) {
+                Text(
+                    text = stringResource(R.string.library_search_placeholder),
+                    color = MaterialTheme.colorScheme.onSurfaceVariant,
+                )
+            }
+            !appsPrepared -> Box(Modifier.fillMaxSize(), contentAlignment = Alignment.Center) {
+                CircularProgressIndicator()
+            }
+            results.isEmpty() -> LibraryEmptyState(query)
+            else -> LazyColumn(
+                modifier = Modifier.fillMaxSize(),
+                contentPadding = PaddingValues(bottom = 24.dp),
+            ) {
+                items(results, key = { it.databaseId }) { app ->
+                    LibraryListItem(
+                        app = app,
+                        onOpenApp = onOpenApp,
+                        onOpenActions = onOpenActions,
+                        onFavorite = onFavorite,
+                        controllerFocused = false,
+                        favoriteEnabled = state.databaseControlsReady,
+                        selectionMode = false,
+                        selected = false,
+                        onToggleSelection = {},
+                        iconRatio = state.iconRatio,
+                        iconShape = state.iconShape,
+                        enhancedIcons = state.enhancedIcons,
+                        showDescription = false,
+                    )
+                }
+            }
+        }
+    }
+}
+
+@Composable
 internal fun LibraryAppsDestination(
     state: LibraryUiState,
     scaffoldPadding: PaddingValues,
@@ -2823,7 +2959,7 @@ private fun LibraryAppsHeader(
                     Spacer(Modifier.width(8.dp))
                     Text(stringResource(R.string.library_destination_apps))
                     Icon(
-                        painter = painterResource(R.drawable.ic_arrow_drop_down),
+                        painter = painterResource(R.drawable.ic_keyboard_arrow_down),
                         contentDescription = null,
                     )
                 }
@@ -3098,6 +3234,7 @@ internal fun LibraryCollectionsDestination(scaffoldPadding: PaddingValues) {
 internal fun LibraryMoreDestination(
     scaffoldPadding: PaddingValues,
     onImportAppBundle: () -> Unit = {},
+    onBack: () -> Unit = {},
     onAbout: () -> Unit,
     onDonate: () -> Unit,
     onSettings: () -> Unit,
@@ -3129,11 +3266,19 @@ internal fun LibraryMoreDestination(
                             .padding(horizontal = 12.dp, vertical = 10.dp),
                         verticalArrangement = Arrangement.spacedBy(8.dp),
                     ) {
-                        Text(
-                            text = stringResource(R.string.library_destination_more),
-                            style = MaterialTheme.typography.headlineSmall,
-                            modifier = Modifier.padding(horizontal = 4.dp, vertical = 2.dp),
-                        )
+                        Row(verticalAlignment = Alignment.CenterVertically) {
+                            IconButton(onClick = onBack) {
+                                Icon(
+                                    painter = painterResource(R.drawable.ic_arrow_back),
+                                    contentDescription = stringResource(R.string.action_back),
+                                )
+                            }
+                            Text(
+                                text = stringResource(R.string.action_settings),
+                                style = MaterialTheme.typography.headlineSmall,
+                                modifier = Modifier.padding(horizontal = 4.dp, vertical = 2.dp),
+                            )
+                        }
                         Surface(
                             modifier = Modifier.fillMaxWidth(),
                             shape = MaterialTheme.shapes.large,
