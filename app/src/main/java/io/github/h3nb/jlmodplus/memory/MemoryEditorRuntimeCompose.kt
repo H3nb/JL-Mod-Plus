@@ -284,6 +284,7 @@ internal fun MemoryEditorRuntimeRoot(
                     val targets = actions.captureMemoryScriptBuilderActions(bookmarks)
                     require(targets.size == bookmarks.size)
                     scriptTargets = targets
+                    selectedScriptId = null
                     choosingScriptType = true
                     actions.setScriptsTab()
                 }.fold(
