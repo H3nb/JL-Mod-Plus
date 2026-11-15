@@ -549,7 +549,6 @@ implementation(libs.androidx.activity.compose)
     implementation(libs.kotlinx.serialization.json)
     implementation(libs.google.oboe)
     implementation(libs.pngj)
-    implementation(libs.rx.android)
 
     androidTestImplementation(libs.androidx.compose.ui.test.junit4)
     debugImplementation(libs.androidx.compose.ui.test.manifest)
