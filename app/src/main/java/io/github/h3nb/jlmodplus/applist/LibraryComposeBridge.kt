@@ -104,6 +104,7 @@ import androidx.compose.material3.DropdownMenu
 import androidx.compose.material3.DropdownMenuItem
 import androidx.compose.material3.ExperimentalMaterial3Api
 import androidx.compose.material3.FilterChip
+import androidx.compose.material3.ExtendedFloatingActionButton
 import androidx.compose.material3.FloatingActionButton
 import androidx.compose.material3.Icon
 import androidx.compose.material3.IconButton
@@ -227,6 +228,7 @@ import io.github.h3nb.jlmodplus.ui.rememberLazyListCanScrollForward
 import io.github.h3nb.jlmodplus.input.HostCommand
 import io.github.h3nb.jlmodplus.ui.TransientNoticeHost
 import io.github.h3nb.jlmodplus.ui.TransientNoticeState
+import io.github.h3nb.jlmodplus.ui.availableWindowHeightDp
 import io.github.h3nb.jlmodplus.ui.availableWindowWidthDp
 import io.github.h3nb.jlmodplus.ui.navigateToTab
 import io.github.h3nb.jlmodplus.ui.PagerTabMotion
@@ -1429,11 +1431,28 @@ fun LibraryScreen(
                         ),
                     ) {
                         Box {
-                            FloatingActionButton(onClick = { installSourceMenuVisible = true }) {
-                                Icon(
-                                    painter = painterResource(R.drawable.ic_add),
-                                    contentDescription = stringResource(R.string.install),
+                            val installLabel = stringResource(R.string.install)
+                            val showInstallText = availableWindowWidthDp() >= 360.dp &&
+                                availableWindowHeightDp() >= 480.dp && density.fontScale < 1.5f
+                            if (showInstallText) {
+                                ExtendedFloatingActionButton(
+                                    onClick = { installSourceMenuVisible = true },
+                                    modifier = Modifier.semantics { contentDescription = installLabel },
+                                    icon = {
+                                        Icon(
+                                            painter = painterResource(R.drawable.ic_add),
+                                            contentDescription = null,
+                                        )
+                                    },
+                                    text = { Text(installLabel) },
                                 )
+                            } else {
+                                FloatingActionButton(onClick = { installSourceMenuVisible = true }) {
+                                    Icon(
+                                        painter = painterResource(R.drawable.ic_add),
+                                        contentDescription = installLabel,
+                                    )
+                                }
                             }
                             DropdownMenu(
                                 expanded = installSourceMenuVisible,
@@ -3396,23 +3415,23 @@ private fun LibraryListItem(
         Row(
             modifier = Modifier
                 .fillMaxWidth()
-                .padding(start = 16.dp, end = 12.dp, top = 8.dp, bottom = 8.dp),
+                .padding(start = 12.dp, end = 8.dp, top = 8.dp, bottom = 8.dp),
             verticalAlignment = Alignment.CenterVertically,
         ) {
             LibraryIconSlot(
                 app = app,
-                modifier = Modifier.width(52.dp),
+                modifier = Modifier.width(48.dp),
                 contentSize = 40.dp,
                 iconRatio = iconRatio,
                 iconShape = iconShape,
                 enhancedIcons = enhancedIcons,
             )
-            Spacer(Modifier.width(12.dp))
+            Spacer(Modifier.width(10.dp))
             Column(modifier = Modifier.weight(1f)) {
                 Text(
                     text = app.title,
                     style = MaterialTheme.typography.titleMedium,
-                    maxLines = 1,
+                    maxLines = 2,
                     overflow = TextOverflow.Ellipsis,
                 )
                 Text(
@@ -3427,21 +3446,25 @@ private fun LibraryListItem(
                     overflow = TextOverflow.Ellipsis,
                 )
             }
-            Spacer(Modifier.width(6.dp))
+            Spacer(Modifier.width(4.dp))
             if (selectionMode) {
+                Spacer(Modifier.width(48.dp))
                 Checkbox(
                     checked = selected,
                     onCheckedChange = null,
-                    modifier = Modifier.clearAndSetSemantics { },
+                    modifier = Modifier.size(48.dp).clearAndSetSemantics { },
                 )
-            } else if (favoriteEnabled) {
-                LibraryFavoriteButton(app, onFavorite)
             } else {
-                LibraryFavoritePlaceholder(app.id)
+                if (favoriteEnabled) {
+                    LibraryFavoriteButton(app, onFavorite)
+                } else {
+                    LibraryFavoritePlaceholder(app.id)
+                }
+                LibraryAppActionsButton(app = app, onOpenActions = onOpenActions)
             }
         }
         if (showDescription && app.description.isNotBlank()) {
-            Box(modifier = Modifier.padding(start = 80.dp, end = 16.dp, bottom = 10.dp)) {
+            Box(modifier = Modifier.padding(start = 70.dp, end = 16.dp, bottom = 10.dp)) {
                 LibraryDescription(app.description, app.databaseId)
             }
         }
@@ -3536,6 +3559,23 @@ internal fun LibraryDescription(descriptionValue: String, appId: Long) {
     }
 }
 
+
+@Composable
+private fun LibraryAppActionsButton(
+    app: LibraryAppUiItem,
+    onOpenActions: (LibraryAppUiItem) -> Unit,
+) {
+    IconButton(
+        onClick = { onOpenActions(app) },
+        modifier = Modifier.size(48.dp),
+    ) {
+        Icon(
+            painter = painterResource(R.drawable.ic_more_vert),
+            contentDescription = stringResource(R.string.profile_more_actions, app.title),
+            tint = MaterialTheme.colorScheme.onSurfaceVariant,
+        )
+    }
+}
 
 @Composable
 private fun LibraryFavoriteButton(

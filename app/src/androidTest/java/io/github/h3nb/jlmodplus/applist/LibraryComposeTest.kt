@@ -372,6 +372,45 @@ class LibraryComposeTest {
     }
 
     @Test
+    fun listMoreActionsOpensSettingsWithoutLaunchingTheGame() {
+        val actions = RecordingLibraryActions()
+        setLibraryContent(actions = actions)
+
+        composeRule.onNodeWithContentDescription(
+            uiString(R.string.profile_more_actions, "Demo MIDlet"),
+        ).performClick()
+        assertEquals(null, actions.openedId)
+
+        composeRule.onNodeWithText(uiString(R.string.action_settings)).performClick()
+        assertEquals(7, actions.openedConfigId)
+        assertEquals(null, actions.openedId)
+    }
+
+    @Test
+    fun iconOnlyGridKeepsLongPressActionsWithoutAccidentalLaunch() {
+        val actions = RecordingLibraryActions()
+        setLibraryContent(
+            state = LibraryUiState(
+                loading = false,
+                layout = LibraryLayout.Grid,
+                hideGridTitles = true,
+                apps = listOf(LibraryAppUiItem(7, "Demo MIDlet", "Example Vendor", "1.0", null, true)),
+            ),
+            actions = actions,
+        )
+
+        composeRule.onAllNodesWithContentDescription(
+            uiString(R.string.profile_more_actions, "Demo MIDlet"),
+        ).assertCountEquals(0)
+        composeRule.onNodeWithContentDescription("Demo MIDlet")
+            .performTouchInput { longClick() }
+        assertEquals(null, actions.openedId)
+
+        composeRule.onNodeWithText(uiString(R.string.action_settings)).performClick()
+        assertEquals(7, actions.openedConfigId)
+    }
+
+    @Test
     fun controllerEventsMoveStableFocusAndActivateOnce() {
         val actions = RecordingLibraryActions()
         val controllerEvents = MutableSharedFlow<LibraryControllerEvent>(extraBufferCapacity = 8)
@@ -628,6 +667,9 @@ class LibraryComposeTest {
         composeRule.onAllNodesWithText("Favorites").assertCountEquals(0)
         composeRule.onAllNodesWithContentDescription(uiString(R.string.library_favorite_coming_soon))
             .assertCountEquals(0)
+        composeRule.onAllNodesWithContentDescription(
+            uiString(R.string.profile_more_actions, "Demo MIDlet"),
+        ).assertCountEquals(0)
         composeRule.onNodeWithContentDescription("Select all").performClick()
         composeRule.onNodeWithText("2 apps").assertIsDisplayed()
         composeRule.onNodeWithContentDescription("Deselect all").performClick()
@@ -1168,6 +1210,7 @@ class LibraryComposeTest {
         var folderInstallCount = 0
         var importCount = 0
         var openedId: Int? = null
+        var openedConfigId: Int? = null
         var renamed: Pair<Int, String>? = null
         var settingsCount = 0
         var donationCount = 0
@@ -1186,7 +1229,7 @@ class LibraryComposeTest {
         override fun onOpenApp(appId: Int) { openedId = appId }
         override fun onAddShortcut(appId: Int) = Unit
         override fun onRename(appId: Int, title: String) { renamed = appId to title }
-        override fun onOpenAppSettings(appId: Int) = Unit
+        override fun onOpenAppSettings(appId: Int) { openedConfigId = appId }
         override fun onReinstall(appId: Int) = Unit
         override fun onDelete(appId: Int) = Unit
         override fun onOpenSettings() { settingsCount++ }
