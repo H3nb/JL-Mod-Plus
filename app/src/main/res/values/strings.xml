@@ -1226,6 +1226,13 @@
     <string name="control_skin_rename" tools:ignore="MissingTranslation">Rename</string>
     <string name="control_skin_duplicate" tools:ignore="MissingTranslation">Duplicate</string>
     <string name="control_skin_delete" tools:ignore="MissingTranslation">Delete</string>
+    <string name="control_skin_import_zip" tools:ignore="MissingTranslation">Import ZIP</string>
+    <string name="control_skin_export_zip" tools:ignore="MissingTranslation">Export ZIP</string>
+    <string name="control_skin_select_export_folder" tools:ignore="MissingTranslation">Choose export folder</string>
+    <string name="control_skin_imported" tools:ignore="MissingTranslation">Imported %1$s</string>
+    <string name="control_skin_already_available" tools:ignore="MissingTranslation">%1$s is already available</string>
+    <string name="control_skin_exported" tools:ignore="MissingTranslation">Saved %1$s</string>
+    <string name="control_skin_archive_invalid_path" tools:ignore="MissingTranslation">Selected location is unavailable.</string>
     <string name="control_skin_name" tools:ignore="MissingTranslation">Set name</string>
     <string name="control_skin_icon" tools:ignore="MissingTranslation">Icon only</string>
     <string name="control_skin_full" tools:ignore="MissingTranslation">Full button</string>
