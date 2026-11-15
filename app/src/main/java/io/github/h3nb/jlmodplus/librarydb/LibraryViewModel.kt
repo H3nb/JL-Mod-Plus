@@ -634,8 +634,7 @@ class LibraryViewModel(application: Application) : AndroidViewModel(application)
                 ) {
                     // Detach only once the target is reserved. A failed pre-commit
                     // restore returns its prior ownership after filesystem rollback.
-                    val ownership = if (prepared.configDir != null ||
-                        prepared.layoutSkinFile != null || prepared.controlSkinDir != null) {
+                    val ownership = if (prepared.configDir != null) {
                         ImportedBundleProfileLinkage.begin(
                             getApplication(), generation.emulatorDir, storageKey)
                     } else null
