@@ -207,10 +207,12 @@ class MemoryEditorOverlayComposeTest {
         }
         val scan = rule.onNodeWithText("Refine").getUnclippedBoundsInRoot()
         val refresh = rule.onNodeWithContentDescription("Refresh").getUnclippedBoundsInRoot()
+        val result = rule.onNodeWithText("42").getUnclippedBoundsInRoot()
         rule.runOnIdle { state.value = state.value.copy(selected = setOf(1L)) }
         rule.onNodeWithContentDescription("Edit").assertIsEnabled()
         assertEquals(scan, rule.onNodeWithText("Refine").getUnclippedBoundsInRoot())
         assertEquals(refresh, rule.onNodeWithContentDescription("Refresh").getUnclippedBoundsInRoot())
+        assertEquals(result, rule.onNodeWithText("42").getUnclippedBoundsInRoot())
         rule.runOnIdle {
             state.value = state.value.copy(results = emptyList(), resultCount = 0,
                 selected = emptySet())
