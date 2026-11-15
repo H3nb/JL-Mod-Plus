@@ -108,6 +108,10 @@ public class ManagedJavaMemoryCorrectnessTest {
 		assertTrue(page.ids.length >= 33);
 
 		long[] firstThirtyTwo = Arrays.copyOf(page.ids, 32);
+		assertEquals(MemoryEngineContract.RESULT_RESOURCE_LIMIT,
+				engine.setFreezeLockTyped(TOKEN, search.revision, firstThirtyTwo,
+						"7", false, 0L, 1).code);
+		assertEquals(0, engine.session(TOKEN).freezeCount);
 		assertEquals(MemoryEngineContract.RESULT_OK,
 				engine.setFreezeLockTyped(TOKEN, search.revision, firstThirtyTwo,
 						"7", false, 0L).code);

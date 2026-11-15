@@ -195,7 +195,7 @@ internal class MemoryEditorOverlayState(
     fun saveOpacity() = persistOpacity(opacity)
 
     companion object {
-        const val DEFAULT_OPACITY = 0.97f
+        const val DEFAULT_OPACITY = 0.72f
         const val MIN_OPACITY = 0f
     }
 }
@@ -256,12 +256,11 @@ internal fun MemoryEditorPeekDock(
     leadingContent: (@Composable () -> Unit)? = null,
     centerContent: (@Composable () -> Unit)? = null,
 ) {
-    // Workspace controls need their own theme surface over the live game.
-    // Dialogs keep the footer transparent so Peek does not introduce a second panel.
+    // The workspace already paints behind this dock; another tint would compound opacity.
+    // Dialog windows use the same transparent dock so Peek needs no second panel.
     Surface(
         modifier = modifier.fillMaxWidth(),
-        color = if (overlay.peeking || centerContent == null) Color.Transparent
-            else MaterialTheme.colorScheme.surfaceContainerHigh,
+        color = Color.Transparent,
         contentColor = MaterialTheme.colorScheme.onSurface,
     ) {
         Row(Modifier.fillMaxWidth(), verticalAlignment = Alignment.CenterVertically) {

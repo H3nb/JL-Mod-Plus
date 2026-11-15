@@ -84,6 +84,8 @@ public final class MemoryEngineService extends Service {
 	private final ThreadLocal<Bundle> managedOperationDetails = new ThreadLocal<>();
 	private final AtomicLong searchClearGeneration = new AtomicLong();
 	private volatile ScheduledFuture<?> freezeTask;
+	/** A started lifetime keeps the target bridge and Freeze scheduler alive after UI unbinds. */
+	private boolean freezeServiceStarted;
 	/** Serializes only the tiny local Managed-publication boundary. */
 	private final Object searchCommitLock = new Object();
 	private final Object searchSessionLock = new Object();
@@ -230,6 +232,39 @@ public final class MemoryEngineService extends Service {
             }
         }
 
+        @Override public Bundle attachBookmark(long token, long revision, long candidateId,
+                                                String bookmarkId, String label) {
+            IMemoryTargetBridge bridge = target;
+            if (bridge == null || !isTargetToken(token)) return savedFailure(
+                    MemoryEngineContract.RESULT_TARGET_LOST, "MIDlet runtime unavailable");
+            try {
+                long epoch = Math.max(cancelEpoch.get(), bridge.getManagedCapabilities(token)
+                        .getLong(MemoryEngineContract.KEY_MANAGED_CONTROL_EPOCH, 0L));
+                Bundle result = bridge.attachBookmark(token, revision, candidateId,
+                        bookmarkId, label, epoch);
+                consumeManagedResult(token, bridge, result);
+                return result;
+            } catch (RemoteException error) {
+                return savedFailure(MemoryEngineContract.RESULT_TARGET_LOST, "MIDlet connection lost");
+            }
+        }
+
+        @Override public Bundle detachBookmark(long token, String bookmarkId) {
+            IMemoryTargetBridge bridge = target;
+            if (bridge == null || !isTargetToken(token)) return savedFailure(
+                    MemoryEngineContract.RESULT_TARGET_LOST, "MIDlet runtime unavailable");
+            try {
+                long epoch = Math.max(cancelEpoch.get(), bridge.getManagedCapabilities(token)
+                        .getLong(MemoryEngineContract.KEY_MANAGED_CONTROL_EPOCH, 0L));
+                Bundle result = bridge.detachBookmark(token, bookmarkId, epoch);
+                consumeManagedResult(token, bridge, result);
+                stopFreezeTaskIfIdle();
+                return result;
+            } catch (RemoteException error) {
+                return savedFailure(MemoryEngineContract.RESULT_TARGET_LOST, "MIDlet connection lost");
+            }
+        }
+
         @Override public Bundle freezeSaved(long token, String savedId, String label,
                                            String expectedValue) {
             IMemoryTargetBridge bridge = target;
@@ -261,6 +296,46 @@ public final class MemoryEngineService extends Service {
                 Bundle result = bridge.watchInspector(token, savedId, expectedRevision, anchorId,
                         watchAnchor, offset, type, expectedBits, false, epoch);
                 consumeManagedResult(token, bridge, result);
+                return result;
+            } catch (RemoteException error) {
+                return savedFailure(MemoryEngineContract.RESULT_TARGET_LOST, "MIDlet connection lost");
+            }
+        }
+
+        @Override public Bundle bookmarkInspector(long token, String savedId,
+                                                  long expectedRevision, long anchorId,
+                                                  boolean watchAnchor, int offset, int type,
+                                                  long expectedBits, String bookmarkId) {
+            IMemoryTargetBridge bridge = target;
+            if (bridge == null || !isTargetToken(token)) return savedFailure(
+                    MemoryEngineContract.RESULT_TARGET_LOST, "MIDlet runtime unavailable");
+            try {
+                long epoch = Math.max(cancelEpoch.get(), bridge.getManagedCapabilities(token)
+                        .getLong(MemoryEngineContract.KEY_MANAGED_CONTROL_EPOCH, 0L));
+                Bundle result = bridge.bookmarkInspector(token, savedId, expectedRevision,
+                        anchorId, watchAnchor, offset, type, expectedBits, false,
+                        bookmarkId, epoch);
+                consumeManagedResult(token, bridge, result);
+                return result;
+            } catch (RemoteException error) {
+                return savedFailure(MemoryEngineContract.RESULT_TARGET_LOST, "MIDlet connection lost");
+            }
+        }
+
+        @Override public Bundle editInspectorAndFreezeBookmark(long token, String savedId,
+                long expectedRevision, long anchorId, boolean watchAnchor, int offset,
+                int type, long expectedBits, String replacement, String bookmarkId) {
+            IMemoryTargetBridge bridge = target;
+            if (bridge == null || !isTargetToken(token)) return savedFailure(
+                    MemoryEngineContract.RESULT_TARGET_LOST, "MIDlet runtime unavailable");
+            try {
+                long epoch = Math.max(cancelEpoch.get(), bridge.getManagedCapabilities(token)
+                        .getLong(MemoryEngineContract.KEY_MANAGED_CONTROL_EPOCH, 0L));
+                Bundle result = bridge.editInspectorAndFreezeBookmark(token, savedId,
+                        expectedRevision, anchorId, watchAnchor, offset, type, expectedBits,
+                        replacement, bookmarkId, epoch);
+                if (consumeManagedResult(token, bridge, result) == MemoryEngineContract.RESULT_OK)
+                    startFreezeTaskIfNeeded();
                 return result;
             } catch (RemoteException error) {
                 return savedFailure(MemoryEngineContract.RESULT_TARGET_LOST, "MIDlet connection lost");
@@ -356,6 +431,12 @@ public final class MemoryEngineService extends Service {
 						token != 0L && configuredToken == token
 						? managedBaselineCount : 0L);
 				result.putLong(MemoryEngineContract.KEY_RUNTIME_TOKEN, token);
+                if (managed != null && managedAvailable) {
+                    result.putStringArray("recipeFreezeIds",
+                            managed.getStringArray("recipeFreezeIds"));
+                    result.putStringArray("recipeFreezeNames",
+                            managed.getStringArray("recipeFreezeNames"));
+                }
 				if (!supported) {
 					result.putInt(MemoryEngineContract.KEY_MANAGED_OPERATION_RESULT, token == 0L
 							? MemoryEngineContract.RESULT_NO_SESSION : MemoryEngineContract.RESULT_UNSUPPORTED);
@@ -644,6 +725,52 @@ public final class MemoryEngineService extends Service {
 			// Managed clear is target-owned and already committed synchronously through Binder.
 		}
 
+
+        @Override
+        public Bundle runMemoryRecipe(long token, String document, Bundle parameters,
+                                     boolean freeze, boolean preview) {
+            if (document == null || document.length() > MemoryEngineContract.MAX_RECIPE_BYTES) return savedFailure(
+                    MemoryEngineContract.RESULT_INVALID_REQUEST, "Recipe exceeds the IPC limit");
+            IMemoryTargetBridge bridge = target;
+            if (bridge == null || !isTargetToken(token)) return savedFailure(
+                    MemoryEngineContract.RESULT_TARGET_LOST, "MIDlet runtime is unavailable");
+            if (freeze && !preview && !ensureFreezeServiceStarted()) {
+                return savedFailure(MemoryEngineContract.RESULT_UNSUPPORTED,
+                        "Freeze cannot remain active while the Memory Editor is minimized");
+            }
+            try {
+                Bundle result = bridge.runMemoryRecipe(token, document, parameters, freeze, preview);
+                int code = consumeManagedResult(token, bridge, result);
+                if (code == MemoryEngineContract.RESULT_OK && !preview && isTargetToken(token)) {
+                    synchronized (searchCommitLock) {
+                        configuredToken = token;
+                    }
+                    if (freeze) startFreezeTaskIfNeeded();
+                } else if (freeze && !preview) {
+                    stopFreezeTaskIfIdle();
+                }
+                return result;
+            } catch (RemoteException error) {
+                if (freeze && !preview) stopFreezeTaskIfIdle();
+                return savedFailure(MemoryEngineContract.RESULT_TARGET_LOST, "MIDlet connection lost");
+            }
+        }
+
+        @Override
+        public Bundle clearMemoryRecipeFreeze(long token, String recipeId) {
+            IMemoryTargetBridge bridge = target;
+            if (bridge == null || !isTargetToken(token)) return savedFailure(
+                    MemoryEngineContract.RESULT_TARGET_LOST, "MIDlet runtime is unavailable");
+            try {
+                Bundle result = bridge.clearMemoryRecipeFreeze(token, recipeId);
+                consumeManagedResult(token, bridge, result);
+                stopFreezeTaskIfIdle();
+                return result;
+            } catch (RemoteException error) {
+                return savedFailure(MemoryEngineContract.RESULT_TARGET_LOST, "MIDlet connection lost");
+            }
+        }
+
 		@Override
 		public void cancelOperation(long token) {
 			if (token == 0L || (token != configuredToken && !isTargetToken(token))) return;
@@ -685,6 +812,11 @@ public final class MemoryEngineService extends Service {
 		targetBound = bindService(intent, targetConnection, Context.BIND_AUTO_CREATE);
 	}
 
+	@Override
+	public int onStartCommand(Intent intent, int flags, int startId) {
+		return START_NOT_STICKY; // A dead MIDlet session must not revive a Freeze service.
+	}
+
 	@Nullable
 	@Override
 	public IBinder onBind(Intent intent) {
@@ -693,6 +825,7 @@ public final class MemoryEngineService extends Service {
 
 	@Override
 	public void onDestroy() {
+		freezeServiceStarted = false;
 		stopFreezeTask();
 		freezeScheduler.shutdownNow();
 		IMemoryTargetBridge bridge = target;
@@ -1515,7 +1648,19 @@ public final class MemoryEngineService extends Service {
 		return bundle;
 	}
 
+	private synchronized boolean ensureFreezeServiceStarted() {
+		if (freezeServiceStarted) return true;
+		try {
+			if (startService(new Intent(this, MemoryEngineService.class)) == null) return false;
+			freezeServiceStarted = true;
+			return true;
+		} catch (IllegalStateException | SecurityException error) {
+			return false;
+		}
+	}
+
 	private synchronized void startFreezeTaskIfNeeded() {
+		if (managedFreezeCount <= 0 || !ensureFreezeServiceStarted()) return;
 		ScheduledFuture<?> current = freezeTask;
 		if (current == null || current.isDone()) {
 			try {
@@ -1536,10 +1681,12 @@ public final class MemoryEngineService extends Service {
 	}
 
 	private synchronized void stopFreezeTaskIfIdle() {
-		if (!MemoryManagedServicePolicy.freezeSchedulerIdle(managedFreezeCount)) {
-			return;
-		}
+		if (!MemoryManagedServicePolicy.freezeSchedulerIdle(managedFreezeCount)) return;
 		stopFreezeTask();
+		if (freezeServiceStarted) {
+			freezeServiceStarted = false;
+			stopSelf(); // Still bound while the editor is visible; destroys after its unbind.
+		}
 	}
 
 	private void reconcileFreezeScheduler() {
@@ -1692,7 +1839,7 @@ public final class MemoryEngineService extends Service {
 		for (long id : requested) unique.add(id);
 		int additional = 0;
 		for (long id : unique) if (!frozen.contains(id)) additional++;
-		return frozen.size() + additional <= MemoryEngineContract.MAX_FREEZE_RECORDS;
+		return Math.max(managedFreezeCount, frozen.size()) + additional <= MemoryEngineContract.MAX_FREEZE_RECORDS;
 	}
 
 	private boolean isManagedCurrent(long token) {

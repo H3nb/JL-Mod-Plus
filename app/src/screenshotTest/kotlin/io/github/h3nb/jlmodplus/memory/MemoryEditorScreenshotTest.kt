@@ -104,6 +104,7 @@ private val previewWatch = MemoryWatchRow(
     label = "HP",
     freezeMode = MemoryEngineContract.FREEZE_LOCK,
     freezePaused = false,
+    savedSourceId = "preview-hp",
 )
 
 @PreviewTest
@@ -140,6 +141,8 @@ fun MemoryEditorLandscapeWatchScreenshot() {
                 writeSupported = true,
                 runtimeToken = 1,
                 variablesTab = true,
+                savedVariables = listOf(SavedVariableRow(
+                    "preview-hp", "HP", "player.hp")),
                 watches = listOf(previewWatch),
             ),
             actions = NoOpMemoryEditorActions,
@@ -360,7 +363,7 @@ fun MemorySearchLargeTextScreenshot() {
 @PreviewTest
 @Preview(name = "Memory overlay light underlay", widthDp = 360, heightDp = 640)
 @Composable
-fun MemoryOverlayLightUnderlayScreenshot() = MemoryOverlayUnderlay(dark = false)
+fun MemoryOverlayLightUnderlayScreenshot() = MemoryOverlayUnderlay(dark = false, opacity = 0f)
 
 @PreviewTest
 @Preview(name = "Memory overlay dark underlay", widthDp = 720, heightDp = 360)
@@ -368,8 +371,9 @@ fun MemoryOverlayLightUnderlayScreenshot() = MemoryOverlayUnderlay(dark = false)
 fun MemoryOverlayDarkUnderlayScreenshot() = MemoryOverlayUnderlay(dark = true)
 
 @Composable
-private fun MemoryOverlayUnderlay(dark: Boolean) {
+private fun MemoryOverlayUnderlay(dark: Boolean, opacity: Float? = null) {
     JLModPlusTheme(darkTheme = dark) {
+        val overlay = remember(opacity) { opacity?.let { MemoryEditorOverlayState(initialOpacity = it) } }
         Box(Modifier.fillMaxSize().background(Brush.verticalGradient(
             listOf(Color(0xFF123F82), Color(0xFFF3C741), Color(0xFF206E32)),
         ))) {
@@ -381,6 +385,7 @@ private fun MemoryOverlayUnderlay(dark: Boolean) {
                     resultCount = if (dark) 3 else 0, results = if (dark) previewRows else emptyList(),
                 ),
                 actions = NoOpMemoryEditorActions,
+                overlayState = overlay,
             )
         }
     }
