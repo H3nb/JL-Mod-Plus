@@ -298,7 +298,19 @@ internal fun MemoryScriptBuilderScreen(
                                     enabled = !saving,
                                     singleLine = true, modifier = Modifier.fillMaxWidth(),
                                 )
-                                Row(horizontalArrangement = Arrangement.spacedBy(8.dp)) {
+                                var showLimits by remember(item.bookmarkId) {
+                                    mutableStateOf(item.min.isNotBlank() || item.max.isNotBlank())
+                                }
+                                TextButton(onClick = { showLimits = !showLimits },
+                                    enabled = !saving) {
+                                    Text(stringResource(R.string.memory_builder_limits))
+                                    Icon(painterResource(
+                                        if (showLimits) R.drawable.ic_keyboard_arrow_up
+                                        else R.drawable.ic_keyboard_arrow_down,
+                                    ), contentDescription = null)
+                                }
+                                AnimatedVisibility(showLimits) {
+                                    Row(horizontalArrangement = Arrangement.spacedBy(8.dp)) {
                                     OutlinedTextField(
                                         value = item.min,
                                         onValueChange = { changed ->
@@ -327,6 +339,7 @@ internal fun MemoryScriptBuilderScreen(
                                         enabled = !saving,
                                         singleLine = true, modifier = Modifier.weight(1f),
                                     )
+                                }
                                 }
                             }
                             MemoryScriptBuilderMode.FREEZE,
