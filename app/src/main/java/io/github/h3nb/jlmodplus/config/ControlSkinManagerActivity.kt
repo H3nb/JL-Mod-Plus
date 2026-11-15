@@ -144,6 +144,7 @@ class ControlSkinManagerActivity : AppCompatActivity() {
     private data class Images(val normal: Bitmap?, val pressed: Bitmap?, val mode: String)
     private data class ImportTarget(val setId: String, val key: String, val pressed: Boolean)
     private enum class NameAction { CREATE, RENAME, DUPLICATE }
+    private enum class ArchiveAction { IMPORT, EXPORT }
     private sealed interface SkinPage {
         data object Gallery : SkinPage
         data class SetEditor(val setId: String) : SkinPage
@@ -172,6 +173,48 @@ class ControlSkinManagerActivity : AppCompatActivity() {
     private var busy by mutableStateOf(false)
     private var importTarget: ImportTarget? = null
     private var lastPickerPath: String? = null
+    private var lastArchivePath: String? = null
+    private var archiveAction: ArchiveAction? = null
+    private var archiveSetId: String? = null
+
+    private val archivePicker = registerForActivityResult(FilePickerResultContract()) { uris ->
+        val action = archiveAction
+        val setId = archiveSetId
+        archiveAction = null
+        archiveSetId = null
+        val uri = uris.firstOrNull() ?: return@registerForActivityResult
+        if (action == null || (uri.scheme != null && uri.scheme != "file") ||
+            uri.path.isNullOrBlank()) {
+            notifyError(getString(R.string.control_skin_archive_invalid_path))
+            return@registerForActivityResult
+        }
+        val chosen = File(requireNotNull(uri.path))
+        lastArchivePath = if (action == ArchiveAction.EXPORT) chosen.path else chosen.parent
+        when (action) {
+            ArchiveAction.IMPORT -> perform {
+                val result = ControlSkinArchive.importZip(workdir, chosen, cacheDir)
+                runOnUiThread {
+                    if (!isDestroyed && !isFinishing) {
+                        notifyInfo(getString(
+                            if (result.added) R.string.control_skin_imported
+                            else R.string.control_skin_already_available, result.name,
+                        ))
+                    }
+                }
+                null
+            }
+            ArchiveAction.EXPORT -> if (setId != null) perform {
+                val file = ControlSkinArchive.export(workdir, setId, chosen)
+                runOnUiThread {
+                    if (!isDestroyed && !isFinishing) {
+                        notifyInfo(getString(R.string.control_skin_exported, file.name))
+                    }
+                }
+                editingId
+            }
+            else -> Unit
+        }
+    }
 
     private val picker = registerForActivityResult(FilePickerResultContract()) { uris ->
         val target = importTarget
@@ -216,6 +259,10 @@ class ControlSkinManagerActivity : AppCompatActivity() {
         editingId = savedInstanceState?.getString("editing")
         selectedKey = savedInstanceState?.getString("key")
         lastPickerPath = savedInstanceState?.getString("picker_path")
+        lastArchivePath = savedInstanceState?.getString("archive_path")
+        archiveAction = savedInstanceState?.getString("archive_action")
+            ?.let { runCatching { ArchiveAction.valueOf(it) }.getOrNull() }
+        archiveSetId = savedInstanceState?.getString("archive_set_id")
         importTarget = savedInstanceState?.getString("import_id")?.let { id ->
             val key = savedInstanceState.getString("import_key")
             if (key == null) null else ImportTarget(id, key, savedInstanceState.getBoolean("import_pressed"))
@@ -233,6 +280,9 @@ class ControlSkinManagerActivity : AppCompatActivity() {
         state.putString("editing", editingId)
         state.putString("key", selectedKey)
         state.putString("picker_path", lastPickerPath)
+        state.putString("archive_path", lastArchivePath)
+        state.putString("archive_action", archiveAction?.name)
+        state.putString("archive_set_id", archiveSetId)
         importTarget?.let {
             state.putString("import_id", it.setId)
             state.putString("import_key", it.key)
@@ -248,6 +298,10 @@ class ControlSkinManagerActivity : AppCompatActivity() {
 
     private fun notifyError(message: String) {
         Toast.makeText(this, message, Toast.LENGTH_LONG).show()
+    }
+
+    private fun notifyInfo(message: String) {
+        Toast.makeText(this, message, Toast.LENGTH_SHORT).show()
     }
 
     /** Serializes writes, refreshes list/counts and decodes previews off the UI thread. */
@@ -364,6 +418,30 @@ class ControlSkinManagerActivity : AppCompatActivity() {
         }
     }
 
+    private fun pickArchive(action: ArchiveAction, setId: String? = null) {
+        if (busy) return
+        archiveAction = action
+        archiveSetId = setId
+        val export = action == ArchiveAction.EXPORT
+        archivePicker.launch(Intent(this, FilteredFilePickerActivity::class.java).apply {
+            putExtra(FilePickerContract.EXTRA_MODE,
+                if (export) FilePickerContract.MODE_DIR else FilePickerContract.MODE_FILE)
+            putExtra(FilePickerContract.EXTRA_ALLOW_MULTIPLE, false)
+            putExtra(FilePickerContract.EXTRA_SINGLE_CLICK, !export)
+            putExtra(FilePickerContract.EXTRA_ALLOW_CREATE_DIR, export)
+            putExtra(FilePickerContract.EXTRA_TITLE,
+                getString(if (export) R.string.control_skin_select_export_folder
+                    else R.string.control_skin_import_zip))
+            if (!export) {
+                putStringArrayListExtra(
+                    FilePickerContract.EXTRA_ALLOWED_EXTENSIONS, arrayListOf(".zip"))
+            }
+            putExtra(FilePickerContract.EXTRA_START_PATH,
+                lastArchivePath ?: Environment.getExternalStoragePublicDirectory(
+                    Environment.DIRECTORY_DOWNLOADS).absolutePath)
+        })
+    }
+
     private fun pickImage(setId: String, key: String, pressed: Boolean) {
         importTarget = ImportTarget(setId, key, pressed)
         picker.launch(Intent(this, FilteredFilePickerActivity::class.java).apply {
@@ -436,6 +514,10 @@ class ControlSkinManagerActivity : AppCompatActivity() {
                     },
                     actions = {
                         if (!inlineDetail && currentSet == null) {
+                            IconButton(onClick = { pickArchive(ArchiveAction.IMPORT) }, enabled = !busy) {
+                                Icon(painterResource(R.drawable.ic_file_upload),
+                                    contentDescription = stringResource(R.string.control_skin_import_zip))
+                            }
                             IconButton(onClick = { editName(NameAction.CREATE, null) }, enabled = !busy) {
                                 Icon(painterResource(R.drawable.ic_add),
                                     contentDescription = stringResource(R.string.control_skin_create))
@@ -615,6 +697,10 @@ class ControlSkinManagerActivity : AppCompatActivity() {
             DropdownMenuItem(
                 text = { Text(stringResource(R.string.control_skin_duplicate)) },
                 onClick = { onDismiss(); editName(NameAction.DUPLICATE, set.id, set.name + " Copy") },
+            )
+            DropdownMenuItem(
+                text = { Text(stringResource(R.string.control_skin_export_zip)) },
+                onClick = { onDismiss(); pickArchive(ArchiveAction.EXPORT, set.id) },
             )
             DropdownMenuItem(
                 text = { Text(stringResource(R.string.control_skin_delete)) },
