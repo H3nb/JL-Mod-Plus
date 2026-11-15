@@ -33,6 +33,7 @@ internal object ControlSkinArchive {
                 ?: throw IOException("Control skin set no longer exists")
             val entries = ControlSkinSetTransfer.files(set.folder)
             checkSlotFormats(entries)
+            requireVersion(File(set.folder, "skin.json"))
             if (!destination.isDirectory || !destination.canWrite()) {
                 throw IOException("Export folder is not writable")
             }
@@ -70,12 +71,7 @@ internal object ControlSkinArchive {
         if (!stage.mkdir()) throw IOException("Cannot stage control skin ZIP")
         try {
             val folder = extract(archive, stage)
-            val metadata = File(folder, "skin.json")
-            val version = runCatching {
-                Json.parseToJsonElement(metadata.readText()).jsonObject["version"]
-                    ?.jsonPrimitive?.intOrNull
-            }.getOrNull()
-            if (version != 1) throw IOException("Unsupported control skin ZIP version")
+            requireVersion(File(folder, "skin.json"))
             val entries = ControlSkinSetTransfer.files(folder)
             checkSlotFormats(entries)
             entries.filterNot { it.name == "skin.json" }.forEach { file ->
@@ -156,10 +152,21 @@ internal object ControlSkinArchive {
         return folder ?: throw IOException("Control skin ZIP is empty")
     }
 
+    private fun requireVersion(metadata: File) {
+        val version = runCatching {
+            Json.parseToJsonElement(metadata.readText()).jsonObject["version"]
+                ?.jsonPrimitive?.intOrNull
+        }.getOrNull()
+        if (version != 1) throw IOException("Unsupported control skin ZIP version")
+    }
+
     private fun checkSlotFormats(files: List<File>) {
         val stems = HashSet<String>()
         for (file in files) {
             if (file.name == "skin.json") continue
+            if (file.extension !in setOf("png", "webp", "svg")) {
+                throw IOException("Unsupported control skin image format")
+            }
             if (!stems.add(file.name.substringBeforeLast('.'))) {
                 throw IOException("Multiple formats for one control skin slot")
             }
