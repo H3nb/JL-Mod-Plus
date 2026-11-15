@@ -2914,6 +2914,20 @@ private fun LibraryAppsHeader(
                 }
             }
         }
+        if (compactHeaderActions) {
+            Row(
+                modifier = Modifier.fillMaxWidth().padding(top = 4.dp)
+                    .then(titleGate.positionModifier)
+                    .then(if (titleActionsEnabled) Modifier else Modifier.clearAndSetSemantics {}),
+                horizontalArrangement = Arrangement.End,
+            ) {
+                LibraryHeaderActions(
+                    onOpenSearch = onOpenSearch,
+                    onOpenSettings = onOpenGlobalSettings,
+                    enabled = titleActionsEnabled,
+                )
+            }
+        }
         Row(
             modifier = Modifier
                 .fillMaxWidth()
@@ -2947,13 +2961,6 @@ private fun LibraryAppsHeader(
                     )
                 }
 
-            }
-            if (compactHeaderActions) {
-                LibraryHeaderActions(
-                    onOpenSearch = onOpenSearch,
-                    onOpenSettings = onOpenGlobalSettings,
-                    enabled = searchActionsEnabled,
-                )
             }
             Box {
                 LibrarySortButton(
