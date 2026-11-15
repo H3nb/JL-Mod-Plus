@@ -13,6 +13,11 @@ import org.junit.After;
 import org.junit.Before;
 import org.junit.Test;
 import org.junit.runner.RunWith;
+import java.util.concurrent.CountDownLatch;
+import java.util.concurrent.ExecutorService;
+import java.util.concurrent.Executors;
+import java.util.concurrent.Future;
+import java.util.concurrent.TimeUnit;
 
 import javax.microedition.shell.MemoryDiscoveryBridge;
 
@@ -569,6 +574,53 @@ public class MemoryRecipeInstrumentedTest {
             .getInt(MemoryEngineContract.KEY_MANAGED_FREEZE_COUNT));
     }
 
+    @Test public void simultaneousFreezeAdmissionsRespectSharedCapacity() throws Exception {
+        MemoryTargetBridgeService target = new MemoryTargetBridgeService();
+        IMemoryTargetBridge bridge = IMemoryTargetBridge.Stub.asInterface(
+            target.onBind(new android.content.Intent()));
+        for (int index = 0; index < 31; index++) {
+            String savedId = "admission-" + index;
+            assertEquals(MemoryEngineContract.RESULT_OK, status(bridge.resolveSavedLocator(
+                TOKEN, counterLocator(index), savedId, 0L)));
+            assertEquals(MemoryEngineContract.RESULT_OK,
+                status(bridge.freezeSaved(TOKEN, savedId, "", "0", 0L)));
+        }
+        assertEquals(MemoryEngineContract.RESULT_OK, status(bridge.resolveSavedLocator(
+            TOKEN, counterLocator(31), "last", 0L)));
+        String action = "{\"kind\":\"set\",\"path\":[" + field(ROOT, "coins", "I")
+            + "],\"value\":200}";
+        String document = typedRecipe("toggle", "{}", action);
+        ExecutorService executor = Executors.newFixedThreadPool(2);
+        CountDownLatch ready = new CountDownLatch(2);
+        CountDownLatch start = new CountDownLatch(1);
+        try {
+            Future<Bundle> recipe = executor.submit(() -> {
+                ready.countDown();
+                if (!start.await(5, TimeUnit.SECONDS)) throw new AssertionError("Start timed out");
+                return bridge.runMemoryRecipe(TOKEN, document, new Bundle(), true, false);
+            });
+            Future<Bundle> saved = executor.submit(() -> {
+                ready.countDown();
+                if (!start.await(5, TimeUnit.SECONDS)) throw new AssertionError("Start timed out");
+                return bridge.freezeSaved(TOKEN, "last", "", "0", 0L);
+            });
+            assertTrue(ready.await(5, TimeUnit.SECONDS));
+            start.countDown();
+            int recipeCode = status(recipe.get(10, TimeUnit.SECONDS));
+            int savedCode = status(saved.get(10, TimeUnit.SECONDS));
+            assertTrue("Only one Freeze may claim the final slot",
+                recipeCode == MemoryEngineContract.RESULT_OK
+                    && savedCode == MemoryEngineContract.RESULT_RESOURCE_LIMIT
+                || savedCode == MemoryEngineContract.RESULT_OK
+                    && recipeCode == MemoryEngineContract.RESULT_RESOURCE_LIMIT);
+            assertEquals(32, bridge.getManagedCapabilities(TOKEN)
+                .getInt(MemoryEngineContract.KEY_MANAGED_FREEZE_COUNT));
+        } finally {
+            start.countDown();
+            executor.shutdownNow();
+        }
+    }
+
     private static Bundle counterLocator(int index) {
         Bundle locator = new Bundle();
         locator.putInt("savedSchema", 2);
@@ -668,7 +720,14 @@ public class MemoryRecipeInstrumentedTest {
         assertEquals(MemoryEngineContract.RESULT_IDENTITY_UNSAFE,
             status(runner.run(TOKEN, recipe, edit, false, false)));
         assertEquals(11, root.coins);
+        storeEncodedCoins(root, 11);
+        edit.putStringArray("recipeExpectedValues", new String[]{"11", "11"});
+        assertEquals(MemoryEngineContract.RESULT_IDENTITY_UNSAFE,
+            status(runner.run(TOKEN, recipe, edit, false, false)));
+        assertEquals(11, root.coins);
+        edit.putStringArray("recipeExpectedValues", snapshot.getStringArray("recipeReadValues"));
         root.coins = 10;
+        storeEncodedCoins(root, 10);
         assertEquals(MemoryEngineContract.RESULT_OK,
             status(runner.run(TOKEN, recipe, edit, false, false)));
         assertEquals(500, root.coins);
