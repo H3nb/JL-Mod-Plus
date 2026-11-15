@@ -538,6 +538,42 @@ public class MemoryRecipeInstrumentedTest {
         assertEquals(10, root.coins);
     }
 
+    @Test public void bookmarkDetachStopsItsAutomationWithoutStoppingOtherScripts() throws Exception {
+        MemoryTargetBridgeService target = new MemoryTargetBridgeService();
+        IMemoryTargetBridge bridge = IMemoryTargetBridge.Stub.asInterface(
+            target.onBind(new android.content.Intent()));
+        String bookmarkId = "bookmark-a";
+        assertEquals(MemoryEngineContract.RESULT_OK, status(bridge.resolveSavedLocator(
+            TOKEN, counterLocator(0), bookmarkId, 0L)));
+
+        String bookmarkAction = "{\"kind\":\"set\",\"path\":["
+            + field(ROOT, "counters", "[I")
+            + ",{\"kind\":\"index\",\"descriptor\":\"[I\",\"index\":0}],\"value\":65}";
+        String automation = recipe(bookmarkAction).replace(
+            "\"id\":\"test.memory\"", "\"id\":\"saved." + bookmarkId + "\"");
+        assertEquals(MemoryEngineContract.RESULT_OK, status(bridge.runMemoryRecipe(
+            TOKEN, automation, inputs(0, 1, 100), true, false)));
+
+        String scriptAction = "{\"kind\":\"set\",\"path\":["
+            + field(ROOT, "coins", "I") + "],\"value\":700}";
+        assertEquals(MemoryEngineContract.RESULT_OK, status(bridge.runMemoryRecipe(
+            TOKEN, typedRecipe("toggle", "{}", scriptAction), new Bundle(), true, false)));
+        assertEquals(2, bridge.getManagedCapabilities(TOKEN)
+            .getInt(MemoryEngineContract.KEY_MANAGED_FREEZE_COUNT));
+
+        assertEquals(MemoryEngineContract.RESULT_OK,
+            status(bridge.detachBookmark(TOKEN, bookmarkId, 0L)));
+        Bundle remaining = bridge.getManagedCapabilities(TOKEN);
+        assertEquals(1, remaining.getInt(MemoryEngineContract.KEY_MANAGED_FREEZE_COUNT));
+        assertArrayEquals(new String[]{"typed.test"}, remaining.getStringArray("recipeFreezeIds"));
+
+        root.counters[0] = 10;
+        root.coins = 10;
+        bridge.managedFreezeTick(TOKEN, 0L);
+        assertEquals(10, root.counters[0]);
+        assertEquals(700, root.coins);
+    }
+
     @Test public void recipeFreezeSharesCapacityWithBookmarksAndInspector() throws Exception {
         MemoryTargetBridgeService target = new MemoryTargetBridgeService();
         IMemoryTargetBridge bridge = IMemoryTargetBridge.Stub.asInterface(
