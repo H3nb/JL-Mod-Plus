@@ -584,7 +584,7 @@ class MemoryEditorAdaptiveComposeTest {
         rule.onNodeWithContentDescription(context.getString(R.string.memory_editor_remove))
             .assertIsDisplayed()
         rule.onNodeWithContentDescription(context.getString(R.string.more))
-            .assertDoesNotExist()
+            .assertIsDisplayed()
     }
 
     @Test fun constrainedWindowKeepsSecondaryActionsInMore() {
@@ -607,7 +607,7 @@ class MemoryEditorAdaptiveComposeTest {
             }
         }
         val more = InstrumentationRegistry.getInstrumentation().targetContext.getString(R.string.more)
-        rule.onNodeWithContentDescription(more).assertIsDisplayed().performClick()
+        rule.onAllNodesWithContentDescription(more)[1].assertIsDisplayed().performClick()
         rule.onNodeWithText(
             InstrumentationRegistry.getInstrumentation().targetContext
                 .getString(R.string.memory_editor_remove),
