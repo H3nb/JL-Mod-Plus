@@ -748,7 +748,7 @@ private fun RuntimeSearchResultsTab(
                 editRevision = state.revision
             },
             RuntimeToolbarAction(R.drawable.ic_memory_editor_watch_add,
-                R.string.memory_list_add, !state.busy) {
+                R.string.memory_list_add, selectedRows.isNotEmpty() && !state.busy) {
                 actions.watchSelected(true)
             },
             RuntimeToolbarAction(R.drawable.ic_memory_editor_inspector,
@@ -760,7 +760,7 @@ private fun RuntimeSearchResultsTab(
                 relinkCandidate = selectedRows.single().id
             },
             RuntimeToolbarAction(R.drawable.ic_delete, R.string.memory_editor_remove,
-                !unknownBaseline && !state.busy) {
+                selectedRows.isNotEmpty() && !unknownBaseline && !state.busy) {
                 deleteSnapshot = state.revision to selectedRows.map(MemoryResultRow::id)
             },
         )
