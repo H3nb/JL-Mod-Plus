@@ -836,6 +836,7 @@ fun LibraryScreen(
             navigationState.collectionManageApps
     val selectionActiveHere =
         selectionState.isActive && selectionMatchesDestination && !collectionManageAppsActive && !searchOpen
+    val currentNavigationState by rememberUpdatedState(navigationState)
     val currentControllerState by rememberUpdatedState(state)
     val currentControllerDestination by rememberUpdatedState(destination)
     val currentControllerAppActions by rememberUpdatedState(appActions)
@@ -1142,7 +1143,22 @@ fun LibraryScreen(
                         currentControllerAboutPageVisible -> aboutPageVisible = false
                         currentControllerUpdatesPageVisible -> updatesPageVisible = false
                         currentControllerSelectionActive -> selectionState = selectionState.clear()
-                        currentControllerSearchOpen -> Unit // The Search surface owns its Back/IME order.
+                        currentControllerSearchOpen -> Unit // Search owns keyboard-first Back.
+                        currentControllerDestination == LibraryDestination.Collections &&
+                            currentNavigationState.collectionManageApps -> {
+                            collectionsHost?.collectionsStore()?.dismissPicker()
+                            navigationState = currentNavigationState.copy(collectionManageApps = false)
+                        }
+                        currentControllerDestination == LibraryDestination.Collections &&
+                            currentNavigationState.selectedCollectionId != null -> {
+                            navigationState = currentNavigationState.copy(
+                                selectedCollectionId = null,
+                                selectedCollectionScope = null,
+                                collectionManageApps = false,
+                                destination = LibraryDestinationKey.Apps,
+                            )
+                            collectionsHost?.onDismissCollectionMembers()
+                        }
                         currentControllerDestination != LibraryDestination.Apps ->
                             selectDestination(LibraryDestination.Apps)
                         else -> Unit
