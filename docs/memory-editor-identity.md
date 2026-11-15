@@ -90,6 +90,11 @@ runtime, not a stable identity of a game entity after restart. The existing
 diagnostic location text remains available independently, but must not be parsed
 to construct structural identity. An observation may become stale immediately
 after it is read because the guest is concurrent; refreshing revalidates it.
+Freeze ticks run on the existing 750 ms scheduler, independently of guest
+threads. Target identity and individual write readbacks are checked, but
+neither ordinary Freeze nor multi-target Action Scripts can make updates
+atomic against concurrent MIDlet execution. A partial write must be reported
+as partial; frame pacing, repaint and guest sleep are not global safepoints.
 
 ## Persistent Bookmark locator contract
 
