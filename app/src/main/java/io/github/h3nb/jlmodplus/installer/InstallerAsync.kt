@@ -10,7 +10,6 @@ import androidx.lifecycle.lifecycleScope
 import com.android.dx.command.dexer.ConversionResult
 import io.github.h3nb.jlmodplus.librarydb.LibraryAppBundleImporter
 import java.io.File
-import java.util.function.Consumer
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.Job
@@ -20,6 +19,10 @@ import kotlinx.coroutines.withContext
 
 /** Java-facing entry points keep asynchronous work independent of a disposable UI subscription. */
 object InstallerAsync {
+    fun interface Callback<T> {
+        fun accept(value: T)
+    }
+
     fun interface Task {
         suspend fun execute(): Int
     }
@@ -31,7 +34,7 @@ object InstallerAsync {
     @JvmStatic fun install(installer: AppInstaller): Task = Task { installer.installAwait() }
 
     @JvmStatic
-    fun run(task: Task, completed: Consumer<Int>, failed: Consumer<Throwable>): Job =
+    fun run(task: Task, completed: Callback<Int>, failed: Callback<Throwable>): Job =
         launchWorker {
             val result = try {
                 task.execute()
@@ -46,8 +49,8 @@ object InstallerAsync {
     fun prepareBundle(
         context: Context,
         uri: Uri,
-        completed: Consumer<LibraryAppBundleImporter.PreparedImport>,
-        failed: Consumer<Throwable>,
+        completed: Callback<LibraryAppBundleImporter.PreparedImport>,
+        failed: Callback<Throwable>,
     ): Job = launchWorker {
         val prepared = try {
             withContext(Dispatchers.IO) {
@@ -65,8 +68,8 @@ object InstallerAsync {
         owner: LifecycleOwner,
         context: Context,
         uri: Uri,
-        completed: Consumer<Boolean>,
-        failed: Consumer<Throwable>,
+        completed: Callback<Boolean>,
+        failed: Callback<Throwable>,
     ): Job = owner.lifecycleScope.launch {
         val requiresBulk = try {
             withContext(Dispatchers.IO) {
@@ -88,8 +91,8 @@ object InstallerAsync {
     fun reconvert(
         appDir: File,
         cancellation: InstallerExecutionCoordinator.Cancellation,
-        completed: Consumer<ConversionResult>,
-        failed: Consumer<Throwable>,
+        completed: Callback<ConversionResult>,
+        failed: Callback<Throwable>,
     ): Job = launchWorker {
         val result = try {
             withContext(Dispatchers.IO) {
