@@ -1323,4 +1323,8 @@
     <string name="memory_builder_add_selected">Tambah pilihan</string>
     <string name="memory_builder_min">Minimum (opsional)</string>
     <string name="memory_builder_max">Maksimum (opsional)</string>
+    <string name="memory_builder_add_target">Tambah target</string>
+    <string name="memory_builder_freeze_short">Pertahankan nilai pada angka tertentu</string>
+    <string name="memory_builder_form_short">Ubah beberapa nilai dalam satu tampilan</string>
+    <string name="memory_builder_actions_short">Jalankan aksi Set, Add, atau Subtract sekali tekan</string>
 </resources>
