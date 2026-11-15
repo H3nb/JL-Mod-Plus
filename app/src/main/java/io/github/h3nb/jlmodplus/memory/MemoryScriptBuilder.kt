@@ -10,10 +10,8 @@ import androidx.compose.foundation.horizontalScroll
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.Row
-import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Spacer
 import androidx.compose.foundation.layout.width
-import androidx.compose.foundation.layout.weight
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.heightIn
@@ -34,13 +32,13 @@ import androidx.compose.material3.Surface
 import androidx.compose.material3.Text
 import androidx.compose.material3.TextButton
 import androidx.compose.material3.FilledTonalButton
+import androidx.compose.material3.HorizontalDivider
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
 import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
-import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.platform.testTag
 import androidx.compose.ui.res.painterResource
@@ -164,7 +162,7 @@ internal fun MemoryScriptTypeChooser(
                 }
             }
         }
-        HorizontalDividerForScriptBuilder()
+        HorizontalDivider(color = MaterialTheme.colorScheme.outlineVariant)
         TextButton(onClick = onJson, modifier = Modifier.fillMaxWidth()) {
             Icon(painterResource(R.drawable.ic_memory_editor_inspector),
                 contentDescription = null)
@@ -172,13 +170,6 @@ internal fun MemoryScriptTypeChooser(
             Text(stringResource(R.string.memory_builder_json_editor))
         }
     }
-}
-
-@Composable
-private fun HorizontalDividerForScriptBuilder() {
-    androidx.compose.material3.HorizontalDivider(
-        color = MaterialTheme.colorScheme.outlineVariant,
-    )
 }
 
 @Composable
