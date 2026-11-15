@@ -13,7 +13,7 @@ import org.junit.Assert.assertArrayEquals
 import org.junit.Assert.assertEquals
 import org.junit.Assert.assertFalse
 import org.junit.Assert.assertNotEquals
-import org.junit.Assert.assertThrows
+import org.junit.Assert.fail
 import org.junit.Assert.assertTrue
 import org.junit.Rule
 import org.junit.Test
@@ -99,7 +99,7 @@ class ControlSkinArchiveTest {
             zip.write(byteArrayOf(1, 2, 3))
             zip.closeEntry()
         }
-        assertThrows(IOException::class.java) {
+        expectIOException {
             ControlSkinArchive.importZip(target, source, temporary.root)
         }
         assertEquals(listOf("Keep"), ControlSkinStore.list(target).map { it.name })
@@ -111,7 +111,7 @@ class ControlSkinArchiveTest {
         val set = ControlSkinStore.create(workdir, "Fantasy")
         val skinRoot = ControlSkinStore.directory(workdir)
         for (directory in listOf(skinRoot, set.folder)) {
-            assertThrows(IOException::class.java) {
+            expectIOException {
                 ControlSkinArchive.export(workdir, set.id, directory)
             }
         }
@@ -140,6 +140,15 @@ class ControlSkinArchiveTest {
             temporary.newFolder("restored-legacy"), output, temporary.root,
         )
         assertEquals(set.id, imported.id)
+    }
+
+    private fun expectIOException(block: () -> Unit) {
+        try {
+            block()
+        } catch (_: IOException) {
+            return
+        }
+        fail("Expected IOException")
     }
 
     private fun png(color: Int): ByteArray {
