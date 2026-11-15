@@ -1612,48 +1612,48 @@ private fun RuntimeSelectedActionBar(
         Modifier.fillMaxWidth().background(MaterialTheme.colorScheme.secondaryContainer)
             .padding(horizontal = 12.dp, vertical = 4.dp),
     ) {
-        val scale = LocalDensity.current.fontScale.coerceAtLeast(1f)
-        val capacity = when {
-            maxWidth >= 600.dp * scale -> 6
-            maxWidth >= 312.dp * scale -> 4
+        val fontScale = LocalDensity.current.fontScale.coerceAtLeast(1f)
+        val slots = when {
+            maxWidth >= 720.dp * fontScale -> 5
+            maxWidth >= 460.dp * fontScale -> 4
+            maxWidth >= 320.dp * fontScale -> 3
             else -> 2
         }
-        val available = actions.filter { it.enabled }
-        val count = if (available.size > capacity) capacity - 1 else capacity
-        val direct = available.take(count)
-        val overflow = available.drop(count)
-        Column(Modifier.fillMaxWidth()) {
+        val available = actions.filter(RuntimeToolbarAction::enabled)
+        val directCount = if (available.size > slots) slots - 1 else slots
+        val direct = available.take(directCount)
+        val overflow = available.drop(directCount)
+        Row(
+            Modifier.fillMaxWidth(),
+            verticalAlignment = Alignment.CenterVertically,
+            horizontalArrangement = Arrangement.spacedBy(4.dp),
+        ) {
             Text(label, style = MaterialTheme.typography.labelMedium,
                 color = MaterialTheme.colorScheme.onSecondaryContainer,
-                maxLines = 1, overflow = TextOverflow.Ellipsis)
-            Row(
-                Modifier.fillMaxWidth(),
-                verticalAlignment = Alignment.CenterVertically,
-                horizontalArrangement = Arrangement.spacedBy(4.dp),
-            ) {
-                direct.forEach { action ->
-                    val description = stringResource(action.label)
-                    val compactLabel = when (action.label) {
-                        R.string.memory_editor_inspect_memory ->
-                            stringResource(R.string.memory_editor_inspector)
-                        R.string.memory_scripts_create_from_bookmarks ->
-                            stringResource(R.string.memory_scripts_title)
-                        else -> description
-                    }
-                    TextButton(
+                modifier = Modifier.weight(1f), maxLines = 1,
+                overflow = TextOverflow.Ellipsis)
+            direct.forEach { action ->
+                val description = stringResource(action.label)
+                val compactLabel = when (action.label) {
+                    R.string.memory_editor_inspect_memory ->
+                        stringResource(R.string.memory_editor_inspector)
+                    R.string.memory_scripts_create_from_bookmarks ->
+                        stringResource(R.string.memory_scripts_title)
+                    else -> description
+                }
+                TextButton(
                     onClick = action.onClick, enabled = action.enabled,
                     modifier = Modifier.heightIn(min = 48.dp)
                         .semantics { contentDescription = description },
                 ) {
                     Icon(painterResource(action.icon), contentDescription = null)
                     Spacer(Modifier.width(4.dp))
-                        Text(compactLabel, maxLines = 1)
-                    }
+                    Text(compactLabel, maxLines = 1)
                 }
-                if (overflow.isNotEmpty()) RuntimeActionIcon(
-                    R.drawable.ic_more_vert, R.string.more,
-                ) { showMore = true }
             }
+            if (overflow.isNotEmpty()) RuntimeActionIcon(
+                R.drawable.ic_more_vert, R.string.more,
+            ) { showMore = true }
         }
         if (showMore && overflow.isNotEmpty()) {
             RuntimeOverflowActionsDialog(overflow) { showMore = false }
