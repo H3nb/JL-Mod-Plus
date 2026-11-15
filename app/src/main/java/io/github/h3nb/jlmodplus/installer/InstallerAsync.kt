@@ -10,6 +10,7 @@ import androidx.lifecycle.lifecycleScope
 import com.android.dx.command.dexer.ConversionResult
 import io.github.h3nb.jlmodplus.librarydb.LibraryAppBundleImporter
 import java.io.File
+import kotlinx.coroutines.CancellationException
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.Job
@@ -75,6 +76,8 @@ object InstallerAsync {
             withContext(Dispatchers.IO) {
                 LibraryAppBundleImporter.requiresBulkImport(context.applicationContext, uri)
             }
+        } catch (cancelled: CancellationException) {
+            throw cancelled
         } catch (error: Exception) {
             failed.accept(error)
             return@launch

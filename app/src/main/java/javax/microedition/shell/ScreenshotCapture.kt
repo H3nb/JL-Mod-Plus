@@ -47,24 +47,24 @@ object ScreenshotCapture {
         if (!canvas.needsGlScreenshot()) {
             return withContext(Dispatchers.Default) { canvas.captureSoftwareScreenshot() }
         }
-        val frame = withTimeout(3_000L) {
-            suspendCancellableCoroutine<GlPixels> { continuation ->
-                try {
-                    canvas.captureGlScreenshot { pixels, width, height, error ->
-                        when {
-                            error != null -> continuation.resumeWithException(error)
-                            pixels == null -> continuation.resumeWithException(
-                                IOException("GL screenshot returned no pixels"),
-                            )
-                            else -> continuation.resume(GlPixels(pixels, width, height))
+        return withContext(Dispatchers.Default) {
+            val frame = withTimeout(3_000L) {
+                suspendCancellableCoroutine<GlPixels> { continuation ->
+                    try {
+                        canvas.captureGlScreenshot { pixels, width, height, error ->
+                            when {
+                                error != null -> continuation.resumeWithException(error)
+                                pixels == null -> continuation.resumeWithException(
+                                    IOException("GL screenshot returned no pixels"),
+                                )
+                                else -> continuation.resume(GlPixels(pixels, width, height))
+                            }
                         }
+                    } catch (error: Exception) {
+                        continuation.resumeWithException(error)
                     }
-                } catch (error: Exception) {
-                    continuation.resumeWithException(error)
                 }
             }
-        }
-        return withContext(Dispatchers.Default) {
             val pixels = frame.pixels
             for (index in pixels.indices) {
                 val pixel = pixels[index]
