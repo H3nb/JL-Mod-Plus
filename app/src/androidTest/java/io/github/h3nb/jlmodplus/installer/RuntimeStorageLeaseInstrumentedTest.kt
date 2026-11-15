@@ -26,7 +26,6 @@ import io.github.h3nb.jlmodplus.librarydb.LibraryStateEntity
 import io.github.h3nb.jlmodplus.librarydb.LibraryViewModel
 import io.github.h3nb.jlmodplus.runtime.RuntimeStorageLease
 import io.github.h3nb.jlmodplus.util.Constants
-import io.reactivex.Single
 import java.io.File
 import java.util.zip.ZipEntry
 import java.util.zip.ZipOutputStream
@@ -218,26 +217,37 @@ class RuntimeStorageLeaseInstrumentedTest {
                 zip.closeEntry()
             }
             val installer = AppInstaller(jar, Uri.fromFile(jar), library)
-            assertEquals(AppInstaller.STATUS_NEW, Single.create<Int>(installer::loadInfo).blockingGet())
-            assertEquals(AppInstaller.STATUS_SUCCESS, Single.create<Int>(installer::install).blockingGet())
+            assertEquals(AppInstaller.STATUS_NEW, installer.loadInfo())
+            assertEquals(AppInstaller.STATUS_SUCCESS, installer.installAwait())
             val newApp = File(installer.installedPath)
             assertNotEquals(oldId, installer.installedId)
             assertEquals("Bounce_1", newApp.name)
             assertTrue(RuntimeStorageLease.isActive(app.filesDir, oldApp))
 
-            // A lease reserves a path against a new identity, not a reinstall of its owner.
+            // An active runtime lease blocks replacement even for the same installed identity.
             RuntimeStorageLease.acquire(app.filesDir, newApp).use { sameIdentityLease ->
                 assertTrue(sameIdentityLease != null)
-                val reinstall = AppInstaller(installer.installedId,
+                val blocked = AppInstaller(installer.installedId,
                     requireNotNull(library.readyGeneration()).generation,
                     root, newApp.name, library)
-                assertEquals(AppInstaller.STATUS_EQUAL,
-                    Single.create<Int>(reinstall::loadInfo).blockingGet())
-                assertEquals(AppInstaller.STATUS_SUCCESS,
-                    Single.create<Int>(reinstall::install).blockingGet())
-                assertEquals(newApp.absolutePath, reinstall.installedPath)
-                assertEquals(installer.installedId, reinstall.installedId)
+                assertEquals(AppInstaller.STATUS_EQUAL, blocked.loadInfo())
+                val failure = runCatching { blocked.installAwait() }.exceptionOrNull()
+                assertTrue(
+                    "Reinstall must not replace a target with an active runtime lease",
+                    failure is InstallerFailure &&
+                        failure.cause?.message?.contains("Running MIDlet update needs confirmation") == true,
+                )
+                blocked.clearCache()
+                assertTrue(newApp.isDirectory)
+                assertTrue(RuntimeStorageLease.isActive(app.filesDir, newApp))
             }
+            val reinstall = AppInstaller(installer.installedId,
+                requireNotNull(library.readyGeneration()).generation,
+                root, newApp.name, library)
+            assertEquals(AppInstaller.STATUS_EQUAL, reinstall.loadInfo())
+            assertEquals(AppInstaller.STATUS_SUCCESS, reinstall.installAwait())
+            assertEquals(newApp.absolutePath, reinstall.installedPath)
+            assertEquals(installer.installedId, reinstall.installedId)
 
             val lateJar = File(root, "Late.jar")
             ZipOutputStream(lateJar.outputStream()).use { zip ->
@@ -250,11 +260,11 @@ class RuntimeStorageLeaseInstrumentedTest {
             }
             val lateInstaller = AppInstaller(lateJar, Uri.fromFile(lateJar), library)
             assertEquals(AppInstaller.STATUS_NEW,
-                Single.create<Int>(lateInstaller::loadInfo).blockingGet())
+                lateInstaller.loadInfo())
             RuntimeStorageLease.acquire(app.filesDir, File(root, "converted/Late")).use { lateLease ->
                 assertTrue(lateLease != null)
                 assertEquals(AppInstaller.STATUS_SUCCESS,
-                    Single.create<Int>(lateInstaller::install).blockingGet())
+                    lateInstaller.installAwait())
                 assertEquals("Late_1", File(lateInstaller.installedPath).name)
             }
 

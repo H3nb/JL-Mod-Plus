@@ -13,7 +13,6 @@ import android.util.Log
 import androidx.core.net.toUri
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
-import io.reactivex.Single
 import java.io.File
 import java.util.Locale
 import java.security.MessageDigest
@@ -602,7 +601,7 @@ class BulkInstallViewModel : ViewModel() {
                     AppInstaller.Stage.SAVING -> R.string.installer_stage_save
                 })
             }
-            val currentCode = Single.create<Int>(activeInstaller::loadInfo).blockingGet()
+            val currentCode = activeInstaller.loadInfoAwait()
             if (activeInstaller.expectedGeneration != plan.generation || activeInstaller.expectedWorkdir?.canonicalFile != plan.workdir) {
                 throw FatalBatchException(IllegalStateException("Library generation changed during batch revalidation"))
             }
@@ -673,7 +672,7 @@ class BulkInstallViewModel : ViewModel() {
             if (singleConfirmed && item.preflightStatus.replacesInstalledApp()) {
                 activeInstaller.approveRunningReplacement(true)
             }
-            val installCode = Single.create<Int>(activeInstaller::install).blockingGet()
+            val installCode = activeInstaller.installAwait()
             if (installCode != AppInstaller.STATUS_SUCCESS) {
                 return failed(item, "Installer stopped with status $installCode")
             }

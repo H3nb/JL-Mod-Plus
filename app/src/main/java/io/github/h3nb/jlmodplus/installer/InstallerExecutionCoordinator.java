@@ -7,16 +7,11 @@
  */
 package io.github.h3nb.jlmodplus.installer;
 
-import java.io.File;
 import java.io.IOException;
-import java.util.concurrent.ExecutorService;
-import java.util.concurrent.Executors;
 import java.util.concurrent.Semaphore;
 import java.util.concurrent.atomic.AtomicBoolean;
 import java.util.concurrent.TimeUnit;
 import java.io.InterruptedIOException;
-
-import io.github.h3nb.jlmodplus.librarydb.LibraryViewModel;
 
 /**
  * Process-scoped guard for physical installed-app conversion, publish, and deletion.
@@ -26,17 +21,7 @@ import io.github.h3nb.jlmodplus.librarydb.LibraryViewModel;
  * post-commit projection barrier remain strictly serialized.
  */
 public final class InstallerExecutionCoordinator {
-    private static final long VISIBILITY_TIMEOUT_MILLIS = 10_000L;
     private static final Semaphore INSTALL_PERMIT = new Semaphore(1, true);
-    private static final ExecutorService VISIBILITY_EXECUTOR = Executors.newSingleThreadExecutor(runnable -> {
-        Thread thread = new Thread(runnable, "jlmod-installer-visibility");
-        thread.setDaemon(true);
-        return thread;
-    });
-
-    interface VisibilityCallback {
-        void complete(Throwable error);
-    }
 
     /**
      * Acquires the process-wide lease for any mutation of an installed converted app directory.
@@ -60,29 +45,6 @@ public final class InstallerExecutionCoordinator {
             Thread.currentThread().interrupt();
             throw new IOException("Interrupted while waiting for installer execution permit", error);
         }
-    }
-
-    static void awaitVisible(
-            LibraryViewModel library,
-            long expectedGeneration,
-            File expectedWorkdir,
-            long appId,
-            String storageKey,
-            VisibilityCallback callback) {
-        VISIBILITY_EXECUTOR.execute(() -> {
-            Throwable failure = null;
-            try {
-                library.awaitInstalledAppVisible(
-                        expectedGeneration,
-                        expectedWorkdir,
-                        appId,
-                        storageKey,
-                        VISIBILITY_TIMEOUT_MILLIS);
-            } catch (Throwable error) {
-                failure = error;
-            }
-            callback.complete(failure);
-        });
     }
 
     public static final class Permit implements AutoCloseable {

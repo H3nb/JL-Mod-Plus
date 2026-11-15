@@ -62,7 +62,6 @@ import java.nio.IntBuffer;
 import java.util.HashSet;
 import java.util.List;
 import java.util.Set;
-import java.util.concurrent.TimeUnit;
 
 import io.github.h3nb.jlmodplus.input.HostCommand;
 
@@ -98,8 +97,6 @@ import javax.microedition.shell.timing.PerformanceDiagnostics;
 import javax.microedition.shell.timing.PresentationMailbox;
 import javax.microedition.util.ContextHolder;
 
-import io.reactivex.Single;
-import io.reactivex.schedulers.Schedulers;
 import io.github.h3nb.jlmodplus.R;
 import io.github.h3nb.jlmodplus.config.BackgroundMode;
 import io.github.h3nb.jlmodplus.gles.PostProcessRenderer;
@@ -970,27 +967,36 @@ public abstract class Canvas extends Displayable {
 		}
 	}
 
-	public Single<Bitmap> getScreenshot() {
-		if (renderer != null && !screenshotRawMode) {
-			return renderer.takeScreenShot();
-		}
-		return Single.create(emitter -> {
-			Bitmap bitmap;
-			if (screenshotRawMode) {
-				synchronized (bufferLock) {
-					bitmap = Bitmap.createBitmap(offscreenCopy.getBitmap(), 0, 0,
-							offscreenCopy.getWidth() * offscreenCopy.getPixelScale(),
-							offscreenCopy.getHeight() * offscreenCopy.getPixelScale());
-				}
-			} else {
-				bitmap = Bitmap.createBitmap(onWidth, onHeight, Bitmap.Config.ARGB_8888);
-				canvasWrapper.bind(new android.graphics.Canvas(bitmap));
-				synchronized (bufferLock) {
-					canvasWrapper.drawImage(offscreenCopy, new RectF(0, 0, onWidth, onHeight));
-				}
+	public boolean needsGlScreenshot() {
+		return renderer != null && !screenshotRawMode;
+	}
+
+	public Bitmap captureSoftwareScreenshot() {
+		if (screenshotRawMode) {
+			synchronized (bufferLock) {
+				return Bitmap.createBitmap(offscreenCopy.getBitmap(), 0, 0,
+						offscreenCopy.getWidth() * offscreenCopy.getPixelScale(),
+						offscreenCopy.getHeight() * offscreenCopy.getPixelScale());
 			}
-			emitter.onSuccess(bitmap);
-		});
+		}
+		Bitmap bitmap = Bitmap.createBitmap(onWidth, onHeight, Bitmap.Config.ARGB_8888);
+		canvasWrapper.bind(new android.graphics.Canvas(bitmap));
+		synchronized (bufferLock) {
+			canvasWrapper.drawImage(offscreenCopy, new RectF(0, 0, onWidth, onHeight));
+		}
+		return bitmap;
+	}
+
+	@FunctionalInterface
+	public interface GlScreenshotCallback {
+		void complete(int[] pixels, int width, int height, Throwable error);
+	}
+
+	/** Readback runs on the GL thread; pixel conversion and PNG encoding belong to the caller. */
+	public void captureGlScreenshot(GlScreenshotCallback callback) {
+		GLRenderer active = renderer;
+		if (active == null) throw new IllegalStateException("Screenshot renderer is unavailable");
+		active.capturePixels(callback);
 	}
 
 	private boolean checkSizeChanged() {
@@ -1003,6 +1009,7 @@ public abstract class Canvas extends Displayable {
 	/**
 	 * Update the size and position of the virtual screen relative to the real one.
 	 */
+
 	public void updateSize() {
 		// We turn the sizes of the virtual screen into the sizes of the visible canvas.
 		// At the same time, we take into account that one or both virtual sizes can be less
@@ -2083,34 +2090,30 @@ public abstract class Canvas extends Displayable {
 			mView.onResume();
 		}
 
-		private Single<Bitmap> takeScreenShot() {
-			return Single.<int[]>create(emitter -> {
-						IntBuffer buf = IntBuffer.allocate(onWidth * onHeight);
-						mView.requestRender();
-						mView.queueEvent(() -> {
-							try {
-								glReadPixels(displayWidth - onWidth - onX, displayHeight - onHeight - onY, onWidth, onHeight, GL_RGBA, GL_UNSIGNED_BYTE, buf);
-								int error = glGetError();
-								if (error != GL_NO_ERROR) {
-									emitter.onError(new RuntimeException(GLU.gluErrorString(error)));
-								} else {
-									emitter.onSuccess(buf.array());
-								}
-							} catch (Throwable e) {
-								emitter.onError(e);
-							}
-						});
-					}).timeout(3, TimeUnit.SECONDS)
-					.subscribeOn(Schedulers.computation())
-					.observeOn(Schedulers.computation())
-					.map(pixels -> {
-						for (int i = 0, len = pixels.length; i < len; i++) {
-							int p = pixels[i];
-							pixels[i] = (p & 0xff00ff00) | ((p & 0xff0000) >> 16) | ((p & 0xff) << 16);
-						}
-						return Bitmap.createBitmap(pixels, onWidth * (onHeight - 1), -onWidth, onWidth, onHeight, Bitmap.Config.ARGB_8888);
-					});
+		private void capturePixels(GlScreenshotCallback callback) {
+			int width = onWidth;
+			int height = onHeight;
+			IntBuffer buf = IntBuffer.allocate(width * height);
+			mView.requestRender();
+			mView.queueEvent(() -> {
+				int[] pixels = null;
+				Throwable failure = null;
+				try {
+					glReadPixels(displayWidth - width - onX, displayHeight - height - onY,
+							width, height, GL_RGBA, GL_UNSIGNED_BYTE, buf);
+					int error = glGetError();
+					if (error != GL_NO_ERROR) {
+						failure = new RuntimeException(GLU.gluErrorString(error));
+					} else {
+						pixels = buf.array();
+					}
+				} catch (Throwable error) {
+					failure = error;
+				}
+				callback.complete(pixels, width, height, failure);
+			});
 		}
+
 	}
 
 	private class PaintEvent extends Event implements EventFilter {

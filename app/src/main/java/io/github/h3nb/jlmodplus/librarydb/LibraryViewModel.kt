@@ -53,7 +53,6 @@ import kotlinx.coroutines.flow.map
 import kotlinx.coroutines.flow.mapLatest
 import kotlinx.coroutines.flow.stateIn
 import kotlinx.coroutines.launch
-import kotlinx.coroutines.runBlocking
 import kotlinx.coroutines.sync.Mutex
 import kotlinx.coroutines.sync.withLock
 import kotlinx.coroutines.withContext
@@ -251,16 +250,9 @@ class LibraryViewModel(application: Application) : AndroidViewModel(application)
     fun isReadyGeneration(expectedGeneration: Long, expectedWorkdir: File): Boolean =
         repository.isReadyGeneration(token(expectedGeneration, expectedWorkdir))
 
-    /**
-     * Waits for Room's observable projection to include a committed installer result.
-     *
-     * This Java-friendly boundary is intentionally blocking: AppInstaller calls it from its
-     * dedicated visibility executor while retaining the process-wide installer permit. StateFlow
-     * suspension avoids timing sleeps and wakes immediately on either visibility or generation
-     * drift.
-     */
+    /** Wait for the Room-backed projection after the installer commit, without blocking a worker. */
     @Throws(IOException::class)
-    fun awaitInstalledAppVisible(
+    suspend fun awaitInstalledAppVisible(
         expectedGeneration: Long,
         expectedWorkdir: File,
         appId: Long,
@@ -269,15 +261,13 @@ class LibraryViewModel(application: Application) : AndroidViewModel(application)
     ) {
         val expected = token(expectedGeneration, expectedWorkdir)
         try {
-            runBlocking {
-                withTimeout(timeoutMillis) {
-                    repository.state.first { state ->
+            withTimeout(timeoutMillis) {
+                repository.state.first { state ->
                         check(repository.isReadyGeneration(expected)) {
                             "Library generation changed before committed install became visible"
                         }
-                        state is LibraryRepository.State.Ready &&
-                            state.apps.any { app -> app.id == appId && app.storageKey == storageKey }
-                    }
+                    state is LibraryRepository.State.Ready &&
+                        state.apps.any { app -> app.id == appId && app.storageKey == storageKey }
                 }
             }
         } catch (error: TimeoutCancellationException) {
@@ -834,7 +824,8 @@ class LibraryViewModel(application: Application) : AndroidViewModel(application)
         }
     }
 
-    fun recordInstalledApp(
+    /** Commit installer metadata within the captured Library generation. */
+    suspend fun recordInstalledApp(
         expectedGeneration: Long,
         expectedWorkdir: File,
         existingId: Long?,
@@ -845,25 +836,19 @@ class LibraryViewModel(application: Application) : AndroidViewModel(application)
         sourceDescription: String?,
         iconRevision: Long,
         addedAt: Long,
-        callback: MutationCallback<Long>,
-    ) {
-        val generation = token(expectedGeneration, expectedWorkdir)
-        launchCriticalMutation(callback) {
-            repository.recordInstalledApp(
-                expected = generation,
-                existingId = existingId,
-                metadata = InstalledAppMetadata(
-                    storageKey = storageKey,
-                    sourceTitle = sourceTitle,
-                    sourceVendor = sourceVendor,
-                    sourceVersion = sourceVersion,
-                    sourceDescription = sourceDescription,
-                    iconRevision = iconRevision,
-                    addedAt = addedAt,
-                ),
-            )
-        }
-    }
+    ): Long = repository.recordInstalledApp(
+        expected = token(expectedGeneration, expectedWorkdir),
+        existingId = existingId,
+        metadata = InstalledAppMetadata(
+            storageKey = storageKey,
+            sourceTitle = sourceTitle,
+            sourceVendor = sourceVendor,
+            sourceVersion = sourceVersion,
+            sourceDescription = sourceDescription,
+            iconRevision = iconRevision,
+            addedAt = addedAt,
+        ),
+    )
 
     fun deleteInstalledApp(appId: Long, callback: MutationCallback<LibraryFileOperations.DeleteResult>) {
         val generation = readyGeneration()
