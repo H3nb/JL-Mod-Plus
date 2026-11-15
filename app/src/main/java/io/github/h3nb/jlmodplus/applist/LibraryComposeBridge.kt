@@ -103,6 +103,11 @@ import androidx.compose.material3.ExperimentalMaterial3Api
 import androidx.compose.material3.FilterChip
 import androidx.compose.material3.FloatingActionButton
 import androidx.compose.material3.ExtendedFloatingActionButton
+import androidx.compose.material3.rememberSearchBarState
+import androidx.compose.material3.SearchBarDefaults
+import androidx.compose.material3.ExpandedFullScreenSearchBar
+import androidx.compose.foundation.text.input.rememberTextFieldState
+import androidx.compose.foundation.text.input.setTextAndPlaceCursorAtEnd
 import androidx.compose.material3.Icon
 import androidx.compose.material3.IconButton
 import androidx.compose.material3.ListItem
@@ -2005,7 +2010,7 @@ internal class LibraryChromeScrollHysteresis(
     }
 }
 
-@OptIn(ExperimentalLayoutApi::class)
+@OptIn(ExperimentalMaterial3Api::class)
 @Composable
 internal fun LibrarySearchOverlay(
     state: LibraryUiState,
@@ -2020,15 +2025,27 @@ internal fun LibrarySearchOverlay(
     actionsBlocked: Boolean = false,
     modifier: Modifier = Modifier,
 ) {
-    var query by rememberSaveable(state.libraryScope) { mutableStateOf("") }
+    val textField = androidx.compose.runtime.key(state.libraryScope) { rememberTextFieldState() }
+    val query = textField.text.toString()
+    val searchState = rememberSearchBarState()
     val inputFocus = remember { FocusRequester() }
     val closeFocus = remember { FocusRequester() }
     val keyboard = LocalSoftwareKeyboardController.current
+    val transitionScope = rememberCoroutineScope()
     val imeVisible = WindowInsets.isImeVisible
     var fieldFocused by remember { mutableStateOf(false) }
     var imeWasVisible by remember { mutableStateOf(false) }
 
+    fun closeSearch() {
+        transitionScope.launch {
+            keyboard?.hide()
+            closeFocus.requestFocus()
+            searchState.animateToCollapsed()
+            onDismiss()
+        }
+    }
     LaunchedEffect(Unit) {
+        searchState.animateToExpanded()
         withFrameNanos { }
         inputFocus.requestFocus()
         keyboard?.show()
@@ -2046,9 +2063,7 @@ internal fun LibrarySearchOverlay(
         if (imeVisible || fieldFocused) {
             keyboard?.hide()
             closeFocus.requestFocus()
-        } else {
-            onDismiss()
-        }
+        } else closeSearch()
     }
 
     val results by key(query, apps, state.sortVariant) {
@@ -2081,7 +2096,7 @@ internal fun LibrarySearchOverlay(
     val currentActionsBlocked by rememberUpdatedState(actionsBlocked)
     val currentImeVisible by rememberUpdatedState(imeVisible)
     val currentFieldFocused by rememberUpdatedState(fieldFocused)
-    val currentOnDismiss by rememberUpdatedState(onDismiss)
+    val currentOnDismiss by rememberUpdatedState(::closeSearch)
     val currentOpenApp by rememberUpdatedState(onOpenApp)
     val currentOpenActions by rememberUpdatedState(onOpenActions)
     val currentResolveUiId by rememberUpdatedState(resolveUiId)
@@ -2141,39 +2156,45 @@ internal fun LibrarySearchOverlay(
         }
     }
 
-    Column(
-        modifier = modifier
-            .background(MaterialTheme.colorScheme.background)
-            .windowInsetsPadding(WindowInsets.safeDrawing.only(WindowInsetsSides.Horizontal))
-            .windowInsetsPadding(WindowInsets.safeDrawing.only(WindowInsetsSides.Top))
-            .windowInsetsPadding(WindowInsets.safeDrawing.only(WindowInsetsSides.Bottom))
-            .imePadding(),
-    ) {
-        Row(
+    val inputField: @Composable () -> Unit = {
+        SearchBarDefaults.InputField(
+            textFieldState = textField,
+            searchBarState = searchState,
+            onSearch = {
+                keyboard?.hide()
+                closeFocus.requestFocus()
+            },
             modifier = Modifier
-                .fillMaxWidth()
-                .padding(horizontal = 8.dp, vertical = 8.dp),
-            verticalAlignment = Alignment.CenterVertically,
-            horizontalArrangement = Arrangement.spacedBy(4.dp),
-        ) {
-            IconButton(
-                onClick = onDismiss,
-                modifier = Modifier.focusRequester(closeFocus),
-            ) {
-                Icon(
-                    painter = painterResource(R.drawable.ic_arrow_back),
-                    contentDescription = stringResource(R.string.action_back),
-                )
-            }
-            LibrarySearchField(
-                query = query,
-                onQueryChange = { query = it },
-                modifier = Modifier.weight(1f).focusRequester(inputFocus),
-                onFocusChanged = { fieldFocused = it },
-                onDismissInput = { closeFocus.requestFocus() },
-            )
-        }
-
+                .focusRequester(inputFocus)
+                .onFocusChanged { fieldFocused = it.hasFocus },
+            placeholder = { Text(stringResource(R.string.library_search_placeholder)) },
+            leadingIcon = {
+                IconButton(
+                    onClick = ::closeSearch,
+                    modifier = Modifier.focusRequester(closeFocus),
+                ) {
+                    Icon(
+                        painter = painterResource(R.drawable.ic_arrow_back),
+                        contentDescription = stringResource(R.string.action_back),
+                    )
+                }
+            },
+            trailingIcon = if (query.isNotEmpty()) {{
+                IconButton(onClick = { textField.setTextAndPlaceCursorAtEnd("") }) {
+                    Icon(
+                        painter = painterResource(R.drawable.ic_close),
+                        contentDescription = stringResource(R.string.library_search_clear),
+                    )
+                }
+            }} else null,
+        )
+    }
+    ExpandedFullScreenSearchBar(
+        state = searchState,
+        inputField = inputField,
+        modifier = modifier,
+        properties = DialogProperties(dismissOnBackPress = false, dismissOnClickOutside = false),
+    ) {
         when {
             query.isBlank() -> Box(
                 modifier = Modifier.fillMaxSize().padding(24.dp),
