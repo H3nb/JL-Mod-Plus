@@ -105,6 +105,7 @@ import androidx.compose.material3.DropdownMenuItem
 import androidx.compose.material3.ExperimentalMaterial3Api
 import androidx.compose.material3.FilterChip
 import androidx.compose.material3.FloatingActionButton
+import androidx.compose.material3.ExtendedFloatingActionButton
 import androidx.compose.material3.Icon
 import androidx.compose.material3.IconButton
 import androidx.compose.material3.ListItem
@@ -228,6 +229,7 @@ import io.github.h3nb.jlmodplus.input.HostCommand
 import io.github.h3nb.jlmodplus.ui.TransientNoticeHost
 import io.github.h3nb.jlmodplus.ui.TransientNoticeState
 import io.github.h3nb.jlmodplus.ui.availableWindowWidthDp
+import io.github.h3nb.jlmodplus.ui.availableWindowHeightDp
 import io.github.h3nb.jlmodplus.ui.navigateToTab
 import io.github.h3nb.jlmodplus.ui.PagerTabMotion
 import io.github.h3nb.jlmodplus.ui.PAGE_TRAVEL_DP
@@ -1349,11 +1351,28 @@ fun LibraryScreen(
                         ),
                     ) {
                         Box {
-                            FloatingActionButton(onClick = { installSourceMenuVisible = true }) {
-                                Icon(
-                                    painter = painterResource(R.drawable.ic_add),
-                                    contentDescription = stringResource(R.string.install),
+                            val installLabel = stringResource(R.string.install)
+                            val showInstallText = availableWindowWidthDp() >= 360.dp &&
+                                availableWindowHeightDp() >= 480.dp && density.fontScale < 1.5f
+                            if (showInstallText) {
+                                ExtendedFloatingActionButton(
+                                    onClick = { installSourceMenuVisible = true },
+                                    modifier = Modifier.semantics { contentDescription = installLabel },
+                                    icon = {
+                                        Icon(
+                                            painter = painterResource(R.drawable.ic_add),
+                                            contentDescription = null,
+                                        )
+                                    },
+                                    text = { Text(installLabel) },
                                 )
+                            } else {
+                                FloatingActionButton(onClick = { installSourceMenuVisible = true }) {
+                                    Icon(
+                                        painter = painterResource(R.drawable.ic_add),
+                                        contentDescription = installLabel,
+                                    )
+                                }
                             }
                             DropdownMenu(
                                 expanded = installSourceMenuVisible,
@@ -1503,9 +1522,6 @@ fun LibraryScreen(
                         LibraryDestination.More -> LibraryMoreDestination(
                             scaffoldPadding = viewportPadding(),
                             onBack = { selectDestination(LibraryDestination.Apps) },
-                            onImportAppBundle = {
-                                if (currentControllerDestination == LibraryDestination.More) actions.onImportAppBundle()
-                            },
                             onAbout = {
                                 if (currentControllerDestination == LibraryDestination.More) aboutPageVisible = true
                             },
@@ -2150,8 +2166,8 @@ private fun LibrarySearchOverlay(
     }
 
     val results by key(query, apps, state.sortVariant) {
-        produceState<List<LibraryAppUiItem>>(
-            initialValue = emptyList(),
+        produceState<List<LibraryAppUiItem>?>(
+            initialValue = null,
             query,
             apps,
             state.sortVariant,
@@ -2171,11 +2187,13 @@ private fun LibrarySearchOverlay(
         }
     }
 
+    val visibleResults = results
     Column(
         modifier = modifier
             .background(MaterialTheme.colorScheme.background)
             .windowInsetsPadding(WindowInsets.safeDrawing.only(WindowInsetsSides.Horizontal))
             .windowInsetsPadding(WindowInsets.safeDrawing.only(WindowInsetsSides.Top))
+            .windowInsetsPadding(WindowInsets.safeDrawing.only(WindowInsetsSides.Bottom))
             .imePadding(),
     ) {
         Row(
@@ -2216,12 +2234,15 @@ private fun LibrarySearchOverlay(
             !appsPrepared -> Box(Modifier.fillMaxSize(), contentAlignment = Alignment.Center) {
                 CircularProgressIndicator()
             }
-            results.isEmpty() -> LibraryEmptyState(query)
+            visibleResults == null -> Box(Modifier.fillMaxSize(), contentAlignment = Alignment.Center) {
+                CircularProgressIndicator()
+            }
+            visibleResults.isEmpty() -> LibraryEmptyState(query)
             else -> LazyColumn(
                 modifier = Modifier.fillMaxSize(),
                 contentPadding = PaddingValues(bottom = 24.dp),
             ) {
-                items(results, key = { it.databaseId }) { app ->
+                items(visibleResults, key = { it.databaseId }) { app ->
                     LibraryListItem(
                         app = app,
                         onOpenApp = onOpenApp,
@@ -3179,7 +3200,7 @@ internal fun LibraryCollectionsDestination(scaffoldPadding: PaddingValues) {
 @Composable
 internal fun LibraryMoreDestination(
     scaffoldPadding: PaddingValues,
-    onImportAppBundle: () -> Unit = {},
+    @Suppress("UNUSED_PARAMETER") onImportAppBundle: () -> Unit = {},
     onBack: () -> Unit = {},
     onAbout: () -> Unit,
     onDonate: () -> Unit,
@@ -3243,12 +3264,6 @@ internal fun LibraryMoreDestination(
                                         else R.string.updates_more_summary,
                                     icon = R.drawable.ic_refresh,
                                     action = onUpdates,
-                                )
-                                LibraryActionRow(
-                                    label = R.string.library_action_import_bundle,
-                                    summary = R.string.library_action_import_bundle_summary,
-                                    icon = R.drawable.ic_file_upload,
-                                    action = onImportAppBundle,
                                 )
                                 LibraryActionRow(
                                     label = R.string.library_donation_action,
