@@ -382,7 +382,7 @@ class MemoryScriptsComposeTest {
         rule.onAllNodesWithText("New script")[0].performClick()
         rule.onNodeWithText("Quick Actions").performClick()
         rule.onNodeWithTag("memory-builder-name").performTextReplacement("Add coins")
-        rule.onNodeWithText("Add from Bookmarks").performClick()
+        rule.onNodeWithText("Add target").performClick()
         rule.onNodeWithText("Coins").performClick()
         rule.onNodeWithText("Add selected").performClick()
         rule.onNodeWithText("Add").performClick()
