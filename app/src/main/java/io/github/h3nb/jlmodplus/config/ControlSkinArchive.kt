@@ -15,6 +15,8 @@ import java.util.zip.ZipEntry
 import java.util.zip.ZipInputStream
 import java.util.zip.ZipOutputStream
 import kotlinx.serialization.json.Json
+import kotlinx.serialization.json.JsonObject
+import kotlinx.serialization.json.JsonPrimitive
 import kotlinx.serialization.json.intOrNull
 import kotlinx.serialization.json.jsonObject
 import kotlinx.serialization.json.jsonPrimitive
@@ -29,11 +31,17 @@ internal object ControlSkinArchive {
 
     fun export(workdir: File, setId: String, destination: File): File =
         synchronized(ControlSkinStore::class.java) {
+            val controlRoot = ControlSkinStore.directory(workdir).canonicalFile
+            val exportFolder = destination.canonicalFile
+            if (exportFolder == controlRoot ||
+                exportFolder.path.startsWith(controlRoot.path + File.separator)) {
+                throw IOException("Choose a folder outside the control skin library")
+            }
             val set = ControlSkinStore.find(workdir, setId)
                 ?: throw IOException("Control skin set no longer exists")
             val entries = ControlSkinSetTransfer.files(set.folder)
             checkSlotFormats(entries)
-            requireVersion(File(set.folder, "skin.json"))
+            val metadata = normalizedMetadata(File(set.folder, "skin.json"))
             entries.filterNot { it.name == "skin.json" }.forEach {
                 ControlSkinStore.validateImage(it, "." + it.extension)
             }
@@ -49,8 +57,12 @@ internal object ControlSkinArchive {
                                 throw IOException("Control skin export was interrupted")
                             }
                             zip.putNextEntry(ZipEntry(set.name + "/" + source.name))
-                            FileInputStream(source).buffered().use { input ->
-                                input.copyTo(zip, BUFFER_SIZE)
+                            if (source.name == "skin.json") {
+                                zip.write(metadata)
+                            } else {
+                                FileInputStream(source).buffered().use { input ->
+                                    input.copyTo(zip, BUFFER_SIZE)
+                                }
                             }
                             zip.closeEntry()
                         }
@@ -74,7 +86,9 @@ internal object ControlSkinArchive {
         if (!stage.mkdir()) throw IOException("Cannot stage control skin ZIP")
         try {
             val folder = extract(archive, stage)
-            requireVersion(File(folder, "skin.json"))
+            val metadata = File(folder, "skin.json")
+            val normalized = normalizedMetadata(metadata)
+            metadata.writeBytes(normalized)
             val entries = ControlSkinSetTransfer.files(folder)
             checkSlotFormats(entries)
             entries.filterNot { it.name == "skin.json" }.forEach { file ->
@@ -155,12 +169,22 @@ internal object ControlSkinArchive {
         return folder ?: throw IOException("Control skin ZIP is empty")
     }
 
-    private fun requireVersion(metadata: File) {
-        val version = runCatching {
-            Json.parseToJsonElement(metadata.readText()).jsonObject["version"]
-                ?.jsonPrimitive?.intOrNull
-        }.getOrNull()
-        if (version != 1) throw IOException("Unsupported control skin ZIP version")
+    private fun normalizedMetadata(file: File): ByteArray {
+        val json = try {
+            Json.parseToJsonElement(file.readText()).jsonObject
+        } catch (error: Exception) {
+            throw IOException("Invalid control skin metadata", error)
+        }
+        val version = json["version"]
+        if (version != null && (version as? JsonPrimitive)?.intOrNull != 1) {
+            throw IOException("Unsupported control skin ZIP version")
+        }
+        val bytes = (JsonObject(json + ("version" to JsonPrimitive(1))).toString() + "\n")
+            .toByteArray(Charsets.UTF_8)
+        if (bytes.size > ControlSkinSetTransfer.MAX_METADATA_BYTES) {
+            throw IOException("Control skin metadata is too large")
+        }
+        return bytes
     }
 
     private fun checkSlotFormats(files: List<File>) {

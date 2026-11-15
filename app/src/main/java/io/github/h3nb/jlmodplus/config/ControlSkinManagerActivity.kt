@@ -191,7 +191,7 @@ class ControlSkinManagerActivity : AppCompatActivity() {
         val chosen = File(requireNotNull(uri.path))
         lastArchivePath = if (action == ArchiveAction.EXPORT) chosen.path else chosen.parent
         when (action) {
-            ArchiveAction.IMPORT -> perform {
+            ArchiveAction.IMPORT -> perform(R.string.control_skin_archive_import_failed) {
                 val result = ControlSkinArchive.importZip(workdir, chosen, cacheDir)
                 runOnUiThread {
                     if (!isDestroyed && !isFinishing) {
@@ -203,7 +203,7 @@ class ControlSkinManagerActivity : AppCompatActivity() {
                 }
                 null
             }
-            ArchiveAction.EXPORT -> if (setId != null) perform {
+            ArchiveAction.EXPORT -> if (setId != null) perform(R.string.control_skin_archive_export_failed) {
                 val file = ControlSkinArchive.export(workdir, setId, chosen)
                 runOnUiThread {
                     if (!isDestroyed && !isFinishing) {
@@ -305,7 +305,7 @@ class ControlSkinManagerActivity : AppCompatActivity() {
     }
 
     /** Serializes writes, refreshes list/counts and decodes previews off the UI thread. */
-    private fun perform(action: () -> String?) {
+    private fun perform(errorMessageRes: Int? = null, action: () -> String?) {
         if (busy) return
         busy = true
         worker.execute {
@@ -342,7 +342,8 @@ class ControlSkinManagerActivity : AppCompatActivity() {
                 runOnUiThread {
                     if (!isDestroyed && !isFinishing) {
                         busy = false
-                        notifyError(error.message ?: getString(R.string.control_skin_operation_failed))
+                        notifyError(if (errorMessageRes != null) getString(errorMessageRes)
+                            else error.message ?: getString(R.string.control_skin_operation_failed))
                     }
                 }
             }

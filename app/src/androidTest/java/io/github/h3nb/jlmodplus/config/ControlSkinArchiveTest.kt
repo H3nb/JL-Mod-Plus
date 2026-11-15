@@ -106,6 +106,38 @@ class ControlSkinArchiveTest {
         assertTrue(temporary.root.listFiles()!!.none { it.name.startsWith(".control-skin-") })
     }
 
+    @Test fun exportRefusesDestinationsInsideManagedSkinDirectory() {
+        val workdir = temporary.newFolder("managed")
+        val set = ControlSkinStore.create(workdir, "Fantasy")
+        val skinRoot = ControlSkinStore.directory(workdir)
+        for (directory in listOf(skinRoot, set.folder)) {
+            assertThrows(IOException::class.java) {
+                ControlSkinArchive.export(workdir, set.id, directory)
+            }
+        }
+        assertEquals(listOf("Fantasy"), ControlSkinStore.list(workdir).map { it.name })
+        assertTrue(set.folder.listFiles()!!.all { it.extension != "zip" })
+    }
+
+    @Test fun exportNormalizesLegacyMetadataWithoutChangingTheSource() {
+        val workdir = temporary.newFolder("legacy")
+        val set = ControlSkinStore.create(workdir, "Legacy")
+        val metadata = File(set.folder, "skin.json")
+        val old = """{"id":"${set.id}","defaultMode":"icon"}"""
+        metadata.writeText(old)
+        val output = ControlSkinArchive.export(workdir, set.id, temporary.newFolder("old-out"))
+        assertEquals(old, metadata.readText())
+        ZipFile(output).use { zip ->
+            val restored = zip.getInputStream(zip.getEntry("Legacy/skin.json"))
+                .bufferedReader().use { it.readText() }
+            assertTrue(restored.contains("\\"version\\":1"))
+        }
+        val imported = ControlSkinArchive.importZip(
+            temporary.newFolder("restored-legacy"), output, temporary.root,
+        )
+        assertEquals(set.id, imported.id)
+    }
+
     private fun png(color: Int): ByteArray {
         val image = Bitmap.createBitmap(3, 3, Bitmap.Config.ARGB_8888)
         return try {
