@@ -10,6 +10,7 @@ import androidx.compose.ui.unit.dp
 import androidx.compose.ui.platform.testTag
 import androidx.compose.ui.semantics.SemanticsProperties
 import androidx.compose.ui.test.assertIsDisplayed
+import androidx.compose.ui.test.assertDoesNotExist
 import androidx.compose.ui.test.assertIsEnabled
 import androidx.compose.ui.test.assertIsNotEnabled
 import androidx.compose.ui.test.assertIsSelected
@@ -149,6 +150,80 @@ class MemoryScriptsComposeTest {
         assertTrue(restored.config[SemanticsProperties.EditableText].text.contains("sample.coins"))
         MemoryEditorSessionNavigation.read(token + 1)
         assertFalse(MemoryEditorSessionNavigation.script(token + 1).editing)
+    }
+
+    @Test fun pendingJsonSaveLocksNavigationAndRetainsDraftOnFailure() {
+        val token = 92520L
+        MemoryEditorSessionNavigation.read(token)
+        var closed = false
+        var complete: ((Boolean) -> Unit)? = null
+        val actions = object : TestMemoryEditorActions() {
+            override fun close() { closed = true }
+            override fun saveMemoryScript(
+                document: String, replacingId: String?, onComplete: (Boolean) -> Unit,
+            ) { complete = onComplete }
+        }
+        rule.setContent {
+            JLModPlusTheme {
+                MemoryEditorRuntimeRoot(MemoryEditorUiState(
+                    visible = true, connected = true, supported = true,
+                    writeSupported = true, scriptsTab = true, runtimeToken = token,
+                ), actions)
+            }
+        }
+        rule.onAllNodesWithText("New script")[0].performClick()
+        rule.onNodeWithText("JSON Editor").performClick()
+        rule.onNodeWithTag("memory-script-editor").performTextReplacement(sample)
+        rule.onNodeWithText("Save").performClick()
+        rule.onNodeWithContentDescription("Back").assertIsNotEnabled()
+        rule.onNodeWithContentDescription("Minimize Memory Editor").assertIsNotEnabled()
+        rule.runOnIdle {
+            assertFalse(closed)
+            assertEquals(sample, MemoryEditorSessionNavigation.script(token).pendingSave?.document)
+            complete?.invoke(false)
+        }
+        rule.onNodeWithTag("memory-script-editor").assertIsDisplayed()
+        rule.onNodeWithContentDescription("Back").assertIsEnabled().performClick()
+        rule.onNodeWithText("Discard").assertIsDisplayed()
+    }
+
+    @Test fun reopenedWorkspaceReconcilesCommittedSaveWithoutLostCallback() {
+        val token = 92521L
+        MemoryEditorSessionNavigation.read(token)
+        val showing = mutableStateOf(true)
+        val state = mutableStateOf(MemoryEditorUiState(
+            visible = true, connected = true, supported = true,
+            writeSupported = true, scriptsTab = true, runtimeToken = token,
+        ))
+        val actions = object : TestMemoryEditorActions() {
+            override fun saveMemoryScript(
+                document: String, replacingId: String?, onComplete: (Boolean) -> Unit,
+            ) = Unit
+        }
+        rule.setContent {
+            JLModPlusTheme {
+                if (showing.value) MemoryEditorRuntimeRoot(state.value, actions)
+            }
+        }
+        rule.onAllNodesWithText("New script")[0].performClick()
+        rule.onNodeWithText("JSON Editor").performClick()
+        rule.onNodeWithTag("memory-script-editor").performTextReplacement(sample)
+        rule.onNodeWithText("Save").performClick()
+        rule.runOnIdle {
+            assertEquals(sample, MemoryEditorSessionNavigation.script(token).pendingSave?.document)
+            showing.value = false
+        }
+        rule.runOnIdle {
+            state.value = state.value.copy(scriptsLoaded = true, scripts = listOf(
+                MemoryScriptRow("sample.coins", "Sample Coins", sample),
+            ))
+            showing.value = true
+        }
+        rule.onNodeWithTag("memory-script-editor").assertDoesNotExist()
+        rule.onNodeWithText("Run").assertIsDisplayed()
+        rule.runOnIdle {
+            assertEquals(null, MemoryEditorSessionNavigation.script(token).pendingSave)
+        }
     }
 
     @Test fun refreshShowsDecodedCurrentValueWithoutWritingAndFlagsDisagreement() {
