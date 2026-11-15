@@ -5,6 +5,8 @@ package io.github.h3nb.jlmodplus.installer
 
 import android.content.Context
 import android.net.Uri
+import androidx.lifecycle.LifecycleOwner
+import androidx.lifecycle.lifecycleScope
 import com.android.dx.command.dexer.ConversionResult
 import io.github.h3nb.jlmodplus.librarydb.LibraryAppBundleImporter
 import java.io.File
@@ -17,7 +19,7 @@ import kotlinx.coroutines.launch
 import kotlinx.coroutines.withContext
 
 /** Java-facing entry points keep asynchronous work independent of a disposable UI subscription. */
-internal object InstallerAsync {
+object InstallerAsync {
     fun interface Task {
         suspend fun execute(): Int
     }
@@ -56,6 +58,25 @@ internal object InstallerAsync {
             return@launchWorker
         }
         completed.accept(prepared)
+    }
+
+    @JvmStatic
+    fun routeBundle(
+        owner: LifecycleOwner,
+        context: Context,
+        uri: Uri,
+        completed: Consumer<Boolean>,
+        failed: Consumer<Throwable>,
+    ): Job = owner.lifecycleScope.launch {
+        val requiresBulk = try {
+            withContext(Dispatchers.IO) {
+                LibraryAppBundleImporter.requiresBulkImport(context.applicationContext, uri)
+            }
+        } catch (error: Exception) {
+            failed.accept(error)
+            return@launch
+        }
+        completed.accept(requiresBulk)
     }
 
     @JvmStatic
