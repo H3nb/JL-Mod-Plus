@@ -1428,4 +1428,5 @@
     <string name="memory_editor_refine_scan" tools:ignore="MissingTranslation">Refine</string>
     <string name="memory_scripts_saved_count" tools:ignore="MissingTranslation">%1$d saved</string>
     <string name="memory_scripts_empty_hint" tools:ignore="MissingTranslation">Create a script to edit or freeze values while playing.</string>
+    <string name="memory_builder_limits" tools:ignore="MissingTranslation">Limits (optional)</string>
 </resources>
