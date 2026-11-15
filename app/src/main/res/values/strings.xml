@@ -489,6 +489,7 @@
     <string name="library_collection_add_app">Add to collection</string>
     <string name="library_collection_add_apps">Add apps</string>
     <string name="library_collection_manage_apps">Choose apps</string>
+    <string name="library_collection_manage">Manage collections</string>
     <string name="library_collection_manage_apps_summary">Select apps to include in this collection.</string>
     <string name="library_collection_name">Collection name</string>
     <string name="library_collection_members_empty">No apps in this collection.</string>
