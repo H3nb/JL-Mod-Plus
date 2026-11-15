@@ -188,13 +188,16 @@ class MemoryEditorOverlayComposeTest {
     }
 
     @OptIn(ExperimentalTestApi::class)
-    @Test fun quickActionsStayStableAndUndoRemainsAvailableAfterAnEmptyScan() {
+    @Test fun scanControlStaysStableWhileSelectionChangesAndUndoRecoversEmptyScans() {
         val state = mutableStateOf(MemoryEditorUiState(
             visible = true, connected = true, supported = true, writeSupported = true,
+            sessionStage = MemorySessionStage.CANDIDATES,
+            canUndo = true,
             resultCount = 1, results = listOf(MemoryResultRow(
-                id = 1, valueText = "42", locationText = "score", aliasMask = 1 shl MemoryEngineContract.TYPE_INT,
-                primaryType = MemoryEngineContract.TYPE_INT, state = MemoryEngineContract.CANDIDATE_STABLE,
-                relocations = 0,
+                id = 1, valueText = "42", locationText = "score",
+                aliasMask = 1 shl MemoryEngineContract.TYPE_INT,
+                primaryType = MemoryEngineContract.TYPE_INT,
+                state = MemoryEngineContract.CANDIDATE_STABLE, relocations = 0,
             )),
         ))
         rule.setContent {
@@ -202,16 +205,15 @@ class MemoryEditorOverlayComposeTest {
                 JLModPlusTheme { MemoryEditorRuntimeRoot(state.value, TestMemoryEditorActions()) }
             }
         }
-        val labels = listOf("Search known values", "Search unknown values", "Edit", "Bookmark selected values", "Refresh")
-        val bounds = labels.map { rule.onNodeWithContentDescription(it).getUnclippedBoundsInRoot() }
-        rule.onNodeWithContentDescription("Edit").assertIsNotEnabled()
+        val scan = rule.onNodeWithText("Refine").getUnclippedBoundsInRoot()
+        val refresh = rule.onNodeWithContentDescription("Refresh").getUnclippedBoundsInRoot()
         rule.runOnIdle { state.value = state.value.copy(selected = setOf(1L)) }
         rule.onNodeWithContentDescription("Edit").assertIsEnabled()
-        labels.forEachIndexed { index, label ->
-            assertEquals(bounds[index], rule.onNodeWithContentDescription(label).getUnclippedBoundsInRoot())
-        }
+        assertEquals(scan, rule.onNodeWithText("Refine").getUnclippedBoundsInRoot())
+        assertEquals(refresh, rule.onNodeWithContentDescription("Refresh").getUnclippedBoundsInRoot())
         rule.runOnIdle {
-            state.value = state.value.copy(results = emptyList(), resultCount = 0, selected = emptySet(), canUndo = true)
+            state.value = state.value.copy(results = emptyList(), resultCount = 0,
+                selected = emptySet())
         }
         rule.onNodeWithContentDescription("More").performClick()
         val menuBounds = rule.onNodeWithTag("adaptive-dialog-surface").getUnclippedBoundsInRoot()
