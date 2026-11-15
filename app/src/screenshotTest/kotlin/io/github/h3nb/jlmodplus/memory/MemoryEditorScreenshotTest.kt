@@ -370,9 +370,15 @@ fun MemoryOverlayLightUnderlayScreenshot() = MemoryOverlayUnderlay(dark = false)
 @Composable
 fun MemoryOverlayDarkUnderlayScreenshot() = MemoryOverlayUnderlay(dark = true)
 
+@PreviewTest
+@Preview(name = "Memory overlay fully transparent", widthDp = 360, heightDp = 640)
 @Composable
-private fun MemoryOverlayUnderlay(dark: Boolean) {
+fun MemoryOverlayTransparentScreenshot() = MemoryOverlayUnderlay(dark = false, opacity = 0f)
+
+@Composable
+private fun MemoryOverlayUnderlay(dark: Boolean, opacity: Float? = null) {
     JLModPlusTheme(darkTheme = dark) {
+        val overlay = remember(opacity) { opacity?.let { MemoryEditorOverlayState(initialOpacity = it) } }
         Box(Modifier.fillMaxSize().background(Brush.verticalGradient(
             listOf(Color(0xFF123F82), Color(0xFFF3C741), Color(0xFF206E32)),
         ))) {
@@ -384,6 +390,7 @@ private fun MemoryOverlayUnderlay(dark: Boolean) {
                     resultCount = if (dark) 3 else 0, results = if (dark) previewRows else emptyList(),
                 ),
                 actions = NoOpMemoryEditorActions,
+                overlayState = overlay,
             )
         }
     }
