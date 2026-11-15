@@ -2764,6 +2764,15 @@ private fun LibraryAppsHeader(
     interactive: Boolean = true,
 ) {
     var scopePickerVisible by remember { mutableStateOf(false) }
+    val scopeSheetState = rememberModalBottomSheetState(skipPartiallyExpanded = true)
+    val scopeSheetCoroutine = rememberCoroutineScope()
+    fun closeScopeThen(action: () -> Unit) {
+        scopeSheetCoroutine.launch {
+            scopeSheetState.hide()
+            scopePickerVisible = false
+            action()
+        }
+    }
     val sortEntries = stringArrayResource(R.array.pref_app_sort_entries).toList()
     val projectionKey = remember(state) {
         LibraryProjectionKey(state.projectionRevision, state.apps)
@@ -3009,7 +3018,7 @@ private fun LibraryAppsHeader(
     if (scopePickerVisible) {
         ModalBottomSheet(
             onDismissRequest = { scopePickerVisible = false },
-            sheetState = rememberModalBottomSheetState(skipPartiallyExpanded = true),
+            sheetState = scopeSheetState,
         ) {
             Column(
                 modifier = Modifier
@@ -3026,8 +3035,9 @@ private fun LibraryAppsHeader(
                         ListItem(
                             headlineContent = { Text(stringResource(R.string.library_destination_apps)) },
                             modifier = Modifier.clickable {
-                                scopePickerVisible = false
-                                if (state.quickView != LibraryQuickView.All) onQuickView(LibraryQuickView.All)
+                                closeScopeThen {
+                                    if (state.quickView != LibraryQuickView.All) onQuickView(LibraryQuickView.All)
+                                }
                             },
                             leadingContent = {
                                 Icon(painterResource(R.drawable.ic_apps), contentDescription = null)
@@ -3043,8 +3053,7 @@ private fun LibraryAppsHeader(
                                 Text(collection.name, maxLines = 2, overflow = TextOverflow.Ellipsis)
                             },
                             modifier = Modifier.clickable {
-                                scopePickerVisible = false
-                                onSelectCollection(collection.id)
+                                closeScopeThen { onSelectCollection(collection.id) }
                             },
                             leadingContent = {
                                 Icon(painterResource(R.drawable.ic_folder), contentDescription = null)
@@ -3055,8 +3064,7 @@ private fun LibraryAppsHeader(
                 HorizontalDivider()
                 TextButton(
                     onClick = {
-                        scopePickerVisible = false
-                        onManageCollections()
+                        closeScopeThen(onManageCollections)
                     },
                     modifier = Modifier
                         .align(Alignment.End)
