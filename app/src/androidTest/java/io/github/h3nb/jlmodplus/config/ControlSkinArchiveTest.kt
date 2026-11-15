@@ -127,6 +127,10 @@ class ControlSkinArchiveTest {
         metadata.writeText(old)
         val output = ControlSkinArchive.export(workdir, set.id, temporary.newFolder("old-out"))
         assertEquals(old, metadata.readText())
+        val duplicate = ControlSkinArchive.importZip(workdir, output, temporary.root)
+        assertFalse(duplicate.added)
+        assertEquals(set.id, duplicate.id)
+        assertEquals(1, ControlSkinStore.list(workdir).size)
         ZipFile(output).use { zip ->
             val restored = zip.getInputStream(zip.getEntry("Legacy/skin.json"))
                 .bufferedReader().use { it.readText() }

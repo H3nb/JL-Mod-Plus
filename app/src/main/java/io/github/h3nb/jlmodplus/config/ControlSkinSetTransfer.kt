@@ -116,7 +116,11 @@ internal object ControlSkinSetTransfer {
             if (a.name == METADATA) {
                 val left = Json.parseToJsonElement(a.readText()).jsonObject
                 val right = Json.parseToJsonElement(b.readText()).jsonObject
-                return@all (left - "id") == (right - "id")
+                val normalizedLeft = (left - "id") +
+                    ("version" to (left["version"] ?: JsonPrimitive(1)))
+                val normalizedRight = (right - "id") +
+                    ("version" to (right["version"] ?: JsonPrimitive(1)))
+                return@all normalizedLeft == normalizedRight
             }
             if (a.length() != b.length()) return@all false
             a.inputStream().buffered().use { left ->
