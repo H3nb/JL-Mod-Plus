@@ -87,10 +87,13 @@ freeze timing or polling cadence. It makes no frame-time or allocation claim.
   Batch Edit remains limited to compatible session-only Watch entries; mixed
   selections support Remove. The stable top row preserves selection/count affordances.
 - Place result counts and scan controls above the scrolling results, while
-  target provenance remains with its row or Inspector. The data viewport uses a
-  mostly opaque themed surface over the live game to maintain readability even
-  when the configurable outer workspace background is transparent. Keep numeric
-  values legible and truncate only secondary source summaries.
+  target provenance remains with its row or Inspector. The workspace, header,
+  data viewport and footer must respect the user's opacity setting without
+  independent opaque layers obscuring the live game. Keep numeric values legible
+  and truncate only secondary source summaries. Technical values and identifiers
+  use a readable monospace style; prose uses the normal Material text family.
+  A selected-action bar overlays the list rather than resizing its viewport,
+  with sufficient scroll padding to reach the last result.
 - Input dialogs use one scroll owner. In wide windows, title/controls and keypad
   sit side by side. Otherwise they stack. The title participates in body scrolling;
   confirmation/cancel remain outside it. Large fonts favor scrolling over smaller keys.
@@ -186,15 +189,22 @@ Hidden bodies have no actionable semantics; a pointer shield and key handling pr
 editing invisible content. Peek is a view-only action, not touch-through game control.
 Tooltips dismiss when Peek starts. Input dialogs keep opaque surfaces for legibility.
 
-The workspace footer paints edge-to-edge with a solid Material surface and matching foreground colors to keep pagination and controls readable over changing game pixels, including at reduced panel opacity. Its touch targets stay within system-safe bounds. Dialog footer space remains transparent; the workspace dock backdrop also becomes transparent during Peek.
+The workspace footer paints edge-to-edge and follows the same user-selected
+background opacity as the editor surface. Its controls respect the system-safe
+bounds. Dialog footers remain transparent; the workspace dock disappears during
+Peek. Keep dialog surfaces solid so users can safely inspect or edit inputs.
 
-Panel opacity affects the outer workspace background. The default is 97%, adjustable
-from 0% to 100% in its footer setting. The content viewport and header retain
-stronger tonal coverage so game graphics do not compete with form fields and
-memory data; Peek provides a fully unobstructed view of the game. The memory-engine process owns the small
-`memory_editor_ui` preference file; format percentages for the active locale and
-save on slider release or dialog dismissal, not
-on every movement. This does not modify game rendering or the runtime configuration.
+Panel opacity controls the workspace backdrop, including its header, data
+viewport and footer, without fading text or icons. The initial default is 72%,
+adjustable from 0% to 100%; previously saved preferences remain unchanged.
+At 0%, the backdrop is transparent and the game remains visible behind editor
+controls. At 100%, the backdrop is opaque. Local action surfaces may remain
+solid for usability, but must not cover the entire data viewport. Do not blur the
+live game: players need to read its numbers while comparing results. Peek still
+provides a fully unobstructed game view. The memory-engine process owns the
+`memory_editor_ui` preference file; format percentages for the active locale
+and save on slider release or dialog dismissal, not on every movement. This
+does not modify game rendering or the runtime configuration.
 
 ## Regression coverage
 
@@ -210,7 +220,8 @@ window-alpha test is replaced by the nested production-dialog coverage.
 
 Preview references cover portrait, short/wide landscape, light/dark surfaces,
 selection, empty results, unknown-search baseline, status feedback, Inspector and
-200% text. Colored underlays make panel/foreground transparency regressions visible;
+200% text. Colored underlays and a fully transparent viewport case make
+panel/foreground transparency regressions visible;
 compact large-text opacity dialogs check bounded controls and RTL layout. Review actual renders before accepting reference
 changes; screenshot comparison alone cannot prove gestures, IME suppression or asynchronous navigation.
 
