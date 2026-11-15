@@ -203,6 +203,10 @@ internal fun MemoryEditorRuntimeRoot(
         var scriptBuilder by remember(state.runtimeToken) {
             mutableStateOf(savedScript.builder)
         }
+        var pendingScriptSave by remember(state.runtimeToken) {
+            mutableStateOf(savedScript.pendingSave)
+        }
+        var saveStartedHere by remember(state.runtimeToken) { mutableStateOf(false) }
         var choosingScriptType by remember(state.runtimeToken) { mutableStateOf(false) }
         var scriptTargets by remember(state.runtimeToken) {
             mutableStateOf(emptyList<MemoryScriptBuilderAction>())
@@ -229,16 +233,55 @@ internal fun MemoryEditorRuntimeRoot(
             scriptInitialText = draft?.initialText.orEmpty()
             scriptText = draft?.text.orEmpty()
         }
+        LaunchedEffect(state.scriptsLoaded, state.scriptsError, state.scripts,
+            pendingScriptSave, saveStartedHere) {
+            val pending = pendingScriptSave
+            if (pending != null && !saveStartedHere &&
+                (state.scriptsLoaded || state.scriptsError != null)) {
+                if (state.scripts.any { it.id == pending.id && it.document == pending.document }) {
+                    selectedScriptId = pending.id
+                    setScriptDraft(null)
+                    scriptBuilder = null
+                }
+                pendingScriptSave = null
+                MemoryEditorSessionNavigation.rememberPendingScriptSave(state.runtimeToken, null)
+            }
+        }
+        val saveScript: (String, String?, (Boolean) -> Unit) -> Unit =
+            { document, replacingId, onComplete ->
+                if (pendingScriptSave == null) {
+                    val id = runCatching { memoryScriptMetadata(document).id }.getOrNull()
+                    if (id == null) {
+                        onComplete(false)
+                    } else {
+                        val pending = MemoryEditorPendingScriptSave(id, document)
+                        pendingScriptSave = pending
+                        saveStartedHere = true
+                        MemoryEditorSessionNavigation.rememberPendingScriptSave(state.runtimeToken, pending)
+                        actions.saveMemoryScript(document, replacingId) { success ->
+                            saveStartedHere = false
+                            pendingScriptSave = null
+                            MemoryEditorSessionNavigation.rememberPendingScriptSave(state.runtimeToken, null)
+                            onComplete(success)
+                        }
+                    }
+                }
+            }
+        val scriptSavePending = pendingScriptSave != null
         var scriptDiscardMode by remember { mutableStateOf<String?>(null) }
         val backFromScriptEditor = {
-            if (scriptDraft?.dirty == true) scriptDiscardMode = "json"
-            else setScriptDraft(null)
+            if (!scriptSavePending) {
+                if (scriptDraft?.dirty == true) scriptDiscardMode = "json"
+                else setScriptDraft(null)
+            }
         }
         val backFromScriptBuilder = {
-            if (scriptBuilder?.hasChanges == true) scriptDiscardMode = "builder"
-            else scriptBuilder = null
+            if (!scriptSavePending) {
+                if (scriptBuilder?.hasChanges == true) scriptDiscardMode = "builder"
+                else scriptBuilder = null
+            }
         }
-        val closeWorkspace = { actions.close() }
+        val closeWorkspace = { if (!scriptSavePending) actions.close() }
         val resultsListState = rememberLazyListState()
         val variablesListState = rememberLazyListState()
         var relinkingBookmarkId by rememberSaveable(state.runtimeToken) {
@@ -292,19 +335,20 @@ internal fun MemoryEditorRuntimeRoot(
             }
         }
         val selectTab: (MemoryEditorTab) -> Unit = {
-            when (it) {
+            if (!scriptSavePending) when (it) {
                 MemoryEditorTab.RESULTS -> actions.setVariablesTab(false)
                 MemoryEditorTab.VARIABLES -> actions.setVariablesTab(true)
                 MemoryEditorTab.SCRIPTS -> actions.setScriptsTab()
                 MemoryEditorTab.INSPECTOR -> Unit
             }
         }
-        BackHandler(enabled = tab == MemoryEditorTab.INSPECTOR || overlay.peeking ||
+        BackHandler(enabled = scriptSavePending || tab == MemoryEditorTab.INSPECTOR || overlay.peeking ||
             scriptDraft?.dirty == true || scriptBuilder?.hasChanges == true ||
             (tab == MemoryEditorTab.SCRIPTS &&
                 (scriptDraft != null || scriptBuilder != null || selectedScriptId != null)) ||
             (state.variablesTab && listSelection.isNotEmpty())) {
             when {
+                scriptSavePending -> Unit
                 overlay.peeking -> overlay.peeking = false
                 tab == MemoryEditorTab.INSPECTOR -> actions.closeInspector()
                 tab == MemoryEditorTab.SCRIPTS && scriptDraft != null -> backFromScriptEditor()
@@ -366,6 +410,7 @@ internal fun MemoryEditorRuntimeRoot(
                             RuntimeMemoryHeader(
                                 state = state, inlineNavigation = showLabels || !showTitle,
                                 onTab = selectTab, onMinimize = closeWorkspace,
+                                navigationLocked = scriptSavePending,
                                 showTitle = showTitle, detailTitle = detailTitle,
                                 onDetailBack = {
                                     when {
@@ -429,6 +474,7 @@ internal fun MemoryEditorRuntimeRoot(
                                         { selectedScriptId = it }, scriptDraft,
                                         { setScriptDraft(it) },
                                         scriptBuilder, { scriptBuilder = it },
+                                        scriptSavePending, saveScript,
                                         choosingScriptType, { choosingScriptType = it },
                                         scriptTargets, { scriptTargets = emptyList() },
                                         Modifier.fillMaxSize(),
@@ -485,8 +531,10 @@ internal fun MemoryEditorRuntimeRoot(
                 text = { Text(stringResource(R.string.memory_scripts_unsaved_message)) },
                 confirmButton = {
                     TextButton(onClick = {
-                        if (scriptDiscardMode == "builder") scriptBuilder = null
-                        else setScriptDraft(null)
+                        if (!scriptSavePending) {
+                            if (scriptDiscardMode == "builder") scriptBuilder = null
+                            else setScriptDraft(null)
+                        }
                         scriptDiscardMode = null
                     }) { Text(stringResource(R.string.memory_scripts_discard)) }
                 },
@@ -506,6 +554,7 @@ private fun RuntimeMemoryHeader(
     inlineNavigation: Boolean,
     onTab: (MemoryEditorTab) -> Unit,
     onMinimize: () -> Unit,
+    navigationLocked: Boolean,
     showTitle: Boolean,
     detailTitle: String?,
     onDetailBack: () -> Unit,
@@ -523,7 +572,7 @@ private fun RuntimeMemoryHeader(
             ) {
                 if (detailTitle != null) {
                     RuntimeIconTooltip(stringResource(R.string.memory_scripts_back)) {
-                        IconButton(onClick = onDetailBack) {
+                        IconButton(onClick = onDetailBack, enabled = !navigationLocked) {
                             Icon(painterResource(R.drawable.ic_arrow_back),
                                 stringResource(R.string.memory_scripts_back))
                         }
@@ -541,18 +590,19 @@ private fun RuntimeMemoryHeader(
                             else Modifier.widthIn(max = titleMaxWidth),
                     )
                     if (inlineNavigation) {
-                        RuntimeMemoryTabs(state, onTab, Modifier.weight(1f))
+                        RuntimeMemoryTabs(state, onTab, Modifier.weight(1f), navigationLocked)
                     } else Spacer(Modifier.weight(1f))
                 }
                 RuntimeIconTooltip(stringResource(R.string.memory_editor_minimize)) {
-                    IconButton(onClick = onMinimize) {
+                    IconButton(onClick = onMinimize, enabled = !navigationLocked) {
                         Icon(painterResource(R.drawable.ic_remove),
                             stringResource(R.string.memory_editor_minimize))
                     }
                 }
             }
         }
-        if (detailTitle == null && !inlineNavigation) RuntimeMemoryTabs(state, onTab)
+        if (detailTitle == null && !inlineNavigation)
+            RuntimeMemoryTabs(state, onTab, navigationLocked = navigationLocked)
     }
 }
 
@@ -561,6 +611,7 @@ private fun RuntimeMemoryTabs(
     state: MemoryEditorUiState,
     onTab: (MemoryEditorTab) -> Unit,
     modifier: Modifier = Modifier,
+    navigationLocked: Boolean = false,
 ) {
     val destinations = listOf(
         MemoryEditorTab.RESULTS, MemoryEditorTab.VARIABLES, MemoryEditorTab.SCRIPTS,
@@ -580,6 +631,7 @@ private fun RuntimeMemoryTabs(
             })
             Tab(
                 selected = state.activeTab == tab,
+                enabled = !navigationLocked,
                 onClick = { onTab(tab) },
                 modifier = Modifier.semantics { contentDescription = description },
                 text = {
