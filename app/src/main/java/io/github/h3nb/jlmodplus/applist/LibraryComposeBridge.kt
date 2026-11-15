@@ -414,6 +414,8 @@ interface LibraryActions {
     fun onInstallFolder() = Unit
     fun onImportAppBundle() = Unit
     fun onOpenApp(appId: Int)
+    /** Resolve a Room ID to the current host ID only when an all-apps search action is invoked. */
+    fun resolveAppUiId(databaseId: Long): Int? = null
     fun onAddShortcut(appId: Int)
     fun onRename(appId: Int, title: String)
     fun onOpenAppSettings(appId: Int)
@@ -1554,6 +1556,7 @@ fun LibraryScreen(
                     appActionsCollectionId = null
                 },
                 onFavorite = actions::onFavorite,
+                resolveUiId = actions::resolveAppUiId,
                 modifier = Modifier.fillMaxSize().zIndex(2f),
             )
         }
@@ -2132,6 +2135,7 @@ private fun LibrarySearchOverlay(
     onOpenApp: (Int) -> Unit,
     onOpenActions: (LibraryAppUiItem) -> Unit,
     onFavorite: (Int, Boolean) -> Unit,
+    resolveUiId: (Long) -> Int? = { null },
     modifier: Modifier = Modifier,
 ) {
     var query by rememberSaveable(state.libraryScope) { mutableStateOf("") }
@@ -2245,9 +2249,18 @@ private fun LibrarySearchOverlay(
                 items(visibleResults, key = { it.databaseId }) { app ->
                     LibraryListItem(
                         app = app,
-                        onOpenApp = onOpenApp,
-                        onOpenActions = onOpenActions,
-                        onFavorite = onFavorite,
+                        onOpenApp = { id ->
+                            val resolved = resolveUiId(app.databaseId) ?: id.takeIf { it != 0 }
+                            if (resolved != null) onOpenApp(resolved)
+                        },
+                        onOpenActions = { item ->
+                            val resolved = resolveUiId(item.databaseId) ?: item.id.takeIf { it != 0 }
+                            if (resolved != null) onOpenActions(item.copy(id = resolved))
+                        },
+                        onFavorite = { id, favorite ->
+                            val resolved = resolveUiId(app.databaseId) ?: id.takeIf { it != 0 }
+                            if (resolved != null) onFavorite(resolved, favorite)
+                        },
                         controllerFocused = false,
                         favoriteEnabled = state.databaseControlsReady,
                         selectionMode = false,
