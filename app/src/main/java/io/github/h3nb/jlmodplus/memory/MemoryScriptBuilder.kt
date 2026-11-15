@@ -310,7 +310,7 @@ internal fun MemoryScriptBuilderScreen(
                                     ), contentDescription = null)
                                 }
                                 AnimatedVisibility(showLimits) {
-                                    Row(horizontalArrangement = Arrangement.spacedBy(8.dp)) {
+                                    Column(verticalArrangement = Arrangement.spacedBy(8.dp)) {
                                     OutlinedTextField(
                                         value = item.min,
                                         onValueChange = { changed ->
@@ -323,7 +323,7 @@ internal fun MemoryScriptBuilderScreen(
                                         },
                                         label = { Text(stringResource(R.string.memory_builder_min)) },
                                         enabled = !saving,
-                                        singleLine = true, modifier = Modifier.weight(1f),
+                                        singleLine = true, modifier = Modifier.fillMaxWidth(),
                                     )
                                     OutlinedTextField(
                                         value = item.max,
@@ -337,7 +337,7 @@ internal fun MemoryScriptBuilderScreen(
                                         },
                                         label = { Text(stringResource(R.string.memory_builder_max)) },
                                         enabled = !saving,
-                                        singleLine = true, modifier = Modifier.weight(1f),
+                                        singleLine = true, modifier = Modifier.fillMaxWidth(),
                                     )
                                 }
                                 }
