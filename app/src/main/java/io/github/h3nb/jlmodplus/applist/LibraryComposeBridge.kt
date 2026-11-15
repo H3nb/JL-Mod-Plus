@@ -91,7 +91,6 @@ import androidx.compose.foundation.lazy.rememberLazyListState
 import androidx.compose.foundation.pager.HorizontalPager
 import androidx.compose.foundation.pager.rememberPagerState
 import androidx.compose.foundation.rememberScrollState
-import androidx.compose.foundation.shape.CircleShape
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.foundation.verticalScroll
 import io.github.h3nb.jlmodplus.ui.AdaptiveAlertDialog as AlertDialog
@@ -3323,13 +3322,6 @@ private fun LibraryGridItem(
                         .align(Alignment.TopStart)
                         .clearAndSetSemantics { },
                 )
-            } else {
-                LibraryAppActionsButton(
-                    app = app,
-                    onOpenActions = onOpenActions,
-                    overArtwork = true,
-                    modifier = Modifier.align(Alignment.TopEnd),
-                )
             }
         }
         if (!hideTitle) {
@@ -3572,38 +3564,16 @@ internal fun LibraryDescription(descriptionValue: String, appId: Long) {
 private fun LibraryAppActionsButton(
     app: LibraryAppUiItem,
     onOpenActions: (LibraryAppUiItem) -> Unit,
-    modifier: Modifier = Modifier,
-    overArtwork: Boolean = false,
 ) {
-    val label = stringResource(R.string.profile_more_actions, app.title)
     IconButton(
         onClick = { onOpenActions(app) },
-        modifier = modifier.size(48.dp),
+        modifier = Modifier.size(48.dp),
     ) {
-        if (overArtwork) {
-            Box(
-                modifier = Modifier
-                    .size(24.dp)
-                    .background(
-                        MaterialTheme.colorScheme.surface.copy(alpha = 0.88f),
-                        CircleShape,
-                    ),
-                contentAlignment = Alignment.Center,
-            ) {
-                Icon(
-                    painter = painterResource(R.drawable.ic_more_vert),
-                    contentDescription = label,
-                    modifier = Modifier.size(16.dp),
-                    tint = MaterialTheme.colorScheme.onSurface,
-                )
-            }
-        } else {
-            Icon(
-                painter = painterResource(R.drawable.ic_more_vert),
-                contentDescription = label,
-                tint = MaterialTheme.colorScheme.onSurfaceVariant,
-            )
-        }
+        Icon(
+            painter = painterResource(R.drawable.ic_more_vert),
+            contentDescription = stringResource(R.string.profile_more_actions, app.title),
+            tint = MaterialTheme.colorScheme.onSurfaceVariant,
+        )
     }
 }
 
