@@ -101,7 +101,7 @@
     <string name="library_destination_more">Lainnya</string>
     <string name="library_search_placeholder">Cari aplikasi…</string>
     <string name="library_filter_all">Semua</string>
-    <string name="library_filter_recently_opened">Baru dimainkan</string>
+    <string name="library_filter_recently_opened">Baru dibuka</string>
     <string name="library_filter_recently_added">Baru ditambahkan</string>
     <string name="library_filter_favorites">Favorit</string>
     <string name="library_add_to_favorites_action">Tambahkan ke favorit</string>
@@ -452,7 +452,7 @@
     <string name="library_import_invalid_bundle">Bundel yang dipilih tidak valid, rusak, atau tidak didukung. Pilih bundel JL-Mod Plus yang valid lalu coba lagi.</string>
     <string name="library_import_restore_existing">Aplikasi ini sudah terpasang. Jika bundel menyertakan pengaturan atau data simpanan, data tersebut akan mengganti data terkait yang sudah ada.</string>
     <string name="library_import_restore_failed">Aplikasi sudah terpasang, tetapi data bundel gagal dipulihkan. Coba pulihkan lagi?</string>
-    <string name="library_play_stats_summary">Dimainkan: %1$d kali · Waktu total: %2$s</string>
+    <string name="library_play_stats_summary">Dibuka: %1$d kali · Waktu total: %2$s</string>
     <string name="library_share_chooser_title">Bagikan aplikasi</string>
     <string name="library_export_chooser_title">Ekspor bundel aplikasi</string>
     <string name="library_export_progress">Mengekspor… %1$d/%2$d</string>
