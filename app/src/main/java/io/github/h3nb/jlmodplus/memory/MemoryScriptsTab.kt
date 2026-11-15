@@ -123,10 +123,8 @@ internal fun RuntimeScriptsTab(
     onSelectedId: (String?) -> Unit,
     draft: MemoryScriptDraft?,
     onDraft: (MemoryScriptDraft?) -> Unit,
-    onBackFromEditor: () -> Unit,
     builder: MemoryScriptBuilderDraft?,
     onBuilder: (MemoryScriptBuilderDraft?) -> Unit,
-    onBackFromBuilder: () -> Unit,
     choosingType: Boolean,
     onChoosingTypeChange: (Boolean) -> Unit,
     initialTargets: List<MemoryScriptBuilderAction>,
@@ -183,7 +181,6 @@ internal fun RuntimeScriptsTab(
         MemoryScriptBuilderScreen(
             draft = builder, state = state, actions = actions,
             onDraft = { onBuilder(it) },
-            onBack = onBackFromBuilder,
             onSaved = {
                 onSelectedId(it)
                 onBuilder(null)
@@ -221,7 +218,6 @@ internal fun RuntimeScriptsTab(
                 onDraft(MemoryScriptDraft(null, "", ""))
                 onTargetsUsed()
             },
-            onBack = cancelTypeChoice,
             modifier = modifier,
         )
         return
@@ -303,7 +299,6 @@ internal fun RuntimeScriptsTab(
     if (selected != null && metadata != null && metadata.mode != "legacy") {
         TypedMemoryRecipeDetail(
             script = selected, metadata = metadata, state = state, actions = actions,
-            onBack = { onSelectedId(null) },
             onEdit = { editScript(selected) },
             onDeleted = { onSelectedId(null) },
             modifier = modifier,
