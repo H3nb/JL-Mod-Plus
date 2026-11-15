@@ -2127,7 +2127,7 @@ private fun RowScope.LibraryNavigationItem(
 
 @OptIn(ExperimentalLayoutApi::class)
 @Composable
-private fun LibrarySearchOverlay(
+internal fun LibrarySearchOverlay(
     state: LibraryUiState,
     apps: List<LibraryAppUiItem>,
     appsPrepared: Boolean,
