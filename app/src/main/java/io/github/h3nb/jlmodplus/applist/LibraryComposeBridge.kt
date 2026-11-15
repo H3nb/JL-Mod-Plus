@@ -804,6 +804,7 @@ fun LibraryScreen(
     val appsListState = appsViewport.listState
     val appsGridState = appsViewport.gridState
     val showInstallFab = appsViewport.chromeVisible
+    var searchOpen by rememberSaveable { mutableStateOf(false) }
     val isImeVisible = WindowInsets.isImeVisible
     val scaffoldInsets = WindowInsets.safeDrawing
         .exclude(WindowInsets.ime)
@@ -834,7 +835,7 @@ fun LibraryScreen(
             selectedCollectionMatchesLibrary &&
             navigationState.collectionManageApps
     val selectionActiveHere =
-        selectionState.isActive && selectionMatchesDestination && !collectionManageAppsActive
+        selectionState.isActive && selectionMatchesDestination && !collectionManageAppsActive && !searchOpen
     val currentNavigationState by rememberUpdatedState(navigationState)
     val currentControllerState by rememberUpdatedState(state)
     val currentControllerDestination by rememberUpdatedState(destination)
@@ -855,8 +856,9 @@ fun LibraryScreen(
     val currentControllerOtherModalVisible by rememberUpdatedState(
         renameTarget != null || metadataTarget != null || deleteTarget != null ||
             infoDialog != null || pendingBulkDeleteIds != null || auxiliaryPageOnScreen ||
-            updatePrompt != null,
+            updatePrompt != null || searchOpen,
     )
+    val currentControllerSearchOpen by rememberUpdatedState(searchOpen)
 
     LaunchedEffect(state.generation, state.databaseControlsReady) {
         if (!state.databaseControlsReady) return@LaunchedEffect
@@ -1141,6 +1143,7 @@ fun LibraryScreen(
                         currentControllerAboutPageVisible -> aboutPageVisible = false
                         currentControllerUpdatesPageVisible -> updatesPageVisible = false
                         currentControllerSelectionActive -> selectionState = selectionState.clear()
+                        currentControllerSearchOpen -> searchOpen = false
                         currentControllerDestination != LibraryDestination.Apps ->
                             selectDestination(LibraryDestination.Apps)
                         else -> Unit
@@ -1157,6 +1160,13 @@ fun LibraryScreen(
         }
     }
 
+    LaunchedEffect(state.libraryScope) {
+        searchOpen = false
+    }
+    BackHandler(enabled = destination != LibraryDestination.Apps &&
+        (destination == LibraryDestination.More || navigationState.selectedCollectionId == null)) {
+        selectDestination(LibraryDestination.Apps)
+    }
     LaunchedEffect(destination, state.libraryScope) {
         when (destination) {
             LibraryDestination.Apps -> appsViewport.chromeVisible = true
@@ -1203,14 +1213,17 @@ fun LibraryScreen(
         || deleteTarget != null || infoDialog != null || pendingBulkDeleteIds != null
         || auxiliaryPageOnScreen
     val libraryModalVisible = libraryOverlayVisible || updatePrompt != null
-    LaunchedEffect(libraryModalVisible, selectionActiveHere) {
-        onControllerBackAvailabilityChanged(libraryModalVisible || selectionActiveHere)
+    LaunchedEffect(libraryModalVisible, selectionActiveHere, searchOpen, destination) {
+        onControllerBackAvailabilityChanged(
+            libraryModalVisible || selectionActiveHere || searchOpen ||
+                destination != LibraryDestination.Apps,
+        )
     }
     val updateDialogReady = hostResumed && destination == LibraryDestination.Apps &&
         state.databaseControlsReady && !isImeVisible &&
         hostActivity?.isHostDialogVisible() == false && !fragmentDialogVisible &&
         !collectionDialogVisible && !installSourceMenuVisible &&
-        !libraryOverlayVisible && !selectionActiveHere
+        !libraryOverlayVisible && !selectionActiveHere && !searchOpen
     LaunchedEffect(availableUpdate, updateDialogReady, updateRepository?.automaticChecks,
         sessionDismissedUpdate, updateRepository?.channel) {
         val repository = updateRepository
@@ -1285,7 +1298,7 @@ fun LibraryScreen(
                 if (
                     !imeHidesLibraryChrome &&
                     destination == LibraryDestination.Apps &&
-                    !selectionActiveHere
+                    !selectionActiveHere && !searchOpen
                 ) {
                     AnimatedVisibility(
                         modifier = Modifier.windowInsetsPadding(
@@ -1356,6 +1369,13 @@ fun LibraryScreen(
                                         actions.onInstallFolder()
                                     },
                                 )
+                                DropdownMenuItem(
+                                    text = { Text(stringResource(R.string.library_action_import_bundle)) },
+                                    onClick = {
+                                        installSourceMenuVisible = false
+                                        actions.onImportAppBundle()
+                                    },
+                                )
                             }
                         }
                     }
@@ -1416,6 +1436,25 @@ fun LibraryScreen(
                             onRetry = actions::onRetryLibrary,
                             onFabVisibilityChanged = {},
                             onNavigationVisibilityChanged = {},
+                            collections = collectionDialogState?.collections.orEmpty(),
+                            onSelectCollection = { collectionId ->
+                                navigationState = navigationState.copy(
+                                    destination = LibraryDestinationKey.Collections,
+                                    selectedCollectionId = collectionId,
+                                    selectedCollectionScope = state.libraryScope.takeIf(String::isNotEmpty),
+                                    collectionManageApps = false,
+                                )
+                            },
+                            onManageCollections = {
+                                navigationState = navigationState.copy(
+                                    destination = LibraryDestinationKey.Collections,
+                                    selectedCollectionId = null,
+                                    selectedCollectionScope = null,
+                                    collectionManageApps = false,
+                                )
+                            },
+                            onOpenSearch = { searchOpen = true },
+                            onOpenGlobalSettings = { selectDestination(LibraryDestination.More) },
                             active = destination == LibraryDestination.Apps,
                         )
                         LibraryDestination.Collections -> if (collectionsHost != null) {
@@ -1460,6 +1499,7 @@ fun LibraryScreen(
                         }
                         LibraryDestination.More -> LibraryMoreDestination(
                             scaffoldPadding = viewportPadding(),
+                            onBack = { selectDestination(LibraryDestination.Apps) },
                             onImportAppBundle = {
                                 if (currentControllerDestination == LibraryDestination.More) actions.onImportAppBundle()
                             },
@@ -1481,6 +1521,22 @@ fun LibraryScreen(
                             },
                         )
             }
+        }
+
+        if (searchOpen) {
+            LibrarySearchOverlay(
+                state = state,
+                apps = collectionDialogState?.allApps ?: state.apps,
+                appsPrepared = collectionDialogState?.allAppsPrepared ?: !state.loading,
+                onDismiss = { searchOpen = false },
+                onOpenApp = actions::onOpenApp,
+                onOpenActions = { app ->
+                    appActions = app
+                    appActionsCollectionId = null
+                },
+                onFavorite = actions::onFavorite,
+                modifier = Modifier.fillMaxSize().zIndex(2f),
+            )
         }
 
         val auxiliaryPageOffset = with(density) { PAGE_TRAVEL_DP.dp.roundToPx() }
@@ -2072,6 +2128,11 @@ internal fun LibraryAppsDestination(
     onRetry: () -> Unit,
     onFabVisibilityChanged: (Boolean) -> Unit,
     onNavigationVisibilityChanged: (Boolean) -> Unit,
+    collections: List<LibraryCollectionUiItem> = emptyList(),
+    onSelectCollection: (Long) -> Unit = {},
+    onManageCollections: () -> Unit = {},
+    onOpenSearch: () -> Unit = {},
+    onOpenGlobalSettings: () -> Unit = {},
     title: String? = null,
     onBack: (() -> Unit)? = null,
     showQuickViews: Boolean = true,
@@ -2258,6 +2319,11 @@ internal fun LibraryAppsDestination(
             title = title,
             onBack = onBack?.let { back -> { if (currentActive) back() } },
             showQuickViews = showQuickViews && !selectionState.isActive,
+            collections = collections,
+            onSelectCollection = onSelectCollection,
+            onManageCollections = onManageCollections,
+            onOpenSearch = onOpenSearch,
+            onOpenGlobalSettings = onOpenGlobalSettings,
             interactive = interactive,
         )
     }
@@ -2597,8 +2663,14 @@ private fun LibraryAppsHeader(
     title: String? = null,
     onBack: (() -> Unit)? = null,
     showQuickViews: Boolean = true,
+    collections: List<LibraryCollectionUiItem> = emptyList(),
+    onSelectCollection: (Long) -> Unit = {},
+    onManageCollections: () -> Unit = {},
+    onOpenSearch: () -> Unit = {},
+    onOpenGlobalSettings: () -> Unit = {},
     interactive: Boolean = true,
 ) {
+    var scopeMenuVisible by remember { mutableStateOf(false) }
     val sortEntries = stringArrayResource(R.array.pref_app_sort_entries).toList()
     val projectionKey = remember(state) {
         LibraryProjectionKey(state.projectionRevision, state.apps)
@@ -2684,6 +2756,18 @@ private fun LibraryAppsHeader(
                         showDebugMark = BuildConfig.DEBUG,
                         modifier = Modifier.weight(1f),
                     )
+                    IconButton(onClick = onOpenSearch, enabled = titleActionsEnabled) {
+                        Icon(
+                            painter = painterResource(R.drawable.ic_search),
+                            contentDescription = stringResource(R.string.library_search_placeholder),
+                        )
+                    }
+                    IconButton(onClick = onOpenGlobalSettings, enabled = titleActionsEnabled) {
+                        Icon(
+                            painter = painterResource(R.drawable.ic_settings),
+                            contentDescription = stringResource(R.string.action_settings),
+                        )
+                    }
                 }
             }
             if (selectionState.isActive) {
@@ -2726,14 +2810,58 @@ private fun LibraryAppsHeader(
             verticalAlignment = Alignment.CenterVertically,
             horizontalArrangement = Arrangement.spacedBy(8.dp),
         ) {
-            LibrarySearchField(
-                query = query,
-                onQueryChange = onQueryChange,
-                modifier = Modifier.weight(1f),
-                enabled = searchActionsEnabled,
-                onFocusChanged = onSearchFocusChanged,
-                onDismissInput = { dismissFocusRequester.requestFocus() },
-            )
+            Box(modifier = Modifier.weight(1f)) {
+                TextButton(
+                    enabled = searchActionsEnabled,
+                    onClick = { scopeMenuVisible = true },
+                ) {
+                    Icon(
+                        painter = painterResource(R.drawable.ic_apps),
+                        contentDescription = null,
+                        modifier = Modifier.size(20.dp),
+                    )
+                    Spacer(Modifier.width(8.dp))
+                    Text(stringResource(R.string.library_destination_apps))
+                    Icon(
+                        painter = painterResource(R.drawable.ic_arrow_drop_down),
+                        contentDescription = null,
+                    )
+                }
+                DropdownMenu(
+                    expanded = scopeMenuVisible && searchActionsEnabled,
+                    onDismissRequest = { scopeMenuVisible = false },
+                ) {
+                    DropdownMenuItem(
+                        text = { Text(stringResource(R.string.library_destination_apps)) },
+                        onClick = { scopeMenuVisible = false },
+                        leadingIcon = {
+                            Icon(painterResource(R.drawable.ic_apps), contentDescription = null)
+                        },
+                    )
+                    collections.forEach { collection ->
+                        DropdownMenuItem(
+                            text = { Text(collection.name, maxLines = 1, overflow = TextOverflow.Ellipsis) },
+                            onClick = {
+                                scopeMenuVisible = false
+                                onSelectCollection(collection.id)
+                            },
+                            leadingIcon = {
+                                Icon(painterResource(R.drawable.ic_folder), contentDescription = null)
+                            },
+                        )
+                    }
+                    DropdownMenuItem(
+                        text = { Text(stringResource(R.string.library_destination_collections)) },
+                        onClick = {
+                            scopeMenuVisible = false
+                            onManageCollections()
+                        },
+                        leadingIcon = {
+                            Icon(painterResource(R.drawable.ic_settings), contentDescription = null)
+                        },
+                    )
+                }
+            }
             Box {
                 LibrarySortButton(
                     onClick = { onSortVisibilityChanged(true) },
