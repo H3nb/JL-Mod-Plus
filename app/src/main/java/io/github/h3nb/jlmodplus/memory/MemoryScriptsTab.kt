@@ -5,11 +5,15 @@ package io.github.h3nb.jlmodplus.memory
 
 import android.content.ClipboardManager
 import androidx.activity.compose.BackHandler
+import androidx.compose.foundation.BorderStroke
 import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.BoxWithConstraints
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.Row
+import androidx.compose.foundation.layout.Spacer
+import androidx.compose.foundation.layout.heightIn
+import androidx.compose.foundation.layout.width
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.padding
@@ -20,6 +24,8 @@ import androidx.compose.foundation.verticalScroll
 import androidx.compose.material3.Button
 import androidx.compose.material3.Checkbox
 import androidx.compose.material3.HorizontalDivider
+import androidx.compose.material3.FilledTonalButton
+import androidx.compose.material3.Icon
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.OutlinedButton
 import androidx.compose.material3.OutlinedTextField
@@ -38,6 +44,7 @@ import androidx.compose.ui.Modifier
 import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.platform.testTag
 import androidx.compose.ui.res.stringResource
+import androidx.compose.ui.res.painterResource
 import androidx.compose.ui.text.font.FontFamily
 import androidx.compose.ui.text.style.TextOverflow
 import androidx.compose.ui.unit.dp
@@ -233,26 +240,9 @@ internal fun RuntimeScriptsTab(
                 Text(
                     stringResource(if (draft.replacingId == null) R.string.memory_scripts_new
                         else R.string.memory_scripts_edit),
-                    style = MaterialTheme.typography.titleSmall,
+                    style = MaterialTheme.typography.titleMedium,
                     modifier = Modifier.weight(1f),
                 )
-                TextButton(
-                    enabled = !saving && draft.text.isNotBlank() &&
-                        draft.text.toByteArray(Charsets.UTF_8).size <= MemoryEngineContract.MAX_RECIPE_BYTES &&
-                        parsed.isSuccess &&
-                        (draft.replacingId == null || parsed.getOrNull()?.id == draft.replacingId),
-                    onClick = {
-                        saving = true
-                        localError = null
-                        actions.saveMemoryScript(draft.text, draft.replacingId) { success ->
-                            saving = false
-                            if (success) {
-                                onSelectedId(parsed.getOrNull()?.id)
-                                onDraft(null)
-                            } else localError = saveErrorText
-                        }
-                    },
-                ) { Text(stringResource(R.string.memory_scripts_save)) }
             }
             if (!compactEditor) Text(stringResource(R.string.memory_scripts_editor_hint),
                 style = MaterialTheme.typography.bodySmall,
@@ -272,19 +262,41 @@ internal fun RuntimeScriptsTab(
                 enabled = !saving,
                 minLines = if (compactEditor) 2 else 6,
             )
-            Row(verticalAlignment = Alignment.CenterVertically, modifier = Modifier.fillMaxWidth()) {
+            Row(verticalAlignment = Alignment.CenterVertically,
+                horizontalArrangement = Arrangement.spacedBy(8.dp),
+                modifier = Modifier.fillMaxWidth()) {
                 Text("${draft.text.toByteArray(Charsets.UTF_8).size}/${MemoryEngineContract.MAX_RECIPE_BYTES} B",
-                    style = MaterialTheme.typography.labelSmall, modifier = Modifier.weight(1f))
+                    style = MaterialTheme.typography.labelSmall, modifier = Modifier.weight(1f),
+                    color = MaterialTheme.colorScheme.onSurfaceVariant)
                 TextButton(enabled = !saving, onClick = {
                     val clipboard = context.getSystemService(ClipboardManager::class.java)
                     val clip = clipboard?.primaryClip
                     val pasted = if (clip != null && clip.itemCount > 0)
                         clip.getItemAt(0).coerceToText(context)?.toString() else null
-                    if (pasted != null && pasted.toByteArray(Charsets.UTF_8).size <= MemoryEngineContract.MAX_RECIPE_BYTES) {
+                    if (pasted != null &&
+                        pasted.toByteArray(Charsets.UTF_8).size <= MemoryEngineContract.MAX_RECIPE_BYTES) {
                         onDraft(draft.copy(text = pasted))
                         localError = null
                     } else localError = clipboardErrorText
                 }) { Text(stringResource(R.string.memory_scripts_paste)) }
+                Button(
+                    modifier = Modifier.heightIn(min = 48.dp),
+                    enabled = !saving && draft.text.isNotBlank() &&
+                        draft.text.toByteArray(Charsets.UTF_8).size <= MemoryEngineContract.MAX_RECIPE_BYTES &&
+                        parsed.isSuccess &&
+                        (draft.replacingId == null || parsed.getOrNull()?.id == draft.replacingId),
+                    onClick = {
+                        saving = true
+                        localError = null
+                        actions.saveMemoryScript(draft.text, draft.replacingId) { success ->
+                            saving = false
+                            if (success) {
+                                onSelectedId(parsed.getOrNull()?.id)
+                                onDraft(null)
+                            } else localError = saveErrorText
+                        }
+                    },
+                ) { Text(stringResource(R.string.memory_scripts_save)) }
             }
             if (draft.text.isNotBlank()) parsed.exceptionOrNull()?.message?.let {
                 Text(it, color = MaterialTheme.colorScheme.error,
@@ -447,11 +459,17 @@ internal fun RuntimeScriptsTab(
         return
     }
 
-    Column(modifier.fillMaxSize().padding(8.dp), verticalArrangement = Arrangement.spacedBy(8.dp)) {
+    Column(modifier.fillMaxSize().padding(horizontal = 12.dp, vertical = 8.dp),
+        verticalArrangement = Arrangement.spacedBy(12.dp)) {
         Row(modifier = Modifier.fillMaxWidth(), verticalAlignment = Alignment.CenterVertically) {
             Text(stringResource(R.string.memory_scripts_title),
-                style = MaterialTheme.typography.titleMedium, modifier = Modifier.weight(1f))
-            Button(onClick = { onChoosingTypeChange(true) }) {
+                style = MaterialTheme.typography.titleLarge, modifier = Modifier.weight(1f))
+            FilledTonalButton(
+                onClick = { onChoosingTypeChange(true) },
+                modifier = Modifier.heightIn(min = 48.dp),
+            ) {
+                Icon(painterResource(R.drawable.ic_add), contentDescription = null)
+                Spacer(Modifier.width(6.dp))
                 Text(stringResource(R.string.memory_scripts_new))
             }
         }
@@ -460,20 +478,27 @@ internal fun RuntimeScriptsTab(
                 style = MaterialTheme.typography.bodySmall)
         }
         if (state.scripts.isEmpty()) {
-            Column(Modifier.fillMaxWidth().weight(1f),
-                verticalArrangement = Arrangement.spacedBy(8.dp)) {
-                Text(stringResource(R.string.memory_scripts_empty),
-                    style = MaterialTheme.typography.titleSmall)
-                Text(stringResource(R.string.memory_scripts_paste_hint),
-                    color = MaterialTheme.colorScheme.onSurfaceVariant,
-                    style = MaterialTheme.typography.bodySmall)
-                OutlinedButton(onClick = { onChoosingTypeChange(true) }) {
-                    Text(stringResource(R.string.memory_scripts_new))
+            Column(
+                Modifier.fillMaxWidth().weight(1f).padding(horizontal = 16.dp, vertical = 24.dp),
+                verticalArrangement = Arrangement.spacedBy(8.dp),
+                horizontalAlignment = Alignment.CenterHorizontally,
+            ) {
+                Surface(shape = MaterialTheme.shapes.extraLarge,
+                    color = MaterialTheme.colorScheme.secondaryContainer) {
+                    Icon(painterResource(R.drawable.ic_auto_mode), contentDescription = null,
+                        modifier = Modifier.padding(16.dp),
+                        tint = MaterialTheme.colorScheme.onSecondaryContainer)
                 }
+                Text(stringResource(R.string.memory_scripts_empty),
+                    style = MaterialTheme.typography.titleMedium)
+                Text(stringResource(R.string.memory_scripts_empty_hint),
+                    color = MaterialTheme.colorScheme.onSurfaceVariant,
+                    style = MaterialTheme.typography.bodyMedium,
+                    textAlign = androidx.compose.ui.text.style.TextAlign.Center)
             }
         } else {
             LazyColumn(Modifier.fillMaxWidth().weight(1f),
-                verticalArrangement = Arrangement.spacedBy(6.dp)) {
+                verticalArrangement = Arrangement.spacedBy(8.dp)) {
                 items(state.scripts, key = MemoryScriptRow::id) { script ->
                     val scriptMetadata = remember(script.document) {
                         runCatching { memoryScriptMetadata(script.document) }.getOrNull()
@@ -481,14 +506,23 @@ internal fun RuntimeScriptsTab(
                     var launching by remember(script.id, state.runtimeToken) { mutableStateOf(false) }
                     val active = state.scriptActiveFreezes.any { it.first == script.id }
                     Surface(modifier = Modifier.fillMaxWidth().clickable { onSelectedId(script.id) },
-                        shape = MaterialTheme.shapes.medium,
-                        color = MaterialTheme.colorScheme.surfaceContainer) {
+                        shape = MaterialTheme.shapes.large,
+                        color = MaterialTheme.colorScheme.surfaceContainerLow,
+                        border = BorderStroke(1.dp, MaterialTheme.colorScheme.outlineVariant)) {
                         Row(Modifier.fillMaxWidth().padding(12.dp),
                             verticalAlignment = Alignment.CenterVertically,
-                            horizontalArrangement = Arrangement.spacedBy(8.dp)) {
+                            horizontalArrangement = Arrangement.spacedBy(12.dp)) {
+                            val icon = when (scriptMetadata?.mode) {
+                                "toggle" -> R.drawable.ic_lock
+                                "form" -> R.drawable.ic_memory_editor_edit_value
+                                else -> R.drawable.ic_auto_mode
+                            }
+                            Icon(painterResource(icon), contentDescription = null,
+                                tint = MaterialTheme.colorScheme.onSurfaceVariant)
                             Column(Modifier.weight(1f),
-                                verticalArrangement = Arrangement.spacedBy(4.dp)) {
-                                Text(script.name, style = MaterialTheme.typography.titleSmall)
+                                verticalArrangement = Arrangement.spacedBy(2.dp)) {
+                                Text(script.name, style = MaterialTheme.typography.titleSmall,
+                                    maxLines = 1, overflow = TextOverflow.Ellipsis)
                                 val modeLabel = scriptMetadata?.mode?.let {
                                     recipeModeLabel(it, context)
                                 } ?: script.id
@@ -500,7 +534,7 @@ internal fun RuntimeScriptsTab(
                                 scriptMetadata?.description?.takeIf(String::isNotBlank)?.let {
                                     Text(it, style = MaterialTheme.typography.bodySmall,
                                         color = MaterialTheme.colorScheme.onSurfaceVariant,
-                                        maxLines = 2, overflow = TextOverflow.Ellipsis)
+                                        maxLines = 1, overflow = TextOverflow.Ellipsis)
                                 }
                             }
                             when (scriptMetadata?.mode) {
