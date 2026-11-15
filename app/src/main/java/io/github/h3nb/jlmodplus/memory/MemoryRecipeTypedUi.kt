@@ -45,7 +45,6 @@ internal fun TypedMemoryRecipeDetail(
     metadata: MemoryScriptMetadata,
     state: MemoryEditorUiState,
     actions: MemoryEditorActions,
-    onBack: () -> Unit,
     onEdit: () -> Unit,
     onDeleted: () -> Unit,
     modifier: Modifier = Modifier,
