@@ -92,8 +92,9 @@ freeze timing or polling cadence. It makes no frame-time or allocation claim.
   independent opaque layers obscuring the live game. Keep numeric values legible
   and truncate only secondary source summaries. Technical values and identifiers
   use a readable monospace style; prose uses the normal Material text family.
-  A selected-action bar overlays the list rather than resizing its viewport,
-  with sufficient scroll padding to reach the last result.
+  A single-row selected-action bar overlays the list rather than resizing
+  its viewport, with width-sensitive overflow and enough scroll padding
+  to reach the last result even in short landscape windows.
 - Input dialogs use one scroll owner. In wide windows, title/controls and keypad
   sit side by side. Otherwise they stack. The title participates in body scrolling;
   confirmation/cancel remain outside it. Large fonts favor scrolling over smaller keys.
