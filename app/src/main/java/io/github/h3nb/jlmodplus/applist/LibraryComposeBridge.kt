@@ -1138,7 +1138,7 @@ fun LibraryScreen(
                         currentControllerAboutPageVisible -> aboutPageVisible = false
                         currentControllerUpdatesPageVisible -> updatesPageVisible = false
                         currentControllerSelectionActive -> selectionState = selectionState.clear()
-                        currentControllerSearchOpen -> searchOpen = false
+                        currentControllerSearchOpen -> Unit // The Search surface owns its Back/IME order.
                         currentControllerDestination != LibraryDestination.Apps ->
                             selectDestination(LibraryDestination.Apps)
                         else -> Unit
@@ -2058,6 +2058,9 @@ internal fun LibrarySearchOverlay(
     var controllerFocusVisible by remember { mutableStateOf(false) }
     val currentResults by rememberUpdatedState(visibleResults.orEmpty())
     val currentActionsBlocked by rememberUpdatedState(actionsBlocked)
+    val currentImeVisible by rememberUpdatedState(imeVisible)
+    val currentFieldFocused by rememberUpdatedState(fieldFocused)
+    val currentOnDismiss by rememberUpdatedState(onDismiss)
     val currentOpenApp by rememberUpdatedState(onOpenApp)
     val currentOpenActions by rememberUpdatedState(onOpenActions)
     val currentResolveUiId by rememberUpdatedState(resolveUiId)
@@ -2071,6 +2074,15 @@ internal fun LibrarySearchOverlay(
     LaunchedEffect(controllerEvents) {
         controllerEvents?.collect { event ->
             if (currentActionsBlocked) return@collect
+            if (event.command == LibraryControllerCommand.Back) {
+                if (currentImeVisible || currentFieldFocused) {
+                    keyboard?.hide()
+                    closeFocus.requestFocus()
+                } else {
+                    currentOnDismiss()
+                }
+                return@collect
+            }
             val entries = currentResults
             if (entries.isEmpty()) return@collect
             val currentIndex = entries.indexOfFirst { it.databaseId == focusedDatabaseId }
