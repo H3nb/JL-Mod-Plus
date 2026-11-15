@@ -21,33 +21,10 @@ internal object MemoryRecipeGenerator {
         locator: Bundle, midletClass: String, id: String, value: String,
         label: String = "Saved automation",
     ): String {
-        require(locator.getInt("savedSchema") == 2) { "Unsupported Saved descriptor version" }
-        val rootKind = when (locator.getInt("savedRootKind")) {
-            1 -> "midlet"
-            2 -> "displayable"
-            3 -> "initializedStatic"
-            else -> error("Invalid Saved root")
-        }
-        val rootClass = locator.getString("savedRootClass").orEmpty().replace('.', '/')
-        require(rootClass.isNotEmpty() && midletClass.isNotBlank())
+        require(midletClass.isNotBlank())
+        val target = targetFromSaved(locator)
         val segments = locator.getParcelableArrayList<Bundle>("savedSteps").orEmpty()
-        require(segments.isNotEmpty() && segments.size <= 24)
-        val steps = segments.map { step ->
-            when (step.getInt("kind")) {
-                1 -> JsonObject(mapOf(
-                    "kind" to JsonPrimitive("field"),
-                    "owner" to JsonPrimitive(step.getString("owner").orEmpty().replace('.', '/')),
-                    "name" to JsonPrimitive(step.getString("name").orEmpty()),
-                    "descriptor" to JsonPrimitive(descriptor(step.getString("type").orEmpty())),
-                ))
-                2 -> JsonObject(mapOf(
-                    "kind" to JsonPrimitive("index"),
-                    "descriptor" to JsonPrimitive(descriptor(step.getString("arrayType").orEmpty())),
-                    "index" to JsonPrimitive(step.getInt("index")),
-                ))
-                else -> error("Invalid Saved step")
-            }
-        }
+        val steps = target.getValue("path") as JsonArray
         val terminal = segments.last()
         val type = if (terminal.getInt("kind") == 1) terminal.getString("type").orEmpty()
             else terminal.getString("arrayType").orEmpty().let {
@@ -83,12 +60,10 @@ internal object MemoryRecipeGenerator {
         }
         require(numeric in bounds) { "Value exceeds the selected variable type" }
 
-        val root = JsonObject(mapOf(
-            "kind" to JsonPrimitive(rootKind), "class" to JsonPrimitive(rootClass),
-        ))
+        val root = target.getValue("root")
         val action = JsonObject(mapOf(
             "kind" to JsonPrimitive("set"),
-            "path" to JsonArray(steps),
+            "path" to steps,
             "value" to JsonPrimitive(normalized),
         ))
         return JsonObject(mapOf(
@@ -104,21 +79,48 @@ internal object MemoryRecipeGenerator {
     }
 
 
-    private fun targetFromSaved(locator: Bundle, midletClass: String, id: String): JsonObject {
-        val source = Json.parseToJsonElement(fromSaved(locator, midletClass, id, "0")) as JsonObject
-        val action = (source["actions"] as JsonArray).single() as JsonObject
-        return JsonObject(mapOf(
-            "root" to (source["root"] ?: error("Missing Bookmark root")),
-            "path" to (action["path"] ?: error("Missing Bookmark path")),
+    private fun targetFromSaved(locator: Bundle): JsonObject {
+        require(locator.getInt("savedSchema") == 2) { "Unsupported Saved descriptor version" }
+        val rootKind = when (locator.getInt("savedRootKind")) {
+            1 -> "midlet"
+            2 -> "displayable"
+            3 -> "initializedStatic"
+            else -> error("Invalid Saved root")
+        }
+        val rootClass = locator.getString("savedRootClass").orEmpty().replace('.', '/')
+        require(rootClass.isNotEmpty())
+        val segments = locator.getParcelableArrayList<Bundle>("savedSteps").orEmpty()
+        require(segments.isNotEmpty() && segments.size <= 24)
+        val steps = segments.map { step ->
+            when (step.getInt("kind")) {
+                1 -> JsonObject(mapOf(
+                    "kind" to JsonPrimitive("field"),
+                    "owner" to JsonPrimitive(step.getString("owner").orEmpty().replace('.', '/')),
+                    "name" to JsonPrimitive(step.getString("name").orEmpty()),
+                    "descriptor" to JsonPrimitive(descriptor(step.getString("type").orEmpty())),
+                ))
+                2 -> JsonObject(mapOf(
+                    "kind" to JsonPrimitive("index"),
+                    "descriptor" to JsonPrimitive(descriptor(step.getString("arrayType").orEmpty())),
+                    "index" to JsonPrimitive(step.getInt("index")),
+                ))
+                else -> error("Invalid Saved step")
+            }
+        }
+        val root = JsonObject(mapOf(
+            "kind" to JsonPrimitive(rootKind), "class" to JsonPrimitive(rootClass),
         ))
+        val path = JsonArray(steps)
+        primitiveBounds(path)
+        return JsonObject(mapOf("root" to root, "path" to path))
     }
 
     fun fromBookmark(
-        bookmark: SavedVariableRow, locator: Bundle, midletClass: String,
+        bookmark: SavedVariableRow, locator: Bundle,
     ): MemoryScriptBuilderAction = MemoryScriptBuilderAction(
         bookmarkId = bookmark.id,
         label = bookmark.label,
-        originalTarget = targetFromSaved(locator, midletClass, bookmark.id),
+        originalTarget = targetFromSaved(locator),
     )
 
     fun fromBuilder(
@@ -135,7 +137,7 @@ internal object MemoryRecipeGenerator {
         val actions = draft.actions.mapIndexed { index, item ->
             val locator = locators[item.bookmarkId]
                 ?: error("Bookmark " + item.label + " has no verified locator")
-            val target = targetFromSaved(locator, midletClass, item.bookmarkId)
+            val target = targetFromSaved(locator)
             require(target == item.originalTarget) {
                 "Bookmark " + item.label + " was relinked. Remove and add it again to use its new target."
             }
@@ -240,7 +242,7 @@ internal object MemoryRecipeGenerator {
         val lookup = HashMap<Pair<kotlinx.serialization.json.JsonElement, kotlinx.serialization.json.JsonElement>, String?>()
         for ((savedId, locator) in locators) {
             val saved = runCatching {
-                targetFromSaved(locator, midletClass, savedId)
+                targetFromSaved(locator)
             }.getOrNull() ?: continue
             val target = saved.getValue("root") to saved.getValue("path")
             if (target in lookup) lookup[target] = null else lookup[target] = savedId
