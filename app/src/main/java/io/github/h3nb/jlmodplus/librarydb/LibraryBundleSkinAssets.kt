@@ -5,10 +5,9 @@
 package io.github.h3nb.jlmodplus.librarydb
 
 import io.github.h3nb.jlmodplus.config.ConfigAssetFiles
-import io.github.h3nb.jlmodplus.config.ControlSkinStore
+import io.github.h3nb.jlmodplus.config.ControlSkinSetTransfer
 import java.io.File
 import java.io.IOException
-import java.util.UUID
 import kotlinx.serialization.json.Json
 import kotlinx.serialization.json.JsonNull
 import kotlinx.serialization.json.JsonObject
@@ -21,12 +20,10 @@ import kotlinx.serialization.json.jsonObject
  * belong to the local workdir; never export or replace the entire shared asset directory.
  */
 internal object LibraryBundleSkinAssets {
-    private const val META = "skin.json"
-    internal const val MAX_META = 65_536L
+    internal const val MAX_META = ControlSkinSetTransfer.MAX_METADATA_BYTES
     internal const val MAX_LAYOUT_SKIN_BYTES = 16L * 1024L * 1024L
-    internal const val MAX_CONTROL_SKIN_BYTES = 8L * 1024L * 1024L
+    internal const val MAX_CONTROL_SKIN_BYTES = ControlSkinSetTransfer.MAX_ASSET_BYTES
     private val IMAGE_EXTENSIONS = setOf("png", "jpg", "jpeg", "webp", "bmp", "gif", "svg")
-    private val CONTROL_EXTENSIONS = setOf("png", "webp", "svg")
 
     data class References(val screenSkin: String?, val controlSkinId: String?)
 
@@ -41,92 +38,23 @@ internal object LibraryBundleSkinAssets {
     fun validScreenName(name: String): Boolean =
         validLeaf(name) && name.substringAfterLast('.', "").lowercase() in IMAGE_EXTENSIONS
 
-    fun validSetName(name: String): Boolean =
-        name.length in 1..61 && name != "." && name != ".." &&
-            !name.endsWith('.') && name.first().isLetterOrDigit() &&
-            name.all { it.isLetterOrDigit() || it == ' ' || it == '.' ||
-                it == '_' || it == '(' || it == ')' || it == '-' }
+    fun validSetName(name: String): Boolean = ControlSkinSetTransfer.validSetName(name)
 
-    fun validControlName(name: String): Boolean {
-        if (name == META) return true
-        if (!validLeaf(name) || name.substringAfterLast('.', "").lowercase() !in CONTROL_EXTENSIONS) {
-            return false
-        }
-        return ControlSkinStore.validAsset(name.substringBeforeLast('.'))
-    }
+    fun validControlName(name: String): Boolean = ControlSkinSetTransfer.validAssetName(name)
 
     fun screenSkin(workdir: File, name: String?): File? {
         if (name == null || !validScreenName(name)) return null
         return File(File(workdir, "skins"), name).takeIf { it.isFile }
     }
 
-    /** Find one selected global set without ControlSkinStore.list()'s repair/mutation side effects. */
-    fun controlSkin(workdir: File, id: String?): File? {
-        if (!validId(id)) return null
-        val root = File(File(workdir, "skins"), "controls")
-        val matches = root.listFiles()?.filter { it.isDirectory && readSkinId(it) == id }.orEmpty()
-        if (matches.size > 1) throw IOException("Control skin ID is ambiguous")
-        return matches.singleOrNull()
-    }
+    /** Find the selected shared set without metadata repair side effects. */
+    fun controlSkin(workdir: File, id: String?): File? =
+        ControlSkinSetTransfer.findById(workdir, id)
 
-    fun selectedControlFiles(folder: File): List<File> {
-        if (readSkinId(folder) == null) throw IOException("Invalid control skin metadata")
-        val files = folder.listFiles() ?: throw IOException("Cannot read control skin set")
-        if (files.none { it.name == META }) throw IOException("Control skin has no metadata")
-        return files.sortedBy(File::getName).onEach {
-            if (!it.isFile || !validControlName(it.name) ||
-                it.canonicalFile.parentFile != folder.canonicalFile ||
-                it.length() > if (it.name == META) MAX_META else MAX_CONTROL_SKIN_BYTES) {
-                throw IOException("Invalid control skin asset: ${it.name}")
-            }
-        }
-    }
+    fun selectedControlFiles(folder: File): List<File> = ControlSkinSetTransfer.files(folder)
 
-    /** Install selected assets without modifying another game's set or an existing skin ID. */
-    @Synchronized
-    fun importControlSkin(workdir: File, source: File, sourceName: String?): String {
-        val sourceId = readSkinId(source) ?: throw IOException("Imported control skin is invalid")
-        val files = selectedControlFiles(source)
-        val original = controlSkin(workdir, sourceId)
-        if (original != null && sameFiles(files, original)) return sourceId
-
-        val root = File(File(workdir, "skins"), "controls")
-        // A previous import may have assigned this same set a different UUID
-        // because the original source UUID collided with a local set.
-        root.listFiles()?.sortedBy(File::getName)?.firstOrNull { candidate ->
-            candidate.isDirectory && readSkinId(candidate) != null &&
-                runCatching { sameFiles(files, candidate) }.getOrDefault(false)
-        }?.let { existing -> return readSkinId(existing)!! }
-
-        val installedId = if (original == null) sourceId else UUID.randomUUID().toString()
-        if (!root.isDirectory && !root.mkdirs()) throw IOException("Cannot create control skin directory")
-        val sourceLabel = sourceName?.takeIf(::validSetName) ?: "Imported control skin"
-        var targetName = sourceLabel
-        var number = 2
-        while (root.listFiles()?.any { it.name.equals(targetName, ignoreCase = true) } == true) {
-            val suffix = " ($number)"
-            targetName = sourceLabel.take(61 - suffix.length).trimEnd(' ', '.') + suffix
-            number++
-        }
-        val staging = File(root, ".skin-${UUID.randomUUID()}.tmp")
-        val target = File(root, targetName)
-        if (!staging.mkdir()) throw IOException("Cannot stage imported control skin")
-        try {
-            files.filterNot { it.name == META }.forEach { sourceFile ->
-                sourceFile.copyTo(File(staging, sourceFile.name))
-            }
-            val oldMeta = Json.parseToJsonElement(File(source, META).readText()).jsonObject
-            File(staging, META).writeText(
-                JsonObject(oldMeta + ("id" to JsonPrimitive(installedId))).toString(),
-            )
-            if (target.exists() || !staging.renameTo(target)) {
-                throw IOException("Cannot publish imported control skin")
-            }
-            return installedId
-        } finally {
-            if (staging.exists()) staging.deleteRecursively()
-        }
-    }
+    fun importControlSkin(workdir: File, source: File, sourceName: String?): String =
+        ControlSkinSetTransfer.install(workdir, source, sourceName)
 
     /**
      * Configuration-only import does not bring global assets with it. Missing references become
@@ -210,54 +138,6 @@ internal object LibraryBundleSkinAssets {
             matches()
         }
     }
-
-    private fun sameFiles(source: List<File>, existing: File): Boolean {
-        val other = runCatching { selectedControlFiles(existing) }.getOrNull() ?: return false
-        if (source.map(File::getName) != other.map(File::getName)) return false
-        return source.zip(other).all { (a, b) ->
-            if (a.name == META) {
-                val left = Json.parseToJsonElement(a.readText()).jsonObject
-                val right = Json.parseToJsonElement(b.readText()).jsonObject
-                return@all (left - "id") == (right - "id")
-            }
-            if (a.length() != b.length()) return@all false
-            a.inputStream().use { left ->
-                b.inputStream().use { right ->
-                    val first = ByteArray(8192)
-                    val second = ByteArray(8192)
-                    while (true) {
-                        val count = left.read(first)
-                        if (count < 0) return@use right.read() == -1
-                        var offset = 0
-                        while (offset < count) {
-                            val n = right.read(second, offset, count - offset)
-                            if (n < 0) return@use false
-                            offset += n
-                        }
-                        for (i in 0 until count) if (first[i] != second[i]) return@use false
-                    }
-                    @Suppress("UNREACHABLE_CODE")
-                    false
-                }
-            }
-        }
-    }
-
-    private fun readSkinId(folder: File): String? {
-        val file = File(folder, META)
-        if (!file.isFile || file.length() !in 1..MAX_META) return null
-        val id = runCatching {
-            Json.parseToJsonElement(file.readText()).jsonObject.string("id")
-        }.getOrNull()
-        return id?.takeIf(::validId)
-    }
-
-    private fun JsonObject.string(key: String): String? =
-        (get(key) as? JsonPrimitive)?.contentOrNull?.takeIf(String::isNotBlank)
-
-    private fun validId(value: String?): Boolean = value != null && runCatching {
-        UUID.fromString(value).toString() == value
-    }.getOrDefault(false)
 
     private fun validLeaf(name: String): Boolean =
         name.isNotBlank() && name.length <= 120 &&
