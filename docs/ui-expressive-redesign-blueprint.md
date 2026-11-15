@@ -85,7 +85,7 @@ Test row density at 320–360dp width, large font scale, landscape, dialog with 
 
 ## Decision 3: design-system and engineering boundaries
 
-- Target Material 3 `1.5.0-rc01` only after the isolated dependency experiment passes necessary gates. Keep the Compose BOM, Kotlin/compiler, AGP and Adaptive releases unchanged unless a concrete dependency or API requirement demands otherwise.
+- Material 3 `1.5.0-rc01` is **currently blocked** for production: PR #249 CI reports that the transitive `material3-ripple-android:1.5.0-rc01` requires minSdk 24, while JL-Mod Plus requires API 23. Keep the current stable BOM-managed Material 3 for implementation unless a properly supported API-23-compatible release is verified or product support policy is explicitly changed. Do not use `tools:overrideLibrary`, force an older ripple artifact, or silently raise minSdk.
 - Extend `JlModPlusTheme` with Expressive typography, shape/motion tokens and app-owned colors. Preserve accent selection and dark/light contrast; Expressive must not force Android dynamic colors.
 - Evaluate new controls (e.g., split buttons, button groups, expressive menu/list variants) per interaction, not as a blanket replacement. Prefer real labels over icon-only actions when discovery would otherwise suffer.
 - Follow established short directional page transitions and existing controller/Back/IME ownership; do not apply global Expressive animation to the guest renderer or runtime inputs.
@@ -95,7 +95,7 @@ Test row density at 320–360dp width, large font scale, landscape, dialog with 
 
 ## Implementation sequence and refactoring rules
 
-1. **Foundation**: resolve Material 3 RC compatibility in a dedicated PR; inspect dependency graph, compilation, lint, screenshots and representative devices. Separately qualify theme tokens on a contained preview before widespread restyling.
+1. **Foundation**: record the minSdk-23 failure in the dedicated RC experiment (PR #249). Continue with the stable Material 3 foundation and app-owned expressive-inspired tokens; re-qualify 1.5 only when its transitive Android 6 support is proven. Inspect compilation, lint, screenshots and representative devices. Separately qualify theme tokens on a contained preview before widespread restyling.
 2. **Library vertical slice**: Apps list/grid item, visible actions, game actions and return-to-Library path. Make directly affected composables easier to read and test. Keep existing projection, icon cache and viewport owners unless evidence requires otherwise.
 3. **Library consistency**: search, filters, Collections, More, empty/loading/error states, navigation/chrome and adaptive widths; fix interaction inconsistencies surfaced by the slice.
 4. **Config vertical slice**: choose A/B using task prototype, then redesign Basic/Quick setup and shared preference rows, followed by Display/Media/Controls/System. Refactor form-to-UI projection only when profiling or ownership problems justify it.
