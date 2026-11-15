@@ -576,6 +576,7 @@ class LibraryViewportNavigationTest {
         }
         override fun onDismissCollectionMembers() = store.dismissMembers()
         override fun onPrepareCollectionAppPicker() = store.publishAllApps(members)
+        override fun onPrepareSearchApps() = store.publishAllApps(rows(APP_PREFIX, 1))
         override fun onCreateCollection(name: String) = Unit
         override fun onRenameCollection(collectionId: Long, name: String) = Unit
         override fun onDeleteCollection(collectionId: Long) = Unit
