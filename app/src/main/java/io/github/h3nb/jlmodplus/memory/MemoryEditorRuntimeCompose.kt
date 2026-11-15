@@ -9,6 +9,11 @@ package io.github.h3nb.jlmodplus.memory
 
 import androidx.activity.compose.BackHandler
 import androidx.compose.animation.AnimatedContent
+import androidx.compose.animation.AnimatedVisibility
+import androidx.compose.animation.expandVertically
+import androidx.compose.animation.shrinkVertically
+import androidx.compose.animation.fadeIn
+import androidx.compose.animation.fadeOut
 import androidx.compose.animation.togetherWith
 import androidx.compose.foundation.BorderStroke
 import androidx.compose.foundation.background
@@ -24,6 +29,7 @@ import androidx.compose.foundation.layout.FlowRow
 import androidx.compose.foundation.layout.PaddingValues
 import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.Spacer
+import androidx.compose.foundation.layout.width
 import androidx.compose.foundation.layout.WindowInsets
 import androidx.compose.foundation.layout.WindowInsetsSides
 import androidx.compose.foundation.layout.only
@@ -56,6 +62,7 @@ import androidx.compose.material3.CircularProgressIndicator
 import androidx.compose.material3.DropdownMenu
 import androidx.compose.material3.DropdownMenuItem
 import androidx.compose.material3.FilterChip
+import androidx.compose.material3.FilledTonalButton
 import androidx.compose.material3.HorizontalDivider
 import androidx.compose.material3.Icon
 import androidx.compose.material3.IconButton
@@ -365,7 +372,8 @@ internal fun MemoryEditorRuntimeRoot(
                         AnimatedContent(
                             targetState = state,
                             contentKey = { it.activeTab },
-                            modifier = Modifier.weight(1f).fillMaxWidth().clipToBounds(),
+                            modifier = Modifier.weight(1f).fillMaxWidth().clipToBounds()
+                                .background(MaterialTheme.colorScheme.surface.copy(alpha = 0.94f)),
                             transitionSpec = {
                                 val direction = pageMotionDirection(
                                     0, 0, initialState.activeTab.ordinal, targetState.activeTab.ordinal,
@@ -683,151 +691,114 @@ private fun RuntimeSearchResultsTab(
             }
         }
         val quickActions = listOf(
-            RuntimeToolbarAction(R.drawable.ic_search, R.string.memory_editor_search_known_values, state.canSearch) {
+            RuntimeToolbarAction(R.drawable.ic_search,
+                R.string.memory_editor_search_known_values, state.canSearch) {
                 knownDialog = true
             },
             RuntimeToolbarAction(R.drawable.ic_memory_editor_search_unknown,
                 R.string.memory_editor_search_unknown_values, state.canSearch) {
                 unknownDialog = true
             },
-            RuntimeToolbarAction(R.drawable.ic_memory_editor_edit_value, R.string.memory_editor_edit, selectedWriteSupported && !state.busy) {
-                editTargets = selectedRows.map { MemoryEditTarget(it.id, it.primaryType, it.valueText, it.aliasTypes) }
+        )
+        val selectedActions = listOf(
+            RuntimeToolbarAction(R.drawable.ic_memory_editor_edit_value,
+                R.string.memory_editor_edit, selectedWriteSupported && !state.busy) {
+                editTargets = selectedRows.map {
+                    MemoryEditTarget(it.id, it.primaryType, it.valueText, it.aliasTypes)
+                }
                 editRevision = state.revision
             },
-            RuntimeToolbarAction(R.drawable.ic_memory_editor_watch_add, R.string.memory_list_add,
-                selectedRows.isNotEmpty() && !state.busy) { actions.watchSelected(true) },
-            RuntimeToolbarAction(R.drawable.ic_refresh, R.string.memory_editor_refresh,
-                state.results.isNotEmpty() && !state.busy, actions::refresh),
-        )
-        val extraActions = listOf(
-            RuntimeToolbarAction(R.drawable.ic_memory_editor_inspector, R.string.memory_editor_inspect_memory,
-                selectedRows.size == 1 && !state.busy, onInspectSelected),
+            RuntimeToolbarAction(R.drawable.ic_memory_editor_watch_add,
+                R.string.memory_list_add, !state.busy) {
+                actions.watchSelected(true)
+            },
+            RuntimeToolbarAction(R.drawable.ic_memory_editor_inspector,
+                R.string.memory_editor_inspect_memory, selectedRows.size == 1 && !state.busy,
+                onInspectSelected),
             RuntimeToolbarAction(R.drawable.ic_memory_editor_watch_add,
                 R.string.memory_bookmark_relink,
                 relinkingBookmarkId != null && selectedRows.size == 1 && !state.busy) {
                 relinkCandidate = selectedRows.single().id
             },
-            RuntimeToolbarAction(R.drawable.ic_undo, R.string.memory_editor_undo,
-                state.canUndo && !state.busy, actions::undo),
             RuntimeToolbarAction(R.drawable.ic_delete, R.string.memory_editor_remove,
-                selectedRows.isNotEmpty() && !unknownBaseline && !state.busy) {
+                !unknownBaseline && !state.busy) {
                 deleteSnapshot = state.revision to selectedRows.map(MemoryResultRow::id)
             },
         )
-        // Pack actions from the real toolbar width. A 48 dp button is always
-        // preferred over More when it fits; selected actions may appear directly
-        // without moving the five frequent actions in a spacious window.
-        BoxWithConstraints(Modifier.fillMaxWidth().windowInsetsPadding(
-            WindowInsets.safeGestures.only(WindowInsetsSides.Horizontal),
-        )) {
-            val showSummary = compactRows && (state.results.isNotEmpty() || state.resultCount > 0L)
-            val summaryReserve = if (showSummary) {
-                160.dp * LocalDensity.current.fontScale.coerceAtLeast(1f)
-            } else 0.dp
-            val slotCount = ((maxWidth - 16.dp - summaryReserve).value / 48f)
-                .toInt().coerceAtLeast(2)
-            val availableActions = quickActions + extraActions.filter { it.enabled }
-            val directLimit = if (availableActions.size > slotCount) slotCount - 1 else slotCount
-            val primaryActions = if (directLimit >= quickActions.size) {
-                availableActions.take(directLimit)
-            } else {
-                // Prioritize known search, edit and refresh when space is scarce.
-                val priority = listOf(0, 2, 4, 1, 3).take(directLimit)
-                quickActions.filterIndexed { index, _ -> index in priority }
-            }
-            val overflowActions = availableActions.filterNot { it in primaryActions }
-            Row(
-                modifier = Modifier.fillMaxWidth().padding(horizontal = 8.dp),
-                horizontalArrangement = if (compactRows) Arrangement.End else Arrangement.SpaceEvenly,
-                verticalAlignment = Alignment.CenterVertically,
-            ) {
-                if (showSummary) {
-                    RuntimePageSelectionCheckbox(
-                        checked = allVisibleSelected,
-                        enabled = state.results.isNotEmpty() && !state.busy,
-                        description = visibleSelectionDescription,
-                        onToggle = { if (it) actions.selectVisible() else actions.clearSelection() },
-                    )
-                    Column(
-                        modifier = Modifier.weight(1f).padding(start = 4.dp),
+        if (state.sessionStage != MemorySessionStage.EMPTY || state.results.isNotEmpty()) {
+            BoxWithConstraints(Modifier.fillMaxWidth().windowInsetsPadding(
+                WindowInsets.safeGestures.only(WindowInsetsSides.Horizontal),
+            )) {
+                val showExtra = maxWidth >=
+                    480.dp * LocalDensity.current.fontScale.coerceAtLeast(1f)
+                Row(
+                    Modifier.fillMaxWidth().padding(horizontal = 12.dp, vertical = 4.dp),
+                    verticalAlignment = Alignment.CenterVertically,
+                    horizontalArrangement = Arrangement.spacedBy(4.dp),
+                ) {
+                    Text(pluralStringResource(
+                        if (unknownBaseline) R.plurals.memory_editor_candidates
+                        else R.plurals.memory_editor_results,
+                        state.resultCount.coerceAtMost(Int.MAX_VALUE.toLong()).toInt(),
+                        state.resultCount,
+                    ), style = MaterialTheme.typography.titleSmall,
+                        maxLines = 1, overflow = TextOverflow.Ellipsis,
+                        modifier = Modifier.weight(1f))
+                    FilledTonalButton(
+                        onClick = { knownDialog = true }, enabled = state.canSearch,
+                        modifier = Modifier.heightIn(min = 48.dp),
                     ) {
-                        Text(
-                            pluralStringResource(
-                                if (unknownBaseline) R.plurals.memory_editor_candidates
-                                else R.plurals.memory_editor_results,
-                                state.resultCount.coerceAtMost(Int.MAX_VALUE.toLong()).toInt(),
-                                state.resultCount,
-                            ),
-                            style = MaterialTheme.typography.labelLarge,
-                            maxLines = 1,
-                            overflow = TextOverflow.Ellipsis,
-                        )
-                        if (state.selected.isNotEmpty()) {
-                            Text(
-                                pluralStringResource(
-                                    R.plurals.memory_editor_selected,
-                                    state.selected.size, state.selected.size,
-                                ),
-                                style = MaterialTheme.typography.labelSmall,
-                                color = MaterialTheme.colorScheme.primary,
-                                maxLines = 1,
-                                overflow = TextOverflow.Ellipsis,
-                            )
-                        }
+                        Icon(painterResource(R.drawable.ic_search), contentDescription = null)
+                        Spacer(Modifier.width(6.dp))
+                        Text(stringResource(R.string.memory_editor_refine_scan))
                     }
-                } else if (compactRows) {
-                    Spacer(Modifier.weight(1f))
-                }
-                primaryActions.forEach { action ->
-                    RuntimeActionIcon(action.icon, action.label, action.enabled, action.onClick)
-                }
-                if (overflowActions.isNotEmpty()) {
-                    RuntimeActionIcon(R.drawable.ic_more_vert, R.string.more, enabled = !state.busy) {
+                    if (showExtra) {
+                        RuntimeActionIcon(R.drawable.ic_memory_editor_search_unknown,
+                            R.string.memory_editor_search_unknown_values, state.canSearch) {
+                            unknownDialog = true
+                        }
+                        RuntimeActionIcon(R.drawable.ic_refresh,
+                            R.string.memory_editor_refresh,
+                            state.results.isNotEmpty() && !state.busy, actions::refresh)
+                    }
+                    RuntimeActionIcon(R.drawable.ic_more_vert, R.string.more) {
                         moreMenu = true
                     }
                 }
+                if (moreMenu) RuntimeOverflowActionsDialog(
+                    listOf(
+                        RuntimeToolbarAction(R.drawable.ic_search,
+                            R.string.memory_editor_search_known_values, state.canSearch) {
+                            knownDialog = true
+                        },
+                        RuntimeToolbarAction(R.drawable.ic_memory_editor_search_unknown,
+                            R.string.memory_editor_search_unknown_values, state.canSearch) {
+                            unknownDialog = true
+                        },
+                        RuntimeToolbarAction(R.drawable.ic_refresh,
+                            R.string.memory_editor_refresh,
+                            state.results.isNotEmpty() && !state.busy, actions::refresh),
+                        RuntimeToolbarAction(R.drawable.ic_undo, R.string.memory_editor_undo,
+                            state.canUndo && !state.busy, actions::undo),
+                    ),
+                ) { moreMenu = false }
             }
-            LaunchedEffect(overflowActions.isEmpty()) {
-                if (overflowActions.isEmpty()) moreMenu = false
+            AnimatedVisibility(
+                visible = selectedRows.isNotEmpty(),
+                enter = fadeIn() + expandVertically(),
+                exit = fadeOut() + shrinkVertically(),
+            ) {
+                RuntimeSelectedActionBar(
+                    label = pluralStringResource(
+                        R.plurals.memory_editor_selected, selectedRows.size, selectedRows.size,
+                    ),
+                    actions = selectedActions,
+                )
             }
-            if (moreMenu && overflowActions.isNotEmpty()) {
-                RuntimeOverflowActionsDialog(overflowActions) { moreMenu = false }
-            }
+            HorizontalDivider()
         }
-        HorizontalDivider()
 
         LazyColumn(state = listState, modifier = Modifier.weight(1f).fillMaxWidth()) {
-            if (!compactRows && (state.results.isNotEmpty() || state.resultCount > 0)) item(key = "summary") {
-                Row(
-                    modifier = Modifier.fillMaxWidth()
-                        .windowInsetsPadding(WindowInsets.safeGestures.only(WindowInsetsSides.Horizontal))
-                        .padding(horizontal = 12.dp),
-                    verticalAlignment = Alignment.CenterVertically,
-                ) {
-                    RuntimePageSelectionCheckbox(
-                        checked = allVisibleSelected,
-                        enabled = state.results.isNotEmpty() && !state.busy,
-                        description = visibleSelectionDescription,
-                        onToggle = { if (it) actions.selectVisible() else actions.clearSelection() },
-                    )
-                    Column(Modifier.weight(1f)) {
-                        Text(
-                            pluralStringResource(
-                                if (unknownBaseline) R.plurals.memory_editor_candidates else R.plurals.memory_editor_results,
-                                state.resultCount.coerceAtMost(Int.MAX_VALUE.toLong()).toInt(), state.resultCount,
-                            ),
-                            style = MaterialTheme.typography.labelLarge,
-                        )
-                        if (state.selected.isNotEmpty()) {
-                            Text(
-                                pluralStringResource(R.plurals.memory_editor_selected, state.selected.size, state.selected.size),
-                                style = MaterialTheme.typography.labelMedium,
-                                color = MaterialTheme.colorScheme.primary,
-                            )
-                        }
-                    }
-                }
-            }
             if (state.results.isEmpty()) {
                 item(key = "empty") {
                     Column(
@@ -1565,6 +1536,53 @@ private fun RuntimePageSelectionCheckbox(
         onCheckedChange = onToggle,
         modifier = Modifier.semantics { contentDescription = description },
     )
+}
+
+@Composable
+private fun RuntimeSelectedActionBar(
+    label: String,
+    actions: List<RuntimeToolbarAction>,
+) {
+    var showMore by remember { mutableStateOf(false) }
+    BoxWithConstraints(
+        Modifier.fillMaxWidth().background(MaterialTheme.colorScheme.secondaryContainer)
+            .padding(horizontal = 12.dp, vertical = 4.dp),
+    ) {
+        val capacity = if (maxWidth >=
+            600.dp * LocalDensity.current.fontScale.coerceAtLeast(1f)) 4 else 2
+        val available = actions.filter { it.enabled }
+        val count = if (available.size > capacity) capacity - 1 else capacity
+        val direct = available.take(count)
+        val overflow = available.drop(count)
+        Row(
+            Modifier.fillMaxWidth(),
+            verticalAlignment = Alignment.CenterVertically,
+            horizontalArrangement = Arrangement.spacedBy(4.dp),
+        ) {
+            Text(label, style = MaterialTheme.typography.labelMedium,
+                color = MaterialTheme.colorScheme.onSecondaryContainer,
+                modifier = Modifier.weight(1f), maxLines = 1,
+                overflow = TextOverflow.Ellipsis)
+            direct.forEach { action ->
+                val description = stringResource(action.label)
+                TextButton(
+                    onClick = action.onClick, enabled = action.enabled,
+                    modifier = Modifier.heightIn(min = 48.dp)
+                        .semantics { contentDescription = description },
+                ) {
+                    Icon(painterResource(action.icon), contentDescription = null)
+                    Spacer(Modifier.width(4.dp))
+                    Text(description, maxLines = 1)
+                }
+            }
+            if (overflow.isNotEmpty()) RuntimeActionIcon(
+                R.drawable.ic_more_vert, R.string.more,
+            ) { showMore = true }
+        }
+        if (showMore && overflow.isNotEmpty()) {
+            RuntimeOverflowActionsDialog(overflow) { showMore = false }
+        }
+    }
 }
 
 @Composable
