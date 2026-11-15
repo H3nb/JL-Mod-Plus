@@ -1057,24 +1057,16 @@ private fun RuntimeVariablesTab(
     var moreActions by remember { mutableStateOf(false) }
     var recipeDialog by remember { mutableStateOf(false) }
     var recipeSourceKey by remember { mutableStateOf<String?>(null) }
-    val primaryActions = listOf(
+    val selectionActions = listOf(
         RuntimeToolbarAction(R.drawable.ic_memory_editor_edit_value,
             R.string.memory_editor_edit, editEnabled, ::editSelection),
-        RuntimeToolbarAction(R.drawable.ic_refresh,
-            R.string.memory_editor_refresh, !state.busy) {
-            actions.refresh()
-            actions.refreshSavedVariables()
+        RuntimeToolbarAction(R.drawable.ic_auto_mode,
+            R.string.memory_scripts_create_from_bookmarks, canCreateScript) {
+            createScriptError = onCreateScript(scriptBookmarks)
         },
-    )
-    val contextualActions = listOf(
         RuntimeToolbarAction(R.drawable.ic_memory_editor_inspector,
             R.string.memory_editor_inspect_memory, singleReady && !state.busy) {
             single?.let(::inspect)
-        },
-        RuntimeToolbarAction(R.drawable.ic_memory_editor_watch_add,
-            R.string.memory_bookmark_relink,
-            single?.saved != null && !state.busy) {
-            single?.saved?.let { onRelink(it.id) }
         },
         RuntimeToolbarAction(
             if ((single?.watch?.freezeMode ?: -1) >= 0) R.drawable.ic_unlock
@@ -1083,6 +1075,11 @@ private fun RuntimeVariablesTab(
             else R.string.memory_editor_freeze,
             freezeEnabled,
         ) { single?.let(::toggleFreeze) },
+        RuntimeToolbarAction(R.drawable.ic_memory_editor_watch_add,
+            R.string.memory_bookmark_relink,
+            single?.saved != null && !state.busy) {
+            single?.saved?.let { onRelink(it.id) }
+        },
         RuntimeToolbarAction(R.drawable.ic_memory_editor_rename,
             R.string.memory_saved_rename, single != null && !state.busy) {
             renameKey = single?.key
@@ -1091,63 +1088,50 @@ private fun RuntimeVariablesTab(
             R.string.memory_editor_remove, selectedEntries.isNotEmpty() && !state.busy) {
             removeKeys = selectedKeys
         },
-        RuntimeToolbarAction(R.drawable.ic_auto_mode,
-            R.string.memory_scripts_create_from_bookmarks, canCreateScript) {
-            createScriptError = onCreateScript(scriptBookmarks)
-        },
-    ).filter { it.enabled }
-
+    )
     Column(modifier.fillMaxWidth()) {
-        BoxWithConstraints(Modifier.fillMaxWidth().windowInsetsPadding(
-            WindowInsets.safeGestures.only(WindowInsetsSides.Horizontal),
-        )) {
-            // Reserve touch space for select-all and the count; keep frequent actions
-            // in a stable order and move extras to More only when width requires it.
-            val slots = ((maxWidth - 152.dp).value / 48f).toInt().coerceAtLeast(2)
-            val available = primaryActions + contextualActions
-            val directCount = if (available.size > slots) (slots - 1).coerceAtLeast(1)
-                else slots
-            val direct = available.take(directCount)
-            val overflow = available.drop(directCount)
-            Row(
-                Modifier.fillMaxWidth().padding(horizontal = 8.dp),
-                verticalAlignment = Alignment.CenterVertically,
-            ) {
-                val allSelected = entries.isNotEmpty() &&
-                    entries.all { it.key in selectedKeys }
-                RuntimePageSelectionCheckbox(
-                    checked = allSelected,
-                    enabled = entries.isNotEmpty() && !state.busy,
-                    description = stringResource(if (allSelected)
-                        R.string.memory_editor_clear_selection
-                        else R.string.library_selection_select_all),
-                    onToggle = { checked ->
-                        onSelectionChange(if (checked) entries.mapTo(HashSet()) { it.key }
-                            else emptySet())
-                    },
-                )
-                Text(
-                    if (selectedEntries.isNotEmpty()) pluralStringResource(
-                        R.plurals.memory_editor_selected, selectedEntries.size, selectedEntries.size,
-                    ) else stringResource(R.string.memory_variables_tab) + " · " + entries.size,
-                    style = MaterialTheme.typography.titleSmall,
-                    modifier = Modifier.weight(1f).padding(start = 4.dp),
-                    maxLines = 1,
-                    overflow = TextOverflow.Ellipsis,
-                )
-                direct.forEach { RuntimeActionIcon(it.icon, it.label, it.enabled, it.onClick) }
-                if (overflow.isNotEmpty()) {
-                    RuntimeActionIcon(R.drawable.ic_more_vert, R.string.more, !state.busy) {
-                        moreActions = true
-                    }
-                }
+        Row(
+            Modifier.fillMaxWidth().windowInsetsPadding(
+                WindowInsets.safeGestures.only(WindowInsetsSides.Horizontal),
+            ).padding(horizontal = 8.dp, vertical = 4.dp),
+            verticalAlignment = Alignment.CenterVertically,
+        ) {
+            val allSelected = entries.isNotEmpty() &&
+                entries.all { it.key in selectedKeys }
+            RuntimePageSelectionCheckbox(
+                checked = allSelected,
+                enabled = entries.isNotEmpty() && !state.busy,
+                description = stringResource(if (allSelected)
+                    R.string.memory_editor_clear_selection
+                    else R.string.library_selection_select_all),
+                onToggle = { checked ->
+                    onSelectionChange(if (checked) entries.mapTo(HashSet()) { it.key }
+                        else emptySet())
+                },
+            )
+            Text(
+                stringResource(R.string.memory_variables_tab) + " · " + entries.size,
+                style = MaterialTheme.typography.titleSmall,
+                modifier = Modifier.weight(1f).padding(start = 4.dp),
+                maxLines = 1, overflow = TextOverflow.Ellipsis,
+            )
+            RuntimeActionIcon(R.drawable.ic_refresh, R.string.memory_editor_refresh,
+                enabled = !state.busy) {
+                actions.refresh()
+                actions.refreshSavedVariables()
             }
-            LaunchedEffect(overflow.isEmpty()) {
-                if (overflow.isEmpty()) moreActions = false
-            }
-            if (moreActions && overflow.isNotEmpty()) {
-                RuntimeOverflowActionsDialog(overflow) { moreActions = false }
-            }
+        }
+        AnimatedVisibility(
+            visible = selectedEntries.isNotEmpty(),
+            enter = fadeIn() + expandVertically(),
+            exit = fadeOut() + shrinkVertically(),
+        ) {
+            RuntimeSelectedActionBar(
+                label = pluralStringResource(
+                    R.plurals.memory_editor_selected, selectedEntries.size, selectedEntries.size,
+                ),
+                actions = selectionActions,
+            )
         }
         HorizontalDivider()
         createScriptError?.let {
@@ -1548,21 +1532,25 @@ private fun RuntimeSelectedActionBar(
         Modifier.fillMaxWidth().background(MaterialTheme.colorScheme.secondaryContainer)
             .padding(horizontal = 12.dp, vertical = 4.dp),
     ) {
-        val capacity = if (maxWidth >=
-            600.dp * LocalDensity.current.fontScale.coerceAtLeast(1f)) 4 else 2
+        val scale = LocalDensity.current.fontScale.coerceAtLeast(1f)
+        val capacity = when {
+            maxWidth >= 600.dp * scale -> 5
+            maxWidth >= 340.dp * scale -> 3
+            else -> 2
+        }
         val available = actions.filter { it.enabled }
         val count = if (available.size > capacity) capacity - 1 else capacity
         val direct = available.take(count)
         val overflow = available.drop(count)
-        Row(
-            Modifier.fillMaxWidth(),
-            verticalAlignment = Alignment.CenterVertically,
-            horizontalArrangement = Arrangement.spacedBy(4.dp),
-        ) {
+        Column(Modifier.fillMaxWidth()) {
             Text(label, style = MaterialTheme.typography.labelMedium,
                 color = MaterialTheme.colorScheme.onSecondaryContainer,
-                modifier = Modifier.weight(1f), maxLines = 1,
-                overflow = TextOverflow.Ellipsis)
+                maxLines = 1, overflow = TextOverflow.Ellipsis)
+            Row(
+                Modifier.fillMaxWidth(),
+                verticalAlignment = Alignment.CenterVertically,
+                horizontalArrangement = Arrangement.spacedBy(4.dp),
+            ) {
             direct.forEach { action ->
                 val description = stringResource(action.label)
                 TextButton(
@@ -1578,6 +1566,7 @@ private fun RuntimeSelectedActionBar(
             if (overflow.isNotEmpty()) RuntimeActionIcon(
                 R.drawable.ic_more_vert, R.string.more,
             ) { showMore = true }
+            }
         }
         if (showMore && overflow.isNotEmpty()) {
             RuntimeOverflowActionsDialog(overflow) { showMore = false }
