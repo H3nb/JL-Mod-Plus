@@ -546,13 +546,10 @@ public class MemoryRecipeInstrumentedTest {
         assertEquals(MemoryEngineContract.RESULT_OK, status(bridge.resolveSavedLocator(
             TOKEN, counterLocator(0), bookmarkId, 0L)));
 
-        String bookmarkAction = "{\"kind\":\"set\",\"path\":["
-            + field(ROOT, "counters", "[I")
-            + ",{\"kind\":\"index\",\"descriptor\":\"[I\",\"index\":0}],\"value\":65}";
-        String automation = recipe(bookmarkAction).replace(
-            "\"id\":\"test.memory\"", "\"id\":\"saved." + bookmarkId + "\"");
+        String automation = MemoryRecipeGenerator.INSTANCE.fromSaved(
+            counterLocator(0), Root.class.getName(), bookmarkId, "65");
         assertEquals(MemoryEngineContract.RESULT_OK, status(bridge.runMemoryRecipe(
-            TOKEN, automation, inputs(0, 1, 100), true, false)));
+            TOKEN, automation, new Bundle(), true, false)));
 
         String scriptAction = "{\"kind\":\"set\",\"path\":["
             + field(ROOT, "coins", "I") + "],\"value\":700}";
