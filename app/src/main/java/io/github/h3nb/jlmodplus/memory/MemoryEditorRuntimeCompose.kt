@@ -273,18 +273,18 @@ internal fun MemoryEditorRuntimeRoot(
         val scriptSavePending = pendingScriptSave != null
         var scriptDiscardMode by remember { mutableStateOf<String?>(null) }
         val backFromScriptEditor = {
-            if (!scriptSavePending) {
+            if (pendingScriptSave == null) {
                 if (scriptDraft?.dirty == true) scriptDiscardMode = "json"
                 else setScriptDraft(null)
             }
         }
         val backFromScriptBuilder = {
-            if (!scriptSavePending) {
+            if (pendingScriptSave == null) {
                 if (scriptBuilder?.hasChanges == true) scriptDiscardMode = "builder"
                 else scriptBuilder = null
             }
         }
-        val closeWorkspace = { if (!scriptSavePending) actions.close() }
+        val closeWorkspace = { if (pendingScriptSave == null) actions.close() }
         val resultsListState = rememberLazyListState()
         val variablesListState = rememberLazyListState()
         var relinkingBookmarkId by rememberSaveable(state.runtimeToken) {
@@ -338,7 +338,7 @@ internal fun MemoryEditorRuntimeRoot(
             }
         }
         val selectTab: (MemoryEditorTab) -> Unit = {
-            if (!scriptSavePending) when (it) {
+            if (pendingScriptSave == null) when (it) {
                 MemoryEditorTab.RESULTS -> actions.setVariablesTab(false)
                 MemoryEditorTab.VARIABLES -> actions.setVariablesTab(true)
                 MemoryEditorTab.SCRIPTS -> actions.setScriptsTab()
@@ -351,7 +351,7 @@ internal fun MemoryEditorRuntimeRoot(
                 (scriptDraft != null || scriptBuilder != null || selectedScriptId != null)) ||
             (state.variablesTab && listSelection.isNotEmpty())) {
             when {
-                scriptSavePending -> Unit
+                pendingScriptSave != null -> Unit
                 overlay.peeking -> overlay.peeking = false
                 tab == MemoryEditorTab.INSPECTOR -> actions.closeInspector()
                 tab == MemoryEditorTab.SCRIPTS && scriptDraft != null -> backFromScriptEditor()
@@ -416,7 +416,7 @@ internal fun MemoryEditorRuntimeRoot(
                                 navigationLocked = scriptSavePending,
                                 showTitle = showTitle, detailTitle = detailTitle,
                                 onDetailBack = {
-                                    when {
+                                    if (pendingScriptSave == null) when {
                                         inspectorPage -> actions.closeInspector()
                                         scriptBuilder != null -> backFromScriptBuilder()
                                         scriptDraft != null -> backFromScriptEditor()
@@ -474,9 +474,9 @@ internal fun MemoryEditorRuntimeRoot(
                                     )
                                     MemoryEditorTab.SCRIPTS -> RuntimeScriptsTab(
                                         shownState, actions, selectedScriptId,
-                                        { selectedScriptId = it }, scriptDraft,
-                                        { setScriptDraft(it) },
-                                        scriptBuilder, { scriptBuilder = it },
+                                        { if (pendingScriptSave == null) selectedScriptId = it }, scriptDraft,
+                                        { if (pendingScriptSave == null) setScriptDraft(it) },
+                                        scriptBuilder, { if (pendingScriptSave == null) scriptBuilder = it },
                                         scriptSavePending, saveScript,
                                         choosingScriptType, { choosingScriptType = it },
                                         scriptTargets, { scriptTargets = emptyList() },
@@ -537,7 +537,7 @@ internal fun MemoryEditorRuntimeRoot(
                 text = { Text(stringResource(R.string.memory_scripts_unsaved_message)) },
                 confirmButton = {
                     TextButton(onClick = {
-                        if (!scriptSavePending) {
+                        if (pendingScriptSave == null) {
                             if (scriptDiscardMode == "builder") scriptBuilder = null
                             else setScriptDraft(null)
                         }
