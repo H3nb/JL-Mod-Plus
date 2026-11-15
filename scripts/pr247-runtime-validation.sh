@@ -44,22 +44,33 @@ run_batch() {
   python3 scripts/runtime-smoke-results.py --log "$logfile" --output "$evidence" "${selectors[@]}"
 }
 
-run_batch external-jad \
+failures=0
+run_case() {
+  if ! run_batch "$@"; then
+    failures=$((failures + 1))
+  fi
+}
+
+run_case external-jad \
   'io.github.h3nb.jlmodplus.installer.ExternalContentJadImportTest#externalJadRequiresExplicitJarAndPreservesDescriptorValidation'
-run_batch installer-filesystem \
+run_case installer-filesystem \
   'io.github.h3nb.jlmodplus.installer.InstallerFilesystemTest#freshJadInstallReinstallAndReconversionPreserveSourcesAndUserFiles'
-run_batch runtime-storage-lease \
+run_case runtime-storage-lease \
   'io.github.h3nb.jlmodplus.installer.RuntimeStorageLeaseInstrumentedTest#deletedLiveRuntimeCannotShareFreshInstallStorage'
-run_batch library-room \
+run_case library-room \
   'io.github.h3nb.jlmodplus.librarydb.LibraryDatabaseAndroidTest#absolutePathAndroidSqliteDriverRoundTripsLibraryData'
-run_batch installer-ui \
+run_case installer-ui \
   'io.github.h3nb.jlmodplus.installer.InstallerComposeTest#loadingStateCanRequestCancellation' \
   'io.github.h3nb.jlmodplus.installer.InstallerComposeTest#conversionStateCanRequestCancellation'
-run_batch screenshot-pipeline \
+run_case screenshot-pipeline \
   'javax.microedition.shell.CoroutineScreenshotRuntimeTest#glPixelsAreConvertedSavedAndReturnedOnTheCorrectThreads' \
   'javax.microedition.shell.CoroutineScreenshotRuntimeTest#softwarePixelsAreSavedOffTheMainThread'
-run_batch gles-isolated \
+run_case gles-isolated \
   'io.github.h3nb.jlmodplus.micro3d.EnvironmentTextureGlesTest'
 
+if (( failures != 0 )); then
+  echo "$failures runtime batches failed; inspect ci-artifacts/pr247-runtime/" >&2
+  exit 1
+fi
 test "$(wc -l < "$evidence")" -eq 9
 echo 'All 9 targeted Android instrumentation selectors passed.'
