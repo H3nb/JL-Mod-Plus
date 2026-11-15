@@ -189,10 +189,11 @@ Hidden bodies have no actionable semantics; a pointer shield and key handling pr
 editing invisible content. Peek is a view-only action, not touch-through game control.
 Tooltips dismiss when Peek starts. Input dialogs keep opaque surfaces for legibility.
 
-The workspace footer paints edge-to-edge and follows the same user-selected
-background opacity as the editor surface. Its controls respect the system-safe
-bounds. Dialog footers remain transparent; the workspace dock disappears during
-Peek. Keep dialog surfaces solid so users can safely inspect or edit inputs.
+The workspace footer sits over the same user-selected translucent backdrop
+without painting a second surface, which would compound opacity. Its controls
+respect the system-safe bounds. Dialog footers remain transparent; the workspace
+dock disappears during Peek. Keep dialog surfaces solid so users can safely
+inspect or edit inputs.
 
 Panel opacity controls the workspace backdrop, including its header, data
 viewport and footer, without fading text or icons. The initial default is 72%,
