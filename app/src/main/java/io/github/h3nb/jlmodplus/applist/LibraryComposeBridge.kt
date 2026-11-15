@@ -3456,10 +3456,11 @@ private fun LibraryListItem(
             }
             Spacer(Modifier.width(4.dp))
             if (selectionMode) {
+                Spacer(Modifier.width(48.dp))
                 Checkbox(
                     checked = selected,
                     onCheckedChange = null,
-                    modifier = Modifier.clearAndSetSemantics { },
+                    modifier = Modifier.size(48.dp).clearAndSetSemantics { },
                 )
             } else {
                 if (favoriteEnabled) {
