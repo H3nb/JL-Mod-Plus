@@ -29,7 +29,6 @@ import androidx.compose.foundation.layout.FlowRow
 import androidx.compose.foundation.layout.PaddingValues
 import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.Spacer
-import androidx.compose.foundation.layout.width
 import androidx.compose.foundation.layout.WindowInsets
 import androidx.compose.foundation.layout.WindowInsetsSides
 import androidx.compose.foundation.layout.only
@@ -766,6 +765,12 @@ private fun RuntimeSearchResultsTab(
                     verticalAlignment = Alignment.CenterVertically,
                     horizontalArrangement = Arrangement.spacedBy(4.dp),
                 ) {
+                    RuntimePageSelectionCheckbox(
+                        checked = allVisibleSelected,
+                        enabled = state.results.isNotEmpty() && !state.busy,
+                        description = visibleSelectionDescription,
+                        onToggle = { if (it) actions.selectVisible() else actions.clearSelection() },
+                    )
                     Text(pluralStringResource(
                         if (unknownBaseline) R.plurals.memory_editor_candidates
                         else R.plurals.memory_editor_results,
@@ -1564,8 +1569,8 @@ private fun RuntimeSelectedActionBar(
     ) {
         val scale = LocalDensity.current.fontScale.coerceAtLeast(1f)
         val capacity = when {
-            maxWidth >= 600.dp * scale -> 5
-            maxWidth >= 340.dp * scale -> 3
+            maxWidth >= 600.dp * scale -> 6
+            maxWidth >= 312.dp * scale -> 4
             else -> 2
         }
         val available = actions.filter { it.enabled }
@@ -1583,6 +1588,13 @@ private fun RuntimeSelectedActionBar(
             ) {
             direct.forEach { action ->
                 val description = stringResource(action.label)
+                val compactLabel = when (action.label) {
+                    R.string.memory_editor_inspect_memory ->
+                        stringResource(R.string.memory_editor_inspector)
+                    R.string.memory_scripts_create_from_bookmarks ->
+                        stringResource(R.string.memory_scripts_title)
+                    else -> description
+                }
                 TextButton(
                     onClick = action.onClick, enabled = action.enabled,
                     modifier = Modifier.heightIn(min = 48.dp)
@@ -1590,7 +1602,7 @@ private fun RuntimeSelectedActionBar(
                 ) {
                     Icon(painterResource(action.icon), contentDescription = null)
                     Spacer(Modifier.width(4.dp))
-                    Text(description, maxLines = 1)
+                    Text(compactLabel, maxLines = 1)
                 }
             }
             if (overflow.isNotEmpty()) RuntimeActionIcon(
