@@ -40,11 +40,13 @@ No Freeze action should start before that step. An unavailable target cannot be
 edited but its persistent Bookmark remains listed and removable. A temporary
 legacy orphan active Freeze may remain visible solely so it can be stopped.
 
-Relink first detaches the old session target (and any Freeze), then updates the
-persistent locator and attaches the selected new candidate. Failure after detach
-can leave the original Bookmark present and unfrozen; this is preferable to
-silently writing through an obsolete reference. Passive re-resolution never
-starts Freeze or restores a previous value.
+Relink and delete first detach the old session target, stopping both its
+Watch Freeze and its one-step Saved Automation Freeze (`saved.<bookmarkId>`),
+before changing the persistent Bookmark. Saved Action Scripts keep their
+independent target snapshots and are not detached with the source Bookmark.
+Failure after detach can leave the original Bookmark present and unfrozen;
+this is preferable to silently writing through an obsolete reference. Passive
+re-resolution never starts Freeze or restores a previous value.
 
 ## Direct-reference observation
 
