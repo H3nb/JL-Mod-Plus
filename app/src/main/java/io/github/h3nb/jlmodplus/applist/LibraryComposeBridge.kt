@@ -808,6 +808,10 @@ fun LibraryScreen(
     val density = LocalDensity.current
     val layoutDirection = LocalLayoutDirection.current
     val collectionsHost = actions as? LibraryCollectionsHost
+    LaunchedEffect(searchOpen, state.libraryScope, state.databaseControlsReady,
+        state.projectionRevision) {
+        if (searchOpen && state.databaseControlsReady) collectionsHost?.onPrepareSearchApps()
+    }
     val collectionDialogState = collectionsHost?.collectionsStore()?.state?.collectAsState()?.value
     val collectionDialogVisible = collectionDialogState?.addTarget != null ||
         collectionDialogState?.bulkAddTargetAppIds != null
