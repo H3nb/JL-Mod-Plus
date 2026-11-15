@@ -1464,6 +1464,7 @@ fun LibraryScreen(
                                 )
                             },
                             onSort = actions::onSort,
+                            onLayoutChange = actions::onLayoutChange,
                             onRetry = actions::onRetryLibrary,
                             onFabVisibilityChanged = {},
                             onNavigationVisibilityChanged = {},
@@ -2248,6 +2249,7 @@ internal fun LibraryAppsDestination(
     onSelectAll: () -> Unit = {},
     onUnselectAll: () -> Unit = {},
     onSort: (Int) -> Unit,
+    onLayoutChange: (LibraryLayout) -> Unit = {},
     onRetry: () -> Unit,
     onFabVisibilityChanged: (Boolean) -> Unit,
     onNavigationVisibilityChanged: (Boolean) -> Unit,
@@ -2381,6 +2383,7 @@ internal fun LibraryAppsDestination(
                 }
             },
             onSort = { if (currentActive) onSort(it) },
+            onLayoutChange = { if (currentActive) onLayoutChange(it) },
             selectionState = selectionState,
             onExitSelection = { if (currentActive) onExitSelection() },
             onSelectAll = { if (currentActive) onSelectAll() },
@@ -2722,6 +2725,7 @@ private fun LibraryAppsHeader(
     onSortVisibilityChanged: (Boolean) -> Unit,
     onQuickView: (LibraryQuickView) -> Unit,
     onSort: (Int) -> Unit,
+    onLayoutChange: (LibraryLayout) -> Unit = {},
     selectionState: LibrarySelectionState = LibrarySelectionState(),
     onExitSelection: () -> Unit = {},
     onSelectAll: () -> Unit = {},
@@ -2961,6 +2965,11 @@ private fun LibraryAppsHeader(
                         onSort(index)
                     },
                 )
+            LibraryLayoutButton(
+                layout = state.layout,
+                onLayoutChange = onLayoutChange,
+                enabled = searchActionsEnabled,
+            )
             }
         }
         if (showQuickViews) {
