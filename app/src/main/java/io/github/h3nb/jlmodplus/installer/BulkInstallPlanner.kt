@@ -9,7 +9,6 @@ package io.github.h3nb.jlmodplus.installer
 
 import android.net.Uri
 import androidx.core.net.toUri
-import io.reactivex.Single
 import java.io.File
 import java.io.FileInputStream
 import java.io.IOException
@@ -124,7 +123,7 @@ object BulkInstallPlanner {
         installer.setUseSourceDirectly()
         installer.setInspectionIndex(inspectionIndex)
         return try {
-            val installerStatus = Single.create<Int>(installer::loadInfo).blockingGet()
+            val installerStatus = installer.loadInfo()
             val descriptor = requireNotNull(installer.newDescriptor) { "Installer returned no descriptor" }
             val jar = installer.jar
             val candidates = inspectionIndex.candidates(descriptor.name, descriptor.vendor)
