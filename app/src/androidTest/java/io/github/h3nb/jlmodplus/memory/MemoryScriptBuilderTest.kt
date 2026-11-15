@@ -35,7 +35,7 @@ class MemoryScriptBuilderTest {
         value: String = "", operation: String = "set", fieldName: String = "coins",
     ): MemoryScriptBuilderAction = MemoryRecipeGenerator.fromBookmark(
         SavedVariableRow("coins", "Coins", fieldName, true),
-        locator(fieldName), "sample/Game",
+        locator(fieldName),
     ).copy(value = value, operation = operation)
 
     private fun document(
