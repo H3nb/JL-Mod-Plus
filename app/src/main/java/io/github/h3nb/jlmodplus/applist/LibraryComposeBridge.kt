@@ -2879,6 +2879,16 @@ private fun LibraryAppsHeader(
                             Icon(painterResource(R.drawable.ic_apps), contentDescription = null)
                         },
                     )
+                    DropdownMenuItem(
+                        text = { Text(stringResource(R.string.library_destination_collections)) },
+                        onClick = {
+                            scopeMenuVisible = false
+                            onManageCollections()
+                        },
+                        leadingIcon = {
+                            Icon(painterResource(R.drawable.ic_settings), contentDescription = null)
+                        },
+                    )
                     collections.forEach { collection ->
                         DropdownMenuItem(
                             text = { Text(collection.name, maxLines = 1, overflow = TextOverflow.Ellipsis) },
@@ -2891,16 +2901,6 @@ private fun LibraryAppsHeader(
                             },
                         )
                     }
-                    DropdownMenuItem(
-                        text = { Text(stringResource(R.string.library_destination_collections)) },
-                        onClick = {
-                            scopeMenuVisible = false
-                            onManageCollections()
-                        },
-                        leadingIcon = {
-                            Icon(painterResource(R.drawable.ic_settings), contentDescription = null)
-                        },
-                    )
                 }
             }
             if (compactHeaderActions) {
