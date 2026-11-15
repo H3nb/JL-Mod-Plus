@@ -174,13 +174,14 @@ internal fun MemoryScriptBuilderScreen(
     onDraft: (MemoryScriptBuilderDraft) -> Unit,
     onSaved: (String) -> Unit,
     onEditJson: (String) -> Unit,
+    saving: Boolean,
+    onSaveScript: (String, String?, (Boolean) -> Unit) -> Unit,
     modifier: Modifier = Modifier,
 ) {
     val saveFailedText = stringResource(R.string.memory_scripts_save_failed)
     var picking by remember { mutableStateOf(false) }
     var preview by remember(draft) { mutableStateOf<String?>(null) }
     var error by remember { mutableStateOf<String?>(null) }
-    var saving by remember { mutableStateOf(false) }
     var showDescription by remember(draft.id) {
         mutableStateOf(draft.description.isNotBlank())
     }
@@ -403,9 +404,7 @@ internal fun MemoryScriptBuilderScreen(
                 enabled = !saving && draft.name.isNotBlank() && draft.actions.isNotEmpty(),
                 onClick = {
                     generate { document ->
-                        saving = true
-                        actions.saveMemoryScript(document, draft.replacingId) { saved ->
-                            saving = false
+                        onSaveScript(document, draft.replacingId) { saved ->
                             if (saved) onSaved(draft.id)
                             else error = saveFailedText
                         }
