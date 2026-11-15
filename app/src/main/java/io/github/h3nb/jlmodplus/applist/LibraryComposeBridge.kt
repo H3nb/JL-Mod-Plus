@@ -1759,12 +1759,14 @@ fun LibraryScreen(
             } else {
                 null
             },
-            onSelect = {
-                selectionState = selectionState.enter(
-                    state.generation,
-                    app.databaseId,
-                    collectionId = collectionId,
-                )
+            onSelect = if (searchOpen) null else {
+                {
+                    selectionState = selectionState.enter(
+                        state.generation,
+                        app.databaseId,
+                        collectionId = collectionId,
+                    )
+                }
             },
         )
     }
