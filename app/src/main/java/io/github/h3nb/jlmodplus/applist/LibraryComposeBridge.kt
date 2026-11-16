@@ -3352,44 +3352,59 @@ internal fun LibraryMoreDestination(
             contentPadding = scaffoldPadding,
         ) {
             item {
-                Box(
+                Column(
                     modifier = Modifier
                         .fillMaxWidth()
-                        .windowInsetsPadding(WindowInsets.safeDrawing.only(WindowInsetsSides.Top)),
+                        .windowInsetsPadding(WindowInsets.safeDrawing.only(WindowInsetsSides.Top))
+                        .padding(horizontal = 16.dp, vertical = 12.dp),
+                    verticalArrangement = Arrangement.spacedBy(12.dp),
                 ) {
-                    Column(
-                        modifier = Modifier
-                            .align(Alignment.TopCenter)
-                            .fillMaxWidth()
-                            .widthIn(max = 840.dp)
-                            .padding(horizontal = 12.dp, vertical = 10.dp),
-                        verticalArrangement = Arrangement.spacedBy(8.dp),
+                    Row(
+                        modifier = Modifier.widthIn(max = 720.dp),
+                        verticalAlignment = Alignment.CenterVertically,
                     ) {
-                        Row(verticalAlignment = Alignment.CenterVertically) {
-                            IconButton(onClick = onBack) {
-                                Icon(
-                                    painter = painterResource(R.drawable.ic_arrow_back),
-                                    contentDescription = stringResource(R.string.action_back),
-                                )
-                            }
-                            Text(
-                                text = stringResource(R.string.action_settings),
-                                style = MaterialTheme.typography.headlineSmall,
-                                modifier = Modifier.padding(horizontal = 4.dp, vertical = 2.dp),
+                        IconButton(onClick = onBack) {
+                            Icon(
+                                painter = painterResource(R.drawable.ic_arrow_back),
+                                contentDescription = stringResource(R.string.action_back),
                             )
                         }
+                        Text(
+                            text = stringResource(R.string.action_settings),
+                            style = MaterialTheme.typography.headlineSmall,
+                            modifier = Modifier.padding(start = 4.dp),
+                        )
+                    }
+                    Column(
+                        modifier = Modifier.fillMaxWidth().widthIn(max = 720.dp)
+                            .align(Alignment.CenterHorizontally),
+                        verticalArrangement = Arrangement.spacedBy(12.dp),
+                    ) {
+                        Surface(
+                            modifier = Modifier.fillMaxWidth(),
+                            shape = MaterialTheme.shapes.extraLarge,
+                            color = MaterialTheme.colorScheme.primaryContainer,
+                        ) {
+                            LibraryActionRow(
+                                label = R.string.library_settings_preferences,
+                                summary = R.string.library_action_settings_summary,
+                                icon = R.drawable.ic_settings,
+                                emphasized = true,
+                                action = onSettings,
+                            )
+                        }
+                        Text(
+                            text = stringResource(R.string.library_settings_section_maintenance),
+                            style = MaterialTheme.typography.titleSmall,
+                            color = MaterialTheme.colorScheme.onSurfaceVariant,
+                            modifier = Modifier.padding(start = 12.dp, top = 8.dp),
+                        )
                         Surface(
                             modifier = Modifier.fillMaxWidth(),
                             shape = MaterialTheme.shapes.large,
                             color = MaterialTheme.colorScheme.surfaceContainerLow,
                         ) {
                             Column {
-                                LibraryActionRow(
-                                    label = R.string.action_settings,
-                                    summary = R.string.library_action_settings_summary,
-                                    icon = R.drawable.ic_settings,
-                                    action = onSettings,
-                                )
                                 LibraryActionRow(
                                     label = R.string.updates_title,
                                     summary = if (updateAvailable) R.string.updates_more_available
@@ -3398,22 +3413,36 @@ internal fun LibraryMoreDestination(
                                     action = onUpdates,
                                 )
                                 LibraryActionRow(
-                                    label = R.string.library_donation_action,
-                                    summary = R.string.library_donation_summary,
-                                    icon = R.drawable.ic_favorite,
-                                    action = onDonate,
-                                )
-                                LibraryActionRow(
                                     label = R.string.crash_reports,
                                     summary = R.string.library_action_crash_reports_summary,
                                     icon = R.drawable.ic_bug_report,
                                     action = onCrashReports,
                                 )
+                            }
+                        }
+                        Text(
+                            text = stringResource(R.string.library_settings_section_support),
+                            style = MaterialTheme.typography.titleSmall,
+                            color = MaterialTheme.colorScheme.onSurfaceVariant,
+                            modifier = Modifier.padding(start = 12.dp, top = 8.dp),
+                        )
+                        Surface(
+                            modifier = Modifier.fillMaxWidth(),
+                            shape = MaterialTheme.shapes.large,
+                            color = MaterialTheme.colorScheme.surfaceContainerLow,
+                        ) {
+                            Column {
                                 LibraryActionRow(
                                     label = R.string.about,
                                     summary = R.string.library_action_about_summary,
                                     icon = R.drawable.ic_info,
                                     action = onAbout,
+                                )
+                                LibraryActionRow(
+                                    label = R.string.library_donation_action,
+                                    summary = R.string.library_donation_summary,
+                                    icon = R.drawable.ic_favorite,
+                                    action = onDonate,
                                 )
                             }
                         }
@@ -4762,8 +4791,13 @@ private fun LibraryActionRow(
     icon: Int? = null,
     summary: Int? = null,
     destructive: Boolean = false,
+    emphasized: Boolean = false,
 ) {
-    val contentColor = if (destructive) MaterialTheme.colorScheme.error else MaterialTheme.colorScheme.onSurface
+    val contentColor = when {
+        destructive -> MaterialTheme.colorScheme.error
+        emphasized -> MaterialTheme.colorScheme.onPrimaryContainer
+        else -> MaterialTheme.colorScheme.onSurface
+    }
     Row(
         modifier = Modifier
             .fillMaxWidth()
@@ -4784,17 +4818,18 @@ private fun LibraryActionRow(
         Column(modifier = Modifier.weight(1f)) {
             Text(
                 text = stringResource(label),
-                style = MaterialTheme.typography.bodyLarge,
+                style = if (emphasized) MaterialTheme.typography.titleMedium
+                else MaterialTheme.typography.bodyLarge,
                 color = contentColor,
             )
             if (summary != null) {
                 Text(
                     text = stringResource(summary),
                     style = MaterialTheme.typography.bodyMedium,
-                    color = if (destructive) {
-                        MaterialTheme.colorScheme.error.copy(alpha = 0.82f)
-                    } else {
-                        MaterialTheme.colorScheme.onSurfaceVariant
+                    color = when {
+                        destructive -> MaterialTheme.colorScheme.error
+                        emphasized -> MaterialTheme.colorScheme.onPrimaryContainer
+                        else -> MaterialTheme.colorScheme.onSurfaceVariant
                     },
                 )
             }
@@ -5084,13 +5119,15 @@ internal fun AppActionsDialog(
                         maxLines = 2,
                         overflow = TextOverflow.Ellipsis,
                     )
-                    Text(
-                        text = stringResource(R.string.library_vendor_version, app.author, app.version),
-                        style = MaterialTheme.typography.bodySmall,
-                        color = MaterialTheme.colorScheme.onSurfaceVariant,
-                        maxLines = 1,
-                        overflow = TextOverflow.Ellipsis,
-                    )
+                    if (!compactHeader) {
+                        Text(
+                            text = stringResource(R.string.library_vendor_version, app.author, app.version),
+                            style = MaterialTheme.typography.bodySmall,
+                            color = MaterialTheme.colorScheme.onSurfaceVariant,
+                            maxLines = 1,
+                            overflow = TextOverflow.Ellipsis,
+                        )
+                    }
                     if (!compactHeader && (app.playCount > 0L || app.totalPlayTimeMs > 0L)) {
                         Text(
                             text = stringResource(
@@ -5126,7 +5163,7 @@ internal fun AppActionsDialog(
                         val previousGroup = entries.getOrNull(index - 1)?.group
                         val newGroup = entry.group != previousGroup
                         Column {
-                            if (entry.group != null && (index == 0 || newGroup)) {
+                            if (!compactHeader && entry.group != null && (index == 0 || newGroup)) {
                                 if (index > 0) Spacer(Modifier.height(12.dp))
                                 Text(
                                     text = stringResource(entry.group),
