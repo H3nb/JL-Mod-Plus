@@ -1400,6 +1400,9 @@ fun LibraryScreen(
                             ) {
                                 DropdownMenuItem(
                                     text = { Text(stringResource(R.string.bulk_install_choose_files)) },
+                                    leadingIcon = {
+                                        Icon(painterResource(R.drawable.ic_file_picker_file), contentDescription = null)
+                                    },
                                     onClick = {
                                         installSourceMenuVisible = false
                                         actions.onInstall()
@@ -1407,6 +1410,9 @@ fun LibraryScreen(
                                 )
                                 DropdownMenuItem(
                                     text = { Text(stringResource(R.string.bulk_install_choose_folder)) },
+                                    leadingIcon = {
+                                        Icon(painterResource(R.drawable.ic_folder), contentDescription = null)
+                                    },
                                     onClick = {
                                         installSourceMenuVisible = false
                                         actions.onInstallFolder()
@@ -1414,6 +1420,9 @@ fun LibraryScreen(
                                 )
                                 DropdownMenuItem(
                                     text = { Text(stringResource(R.string.library_action_import_bundle)) },
+                                    leadingIcon = {
+                                        Icon(painterResource(R.drawable.ic_file_upload), contentDescription = null)
+                                    },
                                     onClick = {
                                         installSourceMenuVisible = false
                                         actions.onImportAppBundle()
@@ -3061,11 +3070,19 @@ private fun LibraryAppsHeader(
                     item(key = "all") {
                         ListItem(
                             headlineContent = { Text(stringResource(R.string.library_destination_apps)) },
-                            modifier = Modifier.clickable {
-                                closeScopeThen {
-                                    if (state.quickView != LibraryQuickView.All) onQuickView(LibraryQuickView.All)
-                                }
-                            },
+                            colors = ListItemDefaults.colors(
+                                containerColor = MaterialTheme.colorScheme.secondaryContainer,
+                            ),
+                            modifier = Modifier
+                                .padding(horizontal = 12.dp, vertical = 3.dp)
+                                .clip(MaterialTheme.shapes.large)
+                                .clickable {
+                                    closeScopeThen {
+                                        if (state.quickView != LibraryQuickView.All) {
+                                            onQuickView(LibraryQuickView.All)
+                                        }
+                                    }
+                                },
                             leadingContent = {
                                 Icon(painterResource(R.drawable.ic_apps), contentDescription = null)
                             },
@@ -3079,9 +3096,23 @@ private fun LibraryAppsHeader(
                             headlineContent = {
                                 Text(collection.name, maxLines = 2, overflow = TextOverflow.Ellipsis)
                             },
-                            modifier = Modifier.clickable {
-                                closeScopeThen { onSelectCollection(collection.id) }
+                            supportingContent = {
+                                Text(
+                                    pluralStringResource(
+                                        R.plurals.library_collection_member_count,
+                                        collection.appCount, collection.appCount,
+                                    ),
+                                )
                             },
+                            colors = ListItemDefaults.colors(
+                                containerColor = MaterialTheme.colorScheme.surfaceContainerLow,
+                            ),
+                            modifier = Modifier
+                                .padding(horizontal = 12.dp, vertical = 3.dp)
+                                .clip(MaterialTheme.shapes.large)
+                                .clickable {
+                                    closeScopeThen { onSelectCollection(collection.id) }
+                                },
                             leadingContent = {
                                 Icon(painterResource(R.drawable.ic_folder), contentDescription = null)
                             },
@@ -3484,7 +3515,7 @@ private fun LibraryGridItem(
                         .align(Alignment.TopStart)
                         .clearAndSetSemantics { },
                 )
-            } else if (hideTitle) {
+            } else {
                 IconButton(
                     onClick = { onOpenActions(app) },
                     modifier = Modifier
@@ -3513,25 +3544,12 @@ private fun LibraryGridItem(
             ) {
                 Text(
                     text = app.title,
-                    modifier = Modifier
-                        .fillMaxWidth()
-                        .padding(end = if (selectionMode) 0.dp else 40.dp),
+                    modifier = Modifier.fillMaxWidth(),
                     style = MaterialTheme.typography.titleSmall,
                     maxLines = 2,
                     overflow = TextOverflow.Ellipsis,
-                    textAlign = if (selectionMode) TextAlign.Center else TextAlign.Start,
+                    textAlign = TextAlign.Center,
                 )
-                if (!selectionMode) {
-                    IconButton(
-                        onClick = { onOpenActions(app) },
-                        modifier = Modifier.align(Alignment.TopEnd).size(40.dp),
-                    ) {
-                        Icon(
-                            painter = painterResource(R.drawable.ic_more_vert),
-                            contentDescription = stringResource(R.string.library_app_more_actions, app.title),
-                        )
-                    }
-                }
             }
         }
     }
