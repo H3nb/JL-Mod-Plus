@@ -3461,6 +3461,7 @@ private fun LibraryGridItem(
     } else {
         Modifier.combinedClickable(
             onClick = { onOpenApp(app.id) },
+            onLongClickLabel = stringResource(R.string.library_app_more_actions, app.title),
             onLongClick = { onOpenActions(app) },
         )
     }
@@ -3515,23 +3516,6 @@ private fun LibraryGridItem(
                         .align(Alignment.TopStart)
                         .clearAndSetSemantics { },
                 )
-            } else {
-                IconButton(
-                    onClick = { onOpenActions(app) },
-                    modifier = Modifier
-                        .align(Alignment.BottomEnd)
-                        .padding(4.dp)
-                        .size(40.dp)
-                        .background(
-                            MaterialTheme.colorScheme.surfaceContainerHigh,
-                            MaterialTheme.shapes.medium,
-                        ),
-                ) {
-                    Icon(
-                        painter = painterResource(R.drawable.ic_more_vert),
-                        contentDescription = stringResource(R.string.library_app_more_actions, app.title),
-                    )
-                }
             }
         }
         if (!hideTitle) {
@@ -3589,6 +3573,7 @@ private fun LibraryListItem(
     } else {
         Modifier.combinedClickable(
             onClick = { onOpenApp(app.id) },
+            onLongClickLabel = stringResource(R.string.library_app_more_actions, app.title),
             onLongClick = { onOpenActions(app) },
         )
     }
