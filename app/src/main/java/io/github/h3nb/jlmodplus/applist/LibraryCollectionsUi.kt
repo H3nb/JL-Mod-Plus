@@ -66,6 +66,7 @@ import androidx.compose.ui.Alignment
 import androidx.compose.ui.focus.focusProperties
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.alpha
+import androidx.compose.ui.draw.clip
 import androidx.compose.ui.draw.clipToBounds
 import androidx.compose.ui.input.nestedscroll.nestedScroll
 import androidx.compose.ui.layout.onSizeChanged
@@ -651,7 +652,7 @@ private fun LibraryCollectionsOverview(
                             containerColor = if (selected) {
                                 MaterialTheme.colorScheme.secondaryContainer
                             } else {
-                                Color.Transparent
+                                MaterialTheme.colorScheme.surfaceContainerLow
                             },
                         ),
                         headlineContent = {
@@ -725,12 +726,10 @@ private fun LibraryCollectionsOverview(
                         },
                         modifier = Modifier
                             .fillMaxWidth()
+                            .padding(horizontal = 16.dp, vertical = 4.dp)
+                            .clip(MaterialTheme.shapes.large)
                             .clickable { if (currentActive) onOpenCollection(collection.id) }
                             .semantics { this.selected = selected },
-                    )
-                    HorizontalDivider(
-                        modifier = Modifier.padding(start = 64.dp, end = 16.dp),
-                        color = MaterialTheme.colorScheme.outlineVariant.copy(alpha = 0.6f),
                     )
                 }
             }
