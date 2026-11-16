@@ -1341,4 +1341,8 @@
     <string name="memory_scripts_saved_count">%1$d tersimpan</string>
     <string name="memory_scripts_empty_hint">Buat skrip untuk mengubah atau mempertahankan nilai saat bermain.</string>
     <string name="memory_builder_limits">Batas (opsional)</string>
+    <string name="library_app_more_actions">Tindakan lainnya untuk %1$s</string>
+    <string name="library_actions_group_customize">Sesuaikan</string>
+    <string name="library_actions_group_organize">Kelola</string>
+    <string name="library_actions_group_transfer">Transfer dan pemeliharaan</string>
 </resources>
