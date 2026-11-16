@@ -1442,4 +1442,7 @@
     <string name="library_actions_group_organize">Organize</string>
     <string name="library_actions_group_transfer">Transfer and maintain</string>
     <string name="library_collection_more_actions">More actions for collection %1$s</string>
+    <string name="library_settings_preferences">App preferences</string>
+    <string name="library_settings_section_maintenance">Updates and diagnostics</string>
+    <string name="library_settings_section_support">About and support</string>
 </resources>
