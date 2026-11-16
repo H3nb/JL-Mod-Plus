@@ -142,7 +142,7 @@ class LibraryComposeTest {
     }
 
     @Test
-    fun iconOnlyGridStillProvidesVisibleMidletActions() {
+    fun iconOnlyGridLongPressOpensMidletActions() {
         val actions = RecordingLibraryActions()
         setLibraryContent(
             state = LibraryUiState(
@@ -154,9 +154,8 @@ class LibraryComposeTest {
             actions = actions,
         )
 
-        composeRule.onNodeWithContentDescription(
-            uiString(R.string.library_app_more_actions, "Demo MIDlet"),
-        ).performClick()
+        composeRule.onNodeWithContentDescription("Demo MIDlet")
+            .performTouchInput { longClick() }
 
         composeRule.onNodeWithText(uiString(R.string.library_actions_group_customize))
             .assertIsDisplayed()
