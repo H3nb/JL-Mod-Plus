@@ -3614,6 +3614,12 @@ private fun LibraryListItem(
     Column(
         modifier = Modifier
             .fillMaxWidth()
+            .padding(horizontal = 12.dp, vertical = 4.dp)
+            .clip(MaterialTheme.shapes.large)
+            .background(
+                if (selectionMode && selected) MaterialTheme.colorScheme.secondaryContainer
+                else MaterialTheme.colorScheme.surfaceContainerLow,
+            )
             .then(
                 if (controllerFocused) {
                     Modifier.testTag("library-controller-focus-indicator")
@@ -3682,10 +3688,8 @@ private fun LibraryListItem(
                     onCheckedChange = null,
                     modifier = Modifier.clearAndSetSemantics { },
                 )
-            } else if (favoriteEnabled) {
+            } else if (favoriteEnabled && availableWindowWidthDp() >= 360.dp) {
                 LibraryFavoriteButton(app, onFavorite)
-            } else {
-                LibraryFavoritePlaceholder(app.id)
             }
             if (!selectionMode) {
                 IconButton(
@@ -3832,22 +3836,6 @@ private fun LibraryFavoriteButton(
                 )
             }
         }
-    }
-}
-
-@Composable
-private fun LibraryFavoritePlaceholder(@Suppress("UNUSED_PARAMETER") appId: Int) {
-    IconButton(
-        onClick = {},
-        enabled = false,
-        modifier = Modifier.size(48.dp),
-    ) {
-        Icon(
-            painter = painterResource(R.drawable.ic_star),
-            contentDescription = stringResource(R.string.library_favorite_coming_soon),
-            modifier = Modifier.size(24.dp),
-            tint = MaterialTheme.colorScheme.onSurfaceVariant,
-        )
     }
 }
 
