@@ -1781,6 +1781,12 @@ fun LibraryScreen(
             },
             onReinstall = { actions.onReinstall(app.id) },
             onDelete = { deleteTarget = app },
+            onFavorite = if (state.databaseControlsReady) {
+                { actions.onFavorite(app.id, !app.favorite) }
+            } else null,
+            iconRatio = state.iconRatio,
+            iconShape = state.iconShape,
+            enhancedIcons = state.enhancedIcons,
             onEditMetadata = if (state.databaseControlsReady) {
                 {
                     metadataRestoreRequest = null
@@ -3478,6 +3484,23 @@ private fun LibraryGridItem(
                         .align(Alignment.TopStart)
                         .clearAndSetSemantics { },
                 )
+            } else if (hideTitle) {
+                IconButton(
+                    onClick = { onOpenActions(app) },
+                    modifier = Modifier
+                        .align(Alignment.BottomEnd)
+                        .padding(4.dp)
+                        .size(40.dp)
+                        .background(
+                            MaterialTheme.colorScheme.surfaceContainerHigh,
+                            MaterialTheme.shapes.medium,
+                        ),
+                ) {
+                    Icon(
+                        painter = painterResource(R.drawable.ic_more_vert),
+                        contentDescription = stringResource(R.string.library_app_more_actions, app.title),
+                    )
+                }
             }
         }
         if (!hideTitle) {
@@ -3490,12 +3513,25 @@ private fun LibraryGridItem(
             ) {
                 Text(
                     text = app.title,
-                    modifier = Modifier.fillMaxWidth(),
+                    modifier = Modifier
+                        .fillMaxWidth()
+                        .padding(end = if (selectionMode) 0.dp else 40.dp),
                     style = MaterialTheme.typography.titleSmall,
                     maxLines = 2,
                     overflow = TextOverflow.Ellipsis,
-                    textAlign = TextAlign.Center,
+                    textAlign = if (selectionMode) TextAlign.Center else TextAlign.Start,
                 )
+                if (!selectionMode) {
+                    IconButton(
+                        onClick = { onOpenActions(app) },
+                        modifier = Modifier.align(Alignment.TopEnd).size(40.dp),
+                    ) {
+                        Icon(
+                            painter = painterResource(R.drawable.ic_more_vert),
+                            contentDescription = stringResource(R.string.library_app_more_actions, app.title),
+                        )
+                    }
+                }
             }
         }
     }
@@ -3613,6 +3649,17 @@ private fun LibraryListItem(
                 LibraryFavoriteButton(app, onFavorite)
             } else {
                 LibraryFavoritePlaceholder(app.id)
+            }
+            if (!selectionMode) {
+                IconButton(
+                    onClick = { onOpenActions(app) },
+                    modifier = Modifier.size(48.dp),
+                ) {
+                    Icon(
+                        painter = painterResource(R.drawable.ic_more_vert),
+                        contentDescription = stringResource(R.string.library_app_more_actions, app.title),
+                    )
+                }
             }
         }
         if (showDescription && app.description.isNotBlank()) {
@@ -4838,6 +4885,8 @@ private fun libraryDialogListHeight() = adaptiveDialogLayout().maxHeight
 private data class DialogActionEntry(
     val label: Int,
     val icon: Int?,
+    val group: Int? = null,
+    val prominent: Boolean = false,
     val destructive: Boolean = false,
     val action: () -> Unit,
 )
@@ -4859,6 +4908,10 @@ internal fun AppActionsDialog(
     onShareApp: (() -> Unit)? = null,
     onExportAppBundle: (() -> Unit)? = null,
     onSelect: (() -> Unit)? = null,
+    onFavorite: (() -> Unit)? = null,
+    iconRatio: LibraryIconRatio = LibraryIconRatio.Square,
+    iconShape: LibraryIconShape = LibraryIconShape.Round,
+    enhancedIcons: Boolean = true,
 ) {
     val layout = libraryDialogLayout()
     val listState = rememberLazyListState()
@@ -4871,92 +4924,91 @@ internal fun AppActionsDialog(
         }
     }
     val entries = buildList {
-        if (onSelect != null) {
-            add(
-                DialogActionEntry(
-                    label = R.string.library_action_select,
-                    icon = R.drawable.ic_check,
-                    action = onSelect,
-                ),
-            )
+        add(DialogActionEntry(
+            label = R.string.action_settings,
+            icon = R.drawable.ic_settings,
+            group = R.string.library_actions_group_customize,
+            prominent = true,
+            action = onSettings,
+        ))
+        if (onFavorite != null) {
+            add(DialogActionEntry(
+                label = if (app.favorite) R.string.library_remove_from_favorites_action
+                else R.string.library_add_to_favorites_action,
+                icon = if (app.favorite) R.drawable.ic_star_filled else R.drawable.ic_star,
+                group = R.string.library_actions_group_customize,
+                action = onFavorite,
+            ))
         }
-        add(
-            DialogActionEntry(
-                label = if (onEditMetadata != null) R.string.library_metadata_edit_title
+        add(DialogActionEntry(
+            label = if (onEditMetadata != null) R.string.library_metadata_edit_title
                 else R.string.action_context_rename,
-                icon = R.drawable.ic_edit,
-                action = onEditMetadata ?: onRename,
-            ),
-        )
+            icon = R.drawable.ic_edit,
+            group = R.string.library_actions_group_customize,
+            action = onEditMetadata ?: onRename,
+        ))
+        if (onSelect != null) {
+            add(DialogActionEntry(
+                label = R.string.library_action_select,
+                icon = R.drawable.ic_check,
+                group = R.string.library_actions_group_organize,
+                action = onSelect,
+            ))
+        }
         if (onShortcut != null) {
-            add(
-                DialogActionEntry(
-                    label = R.string.action_context_shortcut,
-                    icon = R.drawable.ic_add_shortcut,
-                    action = onShortcut,
-                ),
-            )
+            add(DialogActionEntry(
+                label = R.string.action_context_shortcut,
+                icon = R.drawable.ic_add_shortcut,
+                group = R.string.library_actions_group_organize,
+                action = onShortcut,
+            ))
         }
         if (onAddToCollection != null) {
-            add(
-                DialogActionEntry(
-                    label = R.string.library_collection_add_app,
-                    icon = R.drawable.ic_add_to_collection,
-                    action = onAddToCollection,
-                ),
-            )
+            add(DialogActionEntry(
+                label = R.string.library_collection_add_app,
+                icon = R.drawable.ic_add_to_collection,
+                group = R.string.library_actions_group_organize,
+                action = onAddToCollection,
+            ))
         }
         if (onRemoveFromCollection != null) {
-            add(
-                DialogActionEntry(
-                    label = R.string.library_collection_remove_from_current,
-                    icon = R.drawable.ic_remove_from_collection,
-                    action = onRemoveFromCollection,
-                ),
-            )
-        }
-        add(
-            DialogActionEntry(
-                label = R.string.action_settings,
-                icon = R.drawable.ic_settings,
-                action = onSettings,
-            ),
-        )
-        if (app.canReinstall) {
-            add(
-                DialogActionEntry(
-                    label = R.string.action_reinstall,
-                    icon = R.drawable.ic_reinstall,
-                    action = onReinstall,
-                ),
-            )
+            add(DialogActionEntry(
+                label = R.string.library_collection_remove_from_current,
+                icon = R.drawable.ic_remove_from_collection,
+                group = R.string.library_actions_group_organize,
+                action = onRemoveFromCollection,
+            ))
         }
         if (onShareApp != null) {
-            add(
-                DialogActionEntry(
-                    label = R.string.library_action_share_app,
-                    icon = R.drawable.ic_share,
-                    action = onShareApp,
-                ),
-            )
+            add(DialogActionEntry(
+                label = R.string.library_action_share_app,
+                icon = R.drawable.ic_share,
+                group = R.string.library_actions_group_transfer,
+                action = onShareApp,
+            ))
         }
         if (onExportAppBundle != null) {
-            add(
-                DialogActionEntry(
-                    label = R.string.library_action_export_bundle,
-                    icon = R.drawable.ic_file_download,
-                    action = onExportAppBundle,
-                ),
-            )
+            add(DialogActionEntry(
+                label = R.string.library_action_export_bundle,
+                icon = R.drawable.ic_file_download,
+                group = R.string.library_actions_group_transfer,
+                action = onExportAppBundle,
+            ))
         }
-        add(
-            DialogActionEntry(
-                label = R.string.action_context_delete,
-                icon = R.drawable.ic_delete,
-                destructive = true,
-                action = onDelete,
-            ),
-        )
+        if (app.canReinstall) {
+            add(DialogActionEntry(
+                label = R.string.action_reinstall,
+                icon = R.drawable.ic_reinstall,
+                group = R.string.library_actions_group_transfer,
+                action = onReinstall,
+            ))
+        }
+        add(DialogActionEntry(
+            label = R.string.action_context_delete,
+            icon = R.drawable.ic_delete,
+            destructive = true,
+            action = onDelete,
+        ))
     }
     val currentEntries by rememberUpdatedState(entries)
     LaunchedEffect(entries.size) {
@@ -4997,6 +5049,7 @@ internal fun AppActionsDialog(
             }
         }
     }
+    val compactHeader = availableWindowHeightDp() < 400.dp
     AlertDialog(
         textScrollable = false,
         onControllerKeyEvent = dialogControllerKeyEvent,
@@ -5005,32 +5058,49 @@ internal fun AppActionsDialog(
             .showNavigationFocusForKey { controllerFocusVisible = true },
         properties = layout.properties,
         onDismissRequest = onDismiss,
+        shape = MaterialTheme.shapes.extraLarge,
+        containerColor = MaterialTheme.colorScheme.surfaceContainerHigh,
         title = {
-            Column {
-                Text(
-                    text = app.title,
-                    maxLines = 1,
-                    overflow = TextOverflow.Ellipsis,
+            Row(
+                verticalAlignment = Alignment.CenterVertically,
+                horizontalArrangement = Arrangement.spacedBy(12.dp),
+            ) {
+                LibraryIconSlot(
+                    app = app,
+                    modifier = Modifier.width(if (compactHeader) 44.dp else 60.dp),
+                    contentSize = if (compactHeader) 36.dp else 48.dp,
+                    iconRatio = iconRatio,
+                    iconShape = iconShape,
+                    enhancedIcons = enhancedIcons,
                 )
-                Text(
-                    text = stringResource(R.string.library_vendor_version, app.author, app.version),
-                    style = MaterialTheme.typography.bodySmall,
-                    color = MaterialTheme.colorScheme.onSurfaceVariant,
-                    maxLines = 1,
-                    overflow = TextOverflow.Ellipsis,
-                )
-                if (app.playCount > 0L || app.totalPlayTimeMs > 0L) {
+                Column(modifier = Modifier.weight(1f)) {
                     Text(
-                        text = stringResource(
-                            R.string.library_play_stats_summary,
-                            app.playCount,
-                            LibraryPlayStatsFormatter.duration(app.totalPlayTimeMs),
-                        ),
+                        text = app.title,
+                        style = if (compactHeader) MaterialTheme.typography.titleMedium
+                        else MaterialTheme.typography.titleLarge,
+                        maxLines = 2,
+                        overflow = TextOverflow.Ellipsis,
+                    )
+                    Text(
+                        text = stringResource(R.string.library_vendor_version, app.author, app.version),
                         style = MaterialTheme.typography.bodySmall,
                         color = MaterialTheme.colorScheme.onSurfaceVariant,
                         maxLines = 1,
                         overflow = TextOverflow.Ellipsis,
                     )
+                    if (!compactHeader && (app.playCount > 0L || app.totalPlayTimeMs > 0L)) {
+                        Text(
+                            text = stringResource(
+                                R.string.library_play_stats_summary,
+                                app.playCount,
+                                LibraryPlayStatsFormatter.duration(app.totalPlayTimeMs),
+                            ),
+                            style = MaterialTheme.typography.labelSmall,
+                            color = MaterialTheme.colorScheme.onSurfaceVariant,
+                            maxLines = 1,
+                            overflow = TextOverflow.Ellipsis,
+                        )
+                    }
                 }
             }
         },
@@ -5050,20 +5120,43 @@ internal fun AppActionsDialog(
                 ) {
                     items(entries.size) { index ->
                         val entry = entries[index]
-                        DialogAction(
-                            label = entry.label,
-                            icon = entry.icon,
-                            destructive = entry.destructive,
-                            selected = controllerFocusVisible && index == focusedIndex,
-                            onDismiss = onDismiss,
-                            action = entry.action,
-                        )
+                        val previousGroup = entries.getOrNull(index - 1)?.group
+                        val newGroup = entry.group != previousGroup
+                        Column {
+                            if (entry.group != null && (index == 0 || newGroup)) {
+                                if (index > 0) Spacer(Modifier.height(12.dp))
+                                Text(
+                                    text = stringResource(entry.group),
+                                    modifier = Modifier.padding(
+                                        start = 16.dp, end = 16.dp, top = 8.dp, bottom = 4.dp,
+                                    ),
+                                    style = MaterialTheme.typography.labelMedium,
+                                    color = MaterialTheme.colorScheme.onSurfaceVariant,
+                                )
+                            }
+                            if (entry.destructive && index > 0) {
+                                HorizontalDivider(
+                                    modifier = Modifier.padding(
+                                        start = 16.dp, end = 16.dp, top = 12.dp, bottom = 8.dp,
+                                    ),
+                                    color = MaterialTheme.colorScheme.outlineVariant,
+                                )
+                            }
+                            DialogAction(
+                                label = entry.label,
+                                icon = entry.icon,
+                                prominent = entry.prominent,
+                                destructive = entry.destructive,
+                                selected = controllerFocusVisible && index == focusedIndex,
+                                onDismiss = onDismiss,
+                                action = entry.action,
+                            )
+                        }
                     }
                 }
                 ScrollableContentHint(
                     visible = canScrollForward,
-                    modifier = Modifier
-                        .align(Alignment.BottomCenter),
+                    modifier = Modifier.align(Alignment.BottomCenter),
                 )
             }
         },
@@ -5075,28 +5168,31 @@ internal fun AppActionsDialog(
 private fun DialogAction(
     label: Int,
     icon: Int?,
+    prominent: Boolean = false,
     destructive: Boolean = false,
     selected: Boolean = false,
     onDismiss: () -> Unit,
     action: () -> Unit,
 ) {
-    val contentColor = if (destructive) {
-        MaterialTheme.colorScheme.error
-    } else {
-        MaterialTheme.colorScheme.onSurface
+    val contentColor = when {
+        destructive -> MaterialTheme.colorScheme.error
+        prominent -> MaterialTheme.colorScheme.onPrimaryContainer
+        else -> MaterialTheme.colorScheme.onSurface
     }
     ListItem(
         colors = ListItemDefaults.colors(
-            containerColor = if (selected) {
-                MaterialTheme.colorScheme.secondaryContainer
-            } else {
-                Color.Transparent
+            containerColor = when {
+                selected -> MaterialTheme.colorScheme.secondaryContainer
+                prominent -> MaterialTheme.colorScheme.primaryContainer
+                else -> Color.Transparent
             },
         ),
         headlineContent = {
             Text(
                 text = stringResource(label),
-                color = contentColor,
+                color = if (selected) MaterialTheme.colorScheme.onSecondaryContainer else contentColor,
+                style = if (prominent) MaterialTheme.typography.titleMedium
+                else MaterialTheme.typography.bodyLarge,
             )
         },
         leadingContent = {
@@ -5104,7 +5200,7 @@ private fun DialogAction(
                 Icon(
                     painter = painterResource(icon),
                     contentDescription = null,
-                    tint = contentColor,
+                    tint = if (selected) MaterialTheme.colorScheme.onSecondaryContainer else contentColor,
                 )
             } else {
                 Spacer(Modifier.size(24.dp))
@@ -5112,6 +5208,8 @@ private fun DialogAction(
         },
         modifier = Modifier
             .fillMaxWidth()
+            .padding(horizontal = 4.dp, vertical = 2.dp)
+            .clip(MaterialTheme.shapes.medium)
             .semantics { this.selected = selected }
             .clickable(
                 role = Role.Button,
