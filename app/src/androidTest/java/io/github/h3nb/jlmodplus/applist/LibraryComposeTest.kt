@@ -162,6 +162,32 @@ class LibraryComposeTest {
     }
 
     @Test
+    fun appActionsFavoriteReflectsTheCurrentState() {
+        var favoriteRequests = 0
+        composeRule.setContent {
+            JLModPlusTheme {
+                AppActionsDialog(
+                    app = LibraryAppUiItem(
+                        7, "Demo MIDlet", "Example Vendor", "1.0", null, true,
+                        favorite = true,
+                    ),
+                    onDismiss = {},
+                    onShortcut = {},
+                    onRename = {},
+                    onSettings = {},
+                    onReinstall = {},
+                    onDelete = {},
+                    onFavorite = { favoriteRequests++ },
+                )
+            }
+        }
+
+        composeRule.onNodeWithText(uiString(R.string.library_remove_from_favorites_action))
+            .performClick()
+        assertEquals(1, favoriteRequests)
+    }
+
+    @Test
     fun appActionsShowFocusOnlyAfterControllerNavigation() {
         val controllerEvents = MutableSharedFlow<LibraryControllerEvent>(extraBufferCapacity = 8)
         composeRule.setContent {
