@@ -817,7 +817,7 @@ class LibraryComposeTest {
 
         composeRule.onNodeWithContentDescription(uiString(R.string.action_settings)).performClick()
         composeRule.onNodeWithText(uiString(R.string.updates_title)).assertIsDisplayed()
-        composeRule.onAllNodesWithText(uiString(R.string.action_settings)).onLast().performClick()
+        composeRule.onNodeWithText(uiString(R.string.library_settings_preferences)).performClick()
         assertEquals(1, actions.settingsCount)
     }
     @Test
