@@ -33,6 +33,8 @@ import androidx.compose.foundation.lazy.items
 import io.github.h3nb.jlmodplus.ui.AdaptiveAlertDialog as AlertDialog
 import io.github.h3nb.jlmodplus.ui.adaptiveDialogLayout
 import androidx.compose.material3.CircularProgressIndicator
+import androidx.compose.material3.DropdownMenu
+import androidx.compose.material3.DropdownMenuItem
 import androidx.compose.material3.HorizontalDivider
 import androidx.compose.material3.Icon
 import androidx.compose.material3.IconButton
@@ -676,11 +678,49 @@ private fun LibraryCollectionsOverview(
                             )
                         },
                         trailingContent = {
-                            IconButton(onClick = { if (currentActive) actionsTarget = collection }) {
-                                Icon(
-                                    painter = painterResource(R.drawable.ic_edit),
-                                    contentDescription = stringResource(R.string.edit),
-                                )
+                            Box {
+                                IconButton(onClick = { if (currentActive) actionsTarget = collection }) {
+                                    Icon(
+                                        painter = painterResource(R.drawable.ic_more_vert),
+                                        contentDescription = stringResource(
+                                            R.string.library_collection_more_actions, collection.name,
+                                        ),
+                                    )
+                                }
+                                DropdownMenu(
+                                    expanded = active && actionsTarget?.id == collection.id,
+                                    onDismissRequest = { actionsTarget = null },
+                                ) {
+                                    DropdownMenuItem(
+                                        text = { Text(stringResource(R.string.action_context_rename)) },
+                                        leadingIcon = {
+                                            Icon(painterResource(R.drawable.ic_edit), contentDescription = null)
+                                        },
+                                        onClick = {
+                                            actionsTarget = null
+                                            renameTarget = collection
+                                        },
+                                    )
+                                    DropdownMenuItem(
+                                        text = {
+                                            Text(
+                                                stringResource(R.string.action_context_delete),
+                                                color = MaterialTheme.colorScheme.error,
+                                            )
+                                        },
+                                        leadingIcon = {
+                                            Icon(
+                                                painterResource(R.drawable.ic_delete),
+                                                contentDescription = null,
+                                                tint = MaterialTheme.colorScheme.error,
+                                            )
+                                        },
+                                        onClick = {
+                                            actionsTarget = null
+                                            deleteTarget = collection
+                                        },
+                                    )
+                                }
                             }
                         },
                         modifier = Modifier
@@ -718,21 +758,6 @@ private fun LibraryCollectionsOverview(
             onConfirm = { name ->
                 createDialog = false
                 if (currentActive) host.onCreateCollection(name)
-            },
-        )
-    }
-
-    actionsTarget?.takeIf { active }?.let { collection ->
-        CollectionActionsDialog(
-            collection = collection,
-            onDismiss = { actionsTarget = null },
-            onRename = {
-                actionsTarget = null
-                renameTarget = collection
-            },
-            onDelete = {
-                actionsTarget = null
-                deleteTarget = collection
             },
         )
     }
@@ -1055,66 +1080,6 @@ private fun AddAppsToCollectionDialog(
                 Text(stringResource(android.R.string.cancel))
             }
         },
-    )
-}
-
-@Composable
-private fun CollectionActionsDialog(
-    collection: LibraryCollectionUiItem,
-    onDismiss: () -> Unit,
-    onRename: () -> Unit,
-    onDelete: () -> Unit,
-) {
-    AlertDialog(
-        onDismissRequest = onDismiss,
-        title = {
-            Text(
-                text = collection.name,
-                maxLines = 1,
-                overflow = TextOverflow.Ellipsis,
-            )
-        },
-        text = {
-            Column {
-                CollectionDialogAction(
-                    label = R.string.action_context_rename,
-                    icon = R.drawable.ic_edit,
-                    onClick = onRename,
-                )
-                CollectionDialogAction(
-                    label = R.string.action_context_delete,
-                    icon = R.drawable.ic_delete,
-                    destructive = true,
-                    onClick = onDelete,
-                )
-            }
-        },
-        confirmButton = null,
-    )
-}
-
-@Composable
-private fun CollectionDialogAction(
-    label: Int,
-    icon: Int,
-    destructive: Boolean = false,
-    onClick: () -> Unit,
-) {
-    val contentColor = if (destructive) MaterialTheme.colorScheme.error
-    else MaterialTheme.colorScheme.onSurface
-    ListItem(
-        colors = ListItemDefaults.colors(containerColor = Color.Transparent),
-        headlineContent = { Text(stringResource(label), color = contentColor) },
-        leadingContent = {
-            Icon(
-                painter = painterResource(icon),
-                contentDescription = null,
-                tint = contentColor,
-            )
-        },
-        modifier = Modifier
-            .fillMaxWidth()
-            .clickable(onClick = onClick),
     )
 }
 
