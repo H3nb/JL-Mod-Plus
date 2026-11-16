@@ -354,6 +354,30 @@ class LibraryCollectionsNavigationTest {
     }
 
     @Test
+    fun collectionOverflowUsesAnAnchoredMenu() {
+        val host = RecordingCollectionsHost()
+        composeRule.setContent {
+            DeviceConfigurationOverride(
+                DeviceConfigurationOverride.WindowSize(DpSize(360.dp, 640.dp)),
+            ) {
+                JLModPlusTheme {
+                    LibraryScreen(state = sampleLibraryState(), actions = host)
+                }
+            }
+        }
+
+        openCollectionsManagement()
+        composeRule.onNodeWithContentDescription(
+            uiString(R.string.library_collection_more_actions, COLLECTION_NAME),
+        ).performClick()
+
+        composeRule.onNodeWithText(uiString(R.string.action_context_rename)).assertIsDisplayed()
+        composeRule.onNodeWithText(uiString(R.string.action_context_delete)).assertIsDisplayed()
+        composeRule.onNodeWithText(uiString(R.string.action_context_rename)).performClick()
+        composeRule.onNodeWithText(uiString(R.string.action_context_rename)).assertIsDisplayed()
+    }
+
+    @Test
     fun collectionSelectionBackExitsSelectionBeforeLeavingCollection() {
         val host = RecordingCollectionsHost()
         composeRule.setContent {
