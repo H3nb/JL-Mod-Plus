@@ -3360,7 +3360,10 @@ internal fun LibraryMoreDestination(
                     verticalArrangement = Arrangement.spacedBy(12.dp),
                 ) {
                     Row(
-                        modifier = Modifier.widthIn(max = 720.dp),
+                        modifier = Modifier
+                            .widthIn(max = 720.dp)
+                            .fillMaxWidth()
+                            .align(Alignment.CenterHorizontally),
                         verticalAlignment = Alignment.CenterVertically,
                     ) {
                         IconButton(onClick = onBack) {
@@ -3376,7 +3379,9 @@ internal fun LibraryMoreDestination(
                         )
                     }
                     Column(
-                        modifier = Modifier.fillMaxWidth().widthIn(max = 720.dp)
+                        modifier = Modifier
+                            .widthIn(max = 720.dp)
+                            .fillMaxWidth()
                             .align(Alignment.CenterHorizontally),
                         verticalArrangement = Arrangement.spacedBy(12.dp),
                     ) {
