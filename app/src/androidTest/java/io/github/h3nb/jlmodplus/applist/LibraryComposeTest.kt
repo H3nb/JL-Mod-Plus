@@ -128,6 +128,41 @@ class LibraryComposeTest {
     }
 
     @Test
+    fun listOverflowOpensTheMidletActionsWithoutLongPress() {
+        val actions = RecordingLibraryActions()
+        setLibraryContent(actions = actions)
+
+        composeRule.onNodeWithContentDescription(
+            uiString(R.string.library_app_more_actions, "Demo MIDlet"),
+        ).performClick()
+
+        composeRule.onNodeWithText(uiString(R.string.library_actions_group_customize))
+            .assertIsDisplayed()
+        composeRule.onNodeWithText(uiString(R.string.action_settings)).assertIsDisplayed()
+    }
+
+    @Test
+    fun iconOnlyGridStillProvidesVisibleMidletActions() {
+        val actions = RecordingLibraryActions()
+        setLibraryContent(
+            state = LibraryUiState(
+                loading = false,
+                layout = LibraryLayout.Grid,
+                hideGridTitles = true,
+                apps = listOf(LibraryAppUiItem(7, "Demo MIDlet", "Vendor", "1.0", null, true)),
+            ),
+            actions = actions,
+        )
+
+        composeRule.onNodeWithContentDescription(
+            uiString(R.string.library_app_more_actions, "Demo MIDlet"),
+        ).performClick()
+
+        composeRule.onNodeWithText(uiString(R.string.library_actions_group_customize))
+            .assertIsDisplayed()
+    }
+
+    @Test
     fun appActionsShowFocusOnlyAfterControllerNavigation() {
         val controllerEvents = MutableSharedFlow<LibraryControllerEvent>(extraBufferCapacity = 8)
         composeRule.setContent {
