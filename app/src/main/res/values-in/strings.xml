@@ -1346,4 +1346,7 @@
     <string name="library_actions_group_organize">Kelola</string>
     <string name="library_actions_group_transfer">Transfer dan pemeliharaan</string>
     <string name="library_collection_more_actions">Tindakan lainnya untuk koleksi %1$s</string>
+    <string name="library_settings_preferences">Preferensi aplikasi</string>
+    <string name="library_settings_section_maintenance">Pembaruan dan diagnostik</string>
+    <string name="library_settings_section_support">Tentang dan dukungan</string>
 </resources>
