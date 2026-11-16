@@ -1345,4 +1345,5 @@
     <string name="library_actions_group_customize">Sesuaikan</string>
     <string name="library_actions_group_organize">Kelola</string>
     <string name="library_actions_group_transfer">Transfer dan pemeliharaan</string>
+    <string name="library_collection_more_actions">Tindakan lainnya untuk koleksi %1$s</string>
 </resources>
