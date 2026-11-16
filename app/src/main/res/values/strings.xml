@@ -1437,12 +1437,12 @@
     <string name="memory_scripts_saved_count" tools:ignore="MissingTranslation">%1$d saved</string>
     <string name="memory_scripts_empty_hint" tools:ignore="MissingTranslation">Create a script to edit or freeze values while playing.</string>
     <string name="memory_builder_limits" tools:ignore="MissingTranslation">Limits (optional)</string>
-    <string name="library_app_more_actions">More actions for %1$s</string>
-    <string name="library_actions_group_customize">Customize</string>
-    <string name="library_actions_group_organize">Organize</string>
-    <string name="library_actions_group_transfer">Transfer and maintain</string>
-    <string name="library_collection_more_actions">More actions for collection %1$s</string>
-    <string name="library_settings_preferences">App preferences</string>
-    <string name="library_settings_section_maintenance">Updates and diagnostics</string>
-    <string name="library_settings_section_support">About and support</string>
+    <string name="library_app_more_actions" tools:ignore="MissingTranslation">More actions for %1$s</string>
+    <string name="library_actions_group_customize" tools:ignore="MissingTranslation">Customize</string>
+    <string name="library_actions_group_organize" tools:ignore="MissingTranslation">Organize</string>
+    <string name="library_actions_group_transfer" tools:ignore="MissingTranslation">Transfer and maintain</string>
+    <string name="library_collection_more_actions" tools:ignore="MissingTranslation">More actions for collection %1$s</string>
+    <string name="library_settings_preferences" tools:ignore="MissingTranslation">App preferences</string>
+    <string name="library_settings_section_maintenance" tools:ignore="MissingTranslation">Updates and diagnostics</string>
+    <string name="library_settings_section_support" tools:ignore="MissingTranslation">About and support</string>
 </resources>
