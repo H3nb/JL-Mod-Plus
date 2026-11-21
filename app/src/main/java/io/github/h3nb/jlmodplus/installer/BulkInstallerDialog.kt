@@ -33,7 +33,7 @@ import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.safeDrawing
 import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.layout.windowInsetsPadding
-import androidx.compose.foundation.shape.RectangleShape
+import androidx.compose.ui.graphics.RectangleShape
 import androidx.compose.foundation.lazy.LazyColumn
 import androidx.compose.foundation.lazy.items
 import androidx.compose.foundation.lazy.rememberLazyListState
@@ -247,7 +247,7 @@ internal fun BulkInstallSurface(
     BoxWithConstraints(
         modifier = Modifier
             .fillMaxSize()
-            .background(MaterialTheme.colorScheme.background)
+            .then(if (showSingle) Modifier else Modifier.background(MaterialTheme.colorScheme.background))
             .windowInsetsPadding(WindowInsets.safeDrawing),
         contentAlignment = Alignment.Center,
     ) {
@@ -438,7 +438,7 @@ private fun SingleReviewContent(
         Column(
             modifier = Modifier
                 .fillMaxWidth()
-                .weight(1f, fill = !single)
+                .weight(1f, fill = false)
                 .verticalScroll(rememberScrollState()),
             verticalArrangement = Arrangement.spacedBy(8.dp),
         ) {
@@ -808,7 +808,7 @@ private fun RunningContent(
         Column(
             modifier = Modifier
                 .fillMaxWidth()
-                .weight(1f, fill = false)
+                .weight(1f, fill = !single)
                 .verticalScroll(rememberScrollState()),
             verticalArrangement = Arrangement.spacedBy(8.dp),
         ) {
