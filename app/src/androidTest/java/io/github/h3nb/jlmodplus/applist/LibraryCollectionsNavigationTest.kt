@@ -136,7 +136,7 @@ class LibraryCollectionsNavigationTest {
     }
 
     @Test
-    fun selectedCollectionRestoresAndBackReturnsToOverview() {
+    fun selectedCollectionRestoresAndBackReturnsToAllApps() {
         val host = RecordingCollectionsHost()
         val restorationTester = StateRestorationTester(composeRule)
         restorationTester.setContent {
@@ -175,7 +175,7 @@ class LibraryCollectionsNavigationTest {
         composeRule.waitForIdle()
 
         composeRule.onAllNodesWithText(MEMBER_TITLE).assertCountEquals(0)
-        composeRule.onNodeWithText(COLLECTION_NAME).assertIsDisplayed()
+        composeRule.onNodeWithText(uiString(R.string.library_filter_all)).assertIsDisplayed()
         assertNull(host.store.displayedMembersCollectionId())
     }
 
@@ -344,7 +344,7 @@ class LibraryCollectionsNavigationTest {
         composeRule.waitForIdle()
 
         composeRule.onAllNodesWithText(MEMBER_TITLE).assertCountEquals(0)
-        composeRule.onNodeWithText(COLLECTION_NAME).assertIsDisplayed()
+        composeRule.onNodeWithText(uiString(R.string.library_filter_all)).assertIsDisplayed()
         assertNull(host.store.displayedMembersCollectionId())
     }
 
@@ -382,6 +382,44 @@ class LibraryCollectionsNavigationTest {
         assertNull(restored.selectedCollectionId)
         assertNull(restored.selectedCollectionScope)
         assertFalse(restored.collectionManageApps)
+    }
+
+    @Test
+    fun appCollectionCheckboxesToggleMembershipWithoutClosingTheDialog() {
+        val host = RecordingCollectionsHost()
+        composeRule.setContent {
+            JLModPlusTheme {
+                LibraryCollectionsDialogHost(host)
+            }
+        }
+        composeRule.runOnIdle {
+            val request = host.store.showAddTarget(SAMPLE_MEMBER.id, MEMBER_TITLE)
+            host.store.publishTargetMemberships(SAMPLE_MEMBER.id, request, emptySet())
+        }
+        composeRule.onNodeWithText(COLLECTION_NAME).performClick()
+        composeRule.waitForIdle()
+        assertEquals(
+            listOf(Triple(SAMPLE_MEMBER.databaseId, COLLECTION_ID, true)),
+            host.membershipRequests,
+        )
+        composeRule.onNodeWithText(COLLECTION_NAME).assertIsDisplayed()
+        composeRule.onNodeWithText(uiString(R.string.library_collection_new)).performClick()
+        composeRule.onNode(hasSetTextAction()).performTextInput("Arcade")
+        composeRule.onNodeWithText(uiString(R.string.create)).performClick()
+        composeRule.waitForIdle()
+        assertEquals(listOf(SAMPLE_MEMBER.id to "Arcade"), host.createdForApps)
+    }
+
+    @Test
+    fun closedCollectionTargetIgnoresLateMembershipResults() {
+        val store = LibraryCollectionsUiStore()
+        val stale = store.showAddTarget(SAMPLE_MEMBER.id, MEMBER_TITLE)
+        store.dismissAddTarget()
+        val current = store.showAddTarget(SAMPLE_MEMBER.id, MEMBER_TITLE)
+        store.publishTargetMemberships(SAMPLE_MEMBER.id, stale, setOf(COLLECTION_ID))
+        assertNull(store.state.value.addTarget?.memberCollectionIds)
+        store.publishTargetMemberships(SAMPLE_MEMBER.id, current, emptySet())
+        assertEquals(emptySet<Long>(), store.state.value.addTarget?.memberCollectionIds)
     }
 
     @Test
@@ -447,7 +485,7 @@ class LibraryCollectionsNavigationTest {
         composeRule.waitForIdle()
 
         composeRule.onAllNodesWithText(MEMBER_TITLE).assertCountEquals(0)
-        composeRule.onNodeWithText(COLLECTION_NAME).assertIsDisplayed()
+        composeRule.onNodeWithText(uiString(R.string.library_filter_all)).assertIsDisplayed()
         assertNull(host.store.displayedMembersCollectionId())
     }
 
@@ -840,6 +878,7 @@ class LibraryCollectionsNavigationTest {
         val bulkRemovals = mutableListOf<Pair<Set<Long>, Long>>()
         val singleRemovals = mutableListOf<Pair<Int, Long>>()
         val membershipRequests = mutableListOf<Triple<Long, Long, Boolean>>()
+        val createdForApps = mutableListOf<Pair<Int, String>>()
         var deferMembershipResult = false
         var pickerApps: List<LibraryAppUiItem> = listOf(SAMPLE_MEMBER, SAMPLE_MEMBER_2)
         private var pendingMembershipResult: CollectionMembershipResultCallback? = null
@@ -856,6 +895,9 @@ class LibraryCollectionsNavigationTest {
 
         override fun onDismissCollectionMembers() = store.dismissMembers()
         override fun onCreateCollection(name: String) = Unit
+        override fun onCreateCollectionForApp(appId: Int, name: String) {
+            createdForApps += appId to name
+        }
         override fun onRenameCollection(collectionId: Long, name: String) = Unit
         override fun onDeleteCollection(collectionId: Long) = Unit
         override fun onPrepareCollectionAppPicker() {
@@ -870,7 +912,17 @@ class LibraryCollectionsNavigationTest {
             included: Boolean,
             callback: CollectionMembershipResultCallback,
         ) {
-            onSetCollectionMembershipByDatabaseId(appId.toLong(), collectionId, included, callback)
+            onSetCollectionMembershipByDatabaseId(
+                appId.toLong(), collectionId, included,
+                CollectionMembershipResultCallback { success ->
+                    if (success) {
+                        store.updateTargetMembership(
+                            appId, store.currentTargetRequestId(appId), collectionId, included,
+                        )
+                    }
+                    callback.onResult(success)
+                },
+            )
         }
 
         override fun onSetCollectionMembershipByDatabaseId(
