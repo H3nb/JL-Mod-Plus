@@ -54,8 +54,8 @@ internal fun PreferenceTextContent(
         if (!value.isNullOrBlank()) {
             Text(
                 text = value,
-                style = MaterialTheme.typography.labelLarge.copy(fontWeight = FontWeight.SemiBold),
-                color = if (enabled) colors.onSurface else disabled,
+                style = MaterialTheme.typography.labelLarge.copy(fontWeight = FontWeight.Medium),
+                color = if (enabled) colors.onSurfaceVariant else disabled,
                 maxLines = 2,
                 overflow = TextOverflow.Ellipsis,
             )
@@ -68,6 +68,17 @@ internal fun PreferenceTextContent(
             )
         }
     }
+}
+
+/** Indicates that a preference opens an editor, chooser or another screen. */
+@Composable
+internal fun PreferenceChevron(modifier: Modifier = Modifier) {
+    Icon(
+        painter = painterResource(R.drawable.ic_chevron_right),
+        contentDescription = null,
+        tint = MaterialTheme.colorScheme.onSurfaceVariant,
+        modifier = modifier.size(20.dp),
+    )
 }
 
 /** Neutral explanation or persistent, themed warning; never a decorative badge. */
