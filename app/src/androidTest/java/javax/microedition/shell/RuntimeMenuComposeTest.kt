@@ -674,6 +674,24 @@ class RuntimeMenuComposeTest {
     }
 
     @Test
+    fun restartActionDismissesBeforeRequestingConfirmation() {
+        val events = mutableListOf<String>()
+        composeRule.setContent {
+            JLModPlusTheme {
+                RuntimeMenuHost(
+                    state = RuntimeMenuUiState(title = "MIDlet"),
+                    menuVisible = true,
+                    actions = RecordingRuntimeMenuActions(events),
+                    onDismissMenu = { events += "dismiss" },
+                )
+            }
+        }
+
+        composeRule.onNodeWithText(uiString(R.string.runtime_restart)).performClick()
+        assertEquals(listOf("dismiss", "restart"), events)
+    }
+
+    @Test
     fun fullscreenToggleDismissesBeforeChangingGlobalPreference() {
         val events = mutableListOf<String>()
         composeRule.setContent {
@@ -941,6 +959,26 @@ class RuntimeMenuComposeTest {
 
         composeRule.onNodeWithText("Cancel").performClick()
         assertEquals(listOf("dismiss"), events)
+    }
+
+    @Test
+    fun restartConfirmationIsRequiredBeforeRelaunch() {
+        val events = mutableListOf<String>()
+        composeRule.setContent {
+            JLModPlusTheme {
+                RuntimeHostDialogs(
+                    state = RuntimeHostDialogState.RestartConfirmation,
+                    actions = RecordingRuntimeHostDialogActions(events),
+                    onDismiss = { events += "dismiss" },
+                )
+            }
+        }
+
+        composeRule.onNodeWithText(uiString(R.string.runtime_restart_confirmation)).assertIsDisplayed()
+        assertEquals(emptyList<String>(), events)
+        composeRule.onNode(hasText(uiString(R.string.runtime_restart)) and hasClickAction())
+            .performClick()
+        assertEquals(listOf("dismiss", "restart-confirmed"), events)
     }
 
     @Test
