@@ -3075,12 +3075,10 @@ private fun LibraryAppsHeader(
                             ) else Modifier
                         ),
                 ) {
-                    Text(
-                        text = stringResource(R.string.library_scope_picker_title),
-                        style = MaterialTheme.typography.titleLarge,
-                        modifier = Modifier.padding(horizontal = 20.dp, vertical = 12.dp),
-                    )
-                    LazyColumn(modifier = Modifier.weight(1f, fill = false)) {
+                    LazyColumn(
+                        modifier = Modifier.weight(1f, fill = false),
+                        contentPadding = PaddingValues(top = 8.dp, bottom = 16.dp),
+                    ) {
                         items((views.size + columns - 1) / columns, key = { "view-$it" }) { row ->
                             Row(
                                 modifier = Modifier.fillMaxWidth().height(IntrinsicSize.Min)
@@ -3112,14 +3110,16 @@ private fun LibraryAppsHeader(
                                 }
                             }
                         }
-                        item(key = "collections-heading") {
-                            Text(
-                                text = stringResource(R.string.library_destination_collections),
-                                style = MaterialTheme.typography.titleMedium,
-                                modifier = Modifier.padding(
-                                    start = 20.dp, end = 20.dp, top = 16.dp, bottom = 8.dp,
-                                ),
-                            )
+                        if (collections.isNotEmpty()) {
+                            item(key = "collections-heading") {
+                                Text(
+                                    text = stringResource(R.string.library_destination_collections),
+                                    style = MaterialTheme.typography.titleMedium,
+                                    modifier = Modifier.padding(
+                                        start = 20.dp, end = 20.dp, top = 12.dp, bottom = 4.dp,
+                                    ),
+                                )
+                            }
                         }
                         items((collections.size + columns - 1) / columns, key = { "collection-row-$it" }) { row ->
                             Row(
@@ -3166,7 +3166,9 @@ private fun LibraryAppsHeader(
                             )
                         },
                         colors = ListItemDefaults.colors(containerColor = Color.Transparent),
-                        modifier = Modifier.fillMaxWidth().clip(MaterialTheme.shapes.large)
+                        modifier = Modifier.fillMaxWidth()
+                            .padding(top = 6.dp, bottom = 4.dp, start = 8.dp, end = 8.dp)
+                            .clip(MaterialTheme.shapes.large)
                             .clickable { closeScopeThen(onManageCollections) },
                     )
                 }
@@ -3249,12 +3251,12 @@ private fun RowScope.LibraryScopeChoiceTile(
     val foreground = if (selected) MaterialTheme.colorScheme.onSecondaryContainer
         else MaterialTheme.colorScheme.onSurface
     Row(
-        modifier = Modifier.weight(1f).fillMaxHeight().heightIn(min = 72.dp)
+        modifier = Modifier.weight(1f).fillMaxHeight().heightIn(min = 64.dp)
             .clip(MaterialTheme.shapes.large).background(background)
             .semantics { this.selected = selected }
             .clickable(enabled = enabled, role = Role.Button, onClick = onClick)
-            .padding(horizontal = 12.dp, vertical = 12.dp),
-        horizontalArrangement = Arrangement.spacedBy(10.dp),
+            .padding(horizontal = 12.dp, vertical = 10.dp),
+        horizontalArrangement = Arrangement.spacedBy(8.dp),
         verticalAlignment = Alignment.CenterVertically,
     ) {
         Icon(
@@ -3266,9 +3268,9 @@ private fun RowScope.LibraryScopeChoiceTile(
         Column(modifier = Modifier.weight(1f)) {
             Text(
                 text = title,
-                style = MaterialTheme.typography.titleSmall,
+                style = MaterialTheme.typography.bodyLarge,
                 color = foreground.copy(alpha = if (enabled) 1f else 0.38f),
-                maxLines = 3,
+                maxLines = 2,
                 overflow = TextOverflow.Ellipsis,
             )
             if (supporting != null) {
