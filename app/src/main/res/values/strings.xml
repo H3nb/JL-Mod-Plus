@@ -143,7 +143,7 @@
     <string name="msg_immediate_mode_disabled">Immediate processing was disabled because event callbacks nested too deeply.</string>
     <string name="msg_mascot_capsule" translatable="false">Mascot Capsule 3D!</string>
     <string name="msg_no_matches">No matches for \"%1$s\"</string>
-    <string name="library_destination_apps">Apps</string>
+    <string name="library_destination_apps">All Apps</string>
     <string name="library_destination_collections">Collections</string>
     <string name="library_destination_more">More</string>
     <string name="library_search_placeholder">Search apps…</string>

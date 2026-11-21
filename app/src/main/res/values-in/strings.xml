@@ -96,7 +96,7 @@
     <string name="msg_error_loading_shader">Shader tidak didukung. Shader bawaan digunakan.</string>
     <string name="msg_immediate_mode_disabled">Mode pemrosesan langsung dinonaktifkan karena callback event bersarang terlalu dalam.</string>
     <string name="msg_no_matches">Tidak ada hasil untuk \"%1$s\"</string>
-    <string name="library_destination_apps">Aplikasi</string>
+    <string name="library_destination_apps">Semua aplikasi</string>
     <string name="library_destination_collections">Koleksi</string>
     <string name="library_destination_more">Lainnya</string>
     <string name="library_search_placeholder">Cari aplikasi…</string>
