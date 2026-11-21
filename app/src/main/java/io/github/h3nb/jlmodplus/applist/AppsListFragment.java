@@ -642,22 +642,8 @@ public class AppsListFragment extends Fragment {
                 if (app == null || generation == null || workdir == null ||
                         activeGeneration != generation.getGeneration() ||
                         !workdir.equals(generation.getEmulatorDir())) return;
-                libraryViewModel.createCollection(name, (collectionId, error) -> {
-                    if (error != null) {
-                        showError(error);
-                        return;
-                    }
-                    if (collectionId == null || !isAdded() ||
-                            !libraryViewModel.isReadyGeneration(generation.getGeneration(), workdir) ||
-                            activeGeneration != generation.getGeneration() ||
-                            activeWorkdir == null || !activeWorkdir.equals(workdir)) return;
-                    LibraryAppRow current = findRow(appId);
-                    if (current == null || current.getId() != app.getId() ||
-                            !current.getStorageKey().equals(app.getStorageKey())) return;
-                    libraryViewModel.setCollectionMembership(
-                            collectionId, app.getId(), true, (ignored, membershipError) -> {
-                                if (membershipError != null) showError(membershipError);
-                            });
+                libraryViewModel.createCollectionWithApp(app.getId(), name, (id, error) -> {
+                    if (error != null) showError(error);
                 });
             }
 
@@ -721,7 +707,10 @@ public class AppsListFragment extends Fragment {
                     if (current == null || current.getId() != app.getId() ||
                             !current.getStorageKey().equals(app.getStorageKey())) return;
                     if (error != null || ids == null) {
-                        collectionsUiStore.dismissAddTarget();
+                        Long currentRequestId = collectionsUiStore.currentTargetRequestId(appId);
+                        if (currentRequestId != null && currentRequestId == requestId) {
+                            collectionsUiStore.dismissAddTarget();
+                        }
                         if (error != null) showError(error);
                         return;
                     }

@@ -264,6 +264,15 @@ class LibraryRepository(
         dao.createCollection(name, createdAt)
     }
 
+    suspend fun createCollectionWithApp(
+        expected: LibraryGenerationToken,
+        name: String,
+        appId: Long,
+        createdAt: Long,
+    ): Long = withActiveDatabase(expected) { dao ->
+        dao.createCollectionWithApp(name, createdAt, appId)
+    }
+
     suspend fun renameCollection(
         expected: LibraryGenerationToken,
         collectionId: Long,

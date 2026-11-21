@@ -389,6 +389,20 @@ abstract class LibraryDao {
     }
 
     @Transaction
+    open suspend fun createCollectionWithApp(
+        name: String,
+        createdAt: Long,
+        appId: Long,
+    ): Long {
+        check(getApp(appId) != null) { "Library app disappeared: $appId" }
+        val id = createCollection(name, createdAt)
+        insertCollectionMembership(
+            LibraryCollectionAppEntity(collectionId = id, appId = appId, addedAt = createdAt),
+        )
+        return id
+    }
+
+    @Transaction
     open suspend fun setCollectionMembership(
         collectionId: Long,
         appId: Long,

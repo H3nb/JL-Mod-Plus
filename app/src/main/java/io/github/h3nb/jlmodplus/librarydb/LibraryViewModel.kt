@@ -709,6 +709,28 @@ class LibraryViewModel(application: Application) : AndroidViewModel(application)
         }
     }
 
+    fun createCollectionWithApp(
+        appId: Long,
+        name: String,
+        callback: MutationCallback<Long>,
+    ) {
+        val generation = readyGeneration()
+        val app = try {
+            generation?.let { repository.currentApp(it, appId) }
+        } catch (_: IllegalStateException) {
+            null
+        }
+        if (generation == null || app == null) {
+            callback.complete(null, IllegalStateException("Library app is not available"))
+            return
+        }
+        launchMutation(callback) {
+            repository.createCollectionWithApp(
+                generation, name, app.id, System.currentTimeMillis(),
+            )
+        }
+    }
+
     fun renameCollection(collectionId: Long, name: String, callback: MutationCallback<Unit>) {
         val generation = readyGeneration()
         val collection = try {
