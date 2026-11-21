@@ -90,6 +90,7 @@ import io.github.h3nb.jlmodplus.updates.UpdateRepository
 import io.github.h3nb.jlmodplus.updates.UpdateStatus
 import io.github.h3nb.jlmodplus.updates.UpdatesScreen
 import io.github.h3nb.jlmodplus.ui.JLModPlusTheme
+import io.github.h3nb.jlmodplus.ui.PreferenceTextContent
 import io.github.h3nb.jlmodplus.ui.TransientNoticeHost
 import io.github.h3nb.jlmodplus.ui.TransientNoticeState
 import io.github.h3nb.jlmodplus.ui.AccentPalette
@@ -495,6 +496,7 @@ fun SettingsScreen(
             title = choice.title,
             selected = choice.selected,
             options = choice.options,
+            summary = choice.summary,
             onDismiss = { libraryChoiceDialog = null },
             onSelected = { value ->
                 libraryChoiceDialog = null
@@ -547,7 +549,6 @@ private fun LazyListScope.settingsOptionSection(
             is SettingsOptionEntry.Choice -> SettingsChoiceRow(
                 title = entry.option.title,
                 selected = entry.option.selected,
-                summary = entry.option.summary,
                 onClick = { onChoice(entry.option) },
             )
             is SettingsOptionEntry.Toggle -> SettingsSwitchRow(
@@ -619,7 +620,6 @@ private fun SettingsChoiceRow(
     title: String,
     selected: SettingsOption,
     showAccentPreview: Boolean = false,
-    summary: String? = null,
     onClick: () -> Unit,
 ) {
     Row(
@@ -630,31 +630,13 @@ private fun SettingsChoiceRow(
         verticalAlignment = Alignment.CenterVertically,
         horizontalArrangement = Arrangement.spacedBy(12.dp),
     ) {
-        Column(
+        PreferenceTextContent(
+            title = title,
+            value = selected.label,
             modifier = Modifier.weight(1f),
-            verticalArrangement = Arrangement.spacedBy(4.dp),
-        ) {
-            Text(
-                text = title,
-                style = MaterialTheme.typography.bodyLarge,
-            )
-            if (summary != null) {
-                Text(
-                    text = summary,
-                    style = MaterialTheme.typography.bodySmall,
-                    color = MaterialTheme.colorScheme.onSurfaceVariant,
-                )
-            }
-            Text(
-                text = selected.label,
-                color = MaterialTheme.colorScheme.onSurface,
-                style = MaterialTheme.typography.labelLarge.copy(fontWeight = FontWeight.SemiBold),
-                maxLines = 2,
-                overflow = TextOverflow.Ellipsis,
-            )
-        }
+        )
         if (showAccentPreview) {
-            androidx.compose.foundation.layout.Box(
+            Box(
                 modifier = Modifier
                     .size(22.dp)
                     .background(
@@ -667,18 +649,13 @@ private fun SettingsChoiceRow(
     }
 }
 
-private enum class SettingsDialogChoice {
-    Theme,
-    Accent,
-    Language,
-}
-
 @Composable
 private fun SettingsChoiceDialog(
     title: String,
     selected: SettingsOption,
     options: List<SettingsOption>,
     showAccentPreview: Boolean = false,
+    summary: String? = null,
     onDismiss: () -> Unit,
     onSelected: (String) -> Unit,
 ) {
@@ -702,6 +679,16 @@ private fun SettingsChoiceDialog(
                         .selectableGroup(),
                     state = listState,
                 ) {
+                    if (!summary.isNullOrBlank()) {
+                        item(key = "explanation") {
+                            Text(
+                                text = summary,
+                                style = MaterialTheme.typography.bodyMedium,
+                                color = MaterialTheme.colorScheme.onSurfaceVariant,
+                                modifier = Modifier.padding(horizontal = 16.dp, vertical = 8.dp),
+                            )
+                        }
+                    }
                     items(options, key = { it.value }) { option ->
                         val selectedOption = option.value == selected.value
                         ListItem(
@@ -775,25 +762,12 @@ private fun SettingsSwitchRow(
         verticalAlignment = Alignment.CenterVertically,
         horizontalArrangement = Arrangement.spacedBy(12.dp),
     ) {
-        Column(
+        PreferenceTextContent(
+            title = setting.title,
+            description = setting.summary,
+            enabled = setting.enabled,
             modifier = Modifier.weight(1f),
-            verticalArrangement = Arrangement.spacedBy(3.dp),
-        ) {
-            Text(
-                text = setting.title,
-                style = MaterialTheme.typography.bodyLarge,
-                color = if (setting.enabled) MaterialTheme.colorScheme.onSurface
-                else MaterialTheme.colorScheme.onSurface.copy(alpha = 0.38f),
-            )
-            setting.summary?.let { summary ->
-                Text(
-                    text = summary,
-                    color = if (setting.enabled) MaterialTheme.colorScheme.onSurfaceVariant
-                    else MaterialTheme.colorScheme.onSurface.copy(alpha = 0.38f),
-                    style = MaterialTheme.typography.bodySmall,
-                )
-            }
-        }
+        )
         Switch(
             checked = setting.checked,
             onCheckedChange = null,
@@ -809,34 +783,16 @@ private fun SettingsActionRow(
     value: String? = null,
     onClick: () -> Unit,
 ) {
-    Column(
+    Box(
         modifier = Modifier
             .fillMaxWidth()
             .clickable(role = Role.Button, onClick = onClick)
             .padding(horizontal = 16.dp, vertical = 11.dp),
-        verticalArrangement = Arrangement.spacedBy(4.dp),
     ) {
-        Text(
-            text = title,
-            style = MaterialTheme.typography.bodyLarge,
+        PreferenceTextContent(
+            title = title,
+            value = value,
+            description = summary,
         )
-        summary?.let { description ->
-            Text(
-                text = description,
-                color = MaterialTheme.colorScheme.onSurfaceVariant,
-                style = MaterialTheme.typography.bodySmall,
-                maxLines = 2,
-                overflow = TextOverflow.Ellipsis,
-            )
-        }
-        value?.let { currentValue ->
-            Text(
-                text = currentValue,
-                color = MaterialTheme.colorScheme.onSurface,
-                style = MaterialTheme.typography.labelLarge.copy(fontWeight = FontWeight.SemiBold),
-                maxLines = 2,
-                overflow = TextOverflow.Ellipsis,
-            )
-        }
     }
 }
