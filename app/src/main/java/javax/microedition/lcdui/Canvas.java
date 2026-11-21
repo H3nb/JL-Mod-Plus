@@ -2155,7 +2155,7 @@ public abstract class Canvas extends Displayable {
 			Throwable failure = null;
 			try {
 				IntBuffer buf = IntBuffer.allocate(width * height);
-				glReadPixels(displayWidth - width - onX, displayHeight - height - onY,
+				glReadPixels(onX, displayHeight - height - onY,
 						width, height, GL_RGBA, GL_UNSIGNED_BYTE, buf);
 				int error = glGetError();
 				if (error != GL_NO_ERROR) {
