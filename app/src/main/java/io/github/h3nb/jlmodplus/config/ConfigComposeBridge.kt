@@ -62,6 +62,7 @@ import androidx.compose.material3.ButtonDefaults
 import androidx.compose.material3.Checkbox
 import androidx.compose.material3.ExperimentalMaterial3Api
 import androidx.compose.material3.FilterChip
+import androidx.compose.material3.FilledTonalIconButton
 import androidx.compose.material3.HorizontalDivider
 import androidx.compose.material3.Icon
 import androidx.compose.material3.IconButton
@@ -750,7 +751,9 @@ private fun ConfigDestinationContent(
                     )
                     ConfigNavigationPreference(
                         title = stringResource(R.string.config_display_performance),
-                        value = stringResource(R.string.config_display_performance_summary),
+                        value = if (form.fpsLimit == "0" || form.fpsLimit.isBlank())
+                            stringResource(R.string.fps_limit_maximum)
+                        else "${form.fpsLimit} FPS",
                         onClick = { onOpenDetail(ConfigDetail.Performance) },
                     )
                 }
@@ -812,10 +815,14 @@ private fun GeneralDestination(
             )
         }
     }
+    val orientation = stringArrayResource(R.array.PREF_ORIENTATION_ENTRIES)
+        .getOrNull(form.orientation).orEmpty()
+    val soundbank = state.soundBanks.firstOrNull { it == form.soundBank }
+        ?: state.soundBanks.firstOrNull().orEmpty()
     ConfigSection(title = stringResource(R.string.config_overview_quick_access)) {
         ConfigNavigationPreference(
             title = stringResource(R.string.config_destination_graphics),
-            value = "${form.screenWidth} × ${form.screenHeight}",
+            value = "${form.screenWidth} × ${form.screenHeight} · $orientation",
             onClick = { onNavigate(ConfigDestination.Display) },
         )
         ConfigNavigationPreference(
@@ -826,7 +833,7 @@ private fun GeneralDestination(
         )
         ConfigNavigationPreference(
             title = stringResource(R.string.config_destination_media),
-            value = stringResource(R.string.config_overview_media_summary),
+            value = soundbank.ifBlank { stringResource(R.string.config_overview_media_summary) },
             onClick = { onNavigate(ConfigDestination.Media) },
         )
     }
@@ -1309,10 +1316,10 @@ private fun ConfigTopBar(
                     Text(stringResource(R.string.save))
                 }
             } else {
-                IconButton(onClick = onStart) {
+                FilledTonalIconButton(onClick = onStart) {
                     Icon(
                         painter = painterResource(R.drawable.ic_play),
-                        modifier = Modifier.size(30.dp),
+                        modifier = Modifier.size(24.dp),
                         contentDescription = stringResource(R.string.START_CMD),
                     )
                 }
