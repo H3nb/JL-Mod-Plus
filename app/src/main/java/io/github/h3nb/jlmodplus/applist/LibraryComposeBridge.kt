@@ -126,6 +126,7 @@ import androidx.compose.material3.Scaffold
 import androidx.compose.material3.Surface
 import androidx.compose.material3.Text
 import androidx.compose.material3.TextButton
+import androidx.compose.material3.OutlinedButton
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.MutableFloatState
 import androidx.compose.runtime.derivedStateOf
@@ -705,6 +706,24 @@ private fun BundleComponentsDialog(
                         Text(stringResource(label), modifier = Modifier.padding(start = 8.dp))
                     }
                 }
+                if (onJarOnly != null) {
+                    Spacer(Modifier.height(12.dp))
+                    OutlinedButton(
+                        onClick = onJarOnly,
+                        modifier = Modifier.fillMaxWidth(),
+                    ) {
+                        Icon(
+                            painter = painterResource(R.drawable.ic_file_download),
+                            contentDescription = null,
+                            modifier = Modifier.size(18.dp),
+                        )
+                        Spacer(Modifier.width(8.dp))
+                        Text(stringResource(
+                            if (jarOnlyIsBulk) R.string.library_export_jars_only
+                            else R.string.library_export_jar_only,
+                        ))
+                    }
+                }
             }
         },
         confirmButton = {
@@ -713,17 +732,7 @@ private fun BundleComponentsDialog(
             }) { Text(stringResource(R.string.library_bundle_export)) }
         },
         dismissButton = {
-            Row {
-                if (onJarOnly != null) {
-                    TextButton(onClick = onJarOnly) {
-                        Text(stringResource(
-                            if (jarOnlyIsBulk) R.string.library_export_jars_only
-                            else R.string.library_export_jar_only,
-                        ))
-                    }
-                }
-                TextButton(onClick = onDismiss) { Text(stringResource(android.R.string.cancel)) }
-            }
+            TextButton(onClick = onDismiss) { Text(stringResource(android.R.string.cancel)) }
         },
     )
 }
