@@ -239,26 +239,30 @@ fun FilePickerScreen(
                     }
                 }
             } else BottomAppBar {
-                Text(
-                    text = when {
-                        state.request.mode == FilePickerContract.MODE_DIR ||
-                            (state.request.mode == FilePickerContract.MODE_FILE_AND_DIR &&
-                                state.selectedPaths.isEmpty()) -> {
-                            stringResource(R.string.file_picker_current_folder)
-                        }
-                        state.selectedPaths.isNotEmpty() -> {
-                            pluralStringResource(
-                                R.plurals.file_picker_selected_count,
-                                state.selectedPaths.size,
-                                state.selectedPaths.size,
-                            )
-                        }
-                        else -> ""
-                    },
-                    modifier = Modifier.weight(1f),
-                    maxLines = 1,
-                    overflow = TextOverflow.Ellipsis,
-                )
+                val summary = when {
+                    state.request.mode == FilePickerContract.MODE_DIR ||
+                        (state.request.mode == FilePickerContract.MODE_FILE_AND_DIR &&
+                            state.selectedPaths.isEmpty()) ->
+                        stringResource(R.string.file_picker_current_folder)
+                    state.selectedPaths.isNotEmpty() -> pluralStringResource(
+                        R.plurals.file_picker_selected_count,
+                        state.selectedPaths.size,
+                        state.selectedPaths.size,
+                    )
+                    else -> null
+                }
+                if (summary == null) {
+                    Spacer(Modifier.weight(1f))
+                } else {
+                    Text(
+                        text = summary,
+                        modifier = Modifier.weight(1f),
+                        style = MaterialTheme.typography.bodySmall,
+                        color = MaterialTheme.colorScheme.onSurfaceVariant,
+                        maxLines = 1,
+                        overflow = TextOverflow.Ellipsis,
+                    )
+                }
                 TextButton(onClick = actions::onExit) {
                     Text(stringResource(R.string.file_picker_cancel))
                 }
@@ -547,7 +551,7 @@ private fun PickerEntryRow(
         headlineContent = {
             Text(
                 text = entry.name,
-                maxLines = if (onPreview != null) 2 else 1,
+                maxLines = 2,
                 overflow = TextOverflow.Ellipsis,
             )
         },
