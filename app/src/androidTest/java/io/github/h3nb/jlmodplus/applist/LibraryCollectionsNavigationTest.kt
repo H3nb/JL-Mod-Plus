@@ -29,6 +29,8 @@ import androidx.compose.ui.test.assertIsOn
 import androidx.compose.ui.test.junit4.StateRestorationTester
 import androidx.compose.ui.test.junit4.v2.createComposeRule
 import androidx.compose.ui.test.hasAnyDescendant
+import androidx.compose.ui.test.hasAnyAncestor
+import androidx.compose.ui.test.isDialog
 import androidx.compose.ui.test.hasScrollAction
 import androidx.compose.ui.test.hasText
 import androidx.compose.ui.test.hasSetTextAction
@@ -101,7 +103,7 @@ class LibraryCollectionsNavigationTest {
     }
 
     @Test
-    fun landscapeCollectionPickerKeepsLastCollectionAboveManageAction() {
+    fun compactLandscapeCollectionPickerUsesDialogWithPinnedManageAction() {
         val host = RecordingCollectionsHost().apply {
             store.publishCollections(
                 listOf(
@@ -127,18 +129,25 @@ class LibraryCollectionsNavigationTest {
         }
 
         composeRule.onNodeWithTag("library_scope_picker").performClick()
-        composeRule.onNodeWithText("RPG").assertIsDisplayed()
-        val emptyCount = InstrumentationRegistry.getInstrumentation().targetContext.resources
-            .getQuantityString(R.plurals.library_collection_member_count, 0, 0)
-        val countNode = composeRule.onNodeWithText(emptyCount)
-        countNode.assertIsDisplayed()
+        val dialog = composeRule.onNodeWithTag("adaptive-dialog-surface")
+        dialog.assertIsDisplayed()
         val footer = composeRule.onNodeWithText(uiString(R.string.library_collection_manage))
         footer.assertIsDisplayed()
+        composeRule.onNode(hasScrollAction() and hasAnyAncestor(isDialog()))
+            .performScrollToIndex(2)
+        val count = InstrumentationRegistry.getInstrumentation().targetContext.resources
+            .getQuantityString(R.plurals.library_collection_member_count, 0, 0)
+        val countNode = composeRule.onNodeWithText(count)
+        countNode.assertIsDisplayed()
         assertTrue(
-            "The last collection's count must not be hidden under Manage collections",
+            "Last collection must not be hidden behind Manage collections",
             countNode.fetchSemanticsNode().boundsInRoot.bottom <=
                 footer.fetchSemanticsNode().boundsInRoot.top,
         )
+        val dialogTop = dialog.fetchSemanticsNode().boundsInRoot.top
+        composeRule.mainClock.advanceTimeBy(500)
+        composeRule.waitForIdle()
+        assertEquals(dialogTop, dialog.fetchSemanticsNode().boundsInRoot.top, 0.5f)
     }
 
     @Test
