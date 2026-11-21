@@ -59,6 +59,7 @@ import java.nio.ByteBuffer;
 import java.nio.ByteOrder;
 import java.nio.FloatBuffer;
 import java.nio.IntBuffer;
+import java.util.ArrayDeque;
 import java.util.HashSet;
 import java.util.List;
 import java.util.Set;
@@ -1866,7 +1867,8 @@ public abstract class Canvas extends Displayable {
 		private int lastUploadedWidth;
 		private int lastUploadedHeight;
 		private boolean textureValid;
-		private boolean isStarted;
+		private volatile boolean isStarted;
+		private final ArrayDeque<GlScreenshotCallback> pendingScreenshots = new ArrayDeque<>();
 
 		@Override
 		public void onSurfaceCreated(GL10 gl, EGLConfig config) {
@@ -1937,6 +1939,7 @@ public abstract class Canvas extends Displayable {
 			long presentationGeneration = presentationMailbox.generation();
 			long hostRevision = presentationMailbox.captureHostRevision(presentationGeneration);
 			boolean presented = false;
+			boolean frameDrawn = false;
 			try {
 				long nowNs = SystemClock.elapsedRealtimeNanos();
 				if (isDynamicSolidMode()) sampleAmbientIfDue(nowNs);
@@ -2038,6 +2041,7 @@ public abstract class Canvas extends Displayable {
 					glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MAG_FILTER, sample);
 					glDrawArrays(GL_TRIANGLE_STRIP, 0, 4);
 				}
+				frameDrawn = true;
 				presented = true;
 				if (metrics != null) {
 					metrics.recordRender(frameSequence);
@@ -2048,7 +2052,11 @@ public abstract class Canvas extends Displayable {
 					diagnostics.recordRender(frameSequence, publicationNanos, consumptionNanos,
 							submitStarted, System.nanoTime());
 				}
+				capturePendingScreenshot();
 			} finally {
+				if (!frameDrawn) {
+					failPendingScreenshots(new IllegalStateException("GL screenshot frame was not rendered"));
+				}
 				boolean needsAnother = presented
 						? presentationMailbox.complete(presentationGeneration, frameSequence, hostRevision)
 						: presentationMailbox.releaseAfterFailure(presentationGeneration);
@@ -2103,7 +2111,10 @@ public abstract class Canvas extends Displayable {
 		}
 
 		public void stop() {
-			isStarted = false;
+			synchronized (pendingScreenshots) {
+				isStarted = false;
+			}
+			failPendingScreenshots(new IllegalStateException("GL screenshot surface is unavailable"));
 			mView.onPause();
 		}
 
@@ -2112,27 +2123,61 @@ public abstract class Canvas extends Displayable {
 		}
 
 		private void capturePixels(GlScreenshotCallback callback) {
+			boolean available;
+			synchronized (pendingScreenshots) {
+				available = isStarted;
+				if (available) pendingScreenshots.addLast(callback);
+			}
+			if (available) {
+				mView.requestRender();
+			} else {
+				callback.complete(null, 0, 0, new IllegalStateException("GL screenshot surface is unavailable"));
+			}
+		}
+
+		private void capturePendingScreenshot() {
+			GlScreenshotCallback callback;
+			boolean morePending;
+			synchronized (pendingScreenshots) {
+				callback = pendingScreenshots.pollFirst();
+				morePending = !pendingScreenshots.isEmpty();
+			}
+			if (callback != null) {
+				readScreenshotPixels(callback);
+			}
+			if (morePending) mView.requestRender();
+		}
+
+		private void readScreenshotPixels(GlScreenshotCallback callback) {
 			int width = onWidth;
 			int height = onHeight;
-			IntBuffer buf = IntBuffer.allocate(width * height);
-			mView.requestRender();
-			mView.queueEvent(() -> {
-				int[] pixels = null;
-				Throwable failure = null;
-				try {
-					glReadPixels(displayWidth - width - onX, displayHeight - height - onY,
-							width, height, GL_RGBA, GL_UNSIGNED_BYTE, buf);
-					int error = glGetError();
-					if (error != GL_NO_ERROR) {
-						failure = new RuntimeException(GLU.gluErrorString(error));
-					} else {
-						pixels = buf.array();
-					}
-				} catch (Throwable error) {
-					failure = error;
+			int[] pixels = null;
+			Throwable failure = null;
+			try {
+				IntBuffer buf = IntBuffer.allocate(width * height);
+				glReadPixels(onX, displayHeight - height - onY,
+						width, height, GL_RGBA, GL_UNSIGNED_BYTE, buf);
+				int error = glGetError();
+				if (error != GL_NO_ERROR) {
+					failure = new RuntimeException(GLU.gluErrorString(error));
+				} else {
+					pixels = buf.array();
 				}
-				callback.complete(pixels, width, height, failure);
-			});
+			} catch (Throwable error) {
+				failure = error;
+			}
+			callback.complete(pixels, width, height, failure);
+		}
+
+		private void failPendingScreenshots(Throwable error) {
+			while (true) {
+				GlScreenshotCallback callback;
+				synchronized (pendingScreenshots) {
+					callback = pendingScreenshots.pollFirst();
+				}
+				if (callback == null) return;
+				callback.complete(null, 0, 0, error);
+			}
 		}
 
 	}
