@@ -107,6 +107,7 @@ internal fun PresetSummary(
             Column(
                 modifier = Modifier.weight(1f)
                     .clickable(role = Role.Button, onClick = onUsePreset)
+                    .testTag("config_profile_picker")
                     .padding(horizontal = 16.dp, vertical = 12.dp),
                 verticalArrangement = Arrangement.spacedBy(4.dp),
             ) {
@@ -119,7 +120,10 @@ internal fun PresetSummary(
                     maxLines = 2, overflow = TextOverflow.Ellipsis)
             }
             Box {
-                IconButton(onClick = { menuExpanded = true }) {
+                IconButton(
+                    onClick = { menuExpanded = true },
+                    modifier = Modifier.testTag("config_profile_actions"),
+                ) {
                     Icon(painterResource(R.drawable.ic_more_vert),
                         contentDescription = stringResource(R.string.profile_more_actions,
                             presetStatusTitle(status)))
@@ -136,12 +140,14 @@ internal fun PresetSummary(
                     state.updatePresetName?.let { name ->
                         DropdownMenuItem(
                             text = { Text(stringResource(R.string.preset_update, name)) },
+                            modifier = Modifier.testTag("preset_update_action"),
                             onClick = { menuExpanded = false; updateConfirmation = name },
                         )
                     }
                     if (status.activeProfile != null) {
                         DropdownMenuItem(
                             text = { Text(stringResource(R.string.profile_stop_following)) },
+                            modifier = Modifier.testTag("profile_stop_following_action"),
                             onClick = { menuExpanded = false; onStopFollowing() },
                         )
                     }
