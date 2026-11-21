@@ -809,7 +809,9 @@ fun LibraryScreen(
     val collectionPickerViewport = rememberLibraryViewportState(state.libraryScope, navigationState.selectedCollectionId)
     val appsListState = appsViewport.listState
     val appsGridState = appsViewport.gridState
-    val showInstallFab = appsViewport.chromeVisible
+    val showInstallFab = if (navigationState.selectedCollectionId == null) {
+        appsViewport.chromeVisible
+    } else collectionViewport.chromeVisible
     var searchOpen by rememberSaveable { mutableStateOf(false) }
     var searchQuery by rememberSaveable(state.libraryScope) { mutableStateOf("") }
     val searchKeyboard = LocalSoftwareKeyboardController.current
@@ -1409,7 +1411,7 @@ fun LibraryScreen(
                 if (
                     !imeHidesLibraryChrome &&
                     destination == LibraryDestination.Apps &&
-                    !selectionActiveHere && !searchOpen
+                    !selectionActiveHere && !searchOpen && !collectionManageAppsActive
                 ) {
                     AnimatedVisibility(
                         modifier = Modifier.windowInsetsPadding(
@@ -1456,12 +1458,21 @@ fun LibraryScreen(
                         ),
                     ) {
                         Box {
-                            val installLabel = stringResource(R.string.install)
+                            val addToCollection = activeCollection != null
+                            val installLabel = stringResource(
+                                if (addToCollection) R.string.library_collection_add_apps
+                                else R.string.install,
+                            )
+                            val openFab = {
+                                if (addToCollection) {
+                                    navigationState = navigationState.copy(collectionManageApps = true)
+                                } else installSourceMenuVisible = true
+                            }
                             val showInstallText = availableWindowWidthDp() >= 360.dp &&
                                 availableWindowHeightDp() >= 480.dp && density.fontScale < 1.5f
                             if (showInstallText) {
                                 ExtendedFloatingActionButton(
-                                    onClick = { installSourceMenuVisible = true },
+                                    onClick = openFab,
                                     modifier = Modifier.semantics { contentDescription = installLabel },
                                     icon = {
                                         Icon(
@@ -1472,7 +1483,7 @@ fun LibraryScreen(
                                     text = { Text(installLabel) },
                                 )
                             } else {
-                                FloatingActionButton(onClick = { installSourceMenuVisible = true }) {
+                                FloatingActionButton(onClick = openFab) {
                                     Icon(
                                         painter = painterResource(R.drawable.ic_add),
                                         contentDescription = installLabel,
@@ -1480,7 +1491,7 @@ fun LibraryScreen(
                                 }
                             }
                             DropdownMenu(
-                                expanded = installSourceMenuVisible,
+                                expanded = installSourceMenuVisible && !addToCollection,
                                 onDismissRequest = { installSourceMenuVisible = false },
                             ) {
                                 DropdownMenuItem(
@@ -1532,13 +1543,15 @@ fun LibraryScreen(
             ) { displayedDestination ->
                 when (displayedDestination) {
                         LibraryDestination.Apps -> LibraryAppsDestination(
-                            state = state,
+                            state = displayedState,
                             scaffoldPadding = if (selectionActiveHere && destination == LibraryDestination.Apps) {
                                 padding
                             } else {
                                 viewportPadding()
                             },
-                            viewportState = appsViewport,
+                            viewportState = if (activeCollectionId == null) {
+                                appsViewport
+                            } else collectionViewport,
                             returnAnchor = metadataRestoreRequest?.anchor,
                             returnViewport = metadataRestoreRequest?.viewport,
                             returnAnchorKey = metadataRestoreAnchorKey,
@@ -1546,11 +1559,9 @@ fun LibraryScreen(
                             onReturnAnchorConsumed = { metadataRestoreRequest = null },
                             freezeViewport = metadataViewportLocked,
                             preserveImePaddingWhileFrozen = metadataImeWasVisible,
-                            selectionState = if (selectionState.collectionId == null) {
+                            selectionState = if (selectionState.collectionId == activeCollectionId) {
                                 selectionState
-                            } else {
-                                LibrarySelectionState()
-                            },
+                            } else LibrarySelectionState(),
                             controllerFocusedDatabaseId = controllerFocusedAppId
                                 .takeIf { controllerFocusVisible },
                             onOpenApp = { id ->
@@ -1568,12 +1579,15 @@ fun LibraryScreen(
                                     searchQuery = ""
                                 }
                                 appActions = it
-                                appActionsCollectionId = null
+                                appActionsCollectionId = activeCollectionId
                             },
                             onQuickView = actions::onQuickView,
                             onFavorite = actions::onFavorite,
                             onToggleSelection = { app ->
-                                selectionState = selectionState.toggle(state.generation, app.databaseId)
+                                selectionState = selectionState.toggle(
+                                    state.generation, app.databaseId,
+                                    collectionId = activeCollectionId,
+                                )
                             },
                             onExitSelection = {
                                 selectionState = selectionState.clear()
@@ -1581,13 +1595,15 @@ fun LibraryScreen(
                             onSelectAll = {
                                 selectionState = selectionState.selectVisible(
                                     state.generation,
-                                    state.projectedAppIds,
+                                    displayedState.projectedAppIds,
+                                    collectionId = activeCollectionId,
                                 )
                             },
                             onUnselectAll = {
                                 selectionState = selectionState.unselectVisible(
                                     state.generation,
-                                    state.projectedAppIds,
+                                    displayedState.projectedAppIds,
+                                    collectionId = activeCollectionId,
                                 )
                             },
                             onSort = actions::onSort,
@@ -1596,19 +1612,37 @@ fun LibraryScreen(
                             onFabVisibilityChanged = {},
                             onNavigationVisibilityChanged = {},
                             collections = collectionDialogState?.collections.orEmpty(),
+                            selectedCollection = activeCollection,
+                            onSelectAllApps = {
+                                if (activeCollectionId != null) {
+                                    selectionState = selectionState.clear()
+                                    navigationState = navigationState.copy(
+                                        selectedCollectionId = null,
+                                        selectedCollectionScope = null,
+                                        collectionManageApps = false,
+                                    )
+                                    collectionsHost?.onDismissCollectionMembers()
+                                }
+                                if (state.quickView != LibraryQuickView.All) {
+                                    actions.onQuickView(LibraryQuickView.All)
+                                }
+                            },
                             onSelectCollection = { collectionId ->
-                                navigationState = navigationState.copy(
-                                    destination = LibraryDestinationKey.Collections,
-                                    selectedCollectionId = collectionId,
-                                    selectedCollectionScope = state.libraryScope.takeIf(String::isNotEmpty),
-                                    collectionManageApps = false,
-                                )
+                                if (activeCollectionId != collectionId) {
+                                    selectionState = selectionState.clear()
+                                    navigationState = navigationState.copy(
+                                        destination = LibraryDestinationKey.Apps,
+                                        selectedCollectionId = collectionId,
+                                        selectedCollectionScope =
+                                            state.libraryScope.takeIf(String::isNotEmpty),
+                                        collectionManageApps = false,
+                                    )
+                                }
                             },
                             onManageCollections = {
+                                selectionState = selectionState.clear()
                                 navigationState = navigationState.copy(
                                     destination = LibraryDestinationKey.Collections,
-                                    selectedCollectionId = null,
-                                    selectedCollectionScope = null,
                                     collectionManageApps = false,
                                 )
                             },
@@ -1622,67 +1656,39 @@ fun LibraryScreen(
                                 searchOpen = false
                                 searchQuery = ""
                             },
-                            searchApps = if (state.quickView == LibraryQuickView.All &&
+                            searchApps = if (activeCollectionId != null) {
+                                displayedState.apps
+                            } else if (state.quickView == LibraryQuickView.All &&
                                 collectionDialogState?.allAppsPrepared == true
                             ) collectionDialogState.allApps else state.apps,
-                            searchAppsPrepared = state.quickView != LibraryQuickView.All ||
+                            searchAppsPrepared = if (activeCollectionId != null) {
+                                sortedMembers != null
+                            } else state.quickView != LibraryQuickView.All ||
                                 collectionsHost == null || collectionDialogState?.allAppsPrepared == true,
                             resolveUiId = actions::resolveAppUiId,
                             controllerEvents = controllerEvents,
-                            active = destination == LibraryDestination.Apps,
+                            showQuickViews = activeCollectionId == null,
+                            active = destination == LibraryDestination.Apps &&
+                                !collectionManageAppsActive,
                         )
                         LibraryDestination.Collections -> if (collectionsHost != null) {
-                            LibraryCollectionsDestination(
+                            LibraryCollectionsManagementDestination(
                                 host = collectionsHost,
                                 libraryState = state,
-                                scaffoldPadding = padding,
-                                overviewScaffoldPadding = viewportPadding(),
-                                collectionScaffoldPadding = if (selectionActiveHere && destination == LibraryDestination.Collections) {
-                                    padding
-                                } else {
-                                    viewportPadding()
+                                scaffoldPadding = viewportPadding(),
+                                viewportState = collectionsViewport,
+                                selectedCollectionId = activeCollectionId,
+                                onBack = { selectDestination(LibraryDestination.Apps) },
+                                onOpenCollection = { collectionId ->
+                                    selectionState = selectionState.clear()
+                                    navigationState = navigationState.copy(
+                                        destination = LibraryDestinationKey.Apps,
+                                        selectedCollectionId = collectionId,
+                                        selectedCollectionScope =
+                                            state.libraryScope.takeIf(String::isNotEmpty),
+                                        collectionManageApps = false,
+                                    )
                                 },
-                                navigationState = navigationState,
-                                overviewViewport = collectionsViewport,
-                                collectionViewport = collectionViewport,
-                                pickerViewport = collectionPickerViewport,
-                                onNavigationStateChanged = { next ->
-                                    navigationState = if (
-                                        navigationState.selectedCollectionId != null &&
-                                        next.selectedCollectionId == null
-                                    ) next.copy(destination = LibraryDestinationKey.Apps) else next
-                                },
-                                onOpenActions = { app, collectionId ->
-                                    if (searchOpen) {
-                                        searchKeyboard?.hide()
-                                        searchOpen = false
-                                        searchQuery = ""
-                                    }
-                                    appActions = app
-                                    appActionsCollectionId = collectionId
-                                },
-                                selectionState = if (
-                                    selectionState.collectionId != null &&
-                                    selectionState.collectionId == navigationState.selectedCollectionId
-                                ) {
-                                    selectionState
-                                } else {
-                                    LibrarySelectionState()
-                                },
-                                onSelectionStateChanged = { next -> selectionState = next },
-                                onNavigationVisibilityChanged = {},
-                                active = destination == LibraryDestination.Collections,
-                                onOpenSearch = { searchOpen = true },
-                                searchActive = searchOpen && destination == LibraryDestination.Collections,
-                                searchQuery = searchQuery,
-                                onSearchQueryChange = { searchQuery = it },
-                                onCloseSearch = {
-                                    searchKeyboard?.hide()
-                                    searchOpen = false
-                                    searchQuery = ""
-                                },
-                                resolveUiId = actions::resolveAppUiId,
-                                controllerEvents = controllerEvents,
                             )
                         } else {
                             LibraryCollectionsDestination(padding)
