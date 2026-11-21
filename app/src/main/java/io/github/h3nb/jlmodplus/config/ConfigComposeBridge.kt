@@ -787,6 +787,7 @@ private fun ScreenGeometrySection(
             title = stringResource(R.string.config_screen_size),
             description = stringResource(R.string.config_help_screen_size),
             value = "${form.screenWidth} × ${form.screenHeight}",
+            showInlineDescription = false,
             onClick = { presetsDialogVisible = true },
         )
         val orientationOptions = stringArrayResource(R.array.PREF_ORIENTATION_ENTRIES).toList()
@@ -1593,6 +1594,11 @@ internal fun ScreenPresetDialog(
                         )
                     }
                 }
+                Text(
+                    text = stringResource(R.string.config_help_screen_size),
+                    style = MaterialTheme.typography.bodySmall,
+                    color = MaterialTheme.colorScheme.onSurfaceVariant,
+                )
                 Box(
                     modifier = Modifier.fillMaxWidth()
                         .weight(1f, fill = false)
