@@ -265,11 +265,15 @@ This readability choice follows [W3C guidance on one-sided text alignment](https
   active toggle.
 - Use the base surface for pages, low/container surfaces for cards and groups,
   and higher surfaces for modal layers. Prefer tonal separation over multiple
-  outlines, gradients, or colored shadows. The Runtime Quick Actions dialog may
-  use a high-opacity themed translucent surface with a subtle outline; it must
-  remain readable without real blur, including over a busy game background.
-  Do not confuse `Modifier.blur()` with backdrop blur: actual blur behind
-  Canvas/GLES is an optional, separately validated renderer/window experiment.
+  outlines, gradients, or colored shadows. Runtime Quick Actions uses a solid
+  theme-aware modal surface, not a near-opaque fake glass panel or decorative
+  outline. On Android 12+, its dialog window requests a restrained native
+  blur-behind effect (20 px) to separate the game from the host menu. If the
+  platform disables blur, or on older Android, the solid surface and regular
+  modal dimming still provide readable contrast. Do not capture or blur guest
+  frames in Compose. This is a modal depth-of-field treatment, not an actual
+  frosted-glass panel; consider true within-panel blur only after device evidence
+  justifies its rendering cost and compatibility risk.
 - Preserve the existing short directional child-page and Search transitions.
   Selection color changes may animate briefly; transitions must honor platform
   animation settings and never delay a MIDlet launch, guest input, or controller
