@@ -15,7 +15,6 @@
 package io.github.h3nb.jlmodplus.config
 
 import androidx.compose.foundation.clickable
-import androidx.compose.foundation.BorderStroke
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
@@ -27,15 +26,19 @@ import androidx.compose.foundation.layout.heightIn
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.lazy.LazyColumn
 import androidx.compose.foundation.lazy.items
-import androidx.compose.foundation.rememberScrollState
+import androidx.compose.foundation.lazy.grid.GridCells
+import androidx.compose.foundation.lazy.grid.GridItemSpan
+import androidx.compose.foundation.lazy.grid.LazyVerticalGrid
+import androidx.compose.foundation.lazy.grid.items as gridItems
 import androidx.compose.foundation.selection.selectable
 import androidx.compose.foundation.selection.selectableGroup
-import androidx.compose.foundation.verticalScroll
 import androidx.compose.material3.ExperimentalMaterial3Api
 import androidx.compose.material3.Button
 import androidx.compose.material3.ButtonDefaults
 import androidx.compose.material3.Icon
 import androidx.compose.material3.IconButton
+import androidx.compose.material3.DropdownMenu
+import androidx.compose.material3.DropdownMenuItem
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.OutlinedTextField
 import androidx.compose.material3.RadioButton
@@ -68,9 +71,7 @@ import androidx.compose.ui.unit.dp
 import io.github.h3nb.jlmodplus.R
 import io.github.h3nb.jlmodplus.ui.AdaptiveAlertDialog as AlertDialog
 import io.github.h3nb.jlmodplus.ui.JLModPlusTheme
-import io.github.h3nb.jlmodplus.ui.ScrollableContentHint
 import io.github.h3nb.jlmodplus.ui.adaptiveDialogLayout
-import io.github.h3nb.jlmodplus.ui.rememberScrollCanScrollForward
 
 data class ProfileUiItem(
     val name: String,
@@ -129,7 +130,6 @@ fun ProfilesScreen(
     actions: ProfilesActions,
     modifier: Modifier = Modifier,
 ) {
-    var selectedProfile by remember { mutableStateOf<ProfileUiItem?>(null) }
     var nameDialog by remember { mutableStateOf<ProfileNameDialog?>(null) }
     var deleteTarget by remember { mutableStateOf<ProfileUiItem?>(null) }
     var defaultDialogVisible by remember { mutableStateOf(false) }
@@ -160,59 +160,71 @@ fun ProfilesScreen(
             )
         },
     ) { padding ->
-        LazyColumn(
+        LazyVerticalGrid(
+            columns = GridCells.Adaptive(minSize = 280.dp),
             modifier = Modifier.fillMaxSize(),
             contentPadding = PaddingValues(
                 start = 16.dp,
-                top = padding.calculateTopPadding() + 16.dp,
+                top = padding.calculateTopPadding() + 8.dp,
                 end = 16.dp,
                 bottom = padding.calculateBottomPadding() + 16.dp,
             ),
+            horizontalArrangement = Arrangement.spacedBy(8.dp),
             verticalArrangement = Arrangement.spacedBy(8.dp),
         ) {
-            item { ProfileSectionHeader(stringResource(R.string.preset_manager_default_section)) }
-            item(key = "default-policy") {
+            item(span = { GridItemSpan(maxLineSpan) }) {
+                ProfileSectionHeader(stringResource(R.string.preset_manager_default_section))
+            }
+            item(key = "default-policy", span = { GridItemSpan(maxLineSpan) }) {
                 DefaultPolicyRow(activeDefault = activeDefault, onClick = { defaultDialogVisible = true })
             }
             if (profiles.isEmpty() && savedLayouts.isEmpty() && unavailable.isEmpty()) {
-                item(key = "empty-profiles") {
+                item(key = "empty-profiles", span = { GridItemSpan(maxLineSpan) }) {
                     EmptyProfilesCard(onCreate = { nameDialog = ProfileNameDialog.Create })
                 }
             }
             if (profiles.isNotEmpty()) {
-                item { ProfileSectionHeader(stringResource(R.string.preset_manager_presets_section)) }
-            }
-            items(profiles, key = { it.name }) { profile ->
-                ProfileRow(
-                    profile = profile,
-                    onClick = { actions.onEdit(profile.name) },
-                    onManage = { selectedProfile = profile },
-                )
+                item(span = { GridItemSpan(maxLineSpan) }) {
+                    ProfileSectionHeader(stringResource(R.string.preset_manager_presets_section))
+                }
+                gridItems(profiles, key = { it.name }) { profile ->
+                    ProfileRow(
+                        profile = profile,
+                        onEdit = { actions.onEdit(profile.name) },
+                        onRename = { nameDialog = ProfileNameDialog.Rename(profile) },
+                        onDelete = { deleteTarget = profile },
+                    )
+                }
             }
             if (savedLayouts.isNotEmpty()) {
-                item { ProfileSectionHeader(stringResource(R.string.preset_manager_keyboard_section)) }
-                items(savedLayouts, key = { "keyboard:" + it.name }) { profile ->
-                    ProfileRow(profile = profile, onClick = { selectedProfile = profile })
+                item(span = { GridItemSpan(maxLineSpan) }) {
+                    ProfileSectionHeader(stringResource(R.string.preset_manager_keyboard_section))
+                }
+                gridItems(savedLayouts, key = { "keyboard:" + it.name }) { profile ->
+                    ProfileRow(
+                        profile = profile,
+                        onEdit = {},
+                        onRename = { nameDialog = ProfileNameDialog.Rename(profile) },
+                        onDelete = { deleteTarget = profile },
+                    )
                 }
             }
             if (unavailable.isNotEmpty()) {
-                item { ProfileSectionHeader(stringResource(R.string.preset_unavailable_section)) }
-                items(unavailable, key = { "unavailable:" + it.name }) { profile ->
-                    ProfileRow(profile = profile, onClick = { selectedProfile = profile })
+                item(span = { GridItemSpan(maxLineSpan) }) {
+                    ProfileSectionHeader(stringResource(R.string.preset_unavailable_section))
+                }
+                gridItems(unavailable, key = { "unavailable:" + it.name }) { profile ->
+                    ProfileRow(
+                        profile = profile,
+                        onEdit = {},
+                        onRename = { nameDialog = ProfileNameDialog.Rename(profile) },
+                        onDelete = { deleteTarget = profile },
+                    )
                 }
             }
         }
     }
 
-    selectedProfile?.let { profile ->
-        ProfileActionsDialog(
-            profile = profile,
-            onDismiss = { selectedProfile = null },
-            onEdit = { actions.onEdit(profile.name) },
-            onRename = { nameDialog = ProfileNameDialog.Rename(profile) },
-            onDelete = { deleteTarget = profile },
-        )
-    }
     nameDialog?.let { dialog ->
         ProfileNameDialog(
             dialog = dialog,
@@ -317,39 +329,39 @@ private fun DefaultPolicyRow(
         activeDefault != null -> activeDefault.name
         else -> stringResource(R.string.profile_builtin_settings)
     }
-    val summary = stringResource(R.string.preset_default_policy_summary)
     Surface(
-        modifier = Modifier
-            .fillMaxWidth()
+        modifier = Modifier.fillMaxWidth()
             .clickable(role = Role.Button, onClick = onClick)
-            .heightIn(min = 80.dp),
+            .heightIn(min = 68.dp),
         shape = MaterialTheme.shapes.large,
-        color = MaterialTheme.colorScheme.primaryContainer,
-        contentColor = MaterialTheme.colorScheme.onPrimaryContainer,
+        color = MaterialTheme.colorScheme.surfaceContainerLow,
     ) {
-        Column(
-            modifier = Modifier.padding(16.dp),
-            verticalArrangement = Arrangement.spacedBy(4.dp),
+        Row(
+            modifier = Modifier.padding(horizontal = 16.dp, vertical = 12.dp),
+            verticalAlignment = Alignment.CenterVertically,
+            horizontalArrangement = Arrangement.spacedBy(12.dp),
         ) {
+            Column(
+                modifier = Modifier.weight(1f),
+                verticalArrangement = Arrangement.spacedBy(3.dp),
+            ) {
+                Text(
+                    displayName,
+                    style = MaterialTheme.typography.titleSmall,
+                    maxLines = 1,
+                    overflow = TextOverflow.Ellipsis,
+                )
+                Text(
+                    stringResource(R.string.preset_default_policy_summary),
+                    style = MaterialTheme.typography.bodySmall,
+                    color = MaterialTheme.colorScheme.onSurfaceVariant,
+                    maxLines = 2,
+                    overflow = TextOverflow.Ellipsis,
+                )
+            }
             Text(
-                displayName,
-                style = MaterialTheme.typography.titleMedium,
-                fontWeight = FontWeight.SemiBold,
-                maxLines = 1,
-                overflow = TextOverflow.Ellipsis,
-            )
-            Text(
-                summary,
-                style = MaterialTheme.typography.bodySmall,
-                color = MaterialTheme.colorScheme.onPrimaryContainer.copy(alpha = 0.78f),
-                maxLines = 2,
-                overflow = TextOverflow.Ellipsis,
-            )
-            Text(
-                text = stringResource(R.string.preset_change_default),
-                modifier = Modifier.align(Alignment.End),
+                stringResource(R.string.preset_change_default),
                 style = MaterialTheme.typography.labelLarge,
-                fontWeight = FontWeight.SemiBold,
                 color = MaterialTheme.colorScheme.primary,
             )
         }
@@ -359,130 +371,94 @@ private fun DefaultPolicyRow(
 @Composable
 private fun ProfileRow(
     profile: ProfileUiItem,
-    onClick: () -> Unit,
-    onManage: (() -> Unit)? = null,
+    onEdit: () -> Unit,
+    onRename: () -> Unit,
+    onDelete: () -> Unit,
 ) {
-    val displayName = profile.name
-    val colors = MaterialTheme.colorScheme
+    var actionsExpanded by remember { mutableStateOf(false) }
+    val editable = !profile.isKeyboardOnly && !profile.isUnavailable && profile.canEdit
+    val orientationOptions = stringArrayResource(R.array.PREF_ORIENTATION_ENTRIES)
+    val summary = when {
+        profile.isKeyboardOnly -> stringResource(R.string.saved_keyboard_layout_summary)
+        profile.isUnavailable -> stringResource(R.string.preset_unavailable_summary)
+        profile.screenWidth > 0 && profile.screenHeight > 0 -> buildString {
+            append(profile.screenWidth).append(" × ").append(profile.screenHeight)
+            orientationOptions.getOrNull(profile.orientation)?.let { append(" · ").append(it) }
+            if (profile.hasKeyboardLayout) append(" · ").append(stringResource(R.string.preset_includes_keyboard_layout))
+            if (profile.isKeyboardLayoutUnavailable) append(" · ").append(stringResource(R.string.preset_keyboard_layout_unavailable))
+        }
+        else -> stringResource(R.string.profile_template_summary)
+    }
     Surface(
-        modifier = Modifier
-            .fillMaxWidth()
-            .clickable(role = Role.Button, onClick = onClick)
-            .heightIn(min = 72.dp),
+        modifier = Modifier.fillMaxWidth()
+            .clickable(role = Role.Button) {
+                if (editable) onEdit() else actionsExpanded = true
+            }
+            .heightIn(min = 68.dp),
         shape = MaterialTheme.shapes.large,
-        color = if (profile.isDefault) colors.secondaryContainer else colors.surfaceContainerLow,
-        contentColor = if (profile.isDefault) colors.onSecondaryContainer else colors.onSurface,
-        border = if (profile.isDefault) BorderStroke(1.dp, colors.secondary) else null,
+        color = MaterialTheme.colorScheme.surfaceContainerLow,
     ) {
         Row(
-            modifier = Modifier.padding(start = 16.dp, end = 8.dp, top = 12.dp, bottom = 12.dp),
+            modifier = Modifier.padding(start = 16.dp, end = 8.dp, top = 10.dp, bottom = 10.dp),
             verticalAlignment = Alignment.CenterVertically,
         ) {
             Column(modifier = Modifier.weight(1f), verticalArrangement = Arrangement.spacedBy(4.dp)) {
-                Row(horizontalArrangement = Arrangement.spacedBy(8.dp), verticalAlignment = Alignment.CenterVertically) {
+                Row(
+                    horizontalArrangement = Arrangement.spacedBy(8.dp),
+                    verticalAlignment = Alignment.CenterVertically,
+                ) {
                     Text(
-                        text = displayName,
+                        profile.name,
                         style = MaterialTheme.typography.titleSmall,
-                        fontWeight = if (profile.isDefault) FontWeight.SemiBold else FontWeight.Medium,
                         maxLines = 1,
                         overflow = TextOverflow.Ellipsis,
                         modifier = Modifier.weight(1f, fill = false),
                     )
                     if (profile.isDefault) {
-                        Surface(
-                            shape = MaterialTheme.shapes.small,
-                            color = colors.secondary,
-                            contentColor = colors.onSecondary,
-                        ) {
-                            Text(
-                                text = stringResource(R.string.profile_default_badge_short),
-                                style = MaterialTheme.typography.labelSmall,
-                                fontWeight = FontWeight.SemiBold,
-                                modifier = Modifier.padding(horizontal = 6.dp, vertical = 3.dp),
-                            )
-                        }
-                    }
-                }
-                val orientationOptions = stringArrayResource(R.array.PREF_ORIENTATION_ENTRIES)
-                val summary = when {
-                    profile.isKeyboardOnly -> stringResource(R.string.saved_keyboard_layout_summary)
-                    profile.isUnavailable -> stringResource(R.string.preset_unavailable_summary)
-                    profile.screenWidth > 0 && profile.screenHeight > 0 -> buildString {
-                        append(profile.screenWidth).append(" × ").append(profile.screenHeight)
-                        orientationOptions.getOrNull(profile.orientation)?.let { append(" · ").append(it) }
-                        if (profile.hasKeyboardLayout) append(" · ").append(stringResource(R.string.preset_includes_keyboard_layout))
-                        if (profile.isKeyboardLayoutUnavailable) append(" · ").append(stringResource(R.string.preset_keyboard_layout_unavailable))
-                    }
-                    else -> buildString {
-                        append(stringResource(R.string.profile_template_summary))
-                        if (profile.isKeyboardLayoutUnavailable) append(" · ").append(stringResource(R.string.preset_keyboard_layout_unavailable))
+                        Text(
+                            stringResource(R.string.profile_default_badge_short),
+                            style = MaterialTheme.typography.labelSmall,
+                            color = MaterialTheme.colorScheme.primary,
+                        )
                     }
                 }
                 Text(
-                    text = summary,
+                    summary,
                     style = MaterialTheme.typography.bodySmall,
-                    color = if (profile.isDefault) colors.onSecondaryContainer.copy(alpha = 0.78f) else colors.onSurfaceVariant,
+                    color = MaterialTheme.colorScheme.onSurfaceVariant,
                     maxLines = 2,
                     overflow = TextOverflow.Ellipsis,
                 )
             }
-            onManage?.let { manage ->
-                IconButton(onClick = manage) {
+            Box {
+                IconButton(onClick = { actionsExpanded = true }) {
                     Icon(
                         painter = painterResource(R.drawable.ic_more_vert),
-                        contentDescription = stringResource(R.string.profile_more_actions, displayName),
+                        contentDescription = stringResource(R.string.profile_more_actions, profile.name),
+                    )
+                }
+                DropdownMenu(
+                    expanded = actionsExpanded,
+                    onDismissRequest = { actionsExpanded = false },
+                ) {
+                    if (editable) {
+                        DropdownMenuItem(
+                            text = { Text(stringResource(R.string.edit_preset)) },
+                            onClick = { actionsExpanded = false; onEdit() },
+                        )
+                    }
+                    DropdownMenuItem(
+                        text = { Text(stringResource(R.string.action_context_rename)) },
+                        onClick = { actionsExpanded = false; onRename() },
+                    )
+                    DropdownMenuItem(
+                        text = { Text(stringResource(R.string.action_context_delete)) },
+                        onClick = { actionsExpanded = false; onDelete() },
                     )
                 }
             }
         }
     }
-}
-
-@Composable
-internal fun ProfileActionsDialog(
-    profile: ProfileUiItem,
-    onDismiss: () -> Unit,
-    onEdit: () -> Unit,
-    onRename: () -> Unit,
-    onDelete: () -> Unit,
-) {
-    val maxActionHeight = adaptiveDialogLayout().maxHeight
-    val scrollState = rememberScrollState()
-    val canScrollForward = rememberScrollCanScrollForward(scrollState)
-    AlertDialog(
-        textScrollable = false,
-        onDismissRequest = onDismiss,
-        title = { Text(profile.name, maxLines = 1, overflow = TextOverflow.Ellipsis) },
-        text = {
-            Box(
-                modifier = Modifier
-                    .fillMaxWidth()
-                    .heightIn(max = maxActionHeight),
-            ) {
-                Column(
-                    modifier = Modifier
-                        .fillMaxWidth()
-                        .heightIn(max = maxActionHeight)
-                        .verticalScroll(scrollState),
-                    verticalArrangement = Arrangement.spacedBy(8.dp),
-                ) {
-                    if (!profile.isKeyboardOnly && !profile.isUnavailable && profile.canEdit) {
-                        ProfileDialogAction(R.string.edit_preset, onDismiss, onEdit)
-                    }
-                    ProfileDialogAction(R.string.action_context_rename, onDismiss, onRename)
-                    ProfileDialogAction(R.string.action_context_delete, onDismiss, onDelete)
-                }
-                ScrollableContentHint(
-                    visible = canScrollForward,
-                    modifier = Modifier.align(Alignment.BottomCenter),
-                )
-            }
-        },
-        confirmButton = null,
-        dismissButton = {
-            TextButton(onClick = onDismiss) { Text(stringResource(android.R.string.cancel)) }
-        },
-    )
 }
 
 @Composable
@@ -564,28 +540,6 @@ private fun DefaultPresetDialog(
 
 private fun profileSelectionId(profile: ProfileUiItem): String =
     if (profile.isBuiltIn) "builtin" else "saved:${profile.name}"
-
-@Composable
-private fun ProfileDialogAction(label: Int, onDismiss: () -> Unit, action: () -> Unit) {
-    Surface(
-        onClick = {
-            onDismiss()
-            action()
-        },
-        modifier = Modifier.fillMaxWidth(),
-        shape = MaterialTheme.shapes.medium,
-        color = MaterialTheme.colorScheme.surfaceContainerLow,
-    ) {
-        Text(
-            text = stringResource(label),
-            modifier = Modifier
-                .fillMaxWidth()
-                .heightIn(min = 48.dp)
-                .padding(horizontal = 16.dp, vertical = 12.dp),
-            style = MaterialTheme.typography.labelLarge,
-        )
-    }
-}
 
 internal sealed interface ProfileNameDialog {
     data object Create : ProfileNameDialog
