@@ -1361,7 +1361,6 @@ class ConfigComposeTest {
     }
 
     @Test
-    fun    @Test
     fun returningFromShaderPageRetainsDisplayScrollPosition() {
         composeRule.setContent {
             JLModPlusTheme {

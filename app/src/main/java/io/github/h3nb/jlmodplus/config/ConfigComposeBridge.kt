@@ -110,6 +110,7 @@ import androidx.compose.ui.platform.ComposeView
 import androidx.compose.ui.focus.FocusRequester
 import androidx.compose.ui.focus.focusRequester
 import androidx.compose.ui.platform.LocalContext
+import androidx.compose.ui.platform.LocalResources
 import androidx.compose.ui.platform.LocalDensity
 import androidx.compose.ui.platform.LocalLayoutDirection
 import androidx.compose.ui.platform.LocalView
@@ -1083,7 +1084,7 @@ private fun ConfigSearchPage(
     onBack: () -> Unit,
     onSelected: (ConfigDestination, String, ConfigDetail?) -> Unit,
 ) {
-    val context = LocalContext.current
+    val resources = LocalResources.current
     var query by rememberSaveable { mutableStateOf("") }
     val focus = remember { FocusRequester() }
     LaunchedEffect(Unit) { focus.requestFocus() }
@@ -1094,8 +1095,8 @@ private fun ConfigSearchPage(
     )
     val filtered = configSearchIndex.filter { entry ->
         if (query.isBlank()) entry.title in suggestions
-        else context.getString(entry.title).contains(query.trim(), ignoreCase = true) ||
-            context.getString(entry.section).contains(query.trim(), ignoreCase = true) ||
+        else resources.getString(entry.title).contains(query.trim(), ignoreCase = true) ||
+            resources.getString(entry.section).contains(query.trim(), ignoreCase = true) ||
             entry.keywords.contains(query.trim(), ignoreCase = true)
     }
     Scaffold(
@@ -1165,7 +1166,7 @@ private fun ConfigSearchPage(
                             Text("${stringResource(entry.destination.label)} · ${stringResource(entry.section)}")
                         },
                         modifier = Modifier.clickable {
-                            onSelected(entry.destination, context.getString(entry.section), entry.detail)
+                            onSelected(entry.destination, resources.getString(entry.section), entry.detail)
                         },
                     )
                 }
