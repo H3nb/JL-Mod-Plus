@@ -2103,6 +2103,8 @@ internal fun LibraryAppsDestination(
     onFabVisibilityChanged: (Boolean) -> Unit,
     onNavigationVisibilityChanged: (Boolean) -> Unit,
     collections: List<LibraryCollectionUiItem> = emptyList(),
+    selectedCollection: LibraryCollectionUiItem? = null,
+    onSelectAllApps: () -> Unit = {},
     onSelectCollection: (Long) -> Unit = {},
     onManageCollections: () -> Unit = {},
     onOpenSearch: () -> Unit = {},
@@ -2296,6 +2298,8 @@ internal fun LibraryAppsDestination(
             onBack = onBack?.let { back -> { if (currentActive) back() } },
             showQuickViews = showQuickViews && !selectionState.isActive,
             collections = collections,
+            selectedCollection = selectedCollection,
+            onSelectAllApps = onSelectAllApps,
             onSelectCollection = onSelectCollection,
             onManageCollections = onManageCollections,
             onOpenSearch = onOpenSearch,
@@ -2688,6 +2692,8 @@ private fun LibraryAppsHeader(
     onBack: (() -> Unit)? = null,
     showQuickViews: Boolean = true,
     collections: List<LibraryCollectionUiItem> = emptyList(),
+    selectedCollection: LibraryCollectionUiItem? = null,
+    onSelectAllApps: () -> Unit = {},
     onSelectCollection: (Long) -> Unit = {},
     onManageCollections: () -> Unit = {},
     onOpenSearch: () -> Unit = {},
@@ -2773,6 +2779,9 @@ private fun LibraryAppsHeader(
                     onDismissInput = { focusManager.clearFocus() },
                     onClose = onCloseSearch,
                     autoFocus = interactive,
+                    placeholder = selectedCollection?.let {
+                        stringResource(R.string.library_search_in_collection, it.name)
+                    },
                 )
             } else {
                 Row(
@@ -2898,14 +2907,17 @@ private fun LibraryAppsHeader(
                 ) {
                     if (!compactHeaderActions) {
                         Icon(
-                            painter = painterResource(R.drawable.ic_apps),
+                            painter = painterResource(
+                                if (selectedCollection == null) R.drawable.ic_apps else R.drawable.ic_folder,
+                            ),
                             contentDescription = null,
                             modifier = Modifier.size(20.dp),
                         )
                         Spacer(Modifier.width(8.dp))
                     }
                     Text(
-                        text = stringResource(R.string.library_filter_all),
+                        text = selectedCollection?.name
+                            ?: stringResource(R.string.library_filter_all),
                         maxLines = 1,
                         overflow = TextOverflow.Ellipsis,
                     )
@@ -3009,23 +3021,22 @@ private fun LibraryAppsHeader(
                         ListItem(
                             headlineContent = { Text(stringResource(R.string.library_destination_apps)) },
                             colors = ListItemDefaults.colors(
-                                containerColor = MaterialTheme.colorScheme.secondaryContainer,
+                                containerColor = if (selectedCollection == null) {
+                                    MaterialTheme.colorScheme.secondaryContainer
+                                } else MaterialTheme.colorScheme.surfaceContainerLow,
                             ),
                             modifier = Modifier
                                 .padding(horizontal = 12.dp, vertical = 3.dp)
                                 .clip(MaterialTheme.shapes.large)
-                                .clickable {
-                                    closeScopeThen {
-                                        if (state.quickView != LibraryQuickView.All) {
-                                            onQuickView(LibraryQuickView.All)
-                                        }
-                                    }
-                                },
+                                .clickable { closeScopeThen(onSelectAllApps) }
+                                .semantics { selected = selectedCollection == null },
                             leadingContent = {
                                 Icon(painterResource(R.drawable.ic_apps), contentDescription = null)
                             },
                             trailingContent = {
-                                Icon(painterResource(R.drawable.ic_check), contentDescription = null)
+                                if (selectedCollection == null) {
+                                    Icon(painterResource(R.drawable.ic_check), contentDescription = null)
+                                }
                             },
                         )
                     }
@@ -3043,16 +3054,24 @@ private fun LibraryAppsHeader(
                                 )
                             },
                             colors = ListItemDefaults.colors(
-                                containerColor = MaterialTheme.colorScheme.surfaceContainerLow,
+                                containerColor = if (selectedCollection?.id == collection.id) {
+                                    MaterialTheme.colorScheme.secondaryContainer
+                                } else MaterialTheme.colorScheme.surfaceContainerLow,
                             ),
                             modifier = Modifier
                                 .padding(horizontal = 12.dp, vertical = 3.dp)
                                 .clip(MaterialTheme.shapes.large)
                                 .clickable {
                                     closeScopeThen { onSelectCollection(collection.id) }
-                                },
+                                }
+                                .semantics { selected = selectedCollection?.id == collection.id },
                             leadingContent = {
                                 Icon(painterResource(R.drawable.ic_folder), contentDescription = null)
+                            },
+                            trailingContent = {
+                                if (selectedCollection?.id == collection.id) {
+                                    Icon(painterResource(R.drawable.ic_check), contentDescription = null)
+                                }
                             },
                         )
                     }
