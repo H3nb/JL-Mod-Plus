@@ -491,11 +491,11 @@
     <string name="library_collection_manage_apps">Choose apps</string>
     <string name="library_collection_manage" tools:ignore="MissingTranslation">Manage collections</string>
     <string name="library_collection_delete_confirmation" tools:ignore="MissingTranslation">Delete “%1$s”? The apps in this collection will remain installed.</string>
-    <string name="library_collection_rename_action">Rename collection %1$s</string>
-    <string name="library_collection_delete_action">Delete collection %1$s</string>
-    <string name="library_notifications_title">Notifications</string>
-    <string name="library_notifications_empty_title">No notifications yet</string>
-    <string name="library_notifications_empty_summary">Updates and MIDlet notifications will appear here when available.</string>
+    <string name="library_collection_rename_action" tools:ignore="MissingTranslation">Rename collection %1$s</string>
+    <string name="library_collection_delete_action" tools:ignore="MissingTranslation">Delete collection %1$s</string>
+    <string name="library_notifications_title" tools:ignore="MissingTranslation">Notifications</string>
+    <string name="library_notifications_empty_title" tools:ignore="MissingTranslation">No notifications yet</string>
+    <string name="library_notifications_empty_summary" tools:ignore="MissingTranslation">Updates and MIDlet notifications will appear here when available.</string>
     <string name="library_collection_manage_apps_summary">Select apps to include in this collection.</string>
     <string name="library_collection_name">Collection name</string>
     <string name="library_collection_members_empty">No apps in this collection.</string>
