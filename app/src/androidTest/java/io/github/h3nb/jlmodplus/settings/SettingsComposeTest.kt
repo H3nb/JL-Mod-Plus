@@ -210,18 +210,20 @@ class SettingsComposeTest {
         setSettingsContent(state = state, actions = actions)
 
         scrollSettingsTo(uiString(R.string.library_grid_icon_size_title))
+        composeRule.onNodeWithText(uiString(R.string.library_grid_icon_size_title)).performClick()
         composeRule.onNodeWithText(uiString(R.string.library_grid_icon_size_summary))
             .assertIsDisplayed()
-        composeRule.onNodeWithText(uiString(R.string.library_grid_icon_size_title)).performClick()
         composeRule.onNodeWithText(uiString(R.string.library_grid_icon_size_large)).performClick()
 
         scrollSettingsTo(uiString(R.string.library_grid_spacing_title))
+        composeRule.onNodeWithText(uiString(R.string.library_grid_spacing_title)).performClick()
         composeRule.onNodeWithText(uiString(R.string.library_grid_spacing_summary)).assertIsDisplayed()
+        composeRule.onNodeWithText(uiString(R.string.library_grid_spacing_standard)).performClick()
         scrollSettingsTo(uiString(R.string.library_hide_grid_titles))
         composeRule.onNodeWithText(uiString(R.string.library_hide_grid_titles_summary)).assertIsDisplayed()
         composeRule.onNodeWithText(uiString(R.string.library_hide_grid_titles)).performClick()
 
-        assertEquals(listOf("pref_apps_grid_icon_size=large"), actions.libraryChoices)
+        assertEquals(listOf("pref_apps_grid_icon_size=large", "pref_apps_grid_spacing=standard"), actions.libraryChoices)
         assertEquals(listOf("pref_apps_hide_grid_titles=true"), actions.toggles)
     }
 
