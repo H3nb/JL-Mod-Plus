@@ -72,11 +72,11 @@ internal fun PreferenceTextContent(
 
 /** Indicates that a preference opens an editor, chooser or another screen. */
 @Composable
-internal fun PreferenceChevron(modifier: Modifier = Modifier) {
+internal fun PreferenceChevron(enabled: Boolean = true, modifier: Modifier = Modifier) {
     Icon(
         painter = painterResource(R.drawable.ic_chevron_right),
         contentDescription = null,
-        tint = MaterialTheme.colorScheme.onSurfaceVariant,
+        tint = MaterialTheme.colorScheme.onSurfaceVariant.copy(alpha = if (enabled) 1f else 0.38f),
         modifier = modifier.size(20.dp),
     )
 }
