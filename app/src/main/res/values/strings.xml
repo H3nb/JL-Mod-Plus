@@ -543,6 +543,9 @@
     <string name="library_description_less">Less</string>
 
     <string name="memory_editor_bubble">Memory Editor floating button</string>
+    <string name="runtime_memory_button_short" tools:ignore="MissingTranslation">Memory button</string>
+    <string name="runtime_action_on" tools:ignore="MissingTranslation">On</string>
+    <string name="runtime_action_off" tools:ignore="MissingTranslation">Off</string>
     <string name="memory_editor_bubble_content_description">Open Memory Editor</string>
     <string name="memory_editor_previous_results_page_action">Previous results page</string>
     <string name="memory_editor_next_results_page_action">Next results page</string>

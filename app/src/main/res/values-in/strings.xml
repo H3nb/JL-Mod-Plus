@@ -486,6 +486,9 @@
     <string name="library_description_less">Ringkas</string>
 
     <string name="memory_editor_bubble">Tombol mengambang editor memori</string>
+    <string name="runtime_memory_button_short">Tombol memori</string>
+    <string name="runtime_action_on">Aktif</string>
+    <string name="runtime_action_off">Nonaktif</string>
     <string name="memory_editor_bubble_content_description">Buka editor memori</string>
     <string name="memory_editor_previous_results_page_action">Halaman hasil sebelumnya</string>
     <string name="memory_editor_next_results_page_action">Halaman hasil berikutnya</string>

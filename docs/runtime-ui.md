@@ -159,6 +159,10 @@ during `startApp()`.
 - Runtime host menus and dialogs preserve the configured system-bar visibility.
   Presenting or dismissing a host modal is not a runtime-chrome transition;
   transient system bars remain controlled by the user's system gesture.
+- The host menu is a compact adaptive action-tile grid without a MIDlet title.
+  Enabled toggles use the Material accent surface, while ordinary actions remain
+  neutral; Exit is a separate footer. Controller arrows follow grid rows and
+  columns, with the same action and dismiss behavior as touch.
 - The explicit Exit item remains the only host-menu exit path and continues to
   use `showExitConfirmation()`. A MIDlet-owned Exit command and system-level
   task removal/force-stop remain independent termination paths.

@@ -74,20 +74,27 @@ class RuntimeMenuLayoutTest {
         )
         assertEquals(
             listOf(
-                R.string.exit, R.string.save_log, R.string.action_lock_orientation,
-                R.string.memory_editor_bubble, R.string.pref_runtime_fullscreen_title,
+                R.string.action_lock_orientation, R.string.memory_editor_bubble,
+                R.string.pref_runtime_fullscreen_title, R.string.PREF_LIMIT_FPS,
+                R.string.runtime_virtual_controls_title, R.string.save_log,
                 R.string.action_keyboard_ime, R.string.take_screenshot,
-                R.string.PREF_LIMIT_FPS, R.string.PREF_EMULATION_SPEED,
-                R.string.runtime_virtual_controls_title,
+                R.string.PREF_EMULATION_SPEED, R.string.exit,
             ),
             entries.map { it.label },
         )
         // Controller activation uses this same ordered list as the rendered rows.
-        entries[4].activate()
-        entries[5].activate()
+        entries[2].activate()
+        entries[6].activate()
         entries[8].activate()
-        entries[9].activate()
+        entries[4].activate()
         assertEquals(listOf("dismiss", "fullscreen", "dismiss", "ime", "dismiss", "speed", "virtualControls"), events)
+    }
+
+    @Test
+    fun runtimeQuickActionsAdaptToDialogWidthAndFontScale() {
+        assertEquals(2, runtimeMenuGridColumns(288f, 1f, 7))
+        assertEquals(4, runtimeMenuGridColumns(568f, 1f, 7))
+        assertEquals(1, runtimeMenuGridColumns(408f, 2f, 7))
     }
 
     @Test
@@ -95,7 +102,7 @@ class RuntimeMenuLayoutTest {
         val form = canvas.copy(isCanvas = false)
         assertTrue(runtimeToolbarShortcuts(form, 640f).isEmpty())
         assertEquals(
-            listOf(R.string.exit, R.string.save_log, R.string.action_lock_orientation, R.string.memory_editor_bubble),
+            listOf(R.string.action_lock_orientation, R.string.memory_editor_bubble, R.string.save_log, R.string.exit),
             menu(form).map { it.label },
         )
         val incompatible = canvas.copy(emulationSpeedAvailable = false, imeAvailable = false)
