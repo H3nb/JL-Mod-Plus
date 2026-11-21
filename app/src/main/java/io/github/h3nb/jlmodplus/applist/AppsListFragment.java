@@ -577,10 +577,7 @@ public class AppsListFragment extends Fragment {
                 }
             }
 
-            @Override
-            public void onShareApp(int appId) {
-                LibraryAppRow app = findRow(appId);
-                if (app == null) return;
+            private void exportJarOnly(LibraryAppRow app) {
                 LibraryTransferActions.prepareShareApp(libraryViewModel, app.getId(), (prepared, error) -> {
                     if (error != null) {
                         showTransferError(error);
@@ -588,7 +585,7 @@ public class AppsListFragment extends Fragment {
                     }
                     if (!isAdded() || prepared == null) return;
                     try {
-                        startActivity(LibraryTransferIntents.shareApp(
+                        startActivity(LibraryTransferIntents.exportJar(
                                 requireContext(), prepared, app.getTitle()));
                     } catch (ActivityNotFoundException | SecurityException exception) {
                         showTransferError(exception);
@@ -626,7 +623,7 @@ public class AppsListFragment extends Fragment {
                             } catch (ActivityNotFoundException | SecurityException exception) {
                                 showTransferError(exception);
                             }
-                        }));
+                        }), () -> exportJarOnly(app), false);
             }
 
             @Override
@@ -961,8 +958,7 @@ public class AppsListFragment extends Fragment {
                 });
             }
 
-            @Override
-            public void onShareSelected(@NonNull Set<Long> appIds) {
+            private void exportJarsOnly(@NonNull Set<Long> appIds) {
                 LibraryTransferActions.prepareShareApps(
                         libraryViewModel,
                         appIds,
@@ -973,8 +969,8 @@ public class AppsListFragment extends Fragment {
                             }
                             if (!isAdded() || prepared == null) return;
                             try {
-                                startActivity(LibraryTransferIntents.shareApp(
-                                        requireContext(), prepared, getString(R.string.library_bulk_share_apps)));
+                                startActivity(LibraryTransferIntents.exportJar(
+                                        requireContext(), prepared, getString(R.string.library_bulk_export_apps)));
                             } catch (ActivityNotFoundException | SecurityException exception) {
                                 showTransferError(exception);
                             }
@@ -1009,7 +1005,7 @@ public class AppsListFragment extends Fragment {
                             } catch (ActivityNotFoundException | SecurityException exception) {
                                 showTransferError(exception);
                             }
-                        }));
+                        }), () -> exportJarsOnly(appIds), true);
             }
 
             @Override
@@ -1488,9 +1484,12 @@ public class AppsListFragment extends Fragment {
                 .commitAllowingStateLoss();
     }
 
-    private void showBundleOptions(@NonNull LibraryBundleExportHandler onExport) {
+    private void showBundleOptions(
+            @NonNull LibraryBundleExportHandler onExport,
+            @NonNull Runnable onJarOnly,
+            boolean isBulk) {
         LibraryComposeController controller = composeController;
-        if (controller != null) controller.showBundleOptions(onExport);
+        if (controller != null) controller.showBundleOptions(onExport, onJarOnly, isBulk);
     }
 
     private void onImportBundlePicked(Uri uri) {
