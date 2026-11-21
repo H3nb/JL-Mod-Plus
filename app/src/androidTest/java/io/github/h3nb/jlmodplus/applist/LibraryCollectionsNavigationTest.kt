@@ -334,16 +334,15 @@ class LibraryCollectionsNavigationTest {
         pressBack()
 
         composeRule.onNodeWithContentDescription(
-            uiString(R.string.library_collection_more_actions, COLLECTION_NAME),
+            uiString(R.string.library_collection_delete_action, COLLECTION_NAME),
         ).performClick()
-        composeRule.onNodeWithText(uiString(R.string.action_context_delete)).performClick()
         composeRule.onNodeWithText(
             uiString(R.string.library_collection_delete_confirmation, COLLECTION_NAME),
         ).assertIsDisplayed()
     }
 
     @Test
-    fun collectionOverflowUsesAnAnchoredMenu() {
+    fun collectionActionsAreDirectAndRenameOpensEditor() {
         val host = RecordingCollectionsHost()
         composeRule.setContent {
             DeviceConfigurationOverride(
@@ -356,13 +355,12 @@ class LibraryCollectionsNavigationTest {
         }
 
         openCollectionsManagement()
-        composeRule.onNodeWithContentDescription(
+        composeRule.onAllNodesWithContentDescription(
             uiString(R.string.library_collection_more_actions, COLLECTION_NAME),
+        ).assertCountEquals(0)
+        composeRule.onNodeWithContentDescription(
+            uiString(R.string.library_collection_rename_action, COLLECTION_NAME),
         ).performClick()
-
-        composeRule.onNodeWithText(uiString(R.string.action_context_rename)).assertIsDisplayed()
-        composeRule.onNodeWithText(uiString(R.string.action_context_delete)).assertIsDisplayed()
-        composeRule.onNodeWithText(uiString(R.string.action_context_rename)).performClick()
         composeRule.onNode(hasSetTextAction()).assertIsDisplayed()
     }
 
