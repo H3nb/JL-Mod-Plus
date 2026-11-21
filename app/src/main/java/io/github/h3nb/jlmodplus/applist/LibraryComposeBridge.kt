@@ -166,7 +166,6 @@ import androidx.compose.ui.layout.onSizeChanged
 import androidx.compose.ui.platform.ComposeView
 import androidx.compose.ui.platform.LocalInspectionMode
 import androidx.compose.ui.platform.LocalContext
-import androidx.compose.ui.platform.LocalConfiguration
 import androidx.compose.ui.platform.LocalSoftwareKeyboardController
 import androidx.compose.ui.platform.LocalDensity
 import androidx.compose.ui.platform.LocalLayoutDirection
@@ -5151,8 +5150,10 @@ internal fun AppActionsDialog(
     iconShape: LibraryIconShape = LibraryIconShape.Round,
     enhancedIcons: Boolean = true,
 ) {
-    val windowHeight = LocalConfiguration.current.screenHeightDp.dp
-    val useSheet = availableWindowWidthDp() < 600.dp && windowHeight >= 500.dp
+    val windowWidth = availableWindowWidthDp()
+    val measuredWindowHeight = availableWindowHeightDp()
+    val windowHeight = remember(app.databaseId, windowWidth) { measuredWindowHeight }
+    val useSheet = windowWidth < 600.dp && windowHeight >= 500.dp
     val compactHeader = windowHeight < 480.dp
     val listState = rememberLazyListState()
     val sheetFocusRequester = remember { FocusRequester() }
