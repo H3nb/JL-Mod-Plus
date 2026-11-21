@@ -1545,10 +1545,11 @@ internal fun ScreenPresetDialog(
         Surface(
             modifier = dialogLayout.modifier,
             shape = MaterialTheme.shapes.extraLarge,
-            color = MaterialTheme.colorScheme.surfaceContainerHigh,
+            color = MaterialTheme.colorScheme.surfaceContainer,
+            contentColor = MaterialTheme.colorScheme.onSurface,
         ) {
             Column(
-                modifier = Modifier.padding(16.dp),
+                modifier = Modifier.padding(horizontal = 20.dp, vertical = 16.dp),
                 verticalArrangement = Arrangement.spacedBy(8.dp),
             ) {
                 Row(
@@ -1627,9 +1628,8 @@ internal fun ScreenPresetDialog(
                                     shape = MaterialTheme.shapes.medium,
                                     color = if (selected) MaterialTheme.colorScheme.primaryContainer
                                         else MaterialTheme.colorScheme.surfaceContainerLow,
-                                    border = if (selected) BorderStroke(
-                                        1.dp, MaterialTheme.colorScheme.primary,
-                                    ) else null,
+                                    contentColor = if (selected) MaterialTheme.colorScheme.onPrimaryContainer
+                                        else MaterialTheme.colorScheme.onSurface,
                                 ) {
                                     Row(
                                         modifier = Modifier.fillMaxWidth()
