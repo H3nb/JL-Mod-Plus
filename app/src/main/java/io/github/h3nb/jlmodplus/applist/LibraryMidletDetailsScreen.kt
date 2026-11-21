@@ -147,8 +147,8 @@ internal fun LibraryMidletDetailsScreen(
                 item(key = "identity") {
                     Row(
                         verticalAlignment = Alignment.CenterVertically,
-                        horizontalArrangement = Arrangement.spacedBy(16.dp),
-                        modifier = Modifier.fillMaxWidth().padding(vertical = 8.dp),
+                        horizontalArrangement = Arrangement.spacedBy(12.dp),
+                        modifier = Modifier.fillMaxWidth().padding(vertical = 12.dp),
                     ) {
                         LibraryIconSlot(
                             app = app,
@@ -161,7 +161,7 @@ internal fun LibraryMidletDetailsScreen(
                         Column(modifier = Modifier.weight(1f)) {
                             Text(
                                 app.title,
-                                style = MaterialTheme.typography.headlineSmall,
+                                style = MaterialTheme.typography.titleLarge,
                                 maxLines = 3,
                                 overflow = TextOverflow.Ellipsis,
                             )
@@ -169,11 +169,15 @@ internal fun LibraryMidletDetailsScreen(
                                 app.author,
                                 style = MaterialTheme.typography.bodyMedium,
                                 color = MaterialTheme.colorScheme.onSurfaceVariant,
+                                maxLines = 2,
+                                overflow = TextOverflow.Ellipsis,
                             )
                             Text(
                                 stringResource(R.string.library_details_version_value, app.version),
                                 style = MaterialTheme.typography.bodySmall,
                                 color = MaterialTheme.colorScheme.onSurfaceVariant,
+                                maxLines = 1,
+                                overflow = TextOverflow.Ellipsis,
                             )
                         }
                     }

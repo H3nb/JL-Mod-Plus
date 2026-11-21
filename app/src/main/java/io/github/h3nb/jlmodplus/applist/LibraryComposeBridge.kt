@@ -1800,10 +1800,11 @@ fun LibraryScreen(
             enter = auxiliaryEnter,
             exit = auxiliaryExit,
         ) {
-            Box(
-                Modifier.fillMaxSize()
-                    .background(MaterialTheme.colorScheme.background)
+            Surface(
+                modifier = Modifier.fillMaxSize()
                     .then(if (notificationsPageVisible) Modifier else Modifier.clearAndSetSemantics {}),
+                color = MaterialTheme.colorScheme.background,
+                contentColor = MaterialTheme.colorScheme.onBackground,
             ) {
                 LibraryNotificationsScreen(onBack = { notificationsPageVisible = false })
                 if (!notificationsPageVisible) {
@@ -1822,9 +1823,10 @@ fun LibraryScreen(
             val app = displayedState.apps.firstOrNull {
                 it.databaseId == original.databaseId
             } ?: original
-            Box(
-                modifier = Modifier.fillMaxSize().zIndex(3f)
-                    .background(MaterialTheme.colorScheme.background),
+            Surface(
+                modifier = Modifier.fillMaxSize().zIndex(3f),
+                color = MaterialTheme.colorScheme.background,
+                contentColor = MaterialTheme.colorScheme.onBackground,
             ) {
                 key(state.libraryScope, app.databaseId) {
                     LibraryMidletDetailsScreen(
