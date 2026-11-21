@@ -14,8 +14,6 @@
 
 package io.github.h3nb.jlmodplus.ui
 
-import android.os.Build
-import android.view.WindowManager
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.BoxWithConstraints
@@ -182,7 +180,6 @@ internal fun AdaptiveAlertDialog(
     tonalElevation: Dp = AlertDialogDefaults.TonalElevation,
     properties: DialogProperties = DialogProperties(),
     maxWidth: Dp = DialogMaximumWidth,
-    blurBehindRadiusPx: Int = 0,
 ) {
     val effectiveControllerKeyEvent = onControllerKeyEvent ?: LocalControllerDialogKeyEvent.current
     val effectiveControllerMotionEvent = LocalControllerDialogMotionEvent.current
@@ -209,23 +206,11 @@ internal fun AdaptiveAlertDialog(
         val dialogView = LocalView.current
         val dialogWindowPolicy = LocalDialogWindowPolicy.current
         val dialogWindow = (dialogView.parent as? DialogWindowProvider)?.window
-        DisposableEffect(dialogWindow, dialogWindowPolicy, blurBehindRadiusPx) {
-            if (dialogWindow != null) {
-                dialogWindowPolicy?.apply(dialogWindow)
-                if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.S && blurBehindRadiusPx > 0) {
-                    dialogWindow.addFlags(WindowManager.LayoutParams.FLAG_BLUR_BEHIND)
-                    val attributes = dialogWindow.attributes
-                    attributes.setBlurBehindRadius(blurBehindRadiusPx)
-                    dialogWindow.attributes = attributes
-                }
+        DisposableEffect(dialogWindow, dialogWindowPolicy) {
+            if (dialogWindow != null && dialogWindowPolicy != null) {
+                dialogWindowPolicy.apply(dialogWindow)
             }
-            onDispose {
-                if (dialogWindow != null && Build.VERSION.SDK_INT >= Build.VERSION_CODES.S &&
-                    blurBehindRadiusPx > 0
-                ) {
-                    dialogWindow.clearFlags(WindowManager.LayoutParams.FLAG_BLUR_BEHIND)
-                }
-            }
+            onDispose {}
         }
         val controllerFocusRequester = if (effectiveControllerKeyEvent != null) {
             remember { FocusRequester() }
