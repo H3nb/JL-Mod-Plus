@@ -85,6 +85,7 @@ internal fun PresetSummary(
 ) {
     var menuExpanded by rememberSaveable { mutableStateOf(false) }
     var updateConfirmation by rememberSaveable { mutableStateOf<String?>(null) }
+    var followConfirmation by rememberSaveable { mutableStateOf<String?>(null) }
     val status = state.profileStatus
     val statusSummary = when {
         status.activeProfile != null && state.updatePresetName != null ->
@@ -151,6 +152,16 @@ internal fun PresetSummary(
                             onClick = { menuExpanded = false; onStopFollowing() },
                         )
                     }
+                    status.sourceProfile?.takeIf { source ->
+                        status.activeProfile == null && state.profileTemplates.any {
+                            it.name == source && it.completeSnapshotReady
+                        }
+                    }?.let { source ->
+                        DropdownMenuItem(
+                            text = { Text(stringResource(R.string.profile_follow_again)) },
+                            onClick = { menuExpanded = false; followConfirmation = source },
+                        )
+                    }
                     DropdownMenuItem(
                         text = { Text(stringResource(R.string.preset_manage)) },
                         onClick = { menuExpanded = false; events.onManageProfiles() },
@@ -158,6 +169,25 @@ internal fun PresetSummary(
                 }
             }
         }
+    }
+    followConfirmation?.let { name ->
+        AlertDialog(
+            onDismissRequest = { followConfirmation = null },
+            title = { Text(stringResource(R.string.profile_follow_again)) },
+            text = { Text(stringResource(R.string.profile_follow_again_summary, name)) },
+            dismissButton = {
+                TextButton(onClick = { followConfirmation = null }) {
+                    Text(stringResource(R.string.CANCEL_CMD))
+                }
+            },
+            confirmButton = {
+                TextButton(onClick = {
+                    if (events.onApplyTemplate(name, ConfigFormEvents.PresetApplyScope.WHOLE_PROFILE)) {
+                        followConfirmation = null
+                    }
+                }) { Text(stringResource(R.string.profile_follow_again)) }
+            },
+        )
     }
     updateConfirmation?.let { name ->
         UpdatePresetDialog(
