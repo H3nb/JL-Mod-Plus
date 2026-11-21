@@ -186,11 +186,6 @@ internal fun ConfigQuickSettingDialog(
                     .screenWidth(size.width.toString())
                     .screenHeight(size.height.toString()).build())
             },
-            onSwap = {
-                onDismiss()
-                onFormChanged(form.toBuilder()
-                    .screenWidth(form.screenHeight).screenHeight(form.screenWidth).build())
-            },
             onAdd = events::onAddResolutionPreset,
             onRemove = events::onRemoveResolutionPreset,
         )
