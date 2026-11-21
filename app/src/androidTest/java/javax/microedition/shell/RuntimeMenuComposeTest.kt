@@ -727,7 +727,7 @@ class RuntimeMenuComposeTest {
 
         val memoryEditorLabel = InstrumentationRegistry.getInstrumentation()
             .targetContext.getString(R.string.memory_editor_bubble)
-        composeRule.onNodeWithText(memoryEditorLabel).performScrollTo().performClick()
+        composeRule.onNodeWithContentDescription(memoryEditorLabel).performScrollTo().performClick()
 
         assertEquals(listOf("dismiss", "memoryEditor"), events)
     }
