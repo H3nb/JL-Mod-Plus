@@ -25,8 +25,11 @@ Use this guidance for app-owned UI architecture, adaptation, and navigation work
 
 - MIDlet Config and global Settings share `PreferenceTextContent` for title,
   current value, and supporting explanation. Choice/number/slider rows remain
-  scannable and reveal their full help in their existing dialogs; switches and
-  actions retain essential inline guidance. `PreferenceNotice` supplies neutral
+  scannable, show a shared decorative trailing chevron, and reveal their full
+  help in the existing dialog; switches retain their distinct trailing control
+  and essential inline guidance, while navigation/action rows also provide a
+  visible opening affordance. Values are visually subordinate to labels.
+  Screen-size help appears in the chooser, not duplicated in the geometry list. `PreferenceNotice` supplies neutral
   Info and persistent themed Warning/Danger without per-screen banners. System
   shows conditional timing/compatibility warnings, while generic system-property
   guidance remains in the editor. Preferences, search targets, and storage owners
