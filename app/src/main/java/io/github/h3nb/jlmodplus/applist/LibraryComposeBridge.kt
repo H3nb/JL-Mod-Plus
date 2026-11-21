@@ -5093,7 +5093,8 @@ internal fun AppActionsDialog(
     }
 
     val entries = buildList {
-        add(DialogActionEntry(
+        if (!moreExpanded) {
+            add(DialogActionEntry(
             label = R.string.action_settings,
             icon = R.drawable.ic_settings,
             prominent = true,
@@ -5144,7 +5145,6 @@ internal fun AppActionsDialog(
                 action = onRemoveFromCollection,
             ))
         }
-        if (!moreExpanded) {
             add(DialogActionEntry(
                 label = R.string.library_actions_more,
                 icon = R.drawable.ic_more_vert,
@@ -5152,6 +5152,12 @@ internal fun AppActionsDialog(
                 action = { moreExpanded = true },
             ))
         } else {
+            add(DialogActionEntry(
+                label = R.string.library_actions_less,
+                icon = R.drawable.ic_arrow_back,
+                dismissOnClick = false,
+                action = { moreExpanded = false },
+            ))
             if (onShareApp != null) {
                 add(DialogActionEntry(
                     label = R.string.library_action_share_app,
@@ -5182,16 +5188,14 @@ internal fun AppActionsDialog(
                 destructive = true,
                 action = onDelete,
             ))
-            add(DialogActionEntry(
-                label = R.string.library_actions_less,
-                icon = R.drawable.ic_keyboard_arrow_up,
-                dismissOnClick = false,
-                action = { moreExpanded = false },
-            ))
         }
     }
 
     val currentEntries by rememberUpdatedState(entries)
+    LaunchedEffect(moreExpanded) {
+        focusedIndex = 0
+        listState.scrollToItem(0)
+    }
     LaunchedEffect(entries.size) {
         focusedIndex = focusedIndex.coerceIn(0, (entries.size - 1).coerceAtLeast(0))
     }
@@ -5301,8 +5305,7 @@ internal fun AppActionsDialog(
             }
             val maxBodyHeight = (windowHeight - if (compactHeader) 144.dp else 196.dp)
                 .coerceAtLeast(100.dp)
-            val actionListHeight = if (useSheet) Modifier.height(maxBodyHeight)
-                else Modifier.heightIn(max = maxBodyHeight)
+            val actionListHeight = Modifier.heightIn(max = maxBodyHeight)
             val canScrollForward = rememberLazyListCanScrollForward(listState)
             Box(modifier = Modifier.fillMaxWidth().then(actionListHeight)) {
                 LazyColumn(
@@ -5359,12 +5362,16 @@ internal fun AppActionsDialog(
             shape = MaterialTheme.shapes.extraLarge,
         ) { body() }
     } else if (useSheet) {
-        ModalBottomSheet(
-            onDismissRequest = onDismiss,
-            sheetState = rememberModalBottomSheetState(skipPartiallyExpanded = true),
-            containerColor = MaterialTheme.colorScheme.surfaceContainerLow,
-        ) {
-            body()
+        // A new page creates a new measured sheet; changing the original sheet's
+        // content height while it is anchored causes repeated offset adjustments.
+        key(app.databaseId, moreExpanded) {
+            ModalBottomSheet(
+                onDismissRequest = onDismiss,
+                sheetState = rememberModalBottomSheetState(skipPartiallyExpanded = true),
+                containerColor = MaterialTheme.colorScheme.surfaceContainerLow,
+            ) {
+                body()
+            }
         }
     } else {
         val layout = libraryDialogLayout()
