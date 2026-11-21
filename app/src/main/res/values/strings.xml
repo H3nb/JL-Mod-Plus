@@ -1529,6 +1529,7 @@
     <string name="config_quick_settings">Quick settings</string>
     <string name="config_all_settings">All settings</string>
     <string name="profile_local_changes_pending">Local changes not saved to the profile</string>
+    <string name="profile_local_configuration_summary">Settings for this MIDlet only</string>
     <string name="profile_not_following">Based on %1$s · Not following updates</string>
     <string name="profile_stop_following">Stop following profile</string>
     <string name="profile_follow_again">Follow profile again</string>
