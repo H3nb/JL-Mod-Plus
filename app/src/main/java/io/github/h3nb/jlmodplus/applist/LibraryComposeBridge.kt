@@ -2924,7 +2924,8 @@ private fun LibraryAppsHeader(
     var scopePickerVisible by remember { mutableStateOf(false) }
     val scopeWindowHeight = availableWindowHeightDp()
     val useScopeDialog = scopeWindowHeight < 480.dp
-    val scopeMaxHeight = (scopeWindowHeight - 136.dp).coerceAtLeast(120.dp)
+    val scopeMaxHeight = (scopeWindowHeight - if (useScopeDialog) 64.dp else 136.dp)
+        .coerceAtLeast(120.dp)
     val scopeSheetState = rememberModalBottomSheetState(skipPartiallyExpanded = true)
     val scopeSheetCoroutine = rememberCoroutineScope()
     fun closeScopeThen(action: () -> Unit) {
