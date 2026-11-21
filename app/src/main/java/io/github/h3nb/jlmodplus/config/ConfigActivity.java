@@ -380,6 +380,11 @@ public class ConfigActivity extends AppCompatActivity {
 			return updatePreset(name);
 		}
 
+        @Override
+        public boolean onStopFollowingProfile() {
+            return stopFollowingProfile();
+        }
+
 		@Override
 		public void onGamepadCalibration() {
 			startGamepadCalibration();
@@ -2257,6 +2262,31 @@ public class ConfigActivity extends AppCompatActivity {
 			operationRunning = false;
 		}
 	}
+
+
+    private boolean stopFollowingProfile() {
+        if (isProfile || operationRunning || presetLinkage == null) return false;
+        operationRunning = true;
+        try {
+            boolean success = runInstalledWrite(() -> {
+                synchronized (ProfilesManager.presetSourceLock()) {
+                    // An outstanding local draft must be durable before unlinking the source.
+                    if (!saveParamsWithInstalledIdentity()) return false;
+                    return !presetLinkage.isLinked() || presetLinkage.detach();
+                }
+            });
+            if (success) {
+                refreshProfileOriginFromMetadata();
+                refreshProfileMatchCache();
+                if (composeController != null) composeController.update(createUiState());
+            } else {
+                ThemedToast.show(this, R.string.profile_template_operation_failed, Toast.LENGTH_SHORT);
+            }
+            return success;
+        } finally {
+            operationRunning = false;
+        }
+    }
 
 	private boolean saveTemplateWithInstalledIdentity(@NonNull String name) {
 		if (!saveParamsWithInstalledIdentity()) {
