@@ -1553,6 +1553,7 @@ fun LibraryScreen(
                             searchAppsPrepared = state.quickView != LibraryQuickView.All ||
                                 collectionsHost == null || collectionDialogState?.allAppsPrepared == true,
                             resolveUiId = actions::resolveAppUiId,
+                            controllerEvents = controllerEvents,
                             active = destination == LibraryDestination.Apps,
                         )
                         LibraryDestination.Collections -> if (collectionsHost != null) {
@@ -1606,6 +1607,7 @@ fun LibraryScreen(
                                     searchQuery = ""
                                 },
                                 resolveUiId = actions::resolveAppUiId,
+                                controllerEvents = controllerEvents,
                             )
                         } else {
                             LibraryCollectionsDestination(padding)
@@ -2111,6 +2113,7 @@ internal fun LibraryAppsDestination(
     searchApps: List<LibraryAppUiItem> = state.apps,
     searchAppsPrepared: Boolean = true,
     resolveUiId: (Long) -> Int? = { null },
+    controllerEvents: Flow<LibraryControllerEvent>? = null,
     title: String? = null,
     onBack: (() -> Unit)? = null,
     showQuickViews: Boolean = true,
@@ -2171,6 +2174,18 @@ internal fun LibraryAppsDestination(
     val retry: () -> Unit = { if (currentActive) onRetry() }
     val headerHeightPx = viewportState.headerHeightPx
     val headerOffsetPx = viewportState.headerOffsetPx
+    val searchFocusedDatabaseId = rememberLibraryInlineSearchControllerFocus(
+        active = active && searchActive,
+        apps = visibleApps,
+        layout = state.layout,
+        listState = searchListState,
+        gridState = searchGridState,
+        headerHeightPx = headerHeightPx.intValue,
+        events = controllerEvents,
+        resolveUiId = resolveUiId,
+        onOpenApp = openApp,
+        onOpenActions = openActions,
+    )
     val currentOnFabVisibilityChanged by rememberUpdatedState(onFabVisibilityChanged)
     val currentOnNavigationVisibilityChanged by rememberUpdatedState(onNavigationVisibilityChanged)
     val activeFabVisibilityChanged: (Boolean) -> Unit = remember(viewportState) {
@@ -2368,9 +2383,12 @@ internal fun LibraryAppsDestination(
                                         if (live != null) openActions(item.copy(id = live))
                                     } else openActions(item)
                                 },
-                                controllerFocused = !searchActive &&
+                                controllerFocused = if (searchActive) {
+                                    app.databaseId == searchFocusedDatabaseId
+                                } else {
                                     app.databaseId == controllerFocusedDatabaseId &&
-                                    !selectionState.isActive,
+                                        !selectionState.isActive
+                                },
                                 selectionMode = selectionState.isActive,
                                 selected = app.databaseId in selectionState.selectedAppIds,
                                 onToggleSelection = toggleSelection,
@@ -2433,9 +2451,12 @@ internal fun LibraryAppsDestination(
                                     if (live != null) favoriteApp(live, favorite)
                                 } else favoriteApp(id, favorite)
                             },
-                            controllerFocused = !searchActive &&
+                            controllerFocused = if (searchActive) {
+                                app.databaseId == searchFocusedDatabaseId
+                            } else {
                                 app.databaseId == controllerFocusedDatabaseId &&
-                                !selectionState.isActive,
+                                    !selectionState.isActive
+                            },
                             favoriteEnabled = state.databaseControlsReady,
                             selectionMode = selectionState.isActive,
                             selected = app.databaseId in selectionState.selectedAppIds,
