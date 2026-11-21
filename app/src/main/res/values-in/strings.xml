@@ -961,6 +961,10 @@
     <string name="settings_section_appearance_language">Tampilan dan bahasa</string>
     <string name="settings_section_storage_profiles">Penyimpanan dan profil</string>
     <string name="settings_section_language">Bahasa</string>
+    <string name="settings_section_library_icons">Ikon pustaka</string>
+    <string name="settings_section_library_grid">Tampilan grid</string>
+    <string name="settings_section_runtime_screen">Layar saat bermain</string>
+    <string name="settings_section_runtime_features">Fitur saat bermain</string>
     <string name="settings_section_library_appearance">Tampilan pustaka</string>
     <string name="settings_section_midlet_runtime">Runtime MIDlet</string>
     <string name="settings_section_storage">Penyimpanan</string>
