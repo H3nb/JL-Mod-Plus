@@ -578,8 +578,8 @@ private fun LazyListScope.settingsSection(
                 .padding(top = 8.dp, bottom = if (rowCount == 0) 16.dp else 8.dp)
                 .semantics { heading() }
                 .padding(start = 12.dp, top = 6.dp, end = 12.dp, bottom = 1.dp),
-            style = MaterialTheme.typography.titleMedium,
-            color = MaterialTheme.colorScheme.primary,
+            style = MaterialTheme.typography.titleSmall,
+            color = MaterialTheme.colorScheme.onSurfaceVariant,
         )
     }
     items(
