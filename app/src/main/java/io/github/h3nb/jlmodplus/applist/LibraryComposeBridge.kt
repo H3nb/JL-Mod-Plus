@@ -935,6 +935,15 @@ fun LibraryScreen(
     val currentControllerCollectionId by rememberUpdatedState(activeCollectionId)
     val currentControllerImeVisible by rememberUpdatedState(isImeVisible)
 
+    LaunchedEffect(selectionState, activeCollectionId, activeMembers?.revision, state.generation) {
+        if (activeCollectionId == null || activeMembers == null ||
+            !selectionState.isActive || selectionState.collectionId != activeCollectionId
+        ) return@LaunchedEffect
+        val retained = selectionState.retainAvailable(
+            state.generation, activeMembers.memberIds, collectionId = activeCollectionId,
+        )
+        if (retained != selectionState) selectionState = retained
+    }
     LaunchedEffect(state.generation, state.databaseControlsReady) {
         if (!state.databaseControlsReady) return@LaunchedEffect
         val retained = selectionState.retainGeneration(state.generation)
@@ -1067,18 +1076,19 @@ fun LibraryScreen(
 
 
     val currentEditorIdentity by rememberUpdatedState(state.libraryScope to metadataTarget?.databaseId)
-    val metadataApp = remember(projectionKey, metadataTarget) {
+    val metadataApp = remember(displayedState.apps, metadataTarget) {
         metadataTarget?.let { target ->
-            state.apps.getOrNull(state.projectedAppIds.indexOf(target.databaseId)) ?: target
+            displayedState.apps.firstOrNull { it.databaseId == target.databaseId } ?: target
         }
     }
-    val metadataRestoreReady = remember(projectionKey, metadataRestoreRequest, state.loading) {
+    val metadataRestoreReady = remember(
+        displayedState.apps, metadataRestoreRequest, displayedState.loading,
+    ) {
         metadataRestoreRequest?.let { request ->
-            val current = state.apps.getOrNull(state.projectedAppIds.indexOf(request.databaseId))
-            // A filtered-out/deleted target cannot be measured, so the stable-id/fallback anchor
-            // is already the best possible restoration. Otherwise wait until the database projection
-            // contains the values submitted by the editor and the row has been remeasured.
-            !state.loading && (current == null || (
+            val current = displayedState.apps.firstOrNull {
+                it.databaseId == request.databaseId
+            }
+            !displayedState.loading && (current == null || (
                 current.title == request.title &&
                     current.author == request.author &&
                     current.defaultDescription == request.description
@@ -1087,24 +1097,26 @@ fun LibraryScreen(
     }
 
     fun captureAppsAnchor(excludedDatabaseId: Long? = null): LibraryScrollAnchor? {
+        val currentViewport = if (activeCollectionId == null) appsViewport else collectionViewport
+        val currentApps = displayedState.apps
         val visible: Pair<Int, Int>? = if (state.layout == LibraryLayout.List) {
-            val items = appsListState.layoutInfo.visibleItemsInfo.filter { it.index > 0 }
+            val items = currentViewport.listState.layoutInfo.visibleItemsInfo.filter { it.index > 0 }
             (items.firstOrNull { item ->
                 val fallbackIndex = (item.index - 1).coerceAtLeast(0)
-                state.apps.getOrNull(fallbackIndex)?.databaseId != excludedDatabaseId
+                currentApps.getOrNull(fallbackIndex)?.databaseId != excludedDatabaseId
             } ?: items.firstOrNull())?.let { it.index to it.offset }
         } else {
-            val items = appsGridState.layoutInfo.visibleItemsInfo.filter { it.index > 0 }
+            val items = currentViewport.gridState.layoutInfo.visibleItemsInfo.filter { it.index > 0 }
             (items.firstOrNull { item ->
                 val fallbackIndex = (item.index - 1).coerceAtLeast(0)
-                state.apps.getOrNull(fallbackIndex)?.databaseId != excludedDatabaseId
+                currentApps.getOrNull(fallbackIndex)?.databaseId != excludedDatabaseId
             } ?: items.firstOrNull())?.let { it.index to it.offset.y }
         }
         if (visible == null) return null
         val fallbackIndex = (visible.first - 1).coerceAtLeast(0)
         return LibraryScrollAnchor(
             generation = state.generation,
-            stableItemId = state.apps.getOrNull(fallbackIndex)?.databaseId,
+            stableItemId = currentApps.getOrNull(fallbackIndex)?.databaseId,
             offsetPx = -visible.second,
             fallbackIndex = fallbackIndex,
             libraryScope = state.libraryScope.takeIf(String::isNotEmpty),
@@ -1112,25 +1124,20 @@ fun LibraryScreen(
     }
 
     fun captureAppsViewport(): LibraryViewportSnapshot? {
+        val currentViewport = if (activeCollectionId == null) appsViewport else collectionViewport
         return if (state.layout == LibraryLayout.List) {
-            if (appsListState.layoutInfo.totalItemsCount == 0) {
-                null
-            } else {
-                LibraryViewportSnapshot(
-                    layout = LibraryLayout.List,
-                    firstVisibleItemIndex = appsListState.firstVisibleItemIndex,
-                    firstVisibleItemOffsetPx = appsListState.firstVisibleItemScrollOffset,
-                )
-            }
-        } else if (appsGridState.layoutInfo.totalItemsCount == 0) {
-            null
-        } else {
-            LibraryViewportSnapshot(
-                layout = LibraryLayout.Grid,
-                firstVisibleItemIndex = appsGridState.firstVisibleItemIndex,
-                firstVisibleItemOffsetPx = appsGridState.firstVisibleItemScrollOffset,
+            if (currentViewport.listState.layoutInfo.totalItemsCount == 0) null
+            else LibraryViewportSnapshot(
+                layout = LibraryLayout.List,
+                firstVisibleItemIndex = currentViewport.listState.firstVisibleItemIndex,
+                firstVisibleItemOffsetPx = currentViewport.listState.firstVisibleItemScrollOffset,
             )
-        }
+        } else if (currentViewport.gridState.layoutInfo.totalItemsCount == 0) null
+        else LibraryViewportSnapshot(
+            layout = LibraryLayout.Grid,
+            firstVisibleItemIndex = currentViewport.gridState.firstVisibleItemIndex,
+            firstVisibleItemOffsetPx = currentViewport.gridState.firstVisibleItemScrollOffset,
+        )
     }
 
     fun closeMetadataEditor(restoreRequest: MetadataRestoreRequest? = null) {
@@ -2284,11 +2291,11 @@ internal fun LibraryAppsDestination(
     val headerHeightPx = viewportState.headerHeightPx
     val headerOffsetPx = viewportState.headerOffsetPx
     val searchFocusedDatabaseId = rememberLibraryInlineSearchControllerFocus(
-        active = active && searchActive,
+        active = active && (searchActive || selectedCollection != null),
         apps = visibleApps,
         layout = state.layout,
-        listState = searchListState,
-        gridState = searchGridState,
+        listState = if (searchActive) searchListState else listState,
+        gridState = if (searchActive) searchGridState else gridState,
         headerHeightPx = headerHeightPx.intValue,
         events = controllerEvents,
         resolveUiId = resolveUiId,
@@ -2498,7 +2505,9 @@ internal fun LibraryAppsDestination(
                                         if (live != null) openActions(item.copy(id = live))
                                     } else openActions(item)
                                 },
-                                controllerFocused = if (searchActive) {
+                                controllerFocused = if (searchActive ||
+                                    selectedCollection != null
+                                ) {
                                     app.databaseId == searchFocusedDatabaseId
                                 } else {
                                     app.databaseId == controllerFocusedDatabaseId &&
@@ -2571,7 +2580,9 @@ internal fun LibraryAppsDestination(
                                     if (live != null) favoriteApp(live, favorite)
                                 } else favoriteApp(id, favorite)
                             },
-                            controllerFocused = if (searchActive) {
+                            controllerFocused = if (searchActive ||
+                                selectedCollection != null
+                            ) {
                                 app.databaseId == searchFocusedDatabaseId
                             } else {
                                 app.databaseId == controllerFocusedDatabaseId &&
