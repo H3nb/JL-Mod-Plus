@@ -124,8 +124,7 @@ public class SettingsActivity extends AppCompatActivity {
 			@Override
 			public void onChromeError(@NonNull Exception failure) {
 				Log.e("SettingsActivity", "Could not access runtime chrome preferences", failure);
-				Toast.makeText(SettingsActivity.this, R.string.runtime_chrome_update_failed,
-						Toast.LENGTH_SHORT).show();
+				composeController.showNotice(getString(R.string.runtime_chrome_update_failed));
 			}
 		});
 	}
