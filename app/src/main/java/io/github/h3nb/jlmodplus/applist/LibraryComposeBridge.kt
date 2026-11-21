@@ -34,6 +34,8 @@ import androidx.compose.animation.fadeIn
 import androidx.compose.animation.fadeOut
 import androidx.compose.animation.scaleIn
 import androidx.compose.animation.scaleOut
+import androidx.compose.animation.slideInHorizontally
+import androidx.compose.animation.slideOutHorizontally
 import androidx.compose.animation.slideInVertically
 import androidx.compose.animation.slideOutVertically
 import androidx.compose.animation.core.FastOutSlowInEasing
@@ -807,6 +809,8 @@ fun LibraryScreen(
     val appsGridState = appsViewport.gridState
     val showInstallFab = appsViewport.chromeVisible
     var searchOpen by rememberSaveable { mutableStateOf(false) }
+    var searchQuery by rememberSaveable(state.libraryScope) { mutableStateOf("") }
+    val searchKeyboard = LocalSoftwareKeyboardController.current
     val isImeVisible = WindowInsets.isImeVisible
     val scaffoldInsets = WindowInsets.safeDrawing
         .exclude(WindowInsets.ime)
@@ -1151,7 +1155,13 @@ fun LibraryScreen(
                         currentControllerAboutPageVisible -> aboutPageVisible = false
                         currentControllerUpdatesPageVisible -> updatesPageVisible = false
                         currentControllerSelectionActive -> selectionState = selectionState.clear()
-                        currentControllerSearchOpen -> Unit // Search owns keyboard-first Back.
+                        currentControllerSearchOpen -> {
+                            if (isImeVisible) searchKeyboard?.hide()
+                            else {
+                                searchOpen = false
+                                searchQuery = ""
+                            }
+                        }
                         currentControllerDestination == LibraryDestination.Collections &&
                             currentNavigationState.collectionManageApps -> {
                             collectionsHost?.collectionsStore()?.dismissPicker()
@@ -1183,8 +1193,9 @@ fun LibraryScreen(
         }
     }
 
-    LaunchedEffect(state.libraryScope) {
+    LaunchedEffect(destination, navigationState.selectedCollectionId, state.libraryScope) {
         searchOpen = false
+        searchQuery = ""
     }
     BackHandler(enabled = destination != LibraryDestination.Apps &&
         (destination == LibraryDestination.More || navigationState.selectedCollectionId == null)) {
@@ -1435,8 +1446,7 @@ fun LibraryScreen(
             val travelPx = with(density) { PAGE_TRAVEL_DP.dp.roundToPx() }
             AnimatedContent(
                 targetState = destination,
-                modifier = Modifier.fillMaxSize()
-                    .then(if (searchOpen) Modifier.clearAndSetSemantics { } else Modifier),
+                modifier = Modifier.fillMaxSize(),
                 transitionSpec = {
                     val direction = if (targetState == LibraryDestination.Apps) -1 else 1
                     pageEnter(direction, travelPx) togetherWith pageExit(direction, travelPx)
@@ -1466,8 +1476,18 @@ fun LibraryScreen(
                             },
                             controllerFocusedDatabaseId = controllerFocusedAppId
                                 .takeIf { controllerFocusVisible },
-                            onOpenApp = actions::onOpenApp,
+                            onOpenApp = { id ->
+                                if (searchOpen) {
+                                    searchOpen = false
+                                    searchQuery = ""
+                                }
+                                actions.onOpenApp(id)
+                            },
                             onOpenActions = {
+                                if (searchOpen) {
+                                    searchOpen = false
+                                    searchQuery = ""
+                                }
                                 appActions = it
                                 appActionsCollectionId = null
                             },
@@ -1515,6 +1535,19 @@ fun LibraryScreen(
                             },
                             onOpenSearch = { searchOpen = true },
                             onOpenGlobalSettings = { selectDestination(LibraryDestination.More) },
+                            searchActive = searchOpen && destination == LibraryDestination.Apps,
+                            searchQuery = searchQuery,
+                            onSearchQueryChange = { searchQuery = it },
+                            onCloseSearch = {
+                                searchOpen = false
+                                searchQuery = ""
+                            },
+                            searchApps = if (state.quickView == LibraryQuickView.All &&
+                                collectionDialogState?.allAppsPrepared == true
+                            ) collectionDialogState.allApps else state.apps,
+                            searchAppsPrepared = state.quickView != LibraryQuickView.All ||
+                                collectionsHost == null || collectionDialogState?.allAppsPrepared == true,
+                            resolveUiId = actions::resolveAppUiId,
                             active = destination == LibraryDestination.Apps,
                         )
                         LibraryDestination.Collections -> if (collectionsHost != null) {
@@ -1539,6 +1572,10 @@ fun LibraryScreen(
                                     ) next.copy(destination = LibraryDestinationKey.Apps) else next
                                 },
                                 onOpenActions = { app, collectionId ->
+                                    if (searchOpen) {
+                                        searchOpen = false
+                                        searchQuery = ""
+                                    }
                                     appActions = app
                                     appActionsCollectionId = collectionId
                                 },
@@ -1554,6 +1591,14 @@ fun LibraryScreen(
                                 onNavigationVisibilityChanged = {},
                                 active = destination == LibraryDestination.Collections,
                                 onOpenSearch = { searchOpen = true },
+                                searchActive = searchOpen && destination == LibraryDestination.Collections,
+                                searchQuery = searchQuery,
+                                onSearchQueryChange = { searchQuery = it },
+                                onCloseSearch = {
+                                    searchOpen = false
+                                    searchQuery = ""
+                                },
+                                resolveUiId = actions::resolveAppUiId,
                             )
                         } else {
                             LibraryCollectionsDestination(padding)
@@ -1580,46 +1625,6 @@ fun LibraryScreen(
                         )
                 }
             }
-        }
-
-        val searchCollectionId = navigationState.selectedCollectionId.takeIf {
-            destination == LibraryDestination.Collections && selectedCollectionMatchesLibrary &&
-                !navigationState.collectionManageApps
-        }
-        val searchMembers = collectionDialogState?.members?.takeIf {
-            it.collectionId == searchCollectionId
-        }
-        AnimatedVisibility(
-            visible = searchOpen,
-            modifier = Modifier.fillMaxSize().zIndex(2f),
-            enter = fadeIn(tween(200)) + slideInVertically(
-                initialOffsetY = { -it / 20 }, animationSpec = tween(220),
-            ),
-            exit = fadeOut(tween(160)) + slideOutVertically(
-                targetOffsetY = { -it / 20 }, animationSpec = tween(180),
-            ),
-        ) {
-            LibrarySearchOverlay(
-                state = state,
-                apps = if (searchCollectionId != null) searchMembers?.members.orEmpty()
-                    else collectionDialogState?.allApps ?: state.apps,
-                appsPrepared = if (searchCollectionId != null) searchMembers != null
-                    else collectionDialogState?.allAppsPrepared ?: !state.loading,
-                scopeName = searchCollectionId?.let { id ->
-                    collectionDialogState?.collections?.firstOrNull { it.id == id }?.name
-                },
-                onDismiss = { searchOpen = false },
-                onOpenApp = actions::onOpenApp,
-                onOpenActions = { app ->
-                    appActions = app
-                    appActionsCollectionId = searchCollectionId
-                },
-                onFavorite = actions::onFavorite,
-                resolveUiId = actions::resolveAppUiId,
-                controllerEvents = controllerEvents,
-                actionsBlocked = libraryOverlayVisible || updatePrompt != null,
-                modifier = Modifier.fillMaxSize(),
-            )
         }
 
         val auxiliaryPageOffset = with(density) { PAGE_TRAVEL_DP.dp.roundToPx() }
@@ -2059,245 +2064,6 @@ internal class LibraryChromeScrollHysteresis(
             }
         }
         return null
-    }
-}
-
-@OptIn(ExperimentalMaterial3Api::class, ExperimentalLayoutApi::class)
-@Composable
-internal fun LibrarySearchOverlay(
-    state: LibraryUiState,
-    apps: List<LibraryAppUiItem>,
-    appsPrepared: Boolean,
-    onDismiss: () -> Unit,
-    onOpenApp: (Int) -> Unit,
-    onOpenActions: (LibraryAppUiItem) -> Unit,
-    onFavorite: (Int, Boolean) -> Unit,
-    resolveUiId: (Long) -> Int? = { null },
-    controllerEvents: Flow<LibraryControllerEvent>? = null,
-    actionsBlocked: Boolean = false,
-    modifier: Modifier = Modifier,
-    scopeName: String? = null,
-) {
-    var query by rememberSaveable(state.libraryScope, scopeName) { mutableStateOf("") }
-    val inputFocus = remember { FocusRequester() }
-    val closeFocus = remember { FocusRequester() }
-    val keyboard = LocalSoftwareKeyboardController.current
-    val imeVisible = WindowInsets.isImeVisible
-    var fieldFocused by remember { mutableStateOf(false) }
-    var imeWasVisible by remember { mutableStateOf(false) }
-
-    fun closeSearch() {
-        keyboard?.hide()
-        closeFocus.requestFocus()
-        onDismiss()
-    }
-    LaunchedEffect(Unit) {
-        withFrameNanos { }
-        inputFocus.requestFocus()
-        keyboard?.show()
-    }
-    LaunchedEffect(imeVisible, fieldFocused) {
-        when {
-            imeVisible -> imeWasVisible = true
-            imeWasVisible && !imeVisible -> {
-                closeFocus.requestFocus()
-                imeWasVisible = false
-            }
-        }
-    }
-    val results by key(query, apps, state.sortVariant) {
-        produceState<List<LibraryAppUiItem>?>(
-            initialValue = null,
-            query,
-            apps,
-            state.sortVariant,
-            appsPrepared,
-        ) {
-            if (appsPrepared && query.isNotBlank()) {
-                value = withContext(Dispatchers.Default) {
-                    val context = currentCoroutineContext()
-                    projectCollectionApps(
-                        rows = apps,
-                        filter = query,
-                        sortVariant = state.sortVariant,
-                        checkActive = { context.ensureActive() },
-                    )
-                }
-            }
-        }
-    }
-
-    val visibleResults = results
-    val searchListState = rememberLazyListState()
-    var focusedDatabaseId by remember { mutableStateOf<Long?>(null) }
-    var controllerFocusVisible by remember { mutableStateOf(false) }
-    val currentResults by rememberUpdatedState(visibleResults.orEmpty())
-    val currentActionsBlocked by rememberUpdatedState(actionsBlocked)
-    val currentImeVisible by rememberUpdatedState(imeVisible)
-    val currentFieldFocused by rememberUpdatedState(fieldFocused)
-    val currentOnDismiss by rememberUpdatedState(::closeSearch)
-    val currentOpenApp by rememberUpdatedState(onOpenApp)
-    val currentOpenActions by rememberUpdatedState(onOpenActions)
-    val currentResolveUiId by rememberUpdatedState(resolveUiId)
-
-    LaunchedEffect(visibleResults) {
-        val readyResults = visibleResults.orEmpty()
-        if (readyResults.none { it.databaseId == focusedDatabaseId }) {
-            focusedDatabaseId = readyResults.firstOrNull()?.databaseId
-        }
-    }
-    LaunchedEffect(controllerEvents) {
-        controllerEvents?.collect { event ->
-            if (currentActionsBlocked) return@collect
-            if (event.command == LibraryControllerCommand.Back) {
-                if (currentImeVisible || currentFieldFocused) {
-                    keyboard?.hide()
-                    closeFocus.requestFocus()
-                } else {
-                    currentOnDismiss()
-                }
-                return@collect
-            }
-            val entries = currentResults
-            if (entries.isEmpty()) return@collect
-            val currentIndex = entries.indexOfFirst { it.databaseId == focusedDatabaseId }
-                .coerceAtLeast(0)
-            when (event.command) {
-                LibraryControllerCommand.MoveUp,
-                LibraryControllerCommand.MoveLeft,
-                LibraryControllerCommand.MoveDown,
-                LibraryControllerCommand.MoveRight -> {
-                    controllerFocusVisible = true
-                    val delta = if (event.command == LibraryControllerCommand.MoveUp ||
-                        event.command == LibraryControllerCommand.MoveLeft) -1 else 1
-                    val nextIndex = (currentIndex + delta).coerceIn(0, entries.lastIndex)
-                    focusedDatabaseId = entries[nextIndex].databaseId
-                    if (searchListState.layoutInfo.visibleItemsInfo.any { it.index == nextIndex }) {
-                        searchListState.animateScrollToItem(nextIndex)
-                    } else {
-                        searchListState.scrollToItem(nextIndex)
-                    }
-                }
-                LibraryControllerCommand.Activate -> {
-                    val app = entries[currentIndex]
-                    val id = currentResolveUiId(app.databaseId) ?: app.id.takeIf { it != 0 }
-                    if (id != null) currentOpenApp(id)
-                }
-                LibraryControllerCommand.OpenActions -> {
-                    val app = entries[currentIndex]
-                    val id = currentResolveUiId(app.databaseId) ?: app.id.takeIf { it != 0 }
-                    if (id != null) currentOpenActions(app.copy(id = id))
-                }
-                LibraryControllerCommand.Back,
-                LibraryControllerCommand.NextTab,
-                LibraryControllerCommand.PreviousTab -> Unit
-            }
-        }
-    }
-
-
-    BackHandler {
-        if (imeVisible || fieldFocused) {
-            keyboard?.hide()
-            closeFocus.requestFocus()
-        } else {
-            closeSearch()
-        }
-    }
-    val hint = if (scopeName == null) {
-        stringResource(R.string.library_search_placeholder)
-    } else {
-        stringResource(R.string.library_search_in_collection, scopeName)
-    }
-    Surface(
-        modifier = modifier.fillMaxSize(),
-        color = MaterialTheme.colorScheme.background,
-    ) {
-        Column(
-            modifier = Modifier
-                .fillMaxSize()
-                .windowInsetsPadding(WindowInsets.safeDrawing)
-                .imePadding(),
-        ) {
-            Row(
-                modifier = Modifier
-                    .fillMaxWidth()
-                    .padding(horizontal = 16.dp, vertical = 8.dp),
-                verticalAlignment = Alignment.CenterVertically,
-                horizontalArrangement = Arrangement.spacedBy(4.dp),
-            ) {
-                IconButton(
-                    onClick = ::closeSearch,
-                    modifier = Modifier.focusRequester(closeFocus),
-                ) {
-                    Icon(
-                        painter = painterResource(R.drawable.ic_arrow_back),
-                        contentDescription = stringResource(R.string.action_back),
-                    )
-                }
-                LibrarySearchField(
-                    query = query,
-                    onQueryChange = { query = it },
-                    modifier = Modifier.weight(1f).focusRequester(inputFocus),
-                    onFocusChanged = { fieldFocused = it },
-                    onDismissInput = { closeFocus.requestFocus() },
-                    placeholder = hint,
-                )
-            }
-            Box(modifier = Modifier.fillMaxSize()) {
-        when {
-            query.isBlank() -> Box(
-                modifier = Modifier.fillMaxSize().padding(24.dp),
-                contentAlignment = Alignment.TopCenter,
-            ) {
-                Text(
-                    text = stringResource(R.string.library_search_placeholder),
-                    color = MaterialTheme.colorScheme.onSurfaceVariant,
-                )
-            }
-            !appsPrepared -> Box(Modifier.fillMaxSize(), contentAlignment = Alignment.Center) {
-                CircularProgressIndicator()
-            }
-            visibleResults == null -> Box(Modifier.fillMaxSize(), contentAlignment = Alignment.Center) {
-                CircularProgressIndicator()
-            }
-            visibleResults.isEmpty() -> LibraryEmptyState(query)
-            else -> LazyColumn(
-                modifier = Modifier.fillMaxSize(),
-                state = searchListState,
-                contentPadding = PaddingValues(bottom = 24.dp),
-            ) {
-                items(visibleResults, key = { it.databaseId }) { app ->
-                    LibraryListItem(
-                        app = app,
-                        onOpenApp = { id ->
-                            val resolved = resolveUiId(app.databaseId) ?: id.takeIf { it != 0 }
-                            if (resolved != null) onOpenApp(resolved)
-                        },
-                        onOpenActions = { item ->
-                            val resolved = resolveUiId(item.databaseId) ?: item.id.takeIf { it != 0 }
-                            if (resolved != null) onOpenActions(item.copy(id = resolved))
-                        },
-                        onFavorite = { id, favorite ->
-                            val resolved = resolveUiId(app.databaseId) ?: id.takeIf { it != 0 }
-                            if (resolved != null) onFavorite(resolved, favorite)
-                        },
-                        controllerFocused = controllerFocusVisible &&
-                            focusedDatabaseId == app.databaseId,
-                        favoriteEnabled = state.databaseControlsReady,
-                        selectionMode = false,
-                        selected = false,
-                        onToggleSelection = {},
-                        iconRatio = state.iconRatio,
-                        iconShape = state.iconShape,
-                        enhancedIcons = state.enhancedIcons,
-                        showDescription = false,
-                    )
-                }
-            }
-        }
-            }
-        }
     }
 }
 
