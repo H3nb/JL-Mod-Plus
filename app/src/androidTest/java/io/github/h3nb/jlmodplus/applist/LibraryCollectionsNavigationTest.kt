@@ -328,15 +328,21 @@ class LibraryCollectionsNavigationTest {
         }
 
         openCollectionsManagement()
-        composeRule.onNodeWithText(uiString(R.string.library_collection_manage)).assertIsDisplayed()
+        composeRule.onNodeWithText(uiString(R.string.library_destination_collections)).assertIsDisplayed()
         composeRule.onNodeWithContentDescription(uiString(R.string.library_collection_new))
             .performClick()
         composeRule.onNode(hasSetTextAction()).assertIsDisplayed()
         pressBack()
 
         composeRule.onNodeWithContentDescription(
-            uiString(R.string.library_collection_delete_action, COLLECTION_NAME),
+            uiString(R.string.library_collection_delete_selected),
+        ).assertIsNotEnabled()
+        composeRule.onNodeWithContentDescription(
+            uiString(R.string.library_collection_select_action, COLLECTION_NAME),
         ).performClick()
+        composeRule.onNodeWithContentDescription(
+            uiString(R.string.library_collection_delete_selected),
+        ).assertIsEnabled().performClick()
         composeRule.onNodeWithText(
             uiString(R.string.library_collection_delete_confirmation, COLLECTION_NAME),
         ).assertIsDisplayed()
@@ -356,13 +362,56 @@ class LibraryCollectionsNavigationTest {
         }
 
         openCollectionsManagement()
-        composeRule.onAllNodesWithContentDescription(
-            uiString(R.string.library_collection_more_actions, COLLECTION_NAME),
-        ).assertCountEquals(0)
         composeRule.onNodeWithContentDescription(
-            uiString(R.string.library_collection_rename_action, COLLECTION_NAME),
+            uiString(R.string.library_collection_rename_selected),
+        ).assertIsNotEnabled()
+        composeRule.onNodeWithContentDescription(
+            uiString(R.string.library_collection_select_action, COLLECTION_NAME),
         ).performClick()
+        composeRule.onNodeWithContentDescription(
+            uiString(R.string.library_collection_rename_selected),
+        ).assertIsEnabled().performClick()
         composeRule.onNode(hasSetTextAction()).assertIsDisplayed()
+    }
+
+    @Test
+    fun selectingMultipleCollectionsEnablesBulkDeleteButDisablesRename() {
+        val host = RecordingCollectionsHost()
+        host.store.publishCollections(
+            listOf(
+                LibraryCollectionRow(COLLECTION_ID, COLLECTION_NAME, 0, 1L, 2),
+                LibraryCollectionRow(2L, "RPG", 1, 2L, 0),
+            ),
+        )
+        composeRule.setContent {
+            DeviceConfigurationOverride(
+                DeviceConfigurationOverride.WindowSize(DpSize(360.dp, 640.dp)),
+            ) {
+                JLModPlusTheme { LibraryScreen(state = sampleLibraryState(), actions = host) }
+            }
+        }
+        openCollectionsManagement()
+        composeRule.onNodeWithContentDescription(
+            uiString(R.string.library_collection_select_action, COLLECTION_NAME),
+        ).performClick()
+        composeRule.onNodeWithContentDescription(
+            uiString(R.string.library_collection_select_action, "RPG"),
+        ).performClick()
+        composeRule.onNodeWithContentDescription(
+            uiString(R.string.library_collection_rename_selected),
+        ).assertIsNotEnabled()
+        composeRule.onNodeWithContentDescription(
+            uiString(R.string.library_collection_delete_selected),
+        ).assertIsEnabled().performClick()
+        composeRule.onNodeWithText(
+            InstrumentationRegistry.getInstrumentation().targetContext.resources.getQuantityString(
+                R.plurals.library_collection_delete_many_confirmation, 2, 2,
+            ),
+        ).assertIsDisplayed()
+        composeRule.onNodeWithText(uiString(R.string.action_context_delete)).performClick()
+        composeRule.waitForIdle()
+        assertEquals(listOf(COLLECTION_ID, 2L), host.bulkCollectionDeletions.single())
+        assertTrue(host.store.state.value.collections.isEmpty())
     }
 
     @Test
@@ -738,6 +787,7 @@ class LibraryCollectionsNavigationTest {
         }
         val openedCollectionIds = mutableListOf<Long>()
         val reorderRequests = mutableListOf<List<Long>>()
+        val bulkCollectionDeletions = mutableListOf<List<Long>>()
         val bulkRemovals = mutableListOf<Pair<Set<Long>, Long>>()
         val singleRemovals = mutableListOf<Pair<Int, Long>>()
         val membershipRequests = mutableListOf<Triple<Long, Long, Boolean>>()
@@ -763,6 +813,23 @@ class LibraryCollectionsNavigationTest {
         }
         override fun onRenameCollection(collectionId: Long, name: String) = Unit
         override fun onDeleteCollection(collectionId: Long) = Unit
+        override fun onDeleteCollections(
+            ids: List<Long>,
+            callback: CollectionMembershipResultCallback,
+        ) {
+            bulkCollectionDeletions += ids
+            val remaining = store.state.value.collections.filterNot { it.id in ids }
+            store.publishCollections(remaining.mapIndexed { index, collection ->
+                LibraryCollectionRow(
+                    collection.id,
+                    collection.name,
+                    index,
+                    collection.id,
+                    collection.appCount,
+                )
+            })
+            callback.onResult(true)
+        }
         override fun onReorderCollections(
             orderedIds: List<Long>,
             callback: CollectionMembershipResultCallback,
