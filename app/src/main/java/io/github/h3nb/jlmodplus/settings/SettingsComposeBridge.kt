@@ -621,33 +621,25 @@ private fun SettingsChoiceRow(
     showAccentPreview: Boolean = false,
     onClick: () -> Unit,
 ) {
-    Row(
-        modifier = Modifier
-            .fillMaxWidth()
-            .heightIn(min = 60.dp)
-            .clickable(role = Role.Button, onClick = onClick)
-            .padding(horizontal = 16.dp, vertical = 10.dp),
-        verticalAlignment = Alignment.CenterVertically,
-        horizontalArrangement = Arrangement.spacedBy(12.dp),
-    ) {
-        PreferenceTextContent(
-            title = title,
-            value = selected.label,
-            modifier = Modifier.weight(1f),
-        )
-        if (showAccentPreview) {
-            Box(
-                modifier = Modifier
-                    .size(22.dp)
-                    .background(
-                        AccentPalette.fromKey(selected.value).previewColor(isSystemInDarkTheme(), LocalContext.current),
-                        CircleShape,
-                    )
-                    .border(1.dp, MaterialTheme.colorScheme.outlineVariant, CircleShape),
-            )
-        }
-        PreferenceChevron()
-    }
+    PreferenceNavigationRow(
+        title = title,
+        value = selected.label,
+        onClick = onClick,
+        trailingContent = if (showAccentPreview) {
+            {
+                Box(
+                    modifier = Modifier
+                        .size(22.dp)
+                        .background(
+                            AccentPalette.fromKey(selected.value)
+                                .previewColor(isSystemInDarkTheme(), LocalContext.current),
+                            CircleShape,
+                        )
+                        .border(1.dp, MaterialTheme.colorScheme.outlineVariant, CircleShape),
+                )
+            }
+        } else null,
+    )
 }
 
 private enum class SettingsDialogChoice {

@@ -99,6 +99,7 @@ internal fun PreferenceNavigationRow(
     destructive: Boolean = false,
     minHeight: Dp = 60.dp,
     verticalPadding: Dp = 10.dp,
+    trailingContent: (@Composable () -> Unit)? = null,
 ) {
     Row(
         modifier = modifier
@@ -117,6 +118,7 @@ internal fun PreferenceNavigationRow(
             destructive = destructive,
             modifier = Modifier.weight(1f),
         )
+        trailingContent?.invoke()
         PreferenceChevron(enabled = enabled)
     }
 }

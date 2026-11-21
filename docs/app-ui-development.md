@@ -24,7 +24,8 @@ Use this guidance for app-owned UI architecture, adaptation, and navigation work
 - MIDlet Config exposes a compact profile status and contextual actions at the Quick Settings root, followed by six common shortcuts, five categories, and a separate root section for configuration reset and installed-MIDlet data deletion. Profile drafts expose only a draft-specific reset, not MIDlet data deletion; the virtual-control layout reset remains within Controls. The Quick Settings tile count adapts to available width and font scale; categories remain grouped settings rows. The screen-size chooser keeps its actions visible on short windows and lets the user toggle width/height reversal of the offered preset sizes without changing the saved MIDlet size until one is selected. Profile management uses adaptive lists and local menus, separate from per-MIDlet editing; shader effect catalogs similarly adapt across window sizes. A normal local edit never publishes to a shared named profile, while an explicit profile update may affect other linked MIDlets at their next preparation. Stopping a live named link preserves its local configuration and origin, without deleting the named source. Font remains a Display detail and performance a Graphics & performance detail; Settings Search navigates/reveals the existing option, including root actions, rather than making another preference store.
 
 - MIDlet Config and global Settings share `PreferenceTextContent` for title,
-  current value, and supporting explanation. Choice/number/slider rows remain
+  current value, and supporting explanation; `PreferenceNavigationRow` and
+  `PreferenceSwitchRow` also keep interaction semantics consistent. Choice/number/slider rows remain
   scannable, show a shared decorative trailing chevron, and reveal their full
   help in the existing dialog; switches retain their distinct trailing control
   and essential inline guidance, while navigation/action rows also provide a

@@ -413,32 +413,23 @@ internal fun ConfigColorPreference(
     onClick: () -> Unit,
     displayLabel: String? = null,
 ) {
-    Row(
-        modifier = Modifier
-            .fillMaxWidth()
-            .heightIn(min = 60.dp)
-            .clickable(role = Role.Button, onClick = onClick)
-            .padding(horizontal = 16.dp, vertical = 10.dp),
-        verticalAlignment = Alignment.CenterVertically,
-        horizontalArrangement = Arrangement.spacedBy(12.dp),
-    ) {
-        PreferenceTextContent(
-            title = title,
-            value = displayLabel ?: "#${value.ifEmpty { "000000" }}",
-            description = description,
-            modifier = Modifier.weight(1f),
-        )
-        if (displayLabel == null) {
-            Box(
-                modifier = Modifier
-                    .size(24.dp)
-                    .clip(MaterialTheme.shapes.extraSmall)
-                    .background(configColor(value))
-                    .border(1.dp, MaterialTheme.colorScheme.outlineVariant, MaterialTheme.shapes.extraSmall),
-            )
-        }
-        PreferenceChevron()
-    }
+    PreferenceNavigationRow(
+        title = title,
+        value = displayLabel ?: "#${value.ifEmpty { "000000" }}",
+        description = description,
+        onClick = onClick,
+        trailingContent = if (displayLabel == null) {
+            {
+                Box(
+                    modifier = Modifier
+                        .size(24.dp)
+                        .clip(MaterialTheme.shapes.extraSmall)
+                        .background(configColor(value))
+                        .border(1.dp, MaterialTheme.colorScheme.outlineVariant, MaterialTheme.shapes.extraSmall),
+                )
+            }
+        } else null,
+    )
 }
 
 @Composable
