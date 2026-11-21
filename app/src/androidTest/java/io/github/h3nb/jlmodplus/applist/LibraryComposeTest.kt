@@ -147,6 +147,8 @@ class LibraryComposeTest {
             }
         }
         composeRule.onAllNodesWithText(uiString(R.string.library_actions_more)).assertCountEquals(0)
+        composeRule.onAllNodesWithText(uiString(R.string.library_action_share_app)).assertCountEquals(0)
+        composeRule.onAllNodesWithText(uiString(R.string.library_metadata_edit_title)).assertCountEquals(0)
         composeRule.onNodeWithText(uiString(R.string.action_settings)).assertIsDisplayed()
         composeRule.onNodeWithText(uiString(R.string.library_details_action)).assertIsDisplayed()
         composeRule.onNodeWithText(uiString(R.string.library_action_export_bundle)).assertIsDisplayed()
@@ -804,6 +806,11 @@ class LibraryComposeTest {
         composeRule.onNodeWithText("Select").performClick()
 
         composeRule.onNodeWithText("1 app").assertIsDisplayed()
+        composeRule.onNodeWithText(uiString(R.string.library_selection_action_delete)).assertIsDisplayed()
+        composeRule.onNodeWithText(uiString(R.string.library_selection_action_collection)).assertIsDisplayed()
+        composeRule.onNodeWithText(uiString(R.string.library_selection_action_export)).assertIsDisplayed()
+        composeRule.onNodeWithText(uiString(R.string.library_selection_action_reinstall)).assertIsDisplayed()
+        composeRule.onAllNodesWithText(uiString(R.string.library_bulk_share_apps)).assertCountEquals(0)
         composeRule.onAllNodesWithText(uiString(R.string.library_filter_recently_opened)).assertCountEquals(0)
         composeRule.onAllNodesWithText("Favorites").assertCountEquals(0)
         composeRule.onAllNodesWithContentDescription(uiString(R.string.library_favorite_coming_soon))
