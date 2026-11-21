@@ -50,8 +50,11 @@ import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.style.TextOverflow
 import androidx.compose.ui.unit.dp
 import io.github.h3nb.jlmodplus.R
+import io.github.h3nb.jlmodplus.ui.PreferenceTextContent
+import io.github.h3nb.jlmodplus.ui.PreferenceNotice
+import io.github.h3nb.jlmodplus.ui.PreferenceMessageLevel
 
-internal enum class ConfigMessageLevel { Info, Warning, Danger }
+internal typealias ConfigMessageLevel = PreferenceMessageLevel
 
 private const val DISABLED_TEXT_ALPHA = 0.38f
 
@@ -141,41 +144,20 @@ internal fun ConfigCompactValuePreference(
     destructive: Boolean = false,
     description: String? = null,
 ) {
-    Column(
+    androidx.compose.foundation.layout.Box(
         modifier = modifier
             .fillMaxWidth()
             .heightIn(min = 56.dp)
             .clickable(enabled = enabled, role = Role.Button, onClick = onClick)
             .padding(horizontal = 16.dp, vertical = 10.dp),
-        verticalArrangement = Arrangement.spacedBy(2.dp),
     ) {
-        Text(
-            text = title,
-            style = MaterialTheme.typography.bodyLarge,
-            color = when {
-                !enabled -> MaterialTheme.colorScheme.onSurface.copy(alpha = DISABLED_TEXT_ALPHA)
-                destructive -> MaterialTheme.colorScheme.error
-                else -> MaterialTheme.colorScheme.onSurface
-            },
+        PreferenceTextContent(
+            title = title,
+            value = value,
+            description = description,
+            enabled = enabled,
+            destructive = destructive,
         )
-        if (!description.isNullOrEmpty()) {
-            Text(
-                text = description,
-                style = MaterialTheme.typography.bodySmall,
-                color = if (enabled) MaterialTheme.colorScheme.onSurfaceVariant
-                    else MaterialTheme.colorScheme.onSurface.copy(alpha = DISABLED_TEXT_ALPHA),
-            )
-        }
-        if (!value.isNullOrEmpty()) {
-            Text(
-                text = value,
-                style = MaterialTheme.typography.labelLarge.copy(fontWeight = FontWeight.SemiBold),
-                color = if (enabled) MaterialTheme.colorScheme.onSurface
-                    else MaterialTheme.colorScheme.onSurface.copy(alpha = DISABLED_TEXT_ALPHA),
-                maxLines = 2,
-                overflow = TextOverflow.Ellipsis,
-            )
-        }
     }
 }
 
@@ -191,15 +173,23 @@ internal fun ConfigValuePreference(
     messageLevel: ConfigMessageLevel = ConfigMessageLevel.Info,
     compact: Boolean = true,
 ) {
-    if (compact && message == null) {
-        ConfigCompactValuePreference(
-            title = title,
-            onClick = onClick,
-            modifier = modifier,
-            value = value,
-            enabled = enabled,
-            description = null,
-        )
+    if (compact) {
+        Column(modifier = modifier) {
+            // Choice, number and slider dialogs already expose the complete explanation.
+            ConfigCompactValuePreference(
+                title = title,
+                value = value,
+                enabled = enabled,
+                onClick = onClick,
+            )
+            if (message != null) {
+                androidx.compose.foundation.layout.Box(
+                    modifier = Modifier.padding(horizontal = 16.dp, vertical = 2.dp),
+                ) {
+                    PreferenceNotice(message, messageLevel)
+                }
+            }
+        }
         return
     }
     Column(
@@ -207,38 +197,16 @@ internal fun ConfigValuePreference(
             .fillMaxWidth()
             .clickable(enabled = enabled, role = Role.Button, onClick = onClick)
             .padding(horizontal = 16.dp, vertical = 11.dp),
-        verticalArrangement = Arrangement.spacedBy(4.dp),
+        verticalArrangement = Arrangement.spacedBy(6.dp),
     ) {
-        Text(
-            text = title,
-            style = MaterialTheme.typography.bodyLarge,
-            color = if (enabled) MaterialTheme.colorScheme.onSurface
-            else MaterialTheme.colorScheme.onSurface.copy(alpha = DISABLED_TEXT_ALPHA),
+        PreferenceTextContent(
+            title = title,
+            value = value,
+            description = description,
+            enabled = enabled,
         )
-        if (!description.isNullOrEmpty()) {
-            Text(
-                text = description,
-                style = MaterialTheme.typography.bodySmall,
-                color = if (enabled) MaterialTheme.colorScheme.onSurfaceVariant
-                else MaterialTheme.colorScheme.onSurface.copy(alpha = DISABLED_TEXT_ALPHA),
-            )
-        }
         if (message != null) {
-            ConfigInlineMessage(message, messageLevel)
-        }
-        Row(
-            modifier = Modifier.fillMaxWidth().padding(top = 2.dp),
-            verticalAlignment = Alignment.CenterVertically,
-        ) {
-            Text(
-                text = value,
-                modifier = Modifier.weight(1f),
-                style = MaterialTheme.typography.labelLarge.copy(fontWeight = FontWeight.SemiBold),
-                color = if (enabled) MaterialTheme.colorScheme.onSurface
-                else MaterialTheme.colorScheme.onSurface.copy(alpha = DISABLED_TEXT_ALPHA),
-                maxLines = 2,
-                overflow = TextOverflow.Ellipsis,
-            )
+            PreferenceNotice(message, messageLevel)
         }
     }
 }
@@ -269,23 +237,17 @@ internal fun ConfigSwitchPreference(
         verticalAlignment = Alignment.CenterVertically,
         horizontalArrangement = Arrangement.spacedBy(12.dp),
     ) {
-        Column(modifier = Modifier.weight(1f), verticalArrangement = Arrangement.spacedBy(3.dp)) {
-            Text(
-                text = title,
-                style = MaterialTheme.typography.bodyLarge,
-                color = if (enabled) MaterialTheme.colorScheme.onSurface
-                else MaterialTheme.colorScheme.onSurface.copy(alpha = DISABLED_TEXT_ALPHA),
+        Column(
+            modifier = Modifier.weight(1f),
+            verticalArrangement = Arrangement.spacedBy(4.dp),
+        ) {
+            PreferenceTextContent(
+                title = title,
+                description = description,
+                enabled = enabled,
             )
-            if (!description.isNullOrEmpty()) {
-                Text(
-                    text = description,
-                    style = MaterialTheme.typography.bodySmall,
-                    color = if (enabled) MaterialTheme.colorScheme.onSurfaceVariant
-                    else MaterialTheme.colorScheme.onSurface.copy(alpha = DISABLED_TEXT_ALPHA),
-                )
-            }
             if (message != null) {
-                ConfigInlineMessage(message, messageLevel)
+                PreferenceNotice(message, messageLevel)
             }
         }
         Switch(enabled = enabled, checked = checked, onCheckedChange = null)
@@ -608,35 +570,10 @@ internal fun ConfigDisclosurePreference(
 
 @Composable
 internal fun ConfigMessageBlock(text: String, level: ConfigMessageLevel = ConfigMessageLevel.Info) {
-    Box(modifier = Modifier.padding(horizontal = 12.dp, vertical = 8.dp)) {
-        ConfigInlineMessage(text, level)
-    }
-}
-
-@Composable
-private fun ConfigInlineMessage(text: String, level: ConfigMessageLevel) {
-    val container = when (level) {
-        ConfigMessageLevel.Info -> MaterialTheme.colorScheme.primaryContainer
-        ConfigMessageLevel.Warning -> MaterialTheme.colorScheme.tertiaryContainer
-        ConfigMessageLevel.Danger -> MaterialTheme.colorScheme.errorContainer
-    }
-    val content = when (level) {
-        ConfigMessageLevel.Info -> MaterialTheme.colorScheme.onPrimaryContainer
-        ConfigMessageLevel.Warning -> MaterialTheme.colorScheme.onTertiaryContainer
-        ConfigMessageLevel.Danger -> MaterialTheme.colorScheme.onErrorContainer
-    }
-    val prefix = when (level) {
-        ConfigMessageLevel.Info -> "ⓘ "
-        ConfigMessageLevel.Warning -> "⚠ "
-        ConfigMessageLevel.Danger -> "⚠ "
-    }
-    Surface(shape = MaterialTheme.shapes.small, color = container) {
-        Text(
-            text = prefix + text,
-            modifier = Modifier.fillMaxWidth().padding(horizontal = 10.dp, vertical = 8.dp),
-            style = MaterialTheme.typography.bodyMedium,
-            color = content,
-        )
+    androidx.compose.foundation.layout.Box(
+        modifier = Modifier.padding(horizontal = 12.dp, vertical = 8.dp),
+    ) {
+        PreferenceNotice(text, level)
     }
 }
 
