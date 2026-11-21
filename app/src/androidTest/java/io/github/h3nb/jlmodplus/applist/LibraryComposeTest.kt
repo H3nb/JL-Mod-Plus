@@ -121,6 +121,8 @@ class LibraryComposeTest {
         }
 
         val deleteLabel = uiString(R.string.action_context_delete)
+        composeRule.onNode(hasScrollAction() and hasAnyAncestor(isDialog()))
+            .performScrollToNode(hasText(uiString(R.string.library_actions_more)))
         composeRule.onNodeWithText(uiString(R.string.library_actions_more)).performClick()
         composeRule.onNode(hasScrollAction() and hasAnyAncestor(isDialog()))
             .performScrollToNode(hasText(deleteLabel))
@@ -139,6 +141,21 @@ class LibraryComposeTest {
 
         composeRule.onNodeWithText(uiString(R.string.action_settings)).assertIsDisplayed()
         composeRule.onNodeWithText(uiString(R.string.library_actions_more)).assertIsDisplayed()
+    }
+
+    @Test
+    fun detailsFromAppActionsReturnsToTheSameLibrary() {
+        val actions = RecordingLibraryActions()
+        setLibraryContent(actions = actions)
+
+        composeRule.onNodeWithContentDescription(
+            uiString(R.string.library_app_more_actions, "Demo MIDlet"),
+        ).performClick()
+        composeRule.onNodeWithText(uiString(R.string.library_details_action)).performClick()
+        composeRule.onNodeWithText(uiString(R.string.library_details_title)).assertIsDisplayed()
+        composeRule.onNodeWithContentDescription(uiString(R.string.action_back)).performClick()
+        composeRule.onNodeWithText("Demo MIDlet").assertIsDisplayed()
+        assertEquals(null, actions.openedId)
     }
 
     @Test
