@@ -106,13 +106,10 @@ class LibraryComposeTest {
                         app = LibraryAppUiItem(7, "Demo MIDlet", "Example Vendor", "1.0", null, true),
                         onDismiss = {},
                         onShortcut = {},
-                        onRename = {},
                         onSettings = {},
                         onReinstall = {},
                         onDelete = {},
-                        onEditMetadata = {},
                         onAddToCollection = {},
-                        onShareApp = {},
                         onExportAppBundle = {},
                         onSelect = {},
                     )
@@ -122,16 +119,13 @@ class LibraryComposeTest {
 
         val deleteLabel = uiString(R.string.action_context_delete)
         composeRule.onNode(hasScrollAction() and hasAnyAncestor(isDialog()))
-            .performScrollToNode(hasText(uiString(R.string.library_actions_more)))
-        composeRule.onNodeWithText(uiString(R.string.library_actions_more)).performClick()
-        composeRule.onNode(hasScrollAction() and hasAnyAncestor(isDialog()))
             .performScrollToNode(hasText(deleteLabel))
         composeRule.onNodeWithText(deleteLabel).assertIsDisplayed()
         composeRule.onAllNodesWithTag("library-controller-focus-indicator").assertCountEquals(0)
     }
 
     @Test
-    fun moreActionsUsesItsOwnSheetPageAndReturnsToPrimaryActions() {
+    fun allMidletActionsShareOneSheetWithoutMoreNavigation() {
         composeRule.setContent {
             DeviceConfigurationOverride(
                 DeviceConfigurationOverride.WindowSize(DpSize(360.dp, 720.dp)),
@@ -141,27 +135,24 @@ class LibraryComposeTest {
                         app = LibraryAppUiItem(7, "Demo MIDlet", "Example Vendor", "1.0", null, true),
                         onDismiss = {},
                         onShortcut = {},
-                        onRename = {},
                         onSettings = {},
                         onReinstall = {},
                         onDelete = {},
-                        onEditMetadata = {},
+                        onDetails = {},
                         onAddToCollection = {},
-                        onShareApp = {},
                         onExportAppBundle = {},
                         onSelect = {},
                     )
                 }
             }
         }
-        composeRule.onNode(hasScrollAction() and hasAnyAncestor(isDialog()))
-            .performScrollToNode(hasText(uiString(R.string.library_actions_more)))
-        composeRule.onNodeWithText(uiString(R.string.library_actions_more)).performClick()
-        composeRule.waitForIdle()
-        composeRule.onAllNodesWithText(uiString(R.string.action_settings)).assertCountEquals(0)
-        composeRule.onNodeWithText(uiString(R.string.library_actions_less)).assertIsDisplayed()
-        composeRule.onNodeWithText(uiString(R.string.library_actions_less)).performClick()
+        composeRule.onAllNodesWithText(uiString(R.string.library_actions_more)).assertCountEquals(0)
         composeRule.onNodeWithText(uiString(R.string.action_settings)).assertIsDisplayed()
+        composeRule.onNodeWithText(uiString(R.string.library_details_action)).assertIsDisplayed()
+        composeRule.onNodeWithText(uiString(R.string.library_action_export_bundle)).assertIsDisplayed()
+        composeRule.onNode(hasScrollAction() and hasAnyAncestor(isDialog()))
+            .performScrollToNode(hasText(uiString(R.string.library_action_select)))
+        composeRule.onNodeWithText(uiString(R.string.library_action_select)).assertIsDisplayed()
     }
 
     @Test
@@ -174,7 +165,8 @@ class LibraryComposeTest {
         ).performClick()
 
         composeRule.onNodeWithText(uiString(R.string.action_settings)).assertIsDisplayed()
-        composeRule.onNodeWithText(uiString(R.string.library_actions_more)).assertIsDisplayed()
+        composeRule.onAllNodesWithText(uiString(R.string.library_actions_more)).assertCountEquals(0)
+        composeRule.onNodeWithText(uiString(R.string.library_action_select)).assertIsDisplayed()
     }
 
     @Test
@@ -223,7 +215,6 @@ class LibraryComposeTest {
                     ),
                     onDismiss = {},
                     onShortcut = {},
-                    onRename = {},
                     onSettings = {},
                     onReinstall = {},
                     onDelete = {},
@@ -248,13 +239,10 @@ class LibraryComposeTest {
                     controllerEvents = controllerEvents,
                     onDismiss = {},
                     onShortcut = {},
-                    onRename = {},
                     onSettings = {},
                     onReinstall = {},
                     onDelete = {},
-                    onEditMetadata = {},
                     onAddToCollection = {},
-                    onShareApp = {},
                     onExportAppBundle = {},
                     onSelect = {},
                 )
