@@ -147,7 +147,6 @@
     <string name="library_destination_collections">Collections</string>
     <string name="library_destination_more">More</string>
     <string name="library_search_placeholder">Search apps…</string>
-    <string name="library_search_in_collection">Search in %1$s…</string>
     <string name="library_filter_all">All</string>
     <string name="library_filter_recently_opened">Recently opened</string>
     <string name="library_filter_recently_added">Recently added</string>

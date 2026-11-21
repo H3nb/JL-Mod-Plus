@@ -100,7 +100,6 @@
     <string name="library_destination_collections">Koleksi</string>
     <string name="library_destination_more">Lainnya</string>
     <string name="library_search_placeholder">Cari aplikasi…</string>
-    <string name="library_search_in_collection">Cari di %1$s…</string>
     <string name="library_filter_all">Semua</string>
     <string name="library_filter_recently_opened">Baru dibuka</string>
     <string name="library_filter_recently_added">Baru ditambahkan</string>

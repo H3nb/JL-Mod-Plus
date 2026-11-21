@@ -2906,9 +2906,7 @@ private fun LibraryAppsHeader(
                     onDismissInput = { focusManager.clearFocus() },
                     onClose = onCloseSearch,
                     autoFocus = interactive,
-                    placeholder = selectedCollection?.let {
-                        stringResource(R.string.library_search_in_collection, it.name)
-                    },
+                    placeholder = stringResource(R.string.library_search_placeholder),
                 )
             } else {
                 Row(
