@@ -5381,10 +5381,14 @@ internal fun AppActionsDialog(
             }
             val maxBodyHeight = (windowHeight - if (compactHeader) 144.dp else 196.dp)
                 .coerceAtLeast(100.dp)
+            // The expanded sheet uses a fixed scroll viewport so its drag anchor cannot
+            // oscillate as lazy items are remeasured near the height limit.
+            val actionListHeight = if (useSheet && moreExpanded) Modifier.height(maxBodyHeight)
+                else Modifier.heightIn(max = maxBodyHeight)
             val canScrollForward = rememberLazyListCanScrollForward(listState)
-            Box(modifier = Modifier.fillMaxWidth().heightIn(max = maxBodyHeight)) {
+            Box(modifier = Modifier.fillMaxWidth().then(actionListHeight)) {
                 LazyColumn(
-                    modifier = Modifier.fillMaxWidth().heightIn(max = maxBodyHeight),
+                    modifier = Modifier.fillMaxWidth().then(actionListHeight),
                     state = listState,
                     contentPadding = PaddingValues(bottom = 8.dp),
                 ) {
