@@ -18,6 +18,7 @@ import androidx.activity.compose.BackHandler
 import androidx.compose.animation.AnimatedContent
 import androidx.compose.animation.togetherWith
 import androidx.compose.foundation.BorderStroke
+import androidx.compose.foundation.background
 import androidx.compose.foundation.Canvas
 import androidx.compose.foundation.shape.CircleShape
 import androidx.compose.foundation.clickable
@@ -1536,9 +1537,13 @@ internal fun ScreenPresetDialog(
                         colors = IconButtonDefaults.iconToggleButtonColors(
                             checkedContentColor = MaterialTheme.colorScheme.primary,
                         ),
-                        modifier = Modifier.semantics {
-                            contentDescription = swapToggleDescription
-                        },
+                        modifier = Modifier
+                            .background(
+                                if (swapped) MaterialTheme.colorScheme.primaryContainer
+                                else MaterialTheme.colorScheme.surfaceContainerLow,
+                                CircleShape,
+                            )
+                            .semantics { contentDescription = swapToggleDescription },
                     ) {
                         Icon(
                             painter = painterResource(R.drawable.ic_swap_horiz),
