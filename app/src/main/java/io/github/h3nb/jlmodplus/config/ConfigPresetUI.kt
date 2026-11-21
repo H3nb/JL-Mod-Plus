@@ -16,6 +16,8 @@ package io.github.h3nb.jlmodplus.config
 
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Column
+import androidx.compose.foundation.layout.FlowRow
+import androidx.compose.foundation.layout.ExperimentalLayoutApi
 import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.heightIn
@@ -27,6 +29,7 @@ import androidx.compose.foundation.BorderStroke
 import androidx.compose.foundation.selection.selectable
 import androidx.compose.material3.Icon
 import androidx.compose.material3.MaterialTheme
+import androidx.compose.material3.OutlinedButton
 import androidx.compose.material3.OutlinedTextField
 import androidx.compose.material3.RadioButton
 import androidx.compose.material3.Surface
@@ -130,6 +133,7 @@ internal fun PresetSummary(
     }
 }
 
+@OptIn(ExperimentalLayoutApi::class)
 @Composable
 private fun PresetActionRows(
     onUsePreset: () -> Unit,
@@ -137,85 +141,47 @@ private fun PresetActionRows(
     updatePresetName: String?,
     onUpdatePreset: (String) -> Unit,
 ) {
-    Column(
-        modifier = Modifier
-            .fillMaxWidth()
-            .padding(horizontal = 8.dp),
+    FlowRow(
+        modifier = Modifier.fillMaxWidth().padding(horizontal = 16.dp, vertical = 4.dp),
+        horizontalArrangement = Arrangement.spacedBy(8.dp),
+        verticalArrangement = Arrangement.spacedBy(4.dp),
     ) {
-        PresetActionRow(
-            label = stringResource(R.string.preset_use),
-            icon = R.drawable.ic_check_circle,
-            onClick = onUsePreset,
-        )
-        PresetActionRow(
-            label = stringResource(R.string.preset_save_as),
-            icon = R.drawable.ic_save_as,
-            onClick = onSavePreset,
-        )
-        updatePresetName?.let { name ->
-            PresetActionRow(
-                label = stringResource(R.string.preset_update_confirm),
-                icon = R.drawable.ic_sync,
-                contentDescription = stringResource(R.string.preset_update, name),
-                modifier = Modifier.testTag("preset_update_action"),
-                onClick = { onUpdatePreset(name) },
-            )
-        }
-    }
-}
-
-@Composable
-private fun PresetActionRow(
-    label: String,
-    icon: Int,
-    onClick: () -> Unit,
-    modifier: Modifier = Modifier,
-    contentDescription: String? = null,
-) {
-    val colors = MaterialTheme.colorScheme
-    Surface(
-        modifier = modifier
-            .fillMaxWidth()
-            .semantics {
-                if (contentDescription != null) {
-                    this.contentDescription = contentDescription
-                }
-            },
-        onClick = onClick,
-        shape = MaterialTheme.shapes.medium,
-        color = Color.Transparent,
-        contentColor = colors.onSurface,
-    ) {
-        Row(
-            modifier = Modifier
-                .fillMaxWidth()
-                .heightIn(min = 48.dp)
-                .padding(horizontal = 12.dp, vertical = 6.dp),
-            verticalAlignment = Alignment.CenterVertically,
-        ) {
+        OutlinedButton(onClick = onUsePreset, modifier = Modifier.heightIn(min = 48.dp)) {
             Icon(
-                painter = painterResource(icon),
+                painter = painterResource(R.drawable.ic_check_circle),
                 contentDescription = null,
-                modifier = Modifier.size(24.dp),
-                tint = colors.onSurfaceVariant,
+                modifier = Modifier.size(18.dp),
             )
             Text(
-                text = label,
-                style = MaterialTheme.typography.bodyLarge,
-                modifier = Modifier
-                    .weight(1f)
-                    .padding(horizontal = 16.dp),
+                stringResource(R.string.preset_use),
+                modifier = Modifier.padding(start = 8.dp),
+                maxLines = 2,
             )
+        }
+        OutlinedButton(onClick = onSavePreset, modifier = Modifier.heightIn(min = 48.dp)) {
             Icon(
-                painter = painterResource(R.drawable.ic_chevron_right),
+                painter = painterResource(R.drawable.ic_save_as),
                 contentDescription = null,
-                modifier = Modifier.size(20.dp),
-                tint = colors.onSurfaceVariant,
+                modifier = Modifier.size(18.dp),
             )
+            Text(
+                stringResource(R.string.preset_save_as),
+                modifier = Modifier.padding(start = 8.dp),
+                maxLines = 2,
+            )
+        }
+        updatePresetName?.let { name ->
+            TextButton(
+                onClick = { onUpdatePreset(name) },
+                modifier = Modifier.testTag("preset_update_action").semantics {
+                    contentDescription = stringResource(R.string.preset_update, name)
+                },
+            ) {
+                Text(stringResource(R.string.preset_update_confirm))
+            }
         }
     }
 }
-
 
 @Composable
 internal fun PresetDialogs(
