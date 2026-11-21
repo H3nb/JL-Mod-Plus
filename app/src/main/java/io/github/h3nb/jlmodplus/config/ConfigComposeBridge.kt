@@ -138,6 +138,8 @@ import io.github.h3nb.jlmodplus.R
 import io.github.h3nb.jlmodplus.config.model.Size
 import io.github.h3nb.jlmodplus.mmapi.camera.CameraCaptureOptions
 import io.github.h3nb.jlmodplus.ui.JLModPlusTheme
+import io.github.h3nb.jlmodplus.ui.TransientNoticeHost
+import io.github.h3nb.jlmodplus.ui.TransientNoticeState
 import io.github.h3nb.jlmodplus.ui.ScrollableContentHint
 import io.github.h3nb.jlmodplus.ui.availableWindowWidthDp
 import io.github.h3nb.jlmodplus.ui.PAGE_TRAVEL_DP
@@ -162,6 +164,7 @@ class ConfigComposeController @JvmOverloads constructor(
     private var gamepadHelpVisible by mutableStateOf(false)
     private var gamepadDiagnosis by mutableStateOf<String?>(null)
     private var gamepadCalibration by mutableStateOf<GamepadCalibrationUiState?>(null)
+    private val notices = TransientNoticeState()
 
     init {
         composeView.id = R.id.config_compose_root
@@ -170,7 +173,8 @@ class ConfigComposeController @JvmOverloads constructor(
         )
         composeView.setContent {
             JLModPlusTheme {
-                ConfigScreen(
+                Box(Modifier.fillMaxSize()) {
+                    ConfigScreen(
                     state = state,
                     events = events,
                     title = title,
@@ -204,13 +208,19 @@ class ConfigComposeController @JvmOverloads constructor(
                     onGamepadCalibrationReset = { events.onGamepadCalibrationReset() },
                     onGamepadCalibrationAdvance = { events.onGamepadCalibrationAdvance() },
                     onGamepadCalibrationSave = { events.onGamepadCalibrationSave() },
-                )
+                    )
+                    TransientNoticeHost(notices, Modifier.align(Alignment.BottomCenter))
+                }
             }
         }
     }
 
     fun update(nextState: ConfigUiState) {
         state = nextState
+    }
+
+    fun showNotice(message: String, durationMillis: Long = 3_500L) {
+        notices.show(message, durationMillis)
     }
 
     fun showColorPicker(field: ConfigFormEvents.ColorField, initialHex: String, dynamic: Boolean) {
