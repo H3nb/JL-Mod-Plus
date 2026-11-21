@@ -14,6 +14,8 @@ import android.content.Context
 import android.net.Uri
 import android.os.Bundle
 import android.view.WindowManager
+import androidx.activity.compose.BackHandler
+import androidx.compose.foundation.background
 import androidx.compose.foundation.horizontalScroll
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
@@ -31,6 +33,7 @@ import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.safeDrawing
 import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.layout.windowInsetsPadding
+import androidx.compose.foundation.shape.RectangleShape
 import androidx.compose.foundation.lazy.LazyColumn
 import androidx.compose.foundation.lazy.items
 import androidx.compose.foundation.lazy.rememberLazyListState
@@ -40,8 +43,12 @@ import androidx.compose.foundation.verticalScroll
 import androidx.compose.material3.Button
 import androidx.compose.material3.Checkbox
 import androidx.compose.material3.CircularProgressIndicator
+import androidx.compose.material3.DropdownMenu
+import androidx.compose.material3.DropdownMenuItem
 import androidx.compose.material3.FilterChip
 import androidx.compose.material3.HorizontalDivider
+import androidx.compose.material3.Icon
+import androidx.compose.material3.IconButton
 import androidx.compose.material3.LinearProgressIndicator
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.OutlinedButton
@@ -58,9 +65,10 @@ import androidx.compose.runtime.remember
 import androidx.compose.runtime.saveable.rememberSaveable
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
-import androidx.compose.ui.draw.alpha
+import androidx.compose.ui.draw.rotate
 import androidx.compose.ui.platform.ComposeView
 import androidx.compose.ui.platform.LocalResources
+import androidx.compose.ui.res.painterResource
 import androidx.compose.ui.res.pluralStringResource
 import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.semantics.Role
@@ -77,9 +85,7 @@ import io.github.h3nb.jlmodplus.MainActivity
 import io.github.h3nb.jlmodplus.R
 import io.github.h3nb.jlmodplus.librarydb.LibraryViewModel
 import io.github.h3nb.jlmodplus.ui.JLModPlusTheme
-import io.github.h3nb.jlmodplus.ui.ScrollableContentHint
 import io.github.h3nb.jlmodplus.ui.adaptiveDialogLayout
-import io.github.h3nb.jlmodplus.ui.rememberLazyListCanScrollForward
 
 class BulkInstallerDialog : DialogFragment() {
     private lateinit var libraryViewModel: LibraryViewModel
@@ -236,105 +242,151 @@ internal fun BulkInstallSurface(
     onInstallSingle: () -> Unit = onInstall,
     onReviewJarOnly: () -> Unit = {},
 ) {
+    val showSingle = explicitSourceSelection && singlePresentation
+    BackHandler(enabled = state !is BulkInstallViewModel.State.Running) { onClose() }
     BoxWithConstraints(
         modifier = Modifier
             .fillMaxSize()
+            .background(MaterialTheme.colorScheme.background)
             .windowInsetsPadding(WindowInsets.safeDrawing),
         contentAlignment = Alignment.Center,
     ) {
-        val showSingle = explicitSourceSelection && singlePresentation
         val compactWidth = maxWidth < 360.dp
         val compactHeight = maxHeight < 480.dp
         val compactHeader = compactWidth || compactHeight
         val dialogLayout = adaptiveDialogLayout(maxWidth, maxHeight)
+        val surfaceModifier = if (showSingle) dialogLayout.modifier else Modifier.fillMaxSize()
+        var selectionMenuVisible by remember { mutableStateOf(false) }
 
-        Box(
-            modifier = Modifier.fillMaxSize(),
-            contentAlignment = Alignment.Center,
+        Surface(
+            shape = if (showSingle) MaterialTheme.shapes.extraLarge else RectangleShape,
+            color = if (showSingle) MaterialTheme.colorScheme.surfaceContainerHigh
+                else MaterialTheme.colorScheme.background,
+            tonalElevation = if (showSingle) 6.dp else 0.dp,
+            modifier = surfaceModifier,
         ) {
-            Surface(
-                shape = MaterialTheme.shapes.extraLarge,
-                color = MaterialTheme.colorScheme.surfaceContainerHigh,
-                tonalElevation = 6.dp,
-                modifier = dialogLayout.modifier,
+            Column(
+                modifier = (if (showSingle) Modifier.fillMaxWidth() else Modifier.fillMaxSize())
+                    .padding(
+                        horizontal = if (compactWidth) 16.dp else 20.dp,
+                        vertical = if (compactHeight) 8.dp else 16.dp,
+                    ),
+                verticalArrangement = Arrangement.spacedBy(if (compactHeader) 8.dp else 12.dp),
             ) {
-                Column(
-                    modifier = Modifier
-                        .fillMaxWidth()
-                        .padding(
-                            horizontal = if (compactWidth) 16.dp else 20.dp,
-                            vertical = if (compactHeight) 12.dp else 16.dp,
-                        ),
-                    verticalArrangement = Arrangement.spacedBy(if (compactHeader) 8.dp else 12.dp),
+                val titleRes = when {
+                    showSingle || (explicitSourceSelection &&
+                        (state is BulkInstallViewModel.State.Idle ||
+                            state is BulkInstallViewModel.State.Planning ||
+                            state is BulkInstallViewModel.State.Error)) ->
+                        R.string.installer_title
+                    state is BulkInstallViewModel.State.Finished ->
+                        if (state.cancelled || state.fatalError != null) {
+                            R.string.bulk_install_cancelled
+                        } else {
+                            R.string.bulk_install_complete
+                        }
+                    else -> R.string.bulk_install_title
+                }
+                Row(
+                    modifier = Modifier.fillMaxWidth(),
+                    verticalAlignment = Alignment.CenterVertically,
+                    horizontalArrangement = Arrangement.spacedBy(8.dp),
                 ) {
-                    val titleRes = when {
-                        showSingle || (explicitSourceSelection &&
-                            (state is BulkInstallViewModel.State.Idle ||
-                                state is BulkInstallViewModel.State.Planning ||
-                                state is BulkInstallViewModel.State.Error)) ->
-                            R.string.installer_title
-                        state is BulkInstallViewModel.State.Finished ->
-                            if (state.cancelled || state.fatalError != null) {
-                                R.string.bulk_install_cancelled
-                            } else {
-                                R.string.bulk_install_complete
-                            }
-                        else -> R.string.bulk_install_title
+                    if (!showSingle) {
+                        IconButton(
+                            onClick = onClose,
+                            enabled = state !is BulkInstallViewModel.State.Running,
+                        ) {
+                            Icon(
+                                painter = painterResource(R.drawable.ic_arrow_back),
+                                contentDescription = stringResource(R.string.action_back),
+                            )
+                        }
                     }
                     Text(
                         text = stringResource(titleRes),
-                        style = MaterialTheme.typography.headlineSmall,
+                        modifier = Modifier.weight(1f),
+                        style = if (showSingle) MaterialTheme.typography.headlineSmall
+                            else MaterialTheme.typography.titleLarge,
                         maxLines = 2,
                         overflow = TextOverflow.Ellipsis,
                     )
-                    when (state) {
-                        BulkInstallViewModel.State.Idle -> PlanningContent(onClose = onClose)
-                        is BulkInstallViewModel.State.Planning -> PlanningContent(state.sourceLabel, onClose)
-                        is BulkInstallViewModel.State.Review -> {
-                            when {
-                                showSingle && state.plan.items.isEmpty() -> EmptySingleReviewContent(
-                                    plan = state.plan,
-                                    onClose = onClose,
+                    if (state is BulkInstallViewModel.State.Review && !showSingle) {
+                        Box {
+                            IconButton(onClick = { selectionMenuVisible = true }) {
+                                Icon(
+                                    painter = painterResource(R.drawable.ic_more_vert),
+                                    contentDescription = stringResource(R.string.bulk_install_selection_options),
                                 )
-                                showSingle && state.plan.items.size == 1 -> SingleReviewContent(
-                                    plan = state.plan,
-                                    onInstall = onInstallSingle,
-                                    onReviewJarOnly = onReviewJarOnly,
-                                    onClose = onClose,
-                                    modifier = Modifier.weight(1f, fill = false),
+                            }
+                            DropdownMenu(
+                                expanded = selectionMenuVisible,
+                                onDismissRequest = { selectionMenuVisible = false },
+                            ) {
+                                DropdownMenuItem(
+                                    text = { Text(stringResource(R.string.bulk_install_recommended)) },
+                                    onClick = {
+                                        selectionMenuVisible = false
+                                        onRecommended()
+                                    },
                                 )
-                                else -> ReviewContent(
-                                    plan = state.plan,
-                                    onToggle = onToggle,
-                                    onRecommended = onRecommended,
-                                    onClear = onClear,
-                                    onInstall = onInstall,
-                                    onClose = onClose,
-                                    compactHeader = compactHeader,
-                                    modifier = Modifier.weight(1f, fill = false),
+                                DropdownMenuItem(
+                                    text = { Text(stringResource(R.string.bulk_install_clear)) },
+                                    onClick = {
+                                        selectionMenuVisible = false
+                                        onClear()
+                                    },
+                                    enabled = state.plan.selectedCount > 0,
                                 )
                             }
                         }
-                        is BulkInstallViewModel.State.Running -> RunningContent(
-                            state = state,
-                            onCancel = onCancel,
-                            single = showSingle,
-                            modifier = Modifier.weight(1f, fill = false),
-                        )
-                        is BulkInstallViewModel.State.Finished -> FinishedContent(
-                            state = state,
+                    }
+                }
+                val bodyModifier = if (showSingle) Modifier.weight(1f, fill = false)
+                    else Modifier.weight(1f)
+                when (state) {
+                    BulkInstallViewModel.State.Idle -> PlanningContent(onClose = onClose)
+                    is BulkInstallViewModel.State.Planning -> PlanningContent(state.sourceLabel, onClose)
+                    is BulkInstallViewModel.State.Review -> when {
+                        showSingle && state.plan.items.isEmpty() -> EmptySingleReviewContent(
+                            plan = state.plan,
                             onClose = onClose,
-                            onRetry = onRetry,
-                            compactHeight = compactHeight,
-                            single = showSingle,
-                            modifier = Modifier.weight(1f, fill = false),
                         )
-                        is BulkInstallViewModel.State.Error -> ErrorContent(
-                            message = state.message,
+                        showSingle && state.plan.items.size == 1 -> SingleReviewContent(
+                            plan = state.plan,
+                            onInstall = onInstallSingle,
+                            onReviewJarOnly = onReviewJarOnly,
                             onClose = onClose,
-                            modifier = Modifier.weight(1f, fill = false),
+                            modifier = bodyModifier,
+                        )
+                        else -> ReviewContent(
+                            plan = state.plan,
+                            onToggle = onToggle,
+                            onInstall = onInstall,
+                            onClose = onClose,
+                            compactHeader = compactHeader,
+                            modifier = bodyModifier,
                         )
                     }
+                    is BulkInstallViewModel.State.Running -> RunningContent(
+                        state = state,
+                        onCancel = onCancel,
+                        single = showSingle,
+                        modifier = bodyModifier,
+                    )
+                    is BulkInstallViewModel.State.Finished -> FinishedContent(
+                        state = state,
+                        onClose = onClose,
+                        onRetry = onRetry,
+                        compactHeight = compactHeight,
+                        single = showSingle,
+                        modifier = bodyModifier,
+                    )
+                    is BulkInstallViewModel.State.Error -> ErrorContent(
+                        message = state.message,
+                        onClose = onClose,
+                        modifier = bodyModifier,
+                    )
                 }
             }
         }
@@ -491,8 +543,6 @@ private fun EmptySingleReviewContent(plan: BulkInstallPlan, onClose: () -> Unit)
 private fun ReviewContent(
     plan: BulkInstallPlan,
     onToggle: (String) -> Unit,
-    onRecommended: () -> Unit,
-    onClear: () -> Unit,
     onInstall: () -> Unit,
     onClose: () -> Unit,
     compactHeader: Boolean,
@@ -515,139 +565,104 @@ private fun ReviewContent(
         }
     }
     LaunchedEffect(filter) { listState.scrollToItem(0) }
-    val canScrollForward = rememberLazyListCanScrollForward(listState)
     Column(
         modifier = modifier.fillMaxWidth(),
         verticalArrangement = Arrangement.spacedBy(8.dp),
     ) {
-        Box(
-            modifier = Modifier
-                .fillMaxWidth()
-                .weight(1f, fill = false),
+        LazyColumn(
+            modifier = Modifier.fillMaxWidth().weight(1f),
+            state = listState,
+            verticalArrangement = Arrangement.spacedBy(6.dp),
         ) {
-            LazyColumn(
-                modifier = Modifier.fillMaxWidth(),
-                state = listState,
-                verticalArrangement = Arrangement.spacedBy(8.dp),
-            ) {
-                item {
-                    Column(verticalArrangement = Arrangement.spacedBy(8.dp)) {
-                        FlowRow(
-                            modifier = Modifier.fillMaxWidth(),
-                            horizontalArrangement = Arrangement.SpaceBetween,
-                            verticalArrangement = Arrangement.spacedBy(4.dp),
-                        ) {
-                            Text(
-                                pluralStringResource(
-                                    R.plurals.bulk_install_found,
-                                    plan.items.size,
-                                    plan.items.size,
-                                ),
-                                style = if (compactHeader) {
-                                    MaterialTheme.typography.bodySmall
-                                } else {
-                                    MaterialTheme.typography.bodyMedium
-                                },
-                            )
-                            Text(
-                                text = pluralStringResource(
-                                    R.plurals.bulk_install_selected,
-                                    plan.selectedCount,
-                                    plan.selectedCount,
-                                ),
-                                fontWeight = FontWeight.Medium,
-                                color = MaterialTheme.colorScheme.primary,
-                                style = if (compactHeader) {
-                                    MaterialTheme.typography.bodySmall
-                                } else {
-                                    MaterialTheme.typography.bodyMedium
-                                },
-                            )
-                        }
-                        ReviewStatusSummary(plan, compactHeader)
-                        Row(
-                            modifier = Modifier.fillMaxWidth().horizontalScroll(rememberScrollState()),
-                            horizontalArrangement = Arrangement.spacedBy(8.dp),
-                        ) {
-                            listOf(
-                                ReviewFilter.All to R.string.bulk_install_filter_all,
-                                ReviewFilter.Selected to R.string.bulk_install_filter_selected,
-                                ReviewFilter.Attention to R.string.bulk_install_filter_review,
-                            ).forEach { (option, label) ->
-                                FilterChip(
-                                    selected = filter == option,
-                                    onClick = { filter = option },
-                                    label = { Text(stringResource(label)) },
-                                )
-                            }
-                        }
-                        if (plan.warnings.isNotEmpty()) {
-                            Text(
-                                text = pluralStringResource(
-                                    R.plurals.bulk_install_warning_count,
-                                    plan.warnings.size,
-                                    plan.warnings.size,
-                                ),
-                                modifier = Modifier.padding(top = 4.dp),
-                                color = MaterialTheme.colorScheme.tertiary,
-                                style = MaterialTheme.typography.labelMedium,
-                            )
-                            Text(
-                                text = plan.warnings.first(),
-                                color = MaterialTheme.colorScheme.onSurfaceVariant,
-                                style = MaterialTheme.typography.bodySmall,
-                                maxLines = 2,
-                                overflow = TextOverflow.Ellipsis,
-                            )
-                        }
-                        Row(
-                            modifier = Modifier
-                                .fillMaxWidth()
-                                .horizontalScroll(rememberScrollState())
-                                .padding(vertical = 4.dp),
-                            horizontalArrangement = Arrangement.spacedBy(8.dp),
-                        ) {
-                            OutlinedButton(onClick = onRecommended) {
-                                Text(stringResource(R.string.bulk_install_recommended))
-                            }
-                            OutlinedButton(onClick = onClear, enabled = plan.selectedCount > 0) {
-                                Text(stringResource(R.string.bulk_install_clear))
-                            }
-                        }
-                        HorizontalDivider()
-                    }
-                }
-                if (visibleItems.isEmpty()) {
-                    item {
+            item {
+                Column(verticalArrangement = Arrangement.spacedBy(8.dp)) {
+                    Row(
+                        modifier = Modifier.fillMaxWidth(),
+                        horizontalArrangement = Arrangement.SpaceBetween,
+                    ) {
                         Text(
-                            text = stringResource(
-                                if (plan.items.isEmpty()) R.string.bulk_install_empty
-                                else R.string.bulk_install_empty_filter,
+                            pluralStringResource(
+                                R.plurals.bulk_install_found,
+                                plan.items.size,
+                                plan.items.size,
                             ),
-                            modifier = Modifier.fillMaxWidth().padding(vertical = 24.dp),
-                            color = MaterialTheme.colorScheme.onSurfaceVariant,
+                            style = if (compactHeader) MaterialTheme.typography.bodySmall
+                                else MaterialTheme.typography.bodyMedium,
+                        )
+                        Text(
+                            pluralStringResource(
+                                R.plurals.bulk_install_selected,
+                                plan.selectedCount,
+                                plan.selectedCount,
+                            ),
+                            color = MaterialTheme.colorScheme.primary,
+                            style = if (compactHeader) MaterialTheme.typography.bodySmall
+                                else MaterialTheme.typography.bodyMedium,
                         )
                     }
-                }
-                items(visibleItems, key = { it.id }) { item ->
-                    BulkItemRow(item, onToggle)
+                    Row(
+                        modifier = Modifier.fillMaxWidth().horizontalScroll(rememberScrollState()),
+                        horizontalArrangement = Arrangement.spacedBy(8.dp),
+                    ) {
+                        listOf(
+                            ReviewFilter.All to R.string.bulk_install_filter_all,
+                            ReviewFilter.Selected to R.string.bulk_install_filter_selected,
+                            ReviewFilter.Attention to R.string.bulk_install_filter_review,
+                        ).forEach { (option, label) ->
+                            FilterChip(
+                                selected = filter == option,
+                                onClick = { filter = option },
+                                label = { Text(stringResource(label)) },
+                            )
+                        }
+                    }
+                    if (plan.warnings.isNotEmpty()) {
+                        Text(
+                            pluralStringResource(
+                                R.plurals.bulk_install_warning_count,
+                                plan.warnings.size,
+                                plan.warnings.size,
+                            ),
+                            color = MaterialTheme.colorScheme.tertiary,
+                            style = MaterialTheme.typography.labelMedium,
+                        )
+                        Text(
+                            plan.warnings.first(),
+                            color = MaterialTheme.colorScheme.onSurfaceVariant,
+                            style = MaterialTheme.typography.bodySmall,
+                            maxLines = 2,
+                            overflow = TextOverflow.Ellipsis,
+                        )
+                    }
+                    HorizontalDivider()
                 }
             }
-            ScrollableContentHint(
-                visible = canScrollForward,
-                modifier = Modifier.align(Alignment.BottomCenter),
-            )
+            if (visibleItems.isEmpty()) {
+                item {
+                    Text(
+                        stringResource(
+                            if (plan.items.isEmpty()) R.string.bulk_install_empty
+                            else R.string.bulk_install_empty_filter,
+                        ),
+                        modifier = Modifier.fillMaxWidth().padding(vertical = 24.dp),
+                        color = MaterialTheme.colorScheme.onSurfaceVariant,
+                    )
+                }
+            }
+            items(visibleItems, key = { it.id }) { item ->
+                BulkItemRow(item, onToggle)
+                HorizontalDivider(color = MaterialTheme.colorScheme.outlineVariant)
+            }
         }
         HorizontalDivider()
-        Row(
-            modifier = Modifier.fillMaxWidth().horizontalScroll(rememberScrollState()),
+        FlowRow(
+            modifier = Modifier.fillMaxWidth(),
             horizontalArrangement = Arrangement.End,
-            verticalAlignment = Alignment.CenterVertically,
+            verticalArrangement = Arrangement.spacedBy(4.dp),
         ) {
             TextButton(onClick = onClose) {
                 Text(stringResource(R.string.bulk_install_close))
             }
-            Spacer(Modifier.size(8.dp))
             Button(onClick = onInstall, enabled = plan.selectedCount > 0) {
                 Text(stringResource(R.string.bulk_install_install_count, plan.selectedCount))
             }
@@ -656,113 +671,116 @@ private fun ReviewContent(
 }
 
 @Composable
-private fun ReviewStatusSummary(plan: BulkInstallPlan, compact: Boolean) {
-    val ready = plan.items.count {
-        it.status == BulkInstallStatus.New || it.status == BulkInstallStatus.Update
-    }
-    val skipped = plan.items.count {
-        it.status == BulkInstallStatus.AlreadyInstalled || it.status == BulkInstallStatus.Duplicate
-    }
-    val attention = plan.items.size - ready - skipped
-    Text(
-        text = listOf(
-            pluralStringResource(R.plurals.bulk_install_ready_count, ready, ready),
-            pluralStringResource(R.plurals.bulk_install_skipped_count, skipped, skipped),
-            pluralStringResource(R.plurals.bulk_install_attention_count, attention, attention),
-        ).joinToString(" · "),
-        modifier = Modifier.padding(top = 2.dp),
-        style = if (compact) MaterialTheme.typography.labelSmall else MaterialTheme.typography.bodySmall,
-        color = MaterialTheme.colorScheme.onSurfaceVariant,
-    )
-}
-
-@Composable
 private fun BulkItemRow(item: BulkInstallItem, onToggle: (String) -> Unit) {
     val enabled = item.installable
-    Row(
-        modifier = Modifier
-            .fillMaxWidth()
-            .alpha(if (enabled) 1f else 0.62f)
-            .toggleable(
-                value = item.selected,
-                enabled = enabled,
-                role = Role.Checkbox,
-                onValueChange = { onToggle(item.id) },
-            )
-            .padding(vertical = 8.dp),
-        verticalAlignment = Alignment.Top,
-    ) {
-        Checkbox(
-            checked = item.selected,
-            onCheckedChange = null,
-            enabled = enabled,
-        )
-        Column(
-            modifier = Modifier.weight(1f).padding(start = 8.dp),
-            verticalArrangement = Arrangement.spacedBy(2.dp),
+    var expanded by rememberSaveable(item.id) { mutableStateOf(false) }
+    Column(modifier = Modifier.fillMaxWidth()) {
+        Row(
+            modifier = Modifier.fillMaxWidth(),
+            verticalAlignment = Alignment.Top,
         ) {
-            Text(
-                text = item.name,
-                style = MaterialTheme.typography.titleSmall,
-                fontWeight = FontWeight.Medium,
-                maxLines = 1,
-                overflow = TextOverflow.Ellipsis,
-            )
-            if (item.vendor.isNotBlank() || item.version.isNotBlank()) {
-                Text(
-                    text = listOf(item.vendor, item.version).filter(String::isNotBlank).joinToString(" · "),
-                    style = MaterialTheme.typography.bodySmall,
-                )
-            }
-            val statusColor = statusColor(item.status)
-            Surface(
-                shape = MaterialTheme.shapes.small,
-                color = statusColor.copy(alpha = 0.12f),
-                contentColor = statusColor,
+            Row(
+                modifier = Modifier
+                    .weight(1f)
+                    .toggleable(
+                        value = item.selected,
+                        enabled = enabled,
+                        role = Role.Checkbox,
+                        onValueChange = { onToggle(item.id) },
+                    )
+                    .padding(vertical = 8.dp),
+                verticalAlignment = Alignment.Top,
             ) {
-                Text(
-                    text = statusLabel(item),
-                    modifier = Modifier.padding(horizontal = 8.dp, vertical = 3.dp),
-                    style = MaterialTheme.typography.labelMedium,
+                Checkbox(
+                    checked = item.selected,
+                    onCheckedChange = null,
+                    enabled = enabled,
+                )
+                Column(
+                    modifier = Modifier.weight(1f).padding(start = 8.dp),
+                    verticalArrangement = Arrangement.spacedBy(3.dp),
+                ) {
+                    Text(
+                        text = item.name,
+                        style = MaterialTheme.typography.titleSmall,
+                        fontWeight = FontWeight.Medium,
+                        maxLines = 2,
+                        overflow = TextOverflow.Ellipsis,
+                    )
+                    if (item.vendor.isNotBlank() || item.version.isNotBlank()) {
+                        Text(
+                            listOf(item.vendor, item.version)
+                                .filter(String::isNotBlank).joinToString(" · "),
+                            style = MaterialTheme.typography.bodySmall,
+                            color = MaterialTheme.colorScheme.onSurfaceVariant,
+                        )
+                    }
+                    val statusColor = statusColor(item.status)
+                    Surface(
+                        shape = MaterialTheme.shapes.small,
+                        color = statusColor.copy(alpha = 0.12f),
+                        contentColor = statusColor,
+                    ) {
+                        Text(
+                            text = statusLabel(item),
+                            modifier = Modifier.padding(horizontal = 8.dp, vertical = 3.dp),
+                            style = MaterialTheme.typography.labelMedium,
+                        )
+                    }
+                    item.installedVersion?.let {
+                        Text(
+                            stringResource(R.string.bulk_install_installed_version, it),
+                            style = MaterialTheme.typography.bodySmall,
+                            color = MaterialTheme.colorScheme.onSurfaceVariant,
+                        )
+                    }
+                    item.effectiveReviewReason?.let { reason ->
+                        Text(
+                            bulkInstallReviewReasonText(LocalResources.current, reason),
+                            color = MaterialTheme.colorScheme.onSurfaceVariant,
+                            style = MaterialTheme.typography.bodySmall,
+                            maxLines = 2,
+                            overflow = TextOverflow.Ellipsis,
+                        )
+                    }
+                }
+            }
+            IconButton(onClick = { expanded = !expanded }) {
+                Icon(
+                    painter = painterResource(R.drawable.ic_chevron_right),
+                    contentDescription = stringResource(
+                        if (expanded) R.string.bulk_install_hide_details
+                        else R.string.bulk_install_show_details,
+                    ),
+                    modifier = Modifier.rotate(if (expanded) 90f else 0f),
                 )
             }
-            if (item.selected && item.action == BulkInstallAction.InstallSeparateCopy) {
+        }
+        if (expanded) {
+            Column(
+                modifier = Modifier.fillMaxWidth().padding(start = 56.dp, end = 8.dp, bottom = 12.dp),
+                verticalArrangement = Arrangement.spacedBy(4.dp),
+            ) {
+                if (item.selected && item.action == BulkInstallAction.InstallSeparateCopy) {
+                    Text(
+                        stringResource(R.string.bulk_install_action_separate_copy),
+                        style = MaterialTheme.typography.bodySmall,
+                    )
+                }
+                if (item.selected && item.action == BulkInstallAction.InstallJarOnly) {
+                    Text(
+                        stringResource(R.string.bulk_install_action_jar_only),
+                        style = MaterialTheme.typography.bodySmall,
+                    )
+                }
                 Text(
-                    stringResource(R.string.bulk_install_action_separate_copy),
-                    style = MaterialTheme.typography.bodySmall,
-                )
-            }
-            if (item.selected && item.action == BulkInstallAction.InstallJarOnly) {
-                Text(
-                    stringResource(R.string.bulk_install_action_jar_only),
-                    style = MaterialTheme.typography.bodySmall,
-                )
-            }
-            item.installedVersion?.let {
-                Text(
-                    stringResource(R.string.bulk_install_installed_version, it),
-                    style = MaterialTheme.typography.bodySmall,
-                )
-            }
-            val reviewText = item.effectiveReviewReason?.let {
-                bulkInstallReviewReasonText(LocalResources.current, it)
-            }
-            reviewText?.let {
-                Text(
-                    it,
+                    stringResource(R.string.bulk_install_source, item.unit.primaryFile.path),
                     style = MaterialTheme.typography.bodySmall,
                     color = MaterialTheme.colorScheme.onSurfaceVariant,
-                    maxLines = 2,
+                    maxLines = 4,
                     overflow = TextOverflow.Ellipsis,
                 )
             }
-            Text(
-                text = stringResource(R.string.bulk_install_source, item.unit.primaryFile.path),
-                style = MaterialTheme.typography.bodySmall,
-                color = MaterialTheme.colorScheme.onSurfaceVariant,
-                maxLines = 1,
-                overflow = TextOverflow.Ellipsis,
-            )
         }
     }
 }
@@ -831,7 +849,6 @@ private fun FinishedContent(
     single: Boolean = false,
 ) {
     val listState = rememberLazyListState()
-    val canScrollForward = rememberLazyListCanScrollForward(listState)
     val hasRetryableResults = state.results.any {
         it.kind == BulkInstallResultKind.Failed ||
             it.kind == BulkInstallResultKind.PartiallyInstalled ||
@@ -918,10 +935,6 @@ private fun FinishedContent(
                     }
                 }
             }
-            ScrollableContentHint(
-                visible = canScrollForward,
-                modifier = Modifier.align(Alignment.BottomCenter),
-            )
         }
         if (!compactHeight) {
             HorizontalDivider()
