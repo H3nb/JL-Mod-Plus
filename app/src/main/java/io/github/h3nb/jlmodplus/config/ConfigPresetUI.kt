@@ -18,6 +18,8 @@ import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.FlowRow
 import androidx.compose.foundation.layout.ExperimentalLayoutApi
+import androidx.compose.foundation.layout.Box
+import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.heightIn
@@ -28,6 +30,9 @@ import androidx.compose.foundation.lazy.items
 import androidx.compose.foundation.BorderStroke
 import androidx.compose.foundation.selection.selectable
 import androidx.compose.material3.Icon
+import androidx.compose.material3.IconButton
+import androidx.compose.material3.DropdownMenu
+import androidx.compose.material3.DropdownMenuItem
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.OutlinedButton
 import androidx.compose.material3.OutlinedTextField
@@ -75,52 +80,77 @@ internal fun PresetSummary(
     state: ConfigUiState,
     onUsePreset: () -> Unit,
     onSavePreset: () -> Unit,
+    onStopFollowing: () -> Unit,
     events: ConfigFormEvents,
 ) {
+    var menuExpanded by rememberSaveable { mutableStateOf(false) }
     var updateConfirmation by rememberSaveable { mutableStateOf<String?>(null) }
-    ConfigSection(
-        title = stringResource(R.string.presets),
-        highlighted = true,
+    val status = state.profileStatus
+    val statusSummary = when {
+        status.activeProfile != null && state.updatePresetName != null ->
+            stringResource(R.string.profile_local_changes_pending)
+        status.activeProfile != null -> stringResource(R.string.profile_follows_updates)
+        status.sourceProfile != null ->
+            stringResource(R.string.profile_not_following, status.sourceProfile)
+        status.builtInDefault -> stringResource(R.string.preset_builtin_summary)
+        else -> stringResource(R.string.preset_custom_configuration)
+    }
+    Surface(
+        modifier = Modifier.fillMaxWidth(),
+        shape = MaterialTheme.shapes.large,
+        color = MaterialTheme.colorScheme.surfaceContainerLow,
     ) {
-        Column(
-            modifier = Modifier
-                .fillMaxWidth()
-                .padding(vertical = 12.dp),
+        Row(
+            modifier = Modifier.fillMaxWidth().heightIn(min = 80.dp),
+            verticalAlignment = Alignment.CenterVertically,
         ) {
             Column(
-                modifier = Modifier.padding(horizontal = 16.dp),
+                modifier = Modifier.weight(1f)
+                    .clickable(role = Role.Button, onClick = onUsePreset)
+                    .padding(horizontal = 16.dp, vertical = 12.dp),
                 verticalArrangement = Arrangement.spacedBy(4.dp),
             ) {
-                Text(
-                    text = presetStatusTitle(state.profileStatus),
-                    style = MaterialTheme.typography.titleMedium,
-                    color = MaterialTheme.colorScheme.onSurface,
-                    maxLines = 1,
-                    overflow = TextOverflow.Ellipsis,
-                )
-                provenanceSummary(state.profileStatus)?.let { provenance ->
-                    Text(
-                        text = provenance,
-                        style = MaterialTheme.typography.bodyMedium,
-                        color = MaterialTheme.colorScheme.onSurfaceVariant,
-                        maxLines = 2,
-                        overflow = TextOverflow.Ellipsis,
+                Text(stringResource(R.string.presets), style = MaterialTheme.typography.labelMedium,
+                    color = MaterialTheme.colorScheme.onSurfaceVariant)
+                Text(presetStatusTitle(status), style = MaterialTheme.typography.titleMedium,
+                    maxLines = 1, overflow = TextOverflow.Ellipsis)
+                Text(statusSummary, style = MaterialTheme.typography.bodySmall,
+                    color = MaterialTheme.colorScheme.onSurfaceVariant,
+                    maxLines = 2, overflow = TextOverflow.Ellipsis)
+            }
+            Box {
+                IconButton(onClick = { menuExpanded = true }) {
+                    Icon(painterResource(R.drawable.ic_more_vert),
+                        contentDescription = stringResource(R.string.profile_more_actions,
+                            presetStatusTitle(status)))
+                }
+                DropdownMenu(expanded = menuExpanded, onDismissRequest = { menuExpanded = false }) {
+                    DropdownMenuItem(
+                        text = { Text(stringResource(R.string.preset_use)) },
+                        onClick = { menuExpanded = false; onUsePreset() },
+                    )
+                    DropdownMenuItem(
+                        text = { Text(stringResource(R.string.preset_save_as)) },
+                        onClick = { menuExpanded = false; onSavePreset() },
+                    )
+                    state.updatePresetName?.let { name ->
+                        DropdownMenuItem(
+                            text = { Text(stringResource(R.string.preset_update, name)) },
+                            onClick = { menuExpanded = false; updateConfirmation = name },
+                        )
+                    }
+                    if (status.activeProfile != null) {
+                        DropdownMenuItem(
+                            text = { Text(stringResource(R.string.profile_stop_following)) },
+                            onClick = { menuExpanded = false; onStopFollowing() },
+                        )
+                    }
+                    DropdownMenuItem(
+                        text = { Text(stringResource(R.string.preset_manage)) },
+                        onClick = { menuExpanded = false; events.onManageProfiles() },
                     )
                 }
-                Text(
-                    text = setupSummary(state.form),
-                    style = MaterialTheme.typography.bodySmall,
-                    color = MaterialTheme.colorScheme.onSurfaceVariant,
-                    maxLines = 2,
-                    overflow = TextOverflow.Ellipsis,
-                )
             }
-            PresetActionRows(
-                onUsePreset = onUsePreset,
-                onSavePreset = onSavePreset,
-                updatePresetName = state.updatePresetName,
-                onUpdatePreset = { updateConfirmation = it },
-            )
         }
     }
     updateConfirmation?.let { name ->
@@ -131,57 +161,6 @@ internal fun PresetSummary(
                 if (events.onUpdatePreset(name)) updateConfirmation = null
             },
         )
-    }
-}
-
-@OptIn(ExperimentalLayoutApi::class)
-@Composable
-private fun PresetActionRows(
-    onUsePreset: () -> Unit,
-    onSavePreset: () -> Unit,
-    updatePresetName: String?,
-    onUpdatePreset: (String) -> Unit,
-) {
-    FlowRow(
-        modifier = Modifier.fillMaxWidth().padding(horizontal = 16.dp, vertical = 4.dp),
-        horizontalArrangement = Arrangement.spacedBy(8.dp),
-        verticalArrangement = Arrangement.spacedBy(4.dp),
-    ) {
-        OutlinedButton(onClick = onUsePreset, modifier = Modifier.heightIn(min = 48.dp)) {
-            Icon(
-                painter = painterResource(R.drawable.ic_check_circle),
-                contentDescription = null,
-                modifier = Modifier.size(18.dp),
-            )
-            Text(
-                stringResource(R.string.preset_use),
-                modifier = Modifier.padding(start = 8.dp),
-                maxLines = 2,
-            )
-        }
-        OutlinedButton(onClick = onSavePreset, modifier = Modifier.heightIn(min = 48.dp)) {
-            Icon(
-                painter = painterResource(R.drawable.ic_save_as),
-                contentDescription = null,
-                modifier = Modifier.size(18.dp),
-            )
-            Text(
-                stringResource(R.string.preset_save_as),
-                modifier = Modifier.padding(start = 8.dp),
-                maxLines = 2,
-            )
-        }
-        updatePresetName?.let { name ->
-            val updateDescription = stringResource(R.string.preset_update, name)
-            TextButton(
-                onClick = { onUpdatePreset(name) },
-                modifier = Modifier.testTag("preset_update_action").semantics {
-                    contentDescription = updateDescription
-                },
-            ) {
-                Text(stringResource(R.string.preset_update_confirm))
-            }
-        }
     }
 }
 
