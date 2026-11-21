@@ -16,6 +16,8 @@
 package io.github.h3nb.jlmodplus.ui
 
 import android.app.Activity
+import android.content.Context
+import android.os.Build
 import android.content.SharedPreferences
 import androidx.core.content.edit
 import androidx.compose.foundation.isSystemInDarkTheme
@@ -26,6 +28,8 @@ import androidx.compose.material3.NavigationRailItemDefaults
 import androidx.compose.material3.Shapes
 import androidx.compose.material3.Typography
 import androidx.compose.material3.darkColorScheme
+import androidx.compose.material3.dynamicDarkColorScheme
+import androidx.compose.material3.dynamicLightColorScheme
 import androidx.compose.material3.lightColorScheme
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.DisposableEffect
@@ -109,7 +113,8 @@ enum class AccentPalette(val key: String) {
     Rose("rose"),
     Green("green"),
     Amber("amber"),
-    DefaultBlue("blue");
+    DefaultBlue("blue"),
+    Wallpaper("wallpaper");
 
     companion object {
         val Default: AccentPalette = Sapphire
@@ -128,7 +133,7 @@ enum class AccentPalette(val key: String) {
         }
     }
 
-    fun previewColor(dark: Boolean): Color = if (dark) tones().dark.primary else tones().light.primary
+    fun previewColor(dark: Boolean, context: Context? = null): Color = colorScheme(dark, context).primary
 }
 
 private data class AccentRoles(
@@ -371,10 +376,14 @@ private val AccentToneSets = mapOf(
     ),
 )
 
-private fun AccentPalette.tones(): AccentTones = checkNotNull(AccentToneSets[this])
+private fun AccentPalette.tones(): AccentTones =
+    checkNotNull(AccentToneSets[if (this == AccentPalette.Wallpaper) AccentPalette.Default else this])
 
 /** Complete accent-specific Material 3 roles, including invariant fixed colors. */
-internal fun AccentPalette.colorScheme(dark: Boolean): androidx.compose.material3.ColorScheme {
+internal fun AccentPalette.colorScheme(dark: Boolean, context: Context? = null): androidx.compose.material3.ColorScheme {
+    if (this == AccentPalette.Wallpaper && context != null && Build.VERSION.SDK_INT >= Build.VERSION_CODES.S) {
+        return if (dark) dynamicDarkColorScheme(context) else dynamicLightColorScheme(context)
+    }
     val base = if (dark) DarkColors else LightColors
     val tones = tones()
     val roles = if (dark) tones.dark else tones.light
@@ -478,7 +487,7 @@ private val AppShapes = Shapes(
     extraLarge = RoundedCornerShape(24.dp),
 )
 
-/** Material 3 theme for app-owned Compose surfaces; dynamic color stays off for parity. */
+/** Material 3 theme for app-owned Compose surfaces; wallpaper color is explicit opt-in. */
 @Composable
 fun JLModPlusTheme(
     darkTheme: Boolean = isSystemInDarkTheme(),
@@ -508,7 +517,9 @@ fun JLModPlusTheme(
     }
     val view = LocalView.current
     val selectedAccent = accent ?: AccentPalette.fromKey(preferenceAccentKey)
-    val colorScheme = remember(selectedAccent, darkTheme) { selectedAccent.colorScheme(darkTheme) }
+    val colorScheme = remember(selectedAccent, darkTheme, context) {
+        selectedAccent.colorScheme(darkTheme, context)
+    }
     if (!view.isInEditMode) {
         SideEffect {
             val window = (view.context as? Activity)?.window ?: return@SideEffect
