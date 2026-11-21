@@ -13,6 +13,7 @@ import androidx.compose.foundation.focusGroup
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
 import androidx.activity.compose.BackHandler
+import androidx.compose.foundation.selection.toggleable
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.PaddingValues
 import androidx.compose.foundation.layout.Row
@@ -65,6 +66,7 @@ import androidx.compose.runtime.rememberUpdatedState
 import androidx.compose.runtime.saveable.rememberSaveable
 import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
+import androidx.compose.ui.semantics.Role
 import androidx.compose.ui.focus.focusProperties
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.alpha
@@ -108,6 +110,8 @@ data class LibraryCollectionMembersUi(
 data class LibraryCollectionAppTargetUi(
     val appId: Int,
     val title: String,
+    val requestId: Long,
+    val memberCollectionIds: Set<Long>? = null,
 )
 
 data class LibraryCollectionsUiState(
@@ -123,6 +127,7 @@ data class LibraryCollectionsUiState(
 
 /** Fragment-owned presentation bridge; Compose never reaches Room or filesystem directly. */
 class LibraryCollectionsUiStore {
+    private var nextTargetRevision = 0L
     private var nextAllAppsRevision = 0L
     private var nextMembersRevision = 0L
     private val mutableState = MutableStateFlow(LibraryCollectionsUiState())
@@ -185,10 +190,34 @@ class LibraryCollectionsUiStore {
         )
     }
 
-    fun showAddTarget(appId: Int, title: String) {
+    fun showAddTarget(appId: Int, title: String): Long {
+        val requestId = ++nextTargetRevision
         mutableState.value = mutableState.value.copy(
-            addTarget = LibraryCollectionAppTargetUi(appId, title),
+            addTarget = LibraryCollectionAppTargetUi(appId, title, requestId),
             bulkAddTargetAppIds = null,
+        )
+        return requestId
+    }
+
+    fun publishTargetMemberships(appId: Int, requestId: Long, ids: Set<Long>) {
+        val current = mutableState.value
+        val target = current.addTarget ?: return
+        if (target.appId != appId || target.requestId != requestId) return
+        mutableState.value = current.copy(
+            addTarget = target.copy(memberCollectionIds = ids),
+        )
+    }
+
+    fun updateTargetMembership(appId: Int, collectionId: Long, included: Boolean) {
+        val current = mutableState.value
+        val target = current.addTarget ?: return
+        if (target.appId != appId) return
+        val existing = target.memberCollectionIds ?: return
+        mutableState.value = current.copy(
+            addTarget = target.copy(
+                memberCollectionIds = if (included) existing + collectionId
+                    else existing - collectionId,
+            ),
         )
     }
 
@@ -225,6 +254,7 @@ fun interface CollectionMembershipResultCallback {
 interface LibraryCollectionsHost : LibraryActions, LibraryBulkActions {
     fun collectionsStore(): LibraryCollectionsUiStore
     fun onCreateCollection(name: String)
+    fun onCreateCollectionForApp(appId: Int, name: String) = onCreateCollection(name)
     fun onRenameCollection(collectionId: Long, name: String)
     fun onDeleteCollection(collectionId: Long)
     fun onOpenCollection(collectionId: Long)
@@ -989,9 +1019,8 @@ internal fun LibraryCollectionsDialogHost(host: LibraryCollectionsHost) {
             collections = state.collections,
             onDismiss = host::onDismissAddToCollection,
             onCreate = { createForAdd = true },
-            onSelected = { collectionId ->
-                host.onAddAppToCollection(target.appId, collectionId)
-                host.onDismissAddToCollection()
+            onSetMembership = { collectionId, included, callback ->
+                host.onSetCollectionMembership(target.appId, collectionId, included, callback)
             },
         )
     }
@@ -1016,7 +1045,12 @@ internal fun LibraryCollectionsDialogHost(host: LibraryCollectionsHost) {
             onDismiss = { createForAdd = false },
             onConfirm = { name ->
                 createForAdd = false
-                host.onCreateCollection(name)
+                val target = state.addTarget
+                if (target == null) host.onCreateCollection(name)
+                else {
+                    host.onCreateCollectionForApp(target.appId, name)
+                    host.onDismissAddToCollection()
+                }
             },
         )
     }
@@ -1028,13 +1062,20 @@ private fun AddToCollectionDialog(
     collections: List<LibraryCollectionUiItem>,
     onDismiss: () -> Unit,
     onCreate: () -> Unit,
-    onSelected: (Long) -> Unit,
+    onSetMembership: (Long, Boolean, CollectionMembershipResultCallback) -> Unit,
 ) {
     val maxListHeight = adaptiveDialogLayout().maxHeight
+    var pending by remember(target.requestId) { mutableStateOf<Map<Long, Boolean>>(emptyMap()) }
+    val committed = target.memberCollectionIds
+    LaunchedEffect(committed) {
+        if (committed != null) {
+            pending = pending.filter { (id, included) -> (id in committed) != included }
+        }
+    }
     AlertDialog(
         textScrollable = false,
         onDismissRequest = onDismiss,
-        title = { Text(stringResource(R.string.library_collection_add_app)) },
+        title = { Text(stringResource(R.string.library_destination_collections)) },
         text = {
             Column {
                 Text(
@@ -1045,62 +1086,94 @@ private fun AddToCollectionDialog(
                     maxLines = 1,
                     overflow = TextOverflow.Ellipsis,
                 )
-                if (collections.isEmpty()) {
-                    Text(
-                        text = stringResource(R.string.library_collection_ready_empty_message),
-                        modifier = Modifier.padding(horizontal = 16.dp, vertical = 12.dp),
-                        color = MaterialTheme.colorScheme.onSurfaceVariant,
-                    )
-                } else {
-                    val listState = androidx.compose.foundation.lazy.rememberLazyListState()
-                    val canScrollForward = rememberLazyListCanScrollForward(listState)
-                    Box(
-                        modifier = Modifier
-                            .fillMaxWidth()
-                            .heightIn(max = maxListHeight),
-                    ) {
-                        LazyColumn(
-                            modifier = Modifier.fillMaxWidth(),
-                            state = listState,
-                        ) {
-                            items(collections, key = { it.id }) { collection ->
-                                ListItem(
-                                    colors = ListItemDefaults.colors(containerColor = Color.Transparent),
-                                    headlineContent = {
-                                        Text(
-                                            text = collection.name,
-                                            maxLines = 1,
-                                            overflow = TextOverflow.Ellipsis,
-                                        )
-                                    },
-                                    supportingContent = {
-                                        Text(
-                                            pluralStringResource(
-                                                R.plurals.library_collection_member_count,
-                                                collection.appCount,
-                                                collection.appCount,
-                                            ),
-                                        )
-                                    },
-                                    modifier = Modifier
-                                        .fillMaxWidth()
-                                        .clickable { onSelected(collection.id) },
-                                )
-                            }
-                        }
-                        ScrollableContentHint(
-                            visible = canScrollForward,
-                            modifier = Modifier.align(Alignment.BottomCenter),
+                when {
+                    committed == null -> {
+                        Box(
+                            modifier = Modifier.fillMaxWidth().heightIn(min = 100.dp),
+                            contentAlignment = Alignment.Center,
+                        ) { CircularProgressIndicator() }
+                    }
+                    collections.isEmpty() -> {
+                        Text(
+                            text = stringResource(R.string.library_collection_ready_empty_message),
+                            modifier = Modifier.padding(horizontal = 16.dp, vertical = 12.dp),
+                            color = MaterialTheme.colorScheme.onSurfaceVariant,
                         )
+                    }
+                    else -> {
+                        val listState = androidx.compose.foundation.lazy.rememberLazyListState()
+                        val canScrollForward = rememberLazyListCanScrollForward(listState)
+                        Box(
+                            modifier = Modifier.fillMaxWidth().heightIn(max = maxListHeight),
+                        ) {
+                            LazyColumn(
+                                modifier = Modifier.fillMaxWidth(),
+                                state = listState,
+                            ) {
+                                items(collections, key = { it.id }) { collection ->
+                                    val checked = pending[collection.id]
+                                        ?: (collection.id in committed)
+                                    val enabled = collection.id !in pending
+                                    ListItem(
+                                        colors = ListItemDefaults.colors(
+                                            containerColor = Color.Transparent,
+                                        ),
+                                        headlineContent = {
+                                            Text(
+                                                text = collection.name,
+                                                maxLines = 1,
+                                                overflow = TextOverflow.Ellipsis,
+                                            )
+                                        },
+                                        supportingContent = {
+                                            Text(
+                                                pluralStringResource(
+                                                    R.plurals.library_collection_member_count,
+                                                    collection.appCount,
+                                                    collection.appCount,
+                                                ),
+                                            )
+                                        },
+                                        trailingContent = {
+                                            androidx.compose.material3.Checkbox(
+                                                checked = checked,
+                                                onCheckedChange = null,
+                                                enabled = enabled,
+                                                modifier = Modifier.clearAndSetSemantics {},
+                                            )
+                                        },
+                                        modifier = Modifier.fillMaxWidth().toggleable(
+                                            value = checked,
+                                            enabled = enabled,
+                                            role = Role.Checkbox,
+                                            onValueChange = { included ->
+                                                pending = pending + (collection.id to included)
+                                                onSetMembership(
+                                                    collection.id,
+                                                    included,
+                                                    CollectionMembershipResultCallback { success ->
+                                                        if (!success &&
+                                                            pending[collection.id] == included
+                                                        ) pending = pending - collection.id
+                                                    },
+                                                )
+                                            },
+                                        ),
+                                    )
+                                }
+                            }
+                            ScrollableContentHint(
+                                visible = canScrollForward,
+                                modifier = Modifier.align(Alignment.BottomCenter),
+                            )
+                        }
                     }
                 }
             }
         },
         confirmButton = {
-            if (collections.isEmpty()) {
-                TextButton(onClick = onCreate) {
-                    Text(stringResource(R.string.library_collection_new))
-                }
+            TextButton(onClick = onCreate) {
+                Text(stringResource(R.string.library_collection_new))
             }
         },
         dismissButton = {
