@@ -89,14 +89,14 @@ class LibraryCollectionsNavigationTest {
                 }
             }
         }
-        composeRule.onNodeWithText(uiString(R.string.library_filter_all)).performClick()
+        composeRule.onNodeWithTag("library_scope_picker").performClick()
         composeRule.onNodeWithText(COLLECTION_NAME).performClick()
         waitForMember()
         composeRule.onNodeWithText(MEMBER_TITLE).assertIsDisplayed()
 
         pressBack()
         composeRule.waitForIdle()
-        composeRule.onNodeWithText(uiString(R.string.library_filter_all)).assertIsDisplayed()
+        composeRule.onNodeWithTag("library_scope_picker").assertIsDisplayed()
     }
 
     @Test
@@ -125,7 +125,7 @@ class LibraryCollectionsNavigationTest {
             }
         }
 
-        composeRule.onNodeWithText(uiString(R.string.library_filter_all)).performClick()
+        composeRule.onNodeWithTag("library_scope_picker").performClick()
         composeRule.onNodeWithText("RPG").assertIsDisplayed()
         val emptyCount = InstrumentationRegistry.getInstrumentation().targetContext.resources
             .getQuantityString(R.plurals.library_collection_member_count, 0, 0)
@@ -211,7 +211,7 @@ class LibraryCollectionsNavigationTest {
         composeRule.waitForIdle()
 
         composeRule.onAllNodesWithText(MEMBER_TITLE).assertCountEquals(0)
-        composeRule.onNodeWithText(uiString(R.string.library_filter_all)).assertIsDisplayed()
+        composeRule.onNodeWithTag("library_scope_picker").assertIsDisplayed()
         assertNull(host.store.displayedMembersCollectionId())
     }
 
@@ -232,7 +232,7 @@ class LibraryCollectionsNavigationTest {
         composeRule.onNodeWithText(MEMBER_TITLE).assertIsDisplayed()
         composeRule.runOnIdle { host.store.publishCollections(emptyList()) }
         composeRule.waitUntil(5_000) {
-            composeRule.onAllNodesWithText(uiString(R.string.library_filter_all))
+            composeRule.onAllNodesWithTag("library_scope_picker")
                 .fetchSemanticsNodes().isNotEmpty()
         }
         composeRule.onAllNodesWithText(MEMBER_TITLE).assertCountEquals(0)
@@ -271,7 +271,7 @@ class LibraryCollectionsNavigationTest {
         composeRule.waitForIdle()
 
         composeRule.onAllNodesWithText(MEMBER_TITLE).assertCountEquals(0)
-        composeRule.onNodeWithText(uiString(R.string.library_filter_all)).assertIsDisplayed()
+        composeRule.onNodeWithTag("library_scope_picker").assertIsDisplayed()
         assertNull(host.store.displayedMembersCollectionId())
     }
 
@@ -405,7 +405,7 @@ class LibraryCollectionsNavigationTest {
         composeRule.waitForIdle()
 
         composeRule.onAllNodesWithText(MEMBER_TITLE).assertCountEquals(0)
-        composeRule.onNodeWithText(uiString(R.string.library_filter_all)).assertIsDisplayed()
+        composeRule.onNodeWithTag("library_scope_picker").assertIsDisplayed()
         assertNull(host.store.displayedMembersCollectionId())
     }
 
@@ -676,7 +676,7 @@ class LibraryCollectionsNavigationTest {
     }
 
     private fun openCollectionsManagement() {
-        composeRule.onNodeWithText(uiString(R.string.library_filter_all)).performClick()
+        composeRule.onNodeWithTag("library_scope_picker").performClick()
         composeRule.onNodeWithText(uiString(R.string.library_collection_manage)).performClick()
     }
 
