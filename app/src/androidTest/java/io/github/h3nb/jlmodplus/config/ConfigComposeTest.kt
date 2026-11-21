@@ -985,6 +985,24 @@ class ConfigComposeTest {
     }
 
     @Test
+    fun screenSizeActionsRemainVisibleInCompactLandscape() {
+        composeRule.setContent {
+            DeviceConfigurationOverride(
+                DeviceConfigurationOverride.WindowSize(DpSize(640.dp, 360.dp)),
+            ) {
+                JLModPlusTheme { ConfigScreen(sampleState(), RecordingConfigEvents()) }
+            }
+        }
+        composeRule.onNodeWithTag("config_quick_resolution").performClick()
+        composeRule.onNodeWithContentDescription(uiString(R.string.config_swap_screen_size))
+            .assertIsDisplayed()
+        composeRule.onNodeWithText(uiString(R.string.config_custom_resolution))
+            .assertIsDisplayed()
+        composeRule.onNodeWithText(uiString(android.R.string.cancel))
+            .assertIsDisplayed()
+    }
+
+    @Test
     fun configurationDropdownsExposeTheirOptionsAndUpdateTheDraft() {
         val events = RecordingConfigEvents()
         composeRule.setContent {
