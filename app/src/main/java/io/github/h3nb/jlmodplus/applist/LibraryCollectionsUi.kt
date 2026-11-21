@@ -9,6 +9,7 @@ package io.github.h3nb.jlmodplus.applist
 import androidx.activity.compose.BackHandler
 import androidx.compose.foundation.background
 import androidx.compose.foundation.clickable
+import androidx.compose.foundation.gestures.detectDragGesturesAfterLongPress
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
 import androidx.activity.compose.BackHandler
@@ -55,6 +56,7 @@ import androidx.compose.runtime.derivedStateOf
 import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.key
 import androidx.compose.runtime.collectAsState
+import androidx.compose.runtime.mutableFloatStateOf
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
 import androidx.compose.runtime.rememberUpdatedState
@@ -67,7 +69,9 @@ import androidx.compose.ui.draw.alpha
 import androidx.compose.ui.draw.clip
 import androidx.compose.ui.draw.clipToBounds
 import androidx.compose.ui.input.nestedscroll.nestedScroll
+import androidx.compose.ui.input.pointer.pointerInput
 import androidx.compose.ui.layout.onSizeChanged
+import androidx.compose.ui.platform.LocalDensity
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.graphics.graphicsLayer
 import androidx.compose.ui.res.painterResource
@@ -79,6 +83,7 @@ import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.text.style.TextOverflow
 import androidx.compose.ui.unit.dp
+import kotlin.math.abs
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.StateFlow
 import kotlinx.coroutines.flow.asStateFlow
@@ -453,12 +458,33 @@ private fun LibraryCollectionsOverview(
     var createDialog by rememberSaveable { mutableStateOf(false) }
     var renameTarget by remember { mutableStateOf<LibraryCollectionUiItem?>(null) }
     var deleteTarget by remember { mutableStateOf<LibraryCollectionUiItem?>(null) }
+    var previewOrder by remember { mutableStateOf<List<Long>?>(null) }
+    var draggingId by remember { mutableStateOf<Long?>(null) }
+    var dragDistance by remember { mutableFloatStateOf(0f) }
+    var savingOrder by remember { mutableStateOf(false) }
+    val reorderStepPx = with(LocalDensity.current) { 64.dp.toPx() }
+    val collectionsById = state.collections.associateBy { it.id }
+    val displayedCollections = previewOrder?.takeIf { ids ->
+        ids.size == collectionsById.size && ids.all { it in collectionsById }
+    }?.map { requireNotNull(collectionsById[it]) } ?: state.collections
+    LaunchedEffect(state.collections) {
+        val persistedOrder = state.collections.map { it.id }
+        if (draggingId == null && previewOrder != null &&
+            (previewOrder == persistedOrder || previewOrder!!.toSet() != persistedOrder.toSet())
+        ) {
+            previewOrder = null
+            savingOrder = false
+        }
+    }
     // These windows are presentation owned by the settled route, not retained viewport data.
     LaunchedEffect(active) {
         if (!active) {
             createDialog = false
             renameTarget = null
             deleteTarget = null
+            previewOrder = null
+            draggingId = null
+            savingOrder = false
         }
     }
     val listState = viewportState.listState
@@ -577,17 +603,92 @@ private fun LibraryCollectionsOverview(
                     }
                 }
             } else {
-                items(state.collections, key = { it.id }) { collection ->
-                    Box(modifier = Modifier.fillMaxWidth(), contentAlignment = Alignment.Center) {
+                items(displayedCollections, key = { it.id }) { collection ->
+                    Box(
+                        modifier = Modifier
+                            .fillMaxWidth()
+                            .animateItem()
+                            .pointerInput(collection.id, active, savingOrder) {
+                                detectDragGesturesAfterLongPress(
+                                    onDragStart = {
+                                        if (active && !savingOrder) {
+                                            draggingId = collection.id
+                                            dragDistance = 0f
+                                            previewOrder = displayedCollections.map { it.id }
+                                        }
+                                    },
+                                    onDrag = { change, delta ->
+                                        if (draggingId == collection.id) {
+                                            change.consume()
+                                            dragDistance += delta.y
+                                            var steps = 0
+                                            while (abs(dragDistance) >= reorderStepPx * 0.65f &&
+                                                steps < displayedCollections.size
+                                            ) {
+                                                val order = previewOrder ?: break
+                                                val index = order.indexOf(collection.id)
+                                                val direction = if (dragDistance > 0f) 1 else -1
+                                                val target = index + direction
+                                                if (index < 0 || target !in order.indices) {
+                                                    dragDistance = 0f
+                                                    break
+                                                }
+                                                previewOrder = order.toMutableList().apply {
+                                                    removeAt(index)
+                                                    add(target, collection.id)
+                                                }
+                                                dragDistance -= direction * reorderStepPx
+                                                steps++
+                                            }
+                                        }
+                                    },
+                                    onDragEnd = {
+                                        if (draggingId == collection.id) {
+                                            draggingId = null
+                                            dragDistance = 0f
+                                            val order = previewOrder
+                                            if (order == null || order == state.collections.map { it.id }) {
+                                                previewOrder = null
+                                            } else {
+                                                savingOrder = true
+                                                host.onReorderCollections(
+                                                    order,
+                                                    CollectionMembershipResultCallback { success ->
+                                                        if (!success) {
+                                                            previewOrder = null
+                                                            savingOrder = false
+                                                        }
+                                                    },
+                                                )
+                                            }
+                                        }
+                                    },
+                                    onDragCancel = {
+                                        if (draggingId == collection.id) {
+                                            draggingId = null
+                                            dragDistance = 0f
+                                            previewOrder = null
+                                        }
+                                    },
+                                )
+                            }
+                            .graphicsLayer {
+                                translationY = if (draggingId == collection.id) dragDistance else 0f
+                            },
+                        contentAlignment = Alignment.Center,
+                    ) {
                         LibraryCollectionChoiceRow(
                             collection = collection,
                             selected = collection.id == selectedCollectionId,
-                            onClick = { if (currentActive) onOpenCollection(collection.id) },
+                            onClick = { if (currentActive && !savingOrder) onOpenCollection(collection.id) },
                             modifier = Modifier.widthIn(max = 720.dp)
                                 .padding(horizontal = 16.dp, vertical = 2.dp),
                             trailingContent = {
                                 Row {
-                                    IconButton(onClick = { if (currentActive) renameTarget = collection }) {
+                                    IconButton(
+                                        enabled = active && !savingOrder,
+                                        onClick = { if (currentActive && !savingOrder) renameTarget = collection },
+                                    ) {
                                         Icon(
                                             painter = painterResource(R.drawable.ic_edit),
                                             contentDescription = stringResource(
@@ -595,7 +696,10 @@ private fun LibraryCollectionsOverview(
                                             ),
                                         )
                                     }
-                                    IconButton(onClick = { if (currentActive) deleteTarget = collection }) {
+                                    IconButton(
+                                        enabled = active && !savingOrder,
+                                        onClick = { if (currentActive && !savingOrder) deleteTarget = collection },
+                                    ) {
                                         Icon(
                                             painter = painterResource(R.drawable.ic_delete),
                                             contentDescription = stringResource(
