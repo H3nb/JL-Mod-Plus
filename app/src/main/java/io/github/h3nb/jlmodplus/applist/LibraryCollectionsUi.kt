@@ -681,7 +681,7 @@ internal fun LibraryCollectionsDialogHost(host: LibraryCollectionsHost) {
     val state by host.collectionsStore().state.collectAsState()
     var createForAdd by rememberSaveable { mutableStateOf(false) }
 
-    state.addTarget?.let { target ->
+    state.addTarget?.takeUnless { createForAdd }?.let { target ->
         AddToCollectionDialog(
             target = target,
             collections = state.collections,
