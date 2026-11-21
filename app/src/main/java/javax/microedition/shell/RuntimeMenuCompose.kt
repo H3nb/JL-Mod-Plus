@@ -87,7 +87,6 @@ import androidx.compose.ui.unit.Constraints
 import androidx.compose.ui.unit.LayoutDirection
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
-import androidx.compose.ui.window.DialogProperties
 import io.github.h3nb.jlmodplus.R
 import io.github.h3nb.jlmodplus.input.HostCommand
 import io.github.h3nb.jlmodplus.ui.AdaptiveAlertDialog as AlertDialog
@@ -604,17 +603,6 @@ private data class PlatformPackageChoice(
     val onCancel: Runnable,
 )
 
-private data class RuntimeMenuDialogLayout(
-    val modifier: Modifier,
-    val properties: DialogProperties,
-)
-
-@Composable
-private fun runtimeMenuDialogLayout(): RuntimeMenuDialogLayout = RuntimeMenuDialogLayout(
-    modifier = Modifier,
-    properties = DialogProperties(),
-)
-
 @Composable
 private fun runtimeMenuDialogContentHeight() = adaptiveDialogLayout().maxHeight
 
@@ -625,10 +613,7 @@ internal fun RuntimeLimitFpsDialog(
     onReset: () -> Unit,
 ) {
     var value by remember { mutableStateOf("") }
-    val layout = runtimeMenuDialogLayout()
     AlertDialog(
-        modifier = layout.modifier,
-        properties = layout.properties,
         onDismissRequest = onDismiss,
         title = { Text(stringResource(R.string.PREF_LIMIT_FPS)) },
         text = {
@@ -671,14 +656,11 @@ internal fun RuntimeEmulationSpeedDialog(
     var draftIndex by remember(currentIndex, presetValues) { mutableFloatStateOf(currentIndex.toFloat()) }
     val selectedIndex = draftIndex.roundToInt().coerceIn(presetValues.indices)
     val selectedValue = presetValues[selectedIndex]
-    val layout = runtimeMenuDialogLayout()
     val dialogBounds = adaptiveDialogLayout()
     val scrollState = rememberScrollState()
     val canScrollForward by remember(scrollState) { derivedStateOf { scrollState.canScrollForward } }
     AlertDialog(
         textScrollable = false,
-        modifier = layout.modifier,
-        properties = layout.properties,
         onDismissRequest = onDismiss,
         title = { Text(stringResource(R.string.PREF_EMULATION_SPEED)) },
         text = {
@@ -1037,15 +1019,13 @@ private fun RuntimeMenuDialog(
     onNavigationFocusChanged: (Boolean) -> Unit,
     onGridColumnsChanged: (Int) -> Unit,
 ) {
-    val layout = runtimeMenuDialogLayout()
     val exit = if (virtualKeyboardPage) null else entries.lastOrNull { it.label == R.string.exit }
     val tiles = if (exit == null) entries else entries.dropLast(1)
     AlertDialog(
         textScrollable = false,
-        modifier = layout.modifier
+        modifier = Modifier
             .clearNavigationFocusOnTouch { onNavigationFocusChanged(false) }
             .showNavigationFocusForKey { onNavigationFocusChanged(true) },
-        properties = layout.properties,
         onDismissRequest = onDismiss,
         title = if (virtualKeyboardPage) {
             {
