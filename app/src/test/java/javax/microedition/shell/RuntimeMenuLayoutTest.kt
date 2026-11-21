@@ -15,6 +15,7 @@
 package javax.microedition.shell
 
 import io.github.h3nb.jlmodplus.R
+import io.github.h3nb.jlmodplus.input.HostCommand
 import org.junit.jupiter.api.Assertions.assertEquals
 import org.junit.jupiter.api.Assertions.assertFalse
 import org.junit.jupiter.api.Assertions.assertTrue
@@ -95,6 +96,17 @@ class RuntimeMenuLayoutTest {
         assertEquals(2, runtimeMenuGridColumns(288f, 1f, 7))
         assertEquals(4, runtimeMenuGridColumns(568f, 1f, 7))
         assertEquals(1, runtimeMenuGridColumns(408f, 2f, 7))
+    }
+
+    @Test
+    fun gridNavigationReachesPartialRowsAndTheExitFooter() {
+        assertEquals(4, runtimeMenuNextFocus(2, 6, 3, true, HostCommand.NavigateDown))
+        assertEquals(5, runtimeMenuNextFocus(4, 6, 3, true, HostCommand.NavigateDown))
+        assertEquals(4, runtimeMenuNextFocus(5, 6, 3, true, HostCommand.NavigateUp))
+        assertEquals(3, runtimeMenuNextFocus(3, 6, 3, true, HostCommand.NavigateLeft))
+        assertEquals(2, runtimeMenuNextFocus(2, 6, 3, true, HostCommand.NavigateRight))
+        assertEquals(0, runtimeMenuNextFocus(5, 6, 3, true, HostCommand.NextTab))
+        assertEquals(2, runtimeMenuNextFocus(1, 3, 2, false, HostCommand.NavigateDown))
     }
 
     @Test

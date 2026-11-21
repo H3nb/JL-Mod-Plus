@@ -498,27 +498,9 @@ class RuntimeMenuComposeController @JvmOverloads constructor(
     private fun moveControllerFocus(command: HostCommand) {
         val count = controllerItems().size
         if (count == 0) return
-        val columns = menuGridColumns.coerceAtLeast(1)
-        val tileCount = if (virtualKeyboardPage) count else count - 1
-        val current = controllerFocusIndex.coerceIn(0, count - 1)
-        controllerFocusIndex = when (command) {
-            HostCommand.NavigateUp -> when {
-                current >= tileCount -> (tileCount - 1).coerceAtLeast(0)
-                current >= columns -> current - columns
-                else -> current
-            }
-            HostCommand.NavigateDown -> when {
-                current >= tileCount -> current
-                current + columns < tileCount -> current + columns
-                virtualKeyboardPage -> current
-                else -> count - 1
-            }
-            HostCommand.NavigateLeft -> if (current < tileCount) (current - 1).coerceAtLeast(0) else current
-            HostCommand.NavigateRight -> if (current < tileCount) (current + 1).coerceAtMost(tileCount - 1) else current
-            HostCommand.PreviousTab -> (current - 1).mod(count)
-            HostCommand.NextTab -> (current + 1).mod(count)
-            else -> current
-        }
+        controllerFocusIndex = runtimeMenuNextFocus(
+            controllerFocusIndex, count, menuGridColumns, hasExit = !virtualKeyboardPage, command,
+        )
     }
 
     private fun controllerItems(): List<RuntimeMenuEntry> = runtimeMenuEntries(
@@ -1147,6 +1129,41 @@ private fun RuntimeMenuDialog(
         },
         confirmButton = null,
     )
+}
+
+internal fun runtimeMenuNextFocus(
+    currentIndex: Int,
+    itemCount: Int,
+    columns: Int,
+    hasExit: Boolean,
+    command: HostCommand,
+): Int {
+    if (itemCount == 0) return 0
+    val index = currentIndex.coerceIn(0, itemCount - 1)
+    val tileCount = itemCount - (if (hasExit) 1 else 0)
+    val columnCount = columns.coerceAtLeast(1)
+    return when (command) {
+        HostCommand.PreviousTab -> (index - 1).mod(itemCount)
+        HostCommand.NextTab -> (index + 1).mod(itemCount)
+        HostCommand.NavigateUp -> when {
+            index >= tileCount -> (tileCount - 1).coerceAtLeast(0)
+            index >= columnCount -> index - columnCount
+            else -> index
+        }
+        HostCommand.NavigateDown -> when {
+            index >= tileCount -> index
+            index / columnCount < (tileCount - 1) / columnCount ->
+                minOf(index + columnCount, tileCount - 1)
+            hasExit -> itemCount - 1
+            else -> index
+        }
+        HostCommand.NavigateLeft ->
+            if (index < tileCount && index % columnCount != 0) index - 1 else index
+        HostCommand.NavigateRight ->
+            if (index < tileCount && (index + 1) % columnCount != 0 && index + 1 < tileCount)
+                index + 1 else index
+        else -> index
+    }
 }
 
 internal fun runtimeMenuGridColumns(widthDp: Float, fontScale: Float, count: Int): Int {
