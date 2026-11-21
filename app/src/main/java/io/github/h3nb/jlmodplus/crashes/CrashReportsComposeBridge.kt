@@ -161,6 +161,7 @@ class CrashReportsListController internal constructor(
         state = state.copy(processingReports = sharing)
     }
 
+    @JvmOverloads
     fun showNotice(message: String, durationMillis: Long = 3_500L) {
         notices.show(message, durationMillis)
     }
