@@ -16,10 +16,16 @@ package io.github.h3nb.jlmodplus.applist
 
 import android.content.res.Configuration
 import androidx.compose.foundation.layout.PaddingValues
+import androidx.compose.foundation.layout.Box
+import androidx.compose.foundation.layout.fillMaxSize
+import androidx.compose.foundation.layout.padding
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.CompositionLocalProvider
 import androidx.compose.runtime.remember
 import androidx.compose.ui.platform.LocalConfiguration
+import androidx.compose.ui.Alignment
+import androidx.compose.ui.Modifier
+import androidx.compose.ui.unit.dp
 import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.tooling.preview.Preview
 import androidx.navigationevent.compose.LocalNavigationEventDispatcherOwner
@@ -563,13 +569,17 @@ fun ProfileCreateScreenshot() {
 @Composable
 fun ProfileActionsScreenshot() {
     JLModPlusTheme(darkTheme = false) {
-        ProfileRow(
-            profile = PreviewProfiles.first(),
-            onEdit = {},
-            onRename = {},
-            onDelete = {},
-            initiallyExpanded = true,
-        )
+        Box(
+            modifier = Modifier.fillMaxSize().padding(horizontal = 16.dp),
+            contentAlignment = Alignment.Center,
+        ) {
+            ProfileRow(
+                profile = PreviewProfiles.first(),
+                onEdit = {},
+                onRename = {},
+                onDelete = {},
+            )
+        }
     }
 }
 
@@ -725,13 +735,17 @@ private class PreviewCollectionsHost : LibraryCollectionsHost, LibraryActions by
 @Composable
 fun ProfileActionsCompactLandscapeLargeTextScreenshot() {
     JLModPlusTheme(darkTheme = false) {
-        ProfileRow(
-            profile = PreviewProfiles.first().copy(isDefault = false),
-            onEdit = {},
-            onRename = {},
-            onDelete = {},
-            initiallyExpanded = true,
-        )
+        Box(
+            modifier = Modifier.fillMaxSize().padding(horizontal = 16.dp),
+            contentAlignment = Alignment.Center,
+        ) {
+            ProfileRow(
+                profile = PreviewProfiles.first().copy(isDefault = false),
+                onEdit = {},
+                onRename = {},
+                onDelete = {},
+            )
+        }
     }
 }
 
