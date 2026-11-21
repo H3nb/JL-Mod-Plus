@@ -142,12 +142,12 @@ class SettingsComposeTest {
         val state = sampleState().copy(
             libraryChoices = listOf(
                 SettingsChoice(
-                    key = "pref_apps_view",
-                    title = uiString(R.string.pref_apps_view),
-                    selected = SettingsOption("list", "List"),
+                    key = "pref_apps_icon_ratio",
+                    title = uiString(R.string.library_icon_ratio_title),
+                    selected = SettingsOption("square", "1:1"),
                     options = listOf(
-                        SettingsOption("list", "List"),
-                        SettingsOption("grid", "Grid"),
+                        SettingsOption("square", "1:1"),
+                        SettingsOption("portrait", "3:4"),
                     ),
                 ),
             ),
@@ -162,13 +162,13 @@ class SettingsComposeTest {
         )
         setSettingsContent(state = state, actions = actions)
 
-        scrollSettingsTo(uiString(R.string.pref_apps_view))
-        composeRule.onNodeWithText(uiString(R.string.pref_apps_view)).performClick()
-        composeRule.onNodeWithText("Grid").performClick()
+        scrollSettingsTo(uiString(R.string.library_icon_ratio_title))
+        composeRule.onNodeWithText(uiString(R.string.library_icon_ratio_title)).performClick()
+        composeRule.onNodeWithText("3:4").performClick()
         scrollSettingsTo(uiString(R.string.library_enhanced_icons_title))
         composeRule.onNodeWithText(uiString(R.string.library_enhanced_icons_title)).performClick()
 
-        assertEquals(listOf("pref_apps_view=grid"), actions.libraryChoices)
+        assertEquals(listOf("pref_apps_icon_ratio=portrait"), actions.libraryChoices)
         assertEquals(listOf("pref_apps_enhanced_icons=false"), actions.toggles)
     }
 
@@ -176,15 +176,6 @@ class SettingsComposeTest {
     fun gridOnlyLibraryOptionsAreNotShownInListMode() {
         val gridState = sampleState().copy(
             libraryChoices = listOf(
-                SettingsChoice(
-                    key = "pref_apps_view",
-                    title = uiString(R.string.pref_apps_view),
-                    selected = SettingsOption("grid", "Grid"),
-                    options = listOf(
-                        SettingsOption("list", "List"),
-                        SettingsOption("grid", "Grid"),
-                    ),
-                ),
                 SettingsChoice(
                     key = "pref_apps_grid_spacing",
                     title = uiString(R.string.library_grid_spacing_title),
@@ -209,17 +200,7 @@ class SettingsComposeTest {
     @Test
     fun listLibraryOptionsExcludeGridOnlyChoices() {
         val listState = sampleState().copy(
-            libraryChoices = listOf(
-                SettingsChoice(
-                    key = "pref_apps_view",
-                    title = uiString(R.string.pref_apps_view),
-                    selected = SettingsOption("list", "List"),
-                    options = listOf(
-                        SettingsOption("list", "List"),
-                        SettingsOption("grid", "Grid"),
-                    ),
-                ),
-            ),
+            libraryChoices = emptyList(),
             librarySwitches = listOf(
                 SettingsSwitch("pref_apps_enhanced_icons", uiString(R.string.library_enhanced_icons_title), null, true),
 
@@ -234,18 +215,18 @@ class SettingsComposeTest {
 
     @Test
     fun conditionalLibraryRowsKeepTheVisibleStorageRowAnchored() {
-        val viewChoice = SettingsChoice(
-            key = "pref_apps_view",
-            title = uiString(R.string.pref_apps_view),
-            selected = SettingsOption("list", "List"),
+        val iconRatioChoice = SettingsChoice(
+            key = "pref_apps_icon_ratio",
+            title = uiString(R.string.library_icon_ratio_title),
+            selected = SettingsOption("square", "1:1"),
             options = listOf(
-                SettingsOption("list", "List"),
-                SettingsOption("grid", "Grid"),
+                SettingsOption("square", "1:1"),
+                SettingsOption("portrait", "3:4"),
             ),
         )
         val state = mutableStateOf(
             sampleState().copy(
-                libraryChoices = listOf(viewChoice),
+                libraryChoices = listOf(iconRatioChoice),
                 librarySwitches = listOf(
                     SettingsSwitch(
                         "pref_apps_enhanced_icons",
@@ -280,7 +261,7 @@ class SettingsComposeTest {
         composeRule.runOnIdle {
             state.value = state.value.copy(
                 libraryChoices = listOf(
-                    viewChoice.copy(selected = SettingsOption("grid", "Grid")),
+                    iconRatioChoice.copy(selected = SettingsOption("portrait", "3:4")),
                     SettingsChoice(
                         key = "pref_apps_grid_spacing",
                         title = uiString(R.string.library_grid_spacing_title),
