@@ -97,7 +97,8 @@ class RuntimeMenuLayoutTest {
         assertEquals(3, runtimeMenuGridColumns(344f, 1f, 7))
         assertEquals(2, runtimeMenuGridColumns(344f, 1.5f, 7))
         assertEquals(4, runtimeMenuGridColumns(568f, 1f, 7))
-        assertEquals(1, runtimeMenuGridColumns(408f, 2f, 7))
+        assertEquals(2, runtimeMenuGridColumns(408f, 2f, 7))
+        assertEquals(1, runtimeMenuGridColumns(320f, 2f, 7))
     }
 
     @Test
