@@ -172,13 +172,15 @@ internal fun ConfigValuePreference(
     message: String? = null,
     messageLevel: ConfigMessageLevel = ConfigMessageLevel.Info,
     compact: Boolean = true,
+    showInlineDescription: Boolean = true,
 ) {
     if (compact) {
         Column(modifier = modifier) {
-            // Choice, number and slider dialogs already expose the complete explanation.
+            // Hide help only when the caller's selection/edit dialog displays it.
             ConfigCompactValuePreference(
                 title = title,
                 value = value,
+                description = if (showInlineDescription) description else null,
                 enabled = enabled,
                 onClick = onClick,
             )
@@ -281,6 +283,7 @@ internal fun ConfigChoicePreference(
         message = message,
         messageLevel = messageLevel,
         compact = compact,
+        showInlineDescription = false,
         modifier = modifier,
         onClick = { dialogVisible = true },
     )
@@ -389,6 +392,7 @@ internal fun ConfigNumberPreference(
         description = description,
         value = display,
         compact = compact,
+        showInlineDescription = false,
         enabled = enabled,
         modifier = modifier,
         onClick = { dialogVisible = true },
@@ -429,6 +433,7 @@ internal fun ConfigSliderPreference(
         description = description,
         value = "$value$valueSuffix",
         compact = compact,
+        showInlineDescription = false,
         modifier = modifier,
         onClick = { dialogVisible = true },
     )
