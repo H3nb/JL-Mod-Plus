@@ -16,6 +16,7 @@ package io.github.h3nb.jlmodplus.ui
 
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.fillMaxWidth
+import androidx.compose.foundation.layout.imePadding
 import androidx.compose.foundation.layout.navigationBarsPadding
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.widthIn
@@ -67,6 +68,7 @@ internal fun TransientNoticeHost(
     Box(
         modifier = modifier
             .fillMaxWidth()
+            .imePadding()
             .navigationBarsPadding()
             .padding(horizontal = 16.dp, vertical = 12.dp),
         contentAlignment = Alignment.BottomCenter,
