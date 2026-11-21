@@ -105,6 +105,26 @@ class ConfigComposeTest {
     }
 
     @Test
+    fun activeCompatibilityWarningIsNotPartOfTheToggleTouchTarget() {
+        val base = sampleState()
+        val state = ConfigUiState(
+            base.form.toBuilder().immediateMode(true).build(),
+            base.screenPresets, base.fontPresets, base.skins, base.soundBanks,
+            base.shaders, base.removableScreenPresets,
+        )
+        composeRule.setContent {
+            JLModPlusTheme {
+                ConfigScreen(state, RecordingConfigEvents(), initialDestination = ConfigDestination.System)
+            }
+        }
+
+        scrollTo(uiString(R.string.PREF_IMMEDIATE))
+        composeRule.onNodeWithText(uiString(R.string.config_help_immediate))
+            .assertExists()
+            .assertHasNoClickAction()
+    }
+
+    @Test
     fun groupedGamepadPreferencesHaveSeparateVerticalBounds() {
         composeRule.setContent {
             JLModPlusTheme {
