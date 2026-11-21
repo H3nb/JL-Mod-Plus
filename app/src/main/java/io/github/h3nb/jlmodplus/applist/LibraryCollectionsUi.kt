@@ -581,57 +581,57 @@ private fun LibraryCollectionsOverview(
                         contentAlignment = Alignment.Center,
                     ) {
                         LibraryCollectionChoiceRow(
-                        collection = collection,
-                        selected = collection.id == selectedCollectionId,
-                        onClick = { if (currentActive) onOpenCollection(collection.id) },
-                        modifier = Modifier.widthIn(max = 720.dp)
-                            .padding(horizontal = 16.dp, vertical = 2.dp),
-                        trailingContent = {
-                            Box {
-                                IconButton(onClick = { if (currentActive) actionsTarget = collection }) {
-                                    Icon(
-                                        painter = painterResource(R.drawable.ic_more_vert),
-                                        contentDescription = stringResource(
-                                            R.string.library_collection_more_actions, collection.name,
-                                        ),
-                                    )
+                            collection = collection,
+                            selected = collection.id == selectedCollectionId,
+                            onClick = { if (currentActive) onOpenCollection(collection.id) },
+                            modifier = Modifier.widthIn(max = 720.dp)
+                                .padding(horizontal = 16.dp, vertical = 2.dp),
+                            trailingContent = {
+                                Box {
+                                    IconButton(onClick = { if (currentActive) actionsTarget = collection }) {
+                                        Icon(
+                                            painter = painterResource(R.drawable.ic_more_vert),
+                                            contentDescription = stringResource(
+                                                R.string.library_collection_more_actions, collection.name,
+                                            ),
+                                        )
+                                    }
+                                    DropdownMenu(
+                                        expanded = active && actionsTarget?.id == collection.id,
+                                        onDismissRequest = { actionsTarget = null },
+                                    ) {
+                                        DropdownMenuItem(
+                                            text = { Text(stringResource(R.string.action_context_rename)) },
+                                            leadingIcon = {
+                                                Icon(painterResource(R.drawable.ic_edit), contentDescription = null)
+                                            },
+                                            onClick = {
+                                                actionsTarget = null
+                                                renameTarget = collection
+                                            },
+                                        )
+                                        DropdownMenuItem(
+                                            text = {
+                                                Text(
+                                                    stringResource(R.string.action_context_delete),
+                                                    color = MaterialTheme.colorScheme.error,
+                                                )
+                                            },
+                                            leadingIcon = {
+                                                Icon(
+                                                    painterResource(R.drawable.ic_delete),
+                                                    contentDescription = null,
+                                                    tint = MaterialTheme.colorScheme.error,
+                                                )
+                                            },
+                                            onClick = {
+                                                actionsTarget = null
+                                                deleteTarget = collection
+                                            },
+                                        )
+                                    }
                                 }
-                                DropdownMenu(
-                                    expanded = active && actionsTarget?.id == collection.id,
-                                    onDismissRequest = { actionsTarget = null },
-                                ) {
-                                    DropdownMenuItem(
-                                        text = { Text(stringResource(R.string.action_context_rename)) },
-                                        leadingIcon = {
-                                            Icon(painterResource(R.drawable.ic_edit), contentDescription = null)
-                                        },
-                                        onClick = {
-                                            actionsTarget = null
-                                            renameTarget = collection
-                                        },
-                                    )
-                                    DropdownMenuItem(
-                                        text = {
-                                            Text(
-                                                stringResource(R.string.action_context_delete),
-                                                color = MaterialTheme.colorScheme.error,
-                                            )
-                                        },
-                                        leadingIcon = {
-                                            Icon(
-                                                painterResource(R.drawable.ic_delete),
-                                                contentDescription = null,
-                                                tint = MaterialTheme.colorScheme.error,
-                                            )
-                                        },
-                                        onClick = {
-                                            actionsTarget = null
-                                            deleteTarget = collection
-                                        },
-                                    )
-                                }
-                            }
-                        },
+                            },
                         )
                     }
                 }
