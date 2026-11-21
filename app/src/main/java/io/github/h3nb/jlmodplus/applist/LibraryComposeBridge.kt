@@ -463,6 +463,8 @@ class LibraryComposeController(
     private var controllerEventSequence = 0L
     private var nextProjectionRevision = 0L
     private var pendingBundleExport by mutableStateOf<LibraryBundleExportHandler?>(null)
+    private var pendingJarExport by mutableStateOf<Runnable?>(null)
+    private var pendingJarExportIsBulk by mutableStateOf(false)
     private var state by mutableStateOf(
         LibraryUiState(
             layout = initialLayout,
@@ -495,18 +497,36 @@ class LibraryComposeController(
                 )
                 pendingBundleExport?.let { request ->
                     BundleComponentsDialog(
-                        onDismiss = { pendingBundleExport = null },
+                        onDismiss = {
+                            pendingBundleExport = null
+                            pendingJarExport = null
+                        },
                         onConfirm = { options ->
                             pendingBundleExport = null
+                            pendingJarExport = null
                             request.onExport(options)
                         },
+                        onJarOnly = pendingJarExport?.let { runnable ->
+                            {
+                                pendingBundleExport = null
+                                pendingJarExport = null
+                                runnable.run()
+                            }
+                        },
+                        jarOnlyIsBulk = pendingJarExportIsBulk,
                     )
                 }
             }
         }
     }
 
-    fun showBundleOptions(onExport: LibraryBundleExportHandler) {
+    fun showBundleOptions(
+        onExport: LibraryBundleExportHandler,
+        onJarOnly: Runnable,
+        jarOnlyIsBulk: Boolean,
+    ) {
+        pendingJarExport = onJarOnly
+        pendingJarExportIsBulk = jarOnlyIsBulk
         pendingBundleExport = onExport
     }
 
@@ -656,6 +676,8 @@ class LibraryComposeController(
 private fun BundleComponentsDialog(
     onDismiss: () -> Unit,
     onConfirm: (LibraryBundleComponents) -> Unit,
+    onJarOnly: (() -> Unit)? = null,
+    jarOnlyIsBulk: Boolean = false,
 ) {
     var config by remember { mutableStateOf(false) }
     var saveData by remember { mutableStateOf(false) }
@@ -692,7 +714,17 @@ private fun BundleComponentsDialog(
             }) { Text(stringResource(R.string.library_bundle_export)) }
         },
         dismissButton = {
-            TextButton(onClick = onDismiss) { Text(stringResource(android.R.string.cancel)) }
+            Row {
+                if (onJarOnly != null) {
+                    TextButton(onClick = onJarOnly) {
+                        Text(stringResource(
+                            if (jarOnlyIsBulk) R.string.library_export_jars_only
+                            else R.string.library_export_jar_only,
+                        ))
+                    }
+                }
+                TextButton(onClick = onDismiss) { Text(stringResource(android.R.string.cancel)) }
+            }
         },
     )
 }
