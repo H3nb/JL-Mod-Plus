@@ -263,11 +263,16 @@ This readability choice follows [W3C guidance on one-sided text alignment](https
   `onPrimaryContainer` for active/selected states, and `error` for destructive
   actions. A setting shortcut that *reports* an enabled value is not itself an
   active toggle.
-- Use the base surface for pages, low/container surfaces for cards and groups,
-  and higher surfaces for modal layers. Prefer tonal separation over multiple
-  outlines, gradients, or colored shadows. Runtime Quick Actions uses the
-  ordinary solid Material 3 dialog surface across Android 6+, without fake
-  glass, version-dependent window blur, or decorative borders. Keep the game
+- Use the base surface for pages, `surfaceContainerLow` for cards and option
+  tiles, and `surfaceContainer` for app-owned dialogs, with
+  `onSurface` for primary dialog text and `onSurfaceVariant` for supporting
+  text. Use `primaryContainer`/`onPrimaryContainer` for selected tiles and
+  presets; avoid mixing a different selection family into one flow. The shared
+  adaptive dialog uses `titleLarge`, the same extra-large shape and neutral
+  surface as standalone grid dialogs, and no extra tonal elevation. Prefer
+  tonal separation over decorative borders, gradients, or shadows.
+  Runtime Quick Actions uses the same solid Material 3 dialog across
+  Android 6+, without fake glass or version-dependent window blur. Keep the game
   behind the menu visible through normal modal dimming, without sampling or
   blurring its framebuffer. An actual backdrop-blur effect would require
   separate renderer-independent capture/compositing work on older devices;
