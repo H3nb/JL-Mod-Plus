@@ -1147,7 +1147,7 @@ internal fun runtimeMenuNextFocus(
 }
 
 internal fun runtimeMenuGridColumns(widthDp: Float, fontScale: Float, count: Int): Int {
-    val minTileWidth = 116f * fontScale.coerceAtLeast(1f)
+    val minTileWidth = 104f * fontScale.coerceAtLeast(1f)
     return ((widthDp + 8f) / (minTileWidth + 8f)).toInt().coerceIn(1, 4)
         .coerceAtMost(count.coerceAtLeast(1))
 }
@@ -1181,33 +1181,35 @@ private fun RuntimeActionTile(
         border = if (focused) BorderStroke(2.dp, colors.primary) else null,
     ) {
         Column(
-            modifier = Modifier.fillMaxWidth().heightIn(min = 112.dp).padding(12.dp),
-            verticalArrangement = Arrangement.SpaceBetween,
+            modifier = Modifier.fillMaxWidth().heightIn(min = 80.dp).padding(10.dp),
+            verticalArrangement = Arrangement.spacedBy(8.dp),
         ) {
-            Icon(
-                painter = painterResource(entry.icon),
-                contentDescription = null,
-                modifier = Modifier.size(24.dp),
-                tint = if (active) colors.primary else colors.onSurfaceVariant,
-            )
-            Column(verticalArrangement = Arrangement.spacedBy(4.dp)) {
-                Text(
-                    text = stringResource(entry.displayLabel),
-                    style = MaterialTheme.typography.labelLarge,
-                    fontWeight = FontWeight.Medium,
-                    color = foreground,
+            Row(
+                modifier = Modifier.fillMaxWidth(),
+                horizontalArrangement = Arrangement.SpaceBetween,
+                verticalAlignment = Alignment.CenterVertically,
+            ) {
+                Icon(
+                    painter = painterResource(entry.icon),
+                    contentDescription = null,
+                    modifier = Modifier.size(22.dp),
+                    tint = if (active) colors.primary else colors.onSurfaceVariant,
                 )
-                entry.checked?.let { checked ->
+                if (active) {
                     Text(
-                        text = stringResource(
-                            if (checked) R.string.runtime_action_on else R.string.runtime_action_off,
-                        ),
-                        style = MaterialTheme.typography.labelSmall,
-                        color = if (checked) colors.primary else colors.onSurfaceVariant,
+                        text = "✓",
+                        color = colors.primary,
+                        style = MaterialTheme.typography.labelLarge,
                         modifier = Modifier.clearAndSetSemantics {},
                     )
                 }
             }
+            Text(
+                text = stringResource(entry.displayLabel),
+                style = MaterialTheme.typography.labelLarge,
+                fontWeight = FontWeight.Medium,
+                color = foreground,
+            )
         }
     }
 }
@@ -1216,31 +1218,33 @@ private fun RuntimeActionTile(
 private fun RuntimeExitTile(entry: RuntimeMenuEntry, focused: Boolean) {
     val colors = MaterialTheme.colorScheme
     val accessibleLabel = stringResource(entry.label)
-    Surface(
-        modifier = Modifier.fillMaxWidth()
-            .then(if (focused) Modifier.testTag("runtime-controller-focus-indicator") else Modifier)
-            .semantics { contentDescription = accessibleLabel }
-            .clickable(role = Role.Button, onClick = entry.activate),
-        shape = MaterialTheme.shapes.large,
-        color = colors.surfaceContainerHighest,
-        border = if (focused) BorderStroke(2.dp, colors.primary) else null,
-    ) {
-        Row(
-            modifier = Modifier.fillMaxWidth().heightIn(min = 56.dp).padding(horizontal = 16.dp, vertical = 12.dp),
-            verticalAlignment = Alignment.CenterVertically,
-            horizontalArrangement = Arrangement.spacedBy(12.dp),
+    Row(modifier = Modifier.fillMaxWidth(), horizontalArrangement = Arrangement.End) {
+        Surface(
+            modifier = Modifier
+                .then(if (focused) Modifier.testTag("runtime-controller-focus-indicator") else Modifier)
+                .semantics { contentDescription = accessibleLabel }
+                .clickable(role = Role.Button, onClick = entry.activate),
+            shape = MaterialTheme.shapes.large,
+            color = colors.surfaceContainerHighest,
+            border = if (focused) BorderStroke(2.dp, colors.primary) else null,
         ) {
-            Icon(
-                painter = painterResource(entry.icon),
-                contentDescription = null,
-                tint = colors.onSurfaceVariant,
-                modifier = Modifier.size(24.dp),
-            )
-            Text(
-                text = stringResource(entry.displayLabel),
-                style = MaterialTheme.typography.labelLarge,
-                fontWeight = FontWeight.Medium,
-            )
+            Row(
+                modifier = Modifier.heightIn(min = 48.dp).padding(horizontal = 16.dp, vertical = 10.dp),
+                verticalAlignment = Alignment.CenterVertically,
+                horizontalArrangement = Arrangement.spacedBy(8.dp),
+            ) {
+                Icon(
+                    painter = painterResource(entry.icon),
+                    contentDescription = null,
+                    tint = colors.onSurfaceVariant,
+                    modifier = Modifier.size(20.dp),
+                )
+                Text(
+                    text = stringResource(entry.displayLabel),
+                    style = MaterialTheme.typography.labelLarge,
+                    fontWeight = FontWeight.Medium,
+                )
+            }
         }
     }
 }
