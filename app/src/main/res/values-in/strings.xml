@@ -691,6 +691,9 @@
         <item quantity="other">%1$d aplikasi pustaka yang dipilih sudah tidak tersedia.</item>
     </plurals>
 
+    <string name="config_search_title">Cari pengaturan</string>
+    <string name="config_search_hint">Cari opsi, mis. MMPX atau orientasi</string>
+    <string name="config_search_no_results">Tidak ada pengaturan yang cocok</string>
     <string name="config_display_more">Teks dan performa</string>
     <string name="config_display_performance_summary">Frame rate dan overlay performa</string>
     <string name="config_destination_home">Utama</string>
