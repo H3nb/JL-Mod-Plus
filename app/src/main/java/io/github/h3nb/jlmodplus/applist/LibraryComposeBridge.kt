@@ -5004,14 +5004,16 @@ internal fun AppActionsDialog(
 
     if (useSheet && LocalInspectionMode.current) {
         Surface(
-            color = MaterialTheme.colorScheme.surfaceContainerLow,
+            color = MaterialTheme.colorScheme.surfaceContainer,
+            contentColor = MaterialTheme.colorScheme.onSurface,
             shape = MaterialTheme.shapes.extraLarge,
         ) { body() }
     } else if (useSheet) {
         ModalBottomSheet(
             onDismissRequest = onDismiss,
             sheetState = rememberModalBottomSheetState(skipPartiallyExpanded = true),
-            containerColor = MaterialTheme.colorScheme.surfaceContainerLow,
+            containerColor = MaterialTheme.colorScheme.surfaceContainer,
+            contentColor = MaterialTheme.colorScheme.onSurface,
         ) {
             body()
         }
@@ -5020,8 +5022,6 @@ internal fun AppActionsDialog(
             textScrollable = false,
             onControllerKeyEvent = dialogControllerKeyEvent,
             onDismissRequest = onDismiss,
-            shape = MaterialTheme.shapes.extraLarge,
-            containerColor = MaterialTheme.colorScheme.surfaceContainerHigh,
             text = body,
             confirmButton = null,
         )
