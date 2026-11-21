@@ -437,6 +437,14 @@
     <string name="library_collection_delete_confirmation">Hapus koleksi “%1$s”? Aplikasi di dalamnya tetap terpasang.</string>
     <string name="library_collection_rename_action">Ubah nama koleksi %1$s</string>
     <string name="library_collection_delete_action">Hapus koleksi %1$s</string>
+    <string name="library_collection_select_action">Pilih koleksi %1$s</string>
+    <string name="library_collection_open_action">Buka koleksi %1$s</string>
+    <string name="library_collection_rename_selected">Ubah nama koleksi terpilih</string>
+    <string name="library_collection_delete_selected">Hapus koleksi terpilih</string>
+    <plurals name="library_collection_delete_many_confirmation">
+        <item quantity="one">Hapus %d koleksi? Aplikasi di dalamnya tetap terpasang.</item>
+        <item quantity="other">Hapus %d koleksi? Aplikasi di dalamnya tetap terpasang.</item>
+    </plurals>
     <string name="library_notifications_title">Notifikasi</string>
     <string name="library_notifications_empty_title">Belum ada notifikasi</string>
     <string name="library_notifications_empty_summary">Pembaruan dan notifikasi MIDlet akan muncul di sini saat tersedia.</string>
