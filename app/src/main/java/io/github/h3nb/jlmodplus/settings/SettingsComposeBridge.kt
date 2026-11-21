@@ -179,6 +179,7 @@ fun SettingsScreen(
     var infoDialog by remember { mutableStateOf<LibraryInfoDialog?>(null) }
     val context = LocalContext.current
     val updates = remember(context) { UpdateRepository.get(context) }
+    val settingsListState = rememberLazyListState()
 
     BackHandler(enabled = infoDialog != null) { infoDialog = null }
     BackHandler(enabled = page != SettingsPage.Main && infoDialog == null) {
@@ -223,6 +224,7 @@ fun SettingsScreen(
     ) { padding ->
         Box(modifier = Modifier.fillMaxSize()) {
             LazyColumn(
+                state = settingsListState,
                 modifier = Modifier
                     .align(Alignment.TopCenter)
                     .fillMaxWidth()
@@ -298,6 +300,21 @@ fun SettingsScreen(
                         onCheckedChange = { checked -> actions.onToggle(setting.key, checked) },
                     )
                 }
+                if (state.experimentalSwitches.isNotEmpty()) {
+                    settingsSection(
+                        key = "experimental",
+                        title = R.string.pref_category_experimental,
+                        rowCount = state.experimentalSwitches.size,
+                        rowKey = { state.experimentalSwitches[it].key },
+                        rowType = { SettingsItemType.Switch },
+                    ) { index ->
+                        val setting = state.experimentalSwitches[index]
+                        SettingsSwitchRow(
+                            setting = setting,
+                            onCheckedChange = { checked -> actions.onToggle(setting.key, checked) },
+                        )
+                    }
+                }
                 settingsSection(
                     key = "storage-and-profiles",
                     title = R.string.settings_section_storage_profiles,
@@ -316,21 +333,6 @@ fun SettingsScreen(
                             title = stringResource(R.string.preset_manage),
                             summary = stringResource(R.string.settings_profiles_summary),
                             onClick = actions::onOpenProfiles,
-                        )
-                    }
-                }
-                if (state.experimentalSwitches.isNotEmpty()) {
-                    settingsSection(
-                        key = "experimental",
-                        title = R.string.pref_category_experimental,
-                        rowCount = state.experimentalSwitches.size,
-                        rowKey = { state.experimentalSwitches[it].key },
-                        rowType = { SettingsItemType.Switch },
-                    ) { index ->
-                        val setting = state.experimentalSwitches[index]
-                        SettingsSwitchRow(
-                            setting = setting,
-                            onCheckedChange = { checked -> actions.onToggle(setting.key, checked) },
                         )
                     }
                 }
