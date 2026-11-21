@@ -2097,6 +2097,13 @@ internal fun LibraryAppsDestination(
     onManageCollections: () -> Unit = {},
     onOpenSearch: () -> Unit = {},
     onOpenGlobalSettings: () -> Unit = {},
+    searchActive: Boolean = false,
+    searchQuery: String = "",
+    onSearchQueryChange: (String) -> Unit = {},
+    onCloseSearch: () -> Unit = {},
+    searchApps: List<LibraryAppUiItem> = state.apps,
+    searchAppsPrepared: Boolean = true,
+    resolveUiId: (Long) -> Int? = { null },
     title: String? = null,
     onBack: (() -> Unit)? = null,
     showQuickViews: Boolean = true,
@@ -2107,6 +2114,41 @@ internal fun LibraryAppsDestination(
     val sortFocus = remember { FocusRequester() }
     val listState = viewportState.listState
     val gridState = viewportState.gridState
+    val searchListState = rememberLazyListState()
+    val searchGridState = rememberLazyGridState()
+    val matchingApps by produceState<List<LibraryAppUiItem>?>(
+        initialValue = null, searchActive, searchQuery, searchApps, searchAppsPrepared, state.sortVariant,
+    ) {
+        if (!searchActive || searchQuery.isBlank() || !searchAppsPrepared) return@produceState
+        value = withContext(Dispatchers.Default) {
+            val context = currentCoroutineContext()
+            projectCollectionApps(
+                rows = searchApps,
+                filter = searchQuery,
+                sortVariant = state.sortVariant,
+                checkActive = { context.ensureActive() },
+            )
+        }
+    }
+    val shownApps = if (searchActive && searchQuery.isNotBlank()) matchingApps else state.apps
+    val visibleApps = shownApps.orEmpty()
+    LaunchedEffect(searchActive, searchQuery) {
+        if (searchActive) {
+            searchListState.scrollToItem(0)
+            searchGridState.scrollToItem(0)
+        }
+    }
+    var savedHeaderOffset by remember(viewportState) { mutableStateOf<Float?>(null) }
+    LaunchedEffect(searchActive) {
+        if (searchActive) {
+            savedHeaderOffset = viewportState.headerOffsetPx.floatValue
+            viewportState.headerOffsetPx.floatValue = 0f
+            viewportState.chromeVisible = true
+        } else {
+            savedHeaderOffset?.let { viewportState.headerOffsetPx.floatValue = it }
+            savedHeaderOffset = null
+        }
+    }
     var sortVisible by remember { mutableStateOf(false) }
     LaunchedEffect(active) {
         if (!active) sortVisible = false
@@ -2235,6 +2277,10 @@ internal fun LibraryAppsDestination(
             onManageCollections = onManageCollections,
             onOpenSearch = onOpenSearch,
             onOpenGlobalSettings = onOpenGlobalSettings,
+            searchActive = searchActive,
+            searchQuery = searchQuery,
+            onSearchQueryChange = onSearchQueryChange,
+            onCloseSearch = onCloseSearch,
             interactive = interactive,
         )
     }
@@ -2242,7 +2288,7 @@ internal fun LibraryAppsDestination(
         viewport = viewportState,
         layout = state.layout,
         headerHeightPx = headerHeightPx,
-        enabled = active && !freezeViewport,
+        enabled = active && !freezeViewport && !searchActive,
         onVisibilityChanged = { visible ->
             activeFabVisibilityChanged(visible)
             activeNavigationVisibilityChanged(visible)
@@ -2264,7 +2310,8 @@ internal fun LibraryAppsDestination(
                     modifier = Modifier
                     .fillMaxSize()
                     .padding(horizontal = LibraryGridHorizontalPadding),
-                    state = if (state.loading || state.errorMessage != null) rememberLazyGridState() else gridState,
+                    state = if (state.loading || state.errorMessage != null) rememberLazyGridState()
+                        else if (searchActive) searchGridState else gridState,
                     contentPadding = scaffoldPadding,
                 ) {
                     item(span = { GridItemSpan(maxLineSpan) }) {
@@ -2286,10 +2333,15 @@ internal fun LibraryAppsDestination(
                         state.loading -> item(span = { GridItemSpan(maxLineSpan) }) {
                             LibraryLoadingState(state)
                         }
-                        state.apps.isEmpty() -> item(span = { GridItemSpan(maxLineSpan) }) {
-                            LibraryEmptyState(state.appliedFilter)
+                        searchActive && searchQuery.isNotBlank() && shownApps == null ->
+                            item(span = { GridItemSpan(maxLineSpan) }) {
+                                Box(Modifier.fillMaxWidth().heightIn(min = 160.dp),
+                                    contentAlignment = Alignment.Center) { CircularProgressIndicator() }
+                            }
+                        visibleApps.isEmpty() -> item(span = { GridItemSpan(maxLineSpan) }) {
+                            LibraryEmptyState(if (searchActive) searchQuery else state.appliedFilter)
                         }
-                        else -> items(state.apps, key = { it.databaseId }) { app ->
+                        else -> items(visibleApps, key = { it.databaseId }) { app ->
                             LibraryGridItem(
                                 app = app,
                                 iconRatio = state.iconRatio,
@@ -2297,9 +2349,20 @@ internal fun LibraryAppsDestination(
                                 enhancedIcons = state.enhancedIcons,
                                 hideTitle = state.hideGridTitles,
                                 gridSpacing = state.gridSpacing.value,
-                                onOpenApp = openApp,
-                                onOpenActions = openActions,
-                                controllerFocused = app.databaseId == controllerFocusedDatabaseId &&
+                                onOpenApp = { id ->
+                                    if (searchActive) {
+                                        val live = resolveUiId(app.databaseId) ?: id.takeIf { it != 0 }
+                                        if (live != null) openApp(live)
+                                    } else openApp(id)
+                                },
+                                onOpenActions = { item ->
+                                    if (searchActive) {
+                                        val live = resolveUiId(app.databaseId) ?: item.id.takeIf { it != 0 }
+                                        if (live != null) openActions(item.copy(id = live))
+                                    } else openActions(item)
+                                },
+                                controllerFocused = !searchActive &&
+                                    app.databaseId == controllerFocusedDatabaseId &&
                                     !selectionState.isActive,
                                 selectionMode = selectionState.isActive,
                                 selected = app.databaseId in selectionState.selectedAppIds,
@@ -2312,7 +2375,8 @@ internal fun LibraryAppsDestination(
         } else {
             LazyColumn(
                 modifier = Modifier.fillMaxSize(),
-                state = if (state.loading || state.errorMessage != null) rememberLazyListState() else listState,
+                state = if (state.loading || state.errorMessage != null) rememberLazyListState()
+                else if (searchActive) searchListState else listState,
                 contentPadding = scaffoldPadding,
             ) {
                 item {
@@ -2330,18 +2394,40 @@ internal fun LibraryAppsDestination(
                 when {
                     state.errorMessage != null -> item { LibraryErrorState(retry) }
                     state.loading -> item { LibraryLoadingState(state) }
-                    state.apps.isEmpty() -> item { LibraryEmptyState(state.appliedFilter) }
-                    else -> items(state.apps, key = { it.databaseId }) { app ->
+                    searchActive && searchQuery.isNotBlank() && shownApps == null ->
+                        item {
+                            Box(Modifier.fillMaxWidth().heightIn(min = 160.dp),
+                                contentAlignment = Alignment.Center) { CircularProgressIndicator() }
+                        }
+                    visibleApps.isEmpty() ->
+                        item { LibraryEmptyState(if (searchActive) searchQuery else state.appliedFilter) }
+                    else -> items(visibleApps, key = { it.databaseId }) { app ->
                         LibraryListItem(
                             app = app,
                             iconRatio = state.iconRatio,
                             iconShape = state.iconShape,
                             enhancedIcons = state.enhancedIcons,
                             showDescription = state.showListDescription,
-                            onOpenApp = openApp,
-                            onOpenActions = openActions,
-                            onFavorite = favoriteApp,
-                            controllerFocused = app.databaseId == controllerFocusedDatabaseId &&
+                            onOpenApp = { id ->
+                                if (searchActive) {
+                                    val live = resolveUiId(app.databaseId) ?: id.takeIf { it != 0 }
+                                    if (live != null) openApp(live)
+                                } else openApp(id)
+                            },
+                            onOpenActions = { item ->
+                                if (searchActive) {
+                                    val live = resolveUiId(app.databaseId) ?: item.id.takeIf { it != 0 }
+                                    if (live != null) openActions(item.copy(id = live))
+                                } else openActions(item)
+                            },
+                            onFavorite = { id, favorite ->
+                                if (searchActive) {
+                                    val live = resolveUiId(app.databaseId) ?: id.takeIf { it != 0 }
+                                    if (live != null) favoriteApp(live, favorite)
+                                } else favoriteApp(id, favorite)
+                            },
+                            controllerFocused = !searchActive &&
+                                app.databaseId == controllerFocusedDatabaseId &&
                                 !selectionState.isActive,
                             favoriteEnabled = state.databaseControlsReady,
                             selectionMode = selectionState.isActive,
