@@ -807,6 +807,8 @@ private fun ScreenGeometrySection(
             keyboardType = KeyboardType.Number,
             onValueChange = { value -> onFormChanged(form.toBuilder().screenPadding(value).build()) },
         )
+    }
+    ConfigSection(title = stringResource(R.string.config_screen_behavior)) {
         if (cutoutAvailable) {
             ConfigSwitchPreference(
                 title = stringResource(R.string.config_avoid_camera_cutout_title),
