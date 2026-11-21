@@ -84,6 +84,13 @@ public class Image {
 	}
 
 	public static Image createImage(int width, int height, int argb) {
+		// 跟随内部分辨率分配：否则游戏把文字画进 1× 缓冲再放大，字形会发虚
+		int scale = Canvas.mutableImageScale(width, height);
+		if (scale > 1) {
+			Bitmap scaled = Bitmap.createBitmap(width * scale, height * scale, Bitmap.Config.ARGB_8888);
+			if (argb != 0) scaled.eraseColor(argb);
+			return new Image(scaled, true, scale);
+		}
 		Bitmap bitmap = Bitmap.createBitmap(width, height, Bitmap.Config.ARGB_8888);
 		if (argb != 0) bitmap.eraseColor(argb);
 		return new Image(bitmap, true);

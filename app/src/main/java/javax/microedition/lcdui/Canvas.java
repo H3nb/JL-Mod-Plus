@@ -171,6 +171,29 @@ public abstract class Canvas extends Displayable {
 	protected int maxHeight;
 	/** Session density only decreases on resize or allocation failure; restart resets it. */
 	private volatile int internalResolutionScale = 1;
+	/** 最近一次生效的内部分辨率倍率；游戏自建可变图片按它分配，避免 1× 缓冲被放大后发虚 */
+	private static volatile int lastInternalResolutionScale = 1;
+
+	/**
+	 * 供 Image.createImage 使用：可变图片也应跟随内部分辨率。
+	 * 画布尚未建立时（游戏在类静态初始化里就建图）退回配置值，而不是固定 1×。
+	 */
+	static int mutableImageScale(int width, int height) {
+		int scale = lastInternalResolutionScale;
+		if (scale <= 1) {
+			try {
+				int requested = settings == null ? 0 : settings.internalResolutionScale;
+				scale = requested > 0 ? requested : 2;
+			} catch (Throwable t) {
+				scale = 1;
+			}
+		}
+		scale = Math.max(1, Math.min(InternalResolution.MAX_SCALE, scale));
+		while (scale > 1 && !InternalResolution.fitsBitmap(width, height, scale)) {
+			scale--;
+		}
+		return scale;
+	}
 	private int lastReportedInternalScale;
 
 	protected final int getInternalResolutionScale() {
@@ -1183,6 +1206,7 @@ public abstract class Canvas extends Displayable {
 				// All allocations precede the GameCanvas rebind. On failure
 				// the previous published and paint buffers remain available.
 				internalResolutionScale = scale;
+				lastInternalResolutionScale = scale;
 				try {
 					onDisplayTargetResized();
 					offscreenCopy = next;
