@@ -262,6 +262,15 @@ enum class LibraryIconShape {
     Square,
 }
 
+enum class LibraryGridIconSize(
+    val minCellWidth: Dp,
+    val maxArtworkSize: Dp,
+) {
+    Small(72.dp, 56.dp),
+    Standard(88.dp, 72.dp),
+    Large(112.dp, 96.dp),
+}
+
 enum class LibraryGridSpacing(
     val value: Dp,
 ) {
@@ -362,6 +371,7 @@ data class LibraryUiState(
     val enhancedIcons: Boolean = true,
     val hideGridTitles: Boolean = false,
     val gridSpacing: LibraryGridSpacing = LibraryGridSpacing.Standard,
+    val gridIconSize: LibraryGridIconSize = LibraryGridIconSize.Standard,
     val sortVariant: Int = 0,
     val quickView: LibraryQuickView = LibraryQuickView.All,
     val databaseControlsReady: Boolean = false,
@@ -453,6 +463,7 @@ class LibraryComposeController(
     initialEnhancedIcons: Boolean,
     initialHideGridTitles: Boolean,
     initialGridSpacing: LibraryGridSpacing,
+    initialGridIconSize: LibraryGridIconSize,
     canAddShortcut: Boolean,
     private val controllerKeyEventHandler: LibraryControllerKeyEventHandler? = null,
 ) {
@@ -473,6 +484,7 @@ class LibraryComposeController(
             enhancedIcons = initialEnhancedIcons,
             hideGridTitles = initialHideGridTitles,
             gridSpacing = initialGridSpacing,
+            gridIconSize = initialGridIconSize,
             sortVariant = initialSortVariant,
             canAddShortcut = canAddShortcut,
         ),
@@ -625,6 +637,7 @@ class LibraryComposeController(
         enhancedIcons: Boolean,
         hideGridTitles: Boolean,
         gridSpacing: LibraryGridSpacing,
+        gridIconSize: LibraryGridIconSize,
     ) {
         state = state.copy(
             layout = layout,
@@ -633,6 +646,7 @@ class LibraryComposeController(
             enhancedIcons = enhancedIcons,
             hideGridTitles = hideGridTitles,
             gridSpacing = gridSpacing,
+            gridIconSize = gridIconSize,
         )
     }
 
@@ -2097,7 +2111,6 @@ internal const val LIBRARY_CHROME_HIDE_DISTANCE_DP = 80f
 internal const val LIBRARY_CHROME_MIN_SCROLL_ROOM_DP = 160f
 private const val LIBRARY_CHROME_ANIMATION_MILLIS = 220
 private const val LIBRARY_RETURN_ANCHOR_SETTLE_FRAMES = 2
-internal val LibraryGridMinCellSize = 88.dp
 internal val LibraryGridHorizontalPadding = 12.dp
 private const val LIBRARY_GRID_ARTWORK_FRACTION = 0.78f
 private val LibraryGridMaxArtworkSize = 72.dp
@@ -2409,7 +2422,7 @@ internal fun LibraryAppsDestination(
             // Compute columns before the outer gutter to preserve the grid density.
             BoxWithConstraints(modifier = Modifier.fillMaxSize()) {
                 LazyVerticalGrid(
-                    columns = GridCells.Fixed((maxWidth / LibraryGridMinCellSize).toInt().coerceAtLeast(1)),
+                    columns = GridCells.Fixed((maxWidth / state.gridIconSize.minCellWidth).toInt().coerceAtLeast(1)),
                     modifier = Modifier
                     .fillMaxSize()
                     .padding(horizontal = LibraryGridHorizontalPadding),
@@ -2456,6 +2469,7 @@ internal fun LibraryAppsDestination(
                                 enhancedIcons = state.enhancedIcons,
                                 hideTitle = state.hideGridTitles,
                                 gridSpacing = state.gridSpacing.value,
+                                gridIconSize = state.gridIconSize,
                                 onOpenApp = { id ->
                                     if (searchActive) {
                                         val live = resolveUiId(app.databaseId) ?: id.takeIf { it != 0 }
@@ -3447,6 +3461,7 @@ private fun LibraryGridItem(
     enhancedIcons: Boolean,
     hideTitle: Boolean,
     gridSpacing: Dp,
+    gridIconSize: LibraryGridIconSize,
 ) {
     val selectionDescription = stringResource(
         R.string.library_selection_checkbox_description,
@@ -3511,6 +3526,7 @@ private fun LibraryGridItem(
                 iconRatio = iconRatio,
                 iconShape = iconShape,
                 enhancedIcons = enhancedIcons,
+                maxArtworkSize = gridIconSize.maxArtworkSize,
             )
             if (selectionMode) {
                 Checkbox(
@@ -4506,6 +4522,7 @@ internal fun LibraryIconSlot(
     iconRatio: LibraryIconRatio,
     iconShape: LibraryIconShape = LibraryIconShape.Round,
     enhancedIcons: Boolean = true,
+    maxArtworkSize: Dp = LibraryGridMaxArtworkSize,
 ) {
     val slotModifier = modifier.aspectRatio(iconRatio.widthToHeight)
     if (contentSize != null) {
@@ -4516,7 +4533,7 @@ internal fun LibraryIconSlot(
         BoxWithConstraints(modifier = slotModifier) {
             val artworkSize = minOf(
                 maxWidth * LIBRARY_GRID_ARTWORK_FRACTION,
-                LibraryGridMaxArtworkSize,
+                maxArtworkSize,
             )
             LibraryIconSlotContent(app, artworkSize, iconRatio, iconShape, enhancedIcons)
         }

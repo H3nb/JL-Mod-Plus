@@ -163,7 +163,13 @@
     <string name="library_icon_shape_title">Icon shape</string>
     <string name="library_icon_shape_round">Rounded corners</string>
     <string name="library_icon_shape_square">Sharp corners</string>
+    <string name="library_grid_icon_size_title" tools:ignore="MissingTranslation">Grid icon size</string>
+    <string name="library_grid_icon_size_small" tools:ignore="MissingTranslation">Small</string>
+    <string name="library_grid_icon_size_standard" tools:ignore="MissingTranslation">Standard</string>
+    <string name="library_grid_icon_size_large" tools:ignore="MissingTranslation">Large</string>
+    <string name="library_grid_icon_size_summary" tools:ignore="MissingTranslation">Changes icon size and column count in Grid view.</string>
     <string name="library_grid_spacing_title">Grid spacing</string>
+    <string name="library_grid_spacing_summary" tools:ignore="MissingTranslation">Only applies to Grid view.</string>
     <string name="library_grid_spacing_none">None (0 dp)</string>
     <string name="library_grid_spacing_compact">Compact (4 dp)</string>
     <string name="library_grid_spacing_standard">Standard (8 dp)</string>
@@ -941,7 +947,7 @@
     <string name="library_metadata_reset_to_original">Reset to original</string>
     <string name="library_metadata_save">Save</string>
 
-    <string name="library_hide_grid_titles_summary">Show only MIDlet icons in grid view.</string>
+    <string name="library_hide_grid_titles_summary">Hide MIDlet names in Grid view. List view keeps them visible.</string>
     <string name="library_show_list_description_summary">Show each MIDlet description below its title and version.</string>
 
     <string name="library_indexing_progress">Indexing the Library… %1$d/%2$d</string>

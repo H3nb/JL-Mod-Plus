@@ -21,6 +21,7 @@ import static io.github.h3nb.jlmodplus.util.Constants.PREF_EMULATOR_DIR;
 import static io.github.h3nb.jlmodplus.util.Constants.PREF_ACCENT;
 import static io.github.h3nb.jlmodplus.util.Constants.PREF_APPS_ENHANCED_ICONS;
 import static io.github.h3nb.jlmodplus.util.Constants.PREF_APPS_GRID_SPACING;
+import static io.github.h3nb.jlmodplus.util.Constants.PREF_APPS_GRID_ICON_SIZE;
 import static io.github.h3nb.jlmodplus.util.Constants.PREF_APPS_HIDE_GRID_TITLES;
 import static io.github.h3nb.jlmodplus.util.Constants.PREF_APPS_ICON_RATIO;
 import static io.github.h3nb.jlmodplus.util.Constants.PREF_APPS_ICON_SHAPE;
@@ -31,6 +32,9 @@ import static io.github.h3nb.jlmodplus.util.Constants.PREF_THEME;
 import static io.github.h3nb.jlmodplus.util.Constants.PREF_TOOLBAR;
 import static io.github.h3nb.jlmodplus.util.Constants.PREF_STATUSBAR;
 import static io.github.h3nb.jlmodplus.util.Constants.PREF_VIBRATION;
+import static io.github.h3nb.jlmodplus.util.Constants.LIBRARY_GRID_ICON_SIZE_SMALL;
+import static io.github.h3nb.jlmodplus.util.Constants.LIBRARY_GRID_ICON_SIZE_STANDARD;
+import static io.github.h3nb.jlmodplus.util.Constants.LIBRARY_GRID_ICON_SIZE_LARGE;
 import static io.github.h3nb.jlmodplus.util.Constants.LIBRARY_GRID_SPACING_COMPACT;
 import static io.github.h3nb.jlmodplus.util.Constants.LIBRARY_GRID_SPACING_NONE;
 import static io.github.h3nb.jlmodplus.util.Constants.LIBRARY_GRID_SPACING_SPACIOUS;
@@ -186,6 +190,12 @@ public class SettingsActivity extends AppCompatActivity {
 						editor.putInt(PREF_APPS_ICON_SHAPE,
 								"square".equals(value)
 										? LIBRARY_ICON_SHAPE_SQUARE : LIBRARY_ICON_SHAPE_ROUND);
+						break;
+					case PREF_APPS_GRID_ICON_SIZE:
+						editor.putInt(PREF_APPS_GRID_ICON_SIZE,
+								"small".equals(value) ? LIBRARY_GRID_ICON_SIZE_SMALL
+										: "large".equals(value) ? LIBRARY_GRID_ICON_SIZE_LARGE
+										: LIBRARY_GRID_ICON_SIZE_STANDARD);
 						break;
 					case PREF_APPS_GRID_SPACING:
 						editor.putInt(PREF_APPS_GRID_SPACING, gridSpacingValue(value));
@@ -368,8 +378,6 @@ public class SettingsActivity extends AppCompatActivity {
 
 	private List<SettingsChoice> buildLibraryChoices() {
 		List<SettingsChoice> choices = new ArrayList<>();
-		boolean gridView = preferences.getInt(PREF_APPS_VIEW, LIBRARY_LAYOUT_LIST)
-				== LIBRARY_LAYOUT_GRID;
 		List<SettingsOption> ratioOptions = Arrays.asList(
 				new SettingsOption("square", getString(R.string.library_icon_ratio_square)),
 				new SettingsOption("portrait", getString(R.string.library_icon_ratio_portrait)));
@@ -391,43 +399,54 @@ public class SettingsActivity extends AppCompatActivity {
 				findOption(shapeOptions,
 						preferences.getInt(PREF_APPS_ICON_SHAPE, LIBRARY_ICON_SHAPE_ROUND)
 								== LIBRARY_ICON_SHAPE_SQUARE ? "square" : "round",
-						shapeOptions.get(0)),
+							shapeOptions.get(0)),
 				shapeOptions));
 
-		if (gridView) {
-			List<SettingsOption> spacingOptions = Arrays.asList(
-					new SettingsOption("none", getString(R.string.library_grid_spacing_none)),
-					new SettingsOption("compact", getString(R.string.library_grid_spacing_compact)),
-					new SettingsOption("standard", getString(R.string.library_grid_spacing_standard)),
-					new SettingsOption("spacious", getString(R.string.library_grid_spacing_spacious)));
-			choices.add(new SettingsChoice(
-					PREF_APPS_GRID_SPACING,
-					getString(R.string.library_grid_spacing_title),
-					findOption(spacingOptions,
-							gridSpacingKey(preferences.getInt(
-									PREF_APPS_GRID_SPACING, LIBRARY_GRID_SPACING_STANDARD)),
-							spacingOptions.get(2)),
-					spacingOptions));
-		}
+		List<SettingsOption> iconSizes = Arrays.asList(
+				new SettingsOption("small", getString(R.string.library_grid_icon_size_small)),
+				new SettingsOption("standard", getString(R.string.library_grid_icon_size_standard)),
+				new SettingsOption("large", getString(R.string.library_grid_icon_size_large)));
+		int storedIconSize = preferences.getInt(
+				PREF_APPS_GRID_ICON_SIZE, LIBRARY_GRID_ICON_SIZE_STANDARD);
+		choices.add(new SettingsChoice(
+				PREF_APPS_GRID_ICON_SIZE,
+				getString(R.string.library_grid_icon_size_title),
+				findOption(iconSizes,
+						storedIconSize == LIBRARY_GRID_ICON_SIZE_SMALL ? "small"
+								: storedIconSize == LIBRARY_GRID_ICON_SIZE_LARGE ? "large" : "standard",
+						iconSizes.get(1)),
+				iconSizes,
+				getString(R.string.library_grid_icon_size_summary)));
+
+		List<SettingsOption> spacingOptions = Arrays.asList(
+				new SettingsOption("none", getString(R.string.library_grid_spacing_none)),
+				new SettingsOption("compact", getString(R.string.library_grid_spacing_compact)),
+				new SettingsOption("standard", getString(R.string.library_grid_spacing_standard)),
+				new SettingsOption("spacious", getString(R.string.library_grid_spacing_spacious)));
+		choices.add(new SettingsChoice(
+				PREF_APPS_GRID_SPACING,
+				getString(R.string.library_grid_spacing_title),
+				findOption(spacingOptions,
+						gridSpacingKey(preferences.getInt(
+								PREF_APPS_GRID_SPACING, LIBRARY_GRID_SPACING_STANDARD)),
+						spacingOptions.get(2)),
+				spacingOptions,
+				getString(R.string.library_grid_spacing_summary)));
 		return choices;
 	}
 
 	private List<SettingsSwitch> buildLibrarySwitches() {
-		boolean gridView = preferences.getInt(PREF_APPS_VIEW, LIBRARY_LAYOUT_LIST)
-				== LIBRARY_LAYOUT_GRID;
 		List<SettingsSwitch> switches = new ArrayList<>();
 		switches.add(new SettingsSwitch(
 				PREF_APPS_ENHANCED_ICONS,
 				getString(R.string.library_enhanced_icons_title),
 				getString(R.string.library_enhanced_icons_summary),
 				preferences.getBoolean(PREF_APPS_ENHANCED_ICONS, true)));
-		if (gridView) {
-			switches.add(new SettingsSwitch(
-					PREF_APPS_HIDE_GRID_TITLES,
-					getString(R.string.library_hide_grid_titles),
-					getString(R.string.library_hide_grid_titles_summary),
-					preferences.getBoolean(PREF_APPS_HIDE_GRID_TITLES, false)));
-		}
+		switches.add(new SettingsSwitch(
+				PREF_APPS_HIDE_GRID_TITLES,
+				getString(R.string.library_hide_grid_titles),
+				getString(R.string.library_hide_grid_titles_summary),
+				preferences.getBoolean(PREF_APPS_HIDE_GRID_TITLES, false)));
 		return switches;
 	}
 

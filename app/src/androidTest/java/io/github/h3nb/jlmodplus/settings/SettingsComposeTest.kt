@@ -175,118 +175,54 @@ class SettingsComposeTest {
     }
 
     @Test
-    fun gridOnlyLibraryOptionsAreNotShownInListMode() {
-        val gridState = sampleState().copy(
+    fun gridSettingsStayDiscoverableAndConfigurableWithoutGridMode() {
+        val actions = RecordingSettingsActions()
+        val state = sampleState().copy(
             libraryChoices = listOf(
+                SettingsChoice(
+                    key = "pref_apps_grid_icon_size",
+                    title = uiString(R.string.library_grid_icon_size_title),
+                    selected = SettingsOption("standard", uiString(R.string.library_grid_icon_size_standard)),
+                    options = listOf(
+                        SettingsOption("small", uiString(R.string.library_grid_icon_size_small)),
+                        SettingsOption("standard", uiString(R.string.library_grid_icon_size_standard)),
+                        SettingsOption("large", uiString(R.string.library_grid_icon_size_large)),
+                    ),
+                    summary = uiString(R.string.library_grid_icon_size_summary),
+                ),
                 SettingsChoice(
                     key = "pref_apps_grid_spacing",
                     title = uiString(R.string.library_grid_spacing_title),
-                    selected = SettingsOption("standard", "Standard (8 dp)"),
-                    options = listOf(SettingsOption("standard", "Standard (8 dp)")),
+                    selected = SettingsOption("standard", uiString(R.string.library_grid_spacing_standard)),
+                    options = listOf(SettingsOption("standard", uiString(R.string.library_grid_spacing_standard))),
+                    summary = uiString(R.string.library_grid_spacing_summary),
                 ),
             ),
             librarySwitches = listOf(
-                SettingsSwitch("pref_apps_enhanced_icons", uiString(R.string.library_enhanced_icons_title), null, true),
-                SettingsSwitch("pref_apps_hide_grid_titles", uiString(R.string.library_hide_grid_titles), null, false),
+                SettingsSwitch(
+                    key = "pref_apps_hide_grid_titles",
+                    title = uiString(R.string.library_hide_grid_titles),
+                    summary = uiString(R.string.library_hide_grid_titles_summary),
+                    checked = false,
+                ),
             ),
         )
-        setSettingsContent(state = gridState, actions = RecordingSettingsActions())
+        setSettingsContent(state = state, actions = actions)
+
+        scrollSettingsTo(uiString(R.string.library_grid_icon_size_title))
+        composeRule.onNodeWithText(uiString(R.string.library_grid_icon_size_summary))
+            .assertIsDisplayed()
+        composeRule.onNodeWithText(uiString(R.string.library_grid_icon_size_title)).performClick()
+        composeRule.onNodeWithText(uiString(R.string.library_grid_icon_size_large)).performClick()
 
         scrollSettingsTo(uiString(R.string.library_grid_spacing_title))
-        composeRule.onNodeWithText(uiString(R.string.library_grid_spacing_title)).assertIsDisplayed()
+        composeRule.onNodeWithText(uiString(R.string.library_grid_spacing_summary)).assertIsDisplayed()
         scrollSettingsTo(uiString(R.string.library_hide_grid_titles))
-        composeRule.onNodeWithText(uiString(R.string.library_hide_grid_titles)).assertIsDisplayed()
-        composeRule.onNodeWithText(uiString(R.string.library_show_list_description)).assertDoesNotExist()
-    }
+        composeRule.onNodeWithText(uiString(R.string.library_hide_grid_titles_summary)).assertIsDisplayed()
+        composeRule.onNodeWithText(uiString(R.string.library_hide_grid_titles)).performClick()
 
-    @Test
-    fun listLibraryOptionsExcludeGridOnlyChoices() {
-        val listState = sampleState().copy(
-            libraryChoices = emptyList(),
-            librarySwitches = listOf(
-                SettingsSwitch("pref_apps_enhanced_icons", uiString(R.string.library_enhanced_icons_title), null, true),
-
-            ),
-        )
-        setSettingsContent(state = listState, actions = RecordingSettingsActions())
-
-        composeRule.onNodeWithText(uiString(R.string.library_show_list_description)).assertDoesNotExist()
-        composeRule.onNodeWithText(uiString(R.string.library_grid_spacing_title)).assertDoesNotExist()
-        composeRule.onNodeWithText(uiString(R.string.library_hide_grid_titles)).assertDoesNotExist()
-    }
-
-    @Test
-    fun conditionalLibraryRowsKeepTheVisibleStorageRowAnchored() {
-        val iconRatioChoice = SettingsChoice(
-            key = "pref_apps_icon_ratio",
-            title = uiString(R.string.library_icon_ratio_title),
-            selected = SettingsOption("square", "1:1"),
-            options = listOf(
-                SettingsOption("square", "1:1"),
-                SettingsOption("portrait", "3:4"),
-            ),
-        )
-        val state = mutableStateOf(
-            sampleState().copy(
-                libraryChoices = listOf(iconRatioChoice),
-                librarySwitches = listOf(
-                    SettingsSwitch(
-                        "pref_apps_enhanced_icons",
-                        uiString(R.string.library_enhanced_icons_title),
-                        null,
-                        true,
-                    ),
-                ),
-                // Keep enough content below Storage to scroll that row to the leading edge.
-                experimentalSwitches = List(20) { index ->
-                    SettingsSwitch("experimental-$index", "Experimental option $index", null, false)
-                },
-            ),
-        )
-        val actions = RecordingSettingsActions()
-        composeRule.setContent {
-            DeviceConfigurationOverride(
-                DeviceConfigurationOverride.WindowSize(DpSize(480.dp, 240.dp)),
-            ) {
-                JLModPlusTheme {
-                    SettingsScreen(state = state.value, actions = actions)
-                }
-            }
-        }
-
-        val storageTitle = uiString(R.string.pref_emulator_dir)
-        scrollSettingsTo(storageTitle)
-        val storageRow = composeRule.onNode(hasText(storageTitle) and hasClickAction())
-        storageRow.assertIsDisplayed()
-        val originalTop = storageRow.fetchSemanticsNode().boundsInRoot.top
-
-        composeRule.runOnIdle {
-            state.value = state.value.copy(
-                libraryChoices = listOf(
-                    iconRatioChoice.copy(selected = SettingsOption("portrait", "3:4")),
-                    SettingsChoice(
-                        key = "pref_apps_grid_spacing",
-                        title = uiString(R.string.library_grid_spacing_title),
-                        selected = SettingsOption("standard", "Standard (8 dp)"),
-                        options = listOf(SettingsOption("standard", "Standard (8 dp)")),
-                    ),
-                ),
-                librarySwitches = listOf(
-                    SettingsSwitch(
-                        "pref_apps_hide_grid_titles",
-                        uiString(R.string.library_hide_grid_titles),
-                        null,
-                        false,
-                    ),
-                ),
-            )
-        }
-
-        storageRow.assertIsDisplayed()
-        // Lazy scroll offsets are rounded to whole pixels when preceding rows change.
-        assertEquals(originalTop, storageRow.fetchSemanticsNode().boundsInRoot.top, 1f)
-        storageRow.performClick()
-        assertEquals(1, actions.directoryClicks)
+        assertEquals(listOf("pref_apps_grid_icon_size=large"), actions.libraryChoices)
+        assertEquals(listOf("pref_apps_hide_grid_titles=true"), actions.toggles)
     }
 
     @Test

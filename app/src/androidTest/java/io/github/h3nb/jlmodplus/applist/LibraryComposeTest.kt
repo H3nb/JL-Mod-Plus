@@ -953,6 +953,54 @@ class LibraryComposeTest {
     }
 
     @Test
+    fun gridIconSizePresetsChangeTileDensityWithoutChangingListLayout() {
+        val state = mutableStateOf(
+            LibraryUiState(
+                loading = false,
+                layout = LibraryLayout.Grid,
+                gridIconSize = LibraryGridIconSize.Small,
+                apps = List(8) { index ->
+                    LibraryAppUiItem(index + 1, "App $index", "Vendor", "1.0", null, true)
+                },
+                databaseControlsReady = true,
+            ),
+        )
+        composeRule.setContent {
+            DeviceConfigurationOverride(DeviceConfigurationOverride.WindowSize(DpSize(360.dp, 640.dp))) {
+                JLModPlusTheme {
+                    LibraryScreen(state = state.value, actions = RecordingLibraryActions())
+                }
+            }
+        }
+
+        val smallWidth = composeRule.onNodeWithText("App 0")
+            .fetchSemanticsNode().boundsInRoot.width
+        composeRule.runOnIdle {
+            state.value = state.value.copy(gridIconSize = LibraryGridIconSize.Large)
+        }
+        composeRule.waitForIdle()
+        val largeWidth = composeRule.onNodeWithText("App 0")
+            .fetchSemanticsNode().boundsInRoot.width
+        assertTrue(largeWidth > smallWidth)
+
+        composeRule.runOnIdle {
+            state.value = state.value.copy(layout = LibraryLayout.List)
+        }
+        composeRule.waitForIdle()
+        val listWidth = composeRule.onNodeWithText("App 0")
+            .fetchSemanticsNode().boundsInRoot.width
+        composeRule.runOnIdle {
+            state.value = state.value.copy(gridIconSize = LibraryGridIconSize.Small)
+        }
+        composeRule.waitForIdle()
+        assertEquals(
+            listWidth,
+            composeRule.onNodeWithText("App 0").fetchSemanticsNode().boundsInRoot.width,
+            1f,
+        )
+    }
+
+    @Test
     fun gridLayoutSwitchCanReturnToList() {
         val actions = RecordingLibraryActions()
         setLibraryContent(

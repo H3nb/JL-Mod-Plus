@@ -21,6 +21,7 @@
 package io.github.h3nb.jlmodplus.applist;
 
 import static io.github.h3nb.jlmodplus.util.Constants.PREF_APPS_GRID_SPACING;
+import static io.github.h3nb.jlmodplus.util.Constants.PREF_APPS_GRID_ICON_SIZE;
 import static io.github.h3nb.jlmodplus.util.Constants.PREF_APPS_HIDE_GRID_TITLES;
 import static io.github.h3nb.jlmodplus.util.Constants.PREF_APPS_ICON_RATIO;
 import static io.github.h3nb.jlmodplus.util.Constants.PREF_APPS_ICON_SHAPE;
@@ -28,6 +29,9 @@ import static io.github.h3nb.jlmodplus.util.Constants.PREF_APPS_ENHANCED_ICONS;
 import static io.github.h3nb.jlmodplus.util.Constants.PREF_APPS_VIEW;
 import static io.github.h3nb.jlmodplus.util.Constants.PREF_APP_SORT;
 import static io.github.h3nb.jlmodplus.util.Constants.PREF_LAST_PATH;
+import static io.github.h3nb.jlmodplus.util.Constants.LIBRARY_GRID_ICON_SIZE_SMALL;
+import static io.github.h3nb.jlmodplus.util.Constants.LIBRARY_GRID_ICON_SIZE_STANDARD;
+import static io.github.h3nb.jlmodplus.util.Constants.LIBRARY_GRID_ICON_SIZE_LARGE;
 import static io.github.h3nb.jlmodplus.util.Constants.LIBRARY_GRID_SPACING_COMPACT;
 import static io.github.h3nb.jlmodplus.util.Constants.LIBRARY_GRID_SPACING_NONE;
 import static io.github.h3nb.jlmodplus.util.Constants.LIBRARY_GRID_SPACING_SPACIOUS;
@@ -251,6 +255,7 @@ public class AppsListFragment extends Fragment {
                 preferences.getBoolean(PREF_APPS_ENHANCED_ICONS, true),
                 preferences.getBoolean(PREF_APPS_HIDE_GRID_TITLES, false),
                 gridSpacing,
+                readGridIconSize(),
                 ShortcutManagerCompat.isRequestPinShortcutSupported(requireContext()),
                 new LibraryControllerKeyEventHandler() {
                     @Override
@@ -332,11 +337,24 @@ public class AppsListFragment extends Fragment {
                         ? LibraryIconShape.Square : LibraryIconShape.Round,
                 preferences.getBoolean(PREF_APPS_ENHANCED_ICONS, true),
                 preferences.getBoolean(PREF_APPS_HIDE_GRID_TITLES, false),
-                gridSpacing);
+                gridSpacing,
+                readGridIconSize());
+    }
+
+    private LibraryGridIconSize readGridIconSize() {
+        switch (preferences.getInt(PREF_APPS_GRID_ICON_SIZE, LIBRARY_GRID_ICON_SIZE_STANDARD)) {
+            case LIBRARY_GRID_ICON_SIZE_SMALL:
+                return LibraryGridIconSize.Small;
+            case LIBRARY_GRID_ICON_SIZE_LARGE:
+                return LibraryGridIconSize.Large;
+            default:
+                return LibraryGridIconSize.Standard;
+        }
     }
 
     private static boolean isLibraryAppearancePreference(String key) {
         return PREF_APPS_VIEW.equals(key)
+                || PREF_APPS_GRID_ICON_SIZE.equals(key)
                 || PREF_APPS_ICON_RATIO.equals(key)
                 || PREF_APPS_ICON_SHAPE.equals(key)
                 || PREF_APPS_ENHANCED_ICONS.equals(key)

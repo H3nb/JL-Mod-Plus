@@ -94,11 +94,12 @@ data class SettingsOption(
     val label: String,
 )
 
-data class SettingsChoice(
+data class SettingsChoice @JvmOverloads constructor(
     val key: String,
     val title: String,
     val selected: SettingsOption,
     val options: List<SettingsOption>,
+    val summary: String? = null,
 )
 
 data class SettingsSwitch @JvmOverloads constructor(
@@ -281,6 +282,7 @@ fun SettingsScreen(
                             SettingsChoiceRow(
                                 title = choice.title,
                                 selected = choice.selected,
+                                summary = choice.summary,
                                 onClick = { libraryChoiceDialog = choice },
                             )
                         } else {
@@ -556,6 +558,7 @@ private fun SettingsChoiceRow(
     title: String,
     selected: SettingsOption,
     showAccentPreview: Boolean = false,
+    summary: String? = null,
     onClick: () -> Unit,
 ) {
     Row(
@@ -574,6 +577,13 @@ private fun SettingsChoiceRow(
                 text = title,
                 style = MaterialTheme.typography.bodyLarge,
             )
+            if (summary != null) {
+                Text(
+                    text = summary,
+                    style = MaterialTheme.typography.bodySmall,
+                    color = MaterialTheme.colorScheme.onSurfaceVariant,
+                )
+            }
             Text(
                 text = selected.label,
                 color = MaterialTheme.colorScheme.onSurface,
