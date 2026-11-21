@@ -3616,7 +3616,12 @@ private fun LibraryListItem(
                 }
             }
             .heightIn(min = 80.dp)
-            .padding(start = 12.dp, end = 0.dp, top = 10.dp, bottom = 10.dp),
+            .padding(
+                start = 12.dp,
+                end = if (selectionMode) 16.dp else 0.dp,
+                top = 10.dp,
+                bottom = 10.dp,
+            ),
         verticalAlignment = Alignment.CenterVertically,
     ) {
         LibraryIconSlot(
