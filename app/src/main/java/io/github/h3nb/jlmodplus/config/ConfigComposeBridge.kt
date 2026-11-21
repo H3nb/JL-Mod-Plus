@@ -294,10 +294,10 @@ data class EncodingPickerRequest(
 )
 
 internal enum class ConfigDestination(val label: Int, val icon: Int) {
-    Basic(R.string.config_destination_general, R.drawable.ic_config_general),
+    Basic(R.string.config_destination_home, R.drawable.ic_config_general),
     Display(R.string.config_destination_graphics, R.drawable.ic_config_graphics),
-    Media(R.string.config_destination_media, R.drawable.ic_config_media),
     Controls(R.string.config_destination_controls, R.drawable.ic_config_controls),
+    Media(R.string.config_destination_media, R.drawable.ic_config_media),
     System(R.string.config_destination_system, R.drawable.ic_settings),
 }
 
@@ -532,6 +532,7 @@ internal fun ConfigScreen(
                                                 onOpenShaders = {
                                                     renderingSubpage = RenderingSubpage.SHADERS
                                                 },
+                                                onNavigate = selectDestination,
                                                 onUsePreset = { presetPickerVisible = true },
                                                 onSavePreset = { savePresetVisible = true },
                                                 modifier = Modifier.widthIn(max = 880.dp),
@@ -669,6 +670,7 @@ private fun ConfigDestinationContent(
     onRequestAction: (ConfigAction) -> Unit,
     onEditSystemProperties: () -> Unit,
     onOpenShaders: () -> Unit,
+    onNavigate: (ConfigDestination) -> Unit,
     onUsePreset: () -> Unit,
     onSavePreset: () -> Unit,
     modifier: Modifier = Modifier,
@@ -678,16 +680,14 @@ private fun ConfigDestinationContent(
             ConfigDestination.Basic -> GeneralDestination(
                 state = state,
                 form = form,
-                onFormChanged = onFormChanged,
                 events = events,
                 onUsePreset = onUsePreset,
                 onSavePreset = onSavePreset,
                 showPresetSummary = !isProfile,
-                showClearData = !isProfile,
-                cutoutAvailable = cutoutAvailable,
-                onRequestAction = onRequestAction,
+                onNavigate = onNavigate,
             )
             ConfigDestination.Display -> {
+                ScreenGeometrySection(state, form, onFormChanged, events, cutoutAvailable)
                 ScreenSection(form, state, onFormChanged, events, onOpenShaders)
                 FontSection(form, state, onFormChanged)
                 PerformanceSection(form, onFormChanged)
@@ -696,15 +696,13 @@ private fun ConfigDestinationContent(
                 AudioSection(form, state, onFormChanged, events)
                 CameraSection(form, onFormChanged)
             }
-            ConfigDestination.Controls -> InputSection(
-                form,
-                state,
-                onFormChanged,
-                events,
-                onRequestAction,
-            )
+            ConfigDestination.Controls -> {
+                ConfigBasicInputSection(form, onFormChanged)
+                InputSection(form, state, onFormChanged, events, onRequestAction)
+            }
             ConfigDestination.System -> {
                 SystemSection(state, form, onFormChanged, events, !isProfile, onEditSystemProperties)
+                ConfigMaintenanceSection(!isProfile, onRequestAction)
             }
         }
     }
@@ -728,16 +726,12 @@ private fun deviceHasDisplayCutout(density: androidx.compose.ui.unit.Density): B
 private fun GeneralDestination(
     state: ConfigUiState,
     form: ConfigFormState,
-    onFormChanged: (ConfigFormState) -> Unit,
     events: ConfigFormEvents,
     onUsePreset: () -> Unit,
     onSavePreset: () -> Unit,
     showPresetSummary: Boolean,
-    showClearData: Boolean,
-    cutoutAvailable: Boolean,
-    onRequestAction: (ConfigAction) -> Unit,
+    onNavigate: (ConfigDestination) -> Unit,
 ) {
-    var presetsDialogVisible by rememberSaveable { mutableStateOf(false) }
     if (showPresetSummary) {
         PresetSummary(
             state = state,
@@ -745,7 +739,51 @@ private fun GeneralDestination(
             onSavePreset = onSavePreset,
             events = events,
         )
+    } else {
+        ConfigSection(title = stringResource(R.string.config_overview_profile_draft)) {
+            Text(
+                text = stringResource(R.string.config_overview_profile_draft_summary),
+                modifier = Modifier.padding(horizontal = 16.dp, vertical = 12.dp),
+                style = MaterialTheme.typography.bodyMedium,
+                color = MaterialTheme.colorScheme.onSurfaceVariant,
+            )
+        }
     }
+    ConfigSection(title = stringResource(R.string.config_overview_quick_access)) {
+        ConfigCompactValuePreference(
+            title = stringResource(R.string.config_destination_graphics),
+            value = "${form.screenWidth} × ${form.screenHeight}",
+            onClick = { onNavigate(ConfigDestination.Display) },
+        )
+        ConfigCompactValuePreference(
+            title = stringResource(R.string.config_destination_controls),
+            value = stringResource(if (form.showKeyboard) R.string.config_overview_enabled
+                else R.string.config_overview_disabled),
+            onClick = { onNavigate(ConfigDestination.Controls) },
+        )
+        ConfigCompactValuePreference(
+            title = stringResource(R.string.config_destination_media),
+            value = stringResource(R.string.config_overview_media_summary),
+            onClick = { onNavigate(ConfigDestination.Media) },
+        )
+    }
+    Text(
+        text = stringResource(R.string.config_overview_hint),
+        modifier = Modifier.padding(horizontal = 12.dp, vertical = 4.dp),
+        style = MaterialTheme.typography.bodySmall,
+        color = MaterialTheme.colorScheme.onSurfaceVariant,
+    )
+}
+
+@Composable
+private fun ScreenGeometrySection(
+    state: ConfigUiState,
+    form: ConfigFormState,
+    onFormChanged: (ConfigFormState) -> Unit,
+    events: ConfigFormEvents,
+    cutoutAvailable: Boolean,
+) {
+    var presetsDialogVisible by rememberSaveable { mutableStateOf(false) }
     ConfigSection(title = stringResource(R.string.config_basic_display)) {
         ConfigValuePreference(
             title = stringResource(R.string.config_screen_size),
@@ -819,42 +857,6 @@ private fun GeneralDestination(
             },
         )
     }
-    ConfigSection(title = stringResource(R.string.config_basic_input)) {
-        ConfigSwitchPreference(
-            title = stringResource(R.string.PREF_VIRTUAL_KEYBOARD_OPTIONS),
-            description = stringResource(R.string.config_help_virtual_keyboard),
-            checked = form.showKeyboard,
-            onCheckedChange = { checked ->
-                onFormChanged(form.toBuilder().showKeyboard(checked).build())
-            },
-        )
-        ConfigSwitchPreference(
-            title = stringResource(R.string.PREF_TOUCH_INPUT),
-            description = stringResource(R.string.config_help_touch_input),
-            checked = form.touchInput,
-            onCheckedChange = { checked ->
-                onFormChanged(form.toBuilder().touchInput(checked).build())
-            },
-        )
-    }
-    ConfigSection(title = stringResource(R.string.config_maintenance)) {
-        ConfigActionPreference(
-            title = stringResource(R.string.config_reset_all_settings),
-            description = stringResource(R.string.config_reset_all_settings_summary),
-            destructive = true,
-            testTag = "config_reset_settings_action",
-            onClick = { onRequestAction(ConfigAction.ResetSettings) },
-        )
-        if (showClearData) {
-            ConfigActionPreference(
-                title = stringResource(R.string.config_delete_app_data),
-                description = stringResource(R.string.config_delete_app_data_summary),
-                destructive = true,
-                testTag = "config_clear_data_action",
-                onClick = { onRequestAction(ConfigAction.ClearData) },
-            )
-        }
-    }
     if (presetsDialogVisible) {
         val selectedPreset = form.screenWidth.toIntOrNull()?.let { width ->
             form.screenHeight.toIntOrNull()?.let { height -> Size(width, height) }
@@ -885,6 +887,57 @@ private fun GeneralDestination(
             onAdd = events::onAddResolutionPreset,
             onRemove = events::onRemoveResolutionPreset,
         )
+    }
+}
+
+
+@Composable
+private fun ConfigBasicInputSection(
+    form: ConfigFormState,
+    onFormChanged: (ConfigFormState) -> Unit,
+) {
+    ConfigSection(title = stringResource(R.string.config_basic_input)) {
+        ConfigSwitchPreference(
+            title = stringResource(R.string.PREF_VIRTUAL_KEYBOARD_OPTIONS),
+            description = stringResource(R.string.config_help_virtual_keyboard),
+            checked = form.showKeyboard,
+            onCheckedChange = { checked ->
+                onFormChanged(form.toBuilder().showKeyboard(checked).build())
+            },
+        )
+        ConfigSwitchPreference(
+            title = stringResource(R.string.PREF_TOUCH_INPUT),
+            description = stringResource(R.string.config_help_touch_input),
+            checked = form.touchInput,
+            onCheckedChange = { checked ->
+                onFormChanged(form.toBuilder().touchInput(checked).build())
+            },
+        )
+    }
+}
+
+@Composable
+private fun ConfigMaintenanceSection(
+    showClearData: Boolean,
+    onRequestAction: (ConfigAction) -> Unit,
+) {
+    ConfigSection(title = stringResource(R.string.config_maintenance)) {
+        ConfigActionPreference(
+            title = stringResource(R.string.config_reset_all_settings),
+            description = stringResource(R.string.config_reset_all_settings_summary),
+            destructive = true,
+            testTag = "config_reset_settings_action",
+            onClick = { onRequestAction(ConfigAction.ResetSettings) },
+        )
+        if (showClearData) {
+            ConfigActionPreference(
+                title = stringResource(R.string.config_delete_app_data),
+                description = stringResource(R.string.config_delete_app_data_summary),
+                destructive = true,
+                testTag = "config_clear_data_action",
+                onClick = { onRequestAction(ConfigAction.ClearData) },
+            )
+        }
     }
 }
 
