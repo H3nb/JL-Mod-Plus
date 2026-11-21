@@ -5077,7 +5077,7 @@ internal fun AppActionsDialog(
     var moreExpanded by rememberSaveable(app.databaseId) { mutableStateOf(false) }
     val listState = key(app.databaseId, moreExpanded) { rememberLazyListState() }
     val sheetFocusRequester = remember { FocusRequester() }
-    LaunchedEffect(useSheet) {
+    LaunchedEffect(useSheet, moreExpanded) {
         if (useSheet) {
             withFrameNanos { }
             sheetFocusRequester.requestFocus()
