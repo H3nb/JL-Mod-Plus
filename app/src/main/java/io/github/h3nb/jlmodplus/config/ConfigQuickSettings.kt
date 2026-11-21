@@ -15,7 +15,6 @@ import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.heightIn
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.size
-import androidx.compose.foundation.layout.widthIn
 import androidx.compose.material3.Icon
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Surface
@@ -111,10 +110,12 @@ internal fun ConfigQuickSettings(
                         Icon(
                             painter = painterResource(
                                 when (setting) {
-                                    QuickSetting.Resolution, QuickSetting.Orientation,
-                                    QuickSetting.Scale -> R.drawable.ic_config_graphics
-                                    QuickSetting.Renderer, QuickSetting.Fps -> R.drawable.ic_settings
-                                    QuickSetting.VirtualKeys -> R.drawable.ic_config_controls
+                                    QuickSetting.Resolution -> R.drawable.ic_config_graphics
+                                    QuickSetting.Orientation -> R.drawable.ic_screen_lock_rotation
+                                    QuickSetting.Scale -> R.drawable.ic_auto_mode
+                                    QuickSetting.Renderer -> R.drawable.ic_settings
+                                    QuickSetting.VirtualKeys -> R.drawable.ic_virtual_controls
+                                    QuickSetting.Fps -> R.drawable.ic_runtime_fps
                                 },
                             ),
                             contentDescription = null,
