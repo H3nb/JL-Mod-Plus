@@ -133,7 +133,12 @@ enum class AccentPalette(val key: String) {
         }
     }
 
-    fun previewColor(dark: Boolean, context: Context? = null): Color = colorScheme(dark, context).primary
+    fun previewColor(dark: Boolean, context: Context? = null): Color {
+        if (this == Wallpaper && context != null && Build.VERSION.SDK_INT >= Build.VERSION_CODES.S) {
+            return colorScheme(dark, context).primary
+        }
+        return if (dark) tones().dark.primary else tones().light.primary
+    }
 }
 
 private data class AccentRoles(
