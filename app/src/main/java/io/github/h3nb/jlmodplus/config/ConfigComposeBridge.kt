@@ -1024,9 +1024,8 @@ private fun ConfigSearchResults(
         R.string.pref_map_keys, R.string.PREF_TIMING_MODE,
     )
     val filtered = configSearchIndex.filter { entry ->
-        if (isProfile && entry.title in listOf(
-                R.string.config_reset_all_settings, R.string.config_delete_app_data,
-            )) return@filter false
+        if (isProfile && entry.destination == ConfigDestination.Basic &&
+                entry.title != R.string.config_reset_profile_settings) return@filter false
         if (!isProfile && entry.title == R.string.config_reset_profile_settings) return@filter false
         if (query.isBlank()) entry.title in suggestions
         else resources.getString(entry.title).contains(query.trim(), ignoreCase = true) ||
