@@ -649,6 +649,12 @@ private fun SettingsChoiceRow(
     }
 }
 
+private enum class SettingsDialogChoice {
+    Theme,
+    Accent,
+    Language,
+}
+
 @Composable
 private fun SettingsChoiceDialog(
     title: String,
