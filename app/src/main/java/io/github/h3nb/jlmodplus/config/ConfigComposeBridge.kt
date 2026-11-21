@@ -307,21 +307,23 @@ internal enum class ConfigAction(val title: Int, val message: Int) {
     ResetLayout(R.string.RESET_LAYOUT_CMD, R.string.message_reset_layout),
 }
 
+private enum class ConfigDetail { Font, Performance }
+
 private sealed interface ConfigPage {
     data object Main : ConfigPage
     data object SystemProperties : ConfigPage
+    data class Detail(val type: ConfigDetail) : ConfigPage
     data class Rendering(val subpage: RenderingSubpage) : ConfigPage
 }
 
 private fun ConfigPage.depth(): Int = when (this) {
     ConfigPage.Main -> 0
-    ConfigPage.SystemProperties -> 1
-    is ConfigPage.Rendering -> 1
+    ConfigPage.SystemProperties, is ConfigPage.Detail, is ConfigPage.Rendering -> 1
 }
 
 private fun ConfigPage.siblingOrder(): Int = when (this) {
     is ConfigPage.Rendering -> subpage.ordinal
-    ConfigPage.Main, ConfigPage.SystemProperties -> 0
+    ConfigPage.Main, ConfigPage.SystemProperties, is ConfigPage.Detail -> 0
 }
 
 @Composable
@@ -356,6 +358,7 @@ internal fun ConfigScreen(
     var systemPropertiesEditorVisible by rememberSaveable { mutableStateOf(false) }
     var systemPropertiesSession by rememberSaveable { mutableIntStateOf(0) }
     var renderingSubpage by rememberSaveable { mutableStateOf<RenderingSubpage?>(null) }
+    var detailPage by rememberSaveable { mutableStateOf<ConfigDetail?>(null) }
     val backRendering: () -> Unit = { renderingSubpage = null }
     var presetPickerVisible by rememberSaveable { mutableStateOf(false) }
     var savePresetVisible by rememberSaveable { mutableStateOf(false) }
@@ -366,6 +369,8 @@ internal fun ConfigScreen(
     val requestBack = {
         if (renderingSubpage != null) {
             backRendering()
+        } else if (detailPage != null) {
+            detailPage = null
         } else if (systemPropertiesEditorVisible) {
             systemPropertiesEditorVisible = false
         } else if (isProfile && menuActions?.hasUnsavedProfileChanges() == true) {
@@ -376,7 +381,8 @@ internal fun ConfigScreen(
         }
     }
     // Only in-app navigation and profile drafts consume Back; the root Activity uses system Back.
-    BackHandler(enabled = renderingSubpage != null || systemPropertiesEditorVisible || isProfile) {
+    BackHandler(enabled = renderingSubpage != null || detailPage != null ||
+        systemPropertiesEditorVisible || isProfile) {
         requestBack()
     }
 
@@ -406,6 +412,7 @@ internal fun ConfigScreen(
 
     val currentPage = when {
         renderingSubpage != null -> ConfigPage.Rendering(requireNotNull(renderingSubpage))
+        detailPage != null -> ConfigPage.Detail(requireNotNull(detailPage))
         systemPropertiesEditorVisible -> ConfigPage.SystemProperties
         else -> ConfigPage.Main
     }
@@ -429,6 +436,15 @@ internal fun ConfigScreen(
             ),
         ) {
             when (shownPage) {
+                is ConfigPage.Detail -> {
+                    ConfigDetailPage(
+                        detail = shownPage.type,
+                        form = form,
+                        state = state,
+                        onFormChanged = updateForm,
+                        onBack = { detailPage = null },
+                    )
+                }
                 is ConfigPage.Rendering -> {
                     RenderingSettingsPage(
                         state = state,
@@ -533,6 +549,7 @@ internal fun ConfigScreen(
                                                     renderingSubpage = RenderingSubpage.SHADERS
                                                 },
                                                 onNavigate = selectDestination,
+                                                onOpenDetail = { detailPage = it },
                                                 onUsePreset = { presetPickerVisible = true },
                                                 onSavePreset = { savePresetVisible = true },
                                                 modifier = Modifier.widthIn(max = 880.dp),
@@ -671,6 +688,7 @@ private fun ConfigDestinationContent(
     onEditSystemProperties: () -> Unit,
     onOpenShaders: () -> Unit,
     onNavigate: (ConfigDestination) -> Unit,
+    onOpenDetail: (ConfigDetail) -> Unit,
     onUsePreset: () -> Unit,
     onSavePreset: () -> Unit,
     modifier: Modifier = Modifier,
@@ -689,8 +707,19 @@ private fun ConfigDestinationContent(
             ConfigDestination.Display -> {
                 ScreenGeometrySection(state, form, onFormChanged, events, cutoutAvailable)
                 ScreenSection(form, state, onFormChanged, events, onOpenShaders)
-                FontSection(form, state, onFormChanged)
-                PerformanceSection(form, onFormChanged)
+                ConfigSection(title = stringResource(R.string.config_display_more)) {
+                    ConfigCompactValuePreference(
+                        title = stringResource(R.string.config_display_text),
+                        value = stringResource(R.string.config_font_sizes_value,
+                            form.fontSizeSmall, form.fontSizeMedium, form.fontSizeLarge),
+                        onClick = { onOpenDetail(ConfigDetail.Font) },
+                    )
+                    ConfigCompactValuePreference(
+                        title = stringResource(R.string.config_display_performance),
+                        value = stringResource(R.string.config_display_performance_summary),
+                        onClick = { onOpenDetail(ConfigDetail.Performance) },
+                    )
+                }
             }
             ConfigDestination.Media -> {
                 AudioSection(form, state, onFormChanged, events)
@@ -937,6 +966,55 @@ private fun ConfigMaintenanceSection(
                 testTag = "config_clear_data_action",
                 onClick = { onRequestAction(ConfigAction.ClearData) },
             )
+        }
+    }
+}
+
+@OptIn(ExperimentalMaterial3Api::class)
+@Composable
+private fun ConfigDetailPage(
+    detail: ConfigDetail,
+    form: ConfigFormState,
+    state: ConfigUiState,
+    onFormChanged: (ConfigFormState) -> Unit,
+    onBack: () -> Unit,
+) {
+    Scaffold(
+        contentWindowInsets = WindowInsets.safeDrawing,
+        topBar = {
+            TopAppBar(
+                title = {
+                    Text(stringResource(
+                        if (detail == ConfigDetail.Font) R.string.config_display_text
+                        else R.string.config_display_performance,
+                    ))
+                },
+                navigationIcon = {
+                    IconButton(onClick = onBack) {
+                        Icon(
+                            painterResource(R.drawable.ic_arrow_back),
+                            contentDescription = stringResource(R.string.action_back),
+                        )
+                    }
+                },
+            )
+        },
+    ) { padding ->
+        Column(
+            modifier = Modifier.fillMaxSize().padding(padding)
+                .consumeWindowInsets(padding).verticalScroll(rememberScrollState())
+                .padding(horizontal = 12.dp, vertical = 8.dp),
+            horizontalAlignment = Alignment.CenterHorizontally,
+        ) {
+            Column(
+                modifier = Modifier.widthIn(max = 880.dp),
+                verticalArrangement = Arrangement.spacedBy(12.dp),
+            ) {
+                when (detail) {
+                    ConfigDetail.Font -> FontSection(form, state, onFormChanged)
+                    ConfigDetail.Performance -> PerformanceSection(form, onFormChanged)
+                }
+            }
         }
     }
 }
