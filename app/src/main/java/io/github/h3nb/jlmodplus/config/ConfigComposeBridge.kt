@@ -2354,8 +2354,11 @@ private fun CompatibilitySection(
         )
         ConfigSwitchPreference(
             title = stringResource(R.string.PREF_IMMEDIATE),
-            description = stringResource(R.string.config_help_immediate),
+            description = if (form.immediateMode) null
+                else stringResource(R.string.config_help_immediate),
             checked = form.immediateMode,
+            message = if (form.immediateMode) stringResource(R.string.config_help_immediate) else null,
+            messageLevel = ConfigMessageLevel.Warning,
             onCheckedChange = { checked -> onFormChanged(form.toBuilder().immediateMode(checked).build()) },
         )
     }
@@ -2569,7 +2572,6 @@ private fun ConfigSystemPropertiesPreference(
             value.lineSequence().count { it.isNotBlank() },
             value.lineSequence().count { it.isNotBlank() },
         ),
-        message = stringResource(R.string.config_system_properties_info),
         onClick = onClick,
     )
 }
