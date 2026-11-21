@@ -798,7 +798,7 @@ fun LibraryScreen(
     var controllerFocusedAppId by rememberSaveable { mutableStateOf<Long?>(null) }
     var controllerFocusedAppIndex by rememberSaveable { mutableIntStateOf(0) }
     val appsViewport = rememberLibraryViewportState(state.libraryScope)
-    // Queries belong to the independent Search surface, not the underlying Library.
+    // Search has a temporary query; the Browse projection must remain independent.
     LaunchedEffect(state.libraryScope, state.appliedFilter) {
         if (state.appliedFilter.isNotEmpty()) actions.onSearch("")
     }
@@ -1478,6 +1478,7 @@ fun LibraryScreen(
                                 .takeIf { controllerFocusVisible },
                             onOpenApp = { id ->
                                 if (searchOpen) {
+                                    searchKeyboard?.hide()
                                     searchOpen = false
                                     searchQuery = ""
                                 }
@@ -1485,6 +1486,7 @@ fun LibraryScreen(
                             },
                             onOpenActions = {
                                 if (searchOpen) {
+                                    searchKeyboard?.hide()
                                     searchOpen = false
                                     searchQuery = ""
                                 }
@@ -1539,6 +1541,7 @@ fun LibraryScreen(
                             searchQuery = searchQuery,
                             onSearchQueryChange = { searchQuery = it },
                             onCloseSearch = {
+                                searchKeyboard?.hide()
                                 searchOpen = false
                                 searchQuery = ""
                             },
@@ -1573,6 +1576,7 @@ fun LibraryScreen(
                                 },
                                 onOpenActions = { app, collectionId ->
                                     if (searchOpen) {
+                                        searchKeyboard?.hide()
                                         searchOpen = false
                                         searchQuery = ""
                                     }
@@ -1595,6 +1599,7 @@ fun LibraryScreen(
                                 searchQuery = searchQuery,
                                 onSearchQueryChange = { searchQuery = it },
                                 onCloseSearch = {
+                                    searchKeyboard?.hide()
                                     searchOpen = false
                                     searchQuery = ""
                                 },
@@ -2746,92 +2751,92 @@ private fun LibraryAppsHeader(
                     autoFocus = interactive,
                 )
             } else {
-            Row(
-                modifier = Modifier
-                    .fillMaxWidth()
-                    .heightIn(min = 56.dp),
-                verticalAlignment = Alignment.CenterVertically,
-            ) {
-                if (selectionState.isActive || onBack != null) {
-                    IconButton(
-                        onClick = if (selectionState.isActive) onExitSelection else requireNotNull(onBack),
-                        enabled = titleActionsEnabled,
-                    ) {
-                        Icon(
-                            painter = painterResource(R.drawable.ic_arrow_back),
-                            contentDescription = stringResource(R.string.library_back),
-                        )
+                Row(
+                    modifier = Modifier
+                        .fillMaxWidth()
+                        .heightIn(min = 56.dp),
+                    verticalAlignment = Alignment.CenterVertically,
+                ) {
+                    if (selectionState.isActive || onBack != null) {
+                        IconButton(
+                            onClick = if (selectionState.isActive) onExitSelection else requireNotNull(onBack),
+                            enabled = titleActionsEnabled,
+                        ) {
+                            Icon(
+                                painter = painterResource(R.drawable.ic_arrow_back),
+                                contentDescription = stringResource(R.string.library_back),
+                            )
+                        }
+                        Spacer(Modifier.width(4.dp))
                     }
-                    Spacer(Modifier.width(4.dp))
-                }
-                when {
-                    selectionState.isActive -> {
-                        Text(
-                            text = pluralStringResource(
-                                R.plurals.library_selection_count,
-                                selectionState.selectedCount,
-                                selectionState.selectedCount,
-                            ),
-                            modifier = Modifier.weight(1f),
-                            style = MaterialTheme.typography.headlineSmall,
-                            maxLines = 1,
-                            overflow = TextOverflow.Ellipsis,
-                        )
+                    when {
+                        selectionState.isActive -> {
+                            Text(
+                                text = pluralStringResource(
+                                    R.plurals.library_selection_count,
+                                    selectionState.selectedCount,
+                                    selectionState.selectedCount,
+                                ),
+                                modifier = Modifier.weight(1f),
+                                style = MaterialTheme.typography.headlineSmall,
+                                maxLines = 1,
+                                overflow = TextOverflow.Ellipsis,
+                            )
+                        }
+                        title != null -> {
+                            Text(
+                                text = title,
+                                modifier = Modifier.weight(1f),
+                                style = MaterialTheme.typography.headlineSmall,
+                                maxLines = 1,
+                                overflow = TextOverflow.Ellipsis,
+                            )
+                        }
+                        else -> {
+                            JlModPlusWordmark(
+                                showDebugMark = BuildConfig.DEBUG,
+                                modifier = Modifier.weight(1f),
+                            )
+                            if (!compactHeaderActions) {
+                                LibraryHeaderActions(
+                                    onOpenSearch = onOpenSearch,
+                                    onOpenSettings = onOpenGlobalSettings,
+                                    enabled = titleActionsEnabled,
+                                )
+                            }
+                        }
                     }
-                    title != null -> {
-                        Text(
-                            text = title,
-                            modifier = Modifier.weight(1f),
-                            style = MaterialTheme.typography.headlineSmall,
-                            maxLines = 1,
-                            overflow = TextOverflow.Ellipsis,
+                    if (selectionState.isActive) {
+                        val allVisibleSelected = remember(projectionKey, selectionState.selectedAppIds) {
+                            selectionState.isAllVisibleSelected(visibleAppIds)
+                        }
+                        val selectionToggleLabel = stringResource(
+                            if (allVisibleSelected) {
+                                R.string.library_selection_unselect_all
+                            } else {
+                                R.string.library_selection_select_all
+                            },
                         )
-                    }
-                    else -> {
-                        JlModPlusWordmark(
-                            showDebugMark = BuildConfig.DEBUG,
-                            modifier = Modifier.weight(1f),
-                        )
-                        if (!compactHeaderActions) {
-                            LibraryHeaderActions(
-                                onOpenSearch = onOpenSearch,
-                                onOpenSettings = onOpenGlobalSettings,
-                                enabled = titleActionsEnabled,
+                        IconButton(
+                            onClick = if (allVisibleSelected) onUnselectAll else onSelectAll,
+                            enabled = visibleAppIds.isNotEmpty() && titleActionsEnabled,
+                            modifier = Modifier.semantics {
+                                contentDescription = selectionToggleLabel
+                            },
+                        ) {
+                            Icon(
+                                painter = painterResource(
+                                    if (allVisibleSelected) {
+                                        R.drawable.ic_deselect
+                                    } else {
+                                        R.drawable.ic_select_all
+                                    },
+                                ),
+                                contentDescription = null,
                             )
                         }
                     }
                 }
-                if (selectionState.isActive) {
-                    val allVisibleSelected = remember(projectionKey, selectionState.selectedAppIds) {
-                        selectionState.isAllVisibleSelected(visibleAppIds)
-                    }
-                    val selectionToggleLabel = stringResource(
-                        if (allVisibleSelected) {
-                            R.string.library_selection_unselect_all
-                        } else {
-                            R.string.library_selection_select_all
-                        },
-                    )
-                    IconButton(
-                        onClick = if (allVisibleSelected) onUnselectAll else onSelectAll,
-                        enabled = visibleAppIds.isNotEmpty() && titleActionsEnabled,
-                        modifier = Modifier.semantics {
-                            contentDescription = selectionToggleLabel
-                        },
-                    ) {
-                        Icon(
-                            painter = painterResource(
-                                if (allVisibleSelected) {
-                                    R.drawable.ic_deselect
-                                } else {
-                                    R.drawable.ic_select_all
-                                },
-                            ),
-                            contentDescription = null,
-                        )
-                    }
-                }
-            }
 
             }
         }

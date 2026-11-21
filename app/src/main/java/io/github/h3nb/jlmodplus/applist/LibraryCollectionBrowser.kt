@@ -99,6 +99,7 @@ import kotlinx.coroutines.launch
 import kotlinx.coroutines.withContext
 import io.github.h3nb.jlmodplus.R
 import io.github.h3nb.jlmodplus.ui.GlassSystemBarScrim
+import io.github.h3nb.jlmodplus.ui.availableWindowWidthDp
 
 /**
  * Collection-specific browser. It mirrors Library List/Grid chrome while collection management and
@@ -127,6 +128,7 @@ internal fun LibraryCollectionBrowser(
     onSetMembership: (Long, Boolean, CollectionMembershipResultCallback) -> Unit,
     onPrepareAppPicker: () -> Unit,
     onSort: (Int) -> Unit,
+    onLayoutChange: (LibraryLayout) -> Unit = {},
     onNavigationVisibilityChanged: (Boolean) -> Unit = {},
     showBackButton: Boolean = true,
     handleSystemBack: Boolean = true,
@@ -293,6 +295,7 @@ internal fun LibraryCollectionBrowser(
             title = collection.name,
             headerOffsetPx = headerOffsetPx,
             sortVariant = libraryState.sortVariant,
+            layout = libraryState.layout,
             sortVisible = interactionActive && sortVisible,
             selectionState = selectionState,
             visibleAppIds = projectedIds,
@@ -325,7 +328,11 @@ internal fun LibraryCollectionBrowser(
             onCloseSearch = onCloseSearch,
             onSortVisibilityChanged = { sortVisible = currentInteractionActive && it },
             onSort = { if (currentInteractionActive) onSort(it) },
-            onManageApps = { setManageApps(true) },
+            onLayoutChange = { if (currentInteractionActive) onLayoutChange(it) },
+            onManageApps = {
+                if (searchActive) onCloseSearch()
+                setManageApps(true)
+            },
             interactive = interactive,
             showBackButton = showBackButton,
         )
@@ -503,6 +510,7 @@ private fun LibraryCollectionHeader(
     title: String,
     headerOffsetPx: MutableFloatState,
     sortVariant: Int,
+    layout: LibraryLayout,
     sortVisible: Boolean,
     selectionState: LibrarySelectionState,
     visibleAppIds: List<Long>,
@@ -517,6 +525,7 @@ private fun LibraryCollectionHeader(
     onCloseSearch: () -> Unit = {},
     onSortVisibilityChanged: (Boolean) -> Unit,
     onSort: (Int) -> Unit,
+    onLayoutChange: (LibraryLayout) -> Unit,
     onManageApps: () -> Unit,
     interactive: Boolean,
     showBackButton: Boolean,
@@ -524,6 +533,8 @@ private fun LibraryCollectionHeader(
     val sortEntries = stringArrayResource(R.array.pref_app_sort_entries).toList()
     val selectedSort = sortVariant and Int.MAX_VALUE
     val ascending = sortVariant >= 0
+    val compactControls = LocalDensity.current.fontScale >= 1.5f &&
+        availableWindowWidthDp() < 400.dp
     val selectionMode = selectionState.isActive
     val allVisibleSelected = remember(selectionMode, visibleAppIds, selectionState.selectedAppIds) {
         selectionMode && selectionState.isAllVisibleSelected(visibleAppIds)
@@ -571,71 +582,71 @@ private fun LibraryCollectionHeader(
                     autoFocus = interactive,
                 )
             } else {
-            Row(
-                modifier = Modifier
-                    .fillMaxWidth()
-                    .heightIn(min = 56.dp),
-                verticalAlignment = Alignment.CenterVertically,
-            ) {
-                if (selectionMode || showBackButton) {
-                    IconButton(
-                        onClick = if (selectionMode) onExitSelection else onBack,
-                        enabled = titleActionsEnabled,
-                    ) {
-                        Icon(
-                            painter = painterResource(R.drawable.ic_arrow_back),
-                            contentDescription = stringResource(R.string.library_back),
-                        )
+                Row(
+                    modifier = Modifier
+                        .fillMaxWidth()
+                        .heightIn(min = 56.dp),
+                    verticalAlignment = Alignment.CenterVertically,
+                ) {
+                    if (selectionMode || showBackButton) {
+                        IconButton(
+                            onClick = if (selectionMode) onExitSelection else onBack,
+                            enabled = titleActionsEnabled,
+                        ) {
+                            Icon(
+                                painter = painterResource(R.drawable.ic_arrow_back),
+                                contentDescription = stringResource(R.string.library_back),
+                            )
+                        }
                     }
-                }
-                Text(
-                    text = if (selectionMode) {
-                        pluralStringResource(
-                            R.plurals.library_selection_count,
-                            selectionState.selectedCount,
-                            selectionState.selectedCount,
-                        )
-                    } else {
-                        title
-                    },
-                    modifier = Modifier.weight(1f),
-                    style = MaterialTheme.typography.headlineSmall,
-                    fontWeight = FontWeight.SemiBold,
-                    maxLines = 1,
-                    overflow = TextOverflow.Ellipsis,
-                )
-                if (selectionMode) {
-                    val toggleLabel = stringResource(
-                        if (allVisibleSelected) {
-                            R.string.library_selection_unselect_all
+                    Text(
+                        text = if (selectionMode) {
+                            pluralStringResource(
+                                R.plurals.library_selection_count,
+                                selectionState.selectedCount,
+                                selectionState.selectedCount,
+                            )
                         } else {
-                            R.string.library_selection_select_all
+                            title
                         },
+                        modifier = Modifier.weight(1f),
+                        style = MaterialTheme.typography.headlineSmall,
+                        fontWeight = FontWeight.SemiBold,
+                        maxLines = 1,
+                        overflow = TextOverflow.Ellipsis,
                     )
-                    TextButton(
-                        onClick = if (allVisibleSelected) onUnselectAll else onSelectAll,
-                        enabled = visibleAppIds.isNotEmpty() && titleActionsEnabled,
-                    ) {
-                        Icon(
-                            painter = painterResource(
-                                if (allVisibleSelected) R.drawable.ic_deselect
-                                else R.drawable.ic_select_all,
-                            ),
-                            contentDescription = null,
-                            modifier = Modifier.size(18.dp),
+                    if (selectionMode) {
+                        val toggleLabel = stringResource(
+                            if (allVisibleSelected) {
+                                R.string.library_selection_unselect_all
+                            } else {
+                                R.string.library_selection_select_all
+                            },
                         )
-                        Spacer(Modifier.width(4.dp))
-                        Text(toggleLabel)
-                    }
-                } else {
-                    IconButton(onClick = onOpenSearch, enabled = titleActionsEnabled) {
-                        Icon(
-                            painter = painterResource(R.drawable.ic_search),
-                            contentDescription = stringResource(R.string.library_search_placeholder),
-                        )
+                        TextButton(
+                            onClick = if (allVisibleSelected) onUnselectAll else onSelectAll,
+                            enabled = visibleAppIds.isNotEmpty() && titleActionsEnabled,
+                        ) {
+                            Icon(
+                                painter = painterResource(
+                                    if (allVisibleSelected) R.drawable.ic_deselect
+                                    else R.drawable.ic_select_all,
+                                ),
+                                contentDescription = null,
+                                modifier = Modifier.size(18.dp),
+                            )
+                            Spacer(Modifier.width(4.dp))
+                            Text(toggleLabel)
+                        }
+                    } else {
+                        IconButton(onClick = onOpenSearch, enabled = titleActionsEnabled) {
+                            Icon(
+                                painter = painterResource(R.drawable.ic_search),
+                                contentDescription = stringResource(R.string.library_search_placeholder),
+                            )
+                        }
                     }
                 }
-            }
 
             }
         }
@@ -648,14 +659,23 @@ private fun LibraryCollectionHeader(
             verticalAlignment = Alignment.CenterVertically,
             horizontalArrangement = Arrangement.spacedBy(8.dp),
         ) {
-            TextButton(onClick = onManageApps, enabled = searchActionsEnabled) {
-                Icon(
-                    painter = painterResource(R.drawable.ic_add_to_collection),
-                    contentDescription = null,
-                    modifier = Modifier.size(18.dp),
-                )
-                Spacer(Modifier.width(4.dp))
-                Text(stringResource(R.string.library_collection_add_apps))
+            if (compactControls) {
+                IconButton(onClick = onManageApps, enabled = searchActionsEnabled) {
+                    Icon(
+                        painter = painterResource(R.drawable.ic_add_to_collection),
+                        contentDescription = stringResource(R.string.library_collection_add_apps),
+                    )
+                }
+            } else {
+                TextButton(onClick = onManageApps, enabled = searchActionsEnabled) {
+                    Icon(
+                        painter = painterResource(R.drawable.ic_add_to_collection),
+                        contentDescription = null,
+                        modifier = Modifier.size(18.dp),
+                    )
+                    Spacer(Modifier.width(4.dp))
+                    Text(stringResource(R.string.library_collection_add_apps))
+                }
             }
             Box {
                 LibrarySortButton(
@@ -674,6 +694,11 @@ private fun LibraryCollectionHeader(
                     },
                 )
             }
+            LibraryLayoutButton(
+                layout = layout,
+                onLayoutChange = onLayoutChange,
+                enabled = searchActionsEnabled,
+            )
         }
     }
 }

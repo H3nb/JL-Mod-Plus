@@ -242,7 +242,8 @@ class LibraryComposeTest {
 
         composeRule.onNodeWithContentDescription(uiString(R.string.library_search_placeholder)).performClick()
         composeRule.onNode(hasSetTextAction()).assertIsDisplayed()
-        composeRule.onNodeWithContentDescription(uiString(R.string.action_settings)).assertDoesNotExist()
+        composeRule.onAllNodesWithContentDescription(uiString(R.string.action_settings))
+            .assertCountEquals(0)
         composeRule.onNode(hasSetTextAction()).performTextInput("Demo")
         composeRule.waitUntil(5_000) {
             composeRule.onAllNodesWithText("Demo MIDlet").fetchSemanticsNodes().isNotEmpty()

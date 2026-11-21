@@ -499,6 +499,7 @@ internal fun LibraryCollectionsDestination(
                                 },
                                 onPrepareAppPicker = host::onPrepareCollectionAppPicker,
                                 onSort = host::onSort,
+                                onLayoutChange = host::onLayoutChange,
                                 onNavigationVisibilityChanged = activeNavigationVisibilityChanged,
                                 showBackButton = showDetailBack,
                                 handleSystemBack = false,
