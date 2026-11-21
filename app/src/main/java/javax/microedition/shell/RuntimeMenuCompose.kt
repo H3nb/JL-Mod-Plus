@@ -1021,12 +1021,10 @@ private fun RuntimeMenuDialog(
 ) {
     val exit = if (virtualKeyboardPage) null else entries.lastOrNull { it.label == R.string.exit }
     val tiles = if (exit == null) entries else entries.dropLast(1)
-    val colors = MaterialTheme.colorScheme
     AlertDialog(
         textScrollable = false,
-        containerColor = colors.surfaceContainerHigh.copy(alpha = 0.96f),
-        border = BorderStroke(1.dp, colors.outlineVariant.copy(alpha = 0.65f)),
-        tonalElevation = 0.dp,
+        containerColor = MaterialTheme.colorScheme.surfaceContainerHigh,
+        blurBehindRadiusPx = 20,
         modifier = Modifier
             .clearNavigationFocusOnTouch { onNavigationFocusChanged(false) }
             .showNavigationFocusForKey { onNavigationFocusChanged(true) },
