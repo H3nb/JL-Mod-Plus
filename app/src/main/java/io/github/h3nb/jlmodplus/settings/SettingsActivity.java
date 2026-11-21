@@ -25,7 +25,6 @@ import static io.github.h3nb.jlmodplus.util.Constants.PREF_APPS_GRID_ICON_SIZE;
 import static io.github.h3nb.jlmodplus.util.Constants.PREF_APPS_HIDE_GRID_TITLES;
 import static io.github.h3nb.jlmodplus.util.Constants.PREF_APPS_ICON_RATIO;
 import static io.github.h3nb.jlmodplus.util.Constants.PREF_APPS_ICON_SHAPE;
-import static io.github.h3nb.jlmodplus.util.Constants.PREF_APPS_VIEW;
 import static io.github.h3nb.jlmodplus.util.Constants.PREF_KEEP_SCREEN;
 import static io.github.h3nb.jlmodplus.util.Constants.PREF_SCREENSHOT_SWITCH;
 import static io.github.h3nb.jlmodplus.util.Constants.PREF_THEME;
@@ -43,8 +42,6 @@ import static io.github.h3nb.jlmodplus.util.Constants.LIBRARY_ICON_RATIO_PORTRAI
 import static io.github.h3nb.jlmodplus.util.Constants.LIBRARY_ICON_RATIO_SQUARE;
 import static io.github.h3nb.jlmodplus.util.Constants.LIBRARY_ICON_SHAPE_ROUND;
 import static io.github.h3nb.jlmodplus.util.Constants.LIBRARY_ICON_SHAPE_SQUARE;
-import static io.github.h3nb.jlmodplus.util.Constants.LIBRARY_LAYOUT_GRID;
-import static io.github.h3nb.jlmodplus.util.Constants.LIBRARY_LAYOUT_LIST;
 
 import android.annotation.SuppressLint;
 import android.content.ActivityNotFoundException;
