@@ -12,6 +12,18 @@ For changes to Java ME APIs, JSRs, vendor APIs, or compatibility behavior:
 - Do not silently "correct" known-compatible behavior just because Android or desktop Java behaves differently.
 - If documentation is incomplete or ambiguous, prefer preserving known behavior and add a focused characterization/regression test instead of guessing.
 
+## Supersampled mutable images
+
+The guest-visible dimensions and pixel coordinates of an `Image` remain logical
+even when its mutable bitmap backing is allocated at a higher internal resolution.
+Immutable copies, transformed regions, and vendor pixel APIs preserve those logical
+coordinates; Vodafone and Siemens image exports use logical dimensions. Runtime-owned
+display targets always honor their explicitly requested scale, including 1x. Guest
+image allocation may fall back to a lower scale if a higher-density bitmap cannot
+be allocated. An early guest static initializer can create an image before the
+first Canvas resolves the effective scale; it uses the configured density (or
+the existing 2x Auto fallback) until an actual canvas scale is known.
+
 ## Timer callback failures
 
 Guest `TimerTask.run()` callbacks preserve the J2ME-Loader/JL-Mod compatibility

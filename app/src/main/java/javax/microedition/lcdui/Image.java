@@ -56,10 +56,10 @@ public class Image {
 
 	/** Runtime-owned 2D surface; ordinary MIDlet images remain at their logical size. */
 	public static Image createDisplayTarget(int width, int height, int scale) {
-		// Do not add any new size restriction to the existing 1x behavior.
-		if (scale == 1) return createImage(width, height);
-		if (scale > InternalResolution.MAX_SCALE
-				|| !InternalResolution.fitsBitmap(width, height, scale)) {
+		// Explicit display targets must not inherit mutable-image supersampling.
+		// Preserve the existing unrestricted 1x allocation behavior.
+		if (scale != 1 && (scale > InternalResolution.MAX_SCALE
+				|| !InternalResolution.fitsBitmap(width, height, scale))) {
 			throw new IllegalArgumentException("Invalid display target size");
 		}
 		Bitmap bitmap = Bitmap.createBitmap(width * scale, height * scale, Bitmap.Config.ARGB_8888);
@@ -84,6 +84,16 @@ public class Image {
 	}
 
 	public static Image createImage(int width, int height, int argb) {
+		// Render guest-owned offscreen text at the same density as the display, where possible.
+		for (int scale = Canvas.mutableImageScale(width, height); scale > 1; scale--) {
+			try {
+				Bitmap scaled = Bitmap.createBitmap(width * scale, height * scale, Bitmap.Config.ARGB_8888);
+				if (argb != 0) scaled.eraseColor(argb);
+				return new Image(scaled, true, scale);
+			} catch (OutOfMemoryError ignored) {
+				// The original 1x allocation remains the final fallback.
+			}
+		}
 		Bitmap bitmap = Bitmap.createBitmap(width, height, Bitmap.Config.ARGB_8888);
 		if (argb != 0) bitmap.eraseColor(argb);
 		return new Image(bitmap, true);
@@ -120,15 +130,25 @@ public class Image {
 	}
 
 	public static Image createImage(Image image, int x, int y, int width, int height, int transform) {
-		Matrix m = transform == 0 ? null : Sprite.transformMatrix(transform, width / 2.0f, height / 2.0f);
-		return new Image(Bitmap.createBitmap(image.bitmap, x, y, width, height, m, false), false);
+		if (x < 0 || y < 0 || width <= 0 || height <= 0
+				|| (long) x + width > image.getWidth() || (long) y + height > image.getHeight()) {
+			throw new IllegalArgumentException("Invalid source region");
+		}
+		int scale = image.getPixelScale();
+		int physicalWidth = width * scale;
+		int physicalHeight = height * scale;
+		Matrix m = transform == 0 ? null
+				: Sprite.transformMatrix(transform, physicalWidth / 2.0f, physicalHeight / 2.0f);
+		return new Image(Bitmap.createBitmap(image.bitmap, x * scale, y * scale,
+				physicalWidth, physicalHeight, m, false), false, scale);
 	}
 
 	public static Image createImage(Image source) {
 		if (!source.isMutable()) {
 			return source;
 		}
-		return new Image(source.bitmap.copy(Bitmap.Config.ARGB_8888, false), false);
+		return new Image(source.bitmap.copy(Bitmap.Config.ARGB_8888, false), false,
+				source.getPixelScale());
 	}
 
 	public static Image createRGBImage(int[] rgb, int width, int height, boolean processAlpha) {
@@ -179,6 +199,49 @@ public class Image {
 					(y + j) * pixelScale + pixelScale / 2, row.length, 1);
 			for (int i = 0; i < width; i++) {
 				rgbData[offset + j * scanlength + i] = row[i * pixelScale + pixelScale / 2];
+			}
+		}
+	}
+
+	/** Host vendor APIs address logical pixels even when the backing is supersampled. */
+	public int getLogicalPixel(int x, int y) {
+		if (x < 0 || y < 0 || x >= getWidth() || y >= getHeight())
+			throw new IllegalArgumentException("Logical pixel outside bounds");
+		int scale = pixelScale;
+		return bitmap.getPixel(x * scale + scale / 2, y * scale + scale / 2);
+	}
+
+	public void setLogicalPixel(int x, int y, int argb) {
+		if (x < 0 || y < 0 || x >= getWidth() || y >= getHeight())
+			throw new IllegalArgumentException("Logical pixel outside bounds");
+		if (pixelScale == 1) {
+			bitmap.setPixel(x, y, argb);
+		} else {
+			setLogicalPixels(new int[]{argb}, 0, 1, x, y, 1, 1);
+		}
+	}
+
+	/** Write exact ARGB values, including transparency, to the whole physical pixel cell. */
+	public void setLogicalPixels(int[] pixels, int offset, int scanlength,
+			int x, int y, int width, int height) {
+		if (x < 0 || y < 0 || width < 0 || height < 0
+				|| (long) x + width > getWidth() || (long) y + height > getHeight())
+			throw new IllegalArgumentException("Logical image write outside bounds");
+		int scale = pixelScale;
+		if (scale == 1) {
+			bitmap.setPixels(pixels, offset, scanlength, x, y, width, height);
+			return;
+		}
+		if (width == 0 || height == 0) return;
+		int[] physicalRow = new int[width * scale];
+		for (int row = 0; row < height; row++) {
+			for (int col = 0; col < width; col++) {
+				java.util.Arrays.fill(physicalRow, col * scale, (col + 1) * scale,
+						pixels[offset + row * scanlength + col]);
+			}
+			for (int repeat = 0; repeat < scale; repeat++) {
+				bitmap.setPixels(physicalRow, 0, physicalRow.length,
+						x * scale, (y + row) * scale + repeat, physicalRow.length, 1);
 			}
 		}
 	}

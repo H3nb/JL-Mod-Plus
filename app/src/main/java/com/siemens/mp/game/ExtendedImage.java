@@ -61,7 +61,7 @@ public class ExtendedImage extends com.siemens.mp.misc.NativeMem {
 	}
 
 	public int getPixel(int x, int y) {
-		final int pixel = image.getBitmap().getPixel(x, y);
+		final int pixel = image.getLogicalPixel(x, y);
 		if (hasAlpha) {
 			if ((pixel & 0xFF000000) != 0xFF000000) return 0;
 			return ((pixel & 0xFFFFFF) == 0xFFFFFF) ? 1 : 2;
@@ -71,7 +71,7 @@ public class ExtendedImage extends com.siemens.mp.misc.NativeMem {
 
 	public void getPixelBytes(byte[] pixels, int x, int y, int width, int height) {
 		int[] colors = new int[width * height];
-		image.getBitmap().getPixels(colors, 0, width, x, y, width, height);
+		image.getRGB(colors, 0, width, x, y, width, height);
 		if (hasAlpha) {
 			final int dataLen = colors.length / 4;
 			for (int i = 0, k = 0; i < dataLen; i++) {
@@ -102,13 +102,13 @@ public class ExtendedImage extends com.siemens.mp.misc.NativeMem {
 
 	public void setPixel(int x, int y, byte color) {
 		if (!hasAlpha) {
-			image.getBitmap().setPixel(x, y, color == 1 ? Color.BLACK : Color.WHITE);
+			image.setLogicalPixel(x, y, color == 1 ? Color.BLACK : Color.WHITE);
 			return;
 		}
 		if (color == 0) {
-			image.getBitmap().setPixel(x, y, 0);
+			image.setLogicalPixel(x, y, 0);
 		} else {
-			image.getBitmap().setPixel(x, y, color == 1 ? Color.WHITE : Color.BLACK);
+			image.setLogicalPixel(x, y, color == 1 ? Color.WHITE : Color.BLACK);
 		}
 	}
 
@@ -150,6 +150,6 @@ public class ExtendedImage extends com.siemens.mp.misc.NativeMem {
 				}
 			}
 		}
-		image.getBitmap().setPixels(colors, 0, width, x, y, width, height);
+		image.setLogicalPixels(colors, 0, width, x, y, width, height);
 	}
 }

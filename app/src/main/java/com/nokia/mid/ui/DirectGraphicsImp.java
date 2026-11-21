@@ -28,7 +28,6 @@
 
 package com.nokia.mid.ui;
 
-import android.graphics.Bitmap;
 
 import javax.microedition.lcdui.Graphics;
 import javax.microedition.lcdui.Image;
@@ -496,9 +495,6 @@ public class DirectGraphicsImp implements DirectGraphics {
 						   int height) {
 		x += graphics.getTranslateX();
 		y += graphics.getTranslateY();
-		Bitmap image = graphics.getBitmap();
-		int w = Math.min(width, image.getWidth() - x);
-		int h = Math.min(height, image.getHeight() - y);
-		image.getPixels(pixels, offset, stride, x, y, w, h);
+		graphics.getPixels(pixels, offset, stride, x, y, width, height);
 	}
 }
