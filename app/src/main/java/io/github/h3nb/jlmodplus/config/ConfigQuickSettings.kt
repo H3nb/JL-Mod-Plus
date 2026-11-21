@@ -23,6 +23,7 @@ import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.platform.testTag
 import androidx.compose.ui.res.painterResource
 import androidx.compose.ui.res.stringArrayResource
 import androidx.compose.ui.res.stringResource
@@ -49,7 +50,12 @@ internal fun ConfigQuickSettings(
     onOpenPerformance: () -> Unit,
     onOpenQuickSetting: (QuickSetting) -> Unit,
 ) {
-    if (!isProfile) {
+    if (isProfile) {
+        Text(stringResource(R.string.config_overview_profile_draft_summary),
+            style = MaterialTheme.typography.bodySmall,
+            color = MaterialTheme.colorScheme.onSurfaceVariant,
+            modifier = Modifier.padding(horizontal = 12.dp, vertical = 8.dp))
+    } else {
         PresetSummary(
             state = state,
             onUsePreset = onUsePreset,
@@ -90,6 +96,7 @@ internal fun ConfigQuickSettings(
             tiles.forEach { (setting, title, value) ->
                 Surface(
                     modifier = Modifier.weight(1f).heightIn(min = 96.dp)
+                        .testTag("config_quick_" + setting.name.lowercase())
                         .clickable(role = Role.Button) {
                             if (setting == QuickSetting.Fps) onOpenPerformance()
                             else onOpenQuickSetting(setting)
@@ -128,6 +135,7 @@ internal fun ConfigQuickSettings(
     ConfigDestination.entries.filter { it != ConfigDestination.Basic }.forEach { destination ->
         Row(
             modifier = Modifier.fillMaxWidth().heightIn(min = 56.dp)
+                .testTag("config_category_" + destination.name.lowercase())
                 .clickable(role = Role.Button) { onOpenCategory(destination) }
                 .padding(horizontal = 12.dp, vertical = 8.dp),
             verticalAlignment = Alignment.CenterVertically,
