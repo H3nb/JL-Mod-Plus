@@ -145,6 +145,7 @@
     <string name="msg_no_matches">No matches for \"%1$s\"</string>
     <string name="library_destination_apps">All Apps</string>
     <string name="library_destination_collections">Collections</string>
+    <string name="library_scope_picker_title" tools:ignore="MissingTranslation">Browse apps</string>
     <string name="library_destination_more">More</string>
     <string name="library_search_placeholder">Search apps…</string>
     <string name="library_filter_all">All</string>

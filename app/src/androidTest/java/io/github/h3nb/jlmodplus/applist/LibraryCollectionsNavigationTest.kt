@@ -134,7 +134,7 @@ class LibraryCollectionsNavigationTest {
         val footer = composeRule.onNodeWithText(uiString(R.string.library_collection_manage))
         footer.assertIsDisplayed()
         composeRule.onNode(hasScrollAction() and hasAnyAncestor(isDialog()))
-            .performScrollToIndex(2)
+            .performScrollToIndex(3)
         val count = InstrumentationRegistry.getInstrumentation().targetContext.resources
             .getQuantityString(R.plurals.library_collection_member_count, 0, 0)
         val countNode = composeRule.onNodeWithText(count)

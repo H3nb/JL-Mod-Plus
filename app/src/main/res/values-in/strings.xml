@@ -98,6 +98,7 @@
     <string name="msg_no_matches">Tidak ada hasil untuk \"%1$s\"</string>
     <string name="library_destination_apps">Semua aplikasi</string>
     <string name="library_destination_collections">Koleksi</string>
+    <string name="library_scope_picker_title">Jelajahi aplikasi</string>
     <string name="library_destination_more">Lainnya</string>
     <string name="library_search_placeholder">Cari aplikasi…</string>
     <string name="library_filter_all">Semua</string>

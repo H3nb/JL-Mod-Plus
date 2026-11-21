@@ -332,7 +332,6 @@ fun LibraryCollectionBrowserScreenshot() {
             viewportState = rememberLibraryViewportState(collectionId = 1L),
             selectedCollection = LibraryCollectionUiItem(1L, "RPG Favorites", members.size),
             collections = listOf(LibraryCollectionUiItem(1L, "RPG Favorites", members.size)),
-            showQuickViews = false,
             onOpenApp = {},
             onOpenActions = {},
             onQuickView = {},

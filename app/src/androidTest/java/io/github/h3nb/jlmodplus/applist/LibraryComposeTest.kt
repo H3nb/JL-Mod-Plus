@@ -82,6 +82,7 @@ import org.junit.Test
 import org.junit.runner.RunWith
 import org.junit.rules.RuleChain
 import org.junit.rules.Timeout
+import io.github.h3nb.jlmodplus.librarydb.LibraryQuickView
 import io.github.h3nb.jlmodplus.ui.JLModPlusTheme
 
 private fun uiString(resId: Int, vararg formatArgs: Any): String =
@@ -796,8 +797,8 @@ class LibraryComposeTest {
         composeRule.onNodeWithText("Demo MIDlet 12").assertIsDisplayed()
         val focusedTop = composeRule.onNodeWithText("Demo MIDlet 12")
             .fetchSemanticsNode().boundsInRoot.top
-        // The quick-filter group may already be obscured when a controller command
-        // begins; it must not be forced open just to satisfy an obsolete test assumption.
+        // The scope control may already be obscured when a controller command begins;
+        // it must not be forced open merely to satisfy an obsolete test assumption.
         val filter = composeRule.onNodeWithTag(
             "library_scope_picker",
             useUnmergedTree = true,
@@ -863,6 +864,32 @@ class LibraryComposeTest {
 
         composeRule.onNodeWithContentDescription(uiString(R.string.library_back)).performClick()
         composeRule.onNodeWithTag("library_scope_picker").assertIsDisplayed()
+    }
+
+    @Test
+    fun browsePickerContainsQuickViewsAndUpdatesTheChosenScope() {
+        val actions = RecordingLibraryActions()
+        setLibraryContent(
+            state = LibraryUiState(
+                loading = false,
+                databaseControlsReady = true,
+                apps = listOf(
+                    LibraryAppUiItem(7, "Demo MIDlet", "Example Vendor", "1.0", null, true),
+                ),
+            ),
+            actions = actions,
+        )
+
+        composeRule.onAllNodesWithText(uiString(R.string.library_filter_favorites))
+            .assertCountEquals(0)
+        composeRule.onNodeWithTag("library_scope_picker").performClick()
+        composeRule.onNodeWithText(uiString(R.string.library_destination_apps)).assertExists()
+        composeRule.onNodeWithText(uiString(R.string.library_filter_favorites)).assertExists()
+        composeRule.onNodeWithText(uiString(R.string.library_filter_recently_opened)).assertExists()
+        composeRule.onNodeWithText(uiString(R.string.library_filter_recently_added)).assertExists()
+        composeRule.onNodeWithText(uiString(R.string.library_destination_collections)).assertExists()
+        composeRule.onNodeWithText(uiString(R.string.library_filter_favorites)).performClick()
+        assertEquals(LibraryQuickView.Favorites, actions.lastQuickView)
     }
 
     @Test
@@ -1345,6 +1372,7 @@ class LibraryComposeTest {
     private class RecordingLibraryActions : LibraryActions {
         val searches = mutableListOf<String>()
         var layout: LibraryLayout? = null
+        var lastQuickView: LibraryQuickView? = null
         var iconRatio: LibraryIconRatio? = null
         var gridSpacing: LibraryGridSpacing? = null
         var hideGridTitles = false
@@ -1362,6 +1390,7 @@ class LibraryComposeTest {
         var retryCount = 0
 
         override fun onSearch(query: String) { searches += query }
+        override fun onQuickView(quickView: LibraryQuickView) { lastQuickView = quickView }
         override fun onLayoutChange(layout: LibraryLayout) { this.layout = layout }
         override fun onIconRatioChange(iconRatio: LibraryIconRatio) { this.iconRatio = iconRatio }
         override fun onHideGridTitlesChange(hide: Boolean) { hideGridTitles = hide }
