@@ -24,6 +24,9 @@ import androidx.compose.foundation.clickable
 import androidx.compose.foundation.interaction.MutableInteractionSource
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
+import androidx.compose.foundation.layout.BoxWithConstraints
+import androidx.compose.foundation.layout.ExperimentalLayoutApi
+import androidx.compose.foundation.layout.FlowRow
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.ColumnScope
 import androidx.compose.foundation.layout.Row
@@ -1480,6 +1483,7 @@ internal fun PerformanceOverlayParametersDialog(
     )
 }
 
+@OptIn(ExperimentalLayoutApi::class)
 @Composable
 internal fun ScreenPresetDialog(
     presets: List<Size>,
@@ -1499,128 +1503,134 @@ internal fun ScreenPresetDialog(
     } else {
         presets
     }
-    val temporaryPreset = selectedPreset != null && !presets.contains(selectedPreset)
-
-    val selectAndDismiss: (Size) -> Unit = { size ->
-        onSelected(size)
-        onDismissRequest()
-    }
 
     val dialogContent: @Composable () -> Unit = {
-        val listState = rememberLazyListState()
-        val canScrollForward = rememberLazyListCanScrollForward(listState)
         Surface(
             modifier = dialogLayout.modifier,
             shape = MaterialTheme.shapes.extraLarge,
             color = MaterialTheme.colorScheme.surfaceContainerHigh,
-            tonalElevation = 6.dp,
         ) {
             Column(
-                modifier = Modifier.padding(horizontal = 16.dp, vertical = 12.dp),
+                modifier = Modifier.padding(16.dp),
+                verticalArrangement = Arrangement.spacedBy(12.dp),
             ) {
-                Text(
-                    text = stringResource(R.string.config_select_screen_size),
-                    style = MaterialTheme.typography.headlineSmall,
-                    modifier = Modifier.padding(horizontal = 8.dp, vertical = 8.dp),
-                )
-                Box(
-                    modifier = Modifier
-                        .weight(1f)
-                        .fillMaxWidth(),
+                Row(
+                    modifier = Modifier.fillMaxWidth(),
+                    verticalAlignment = Alignment.CenterVertically,
+                    horizontalArrangement = Arrangement.spacedBy(8.dp),
                 ) {
-                    LazyColumn(
-                        modifier = Modifier.fillMaxSize(),
-                        state = listState,
-                    ) {
-                        itemsIndexed(listedPresets) { index, preset ->
-                            val isTemporary = temporaryPreset && index == 0
-                            ListItem(
-                                colors = ListItemDefaults.colors(containerColor = Color.Transparent),
-                                headlineContent = {
-                                    Text(
-                                        if (isTemporary) {
-                                            stringResource(R.string.config_current_screen_size, preset.toString())
-                                        } else {
-                                            preset.toString()
-                                        },
-                                    )
-                                },
-                                leadingContent = {
-                                    RadioButton(
-                                        selected = preset == selectedPreset,
-                                        onClick = null,
-                                    )
-                                },
-                                trailingContent = if (!isTemporary && removablePresets.contains(preset)) {
-                                    {
-                                        IconButton(onClick = { onRemove(preset) }) {
-                                            Icon(
-                                                painter = painterResource(R.drawable.ic_delete),
-                                                contentDescription = stringResource(R.string.remove_screen_preset),
-                                                tint = MaterialTheme.colorScheme.onSurfaceVariant,
-                                            )
-                                        }
-                                    }
-                                } else {
-                                    null
-                                },
-                                modifier = Modifier
-                                    .fillMaxWidth()
-                                    .clickable(
-                                        role = Role.RadioButton,
-                                        onClick = { selectAndDismiss(preset) },
-                                    ),
+                    Column(modifier = Modifier.weight(1f)) {
+                        Text(
+                            text = stringResource(R.string.config_select_screen_size),
+                            style = MaterialTheme.typography.titleLarge,
+                        )
+                        if (selectedPreset != null) {
+                            Text(
+                                text = stringResource(
+                                    R.string.config_current_screen_size,
+                                    selectedPreset.toString(),
+                                ),
+                                style = MaterialTheme.typography.bodySmall,
+                                color = MaterialTheme.colorScheme.onSurfaceVariant,
                             )
                         }
                     }
-                    ScrollableContentHint(
-                        visible = canScrollForward,
-                        modifier = Modifier.align(Alignment.BottomCenter),
-                    )
+                    if (onSwap != null) {
+                        IconButton(onClick = onSwap) {
+                            Icon(
+                                painter = painterResource(R.drawable.ic_swap_horiz),
+                                contentDescription = stringResource(R.string.config_swap_screen_size),
+                            )
+                        }
+                    }
                 }
-                HorizontalDivider()
-                if (onSwap != null) {
-                    Row(
-                        modifier = Modifier
-                            .fillMaxWidth()
-                            .clickable(onClick = onSwap)
-                            .padding(horizontal = 8.dp, vertical = 12.dp),
-                        verticalAlignment = Alignment.CenterVertically,
-                    ) {
-                        Icon(
-                            painter = painterResource(R.drawable.ic_swap_horiz),
-                            contentDescription = null,
-                            tint = MaterialTheme.colorScheme.primary,
-                        )
-                        Spacer(Modifier.width(8.dp))
-                        Text(
-                            text = stringResource(R.string.config_swap_screen_size),
-                            color = MaterialTheme.colorScheme.primary,
-                        )
+                Column(
+                    modifier = Modifier.fillMaxWidth()
+                        .heightIn(max = minOf(
+                            320.dp,
+                            (dialogLayout.maxHeight - 152.dp).coerceAtLeast(64.dp),
+                        ))
+                        .verticalScroll(rememberScrollState()),
+                ) {
+                    BoxWithConstraints(Modifier.fillMaxWidth()) {
+                        val columns = when {
+                            maxWidth >= 480.dp -> 3
+                            maxWidth >= 250.dp -> 2
+                            else -> 1
+                        }
+                        val itemWidth = (maxWidth - 8.dp * (columns - 1)) / columns
+                        FlowRow(
+                            maxItemsInEachRow = columns,
+                            horizontalArrangement = Arrangement.spacedBy(8.dp),
+                            verticalArrangement = Arrangement.spacedBy(8.dp),
+                        ) {
+                            listedPresets.forEach { preset ->
+                                val selected = preset == selectedPreset
+                                Surface(
+                                    modifier = Modifier
+                                        .width(itemWidth)
+                                        .heightIn(min = 56.dp)
+                                        .selectable(
+                                            selected = selected,
+                                            role = Role.RadioButton,
+                                            onClick = {
+                                                onSelected(preset)
+                                                onDismissRequest()
+                                            },
+                                        ),
+                                    shape = MaterialTheme.shapes.medium,
+                                    color = if (selected) MaterialTheme.colorScheme.primaryContainer
+                                        else MaterialTheme.colorScheme.surfaceContainerLow,
+                                    border = if (selected) BorderStroke(
+                                        1.dp, MaterialTheme.colorScheme.primary,
+                                    ) else null,
+                                ) {
+                                    Row(
+                                        modifier = Modifier.fillMaxWidth()
+                                            .heightIn(min = 56.dp)
+                                            .padding(start = 12.dp, end = 4.dp),
+                                        verticalAlignment = Alignment.CenterVertically,
+                                    ) {
+                                        Text(
+                                            text = preset.toString(),
+                                            modifier = Modifier.weight(1f),
+                                            style = MaterialTheme.typography.labelLarge,
+                                            maxLines = 1,
+                                            overflow = TextOverflow.Ellipsis,
+                                        )
+                                        if (removablePresets.contains(preset)) {
+                                            IconButton(
+                                                modifier = Modifier.size(40.dp),
+                                                onClick = { onRemove(preset) },
+                                            ) {
+                                                Icon(
+                                                    painter = painterResource(R.drawable.ic_delete),
+                                                    contentDescription = stringResource(R.string.remove_screen_preset),
+                                                    tint = MaterialTheme.colorScheme.onSurfaceVariant,
+                                                    modifier = Modifier.size(20.dp),
+                                                )
+                                            }
+                                        }
+                                    }
+                                }
+                            }
+                        }
                     }
                 }
                 Row(
-                    modifier = Modifier
-                        .fillMaxWidth()
-                        .clickable { customResolutionVisible = true }
-                        .padding(horizontal = 8.dp, vertical = 12.dp),
-                    verticalAlignment = Alignment.CenterVertically,
-                ) {
-                    Icon(
-                        painter = painterResource(R.drawable.ic_add),
-                        contentDescription = null,
-                        tint = MaterialTheme.colorScheme.primary,
-                    )
-                    Spacer(Modifier.width(8.dp))
-                    Text(
-                        text = stringResource(R.string.config_custom_resolution),
-                        color = MaterialTheme.colorScheme.primary,
-                    )
-                }
-                Row(
                     modifier = Modifier.fillMaxWidth(),
-                    horizontalArrangement = Arrangement.End,
+                    verticalAlignment = Alignment.CenterVertically,
+                    horizontalArrangement = Arrangement.SpaceBetween,
                 ) {
+                    TextButton(onClick = { customResolutionVisible = true }) {
+                        Icon(
+                            painter = painterResource(R.drawable.ic_add),
+                            contentDescription = null,
+                            modifier = Modifier.size(18.dp),
+                        )
+                        Spacer(Modifier.width(6.dp))
+                        Text(stringResource(R.string.config_custom_resolution))
+                    }
                     TextButton(onClick = onDismissRequest) {
                         Text(stringResource(android.R.string.cancel))
                     }
@@ -1651,7 +1661,8 @@ internal fun ScreenPresetDialog(
             onSave = { size ->
                 customResolutionVisible = false
                 onAdd(size)
-                selectAndDismiss(size)
+                onSelected(size)
+                onDismissRequest()
             },
         )
     }
