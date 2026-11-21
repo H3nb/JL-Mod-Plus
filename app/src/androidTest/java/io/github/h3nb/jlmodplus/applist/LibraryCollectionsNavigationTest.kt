@@ -34,7 +34,6 @@ import androidx.compose.ui.test.hasScrollAction
 import androidx.compose.ui.test.hasText
 import androidx.compose.ui.test.hasSetTextAction
 import androidx.compose.ui.test.isDialog
-import androidx.compose.ui.test.onNode
 import androidx.compose.ui.test.onLast
 import androidx.compose.ui.test.performScrollToIndex
 import androidx.compose.ui.test.performTextInput
