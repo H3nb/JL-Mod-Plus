@@ -733,8 +733,8 @@ class LibraryComposeTest {
             .fetchSemanticsNode().boundsInRoot.top
         // The quick-filter group may already be obscured when a controller command
         // begins; it must not be forced open just to satisfy an obsolete test assumption.
-        val filter = composeRule.onNodeWithText(
-            uiString(R.string.library_filter_all),
+        val filter = composeRule.onNodeWithTag(
+            "library_scope_picker",
             useUnmergedTree = true,
         )
         if (filter.isDisplayed()) {
@@ -792,7 +792,43 @@ class LibraryComposeTest {
         composeRule.onNodeWithText("0 apps").assertIsDisplayed()
 
         composeRule.onNodeWithContentDescription(uiString(R.string.library_back)).performClick()
-        composeRule.onNodeWithText(uiString(R.string.library_filter_all)).assertIsDisplayed()
+        composeRule.onNodeWithTag("library_scope_picker").assertIsDisplayed()
+    }
+
+    @Test
+    fun libraryHeaderSelectStartsWithoutSelectingAnyApps() {
+        val actions = RecordingLibraryActions()
+        setLibraryContent(
+            state = LibraryUiState(
+                loading = false,
+                generation = 11L,
+                databaseControlsReady = true,
+                apps = listOf(
+                    LibraryAppUiItem(
+                        id = 7,
+                        title = "Demo MIDlet",
+                        author = "Example Vendor",
+                        version = "1.0",
+                        iconPath = null,
+                        canReinstall = true,
+                        databaseId = 70L,
+                    ),
+                ),
+                availableAppIds = setOf(70L),
+                projectedAppIds = listOf(70L),
+            ),
+            actions = actions,
+        )
+
+        composeRule.onNodeWithContentDescription(uiString(R.string.library_action_select))
+            .assertIsDisplayed()
+            .performClick()
+        composeRule.onNodeWithText("0 apps").assertIsDisplayed()
+        composeRule.onNodeWithContentDescription(
+            uiString(R.string.library_selection_checkbox_description, "Demo MIDlet"),
+        ).performClick()
+        composeRule.onNodeWithText("1 app").assertIsDisplayed()
+        assertEquals(null, actions.openedId)
     }
 
     @Test
@@ -986,7 +1022,7 @@ class LibraryComposeTest {
         val actions = RecordingLibraryActions()
         setLibraryContent(actions = actions)
 
-        composeRule.onNodeWithText(uiString(R.string.library_filter_all)).performClick()
+        composeRule.onNodeWithTag("library_scope_picker").performClick()
         composeRule.onNodeWithText(uiString(R.string.library_collection_manage)).performClick()
         composeRule.onNodeWithText(uiString(R.string.library_collections_empty_message))
             .assertIsDisplayed()
@@ -1070,7 +1106,7 @@ class LibraryComposeTest {
         }
         composeRule.waitForIdle()
         composeRule.onAllNodesWithContentDescription(uiString(R.string.install)).assertCountEquals(0)
-        composeRule.onAllNodesWithText(uiString(R.string.library_filter_all)).assertCountEquals(0)
+        composeRule.onAllNodesWithTag("library_scope_picker").assertCountEquals(0)
         composeRule.onAllNodesWithContentDescription(uiString(R.string.app_name)).assertCountEquals(0)
         composeRule.onAllNodesWithContentDescription(uiString(R.string.library_sort)).assertCountEquals(0)
 
@@ -1079,7 +1115,7 @@ class LibraryComposeTest {
         }
         composeRule.waitForIdle()
         composeRule.onNodeWithContentDescription(uiString(R.string.install)).assertIsDisplayed()
-        composeRule.onNodeWithText(uiString(R.string.library_filter_all)).assertIsDisplayed()
+        composeRule.onNodeWithTag("library_scope_picker").assertIsDisplayed()
         composeRule.onNodeWithContentDescription(uiString(R.string.app_name)).assertIsDisplayed()
         composeRule.onNodeWithContentDescription(uiString(R.string.library_sort)).assertIsDisplayed()
     }
@@ -1103,12 +1139,12 @@ class LibraryComposeTest {
         }
         composeRule.waitForIdle()
         composeRule.onNodeWithContentDescription(uiString(R.string.install)).assertIsDisplayed()
-        composeRule.onNodeWithText(uiString(R.string.library_filter_all)).assertIsDisplayed()
+        composeRule.onNodeWithTag("library_scope_picker").assertIsDisplayed()
         composeRule.onNodeWithContentDescription(uiString(R.string.app_name)).assertIsDisplayed()
         composeRule.onNodeWithContentDescription(uiString(R.string.library_sort)).assertIsDisplayed()
         composeRule.onNodeWithContentDescription(uiString(R.string.library_search_placeholder))
             .assertIsDisplayed()
-        composeRule.onNodeWithText(uiString(R.string.library_filter_all)).assertIsDisplayed()
+        composeRule.onNodeWithTag("library_scope_picker").assertIsDisplayed()
     }
 
     @Test
@@ -1146,7 +1182,7 @@ class LibraryComposeTest {
         composeRule.onNodeWithContentDescription(uiString(R.string.library_search_placeholder))
             .assertIsDisplayed()
         composeRule.onNodeWithContentDescription(uiString(R.string.library_sort)).assertIsDisplayed()
-        composeRule.onNodeWithText(uiString(R.string.library_filter_all)).assertIsDisplayed()
+        composeRule.onNodeWithTag("library_scope_picker").assertIsDisplayed()
         composeRule.onNodeWithText(uiString(R.string.library_filter_favorites)).assertIsDisplayed()
         composeRule.onNodeWithContentDescription(uiString(R.string.install)).assertIsDisplayed()
         composeRule.onNodeWithContentDescription(uiString(R.string.action_settings))
