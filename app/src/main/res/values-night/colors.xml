@@ -1,12 +1,12 @@
 <?xml version="1.0" encoding="utf-8"?>
 <resources>
-    <!--dark theme colors-->
+    <!-- AppCompat/Android View fallback roles; keep in sync with JLModPlusTheme. -->
     <color name="primary">#262e37</color>
     <color name="primary_dark">#20272f</color>
-    <color name="accent">#A9C8E5</color>
-    <color name="background">#000000</color>
-    <color name="text_primary">#ffffff</color>
-    <color name="text_secondary">#dedede</color>
+    <color name="accent">#9BBEFF</color>
+    <color name="background">#111518</color>
+    <color name="text_primary">#E6EBEF</color>
+    <color name="text_secondary">#B6C2CA</color>
     <color name="library_default_icon">#CCDAF5</color>
     <color name="library_default_icon_background">#1B2027</color>
     <color name="btn_bg_normal">#0099ff</color>
