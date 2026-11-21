@@ -62,6 +62,7 @@ import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
 import androidx.compose.ui.graphics.Color
+import androidx.compose.ui.platform.LocalInspectionMode
 import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.platform.ComposeView
 import androidx.compose.ui.platform.ViewCompositionStrategy
@@ -178,7 +179,9 @@ fun SettingsScreen(
     var page by rememberSaveable { mutableStateOf(SettingsPage.Main) }
     var infoDialog by remember { mutableStateOf<LibraryInfoDialog?>(null) }
     val context = LocalContext.current
-    val updates = remember(context) { UpdateRepository.get(context) }
+    val updates = if (LocalInspectionMode.current) null else remember(context) {
+        UpdateRepository.get(context)
+    }
     val settingsListState = rememberLazyListState()
 
     BackHandler(enabled = infoDialog != null) { infoDialog = null }
@@ -187,12 +190,14 @@ fun SettingsScreen(
     }
     if (page != SettingsPage.Main) {
         when (page) {
-            SettingsPage.Updates -> UpdatesScreen(
-                repository = updates,
-                onBack = { page = SettingsPage.Main },
-                onOpenRelease = actions::onOpenUpdateRelease,
-                onOpenDownload = actions::onOpenUpdateDownload,
-            )
+            SettingsPage.Updates -> if (updates != null) {
+                UpdatesScreen(
+                    repository = updates,
+                    onBack = { page = SettingsPage.Main },
+                    onOpenRelease = actions::onOpenUpdateRelease,
+                    onOpenDownload = actions::onOpenUpdateDownload,
+                )
+            }
             SettingsPage.About -> LibraryAboutScreen(
                 onBack = { page = SettingsPage.Main },
                 onLicenses = { infoDialog = LibraryInfoDialog.Licenses },
@@ -347,7 +352,7 @@ fun SettingsScreen(
                         SettingsActionRow(
                             title = stringResource(R.string.updates_title),
                             summary = stringResource(
-                                if (updates.status is UpdateStatus.Available) R.string.updates_more_available
+                                if (updates?.status is UpdateStatus.Available) R.string.updates_more_available
                                 else R.string.updates_more_summary,
                             ),
                             onClick = { page = SettingsPage.Updates },
