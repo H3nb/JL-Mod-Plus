@@ -324,7 +324,7 @@
     <string name="config_gamepad_diagnosis_no_controller">(no connected controller)</string>
     <string name="config_gamepad_diagnosis_samples_not_sent">Input samples are intentionally not sent to the MIDlet.</string>
     <string name="config_destination_system">System</string>
-    <string name="config_screen_behavior">Screen behavior</string>
+    <string name="config_screen_behavior" tools:ignore="MissingTranslation">Screen behavior</string>
     <string name="config_screen_size">Screen size</string>
     <string name="config_select_screen_size">Select screen size</string>
     <string name="config_current_screen_size">Current size: %1$s</string>
@@ -1526,12 +1526,12 @@
     <string name="library_details_view_details" tools:ignore="MissingTranslation">View details</string>
     <string name="library_actions_more" tools:ignore="MissingTranslation">More actions</string>
     <string name="library_actions_less" tools:ignore="MissingTranslation">Fewer actions</string>
-    <string name="config_quick_settings">Quick settings</string>
-    <string name="config_all_settings">All settings</string>
-    <string name="profile_local_changes_pending">Local changes not saved to the profile</string>
-    <string name="profile_local_configuration_summary">Settings for this MIDlet only</string>
-    <string name="profile_not_following">Based on %1$s · Not following updates</string>
-    <string name="profile_stop_following">Stop following profile</string>
-    <string name="profile_follow_again">Follow profile again</string>
-    <string name="profile_follow_again_summary">Replace this MIDlet’s local settings and virtual controls with the latest %1$s profile, and follow its future updates?</string>
+    <string name="config_quick_settings" tools:ignore="MissingTranslation">Quick settings</string>
+    <string name="config_all_settings" tools:ignore="MissingTranslation">All settings</string>
+    <string name="profile_local_changes_pending" tools:ignore="MissingTranslation">Local changes not saved to the profile</string>
+    <string name="profile_local_configuration_summary" tools:ignore="MissingTranslation">Settings for this MIDlet only</string>
+    <string name="profile_not_following" tools:ignore="MissingTranslation">Based on %1$s · Not following updates</string>
+    <string name="profile_stop_following" tools:ignore="MissingTranslation">Stop following profile</string>
+    <string name="profile_follow_again" tools:ignore="MissingTranslation">Follow profile again</string>
+    <string name="profile_follow_again_summary" tools:ignore="MissingTranslation">Replace this MIDlet’s local settings and virtual controls with the latest %1$s profile, and follow its future updates?</string>
 </resources>
