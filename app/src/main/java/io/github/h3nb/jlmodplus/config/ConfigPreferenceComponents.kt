@@ -51,6 +51,7 @@ import androidx.compose.ui.text.style.TextOverflow
 import androidx.compose.ui.unit.dp
 import io.github.h3nb.jlmodplus.R
 import io.github.h3nb.jlmodplus.ui.PreferenceTextContent
+import io.github.h3nb.jlmodplus.ui.PreferenceChevron
 import io.github.h3nb.jlmodplus.ui.PreferenceNotice
 import io.github.h3nb.jlmodplus.ui.PreferenceMessageLevel
 
@@ -109,31 +110,24 @@ internal fun ConfigNavigationPreference(
     onClick: () -> Unit,
 ) {
     Row(
-        modifier = Modifier.fillMaxWidth()
-            .heightIn(min = 64.dp)
+        modifier = Modifier
+            .fillMaxWidth()
+            .heightIn(min = 60.dp)
             .clickable(role = Role.Button, onClick = onClick)
-            .padding(horizontal = 16.dp, vertical = 12.dp),
+            .padding(horizontal = 16.dp, vertical = 10.dp),
         verticalAlignment = Alignment.CenterVertically,
         horizontalArrangement = Arrangement.spacedBy(12.dp),
     ) {
-        Column(modifier = Modifier.weight(1f), verticalArrangement = Arrangement.spacedBy(2.dp)) {
-            Text(title, style = MaterialTheme.typography.bodyLarge)
-            if (!value.isNullOrBlank()) {
-                Text(value, style = MaterialTheme.typography.bodySmall,
-                    color = MaterialTheme.colorScheme.onSurfaceVariant,
-                    maxLines = 2, overflow = TextOverflow.Ellipsis)
-            }
-        }
-        Icon(
-            painter = painterResource(R.drawable.ic_chevron_right),
-            contentDescription = null,
-            tint = MaterialTheme.colorScheme.onSurfaceVariant,
-            modifier = Modifier.size(20.dp),
+        PreferenceTextContent(
+            title = title,
+            value = value,
+            modifier = Modifier.weight(1f),
         )
+        PreferenceChevron()
     }
 }
+/** One accessible target for a preference that opens an editor or action. */
 
-/** A single accessible target for compact configuration rows. Values remain visible and localized. */
 @Composable
 internal fun ConfigCompactValuePreference(
     title: String,
@@ -144,12 +138,14 @@ internal fun ConfigCompactValuePreference(
     destructive: Boolean = false,
     description: String? = null,
 ) {
-    androidx.compose.foundation.layout.Box(
+    Row(
         modifier = modifier
             .fillMaxWidth()
-            .heightIn(min = 56.dp)
+            .heightIn(min = 60.dp)
             .clickable(enabled = enabled, role = Role.Button, onClick = onClick)
             .padding(horizontal = 16.dp, vertical = 10.dp),
+        verticalAlignment = Alignment.CenterVertically,
+        horizontalArrangement = Arrangement.spacedBy(12.dp),
     ) {
         PreferenceTextContent(
             title = title,
@@ -157,7 +153,9 @@ internal fun ConfigCompactValuePreference(
             description = description,
             enabled = enabled,
             destructive = destructive,
+            modifier = Modifier.weight(1f),
         )
+        PreferenceChevron(modifier = Modifier.then(if (enabled) Modifier else Modifier.alpha(0.38f)))
     }
 }
 
@@ -194,21 +192,29 @@ internal fun ConfigValuePreference(
         }
         return
     }
-    Column(
-        modifier = modifier
-            .fillMaxWidth()
-            .clickable(enabled = enabled, role = Role.Button, onClick = onClick)
-            .padding(horizontal = 16.dp, vertical = 11.dp),
-        verticalArrangement = Arrangement.spacedBy(6.dp),
-    ) {
-        PreferenceTextContent(
-            title = title,
-            value = value,
-            description = description,
-            enabled = enabled,
-        )
+    Column(modifier = modifier.fillMaxWidth()) {
+        Row(
+            modifier = Modifier
+                .fillMaxWidth()
+                .heightIn(min = 60.dp)
+                .clickable(enabled = enabled, role = Role.Button, onClick = onClick)
+                .padding(horizontal = 16.dp, vertical = 10.dp),
+            verticalAlignment = Alignment.CenterVertically,
+            horizontalArrangement = Arrangement.spacedBy(12.dp),
+        ) {
+            PreferenceTextContent(
+                title = title,
+                value = value,
+                description = description,
+                enabled = enabled,
+                modifier = Modifier.weight(1f),
+            )
+            PreferenceChevron(modifier = Modifier.then(if (enabled) Modifier else Modifier.alpha(0.38f)))
+        }
         if (message != null) {
-            PreferenceNotice(message, messageLevel)
+            Box(modifier = Modifier.padding(horizontal = 16.dp, vertical = 2.dp)) {
+                PreferenceNotice(message, messageLevel)
+            }
         }
     }
 }
