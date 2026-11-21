@@ -1061,6 +1061,7 @@
     <string name="pref_accent_amber">Golden amber</string>
     <string name="pref_accent_blue">Default blue</string>
     <string name="pref_accent_classic_blue">Classic blue</string>
+    <string name="pref_accent_wallpaper" tools:ignore="MissingTranslation">Wallpaper colors</string>
     <string name="runtime_invalid_intent">Invalid launch request: the MIDlet path is missing.</string>
     <string name="runtime_storage_in_use">MIDlet storage is already in use by another runtime.</string>
     <string name="runtime_installation_changed">The MIDlet installation could not be prepared for launch.</string>
