@@ -15,7 +15,6 @@
 package io.github.h3nb.jlmodplus.config
 
 import androidx.compose.foundation.clickable
-import androidx.compose.foundation.BorderStroke
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
@@ -529,9 +528,8 @@ private fun DefaultPresetDialog(
                             )
                             .heightIn(min = 56.dp),
                         shape = MaterialTheme.shapes.medium,
-                        color = if (selected) colors.secondaryContainer else colors.surfaceContainerLow,
-                        contentColor = if (selected) colors.onSecondaryContainer else colors.onSurface,
-                        border = if (selected) BorderStroke(1.dp, colors.secondary) else null,
+                        color = if (selected) colors.primaryContainer else colors.surfaceContainerLow,
+                        contentColor = if (selected) colors.onPrimaryContainer else colors.onSurface,
                     ) {
                         Row(
                             modifier = Modifier.padding(horizontal = 12.dp, vertical = 8.dp),
