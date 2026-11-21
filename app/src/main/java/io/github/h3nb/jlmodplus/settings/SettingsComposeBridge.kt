@@ -124,7 +124,7 @@ data class SettingsUiState(
     val language: SettingsOption,
     val languages: List<SettingsOption>,
     val switches: List<SettingsSwitch>,
-    val experimentalSwitches: List<SettingsSwitch>,
+    val diagnosticSwitches: List<SettingsSwitch>,
     val showProfiles: Boolean,
     val workingDirectory: String,
     val directoryError: String? = null,
@@ -342,12 +342,12 @@ fun SettingsScreen(
                 settingsSection(
                     key = "maintenance",
                     title = R.string.library_settings_section_maintenance,
-                    rowCount = 2 + state.experimentalSwitches.size,
+                    rowCount = 2 + state.diagnosticSwitches.size,
                     rowKey = { index ->
                         when (index) {
                             0 -> "updates"
                             1 -> "diagnostics"
-                            else -> state.experimentalSwitches[index - 2].key
+                            else -> state.diagnosticSwitches[index - 2].key
                         }
                     },
                     rowType = { if (it < 2) SettingsItemType.Action else SettingsItemType.Switch },
@@ -367,7 +367,7 @@ fun SettingsScreen(
                             onClick = actions::onOpenCrashReports,
                         )
                         else -> {
-                            val setting = state.experimentalSwitches[index - 2]
+                            val setting = state.diagnosticSwitches[index - 2]
                             SettingsSwitchRow(
                                 setting = setting,
                                 onCheckedChange = { checked -> actions.onToggle(setting.key, checked) },
