@@ -16,7 +16,7 @@ import io.github.h3nb.jlmodplus.R
 /** Builds read-only Android shares for prepared Library transfer artifacts. */
 object LibraryTransferIntents {
     @JvmStatic
-    fun shareApp(
+    fun exportJar(
         context: Context,
         prepared: LibraryShareManager.PreparedShare,
         subject: String,
@@ -26,7 +26,7 @@ object LibraryTransferIntents {
         mimeType = prepared.mimeType,
         fileName = prepared.fileName,
         subject = subject,
-        chooserTitle = R.string.library_share_chooser_title,
+        chooserTitle = R.string.library_export_chooser_title,
     )
 
     @JvmStatic
