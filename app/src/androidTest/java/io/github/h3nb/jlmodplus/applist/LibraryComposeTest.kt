@@ -883,6 +883,7 @@ class LibraryComposeTest {
         composeRule.onAllNodesWithText(uiString(R.string.library_filter_favorites))
             .assertCountEquals(0)
         composeRule.onNodeWithTag("library_scope_picker").performClick()
+        composeRule.onAllNodesWithText(uiString(R.string.library_scope_picker_title)).assertCountEquals(0)
         composeRule.onNodeWithText(uiString(R.string.library_destination_apps)).assertExists()
         composeRule.onNodeWithText(uiString(R.string.library_filter_favorites)).assertExists()
         composeRule.onNodeWithText(uiString(R.string.library_filter_recently_opened)).assertExists()
