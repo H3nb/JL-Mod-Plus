@@ -102,6 +102,37 @@ class LibraryCollectionRepositoryTest {
     }
 
     @Test
+    fun collectionCreationOrderCanBeRearrangedWithoutLosingNewCollections() = runBlocking {
+        val root = TempFiles.newFolder(temporaryFolder, "reorder")
+        createConvertedApp(root, "game", "Game")
+        repository.setEmulatorDirectory(root)
+        val token = awaitReady(root).token()
+
+        val first = repository.createCollection(token, "First", createdAt = 100L)
+        val second = repository.createCollection(token, "Second", createdAt = 200L)
+        val third = repository.createCollection(token, "Third", createdAt = 300L)
+        awaitReady(root) { it.collections.map(LibraryCollectionRow::id) == listOf(first, second, third) }
+
+        repository.reorderCollections(token, listOf(third, first, second))
+        awaitReady(root) { it.collections.map(LibraryCollectionRow::id) == listOf(third, first, second) }
+
+        try {
+            repository.reorderCollections(token, listOf(second, first))
+            throw AssertionError("An incomplete reorder must be rejected")
+        } catch (_: IllegalArgumentException) {
+            assertEquals(
+                listOf(third, first, second),
+                awaitReady(root).collections.map(LibraryCollectionRow::id),
+            )
+        }
+
+        val fourth = repository.createCollection(token, "Fourth", createdAt = 400L)
+        awaitReady(root) {
+            it.collections.map(LibraryCollectionRow::id) == listOf(third, first, second, fourth)
+        }
+    }
+
+    @Test
     fun staleCollectionMutationIsRejectedAfterWorkdirRoundTrip() = runBlocking {
         val first = TempFiles.newFolder(temporaryFolder, "first")
         val second = TempFiles.newFolder(temporaryFolder, "second")
