@@ -17,7 +17,7 @@ object LegacyThemeColors {
     @JvmStatic
     fun accent(context: Context): Int {
         val preferences = PreferenceManager.getDefaultSharedPreferences(context)
-        return AccentPalette.readPreference(preferences).previewColor(isDark(context)).toArgb()
+        return AccentPalette.readPreference(preferences).previewColor(isDark(context), context).toArgb()
     }
 
     private fun isDark(context: Context): Boolean {
