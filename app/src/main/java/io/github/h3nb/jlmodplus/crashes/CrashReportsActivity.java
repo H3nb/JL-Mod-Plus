@@ -21,7 +21,6 @@ import android.content.ContentResolver;
 import android.content.Context;
 import android.content.Intent;
 import android.net.Uri;
-import android.widget.Toast;
 import android.os.Bundle;
 import androidx.annotation.Nullable;
 import androidx.appcompat.app.AppCompatActivity;
@@ -39,7 +38,6 @@ import java.util.Set;
 
 import io.github.h3nb.jlmodplus.R;
 import io.github.h3nb.jlmodplus.ui.AppPageTransitions;
-import io.github.h3nb.jlmodplus.ui.ThemedToast;
 import io.github.h3nb.jlmodplus.util.EdgeToEdgeCompat;
 
 /** Local-only inbox for retained JL-Mod Plus diagnostic records. */
@@ -156,15 +154,15 @@ public class CrashReportsActivity extends AppCompatActivity {
 				if (isFinishing() || isDestroyed()) return;
 				composeController.setSavingLog(false);
 				if (result.saved()) {
-					ThemedToast.show(this, getString(
+					composeController.showNotice(getString(
 							result.status == ManualLogCapture.Status.PARTIAL
 									? R.string.log_save_partial : R.string.log_save_success,
-							result.fileName), Toast.LENGTH_LONG);
+							result.fileName), 6_000L);
 				} else {
 					int message = result.status == ManualLogCapture.Status.EMPTY
 							? R.string.log_save_empty : result.status == ManualLogCapture.Status.TIMEOUT
 							? R.string.log_save_timeout : R.string.log_save_failed;
-					ThemedToast.show(this, message, Toast.LENGTH_LONG);
+					composeController.showNotice(getString(message), 6_000L);
 				}
 			});
 		}, "JLP-save-diagnostic-log").start();
@@ -190,7 +188,7 @@ public class CrashReportsActivity extends AppCompatActivity {
 		if (records.isEmpty()) return;
 		processingReports = true;
 		composeController.setProcessingReports(true);
-		ThemedToast.show(this, R.string.crash_report_bundle_preparing, Toast.LENGTH_SHORT);
+		composeController.showNotice(getString(R.string.crash_report_bundle_preparing));
 		Context appContext = getApplicationContext();
 		new Thread(() -> {
 			ArrayList<Uri> attachments = new ArrayList<>(records.size());
@@ -218,14 +216,14 @@ public class CrashReportsActivity extends AppCompatActivity {
 				if (isFinishing() || isDestroyed()) return;
 				composeController.setProcessingReports(false);
 				if (!ready) {
-					ThemedToast.show(this, R.string.crash_report_bundle_failed, Toast.LENGTH_LONG);
+					composeController.showNotice(getString(R.string.crash_report_bundle_failed), 6_000L);
 					return;
 				}
 				try {
 					startActivity(Intent.createChooser(shareIntent(attachments),
 							getString(R.string.share_selected_reports)));
 				} catch (ActivityNotFoundException | SecurityException error) {
-					ThemedToast.show(this, R.string.crash_report_bundle_failed, Toast.LENGTH_LONG);
+					composeController.showNotice(getString(R.string.crash_report_bundle_failed), 6_000L);
 				}
 			});
 		}, "JLP-share-diagnostics").start();
@@ -276,13 +274,13 @@ public class CrashReportsActivity extends AppCompatActivity {
 				composeController.setProcessingReports(false);
 				updateStoredRecords();
 				if (!finalAllSourcesDeleted) {
-					ThemedToast.show(
-							this, records.size() > 1 ? R.string.crash_reports_delete_failed
-									: R.string.crash_report_delete_failed, Toast.LENGTH_LONG);
+					composeController.showNotice(getString(records.size() > 1
+							? R.string.crash_reports_delete_failed
+							: R.string.crash_report_delete_failed), 6_000L);
 				} else if (!finalAllBundlesDeleted) {
-					ThemedToast.show(
-							this, records.size() > 1 ? R.string.crash_reports_bundle_cleanup_failed
-									: R.string.crash_report_bundle_cleanup_failed, Toast.LENGTH_LONG);
+					composeController.showNotice(getString(records.size() > 1
+							? R.string.crash_reports_bundle_cleanup_failed
+							: R.string.crash_report_bundle_cleanup_failed), 6_000L);
 				}
 			});
 		}, "JLP-delete-diagnostics").start();
