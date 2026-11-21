@@ -1023,8 +1023,6 @@ private fun RuntimeMenuDialog(
     val tiles = if (exit == null) entries else entries.dropLast(1)
     AlertDialog(
         textScrollable = false,
-        containerColor = MaterialTheme.colorScheme.surfaceContainerHigh,
-        blurBehindRadiusPx = 20,
         modifier = Modifier
             .clearNavigationFocusOnTouch { onNavigationFocusChanged(false) }
             .showNavigationFocusForKey { onNavigationFocusChanged(true) },
