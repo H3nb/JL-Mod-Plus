@@ -490,7 +490,7 @@
     <string name="library_collection_add_apps">Add apps</string>
     <string name="library_collection_manage_apps">Choose apps</string>
     <string name="library_collection_manage" tools:ignore="MissingTranslation">Manage collections</string>
-    <string name="library_collection_delete_confirmation">Delete “%1$s”? The apps in this collection will remain installed.</string>
+    <string name="library_collection_delete_confirmation" tools:ignore="MissingTranslation">Delete “%1$s”? The apps in this collection will remain installed.</string>
     <string name="library_collection_manage_apps_summary">Select apps to include in this collection.</string>
     <string name="library_collection_name">Collection name</string>
     <string name="library_collection_members_empty">No apps in this collection.</string>
