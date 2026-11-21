@@ -2833,7 +2833,7 @@ private fun LibraryAppsHeader(
         modifier = modifier
             .fillMaxWidth()
             .windowInsetsPadding(WindowInsets.safeDrawing.only(WindowInsetsSides.Top))
-            .padding(horizontal = 16.dp, vertical = 4.dp),
+            .padding(horizontal = 12.dp, vertical = 4.dp),
     ) {
         AnimatedContent(
             targetState = searchActive && !selectionState.isActive && title == null && onBack == null,
@@ -2976,7 +2976,7 @@ private fun LibraryAppsHeader(
                 .padding(top = 8.dp)
                 .then(searchGate.positionModifier)
                 .then(if (searchActionsEnabled) Modifier else Modifier.clearAndSetSemantics {}),
-            shape = MaterialTheme.shapes.extraLarge,
+            shape = MaterialTheme.shapes.large,
             color = MaterialTheme.colorScheme.surfaceContainerLow,
         ) {
             Row(
@@ -2988,7 +2988,6 @@ private fun LibraryAppsHeader(
                         .weight(1f)
                         .heightIn(min = 56.dp)
                         .testTag("library_scope_picker")
-                        .clip(MaterialTheme.shapes.extraLarge)
                         .clickable(
                             enabled = searchActionsEnabled,
                             role = Role.Button,
