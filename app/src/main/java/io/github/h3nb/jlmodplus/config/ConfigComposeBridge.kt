@@ -1073,8 +1073,14 @@ private fun ConfigSearchPage(
     var query by rememberSaveable { mutableStateOf("") }
     val focus = remember { FocusRequester() }
     LaunchedEffect(Unit) { focus.requestFocus() }
+    val suggestions = setOf(
+        R.string.config_screen_size, R.string.PREF_ORIENTATION,
+        R.string.pref_graphics_mode_title, R.string.PREF_VIRTUAL_KEYBOARD_OPTIONS,
+        R.string.pref_map_keys, R.string.PREF_TIMING_MODE,
+    )
     val filtered = configSearchIndex.filter { entry ->
-        query.isBlank() || context.getString(entry.title).contains(query.trim(), ignoreCase = true) ||
+        if (query.isBlank()) entry.title in suggestions
+        else context.getString(entry.title).contains(query.trim(), ignoreCase = true) ||
             context.getString(entry.section).contains(query.trim(), ignoreCase = true) ||
             entry.keywords.contains(query.trim(), ignoreCase = true)
     }
@@ -1105,12 +1111,30 @@ private fun ConfigSearchPage(
                     Icon(painterResource(R.drawable.ic_search), contentDescription = null)
                 },
                 placeholder = { Text(stringResource(R.string.config_search_hint)) },
+                trailingIcon = {
+                    if (query.isNotEmpty()) {
+                        IconButton(onClick = { query = "" }) {
+                            Icon(painterResource(R.drawable.ic_close),
+                                contentDescription = stringResource(R.string.config_search_clear))
+                        }
+                    }
+                },
                 keyboardOptions = KeyboardOptions(imeAction = ImeAction.Search),
                 modifier = Modifier.fillMaxWidth().widthIn(max = 720.dp).focusRequester(focus),
             )
             LazyColumn(
                 modifier = Modifier.weight(1f).widthIn(max = 720.dp),
             ) {
+                if (query.isBlank()) {
+                    item {
+                        Text(
+                            stringResource(R.string.config_search_suggestions),
+                            modifier = Modifier.padding(top = 20.dp, bottom = 8.dp),
+                            style = MaterialTheme.typography.titleSmall,
+                            color = MaterialTheme.colorScheme.onSurfaceVariant,
+                        )
+                    }
+                }
                 if (filtered.isEmpty()) {
                     item {
                         Text(
