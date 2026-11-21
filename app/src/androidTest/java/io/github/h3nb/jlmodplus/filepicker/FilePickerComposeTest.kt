@@ -21,6 +21,7 @@ import androidx.test.platform.app.InstrumentationRegistry
 import androidx.compose.ui.test.junit4.v2.createComposeRule
 import androidx.compose.ui.test.assertCountEquals
 import androidx.compose.ui.test.assertIsEnabled
+import androidx.compose.ui.test.getUnclippedBoundsInRoot
 import androidx.compose.ui.test.onNodeWithContentDescription
 import androidx.compose.ui.test.onNodeWithText
 import androidx.compose.ui.test.onNodeWithTag
@@ -34,6 +35,7 @@ import androidx.test.ext.junit.runners.AndroidJUnit4
 import androidx.test.espresso.Espresso.pressBack
 import java.util.concurrent.atomic.AtomicReference
 import org.junit.Assert.assertEquals
+import org.junit.Assert.assertTrue
 import org.junit.Rule
 import org.junit.Test
 import org.junit.runner.RunWith
@@ -82,6 +84,34 @@ class FilePickerComposeTest {
         composeRule.onNodeWithText("zeta.jar").assertExists()
         composeRule.onNodeWithText(uiString(R.string.file_picker_sort_modified_newest)).performClick()
         assertEquals("sort:MODIFIED_NEWEST", events.get())
+    }
+
+    @Test
+    fun toolbarPlacesSearchBeforeSortAndSelectAll() {
+        composeRule.setContent {
+            JLModPlusTheme {
+                FilePickerScreen(
+                    state = sampleState().copy(
+                        request = sampleState().request.copy(
+                            allowMultiple = true,
+                            singleClick = false,
+                        ),
+                    ),
+                    actions = RecordingActions(AtomicReference("")),
+                )
+            }
+        }
+
+        val search = composeRule.onNodeWithContentDescription(
+            uiString(R.string.file_picker_search),
+        ).getUnclippedBoundsInRoot()
+        val sort = composeRule.onNodeWithContentDescription(
+            uiString(R.string.file_picker_sort),
+        ).getUnclippedBoundsInRoot()
+        val select = composeRule.onNodeWithContentDescription(
+            uiString(R.string.file_picker_select_all),
+        ).getUnclippedBoundsInRoot()
+        assertTrue(search.left < sort.left && sort.left < select.left)
     }
 
     @Test
