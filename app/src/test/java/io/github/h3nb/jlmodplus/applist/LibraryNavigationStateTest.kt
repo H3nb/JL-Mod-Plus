@@ -74,7 +74,7 @@ class LibraryNavigationStateTest {
         assertNotNull(saved)
         assertEquals(state, LibraryNavigationState.Saver.restore(saved!!))
         assertEquals(
-            listOf("Collections", 42L, "/work/library-a", true),
+            listOf("Collections", 42L, "/work/library-a", true, "scope-v2"),
             saved,
         )
     }
@@ -91,7 +91,7 @@ class LibraryNavigationStateTest {
 
         assertEquals(
             LibraryNavigationState(
-                destination = LibraryDestinationKey.Collections,
+                destination = LibraryDestinationKey.Apps,
                 selectedCollectionId = 42L,
                 selectedCollectionScope = "/work/library-a",
                 collectionManageApps = true,
@@ -111,10 +111,27 @@ class LibraryNavigationStateTest {
 
         assertEquals(
             LibraryNavigationState(
-                destination = LibraryDestinationKey.Collections,
+                destination = LibraryDestinationKey.Apps,
                 selectedCollectionId = 42L,
             ),
             restored,
+        )
+    }
+
+    @Test
+    fun saverMigratesPreScopeNavigationToCollectionBrowsing() {
+        val olderFourSlot = LibraryNavigationState.Saver.restore(
+            listOf("Collections", 42L, "/work/library-a", true),
+        )
+
+        assertEquals(
+            LibraryNavigationState(
+                destination = LibraryDestinationKey.Apps,
+                selectedCollectionId = 42L,
+                selectedCollectionScope = "/work/library-a",
+                collectionManageApps = true,
+            ),
+            olderFourSlot,
         )
     }
 
