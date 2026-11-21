@@ -691,6 +691,14 @@
         <item quantity="other">%1$d aplikasi pustaka yang dipilih sudah tidak tersedia.</item>
     </plurals>
 
+    <string name="config_destination_home">Utama</string>
+    <string name="config_overview_profile_draft">Draf profil</string>
+    <string name="config_overview_profile_draft_summary">Sesuaikan profil yang dapat digunakan kembali, lalu simpan perubahan melalui bilah atas.</string>
+    <string name="config_overview_quick_access">Akses cepat</string>
+    <string name="config_overview_enabled">Kontrol virtual aktif</string>
+    <string name="config_overview_disabled">Kontrol virtual nonaktif</string>
+    <string name="config_overview_media_summary">Soundbank dan kamera</string>
+    <string name="config_overview_hint">Pilih kategori untuk menyesuaikan game. Pintasan ini membuka pengaturan di lokasi asalnya.</string>
     <string name="config_destination_general">Umum</string>
     <string name="config_destination_graphics">Tampilan</string>
     <string name="config_destination_media">Media</string>

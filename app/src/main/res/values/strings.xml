@@ -773,6 +773,14 @@
         <item quantity="other">%1$d selected Library apps are no longer available.</item>
     </plurals>
 
+    <string name="config_destination_home" tools:ignore="MissingTranslation">Home</string>
+    <string name="config_overview_profile_draft" tools:ignore="MissingTranslation">Profile draft</string>
+    <string name="config_overview_profile_draft_summary" tools:ignore="MissingTranslation">Edit this reusable profile, then save your changes from the toolbar.</string>
+    <string name="config_overview_quick_access" tools:ignore="MissingTranslation">Quick access</string>
+    <string name="config_overview_enabled" tools:ignore="MissingTranslation">Virtual controls on</string>
+    <string name="config_overview_disabled" tools:ignore="MissingTranslation">Virtual controls off</string>
+    <string name="config_overview_media_summary" tools:ignore="MissingTranslation">Soundbank and camera</string>
+    <string name="config_overview_hint" tools:ignore="MissingTranslation">Choose a category to customize your game. Every setting has one home; these shortcuts take you there.</string>
     <string name="config_destination_general">General</string>
     <string name="config_basic_display">MIDlet screen</string>
     <string name="config_basic_input">Input</string>
