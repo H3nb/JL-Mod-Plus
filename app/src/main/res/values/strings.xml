@@ -876,7 +876,7 @@
     <string name="config_help_shader">Applies a shader to the MIDlet frame before it is displayed.</string>
     <string name="config_help_shader_tuning">Available controls depend on the selected shader.</string>
     <string name="config_help_parallel_redraw">Schedules frame presentation asynchronously. This may improve performance on some devices.</string>
-    <string name="config_help_force_fullscreen">Starts Java ME Canvas screens without the softkey command bar. Games can change this mode.</string>
+    <string name="config_help_force_fullscreen">The MIDlet may show the softkey bar again during play.</string>
     <string name="config_help_fps_limit">Sets the FPS limit at 1× emulation speed. The effective limit follows emulation speed; 0 (Maximum) uses the display’s maximum refresh rate.</string>
     <string name="PREF_EMULATION_SPEED">Emulation speed</string>
     <string name="PREF_TIMING_MODE">Time source</string>
@@ -1238,7 +1238,7 @@
     <!-- The batch dialog title already shows the number of selected values. -->
     <string name="memory_editor_increment_preview">Preview: %1$s</string>
     <string name="config_avoid_camera_cutout_title">Avoid camera/notch area</string>
-    <string name="config_avoid_camera_cutout_summary">Keep the game away from the front camera or screen cutout. Enable this if game controls are covered.</string>
+    <string name="config_avoid_camera_cutout_summary">Enable if the camera or screen cutout covers game controls.</string>
     <string name="pref_runtime_fullscreen_title">Fullscreen</string>
     <string name="pref_runtime_fullscreen_summary">Hide the toolbar while playing. Applies to all MIDlets.</string>
     <string name="pref_show_status_bar_title">Show status bar</string>
