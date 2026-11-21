@@ -68,6 +68,8 @@ import androidx.compose.material3.FilledTonalIconButton
 import androidx.compose.material3.HorizontalDivider
 import androidx.compose.material3.Icon
 import androidx.compose.material3.IconButton
+import androidx.compose.material3.IconToggleButton
+import androidx.compose.material3.IconButtonDefaults
 import androidx.compose.material3.DropdownMenu
 import androidx.compose.material3.DropdownMenuItem
 import androidx.compose.material3.ListItem
@@ -119,6 +121,7 @@ import androidx.compose.ui.res.pluralStringResource
 import androidx.compose.ui.res.stringArrayResource
 import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.semantics.Role
+import androidx.compose.ui.semantics.contentDescription
 import androidx.compose.ui.semantics.clearAndSetSemantics
 import androidx.compose.ui.text.font.FontFamily
 import androidx.compose.ui.text.input.KeyboardType
@@ -846,15 +849,6 @@ private fun ScreenGeometrySection(
                         .build(),
                 )
             },
-            onSwap = {
-                presetsDialogVisible = false
-                onFormChanged(
-                    form.toBuilder()
-                        .screenWidth(form.screenHeight)
-                        .screenHeight(form.screenWidth)
-                        .build(),
-                )
-            },
             onAdd = events::onAddResolutionPreset,
             onRemove = events::onRemoveResolutionPreset,
         )
@@ -1493,14 +1487,15 @@ internal fun ScreenPresetDialog(
     selectedPreset: Size?,
     onDismissRequest: () -> Unit,
     onSelected: (Size) -> Unit,
-    onSwap: (() -> Unit)? = null,
     onAdd: (Size) -> Unit,
     onRemove: (Size) -> Unit,
     useModalBottomSheet: Boolean = true,
 ) {
+    var swapped by rememberSaveable { mutableStateOf(false) }
     var customResolutionVisible by rememberSaveable { mutableStateOf(false) }
+    val swapToggleDescription = stringResource(R.string.config_swap_screen_size)
     val dialogLayout = adaptiveDialogLayout()
-    val listedPresets = if (selectedPreset != null && !presets.contains(selectedPreset)) {
+    val availablePresets = if (selectedPreset != null && !presets.contains(selectedPreset)) {
         listOf(selectedPreset) + presets
     } else {
         presets
@@ -1514,7 +1509,7 @@ internal fun ScreenPresetDialog(
         ) {
             Column(
                 modifier = Modifier.padding(16.dp),
-                verticalArrangement = Arrangement.spacedBy(12.dp),
+                verticalArrangement = Arrangement.spacedBy(8.dp),
             ) {
                 Row(
                     modifier = Modifier.fillMaxWidth(),
@@ -1537,21 +1532,25 @@ internal fun ScreenPresetDialog(
                             )
                         }
                     }
-                    if (onSwap != null) {
-                        IconButton(onClick = onSwap) {
-                            Icon(
-                                painter = painterResource(R.drawable.ic_swap_horiz),
-                                contentDescription = stringResource(R.string.config_swap_screen_size),
-                            )
-                        }
+                    IconToggleButton(
+                        checked = swapped,
+                        onCheckedChange = { swapped = it },
+                        colors = IconButtonDefaults.iconToggleButtonColors(
+                            checkedContentColor = MaterialTheme.colorScheme.primary,
+                        ),
+                        modifier = Modifier.semantics {
+                            contentDescription = swapToggleDescription
+                        },
+                    ) {
+                        Icon(
+                            painter = painterResource(R.drawable.ic_swap_horiz),
+                            contentDescription = null,
+                        )
                     }
                 }
-                Column(
+                Box(
                     modifier = Modifier.fillMaxWidth()
-                        .heightIn(max = minOf(
-                            320.dp,
-                            (dialogLayout.maxHeight - 152.dp).coerceAtLeast(64.dp),
-                        ))
+                        .weight(1f, fill = false)
                         .verticalScroll(rememberScrollState()),
                 ) {
                     BoxWithConstraints(Modifier.fillMaxWidth()) {
@@ -1560,23 +1559,24 @@ internal fun ScreenPresetDialog(
                             maxWidth >= 250.dp -> 2
                             else -> 1
                         }
-                        val itemWidth = (maxWidth - 8.dp * (columns - 1)) / columns
+                        val tileWidth = (maxWidth - 8.dp * (columns - 1)) / columns
                         FlowRow(
                             maxItemsInEachRow = columns,
                             horizontalArrangement = Arrangement.spacedBy(8.dp),
                             verticalArrangement = Arrangement.spacedBy(8.dp),
                         ) {
-                            listedPresets.forEach { preset ->
-                                val selected = preset == selectedPreset
+                            availablePresets.forEach { source ->
+                                val display = if (swapped) Size(source.height, source.width) else source
+                                val selected = display == selectedPreset
                                 Surface(
                                     modifier = Modifier
-                                        .width(itemWidth)
+                                        .width(tileWidth)
                                         .heightIn(min = 56.dp)
                                         .selectable(
                                             selected = selected,
                                             role = Role.RadioButton,
                                             onClick = {
-                                                onSelected(preset)
+                                                onSelected(display)
                                                 onDismissRequest()
                                             },
                                         ),
@@ -1594,16 +1594,16 @@ internal fun ScreenPresetDialog(
                                         verticalAlignment = Alignment.CenterVertically,
                                     ) {
                                         Text(
-                                            text = preset.toString(),
+                                            text = display.toString(),
                                             modifier = Modifier.weight(1f),
                                             style = MaterialTheme.typography.labelLarge,
                                             maxLines = 1,
                                             overflow = TextOverflow.Ellipsis,
                                         )
-                                        if (removablePresets.contains(preset)) {
+                                        if (removablePresets.contains(source)) {
                                             IconButton(
                                                 modifier = Modifier.size(40.dp),
-                                                onClick = { onRemove(preset) },
+                                                onClick = { onRemove(source) },
                                             ) {
                                                 Icon(
                                                     painter = painterResource(R.drawable.ic_delete),
@@ -1641,22 +1641,22 @@ internal fun ScreenPresetDialog(
         }
     }
 
-    if (useModalBottomSheet) {
-        Dialog(
-            onDismissRequest = onDismissRequest,
-            properties = dialogLayout.properties,
-        ) {
+    if (!customResolutionVisible) {
+        if (useModalBottomSheet) {
+            Dialog(
+                onDismissRequest = onDismissRequest,
+                properties = dialogLayout.properties,
+            ) {
+                Box(modifier = Modifier.fillMaxSize(), contentAlignment = Alignment.Center) {
+                    dialogContent()
+                }
+            }
+        } else {
             Box(modifier = Modifier.fillMaxSize(), contentAlignment = Alignment.Center) {
                 dialogContent()
             }
         }
     } else {
-        Box(modifier = Modifier.fillMaxSize(), contentAlignment = Alignment.Center) {
-            dialogContent()
-        }
-    }
-
-    if (customResolutionVisible) {
         CustomResolutionDialog(
             initialSize = selectedPreset,
             onDismissRequest = { customResolutionVisible = false },
