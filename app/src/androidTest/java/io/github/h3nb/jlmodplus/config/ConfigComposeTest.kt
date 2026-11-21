@@ -528,9 +528,8 @@ class ConfigComposeTest {
             JLModPlusTheme { ConfigScreen(sampleState(), events) }
         }
         composeRule.onNodeWithTag("config_quick_resolution").performClick()
-        composeRule.onNodeWithText(uiString(R.string.config_screen_size)).assertExists()
-        composeRule.onNodeWithText(uiString(R.string.config_quick_settings)).assertExists()
-        composeRule.onRoot().performTouchInput { swipeLeft() }
+        composeRule.onNodeWithText(uiString(R.string.config_select_screen_size)).assertIsDisplayed()
+        Espresso.pressBack()
         composeRule.onNodeWithText(uiString(R.string.config_quick_settings)).assertExists()
     }
 
