@@ -226,6 +226,41 @@ class SettingsComposeTest {
     }
 
     @Test
+    fun runtimeAndDiagnosticOptionsStayAvailableInTheirNewGroups() {
+        val actions = RecordingSettingsActions()
+        val state = sampleState().copy(
+            switches = listOf(
+                SettingsSwitch("pref_wakelock_switch", "Keep screen on", null, false),
+                SettingsSwitch(
+                    "pref_screenshot_switch",
+                    uiString(R.string.pref_screenshot_title),
+                    uiString(R.string.pref_screenshot_summary),
+                    false,
+                ),
+            ),
+            experimentalSwitches = listOf(
+                SettingsSwitch(
+                    "micro3d_using_message",
+                    uiString(R.string.pref_mascot_title),
+                    uiString(R.string.pref_mascot_summary),
+                    false,
+                ),
+            ),
+        )
+        setSettingsContent(state = state, actions = actions)
+
+        scrollSettingsTo(uiString(R.string.pref_screenshot_title))
+        composeRule.onNodeWithText(uiString(R.string.pref_screenshot_title)).performClick()
+        scrollSettingsTo(uiString(R.string.pref_mascot_title))
+        composeRule.onNodeWithText(uiString(R.string.pref_mascot_title)).performClick()
+
+        assertEquals(
+            listOf("pref_screenshot_switch", "micro3d_using_message"),
+            actions.changes,
+        )
+    }
+
+    @Test
     fun settingsIntegrateMaintenanceAboutAndVoluntarySupport() {
         val actions = RecordingSettingsActions()
         setSettingsContent(actions = actions, windowSize = DpSize(360.dp, 640.dp))
