@@ -94,6 +94,7 @@ import androidx.compose.ui.text.style.TextOverflow
 import androidx.compose.ui.unit.Dp
 import androidx.compose.ui.unit.dp
 import kotlinx.coroutines.Dispatchers
+import kotlinx.coroutines.flow.Flow
 import kotlinx.coroutines.currentCoroutineContext
 import kotlinx.coroutines.ensureActive
 import kotlinx.coroutines.launch
@@ -140,6 +141,7 @@ internal fun LibraryCollectionBrowser(
     onSearchQueryChange: (String) -> Unit = {},
     onCloseSearch: () -> Unit = {},
     resolveUiId: (Long) -> Int? = { null },
+    controllerEvents: Flow<LibraryControllerEvent>? = null,
 ) {
     val currentInteractionActive by rememberUpdatedState(interactionActive)
     val currentOnNavigationVisibilityChanged by rememberUpdatedState(onNavigationVisibilityChanged)
@@ -265,6 +267,18 @@ internal fun LibraryCollectionBrowser(
     val gridState = viewportState.gridState
     val headerHeightPx = viewportState.headerHeightPx
     val headerOffsetPx = viewportState.headerOffsetPx
+    val searchFocusedDatabaseId = rememberLibraryInlineSearchControllerFocus(
+        active = interactionActive && searchActive,
+        apps = visibleApps,
+        layout = libraryState.layout,
+        listState = searchListState,
+        gridState = searchGridState,
+        headerHeightPx = headerHeightPx.intValue,
+        events = controllerEvents,
+        resolveUiId = resolveUiId,
+        onOpenApp = openApp,
+        onOpenActions = openActions,
+    )
     var savedHeaderOffset by remember(viewportState) { mutableStateOf<Float?>(null) }
     LaunchedEffect(searchActive) {
         if (searchActive) {
@@ -399,6 +413,8 @@ internal fun LibraryCollectionBrowser(
                                 },
                                 selectionMode = selectionState.isActive,
                                 selected = app.databaseId in selectionState.selectedAppIds,
+                                controllerFocused = searchActive &&
+                                    app.databaseId == searchFocusedDatabaseId,
                                 onToggleSelection = {
                                     if (currentInteractionActive) onSelectionStateChanged(
                                         selectionState.toggle(
@@ -453,6 +469,8 @@ internal fun LibraryCollectionBrowser(
                             },
                             selectionMode = selectionState.isActive,
                             selected = app.databaseId in selectionState.selectedAppIds,
+                            controllerFocused = searchActive &&
+                                app.databaseId == searchFocusedDatabaseId,
                             onToggleSelection = {
                                 if (currentInteractionActive) onSelectionStateChanged(
                                     selectionState.toggle(
@@ -716,6 +734,7 @@ private fun LibraryCollectionListItem(
     onOpenActions: (LibraryAppUiItem) -> Unit,
     selectionMode: Boolean,
     selected: Boolean,
+    controllerFocused: Boolean = false,
     onToggleSelection: (LibraryAppUiItem) -> Unit,
 ) {
     val selectionDescription = stringResource(
@@ -741,6 +760,9 @@ private fun LibraryCollectionListItem(
     Column(
         modifier = Modifier
             .fillMaxWidth()
+            .then(if (controllerFocused) {
+                Modifier.background(MaterialTheme.colorScheme.secondaryContainer)
+            } else Modifier)
             .then(interactionModifier)
             .semantics {
                 role = if (selectionMode) Role.Checkbox else Role.Button
@@ -810,6 +832,7 @@ private fun LibraryCollectionGridItem(
     onOpenActions: (LibraryAppUiItem) -> Unit,
     selectionMode: Boolean,
     selected: Boolean,
+    controllerFocused: Boolean = false,
     onToggleSelection: (LibraryAppUiItem) -> Unit,
 ) {
     val selectionDescription = stringResource(
@@ -836,6 +859,9 @@ private fun LibraryCollectionGridItem(
         modifier = Modifier
             .fillMaxWidth()
             .padding(gridSpacing / 2)
+            .then(if (controllerFocused) {
+                Modifier.background(MaterialTheme.colorScheme.secondaryContainer)
+            } else Modifier)
             .then(interactionModifier)
             .semantics {
                 role = if (selectionMode) Role.Checkbox else Role.Button

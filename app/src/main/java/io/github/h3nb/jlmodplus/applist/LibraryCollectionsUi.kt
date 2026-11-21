@@ -81,6 +81,7 @@ import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.text.style.TextOverflow
 import androidx.compose.ui.unit.dp
+import kotlinx.coroutines.flow.Flow
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.StateFlow
 import kotlinx.coroutines.flow.asStateFlow
@@ -273,6 +274,7 @@ internal fun LibraryCollectionsDestination(
     onSearchQueryChange: (String) -> Unit = {},
     onCloseSearch: () -> Unit = {},
     resolveUiId: (Long) -> Int? = { null },
+    controllerEvents: Flow<LibraryControllerEvent>? = null,
 ) {
     val state by host.collectionsStore().state.collectAsState()
     if (!state.ready) {
@@ -510,6 +512,7 @@ internal fun LibraryCollectionsDestination(
                                 onSearchQueryChange = onSearchQueryChange,
                                 onCloseSearch = onCloseSearch,
                                 resolveUiId = resolveUiId,
+                                controllerEvents = controllerEvents,
                             )
                         }
                     }
