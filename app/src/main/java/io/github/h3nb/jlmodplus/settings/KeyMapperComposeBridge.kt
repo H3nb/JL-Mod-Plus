@@ -70,6 +70,8 @@ import io.github.h3nb.jlmodplus.ui.AdaptiveAlertDialog
 import androidx.compose.ui.unit.dp
 import io.github.h3nb.jlmodplus.R
 import io.github.h3nb.jlmodplus.ui.JLModPlusTheme
+import io.github.h3nb.jlmodplus.ui.TransientNoticeHost
+import io.github.h3nb.jlmodplus.ui.TransientNoticeState
 import io.github.h3nb.jlmodplus.ui.ScrollableContentHint
 import io.github.h3nb.jlmodplus.ui.adaptiveDialogLayout
 import io.github.h3nb.jlmodplus.ui.rememberScrollCanScrollForward
@@ -117,6 +119,7 @@ class KeyMapperComposeController(
 ) {
     private var state by mutableStateOf(KeyMapperUiState())
     private var popupBounds: Rect? = null
+    private val notices = TransientNoticeState()
 
     init {
         composeView.id = R.id.key_mapper_compose_root
@@ -125,13 +128,20 @@ class KeyMapperComposeController(
         )
         composeView.setContent {
             JLModPlusTheme {
-                KeyMapperScreen(
-                    state = state,
-                    actions = actions,
-                    onPopupBoundsChanged = { popupBounds = it },
-                )
+                Box(Modifier.fillMaxSize()) {
+                    KeyMapperScreen(
+                        state = state,
+                        actions = actions,
+                        onPopupBoundsChanged = { popupBounds = it },
+                    )
+                    TransientNoticeHost(notices, Modifier.align(Alignment.BottomCenter))
+                }
             }
         }
+    }
+
+    fun showNotice(message: String) {
+        notices.show(message)
     }
 
     fun showMappingDialog(canvasKey: Int, assignedInputs: List<KeyMapperAssignedInput>) {
