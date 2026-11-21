@@ -887,7 +887,7 @@ class LibraryComposeTest {
         composeRule.onNodeWithText(uiString(R.string.library_filter_favorites)).assertExists()
         composeRule.onNodeWithText(uiString(R.string.library_filter_recently_opened)).assertExists()
         composeRule.onNodeWithText(uiString(R.string.library_filter_recently_added)).assertExists()
-        composeRule.onNodeWithText(uiString(R.string.library_destination_collections)).assertExists()
+        composeRule.onNodeWithText(uiString(R.string.library_destination_collections)).assertDoesNotExist()
         composeRule.onNodeWithText(uiString(R.string.library_filter_favorites)).performClick()
         assertEquals(LibraryQuickView.Favorites, actions.lastQuickView)
     }
