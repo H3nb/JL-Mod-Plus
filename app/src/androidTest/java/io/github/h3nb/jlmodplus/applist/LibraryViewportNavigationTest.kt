@@ -468,7 +468,7 @@ class LibraryViewportNavigationTest {
     }
 
     private fun openCollectionManagement() {
-        composeRule.onNodeWithText(uiString(R.string.library_filter_all)).performClick()
+        composeRule.onNodeWithTag("library_scope_picker").performClick()
         composeRule.onNodeWithText(uiString(R.string.library_collection_manage)).performClick()
     }
 
