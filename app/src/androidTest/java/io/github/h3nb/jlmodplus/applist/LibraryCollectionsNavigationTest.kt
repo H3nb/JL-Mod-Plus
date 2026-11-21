@@ -51,6 +51,7 @@ import androidx.test.ext.junit.runners.AndroidJUnit4
 import androidx.test.platform.app.InstrumentationRegistry
 import org.junit.Assert.assertEquals
 import org.junit.Assert.assertNull
+import org.junit.Assert.assertTrue
 import org.junit.Rule
 import org.junit.Test
 import org.junit.runner.RunWith
@@ -96,6 +97,47 @@ class LibraryCollectionsNavigationTest {
         pressBack()
         composeRule.waitForIdle()
         composeRule.onNodeWithText(uiString(R.string.library_filter_all)).assertIsDisplayed()
+    }
+
+    @Test
+    fun landscapeCollectionPickerKeepsLastCollectionAboveManageAction() {
+        val host = RecordingCollectionsHost().apply {
+            store.publishCollections(
+                listOf(
+                    LibraryCollectionRow(
+                        id = COLLECTION_ID, name = "Gameloft",
+                        sortOrder = 0, createdAt = 1L, appCount = 8,
+                    ),
+                    LibraryCollectionRow(
+                        id = 2L, name = "RPG",
+                        sortOrder = 1, createdAt = 2L, appCount = 0,
+                    ),
+                ),
+            )
+        }
+        composeRule.setContent {
+            DeviceConfigurationOverride(
+                DeviceConfigurationOverride.WindowSize(DpSize(800.dp, 360.dp)),
+            ) {
+                JLModPlusTheme {
+                    LibraryScreen(state = sampleLibraryState(), actions = host)
+                }
+            }
+        }
+
+        composeRule.onNodeWithText(uiString(R.string.library_filter_all)).performClick()
+        composeRule.onNodeWithText("RPG").assertIsDisplayed()
+        val emptyCount = InstrumentationRegistry.getInstrumentation().targetContext.resources
+            .getQuantityString(R.plurals.library_collection_member_count, 0, 0)
+        val countNode = composeRule.onNodeWithText(emptyCount)
+        countNode.assertIsDisplayed()
+        val footer = composeRule.onNodeWithText(uiString(R.string.library_collection_manage))
+        footer.assertIsDisplayed()
+        assertTrue(
+            "The last collection's count must not be hidden under Manage collections",
+            countNode.fetchSemanticsNode().boundsInRoot.bottom <=
+                footer.fetchSemanticsNode().boundsInRoot.top,
+        )
     }
 
     @Test

@@ -3134,7 +3134,7 @@ private fun LibraryAppsHeader(
             Column(
                 modifier = Modifier
                     .fillMaxWidth()
-                    .heightIn(max = availableWindowHeightDp() * 0.76f),
+                    .heightIn(max = (availableWindowHeightDp() - 48.dp).coerceAtLeast(0.dp)),
             ) {
                 Text(
                     text = stringResource(R.string.library_destination_collections),
