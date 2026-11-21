@@ -89,6 +89,7 @@ import io.github.h3nb.jlmodplus.filepicker.FilePickerResultContract;
 import io.github.h3nb.jlmodplus.filepicker.FilteredFilePickerActivity;
 import io.github.h3nb.jlmodplus.librarydb.LibraryAppRow;
 import io.github.h3nb.jlmodplus.librarydb.LibraryLocalizedDescriptionEditorData;
+import io.github.h3nb.jlmodplus.librarydb.LibraryMidletDetailsData;
 import io.github.h3nb.jlmodplus.librarydb.LibraryGenerationToken;
 import io.github.h3nb.jlmodplus.librarydb.LibraryIconOverride;
 import io.github.h3nb.jlmodplus.librarydb.LibraryIconFiles;
@@ -378,6 +379,18 @@ public class AppsListFragment extends Fragment {
                 libraryViewModel.setFavorite(row.getId(), favorite, (ignored, error) -> {
                     if (error != null) showError(error);
                 });
+            }
+
+            @Override
+            public void onLoadMidletDetails(
+                    int appId,
+                    @NonNull LibraryViewModel.MutationCallback<LibraryMidletDetailsData> callback) {
+                LibraryAppRow row = findRow(appId);
+                if (row == null) {
+                    callback.complete(null, new IllegalStateException("Library app is not available"));
+                    return;
+                }
+                libraryViewModel.loadMidletDetails(row.getId(), callback);
             }
 
             @Override
@@ -1283,7 +1296,8 @@ public class AppsListFragment extends Fragment {
                 row.getId(), row.getDescription(),
                 (resolved ? files.getPortraitIconPresent() : portrait.isFile())
                         ? portrait.getAbsolutePath() : null,
-                resolved ? files.getCustomIconPresent() : custom.isFile(), row.getAddedAt());
+                resolved ? files.getCustomIconPresent() : custom.isFile(), row.getAddedAt(),
+                row.getLastPlayedAt());
     }
 
     private LibraryAppUiItem toLibraryUiItem(LibraryAppRow row) {

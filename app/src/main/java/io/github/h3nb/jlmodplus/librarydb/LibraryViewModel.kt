@@ -23,6 +23,8 @@ import java.util.Locale
 import java.util.concurrent.locks.ReentrantLock
 import io.github.h3nb.jlmodplus.installer.InstallerExecutionCoordinator
 import io.github.h3nb.jlmodplus.config.ImportedBundleProfileLinkage
+import io.github.h3nb.jlmodplus.config.Config
+import io.github.h3nb.jlmodplus.jar.Descriptor
 import kotlin.concurrent.withLock
 import kotlinx.coroutines.CancellationException
 import kotlinx.coroutines.CoroutineScope
@@ -796,6 +798,49 @@ class LibraryViewModel(application: Application) : AndroidViewModel(application)
                 included = included,
                 addedAt = System.currentTimeMillis(),
             )
+        }
+    }
+
+    fun loadMidletDetails(
+        appId: Long,
+        callback: MutationCallback<LibraryMidletDetailsData>,
+    ) {
+        val generation = readyGeneration()
+        val app = try {
+            generation?.let { repository.currentApp(it, appId) }
+        } catch (_: IllegalStateException) {
+            null
+        }
+        if (generation == null || app == null) {
+            callback.complete(null, IllegalStateException("Library app is not available"))
+            return
+        }
+        launchMutation(callback) {
+            val (attributes, jarSize) = withContext(Dispatchers.IO) {
+                val installedDir = File(File(generation.emulatorDir, "converted"), app.storageKey)
+                val descriptorFile = File(
+                    installedDir, Config.MIDLET_MANIFEST_FILE.removePrefix("/"),
+                )
+                val attrs = if (descriptorFile.isFile) {
+                    try {
+                        Descriptor(descriptorFile, false).attrs.toSortedMap(String.CASE_INSENSITIVE_ORDER)
+                    } catch (_: IOException) {
+                        null
+                    }
+                } else null
+                val retainedJar = LibraryFileOperations.retainedJar(
+                    generation.emulatorDir, app.storageKey,
+                )
+                attrs to retainedJar.takeIf { it.isFile }?.length()
+            }
+            val collectionIds = repository.appCollectionIds(generation, app.id)
+            check(repository.isReadyGeneration(generation) &&
+                repository.currentApp(generation, appId)?.storageKey == app.storageKey
+            ) { "Library changed while loading MIDlet details" }
+            val names = collectionIds.mapNotNull {
+                repository.currentCollection(generation, it)?.name
+            }.sortedWith(String.CASE_INSENSITIVE_ORDER)
+            LibraryMidletDetailsData(attributes, jarSize, names)
         }
     }
 

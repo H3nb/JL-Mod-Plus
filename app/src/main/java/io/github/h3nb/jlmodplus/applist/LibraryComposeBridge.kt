@@ -16,6 +16,7 @@ package io.github.h3nb.jlmodplus.applist
 
 import io.github.h3nb.jlmodplus.librarydb.LibraryIconDraft
 import io.github.h3nb.jlmodplus.librarydb.LibraryLocalizedDescriptionEditorData
+import io.github.h3nb.jlmodplus.librarydb.LibraryMidletDetailsData
 import io.github.h3nb.jlmodplus.librarydb.LibraryViewModel
 import io.github.h3nb.jlmodplus.librarydb.LibraryBundleComponents
 import android.graphics.Bitmap
@@ -319,6 +320,7 @@ data class LibraryAppUiItem(
     val portraitIconPath: String? = null,
     val hasCustomIcon: Boolean = false,
     val addedAt: Long? = null,
+    val lastPlayedAt: Long? = null,
 )
 
 private data class MetadataRestoreRequest(
@@ -377,6 +379,11 @@ interface LibraryActions {
     fun onSearch(query: String)
     fun onQuickView(quickView: LibraryQuickView) = Unit
     fun onFavorite(appId: Int, favorite: Boolean) = Unit
+    fun onLoadMidletDetails(
+        appId: Int,
+        callback: LibraryViewModel.MutationCallback<LibraryMidletDetailsData>,
+    ) = callback.complete(null, IllegalStateException("MIDlet details are unavailable"))
+
     fun onLoadLocalizedDescriptions(
         appId: Int,
         callback: LibraryViewModel.MutationCallback<LibraryLocalizedDescriptionEditorData>,
