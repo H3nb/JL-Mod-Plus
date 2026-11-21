@@ -21,7 +21,6 @@ import androidx.compose.foundation.BorderStroke
 import androidx.compose.foundation.Canvas
 import androidx.compose.foundation.shape.CircleShape
 import androidx.compose.foundation.pager.HorizontalPager
-import androidx.compose.foundation.focusable
 import androidx.compose.foundation.pager.rememberPagerState
 import androidx.compose.foundation.clickable
 import androidx.compose.foundation.interaction.MutableInteractionSource
@@ -554,43 +553,43 @@ internal fun ConfigScreen(
                                             ConfigSectionReveal(section) { revealSection = null }
                                         },
                                     ) {
-                                    Column(
-                                        modifier = Modifier
-                                            .fillMaxSize()
-                                            .imePadding()
-                                            .verticalScroll(pageScrollState)
-                                            .padding(horizontal = 12.dp, vertical = 8.dp),
-                                        verticalArrangement = Arrangement.spacedBy(8.dp),
-                                    ) {
-                                        Box(
-                                            modifier = Modifier.fillMaxWidth(),
-                                            contentAlignment = Alignment.TopCenter,
+                                        Column(
+                                            modifier = Modifier
+                                                .fillMaxSize()
+                                                .imePadding()
+                                                .verticalScroll(pageScrollState)
+                                                .padding(horizontal = 12.dp, vertical = 8.dp),
+                                            verticalArrangement = Arrangement.spacedBy(8.dp),
                                         ) {
-                                            ConfigDestinationContent(
-                                                destination = destinations[page],
-                                                state = state,
-                                                form = form,
-                                                onFormChanged = updateForm,
-                                                events = events,
-                                                isProfile = isProfile,
-                                                cutoutAvailable = cutoutAvailable,
-                                                onRequestAction = { pendingAction = it },
-                                                onEditSystemProperties = {
-                                                    systemPropertiesSession++
-                                                    systemPropertiesEditorVisible = true
-                                                },
-                                                onOpenShaders = {
-                                                    renderingSubpage = RenderingSubpage.SHADERS
-                                                },
-                                                onNavigate = selectDestination,
-                                                onOpenDetail = { detailPage = it },
-                                                onUsePreset = { presetPickerVisible = true },
-                                                onSavePreset = { savePresetVisible = true },
-                                                modifier = Modifier.widthIn(max = 880.dp),
-                                            )
+                                            Box(
+                                                modifier = Modifier.fillMaxWidth(),
+                                                contentAlignment = Alignment.TopCenter,
+                                            ) {
+                                                ConfigDestinationContent(
+                                                    destination = destinations[page],
+                                                    state = state,
+                                                    form = form,
+                                                    onFormChanged = updateForm,
+                                                    events = events,
+                                                    isProfile = isProfile,
+                                                    cutoutAvailable = cutoutAvailable,
+                                                    onRequestAction = { pendingAction = it },
+                                                    onEditSystemProperties = {
+                                                        systemPropertiesSession++
+                                                        systemPropertiesEditorVisible = true
+                                                    },
+                                                    onOpenShaders = {
+                                                        renderingSubpage = RenderingSubpage.SHADERS
+                                                    },
+                                                    onNavigate = selectDestination,
+                                                    onOpenDetail = { detailPage = it },
+                                                    onUsePreset = { presetPickerVisible = true },
+                                                    onSavePreset = { savePresetVisible = true },
+                                                    modifier = Modifier.widthIn(max = 880.dp),
+                                                )
+                                            }
                                         }
-                                    }
-                                    }
+                                        }
                                 }
                                 if (tabMotion.isJumping) {
                                     Box(
