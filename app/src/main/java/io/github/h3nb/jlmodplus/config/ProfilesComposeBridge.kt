@@ -442,6 +442,18 @@ private fun ProfileRow(
                     expanded = actionsExpanded,
                     onDismissRequest = { actionsExpanded = false },
                 ) {
+                    if (profile.isUnavailable) {
+                        DropdownMenuItem(
+                            text = {
+                                Text(
+                                    stringResource(R.string.preset_unavailable_summary),
+                                    style = MaterialTheme.typography.bodySmall,
+                                )
+                            },
+                            onClick = {},
+                            enabled = false,
+                        )
+                    }
                     if (editable) {
                         DropdownMenuItem(
                             text = { Text(stringResource(R.string.edit_preset)) },
