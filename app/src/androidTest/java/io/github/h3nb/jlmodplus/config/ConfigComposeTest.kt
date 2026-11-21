@@ -1094,10 +1094,17 @@ class ConfigComposeTest {
             }
         }
         composeRule.onNodeWithText(uiString(R.string.PREF_VIRTUAL_KEYBOARD_OPTIONS)).assertDoesNotExist()
+        scrollTo(uiString(R.string.PREF_LAYOUT))
+        composeRule.onNodeWithText(uiString(R.string.PREF_LAYOUT)).performClick()
         composeRule.onNodeWithText(uiString(R.string.config_help_key_layout)).assertExists()
+        Espresso.pressBack()
+        composeRule.waitForIdle()
         composeRule.onNodeWithText(uiString(R.string.config_controls_disabled_hint)).assertExists()
-        scrollTo(uiString(R.string.config_controls_customization))
+        scrollTo(uiString(R.string.pref_button_shape_title))
+        composeRule.onNodeWithText(uiString(R.string.pref_button_shape_title)).performClick()
         composeRule.onNodeWithText(uiString(R.string.config_help_vk_button_shape)).assertExists()
+        Espresso.pressBack()
+        composeRule.waitForIdle()
         scrollTo(uiString(R.string.config_controls_virtual_keyboard_colors))
         composeRule.onNodeWithTag("color_outline").assertExists()
     }
