@@ -3151,7 +3151,7 @@ private fun ColorRow(
 ) {
     ConfigColorPreference(
         title = label,
-        description = stringResource(R.string.config_help_generic_color),
+        description = null,
         value = value,
         onClick = onPick,
     )
