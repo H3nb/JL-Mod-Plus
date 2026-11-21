@@ -224,7 +224,6 @@ import io.github.h3nb.jlmodplus.librarydb.LibraryQuickView
 import io.github.h3nb.jlmodplus.updates.UpdateCandidate
 import io.github.h3nb.jlmodplus.updates.UpdateRepository
 import io.github.h3nb.jlmodplus.updates.UpdateStatus
-import io.github.h3nb.jlmodplus.updates.UpdatesScreen
 import io.github.h3nb.jlmodplus.ui.JLModPlusTheme
 import io.github.h3nb.jlmodplus.ui.GlassSystemBarScrim
 import io.github.h3nb.jlmodplus.ui.ScrollableContentHint
@@ -276,7 +275,6 @@ enum class LibraryGridSpacing(
 private enum class LibraryDestination {
     Apps,
     Collections,
-    More,
 }
 
 enum class LibraryControllerCommand {
@@ -821,20 +819,12 @@ fun LibraryScreen(
     var metadataRestoreAnchorKey by remember { mutableIntStateOf(0) }
     var appActionsCollectionId by remember { mutableStateOf<Long?>(null) }
     var deleteTarget by remember { mutableStateOf<LibraryAppUiItem?>(null) }
-    var infoDialog by remember { mutableStateOf<LibraryInfoDialog?>(null) }
-    var aboutPageVisible by rememberSaveable { mutableStateOf(false) }
     var installSourceMenuVisible by remember { mutableStateOf(false) }
-    var updatesPageVisible by rememberSaveable { mutableStateOf(false) }
     var notificationsPageVisible by rememberSaveable { mutableStateOf(false) }
     // Keep full-screen navigation blocking until the outgoing page finishes fading away.
-    val aboutPageMotion = remember { MutableTransitionState(false) }
-    aboutPageMotion.targetState = aboutPageVisible
-    val updatesPageMotion = remember { MutableTransitionState(false) }
-    updatesPageMotion.targetState = updatesPageVisible
     val notificationsPageMotion = remember { MutableTransitionState(false) }
     notificationsPageMotion.targetState = notificationsPageVisible
-    val auxiliaryPageOnScreen = aboutPageMotion.currentState || aboutPageMotion.targetState ||
-        updatesPageMotion.currentState || updatesPageMotion.targetState ||
+    val auxiliaryPageOnScreen =
         notificationsPageMotion.currentState || notificationsPageMotion.targetState
     var updatePrompt by remember { mutableStateOf<UpdateCandidate?>(null) }
     var sessionDismissedUpdate by rememberSaveable { mutableStateOf<String?>(null) }
@@ -947,7 +937,7 @@ fun LibraryScreen(
     }
     val selectionMatchesDestination = when (destination) {
         LibraryDestination.Apps -> selectionState.collectionId == activeCollectionId
-        LibraryDestination.Collections, LibraryDestination.More -> false
+        LibraryDestination.Collections -> false
     }
     val collectionManageAppsActive =
         destination == LibraryDestination.Apps &&
@@ -963,13 +953,6 @@ fun LibraryScreen(
     val currentControllerMetadataTarget by rememberUpdatedState(metadataTarget)
     val currentControllerDetailsTarget by rememberUpdatedState(detailsTarget)
     val currentControllerDeleteTarget by rememberUpdatedState(deleteTarget)
-    val currentControllerInfoDialog by rememberUpdatedState(infoDialog)
-    val currentControllerAboutPageVisible by rememberUpdatedState(
-        aboutPageMotion.currentState || aboutPageMotion.targetState,
-    )
-    val currentControllerUpdatesPageVisible by rememberUpdatedState(
-        updatesPageMotion.currentState || updatesPageMotion.targetState,
-    )
     val currentControllerNotificationsPageVisible by rememberUpdatedState(
         notificationsPageMotion.currentState || notificationsPageMotion.targetState,
     )
@@ -978,7 +961,7 @@ fun LibraryScreen(
     val currentControllerSelectionActive by rememberUpdatedState(selectionActiveHere)
     val currentControllerOtherModalVisible by rememberUpdatedState(
         renameTarget != null || metadataTarget != null || detailsTarget != null ||
-            deleteTarget != null || infoDialog != null || pendingBulkDeleteIds != null ||
+            deleteTarget != null || pendingBulkDeleteIds != null ||
             auxiliaryPageOnScreen ||
             updatePrompt != null || searchOpen,
     )
@@ -1108,14 +1091,6 @@ fun LibraryScreen(
         enabled = destination == LibraryDestination.Apps && selectionActiveHere,
     ) {
         selectionState = selectionState.clear()
-    }
-    BackHandler(
-        enabled = (aboutPageMotion.currentState || aboutPageMotion.targetState) && infoDialog == null,
-    ) {
-        aboutPageVisible = false
-    }
-    BackHandler(enabled = updatesPageMotion.currentState || updatesPageMotion.targetState) {
-        updatesPageVisible = false
     }
     val availableUpdate = (updateRepository?.status as? UpdateStatus.Available)?.candidate
     LaunchedEffect(hostResumed) {
@@ -1293,9 +1268,6 @@ fun LibraryScreen(
                         currentControllerDetailsTarget != null -> detailsTarget = null
                         currentControllerDeleteTarget != null -> deleteTarget = null
                         currentControllerBulkDeleteIds != null -> pendingBulkDeleteIds = null
-                        currentControllerInfoDialog != null -> infoDialog = null
-                        currentControllerAboutPageVisible -> aboutPageVisible = false
-                        currentControllerUpdatesPageVisible -> updatesPageVisible = false
                         currentControllerNotificationsPageVisible -> notificationsPageVisible = false
                         currentControllerSelectionActive -> selectionState = selectionState.clear()
                         currentControllerSearchOpen -> {
@@ -1363,7 +1335,6 @@ fun LibraryScreen(
                 collectionsViewport.chromeVisible = true
                 collectionViewport.chromeVisible = true
             }
-            LibraryDestination.More -> Unit
         }
         if (destination != LibraryDestination.Apps) {
             appActions = null
@@ -1400,7 +1371,7 @@ fun LibraryScreen(
     val imeHidesLibraryChrome = isImeVisible && (!metadataViewportLocked || metadataImeWasVisible)
     val libraryOverlayVisible = appActions != null || renameTarget != null ||
         detailsTarget != null || metadataApp != null
-        || deleteTarget != null || infoDialog != null || pendingBulkDeleteIds != null
+        || deleteTarget != null || pendingBulkDeleteIds != null
         || auxiliaryPageOnScreen
     val libraryModalVisible = libraryOverlayVisible || updatePrompt != null ||
         collectionManageAppsActive
@@ -1729,7 +1700,7 @@ fun LibraryScreen(
                             },
                             onOpenSearch = { searchOpen = true },
                             onOpenNotifications = { notificationsPageVisible = true },
-                            onOpenGlobalSettings = { selectDestination(LibraryDestination.More) },
+                            onOpenGlobalSettings = actions::onOpenSettings,
                             searchActive = searchOpen && destination == LibraryDestination.Apps,
                             searchQuery = searchQuery,
                             onSearchQueryChange = { searchQuery = it },
@@ -1776,26 +1747,7 @@ fun LibraryScreen(
                         } else {
                             LibraryCollectionsDestination(padding)
                         }
-                        LibraryDestination.More -> LibraryMoreDestination(
-                            scaffoldPadding = viewportPadding(),
-                            onBack = { selectDestination(LibraryDestination.Apps) },
-                            onAbout = {
-                                if (currentControllerDestination == LibraryDestination.More) aboutPageVisible = true
-                            },
-                            onUpdates = {
-                                if (currentControllerDestination == LibraryDestination.More) updatesPageVisible = true
-                            },
-                            updateAvailable = updateRepository?.status is UpdateStatus.Available,
-                            onDonate = {
-                                if (currentControllerDestination == LibraryDestination.More) infoDialog = LibraryInfoDialog.Donation
-                            },
-                            onSettings = {
-                                if (currentControllerDestination == LibraryDestination.More) actions.onOpenSettings()
-                            },
-                            onCrashReports = {
-                                if (currentControllerDestination == LibraryDestination.More) actions.onOpenCrashReports()
-                            },
-                        )
+
                 }
             }
         }
@@ -1826,47 +1778,6 @@ fun LibraryScreen(
         val auxiliaryEnter = pageEnter(1, auxiliaryPageOffset)
         val auxiliaryExit = pageExit(-1, auxiliaryPageOffset)
         AnimatedVisibility(
-            visibleState = updatesPageMotion,
-            modifier = Modifier.fillMaxSize().zIndex(4f),
-            enter = auxiliaryEnter,
-            exit = auxiliaryExit,
-        ) {
-            Box(
-                Modifier.fillMaxSize()
-                    .background(MaterialTheme.colorScheme.background)
-                    .then(if (updatesPageVisible) Modifier else Modifier.clearAndSetSemantics {}),
-            ) {
-                // Catch touches on uncovered parts of the outgoing screen, behind its controls.
-                Box(
-                    Modifier.matchParentSize()
-                        .clickable(
-                            interactionSource = remember { MutableInteractionSource() },
-                            indication = null,
-                        ) {}
-                        .clearAndSetSemantics {},
-                )
-                updateRepository?.let { repository ->
-                    UpdatesScreen(
-                        repository = repository,
-                        onBack = { updatesPageVisible = false },
-                        onOpenRelease = { actions.onOpenUpdateRelease(it) },
-                        onOpenDownload = { actions.onOpenUpdateDownload(it) },
-                    )
-                }
-                // Outgoing content is still drawn, but must not accept actions or focus.
-                if (!updatesPageVisible) {
-                    Box(
-                        Modifier.matchParentSize()
-                            .clickable(
-                                interactionSource = remember { MutableInteractionSource() },
-                                indication = null,
-                            ) {}
-                            .clearAndSetSemantics {},
-                    )
-                }
-            }
-        }
-        AnimatedVisibility(
             visibleState = notificationsPageMotion,
             modifier = Modifier.fillMaxSize().zIndex(4f),
             enter = auxiliaryEnter,
@@ -1879,43 +1790,6 @@ fun LibraryScreen(
             ) {
                 LibraryNotificationsScreen(onBack = { notificationsPageVisible = false })
                 if (!notificationsPageVisible) {
-                    Box(
-                        Modifier.matchParentSize()
-                            .clickable(
-                                interactionSource = remember { MutableInteractionSource() },
-                                indication = null,
-                            ) {}
-                            .clearAndSetSemantics {},
-                    )
-                }
-            }
-        }
-        AnimatedVisibility(
-            visibleState = aboutPageMotion,
-            modifier = Modifier.fillMaxSize().zIndex(4f),
-            enter = auxiliaryEnter,
-            exit = auxiliaryExit,
-        ) {
-            Box(
-                Modifier.fillMaxSize()
-                    .background(MaterialTheme.colorScheme.background)
-                    .then(if (aboutPageVisible) Modifier else Modifier.clearAndSetSemantics {}),
-            ) {
-                Box(
-                    Modifier.matchParentSize()
-                        .clickable(
-                            interactionSource = remember { MutableInteractionSource() },
-                            indication = null,
-                        ) {}
-                        .clearAndSetSemantics {},
-                )
-                LibraryAboutScreen(
-                    onBack = { aboutPageVisible = false },
-                    onLicenses = { infoDialog = LibraryInfoDialog.Licenses },
-                    onOpenGitHub = actions::onOpenProjectRepository,
-                )
-                // Outgoing content is still drawn, but must not accept actions or focus.
-                if (!aboutPageVisible) {
                     Box(
                         Modifier.matchParentSize()
                             .clickable(
@@ -2149,16 +2023,6 @@ fun LibraryScreen(
                     Text(stringResource(android.R.string.cancel))
                 }
             },
-        )
-    }
-    infoDialog?.let { dialog ->
-        LibraryInformationDialog(
-            dialog = dialog,
-            onControllerKeyEvent = controllerKeyEventHandler?.let { handler ->
-                { event -> handler.onControllerKeyEvent(event) }
-            },
-            onDismiss = { infoDialog = null },
-            onDonate = actions::onOpenDonation,
         )
     }
     collectionsHost?.let { LibraryCollectionsDialogHost(it) }
@@ -3568,139 +3432,6 @@ internal fun LibraryCollectionsDestination(scaffoldPadding: PaddingValues) {
     }
 }
 
-@Composable
-internal fun LibraryMoreDestination(
-    scaffoldPadding: PaddingValues,
-    @Suppress("UNUSED_PARAMETER") onImportAppBundle: () -> Unit = {},
-    onBack: () -> Unit = {},
-    onAbout: () -> Unit,
-    onDonate: () -> Unit,
-    onSettings: () -> Unit,
-    onCrashReports: () -> Unit,
-    onUpdates: () -> Unit = {},
-    updateAvailable: Boolean = false,
-) {
-    val listState = rememberLazyListState()
-    val canScrollForward = rememberLazyListCanScrollForward(listState)
-    Box(modifier = Modifier.fillMaxSize()) {
-        LazyColumn(
-            modifier = Modifier
-                .fillMaxSize()
-                .windowInsetsPadding(WindowInsets.safeDrawing.only(WindowInsetsSides.Horizontal)),
-            state = listState,
-            contentPadding = scaffoldPadding,
-        ) {
-            item {
-                Column(
-                    modifier = Modifier
-                        .fillMaxWidth()
-                        .windowInsetsPadding(WindowInsets.safeDrawing.only(WindowInsetsSides.Top))
-                        .padding(horizontal = 16.dp, vertical = 12.dp),
-                    verticalArrangement = Arrangement.spacedBy(12.dp),
-                ) {
-                    Row(
-                        modifier = Modifier
-                            .widthIn(max = 720.dp)
-                            .fillMaxWidth()
-                            .align(Alignment.CenterHorizontally),
-                        verticalAlignment = Alignment.CenterVertically,
-                    ) {
-                        IconButton(onClick = onBack) {
-                            Icon(
-                                painter = painterResource(R.drawable.ic_arrow_back),
-                                contentDescription = stringResource(R.string.action_back),
-                            )
-                        }
-                        Text(
-                            text = stringResource(R.string.action_settings),
-                            style = MaterialTheme.typography.headlineSmall,
-                            modifier = Modifier.padding(start = 4.dp),
-                        )
-                    }
-                    Column(
-                        modifier = Modifier
-                            .widthIn(max = 720.dp)
-                            .fillMaxWidth()
-                            .align(Alignment.CenterHorizontally),
-                        verticalArrangement = Arrangement.spacedBy(12.dp),
-                    ) {
-                        Surface(
-                            modifier = Modifier.fillMaxWidth(),
-                            shape = MaterialTheme.shapes.extraLarge,
-                            color = MaterialTheme.colorScheme.primaryContainer,
-                        ) {
-                            LibraryActionRow(
-                                label = R.string.library_settings_preferences,
-                                summary = R.string.library_action_settings_summary,
-                                icon = R.drawable.ic_settings,
-                                emphasized = true,
-                                action = onSettings,
-                            )
-                        }
-                        Text(
-                            text = stringResource(R.string.library_settings_section_maintenance),
-                            style = MaterialTheme.typography.titleSmall,
-                            color = MaterialTheme.colorScheme.onSurfaceVariant,
-                            modifier = Modifier.padding(start = 12.dp, top = 8.dp),
-                        )
-                        Surface(
-                            modifier = Modifier.fillMaxWidth(),
-                            shape = MaterialTheme.shapes.large,
-                            color = MaterialTheme.colorScheme.surfaceContainerLow,
-                        ) {
-                            Column {
-                                LibraryActionRow(
-                                    label = R.string.updates_title,
-                                    summary = if (updateAvailable) R.string.updates_more_available
-                                        else R.string.updates_more_summary,
-                                    icon = R.drawable.ic_refresh,
-                                    action = onUpdates,
-                                )
-                                LibraryActionRow(
-                                    label = R.string.crash_reports,
-                                    summary = R.string.library_action_crash_reports_summary,
-                                    icon = R.drawable.ic_bug_report,
-                                    action = onCrashReports,
-                                )
-                            }
-                        }
-                        Text(
-                            text = stringResource(R.string.library_settings_section_support),
-                            style = MaterialTheme.typography.titleSmall,
-                            color = MaterialTheme.colorScheme.onSurfaceVariant,
-                            modifier = Modifier.padding(start = 12.dp, top = 8.dp),
-                        )
-                        Surface(
-                            modifier = Modifier.fillMaxWidth(),
-                            shape = MaterialTheme.shapes.large,
-                            color = MaterialTheme.colorScheme.surfaceContainerLow,
-                        ) {
-                            Column {
-                                LibraryActionRow(
-                                    label = R.string.about,
-                                    summary = R.string.library_action_about_summary,
-                                    icon = R.drawable.ic_info,
-                                    action = onAbout,
-                                )
-                                LibraryActionRow(
-                                    label = R.string.library_donation_action,
-                                    summary = R.string.library_donation_summary,
-                                    icon = R.drawable.ic_favorite,
-                                    action = onDonate,
-                                )
-                            }
-                        }
-                    }
-                }
-            }
-        }
-        ScrollableContentHint(
-            visible = canScrollForward,
-            modifier = Modifier.align(Alignment.BottomCenter),
-        )
-    }
-}
-
 @OptIn(ExperimentalFoundationApi::class)
 @Composable
 private fun LibraryGridItem(
@@ -4894,59 +4625,6 @@ private fun LibraryIconArtwork(
         contentScale = contentScale,
         filterQuality = icon.filterQuality,
     )
-}
-
-@Composable
-private fun LibraryActionRow(
-    label: Int,
-    action: () -> Unit,
-    icon: Int? = null,
-    summary: Int? = null,
-    destructive: Boolean = false,
-    emphasized: Boolean = false,
-) {
-    val contentColor = when {
-        destructive -> MaterialTheme.colorScheme.error
-        emphasized -> MaterialTheme.colorScheme.onPrimaryContainer
-        else -> MaterialTheme.colorScheme.onSurface
-    }
-    Row(
-        modifier = Modifier
-            .fillMaxWidth()
-            .heightIn(min = 64.dp)
-            .clickable(role = Role.Button, onClick = action)
-            .padding(horizontal = 16.dp, vertical = 10.dp),
-        verticalAlignment = Alignment.CenterVertically,
-        horizontalArrangement = Arrangement.spacedBy(12.dp),
-    ) {
-        if (icon != null) {
-            Icon(
-                painter = painterResource(icon),
-                contentDescription = null,
-                modifier = Modifier.size(24.dp),
-                tint = contentColor,
-            )
-        }
-        Column(modifier = Modifier.weight(1f)) {
-            Text(
-                text = stringResource(label),
-                style = if (emphasized) MaterialTheme.typography.titleMedium
-                else MaterialTheme.typography.bodyLarge,
-                color = contentColor,
-            )
-            if (summary != null) {
-                Text(
-                    text = stringResource(summary),
-                    style = MaterialTheme.typography.bodyMedium,
-                    color = when {
-                        destructive -> MaterialTheme.colorScheme.error
-                        emphasized -> MaterialTheme.colorScheme.onPrimaryContainer
-                        else -> MaterialTheme.colorScheme.onSurfaceVariant
-                    },
-                )
-            }
-        }
-    }
 }
 
 @Composable
