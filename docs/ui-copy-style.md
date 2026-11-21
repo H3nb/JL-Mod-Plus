@@ -242,7 +242,7 @@ This readability choice follows [W3C guidance on one-sided text alignment](https
   and error meaning. Keep technical diagnostics behind an explicit copy/details
   action.
 
-## Appearance and restrained glass
+## Appearance and modal depth
 
 - Keep the existing Material 3 typography and shape scale. Screen headings, section
   headings, setting names, supporting values, and action labels use semantic roles,
