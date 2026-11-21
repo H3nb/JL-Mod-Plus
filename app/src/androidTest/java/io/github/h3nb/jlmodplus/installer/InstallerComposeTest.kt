@@ -23,6 +23,7 @@ import androidx.compose.ui.test.assertCountEquals
 import androidx.compose.ui.test.assertIsDisplayed
 import androidx.compose.ui.test.junit4.v2.createComposeRule
 import androidx.compose.ui.test.onNodeWithContentDescription
+import androidx.compose.ui.test.onAllNodesWithContentDescription
 import androidx.compose.ui.test.onAllNodesWithText
 import androidx.compose.ui.test.onNodeWithText
 import androidx.compose.ui.test.performClick
@@ -108,6 +109,72 @@ class InstallerComposeTest {
         composeRule.onAllNodesWithText(uiString(R.string.bulk_install_filter_all)).assertCountEquals(0)
         composeRule.onNodeWithText(uiString(R.string.install)).performClick()
         assertEquals(1, installs)
+    }
+
+    @Test
+    fun batchReviewKeepsSourcesInExpandableDetailsAndSelectionActionsInMenu() {
+        var recommended = 0
+        var cleared = 0
+        val source = File("/work/demo.jar")
+        val newApp = BulkInstallItem(
+            id = "new",
+            unit = BulkSourceUnit(
+                id = "new",
+                origin = BulkSourceOrigin.ExplicitSelection,
+                kind = BulkSourceKind.JarOnly,
+                primaryFile = source,
+                sourceFiles = listOf(source),
+                jarFile = source,
+            ),
+            name = "Demo app",
+            vendor = "Studio",
+            version = "1.0",
+            status = BulkInstallStatus.New,
+            action = BulkInstallAction.Install,
+            selected = true,
+        )
+        val installedApp = newApp.copy(
+            id = "installed",
+            name = "Existing app",
+            status = BulkInstallStatus.AlreadyInstalled,
+            action = BulkInstallAction.Skip,
+            selected = false,
+        )
+        composeRule.setContent {
+            DeviceConfigurationOverride(DeviceConfigurationOverride.WindowSize(DpSize(360.dp, 640.dp))) {
+                JLModPlusTheme {
+                    BulkInstallSurface(
+                        state = BulkInstallViewModel.State.Review(
+                            BulkInstallPlan(1, File("/workdir"), listOf(newApp, installedApp)),
+                        ),
+                        onToggle = {},
+                        onRecommended = { recommended++ },
+                        onClear = { cleared++ },
+                        onInstall = {},
+                        onRetry = {},
+                        onCancel = {},
+                        onClose = {},
+                    )
+                }
+            }
+        }
+
+        composeRule.onAllNodesWithText(uiString(R.string.bulk_install_source, source.path))
+            .assertCountEquals(0)
+        composeRule.onAllNodesWithContentDescription(uiString(R.string.bulk_install_show_details))
+            .onFirst().performClick()
+        composeRule.onNodeWithText(uiString(R.string.bulk_install_source, source.path))
+            .assertIsDisplayed()
+        composeRule.onNodeWithContentDescription(uiString(R.string.bulk_install_selection_options))
+            .performClick()
+        composeRule.onNodeWithText(uiString(R.string.bulk_install_clear)).performClick()
+        assertEquals(1, cleared)
+        composeRule.onNodeWithContentDescription(uiString(R.string.bulk_install_selection_options))
+            .performClick()
+        composeRule.onNodeWithText(uiString(R.string.bulk_install_recommended)).performClick()
+        assertEquals(1, recommended)
+        composeRule.onNodeWithText(uiString(R.string.bulk_install_install_count, 1))
+            .assertIsDisplayed()
     }
 
     @Test
