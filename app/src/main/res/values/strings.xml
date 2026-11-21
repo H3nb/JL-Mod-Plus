@@ -1530,4 +1530,6 @@
     <string name="profile_local_changes_pending">Local changes not saved to the profile</string>
     <string name="profile_not_following">Based on %1$s · Not following updates</string>
     <string name="profile_stop_following">Stop following profile</string>
+    <string name="profile_follow_again">Follow profile again</string>
+    <string name="profile_follow_again_summary">Replace this MIDlet’s local settings and virtual controls with the latest %1$s profile, and follow its future updates?</string>
 </resources>
