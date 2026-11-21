@@ -155,6 +155,7 @@ fun FilePickerScreen(
                                 query = state.searchQuery,
                                 onQueryChange = actions::onSearchQueryChanged,
                                 modifier = Modifier.fillMaxWidth(),
+                                enabled = state.searchVisible,
                                 placeholder = stringResource(R.string.file_picker_search),
                                 onDismissInput = { focusManager.clearFocus() },
                                 onClose = actions::onToggleSearch,
