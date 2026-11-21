@@ -68,25 +68,6 @@ class LibraryViewportNavigationTest {
     val composeRule = createComposeRule()
 
     @Test
-    fun aboutBackReturnsToContextualSettings() {
-        val host = ViewportHost()
-        composeRule.setContent {
-            DeviceConfigurationOverride(
-                DeviceConfigurationOverride.WindowSize(DpSize(360.dp, 640.dp)),
-            ) {
-                JLModPlusTheme { LibraryScreen(state = libraryState(LibraryLayout.List), actions = host) }
-            }
-        }
-
-        composeRule.onNodeWithContentDescription(uiString(R.string.action_settings)).performClick()
-        composeRule.onNodeWithText(uiString(R.string.about)).performClick()
-        composeRule.waitForIdle()
-        composeRule.onNodeWithContentDescription(uiString(R.string.action_back)).performClick()
-        composeRule.waitForIdle()
-        composeRule.onNodeWithText(uiString(R.string.updates_title)).assertIsDisplayed()
-    }
-
-    @Test
     fun collectionViewportSurvivesHostIdReassignmentAndPrepend() {
         val host = ViewportHost()
         composeRule.setContent {
@@ -125,9 +106,8 @@ class LibraryViewportNavigationTest {
         }
 
         composeRule.onNodeWithContentDescription(uiString(R.string.action_settings)).performClick()
-        composeRule.onNodeWithText(uiString(R.string.updates_title)).assertIsDisplayed()
+        assertEquals(1, host.settingsRequests)
         composeRule.onAllNodesWithText(COLLECTION_NAME).assertCountEquals(0)
-        composeRule.onNodeWithContentDescription(uiString(R.string.action_back)).performClick()
         composeRule.onNodeWithText(rowTitle(APP_PREFIX, 0), useUnmergedTree = true)
             .assertIsDisplayed()
     }
@@ -610,7 +590,8 @@ class LibraryViewportNavigationTest {
         override fun onOpenAppSettings(appId: Int) = Unit
         override fun onReinstall(appId: Int) = Unit
         override fun onDelete(appId: Int) = Unit
-        override fun onOpenSettings() = Unit
+        var settingsRequests = 0
+        override fun onOpenSettings() { settingsRequests++ }
         override fun onOpenProfiles() = Unit
         override fun onOpenCrashReports() = Unit
         override fun onRetryLibrary() = Unit
