@@ -311,6 +311,10 @@ interface LibraryCollectionsHost : LibraryActions, LibraryBulkActions {
     fun onCreateCollectionForApp(appId: Int, name: String) = onCreateCollection(name)
     fun onRenameCollection(collectionId: Long, name: String)
     fun onDeleteCollection(collectionId: Long)
+    fun onReorderCollections(
+        orderedIds: List<Long>,
+        callback: CollectionMembershipResultCallback,
+    ) = callback.onResult(false)
     fun onOpenCollection(collectionId: Long)
     fun onPrepareCollectionAppPicker()
     fun onPrepareSearchApps() = Unit
@@ -447,14 +451,12 @@ private fun LibraryCollectionsOverview(
     }
 
     var createDialog by rememberSaveable { mutableStateOf(false) }
-    var actionsTarget by remember { mutableStateOf<LibraryCollectionUiItem?>(null) }
     var renameTarget by remember { mutableStateOf<LibraryCollectionUiItem?>(null) }
     var deleteTarget by remember { mutableStateOf<LibraryCollectionUiItem?>(null) }
     // These windows are presentation owned by the settled route, not retained viewport data.
     LaunchedEffect(active) {
         if (!active) {
             createDialog = false
-            actionsTarget = null
             renameTarget = null
             deleteTarget = null
         }
@@ -576,10 +578,7 @@ private fun LibraryCollectionsOverview(
                 }
             } else {
                 items(state.collections, key = { it.id }) { collection ->
-                    Box(
-                        modifier = Modifier.fillMaxWidth(),
-                        contentAlignment = Alignment.Center,
-                    ) {
+                    Box(modifier = Modifier.fillMaxWidth(), contentAlignment = Alignment.Center) {
                         LibraryCollectionChoiceRow(
                             collection = collection,
                             selected = collection.id == selectedCollectionId,
@@ -587,47 +586,22 @@ private fun LibraryCollectionsOverview(
                             modifier = Modifier.widthIn(max = 720.dp)
                                 .padding(horizontal = 16.dp, vertical = 2.dp),
                             trailingContent = {
-                                Box {
-                                    IconButton(onClick = { if (currentActive) actionsTarget = collection }) {
+                                Row {
+                                    IconButton(onClick = { if (currentActive) renameTarget = collection }) {
                                         Icon(
-                                            painter = painterResource(R.drawable.ic_more_vert),
+                                            painter = painterResource(R.drawable.ic_edit),
                                             contentDescription = stringResource(
-                                                R.string.library_collection_more_actions, collection.name,
+                                                R.string.library_collection_rename_action, collection.name,
                                             ),
                                         )
                                     }
-                                    DropdownMenu(
-                                        expanded = active && actionsTarget?.id == collection.id,
-                                        onDismissRequest = { actionsTarget = null },
-                                    ) {
-                                        DropdownMenuItem(
-                                            text = { Text(stringResource(R.string.action_context_rename)) },
-                                            leadingIcon = {
-                                                Icon(painterResource(R.drawable.ic_edit), contentDescription = null)
-                                            },
-                                            onClick = {
-                                                actionsTarget = null
-                                                renameTarget = collection
-                                            },
-                                        )
-                                        DropdownMenuItem(
-                                            text = {
-                                                Text(
-                                                    stringResource(R.string.action_context_delete),
-                                                    color = MaterialTheme.colorScheme.error,
-                                                )
-                                            },
-                                            leadingIcon = {
-                                                Icon(
-                                                    painterResource(R.drawable.ic_delete),
-                                                    contentDescription = null,
-                                                    tint = MaterialTheme.colorScheme.error,
-                                                )
-                                            },
-                                            onClick = {
-                                                actionsTarget = null
-                                                deleteTarget = collection
-                                            },
+                                    IconButton(onClick = { if (currentActive) deleteTarget = collection }) {
+                                        Icon(
+                                            painter = painterResource(R.drawable.ic_delete),
+                                            contentDescription = stringResource(
+                                                R.string.library_collection_delete_action, collection.name,
+                                            ),
+                                            tint = MaterialTheme.colorScheme.error,
                                         )
                                     }
                                 }
