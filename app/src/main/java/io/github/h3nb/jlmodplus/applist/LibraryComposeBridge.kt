@@ -61,6 +61,7 @@ import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.BoxWithConstraints
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.ExperimentalLayoutApi
+import androidx.compose.foundation.layout.IntrinsicSize
 import androidx.compose.foundation.layout.FlowRow
 import androidx.compose.foundation.layout.PaddingValues
 import androidx.compose.foundation.layout.Row
@@ -71,6 +72,7 @@ import androidx.compose.foundation.layout.WindowInsetsSides
 import androidx.compose.foundation.layout.aspectRatio
 import androidx.compose.foundation.layout.exclude
 import androidx.compose.foundation.layout.fillMaxSize
+import androidx.compose.foundation.layout.fillMaxHeight
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.heightIn
@@ -5003,8 +5005,6 @@ private fun libraryDialogListHeight() = adaptiveDialogLayout().maxHeight
 private data class DialogActionEntry(
     val label: Int,
     val icon: Int?,
-    val group: Int? = null,
-    val prominent: Boolean = false,
     val destructive: Boolean = false,
     val dismissOnClick: Boolean = true,
     val action: () -> Unit,
@@ -5054,17 +5054,37 @@ internal fun AppActionsDialog(
     }
 
     val entries = buildList {
-        add(DialogActionEntry(
-            label = R.string.action_settings,
-            icon = R.drawable.ic_settings,
-            prominent = true,
-            action = onSettings,
-        ))
+        if (onSelect != null) {
+            add(DialogActionEntry(
+                label = R.string.library_action_select,
+                icon = R.drawable.ic_check,
+                action = onSelect,
+            ))
+        }
         if (onDetails != null) {
             add(DialogActionEntry(
                 label = R.string.library_details_action,
                 icon = R.drawable.ic_info,
                 action = onDetails,
+            ))
+        }
+        add(DialogActionEntry(
+            label = R.string.action_settings,
+            icon = R.drawable.ic_settings,
+            action = onSettings,
+        ))
+        if (onAddToCollection != null) {
+            add(DialogActionEntry(
+                label = R.string.library_bulk_add_collection,
+                icon = R.drawable.ic_collections,
+                action = onAddToCollection,
+            ))
+        }
+        if (onShortcut != null) {
+            add(DialogActionEntry(
+                label = R.string.action_context_shortcut,
+                icon = R.drawable.ic_add_shortcut,
+                action = onShortcut,
             ))
         }
         if (onExportAppBundle != null) {
@@ -5087,43 +5107,24 @@ internal fun AppActionsDialog(
             destructive = true,
             action = onDelete,
         ))
-        if (onSelect != null) {
-            add(DialogActionEntry(
-                label = R.string.library_action_select,
-                icon = R.drawable.ic_check,
-                group = R.string.library_actions_group_organize,
-                action = onSelect,
-            ))
-        }
-        if (onAddToCollection != null) {
-            add(DialogActionEntry(
-                label = R.string.library_bulk_add_collection,
-                icon = R.drawable.ic_collections,
-                group = R.string.library_actions_group_organize,
-                action = onAddToCollection,
-            ))
-        }
-        if (onShortcut != null) {
-            add(DialogActionEntry(
-                label = R.string.action_context_shortcut,
-                icon = R.drawable.ic_add_shortcut,
-                group = R.string.library_actions_group_organize,
-                action = onShortcut,
-            ))
-        }
         if (onRemoveFromCollection != null) {
             add(DialogActionEntry(
                 label = R.string.library_collection_remove_from_current,
                 icon = R.drawable.ic_remove_from_collection,
-                group = R.string.library_actions_group_organize,
                 action = onRemoveFromCollection,
             ))
         }
     }
-    val gridColumns = if (windowWidth < 340.dp || LocalDensity.current.fontScale >= 1.5f) 1 else 2
-    val primaryCount = entries.count { it.group == null }
-    val primaryRows = (primaryCount + gridColumns - 1) / gridColumns
-    val organizeCount = entries.size - primaryCount
+    // Adaptive dialogs are narrower than the full landscape window.
+    val tileViewportWidth = if (useSheet) {
+        windowWidth - 24.dp
+    } else {
+        adaptiveDialogLayout().width - 40.dp
+    }
+    val tileMinWidth = if (LocalDensity.current.fontScale >= 1.5f) 200.dp else 148.dp
+    val gridColumns = ((tileViewportWidth + 8.dp) / (tileMinWidth + 8.dp))
+        .toInt().coerceAtLeast(1)
+    val gridRows = (entries.size + gridColumns - 1) / gridColumns
 
     val currentEntries by rememberUpdatedState(entries)
     LaunchedEffect(entries.size) {
@@ -5144,12 +5145,7 @@ internal fun AppActionsDialog(
                             else -> 1
                         }
                         focusedIndex = (focusedIndex + delta).coerceIn(0, current.lastIndex)
-                        val row = if (focusedIndex < primaryCount) {
-                            focusedIndex / gridColumns
-                        } else {
-                            primaryRows + 1 + (focusedIndex - primaryCount) / gridColumns
-                        }
-                        listState.animateScrollToItem(row)
+                        listState.animateScrollToItem(focusedIndex / gridColumns)
                     }
                 }
                 LibraryControllerCommand.Activate -> {
@@ -5249,60 +5245,23 @@ internal fun AppActionsDialog(
                     state = listState,
                     contentPadding = PaddingValues(bottom = 12.dp),
                 ) {
-                    items(primaryRows) { rowIndex ->
+                    items(gridRows) { rowIndex ->
                         Row(
                             modifier = Modifier.fillMaxWidth()
+                                .height(IntrinsicSize.Min)
                                 .padding(horizontal = 12.dp, vertical = 4.dp),
                             horizontalArrangement = Arrangement.spacedBy(8.dp),
                         ) {
-                            val first = rowIndex * gridColumns
-                            DialogActionTile(
-                                entry = entries[first],
-                                selected = controllerFocusVisible && focusedIndex == first,
-                                onDismiss = onDismiss,
-                            )
-                            if (gridColumns == 2 && first + 1 < primaryCount) {
-                                DialogActionTile(
-                                    entry = entries[first + 1],
-                                    selected = controllerFocusVisible && focusedIndex == first + 1,
-                                    onDismiss = onDismiss,
-                                )
-                            } else if (gridColumns == 2) {
-                                Spacer(modifier = Modifier.weight(1f))
-                            }
-                        }
-                    }
-                    if (organizeCount > 0) {
-                        item {
-                            Text(
-                                text = stringResource(R.string.library_actions_group_organize),
-                                modifier = Modifier.padding(
-                                    start = 20.dp, end = 16.dp, top = 16.dp, bottom = 6.dp,
-                                ),
-                                style = MaterialTheme.typography.labelMedium,
-                                color = MaterialTheme.colorScheme.onSurfaceVariant,
-                            )
-                        }
-                        items((organizeCount + gridColumns - 1) / gridColumns) { rowIndex ->
-                            Row(
-                                modifier = Modifier.fillMaxWidth()
-                                    .padding(horizontal = 12.dp, vertical = 4.dp),
-                                horizontalArrangement = Arrangement.spacedBy(8.dp),
-                            ) {
-                                val first = primaryCount + rowIndex * gridColumns
-                                DialogActionTile(
-                                    entry = entries[first],
-                                    selected = controllerFocusVisible && focusedIndex == first,
-                                    onDismiss = onDismiss,
-                                )
-                                if (gridColumns == 2 && first + 1 < entries.size) {
+                            repeat(gridColumns) { columnIndex ->
+                                val index = rowIndex * gridColumns + columnIndex
+                                if (index < entries.size) {
                                     DialogActionTile(
-                                        entry = entries[first + 1],
-                                        selected = controllerFocusVisible && focusedIndex == first + 1,
+                                        entry = entries[index],
+                                        selected = controllerFocusVisible && focusedIndex == index,
                                         onDismiss = onDismiss,
                                     )
-                                } else if (gridColumns == 2) {
-                                    Spacer(modifier = Modifier.weight(1f))
+                                } else {
+                                    Spacer(Modifier.weight(1f))
                                 }
                             }
                         }
@@ -5353,19 +5312,18 @@ private fun RowScope.DialogActionTile(
 ) {
     val background = when {
         selected -> MaterialTheme.colorScheme.secondaryContainer
-        entry.prominent -> MaterialTheme.colorScheme.primaryContainer
         entry.destructive -> MaterialTheme.colorScheme.errorContainer.copy(alpha = 0.4f)
         else -> MaterialTheme.colorScheme.surfaceContainerHigh
     }
     val foreground = when {
         entry.destructive -> MaterialTheme.colorScheme.error
         selected -> MaterialTheme.colorScheme.onSecondaryContainer
-        entry.prominent -> MaterialTheme.colorScheme.onPrimaryContainer
         else -> MaterialTheme.colorScheme.onSurface
     }
     Row(
         modifier = Modifier
             .weight(1f)
+            .fillMaxHeight()
             .heightIn(min = 64.dp)
             .clip(MaterialTheme.shapes.large)
             .background(background)
@@ -5388,8 +5346,7 @@ private fun RowScope.DialogActionTile(
             text = stringResource(entry.label),
             color = foreground,
             style = MaterialTheme.typography.labelLarge,
-            maxLines = 2,
-            overflow = TextOverflow.Ellipsis,
+            softWrap = true,
         )
     }
 }
