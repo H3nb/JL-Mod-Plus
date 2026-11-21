@@ -706,7 +706,8 @@ class ConfigComposeTest {
         composeRule.onNodeWithText("Built-in MIDlet settings and virtual controls.").assertExists()
         composeRule.onNodeWithText("Current Configuration").assertDoesNotExist()
         composeRule.onNodeWithTag("config_profile_picker").performClick()
-        composeRule.onNodeWithText("Built-in MIDlet settings and virtual controls.").assertExists()
+        composeRule.onNode(hasText("Built-in MIDlet settings and virtual controls.") and
+            hasAnyAncestor(isDialog())).assertExists()
         composeRule.onNode(hasText("JL-Mod Defaults") and hasAnyAncestor(isDialog())).performClick()
         composeRule.onNodeWithText(uiString(R.string.preset_choose_parts)).assertDoesNotExist()
         composeRule.onNodeWithTag("profile_scope_settings").assertDoesNotExist()
