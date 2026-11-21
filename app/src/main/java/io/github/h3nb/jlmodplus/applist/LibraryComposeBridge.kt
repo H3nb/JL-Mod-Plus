@@ -5151,7 +5151,7 @@ internal fun AppActionsDialog(
     } else {
         adaptiveDialogLayout().width - 40.dp
     }
-    val tileMinWidth = if (LocalDensity.current.fontScale >= 1.5f) 200.dp else 148.dp
+    val tileMinWidth = if (LocalDensity.current.fontScale >= 1.5f) 240.dp else 148.dp
     val gridColumns = ((tileViewportWidth + 8.dp) / (tileMinWidth + 8.dp))
         .toInt().coerceIn(1, entries.size.coerceAtLeast(1))
     val gridRows = (entries.size + gridColumns - 1) / gridColumns
