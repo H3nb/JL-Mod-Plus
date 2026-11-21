@@ -242,6 +242,39 @@ This readability choice follows [W3C guidance on one-sided text alignment](https
   and error meaning. Keep technical diagnostics behind an explicit copy/details
   action.
 
+## Appearance and restrained glass
+
+- Keep the existing Material 3 typography and shape scale. Screen headings, section
+  headings, setting names, supporting values, and action labels use semantic roles,
+  not a custom per-screen font size. Respect Android font scaling; reflow content
+  rather than shrinking text or requiring fixed tile heights.
+- Theme chooses light or dark appearance; the explicit Follow system option uses
+  AppCompat's system night mode. Existing saved light/dark/time/battery choices
+  retain their meanings, and the historical light default is unchanged for
+  preferences without a stored choice.
+- Accent selects the shared color scheme. Eight static palettes preserve neutral
+  surfaces and map actionable, selected, and toggle-on states to primary/container
+  roles; focus remains visibly distinct. Wallpaper colors are an opt-in choice on
+  Android 12+, resolved through Material 3 dynamic color. The stored wallpaper
+  choice falls back to the Sapphire palette if loaded on an older Android version.
+  The selected palette also colors legacy host accents, not guest framebuffer pixels
+  or user-customized virtual controls.
+- Use neutral surfaces for ordinary actions, `primaryContainer` and
+  `onPrimaryContainer` for active/selected states, and `error` for destructive
+  actions. A setting shortcut that *reports* an enabled value is not itself an
+  active toggle.
+- Use the base surface for pages, low/container surfaces for cards and groups,
+  and higher surfaces for modal layers. Prefer tonal separation over multiple
+  outlines, gradients, or colored shadows. The Runtime Quick Actions dialog may
+  use a high-opacity themed translucent surface with a subtle outline; it must
+  remain readable without real blur, including over a busy game background.
+  Do not confuse `Modifier.blur()` with backdrop blur: actual blur behind
+  Canvas/GLES is an optional, separately validated renderer/window experiment.
+- Preserve the existing short directional child-page and Search transitions.
+  Selection color changes may animate briefly; transitions must honor platform
+  animation settings and never delay a MIDlet launch, guest input, or controller
+  focus movement. Prefer no animation to a long or continuous decorative effect.
+
 ## Presentation review
 
 For interaction architecture, accessibility behavior, performance, and general UI testing policy, follow [App-owned UI development](app-ui-development.md) and [Testing strategy](development.md#testing-strategy). This document adds only copy and presentation-specific checks.
