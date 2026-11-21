@@ -25,7 +25,7 @@ import androidx.compose.ui.tooling.preview.Preview
 import androidx.navigationevent.compose.LocalNavigationEventDispatcherOwner
 import androidx.navigationevent.compose.rememberNavigationEventDispatcherOwner
 import com.android.tools.screenshot.PreviewTest
-import io.github.h3nb.jlmodplus.config.ProfileActionsDialog
+import io.github.h3nb.jlmodplus.config.ProfileRow
 import io.github.h3nb.jlmodplus.config.ProfileNameDialog
 import io.github.h3nb.jlmodplus.config.ProfileUiItem
 import io.github.h3nb.jlmodplus.config.ProfilesActions
@@ -563,12 +563,12 @@ fun ProfileCreateScreenshot() {
 @Composable
 fun ProfileActionsScreenshot() {
     JLModPlusTheme(darkTheme = false) {
-        ProfileActionsDialog(
+        ProfileRow(
             profile = PreviewProfiles.first(),
-            onDismiss = {},
             onEdit = {},
             onRename = {},
             onDelete = {},
+            initiallyExpanded = true,
         )
     }
 }
@@ -725,12 +725,12 @@ private class PreviewCollectionsHost : LibraryCollectionsHost, LibraryActions by
 @Composable
 fun ProfileActionsCompactLandscapeLargeTextScreenshot() {
     JLModPlusTheme(darkTheme = false) {
-        ProfileActionsDialog(
+        ProfileRow(
             profile = PreviewProfiles.first().copy(isDefault = false),
-            onDismiss = {},
             onEdit = {},
             onRename = {},
             onDelete = {},
+            initiallyExpanded = true,
         )
     }
 }
