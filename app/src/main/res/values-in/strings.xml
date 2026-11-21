@@ -1433,6 +1433,7 @@
     <string name="config_quick_settings">Pengaturan cepat</string>
     <string name="config_all_settings">Semua pengaturan</string>
     <string name="profile_local_changes_pending">Perubahan lokal tidak disimpan ke profil</string>
+    <string name="profile_local_configuration_summary">Pengaturan hanya untuk MIDlet ini</string>
     <string name="profile_not_following">Berdasarkan %1$s · Tidak mengikuti pembaruan</string>
     <string name="profile_stop_following">Berhenti mengikuti profil</string>
     <string name="profile_follow_again">Ikuti lagi profil</string>
