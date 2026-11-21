@@ -836,17 +836,74 @@ fun LibraryScreen(
                 state.libraryScope.isEmpty() ||
                     navigationState.selectedCollectionScope == state.libraryScope
                 )
+    val activeCollectionId = navigationState.selectedCollectionId.takeIf {
+        selectedCollectionMatchesLibrary
+    }
+    val activeCollection = collectionDialogState?.collections?.firstOrNull {
+        it.id == activeCollectionId
+    }
+    val activeMembers = collectionDialogState?.members?.takeIf {
+        it.collectionId == activeCollectionId
+    }
+    val sortedMembers by produceState<List<LibraryAppUiItem>?>(
+        initialValue = null, activeCollectionId, activeMembers?.revision, state.sortVariant,
+    ) {
+        if (activeCollectionId == null || activeMembers == null) return@produceState
+        value = withContext(Dispatchers.Default) {
+            val job = currentCoroutineContext()
+            projectCollectionApps(activeMembers.members, "", state.sortVariant) {
+                job.ensureActive()
+            }
+        }
+    }
+    val displayedState = if (activeCollectionId == null) state else state.copy(
+        apps = sortedMembers.orEmpty(),
+        projectedAppIds = sortedMembers.orEmpty().map(LibraryAppUiItem::databaseId),
+        availableAppIds = activeMembers?.memberIds.orEmpty(),
+        quickView = LibraryQuickView.All,
+        appliedFilter = "",
+        loading = state.loading || sortedMembers == null,
+        projectionRevision = activeMembers?.revision ?: state.projectionRevision,
+    )
+    LaunchedEffect(
+        navigationState.selectedCollectionId,
+        selectedCollectionMatchesLibrary,
+        activeCollection?.id,
+        activeMembers?.collectionId,
+        collectionDialogState?.ready,
+        state.libraryScope,
+    ) {
+        val selectedId = navigationState.selectedCollectionId
+        when {
+            selectedId != null && !selectedCollectionMatchesLibrary -> {
+                navigationState = navigationState.copy(
+                    selectedCollectionId = null,
+                    selectedCollectionScope = null,
+                    collectionManageApps = false,
+                )
+                collectionsHost?.onDismissCollectionMembers()
+            }
+            selectedId != null && collectionDialogState?.ready == true &&
+                activeCollection == null -> {
+                navigationState = navigationState.copy(
+                    selectedCollectionId = null,
+                    selectedCollectionScope = null,
+                    collectionManageApps = false,
+                )
+                collectionsHost?.onDismissCollectionMembers()
+            }
+            activeCollection != null && activeMembers == null -> {
+                collectionsHost?.onOpenCollection(activeCollection.id)
+            }
+        }
+    }
     val selectionMatchesDestination = when (destination) {
-        LibraryDestination.Apps -> selectionState.collectionId == null
-        LibraryDestination.Collections ->
-            selectedCollectionMatchesLibrary &&
-                selectionState.collectionId != null &&
-                navigationState.selectedCollectionId == selectionState.collectionId
-        LibraryDestination.More -> false
+        LibraryDestination.Apps -> selectionState.collectionId == activeCollectionId
+        LibraryDestination.Collections, LibraryDestination.More -> false
     }
     val collectionManageAppsActive =
-        destination == LibraryDestination.Collections &&
-            selectedCollectionMatchesLibrary &&
+        destination == LibraryDestination.Apps &&
+            activeCollection != null &&
             navigationState.collectionManageApps
     val selectionActiveHere =
         selectionState.isActive && selectionMatchesDestination && !collectionManageAppsActive && !searchOpen
@@ -873,6 +930,7 @@ fun LibraryScreen(
             updatePrompt != null || searchOpen,
     )
     val currentControllerSearchOpen by rememberUpdatedState(searchOpen)
+    val currentControllerCollectionId by rememberUpdatedState(activeCollectionId)
     val currentControllerImeVisible by rememberUpdatedState(isImeVisible)
 
     LaunchedEffect(state.generation, state.databaseControlsReady) {
@@ -924,6 +982,7 @@ fun LibraryScreen(
     suspend fun moveControllerFocus(command: LibraryControllerCommand) {
         val currentState = currentControllerState
         if (currentControllerDestination != LibraryDestination.Apps ||
+            currentControllerCollectionId != null ||
             currentState.apps.isEmpty() || currentControllerSelectionActive
         ) return
         val apps = currentState.apps
@@ -1100,6 +1159,9 @@ fun LibraryScreen(
     LaunchedEffect(controllerEvents, appsViewport) {
         controllerEvents?.collect { event ->
             if (currentControllerAppActions != null) return@collect
+            if (currentControllerCollectionId != null &&
+                event.command != LibraryControllerCommand.Back
+            ) return@collect
             controllerFocusVisible = true
             if (currentControllerOtherModalVisible && event.command != LibraryControllerCommand.Back) {
                 return@collect
@@ -1165,12 +1227,12 @@ fun LibraryScreen(
                                 searchQuery = ""
                             }
                         }
-                        currentControllerDestination == LibraryDestination.Collections &&
+                        currentControllerDestination == LibraryDestination.Apps &&
                             currentNavigationState.collectionManageApps -> {
                             collectionsHost?.collectionsStore()?.dismissPicker()
                             navigationState = currentNavigationState.copy(collectionManageApps = false)
                         }
-                        currentControllerDestination == LibraryDestination.Collections &&
+                        currentControllerDestination == LibraryDestination.Apps &&
                             currentNavigationState.selectedCollectionId != null -> {
                             navigationState = currentNavigationState.copy(
                                 selectedCollectionId = null,
@@ -1200,13 +1262,24 @@ fun LibraryScreen(
         searchOpen = false
         searchQuery = ""
     }
-    BackHandler(enabled = destination != LibraryDestination.Apps &&
-        (destination == LibraryDestination.More || navigationState.selectedCollectionId == null)) {
+    BackHandler(enabled = destination == LibraryDestination.Apps &&
+        activeCollectionId != null && !selectionActiveHere && !searchOpen &&
+        !collectionManageAppsActive) {
+        navigationState = navigationState.copy(
+            selectedCollectionId = null,
+            selectedCollectionScope = null,
+        )
+        collectionsHost?.onDismissCollectionMembers()
+    }
+    BackHandler(enabled = destination != LibraryDestination.Apps) {
         selectDestination(LibraryDestination.Apps)
     }
-    LaunchedEffect(destination, state.libraryScope) {
+    LaunchedEffect(destination, activeCollectionId, state.libraryScope) {
         when (destination) {
-            LibraryDestination.Apps -> appsViewport.chromeVisible = true
+            LibraryDestination.Apps -> {
+                if (activeCollectionId == null) appsViewport.chromeVisible = true
+                else collectionViewport.chromeVisible = true
+            }
             LibraryDestination.Collections -> {
                 collectionsViewport.chromeVisible = true
                 collectionViewport.chromeVisible = true
@@ -1249,11 +1322,12 @@ fun LibraryScreen(
     val libraryOverlayVisible = appActions != null || renameTarget != null || metadataApp != null
         || deleteTarget != null || infoDialog != null || pendingBulkDeleteIds != null
         || auxiliaryPageOnScreen
-    val libraryModalVisible = libraryOverlayVisible || updatePrompt != null || searchOpen
+    val libraryModalVisible = libraryOverlayVisible || updatePrompt != null ||
+        searchOpen || collectionManageAppsActive
     LaunchedEffect(libraryModalVisible, selectionActiveHere, searchOpen, destination) {
         onControllerBackAvailabilityChanged(
             libraryModalVisible || selectionActiveHere || searchOpen ||
-                destination != LibraryDestination.Apps,
+                activeCollectionId != null || destination != LibraryDestination.Apps,
         )
     }
     val updateDialogReady = hostResumed && destination == LibraryDestination.Apps &&
