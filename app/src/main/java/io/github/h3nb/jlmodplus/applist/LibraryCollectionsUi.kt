@@ -12,6 +12,7 @@ import androidx.compose.foundation.clickable
 import androidx.compose.foundation.focusGroup
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
+import androidx.activity.compose.BackHandler
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.PaddingValues
 import androidx.compose.foundation.layout.Row
@@ -42,6 +43,7 @@ import androidx.compose.material3.ListItem
 import androidx.compose.material3.ListItemDefaults
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.OutlinedTextField
+import androidx.compose.material3.Surface
 import androidx.compose.material3.Text
 import androidx.compose.material3.TextButton
 import androidx.compose.material3.adaptive.ExperimentalMaterial3AdaptiveApi
@@ -522,6 +524,89 @@ internal fun LibraryCollectionsDestination(
     )
 }
 
+/** Collection management is a child of Library, not a second application browser. */
+@Composable
+internal fun LibraryCollectionsManagementDestination(
+    host: LibraryCollectionsHost,
+    libraryState: LibraryUiState,
+    scaffoldPadding: PaddingValues,
+    viewportState: LibraryViewportState,
+    selectedCollectionId: Long?,
+    onBack: () -> Unit,
+    onOpenCollection: (Long) -> Unit,
+) {
+    val state by host.collectionsStore().state.collectAsState()
+    if (!state.ready) {
+        LibraryCollectionsDestination(scaffoldPadding)
+        return
+    }
+    BackHandler(onBack = onBack)
+    LibraryCollectionsOverview(
+        host = host,
+        state = state,
+        libraryState = libraryState,
+        scaffoldPadding = scaffoldPadding,
+        viewportState = viewportState,
+        selectedCollectionId = selectedCollectionId,
+        active = true,
+        onOpenCollection = onOpenCollection,
+        onNavigationVisibilityChanged = {},
+        onBack = onBack,
+    )
+}
+
+/** Single membership editor reused for every active Library collection. */
+@Composable
+internal fun LibraryCollectionMembershipEditor(
+    host: LibraryCollectionsHost,
+    collection: LibraryCollectionUiItem,
+    members: LibraryCollectionMembersUi?,
+    libraryState: LibraryUiState,
+    viewportState: LibraryViewportState,
+    onBack: () -> Unit,
+) {
+    val state by host.collectionsStore().state.collectAsState()
+    var pending by remember(collection.id) { mutableStateOf<Map<Long, Boolean>>(emptyMap()) }
+    val memberIds = members?.memberIds.orEmpty()
+    LaunchedEffect(members?.revision) {
+        pending = pending.filter { (id, included) -> (id in memberIds) != included }
+    }
+    LaunchedEffect(collection.id) { host.onPrepareCollectionAppPicker() }
+    BackHandler(onBack = onBack)
+    Surface(modifier = Modifier.fillMaxSize(), color = MaterialTheme.colorScheme.background) {
+        LibraryCollectionAppPicker(
+            collection = collection,
+            allApps = state.allApps,
+            sourceRevision = state.allAppsRevision,
+            memberIds = memberIds,
+            pendingMemberships = pending,
+            sortVariant = libraryState.sortVariant,
+            iconRatio = libraryState.iconRatio,
+            iconShape = libraryState.iconShape,
+            enhancedIcons = libraryState.enhancedIcons,
+            scaffoldPadding = PaddingValues(),
+            viewportState = viewportState,
+            loading = !state.allAppsPrepared || members == null,
+            onBack = onBack,
+            onSetMembership = { appId, included ->
+                if (appId !in pending) {
+                    pending = pending + (appId to included)
+                    host.onSetCollectionMembershipByDatabaseId(
+                        appId,
+                        collection.id,
+                        included,
+                        CollectionMembershipResultCallback { success ->
+                            if (!success && pending[appId] == included) {
+                                pending = pending - appId
+                            }
+                        },
+                    )
+                }
+            },
+        )
+    }
+}
+
 @Composable
 private fun LibraryCollectionsOverview(
     host: LibraryCollectionsHost,
@@ -533,6 +618,7 @@ private fun LibraryCollectionsOverview(
     active: Boolean,
     onOpenCollection: (Long) -> Unit,
     onNavigationVisibilityChanged: (Boolean) -> Unit,
+    onBack: (() -> Unit)? = null,
 ) {
     val currentActive by rememberUpdatedState(active)
     val currentOnNavigationVisibilityChanged by rememberUpdatedState(onNavigationVisibilityChanged)
@@ -585,6 +671,14 @@ private fun LibraryCollectionsOverview(
                 .then(if (titleActionsEnabled) Modifier else Modifier.clearAndSetSemantics { }),
             verticalAlignment = Alignment.CenterVertically,
         ) {
+            if (onBack != null) {
+                IconButton(onClick = onBack, enabled = titleActionsEnabled) {
+                    Icon(
+                        painter = painterResource(R.drawable.ic_arrow_back),
+                        contentDescription = stringResource(R.string.library_back),
+                    )
+                }
+            }
             Text(
                 text = stringResource(R.string.library_destination_collections),
                 modifier = Modifier.weight(1f),
