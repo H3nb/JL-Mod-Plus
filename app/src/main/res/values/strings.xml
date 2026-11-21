@@ -245,8 +245,8 @@
     <string name="pref_skip_resume_call">Skip startApp() on resume</string>
     <string name="pref_soundbank_title">MIDI soundbank</string>
     <string name="PREF_SYS_PROPS">System properties</string>
-    <string name="config_destination_display" tools:ignore="MissingTranslation">Display</string>
-    <string name="config_destination_graphics">Graphics &amp; performance</string>
+    <string name="config_destination_graphics">Display</string>
+    <string name="config_destination_rendering" tools:ignore="MissingTranslation">Graphics &amp; performance</string>
     <string name="config_destination_media">Media</string>
     <string name="config_camera_title">Camera</string>
     <string name="config_camera_default_title">Default camera</string>

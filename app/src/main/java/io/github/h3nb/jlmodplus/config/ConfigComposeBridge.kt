@@ -306,8 +306,8 @@ data class EncodingPickerRequest(
 
 internal enum class ConfigDestination(val label: Int, val icon: Int) {
     Basic(R.string.config_quick_settings, R.drawable.ic_config_general),
-    Display(R.string.config_destination_display, R.drawable.ic_config_graphics),
-    Graphics(R.string.config_destination_graphics, R.drawable.ic_runtime_fps),
+    Display(R.string.config_destination_graphics, R.drawable.ic_config_graphics),
+    Graphics(R.string.config_destination_rendering, R.drawable.ic_runtime_fps),
     Controls(R.string.config_destination_controls, R.drawable.ic_config_controls),
     Media(R.string.config_destination_media, R.drawable.ic_config_media),
     System(R.string.config_destination_system, R.drawable.ic_settings),
@@ -540,20 +540,20 @@ internal fun ConfigScreen(
                                     ) {
                                         Column(
                                             modifier = Modifier.widthIn(max = 880.dp),
-                                        verticalArrangement = Arrangement.spacedBy(8.dp),
-                                    ) {
-                                        ConfigQuickSettings(
-                                            state = state,
-                                            isProfile = isProfile,
-                                            events = events,
-                                            onUsePreset = { presetPickerVisible = true },
-                                            onSavePreset = { savePresetVisible = true },
-                                            onStopFollowing = { events.onStopFollowingProfile() },
-                                            onOpenCategory = { selectedDestination = it },
-                                            onOpenPerformance = { detailPage = ConfigDetail.Performance },
-                                            onOpenQuickSetting = { quickSetting = it },
-                                            onRequestAction = { pendingAction = it },
-                                        )
+                                            verticalArrangement = Arrangement.spacedBy(8.dp),
+                                        ) {
+                                            ConfigQuickSettings(
+                                                state = state,
+                                                isProfile = isProfile,
+                                                events = events,
+                                                onUsePreset = { presetPickerVisible = true },
+                                                onSavePreset = { savePresetVisible = true },
+                                                onStopFollowing = { events.onStopFollowingProfile() },
+                                                onOpenCategory = { selectedDestination = it },
+                                                onOpenPerformance = { detailPage = ConfigDetail.Performance },
+                                                onOpenQuickSetting = { quickSetting = it },
+                                                onRequestAction = { pendingAction = it },
+                                            )
                                         }
                                     }
                                 } else {
