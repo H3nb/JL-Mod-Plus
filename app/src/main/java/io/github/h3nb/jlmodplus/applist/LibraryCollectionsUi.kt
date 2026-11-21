@@ -623,7 +623,8 @@ private fun LibraryCollectionsOverview(
             IconButton(
                 enabled = titleActionsEnabled && canRename,
                 onClick = {
-                    renameTarget = state.collections.firstOrNull { it.id == selectedIds.single() }
+                    val selectedId = selectedIds.singleOrNull()
+                    renameTarget = state.collections.firstOrNull { it.id == selectedId }
                 },
             ) {
                 Icon(
