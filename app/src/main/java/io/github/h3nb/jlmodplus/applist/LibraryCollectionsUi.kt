@@ -37,6 +37,7 @@ import androidx.compose.foundation.lazy.LazyColumn
 import androidx.compose.foundation.lazy.items
 import io.github.h3nb.jlmodplus.ui.AdaptiveAlertDialog as AlertDialog
 import io.github.h3nb.jlmodplus.ui.adaptiveDialogLayout
+import androidx.compose.material3.Checkbox
 import androidx.compose.material3.CircularProgressIndicator
 import androidx.compose.material3.DropdownMenu
 import androidx.compose.material3.DropdownMenuItem
@@ -316,6 +317,8 @@ interface LibraryCollectionsHost : LibraryActions, LibraryBulkActions {
     fun onCreateCollectionForApp(appId: Int, name: String) = onCreateCollection(name)
     fun onRenameCollection(collectionId: Long, name: String)
     fun onDeleteCollection(collectionId: Long)
+    fun onDeleteCollections(ids: List<Long>, callback: CollectionMembershipResultCallback) =
+        callback.onResult(false)
     fun onReorderCollections(
         orderedIds: List<Long>,
         callback: CollectionMembershipResultCallback,
@@ -457,7 +460,9 @@ private fun LibraryCollectionsOverview(
 
     var createDialog by rememberSaveable { mutableStateOf(false) }
     var renameTarget by remember { mutableStateOf<LibraryCollectionUiItem?>(null) }
-    var deleteTarget by remember { mutableStateOf<LibraryCollectionUiItem?>(null) }
+    var selectedIds by remember { mutableStateOf<Set<Long>>(emptySet()) }
+    var deleteTargetIds by remember { mutableStateOf<List<Long>?>(null) }
+    var deleting by remember { mutableStateOf(false) }
     var previewOrder by remember { mutableStateOf<List<Long>?>(null) }
     var draggingId by remember { mutableStateOf<Long?>(null) }
     var dragDistance by remember { mutableFloatStateOf(0f) }
@@ -469,6 +474,7 @@ private fun LibraryCollectionsOverview(
     }?.map { requireNotNull(collectionsById[it]) } ?: state.collections
     LaunchedEffect(state.collections) {
         val persistedOrder = state.collections.map { it.id }
+        selectedIds = selectedIds.intersect(persistedOrder.toSet())
         if (draggingId == null && previewOrder != null &&
             (previewOrder == persistedOrder || previewOrder!!.toSet() != persistedOrder.toSet())
         ) {
@@ -481,7 +487,9 @@ private fun LibraryCollectionsOverview(
         if (!active) {
             createDialog = false
             renameTarget = null
-            deleteTarget = null
+            selectedIds = emptySet()
+            deleteTargetIds = null
+            deleting = false
             previewOrder = null
             draggingId = null
             savingOrder = false
@@ -507,6 +515,8 @@ private fun LibraryCollectionsOverview(
     val renderHeader: @Composable (Modifier, Boolean) -> Unit = { modifier, interactive ->
         val titleGate = rememberLibraryHeaderActionGate(headerOffsetPx)
         val titleActionsEnabled = interactive && titleGate.enabled.value
+        val canRename = selectedIds.size == 1 && !savingOrder && !deleting
+        val canDelete = selectedIds.isNotEmpty() && !savingOrder && !deleting
         Row(
             modifier = modifier
                 .fillMaxWidth()
@@ -525,17 +535,43 @@ private fun LibraryCollectionsOverview(
                 }
             }
             Text(
-                text = stringResource(R.string.library_collection_manage),
+                text = stringResource(R.string.library_destination_collections),
                 modifier = Modifier.weight(1f),
+                maxLines = 1,
+                overflow = TextOverflow.Ellipsis,
                 style = MaterialTheme.typography.titleLarge,
             )
             IconButton(
-                enabled = titleActionsEnabled,
+                enabled = titleActionsEnabled && !savingOrder && !deleting,
                 onClick = { if (currentActive) createDialog = true },
             ) {
                 Icon(
                     painter = painterResource(R.drawable.ic_create_folder),
                     contentDescription = stringResource(R.string.library_collection_new),
+                )
+            }
+            IconButton(
+                enabled = titleActionsEnabled && canRename,
+                onClick = {
+                    renameTarget = state.collections.firstOrNull { it.id == selectedIds.single() }
+                },
+            ) {
+                Icon(
+                    painter = painterResource(R.drawable.ic_edit),
+                    contentDescription = stringResource(R.string.library_collection_rename_selected),
+                )
+            }
+            IconButton(
+                enabled = titleActionsEnabled && canDelete,
+                onClick = {
+                    deleteTargetIds = state.collections.map { it.id }.filter { it in selectedIds }
+                },
+            ) {
+                Icon(
+                    painter = painterResource(R.drawable.ic_delete),
+                    contentDescription = stringResource(R.string.library_collection_delete_selected),
+                    tint = if (titleActionsEnabled && canDelete) MaterialTheme.colorScheme.error
+                        else MaterialTheme.colorScheme.onSurface.copy(alpha = 0.38f),
                 )
             }
         }
