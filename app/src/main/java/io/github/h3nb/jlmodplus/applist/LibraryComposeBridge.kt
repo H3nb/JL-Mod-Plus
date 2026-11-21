@@ -5034,16 +5034,10 @@ private fun RowScope.DialogActionTile(
     selected: Boolean,
     onDismiss: () -> Unit,
 ) {
-    val background = when {
-        selected -> MaterialTheme.colorScheme.secondaryContainer
-        entry.destructive -> MaterialTheme.colorScheme.errorContainer.copy(alpha = 0.4f)
-        else -> MaterialTheme.colorScheme.surfaceContainerHigh
-    }
-    val foreground = when {
-        entry.destructive -> MaterialTheme.colorScheme.error
-        selected -> MaterialTheme.colorScheme.onSecondaryContainer
-        else -> MaterialTheme.colorScheme.onSurface
-    }
+    val colors = MaterialTheme.colorScheme
+    val background = if (entry.destructive) colors.errorContainer.copy(alpha = 0.4f)
+        else colors.surfaceContainerLow
+    val foreground = if (entry.destructive) colors.error else colors.onSurface
     Row(
         modifier = Modifier
             .weight(1f)
@@ -5051,6 +5045,8 @@ private fun RowScope.DialogActionTile(
             .heightIn(min = 64.dp)
             .clip(MaterialTheme.shapes.large)
             .background(background)
+            .then(if (selected) Modifier.border(2.dp, colors.primary, MaterialTheme.shapes.large)
+                else Modifier)
             .semantics { this.selected = selected }
             .clickable(role = Role.Button) {
                 onDismiss()
