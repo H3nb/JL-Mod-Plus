@@ -3351,12 +3351,11 @@ private fun LibraryHeaderActions(
             contentDescription = stringResource(R.string.library_search_placeholder),
         )
     }
+    val notificationsLabel = stringResource(R.string.library_notifications_title)
     IconButton(
         onClick = onOpenNotifications,
         enabled = enabled,
-        modifier = Modifier.semantics {
-            contentDescription = stringResource(R.string.library_notifications_title)
-        },
+        modifier = Modifier.semantics { contentDescription = notificationsLabel },
     ) {
         Box(modifier = Modifier.size(24.dp)) {
             Icon(
