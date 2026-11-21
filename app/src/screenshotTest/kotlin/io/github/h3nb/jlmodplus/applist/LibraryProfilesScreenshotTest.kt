@@ -396,15 +396,12 @@ fun LibraryAppActionsScreenshot() {
             app = PreviewApps.first(),
             onDismiss = {},
             onShortcut = {},
-            onRename = {},
             onSettings = {},
             onReinstall = {},
             onDelete = {},
             onDetails = {},
-            onEditMetadata = {},
             onSelect = {},
             onAddToCollection = {},
-            onShareApp = {},
             onExportAppBundle = {},
         )
     }
@@ -425,15 +422,12 @@ fun LibraryAppActionsCompactLandscapeLargeTextScreenshot() {
             app = PreviewApps.first(),
             onDismiss = {},
             onShortcut = {},
-            onRename = {},
             onSettings = {},
             onReinstall = {},
             onDelete = {},
             onDetails = {},
-            onEditMetadata = {},
             onSelect = {},
             onAddToCollection = {},
-            onShareApp = {},
             onExportAppBundle = {},
         )
     }
