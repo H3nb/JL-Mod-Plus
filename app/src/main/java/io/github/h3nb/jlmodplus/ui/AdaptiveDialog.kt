@@ -27,7 +27,6 @@ import androidx.compose.foundation.layout.width
 import androidx.compose.foundation.rememberScrollState
 import androidx.compose.foundation.verticalScroll
 import androidx.compose.foundation.focusable
-import androidx.compose.material3.AlertDialogDefaults
 import androidx.compose.material3.BasicAlertDialog
 import androidx.compose.material3.ExperimentalMaterial3Api
 import androidx.compose.material3.LocalContentColor
@@ -172,12 +171,12 @@ internal fun AdaptiveAlertDialog(
     title: (@Composable () -> Unit)? = null,
     text: (@Composable () -> Unit)? = null,
     textScrollable: Boolean = true,
-    shape: Shape = AlertDialogDefaults.shape,
-    containerColor: Color = AlertDialogDefaults.containerColor,
-    iconContentColor: Color = AlertDialogDefaults.iconContentColor,
-    titleContentColor: Color = AlertDialogDefaults.titleContentColor,
-    textContentColor: Color = AlertDialogDefaults.textContentColor,
-    tonalElevation: Dp = AlertDialogDefaults.TonalElevation,
+    shape: Shape = MaterialTheme.shapes.extraLarge,
+    containerColor: Color = MaterialTheme.colorScheme.surfaceContainer,
+    iconContentColor: Color = MaterialTheme.colorScheme.primary,
+    titleContentColor: Color = MaterialTheme.colorScheme.onSurface,
+    textContentColor: Color = MaterialTheme.colorScheme.onSurface,
+    tonalElevation: Dp = 0.dp,
     properties: DialogProperties = DialogProperties(),
     maxWidth: Dp = DialogMaximumWidth,
 ) {
@@ -354,8 +353,8 @@ internal fun AdaptiveDialogContent(
     confirmButton: (@Composable () -> Unit)? = null,
     dismissButton: (@Composable () -> Unit)? = null,
     dismissButtonBelowWrappedActions: Boolean = false,
-    iconContentColor: Color = AlertDialogDefaults.iconContentColor,
-    titleContentColor: Color = AlertDialogDefaults.titleContentColor,
+    iconContentColor: Color = MaterialTheme.colorScheme.primary,
+    titleContentColor: Color = MaterialTheme.colorScheme.onSurface,
 ) {
     var actionsWrapped by remember { mutableStateOf(false) }
     Column(
@@ -369,7 +368,7 @@ internal fun AdaptiveDialogContent(
         }
         if (title != null) {
             CompositionLocalProvider(LocalContentColor provides titleContentColor) {
-                ProvideTextStyle(MaterialTheme.typography.headlineSmall) { title() }
+                ProvideTextStyle(MaterialTheme.typography.titleLarge) { title() }
             }
         }
         if (text != null) {
