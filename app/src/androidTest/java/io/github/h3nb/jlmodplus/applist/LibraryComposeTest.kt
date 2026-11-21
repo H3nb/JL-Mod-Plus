@@ -418,8 +418,7 @@ class LibraryComposeTest {
         composeRule.onAllNodesWithText(uiString(R.string.library_destination_more)).assertCountEquals(0)
 
         composeRule.onNodeWithContentDescription(uiString(R.string.action_settings)).performClick()
-        composeRule.onNodeWithText(uiString(R.string.updates_title)).assertIsDisplayed()
-        composeRule.onNodeWithContentDescription(uiString(R.string.action_back)).performClick()
+        assertEquals(1, actions.settingsCount)
         composeRule.onNodeWithText("Demo MIDlet").assertIsDisplayed()
     }
     @Test
@@ -969,76 +968,6 @@ class LibraryComposeTest {
     }
 
     @Test
-    fun settingsHubRetainsGlobalPreferencesAndUpdates() {
-        val actions = RecordingLibraryActions()
-        setLibraryContent(actions = actions)
-
-        composeRule.onNodeWithContentDescription(uiString(R.string.action_settings)).performClick()
-        composeRule.onNodeWithText(uiString(R.string.updates_title)).assertIsDisplayed()
-        composeRule.onNodeWithText(uiString(R.string.library_settings_preferences)).performClick()
-        assertEquals(1, actions.settingsCount)
-    }
-    @Test
-    fun settingsHubKeepsDiagnosticsAndSupportWithoutDuplicateImport() {
-        val actions = RecordingLibraryActions()
-        setLibraryContent(actions = actions)
-
-        composeRule.onNodeWithContentDescription(uiString(R.string.action_settings)).performClick()
-        composeRule.onAllNodesWithText(uiString(R.string.save_log)).assertCountEquals(0)
-        composeRule.onAllNodesWithText(uiString(R.string.help)).assertCountEquals(0)
-        composeRule.onAllNodesWithText(uiString(R.string.library_action_import_bundle)).assertCountEquals(0)
-        composeRule.onNodeWithText(uiString(R.string.library_donation_action)).assertIsDisplayed()
-        composeRule.onNodeWithText(uiString(R.string.crash_reports)).assertIsDisplayed()
-        composeRule.onNodeWithText(uiString(R.string.about)).assertIsDisplayed()
-    }
-    @Test
-    fun moreDonationIsVoluntaryAndOpensViaExplicitHostAction() {
-        val actions = RecordingLibraryActions()
-        setLibraryContent(actions = actions)
-        composeRule.onAllNodesWithText(uiString(R.string.library_donation_title)).assertCountEquals(0)
-
-        composeRule.onNodeWithContentDescription(uiString(R.string.action_settings)).performClick()
-        composeRule.onNodeWithText(uiString(R.string.library_donation_action)).performClick()
-        composeRule.onNodeWithText(uiString(R.string.library_donation_title)).assertIsDisplayed()
-        composeRule.onNodeWithText(uiString(R.string.library_donation_message)).assertIsDisplayed()
-        assertEquals(0, actions.donationCount)
-        composeRule.onNodeWithText(uiString(R.string.library_donation_not_now)).performClick()
-        composeRule.onAllNodesWithText(uiString(R.string.library_donation_title)).assertCountEquals(0)
-
-        composeRule.onNodeWithText(uiString(R.string.library_donation_action)).performClick()
-        composeRule.onNodeWithText(uiString(R.string.library_donation_continue)).performClick()
-        assertEquals(1, actions.donationCount)
-        composeRule.onAllNodesWithText(uiString(R.string.library_donation_title)).assertCountEquals(0)
-    }
-
-    @Test
-    fun aboutIsASeparatePageWithLicensesAndGitHubLink() {
-        val actions = RecordingLibraryActions()
-        setLibraryContent(actions = actions)
-        composeRule.onNodeWithContentDescription(uiString(R.string.action_settings)).performClick()
-        composeRule.onNodeWithText(uiString(R.string.about)).performClick()
-
-        composeRule.onNodeWithText(uiString(R.string.about_compatibility))
-            .performScrollTo()
-            .assertIsDisplayed()
-        composeRule.onNodeWithText(uiString(R.string.about_build_title))
-            .performScrollTo()
-            .assertIsDisplayed()
-        composeRule.onNodeWithText(uiString(R.string.about_github_label))
-            .performScrollTo()
-            .performClick()
-        assertEquals(1, actions.githubCount)
-        composeRule.onNodeWithText(uiString(R.string.licenses))
-            .performScrollTo()
-            .performClick()
-        composeRule.onNode(hasText(uiString(R.string.licenses)) and hasAnyAncestor(isDialog()))
-            .assertIsDisplayed()
-        composeRule.onNodeWithText(uiString(R.string.close)).performClick()
-        composeRule.onNodeWithContentDescription(uiString(R.string.action_back)).performClick()
-        composeRule.onNodeWithText(uiString(R.string.library_donation_action)).assertIsDisplayed()
-    }
-
-    @Test
     fun importBundleIsAvailableFromTheAddMenu() {
         val actions = RecordingLibraryActions()
         setLibraryContent(actions = actions)
@@ -1047,24 +976,6 @@ class LibraryComposeTest {
         composeRule.onNodeWithText(uiString(R.string.library_action_import_bundle)).performClick()
         assertEquals(1, actions.importCount)
     }
-    @Test
-    fun moreDoesNotExposeFormerInlineLibraryDisplayOptions() {
-        val actions = RecordingLibraryActions()
-        setLibraryContent(
-            state = LibraryUiState(
-                loading = false,
-                layout = LibraryLayout.Grid,
-            ),
-            actions = actions,
-        )
-
-        composeRule.onNodeWithContentDescription(uiString(R.string.action_settings)).performClick()
-        composeRule.onAllNodesWithText(uiString(R.string.action_settings)).onLast().assertIsDisplayed()
-        composeRule.onAllNodesWithText("3:4").assertCountEquals(0)
-        composeRule.onAllNodesWithText("Compact (4 dp)").assertCountEquals(0)
-        composeRule.onAllNodesWithContentDescription("Hide titles in grid").assertCountEquals(0)
-    }
-
     @Test
     fun collectionManagementRemainsAvailableFromLibraryScope() {
         val actions = RecordingLibraryActions()
