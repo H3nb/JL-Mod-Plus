@@ -1688,6 +1688,7 @@ fun LibraryScreen(
                                 scaffoldPadding = viewportPadding(),
                                 viewportState = collectionsViewport,
                                 selectedCollectionId = activeCollectionId,
+                                active = destination == LibraryDestination.Collections,
                                 onBack = { selectDestination(LibraryDestination.Apps) },
                                 onOpenCollection = { collectionId ->
                                     selectionState = selectionState.clear()

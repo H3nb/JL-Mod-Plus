@@ -291,13 +291,14 @@ internal fun LibraryCollectionsManagementDestination(
     selectedCollectionId: Long?,
     onBack: () -> Unit,
     onOpenCollection: (Long) -> Unit,
+    active: Boolean = true,
 ) {
     val state by host.collectionsStore().state.collectAsState()
     if (!state.ready) {
         LibraryCollectionsDestination(scaffoldPadding)
         return
     }
-    BackHandler(onBack = onBack)
+    BackHandler(enabled = active, onBack = onBack)
     LibraryCollectionsOverview(
         host = host,
         state = state,
@@ -305,7 +306,7 @@ internal fun LibraryCollectionsManagementDestination(
         scaffoldPadding = scaffoldPadding,
         viewportState = viewportState,
         selectedCollectionId = selectedCollectionId,
-        active = true,
+        active = active,
         onOpenCollection = onOpenCollection,
         onNavigationVisibilityChanged = {},
         onBack = onBack,
