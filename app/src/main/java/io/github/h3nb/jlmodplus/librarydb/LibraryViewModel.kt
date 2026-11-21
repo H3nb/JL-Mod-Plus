@@ -774,6 +774,15 @@ class LibraryViewModel(application: Application) : AndroidViewModel(application)
         launchMutation(callback) { repository.reorderCollections(generation, orderedIds) }
     }
 
+    fun deleteCollections(ids: List<Long>, callback: MutationCallback<Unit>) {
+        val generation = readyGeneration()
+        if (generation == null) {
+            callback.complete(null, IllegalStateException("Library is not READY"))
+            return
+        }
+        launchMutation(callback) { repository.deleteCollections(generation, ids) }
+    }
+
     fun setCollectionMembership(
         collectionId: Long,
         appId: Long,
