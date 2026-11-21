@@ -75,6 +75,7 @@ class FilePickerComposeTest {
 
         composeRule.onNodeWithContentDescription(uiString(R.string.file_picker_search)).performClick()
         composeRule.onNodeWithText(uiString(R.string.file_picker_search)).assertExists()
+        composeRule.onNodeWithContentDescription(uiString(R.string.action_back)).performClick()
         composeRule.onNodeWithContentDescription(uiString(R.string.file_picker_sort)).performClick()
         composeRule.onNodeWithText(uiString(R.string.file_picker_sort_name_ascending)).assertExists()
         composeRule.onNodeWithText(uiString(R.string.file_picker_sort_modified_newest)).assertExists()
@@ -156,6 +157,7 @@ class FilePickerComposeTest {
         }
 
         composeRule.onNodeWithText(uiString(R.string.file_picker_current_folder)).assertExists()
+        composeRule.onNodeWithText(uiString(R.string.file_picker_create_folder)).assertExists()
         composeRule.onNodeWithText("Choose").assertIsEnabled().performClick()
         assertEquals("confirm", events.get())
     }
