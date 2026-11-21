@@ -20,8 +20,6 @@ import androidx.compose.animation.togetherWith
 import androidx.compose.foundation.BorderStroke
 import androidx.compose.foundation.Canvas
 import androidx.compose.foundation.shape.CircleShape
-import androidx.compose.foundation.pager.HorizontalPager
-import androidx.compose.foundation.pager.rememberPagerState
 import androidx.compose.foundation.clickable
 import androidx.compose.foundation.interaction.MutableInteractionSource
 import androidx.compose.foundation.layout.Arrangement
@@ -70,10 +68,6 @@ import androidx.compose.material3.DropdownMenuItem
 import androidx.compose.material3.ListItem
 import androidx.compose.material3.ListItemDefaults
 import androidx.compose.material3.MaterialTheme
-import androidx.compose.material3.NavigationBar
-import androidx.compose.material3.NavigationBarItem
-import androidx.compose.material3.NavigationRail
-import androidx.compose.material3.NavigationRailItem
 import androidx.compose.material3.OutlinedTextField
 import androidx.compose.material3.RadioButton
 import androidx.compose.material3.Scaffold
@@ -89,7 +83,6 @@ import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableIntStateOf
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
-import androidx.compose.runtime.rememberCoroutineScope
 import androidx.compose.runtime.saveable.rememberSaveable
 import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
@@ -130,7 +123,6 @@ import androidx.compose.ui.unit.dp
 import androidx.compose.ui.window.Dialog
 import androidx.annotation.StringRes
 import androidx.core.view.ViewCompat
-import kotlinx.coroutines.launch
 import javax.microedition.shell.timing.TimingMode
 import javax.microedition.lcdui.keyboard.VirtualControlAppearance
 import io.github.h3nb.jlmodplus.R
@@ -139,14 +131,10 @@ import io.github.h3nb.jlmodplus.mmapi.camera.CameraCaptureOptions
 import io.github.h3nb.jlmodplus.ui.JLModPlusTheme
 import io.github.h3nb.jlmodplus.ui.ScrollableContentHint
 import io.github.h3nb.jlmodplus.ui.availableWindowWidthDp
-import io.github.h3nb.jlmodplus.ui.navigateToTab
-import io.github.h3nb.jlmodplus.ui.PagerTabMotion
 import io.github.h3nb.jlmodplus.ui.PAGE_TRAVEL_DP
 import io.github.h3nb.jlmodplus.ui.pageMotionDirection
 import io.github.h3nb.jlmodplus.ui.pageEnter
 import io.github.h3nb.jlmodplus.ui.pageExit
-import io.github.h3nb.jlmodplus.ui.jlModPlusNavigationRailItemColors
-import io.github.h3nb.jlmodplus.ui.jlModPlusNavigationBarItemColors
 import io.github.h3nb.jlmodplus.ui.rememberLazyListCanScrollForward
 import kotlin.math.roundToInt
 
@@ -317,7 +305,7 @@ private enum class ConfigDetail { Font, Performance }
 
 private sealed interface ConfigPage {
     data object Main : ConfigPage
-    data object Search : ConfigPage
+    data class Category(val destination: ConfigDestination) : ConfigPage
     data object SystemProperties : ConfigPage
     data class Detail(val type: ConfigDetail) : ConfigPage
     data class Rendering(val subpage: RenderingSubpage) : ConfigPage
@@ -325,13 +313,13 @@ private sealed interface ConfigPage {
 
 private fun ConfigPage.depth(): Int = when (this) {
     ConfigPage.Main -> 0
-    ConfigPage.Search, ConfigPage.SystemProperties, is ConfigPage.Detail,
-    is ConfigPage.Rendering -> 1
+    is ConfigPage.Category -> 1
+    ConfigPage.SystemProperties, is ConfigPage.Detail, is ConfigPage.Rendering -> 2
 }
 
 private fun ConfigPage.siblingOrder(): Int = when (this) {
     is ConfigPage.Rendering -> subpage.ordinal
-    ConfigPage.Main, ConfigPage.Search, ConfigPage.SystemProperties, is ConfigPage.Detail -> 0
+    else -> 0
 }
 
 @Composable
@@ -367,67 +355,51 @@ internal fun ConfigScreen(
     var systemPropertiesSession by rememberSaveable { mutableIntStateOf(0) }
     var renderingSubpage by rememberSaveable { mutableStateOf<RenderingSubpage?>(null) }
     var detailPage by rememberSaveable { mutableStateOf<ConfigDetail?>(null) }
+    var selectedDestination by rememberSaveable {
+        mutableStateOf(initialDestination ?: ConfigDestination.Basic)
+    }
     var searchVisible by rememberSaveable { mutableStateOf(false) }
+    var searchQuery by rememberSaveable { mutableStateOf("") }
     var revealSection by remember { mutableStateOf<String?>(null) }
-    val backRendering: () -> Unit = { renderingSubpage = null }
+    var quickSetting by rememberSaveable { mutableStateOf<QuickSetting?>(null) }
     var presetPickerVisible by rememberSaveable { mutableStateOf(false) }
     var savePresetVisible by rememberSaveable { mutableStateOf(false) }
     var discardProfileChangesVisible by rememberSaveable { mutableStateOf(false) }
-    val updateForm: (ConfigFormState) -> Unit = { next ->
-        events.onFormChanged(next)
-    }
+    val updateForm: (ConfigFormState) -> Unit = events::onFormChanged
+    val closeSearch = { searchVisible = false; searchQuery = "" }
     val requestBack = {
-        if (searchVisible) {
-            searchVisible = false
-        } else if (renderingSubpage != null) {
-            backRendering()
-        } else if (detailPage != null) {
-            detailPage = null
-        } else if (systemPropertiesEditorVisible) {
-            systemPropertiesEditorVisible = false
-        } else if (isProfile && menuActions?.hasUnsavedProfileChanges() == true) {
-            discardProfileChangesVisible = true
-        } else {
-            menuActions?.onBack()
-            Unit
+        when {
+            searchVisible -> closeSearch()
+            renderingSubpage != null -> renderingSubpage = null
+            detailPage != null -> detailPage = null
+            systemPropertiesEditorVisible -> systemPropertiesEditorVisible = false
+            selectedDestination != ConfigDestination.Basic ->
+                selectedDestination = ConfigDestination.Basic
+            isProfile && menuActions?.hasUnsavedProfileChanges() == true ->
+                discardProfileChangesVisible = true
+            else -> {
+                menuActions?.onBack()
+                Unit
+            }
         }
     }
-    // Only in-app navigation and profile drafts consume Back; the root Activity uses system Back.
     BackHandler(enabled = searchVisible || renderingSubpage != null || detailPage != null ||
-        systemPropertiesEditorVisible || isProfile) {
+        systemPropertiesEditorVisible || selectedDestination != ConfigDestination.Basic || isProfile) {
         requestBack()
     }
 
-    val destinations = ConfigDestination.values().toList()
-    val initialDestinationIndex = initialDestination
-        ?.let { destinations.indexOf(it).takeIf { index -> index >= 0 } }
-        ?: 0
-    val pagerState = rememberPagerState(
-        initialPage = initialDestinationIndex,
-        pageCount = { destinations.size },
-    )
-    val pagerScope = rememberCoroutineScope()
-    val tabMotion = remember { PagerTabMotion() }
-    val selectedDestination = destinations.getOrElse(pagerState.currentPage) { destinations.first() }
-    val selectDestination: (ConfigDestination) -> Unit = { destination ->
-        val index = destinations.indexOf(destination)
-        if (index >= 0) {
-            pagerScope.launch { pagerState.navigateToTab(index, tabMotion) }
-        }
-    }
-    // Keep Display scroll ownership above animated subpages so returning preserves its offset.
+    val quickScrollState = rememberScrollState()
     val displayScrollState = rememberScrollState()
-    val useNavigationRail = availableWindowWidthDp() >= 600.dp
+    val controlsScrollState = rememberScrollState()
+    val mediaScrollState = rememberScrollState()
+    val systemScrollState = rememberScrollState()
     val density = LocalDensity.current
-    val iconOnlyBottomNavigation = density.fontScale >= 1.5f
-    val imeVisible = WindowInsets.ime.getBottom(density) > 0
     val cutoutAvailable = cutoutSupportOverride ?: deviceHasDisplayCutout(density)
-
     val currentPage = when {
-        searchVisible -> ConfigPage.Search
         renderingSubpage != null -> ConfigPage.Rendering(requireNotNull(renderingSubpage))
         detailPage != null -> ConfigPage.Detail(requireNotNull(detailPage))
         systemPropertiesEditorVisible -> ConfigPage.SystemProperties
+        selectedDestination != ConfigDestination.Basic -> ConfigPage.Category(selectedDestination)
         else -> ConfigPage.Main
     }
     val motionOffsetPx = with(density) { PAGE_TRAVEL_DP.dp.roundToPx() }
@@ -450,21 +422,6 @@ internal fun ConfigScreen(
             ),
         ) {
             when (shownPage) {
-                ConfigPage.Search -> {
-                    ConfigSearchPage(
-                        onBack = { searchVisible = false },
-                        onSelected = { destination, section, detail ->
-                            searchVisible = false
-                            if (detail != null) {
-                                detailPage = detail
-                                selectDestination(ConfigDestination.Display)
-                            } else {
-                                revealSection = section
-                                selectDestination(destination)
-                            }
-                        },
-                    )
-                }
                 is ConfigPage.Detail -> {
                     ConfigDetailPage(
                         detail = shownPage.type,
@@ -479,7 +436,7 @@ internal fun ConfigScreen(
                         state = state,
                         onFormChanged = updateForm,
                         onShaderPickerOpened = events::onShaderPickerOpened,
-                        onBack = { if (active) backRendering() },
+                        onBack = { if (active) renderingSubpage = null },
                     )
                 }
                 ConfigPage.SystemProperties -> {
@@ -502,119 +459,107 @@ internal fun ConfigScreen(
                         )
                     }
                 }
-                ConfigPage.Main -> {
-                    Row(modifier = Modifier.fillMaxSize()) {
-                        if (useNavigationRail) {
-                            ConfigNavigationRail(
-                                destinations = destinations,
-                                selected = selectedDestination,
-                                onSelected = selectDestination,
+                ConfigPage.Main, is ConfigPage.Category -> {
+                    val destination = (shownPage as? ConfigPage.Category)?.destination
+                        ?: ConfigDestination.Basic
+                    val scrollState = when (destination) {
+                        ConfigDestination.Basic -> quickScrollState
+                        ConfigDestination.Display -> displayScrollState
+                        ConfigDestination.Controls -> controlsScrollState
+                        ConfigDestination.Media -> mediaScrollState
+                        ConfigDestination.System -> systemScrollState
+                    }
+                    Scaffold(
+                        modifier = Modifier.fillMaxSize(),
+                        contentWindowInsets = WindowInsets.safeDrawing,
+                        topBar = {
+                            ConfigTopBar(
+                                title = if (destination == ConfigDestination.Basic) title
+                                    else stringResource(destination.label),
+                                isProfile = isProfile,
+                                onBack = requestBack,
+                                onSearch = { searchVisible = true },
+                                onStart = { menuActions?.onStart() },
+                                onSave = { menuActions?.onSaveProfileDraft() },
+                                saveEnabled = !isProfile ||
+                                    menuActions?.hasUnsavedProfileChanges() == true,
+                                searchVisible = searchVisible,
+                                searchQuery = searchQuery,
+                                onQueryChange = { searchQuery = it },
+                                onCloseSearch = closeSearch,
                             )
-                        }
-
-                        Scaffold(
-                            modifier = Modifier.weight(1f).fillMaxSize(),
-                            contentWindowInsets = WindowInsets.safeDrawing,
-                            topBar = {
-                                ConfigTopBar(
-                                    title = title,
-                                    isProfile = isProfile,
-                                    onBack = requestBack,
-                                    onSearch = { searchVisible = true },
-                                    onStart = { menuActions?.onStart() },
-                                    onSave = { menuActions?.onSaveProfileDraft() },
-                                    saveEnabled = !isProfile || menuActions?.hasUnsavedProfileChanges() == true,
-                                )
-                            },
-                            bottomBar = {
-                                // Keep the destination bar from floating above the IME while editing text.
-                                if (!useNavigationRail && !imeVisible) {
-                                    ConfigNavigationBar(
-                                        destinations = destinations,
-                                        selected = selectedDestination,
-                                        onSelected = selectDestination,
-                                        iconOnly = iconOnlyBottomNavigation,
-                                    )
-                                }
-                            },
-                        ) { padding ->
-                            Box(
-                                Modifier.fillMaxSize().padding(padding).consumeWindowInsets(padding)
-                                    .then(if (tabMotion.isJumping) Modifier.clearAndSetSemantics {} else Modifier),
+                        },
+                    ) { padding ->
+                        if (searchVisible) {
+                            ConfigSearchResults(
+                                query = searchQuery,
+                                modifier = Modifier.fillMaxSize().padding(padding)
+                                    .consumeWindowInsets(padding),
+                                onSelected = { nextDestination, section, detail ->
+                                    closeSearch()
+                                    selectedDestination = nextDestination
+                                    revealSection = if (detail == null) section else null
+                                    detailPage = detail
+                                },
+                            )
+                        } else {
+                            Column(
+                                modifier = Modifier.fillMaxSize().padding(padding)
+                                    .consumeWindowInsets(padding).imePadding()
+                                    .verticalScroll(scrollState)
+                                    .padding(horizontal = 12.dp, vertical = 8.dp),
+                                verticalArrangement = Arrangement.spacedBy(8.dp),
+                                horizontalAlignment = Alignment.CenterHorizontally,
                             ) {
-                                HorizontalPager(
-                                    state = pagerState,
-                                    modifier = Modifier.fillMaxSize().graphicsLayer {
-                                        alpha = tabMotion.alpha
-                                        translationX = tabMotion.translationDp * density.density
-                                    },
-                                ) { page ->
-                                    val pageScrollState = if (destinations[page] == ConfigDestination.Display)
-                                        displayScrollState else rememberScrollState()
+                                if (destination == ConfigDestination.Basic) {
+                                    Column(
+                                        modifier = Modifier.widthIn(max = 880.dp),
+                                        verticalArrangement = Arrangement.spacedBy(8.dp),
+                                    ) {
+                                        ConfigQuickSettings(
+                                            state = state,
+                                            isProfile = isProfile,
+                                            events = events,
+                                            onUsePreset = { presetPickerVisible = true },
+                                            onSavePreset = { savePresetVisible = true },
+                                            onStopFollowing = { events.onStopFollowingProfile() },
+                                            onOpenCategory = { selectedDestination = it },
+                                            onOpenPerformance = { detailPage = ConfigDetail.Performance },
+                                            onOpenQuickSetting = { quickSetting = it },
+                                        )
+                                    }
+                                } else {
                                     androidx.compose.runtime.CompositionLocalProvider(
                                         LocalConfigSectionReveal provides revealSection?.let { section ->
                                             ConfigSectionReveal(section) { revealSection = null }
                                         },
                                     ) {
-                                        Column(
-                                            modifier = Modifier
-                                                .fillMaxSize()
-                                                .imePadding()
-                                                .verticalScroll(pageScrollState)
-                                                .padding(horizontal = 12.dp, vertical = 8.dp),
-                                            verticalArrangement = Arrangement.spacedBy(8.dp),
-                                        ) {
-                                            if (iconOnlyBottomNavigation && !useNavigationRail) {
-                                                Text(
-                                                    stringResource(destinations[page].label),
-                                                    modifier = Modifier.padding(horizontal = 12.dp, vertical = 4.dp),
-                                                    style = MaterialTheme.typography.titleMedium,
-                                                )
-                                            }
-                                            Box(
-                                                modifier = Modifier.fillMaxWidth(),
-                                                contentAlignment = Alignment.TopCenter,
-                                            ) {
-                                                ConfigDestinationContent(
-                                                    destination = destinations[page],
-                                                    state = state,
-                                                    form = form,
-                                                    onFormChanged = updateForm,
-                                                    events = events,
-                                                    isProfile = isProfile,
-                                                    cutoutAvailable = cutoutAvailable,
-                                                    onRequestAction = { pendingAction = it },
-                                                    onEditSystemProperties = {
-                                                        systemPropertiesSession++
-                                                        systemPropertiesEditorVisible = true
-                                                    },
-                                                    onOpenShaders = {
-                                                        renderingSubpage = RenderingSubpage.SHADERS
-                                                    },
-                                                    onNavigate = selectDestination,
-                                                    onOpenDetail = { detailPage = it },
-                                                    onUsePreset = { presetPickerVisible = true },
-                                                    onSavePreset = { savePresetVisible = true },
-                                                    modifier = Modifier.widthIn(max = 880.dp),
-                                                )
-                                            }
-                                        }
+                                        ConfigDestinationContent(
+                                            destination = destination,
+                                            state = state,
+                                            form = form,
+                                            onFormChanged = updateForm,
+                                            events = events,
+                                            isProfile = isProfile,
+                                            cutoutAvailable = cutoutAvailable,
+                                            onRequestAction = { pendingAction = it },
+                                            onEditSystemProperties = {
+                                                systemPropertiesSession++
+                                                systemPropertiesEditorVisible = true
+                                            },
+                                            onOpenShaders = {
+                                                renderingSubpage = RenderingSubpage.SHADERS
+                                            },
+                                            onOpenDetail = { detailPage = it },
+                                            modifier = Modifier.widthIn(max = 880.dp),
+                                        )
                                     }
-                                }
-                                if (tabMotion.isJumping) {
-                                    Box(
-                                        Modifier.matchParentSize().clickable(
-                                            interactionSource = remember { MutableInteractionSource() },
-                                            indication = null,
-                                        ) {},
-                                    )
                                 }
                             }
                         }
                     }
                 }
             }
-            // Outgoing pages remain drawn briefly; they must not accept input or accessibility focus.
             if (!active) {
                 Box(
                     Modifier.matchParentSize().clickable(
@@ -624,6 +569,16 @@ internal fun ConfigScreen(
                 )
             }
         }
+    }
+
+    quickSetting?.let { setting ->
+        ConfigQuickSettingDialog(
+            setting = setting,
+            state = state,
+            events = events,
+            onDismiss = { quickSetting = null },
+            onFormChanged = updateForm,
+        )
     }
 
     colorPicker?.let { request ->
@@ -731,23 +686,12 @@ private fun ConfigDestinationContent(
     onRequestAction: (ConfigAction) -> Unit,
     onEditSystemProperties: () -> Unit,
     onOpenShaders: () -> Unit,
-    onNavigate: (ConfigDestination) -> Unit,
     onOpenDetail: (ConfigDetail) -> Unit,
-    onUsePreset: () -> Unit,
-    onSavePreset: () -> Unit,
     modifier: Modifier = Modifier,
 ) {
     Column(modifier = modifier, verticalArrangement = Arrangement.spacedBy(8.dp)) {
         when (destination) {
-            ConfigDestination.Basic -> GeneralDestination(
-                state = state,
-                form = form,
-                events = events,
-                onUsePreset = onUsePreset,
-                onSavePreset = onSavePreset,
-                showPresetSummary = !isProfile,
-                onNavigate = onNavigate,
-            )
+            ConfigDestination.Basic -> Unit
             ConfigDestination.Display -> {
                 ScreenGeometrySection(state, form, onFormChanged, events, cutoutAvailable)
                 ScreenSection(form, state, onFormChanged, events, onOpenShaders)
@@ -795,63 +739,6 @@ private fun deviceHasDisplayCutout(density: androidx.compose.ui.unit.Density): B
         cutout.getRight(density, layoutDirection) > 0 || cutout.getBottom(density) > 0
     val physical = ViewCompat.getRootWindowInsets(LocalView.current)?.displayCutout
     return hasSafeInset || physical?.boundingRects?.any { !it.isEmpty } == true
-}
-
-@Composable
-private fun GeneralDestination(
-    state: ConfigUiState,
-    form: ConfigFormState,
-    events: ConfigFormEvents,
-    onUsePreset: () -> Unit,
-    onSavePreset: () -> Unit,
-    showPresetSummary: Boolean,
-    onNavigate: (ConfigDestination) -> Unit,
-) {
-    if (showPresetSummary) {
-        PresetSummary(
-            state = state,
-            onUsePreset = onUsePreset,
-            onSavePreset = onSavePreset,
-            events = events,
-        )
-    } else {
-        ConfigSection(title = stringResource(R.string.config_overview_profile_draft)) {
-            Text(
-                text = stringResource(R.string.config_overview_profile_draft_summary),
-                modifier = Modifier.padding(horizontal = 16.dp, vertical = 12.dp),
-                style = MaterialTheme.typography.bodyMedium,
-                color = MaterialTheme.colorScheme.onSurfaceVariant,
-            )
-        }
-    }
-    val orientation = stringArrayResource(R.array.PREF_ORIENTATION_ENTRIES)
-        .getOrNull(form.orientation).orEmpty()
-    val soundbank = state.soundBanks.firstOrNull { it == form.soundBank }
-        ?: state.soundBanks.firstOrNull().orEmpty()
-    ConfigSection(title = stringResource(R.string.config_overview_quick_access)) {
-        ConfigNavigationPreference(
-            title = stringResource(R.string.config_destination_graphics),
-            value = "${form.screenWidth} × ${form.screenHeight} · $orientation",
-            onClick = { onNavigate(ConfigDestination.Display) },
-        )
-        ConfigNavigationPreference(
-            title = stringResource(R.string.config_destination_controls),
-            value = stringResource(if (form.showKeyboard) R.string.config_overview_enabled
-                else R.string.config_overview_disabled),
-            onClick = { onNavigate(ConfigDestination.Controls) },
-        )
-        ConfigNavigationPreference(
-            title = stringResource(R.string.config_destination_media),
-            value = soundbank.ifBlank { stringResource(R.string.config_overview_media_summary) },
-            onClick = { onNavigate(ConfigDestination.Media) },
-        )
-    }
-    Text(
-        text = stringResource(R.string.config_overview_hint),
-        modifier = Modifier.padding(horizontal = 12.dp, vertical = 4.dp),
-        style = MaterialTheme.typography.bodySmall,
-        color = MaterialTheme.colorScheme.onSurfaceVariant,
-    )
 }
 
 @Composable
@@ -1087,16 +974,13 @@ private val configSearchIndex = listOf(
     ConfigSearchItem(R.string.config_delete_app_data, R.string.config_maintenance, ConfigDestination.System, keywords = "clear data"),
 )
 
-@OptIn(ExperimentalMaterial3Api::class)
 @Composable
-private fun ConfigSearchPage(
-    onBack: () -> Unit,
+private fun ConfigSearchResults(
+    query: String,
     onSelected: (ConfigDestination, String, ConfigDetail?) -> Unit,
+    modifier: Modifier = Modifier,
 ) {
     val resources = LocalResources.current
-    var query by rememberSaveable { mutableStateOf("") }
-    val focus = remember { FocusRequester() }
-    LaunchedEffect(Unit) { focus.requestFocus() }
     val suggestions = setOf(
         R.string.config_screen_size, R.string.PREF_ORIENTATION,
         R.string.pref_graphics_mode_title, R.string.PREF_VIRTUAL_KEYBOARD_OPTIONS,
@@ -1108,78 +992,34 @@ private fun ConfigSearchPage(
             resources.getString(entry.section).contains(query.trim(), ignoreCase = true) ||
             entry.keywords.contains(query.trim(), ignoreCase = true)
     }
-    Scaffold(
-        contentWindowInsets = WindowInsets.safeDrawing,
-        topBar = {
-            TopAppBar(
-                title = { Text(stringResource(R.string.config_search_title)) },
-                navigationIcon = {
-                    IconButton(onClick = onBack) {
-                        Icon(painterResource(R.drawable.ic_arrow_back),
-                            contentDescription = stringResource(R.string.action_back))
-                    }
-                },
-            )
-        },
-    ) { padding ->
-        Column(
-            Modifier.fillMaxSize().padding(padding).consumeWindowInsets(padding)
-                .imePadding().padding(horizontal = 16.dp),
-            horizontalAlignment = Alignment.CenterHorizontally,
-        ) {
-            OutlinedTextField(
-                value = query,
-                onValueChange = { query = it },
-                singleLine = true,
-                leadingIcon = {
-                    Icon(painterResource(R.drawable.ic_search), contentDescription = null)
-                },
-                placeholder = { Text(stringResource(R.string.config_search_hint)) },
-                trailingIcon = {
-                    if (query.isNotEmpty()) {
-                        IconButton(onClick = { query = "" }) {
-                            Icon(painterResource(R.drawable.ic_close),
-                                contentDescription = stringResource(R.string.config_search_clear))
-                        }
-                    }
-                },
-                keyboardOptions = KeyboardOptions(imeAction = ImeAction.Search),
-                modifier = Modifier.fillMaxWidth().widthIn(max = 720.dp).focusRequester(focus),
-            )
-            LazyColumn(
-                modifier = Modifier.weight(1f).widthIn(max = 720.dp),
-            ) {
-                if (query.isBlank()) {
-                    item {
-                        Text(
-                            stringResource(R.string.config_search_suggestions),
-                            modifier = Modifier.padding(top = 20.dp, bottom = 8.dp),
-                            style = MaterialTheme.typography.titleSmall,
-                            color = MaterialTheme.colorScheme.onSurfaceVariant,
-                        )
-                    }
-                }
-                if (filtered.isEmpty()) {
-                    item {
-                        Text(
-                            stringResource(R.string.config_search_no_results),
-                            modifier = Modifier.padding(vertical = 24.dp),
-                            color = MaterialTheme.colorScheme.onSurfaceVariant,
-                        )
-                    }
-                }
-                itemsIndexed(filtered, key = { _, entry -> entry.title }) { _, entry ->
-                    ListItem(
-                        headlineContent = { Text(stringResource(entry.title)) },
-                        supportingContent = {
-                            Text("${stringResource(entry.destination.label)} · ${stringResource(entry.section)}")
-                        },
-                        modifier = Modifier.clickable {
-                            onSelected(entry.destination, resources.getString(entry.section), entry.detail)
-                        },
-                    )
-                }
+    LazyColumn(modifier = modifier.imePadding().padding(horizontal = 16.dp),
+        verticalArrangement = Arrangement.spacedBy(2.dp)) {
+        if (query.isBlank()) {
+            item {
+                Text(stringResource(R.string.config_search_suggestions),
+                    modifier = Modifier.padding(top = 16.dp, bottom = 8.dp),
+                    style = MaterialTheme.typography.titleSmall,
+                    color = MaterialTheme.colorScheme.onSurfaceVariant)
             }
+        }
+        if (filtered.isEmpty()) {
+            item {
+                Text(stringResource(R.string.config_search_no_results),
+                    modifier = Modifier.padding(vertical = 24.dp),
+                    color = MaterialTheme.colorScheme.onSurfaceVariant)
+            }
+        }
+        itemsIndexed(filtered, key = { _, entry -> entry.title }) { _, entry ->
+            ListItem(
+                headlineContent = { Text(stringResource(entry.title)) },
+                supportingContent = {
+                    Text(stringResource(entry.destination.label) + " · " +
+                        stringResource(entry.section))
+                },
+                modifier = Modifier.clickable {
+                    onSelected(entry.destination, resources.getString(entry.section), entry.detail)
+                },
+            )
         }
     }
 }
@@ -1233,69 +1073,6 @@ private fun ConfigDetailPage(
     }
 }
 
-@Composable
-private fun ConfigNavigationBar(
-    destinations: List<ConfigDestination>,
-    selected: ConfigDestination,
-    onSelected: (ConfigDestination) -> Unit,
-    iconOnly: Boolean,
-) {
-    NavigationBar(
-        modifier = Modifier.testTag(CONFIG_NAVIGATION_BAR_TAG),
-        containerColor = MaterialTheme.colorScheme.surfaceContainer,
-    ) {
-        destinations.forEach { destination ->
-            val label = stringResource(destination.label)
-            NavigationBarItem(
-                selected = destination == selected,
-                onClick = { onSelected(destination) },
-                colors = jlModPlusNavigationBarItemColors(),
-                icon = {
-                    Icon(
-                        painter = painterResource(destination.icon),
-                        contentDescription = label,
-                    )
-                },
-                label = if (iconOnly) null else {
-                    { Text(label, maxLines = 1, softWrap = false, overflow = TextOverflow.Ellipsis) }
-                },
-                alwaysShowLabel = !iconOnly,
-            )
-        }
-    }
-}
-
-@Composable
-private fun ConfigNavigationRail(
-    destinations: List<ConfigDestination>,
-    selected: ConfigDestination,
-    onSelected: (ConfigDestination) -> Unit,
-) {
-    NavigationRail(
-        modifier = Modifier.testTag(CONFIG_NAVIGATION_RAIL_TAG),
-        containerColor = MaterialTheme.colorScheme.surfaceContainer,
-    ) {
-        destinations.forEach { destination ->
-            val label = stringResource(destination.label)
-            NavigationRailItem(
-                selected = destination == selected,
-                onClick = { onSelected(destination) },
-                colors = jlModPlusNavigationRailItemColors(),
-                icon = {
-                    Icon(
-                        painter = painterResource(destination.icon),
-                        contentDescription = label,
-                    )
-                },
-                label = {
-                    Text(label, maxLines = 1, softWrap = false, overflow = TextOverflow.Ellipsis)
-                },
-                alwaysShowLabel = false,
-            )
-        }
-    }
-}
-
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
 private fun ConfigTopBar(
@@ -1306,41 +1083,56 @@ private fun ConfigTopBar(
     onStart: () -> Unit,
     onSave: () -> Unit,
     saveEnabled: Boolean,
+    searchVisible: Boolean,
+    searchQuery: String,
+    onQueryChange: (String) -> Unit,
+    onCloseSearch: () -> Unit,
 ) {
+    val focusManager = androidx.compose.ui.platform.LocalFocusManager.current
     TopAppBar(
         title = {
-            Text(
-                text = title.ifBlank { stringResource(R.string.action_settings) },
-                maxLines = 1,
-                overflow = TextOverflow.Ellipsis,
-            )
+            if (searchVisible) {
+                io.github.h3nb.jlmodplus.applist.LibrarySearchField(
+                    query = searchQuery,
+                    onQueryChange = onQueryChange,
+                    modifier = Modifier.fillMaxWidth(),
+                    onDismissInput = { focusManager.clearFocus() },
+                    onClose = onCloseSearch,
+                    placeholder = stringResource(R.string.config_search_hint),
+                    autoFocus = true,
+                )
+            } else {
+                Text(
+                    text = title.ifBlank { stringResource(R.string.action_settings) },
+                    maxLines = 1,
+                    overflow = TextOverflow.Ellipsis,
+                )
+            }
         },
         navigationIcon = {
-            IconButton(onClick = onBack) {
-                Icon(
-                    painter = painterResource(R.drawable.ic_arrow_back),
-                    contentDescription = stringResource(R.string.action_back),
-                )
+            if (!searchVisible) {
+                IconButton(onClick = onBack) {
+                    Icon(painterResource(R.drawable.ic_arrow_back),
+                        contentDescription = stringResource(R.string.action_back))
+                }
             }
         },
         actions = {
-            IconButton(onClick = onSearch) {
-                Icon(
-                    painter = painterResource(R.drawable.ic_search),
-                    contentDescription = stringResource(R.string.config_search_title),
-                )
-            }
-            if (isProfile) {
-                TextButton(onClick = onSave, enabled = saveEnabled) {
-                    Text(stringResource(R.string.save))
+            if (!searchVisible) {
+                IconButton(onClick = onSearch) {
+                    Icon(painterResource(R.drawable.ic_search),
+                        contentDescription = stringResource(R.string.config_search_title))
                 }
-            } else {
-                FilledTonalIconButton(onClick = onStart) {
-                    Icon(
-                        painter = painterResource(R.drawable.ic_play),
-                        modifier = Modifier.size(24.dp),
-                        contentDescription = stringResource(R.string.START_CMD),
-                    )
+                if (isProfile) {
+                    TextButton(onClick = onSave, enabled = saveEnabled) {
+                        Text(stringResource(R.string.save))
+                    }
+                } else {
+                    FilledTonalIconButton(onClick = onStart) {
+                        Icon(painterResource(R.drawable.ic_play),
+                            modifier = Modifier.size(24.dp),
+                            contentDescription = stringResource(R.string.START_CMD))
+                    }
                 }
             }
         },
