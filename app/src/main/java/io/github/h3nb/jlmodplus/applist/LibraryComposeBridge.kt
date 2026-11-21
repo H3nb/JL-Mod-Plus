@@ -30,6 +30,8 @@ import androidx.compose.animation.AnimatedVisibility
 import androidx.compose.animation.AnimatedContent
 import androidx.compose.animation.togetherWith
 import androidx.compose.animation.core.MutableTransitionState
+import androidx.compose.animation.expandVertically
+import androidx.compose.animation.shrinkVertically
 import androidx.compose.animation.fadeIn
 import androidx.compose.animation.fadeOut
 import androidx.compose.animation.scaleIn
@@ -2840,7 +2842,11 @@ private fun LibraryAppsHeader(
 
             }
         }
-        if (compactHeaderActions && !searchActive) {
+        AnimatedVisibility(
+            visible = compactHeaderActions && !searchActive,
+            enter = fadeIn(tween(180)) + expandVertically(animationSpec = tween(220)),
+            exit = fadeOut(tween(120)) + shrinkVertically(animationSpec = tween(180)),
+        ) {
             Row(
                 modifier = Modifier.fillMaxWidth().padding(top = 4.dp)
                     .then(titleGate.positionModifier)
