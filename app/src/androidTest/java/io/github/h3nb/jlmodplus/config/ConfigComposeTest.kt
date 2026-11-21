@@ -649,8 +649,8 @@ class ConfigComposeTest {
             }
         }
 
-        scrollTo(uiString(R.string.config_display_performance))
-        composeRule.onNodeWithText(uiString(R.string.config_display_performance)).performClick()
+        scrollTo(uiString(R.string.config_performance_page_title))
+        composeRule.onNodeWithText(uiString(R.string.config_performance_page_title)).performClick()
         scrollTo(uiString(R.string.PREF_LIMIT_FPS))
         composeRule.onNodeWithText(uiString(R.string.PREF_LIMIT_FPS)).assertIsDisplayed()
         composeRule.onNodeWithText(uiString(R.string.fps_limit_maximum)).assertIsDisplayed()
