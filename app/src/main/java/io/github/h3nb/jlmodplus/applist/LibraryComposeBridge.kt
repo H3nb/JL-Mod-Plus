@@ -2970,89 +2970,122 @@ private fun LibraryAppsHeader(
                 )
             }
         }
-        Row(
+        Surface(
             modifier = Modifier
                 .fillMaxWidth()
-                .padding(top = 4.dp)
+                .padding(top = 8.dp)
                 .then(searchGate.positionModifier)
-                .then(if (searchActionsEnabled) Modifier else Modifier.clearAndSetSemantics { }),
-            verticalAlignment = Alignment.CenterVertically,
-            horizontalArrangement = Arrangement.spacedBy(8.dp),
+                .then(if (searchActionsEnabled) Modifier else Modifier.clearAndSetSemantics {}),
+            shape = MaterialTheme.shapes.extraLarge,
+            color = MaterialTheme.colorScheme.surfaceContainerLow,
         ) {
             Row(
-                modifier = Modifier
-                    .weight(1f)
-                    .height(48.dp)
-                    .testTag("library_scope_picker")
-                    .clip(MaterialTheme.shapes.medium)
-                    .background(MaterialTheme.colorScheme.surfaceContainerLow)
-                    .clickable(
-                        enabled = searchActionsEnabled,
-                        role = Role.Button,
-                        onClick = { scopePickerVisible = true },
-                    )
-                    .padding(horizontal = 12.dp),
+                modifier = Modifier.fillMaxWidth().heightIn(min = 56.dp),
                 verticalAlignment = Alignment.CenterVertically,
-                horizontalArrangement = Arrangement.spacedBy(8.dp),
             ) {
-                Icon(
-                    painter = painterResource(
-                        if (selectedCollection != null) R.drawable.ic_folder else when (state.quickView) {
-                            LibraryQuickView.All -> R.drawable.ic_apps
-                            LibraryQuickView.Favorites -> R.drawable.ic_star
-                            LibraryQuickView.RecentlyPlayed -> R.drawable.ic_history
-                            LibraryQuickView.RecentlyAdded -> R.drawable.ic_recently_added
+                Row(
+                    modifier = Modifier
+                        .weight(1f)
+                        .heightIn(min = 56.dp)
+                        .testTag("library_scope_picker")
+                        .clip(MaterialTheme.shapes.extraLarge)
+                        .clickable(
+                            enabled = searchActionsEnabled,
+                            role = Role.Button,
+                            onClick = { scopePickerVisible = true },
+                        )
+                        .padding(start = 16.dp, end = 12.dp),
+                    verticalAlignment = Alignment.CenterVertically,
+                    horizontalArrangement = Arrangement.spacedBy(10.dp),
+                ) {
+                    Icon(
+                        painter = painterResource(
+                            if (selectedCollection != null) R.drawable.ic_folder else when (state.quickView) {
+                                LibraryQuickView.All -> R.drawable.ic_apps
+                                LibraryQuickView.Favorites -> R.drawable.ic_star
+                                LibraryQuickView.RecentlyPlayed -> R.drawable.ic_history
+                                LibraryQuickView.RecentlyAdded -> R.drawable.ic_recently_added
+                            },
+                        ),
+                        contentDescription = null,
+                        tint = MaterialTheme.colorScheme.onSurfaceVariant,
+                        modifier = Modifier.size(22.dp),
+                    )
+                    Text(
+                        text = selectedCollection?.name ?: stringResource(
+                            when (state.quickView) {
+                                LibraryQuickView.All -> R.string.library_destination_apps
+                                LibraryQuickView.Favorites -> R.string.library_filter_favorites
+                                LibraryQuickView.RecentlyPlayed -> R.string.library_filter_recently_opened
+                                LibraryQuickView.RecentlyAdded -> R.string.library_filter_recently_added
+                            },
+                        ),
+                        modifier = Modifier.weight(1f),
+                        style = MaterialTheme.typography.titleSmall,
+                        maxLines = 2,
+                        overflow = TextOverflow.Ellipsis,
+                    )
+                    Icon(
+                        painter = painterResource(R.drawable.ic_keyboard_arrow_down),
+                        contentDescription = null,
+                        tint = MaterialTheme.colorScheme.onSurfaceVariant,
+                        modifier = Modifier.size(20.dp),
+                    )
+                }
+                Box(
+                    modifier = Modifier.width(1.dp).height(24.dp)
+                        .background(MaterialTheme.colorScheme.outlineVariant),
+                )
+                Box {
+                    IconButton(
+                        onClick = { onSortVisibilityChanged(true) },
+                        enabled = searchActionsEnabled,
+                        modifier = Modifier
+                            .size(48.dp)
+                            .focusRequester(dismissFocusRequester)
+                            .focusProperties { canFocus = searchActionsEnabled },
+                    ) {
+                        Icon(
+                            painter = painterResource(R.drawable.ic_sort),
+                            contentDescription = stringResource(R.string.library_sort),
+                            tint = MaterialTheme.colorScheme.onSurfaceVariant,
+                        )
+                    }
+                    LibrarySortMenu(
+                        expanded = sortVisible && searchActionsEnabled,
+                        entries = sortEntries,
+                        selectedSort = selectedSort,
+                        ascending = ascending,
+                        onDismissRequest = { onSortVisibilityChanged(false) },
+                        onSelected = { index ->
+                            onSortVisibilityChanged(false)
+                            onSort(index)
                         },
-                    ),
-                    contentDescription = null,
-                    modifier = Modifier.size(20.dp),
-                )
-                Text(
-                    text = selectedCollection?.name ?: stringResource(
-                        when (state.quickView) {
-                            LibraryQuickView.All -> R.string.library_destination_apps
-                            LibraryQuickView.Favorites -> R.string.library_filter_favorites
-                            LibraryQuickView.RecentlyPlayed -> R.string.library_filter_recently_opened
-                            LibraryQuickView.RecentlyAdded -> R.string.library_filter_recently_added
-                        },
-                    ),
-                    modifier = Modifier.weight(1f),
-                    style = MaterialTheme.typography.titleSmall,
-                    maxLines = 1,
-                    overflow = TextOverflow.Ellipsis,
-                )
-                Icon(
-                    painter = painterResource(R.drawable.ic_keyboard_arrow_down),
-                    contentDescription = null,
-                    modifier = Modifier.size(20.dp),
-                )
-            }
-
-            Box {
-                LibrarySortButton(
-                    onClick = { onSortVisibilityChanged(true) },
-                    modifier = if (searchActionsEnabled) {
-                        Modifier.focusRequester(dismissFocusRequester).focusProperties { canFocus = true }
-                    } else Modifier,
-                    enabled = searchActionsEnabled,
-                )
-                LibrarySortMenu(
-                    expanded = sortVisible && searchActionsEnabled,
-                    entries = sortEntries,
-                    selectedSort = selectedSort,
-                    ascending = ascending,
-                    onDismissRequest = { onSortVisibilityChanged(false) },
-                    onSelected = { index ->
-                        onSortVisibilityChanged(false)
-                        onSort(index)
+                    )
+                }
+                IconButton(
+                    onClick = {
+                        onLayoutChange(
+                            if (state.layout == LibraryLayout.List) LibraryLayout.Grid
+                            else LibraryLayout.List,
+                        )
                     },
-                )
+                    enabled = searchActionsEnabled,
+                    modifier = Modifier.size(48.dp),
+                ) {
+                    Icon(
+                        painter = painterResource(
+                            if (state.layout == LibraryLayout.List) R.drawable.ic_apps
+                            else R.drawable.ic_view_list,
+                        ),
+                        contentDescription = stringResource(
+                            if (state.layout == LibraryLayout.List) R.string.library_view_grid
+                            else R.string.library_view_list,
+                        ),
+                        tint = MaterialTheme.colorScheme.onSurfaceVariant,
+                    )
+                }
             }
-            LibraryLayoutButton(
-                layout = state.layout,
-                onLayoutChange = onLayoutChange,
-                enabled = searchActionsEnabled,
-            )
         }
     }
     if (scopePickerVisible) {
