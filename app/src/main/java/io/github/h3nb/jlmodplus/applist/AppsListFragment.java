@@ -668,6 +668,16 @@ public class AppsListFragment extends Fragment {
             }
 
             @Override
+            public void onReorderCollections(
+                    @NonNull java.util.List<Long> orderedIds,
+                    @NonNull CollectionMembershipResultCallback callback) {
+                libraryViewModel.reorderCollections(orderedIds, (ignored, error) -> {
+                    if (error != null) showError(error);
+                    callback.onResult(error == null);
+                });
+            }
+
+            @Override
             public void onOpenCollection(long collectionId) {
                 loadCollectionMembers(collectionId);
             }
