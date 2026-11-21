@@ -219,6 +219,14 @@ This readability choice follows [W3C guidance on one-sided text alignment](https
   title/actions cannot sensibly fit outside the body. Never clip an action
   permanently or rely on a hidden gesture to find it.
 
+## Transient feedback
+
+- Prefer the app-owned `TransientNoticeHost` for short, foreground feedback. Its neutral Material 3 Snackbar appearance comes from the active theme; place it over the current screen rather than creating a second host or a global queue.
+- Use `SnackbarHostState` when the notice must provide an action such as Undo. Do not show an automatically disappearing snackbar as the only explanation of an error that requires recovery; keep validation with its input and durable failure state with the owning task.
+- Do not announce every successful toggle or setting change. Use short confirmation only when completion is otherwise unclear, such as a saved profile or exported file. Progress belongs with the active operation, not in a succession of toasts.
+- Standard Android Toast remains a fallback before Compose is mounted, when its notice would be hidden by another modal/window, or when the user has already navigated away from the owning screen. Avoid deprecated custom Toast views.
+- Transient feedback must respect navigation bars and the IME. Long text can wrap without covering required controls; do not show a hidden in-app snackbar behind a modal as the sole failure signal.
+
 ## Theme, accent, and readable content
 
 - Resolve surface, text, icons, controls, links, selection, errors, and scroll
