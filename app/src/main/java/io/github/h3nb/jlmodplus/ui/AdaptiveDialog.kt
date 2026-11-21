@@ -14,6 +14,7 @@
 
 package io.github.h3nb.jlmodplus.ui
 
+import androidx.compose.foundation.BorderStroke
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.BoxWithConstraints
@@ -174,6 +175,7 @@ internal fun AdaptiveAlertDialog(
     textScrollable: Boolean = true,
     shape: Shape = AlertDialogDefaults.shape,
     containerColor: Color = AlertDialogDefaults.containerColor,
+    border: BorderStroke? = null,
     iconContentColor: Color = AlertDialogDefaults.iconContentColor,
     titleContentColor: Color = AlertDialogDefaults.titleContentColor,
     textContentColor: Color = AlertDialogDefaults.textContentColor,
@@ -323,6 +325,7 @@ internal fun AdaptiveAlertDialog(
             shape = shape,
             color = containerColor,
             contentColor = textContentColor,
+            border = border,
             tonalElevation = tonalElevation,
         ) {
             AdaptiveDialogContent(
