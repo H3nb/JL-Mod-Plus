@@ -30,6 +30,7 @@ import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.safeDrawing
 import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.layout.width
+import androidx.compose.foundation.layout.widthIn
 import androidx.compose.foundation.layout.windowInsetsPadding
 import androidx.compose.foundation.lazy.LazyColumn
 import androidx.compose.foundation.lazy.items
@@ -108,7 +109,7 @@ internal fun LibraryCollectionChoiceRow(
         headlineContent = {
             Text(
                 text = collection?.name ?: stringResource(R.string.library_destination_apps),
-                maxLines = 1,
+                maxLines = 2,
                 overflow = TextOverflow.Ellipsis,
             )
         },
@@ -575,11 +576,16 @@ private fun LibraryCollectionsOverview(
                 }
             } else {
                 items(state.collections, key = { it.id }) { collection ->
-                    LibraryCollectionChoiceRow(
+                    Box(
+                        modifier = Modifier.fillMaxWidth(),
+                        contentAlignment = Alignment.Center,
+                    ) {
+                        LibraryCollectionChoiceRow(
                         collection = collection,
                         selected = collection.id == selectedCollectionId,
                         onClick = { if (currentActive) onOpenCollection(collection.id) },
-                        modifier = Modifier.padding(horizontal = 16.dp, vertical = 2.dp),
+                        modifier = Modifier.widthIn(max = 720.dp)
+                            .padding(horizontal = 16.dp, vertical = 2.dp),
                         trailingContent = {
                             Box {
                                 IconButton(onClick = { if (currentActive) actionsTarget = collection }) {
@@ -626,7 +632,8 @@ private fun LibraryCollectionsOverview(
                                 }
                             }
                         },
-                    )
+                        )
+                    }
                 }
             }
         }
