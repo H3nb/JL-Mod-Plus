@@ -34,7 +34,6 @@ public class Constants {
 	public static final String PREF_APPS_ICON_RATIO = "pref_apps_icon_ratio";
 	public static final String PREF_APPS_ICON_SHAPE = "pref_apps_icon_shape";
 	public static final String PREF_APPS_ENHANCED_ICONS = "pref_apps_enhanced_icons";
-	public static final String PREF_APPS_SHOW_LIST_DESCRIPTION = "pref_apps_show_list_description";
 	public static final String PREF_APPS_VIEW = "pref_apps_view";
 	public static final int LIBRARY_LAYOUT_LIST = 0;
 	public static final int LIBRARY_LAYOUT_GRID = 1;
