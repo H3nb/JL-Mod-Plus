@@ -519,29 +519,24 @@ internal fun ConfigActionPreference(
         color = Color.Transparent,
         shape = MaterialTheme.shapes.medium,
     ) {
-        Column(
+        Row(
             modifier = Modifier
                 .fillMaxWidth()
+                .heightIn(min = 60.dp)
                 .clickable(enabled = enabled, role = Role.Button, onClick = onClick)
                 .then(if (testTag == null) Modifier else Modifier.testTag(testTag))
-                .padding(horizontal = 16.dp, vertical = 11.dp),
-            verticalArrangement = Arrangement.spacedBy(3.dp),
+                .padding(horizontal = 16.dp, vertical = 10.dp),
+            verticalAlignment = Alignment.CenterVertically,
+            horizontalArrangement = Arrangement.spacedBy(12.dp),
         ) {
-            Text(
-                text = title,
-                style = MaterialTheme.typography.bodyLarge,
-                color = when {
-                    !enabled -> MaterialTheme.colorScheme.onSurface.copy(alpha = DISABLED_TEXT_ALPHA)
-                    destructive -> MaterialTheme.colorScheme.error
-                    else -> MaterialTheme.colorScheme.onSurface
-                },
+            PreferenceTextContent(
+                title = title,
+                description = description,
+                destructive = destructive,
+                enabled = enabled,
+                modifier = Modifier.weight(1f),
             )
-            Text(
-                text = description,
-                style = MaterialTheme.typography.bodySmall,
-                color = if (enabled) MaterialTheme.colorScheme.onSurfaceVariant
-                else MaterialTheme.colorScheme.onSurface.copy(alpha = DISABLED_TEXT_ALPHA),
-            )
+            PreferenceChevron(enabled = enabled)
         }
     }
 }
