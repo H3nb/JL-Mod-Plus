@@ -34,6 +34,7 @@ import androidx.compose.material3.DropdownMenu
 import androidx.compose.material3.DropdownMenuItem
 import androidx.compose.material3.ExperimentalMaterial3Api
 import androidx.compose.material3.FilledTonalButton
+import androidx.compose.material3.HorizontalDivider
 import androidx.compose.material3.Icon
 import androidx.compose.material3.IconButton
 import androidx.compose.material3.MaterialTheme
@@ -502,92 +503,96 @@ private fun EffectStackContent(
                 shape = MaterialTheme.shapes.large,
                 color = MaterialTheme.colorScheme.surfaceContainerLow,
             ) {
-                Row(
-                    modifier = Modifier.padding(
-                        start = 16.dp, top = 8.dp, end = 8.dp, bottom = 8.dp
-                    ),
-                    verticalAlignment = Alignment.CenterVertically,
-                    horizontalArrangement = Arrangement.spacedBy(4.dp),
+                Column(
+                    modifier = Modifier.padding(top = 10.dp, bottom = 4.dp),
                 ) {
-                    Column(
-                        modifier = Modifier.weight(1f),
-                        verticalArrangement = Arrangement.spacedBy(2.dp),
+                    Row(
+                        modifier = Modifier.fillMaxWidth()
+                            .padding(start = 16.dp, end = 8.dp, bottom = 8.dp),
+                        verticalAlignment = Alignment.CenterVertically,
+                        horizontalArrangement = Arrangement.spacedBy(12.dp),
                     ) {
-                        Text(
-                            title,
-                            style = MaterialTheme.typography.bodyLarge,
-                            maxLines = 2,
-                            overflow = TextOverflow.Ellipsis,
-                        )
-                        Text(
-                            summary,
-                            style = MaterialTheme.typography.bodySmall,
-                            color = MaterialTheme.colorScheme.onSurfaceVariant,
-                            maxLines = 2,
-                            overflow = TextOverflow.Ellipsis,
-                        )
-                        if (missing) {
+                        Column(
+                            modifier = Modifier.weight(1f),
+                            verticalArrangement = Arrangement.spacedBy(4.dp),
+                        ) {
                             Text(
-                                stringResource(R.string.render_effect_missing, title),
+                                title,
+                                style = MaterialTheme.typography.titleMedium,
+                                maxLines = 2,
+                                overflow = TextOverflow.Ellipsis,
+                            )
+                            Text(
+                                summary,
                                 style = MaterialTheme.typography.bodySmall,
-                                color = MaterialTheme.colorScheme.error,
+                                color = MaterialTheme.colorScheme.onSurfaceVariant,
+                                maxLines = 2,
+                                overflow = TextOverflow.Ellipsis,
+                            )
+                            if (missing) {
+                                Text(
+                                    stringResource(R.string.render_effect_missing, title),
+                                    style = MaterialTheme.typography.bodySmall,
+                                    color = MaterialTheme.colorScheme.error,
+                                )
+                            }
+                        }
+                        Icon(
+                            painterResource(R.drawable.ic_chevron_right),
+                            contentDescription = null,
+                            modifier = Modifier.size(20.dp),
+                            tint = MaterialTheme.colorScheme.onSurfaceVariant,
+                        )
+                    }
+                    HorizontalDivider(
+                        modifier = Modifier.padding(horizontal = 16.dp),
+                        color = MaterialTheme.colorScheme.outlineVariant.copy(alpha = 0.45f),
+                    )
+                    Row(
+                        modifier = Modifier.fillMaxWidth()
+                            .padding(start = 8.dp, end = 8.dp, top = 4.dp),
+                        verticalAlignment = Alignment.CenterVertically,
+                        horizontalArrangement = Arrangement.spacedBy(4.dp),
+                    ) {
+                        IconButton(
+                            onClick = { onMove(index, index - 1) },
+                            enabled = index > 0,
+                            modifier = Modifier.size(40.dp),
+                        ) {
+                            Icon(
+                                painterResource(R.drawable.ic_arrow_upward),
+                                contentDescription = upLabel,
+                                modifier = Modifier.size(20.dp),
+                                tint = MaterialTheme.colorScheme.onSurfaceVariant.copy(
+                                    alpha = if (index > 0) 1f else 0.38f,
+                                ),
                             )
                         }
-                    }
-                    Column(horizontalAlignment = Alignment.End) {
-                        Row(verticalAlignment = Alignment.CenterVertically) {
-                            Box(
-                                modifier = Modifier.size(40.dp),
-                                contentAlignment = Alignment.Center,
-                            ) {
-                                Icon(
-                                    painterResource(R.drawable.ic_chevron_right),
-                                    contentDescription = null,
-                                    modifier = Modifier.size(20.dp),
-                                    tint = MaterialTheme.colorScheme.onSurfaceVariant,
-                                )
-                            }
-                            IconButton(
-                                onClick = { onRemove(entry.key) },
-                                modifier = Modifier.size(40.dp),
-                            ) {
-                                Icon(
-                                    painterResource(R.drawable.ic_delete),
-                                    contentDescription = removeLabel,
-                                    modifier = Modifier.size(20.dp),
-                                    tint = MaterialTheme.colorScheme.error,
-                                )
-                            }
+                        IconButton(
+                            onClick = { onMove(index, index + 1) },
+                            enabled = index < effects.lastIndex,
+                            modifier = Modifier.size(40.dp),
+                        ) {
+                            Icon(
+                                painterResource(R.drawable.ic_arrow_downward),
+                                contentDescription = downLabel,
+                                modifier = Modifier.size(20.dp),
+                                tint = MaterialTheme.colorScheme.onSurfaceVariant.copy(
+                                    alpha = if (index < effects.lastIndex) 1f else 0.38f,
+                                ),
+                            )
                         }
-                        Row(verticalAlignment = Alignment.CenterVertically) {
-                            IconButton(
-                                onClick = { onMove(index, index - 1) },
-                                enabled = index > 0,
-                                modifier = Modifier.size(40.dp),
-                            ) {
-                                Icon(
-                                    painterResource(R.drawable.ic_arrow_upward),
-                                    contentDescription = upLabel,
-                                    modifier = Modifier.size(20.dp),
-                                    tint = MaterialTheme.colorScheme.onSurfaceVariant.copy(
-                                        alpha = if (index > 0) 1f else 0.38f
-                                    ),
-                                )
-                            }
-                            IconButton(
-                                onClick = { onMove(index, index + 1) },
-                                enabled = index < effects.lastIndex,
-                                modifier = Modifier.size(40.dp),
-                            ) {
-                                Icon(
-                                    painterResource(R.drawable.ic_arrow_downward),
-                                    contentDescription = downLabel,
-                                    modifier = Modifier.size(20.dp),
-                                    tint = MaterialTheme.colorScheme.onSurfaceVariant.copy(
-                                        alpha = if (index < effects.lastIndex) 1f else 0.38f
-                                    ),
-                                )
-                            }
+                        Spacer(Modifier.weight(1f))
+                        IconButton(
+                            onClick = { onRemove(entry.key) },
+                            modifier = Modifier.size(40.dp),
+                        ) {
+                            Icon(
+                                painterResource(R.drawable.ic_delete),
+                                contentDescription = removeLabel,
+                                modifier = Modifier.size(20.dp),
+                                tint = MaterialTheme.colorScheme.error,
+                            )
                         }
                     }
                 }
