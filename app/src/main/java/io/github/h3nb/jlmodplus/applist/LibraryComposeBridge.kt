@@ -1332,7 +1332,7 @@ fun LibraryScreen(
         || deleteTarget != null || infoDialog != null || pendingBulkDeleteIds != null
         || auxiliaryPageOnScreen
     val libraryModalVisible = libraryOverlayVisible || updatePrompt != null ||
-        searchOpen || collectionManageAppsActive
+        collectionManageAppsActive
     LaunchedEffect(libraryModalVisible, selectionActiveHere, searchOpen, destination) {
         onControllerBackAvailabilityChanged(
             libraryModalVisible || selectionActiveHere || searchOpen ||
