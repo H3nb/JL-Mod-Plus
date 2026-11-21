@@ -5120,8 +5120,9 @@ internal fun AppActionsDialog(
             ))
         }
     }
+    val gridColumns = if (windowWidth < 340.dp || LocalDensity.current.fontScale >= 1.5f) 1 else 2
     val primaryCount = entries.count { it.group == null }
-    val primaryRows = (primaryCount + 1) / 2
+    val primaryRows = (primaryCount + gridColumns - 1) / gridColumns
     val organizeCount = entries.size - primaryCount
 
     val currentEntries by rememberUpdatedState(entries)
@@ -5137,16 +5138,16 @@ internal fun AppActionsDialog(
                     if (current.isNotEmpty()) {
                         controllerFocusVisible = true
                         val delta = when (event.command) {
-                            LibraryControllerCommand.MoveUp -> -2
-                            LibraryControllerCommand.MoveDown -> 2
+                            LibraryControllerCommand.MoveUp -> -gridColumns
+                            LibraryControllerCommand.MoveDown -> gridColumns
                             LibraryControllerCommand.MoveLeft -> -1
                             else -> 1
                         }
                         focusedIndex = (focusedIndex + delta).coerceIn(0, current.lastIndex)
                         val row = if (focusedIndex < primaryCount) {
-                            focusedIndex / 2
+                            focusedIndex / gridColumns
                         } else {
-                            primaryRows + 1 + (focusedIndex - primaryCount) / 2
+                            primaryRows + 1 + (focusedIndex - primaryCount) / gridColumns
                         }
                         listState.animateScrollToItem(row)
                     }
@@ -5254,19 +5255,19 @@ internal fun AppActionsDialog(
                                 .padding(horizontal = 12.dp, vertical = 4.dp),
                             horizontalArrangement = Arrangement.spacedBy(8.dp),
                         ) {
-                            val first = rowIndex * 2
+                            val first = rowIndex * gridColumns
                             DialogActionTile(
                                 entry = entries[first],
                                 selected = controllerFocusVisible && focusedIndex == first,
                                 onDismiss = onDismiss,
                             )
-                            if (first + 1 < primaryCount) {
+                            if (gridColumns == 2 && first + 1 < primaryCount) {
                                 DialogActionTile(
                                     entry = entries[first + 1],
                                     selected = controllerFocusVisible && focusedIndex == first + 1,
                                     onDismiss = onDismiss,
                                 )
-                            } else {
+                            } else if (gridColumns == 2) {
                                 Spacer(modifier = Modifier.weight(1f))
                             }
                         }
@@ -5282,25 +5283,25 @@ internal fun AppActionsDialog(
                                 color = MaterialTheme.colorScheme.onSurfaceVariant,
                             )
                         }
-                        items((organizeCount + 1) / 2) { rowIndex ->
+                        items((organizeCount + gridColumns - 1) / gridColumns) { rowIndex ->
                             Row(
                                 modifier = Modifier.fillMaxWidth()
                                     .padding(horizontal = 12.dp, vertical = 4.dp),
                                 horizontalArrangement = Arrangement.spacedBy(8.dp),
                             ) {
-                                val first = primaryCount + rowIndex * 2
+                                val first = primaryCount + rowIndex * gridColumns
                                 DialogActionTile(
                                     entry = entries[first],
                                     selected = controllerFocusVisible && focusedIndex == first,
                                     onDismiss = onDismiss,
                                 )
-                                if (first + 1 < entries.size) {
+                                if (gridColumns == 2 && first + 1 < entries.size) {
                                     DialogActionTile(
                                         entry = entries[first + 1],
                                         selected = controllerFocusVisible && focusedIndex == first + 1,
                                         onDismiss = onDismiss,
                                     )
-                                } else {
+                                } else if (gridColumns == 2) {
                                     Spacer(modifier = Modifier.weight(1f))
                                 }
                             }
