@@ -1210,7 +1210,7 @@ private fun RuntimeActionTile(
         border = if (focused) BorderStroke(2.dp, colors.primary) else null,
     ) {
         Column(
-            modifier = Modifier.fillMaxWidth()
+            modifier = Modifier.fillMaxWidth().fillMaxHeight()
                 .heightIn(min = if (compact) 64.dp else 88.dp)
                 .padding(10.dp),
             horizontalAlignment = Alignment.CenterHorizontally,
