@@ -45,6 +45,7 @@ import androidx.compose.ui.graphics.luminance
 import androidx.compose.ui.graphics.toArgb
 import androidx.compose.ui.platform.LocalView
 import androidx.compose.ui.platform.LocalContext
+import androidx.compose.ui.platform.LocalConfiguration
 import androidx.compose.ui.text.font.FontFamily
 import androidx.compose.ui.unit.dp
 import androidx.core.view.WindowCompat
@@ -522,7 +523,8 @@ fun JLModPlusTheme(
     }
     val view = LocalView.current
     val selectedAccent = accent ?: AccentPalette.fromKey(preferenceAccentKey)
-    val colorScheme = remember(selectedAccent, darkTheme, context) {
+    val configuration = LocalConfiguration.current
+    val colorScheme = remember(selectedAccent, darkTheme, context, configuration) {
         selectedAccent.colorScheme(darkTheme, context)
     }
     if (!view.isInEditMode) {
