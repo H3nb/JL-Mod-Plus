@@ -668,6 +668,30 @@ public class AppsListFragment extends Fragment {
             }
 
             @Override
+            public void onDeleteCollections(
+                    @NonNull java.util.List<Long> collectionIds,
+                    @NonNull CollectionMembershipResultCallback callback) {
+                if (collectionIds.isEmpty()) {
+                    callback.onResult(false);
+                    return;
+                }
+                libraryViewModel.deleteCollections(collectionIds, (ignored, error) -> {
+                    if (error == null) {
+                        for (long id : collectionIds) {
+                            if (collectionMembersRequests.targets(id)) {
+                                collectionMembersRequests.invalidate();
+                                collectionsUiStore.dismissMembers();
+                                break;
+                            }
+                        }
+                    } else {
+                        showError(error);
+                    }
+                    callback.onResult(error == null);
+                });
+            }
+
+            @Override
             public void onReorderCollections(
                     @NonNull java.util.List<Long> orderedIds,
                     @NonNull CollectionMembershipResultCallback callback) {
