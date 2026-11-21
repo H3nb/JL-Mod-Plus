@@ -53,7 +53,7 @@ data class LibraryNavigationState(
             },
             restore = { saved ->
                 val destination = (saved.firstOrNull() as? String)?.let { value ->
-                    val compatible = if (value == "Options") "More" else value
+                    val compatible = if (value == "Options" || value == "More") "Apps" else value
                     runCatching { LibraryDestinationKey.valueOf(compatible) }.getOrNull()
                 } ?: LibraryDestinationKey.Apps
                 // The previous format placed Layout.name in slot 1; newer state places an id.
@@ -102,5 +102,4 @@ data class ResolvedLibraryScrollAnchor(
 enum class LibraryDestinationKey {
     Apps,
     Collections,
-    More,
 }
