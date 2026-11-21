@@ -227,7 +227,7 @@ class LibraryComposeTest {
     }
 
     @Test
-    fun expandedSearchFiltersResultsWithoutMutatingBrowseProjection() {
+    fun inlineSearchFiltersTheCurrentLibraryAndRestoresBrowseProjection() {
         val actions = RecordingLibraryActions()
         setLibraryContent(
             state = LibraryUiState(
@@ -241,6 +241,8 @@ class LibraryComposeTest {
         )
 
         composeRule.onNodeWithContentDescription(uiString(R.string.library_search_placeholder)).performClick()
+        composeRule.onNode(hasSetTextAction()).assertIsDisplayed()
+        composeRule.onNodeWithContentDescription(uiString(R.string.action_settings)).assertDoesNotExist()
         composeRule.onNode(hasSetTextAction()).performTextInput("Demo")
         composeRule.waitUntil(5_000) {
             composeRule.onAllNodesWithText("Demo MIDlet").fetchSemanticsNodes().isNotEmpty()
@@ -248,48 +250,45 @@ class LibraryComposeTest {
         composeRule.onAllNodesWithText("Second MIDlet").assertCountEquals(0)
         assertEquals(emptyList<String>(), actions.searches)
 
+        composeRule.onNodeWithContentDescription(uiString(R.string.library_search_clear)).performClick()
+        composeRule.onNodeWithText("Second MIDlet").assertIsDisplayed()
+        composeRule.onNode(hasSetTextAction()).performTextInput("Demo")
         composeRule.onNodeWithContentDescription(uiString(R.string.action_back)).performClick()
         composeRule.onNodeWithText("Second MIDlet").assertIsDisplayed()
         composeRule.onNodeWithText("Demo MIDlet").assertIsDisplayed()
     }
     @Test
-    fun searchActionsResolveTheCorrectHostIdForUnprojectedApps() {
-        var openedId: Int? = null
-        var actionsAppId: Int? = null
-        var favoriteId: Int? = null
-        composeRule.setContent {
-            JLModPlusTheme {
-                LibrarySearchOverlay(
-                    state = LibraryUiState(loading = false, databaseControlsReady = true),
-                    apps = listOf(
-                        LibraryAppUiItem(
-                            id = 0,
-                            title = "Demo MIDlet",
-                            author = "Example Vendor",
-                            version = "1.0",
-                            iconPath = null,
-                            canReinstall = true,
-                            databaseId = 70L,
-                        ),
+    fun searchActionsResolveCurrentHostIdForUnprojectedApps() {
+        val actions = RecordingLibraryActions().apply { resolvedSearchId = 7 }
+        setLibraryContent(
+            state = LibraryUiState(
+                loading = false,
+                databaseControlsReady = true,
+                apps = listOf(
+                    LibraryAppUiItem(
+                        id = 0,
+                        title = "Demo MIDlet",
+                        author = "Example Vendor",
+                        version = "1.0",
+                        iconPath = null,
+                        canReinstall = true,
+                        databaseId = 70L,
                     ),
-                    appsPrepared = true,
-                    onDismiss = {},
-                    onOpenApp = { openedId = it },
-                    onOpenActions = { actionsAppId = it.id },
-                    onFavorite = { id, _ -> favoriteId = id },
-                    resolveUiId = { databaseId -> if (databaseId == 70L) 7 else null },
-                )
-            }
-        }
+                ),
+            ),
+            actions = actions,
+        )
 
+        composeRule.onNodeWithContentDescription(uiString(R.string.library_search_placeholder)).performClick()
         composeRule.onNode(hasSetTextAction()).performTextInput("Demo")
-        composeRule.onNodeWithText("Demo MIDlet").assertIsDisplayed().performClick()
-        assertEquals(7, openedId)
-        composeRule.onNodeWithText("Demo MIDlet").performTouchInput { longClick() }
-        assertEquals(7, actionsAppId)
+        composeRule.waitUntil(5_000) {
+            composeRule.onAllNodesWithText("Demo MIDlet").fetchSemanticsNodes().isNotEmpty()
+        }
         composeRule.onNodeWithContentDescription(uiString(R.string.library_add_to_favorites_action))
             .performClick()
-        assertEquals(7, favoriteId)
+        assertEquals(7, actions.favoritedId)
+        composeRule.onNodeWithText("Demo MIDlet").performClick()
+        assertEquals(7, actions.openedId)
     }
 
     @Test
@@ -1270,6 +1269,8 @@ class LibraryComposeTest {
         var folderInstallCount = 0
         var importCount = 0
         var openedId: Int? = null
+        var resolvedSearchId: Int? = null
+        var favoritedId: Int? = null
         var renamed: Pair<Int, String>? = null
         var settingsCount = 0
         var donationCount = 0
@@ -1285,6 +1286,11 @@ class LibraryComposeTest {
         override fun onInstall() { installCount++ }
         override fun onInstallFolder() { folderInstallCount++ }
         override fun onImportAppBundle() { importCount++ }
+        override fun resolveAppUiId(databaseId: Long) =
+            if (databaseId == 70L) resolvedSearchId else null
+        override fun onFavorite(appId: Int, favorite: Boolean) {
+            if (favorite) favoritedId = appId
+        }
         override fun onOpenApp(appId: Int) { openedId = appId }
         override fun onAddShortcut(appId: Int) = Unit
         override fun onRename(appId: Int, title: String) { renamed = appId to title }
