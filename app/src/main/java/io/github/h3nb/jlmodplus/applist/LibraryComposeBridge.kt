@@ -2062,6 +2062,7 @@ internal class LibraryChromeScrollHysteresis(
     }
 }
 
+@OptIn(ExperimentalMaterial3Api::class, ExperimentalLayoutApi::class)
 @Composable
 internal fun LibrarySearchOverlay(
     state: LibraryUiState,
@@ -2215,13 +2216,12 @@ internal fun LibrarySearchOverlay(
         Column(
             modifier = Modifier
                 .fillMaxSize()
-                .windowInsetsPadding(WindowInsets.safeDrawing.only(WindowInsetsSides.Top))
+                .windowInsetsPadding(WindowInsets.safeDrawing)
                 .imePadding(),
         ) {
             Row(
                 modifier = Modifier
                     .fillMaxWidth()
-                    .windowInsetsPadding(WindowInsets.safeDrawing.only(WindowInsetsSides.Horizontal))
                     .padding(horizontal = 16.dp, vertical = 8.dp),
                 verticalAlignment = Alignment.CenterVertically,
                 horizontalArrangement = Arrangement.spacedBy(4.dp),
