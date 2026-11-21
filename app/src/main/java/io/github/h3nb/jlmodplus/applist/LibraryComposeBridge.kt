@@ -3268,7 +3268,7 @@ private fun RowScope.LibraryScopeChoiceTile(
         Column(modifier = Modifier.weight(1f)) {
             Text(
                 text = title,
-                style = MaterialTheme.typography.bodyLarge,
+                style = MaterialTheme.typography.bodyMedium,
                 color = foreground.copy(alpha = if (enabled) 1f else 0.38f),
                 maxLines = 2,
                 overflow = TextOverflow.Ellipsis,
