@@ -25,7 +25,6 @@ import static io.github.h3nb.jlmodplus.util.Constants.PREF_APPS_HIDE_GRID_TITLES
 import static io.github.h3nb.jlmodplus.util.Constants.PREF_APPS_ICON_RATIO;
 import static io.github.h3nb.jlmodplus.util.Constants.PREF_APPS_ICON_SHAPE;
 import static io.github.h3nb.jlmodplus.util.Constants.PREF_APPS_ENHANCED_ICONS;
-import static io.github.h3nb.jlmodplus.util.Constants.PREF_APPS_SHOW_LIST_DESCRIPTION;
 import static io.github.h3nb.jlmodplus.util.Constants.PREF_APPS_VIEW;
 import static io.github.h3nb.jlmodplus.util.Constants.PREF_APP_SORT;
 import static io.github.h3nb.jlmodplus.util.Constants.PREF_LAST_PATH;
@@ -251,7 +250,6 @@ public class AppsListFragment extends Fragment {
                 iconShape,
                 preferences.getBoolean(PREF_APPS_ENHANCED_ICONS, true),
                 preferences.getBoolean(PREF_APPS_HIDE_GRID_TITLES, false),
-                preferences.getBoolean(PREF_APPS_SHOW_LIST_DESCRIPTION, true),
                 gridSpacing,
                 ShortcutManagerCompat.isRequestPinShortcutSupported(requireContext()),
                 new LibraryControllerKeyEventHandler() {
@@ -334,7 +332,6 @@ public class AppsListFragment extends Fragment {
                         ? LibraryIconShape.Square : LibraryIconShape.Round,
                 preferences.getBoolean(PREF_APPS_ENHANCED_ICONS, true),
                 preferences.getBoolean(PREF_APPS_HIDE_GRID_TITLES, false),
-                preferences.getBoolean(PREF_APPS_SHOW_LIST_DESCRIPTION, true),
                 gridSpacing);
     }
 
@@ -344,7 +341,6 @@ public class AppsListFragment extends Fragment {
                 || PREF_APPS_ICON_SHAPE.equals(key)
                 || PREF_APPS_ENHANCED_ICONS.equals(key)
                 || PREF_APPS_HIDE_GRID_TITLES.equals(key)
-                || PREF_APPS_SHOW_LIST_DESCRIPTION.equals(key)
                 || PREF_APPS_GRID_SPACING.equals(key);
     }
 
@@ -495,13 +491,6 @@ public class AppsListFragment extends Fragment {
                 preferences.edit().putBoolean(PREF_APPS_HIDE_GRID_TITLES, hide).apply();
                 LibraryComposeController controller = composeController;
                 if (controller != null) controller.updateHideGridTitles(hide);
-            }
-
-            @Override
-            public void onShowListDescriptionChange(boolean show) {
-                preferences.edit().putBoolean(PREF_APPS_SHOW_LIST_DESCRIPTION, show).apply();
-                LibraryComposeController controller = composeController;
-                if (controller != null) controller.updateShowListDescription(show);
             }
 
             @Override
