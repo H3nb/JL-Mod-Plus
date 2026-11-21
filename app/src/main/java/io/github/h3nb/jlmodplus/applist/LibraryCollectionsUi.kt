@@ -437,6 +437,74 @@ internal fun LibraryCollectionMembershipEditor(
 }
 
 @Composable
+private fun LibraryManagedCollectionRow(
+    collection: LibraryCollectionUiItem,
+    checked: Boolean,
+    enabled: Boolean,
+    onToggle: () -> Unit,
+    onOpen: () -> Unit,
+    modifier: Modifier = Modifier,
+) {
+    val checkboxLabel = stringResource(R.string.library_collection_select_action, collection.name)
+    Row(
+        modifier = modifier
+            .fillMaxWidth()
+            .clip(MaterialTheme.shapes.large)
+            .background(
+                if (checked) MaterialTheme.colorScheme.secondaryContainer
+                else MaterialTheme.colorScheme.surfaceContainerLow,
+            )
+            .clickable(enabled = enabled, onClick = onOpen)
+            .heightIn(min = 76.dp)
+            .padding(start = 4.dp),
+        verticalAlignment = Alignment.CenterVertically,
+    ) {
+        Checkbox(
+            checked = checked,
+            enabled = enabled,
+            onCheckedChange = { onToggle() },
+            modifier = Modifier.semantics { contentDescription = checkboxLabel },
+        )
+        Icon(
+            painter = painterResource(R.drawable.ic_folder),
+            contentDescription = null,
+            tint = MaterialTheme.colorScheme.onSurfaceVariant,
+            modifier = Modifier.padding(start = 4.dp).size(24.dp),
+        )
+        Column(
+            modifier = Modifier.weight(1f).padding(start = 12.dp),
+        ) {
+            Text(
+                text = collection.name,
+                style = MaterialTheme.typography.titleMedium,
+                maxLines = 2,
+                overflow = TextOverflow.Ellipsis,
+            )
+            Text(
+                text = pluralStringResource(
+                    R.plurals.library_collection_member_count,
+                    collection.appCount,
+                    collection.appCount,
+                ),
+                style = MaterialTheme.typography.bodySmall,
+                color = MaterialTheme.colorScheme.onSurfaceVariant,
+            )
+        }
+        IconButton(
+            onClick = onOpen,
+            enabled = enabled,
+        ) {
+            Icon(
+                painter = painterResource(R.drawable.ic_chevron_right),
+                contentDescription = stringResource(
+                    R.string.library_collection_open_action, collection.name,
+                ),
+            )
+        }
+    }
+}
+
+@Composable
 private fun LibraryCollectionsOverview(
     host: LibraryCollectionsHost,
     state: LibraryCollectionsUiState,
@@ -644,10 +712,10 @@ private fun LibraryCollectionsOverview(
                         modifier = Modifier
                             .fillMaxWidth()
                             .animateItem()
-                            .pointerInput(collection.id, active, savingOrder) {
+                            .pointerInput(collection.id, active, savingOrder, deleting) {
                                 detectDragGesturesAfterLongPress(
                                     onDragStart = {
-                                        if (active && !savingOrder) {
+                                        if (active && !savingOrder && !deleting) {
                                             draggingId = collection.id
                                             dragDistance = 0f
                                             previewOrder = displayedCollections.map { it.id }
@@ -658,7 +726,10 @@ private fun LibraryCollectionsOverview(
                                             change.consume()
                                             dragDistance += delta.y
                                             var steps = 0
-                                            while (abs(dragDistance) >= reorderStepPx * 0.65f &&
+                                            val stepPx = listState.layoutInfo.visibleItemsInfo
+                                                .firstOrNull { it.key == collection.id }
+                                                ?.size?.toFloat() ?: reorderStepPx
+                                            while (abs(dragDistance) >= stepPx * 0.65f &&
                                                 steps < displayedCollections.size
                                             ) {
                                                 val order = previewOrder ?: break
@@ -673,7 +744,7 @@ private fun LibraryCollectionsOverview(
                                                     removeAt(index)
                                                     add(target, collection.id)
                                                 }
-                                                dragDistance -= direction * reorderStepPx
+                                                dragDistance -= direction * stepPx
                                                 steps++
                                             }
                                         }
@@ -713,39 +784,20 @@ private fun LibraryCollectionsOverview(
                             },
                         contentAlignment = Alignment.Center,
                     ) {
-                        LibraryCollectionChoiceRow(
+                        LibraryManagedCollectionRow(
                             collection = collection,
-                            selected = collection.id == selectedCollectionId,
-                            onClick = { if (currentActive && !savingOrder) onOpenCollection(collection.id) },
-                            modifier = Modifier.widthIn(max = 720.dp)
-                                .padding(horizontal = 16.dp, vertical = 2.dp),
-                            trailingContent = {
-                                Row {
-                                    IconButton(
-                                        enabled = active && !savingOrder,
-                                        onClick = { if (currentActive && !savingOrder) renameTarget = collection },
-                                    ) {
-                                        Icon(
-                                            painter = painterResource(R.drawable.ic_edit),
-                                            contentDescription = stringResource(
-                                                R.string.library_collection_rename_action, collection.name,
-                                            ),
-                                        )
-                                    }
-                                    IconButton(
-                                        enabled = active && !savingOrder,
-                                        onClick = { if (currentActive && !savingOrder) deleteTarget = collection },
-                                    ) {
-                                        Icon(
-                                            painter = painterResource(R.drawable.ic_delete),
-                                            contentDescription = stringResource(
-                                                R.string.library_collection_delete_action, collection.name,
-                                            ),
-                                            tint = MaterialTheme.colorScheme.error,
-                                        )
-                                    }
+                            checked = collection.id in selectedIds,
+                            enabled = currentActive && !savingOrder && !deleting,
+                            onToggle = {
+                                selectedIds = if (collection.id in selectedIds) {
+                                    selectedIds - collection.id
+                                } else {
+                                    selectedIds + collection.id
                                 }
                             },
+                            onOpen = { if (currentActive && !savingOrder && !deleting) onOpenCollection(collection.id) },
+                            modifier = Modifier.widthIn(max = 720.dp)
+                                .padding(horizontal = 16.dp, vertical = 4.dp),
                         )
                     }
                 }
