@@ -21,17 +21,19 @@ import static io.github.h3nb.jlmodplus.util.Constants.PREF_EMULATOR_DIR;
 import static io.github.h3nb.jlmodplus.util.Constants.PREF_ACCENT;
 import static io.github.h3nb.jlmodplus.util.Constants.PREF_APPS_ENHANCED_ICONS;
 import static io.github.h3nb.jlmodplus.util.Constants.PREF_APPS_GRID_SPACING;
+import static io.github.h3nb.jlmodplus.util.Constants.PREF_APPS_GRID_ICON_SIZE;
 import static io.github.h3nb.jlmodplus.util.Constants.PREF_APPS_HIDE_GRID_TITLES;
 import static io.github.h3nb.jlmodplus.util.Constants.PREF_APPS_ICON_RATIO;
 import static io.github.h3nb.jlmodplus.util.Constants.PREF_APPS_ICON_SHAPE;
-import static io.github.h3nb.jlmodplus.util.Constants.PREF_APPS_SHOW_LIST_DESCRIPTION;
-import static io.github.h3nb.jlmodplus.util.Constants.PREF_APPS_VIEW;
 import static io.github.h3nb.jlmodplus.util.Constants.PREF_KEEP_SCREEN;
 import static io.github.h3nb.jlmodplus.util.Constants.PREF_SCREENSHOT_SWITCH;
 import static io.github.h3nb.jlmodplus.util.Constants.PREF_THEME;
 import static io.github.h3nb.jlmodplus.util.Constants.PREF_TOOLBAR;
 import static io.github.h3nb.jlmodplus.util.Constants.PREF_STATUSBAR;
 import static io.github.h3nb.jlmodplus.util.Constants.PREF_VIBRATION;
+import static io.github.h3nb.jlmodplus.util.Constants.LIBRARY_GRID_ICON_SIZE_SMALL;
+import static io.github.h3nb.jlmodplus.util.Constants.LIBRARY_GRID_ICON_SIZE_STANDARD;
+import static io.github.h3nb.jlmodplus.util.Constants.LIBRARY_GRID_ICON_SIZE_LARGE;
 import static io.github.h3nb.jlmodplus.util.Constants.LIBRARY_GRID_SPACING_COMPACT;
 import static io.github.h3nb.jlmodplus.util.Constants.LIBRARY_GRID_SPACING_NONE;
 import static io.github.h3nb.jlmodplus.util.Constants.LIBRARY_GRID_SPACING_SPACIOUS;
@@ -40,10 +42,12 @@ import static io.github.h3nb.jlmodplus.util.Constants.LIBRARY_ICON_RATIO_PORTRAI
 import static io.github.h3nb.jlmodplus.util.Constants.LIBRARY_ICON_RATIO_SQUARE;
 import static io.github.h3nb.jlmodplus.util.Constants.LIBRARY_ICON_SHAPE_ROUND;
 import static io.github.h3nb.jlmodplus.util.Constants.LIBRARY_ICON_SHAPE_SQUARE;
-import static io.github.h3nb.jlmodplus.util.Constants.LIBRARY_LAYOUT_GRID;
-import static io.github.h3nb.jlmodplus.util.Constants.LIBRARY_LAYOUT_LIST;
 
 import android.annotation.SuppressLint;
+import android.content.ActivityNotFoundException;
+import android.content.ClipData;
+import android.content.ClipboardManager;
+import android.content.Context;
 import android.content.Intent;
 import android.content.SharedPreferences;
 import android.content.res.Resources;
@@ -75,6 +79,7 @@ import io.github.h3nb.jlmodplus.ui.AppPageTransitions;
 import io.github.h3nb.jlmodplus.ui.AccentPalette;
 import io.github.h3nb.jlmodplus.config.Config;
 import io.github.h3nb.jlmodplus.config.ProfilesActivity;
+import io.github.h3nb.jlmodplus.crashes.CrashReportsActivity;
 import io.github.h3nb.jlmodplus.util.EdgeToEdgeCompat;
 import io.github.h3nb.jlmodplus.util.FileUtils;
 import io.github.h3nb.jlmodplus.util.PickDirResultContract;
@@ -173,10 +178,6 @@ public class SettingsActivity extends AppCompatActivity {
 			public void onLibraryChoiceChanged(@NonNull String key, @NonNull String value) {
 				SharedPreferences.Editor editor = preferences.edit();
 				switch (key) {
-					case PREF_APPS_VIEW:
-						editor.putInt(PREF_APPS_VIEW,
-								"grid".equals(value) ? LIBRARY_LAYOUT_GRID : LIBRARY_LAYOUT_LIST);
-						break;
 					case PREF_APPS_ICON_RATIO:
 						editor.putInt(PREF_APPS_ICON_RATIO,
 								"portrait".equals(value)
@@ -186,6 +187,12 @@ public class SettingsActivity extends AppCompatActivity {
 						editor.putInt(PREF_APPS_ICON_SHAPE,
 								"square".equals(value)
 										? LIBRARY_ICON_SHAPE_SQUARE : LIBRARY_ICON_SHAPE_ROUND);
+						break;
+					case PREF_APPS_GRID_ICON_SIZE:
+						editor.putInt(PREF_APPS_GRID_ICON_SIZE,
+								"small".equals(value) ? LIBRARY_GRID_ICON_SIZE_SMALL
+										: "large".equals(value) ? LIBRARY_GRID_ICON_SIZE_LARGE
+										: LIBRARY_GRID_ICON_SIZE_STANDARD);
 						break;
 					case PREF_APPS_GRID_SPACING:
 						editor.putInt(PREF_APPS_GRID_SPACING, gridSpacingValue(value));
@@ -229,7 +236,62 @@ public class SettingsActivity extends AppCompatActivity {
 				directoryError = null;
 				refreshState();
 			}
+
+			@Override
+			public void onOpenCrashReports() {
+				startActivity(new Intent(SettingsActivity.this, CrashReportsActivity.class));
+			}
+
+			@Override
+			public void onOpenDonation() {
+				openExternalPage("https://sociabuzz.com/h3nb/tribe", "Sociabuzz",
+						R.string.library_donation_link_copied,
+						R.string.library_donation_browser_unavailable);
+			}
+
+			@Override
+			public void onOpenProjectRepository() {
+				openExternalPage("https://github.com/H3nb/JL-Mod-Plus", "GitHub",
+						R.string.about_github_link_copied, R.string.about_github_browser_unavailable);
+			}
+
+			@Override
+			public void onOpenUpdateRelease(@NonNull String url) {
+				if (url.startsWith("https://github.com/H3nb/JL-Mod-Plus/releases/tag/v")) {
+					openExternalPage(url, "GitHub Releases",
+							R.string.updates_link_copied, R.string.updates_browser_unavailable);
+				}
+			}
+
+			@Override
+			public void onOpenUpdateDownload(@NonNull String url) {
+				if (url.startsWith("https://github.com/H3nb/JL-Mod-Plus/releases/download/v")
+						&& url.endsWith(".apk")) {
+					openExternalPage(url, "GitHub Releases",
+							R.string.updates_link_copied, R.string.updates_browser_unavailable);
+				}
+			}
 		};
+	}
+
+	private void openExternalPage(
+			@NonNull String url, @NonNull String label, int copiedMessage, int unavailableMessage) {
+		try {
+			startActivity(new Intent(Intent.ACTION_VIEW, Uri.parse(url))
+					.addCategory(Intent.CATEGORY_BROWSABLE));
+		} catch (ActivityNotFoundException | SecurityException exception) {
+			boolean copied = false;
+			try {
+				ClipboardManager clipboard = (ClipboardManager) getSystemService(Context.CLIPBOARD_SERVICE);
+				if (clipboard != null) {
+					clipboard.setPrimaryClip(ClipData.newPlainText(label, url));
+					copied = true;
+				}
+			} catch (SecurityException ignored) {
+				// Fall back to the unavailable-browser message.
+			}
+			Toast.makeText(this, copied ? copiedMessage : unavailableMessage, Toast.LENGTH_LONG).show();
+		}
 	}
 
 	private void refreshState() {
@@ -313,20 +375,6 @@ public class SettingsActivity extends AppCompatActivity {
 
 	private List<SettingsChoice> buildLibraryChoices() {
 		List<SettingsChoice> choices = new ArrayList<>();
-		boolean gridView = preferences.getInt(PREF_APPS_VIEW, LIBRARY_LAYOUT_LIST)
-				== LIBRARY_LAYOUT_GRID;
-		List<SettingsOption> viewOptions = Arrays.asList(
-				new SettingsOption("list", getString(R.string.library_view_list)),
-				new SettingsOption("grid", getString(R.string.library_view_grid)));
-		choices.add(new SettingsChoice(
-				PREF_APPS_VIEW,
-				getString(R.string.pref_apps_view),
-				findOption(viewOptions,
-						preferences.getInt(PREF_APPS_VIEW, LIBRARY_LAYOUT_LIST) == LIBRARY_LAYOUT_GRID
-								? "grid" : "list",
-						viewOptions.get(0)),
-				viewOptions));
-
 		List<SettingsOption> ratioOptions = Arrays.asList(
 				new SettingsOption("square", getString(R.string.library_icon_ratio_square)),
 				new SettingsOption("portrait", getString(R.string.library_icon_ratio_portrait)));
@@ -348,49 +396,54 @@ public class SettingsActivity extends AppCompatActivity {
 				findOption(shapeOptions,
 						preferences.getInt(PREF_APPS_ICON_SHAPE, LIBRARY_ICON_SHAPE_ROUND)
 								== LIBRARY_ICON_SHAPE_SQUARE ? "square" : "round",
-						shapeOptions.get(0)),
+							shapeOptions.get(0)),
 				shapeOptions));
 
-		if (gridView) {
-			List<SettingsOption> spacingOptions = Arrays.asList(
-					new SettingsOption("none", getString(R.string.library_grid_spacing_none)),
-					new SettingsOption("compact", getString(R.string.library_grid_spacing_compact)),
-					new SettingsOption("standard", getString(R.string.library_grid_spacing_standard)),
-					new SettingsOption("spacious", getString(R.string.library_grid_spacing_spacious)));
-			choices.add(new SettingsChoice(
-					PREF_APPS_GRID_SPACING,
-					getString(R.string.library_grid_spacing_title),
-					findOption(spacingOptions,
-							gridSpacingKey(preferences.getInt(
-									PREF_APPS_GRID_SPACING, LIBRARY_GRID_SPACING_STANDARD)),
-							spacingOptions.get(2)),
-					spacingOptions));
-		}
+		List<SettingsOption> iconSizes = Arrays.asList(
+				new SettingsOption("small", getString(R.string.library_grid_icon_size_small)),
+				new SettingsOption("standard", getString(R.string.library_grid_icon_size_standard)),
+				new SettingsOption("large", getString(R.string.library_grid_icon_size_large)));
+		int storedIconSize = preferences.getInt(
+				PREF_APPS_GRID_ICON_SIZE, LIBRARY_GRID_ICON_SIZE_STANDARD);
+		choices.add(new SettingsChoice(
+				PREF_APPS_GRID_ICON_SIZE,
+				getString(R.string.library_grid_icon_size_title),
+				findOption(iconSizes,
+						storedIconSize == LIBRARY_GRID_ICON_SIZE_SMALL ? "small"
+								: storedIconSize == LIBRARY_GRID_ICON_SIZE_LARGE ? "large" : "standard",
+						iconSizes.get(1)),
+				iconSizes,
+				getString(R.string.library_grid_icon_size_summary)));
+
+		List<SettingsOption> spacingOptions = Arrays.asList(
+				new SettingsOption("none", getString(R.string.library_grid_spacing_none)),
+				new SettingsOption("compact", getString(R.string.library_grid_spacing_compact)),
+				new SettingsOption("standard", getString(R.string.library_grid_spacing_standard)),
+				new SettingsOption("spacious", getString(R.string.library_grid_spacing_spacious)));
+		choices.add(new SettingsChoice(
+				PREF_APPS_GRID_SPACING,
+				getString(R.string.library_grid_spacing_title),
+				findOption(spacingOptions,
+						gridSpacingKey(preferences.getInt(
+								PREF_APPS_GRID_SPACING, LIBRARY_GRID_SPACING_STANDARD)),
+						spacingOptions.get(2)),
+				spacingOptions,
+				getString(R.string.library_grid_spacing_summary)));
 		return choices;
 	}
 
 	private List<SettingsSwitch> buildLibrarySwitches() {
-		boolean gridView = preferences.getInt(PREF_APPS_VIEW, LIBRARY_LAYOUT_LIST)
-				== LIBRARY_LAYOUT_GRID;
 		List<SettingsSwitch> switches = new ArrayList<>();
 		switches.add(new SettingsSwitch(
 				PREF_APPS_ENHANCED_ICONS,
 				getString(R.string.library_enhanced_icons_title),
 				getString(R.string.library_enhanced_icons_summary),
 				preferences.getBoolean(PREF_APPS_ENHANCED_ICONS, true)));
-		if (gridView) {
-			switches.add(new SettingsSwitch(
-					PREF_APPS_HIDE_GRID_TITLES,
-					getString(R.string.library_hide_grid_titles),
-					getString(R.string.library_hide_grid_titles_summary),
-					preferences.getBoolean(PREF_APPS_HIDE_GRID_TITLES, false)));
-		} else {
-			switches.add(new SettingsSwitch(
-					PREF_APPS_SHOW_LIST_DESCRIPTION,
-					getString(R.string.library_show_list_description),
-					getString(R.string.library_show_list_description_summary),
-					preferences.getBoolean(PREF_APPS_SHOW_LIST_DESCRIPTION, true)));
-		}
+		switches.add(new SettingsSwitch(
+				PREF_APPS_HIDE_GRID_TITLES,
+				getString(R.string.library_hide_grid_titles),
+				getString(R.string.library_hide_grid_titles_summary),
+				preferences.getBoolean(PREF_APPS_HIDE_GRID_TITLES, false)));
 		return switches;
 	}
 

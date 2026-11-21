@@ -19,7 +19,7 @@ You can select multiple files, a folder, or a ZIP containing several games. JL-M
 
 ## Configure one game before changing everything
 
-Open a MIDlet's settings in the Library to adjust its **Display**, **Controls**, or **Media** options. Start with defaults when checking whether an older game runs correctly; change one setting at a time so you can tell which adjustment affects the result.
+Open a MIDlet's settings in the Library. **Home** summarizes its active profile and links to **Display**, **Controls**, or **Media**. Use **Search settings** to locate a specific option such as MMPX, font size, or timing. Start with defaults when checking whether an older game runs correctly; change one setting at a time so you can tell which adjustment affects the result.
 
 A **profile** can share a reusable configuration with other MIDlets, but it is optional. A screen skin changes the frame around a game; a virtual-control skin changes the appearance of on-screen buttons. Neither is required to run an ordinary JAR.
 

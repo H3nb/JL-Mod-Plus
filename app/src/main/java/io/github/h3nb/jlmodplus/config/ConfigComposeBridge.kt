@@ -61,6 +61,7 @@ import androidx.compose.material3.ButtonDefaults
 import androidx.compose.material3.Checkbox
 import androidx.compose.material3.ExperimentalMaterial3Api
 import androidx.compose.material3.FilterChip
+import androidx.compose.material3.FilledTonalIconButton
 import androidx.compose.material3.HorizontalDivider
 import androidx.compose.material3.Icon
 import androidx.compose.material3.IconButton
@@ -106,7 +107,10 @@ import androidx.compose.ui.graphics.lerp
 import androidx.compose.ui.graphics.toArgb
 import androidx.compose.ui.graphics.drawscope.Stroke
 import androidx.compose.ui.platform.ComposeView
+import androidx.compose.ui.focus.FocusRequester
+import androidx.compose.ui.focus.focusRequester
 import androidx.compose.ui.platform.LocalContext
+import androidx.compose.ui.platform.LocalResources
 import androidx.compose.ui.platform.LocalDensity
 import androidx.compose.ui.platform.LocalLayoutDirection
 import androidx.compose.ui.platform.LocalView
@@ -120,9 +124,11 @@ import androidx.compose.ui.semantics.Role
 import androidx.compose.ui.semantics.clearAndSetSemantics
 import androidx.compose.ui.text.font.FontFamily
 import androidx.compose.ui.text.input.KeyboardType
+import androidx.compose.ui.text.input.ImeAction
 import androidx.compose.ui.text.style.TextOverflow
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.window.Dialog
+import androidx.annotation.StringRes
 import androidx.core.view.ViewCompat
 import kotlinx.coroutines.launch
 import javax.microedition.shell.timing.TimingMode
@@ -294,10 +300,10 @@ data class EncodingPickerRequest(
 )
 
 internal enum class ConfigDestination(val label: Int, val icon: Int) {
-    Basic(R.string.config_destination_general, R.drawable.ic_config_general),
+    Basic(R.string.config_destination_home, R.drawable.ic_config_general),
     Display(R.string.config_destination_graphics, R.drawable.ic_config_graphics),
-    Media(R.string.config_destination_media, R.drawable.ic_config_media),
     Controls(R.string.config_destination_controls, R.drawable.ic_config_controls),
+    Media(R.string.config_destination_media, R.drawable.ic_config_media),
     System(R.string.config_destination_system, R.drawable.ic_settings),
 }
 
@@ -307,21 +313,25 @@ internal enum class ConfigAction(val title: Int, val message: Int) {
     ResetLayout(R.string.RESET_LAYOUT_CMD, R.string.message_reset_layout),
 }
 
+private enum class ConfigDetail { Font, Performance }
+
 private sealed interface ConfigPage {
     data object Main : ConfigPage
+    data object Search : ConfigPage
     data object SystemProperties : ConfigPage
+    data class Detail(val type: ConfigDetail) : ConfigPage
     data class Rendering(val subpage: RenderingSubpage) : ConfigPage
 }
 
 private fun ConfigPage.depth(): Int = when (this) {
     ConfigPage.Main -> 0
-    ConfigPage.SystemProperties -> 1
+    ConfigPage.Search, ConfigPage.SystemProperties, is ConfigPage.Detail,
     is ConfigPage.Rendering -> 1
 }
 
 private fun ConfigPage.siblingOrder(): Int = when (this) {
     is ConfigPage.Rendering -> subpage.ordinal
-    ConfigPage.Main, ConfigPage.SystemProperties -> 0
+    ConfigPage.Main, ConfigPage.Search, ConfigPage.SystemProperties, is ConfigPage.Detail -> 0
 }
 
 @Composable
@@ -356,6 +366,9 @@ internal fun ConfigScreen(
     var systemPropertiesEditorVisible by rememberSaveable { mutableStateOf(false) }
     var systemPropertiesSession by rememberSaveable { mutableIntStateOf(0) }
     var renderingSubpage by rememberSaveable { mutableStateOf<RenderingSubpage?>(null) }
+    var detailPage by rememberSaveable { mutableStateOf<ConfigDetail?>(null) }
+    var searchVisible by rememberSaveable { mutableStateOf(false) }
+    var revealSection by remember { mutableStateOf<String?>(null) }
     val backRendering: () -> Unit = { renderingSubpage = null }
     var presetPickerVisible by rememberSaveable { mutableStateOf(false) }
     var savePresetVisible by rememberSaveable { mutableStateOf(false) }
@@ -364,8 +377,12 @@ internal fun ConfigScreen(
         events.onFormChanged(next)
     }
     val requestBack = {
-        if (renderingSubpage != null) {
+        if (searchVisible) {
+            searchVisible = false
+        } else if (renderingSubpage != null) {
             backRendering()
+        } else if (detailPage != null) {
+            detailPage = null
         } else if (systemPropertiesEditorVisible) {
             systemPropertiesEditorVisible = false
         } else if (isProfile && menuActions?.hasUnsavedProfileChanges() == true) {
@@ -376,7 +393,8 @@ internal fun ConfigScreen(
         }
     }
     // Only in-app navigation and profile drafts consume Back; the root Activity uses system Back.
-    BackHandler(enabled = renderingSubpage != null || systemPropertiesEditorVisible || isProfile) {
+    BackHandler(enabled = searchVisible || renderingSubpage != null || detailPage != null ||
+        systemPropertiesEditorVisible || isProfile) {
         requestBack()
     }
 
@@ -401,11 +419,14 @@ internal fun ConfigScreen(
     val displayScrollState = rememberScrollState()
     val useNavigationRail = availableWindowWidthDp() >= 600.dp
     val density = LocalDensity.current
+    val iconOnlyBottomNavigation = density.fontScale >= 1.5f
     val imeVisible = WindowInsets.ime.getBottom(density) > 0
     val cutoutAvailable = cutoutSupportOverride ?: deviceHasDisplayCutout(density)
 
     val currentPage = when {
+        searchVisible -> ConfigPage.Search
         renderingSubpage != null -> ConfigPage.Rendering(requireNotNull(renderingSubpage))
+        detailPage != null -> ConfigPage.Detail(requireNotNull(detailPage))
         systemPropertiesEditorVisible -> ConfigPage.SystemProperties
         else -> ConfigPage.Main
     }
@@ -429,6 +450,30 @@ internal fun ConfigScreen(
             ),
         ) {
             when (shownPage) {
+                ConfigPage.Search -> {
+                    ConfigSearchPage(
+                        onBack = { searchVisible = false },
+                        onSelected = { destination, section, detail ->
+                            searchVisible = false
+                            if (detail != null) {
+                                detailPage = detail
+                                selectDestination(ConfigDestination.Display)
+                            } else {
+                                revealSection = section
+                                selectDestination(destination)
+                            }
+                        },
+                    )
+                }
+                is ConfigPage.Detail -> {
+                    ConfigDetailPage(
+                        detail = shownPage.type,
+                        form = form,
+                        state = state,
+                        onFormChanged = updateForm,
+                        onBack = { detailPage = null },
+                    )
+                }
                 is ConfigPage.Rendering -> {
                     RenderingSettingsPage(
                         state = state,
@@ -475,6 +520,7 @@ internal fun ConfigScreen(
                                     title = title,
                                     isProfile = isProfile,
                                     onBack = requestBack,
+                                    onSearch = { searchVisible = true },
                                     onStart = { menuActions?.onStart() },
                                     onSave = { menuActions?.onSaveProfileDraft() },
                                     saveEnabled = !isProfile || menuActions?.hasUnsavedProfileChanges() == true,
@@ -487,6 +533,7 @@ internal fun ConfigScreen(
                                         destinations = destinations,
                                         selected = selectedDestination,
                                         onSelected = selectDestination,
+                                        iconOnly = iconOnlyBottomNavigation,
                                     )
                                 }
                             },
@@ -504,38 +551,53 @@ internal fun ConfigScreen(
                                 ) { page ->
                                     val pageScrollState = if (destinations[page] == ConfigDestination.Display)
                                         displayScrollState else rememberScrollState()
-                                    Column(
-                                        modifier = Modifier
-                                            .fillMaxSize()
-                                            .imePadding()
-                                            .verticalScroll(pageScrollState)
-                                            .padding(horizontal = 12.dp, vertical = 8.dp),
-                                        verticalArrangement = Arrangement.spacedBy(8.dp),
+                                    androidx.compose.runtime.CompositionLocalProvider(
+                                        LocalConfigSectionReveal provides revealSection?.let { section ->
+                                            ConfigSectionReveal(section) { revealSection = null }
+                                        },
                                     ) {
-                                        Box(
-                                            modifier = Modifier.fillMaxWidth(),
-                                            contentAlignment = Alignment.TopCenter,
+                                        Column(
+                                            modifier = Modifier
+                                                .fillMaxSize()
+                                                .imePadding()
+                                                .verticalScroll(pageScrollState)
+                                                .padding(horizontal = 12.dp, vertical = 8.dp),
+                                            verticalArrangement = Arrangement.spacedBy(8.dp),
                                         ) {
-                                            ConfigDestinationContent(
-                                                destination = destinations[page],
-                                                state = state,
-                                                form = form,
-                                                onFormChanged = updateForm,
-                                                events = events,
-                                                isProfile = isProfile,
-                                                cutoutAvailable = cutoutAvailable,
-                                                onRequestAction = { pendingAction = it },
-                                                onEditSystemProperties = {
-                                                    systemPropertiesSession++
-                                                    systemPropertiesEditorVisible = true
-                                                },
-                                                onOpenShaders = {
-                                                    renderingSubpage = RenderingSubpage.SHADERS
-                                                },
-                                                onUsePreset = { presetPickerVisible = true },
-                                                onSavePreset = { savePresetVisible = true },
-                                                modifier = Modifier.widthIn(max = 880.dp),
-                                            )
+                                            if (iconOnlyBottomNavigation && !useNavigationRail) {
+                                                Text(
+                                                    stringResource(destinations[page].label),
+                                                    modifier = Modifier.padding(horizontal = 12.dp, vertical = 4.dp),
+                                                    style = MaterialTheme.typography.titleMedium,
+                                                )
+                                            }
+                                            Box(
+                                                modifier = Modifier.fillMaxWidth(),
+                                                contentAlignment = Alignment.TopCenter,
+                                            ) {
+                                                ConfigDestinationContent(
+                                                    destination = destinations[page],
+                                                    state = state,
+                                                    form = form,
+                                                    onFormChanged = updateForm,
+                                                    events = events,
+                                                    isProfile = isProfile,
+                                                    cutoutAvailable = cutoutAvailable,
+                                                    onRequestAction = { pendingAction = it },
+                                                    onEditSystemProperties = {
+                                                        systemPropertiesSession++
+                                                        systemPropertiesEditorVisible = true
+                                                    },
+                                                    onOpenShaders = {
+                                                        renderingSubpage = RenderingSubpage.SHADERS
+                                                    },
+                                                    onNavigate = selectDestination,
+                                                    onOpenDetail = { detailPage = it },
+                                                    onUsePreset = { presetPickerVisible = true },
+                                                    onSavePreset = { savePresetVisible = true },
+                                                    modifier = Modifier.widthIn(max = 880.dp),
+                                                )
+                                            }
                                         }
                                     }
                                 }
@@ -669,6 +731,8 @@ private fun ConfigDestinationContent(
     onRequestAction: (ConfigAction) -> Unit,
     onEditSystemProperties: () -> Unit,
     onOpenShaders: () -> Unit,
+    onNavigate: (ConfigDestination) -> Unit,
+    onOpenDetail: (ConfigDetail) -> Unit,
     onUsePreset: () -> Unit,
     onSavePreset: () -> Unit,
     modifier: Modifier = Modifier,
@@ -678,33 +742,42 @@ private fun ConfigDestinationContent(
             ConfigDestination.Basic -> GeneralDestination(
                 state = state,
                 form = form,
-                onFormChanged = onFormChanged,
                 events = events,
                 onUsePreset = onUsePreset,
                 onSavePreset = onSavePreset,
                 showPresetSummary = !isProfile,
-                showClearData = !isProfile,
-                cutoutAvailable = cutoutAvailable,
-                onRequestAction = onRequestAction,
+                onNavigate = onNavigate,
             )
             ConfigDestination.Display -> {
+                ScreenGeometrySection(state, form, onFormChanged, events, cutoutAvailable)
                 ScreenSection(form, state, onFormChanged, events, onOpenShaders)
-                FontSection(form, state, onFormChanged)
-                PerformanceSection(form, onFormChanged)
+                ConfigSection(title = stringResource(R.string.config_display_more)) {
+                    ConfigNavigationPreference(
+                        title = stringResource(R.string.config_display_text),
+                        value = stringResource(R.string.config_font_sizes_value,
+                            form.fontSizeSmall, form.fontSizeMedium, form.fontSizeLarge),
+                        onClick = { onOpenDetail(ConfigDetail.Font) },
+                    )
+                    ConfigNavigationPreference(
+                        title = stringResource(R.string.config_display_performance),
+                        value = if (form.fpsLimit == "0" || form.fpsLimit.isBlank())
+                            stringResource(R.string.fps_limit_maximum)
+                        else "${form.fpsLimit} FPS",
+                        onClick = { onOpenDetail(ConfigDetail.Performance) },
+                    )
+                }
             }
             ConfigDestination.Media -> {
                 AudioSection(form, state, onFormChanged, events)
                 CameraSection(form, onFormChanged)
             }
-            ConfigDestination.Controls -> InputSection(
-                form,
-                state,
-                onFormChanged,
-                events,
-                onRequestAction,
-            )
+            ConfigDestination.Controls -> {
+                ConfigBasicInputSection(form, onFormChanged)
+                InputSection(form, state, onFormChanged, events, onRequestAction)
+            }
             ConfigDestination.System -> {
                 SystemSection(state, form, onFormChanged, events, !isProfile, onEditSystemProperties)
+                ConfigMaintenanceSection(!isProfile, onRequestAction)
             }
         }
     }
@@ -728,16 +801,12 @@ private fun deviceHasDisplayCutout(density: androidx.compose.ui.unit.Density): B
 private fun GeneralDestination(
     state: ConfigUiState,
     form: ConfigFormState,
-    onFormChanged: (ConfigFormState) -> Unit,
     events: ConfigFormEvents,
     onUsePreset: () -> Unit,
     onSavePreset: () -> Unit,
     showPresetSummary: Boolean,
-    showClearData: Boolean,
-    cutoutAvailable: Boolean,
-    onRequestAction: (ConfigAction) -> Unit,
+    onNavigate: (ConfigDestination) -> Unit,
 ) {
-    var presetsDialogVisible by rememberSaveable { mutableStateOf(false) }
     if (showPresetSummary) {
         PresetSummary(
             state = state,
@@ -745,7 +814,55 @@ private fun GeneralDestination(
             onSavePreset = onSavePreset,
             events = events,
         )
+    } else {
+        ConfigSection(title = stringResource(R.string.config_overview_profile_draft)) {
+            Text(
+                text = stringResource(R.string.config_overview_profile_draft_summary),
+                modifier = Modifier.padding(horizontal = 16.dp, vertical = 12.dp),
+                style = MaterialTheme.typography.bodyMedium,
+                color = MaterialTheme.colorScheme.onSurfaceVariant,
+            )
+        }
     }
+    val orientation = stringArrayResource(R.array.PREF_ORIENTATION_ENTRIES)
+        .getOrNull(form.orientation).orEmpty()
+    val soundbank = state.soundBanks.firstOrNull { it == form.soundBank }
+        ?: state.soundBanks.firstOrNull().orEmpty()
+    ConfigSection(title = stringResource(R.string.config_overview_quick_access)) {
+        ConfigNavigationPreference(
+            title = stringResource(R.string.config_destination_graphics),
+            value = "${form.screenWidth} × ${form.screenHeight} · $orientation",
+            onClick = { onNavigate(ConfigDestination.Display) },
+        )
+        ConfigNavigationPreference(
+            title = stringResource(R.string.config_destination_controls),
+            value = stringResource(if (form.showKeyboard) R.string.config_overview_enabled
+                else R.string.config_overview_disabled),
+            onClick = { onNavigate(ConfigDestination.Controls) },
+        )
+        ConfigNavigationPreference(
+            title = stringResource(R.string.config_destination_media),
+            value = soundbank.ifBlank { stringResource(R.string.config_overview_media_summary) },
+            onClick = { onNavigate(ConfigDestination.Media) },
+        )
+    }
+    Text(
+        text = stringResource(R.string.config_overview_hint),
+        modifier = Modifier.padding(horizontal = 12.dp, vertical = 4.dp),
+        style = MaterialTheme.typography.bodySmall,
+        color = MaterialTheme.colorScheme.onSurfaceVariant,
+    )
+}
+
+@Composable
+private fun ScreenGeometrySection(
+    state: ConfigUiState,
+    form: ConfigFormState,
+    onFormChanged: (ConfigFormState) -> Unit,
+    events: ConfigFormEvents,
+    cutoutAvailable: Boolean,
+) {
+    var presetsDialogVisible by rememberSaveable { mutableStateOf(false) }
     ConfigSection(title = stringResource(R.string.config_basic_display)) {
         ConfigValuePreference(
             title = stringResource(R.string.config_screen_size),
@@ -819,42 +936,6 @@ private fun GeneralDestination(
             },
         )
     }
-    ConfigSection(title = stringResource(R.string.config_basic_input)) {
-        ConfigSwitchPreference(
-            title = stringResource(R.string.PREF_VIRTUAL_KEYBOARD_OPTIONS),
-            description = stringResource(R.string.config_help_virtual_keyboard),
-            checked = form.showKeyboard,
-            onCheckedChange = { checked ->
-                onFormChanged(form.toBuilder().showKeyboard(checked).build())
-            },
-        )
-        ConfigSwitchPreference(
-            title = stringResource(R.string.PREF_TOUCH_INPUT),
-            description = stringResource(R.string.config_help_touch_input),
-            checked = form.touchInput,
-            onCheckedChange = { checked ->
-                onFormChanged(form.toBuilder().touchInput(checked).build())
-            },
-        )
-    }
-    ConfigSection(title = stringResource(R.string.config_maintenance)) {
-        ConfigActionPreference(
-            title = stringResource(R.string.config_reset_all_settings),
-            description = stringResource(R.string.config_reset_all_settings_summary),
-            destructive = true,
-            testTag = "config_reset_settings_action",
-            onClick = { onRequestAction(ConfigAction.ResetSettings) },
-        )
-        if (showClearData) {
-            ConfigActionPreference(
-                title = stringResource(R.string.config_delete_app_data),
-                description = stringResource(R.string.config_delete_app_data_summary),
-                destructive = true,
-                testTag = "config_clear_data_action",
-                onClick = { onRequestAction(ConfigAction.ClearData) },
-            )
-        }
-    }
     if (presetsDialogVisible) {
         val selectedPreset = form.screenWidth.toIntOrNull()?.let { width ->
             form.screenHeight.toIntOrNull()?.let { height -> Size(width, height) }
@@ -888,11 +969,276 @@ private fun GeneralDestination(
     }
 }
 
+
+@Composable
+private fun ConfigBasicInputSection(
+    form: ConfigFormState,
+    onFormChanged: (ConfigFormState) -> Unit,
+) {
+    ConfigSection(title = stringResource(R.string.config_basic_input)) {
+        ConfigSwitchPreference(
+            title = stringResource(R.string.PREF_VIRTUAL_KEYBOARD_OPTIONS),
+            description = stringResource(R.string.config_help_virtual_keyboard),
+            checked = form.showKeyboard,
+            onCheckedChange = { checked ->
+                onFormChanged(form.toBuilder().showKeyboard(checked).build())
+            },
+        )
+        ConfigSwitchPreference(
+            title = stringResource(R.string.PREF_TOUCH_INPUT),
+            description = stringResource(R.string.config_help_touch_input),
+            checked = form.touchInput,
+            onCheckedChange = { checked ->
+                onFormChanged(form.toBuilder().touchInput(checked).build())
+            },
+        )
+    }
+}
+
+@Composable
+private fun ConfigMaintenanceSection(
+    showClearData: Boolean,
+    onRequestAction: (ConfigAction) -> Unit,
+) {
+    ConfigSection(title = stringResource(R.string.config_maintenance)) {
+        ConfigActionPreference(
+            title = stringResource(R.string.config_reset_all_settings),
+            description = stringResource(R.string.config_reset_all_settings_summary),
+            destructive = true,
+            testTag = "config_reset_settings_action",
+            onClick = { onRequestAction(ConfigAction.ResetSettings) },
+        )
+        if (showClearData) {
+            ConfigActionPreference(
+                title = stringResource(R.string.config_delete_app_data),
+                description = stringResource(R.string.config_delete_app_data_summary),
+                destructive = true,
+                testTag = "config_clear_data_action",
+                onClick = { onRequestAction(ConfigAction.ClearData) },
+            )
+        }
+    }
+}
+
+private data class ConfigSearchItem(
+    @StringRes val title: Int,
+    @StringRes val section: Int,
+    val destination: ConfigDestination,
+    val detail: ConfigDetail? = null,
+    val keywords: String = "",
+)
+
+// A small index of existing options, not a second configuration model.
+private val configSearchIndex = listOf(
+    ConfigSearchItem(R.string.preset_use, R.string.presets, ConfigDestination.Basic, keywords = "profile template"),
+    ConfigSearchItem(R.string.preset_save_as, R.string.presets, ConfigDestination.Basic, keywords = "save profile"),
+    ConfigSearchItem(R.string.config_screen_size, R.string.config_basic_display, ConfigDestination.Display, keywords = "resolution dimensions"),
+    ConfigSearchItem(R.string.PREF_ORIENTATION, R.string.config_basic_display, ConfigDestination.Display, keywords = "rotation portrait landscape"),
+    ConfigSearchItem(R.string.pref_screen_scale_type, R.string.config_basic_display, ConfigDestination.Display, keywords = "scale zoom"),
+    ConfigSearchItem(R.string.PREF_SCALE_RATIO, R.string.config_basic_display, ConfigDestination.Display, keywords = "manual scale"),
+    ConfigSearchItem(R.string.pref_screen_gravity, R.string.config_basic_display, ConfigDestination.Display, keywords = "position"),
+    ConfigSearchItem(R.string.pref_screen_padding_title, R.string.config_basic_display, ConfigDestination.Display),
+    ConfigSearchItem(R.string.config_avoid_camera_cutout_title, R.string.config_basic_display, ConfigDestination.Display, keywords = "notch punch hole camera"),
+    ConfigSearchItem(R.string.PREF_FORCE_FULLSCREEN, R.string.config_basic_display, ConfigDestination.Display),
+    ConfigSearchItem(R.string.config_background_mode, R.string.config_display_appearance, ConfigDestination.Display),
+    ConfigSearchItem(R.string.config_background_custom_color, R.string.config_display_appearance, ConfigDestination.Display, keywords = "background color"),
+    ConfigSearchItem(R.string.pref_skin_title, R.string.config_display_appearance, ConfigDestination.Display, keywords = "skin frame bezel"),
+    ConfigSearchItem(R.string.pref_graphics_mode_title, R.string.config_display_rendering, ConfigDestination.Display, keywords = "renderer OpenGL ES"),
+    ConfigSearchItem(R.string.internal_resolution_title, R.string.config_display_rendering, ConfigDestination.Display, keywords = "resolution scaling"),
+    ConfigSearchItem(R.string.bitmap_upscaling_title, R.string.config_display_rendering, ConfigDestination.Display, keywords = "MMPX nearest bilinear edge aware sprites"),
+    ConfigSearchItem(R.string.render_shader_effects, R.string.config_display_rendering, ConfigDestination.Display, keywords = "shader GLSL effects"),
+    ConfigSearchItem(R.string.render_texture_filtering, R.string.config_display_rendering, ConfigDestination.Display, keywords = "texture filtering"),
+    ConfigSearchItem(R.string.parallel_screen_redrawing, R.string.config_display_rendering, ConfigDestination.Display),
+    ConfigSearchItem(R.string.config_font_sizes, R.string.config_display_text, ConfigDestination.Display, ConfigDetail.Font, "font text"),
+    ConfigSearchItem(R.string.SIZE_PRESETS, R.string.config_display_text, ConfigDestination.Display, ConfigDetail.Font),
+    ConfigSearchItem(R.string.PREF_FONT_SIZE_IN_SP, R.string.config_display_text, ConfigDestination.Display, ConfigDetail.Font),
+    ConfigSearchItem(R.string.PREF_FONT_ANTI_ALIASING, R.string.config_display_text, ConfigDestination.Display, ConfigDetail.Font),
+    ConfigSearchItem(R.string.PREF_LIMIT_FPS, R.string.config_display_performance, ConfigDestination.Display, ConfigDetail.Performance, "framerate fps"),
+    ConfigSearchItem(R.string.perf_overlay_title, R.string.config_display_performance, ConfigDestination.Display, ConfigDetail.Performance, "stats performance"),
+    ConfigSearchItem(R.string.PREF_IMMEDIATE, R.string.config_display_performance, ConfigDestination.Display, ConfigDetail.Performance),
+    ConfigSearchItem(R.string.perf_overlay_preset, R.string.config_display_performance, ConfigDestination.Display, ConfigDetail.Performance),
+    ConfigSearchItem(R.string.perf_overlay_parameters, R.string.config_display_performance, ConfigDestination.Display, ConfigDetail.Performance),
+    ConfigSearchItem(R.string.perf_overlay_position, R.string.config_display_performance, ConfigDestination.Display, ConfigDetail.Performance),
+    ConfigSearchItem(R.string.PREF_VIRTUAL_KEYBOARD_OPTIONS, R.string.config_basic_input, ConfigDestination.Controls, keywords = "virtual keys controls"),
+    ConfigSearchItem(R.string.PREF_TOUCH_INPUT, R.string.config_basic_input, ConfigDestination.Controls),
+    ConfigSearchItem(R.string.PREF_LAYOUT, R.string.config_controls_key_input, ConfigDestination.Controls),
+    ConfigSearchItem(R.string.pref_map_keys, R.string.config_controls_key_input, ConfigDestination.Controls, keywords = "key mapping keyboard"),
+    ConfigSearchItem(R.string.config_analog_stick, R.string.config_controls_key_input, ConfigDestination.Controls, keywords = "gamepad joystick"),
+    ConfigSearchItem(R.string.config_gamepad_calibrate, R.string.config_controls_key_input, ConfigDestination.Controls, keywords = "gamepad calibration"),
+    ConfigSearchItem(R.string.PREF_VK_FEEDBACK, R.string.config_controls_virtual_keyboard, ConfigDestination.Controls),
+    ConfigSearchItem(R.string.PREF_VK_HIDE_DELAY, R.string.config_controls_virtual_keyboard, ConfigDestination.Controls),
+    ConfigSearchItem(R.string.pref_button_shape_title, R.string.config_controls_customization, ConfigDestination.Controls),
+    ConfigSearchItem(R.string.control_skin_title, R.string.config_controls_customization, ConfigDestination.Controls),
+    ConfigSearchItem(R.string.PREF_VK_ALPHA, R.string.config_controls_customization, ConfigDestination.Controls, keywords = "transparency opacity"),
+    ConfigSearchItem(R.string.config_controls_opaque_outside, R.string.config_controls_customization, ConfigDestination.Controls),
+    ConfigSearchItem(R.string.config_controls_virtual_keyboard_colors, R.string.config_controls_customization, ConfigDestination.Controls, keywords = "button colors palette"),
+    ConfigSearchItem(R.string.RESET_LAYOUT_CMD, R.string.config_controls_maintenance, ConfigDestination.Controls),
+    ConfigSearchItem(R.string.pref_soundbank_title, R.string.pref_audio_title, ConfigDestination.Media, keywords = "MIDI audio"),
+    ConfigSearchItem(R.string.config_camera_default_title, R.string.config_camera_title, ConfigDestination.Media),
+    ConfigSearchItem(R.string.config_camera_resolution_title, R.string.config_camera_title, ConfigDestination.Media),
+    ConfigSearchItem(R.string.midlet_storage_mode_title, R.string.midlet_permissions_settings_title, ConfigDestination.System, keywords = "files storage"),
+    ConfigSearchItem(R.string.midlet_permissions_read, R.string.midlet_permissions_settings_title, ConfigDestination.System),
+    ConfigSearchItem(R.string.midlet_permissions_write, R.string.midlet_permissions_settings_title, ConfigDestination.System),
+    ConfigSearchItem(R.string.pref_skip_resume_call, R.string.pref_title_emulation, ConfigDestination.System),
+    ConfigSearchItem(R.string.PREF_TIMING_MODE, R.string.config_system_timing, ConfigDestination.System),
+    ConfigSearchItem(R.string.pref_encoding_title, R.string.PREF_SYS_PROPS, ConfigDestination.System),
+    ConfigSearchItem(R.string.config_edit_system_properties, R.string.PREF_SYS_PROPS, ConfigDestination.System, keywords = "properties CLDC Java ME"),
+    ConfigSearchItem(R.string.config_reset_all_settings, R.string.config_maintenance, ConfigDestination.System),
+    ConfigSearchItem(R.string.config_delete_app_data, R.string.config_maintenance, ConfigDestination.System, keywords = "clear data"),
+)
+
+@OptIn(ExperimentalMaterial3Api::class)
+@Composable
+private fun ConfigSearchPage(
+    onBack: () -> Unit,
+    onSelected: (ConfigDestination, String, ConfigDetail?) -> Unit,
+) {
+    val resources = LocalResources.current
+    var query by rememberSaveable { mutableStateOf("") }
+    val focus = remember { FocusRequester() }
+    LaunchedEffect(Unit) { focus.requestFocus() }
+    val suggestions = setOf(
+        R.string.config_screen_size, R.string.PREF_ORIENTATION,
+        R.string.pref_graphics_mode_title, R.string.PREF_VIRTUAL_KEYBOARD_OPTIONS,
+        R.string.pref_map_keys, R.string.PREF_TIMING_MODE,
+    )
+    val filtered = configSearchIndex.filter { entry ->
+        if (query.isBlank()) entry.title in suggestions
+        else resources.getString(entry.title).contains(query.trim(), ignoreCase = true) ||
+            resources.getString(entry.section).contains(query.trim(), ignoreCase = true) ||
+            entry.keywords.contains(query.trim(), ignoreCase = true)
+    }
+    Scaffold(
+        contentWindowInsets = WindowInsets.safeDrawing,
+        topBar = {
+            TopAppBar(
+                title = { Text(stringResource(R.string.config_search_title)) },
+                navigationIcon = {
+                    IconButton(onClick = onBack) {
+                        Icon(painterResource(R.drawable.ic_arrow_back),
+                            contentDescription = stringResource(R.string.action_back))
+                    }
+                },
+            )
+        },
+    ) { padding ->
+        Column(
+            Modifier.fillMaxSize().padding(padding).consumeWindowInsets(padding)
+                .imePadding().padding(horizontal = 16.dp),
+            horizontalAlignment = Alignment.CenterHorizontally,
+        ) {
+            OutlinedTextField(
+                value = query,
+                onValueChange = { query = it },
+                singleLine = true,
+                leadingIcon = {
+                    Icon(painterResource(R.drawable.ic_search), contentDescription = null)
+                },
+                placeholder = { Text(stringResource(R.string.config_search_hint)) },
+                trailingIcon = {
+                    if (query.isNotEmpty()) {
+                        IconButton(onClick = { query = "" }) {
+                            Icon(painterResource(R.drawable.ic_close),
+                                contentDescription = stringResource(R.string.config_search_clear))
+                        }
+                    }
+                },
+                keyboardOptions = KeyboardOptions(imeAction = ImeAction.Search),
+                modifier = Modifier.fillMaxWidth().widthIn(max = 720.dp).focusRequester(focus),
+            )
+            LazyColumn(
+                modifier = Modifier.weight(1f).widthIn(max = 720.dp),
+            ) {
+                if (query.isBlank()) {
+                    item {
+                        Text(
+                            stringResource(R.string.config_search_suggestions),
+                            modifier = Modifier.padding(top = 20.dp, bottom = 8.dp),
+                            style = MaterialTheme.typography.titleSmall,
+                            color = MaterialTheme.colorScheme.onSurfaceVariant,
+                        )
+                    }
+                }
+                if (filtered.isEmpty()) {
+                    item {
+                        Text(
+                            stringResource(R.string.config_search_no_results),
+                            modifier = Modifier.padding(vertical = 24.dp),
+                            color = MaterialTheme.colorScheme.onSurfaceVariant,
+                        )
+                    }
+                }
+                itemsIndexed(filtered, key = { _, entry -> entry.title }) { _, entry ->
+                    ListItem(
+                        headlineContent = { Text(stringResource(entry.title)) },
+                        supportingContent = {
+                            Text("${stringResource(entry.destination.label)} · ${stringResource(entry.section)}")
+                        },
+                        modifier = Modifier.clickable {
+                            onSelected(entry.destination, resources.getString(entry.section), entry.detail)
+                        },
+                    )
+                }
+            }
+        }
+    }
+}
+
+@OptIn(ExperimentalMaterial3Api::class)
+@Composable
+private fun ConfigDetailPage(
+    detail: ConfigDetail,
+    form: ConfigFormState,
+    state: ConfigUiState,
+    onFormChanged: (ConfigFormState) -> Unit,
+    onBack: () -> Unit,
+) {
+    Scaffold(
+        contentWindowInsets = WindowInsets.safeDrawing,
+        topBar = {
+            TopAppBar(
+                title = {
+                    Text(stringResource(
+                        if (detail == ConfigDetail.Font) R.string.config_font_page_title
+                        else R.string.config_performance_page_title,
+                    ))
+                },
+                navigationIcon = {
+                    IconButton(onClick = onBack) {
+                        Icon(
+                            painterResource(R.drawable.ic_arrow_back),
+                            contentDescription = stringResource(R.string.action_back),
+                        )
+                    }
+                },
+            )
+        },
+    ) { padding ->
+        Column(
+            modifier = Modifier.fillMaxSize().padding(padding)
+                .consumeWindowInsets(padding).verticalScroll(rememberScrollState())
+                .padding(horizontal = 12.dp, vertical = 8.dp),
+            horizontalAlignment = Alignment.CenterHorizontally,
+        ) {
+            Column(
+                modifier = Modifier.widthIn(max = 880.dp),
+                verticalArrangement = Arrangement.spacedBy(12.dp),
+            ) {
+                when (detail) {
+                    ConfigDetail.Font -> FontSection(form, state, onFormChanged)
+                    ConfigDetail.Performance -> PerformanceSection(form, onFormChanged)
+                }
+            }
+        }
+    }
+}
+
 @Composable
 private fun ConfigNavigationBar(
     destinations: List<ConfigDestination>,
     selected: ConfigDestination,
     onSelected: (ConfigDestination) -> Unit,
+    iconOnly: Boolean,
 ) {
     NavigationBar(
         modifier = Modifier.testTag(CONFIG_NAVIGATION_BAR_TAG),
@@ -910,9 +1256,10 @@ private fun ConfigNavigationBar(
                         contentDescription = label,
                     )
                 },
-                label = {
-                    Text(label, maxLines = 1, softWrap = false, overflow = TextOverflow.Ellipsis)
+                label = if (iconOnly) null else {
+                    { Text(label, maxLines = 1, softWrap = false, overflow = TextOverflow.Ellipsis) }
                 },
+                alwaysShowLabel = !iconOnly,
             )
         }
     }
@@ -955,6 +1302,7 @@ private fun ConfigTopBar(
     title: String,
     isProfile: Boolean,
     onBack: () -> Unit,
+    onSearch: () -> Unit,
     onStart: () -> Unit,
     onSave: () -> Unit,
     saveEnabled: Boolean,
@@ -976,15 +1324,21 @@ private fun ConfigTopBar(
             }
         },
         actions = {
+            IconButton(onClick = onSearch) {
+                Icon(
+                    painter = painterResource(R.drawable.ic_search),
+                    contentDescription = stringResource(R.string.config_search_title),
+                )
+            }
             if (isProfile) {
                 TextButton(onClick = onSave, enabled = saveEnabled) {
                     Text(stringResource(R.string.save))
                 }
             } else {
-                IconButton(onClick = onStart) {
+                FilledTonalIconButton(onClick = onStart) {
                     Icon(
                         painter = painterResource(R.drawable.ic_play),
-                        modifier = Modifier.size(30.dp),
+                        modifier = Modifier.size(24.dp),
                         contentDescription = stringResource(R.string.START_CMD),
                     )
                 }

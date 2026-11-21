@@ -143,12 +143,12 @@
     <string name="msg_immediate_mode_disabled">Immediate processing was disabled because event callbacks nested too deeply.</string>
     <string name="msg_mascot_capsule" translatable="false">Mascot Capsule 3D!</string>
     <string name="msg_no_matches">No matches for \"%1$s\"</string>
-    <string name="library_destination_apps">Apps</string>
+    <string name="library_destination_apps">All Apps</string>
     <string name="library_destination_collections">Collections</string>
     <string name="library_destination_more">More</string>
     <string name="library_search_placeholder">Search apps…</string>
     <string name="library_filter_all">All</string>
-    <string name="library_filter_recently_opened">Recently played</string>
+    <string name="library_filter_recently_opened">Recently opened</string>
     <string name="library_filter_recently_added">Recently added</string>
     <string name="library_filter_favorites">Favorites</string>
     <string name="library_add_to_favorites_action">Add to favorites</string>
@@ -163,7 +163,13 @@
     <string name="library_icon_shape_title">Icon shape</string>
     <string name="library_icon_shape_round">Rounded corners</string>
     <string name="library_icon_shape_square">Sharp corners</string>
+    <string name="library_grid_icon_size_title" tools:ignore="MissingTranslation">Grid icon size</string>
+    <string name="library_grid_icon_size_small" tools:ignore="MissingTranslation">Small</string>
+    <string name="library_grid_icon_size_standard" tools:ignore="MissingTranslation">Standard</string>
+    <string name="library_grid_icon_size_large" tools:ignore="MissingTranslation">Large</string>
+    <string name="library_grid_icon_size_summary" tools:ignore="MissingTranslation">Changes icon size and column count in Grid view.</string>
     <string name="library_grid_spacing_title">Grid spacing</string>
+    <string name="library_grid_spacing_summary" tools:ignore="MissingTranslation">Only applies to Grid view.</string>
     <string name="library_grid_spacing_none">None (0 dp)</string>
     <string name="library_grid_spacing_compact">Compact (4 dp)</string>
     <string name="library_grid_spacing_standard">Standard (8 dp)</string>
@@ -489,6 +495,21 @@
     <string name="library_collection_add_app">Add to collection</string>
     <string name="library_collection_add_apps">Add apps</string>
     <string name="library_collection_manage_apps">Choose apps</string>
+    <string name="library_collection_manage" tools:ignore="MissingTranslation">Manage collections</string>
+    <string name="library_collection_delete_confirmation" tools:ignore="MissingTranslation">Delete “%1$s”? The apps in this collection will remain installed.</string>
+    <string name="library_collection_rename_action" tools:ignore="MissingTranslation">Rename collection %1$s</string>
+    <string name="library_collection_delete_action" tools:ignore="MissingTranslation">Delete collection %1$s</string>
+    <string name="library_collection_select_action" tools:ignore="MissingTranslation">Select collection %1$s</string>
+    <string name="library_collection_open_action" tools:ignore="MissingTranslation">Open collection %1$s</string>
+    <string name="library_collection_rename_selected" tools:ignore="MissingTranslation">Rename selected collection</string>
+    <string name="library_collection_delete_selected" tools:ignore="MissingTranslation">Delete selected collections</string>
+    <plurals name="library_collection_delete_many_confirmation" tools:ignore="MissingTranslation">
+        <item quantity="one">Delete %d collection? Apps will remain installed.</item>
+        <item quantity="other">Delete %d collections? Apps will remain installed.</item>
+    </plurals>
+    <string name="library_notifications_title" tools:ignore="MissingTranslation">Notifications</string>
+    <string name="library_notifications_empty_title" tools:ignore="MissingTranslation">No notifications yet</string>
+    <string name="library_notifications_empty_summary" tools:ignore="MissingTranslation">Updates and MIDlet notifications will appear here when available.</string>
     <string name="library_collection_manage_apps_summary">Select apps to include in this collection.</string>
     <string name="library_collection_name">Collection name</string>
     <string name="library_collection_members_empty">No apps in this collection.</string>
@@ -508,7 +529,7 @@
     <string name="library_import_invalid_bundle">The selected app bundle is invalid, damaged, or unsupported. Choose a valid JL-Mod Plus app bundle and try again.</string>
     <string name="library_import_restore_existing">This app is already installed. Any settings or save data included in the bundle will replace the corresponding existing data.</string>
     <string name="library_import_restore_failed">The app is installed, but its bundle data could not be restored. Retry the restore?</string>
-    <string name="library_play_stats_summary">Plays: %1$d · Total time: %2$s</string>
+    <string name="library_play_stats_summary">Opens: %1$d · Total time: %2$s</string>
     <string name="library_share_chooser_title">Share app</string>
     <string name="library_export_chooser_title">Export app bundle</string>
     <string name="library_export_progress">Exporting… %1$d/%2$d</string>
@@ -752,6 +773,23 @@
         <item quantity="other">%1$d selected Library apps are no longer available.</item>
     </plurals>
 
+    <string name="config_search_suggestions" tools:ignore="MissingTranslation">Suggested settings</string>
+    <string name="config_search_clear" tools:ignore="MissingTranslation">Clear search</string>
+    <string name="config_search_title" tools:ignore="MissingTranslation">Search settings</string>
+    <string name="config_search_hint" tools:ignore="MissingTranslation">Find a setting, e.g. MMPX or orientation</string>
+    <string name="config_search_no_results" tools:ignore="MissingTranslation">No matching settings</string>
+    <string name="config_font_page_title" tools:ignore="MissingTranslation">Font settings</string>
+    <string name="config_performance_page_title" tools:ignore="MissingTranslation">Performance settings</string>
+    <string name="config_display_more" tools:ignore="MissingTranslation">Text and performance</string>
+    <string name="config_display_performance_summary" tools:ignore="MissingTranslation">Frame rate and performance overlay</string>
+    <string name="config_destination_home" tools:ignore="MissingTranslation">Home</string>
+    <string name="config_overview_profile_draft" tools:ignore="MissingTranslation">Profile draft</string>
+    <string name="config_overview_profile_draft_summary" tools:ignore="MissingTranslation">Edit this reusable profile, then save your changes from the toolbar.</string>
+    <string name="config_overview_quick_access" tools:ignore="MissingTranslation">Quick access</string>
+    <string name="config_overview_enabled" tools:ignore="MissingTranslation">Virtual controls on</string>
+    <string name="config_overview_disabled" tools:ignore="MissingTranslation">Virtual controls off</string>
+    <string name="config_overview_media_summary" tools:ignore="MissingTranslation">Soundbank and camera</string>
+    <string name="config_overview_hint" tools:ignore="MissingTranslation">Choose a category to customize your game. Every setting has one home; these shortcuts take you there.</string>
     <string name="config_destination_general">General</string>
     <string name="config_basic_display">MIDlet screen</string>
     <string name="config_basic_input">Input</string>
@@ -926,7 +964,7 @@
     <string name="library_metadata_reset_to_original">Reset to original</string>
     <string name="library_metadata_save">Save</string>
 
-    <string name="library_hide_grid_titles_summary">Show only MIDlet icons in grid view.</string>
+    <string name="library_hide_grid_titles_summary">Hide MIDlet names in Grid view. List view keeps them visible.</string>
     <string name="library_show_list_description_summary">Show each MIDlet description below its title and version.</string>
 
     <string name="library_indexing_progress">Indexing the Library… %1$d/%2$d</string>
@@ -990,6 +1028,8 @@
     <string name="perf_overlay_display">Display refresh rate (DISP)</string>
 
     <string name="settings_section_appearance">App appearance</string>
+    <string name="settings_section_appearance_language" tools:ignore="MissingTranslation">Appearance and language</string>
+    <string name="settings_section_storage_profiles" tools:ignore="MissingTranslation">Storage and profiles</string>
     <string name="settings_section_language">Language</string>
     <string name="settings_section_library_appearance">Library appearance</string>
     <string name="settings_section_midlet_runtime">MIDlet runtime</string>
@@ -1150,6 +1190,9 @@
     <string name="bulk_install_choose_folder">Folder</string>
     <string name="bulk_install_unreadable_archives">Unreadable archives: %1$d</string>
     <string name="bulk_install_skipped_entries">Skipped archive entries: %1$d</string>
+    <string name="bulk_install_selection_options" tools:ignore="MissingTranslation">Selection options</string>
+    <string name="bulk_install_show_details" tools:ignore="MissingTranslation">Show details</string>
+    <string name="bulk_install_hide_details" tools:ignore="MissingTranslation">Hide details</string>
     <string name="bulk_install_filter_all">All</string>
     <string name="bulk_install_filter_selected">Selected</string>
     <string name="bulk_install_filter_review">Review</string>
@@ -1336,6 +1379,12 @@
     <string name="library_bundle_save_data" tools:ignore="MissingTranslation">Save data</string>
     <string name="library_bundle_saved_variables" tools:ignore="MissingTranslation">Bookmarks</string>
     <string name="library_bundle_export" tools:ignore="MissingTranslation">Export</string>
+    <string name="library_export_jar_only" tools:ignore="MissingTranslation">JAR only</string>
+    <string name="library_export_jars_only" tools:ignore="MissingTranslation">JARs only (ZIP)</string>
+    <string name="library_selection_action_delete" tools:ignore="MissingTranslation">Delete</string>
+    <string name="library_selection_action_collection" tools:ignore="MissingTranslation">Collection</string>
+    <string name="library_selection_action_export" tools:ignore="MissingTranslation">Export</string>
+    <string name="library_selection_action_reinstall" tools:ignore="MissingTranslation">Reinstall</string>
     <string name="date_field_not_set" tools:ignore="MissingTranslation">Not set</string>
     <string name="installer_select_companion_jar" tools:ignore="MissingTranslation">This JAD refers to a separate JAR file. Select the matching JAR to continue. The external file provider does not grant access to neighboring documents.</string>
     <string name="installer_select_jar" tools:ignore="MissingTranslation">Select JAR</string>
@@ -1436,4 +1485,43 @@
     <string name="memory_scripts_saved_count" tools:ignore="MissingTranslation">%1$d saved</string>
     <string name="memory_scripts_empty_hint" tools:ignore="MissingTranslation">Create a script to edit or freeze values while playing.</string>
     <string name="memory_builder_limits" tools:ignore="MissingTranslation">Limits (optional)</string>
+    <string name="library_app_more_actions" tools:ignore="MissingTranslation">More actions for %1$s</string>
+    <string name="library_actions_group_customize" tools:ignore="MissingTranslation">Customize</string>
+    <string name="library_actions_group_organize" tools:ignore="MissingTranslation">Organize</string>
+    <string name="library_actions_group_transfer" tools:ignore="MissingTranslation">Transfer and maintain</string>
+    <string name="library_collection_more_actions" tools:ignore="MissingTranslation">More actions for collection %1$s</string>
+    <string name="library_settings_preferences" tools:ignore="MissingTranslation">App preferences</string>
+    <string name="library_settings_section_maintenance" tools:ignore="MissingTranslation">Updates and diagnostics</string>
+    <string name="library_settings_section_support" tools:ignore="MissingTranslation">About and support</string>
+    <string name="library_details_title" tools:ignore="MissingTranslation">MIDlet details</string>
+    <string name="library_details_description" tools:ignore="MissingTranslation">Description</string>
+    <string name="library_details_play_stats" tools:ignore="MissingTranslation">Play statistics</string>
+    <string name="library_details_launches" tools:ignore="MissingTranslation">Launches</string>
+    <string name="library_details_total_time" tools:ignore="MissingTranslation">Total time</string>
+    <string name="library_details_last_played" tools:ignore="MissingTranslation">Last played</string>
+    <string name="library_details_library_info" tools:ignore="MissingTranslation">Library information</string>
+    <string name="library_details_added" tools:ignore="MissingTranslation">Added to Library</string>
+    <string name="library_details_collections" tools:ignore="MissingTranslation">Collections</string>
+    <string name="library_details_none" tools:ignore="MissingTranslation">None</string>
+    <string name="library_details_technical" tools:ignore="MissingTranslation">Technical information</string>
+    <string name="library_details_profile" tools:ignore="MissingTranslation">Profile</string>
+    <string name="library_details_configuration" tools:ignore="MissingTranslation">Configuration</string>
+    <string name="library_details_jar_size" tools:ignore="MissingTranslation">Retained JAR size</string>
+    <string name="library_details_entry_points" tools:ignore="MissingTranslation">MIDlet entries</string>
+    <string name="library_details_original_metadata" tools:ignore="MissingTranslation">Original metadata</string>
+    <string name="library_details_name" tools:ignore="MissingTranslation">Name</string>
+    <string name="library_details_vendor" tools:ignore="MissingTranslation">Vendor</string>
+    <string name="library_details_version" tools:ignore="MissingTranslation">Version</string>
+    <string name="library_details_version_value" tools:ignore="MissingTranslation">Version %1$s</string>
+    <string name="library_details_original_description" tools:ignore="MissingTranslation">Original description</string>
+    <string name="library_details_permissions" tools:ignore="MissingTranslation">Declared permissions</string>
+    <string name="library_details_required" tools:ignore="MissingTranslation">Required</string>
+    <string name="library_details_optional" tools:ignore="MissingTranslation">Optional</string>
+    <string name="library_details_no_permissions" tools:ignore="MissingTranslation">No permissions declared</string>
+    <string name="library_details_descriptor_attributes" tools:ignore="MissingTranslation">Descriptor attributes</string>
+    <string name="library_details_unavailable" tools:ignore="MissingTranslation">Unavailable</string>
+    <string name="library_details_action" tools:ignore="MissingTranslation">Details</string>
+    <string name="library_details_view_details" tools:ignore="MissingTranslation">View details</string>
+    <string name="library_actions_more" tools:ignore="MissingTranslation">More actions</string>
+    <string name="library_actions_less" tools:ignore="MissingTranslation">Fewer actions</string>
 </resources>

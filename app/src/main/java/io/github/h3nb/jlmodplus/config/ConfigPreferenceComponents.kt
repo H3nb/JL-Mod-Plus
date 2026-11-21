@@ -7,6 +7,8 @@ package io.github.h3nb.jlmodplus.config
 import androidx.compose.foundation.background
 import androidx.compose.foundation.BorderStroke
 import androidx.compose.foundation.border
+import androidx.compose.foundation.relocation.BringIntoViewRequester
+import androidx.compose.foundation.relocation.bringIntoViewRequester
 import androidx.compose.foundation.clickable
 import androidx.compose.foundation.selection.toggleable
 import androidx.compose.foundation.layout.Arrangement
@@ -27,6 +29,8 @@ import androidx.compose.material3.Surface
 import androidx.compose.material3.Switch
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
+import androidx.compose.runtime.LaunchedEffect
+import androidx.compose.runtime.compositionLocalOf
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
@@ -51,6 +55,9 @@ internal enum class ConfigMessageLevel { Info, Warning, Danger }
 
 private const val DISABLED_TEXT_ALPHA = 0.38f
 
+internal data class ConfigSectionReveal(val title: String, val onReached: () -> Unit)
+internal val LocalConfigSectionReveal = compositionLocalOf<ConfigSectionReveal?> { null }
+
 @Composable
 internal fun ConfigSection(
     title: String,
@@ -58,37 +65,70 @@ internal fun ConfigSection(
     accentTitle: Boolean = true,
     content: @Composable ColumnScope.() -> Unit,
 ) {
-    Column(verticalArrangement = Arrangement.spacedBy(8.dp)) {
+    val reveal = LocalConfigSectionReveal.current
+    val requester = remember { BringIntoViewRequester() }
+    LaunchedEffect(reveal, title) {
+        if (reveal?.title == title) {
+            requester.bringIntoView()
+            reveal.onReached()
+        }
+    }
+    Column(
+        modifier = Modifier.bringIntoViewRequester(requester),
+        verticalArrangement = Arrangement.spacedBy(8.dp),
+    ) {
         Text(
             text = title,
-            style = MaterialTheme.typography.titleMedium,
-            color = if (accentTitle) {
-                MaterialTheme.colorScheme.primary
-            } else {
-                MaterialTheme.colorScheme.onSurfaceVariant
-            },
-            modifier = Modifier
-                .semantics { heading() }
-                .padding(start = 12.dp, top = 6.dp, end = 12.dp, bottom = 1.dp),
+            style = MaterialTheme.typography.titleSmall,
+            color = if (accentTitle) MaterialTheme.colorScheme.onSurfaceVariant
+                else MaterialTheme.colorScheme.onSurface,
+            modifier = Modifier.semantics { heading() }
+                .padding(start = 12.dp, top = 8.dp, end = 12.dp, bottom = 0.dp),
         )
         Surface(
             modifier = Modifier.fillMaxWidth(),
-            shape = MaterialTheme.shapes.large,
-            color = if (highlighted) {
-                MaterialTheme.colorScheme.primaryContainer
-            } else {
-                MaterialTheme.colorScheme.surfaceContainerLow
-            },
-            border = if (highlighted) {
-                BorderStroke(1.dp, MaterialTheme.colorScheme.primary.copy(alpha = 0.42f))
-            } else {
-                null
-            },
-            tonalElevation = if (highlighted) 2.dp else 0.dp,
-            shadowElevation = if (highlighted) 2.dp else 0.dp,
+            shape = MaterialTheme.shapes.extraLarge,
+            color = if (highlighted) MaterialTheme.colorScheme.primaryContainer
+                else MaterialTheme.colorScheme.surfaceContainerLowest,
+            border = BorderStroke(
+                1.dp,
+                if (highlighted) MaterialTheme.colorScheme.primary.copy(alpha = 0.42f)
+                else MaterialTheme.colorScheme.outlineVariant.copy(alpha = 0.55f),
+            ),
         ) {
             Column(content = content)
         }
+    }
+}
+
+@Composable
+internal fun ConfigNavigationPreference(
+    title: String,
+    value: String?,
+    onClick: () -> Unit,
+) {
+    Row(
+        modifier = Modifier.fillMaxWidth()
+            .heightIn(min = 64.dp)
+            .clickable(role = Role.Button, onClick = onClick)
+            .padding(horizontal = 16.dp, vertical = 12.dp),
+        verticalAlignment = Alignment.CenterVertically,
+        horizontalArrangement = Arrangement.spacedBy(12.dp),
+    ) {
+        Column(modifier = Modifier.weight(1f), verticalArrangement = Arrangement.spacedBy(2.dp)) {
+            Text(title, style = MaterialTheme.typography.bodyLarge)
+            if (!value.isNullOrBlank()) {
+                Text(value, style = MaterialTheme.typography.bodySmall,
+                    color = MaterialTheme.colorScheme.onSurfaceVariant,
+                    maxLines = 2, overflow = TextOverflow.Ellipsis)
+            }
+        }
+        Icon(
+            painter = painterResource(R.drawable.ic_chevron_right),
+            contentDescription = null,
+            tint = MaterialTheme.colorScheme.onSurfaceVariant,
+            modifier = Modifier.size(20.dp),
+        )
     }
 }
 
@@ -151,7 +191,7 @@ internal fun ConfigValuePreference(
     enabled: Boolean = true,
     message: String? = null,
     messageLevel: ConfigMessageLevel = ConfigMessageLevel.Info,
-    compact: Boolean = false,
+    compact: Boolean = true,
 ) {
     if (compact && message == null) {
         ConfigCompactValuePreference(
@@ -160,7 +200,7 @@ internal fun ConfigValuePreference(
             modifier = modifier,
             value = value,
             enabled = enabled,
-            description = description,
+            description = null,
         )
         return
     }
@@ -268,7 +308,7 @@ internal fun ConfigChoicePreference(
     onImport: (() -> Unit)? = null,
     onRename: ((String, String) -> Unit)? = null,
     onDelete: ((String) -> Unit)? = null,
-    compact: Boolean = false,
+    compact: Boolean = true,
 ) {
     var dialogVisible by remember(selected, options) { mutableStateOf(false) }
     var renameFile by remember { mutableStateOf<String?>(null) }
@@ -374,7 +414,7 @@ internal fun ConfigNumberPreference(
     valueSuffix: String? = null,
     resetValue: String? = null,
     validIntegerRange: IntRange? = null,
-    compact: Boolean = false,
+    compact: Boolean = true,
 ) {
     var dialogVisible by remember(value) { mutableStateOf(false) }
     val display = buildString {
@@ -420,7 +460,7 @@ internal fun ConfigSliderPreference(
     valueRange: IntRange,
     onSelected: (Int) -> Unit,
     modifier: Modifier = Modifier,
-    compact: Boolean = false,
+    compact: Boolean = true,
     valueSuffix: String = "",
 ) {
     var dialogVisible by remember(value) { mutableStateOf(false) }

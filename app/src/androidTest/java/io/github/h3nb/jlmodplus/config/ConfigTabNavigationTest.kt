@@ -68,7 +68,7 @@ class ConfigTabNavigationTest {
         }
 
         val system = label(R.string.config_destination_system)
-        val basic = label(R.string.config_destination_general)
+        val basic = label(R.string.config_destination_home)
         val displayHeading = label(R.string.config_display_appearance)
         val controlsHeading = label(R.string.config_controls_key_input)
 
@@ -103,7 +103,7 @@ class ConfigTabNavigationTest {
             composeRule.mainClock.autoAdvance = true
         }
         composeRule.waitForIdle()
-        composeRule.onNodeWithText(label(R.string.config_screen_size)).assertIsDisplayed()
+        composeRule.onNodeWithText(label(R.string.config_overview_quick_access)).assertIsDisplayed()
     }
 
     private fun label(id: Int): String =

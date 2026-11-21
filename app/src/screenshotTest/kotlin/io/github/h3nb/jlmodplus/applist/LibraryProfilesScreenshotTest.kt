@@ -320,36 +320,30 @@ fun LibraryFilteredEmptyScreenshot() {
 fun LibraryCollectionBrowserScreenshot() {
     JLModPlusTheme(darkTheme = false) {
         val members = remember { PreviewApps.take(3) }
-        val viewport = rememberLibraryViewportState(collectionId = 1L)
-        remember(viewport, members) {
-            // Layoutlib captures the completed state without running background projection work.
-            viewport.collectionProjection = LibraryCollectionProjection(members, "", 1, members)
-        }
-        LibraryCollectionBrowser(
-            collection = LibraryCollectionUiItem(1L, "RPG Favorites", 3),
-            members = members,
-            allApps = PreviewApps,
-            libraryState = LibraryUiState(
+        LibraryAppsDestination(
+            state = LibraryUiState(
                 loading = false,
-                apps = PreviewApps,
+                apps = members,
                 layout = LibraryLayout.List,
                 sortVariant = 1,
                 databaseControlsReady = true,
             ),
             scaffoldPadding = PaddingValues(),
-            viewportState = viewport,
-            onBack = {},
+            viewportState = rememberLibraryViewportState(collectionId = 1L),
+            selectedCollection = LibraryCollectionUiItem(1L, "RPG Favorites", members.size),
+            collections = listOf(LibraryCollectionUiItem(1L, "RPG Favorites", members.size)),
+            showQuickViews = false,
             onOpenApp = {},
             onOpenActions = {},
-            manageApps = false,
-            onManageAppsChanged = {},
-            onSetMembership = { _, _, _ -> },
-            onPrepareAppPicker = {},
+            onQuickView = {},
+            onFavorite = { _, _ -> },
             onSort = {},
+            onRetry = {},
+            onFabVisibilityChanged = {},
+            onNavigationVisibilityChanged = {},
         )
     }
 }
-
 
 @PreviewTest
 @Preview(name = "Library collection add apps", widthDp = 360, heightDp = 640, showBackground = true)
@@ -402,14 +396,12 @@ fun LibraryAppActionsScreenshot() {
             app = PreviewApps.first(),
             onDismiss = {},
             onShortcut = {},
-            onRename = {},
             onSettings = {},
             onReinstall = {},
             onDelete = {},
-            onEditMetadata = {},
+            onDetails = {},
             onSelect = {},
             onAddToCollection = {},
-            onShareApp = {},
             onExportAppBundle = {},
         )
     }
@@ -430,52 +422,59 @@ fun LibraryAppActionsCompactLandscapeLargeTextScreenshot() {
             app = PreviewApps.first(),
             onDismiss = {},
             onShortcut = {},
-            onRename = {},
             onSettings = {},
             onReinstall = {},
             onDelete = {},
-            onEditMetadata = {},
+            onDetails = {},
             onSelect = {},
             onAddToCollection = {},
-            onShareApp = {},
             onExportAppBundle = {},
         )
     }
 }
 
 @PreviewTest
-@Preview(name = "Library options", widthDp = 360, heightDp = 640, showBackground = true)
+@Preview(name = "MIDlet details", widthDp = 360, heightDp = 640, showBackground = true)
 @Composable
-fun LibraryOptionsScreenshot() {
+fun LibraryMidletDetailsScreenshot() {
     JLModPlusTheme(darkTheme = false) {
-        LibraryMoreDestination(
-            scaffoldPadding = PaddingValues(),
-            onImportAppBundle = {},
-            onAbout = {},
-            onDonate = {},
-            onSettings = {},
-            onCrashReports = {},
+        LibraryMidletDetailsScreen(
+            app = PreviewApps.first(),
+            libraryScope = "preview",
+            iconRatio = LibraryIconRatio.Square,
+            iconShape = LibraryIconShape.Round,
+            enhancedIcons = true,
+            onBack = {},
+            onEditMetadata = {},
+            onLoad = { callback ->
+                callback.complete(
+                    io.github.h3nb.jlmodplus.librarydb.LibraryMidletDetailsData(
+                        descriptorAttributes = mapOf(
+                            "MicroEdition-Profile" to "MIDP-2.0",
+                            "MicroEdition-Configuration" to "CLDC-1.1",
+                            "MIDlet-1" to "Sample,/icon.png,com.example.Sample",
+                        ),
+                        retainedJarSizeBytes = 184_320L,
+                        collectionNames = listOf("RPG"),
+                    ),
+                    null,
+                )
+            },
         )
     }
 }
 
 @PreviewTest
-@Preview(name = "Library collections list detail", widthDp = 900, heightDp = 700, showBackground = true)
+@Preview(name = "Library collection management", widthDp = 900, heightDp = 700, showBackground = true)
 @Composable
 fun LibraryCollectionsScreenshot() {
     val host = remember { PreviewCollectionsHost() }
-    val members = checkNotNull(host.collectionsStore().state.value.members).members
-    val collectionViewport = rememberLibraryViewportState(collectionId = 1L)
-    remember(collectionViewport, members) {
-        // Preview rendering receives the completed collection projection directly.
-        collectionViewport.collectionProjection = LibraryCollectionProjection(members, "", 1, members)
-    }
     val navigationEventDispatcherOwner = rememberNavigationEventDispatcherOwner(parent = null)
     CompositionLocalProvider(
         LocalNavigationEventDispatcherOwner provides navigationEventDispatcherOwner,
     ) {
         JLModPlusTheme(darkTheme = false) {
-            LibraryCollectionsDestination(
+            LibraryCollectionsManagementDestination(
                 host = host,
                 libraryState = LibraryUiState(
                     loading = false,
@@ -485,12 +484,10 @@ fun LibraryCollectionsScreenshot() {
                     databaseControlsReady = true,
                 ),
                 scaffoldPadding = PaddingValues(),
-                navigationState = LibraryNavigationState(
-                    destination = LibraryDestinationKey.Collections,
-                    selectedCollectionId = 1L,
-                ),
-                collectionViewport = collectionViewport,
-                onOpenActions = { _, _ -> },
+                viewportState = rememberLibraryViewportState(),
+                selectedCollectionId = 1L,
+                onBack = {},
+                onOpenCollection = {},
             )
         }
     }
@@ -512,30 +509,6 @@ private fun IndonesianScreenshotContent(content: @Composable () -> Unit) {
         LocalConfiguration provides localizedContext.resources.configuration,
         content = content,
     )
-}
-
-@PreviewTest
-@Preview(
-    name = "Library options Indonesian",
-    widthDp = 360,
-    heightDp = 640,
-    locale = "id",
-    showBackground = true,
-)
-@Composable
-fun LibraryOptionsIndonesianScreenshot() {
-    IndonesianScreenshotContent {
-        JLModPlusTheme(darkTheme = false) {
-            LibraryMoreDestination(
-                scaffoldPadding = PaddingValues(),
-                onImportAppBundle = {},
-                onAbout = {},
-                onDonate = {},
-                onSettings = {},
-                onCrashReports = {},
-            )
-        }
-    }
 }
 
 @PreviewTest

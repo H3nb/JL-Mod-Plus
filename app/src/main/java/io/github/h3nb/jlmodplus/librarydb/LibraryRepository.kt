@@ -264,6 +264,15 @@ class LibraryRepository(
         dao.createCollection(name, createdAt)
     }
 
+    suspend fun createCollectionWithApp(
+        expected: LibraryGenerationToken,
+        name: String,
+        appId: Long,
+        createdAt: Long,
+    ): Long = withActiveDatabase(expected) { dao ->
+        dao.createCollectionWithApp(name, createdAt, appId)
+    }
+
     suspend fun renameCollection(
         expected: LibraryGenerationToken,
         collectionId: Long,
@@ -289,6 +298,14 @@ class LibraryRepository(
                 "Collection disappeared: $collectionId"
             }
         }
+    }
+
+    suspend fun reorderCollections(expected: LibraryGenerationToken, orderedIds: List<Long>) {
+        withActiveDatabase(expected) { dao -> dao.reorderCollections(orderedIds) }
+    }
+
+    suspend fun deleteCollections(expected: LibraryGenerationToken, ids: List<Long>) {
+        withActiveDatabase(expected) { dao -> dao.deleteCollections(ids) }
     }
 
     suspend fun setCollectionMembership(
@@ -321,6 +338,14 @@ class LibraryRepository(
     ): Set<Long> = withActiveDatabase(expected) { dao ->
         check(dao.getCollection(collectionId) != null) { "Collection disappeared: $collectionId" }
         dao.getCollectionAppIds(collectionId).toSet()
+    }
+
+    suspend fun appCollectionIds(
+        expected: LibraryGenerationToken,
+        appId: Long,
+    ): Set<Long> = withActiveDatabase(expected) { dao ->
+        check(dao.getApp(appId) != null) { "Library app disappeared: $appId" }
+        dao.getAppCollectionIds(appId).toSet()
     }
 
     suspend fun recordInstalledApp(

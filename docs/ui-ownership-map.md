@@ -6,11 +6,12 @@ This document describes UI ownership in JL-Mod Plus. The normative boundary is t
 
 | Surface | Current owner | Classification | Compatibility reason / next step |
 | --- | --- | --- | --- |
-| Library list/grid, search, actions, menus, host help/about/licenses | `LibraryComposeBridge.kt`, hosted by `MainActivity`/`AppsListFragment` | Compose-owned presentation; Java/Fragment host | `LibraryViewModel` exposes Room-backed state through StateFlow; file picker, installer intents, and process/runtime calls remain host-owned. |
+| Library list/grid, search, actions, collections and Settings launch | `LibraryComposeBridge.kt`, hosted by `MainActivity`/`AppsListFragment` | Compose-owned presentation; Java/Fragment host | `LibraryViewModel` exposes Room-backed state through StateFlow; file picker, installer intents, and process/runtime calls remain host-owned. Settings opens its own Activity directly. |
 | Profiles list, create/rename/delete/default actions | `ProfilesComposeBridge.kt`, hosted by `ProfilesActivity` | Compose-owned presentation; transitional Activity host | The current Java host owns profile files, persistence, and activity-result editing; preserve their behavior if ownership changes. |
 | Installer progress, confirmation, overwrite, failure, cancellation, guest launch | `InstallerComposeBridge.kt`, hosted by `InstallerDialog` | Compose-owned presentation; transitional `DialogFragment` host | The current host owns AppInstaller sequencing, temporary-file cleanup, repository sync, and guest launch; preserve those semantics across presentation refactors. |
-| Settings | `SettingsComposeBridge.kt`, hosted by `SettingsActivity` | Compose-owned presentation; transitional Activity host | The current Java host owns SharedPreferences access, locale application, raw-path picker, and relaunch behavior; preserve their semantics if ownership changes. |
-| Configuration form, color picker, screen presets, charset/profile/shader dialogs | `ConfigComposeBridge.kt`, `ConfigDialogComposeBridge.kt`, hosted by `ConfigActivity` | Compose-owned presentation; transitional Activity/DialogFragment host | The current Java host owns stored formats, validation/defaults, profile copy/overwrite semantics, shader values, activity results, and guest launch. The DialogFragment shell currently serves as a lifecycle bridge. |
+| Batch installer review, progress and results | `BulkInstallerDialog.kt`, hosted by `BulkInstallerDialog` and `BulkInstallViewModel` | Compose-owned fullscreen batch surface; single-item confirmation remains modal | Planner and ViewModel own classification, selection, identity checks, cancellation, cleanup and retry; presentation owns filters, expandable row details, and overflow menu only. |
+| Settings, Updates, About and support | `SettingsComposeBridge.kt`, hosted by `SettingsActivity`; shared About/info composables remain in `applist` | Compose-owned presentation; transitional Activity host | The Java host owns SharedPreferences, locale application, raw-path picker, external links and diagnostic launch. Updates and About are Settings child pages; support consent is explicit. Preserve the existing host contracts when ownership changes. |
+| MIDlet configuration overview, category navigation, settings search and child pages | `ConfigComposeBridge.kt`, `ConfigPreferenceComponents.kt`, hosted by `ConfigActivity` | Compose-owned presentation; transitional Activity host | Home is navigation and profile status, not a second settings owner. Display/Controls/Media/System remain the sole UI locations for settings. Search only navigates/reveals; `ConfigActivity` continues owning configuration storage, validation, profile draft/linkage, asset actions, and guest launch. |
 | Key mapper keypad, mapper menu, reset action, and missing-menu warning | `KeyMapperComposeBridge.kt`, hosted by `KeyMapperActivity` | Compose-owned presentation; transitional Activity host | The current Java host owns activity-level key/touch dispatch, key codes/order, mapping serialization, and cancellation; preserve those semantics if ownership changes. |
 | Diagnostic report list/details | `CrashReportsComposeBridge.kt`, hosted by crash Activities | Compose-owned presentation; transitional Activity host | The current Java host owns diagnostic storage, process-isolation, bundle generation/deletion, and the GitHub handoff; preserve those contracts if ownership changes. |
 | Runtime host toolbar, options menu, and host dialogs | `RuntimeMenuCompose.kt`, `RuntimeHostDialogs.kt`, hosted by `MicroActivity` | Compose-owned Material 3 presentation inside the View runtime shell | Toolbar overflow, Android Back, and legacy menu-key paths share one modal popup. Popup Back only dismisses it; explicit host Exit, a MIDlet Exit command, and system task removal remain the separate termination paths. Midlet selection, recovery, exit/settings, virtual-keyboard layout, and hide/save dialogs use stable callbacks; no MIDP `Command` or input dispatch moves into Compose. |
@@ -76,17 +77,18 @@ CI debug job compiles/assembles the host and Android-test artifacts and runs
 lint/unit tests; it does not execute connected instrumentation tests. See
 [Build and validation](development.md). When a change affects these platform or runtime behaviors, use a connected emulator or device for the relevant smoke cases across exported JAR/JAD/KJX intents, raw-path/file-picker results, permission recovery, install/overwrite/cancel/error cleanup, guest launch, hardware key/touch dispatch, rotation, and IME behavior. Use the coverage scope in [runtime validation](runtime-ui.md#validation-gates); report unavailable checks as described in [Validation through CI](development.md#validation-through-ci).
 
-Collections overview-to-members uses Material 3 Adaptive list-detail layout without a
-separate navigation back stack. `LibraryNavigationState.selectedCollectionId` owns the
-selected Collection route, and `collectionManageApps` owns that route's full-screen
-membership-editor submode. Pane and parent-navigation visibility are derived from those
-states and the current window directive instead of being reconstructed by delayed child
-effects. Saved Room-backed scroll anchors carry the active Library workdir identity; Collection
-detail anchors additionally carry the Collection id. The Collection member payload remains a
-Room-backed projection in the UI store.
+Collections are a workdir-scoped Library view, not another application browser.
+`LibraryNavigationState.selectedCollectionId` selects the active Library scope; the same
+list/grid, title row, Search, sorting, selection and app actions serve All apps and named
+Collections. `collectionManageApps` owns the full-screen membership editor for the active
+collection. Manage collections remains a Library child page for collection CRUD.
+The Collection member payload is a Room-backed projection in the UI store. Save and
+restore list/grid viewport state with the active workdir and Collection identity; never
+interpret removing membership as uninstalling an app. The membership editor and App
+Actions both write the same catalog records, without duplicating data ownership.
 File Picker navigation likewise remains controller-owned because a second back stack
 would only mirror its current directory; the Activity still owns results and root exit policy.
-Adaptive UI is active where it has a concrete presentation benefit: Library and Config
-choose bottom navigation or a rail from the available container width, and Library,
-Collections, and File Picker use adaptive layouts or grids. Multiple back stacks remain
-unnecessary until a verified independent-history requirement exists.
+Adaptive UI is active where simultaneous or responsive content helps: the Library uses
+an adaptive single-root list/grid, Config retains its own tab navigation, and File Picker
+adapts its file layout. Multiple back stacks remain unnecessary until a verified
+independent-history requirement exists.

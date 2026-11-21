@@ -54,8 +54,8 @@ import io.github.h3nb.jlmodplus.ui.ScrollableContentHint
 import io.github.h3nb.jlmodplus.ui.rememberScrollCanScrollForward
 
 /**
- * Full-screen, Library-owned About destination. The underlying More tab retains its viewport;
- * licenses remain in the existing adaptive dialog rather than introducing another navigator.
+ * Full-screen About page reused as a Settings child destination.
+ * Licenses remain in the existing adaptive dialog rather than introducing another navigator.
  */
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable

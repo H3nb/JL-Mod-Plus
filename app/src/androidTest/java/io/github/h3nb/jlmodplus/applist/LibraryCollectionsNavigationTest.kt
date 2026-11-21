@@ -14,8 +14,8 @@
 
 package io.github.h3nb.jlmodplus.applist
 
-import androidx.compose.foundation.layout.PaddingValues
 import androidx.compose.runtime.mutableStateOf
+import androidx.compose.ui.geometry.Offset
 import androidx.compose.ui.test.DeviceConfigurationOverride
 import androidx.compose.ui.test.ExperimentalTestApi
 import androidx.compose.ui.test.WindowSize
@@ -23,17 +23,17 @@ import androidx.compose.ui.test.assertCountEquals
 import androidx.compose.ui.test.assertIsDisplayed
 import androidx.compose.ui.test.assertIsFocused
 import androidx.compose.ui.test.assertTextEquals
-import androidx.compose.ui.test.assertIsNotFocused
 import androidx.compose.ui.test.assertIsEnabled
 import androidx.compose.ui.test.assertIsNotEnabled
 import androidx.compose.ui.test.assertIsOn
 import androidx.compose.ui.test.junit4.StateRestorationTester
 import androidx.compose.ui.test.junit4.v2.createComposeRule
 import androidx.compose.ui.test.hasAnyDescendant
+import androidx.compose.ui.test.hasAnyAncestor
+import androidx.compose.ui.test.isDialog
 import androidx.compose.ui.test.hasScrollAction
 import androidx.compose.ui.test.hasText
 import androidx.compose.ui.test.hasSetTextAction
-import androidx.compose.ui.test.isDialog
 import androidx.compose.ui.test.onLast
 import androidx.compose.ui.test.performScrollToIndex
 import androidx.compose.ui.test.performTextInput
@@ -46,9 +46,6 @@ import androidx.compose.ui.test.onNodeWithText
 import androidx.compose.ui.test.performClick
 import androidx.compose.ui.test.performTouchInput
 import androidx.compose.ui.test.longClick
-import androidx.compose.ui.test.onRoot
-import androidx.compose.ui.test.swipeLeft
-import androidx.compose.ui.test.swipeRight
 import androidx.compose.ui.semantics.SemanticsProperties
 import androidx.compose.ui.unit.DpSize
 import androidx.compose.ui.unit.dp
@@ -56,9 +53,8 @@ import androidx.test.espresso.Espresso.pressBack
 import androidx.test.ext.junit.runners.AndroidJUnit4
 import androidx.test.platform.app.InstrumentationRegistry
 import org.junit.Assert.assertEquals
-import org.junit.Assert.assertFalse
-import org.junit.Assert.assertNotNull
 import org.junit.Assert.assertNull
+import org.junit.Assert.assertTrue
 import org.junit.Rule
 import org.junit.Test
 import org.junit.runner.RunWith
@@ -83,7 +79,110 @@ class LibraryCollectionsNavigationTest {
     val composeRule = createComposeRule()
 
     @Test
-    fun selectedCollectionRestoresAndBackReturnsToOverview() {
+    fun selectingCollectionFromLibraryScopeOpensItsMembers() {
+        val host = RecordingCollectionsHost().apply {
+            store.showMembers(COLLECTION_ID, listOf(SAMPLE_MEMBER))
+        }
+        composeRule.setContent {
+            DeviceConfigurationOverride(
+                DeviceConfigurationOverride.WindowSize(DpSize(360.dp, 640.dp)),
+            ) {
+                JLModPlusTheme {
+                    LibraryScreen(state = sampleLibraryState(), actions = host)
+                }
+            }
+        }
+        composeRule.onNodeWithTag("library_scope_picker").performClick()
+        composeRule.onNodeWithText(COLLECTION_NAME).performClick()
+        waitForMember()
+        composeRule.onNodeWithText(MEMBER_TITLE).assertIsDisplayed()
+
+        pressBack()
+        composeRule.waitForIdle()
+        composeRule.onNodeWithTag("library_scope_picker").assertIsDisplayed()
+    }
+
+    @Test
+    fun compactLandscapeCollectionPickerUsesDialogWithPinnedManageAction() {
+        val host = RecordingCollectionsHost().apply {
+            store.publishCollections(
+                listOf(
+                    LibraryCollectionRow(
+                        id = COLLECTION_ID, name = "Gameloft",
+                        sortOrder = 0, createdAt = 1L, appCount = 8,
+                    ),
+                    LibraryCollectionRow(
+                        id = 2L, name = "RPG",
+                        sortOrder = 1, createdAt = 2L, appCount = 0,
+                    ),
+                ),
+            )
+        }
+        composeRule.setContent {
+            DeviceConfigurationOverride(
+                DeviceConfigurationOverride.WindowSize(DpSize(800.dp, 360.dp)),
+            ) {
+                JLModPlusTheme {
+                    LibraryScreen(state = sampleLibraryState(), actions = host)
+                }
+            }
+        }
+
+        composeRule.onNodeWithTag("library_scope_picker").performClick()
+        val dialog = composeRule.onNodeWithTag("adaptive-dialog-surface")
+        dialog.assertIsDisplayed()
+        val footer = composeRule.onNodeWithText(uiString(R.string.library_collection_manage))
+        footer.assertIsDisplayed()
+        composeRule.onNode(hasScrollAction() and hasAnyAncestor(isDialog()))
+            .performScrollToIndex(2)
+        val count = InstrumentationRegistry.getInstrumentation().targetContext.resources
+            .getQuantityString(R.plurals.library_collection_member_count, 0, 0)
+        val countNode = composeRule.onNodeWithText(count)
+        countNode.assertIsDisplayed()
+        assertTrue(
+            "Last collection must not be hidden behind Manage collections",
+            countNode.fetchSemanticsNode().boundsInRoot.bottom <=
+                footer.fetchSemanticsNode().boundsInRoot.top,
+        )
+        val dialogTop = dialog.fetchSemanticsNode().boundsInRoot.top
+        composeRule.mainClock.advanceTimeBy(500)
+        composeRule.waitForIdle()
+        assertEquals(dialogTop, dialog.fetchSemanticsNode().boundsInRoot.top, 0.5f)
+    }
+
+    @Test
+    fun searchInCollectionOnlyShowsItsMembersAndRestoresBrowsing() {
+        val host = RecordingCollectionsHost()
+        val outside = LibraryAppUiItem(25, "Outside Demo", "Other Vendor", "1.0", null, true)
+        composeRule.setContent {
+            DeviceConfigurationOverride(
+                DeviceConfigurationOverride.WindowSize(DpSize(360.dp, 640.dp)),
+            ) {
+                JLModPlusTheme {
+                    LibraryScreen(
+                        state = sampleLibraryState().copy(apps = listOf(outside)),
+                        actions = host,
+                    )
+                }
+            }
+        }
+
+        openCollectionsManagement()
+        openCollection()
+        composeRule.onNodeWithContentDescription(uiString(R.string.library_search_placeholder))
+            .performClick()
+        composeRule.onNode(hasSetTextAction()).performTextInput("Demo")
+        composeRule.waitUntil(5_000) {
+            composeRule.onAllNodesWithText(MEMBER_TITLE).fetchSemanticsNodes().isNotEmpty()
+        }
+        composeRule.onAllNodesWithText("Outside Demo").assertCountEquals(0)
+        composeRule.onAllNodesWithText(SAMPLE_MEMBER_2.title).assertCountEquals(0)
+        composeRule.onNodeWithContentDescription(uiString(R.string.action_back)).performClick()
+        composeRule.onNodeWithText(SAMPLE_MEMBER_2.title).assertIsDisplayed()
+    }
+
+    @Test
+    fun selectedCollectionRestoresAndBackReturnsToAllApps() {
         val host = RecordingCollectionsHost()
         val restorationTester = StateRestorationTester(composeRule)
         restorationTester.setContent {
@@ -99,7 +198,7 @@ class LibraryCollectionsNavigationTest {
             }
         }
 
-        composeRule.onNodeWithText("Collections").performClick()
+        openCollectionsManagement()
         openCollection()
         composeRule.onNodeWithText(MEMBER_TITLE).assertIsDisplayed()
 
@@ -122,214 +221,32 @@ class LibraryCollectionsNavigationTest {
         composeRule.waitForIdle()
 
         composeRule.onAllNodesWithText(MEMBER_TITLE).assertCountEquals(0)
-        composeRule.onNodeWithText(COLLECTION_NAME).assertIsDisplayed()
+        composeRule.onNodeWithTag("library_scope_picker").assertIsDisplayed()
         assertNull(host.store.displayedMembersCollectionId())
     }
 
     @Test
-    fun inactiveCollectionOverviewDismissesWindowsAndRejectsActions() {
+    fun deletingActiveCollectionReturnsToAllApps() {
         val host = RecordingCollectionsHost()
-        val active = mutableStateOf(true)
-        val navigationChanges = mutableListOf<LibraryNavigationState>()
         composeRule.setContent {
             DeviceConfigurationOverride(
                 DeviceConfigurationOverride.WindowSize(DpSize(360.dp, 640.dp)),
             ) {
                 JLModPlusTheme {
-                    LibraryCollectionsDestination(
-                        host = host,
-                        libraryState = sampleLibraryState(),
-                        scaffoldPadding = PaddingValues(),
-                        onNavigationStateChanged = { navigationChanges += it },
-                        onOpenActions = { _, _ -> },
-                        active = active.value,
-                    )
+                    LibraryScreen(state = sampleLibraryState(), actions = host)
                 }
             }
         }
-        composeRule.onNodeWithText(uiString(R.string.library_collection_new)).performClick()
-        composeRule.onNode(isDialog()).assertExists()
-        composeRule.runOnIdle { active.value = false }
-        composeRule.onAllNodes(isDialog()).assertCountEquals(0)
-
-        // Test the action boundary directly while the retained page still has its visual tree.
-        composeRule.onNodeWithText(uiString(R.string.library_collection_new)).performClick()
-        composeRule.onNodeWithText(COLLECTION_NAME).performClick()
-        composeRule.onAllNodes(isDialog()).assertCountEquals(0)
-        assertEquals(emptyList<LibraryNavigationState>(), navigationChanges)
-        assertEquals(emptyList<Long>(), host.openedCollectionIds)
-
-        composeRule.runOnIdle { active.value = true }
-        composeRule.onAllNodes(isDialog()).assertCountEquals(0)
-        composeRule.onNodeWithText(uiString(R.string.library_collection_new)).performClick()
-        composeRule.onNode(isDialog()).assertExists()
-    }
-
-    @Test
-    fun inactiveRetainedCollectionStillReconcilesDeletedRoute() {
-        val host = RecordingCollectionsHost().apply {
-            store.showMembers(COLLECTION_ID, listOf(SAMPLE_MEMBER))
+        openCollectionsManagement()
+        openCollection()
+        composeRule.onNodeWithText(MEMBER_TITLE).assertIsDisplayed()
+        composeRule.runOnIdle { host.store.publishCollections(emptyList()) }
+        composeRule.waitUntil(5_000) {
+            composeRule.onAllNodesWithTag("library_scope_picker")
+                .fetchSemanticsNodes().isNotEmpty()
         }
-        val active = mutableStateOf(true)
-        val navigationState = mutableStateOf(
-            LibraryNavigationState(
-                destination = LibraryDestinationKey.Collections,
-                selectedCollectionId = COLLECTION_ID,
-            ),
-        )
-        composeRule.setContent {
-            DeviceConfigurationOverride(
-                DeviceConfigurationOverride.WindowSize(DpSize(360.dp, 640.dp)),
-            ) {
-                JLModPlusTheme {
-                    LibraryCollectionsDestination(
-                        host = host,
-                        libraryState = sampleLibraryState(),
-                        scaffoldPadding = PaddingValues(),
-                        navigationState = navigationState.value,
-                        onNavigationStateChanged = { navigationState.value = it },
-                        onOpenActions = { _, _ -> },
-                        active = active.value,
-                    )
-                }
-            }
-        }
-        waitForMember()
-        composeRule.runOnIdle {
-            active.value = false
-            host.store.publishCollections(emptyList())
-        }
-        composeRule.waitForIdle()
-        assertNull(navigationState.value.selectedCollectionId)
-        assertNull(host.store.displayedMembersCollectionId())
-        composeRule.runOnIdle { active.value = true }
         composeRule.onAllNodesWithText(MEMBER_TITLE).assertCountEquals(0)
-        composeRule.onNodeWithText(uiString(R.string.library_collections_empty_title))
-            .assertIsDisplayed()
-    }
-
-    @Test
-    fun inactiveCollectionPagePreservesSelectedDetailForPagerReturn() {
-        val host = RecordingCollectionsHost().apply {
-            store.showMembers(COLLECTION_ID, listOf(SAMPLE_MEMBER, SAMPLE_MEMBER_2))
-        }
-        val active = mutableStateOf(true)
-        val navigationVisibilityEvents = mutableListOf<Boolean>()
-        composeRule.setContent {
-            DeviceConfigurationOverride(
-                DeviceConfigurationOverride.WindowSize(DpSize(360.dp, 640.dp)),
-            ) {
-                JLModPlusTheme {
-                    LibraryCollectionsDestination(
-                        host = host,
-                        libraryState = sampleLibraryState(),
-                        scaffoldPadding = PaddingValues(),
-                        navigationState = LibraryNavigationState(
-                            destination = LibraryDestinationKey.Collections,
-                            selectedCollectionId = COLLECTION_ID,
-                        ),
-                        onOpenActions = { _, _ -> },
-                        onNavigationVisibilityChanged = { visible ->
-                            navigationVisibilityEvents += visible
-                        },
-                        active = active.value,
-                    )
-                }
-            }
-        }
-
-        waitForMember()
-        composeRule.onNodeWithText(MEMBER_TITLE).assertIsDisplayed()
-        composeRule.runOnIdle {
-            navigationVisibilityEvents.clear()
-            active.value = false
-        }
-        composeRule.waitForIdle()
-
-        // HorizontalPager keeps neighbouring pages composed. Losing active ownership must not
-        // replace the selected Collection with the overview while the page is off-screen.
-        composeRule.onNodeWithText(MEMBER_TITLE).assertIsDisplayed()
-        composeRule.onNode(hasSetTextAction()).performClick().assertIsNotFocused()
-        composeRule.runOnIdle {
-            assertEquals(emptyList<Boolean>(), navigationVisibilityEvents)
-            active.value = true
-        }
-        composeRule.waitForIdle()
-
-        composeRule.onNodeWithText(MEMBER_TITLE).assertIsDisplayed()
-    }
-
-    @Test
-    fun collectionSearchReleasesFocusOnPagerExitWithoutLosingQuery() {
-        val host = RecordingCollectionsHost().apply {
-            store.showMembers(COLLECTION_ID, listOf(SAMPLE_MEMBER, SAMPLE_MEMBER_2))
-        }
-        composeRule.setContent {
-            DeviceConfigurationOverride(
-                DeviceConfigurationOverride.WindowSize(DpSize(360.dp, 640.dp)),
-            ) {
-                JLModPlusTheme {
-                    LibraryScreen(state = sampleLibraryState(), actions = host)
-                }
-            }
-        }
-
-        composeRule.onNodeWithText(uiString(R.string.library_destination_collections)).performClick()
-        openCollection()
-        composeRule.onNode(hasSetTextAction()).performClick().performTextInput("Demo")
-        composeRule.onNode(hasSetTextAction()).assertIsFocused()
-
-        // The previous page stays composed. A settled swipe must retire its editing focus,
-        // allowing the bottom navigation and the More destination to become interactive.
-        composeRule.onRoot().performTouchInput { swipeLeft(durationMillis = 500) }
-        composeRule.waitUntil(timeoutMillis = 5_000) {
-            composeRule.onAllNodesWithText(uiString(R.string.action_settings))
-                .fetchSemanticsNodes().isNotEmpty()
-        }
-        composeRule.onNodeWithText(uiString(R.string.action_settings)).assertIsDisplayed()
-        composeRule.onNodeWithText(uiString(R.string.library_destination_collections)).assertIsDisplayed()
-
-        composeRule.onRoot().performTouchInput { swipeRight(durationMillis = 500) }
-        composeRule.waitForIdle()
-        composeRule.onNodeWithText(MEMBER_TITLE).assertIsDisplayed()
-        composeRule.onNode(hasSetTextAction()).assertIsNotFocused()
-        composeRule.onNode(hasSetTextAction()).assertTextEquals("Demo")
-    }
-
-    @Test
-    fun collectionPickerSearchReleasesFocusAcrossTabs() {
-        val host = RecordingCollectionsHost().apply {
-            store.showMembers(COLLECTION_ID, listOf(SAMPLE_MEMBER, SAMPLE_MEMBER_2))
-        }
-        composeRule.setContent {
-            DeviceConfigurationOverride(
-                DeviceConfigurationOverride.WindowSize(DpSize(360.dp, 640.dp)),
-            ) {
-                JLModPlusTheme {
-                    LibraryScreen(state = sampleLibraryState(), actions = host)
-                }
-            }
-        }
-
-        composeRule.onNodeWithText(uiString(R.string.library_destination_collections)).performClick()
-        openCollection()
-        composeRule.onNodeWithText(uiString(R.string.library_collection_add_apps)).performClick()
-        composeRule.onNode(hasSetTextAction()).performClick().performTextInput("Demo")
-        composeRule.onNode(hasSetTextAction()).assertIsFocused()
-
-        composeRule.onRoot().performTouchInput { swipeLeft(durationMillis = 500) }
-        composeRule.waitUntil(timeoutMillis = 5_000) {
-            composeRule.onAllNodesWithText(uiString(R.string.action_settings))
-                .fetchSemanticsNodes().isNotEmpty()
-        }
-        composeRule.onNodeWithText(uiString(R.string.action_settings)).assertIsDisplayed()
-        composeRule.onNodeWithText(uiString(R.string.library_destination_collections)).assertIsDisplayed()
-
-        composeRule.onRoot().performTouchInput { swipeRight(durationMillis = 500) }
-        composeRule.waitForIdle()
-        composeRule.onNodeWithText(uiString(R.string.library_collection_manage_apps)).assertIsDisplayed()
-        composeRule.onNode(hasSetTextAction()).assertIsNotFocused()
-        composeRule.onNode(hasSetTextAction()).assertTextEquals("Demo")
+        assertNull(host.store.displayedMembersCollectionId())
     }
 
     @Test
@@ -351,7 +268,7 @@ class LibraryCollectionsNavigationTest {
             }
         }
 
-        composeRule.onNodeWithText("Collections").performClick()
+        openCollectionsManagement()
         openCollection()
         composeRule.onNodeWithText(MEMBER_TITLE).assertIsDisplayed()
 
@@ -364,44 +281,177 @@ class LibraryCollectionsNavigationTest {
         composeRule.waitForIdle()
 
         composeRule.onAllNodesWithText(MEMBER_TITLE).assertCountEquals(0)
-        composeRule.onNodeWithText(COLLECTION_NAME).assertIsDisplayed()
+        composeRule.onNodeWithTag("library_scope_picker").assertIsDisplayed()
         assertNull(host.store.displayedMembersCollectionId())
     }
 
     @Test
-    fun collectionScopeMismatchClearsManagementRoute() {
+    fun appCollectionCheckboxesToggleMembershipWithoutClosingTheDialog() {
         val host = RecordingCollectionsHost()
-        val navigationState = mutableStateOf(
-            LibraryNavigationState(
-                destination = LibraryDestinationKey.Collections,
-                selectedCollectionId = COLLECTION_ID,
-                selectedCollectionScope = "/work/library-a",
-                collectionManageApps = true,
-            ),
+        composeRule.setContent {
+            JLModPlusTheme {
+                LibraryCollectionsDialogHost(host)
+            }
+        }
+        composeRule.runOnIdle {
+            val request = host.store.showAddTarget(SAMPLE_MEMBER.id, MEMBER_TITLE)
+            host.store.publishTargetMemberships(SAMPLE_MEMBER.id, request, emptySet())
+        }
+        composeRule.onNodeWithText(COLLECTION_NAME).performClick()
+        composeRule.waitForIdle()
+        assertEquals(
+            listOf(Triple(SAMPLE_MEMBER.databaseId, COLLECTION_ID, true)),
+            host.membershipRequests,
         )
+        composeRule.onNodeWithText(COLLECTION_NAME).assertIsDisplayed()
+        composeRule.onNodeWithText(uiString(R.string.library_collection_new)).performClick()
+        composeRule.onNode(hasSetTextAction()).performTextInput("Arcade")
+        composeRule.onNodeWithText(uiString(R.string.create)).performClick()
+        composeRule.waitForIdle()
+        assertEquals(listOf(SAMPLE_MEMBER.id to "Arcade"), host.createdForApps)
+    }
 
+    @Test
+    fun closedCollectionTargetIgnoresLateMembershipResults() {
+        val store = LibraryCollectionsUiStore()
+        val stale = store.showAddTarget(SAMPLE_MEMBER.id, MEMBER_TITLE)
+        store.dismissAddTarget()
+        val current = store.showAddTarget(SAMPLE_MEMBER.id, MEMBER_TITLE)
+        store.publishTargetMemberships(SAMPLE_MEMBER.id, stale, setOf(COLLECTION_ID))
+        assertNull(store.state.value.addTarget?.memberCollectionIds)
+        store.publishTargetMemberships(SAMPLE_MEMBER.id, current, emptySet())
+        assertEquals(emptySet<Long>(), store.state.value.addTarget?.memberCollectionIds)
+    }
+
+    @Test
+    fun collectionsManagerExposesCreationAndDoesNotImplyUninstallOnDelete() {
+        val host = RecordingCollectionsHost()
         composeRule.setContent {
             DeviceConfigurationOverride(
                 DeviceConfigurationOverride.WindowSize(DpSize(360.dp, 640.dp)),
             ) {
                 JLModPlusTheme {
-                    LibraryCollectionsDestination(
-                        host = host,
-                        libraryState = sampleLibraryState().copy(libraryScope = "/work/library-b"),
-                        scaffoldPadding = PaddingValues(),
-                        navigationState = navigationState.value,
-                        onNavigationStateChanged = { navigationState.value = it },
-                        onOpenActions = { _, _ -> },
-                    )
+                    LibraryScreen(state = sampleLibraryState(), actions = host)
                 }
             }
         }
-        composeRule.waitForIdle()
 
-        val restored = navigationState.value
-        assertNull(restored.selectedCollectionId)
-        assertNull(restored.selectedCollectionScope)
-        assertFalse(restored.collectionManageApps)
+        openCollectionsManagement()
+        composeRule.onNodeWithText(uiString(R.string.library_destination_collections)).assertIsDisplayed()
+        composeRule.onNodeWithContentDescription(uiString(R.string.library_collection_new))
+            .performClick()
+        composeRule.onNode(hasSetTextAction()).assertIsDisplayed()
+        pressBack()
+
+        composeRule.onNodeWithContentDescription(
+            uiString(R.string.library_collection_delete_selected),
+        ).assertIsNotEnabled()
+        composeRule.onNodeWithContentDescription(
+            uiString(R.string.library_collection_select_action, COLLECTION_NAME),
+        ).performClick()
+        composeRule.onNodeWithContentDescription(
+            uiString(R.string.library_collection_delete_selected),
+        ).assertIsEnabled().performClick()
+        composeRule.onNodeWithText(
+            uiString(R.string.library_collection_delete_confirmation, COLLECTION_NAME),
+        ).assertIsDisplayed()
+    }
+
+    @Test
+    fun collectionActionsAreDirectAndRenameOpensEditor() {
+        val host = RecordingCollectionsHost()
+        composeRule.setContent {
+            DeviceConfigurationOverride(
+                DeviceConfigurationOverride.WindowSize(DpSize(360.dp, 640.dp)),
+            ) {
+                JLModPlusTheme {
+                    LibraryScreen(state = sampleLibraryState(), actions = host)
+                }
+            }
+        }
+
+        openCollectionsManagement()
+        composeRule.onNodeWithContentDescription(
+            uiString(R.string.library_collection_rename_selected),
+        ).assertIsNotEnabled()
+        composeRule.onNodeWithContentDescription(
+            uiString(R.string.library_collection_select_action, COLLECTION_NAME),
+        ).performClick()
+        composeRule.onNodeWithContentDescription(
+            uiString(R.string.library_collection_rename_selected),
+        ).assertIsEnabled().performClick()
+        composeRule.onNode(hasSetTextAction()).assertIsDisplayed()
+    }
+
+    @Test
+    fun selectingMultipleCollectionsEnablesBulkDeleteButDisablesRename() {
+        val host = RecordingCollectionsHost()
+        host.store.publishCollections(
+            listOf(
+                LibraryCollectionRow(COLLECTION_ID, COLLECTION_NAME, 0, 1L, 2),
+                LibraryCollectionRow(2L, "RPG", 1, 2L, 0),
+            ),
+        )
+        composeRule.setContent {
+            DeviceConfigurationOverride(
+                DeviceConfigurationOverride.WindowSize(DpSize(360.dp, 640.dp)),
+            ) {
+                JLModPlusTheme { LibraryScreen(state = sampleLibraryState(), actions = host) }
+            }
+        }
+        openCollectionsManagement()
+        composeRule.onNodeWithContentDescription(
+            uiString(R.string.library_collection_select_action, COLLECTION_NAME),
+        ).performClick()
+        composeRule.onNodeWithContentDescription(
+            uiString(R.string.library_collection_select_action, "RPG"),
+        ).performClick()
+        composeRule.onNodeWithContentDescription(
+            uiString(R.string.library_collection_rename_selected),
+        ).assertIsNotEnabled()
+        composeRule.onNodeWithContentDescription(
+            uiString(R.string.library_collection_delete_selected),
+        ).assertIsEnabled().performClick()
+        composeRule.onNodeWithText(
+            InstrumentationRegistry.getInstrumentation().targetContext.resources.getQuantityString(
+                R.plurals.library_collection_delete_many_confirmation, 2, 2,
+            ),
+        ).assertIsDisplayed()
+        composeRule.onNodeWithText(uiString(R.string.action_context_delete)).performClick()
+        composeRule.waitForIdle()
+        assertEquals(listOf(COLLECTION_ID, 2L), host.bulkCollectionDeletions.single())
+        assertTrue(host.store.state.value.collections.isEmpty())
+    }
+
+    @Test
+    fun longPressDragReordersCollectionsAndPersistsOnce() {
+        val host = RecordingCollectionsHost()
+        host.store.publishCollections(
+            listOf(
+                LibraryCollectionRow(COLLECTION_ID, COLLECTION_NAME, 0, 1L, 2),
+                LibraryCollectionRow(2L, "RPG", 1, 2L, 0),
+            ),
+        )
+        composeRule.setContent {
+            DeviceConfigurationOverride(
+                DeviceConfigurationOverride.WindowSize(DpSize(360.dp, 640.dp)),
+            ) {
+                JLModPlusTheme { LibraryScreen(state = sampleLibraryState(), actions = host) }
+            }
+        }
+        openCollectionsManagement()
+        composeRule.onNodeWithText(COLLECTION_NAME).performTouchInput {
+            down(center)
+            advanceEventTime(650)
+            moveBy(Offset(0f, 120f))
+            up()
+        }
+        composeRule.waitForIdle()
+        assertEquals(listOf(2L, COLLECTION_ID), host.reorderRequests.single())
+        assertEquals(
+            listOf(2L, COLLECTION_ID),
+            host.store.state.value.collections.map { it.id },
+        )
     }
 
     @Test
@@ -420,13 +470,13 @@ class LibraryCollectionsNavigationTest {
             }
         }
 
-        composeRule.onNodeWithText("Collections").performClick()
+        openCollectionsManagement()
         openCollection()
         composeRule.onNodeWithText(MEMBER_TITLE).performTouchInput { longClick() }
         composeRule.onNodeWithText("Select").performClick()
 
         composeRule.onNodeWithText(selectionCount(1)).assertIsDisplayed()
-        composeRule.onNodeWithText("Select all").assertIsDisplayed()
+        composeRule.onNodeWithContentDescription(uiString(R.string.library_selection_select_all)).assertIsDisplayed()
         composeRule.onNodeWithContentDescription(
             uiString(R.string.library_selection_checkbox_description, SAMPLE_MEMBER.title),
         ).assertIsDisplayed()
@@ -443,7 +493,7 @@ class LibraryCollectionsNavigationTest {
         composeRule.waitForIdle()
 
         composeRule.onAllNodesWithText(MEMBER_TITLE).assertCountEquals(0)
-        composeRule.onNodeWithText(COLLECTION_NAME).assertIsDisplayed()
+        composeRule.onNodeWithTag("library_scope_picker").assertIsDisplayed()
         assertNull(host.store.displayedMembersCollectionId())
     }
 
@@ -463,7 +513,7 @@ class LibraryCollectionsNavigationTest {
             }
         }
 
-        composeRule.onNodeWithText("Collections").performClick()
+        openCollectionsManagement()
         openCollection()
         // Enter selection after the Collection detail has already rendered. This verifies that
         // changing UI state reaches the visible detail without becoming navigation/layout state.
@@ -474,7 +524,7 @@ class LibraryCollectionsNavigationTest {
         composeRule.onNodeWithContentDescription(
             uiString(R.string.library_selection_checkbox_description, SAMPLE_MEMBER.title),
         ).assertIsDisplayed()
-        composeRule.onNodeWithText("Select all").assertIsDisplayed()
+        composeRule.onNodeWithContentDescription(uiString(R.string.library_selection_select_all)).assertIsDisplayed()
         composeRule.onNodeWithText("Delete apps").assertIsDisplayed()
         composeRule.onNodeWithText("Remove from collection").assertIsDisplayed()
         composeRule.onNodeWithText("Share apps").assertIsDisplayed()
@@ -482,16 +532,16 @@ class LibraryCollectionsNavigationTest {
         composeRule.onNodeWithText("Export bundle").assertIsDisplayed()
         composeRule.onAllNodesWithText("Add to collection").assertCountEquals(0)
 
-        composeRule.onNodeWithText("Select all").performClick()
+        composeRule.onNodeWithContentDescription(uiString(R.string.library_selection_select_all)).performClick()
         composeRule.onNodeWithText(selectionCount(2)).assertIsDisplayed()
-        composeRule.onNodeWithText("Deselect all").assertIsDisplayed()
+        composeRule.onNodeWithContentDescription(uiString(R.string.library_selection_unselect_all)).assertIsDisplayed()
         composeRule.onNodeWithContentDescription(
             uiString(R.string.library_selection_checkbox_description, SAMPLE_MEMBER_2.title),
         ).assertIsDisplayed()
 
-        composeRule.onNodeWithText("Deselect all").performClick()
+        composeRule.onNodeWithContentDescription(uiString(R.string.library_selection_unselect_all)).performClick()
         composeRule.onNodeWithText(selectionCount(0)).assertIsDisplayed()
-        composeRule.onNodeWithText("Select all").assertIsDisplayed()
+        composeRule.onNodeWithContentDescription(uiString(R.string.library_selection_select_all)).assertIsDisplayed()
     }
 
     @Test
@@ -510,7 +560,7 @@ class LibraryCollectionsNavigationTest {
             }
         }
 
-        composeRule.onNodeWithText("Collections").performClick()
+        openCollectionsManagement()
         openCollection()
         composeRule.onNodeWithText(MEMBER_TITLE).performTouchInput { longClick() }
         composeRule.onNodeWithText("Select").performClick()
@@ -552,7 +602,7 @@ class LibraryCollectionsNavigationTest {
             }
         }
 
-        composeRule.onNodeWithText("Collections").performClick()
+        openCollectionsManagement()
         openCollection()
         composeRule.onNodeWithText(MEMBER_TITLE).performTouchInput { longClick() }
         composeRule.onNodeWithText("Remove from collection").performClick()
@@ -563,65 +613,7 @@ class LibraryCollectionsNavigationTest {
     }
 
     @Test
-    fun collectionManageAppsReassertsNavigationChromeAfterPagerReturn() {
-        val host = RecordingCollectionsHost().apply {
-            store.showMembers(COLLECTION_ID, listOf(SAMPLE_MEMBER, SAMPLE_MEMBER_2))
-        }
-        val active = mutableStateOf(true)
-        val navigationState = mutableStateOf(
-            LibraryNavigationState(
-                destination = LibraryDestinationKey.Collections,
-                selectedCollectionId = COLLECTION_ID,
-            ),
-        )
-        val navigationVisibilityEvents = mutableListOf<Boolean>()
-        composeRule.setContent {
-            DeviceConfigurationOverride(
-                DeviceConfigurationOverride.WindowSize(DpSize(360.dp, 640.dp)),
-            ) {
-                JLModPlusTheme {
-                    LibraryCollectionsDestination(
-                        host = host,
-                        libraryState = sampleLibraryState(),
-                        scaffoldPadding = PaddingValues(),
-                        navigationState = navigationState.value,
-                        onNavigationStateChanged = { navigationState.value = it },
-                        onOpenActions = { _, _ -> },
-                        onNavigationVisibilityChanged = { visible ->
-                            navigationVisibilityEvents += visible
-                        },
-                        active = active.value,
-                    )
-                }
-            }
-        }
-
-        composeRule.waitForIdle()
-        composeRule.runOnIdle { navigationVisibilityEvents.clear() }
-        composeRule.onNodeWithText(uiString(R.string.library_collection_add_apps)).performClick()
-        composeRule.waitForIdle()
-
-        composeRule.onNodeWithText(uiString(R.string.library_collection_manage_apps))
-            .assertIsDisplayed()
-        assertEquals(false, navigationVisibilityEvents.last())
-
-        composeRule.runOnIdle {
-            navigationVisibilityEvents.clear()
-            active.value = false
-        }
-        composeRule.waitForIdle()
-        assertEquals(emptyList<Boolean>(), navigationVisibilityEvents)
-
-        composeRule.runOnIdle { active.value = true }
-        composeRule.waitForIdle()
-
-        composeRule.onNodeWithText(uiString(R.string.library_collection_manage_apps))
-            .assertIsDisplayed()
-        assertEquals(false, navigationVisibilityEvents.last())
-    }
-
-    @Test
-    fun offscreenAppsLayoutChangeCannotRevealCollectionNavigationChrome() {
+    fun collectionMembershipEditorRemainsVisibleAcrossLibraryLayoutChange() {
         val host = RecordingCollectionsHost()
         val libraryState = mutableStateOf(sampleLibraryState())
         composeRule.setContent {
@@ -637,7 +629,7 @@ class LibraryCollectionsNavigationTest {
             }
         }
 
-        composeRule.onNodeWithText("Collections").performClick()
+        openCollectionsManagement()
         openCollection()
         composeRule.onNodeWithText(uiString(R.string.library_collection_add_apps)).performClick()
         composeRule.onNodeWithText(uiString(R.string.library_collection_manage_apps))
@@ -677,7 +669,7 @@ class LibraryCollectionsNavigationTest {
             }
         }
 
-        composeRule.onNodeWithText("Collections").performClick()
+        openCollectionsManagement()
         openCollection()
         composeRule.runOnIdle {
             host.store.showMembers(COLLECTION_ID, listOf(SAMPLE_MEMBER))
@@ -740,7 +732,7 @@ class LibraryCollectionsNavigationTest {
                 }
             }
         }
-        composeRule.onNodeWithText("Collections").performClick()
+        openCollectionsManagement()
         openCollection()
         composeRule.onNodeWithText(uiString(R.string.library_collection_add_apps)).performClick()
         composeRule.waitUntil(timeoutMillis = 5_000) {
@@ -771,34 +763,9 @@ class LibraryCollectionsNavigationTest {
         composeRule.onNodeWithTag("collection-membership-10000").assertIsDisplayed()
     }
 
-    @Test
-    fun expandedWindowShowsListAndDetailWithoutDetailBack() {
-        val host = RecordingCollectionsHost().apply {
-            store.showMembers(COLLECTION_ID, listOf(SAMPLE_MEMBER))
-        }
-        composeRule.setContent {
-            DeviceConfigurationOverride(
-                DeviceConfigurationOverride.WindowSize(DpSize(900.dp, 1_000.dp)),
-            ) {
-                JLModPlusTheme {
-                    LibraryCollectionsDestination(
-                        host = host,
-                        libraryState = sampleLibraryState(),
-                        scaffoldPadding = PaddingValues(),
-                        navigationState = LibraryNavigationState(
-                            destination = LibraryDestinationKey.Collections,
-                            selectedCollectionId = COLLECTION_ID,
-                        ),
-                        onOpenActions = { _, _ -> },
-                    )
-                }
-            }
-        }
-
-        composeRule.onNodeWithText("Collections").assertIsDisplayed()
-        waitForMember()
-        composeRule.onNodeWithText(MEMBER_TITLE).assertExists()
-        composeRule.onAllNodesWithContentDescription("Back").assertCountEquals(0)
+    private fun openCollectionsManagement() {
+        composeRule.onNodeWithTag("library_scope_picker").performClick()
+        composeRule.onNodeWithText(uiString(R.string.library_collection_manage)).performClick()
     }
 
     private fun openCollection() {
@@ -828,9 +795,12 @@ class LibraryCollectionsNavigationTest {
             )
         }
         val openedCollectionIds = mutableListOf<Long>()
+        val reorderRequests = mutableListOf<List<Long>>()
+        val bulkCollectionDeletions = mutableListOf<List<Long>>()
         val bulkRemovals = mutableListOf<Pair<Set<Long>, Long>>()
         val singleRemovals = mutableListOf<Pair<Int, Long>>()
         val membershipRequests = mutableListOf<Triple<Long, Long, Boolean>>()
+        val createdForApps = mutableListOf<Pair<Int, String>>()
         var deferMembershipResult = false
         var pickerApps: List<LibraryAppUiItem> = listOf(SAMPLE_MEMBER, SAMPLE_MEMBER_2)
         private var pendingMembershipResult: CollectionMembershipResultCallback? = null
@@ -847,8 +817,40 @@ class LibraryCollectionsNavigationTest {
 
         override fun onDismissCollectionMembers() = store.dismissMembers()
         override fun onCreateCollection(name: String) = Unit
+        override fun onCreateCollectionForApp(appId: Int, name: String) {
+            createdForApps += appId to name
+        }
         override fun onRenameCollection(collectionId: Long, name: String) = Unit
         override fun onDeleteCollection(collectionId: Long) = Unit
+        override fun onDeleteCollections(
+            ids: List<Long>,
+            callback: CollectionMembershipResultCallback,
+        ) {
+            bulkCollectionDeletions += ids
+            val remaining = store.state.value.collections.filterNot { it.id in ids }
+            store.publishCollections(remaining.mapIndexed { index, collection ->
+                LibraryCollectionRow(
+                    collection.id,
+                    collection.name,
+                    index,
+                    collection.id,
+                    collection.appCount,
+                )
+            })
+            callback.onResult(true)
+        }
+        override fun onReorderCollections(
+            orderedIds: List<Long>,
+            callback: CollectionMembershipResultCallback,
+        ) {
+            reorderRequests += orderedIds
+            val current = store.state.value.collections.associateBy { it.id }
+            store.publishCollections(orderedIds.mapIndexed { index, id ->
+                val collection = requireNotNull(current[id])
+                LibraryCollectionRow(id, collection.name, index, index.toLong(), collection.appCount)
+            })
+            callback.onResult(true)
+        }
         override fun onPrepareCollectionAppPicker() {
             store.publishAllApps(pickerApps)
         }
@@ -861,7 +863,17 @@ class LibraryCollectionsNavigationTest {
             included: Boolean,
             callback: CollectionMembershipResultCallback,
         ) {
-            onSetCollectionMembershipByDatabaseId(appId.toLong(), collectionId, included, callback)
+            onSetCollectionMembershipByDatabaseId(
+                appId.toLong(), collectionId, included,
+                CollectionMembershipResultCallback { success ->
+                    if (success) {
+                        store.updateTargetMembership(
+                            appId, store.currentTargetRequestId(appId), collectionId, included,
+                        )
+                    }
+                    callback.onResult(success)
+                },
+            )
         }
 
         override fun onSetCollectionMembershipByDatabaseId(

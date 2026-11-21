@@ -14,6 +14,7 @@
 
 package io.github.h3nb.jlmodplus.settings
 
+import androidx.activity.compose.BackHandler
 import androidx.compose.foundation.clickable
 import androidx.compose.foundation.background
 import androidx.compose.foundation.selection.selectable
@@ -55,11 +56,14 @@ import androidx.compose.runtime.Composable
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
+import androidx.compose.runtime.saveable.rememberSaveable
 import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
 import androidx.compose.ui.graphics.Color
+import androidx.compose.ui.platform.LocalInspectionMode
+import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.platform.ComposeView
 import androidx.compose.ui.platform.ViewCompositionStrategy
 import androidx.compose.ui.res.painterResource
@@ -72,6 +76,12 @@ import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.style.TextOverflow
 import androidx.compose.ui.unit.dp
 import io.github.h3nb.jlmodplus.R
+import io.github.h3nb.jlmodplus.applist.LibraryAboutScreen
+import io.github.h3nb.jlmodplus.applist.LibraryInfoDialog
+import io.github.h3nb.jlmodplus.applist.LibraryInformationDialog
+import io.github.h3nb.jlmodplus.updates.UpdateRepository
+import io.github.h3nb.jlmodplus.updates.UpdateStatus
+import io.github.h3nb.jlmodplus.updates.UpdatesScreen
 import io.github.h3nb.jlmodplus.ui.JLModPlusTheme
 import io.github.h3nb.jlmodplus.ui.AccentPalette
 import io.github.h3nb.jlmodplus.ui.ScrollableContentHint
@@ -84,11 +94,12 @@ data class SettingsOption(
     val label: String,
 )
 
-data class SettingsChoice(
+data class SettingsChoice @JvmOverloads constructor(
     val key: String,
     val title: String,
     val selected: SettingsOption,
     val options: List<SettingsOption>,
+    val summary: String? = null,
 )
 
 data class SettingsSwitch @JvmOverloads constructor(
@@ -125,6 +136,11 @@ interface SettingsActions {
     fun onOpenProfiles()
     fun onChooseDirectory()
     fun onDismissDirectoryError()
+    fun onOpenCrashReports() = Unit
+    fun onOpenDonation() = Unit
+    fun onOpenProjectRepository() = Unit
+    fun onOpenUpdateRelease(url: String) = Unit
+    fun onOpenUpdateDownload(url: String) = Unit
 }
 
 /** Host bridge; SharedPreferences and activity-result ownership remain in SettingsActivity. */
@@ -161,6 +177,40 @@ fun SettingsScreen(
 ) {
     var choiceDialog by remember { mutableStateOf<SettingsDialogChoice?>(null) }
     var libraryChoiceDialog by remember { mutableStateOf<SettingsChoice?>(null) }
+    var page by rememberSaveable { mutableStateOf(SettingsPage.Main) }
+    var infoDialog by remember { mutableStateOf<LibraryInfoDialog?>(null) }
+    val context = LocalContext.current
+    val updates = if (LocalInspectionMode.current) null else remember(context) {
+        UpdateRepository.get(context)
+    }
+    val settingsListState = rememberLazyListState()
+
+    BackHandler(enabled = infoDialog != null) { infoDialog = null }
+    BackHandler(enabled = page != SettingsPage.Main && infoDialog == null) {
+        page = SettingsPage.Main
+    }
+    if (page != SettingsPage.Main) {
+        when (page) {
+            SettingsPage.Updates -> if (updates != null) {
+                UpdatesScreen(
+                    repository = updates,
+                    onBack = { page = SettingsPage.Main },
+                    onOpenRelease = actions::onOpenUpdateRelease,
+                    onOpenDownload = actions::onOpenUpdateDownload,
+                )
+            }
+            SettingsPage.About -> LibraryAboutScreen(
+                onBack = { page = SettingsPage.Main },
+                onLicenses = { infoDialog = LibraryInfoDialog.Licenses },
+                onOpenGitHub = actions::onOpenProjectRepository,
+            )
+            SettingsPage.Main -> Unit
+        }
+        infoDialog?.let { dialog ->
+            LibraryInformationDialog(dialog = dialog, onDismiss = { infoDialog = null })
+        }
+        return
+    }
     Scaffold(
         modifier = modifier.fillMaxSize(),
         contentColor = MaterialTheme.colorScheme.onSurface,
@@ -180,6 +230,7 @@ fun SettingsScreen(
     ) { padding ->
         Box(modifier = Modifier.fillMaxSize()) {
             LazyColumn(
+                state = settingsListState,
                 modifier = Modifier
                     .align(Alignment.TopCenter)
                     .fillMaxWidth()
@@ -187,39 +238,30 @@ fun SettingsScreen(
                 contentPadding = padding,
             ) {
                 settingsSection(
-                    key = "appearance",
-                    title = R.string.settings_section_appearance,
-                    rowCount = 2,
-                    rowKey = { if (it == 0) "theme" else "accent" },
+                    key = "appearance-and-language",
+                    title = R.string.settings_section_appearance_language,
+                    rowCount = 3,
+                    rowKey = { when (it) { 0 -> "theme"; 1 -> "accent"; else -> "language" } },
                     rowType = { SettingsItemType.Choice },
                 ) { index ->
-                    if (index == 0) {
-                        SettingsChoiceRow(
+                    when (index) {
+                        0 -> SettingsChoiceRow(
                             title = stringResource(R.string.pref_theme_title),
                             selected = state.theme,
                             onClick = { choiceDialog = SettingsDialogChoice.Theme },
                         )
-                    } else {
-                        SettingsChoiceRow(
+                        1 -> SettingsChoiceRow(
                             title = stringResource(R.string.pref_accent_title),
                             selected = state.accent,
                             showAccentPreview = true,
                             onClick = { choiceDialog = SettingsDialogChoice.Accent },
                         )
+                        else -> SettingsChoiceRow(
+                            title = stringResource(R.string.pref_language),
+                            selected = state.language,
+                            onClick = { choiceDialog = SettingsDialogChoice.Language },
+                        )
                     }
-                }
-                settingsSection(
-                    key = "language",
-                    title = R.string.settings_section_language,
-                    rowCount = 1,
-                    rowKey = { "language" },
-                    rowType = { SettingsItemType.Choice },
-                ) {
-                    SettingsChoiceRow(
-                        title = stringResource(R.string.pref_language),
-                        selected = state.language,
-                        onClick = { choiceDialog = SettingsDialogChoice.Language },
-                    )
                 }
                 if (state.libraryChoices.isNotEmpty() || state.librarySwitches.isNotEmpty()) {
                     val choiceCount = state.libraryChoices.size
@@ -240,6 +282,7 @@ fun SettingsScreen(
                             SettingsChoiceRow(
                                 title = choice.title,
                                 selected = choice.selected,
+                                summary = choice.summary,
                                 onClick = { libraryChoiceDialog = choice },
                             )
                         } else {
@@ -264,34 +307,6 @@ fun SettingsScreen(
                         onCheckedChange = { checked -> actions.onToggle(setting.key, checked) },
                     )
                 }
-                settingsSection(
-                    key = "storage",
-                    title = R.string.settings_section_storage,
-                    rowCount = 1,
-                    rowKey = { "directory" },
-                    rowType = { SettingsItemType.Action },
-                ) {
-                    SettingsActionRow(
-                        title = stringResource(R.string.pref_emulator_dir),
-                        value = state.workingDirectory,
-                        onClick = actions::onChooseDirectory,
-                    )
-                }
-                if (state.showProfiles) {
-                    settingsSection(
-                        key = "profiles",
-                        title = R.string.settings_section_profiles,
-                        rowCount = 1,
-                        rowKey = { "manage" },
-                        rowType = { SettingsItemType.Action },
-                    ) {
-                        SettingsActionRow(
-                            title = stringResource(R.string.preset_manage),
-                            summary = stringResource(R.string.settings_profiles_summary),
-                            onClick = actions::onOpenProfiles,
-                        )
-                    }
-                }
                 if (state.experimentalSwitches.isNotEmpty()) {
                     settingsSection(
                         key = "experimental",
@@ -307,8 +322,81 @@ fun SettingsScreen(
                         )
                     }
                 }
+                settingsSection(
+                    key = "storage-and-profiles",
+                    title = R.string.settings_section_storage_profiles,
+                    rowCount = if (state.showProfiles) 2 else 1,
+                    rowKey = { if (it == 0) "directory" else "profiles" },
+                    rowType = { SettingsItemType.Action },
+                ) { index ->
+                    if (index == 0) {
+                        SettingsActionRow(
+                            title = stringResource(R.string.pref_emulator_dir),
+                            value = state.workingDirectory,
+                            onClick = actions::onChooseDirectory,
+                        )
+                    } else {
+                        SettingsActionRow(
+                            title = stringResource(R.string.preset_manage),
+                            summary = stringResource(R.string.settings_profiles_summary),
+                            onClick = actions::onOpenProfiles,
+                        )
+                    }
+                }
+                settingsSection(
+                    key = "maintenance",
+                    title = R.string.library_settings_section_maintenance,
+                    rowCount = 2,
+                    rowKey = { if (it == 0) "updates" else "diagnostics" },
+                    rowType = { SettingsItemType.Action },
+                ) { index ->
+                    if (index == 0) {
+                        SettingsActionRow(
+                            title = stringResource(R.string.updates_title),
+                            summary = stringResource(
+                                if (updates?.status is UpdateStatus.Available) R.string.updates_more_available
+                                else R.string.updates_more_summary,
+                            ),
+                            onClick = { page = SettingsPage.Updates },
+                        )
+                    } else {
+                        SettingsActionRow(
+                            title = stringResource(R.string.crash_reports),
+                            summary = stringResource(R.string.library_action_crash_reports_summary),
+                            onClick = actions::onOpenCrashReports,
+                        )
+                    }
+                }
+                settingsSection(
+                    key = "support",
+                    title = R.string.library_settings_section_support,
+                    rowCount = 2,
+                    rowKey = { if (it == 0) "about" else "donate" },
+                    rowType = { SettingsItemType.Action },
+                ) { index ->
+                    if (index == 0) {
+                        SettingsActionRow(
+                            title = stringResource(R.string.about),
+                            summary = stringResource(R.string.library_action_about_summary),
+                            onClick = { page = SettingsPage.About },
+                        )
+                    } else {
+                        SettingsActionRow(
+                            title = stringResource(R.string.library_donation_action),
+                            summary = stringResource(R.string.library_donation_summary),
+                            onClick = { infoDialog = LibraryInfoDialog.Donation },
+                        )
+                    }
+                }
             }
         }
+    }
+    infoDialog?.let { dialog ->
+        LibraryInformationDialog(
+            dialog = dialog,
+            onDismiss = { infoDialog = null },
+            onDonate = actions::onOpenDonation,
+        )
     }
 
     state.directoryError?.let { message ->
@@ -407,6 +495,8 @@ fun SettingsScreen(
     }
 }
 
+private enum class SettingsPage { Main, Updates, About }
+
 private enum class SettingsItemType { Heading, Choice, Switch, Action }
 
 private fun LazyListScope.settingsSection(
@@ -468,6 +558,7 @@ private fun SettingsChoiceRow(
     title: String,
     selected: SettingsOption,
     showAccentPreview: Boolean = false,
+    summary: String? = null,
     onClick: () -> Unit,
 ) {
     Row(
@@ -486,6 +577,13 @@ private fun SettingsChoiceRow(
                 text = title,
                 style = MaterialTheme.typography.bodyLarge,
             )
+            if (summary != null) {
+                Text(
+                    text = summary,
+                    style = MaterialTheme.typography.bodySmall,
+                    color = MaterialTheme.colorScheme.onSurfaceVariant,
+                )
+            }
             Text(
                 text = selected.label,
                 color = MaterialTheme.colorScheme.onSurface,

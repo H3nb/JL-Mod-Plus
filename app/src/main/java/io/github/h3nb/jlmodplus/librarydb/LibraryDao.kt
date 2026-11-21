@@ -103,7 +103,7 @@ abstract class LibraryDao {
         FROM collections AS c
         LEFT JOIN collection_apps AS ca ON ca.collection_id = c.id
         GROUP BY c.id, c.name, c.sort_order, c.created_at
-        ORDER BY c.sort_order ASC, c.name COLLATE NOCASE ASC, c.id ASC
+        ORDER BY c.sort_order ASC, c.created_at ASC, c.id ASC
         """,
     )
     abstract fun observeCollections(): Flow<List<LibraryCollectionRow>>
@@ -131,6 +131,9 @@ abstract class LibraryDao {
 
     @Query("SELECT app_id FROM collection_apps WHERE collection_id = :collectionId ORDER BY added_at DESC, app_id ASC")
     abstract suspend fun getCollectionAppIds(collectionId: Long): List<Long>
+
+    @Query("SELECT collection_id FROM collection_apps WHERE app_id = :appId")
+    abstract suspend fun getAppCollectionIds(appId: Long): List<Long>
 
     @Query(
         """
@@ -299,6 +302,25 @@ abstract class LibraryDao {
     @Query("SELECT MAX(sort_order) FROM collections")
     abstract suspend fun getMaxCollectionSortOrder(): Int?
 
+    @Query("SELECT id FROM collections ORDER BY sort_order ASC, created_at ASC, id ASC")
+    abstract suspend fun getCollectionIdsInOrder(): List<Long>
+
+    @Query("UPDATE collections SET sort_order = :position WHERE id = :collectionId")
+    abstract suspend fun updateCollectionPosition(collectionId: Long, position: Int): Int
+
+    @Transaction
+    open suspend fun reorderCollections(orderedIds: List<Long>) {
+        val currentIds = getCollectionIdsInOrder()
+        require(orderedIds.size == currentIds.size && orderedIds.toSet() == currentIds.toSet()) {
+            "Collection list changed during reorder"
+        }
+        orderedIds.forEachIndexed { position, id ->
+            check(updateCollectionPosition(id, position) == 1) {
+                "Collection disappeared during reorder: $id"
+            }
+        }
+    }
+
     @Query(
         """
         UPDATE collections SET
@@ -315,6 +337,19 @@ abstract class LibraryDao {
 
     @Query("DELETE FROM collections WHERE id = :collectionId")
     abstract suspend fun deleteCollection(collectionId: Long): Int
+
+    @Query("DELETE FROM collections WHERE id IN (:collectionIds)")
+    abstract suspend fun deleteCollectionsByIds(collectionIds: List<Long>): Int
+
+    @Transaction
+    open suspend fun deleteCollections(collectionIds: List<Long>) {
+        require(collectionIds.isNotEmpty() && collectionIds.size == collectionIds.toSet().size) {
+            "Invalid selected collections"
+        }
+        check(deleteCollectionsByIds(collectionIds) == collectionIds.size) {
+            "One or more selected collections disappeared"
+        }
+    }
 
     @Insert(onConflict = OnConflictStrategy.IGNORE)
     abstract suspend fun insertCollectionMembership(membership: LibraryCollectionAppEntity): Long
@@ -383,6 +418,20 @@ abstract class LibraryDao {
                 sortOrder = (getMaxCollectionSortOrder() ?: -1) + 1,
             ),
         )
+    }
+
+    @Transaction
+    open suspend fun createCollectionWithApp(
+        name: String,
+        createdAt: Long,
+        appId: Long,
+    ): Long {
+        check(getApp(appId) != null) { "Library app disappeared: $appId" }
+        val id = createCollection(name, createdAt)
+        insertCollectionMembership(
+            LibraryCollectionAppEntity(collectionId = id, appId = appId, addedAt = createdAt),
+        )
+        return id
     }
 
     @Transaction
