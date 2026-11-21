@@ -808,7 +808,7 @@
     <string name="config_help_shader">Menerapkan shader pada frame MIDlet sebelum ditampilkan.</string>
     <string name="config_help_shader_tuning">Kontrol yang tersedia bergantung pada shader yang dipilih.</string>
     <string name="config_help_parallel_redraw">Menjadwalkan penyajian frame secara asinkron. Dapat meningkatkan performa pada perangkat tertentu.</string>
-    <string name="config_help_force_fullscreen">Memulai layar Canvas Java ME tanpa bilah perintah softkey. Game dapat mengubah mode ini.</string>
+    <string name="config_help_force_fullscreen">MIDlet dapat menampilkan kembali bilah softkey saat berjalan.</string>
     <string name="config_help_fps_limit">Menetapkan batas FPS pada kecepatan emulasi 1×. Batas efektif mengikuti kecepatan emulasi; 0 (Maksimum) memakai refresh rate maksimum layar.</string>
     <string name="PREF_EMULATION_SPEED">Kecepatan emulasi</string>
     <string name="PREF_TIMING_MODE">Sumber waktu</string>
@@ -1158,7 +1158,7 @@
     <string name="memory_editor_increment_invalid">Gunakan satu tipe bilangan bulat dan nilai dalam rentangnya.</string>
     <string name="memory_editor_increment_preview">Pratinjau: %1$s</string>
     <string name="config_avoid_camera_cutout_title">Hindari area kamera/notch</string>
-    <string name="config_avoid_camera_cutout_summary">Jauhkan tampilan game dari kamera depan atau potongan layar. Aktifkan jika kontrol game tertutup.</string>
+    <string name="config_avoid_camera_cutout_summary">Aktifkan jika kamera atau potongan layar menutupi kontrol game.</string>
     <string name="pref_runtime_fullscreen_title">Layar penuh</string>
     <string name="pref_runtime_fullscreen_summary">Sembunyikan bilah alat saat bermain. Berlaku untuk semua MIDlet.</string>
     <string name="pref_show_status_bar_title">Tampilkan bilah status</string>
