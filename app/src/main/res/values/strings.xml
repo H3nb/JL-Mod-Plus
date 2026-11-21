@@ -778,6 +778,8 @@
     <string name="config_search_title" tools:ignore="MissingTranslation">Search settings</string>
     <string name="config_search_hint" tools:ignore="MissingTranslation">Find a setting, e.g. MMPX or orientation</string>
     <string name="config_search_no_results" tools:ignore="MissingTranslation">No matching settings</string>
+    <string name="config_font_page_title" tools:ignore="MissingTranslation">Font settings</string>
+    <string name="config_performance_page_title" tools:ignore="MissingTranslation">Performance settings</string>
     <string name="config_display_more" tools:ignore="MissingTranslation">Text and performance</string>
     <string name="config_display_performance_summary" tools:ignore="MissingTranslation">Frame rate and performance overlay</string>
     <string name="config_destination_home" tools:ignore="MissingTranslation">Home</string>
