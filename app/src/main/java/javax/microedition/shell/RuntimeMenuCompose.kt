@@ -1147,7 +1147,7 @@ internal fun runtimeMenuNextFocus(
 }
 
 internal fun runtimeMenuGridColumns(widthDp: Float, fontScale: Float, count: Int): Int {
-    val minTileWidth = 104f * fontScale.coerceAtLeast(1f)
+    val minTileWidth = 92f * fontScale.coerceAtLeast(1f)
     return ((widthDp + 8f) / (minTileWidth + 8f)).toInt().coerceIn(1, 4)
         .coerceAtMost(count.coerceAtLeast(1))
 }
