@@ -83,6 +83,8 @@ import io.github.h3nb.jlmodplus.updates.UpdateRepository
 import io.github.h3nb.jlmodplus.updates.UpdateStatus
 import io.github.h3nb.jlmodplus.updates.UpdatesScreen
 import io.github.h3nb.jlmodplus.ui.JLModPlusTheme
+import io.github.h3nb.jlmodplus.ui.TransientNoticeHost
+import io.github.h3nb.jlmodplus.ui.TransientNoticeState
 import io.github.h3nb.jlmodplus.ui.AccentPalette
 import io.github.h3nb.jlmodplus.ui.ScrollableContentHint
 import io.github.h3nb.jlmodplus.ui.adaptiveDialogLayout
@@ -150,6 +152,7 @@ class SettingsComposeController(
     private val actions: SettingsActions,
 ) {
     private var state by mutableStateOf(initialState)
+    private val notices = TransientNoticeState()
 
     init {
         composeView.id = R.id.settings_compose_root
@@ -158,13 +161,20 @@ class SettingsComposeController(
         )
         composeView.setContent {
             JLModPlusTheme {
-                SettingsScreen(state = state, actions = actions)
+                Box(Modifier.fillMaxSize()) {
+                    SettingsScreen(state = state, actions = actions)
+                    TransientNoticeHost(notices, Modifier.align(Alignment.BottomCenter))
+                }
             }
         }
     }
 
     fun update(nextState: SettingsUiState) {
         state = nextState
+    }
+
+    fun showNotice(message: String) {
+        notices.show(message)
     }
 }
 
