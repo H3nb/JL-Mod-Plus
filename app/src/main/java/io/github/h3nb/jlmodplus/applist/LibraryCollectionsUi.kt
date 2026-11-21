@@ -7,6 +7,8 @@
 package io.github.h3nb.jlmodplus.applist
 
 import androidx.activity.compose.BackHandler
+import androidx.compose.animation.animateColorAsState
+import androidx.compose.animation.core.tween
 import androidx.compose.foundation.background
 import androidx.compose.foundation.clickable
 import androidx.compose.foundation.gestures.detectDragGesturesAfterLongPress
@@ -125,7 +127,8 @@ internal fun LibraryCollectionChoiceRow(
                         collection.appCount,
                         collection.appCount,
                     ),
-                    color = MaterialTheme.colorScheme.onSurfaceVariant,
+                    color = if (selected) MaterialTheme.colorScheme.onPrimaryContainer
+                        else MaterialTheme.colorScheme.onSurfaceVariant,
                 )
             }
         } else null,
@@ -139,8 +142,12 @@ internal fun LibraryCollectionChoiceRow(
         },
         trailingContent = trailingContent,
         colors = ListItemDefaults.colors(
-            containerColor = if (selected) MaterialTheme.colorScheme.secondaryContainer
+            containerColor = if (selected) MaterialTheme.colorScheme.primaryContainer
                 else Color.Transparent,
+            headlineColor = if (selected) MaterialTheme.colorScheme.onPrimaryContainer
+                else MaterialTheme.colorScheme.onSurface,
+            leadingIconColor = if (selected) MaterialTheme.colorScheme.primary
+                else MaterialTheme.colorScheme.onSurfaceVariant,
         ),
         modifier = modifier
             .fillMaxWidth()
@@ -443,14 +450,17 @@ private fun LibraryManagedCollectionRow(
     modifier: Modifier = Modifier,
 ) {
     val checkboxLabel = stringResource(R.string.library_collection_select_action, collection.name)
+    val selectionColor by animateColorAsState(
+        targetValue = if (checked) MaterialTheme.colorScheme.primaryContainer
+            else MaterialTheme.colorScheme.surfaceContainerLow,
+        animationSpec = tween(180),
+        label = "collection selection",
+    )
     Row(
         modifier = modifier
             .fillMaxWidth()
             .clip(MaterialTheme.shapes.large)
-            .background(
-                if (checked) MaterialTheme.colorScheme.secondaryContainer
-                else MaterialTheme.colorScheme.surfaceContainerLow,
-            )
+            .background(selectionColor)
             .heightIn(min = 76.dp)
             .padding(start = 4.dp),
         verticalAlignment = Alignment.CenterVertically,
@@ -477,6 +487,8 @@ private fun LibraryManagedCollectionRow(
                 Text(
                     text = collection.name,
                     style = MaterialTheme.typography.titleMedium,
+                    color = if (checked) MaterialTheme.colorScheme.onPrimaryContainer
+                        else MaterialTheme.colorScheme.onSurface,
                     maxLines = 2,
                     overflow = TextOverflow.Ellipsis,
                 )
@@ -487,7 +499,8 @@ private fun LibraryManagedCollectionRow(
                         collection.appCount,
                     ),
                     style = MaterialTheme.typography.bodySmall,
-                    color = MaterialTheme.colorScheme.onSurfaceVariant,
+                    color = if (checked) MaterialTheme.colorScheme.onPrimaryContainer
+                        else MaterialTheme.colorScheme.onSurfaceVariant,
                 )
             }
         }
