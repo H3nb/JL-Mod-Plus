@@ -1429,4 +1429,9 @@
     <string name="library_details_view_details">Lihat rincian</string>
     <string name="library_actions_more">Tindakan lainnya</string>
     <string name="library_actions_less">Lebih sedikit tindakan</string>
+    <string name="config_quick_settings">Pengaturan cepat</string>
+    <string name="config_all_settings">Semua pengaturan</string>
+    <string name="profile_local_changes_pending">Perubahan lokal tidak disimpan ke profil</string>
+    <string name="profile_not_following">Berdasarkan %1$s · Tidak mengikuti pembaruan</string>
+    <string name="profile_stop_following">Berhenti mengikuti profil</string>
 </resources>
