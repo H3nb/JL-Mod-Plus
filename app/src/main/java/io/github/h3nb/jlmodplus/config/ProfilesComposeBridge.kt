@@ -73,6 +73,8 @@ import io.github.h3nb.jlmodplus.R
 import io.github.h3nb.jlmodplus.ui.AdaptiveAlertDialog as AlertDialog
 import io.github.h3nb.jlmodplus.ui.JLModPlusTheme
 import io.github.h3nb.jlmodplus.ui.adaptiveDialogLayout
+import io.github.h3nb.jlmodplus.ui.TransientNoticeHost
+import io.github.h3nb.jlmodplus.ui.TransientNoticeState
 
 data class ProfileUiItem(
     val name: String,
@@ -106,6 +108,7 @@ class ProfilesComposeController(
     private val actions: ProfilesActions,
 ) {
     private var state by mutableStateOf(ProfilesUiState())
+    private val notices = TransientNoticeState()
 
     init {
         composeView.id = R.id.profiles_compose_root
@@ -114,13 +117,20 @@ class ProfilesComposeController(
         )
         composeView.setContent {
             JLModPlusTheme {
-                ProfilesScreen(state = state, actions = actions)
+                Box(Modifier.fillMaxSize()) {
+                    ProfilesScreen(state = state, actions = actions)
+                    TransientNoticeHost(notices, Modifier.align(Alignment.BottomCenter))
+                }
             }
         }
     }
 
     fun updateProfileItems(items: List<ProfileUiItem>) {
         state = ProfilesUiState(profiles = items)
+    }
+
+    fun showNotice(message: String, durationMillis: Long = 3_500L) {
+        notices.show(message, durationMillis)
     }
 }
 
