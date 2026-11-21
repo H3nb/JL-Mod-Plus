@@ -166,6 +166,7 @@ import androidx.compose.ui.layout.onSizeChanged
 import androidx.compose.ui.platform.ComposeView
 import androidx.compose.ui.platform.LocalInspectionMode
 import androidx.compose.ui.platform.LocalContext
+import androidx.compose.ui.platform.LocalConfiguration
 import androidx.compose.ui.platform.LocalSoftwareKeyboardController
 import androidx.compose.ui.platform.LocalDensity
 import androidx.compose.ui.platform.LocalLayoutDirection
@@ -1646,6 +1647,12 @@ fun LibraryScreen(
                                     collectionId = activeCollectionId,
                                 )
                             },
+                            onEnterSelection = {
+                                selectionState = LibrarySelectionState(
+                                    generation = state.generation,
+                                    collectionId = activeCollectionId,
+                                )
+                            },
                             onSort = actions::onSort,
                             onLayoutChange = actions::onLayoutChange,
                             onRetry = actions::onRetryLibrary,
@@ -2250,6 +2257,7 @@ internal fun LibraryAppsDestination(
     onExitSelection: () -> Unit = {},
     onSelectAll: () -> Unit = {},
     onUnselectAll: () -> Unit = {},
+    onEnterSelection: () -> Unit = {},
     onSort: (Int) -> Unit,
     onLayoutChange: (LibraryLayout) -> Unit = {},
     onRetry: () -> Unit,
@@ -2449,6 +2457,7 @@ internal fun LibraryAppsDestination(
             onExitSelection = { if (currentActive) onExitSelection() },
             onSelectAll = { if (currentActive) onSelectAll() },
             onUnselectAll = { if (currentActive) onUnselectAll() },
+            onEnterSelection = { if (currentActive) onEnterSelection() },
             title = title,
             onBack = onBack?.let { back -> { if (currentActive) back() } },
             showQuickViews = showQuickViews && !selectionState.isActive,
@@ -2733,17 +2742,10 @@ private fun LibrarySelectionBottomBar(
                 onClick = onShare,
                 enabled = enabled,
             )
-            LibrarySelectionAction(
-                icon = R.drawable.ic_reinstall,
-                label = stringResource(R.string.library_bulk_reinstall_apps),
-                onClick = onReinstall,
+            LibrarySelectionOverflowAction(
                 enabled = enabled,
-            )
-            LibrarySelectionAction(
-                icon = R.drawable.ic_file_download,
-                label = stringResource(R.string.library_bulk_export_apps),
-                onClick = onExport,
-                enabled = enabled,
+                onReinstall = onReinstall,
+                onExport = onExport,
             )
         }
     }
@@ -2778,6 +2780,69 @@ private fun RowScope.LibrarySelectionAction(
                 contentDescription = null,
                 tint = contentColor,
             )
+        }
+        Text(
+            text = label,
+            color = contentColor,
+            style = MaterialTheme.typography.labelSmall,
+            maxLines = 2,
+            overflow = TextOverflow.Ellipsis,
+            textAlign = TextAlign.Center,
+        )
+    }
+}
+
+@Composable
+private fun RowScope.LibrarySelectionOverflowAction(
+    enabled: Boolean,
+    onReinstall: () -> Unit,
+    onExport: () -> Unit,
+) {
+    var expanded by remember { mutableStateOf(false) }
+    val label = stringResource(R.string.library_actions_more)
+    val contentColor = if (enabled) MaterialTheme.colorScheme.onSurfaceVariant
+        else MaterialTheme.colorScheme.onSurface.copy(alpha = 0.38f)
+    Column(
+        modifier = Modifier.weight(1f),
+        horizontalAlignment = Alignment.CenterHorizontally,
+    ) {
+        Box {
+            IconButton(
+                onClick = { expanded = true },
+                enabled = enabled,
+                modifier = Modifier.semantics { contentDescription = label },
+            ) {
+                Icon(
+                    painter = painterResource(R.drawable.ic_more_vert),
+                    contentDescription = null,
+                    tint = contentColor,
+                )
+            }
+            DropdownMenu(
+                expanded = expanded,
+                onDismissRequest = { expanded = false },
+            ) {
+                DropdownMenuItem(
+                    text = { Text(stringResource(R.string.library_bulk_reinstall_apps)) },
+                    onClick = {
+                        expanded = false
+                        onReinstall()
+                    },
+                    leadingIcon = {
+                        Icon(painterResource(R.drawable.ic_reinstall), contentDescription = null)
+                    },
+                )
+                DropdownMenuItem(
+                    text = { Text(stringResource(R.string.library_bulk_export_apps)) },
+                    onClick = {
+                        expanded = false
+                        onExport()
+                    },
+                    leadingIcon = {
+                        Icon(painterResource(R.drawable.ic_file_download), contentDescription = null)
+                    },
+                )
+            }
         }
         Text(
             text = label,
@@ -2862,6 +2927,7 @@ private fun LibraryAppsHeader(
     onExitSelection: () -> Unit = {},
     onSelectAll: () -> Unit = {},
     onUnselectAll: () -> Unit = {},
+    onEnterSelection: () -> Unit = {},
     title: String? = null,
     onBack: (() -> Unit)? = null,
     showQuickViews: Boolean = true,
@@ -2896,6 +2962,10 @@ private fun LibraryAppsHeader(
     val visibleAppIds = if (selectionState.isActive) state.projectedAppIds else emptyList()
     val selectedSort = state.sortVariant and Int.MAX_VALUE
     val ascending = state.sortVariant >= 0
+    val selectAction = onEnterSelection.takeIf {
+        !selectionState.isActive && !searchActive && title == null && onBack == null &&
+            state.databaseControlsReady && state.apps.isNotEmpty()
+    }
     val compactHeaderActions = LocalDensity.current.fontScale >= 1.5f &&
         availableWindowWidthDp() < 600.dp &&
         !selectionState.isActive && title == null && onBack == null
@@ -3006,6 +3076,7 @@ private fun LibraryAppsHeader(
                                 LibraryHeaderActions(
                                     onOpenSearch = onOpenSearch,
                                     onOpenSettings = onOpenGlobalSettings,
+                                    onEnterSelection = selectAction,
                                     enabled = titleActionsEnabled,
                                 )
                             }
@@ -3059,6 +3130,7 @@ private fun LibraryAppsHeader(
                 LibraryHeaderActions(
                     onOpenSearch = onOpenSearch,
                     onOpenSettings = onOpenGlobalSettings,
+                    onEnterSelection = selectAction,
                     enabled = titleActionsEnabled,
                 )
             }
@@ -3072,34 +3144,43 @@ private fun LibraryAppsHeader(
             verticalAlignment = Alignment.CenterVertically,
             horizontalArrangement = Arrangement.spacedBy(8.dp),
         ) {
-            Box(modifier = Modifier.weight(1f)) {
-                TextButton(
-                    enabled = searchActionsEnabled,
-                    onClick = { scopePickerVisible = true },
-                ) {
-                    if (!compactHeaderActions) {
-                        Icon(
-                            painter = painterResource(
-                                if (selectedCollection == null) R.drawable.ic_apps else R.drawable.ic_folder,
-                            ),
-                            contentDescription = null,
-                            modifier = Modifier.size(20.dp),
-                        )
-                        Spacer(Modifier.width(8.dp))
-                    }
-                    Text(
-                        text = selectedCollection?.name
-                            ?: stringResource(R.string.library_filter_all),
-                        maxLines = 1,
-                        overflow = TextOverflow.Ellipsis,
+            Row(
+                modifier = Modifier
+                    .weight(1f)
+                    .height(52.dp)
+                    .clip(MaterialTheme.shapes.large)
+                    .background(MaterialTheme.colorScheme.surfaceContainerLow)
+                    .clickable(
+                        enabled = searchActionsEnabled,
+                        role = Role.Button,
+                        onClick = { scopePickerVisible = true },
                     )
-                    Icon(
-                        painter = painterResource(R.drawable.ic_keyboard_arrow_down),
-                        contentDescription = null,
-                    )
-                }
-
+                    .padding(horizontal = 12.dp),
+                verticalAlignment = Alignment.CenterVertically,
+                horizontalArrangement = Arrangement.spacedBy(8.dp),
+            ) {
+                Icon(
+                    painter = painterResource(
+                        if (selectedCollection == null) R.drawable.ic_apps else R.drawable.ic_folder,
+                    ),
+                    contentDescription = null,
+                    modifier = Modifier.size(20.dp),
+                )
+                Text(
+                    text = selectedCollection?.name
+                        ?: stringResource(R.string.library_destination_apps),
+                    modifier = Modifier.weight(1f),
+                    style = MaterialTheme.typography.titleSmall,
+                    maxLines = 1,
+                    overflow = TextOverflow.Ellipsis,
+                )
+                Icon(
+                    painter = painterResource(R.drawable.ic_keyboard_arrow_down),
+                    contentDescription = null,
+                    modifier = Modifier.size(20.dp),
+                )
             }
+
             Box {
                 LibrarySortButton(
                     onClick = { onSortVisibilityChanged(true) },
@@ -3254,8 +3335,31 @@ private fun LibraryAppsHeader(
 private fun LibraryHeaderActions(
     onOpenSearch: () -> Unit,
     onOpenSettings: () -> Unit,
+    onEnterSelection: (() -> Unit)? = null,
     enabled: Boolean,
 ) {
+    if (onEnterSelection != null) {
+        val showLabel = availableWindowWidthDp() >= 400.dp &&
+            LocalDensity.current.fontScale < 1.3f
+        if (showLabel) {
+            TextButton(onClick = onEnterSelection, enabled = enabled) {
+                Icon(
+                    painter = painterResource(R.drawable.ic_select_all),
+                    contentDescription = null,
+                    modifier = Modifier.size(20.dp),
+                )
+                Spacer(Modifier.width(4.dp))
+                Text(stringResource(R.string.library_action_select))
+            }
+        } else {
+            IconButton(onClick = onEnterSelection, enabled = enabled) {
+                Icon(
+                    painter = painterResource(R.drawable.ic_select_all),
+                    contentDescription = stringResource(R.string.library_action_select),
+                )
+            }
+        }
+    }
     IconButton(onClick = onOpenSearch, enabled = enabled) {
         Icon(
             painter = painterResource(R.drawable.ic_search),
@@ -3747,29 +3851,21 @@ private fun LibraryListItem(
     Column(
         modifier = Modifier
             .fillMaxWidth()
-            .padding(horizontal = 12.dp, vertical = 3.dp)
+            .padding(horizontal = 12.dp, vertical = 4.dp)
             .clip(MaterialTheme.shapes.large)
             .background(
                 if (selectionMode && selected) MaterialTheme.colorScheme.secondaryContainer
-                else MaterialTheme.colorScheme.surfaceContainerLow,
+                else MaterialTheme.colorScheme.surfaceContainer,
             )
             .then(
                 if (controllerFocused) {
                     Modifier.testTag("library-controller-focus-indicator")
-                } else {
-                    Modifier
-                },
-            )
-            .then(
-                if (controllerFocused) {
-                    Modifier.border(
-                        width = 2.dp,
-                        color = MaterialTheme.colorScheme.primary,
-                        shape = RoundedCornerShape(8.dp),
-                    )
-                } else {
-                    Modifier
-                },
+                        .border(
+                            width = 2.dp,
+                            color = MaterialTheme.colorScheme.primary,
+                            shape = MaterialTheme.shapes.large,
+                        )
+                } else Modifier
             )
             .then(interactionModifier)
             .semantics {
@@ -3783,8 +3879,8 @@ private fun LibraryListItem(
         Row(
             modifier = Modifier
                 .fillMaxWidth()
-                .padding(start = 16.dp, end = 12.dp, top = 6.dp, bottom = 6.dp),
-            verticalAlignment = Alignment.CenterVertically,
+                .padding(start = 14.dp, end = 8.dp, top = 10.dp, bottom = 10.dp),
+            verticalAlignment = Alignment.Top,
         ) {
             LibraryIconSlot(
                 app = app,
@@ -3796,53 +3892,57 @@ private fun LibraryListItem(
             )
             Spacer(Modifier.width(12.dp))
             Column(modifier = Modifier.weight(1f)) {
-                Text(
-                    text = app.title,
-                    style = MaterialTheme.typography.titleMedium,
-                    maxLines = 2,
-                    overflow = TextOverflow.Ellipsis,
-                )
-                Text(
-                    text = stringResource(
-                        R.string.library_vendor_version,
-                        app.author,
-                        app.version,
-                    ),
-                    color = MaterialTheme.colorScheme.onSurfaceVariant,
-                    style = MaterialTheme.typography.bodySmall,
-                    maxLines = 1,
-                    overflow = TextOverflow.Ellipsis,
-                )
-            }
-            Spacer(Modifier.width(6.dp))
-            if (selectionMode) {
-                Checkbox(
-                    checked = selected,
-                    onCheckedChange = null,
-                    modifier = Modifier.clearAndSetSemantics { },
-                )
-            } else if (favoriteEnabled && availableWindowWidthDp() >= 360.dp) {
-                LibraryFavoriteButton(app, onFavorite)
-            }
-            if (!selectionMode) {
-                IconButton(
-                    onClick = { onOpenActions(app) },
-                    modifier = Modifier.size(48.dp),
-                ) {
-                    Icon(
-                        painter = painterResource(R.drawable.ic_more_vert),
-                        contentDescription = stringResource(R.string.library_app_more_actions, app.title),
+                Row(verticalAlignment = Alignment.CenterVertically) {
+                    Column(modifier = Modifier.weight(1f)) {
+                        Text(
+                            text = app.title,
+                            style = MaterialTheme.typography.titleMedium,
+                            maxLines = 2,
+                            overflow = TextOverflow.Ellipsis,
+                        )
+                        Text(
+                            text = stringResource(
+                                R.string.library_vendor_version,
+                                app.author,
+                                app.version,
+                            ),
+                            color = MaterialTheme.colorScheme.onSurfaceVariant,
+                            style = MaterialTheme.typography.bodySmall,
+                            maxLines = 1,
+                            overflow = TextOverflow.Ellipsis,
+                        )
+                    }
+                    if (selectionMode) {
+                        Checkbox(
+                            checked = selected,
+                            onCheckedChange = null,
+                            modifier = Modifier.clearAndSetSemantics { },
+                        )
+                    } else {
+                        if (favoriteEnabled && availableWindowWidthDp() >= 360.dp) {
+                            LibraryFavoriteButton(app, onFavorite)
+                        }
+                        IconButton(
+                            onClick = { onOpenActions(app) },
+                            modifier = Modifier.size(48.dp),
+                        ) {
+                            Icon(
+                                painter = painterResource(R.drawable.ic_more_vert),
+                                contentDescription = stringResource(
+                                    R.string.library_app_more_actions, app.title,
+                                ),
+                            )
+                        }
+                    }
+                }
+                if (showDescription && app.description.isNotBlank()) {
+                    Spacer(Modifier.height(5.dp))
+                    LibraryDescription(
+                        descriptionValue = app.description,
+                        appId = app.databaseId,
+                        onOpenDetails = { onOpenDetails(app) },
                     )
                 }
-            }
-        }
-        if (showDescription && app.description.isNotBlank()) {
-            Box(modifier = Modifier.padding(start = 80.dp, end = 16.dp, bottom = 8.dp)) {
-                LibraryDescription(
-                    descriptionValue = app.description,
-                    appId = app.databaseId,
-                    onOpenDetails = { onOpenDetails(app) },
-                )
             }
         }
     }
@@ -3857,13 +3957,29 @@ internal fun LibraryDescription(
     val description = descriptionValue.trim()
     if (description.isEmpty()) return
     var overflows by remember(appId, description) { mutableStateOf(false) }
-    Column(modifier = Modifier.fillMaxWidth()) {
+    val detailsLabel = stringResource(R.string.library_details_view_details)
+    Row(
+        modifier = Modifier
+            .fillMaxWidth()
+            .then(
+                if (overflows) {
+                    Modifier
+                        .testTag("library_description_toggle")
+                        .clip(MaterialTheme.shapes.small)
+                        .clickable(
+                            role = Role.Button,
+                            onClickLabel = detailsLabel,
+                            onClick = onOpenDetails,
+                        )
+                } else Modifier
+            ),
+        verticalAlignment = Alignment.CenterVertically,
+    ) {
         Text(
             text = description,
-            modifier = Modifier.fillMaxWidth(),
+            modifier = Modifier.weight(1f),
             color = MaterialTheme.colorScheme.onSurfaceVariant,
             style = MaterialTheme.typography.bodySmall,
-            textAlign = TextAlign.Start,
             maxLines = 2,
             overflow = TextOverflow.Ellipsis,
             onTextLayout = { layout ->
@@ -3872,19 +3988,11 @@ internal fun LibraryDescription(
             },
         )
         if (overflows) {
-            Text(
-                text = stringResource(R.string.library_details_view_details),
-                modifier = Modifier
-                    .align(Alignment.End)
-                    .testTag("library_description_toggle")
-                    .clickable(
-                        onClickLabel = stringResource(R.string.library_details_view_details),
-                        role = Role.Button,
-                        onClick = onOpenDetails,
-                    )
-                    .padding(top = 4.dp, bottom = 4.dp),
-                style = MaterialTheme.typography.labelMedium,
-                color = MaterialTheme.colorScheme.primary,
+            Icon(
+                painter = painterResource(R.drawable.ic_info),
+                contentDescription = null,
+                tint = MaterialTheme.colorScheme.primary,
+                modifier = Modifier.padding(start = 6.dp).size(17.dp),
             )
         }
     }
@@ -5037,7 +5145,7 @@ internal fun AppActionsDialog(
     iconShape: LibraryIconShape = LibraryIconShape.Round,
     enhancedIcons: Boolean = true,
 ) {
-    val windowHeight = availableWindowHeightDp()
+    val windowHeight = LocalConfiguration.current.screenHeightDp.dp
     val useSheet = availableWindowWidthDp() < 600.dp && windowHeight >= 500.dp
     val compactHeader = windowHeight < 480.dp
     val listState = rememberLazyListState()
