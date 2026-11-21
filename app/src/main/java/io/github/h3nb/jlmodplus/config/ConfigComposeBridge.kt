@@ -219,6 +219,7 @@ class ConfigComposeController @JvmOverloads constructor(
         state = nextState
     }
 
+    @JvmOverloads
     fun showNotice(message: String, durationMillis: Long = 3_500L) {
         notices.show(message, durationMillis)
     }
