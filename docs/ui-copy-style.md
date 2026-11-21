@@ -60,11 +60,12 @@ different role when the actual hierarchy or readability requires it rather than
 preserving a poor historical mapping for consistency.
 
 - Top app bar titles use `titleLarge` or the component default.
-- Standard preference titles use `bodyLarge` (16 sp); concise preference
-  descriptions and summaries use `bodySmall` (12 sp) with `onSurfaceVariant`.
-  Values below descriptions use `labelLarge` (14 sp) with semi-bold weight
-  and `onSurface`. This gives the title the largest role while keeping the value
-  easy to find. These are semantic roles, not measured sizes from another app.
+- Standard preference titles use `bodyLarge` (16 sp). When a preference has
+  a current value, place it directly below the title in semi-bold `labelLarge`
+  (14 sp) with `onSurface`. Supporting descriptions follow the value, where
+  needed, in `bodySmall` (12 sp) with `onSurfaceVariant`. Use the shared
+  `PreferenceTextContent` for this hierarchy in MIDlet Config and global Settings.
+  These are semantic roles, not measured sizes from another app.
   Preserve font scaling and readable wrapping; disabled values and descriptions
   retain disabled emphasis. Longer instructions, messages, and dialog body text
   retain `bodyMedium` (14 sp), rather than shrinking actionable explanations.
@@ -75,8 +76,9 @@ preserving a poor historical mapping for consistency.
 - Disabled settings retain the same semantic type roles while lowering ordinary title,
   supporting, and value text with the Material 3 disabled emphasis. Do not leave
   supporting text at active contrast when its control is disabled.
-- Section titles generally use `titleMedium`. Screen headings may use
-  `headlineSmall`; alert/dialog headlines use `headlineSmall`.
+- Grouped Settings and MIDlet Config section labels use `titleSmall` with
+  `onSurfaceVariant`. Screen headings may use `headlineSmall`; app-owned
+  adaptive dialog titles use `titleLarge`.
 - Dialog body text uses `bodyMedium`; actions use `labelLarge` or their Material
   component default.
 - `bodySmall` is for concise preference summaries and compact secondary content such as metadata,
@@ -163,6 +165,29 @@ For asset handling and accessibility:
   legacy icon is revised, prefer the canonical Material Symbols equivalent when
   it preserves or improves the intended meaning; avoid repository-wide icon
   churn solely for source uniformity.
+
+## Preference help and contextual notices
+
+- Use progressive disclosure consistently: choice, number, and slider rows
+  show their title and current value; the existing selection/edit dialog
+  displays their full description. A description must not be silently dropped
+  unless there is an accessible, discoverable place to read it.
+- Switches and standalone actions have no separate choice dialog. Keep their
+  supporting explanation in the row when it is needed for an informed decision,
+  rather than truncating away important compatibility or data-loss details.
+  Omit redundant copy on self-explanatory settings.
+- Use shared `PreferenceNotice` roles for conditional messages across app-owned
+  preference surfaces. Info uses a neutral icon and text, not an accent-filled
+  banner; Warning uses the themed tertiary container, and Danger the error
+  container. Show warnings while the relevant condition exists, explaining the
+  consequence or recovery step. Do not make a persistent warning disappear on
+  tap or use a transient toast for required configuration guidance.
+- In System, unavailable timing shows its conversion/reinstall warning next to
+  the disabled option; enabling a compatibility override shows its guidance as
+  a persistent warning. General advice about Java ME system properties belongs
+  in the editor rather than consuming space in the settings list.
+- Never derive the severity of a message from its length. Icons support the text;
+  do not convey risk through color or icon alone.
 
 ## Popup layout and overflow
 
