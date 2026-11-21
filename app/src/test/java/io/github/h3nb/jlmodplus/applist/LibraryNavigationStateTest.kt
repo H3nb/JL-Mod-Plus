@@ -157,11 +157,11 @@ class LibraryNavigationStateTest {
     }
 
     @Test
-    fun saverMigratesLegacyOptionsDestinationToMore() {
+    fun saverMigratesRetiredSettingsDestinationToLibrary() {
         val restored = LibraryNavigationState.Saver.restore(
             listOf("Options", "List", "", "All", 0, null, emptyList<Any>()),
         )
 
-        assertEquals(LibraryDestinationKey.More, restored?.destination)
+        assertEquals(LibraryDestinationKey.Apps, restored?.destination)
     }
 }
