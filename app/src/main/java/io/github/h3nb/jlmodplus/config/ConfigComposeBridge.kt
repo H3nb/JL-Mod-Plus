@@ -21,6 +21,7 @@ import androidx.compose.foundation.BorderStroke
 import androidx.compose.foundation.Canvas
 import androidx.compose.foundation.shape.CircleShape
 import androidx.compose.foundation.pager.HorizontalPager
+import androidx.compose.foundation.focusable
 import androidx.compose.foundation.pager.rememberPagerState
 import androidx.compose.foundation.clickable
 import androidx.compose.foundation.interaction.MutableInteractionSource
@@ -106,6 +107,8 @@ import androidx.compose.ui.graphics.lerp
 import androidx.compose.ui.graphics.toArgb
 import androidx.compose.ui.graphics.drawscope.Stroke
 import androidx.compose.ui.platform.ComposeView
+import androidx.compose.ui.focus.FocusRequester
+import androidx.compose.ui.focus.focusRequester
 import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.platform.LocalDensity
 import androidx.compose.ui.platform.LocalLayoutDirection
@@ -120,9 +123,11 @@ import androidx.compose.ui.semantics.Role
 import androidx.compose.ui.semantics.clearAndSetSemantics
 import androidx.compose.ui.text.font.FontFamily
 import androidx.compose.ui.text.input.KeyboardType
+import androidx.compose.ui.text.input.ImeAction
 import androidx.compose.ui.text.style.TextOverflow
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.window.Dialog
+import androidx.annotation.StringRes
 import androidx.core.view.ViewCompat
 import kotlinx.coroutines.launch
 import javax.microedition.shell.timing.TimingMode
@@ -311,6 +316,7 @@ private enum class ConfigDetail { Font, Performance }
 
 private sealed interface ConfigPage {
     data object Main : ConfigPage
+    data object Search : ConfigPage
     data object SystemProperties : ConfigPage
     data class Detail(val type: ConfigDetail) : ConfigPage
     data class Rendering(val subpage: RenderingSubpage) : ConfigPage
@@ -318,12 +324,13 @@ private sealed interface ConfigPage {
 
 private fun ConfigPage.depth(): Int = when (this) {
     ConfigPage.Main -> 0
-    ConfigPage.SystemProperties, is ConfigPage.Detail, is ConfigPage.Rendering -> 1
+    ConfigPage.Search, ConfigPage.SystemProperties, is ConfigPage.Detail,
+    is ConfigPage.Rendering -> 1
 }
 
 private fun ConfigPage.siblingOrder(): Int = when (this) {
     is ConfigPage.Rendering -> subpage.ordinal
-    ConfigPage.Main, ConfigPage.SystemProperties, is ConfigPage.Detail -> 0
+    ConfigPage.Main, ConfigPage.Search, ConfigPage.SystemProperties, is ConfigPage.Detail -> 0
 }
 
 @Composable
@@ -359,6 +366,7 @@ internal fun ConfigScreen(
     var systemPropertiesSession by rememberSaveable { mutableIntStateOf(0) }
     var renderingSubpage by rememberSaveable { mutableStateOf<RenderingSubpage?>(null) }
     var detailPage by rememberSaveable { mutableStateOf<ConfigDetail?>(null) }
+    var searchVisible by rememberSaveable { mutableStateOf(false) }
     var revealSection by remember { mutableStateOf<String?>(null) }
     val backRendering: () -> Unit = { renderingSubpage = null }
     var presetPickerVisible by rememberSaveable { mutableStateOf(false) }
@@ -368,7 +376,9 @@ internal fun ConfigScreen(
         events.onFormChanged(next)
     }
     val requestBack = {
-        if (renderingSubpage != null) {
+        if (searchVisible) {
+            searchVisible = false
+        } else if (renderingSubpage != null) {
             backRendering()
         } else if (detailPage != null) {
             detailPage = null
@@ -382,7 +392,7 @@ internal fun ConfigScreen(
         }
     }
     // Only in-app navigation and profile drafts consume Back; the root Activity uses system Back.
-    BackHandler(enabled = renderingSubpage != null || detailPage != null ||
+    BackHandler(enabled = searchVisible || renderingSubpage != null || detailPage != null ||
         systemPropertiesEditorVisible || isProfile) {
         requestBack()
     }
@@ -412,6 +422,7 @@ internal fun ConfigScreen(
     val cutoutAvailable = cutoutSupportOverride ?: deviceHasDisplayCutout(density)
 
     val currentPage = when {
+        searchVisible -> ConfigPage.Search
         renderingSubpage != null -> ConfigPage.Rendering(requireNotNull(renderingSubpage))
         detailPage != null -> ConfigPage.Detail(requireNotNull(detailPage))
         systemPropertiesEditorVisible -> ConfigPage.SystemProperties
@@ -437,6 +448,21 @@ internal fun ConfigScreen(
             ),
         ) {
             when (shownPage) {
+                ConfigPage.Search -> {
+                    ConfigSearchPage(
+                        onBack = { searchVisible = false },
+                        onSelected = { destination, section, detail ->
+                            searchVisible = false
+                            if (detail != null) {
+                                detailPage = detail
+                                selectDestination(ConfigDestination.Display)
+                            } else {
+                                revealSection = section
+                                selectDestination(destination)
+                            }
+                        },
+                    )
+                }
                 is ConfigPage.Detail -> {
                     ConfigDetailPage(
                         detail = shownPage.type,
@@ -492,6 +518,7 @@ internal fun ConfigScreen(
                                     title = title,
                                     isProfile = isProfile,
                                     onBack = requestBack,
+                                    onSearch = { searchVisible = true },
                                     onStart = { menuActions?.onStart() },
                                     onSave = { menuActions?.onSaveProfileDraft() },
                                     saveEnabled = !isProfile || menuActions?.hasUnsavedProfileChanges() == true,
@@ -977,6 +1004,138 @@ private fun ConfigMaintenanceSection(
     }
 }
 
+private data class ConfigSearchItem(
+    @StringRes val title: Int,
+    @StringRes val section: Int,
+    val destination: ConfigDestination,
+    val detail: ConfigDetail? = null,
+    val keywords: String = "",
+)
+
+// A small index of existing options, not a second configuration model.
+private val configSearchIndex = listOf(
+    ConfigSearchItem(R.string.config_screen_size, R.string.config_basic_display, ConfigDestination.Display, keywords = "resolution dimensions"),
+    ConfigSearchItem(R.string.PREF_ORIENTATION, R.string.config_basic_display, ConfigDestination.Display, keywords = "rotation portrait landscape"),
+    ConfigSearchItem(R.string.pref_screen_scale_type, R.string.config_basic_display, ConfigDestination.Display, keywords = "scale zoom"),
+    ConfigSearchItem(R.string.PREF_SCALE_RATIO, R.string.config_basic_display, ConfigDestination.Display, keywords = "manual scale"),
+    ConfigSearchItem(R.string.pref_screen_gravity, R.string.config_basic_display, ConfigDestination.Display, keywords = "position"),
+    ConfigSearchItem(R.string.pref_screen_padding_title, R.string.config_basic_display, ConfigDestination.Display),
+    ConfigSearchItem(R.string.config_avoid_camera_cutout_title, R.string.config_basic_display, ConfigDestination.Display, keywords = "notch punch hole camera"),
+    ConfigSearchItem(R.string.PREF_FORCE_FULLSCREEN, R.string.config_basic_display, ConfigDestination.Display),
+    ConfigSearchItem(R.string.config_background_mode, R.string.config_display_appearance, ConfigDestination.Display),
+    ConfigSearchItem(R.string.config_background_custom_color, R.string.config_display_appearance, ConfigDestination.Display, keywords = "background color"),
+    ConfigSearchItem(R.string.pref_skin_title, R.string.config_display_appearance, ConfigDestination.Display, keywords = "skin frame bezel"),
+    ConfigSearchItem(R.string.pref_graphics_mode_title, R.string.config_display_rendering, ConfigDestination.Display, keywords = "renderer OpenGL ES"),
+    ConfigSearchItem(R.string.internal_resolution_title, R.string.config_display_rendering, ConfigDestination.Display, keywords = "resolution scaling"),
+    ConfigSearchItem(R.string.bitmap_upscaling_title, R.string.config_display_rendering, ConfigDestination.Display, keywords = "MMPX nearest bilinear edge aware sprites"),
+    ConfigSearchItem(R.string.render_shader_effects, R.string.config_display_rendering, ConfigDestination.Display, keywords = "shader GLSL effects"),
+    ConfigSearchItem(R.string.render_texture_filtering, R.string.config_display_rendering, ConfigDestination.Display, keywords = "texture filtering"),
+    ConfigSearchItem(R.string.parallel_screen_redrawing, R.string.config_display_rendering, ConfigDestination.Display),
+    ConfigSearchItem(R.string.config_font_sizes, R.string.config_display_text, ConfigDestination.Display, ConfigDetail.Font, "font text"),
+    ConfigSearchItem(R.string.SIZE_PRESETS, R.string.config_display_text, ConfigDestination.Display, ConfigDetail.Font),
+    ConfigSearchItem(R.string.PREF_FONT_SIZE_IN_SP, R.string.config_display_text, ConfigDestination.Display, ConfigDetail.Font),
+    ConfigSearchItem(R.string.PREF_FONT_ANTI_ALIASING, R.string.config_display_text, ConfigDestination.Display, ConfigDetail.Font),
+    ConfigSearchItem(R.string.PREF_LIMIT_FPS, R.string.config_display_performance, ConfigDestination.Display, ConfigDetail.Performance, "framerate fps"),
+    ConfigSearchItem(R.string.perf_overlay_title, R.string.config_display_performance, ConfigDestination.Display, ConfigDetail.Performance, "stats performance"),
+    ConfigSearchItem(R.string.PREF_IMMEDIATE, R.string.config_display_performance, ConfigDestination.Display, ConfigDetail.Performance),
+    ConfigSearchItem(R.string.PREF_VIRTUAL_KEYBOARD_OPTIONS, R.string.config_basic_input, ConfigDestination.Controls, keywords = "virtual keys controls"),
+    ConfigSearchItem(R.string.PREF_TOUCH_INPUT, R.string.config_basic_input, ConfigDestination.Controls),
+    ConfigSearchItem(R.string.PREF_LAYOUT, R.string.config_controls_key_input, ConfigDestination.Controls),
+    ConfigSearchItem(R.string.pref_map_keys, R.string.config_controls_key_input, ConfigDestination.Controls, keywords = "key mapping keyboard"),
+    ConfigSearchItem(R.string.config_analog_stick, R.string.config_controls_key_input, ConfigDestination.Controls, keywords = "gamepad joystick"),
+    ConfigSearchItem(R.string.PREF_VK_FEEDBACK, R.string.config_controls_virtual_keyboard, ConfigDestination.Controls),
+    ConfigSearchItem(R.string.PREF_VK_HIDE_DELAY, R.string.config_controls_virtual_keyboard, ConfigDestination.Controls),
+    ConfigSearchItem(R.string.pref_button_shape_title, R.string.config_controls_customization, ConfigDestination.Controls),
+    ConfigSearchItem(R.string.control_skin_title, R.string.config_controls_customization, ConfigDestination.Controls),
+    ConfigSearchItem(R.string.PREF_VK_ALPHA, R.string.config_controls_customization, ConfigDestination.Controls, keywords = "transparency opacity"),
+    ConfigSearchItem(R.string.RESET_LAYOUT_CMD, R.string.config_controls_maintenance, ConfigDestination.Controls),
+    ConfigSearchItem(R.string.pref_soundbank_title, R.string.pref_audio_title, ConfigDestination.Media, keywords = "MIDI audio"),
+    ConfigSearchItem(R.string.config_camera_default_title, R.string.config_camera_title, ConfigDestination.Media),
+    ConfigSearchItem(R.string.config_camera_resolution_title, R.string.config_camera_title, ConfigDestination.Media),
+    ConfigSearchItem(R.string.midlet_storage_mode_title, R.string.midlet_permissions_settings_title, ConfigDestination.System, keywords = "files storage"),
+    ConfigSearchItem(R.string.midlet_permissions_read, R.string.midlet_permissions_settings_title, ConfigDestination.System),
+    ConfigSearchItem(R.string.midlet_permissions_write, R.string.midlet_permissions_settings_title, ConfigDestination.System),
+    ConfigSearchItem(R.string.pref_skip_resume_call, R.string.pref_title_emulation, ConfigDestination.System),
+    ConfigSearchItem(R.string.PREF_TIMING_MODE, R.string.config_system_timing, ConfigDestination.System),
+    ConfigSearchItem(R.string.pref_encoding_title, R.string.PREF_SYS_PROPS, ConfigDestination.System),
+    ConfigSearchItem(R.string.config_edit_system_properties, R.string.PREF_SYS_PROPS, ConfigDestination.System, keywords = "properties CLDC Java ME"),
+    ConfigSearchItem(R.string.config_reset_all_settings, R.string.config_maintenance, ConfigDestination.System),
+    ConfigSearchItem(R.string.config_delete_app_data, R.string.config_maintenance, ConfigDestination.System, keywords = "clear data"),
+)
+
+@OptIn(ExperimentalMaterial3Api::class)
+@Composable
+private fun ConfigSearchPage(
+    onBack: () -> Unit,
+    onSelected: (ConfigDestination, String, ConfigDetail?) -> Unit,
+) {
+    val context = LocalContext.current
+    var query by rememberSaveable { mutableStateOf("") }
+    val focus = remember { FocusRequester() }
+    LaunchedEffect(Unit) { focus.requestFocus() }
+    val filtered = configSearchIndex.filter { entry ->
+        query.isBlank() || context.getString(entry.title).contains(query.trim(), ignoreCase = true) ||
+            context.getString(entry.section).contains(query.trim(), ignoreCase = true) ||
+            entry.keywords.contains(query.trim(), ignoreCase = true)
+    }
+    Scaffold(
+        contentWindowInsets = WindowInsets.safeDrawing,
+        topBar = {
+            TopAppBar(
+                title = { Text(stringResource(R.string.config_search_title)) },
+                navigationIcon = {
+                    IconButton(onClick = onBack) {
+                        Icon(painterResource(R.drawable.ic_arrow_back),
+                            contentDescription = stringResource(R.string.action_back))
+                    }
+                },
+            )
+        },
+    ) { padding ->
+        Column(
+            Modifier.fillMaxSize().padding(padding).consumeWindowInsets(padding)
+                .imePadding().padding(horizontal = 16.dp),
+            horizontalAlignment = Alignment.CenterHorizontally,
+        ) {
+            OutlinedTextField(
+                value = query,
+                onValueChange = { query = it },
+                singleLine = true,
+                leadingIcon = {
+                    Icon(painterResource(R.drawable.ic_search), contentDescription = null)
+                },
+                placeholder = { Text(stringResource(R.string.config_search_hint)) },
+                keyboardOptions = KeyboardOptions(imeAction = ImeAction.Search),
+                modifier = Modifier.fillMaxWidth().widthIn(max = 720.dp).focusRequester(focus),
+            )
+            LazyColumn(
+                modifier = Modifier.weight(1f).widthIn(max = 720.dp),
+            ) {
+                if (filtered.isEmpty()) {
+                    item {
+                        Text(
+                            stringResource(R.string.config_search_no_results),
+                            modifier = Modifier.padding(vertical = 24.dp),
+                            color = MaterialTheme.colorScheme.onSurfaceVariant,
+                        )
+                    }
+                }
+                itemsIndexed(filtered, key = { _, entry -> entry.title }) { _, entry ->
+                    ListItem(
+                        headlineContent = { Text(stringResource(entry.title)) },
+                        supportingContent = {
+                            Text("${stringResource(entry.destination.label)} · ${stringResource(entry.section)}")
+                        },
+                        modifier = Modifier.clickable {
+                            onSelected(entry.destination, context.getString(entry.section), entry.detail)
+                        },
+                    )
+                }
+            }
+        }
+    }
+}
+
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
 private fun ConfigDetailPage(
@@ -1093,6 +1252,7 @@ private fun ConfigTopBar(
     title: String,
     isProfile: Boolean,
     onBack: () -> Unit,
+    onSearch: () -> Unit,
     onStart: () -> Unit,
     onSave: () -> Unit,
     saveEnabled: Boolean,
@@ -1114,6 +1274,12 @@ private fun ConfigTopBar(
             }
         },
         actions = {
+            IconButton(onClick = onSearch) {
+                Icon(
+                    painter = painterResource(R.drawable.ic_search),
+                    contentDescription = stringResource(R.string.config_search_title),
+                )
+            }
             if (isProfile) {
                 TextButton(onClick = onSave, enabled = saveEnabled) {
                     Text(stringResource(R.string.save))
