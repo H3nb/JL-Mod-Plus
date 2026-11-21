@@ -796,39 +796,16 @@ class LibraryComposeTest {
     }
 
     @Test
-    fun libraryHeaderSelectStartsWithoutSelectingAnyApps() {
-        val actions = RecordingLibraryActions()
-        setLibraryContent(
-            state = LibraryUiState(
-                loading = false,
-                generation = 11L,
-                databaseControlsReady = true,
-                apps = listOf(
-                    LibraryAppUiItem(
-                        id = 7,
-                        title = "Demo MIDlet",
-                        author = "Example Vendor",
-                        version = "1.0",
-                        iconPath = null,
-                        canReinstall = true,
-                        databaseId = 70L,
-                    ),
-                ),
-                availableAppIds = setOf(70L),
-                projectedAppIds = listOf(70L),
-            ),
-            actions = actions,
-        )
-
-        composeRule.onNodeWithContentDescription(uiString(R.string.library_action_select))
-            .assertIsDisplayed()
+    fun notificationsEntryOpensEmptyCenterAndReturnsToLibrary() {
+        setLibraryContent(actions = RecordingLibraryActions())
+        composeRule.onAllNodesWithContentDescription(uiString(R.string.library_action_select))
+            .assertCountEquals(0)
+        composeRule.onNodeWithContentDescription(uiString(R.string.library_notifications_title))
             .performClick()
-        composeRule.onNodeWithText("0 apps").assertIsDisplayed()
-        composeRule.onNodeWithContentDescription(
-            uiString(R.string.library_selection_checkbox_description, "Demo MIDlet"),
-        ).performClick()
-        composeRule.onNodeWithText("1 app").assertIsDisplayed()
-        assertEquals(null, actions.openedId)
+        composeRule.onNodeWithText(uiString(R.string.library_notifications_empty_title))
+            .assertIsDisplayed()
+        composeRule.onNodeWithContentDescription(uiString(R.string.library_back)).performClick()
+        composeRule.onNodeWithTag("library_scope_picker").assertIsDisplayed()
     }
 
     @Test
@@ -1049,43 +1026,34 @@ class LibraryComposeTest {
     }
 
     @Test
-    fun longDescriptionOpensDetailsWithoutExpandingTheListCard() {
+    fun listHasNoDescriptionAndDetailsRemainInAppActions() {
         val actions = RecordingLibraryActions()
-        val longDescription = "A MIDlet description that is long enough to require an expandable preview. ".repeat(8)
+        val description = "This description belongs on the MIDlet details screen."
         setLibraryContent(
             state = LibraryUiState(
                 loading = false,
                 apps = listOf(
                     LibraryAppUiItem(
                         id = 7,
-                        title = "Long description",
+                        title = "Demo MIDlet",
                         author = "Example Vendor",
                         version = "1.0",
                         iconPath = null,
                         canReinstall = true,
-                        description = longDescription,
-                    ),
-                    LibraryAppUiItem(
-                        id = 8,
-                        title = "Short description",
-                        author = "Example Vendor",
-                        version = "1.0",
-                        iconPath = null,
-                        canReinstall = true,
-                        description = "Short description.",
+                        description = description,
                     ),
                 ),
             ),
             actions = actions,
         )
-
-        composeRule.onAllNodesWithTag("library_description_toggle").assertCountEquals(1)
-        composeRule.onNodeWithTag("library_description_toggle").assertHasClickAction().performClick()
-        composeRule.onNodeWithText(uiString(R.string.library_details_title)).assertIsDisplayed()
-        composeRule.onNodeWithText(longDescription).assertIsDisplayed()
+        composeRule.onAllNodesWithText(description).assertCountEquals(0)
+        composeRule.onAllNodesWithTag("library_description_toggle").assertCountEquals(0)
+        composeRule.onNodeWithContentDescription(
+            uiString(R.string.library_app_more_actions, "Demo MIDlet"),
+        ).performClick()
+        composeRule.onNodeWithText(uiString(R.string.library_details_action)).performClick()
+        composeRule.onNodeWithText(description).assertIsDisplayed()
         assertEquals(null, actions.openedId)
-        composeRule.onNodeWithContentDescription(uiString(R.string.action_back)).performClick()
-        composeRule.onNodeWithText("Short description").assertIsDisplayed()
     }
 
     @Test
