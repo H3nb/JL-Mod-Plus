@@ -71,12 +71,6 @@ private val PreviewSettingsState = SettingsUiState(
     workingDirectory = "/storage/emulated/0/JL-Mod Plus",
     libraryChoices = listOf(
         SettingsChoice(
-            "pref_apps_view",
-            "Layout",
-            SettingsOption("grid", "Grid"),
-            listOf(SettingsOption("list", "List"), SettingsOption("grid", "Grid")),
-        ),
-        SettingsChoice(
             "pref_apps_icon_ratio",
             "Icon aspect ratio",
             SettingsOption("square", "1:1"),
