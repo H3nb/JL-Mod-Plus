@@ -738,7 +738,7 @@ class ConfigComposeTest {
 
         composeRule.onNodeWithTag("config_profile_picker").performClick()
         composeRule.onNodeWithText("RPG 240×320").performClick()
-        composeRule.onNodeWithText(uiString(R.string.preset_choose_parts)).assertExists()
+        composeRule.onNodeWithText(uiString(R.string.preset_choose_parts)).assertExists().performClick()
         composeRule.onNodeWithTag("profile_scope_whole_profile").assertExists()
         composeRule.onNodeWithTag("profile_scope_settings").assertExists()
         composeRule.onNodeWithTag("profile_scope_keyboard_layout").assertExists()
@@ -771,6 +771,7 @@ class ConfigComposeTest {
 
         composeRule.onNodeWithTag("config_profile_picker").performClick()
         composeRule.onNodeWithText("RPG 240×320").performClick()
+        composeRule.onNodeWithText(uiString(R.string.preset_choose_parts)).performClick()
         composeRule.onNodeWithTag("profile_scope_settings").performClick()
         composeRule.onNodeWithText("Apply").performClick()
         assertEquals(ConfigFormEvents.PresetApplyScope.SETTINGS, events.appliedScope)
