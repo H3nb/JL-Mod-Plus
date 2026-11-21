@@ -129,6 +129,7 @@ class ProfilesComposeController(
         state = ProfilesUiState(profiles = items)
     }
 
+    @JvmOverloads
     fun showNotice(message: String, durationMillis: Long = 3_500L) {
         notices.show(message, durationMillis)
     }
