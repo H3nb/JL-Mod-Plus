@@ -85,10 +85,14 @@ internal fun rememberLibraryInlineSearchControllerFocus(
                     focusVisible = true
                     val target = next + 1 // The Library chrome occupies index zero.
                     if (currentLayout == LibraryLayout.Grid) {
-                        if (gridState.layoutInfo.visibleItemsInfo.none { it.index == target }) {
+                        if (target < gridState.layoutInfo.totalItemsCount &&
+                            gridState.layoutInfo.visibleItemsInfo.none { it.index == target }
+                        ) {
                             gridState.scrollToItem(target, -currentHeaderHeight)
                         }
-                    } else if (listState.layoutInfo.visibleItemsInfo.none { it.index == target }) {
+                    } else if (target < listState.layoutInfo.totalItemsCount &&
+                        listState.layoutInfo.visibleItemsInfo.none { it.index == target }
+                    ) {
                         listState.scrollToItem(target, -currentHeaderHeight)
                     }
                 }

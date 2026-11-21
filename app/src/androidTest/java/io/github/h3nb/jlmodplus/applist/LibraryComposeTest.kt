@@ -293,6 +293,37 @@ class LibraryComposeTest {
     }
 
     @Test
+    fun controllerSearchActivatesMatchedResultInsteadOfHiddenBrowseFocus() {
+        val events = MutableSharedFlow<LibraryControllerEvent>(extraBufferCapacity = 8)
+        val actions = RecordingLibraryActions()
+        composeRule.setContent {
+            JLModPlusTheme {
+                LibraryScreen(
+                    state = LibraryUiState(
+                        loading = false,
+                        apps = listOf(
+                            LibraryAppUiItem(7, "Demo MIDlet", "Vendor", "1.0", null, true),
+                            LibraryAppUiItem(8, "Second MIDlet", "Vendor", "1.0", null, true),
+                        ),
+                    ),
+                    actions = actions,
+                    controllerEvents = events,
+                )
+            }
+        }
+        composeRule.onNodeWithContentDescription(uiString(R.string.library_search_placeholder))
+            .performClick()
+        composeRule.onNode(hasSetTextAction()).performTextInput("Second")
+        composeRule.waitUntil(5_000) {
+            events.subscriptionCount.value >= 2 &&
+                composeRule.onAllNodesWithText("Second MIDlet").fetchSemanticsNodes().isNotEmpty()
+        }
+        assertTrue(events.tryEmit(LibraryControllerEvent(1L, LibraryControllerCommand.Activate)))
+        composeRule.waitUntil(5_000) { actions.openedId == 8 }
+        assertEquals(8, actions.openedId)
+    }
+
+    @Test
     fun singleLibraryRootExposesSearchAndSettingsWithoutTabNavigation() {
         val actions = RecordingLibraryActions()
         setLibraryContent(actions = actions)
