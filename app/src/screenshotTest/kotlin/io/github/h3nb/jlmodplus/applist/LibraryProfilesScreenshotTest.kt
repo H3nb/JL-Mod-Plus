@@ -465,22 +465,6 @@ fun LibraryMidletDetailsScreenshot() {
 }
 
 @PreviewTest
-@Preview(name = "Library options", widthDp = 360, heightDp = 640, showBackground = true)
-@Composable
-fun LibraryOptionsScreenshot() {
-    JLModPlusTheme(darkTheme = false) {
-        LibraryMoreDestination(
-            scaffoldPadding = PaddingValues(),
-            onImportAppBundle = {},
-            onAbout = {},
-            onDonate = {},
-            onSettings = {},
-            onCrashReports = {},
-        )
-    }
-}
-
-@PreviewTest
 @Preview(name = "Library collection management", widthDp = 900, heightDp = 700, showBackground = true)
 @Composable
 fun LibraryCollectionsScreenshot() {
@@ -525,30 +509,6 @@ private fun IndonesianScreenshotContent(content: @Composable () -> Unit) {
         LocalConfiguration provides localizedContext.resources.configuration,
         content = content,
     )
-}
-
-@PreviewTest
-@Preview(
-    name = "Library options Indonesian",
-    widthDp = 360,
-    heightDp = 640,
-    locale = "id",
-    showBackground = true,
-)
-@Composable
-fun LibraryOptionsIndonesianScreenshot() {
-    IndonesianScreenshotContent {
-        JLModPlusTheme(darkTheme = false) {
-            LibraryMoreDestination(
-                scaffoldPadding = PaddingValues(),
-                onImportAppBundle = {},
-                onAbout = {},
-                onDonate = {},
-                onSettings = {},
-                onCrashReports = {},
-            )
-        }
-    }
 }
 
 @PreviewTest
