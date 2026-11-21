@@ -171,10 +171,11 @@ private fun PresetActionRows(
             )
         }
         updatePresetName?.let { name ->
+            val updateDescription = stringResource(R.string.preset_update, name)
             TextButton(
                 onClick = { onUpdatePreset(name) },
                 modifier = Modifier.testTag("preset_update_action").semantics {
-                    contentDescription = stringResource(R.string.preset_update, name)
+                    contentDescription = updateDescription
                 },
             ) {
                 Text(stringResource(R.string.preset_update_confirm))
