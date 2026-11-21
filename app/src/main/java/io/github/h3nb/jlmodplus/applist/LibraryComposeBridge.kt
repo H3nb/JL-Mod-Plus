@@ -5110,6 +5110,13 @@ internal fun AppActionsDialog(
                 action = onAddToCollection,
             ))
         }
+        if (onRemoveFromCollection != null) {
+            add(DialogActionEntry(
+                label = R.string.library_collection_remove_from_current,
+                icon = R.drawable.ic_remove_from_collection,
+                action = onRemoveFromCollection,
+            ))
+        }
         if (onShortcut != null) {
             add(DialogActionEntry(
                 label = R.string.action_context_shortcut,
@@ -5137,13 +5144,6 @@ internal fun AppActionsDialog(
             destructive = true,
             action = onDelete,
         ))
-        if (onRemoveFromCollection != null) {
-            add(DialogActionEntry(
-                label = R.string.library_collection_remove_from_current,
-                icon = R.drawable.ic_remove_from_collection,
-                action = onRemoveFromCollection,
-            ))
-        }
     }
     // Adaptive dialogs are narrower than the full landscape window.
     val tileViewportWidth = if (useSheet) {
@@ -5153,7 +5153,7 @@ internal fun AppActionsDialog(
     }
     val tileMinWidth = if (LocalDensity.current.fontScale >= 1.5f) 200.dp else 148.dp
     val gridColumns = ((tileViewportWidth + 8.dp) / (tileMinWidth + 8.dp))
-        .toInt().coerceAtLeast(1)
+        .toInt().coerceIn(1, entries.size.coerceAtLeast(1))
     val gridRows = (entries.size + gridColumns - 1) / gridColumns
 
     val currentEntries by rememberUpdatedState(entries)
