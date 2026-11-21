@@ -2348,8 +2348,10 @@ private fun CompatibilitySection(
     ConfigSection(title = stringResource(R.string.config_system_compatibility)) {
         ConfigSwitchPreference(
             title = stringResource(R.string.pref_skip_resume_call),
-            description = stringResource(R.string.config_help_skip_resume),
+            description = if (form.skipResumeCall) null else stringResource(R.string.config_help_skip_resume),
             checked = form.skipResumeCall,
+            message = if (form.skipResumeCall) stringResource(R.string.config_help_skip_resume) else null,
+            messageLevel = ConfigMessageLevel.Warning,
             onCheckedChange = { checked -> onFormChanged(form.toBuilder().skipResumeCall(checked).build()) },
         )
         ConfigSwitchPreference(
