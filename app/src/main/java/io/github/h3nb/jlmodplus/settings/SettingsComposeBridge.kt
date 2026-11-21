@@ -76,6 +76,12 @@ import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.style.TextOverflow
 import androidx.compose.ui.unit.dp
 import io.github.h3nb.jlmodplus.R
+import io.github.h3nb.jlmodplus.util.Constants.PREF_APPS_ENHANCED_ICONS
+import io.github.h3nb.jlmodplus.util.Constants.PREF_APPS_ICON_RATIO
+import io.github.h3nb.jlmodplus.util.Constants.PREF_APPS_ICON_SHAPE
+import io.github.h3nb.jlmodplus.util.Constants.PREF_KEEP_SCREEN
+import io.github.h3nb.jlmodplus.util.Constants.PREF_STATUSBAR
+import io.github.h3nb.jlmodplus.util.Constants.PREF_TOOLBAR
 import io.github.h3nb.jlmodplus.applist.LibraryAboutScreen
 import io.github.h3nb.jlmodplus.applist.LibraryInfoDialog
 import io.github.h3nb.jlmodplus.applist.LibraryInformationDialog
@@ -195,6 +201,17 @@ fun SettingsScreen(
     }
     val settingsListState = rememberLazyListState()
 
+    val libraryOptions = state.libraryChoices.map { SettingsOptionEntry.Choice(it) } +
+        state.librarySwitches.map { SettingsOptionEntry.Toggle(it) }
+    val libraryIconOptions = libraryOptions.filter { it.key in libraryIconKeys }
+    val libraryGridOptions = libraryOptions.filterNot { it.key in libraryIconKeys }
+    val runtimeScreenOptions = state.switches
+        .filter { it.key in runtimeScreenKeys }
+        .map { SettingsOptionEntry.Toggle(it) }
+    val runtimeFeatureOptions = state.switches
+        .filterNot { it.key in runtimeScreenKeys }
+        .map { SettingsOptionEntry.Toggle(it) }
+
     BackHandler(enabled = infoDialog != null) { infoDialog = null }
     BackHandler(enabled = page != SettingsPage.Main && infoDialog == null) {
         page = SettingsPage.Main
@@ -273,65 +290,34 @@ fun SettingsScreen(
                         )
                     }
                 }
-                if (state.libraryChoices.isNotEmpty() || state.librarySwitches.isNotEmpty()) {
-                    val choiceCount = state.libraryChoices.size
-                    settingsSection(
-                        key = "library",
-                        title = R.string.settings_section_library_appearance,
-                        rowCount = choiceCount + state.librarySwitches.size,
-                        rowKey = { index ->
-                            if (index < choiceCount) "choice:${state.libraryChoices[index].key}"
-                            else "switch:${state.librarySwitches[index - choiceCount].key}"
-                        },
-                        rowType = { index ->
-                            if (index < choiceCount) SettingsItemType.Choice else SettingsItemType.Switch
-                        },
-                    ) { index ->
-                        if (index < choiceCount) {
-                            val choice = state.libraryChoices[index]
-                            SettingsChoiceRow(
-                                title = choice.title,
-                                selected = choice.selected,
-                                summary = choice.summary,
-                                onClick = { libraryChoiceDialog = choice },
-                            )
-                        } else {
-                            val setting = state.librarySwitches[index - choiceCount]
-                            SettingsSwitchRow(
-                                setting = setting,
-                                onCheckedChange = { checked -> actions.onToggle(setting.key, checked) },
-                            )
-                        }
-                    }
-                }
-                settingsSection(
-                    key = "runtime",
-                    title = R.string.settings_section_midlet_runtime,
-                    rowCount = state.switches.size,
-                    rowKey = { state.switches[it].key },
-                    rowType = { SettingsItemType.Switch },
-                ) { index ->
-                    val setting = state.switches[index]
-                    SettingsSwitchRow(
-                        setting = setting,
-                        onCheckedChange = { checked -> actions.onToggle(setting.key, checked) },
-                    )
-                }
-                if (state.experimentalSwitches.isNotEmpty()) {
-                    settingsSection(
-                        key = "experimental",
-                        title = R.string.pref_category_experimental,
-                        rowCount = state.experimentalSwitches.size,
-                        rowKey = { state.experimentalSwitches[it].key },
-                        rowType = { SettingsItemType.Switch },
-                    ) { index ->
-                        val setting = state.experimentalSwitches[index]
-                        SettingsSwitchRow(
-                            setting = setting,
-                            onCheckedChange = { checked -> actions.onToggle(setting.key, checked) },
-                        )
-                    }
-                }
+                settingsOptionSection(
+                    key = "library-icons",
+                    title = R.string.settings_section_library_icons,
+                    entries = libraryIconOptions,
+                    onChoice = { libraryChoiceDialog = it },
+                    onToggle = { setting, checked -> actions.onToggle(setting.key, checked) },
+                )
+                settingsOptionSection(
+                    key = "library-grid",
+                    title = R.string.settings_section_library_grid,
+                    entries = libraryGridOptions,
+                    onChoice = { libraryChoiceDialog = it },
+                    onToggle = { setting, checked -> actions.onToggle(setting.key, checked) },
+                )
+                settingsOptionSection(
+                    key = "runtime-screen",
+                    title = R.string.settings_section_runtime_screen,
+                    entries = runtimeScreenOptions,
+                    onChoice = { libraryChoiceDialog = it },
+                    onToggle = { setting, checked -> actions.onToggle(setting.key, checked) },
+                )
+                settingsOptionSection(
+                    key = "runtime-features",
+                    title = R.string.settings_section_runtime_features,
+                    entries = runtimeFeatureOptions,
+                    onChoice = { libraryChoiceDialog = it },
+                    onToggle = { setting, checked -> actions.onToggle(setting.key, checked) },
+                )
                 settingsSection(
                     key = "storage-and-profiles",
                     title = R.string.settings_section_storage_profiles,
@@ -356,12 +342,18 @@ fun SettingsScreen(
                 settingsSection(
                     key = "maintenance",
                     title = R.string.library_settings_section_maintenance,
-                    rowCount = 2,
-                    rowKey = { if (it == 0) "updates" else "diagnostics" },
-                    rowType = { SettingsItemType.Action },
+                    rowCount = 2 + state.experimentalSwitches.size,
+                    rowKey = { index ->
+                        when (index) {
+                            0 -> "updates"
+                            1 -> "diagnostics"
+                            else -> state.experimentalSwitches[index - 2].key
+                        }
+                    },
+                    rowType = { if (it < 2) SettingsItemType.Action else SettingsItemType.Switch },
                 ) { index ->
-                    if (index == 0) {
-                        SettingsActionRow(
+                    when (index) {
+                        0 -> SettingsActionRow(
                             title = stringResource(R.string.updates_title),
                             summary = stringResource(
                                 if (updates?.status is UpdateStatus.Available) R.string.updates_more_available
@@ -369,12 +361,18 @@ fun SettingsScreen(
                             ),
                             onClick = { page = SettingsPage.Updates },
                         )
-                    } else {
-                        SettingsActionRow(
+                        1 -> SettingsActionRow(
                             title = stringResource(R.string.crash_reports),
                             summary = stringResource(R.string.library_action_crash_reports_summary),
                             onClick = actions::onOpenCrashReports,
                         )
+                        else -> {
+                            val setting = state.experimentalSwitches[index - 2]
+                            SettingsSwitchRow(
+                                setting = setting,
+                                onCheckedChange = { checked -> actions.onToggle(setting.key, checked) },
+                            )
+                        }
                     }
                 }
                 settingsSection(
@@ -506,6 +504,58 @@ fun SettingsScreen(
 }
 
 private enum class SettingsPage { Main, Updates, About }
+
+private val libraryIconKeys = setOf(
+    PREF_APPS_ICON_RATIO, PREF_APPS_ICON_SHAPE, PREF_APPS_ENHANCED_ICONS,
+)
+private val runtimeScreenKeys = setOf(PREF_TOOLBAR, PREF_STATUSBAR, PREF_KEEP_SCREEN)
+
+private sealed interface SettingsOptionEntry {
+    val key: String
+
+    data class Choice(val option: SettingsChoice) : SettingsOptionEntry {
+        override val key get() = option.key
+    }
+
+    data class Toggle(val option: SettingsSwitch) : SettingsOptionEntry {
+        override val key get() = option.key
+    }
+}
+
+private fun LazyListScope.settingsOptionSection(
+    key: String,
+    title: Int,
+    entries: List<SettingsOptionEntry>,
+    onChoice: (SettingsChoice) -> Unit,
+    onToggle: (SettingsSwitch, Boolean) -> Unit,
+) {
+    if (entries.isEmpty()) return
+    settingsSection(
+        key = key,
+        title = title,
+        rowCount = entries.size,
+        rowKey = { entries[it].key },
+        rowType = {
+            when (entries[it]) {
+                is SettingsOptionEntry.Choice -> SettingsItemType.Choice
+                is SettingsOptionEntry.Toggle -> SettingsItemType.Switch
+            }
+        },
+    ) { index ->
+        when (val entry = entries[index]) {
+            is SettingsOptionEntry.Choice -> SettingsChoiceRow(
+                title = entry.option.title,
+                selected = entry.option.selected,
+                summary = entry.option.summary,
+                onClick = { onChoice(entry.option) },
+            )
+            is SettingsOptionEntry.Toggle -> SettingsSwitchRow(
+                setting = entry.option,
+                onCheckedChange = { checked -> onToggle(entry.option, checked) },
+            )
+        }
+    }
+}
 
 private enum class SettingsItemType { Heading, Choice, Switch, Action }
 
