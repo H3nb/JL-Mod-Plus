@@ -238,7 +238,7 @@ class SettingsComposeTest {
                     false,
                 ),
             ),
-            experimentalSwitches = listOf(
+            diagnosticSwitches = listOf(
                 SettingsSwitch(
                     "micro3d_using_message",
                     uiString(R.string.pref_mascot_title),
@@ -314,7 +314,7 @@ class SettingsComposeTest {
                 checked = false,
             ),
         ),
-        experimentalSwitches = emptyList(),
+        diagnosticSwitches = emptyList(),
         showProfiles = true,
         workingDirectory = "/data/jlmod",
     )
