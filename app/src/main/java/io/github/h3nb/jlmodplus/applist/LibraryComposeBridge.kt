@@ -424,7 +424,6 @@ interface LibraryActions {
     fun onAddShortcut(appId: Int)
     fun onRename(appId: Int, title: String)
     fun onOpenAppSettings(appId: Int)
-    fun onShareApp(appId: Int) = Unit
     fun onExportAppBundle(appId: Int) = Unit
     fun onReinstall(appId: Int)
     fun onDelete(appId: Int)
@@ -2018,7 +2017,6 @@ fun LibraryScreen(
             } else {
                 null
             },
-            onRename = { renameTarget = app },
             onSettings = { actions.onOpenAppSettings(app.id) },
             onAddToCollection = if (state.databaseControlsReady && collectionsHost != null) {
                 { collectionsHost.onRequestAddToCollection(app.id) }
@@ -2037,11 +2035,6 @@ fun LibraryScreen(
             } else {
                 null
             },
-            onShareApp = if (state.databaseControlsReady) {
-                { actions.onShareApp(app.id) }
-            } else {
-                null
-            },
             onExportAppBundle = if (state.databaseControlsReady) {
                 { actions.onExportAppBundle(app.id) }
             } else {
@@ -2055,9 +2048,6 @@ fun LibraryScreen(
             iconRatio = state.iconRatio,
             iconShape = state.iconShape,
             enhancedIcons = state.enhancedIcons,
-            onEditMetadata = if (state.databaseControlsReady) {
-                { openMetadataEditor(app) }
-            } else null,
             onDetails = { detailsTarget = app },
             onSelect = if (searchOpen) null else {
                 {
@@ -5085,15 +5075,12 @@ internal fun AppActionsDialog(
     onControllerKeyEvent: ((KeyEvent) -> Boolean)? = null,
     onDismiss: () -> Unit,
     onShortcut: (() -> Unit)?,
-    onRename: () -> Unit,
     onSettings: () -> Unit,
     onReinstall: () -> Unit,
     onDelete: () -> Unit,
     onDetails: (() -> Unit)? = null,
-    onEditMetadata: (() -> Unit)? = null,
     onAddToCollection: (() -> Unit)? = null,
     onRemoveFromCollection: (() -> Unit)? = null,
-    onShareApp: (() -> Unit)? = null,
     onExportAppBundle: (() -> Unit)? = null,
     onSelect: (() -> Unit)? = null,
     onFavorite: (() -> Unit)? = null,
@@ -5106,16 +5093,15 @@ internal fun AppActionsDialog(
     val windowHeight = remember(app.databaseId, windowWidth) { measuredWindowHeight }
     val useSheet = windowWidth < 600.dp && windowHeight >= 500.dp
     val compactHeader = windowHeight < 480.dp
-    var moreExpanded by rememberSaveable(app.databaseId) { mutableStateOf(false) }
-    val listState = key(app.databaseId, moreExpanded) { rememberLazyListState() }
+    val listState = rememberLazyListState()
     val sheetFocusRequester = remember { FocusRequester() }
-    LaunchedEffect(useSheet, moreExpanded) {
+    LaunchedEffect(useSheet) {
         if (useSheet) {
             withFrameNanos { }
             sheetFocusRequester.requestFocus()
         }
     }
-    var focusedIndex by rememberSaveable(app.databaseId, moreExpanded) { mutableIntStateOf(0) }
+    var focusedIndex by rememberSaveable(app.databaseId) { mutableIntStateOf(0) }
     var controllerFocusVisible by remember(app.databaseId) { mutableStateOf(false) }
     val dialogControllerKeyEvent = onControllerKeyEvent?.let { handler ->
         { event: KeyEvent ->
@@ -5125,8 +5111,7 @@ internal fun AppActionsDialog(
     }
 
     val entries = buildList {
-        if (!moreExpanded) {
-            add(DialogActionEntry(
+        add(DialogActionEntry(
             label = R.string.action_settings,
             icon = R.drawable.ic_settings,
             prominent = true,
@@ -5139,11 +5124,25 @@ internal fun AppActionsDialog(
                 action = onDetails,
             ))
         }
+        if (onExportAppBundle != null) {
+            add(DialogActionEntry(
+                label = R.string.library_action_export_bundle,
+                icon = R.drawable.ic_file_download,
+                action = onExportAppBundle,
+            ))
+        }
+        if (app.canReinstall) {
+            add(DialogActionEntry(
+                label = R.string.action_reinstall,
+                icon = R.drawable.ic_reinstall,
+                action = onReinstall,
+            ))
+        }
         add(DialogActionEntry(
-            label = if (onEditMetadata != null) R.string.library_metadata_edit_title
-                else R.string.action_context_rename,
-            icon = R.drawable.ic_edit,
-            action = onEditMetadata ?: onRename,
+            label = R.string.action_context_delete,
+            icon = R.drawable.ic_delete,
+            destructive = true,
+            action = onDelete,
         ))
         if (onSelect != null) {
             add(DialogActionEntry(
@@ -5155,7 +5154,7 @@ internal fun AppActionsDialog(
         }
         if (onAddToCollection != null) {
             add(DialogActionEntry(
-                label = R.string.library_destination_collections,
+                label = R.string.library_bulk_add_collection,
                 icon = R.drawable.ic_collections,
                 group = R.string.library_actions_group_organize,
                 action = onAddToCollection,
@@ -5177,51 +5176,10 @@ internal fun AppActionsDialog(
                 action = onRemoveFromCollection,
             ))
         }
-            add(DialogActionEntry(
-                label = R.string.library_actions_more,
-                icon = R.drawable.ic_more_vert,
-                dismissOnClick = false,
-                action = { moreExpanded = true },
-            ))
-        } else {
-            add(DialogActionEntry(
-                label = R.string.library_actions_less,
-                icon = R.drawable.ic_arrow_back,
-                dismissOnClick = false,
-                action = { moreExpanded = false },
-            ))
-            if (onShareApp != null) {
-                add(DialogActionEntry(
-                    label = R.string.library_action_share_app,
-                    icon = R.drawable.ic_share,
-                    group = R.string.library_actions_group_transfer,
-                    action = onShareApp,
-                ))
-            }
-            if (onExportAppBundle != null) {
-                add(DialogActionEntry(
-                    label = R.string.library_action_export_bundle,
-                    icon = R.drawable.ic_file_download,
-                    group = R.string.library_actions_group_transfer,
-                    action = onExportAppBundle,
-                ))
-            }
-            if (app.canReinstall) {
-                add(DialogActionEntry(
-                    label = R.string.action_reinstall,
-                    icon = R.drawable.ic_reinstall,
-                    group = R.string.library_actions_group_transfer,
-                    action = onReinstall,
-                ))
-            }
-            add(DialogActionEntry(
-                label = R.string.action_context_delete,
-                icon = R.drawable.ic_delete,
-                destructive = true,
-                action = onDelete,
-            ))
-        }
     }
+    val primaryCount = entries.count { it.group == null }
+    val primaryRows = (primaryCount + 1) / 2
+    val organizeCount = entries.size - primaryCount
 
     val currentEntries by rememberUpdatedState(entries)
     LaunchedEffect(entries.size) {
@@ -5236,12 +5194,18 @@ internal fun AppActionsDialog(
                     if (current.isNotEmpty()) {
                         controllerFocusVisible = true
                         val delta = when (event.command) {
-                            LibraryControllerCommand.MoveUp,
+                            LibraryControllerCommand.MoveUp -> -2
+                            LibraryControllerCommand.MoveDown -> 2
                             LibraryControllerCommand.MoveLeft -> -1
                             else -> 1
                         }
                         focusedIndex = (focusedIndex + delta).coerceIn(0, current.lastIndex)
-                        listState.animateScrollToItem(focusedIndex)
+                        val row = if (focusedIndex < primaryCount) {
+                            focusedIndex / 2
+                        } else {
+                            primaryRows + 1 + (focusedIndex - primaryCount) / 2
+                        }
+                        listState.animateScrollToItem(row)
                     }
                 }
                 LibraryControllerCommand.Activate -> {
@@ -5339,45 +5303,69 @@ internal fun AppActionsDialog(
                 LazyColumn(
                     modifier = Modifier.fillMaxWidth().then(actionListHeight),
                     state = listState,
-                    contentPadding = PaddingValues(bottom = 8.dp),
+                    contentPadding = PaddingValues(bottom = 12.dp),
                 ) {
-                    items(entries.size, key = { index -> entries[index].label }) { index ->
-                        val entry = entries[index]
-                        val groupChanged = entry.group != entries.getOrNull(index - 1)?.group
-                        Column {
-                            if (!compactHeader && entry.group != null && groupChanged) {
-                                Text(
-                                    stringResource(entry.group),
-                                    modifier = Modifier.padding(
-                                        start = 20.dp, end = 16.dp, top = 12.dp, bottom = 4.dp,
-                                    ),
-                                    style = MaterialTheme.typography.labelMedium,
-                                    color = MaterialTheme.colorScheme.onSurfaceVariant,
-                                )
-                            }
-                            if (entry.destructive) {
-                                HorizontalDivider(
-                                    modifier = Modifier.padding(
-                                        horizontal = 16.dp, vertical = 8.dp,
-                                    ),
-                                    color = MaterialTheme.colorScheme.outlineVariant,
-                                )
-                            }
-                            DialogAction(
-                                label = entry.label,
-                                icon = entry.icon,
-                                prominent = entry.prominent,
-                                destructive = entry.destructive,
-                                selected = controllerFocusVisible && index == focusedIndex,
+                    items(primaryRows) { rowIndex ->
+                        Row(
+                            modifier = Modifier.fillMaxWidth()
+                                .padding(horizontal = 12.dp, vertical = 4.dp),
+                            horizontalArrangement = Arrangement.spacedBy(8.dp),
+                        ) {
+                            val first = rowIndex * 2
+                            DialogActionTile(
+                                entry = entries[first],
+                                selected = controllerFocusVisible && focusedIndex == first,
                                 onDismiss = onDismiss,
-                                dismissOnClick = entry.dismissOnClick,
-                                action = entry.action,
                             )
+                            if (first + 1 < primaryCount) {
+                                DialogActionTile(
+                                    entry = entries[first + 1],
+                                    selected = controllerFocusVisible && focusedIndex == first + 1,
+                                    onDismiss = onDismiss,
+                                )
+                            } else {
+                                Spacer(modifier = Modifier.weight(1f))
+                            }
+                        }
+                    }
+                    if (organizeCount > 0) {
+                        item {
+                            Text(
+                                text = stringResource(R.string.library_actions_group_organize),
+                                modifier = Modifier.padding(
+                                    start = 20.dp, end = 16.dp, top = 16.dp, bottom = 6.dp,
+                                ),
+                                style = MaterialTheme.typography.labelMedium,
+                                color = MaterialTheme.colorScheme.onSurfaceVariant,
+                            )
+                        }
+                        items((organizeCount + 1) / 2) { rowIndex ->
+                            Row(
+                                modifier = Modifier.fillMaxWidth()
+                                    .padding(horizontal = 12.dp, vertical = 4.dp),
+                                horizontalArrangement = Arrangement.spacedBy(8.dp),
+                            ) {
+                                val first = primaryCount + rowIndex * 2
+                                DialogActionTile(
+                                    entry = entries[first],
+                                    selected = controllerFocusVisible && focusedIndex == first,
+                                    onDismiss = onDismiss,
+                                )
+                                if (first + 1 < entries.size) {
+                                    DialogActionTile(
+                                        entry = entries[first + 1],
+                                        selected = controllerFocusVisible && focusedIndex == first + 1,
+                                        onDismiss = onDismiss,
+                                    )
+                                } else {
+                                    Spacer(modifier = Modifier.weight(1f))
+                                }
+                            }
                         }
                     }
                 }
                 ScrollableContentHint(
-                    visible = canScrollForward,
+                    visible = rememberLazyListCanScrollForward(listState),
                     modifier = Modifier.align(Alignment.BottomCenter),
                 )
             }
@@ -5390,16 +5378,12 @@ internal fun AppActionsDialog(
             shape = MaterialTheme.shapes.extraLarge,
         ) { body() }
     } else if (useSheet) {
-        // A new page creates a new measured sheet; changing the original sheet's
-        // content height while it is anchored causes repeated offset adjustments.
-        key(app.databaseId, moreExpanded) {
-            ModalBottomSheet(
-                onDismissRequest = onDismiss,
-                sheetState = rememberModalBottomSheetState(skipPartiallyExpanded = true),
-                containerColor = MaterialTheme.colorScheme.surfaceContainerLow,
-            ) {
-                body()
-            }
+        ModalBottomSheet(
+            onDismissRequest = onDismiss,
+            sheetState = rememberModalBottomSheetState(skipPartiallyExpanded = true),
+            containerColor = MaterialTheme.colorScheme.surfaceContainerLow,
+        ) {
+            body()
         }
     } else {
         val layout = libraryDialogLayout()
@@ -5418,61 +5402,52 @@ internal fun AppActionsDialog(
 }
 
 @Composable
-private fun DialogAction(
-    label: Int,
-    icon: Int?,
-    prominent: Boolean = false,
-    destructive: Boolean = false,
-    selected: Boolean = false,
+private fun RowScope.DialogActionTile(
+    entry: DialogActionEntry,
+    selected: Boolean,
     onDismiss: () -> Unit,
-    dismissOnClick: Boolean = true,
-    action: () -> Unit,
 ) {
-    val contentColor = when {
-        destructive -> MaterialTheme.colorScheme.error
-        prominent -> MaterialTheme.colorScheme.onPrimaryContainer
+    val background = when {
+        selected -> MaterialTheme.colorScheme.secondaryContainer
+        entry.prominent -> MaterialTheme.colorScheme.primaryContainer
+        entry.destructive -> MaterialTheme.colorScheme.errorContainer.copy(alpha = 0.4f)
+        else -> MaterialTheme.colorScheme.surfaceContainerHigh
+    }
+    val foreground = when {
+        entry.destructive -> MaterialTheme.colorScheme.error
+        selected -> MaterialTheme.colorScheme.onSecondaryContainer
+        entry.prominent -> MaterialTheme.colorScheme.onPrimaryContainer
         else -> MaterialTheme.colorScheme.onSurface
     }
-    ListItem(
-        colors = ListItemDefaults.colors(
-            containerColor = when {
-                selected -> MaterialTheme.colorScheme.secondaryContainer
-                prominent -> MaterialTheme.colorScheme.primaryContainer
-                else -> Color.Transparent
-            },
-        ),
-        headlineContent = {
-            Text(
-                text = stringResource(label),
-                color = if (selected) MaterialTheme.colorScheme.onSecondaryContainer else contentColor,
-                style = if (prominent) MaterialTheme.typography.titleMedium
-                else MaterialTheme.typography.bodyLarge,
-            )
-        },
-        leadingContent = {
-            if (icon != null) {
-                Icon(
-                    painter = painterResource(icon),
-                    contentDescription = null,
-                    tint = if (selected) MaterialTheme.colorScheme.onSecondaryContainer else contentColor,
-                )
-            } else {
-                Spacer(Modifier.size(24.dp))
-            }
-        },
+    Row(
         modifier = Modifier
-            .fillMaxWidth()
-            .padding(horizontal = 4.dp, vertical = 2.dp)
-            .clip(MaterialTheme.shapes.medium)
+            .weight(1f)
+            .heightIn(min = 64.dp)
+            .clip(MaterialTheme.shapes.large)
+            .background(background)
             .semantics { this.selected = selected }
-            .clickable(
-                role = Role.Button,
-                onClick = {
-                    if (dismissOnClick) onDismiss()
-                    action()
-                },
-            ),
-    )
+            .clickable(role = Role.Button) {
+                onDismiss()
+                entry.action()
+            }
+            .padding(horizontal = 12.dp, vertical = 10.dp),
+        verticalAlignment = Alignment.CenterVertically,
+        horizontalArrangement = Arrangement.spacedBy(10.dp),
+    ) {
+        Icon(
+            painter = painterResource(requireNotNull(entry.icon)),
+            contentDescription = null,
+            tint = foreground,
+            modifier = Modifier.size(22.dp),
+        )
+        Text(
+            text = stringResource(entry.label),
+            color = foreground,
+            style = MaterialTheme.typography.labelLarge,
+            maxLines = 2,
+            overflow = TextOverflow.Ellipsis,
+        )
+    }
 }
 
 @Composable
