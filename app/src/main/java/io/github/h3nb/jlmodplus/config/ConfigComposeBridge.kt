@@ -589,7 +589,7 @@ internal fun ConfigScreen(
                                                 )
                                             }
                                         }
-                                        }
+                                    }
                                 }
                                 if (tabMotion.isJumping) {
                                     Box(
