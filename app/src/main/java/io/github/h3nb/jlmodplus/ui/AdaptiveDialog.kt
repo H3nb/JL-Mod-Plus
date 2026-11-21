@@ -175,13 +175,13 @@ internal fun AdaptiveAlertDialog(
     textScrollable: Boolean = true,
     shape: Shape = AlertDialogDefaults.shape,
     containerColor: Color = AlertDialogDefaults.containerColor,
-    border: BorderStroke? = null,
     iconContentColor: Color = AlertDialogDefaults.iconContentColor,
     titleContentColor: Color = AlertDialogDefaults.titleContentColor,
     textContentColor: Color = AlertDialogDefaults.textContentColor,
     tonalElevation: Dp = AlertDialogDefaults.TonalElevation,
     properties: DialogProperties = DialogProperties(),
     maxWidth: Dp = DialogMaximumWidth,
+    border: BorderStroke? = null,
 ) {
     val effectiveControllerKeyEvent = onControllerKeyEvent ?: LocalControllerDialogKeyEvent.current
     val effectiveControllerMotionEvent = LocalControllerDialogMotionEvent.current
