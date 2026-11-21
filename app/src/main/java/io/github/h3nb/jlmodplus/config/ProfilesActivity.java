@@ -27,7 +27,6 @@ import android.content.Intent;
 import android.content.SharedPreferences;
 import android.net.Uri;
 import android.os.Bundle;
-import android.widget.Toast;
 
 import androidx.activity.result.ActivityResultLauncher;
 import androidx.activity.result.contract.ActivityResultContract;
@@ -47,7 +46,6 @@ import java.util.concurrent.Executors;
 import java.util.Map;
 
 import io.github.h3nb.jlmodplus.util.EdgeToEdgeCompat;
-import io.github.h3nb.jlmodplus.ui.ThemedToast;
 import io.github.h3nb.jlmodplus.R;
 import io.github.h3nb.jlmodplus.ui.AppPageTransitions;
 
@@ -206,7 +204,7 @@ public class ProfilesActivity extends AppCompatActivity {
 	private void finishLifecycleOperation(@NonNull PresetLifecycle.Result result) {
 		if (isFinishing() || isDestroyed()) return;
 		if (result != PresetLifecycle.Result.SUCCESS) {
-			ThemedToast.show(this, R.string.profile_template_operation_failed, Toast.LENGTH_SHORT);
+			composeController.showNotice(getString(R.string.profile_template_operation_failed));
 		}
 		refreshProfiles();
 	}
@@ -265,8 +263,7 @@ public class ProfilesActivity extends AppCompatActivity {
 			if (defaultFallbackFailed) {
 				runOnUiThread(() -> {
 					if (generation == refreshGeneration && !isFinishing() && !isDestroyed()) {
-						ThemedToast.show(
-								this, R.string.profile_template_operation_failed, Toast.LENGTH_SHORT);
+						composeController.showNotice(getString(R.string.profile_template_operation_failed));
 					}
 				});
 				return;
@@ -298,10 +295,8 @@ public class ProfilesActivity extends AppCompatActivity {
 			runOnUiThread(() -> {
 				if (isFinishing() || isDestroyed()) return;
 				if (defaultFallbackApplied) {
-					ThemedToast.show(
-							this,
-							getString(R.string.profile_default_fallback_notice, defaultName),
-							Toast.LENGTH_LONG);
+					composeController.showNotice(
+							getString(R.string.profile_default_fallback_notice, defaultName), 6_000L);
 				}
 				if (generation != refreshGeneration) return;
 				profilesByName.clear();
