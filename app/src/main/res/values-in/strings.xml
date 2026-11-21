@@ -691,6 +691,8 @@
         <item quantity="other">%1$d aplikasi pustaka yang dipilih sudah tidak tersedia.</item>
     </plurals>
 
+    <string name="config_search_suggestions">Pengaturan yang sering dicari</string>
+    <string name="config_search_clear">Hapus pencarian</string>
     <string name="config_search_title">Cari pengaturan</string>
     <string name="config_search_hint">Cari opsi, mis. MMPX atau orientasi</string>
     <string name="config_search_no_results">Tidak ada pengaturan yang cocok</string>
