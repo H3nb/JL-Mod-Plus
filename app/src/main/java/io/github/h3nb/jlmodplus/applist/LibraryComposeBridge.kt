@@ -52,6 +52,7 @@ import androidx.compose.foundation.border
 import androidx.compose.foundation.clickable
 import androidx.compose.foundation.interaction.MutableInteractionSource
 import androidx.compose.foundation.focusGroup
+import androidx.compose.foundation.focusable
 import androidx.compose.foundation.combinedClickable
 import androidx.compose.foundation.horizontalScroll
 import androidx.compose.foundation.selection.toggleable
@@ -156,6 +157,8 @@ import androidx.compose.ui.graphics.FilterQuality
 import androidx.compose.ui.graphics.ImageBitmap
 import androidx.compose.ui.graphics.graphicsLayer
 import androidx.compose.ui.graphics.asImageBitmap
+import androidx.compose.ui.input.key.nativeKeyEvent
+import androidx.compose.ui.input.key.onPreviewKeyEvent
 import androidx.compose.ui.input.nestedscroll.NestedScrollConnection
 import androidx.compose.ui.input.nestedscroll.NestedScrollSource
 import androidx.compose.ui.input.nestedscroll.nestedScroll
@@ -5039,6 +5042,13 @@ internal fun AppActionsDialog(
     val useSheet = availableWindowWidthDp() < 600.dp && windowHeight >= 500.dp
     val compactHeader = windowHeight < 480.dp
     val listState = rememberLazyListState()
+    val sheetFocusRequester = remember { FocusRequester() }
+    LaunchedEffect(useSheet) {
+        if (useSheet) {
+            withFrameNanos { }
+            sheetFocusRequester.requestFocus()
+        }
+    }
     var moreExpanded by rememberSaveable(app.databaseId) { mutableStateOf(false) }
     var focusedIndex by rememberSaveable(app.databaseId) { mutableIntStateOf(0) }
     var controllerFocusVisible by remember(app.databaseId) { mutableStateOf(false) }
@@ -5186,6 +5196,14 @@ internal fun AppActionsDialog(
     val body: @Composable () -> Unit = {
         Column(
             modifier = Modifier.fillMaxWidth()
+                .then(if (useSheet) {
+                    Modifier
+                        .focusRequester(sheetFocusRequester)
+                        .onPreviewKeyEvent { event ->
+                            dialogControllerKeyEvent?.invoke(event.nativeKeyEvent) == true
+                        }
+                        .focusable()
+                } else Modifier)
                 .clearNavigationFocusOnTouch { controllerFocusVisible = false }
                 .showNavigationFocusForKey { controllerFocusVisible = true },
         ) {
