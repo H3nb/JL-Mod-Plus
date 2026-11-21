@@ -24,7 +24,6 @@ import static io.github.h3nb.jlmodplus.util.Constants.PREF_APPS_GRID_SPACING;
 import static io.github.h3nb.jlmodplus.util.Constants.PREF_APPS_HIDE_GRID_TITLES;
 import static io.github.h3nb.jlmodplus.util.Constants.PREF_APPS_ICON_RATIO;
 import static io.github.h3nb.jlmodplus.util.Constants.PREF_APPS_ICON_SHAPE;
-import static io.github.h3nb.jlmodplus.util.Constants.PREF_APPS_SHOW_LIST_DESCRIPTION;
 import static io.github.h3nb.jlmodplus.util.Constants.PREF_APPS_VIEW;
 import static io.github.h3nb.jlmodplus.util.Constants.PREF_KEEP_SCREEN;
 import static io.github.h3nb.jlmodplus.util.Constants.PREF_SCREENSHOT_SWITCH;
@@ -384,12 +383,6 @@ public class SettingsActivity extends AppCompatActivity {
 					getString(R.string.library_hide_grid_titles),
 					getString(R.string.library_hide_grid_titles_summary),
 					preferences.getBoolean(PREF_APPS_HIDE_GRID_TITLES, false)));
-		} else {
-			switches.add(new SettingsSwitch(
-					PREF_APPS_SHOW_LIST_DESCRIPTION,
-					getString(R.string.library_show_list_description),
-					getString(R.string.library_show_list_description_summary),
-					preferences.getBoolean(PREF_APPS_SHOW_LIST_DESCRIPTION, true)));
 		}
 		return switches;
 	}
