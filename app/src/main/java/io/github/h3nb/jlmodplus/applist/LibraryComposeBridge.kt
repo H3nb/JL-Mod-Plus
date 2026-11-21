@@ -772,6 +772,7 @@ fun LibraryScreen(
     }
 
     var appActions by remember { mutableStateOf<LibraryAppUiItem?>(null) }
+    var detailsTarget by remember { mutableStateOf<LibraryAppUiItem?>(null) }
     var renameTarget by remember { mutableStateOf<LibraryAppUiItem?>(null) }
     var metadataTarget by remember { mutableStateOf<LibraryAppUiItem?>(null) }
     var metadataBackRequest by remember { mutableIntStateOf(0) }
@@ -922,6 +923,7 @@ fun LibraryScreen(
     val currentControllerAppActions by rememberUpdatedState(appActions)
     val currentControllerRenameTarget by rememberUpdatedState(renameTarget)
     val currentControllerMetadataTarget by rememberUpdatedState(metadataTarget)
+    val currentControllerDetailsTarget by rememberUpdatedState(detailsTarget)
     val currentControllerDeleteTarget by rememberUpdatedState(deleteTarget)
     val currentControllerInfoDialog by rememberUpdatedState(infoDialog)
     val currentControllerAboutPageVisible by rememberUpdatedState(
@@ -934,8 +936,9 @@ fun LibraryScreen(
     val currentControllerBulkDeleteIds by rememberUpdatedState(pendingBulkDeleteIds)
     val currentControllerSelectionActive by rememberUpdatedState(selectionActiveHere)
     val currentControllerOtherModalVisible by rememberUpdatedState(
-        renameTarget != null || metadataTarget != null || deleteTarget != null ||
-            infoDialog != null || pendingBulkDeleteIds != null || auxiliaryPageOnScreen ||
+        renameTarget != null || metadataTarget != null || detailsTarget != null ||
+            deleteTarget != null || infoDialog != null || pendingBulkDeleteIds != null ||
+            auxiliaryPageOnScreen ||
             updatePrompt != null || searchOpen,
     )
     val currentControllerSearchOpen by rememberUpdatedState(searchOpen)
@@ -1147,6 +1150,20 @@ fun LibraryScreen(
         )
     }
 
+    fun openMetadataEditor(app: LibraryAppUiItem) {
+        metadataRestoreRequest = null
+        metadataViewportLocked = true
+        metadataImeWasVisible = isImeVisible
+        metadataCapturedAnchor = if (destination == LibraryDestination.Apps) {
+            captureAppsAnchor(app.databaseId)
+        } else null
+        metadataCapturedViewport = if (destination == LibraryDestination.Apps) {
+            captureAppsViewport()
+        } else null
+        metadataBackRequest = 0
+        metadataTarget = app
+    }
+
     fun closeMetadataEditor(restoreRequest: MetadataRestoreRequest? = null) {
         // Treat a plain back as a viewport-preserving return as well. The editor is an overlay;
         // removing it can still trigger a list remeasure even when no metadata was changed.
@@ -1175,6 +1192,8 @@ fun LibraryScreen(
     LaunchedEffect(controllerEvents, appsViewport) {
         controllerEvents?.collect { event ->
             if (currentControllerAppActions != null) return@collect
+            if (currentControllerDetailsTarget != null &&
+                event.command != LibraryControllerCommand.Back) return@collect
             if (currentControllerCollectionId != null &&
                 event.command != LibraryControllerCommand.Back
             ) return@collect
@@ -1230,6 +1249,7 @@ fun LibraryScreen(
                         }
                         currentControllerRenameTarget != null -> renameTarget = null
                         currentControllerMetadataTarget != null -> metadataBackRequest++
+                        currentControllerDetailsTarget != null -> detailsTarget = null
                         currentControllerDeleteTarget != null -> deleteTarget = null
                         currentControllerBulkDeleteIds != null -> pendingBulkDeleteIds = null
                         currentControllerInfoDialog != null -> infoDialog = null
@@ -1274,6 +1294,7 @@ fun LibraryScreen(
         }
     }
 
+    LaunchedEffect(state.libraryScope) { detailsTarget = null }
     LaunchedEffect(destination, navigationState.selectedCollectionId, state.libraryScope) {
         searchOpen = false
         searchQuery = ""
@@ -1335,7 +1356,8 @@ fun LibraryScreen(
     }
 
     val imeHidesLibraryChrome = isImeVisible && (!metadataViewportLocked || metadataImeWasVisible)
-    val libraryOverlayVisible = appActions != null || renameTarget != null || metadataApp != null
+    val libraryOverlayVisible = appActions != null || renameTarget != null ||
+        detailsTarget != null || metadataApp != null
         || deleteTarget != null || infoDialog != null || pendingBulkDeleteIds != null
         || auxiliaryPageOnScreen
     val libraryModalVisible = libraryOverlayVisible || updatePrompt != null ||
@@ -1596,6 +1618,7 @@ fun LibraryScreen(
                                 appActions = it
                                 appActionsCollectionId = activeCollectionId
                             },
+                            onOpenDetails = { detailsTarget = it },
                             onQuickView = actions::onQuickView,
                             onFavorite = actions::onFavorite,
                             onToggleSelection = { app ->
@@ -1838,12 +1861,36 @@ fun LibraryScreen(
                 }
             }
         }
+        detailsTarget?.let { original ->
+            val app = displayedState.apps.firstOrNull {
+                it.databaseId == original.databaseId
+            } ?: original
+            Box(
+                modifier = Modifier.fillMaxSize().zIndex(3f)
+                    .background(MaterialTheme.colorScheme.background),
+            ) {
+                key(state.libraryScope, app.databaseId) {
+                    LibraryMidletDetailsScreen(
+                        app = app,
+                        libraryScope = state.libraryScope,
+                        iconRatio = state.iconRatio,
+                        iconShape = state.iconShape,
+                        enhancedIcons = state.enhancedIcons,
+                        onBack = { detailsTarget = null },
+                        onEditMetadata = if (state.databaseControlsReady) {
+                            { openMetadataEditor(app) }
+                        } else null,
+                        onLoad = { callback -> actions.onLoadMidletDetails(app.id, callback) },
+                    )
+                }
+            }
+        }
         metadataApp?.let { app ->
             Box(
                 modifier = Modifier
                     .fillMaxSize()
                     .background(MaterialTheme.colorScheme.background)
-                    .zIndex(3f),
+                    .zIndex(4f),
             ) {
                 key(state.libraryScope, app.databaseId) {
                     LibraryMetadataEditorScreen(
@@ -1952,26 +1999,9 @@ fun LibraryScreen(
             iconShape = state.iconShape,
             enhancedIcons = state.enhancedIcons,
             onEditMetadata = if (state.databaseControlsReady) {
-                {
-                    metadataRestoreRequest = null
-                    metadataViewportLocked = true
-                    metadataImeWasVisible = isImeVisible
-                    metadataCapturedAnchor = if (destination == LibraryDestination.Apps) {
-                        captureAppsAnchor(app.databaseId)
-                    } else {
-                        null
-                    }
-                    metadataCapturedViewport = if (destination == LibraryDestination.Apps) {
-                        captureAppsViewport()
-                    } else {
-                        null
-                    }
-                    metadataBackRequest = 0
-                    metadataTarget = app
-                }
-            } else {
-                null
-            },
+                { openMetadataEditor(app) }
+            } else null,
+            onDetails = { detailsTarget = app },
             onSelect = if (searchOpen) null else {
                 {
                     selectionState = selectionState.enter(
@@ -2211,6 +2241,7 @@ internal fun LibraryAppsDestination(
     controllerFocusedDatabaseId: Long? = null,
     onOpenApp: (Int) -> Unit,
     onOpenActions: (LibraryAppUiItem) -> Unit,
+    onOpenDetails: (LibraryAppUiItem) -> Unit = {},
     onQuickView: (LibraryQuickView) -> Unit,
     onFavorite: (Int, Boolean) -> Unit,
     onToggleSelection: (LibraryAppUiItem) -> Unit = {},
@@ -2291,6 +2322,7 @@ internal fun LibraryAppsDestination(
     // Read eligibility when an action arrives, retaining callback identity across tab changes.
     val openApp: (Int) -> Unit = { if (currentActive) onOpenApp(it) }
     val openActions: (LibraryAppUiItem) -> Unit = { if (currentActive) onOpenActions(it) }
+    val openDetails: (LibraryAppUiItem) -> Unit = { if (currentActive) onOpenDetails(it) }
     val toggleSelection: (LibraryAppUiItem) -> Unit = { if (currentActive) onToggleSelection(it) }
     val favoriteApp: (Int, Boolean) -> Unit = { id, favorite ->
         if (currentActive) onFavorite(id, favorite)
@@ -2581,6 +2613,12 @@ internal fun LibraryAppsDestination(
                                     val live = resolveUiId(app.databaseId) ?: item.id.takeIf { it != 0 }
                                     if (live != null) openActions(item.copy(id = live))
                                 } else openActions(item)
+                            },
+                            onOpenDetails = { item ->
+                                if (searchActive) {
+                                    val resolved = resolveUiId(item.databaseId)
+                                    openDetails(item.copy(id = resolved ?: item.id))
+                                } else openDetails(item)
                             },
                             onFavorite = { id, favorite ->
                                 if (searchActive) {
@@ -3681,6 +3719,7 @@ private fun LibraryListItem(
     iconShape: LibraryIconShape,
     enhancedIcons: Boolean,
     showDescription: Boolean,
+    onOpenDetails: (LibraryAppUiItem) -> Unit = {},
 ) {
     val selectionDescription = stringResource(
         R.string.library_selection_checkbox_description,
@@ -3748,7 +3787,7 @@ private fun LibraryListItem(
             LibraryIconSlot(
                 app = app,
                 modifier = Modifier.width(52.dp),
-                contentSize = 40.dp,
+                contentSize = 46.dp,
                 iconRatio = iconRatio,
                 iconShape = iconShape,
                 enhancedIcons = enhancedIcons,
@@ -3758,7 +3797,7 @@ private fun LibraryListItem(
                 Text(
                     text = app.title,
                     style = MaterialTheme.typography.titleMedium,
-                    maxLines = 1,
+                    maxLines = 2,
                     overflow = TextOverflow.Ellipsis,
                 )
                 Text(
@@ -3797,100 +3836,57 @@ private fun LibraryListItem(
         }
         if (showDescription && app.description.isNotBlank()) {
             Box(modifier = Modifier.padding(start = 80.dp, end = 16.dp, bottom = 8.dp)) {
-                LibraryDescription(app.description, app.databaseId)
+                LibraryDescription(
+                    descriptionValue = app.description,
+                    appId = app.databaseId,
+                    onOpenDetails = { onOpenDetails(app) },
+                )
             }
         }
     }
 }
 
 @Composable
-internal fun LibraryDescription(descriptionValue: String, appId: Long) {
+internal fun LibraryDescription(
+    descriptionValue: String,
+    appId: Long,
+    onOpenDetails: () -> Unit = {},
+) {
     val description = descriptionValue.trim()
     if (description.isEmpty()) return
-
-    var expanded by rememberSaveable(appId, description) { mutableStateOf(false) }
     var overflows by remember(appId, description) { mutableStateOf(false) }
-    val expandDescriptionLabel = stringResource(R.string.library_expand_description)
-    val collapseDescriptionLabel = stringResource(R.string.library_collapse_description)
-
-    if (!expanded) {
-        Box(
-            modifier = Modifier
-                .fillMaxWidth()
-                .then(
-                    if (overflows) {
-                        Modifier
-                            .testTag("library_description_toggle")
-                            .clickable(
-                                onClickLabel = expandDescriptionLabel,
-                                role = Role.Button,
-                                onClick = { expanded = true },
-                            )
-                    } else {
-                        Modifier
-                    },
-                ),
-        ) {
+    Column(modifier = Modifier.fillMaxWidth()) {
+        Text(
+            text = description,
+            modifier = Modifier.fillMaxWidth(),
+            color = MaterialTheme.colorScheme.onSurfaceVariant,
+            style = MaterialTheme.typography.bodySmall,
+            textAlign = TextAlign.Start,
+            maxLines = 2,
+            overflow = TextOverflow.Ellipsis,
+            onTextLayout = { layout ->
+                overflows = layout.hasVisualOverflow ||
+                    (layout.lineCount > 0 && layout.isLineEllipsized(layout.lineCount - 1))
+            },
+        )
+        if (overflows) {
             Text(
-                text = description,
-                modifier = Modifier.fillMaxWidth(),
-                color = MaterialTheme.colorScheme.onSurfaceVariant.copy(alpha = 0.82f),
-                style = MaterialTheme.typography.bodySmall,
-                textAlign = TextAlign.Start,
-                maxLines = 2,
-                overflow = TextOverflow.Ellipsis,
-                onTextLayout = { result ->
-                    overflows = result.didOverflowHeight || result.didOverflowWidth ||
-                        result.hasVisualOverflow ||
-                        (result.lineCount > 0 && result.isLineEllipsized(result.lineCount - 1))
-                },
-            )
-            if (overflows) {
-                Text(
-                    text = stringResource(R.string.library_description_more),
-                    modifier = Modifier
-                        .align(Alignment.BottomEnd)
-                        .background(MaterialTheme.colorScheme.background)
-                        .padding(start = 6.dp),
-                    color = MaterialTheme.colorScheme.primary,
-                    style = MaterialTheme.typography.bodySmall.copy(
-                        fontWeight = FontWeight.Medium,
-                    ),
-                )
-            }
-        }
-    } else {
-        Column(
-            modifier = Modifier
-                .fillMaxWidth()
-                .testTag("library_description_toggle")
-                .clickable(
-                    onClickLabel = collapseDescriptionLabel,
-                    role = Role.Button,
-                    onClick = { expanded = false },
-                ),
-        ) {
-            Text(
-                text = description,
-                modifier = Modifier.fillMaxWidth(),
-                color = MaterialTheme.colorScheme.onSurfaceVariant.copy(alpha = 0.82f),
-                style = MaterialTheme.typography.bodySmall,
-                textAlign = TextAlign.Start,
-            )
-            Text(
-                text = stringResource(R.string.library_description_less),
+                text = stringResource(R.string.library_details_view_details),
                 modifier = Modifier
                     .align(Alignment.End)
-                    .padding(top = 2.dp),
+                    .testTag("library_description_toggle")
+                    .clickable(
+                        onClickLabel = stringResource(R.string.library_details_view_details),
+                        role = Role.Button,
+                        onClick = onOpenDetails,
+                    )
+                    .padding(top = 4.dp, bottom = 4.dp),
+                style = MaterialTheme.typography.labelMedium,
                 color = MaterialTheme.colorScheme.primary,
-                style = MaterialTheme.typography.bodySmall.copy(
-                    fontWeight = FontWeight.Medium,
-                ),
             )
         }
     }
 }
-
 
 @Composable
 private fun LibraryFavoriteButton(
