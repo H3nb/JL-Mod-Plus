@@ -463,45 +463,36 @@ internal fun ConfigSliderPreference(
 @Composable
 internal fun ConfigColorPreference(
     title: String,
-    description: String,
+    description: String?,
     value: String,
     onClick: () -> Unit,
     displayLabel: String? = null,
 ) {
-    Column(
+    Row(
         modifier = Modifier
             .fillMaxWidth()
+            .heightIn(min = 60.dp)
             .clickable(role = Role.Button, onClick = onClick)
-            .padding(horizontal = 16.dp, vertical = 11.dp),
-        verticalArrangement = Arrangement.spacedBy(4.dp),
+            .padding(horizontal = 16.dp, vertical = 10.dp),
+        verticalAlignment = Alignment.CenterVertically,
+        horizontalArrangement = Arrangement.spacedBy(12.dp),
     ) {
-        Text(text = title, style = MaterialTheme.typography.bodyLarge)
-        Text(
-            text = description,
-            style = MaterialTheme.typography.bodySmall,
-            color = MaterialTheme.colorScheme.onSurfaceVariant,
+        PreferenceTextContent(
+            title = title,
+            value = displayLabel ?: "#${value.ifEmpty { "000000" }}",
+            description = description,
+            modifier = Modifier.weight(1f),
         )
-        Row(
-            modifier = Modifier.fillMaxWidth().padding(top = 2.dp),
-            verticalAlignment = Alignment.CenterVertically,
-            horizontalArrangement = Arrangement.spacedBy(8.dp),
-        ) {
-            if (displayLabel == null) {
-                Box(
-                    modifier = Modifier
-                        .size(24.dp)
-                        .clip(MaterialTheme.shapes.extraSmall)
-                        .background(configColor(value))
-                        .border(1.dp, MaterialTheme.colorScheme.outlineVariant, MaterialTheme.shapes.extraSmall),
-                )
-            }
-            Text(
-                text = displayLabel ?: "#${value.ifEmpty { "000000" }}",
-                modifier = Modifier.weight(1f),
-                style = MaterialTheme.typography.labelLarge.copy(fontWeight = FontWeight.SemiBold),
-                color = MaterialTheme.colorScheme.onSurface,
+        if (displayLabel == null) {
+            Box(
+                modifier = Modifier
+                    .size(24.dp)
+                    .clip(MaterialTheme.shapes.extraSmall)
+                    .background(configColor(value))
+                    .border(1.dp, MaterialTheme.colorScheme.outlineVariant, MaterialTheme.shapes.extraSmall),
             )
         }
+        PreferenceChevron()
     }
 }
 
