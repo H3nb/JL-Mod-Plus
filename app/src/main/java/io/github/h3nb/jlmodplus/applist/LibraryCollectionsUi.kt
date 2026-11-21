@@ -299,7 +299,6 @@ class LibraryCollectionsUiStore {
 interface LibraryBulkActions {
     fun onDeleteSelected(appIds: Set<Long>) = Unit
     fun onAddSelectedToCollection(appIds: Set<Long>) = Unit
-    fun onShareSelected(appIds: Set<Long>) = Unit
     fun onReinstallSelected(appIds: Set<Long>) = Unit
     fun onExportSelectedBundle(appIds: Set<Long>) = Unit
 }
