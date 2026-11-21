@@ -161,10 +161,12 @@ during `startApp()`.
   transient system bars remain controlled by the user's system gesture.
 - The host menu is a compact adaptive action-tile grid without a MIDlet title.
   Enabled toggles use the Material accent surface, while ordinary actions remain
-  neutral; Exit is a separate footer. The dialog uses a high-opacity themed
-  frosted surface and subtle border, without sampling or blurring game frames.
-  Controller arrows follow grid rows and columns, with the same action and
-  dismiss behavior as touch.
+  neutral; Exit is a separate footer. The dialog uses a solid theme-aware
+  surface with an optional Android 12+ native 20 px window blur-behind effect
+  for depth; older devices or systems that disable blur retain the standard
+  solid modal and dimming. The game framebuffer is never sampled for this
+  effect. Controller arrows follow grid rows and columns, with the same action
+  and dismiss behavior as touch.
 - The explicit Exit item remains the only host-menu exit path and continues to
   use `showExitConfirmation()`. A MIDlet-owned Exit command and system-level
   task removal/force-stop remain independent termination paths.
