@@ -20,7 +20,6 @@ import androidx.compose.foundation.background
 import androidx.compose.foundation.border
 import androidx.compose.foundation.selection.selectable
 import androidx.compose.foundation.selection.selectableGroup
-import androidx.compose.foundation.selection.toggleable
 import androidx.compose.foundation.shape.CircleShape
 import androidx.compose.foundation.shape.CornerSize
 import androidx.compose.foundation.layout.Arrangement
@@ -49,7 +48,6 @@ import androidx.compose.material3.ListItemDefaults
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.RadioButton
 import androidx.compose.material3.Scaffold
-import androidx.compose.material3.Switch
 import androidx.compose.material3.Text
 import androidx.compose.material3.TextButton
 import androidx.compose.material3.TopAppBar
@@ -88,6 +86,8 @@ import io.github.h3nb.jlmodplus.updates.UpdateRepository
 import io.github.h3nb.jlmodplus.updates.UpdateStatus
 import io.github.h3nb.jlmodplus.updates.UpdatesScreen
 import io.github.h3nb.jlmodplus.ui.JLModPlusTheme
+import io.github.h3nb.jlmodplus.ui.PreferenceNavigationRow
+import io.github.h3nb.jlmodplus.ui.PreferenceSwitchRow
 import io.github.h3nb.jlmodplus.ui.PreferenceTextContent
 import io.github.h3nb.jlmodplus.ui.PreferenceChevron
 import io.github.h3nb.jlmodplus.ui.TransientNoticeHost
@@ -754,33 +754,13 @@ private fun SettingsSwitchRow(
     setting: SettingsSwitch,
     onCheckedChange: (Boolean) -> Unit,
 ) {
-    Row(
-        modifier = Modifier
-            .fillMaxWidth()
-            .heightIn(min = 64.dp)
-            .toggleable(
-                value = setting.checked,
-                enabled = setting.enabled,
-                role = Role.Switch,
-                onValueChange = onCheckedChange,
-            )
-            .semantics(mergeDescendants = true) {}
-            .padding(horizontal = 16.dp, vertical = 10.dp),
-        verticalAlignment = Alignment.CenterVertically,
-        horizontalArrangement = Arrangement.spacedBy(12.dp),
-    ) {
-        PreferenceTextContent(
-            title = setting.title,
-            description = setting.summary,
-            enabled = setting.enabled,
-            modifier = Modifier.weight(1f),
-        )
-        Switch(
-            checked = setting.checked,
-            onCheckedChange = null,
-            enabled = setting.enabled,
-        )
-    }
+    PreferenceSwitchRow(
+        title = setting.title,
+        description = setting.summary,
+        checked = setting.checked,
+        enabled = setting.enabled,
+        onCheckedChange = onCheckedChange,
+    )
 }
 
 @Composable
@@ -790,21 +770,10 @@ private fun SettingsActionRow(
     value: String? = null,
     onClick: () -> Unit,
 ) {
-    Row(
-        modifier = Modifier
-            .fillMaxWidth()
-            .heightIn(min = 60.dp)
-            .clickable(role = Role.Button, onClick = onClick)
-            .padding(horizontal = 16.dp, vertical = 10.dp),
-        verticalAlignment = Alignment.CenterVertically,
-        horizontalArrangement = Arrangement.spacedBy(12.dp),
-    ) {
-        PreferenceTextContent(
-            title = title,
-            value = value,
-            description = summary,
-            modifier = Modifier.weight(1f),
-        )
-        PreferenceChevron()
-    }
+    PreferenceNavigationRow(
+        title = title,
+        value = value,
+        description = summary,
+        onClick = onClick,
+    )
 }

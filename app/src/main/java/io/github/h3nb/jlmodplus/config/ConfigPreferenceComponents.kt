@@ -10,7 +10,6 @@ import androidx.compose.foundation.border
 import androidx.compose.foundation.relocation.BringIntoViewRequester
 import androidx.compose.foundation.relocation.bringIntoViewRequester
 import androidx.compose.foundation.clickable
-import androidx.compose.foundation.selection.toggleable
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
@@ -26,7 +25,6 @@ import androidx.compose.material3.TextButton
 import io.github.h3nb.jlmodplus.ui.AdaptiveAlertDialog as AlertDialog
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Surface
-import androidx.compose.material3.Switch
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.LaunchedEffect
@@ -48,6 +46,8 @@ import androidx.compose.ui.semantics.semantics
 import androidx.compose.ui.text.input.KeyboardType
 import androidx.compose.ui.unit.dp
 import io.github.h3nb.jlmodplus.R
+import io.github.h3nb.jlmodplus.ui.PreferenceNavigationRow
+import io.github.h3nb.jlmodplus.ui.PreferenceSwitchRow
 import io.github.h3nb.jlmodplus.ui.PreferenceTextContent
 import io.github.h3nb.jlmodplus.ui.PreferenceChevron
 import io.github.h3nb.jlmodplus.ui.PreferenceNotice
@@ -106,22 +106,7 @@ internal fun ConfigNavigationPreference(
     value: String?,
     onClick: () -> Unit,
 ) {
-    Row(
-        modifier = Modifier
-            .fillMaxWidth()
-            .heightIn(min = 60.dp)
-            .clickable(role = Role.Button, onClick = onClick)
-            .padding(horizontal = 16.dp, vertical = 10.dp),
-        verticalAlignment = Alignment.CenterVertically,
-        horizontalArrangement = Arrangement.spacedBy(12.dp),
-    ) {
-        PreferenceTextContent(
-            title = title,
-            value = value,
-            modifier = Modifier.weight(1f),
-        )
-        PreferenceChevron()
-    }
+    PreferenceNavigationRow(title = title, value = value, onClick = onClick)
 }
 
 /** One accessible target for a preference that opens an editor or action. */
@@ -135,25 +120,17 @@ internal fun ConfigCompactValuePreference(
     destructive: Boolean = false,
     description: String? = null,
 ) {
-    Row(
-        modifier = modifier
-            .fillMaxWidth()
-            .heightIn(min = 56.dp)
-            .clickable(enabled = enabled, role = Role.Button, onClick = onClick)
-            .padding(horizontal = 16.dp, vertical = 8.dp),
-        verticalAlignment = Alignment.CenterVertically,
-        horizontalArrangement = Arrangement.spacedBy(12.dp),
-    ) {
-        PreferenceTextContent(
-            title = title,
-            value = value,
-            description = description,
-            enabled = enabled,
-            destructive = destructive,
-            modifier = Modifier.weight(1f),
-        )
-        PreferenceChevron(enabled = enabled)
-    }
+    PreferenceNavigationRow(
+        title = title,
+        value = value,
+        description = description,
+        enabled = enabled,
+        destructive = destructive,
+        onClick = onClick,
+        modifier = modifier,
+        minHeight = 56.dp,
+        verticalPadding = 8.dp,
+    )
 }
 
 @Composable
@@ -190,24 +167,13 @@ internal fun ConfigValuePreference(
         return
     }
     Column(modifier = modifier.fillMaxWidth()) {
-        Row(
-            modifier = Modifier
-                .fillMaxWidth()
-                .heightIn(min = 60.dp)
-                .clickable(enabled = enabled, role = Role.Button, onClick = onClick)
-                .padding(horizontal = 16.dp, vertical = 10.dp),
-            verticalAlignment = Alignment.CenterVertically,
-            horizontalArrangement = Arrangement.spacedBy(12.dp),
-        ) {
-            PreferenceTextContent(
-                title = title,
-                value = value,
-                description = description,
-                enabled = enabled,
-                modifier = Modifier.weight(1f),
-            )
-            PreferenceChevron(enabled = enabled)
-        }
+        PreferenceNavigationRow(
+            title = title,
+            value = value,
+            description = description,
+            enabled = enabled,
+            onClick = onClick,
+        )
         if (message != null) {
             Box(modifier = Modifier.padding(horizontal = 16.dp, vertical = 2.dp)) {
                 PreferenceNotice(message, messageLevel)
@@ -228,33 +194,15 @@ internal fun ConfigSwitchPreference(
     messageLevel: ConfigMessageLevel = ConfigMessageLevel.Info,
 ) {
     Column(modifier = modifier.fillMaxWidth()) {
-        Row(
-            modifier = Modifier
-                .fillMaxWidth()
-                .heightIn(min = 64.dp)
-                .toggleable(
-                    value = checked,
-                    enabled = enabled,
-                    role = Role.Switch,
-                    onValueChange = onCheckedChange,
-                )
-                .semantics(mergeDescendants = true) {}
-                .padding(horizontal = 16.dp, vertical = 10.dp),
-            verticalAlignment = Alignment.CenterVertically,
-            horizontalArrangement = Arrangement.spacedBy(12.dp),
-        ) {
-            PreferenceTextContent(
-                title = title,
-                description = description,
-                enabled = enabled,
-                modifier = Modifier.weight(1f),
-            )
-            Switch(enabled = enabled, checked = checked, onCheckedChange = null)
-        }
+        PreferenceSwitchRow(
+            title = title,
+            description = description,
+            checked = checked,
+            onCheckedChange = onCheckedChange,
+            enabled = enabled,
+        )
         if (message != null) {
-            androidx.compose.foundation.layout.Box(
-                modifier = Modifier.padding(horizontal = 16.dp, vertical = 2.dp),
-            ) {
+            Box(modifier = Modifier.padding(horizontal = 16.dp, vertical = 2.dp)) {
                 PreferenceNotice(message, messageLevel)
             }
         }
