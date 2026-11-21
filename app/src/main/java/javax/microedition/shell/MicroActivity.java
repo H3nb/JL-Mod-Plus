@@ -581,6 +581,7 @@ public class MicroActivity extends AppCompatActivity {
 						String[] classes = pendingMidletClasses;
 						pendingMidletClasses = null;
 						if (classes != null && index >= 0 && index < classes.length && microLoader != null) {
+							getIntent().putExtra(KEY_MIDLET_CLASS, classes[index]);
 							microLoader.loadMidlet(classes[index], appName);
 						}
 					}
