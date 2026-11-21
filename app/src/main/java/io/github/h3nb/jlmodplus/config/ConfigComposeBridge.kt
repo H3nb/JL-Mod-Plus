@@ -175,39 +175,39 @@ class ConfigComposeController @JvmOverloads constructor(
             JLModPlusTheme {
                 Box(Modifier.fillMaxSize()) {
                     ConfigScreen(
-                    state = state,
-                    events = events,
-                    title = title,
-                    isProfile = isProfile,
-                    menuActions = menuActions,
-                    colorPicker = colorPicker,
-                    encodingPicker = encodingPicker,
-                    gamepadHelpVisible = gamepadHelpVisible,
-                    gamepadDiagnosis = gamepadDiagnosis,
-                    gamepadCalibration = gamepadCalibration,
-                    onColorPickerDismiss = { colorPicker = null },
-                    onColorPicked = { field, value ->
-                        colorPicker = null
-                        events.onColorPicked(field, value)
-                    },
-                    onBackgroundColorPicked = { value, dynamic ->
-                        colorPicker = null
-                        events.onBackgroundColorPicked(value, dynamic)
-                    },
-                    onEncodingPickerDismiss = { encodingPicker = null },
-                    onEncodingSelected = { charset ->
-                        encodingPicker = null
-                        events.onEncodingSelected(charset)
-                    },
-                    onGamepadHelpDismiss = { gamepadHelpVisible = false },
-                    onGamepadDiagnosisDismiss = { gamepadDiagnosis = null },
-                    onGamepadCalibrationDismiss = {
-                        gamepadCalibration = null
-                        events.onGamepadCalibrationCancel()
-                    },
-                    onGamepadCalibrationReset = { events.onGamepadCalibrationReset() },
-                    onGamepadCalibrationAdvance = { events.onGamepadCalibrationAdvance() },
-                    onGamepadCalibrationSave = { events.onGamepadCalibrationSave() },
+                        state = state,
+                        events = events,
+                        title = title,
+                        isProfile = isProfile,
+                        menuActions = menuActions,
+                        colorPicker = colorPicker,
+                        encodingPicker = encodingPicker,
+                        gamepadHelpVisible = gamepadHelpVisible,
+                        gamepadDiagnosis = gamepadDiagnosis,
+                        gamepadCalibration = gamepadCalibration,
+                        onColorPickerDismiss = { colorPicker = null },
+                        onColorPicked = { field, value ->
+                            colorPicker = null
+                            events.onColorPicked(field, value)
+                        },
+                        onBackgroundColorPicked = { value, dynamic ->
+                            colorPicker = null
+                            events.onBackgroundColorPicked(value, dynamic)
+                        },
+                        onEncodingPickerDismiss = { encodingPicker = null },
+                        onEncodingSelected = { charset ->
+                            encodingPicker = null
+                            events.onEncodingSelected(charset)
+                        },
+                        onGamepadHelpDismiss = { gamepadHelpVisible = false },
+                        onGamepadDiagnosisDismiss = { gamepadDiagnosis = null },
+                        onGamepadCalibrationDismiss = {
+                            gamepadCalibration = null
+                            events.onGamepadCalibrationCancel()
+                        },
+                        onGamepadCalibrationReset = { events.onGamepadCalibrationReset() },
+                        onGamepadCalibrationAdvance = { events.onGamepadCalibrationAdvance() },
+                        onGamepadCalibrationSave = { events.onGamepadCalibrationSave() },
                     )
                     TransientNoticeHost(notices, Modifier.align(Alignment.BottomCenter))
                 }
