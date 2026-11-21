@@ -26,6 +26,17 @@ This document describes UI ownership in JL-Mod Plus. The normative boundary is t
 
 ## Programmatic View boundaries
 
+The Compose theme is authoritative for app-owned page and popup presentation.
+AppCompat `res/values*/colors.xml` still supplies compatibility View/window
+fallback colors; its background, text, and default accent roles match the
+static Sapphire Compose scheme for the corresponding night mode. Those XML
+roles are not a separate configurable accent system: dynamic and non-default
+accents are resolved at the Compose/legacy host boundary. Color-picker swatches,
+guest pixels, and user-defined virtual-control colors are not semantic theme
+tokens. Shared `AdaptiveAlertDialog` and the screen-preset dialog use consistent
+Material 3 surfaces; a distinct `Dialog` host may remain where its lifecycle,
+layout, or controller contract requires it.
+
 There are no remaining app-owned layout/menu XML files under `app/src/main/res`.
 The remaining programmatic Views are deliberately bounded:
 
