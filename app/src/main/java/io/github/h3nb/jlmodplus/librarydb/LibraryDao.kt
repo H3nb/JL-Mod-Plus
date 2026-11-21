@@ -103,7 +103,7 @@ abstract class LibraryDao {
         FROM collections AS c
         LEFT JOIN collection_apps AS ca ON ca.collection_id = c.id
         GROUP BY c.id, c.name, c.sort_order, c.created_at
-        ORDER BY c.sort_order ASC, c.name COLLATE NOCASE ASC, c.id ASC
+        ORDER BY c.sort_order ASC, c.created_at ASC, c.id ASC
         """,
     )
     abstract fun observeCollections(): Flow<List<LibraryCollectionRow>>
@@ -301,6 +301,25 @@ abstract class LibraryDao {
 
     @Query("SELECT MAX(sort_order) FROM collections")
     abstract suspend fun getMaxCollectionSortOrder(): Int?
+
+    @Query("SELECT id FROM collections ORDER BY sort_order ASC, created_at ASC, id ASC")
+    abstract suspend fun getCollectionIdsInOrder(): List<Long>
+
+    @Query("UPDATE collections SET sort_order = :position WHERE id = :collectionId")
+    abstract suspend fun updateCollectionPosition(collectionId: Long, position: Int): Int
+
+    @Transaction
+    open suspend fun reorderCollections(orderedIds: List<Long>) {
+        val currentIds = getCollectionIdsInOrder()
+        require(orderedIds.size == currentIds.size && orderedIds.toSet() == currentIds.toSet()) {
+            "Collection list changed during reorder"
+        }
+        orderedIds.forEachIndexed { position, id ->
+            check(updateCollectionPosition(id, position) == 1) {
+                "Collection disappeared during reorder: $id"
+            }
+        }
+    }
 
     @Query(
         """
