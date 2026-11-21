@@ -323,6 +323,14 @@ class LibraryRepository(
         dao.getCollectionAppIds(collectionId).toSet()
     }
 
+    suspend fun appCollectionIds(
+        expected: LibraryGenerationToken,
+        appId: Long,
+    ): Set<Long> = withActiveDatabase(expected) { dao ->
+        check(dao.getApp(appId) != null) { "Library app disappeared: $appId" }
+        dao.getAppCollectionIds(appId).toSet()
+    }
+
     suspend fun recordInstalledApp(
         expected: LibraryGenerationToken,
         existingId: Long?,

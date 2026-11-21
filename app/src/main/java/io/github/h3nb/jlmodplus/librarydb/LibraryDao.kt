@@ -132,6 +132,9 @@ abstract class LibraryDao {
     @Query("SELECT app_id FROM collection_apps WHERE collection_id = :collectionId ORDER BY added_at DESC, app_id ASC")
     abstract suspend fun getCollectionAppIds(collectionId: Long): List<Long>
 
+    @Query("SELECT collection_id FROM collection_apps WHERE app_id = :appId")
+    abstract suspend fun getAppCollectionIds(appId: Long): List<Long>
+
     @Query(
         """
         SELECT * FROM apps
