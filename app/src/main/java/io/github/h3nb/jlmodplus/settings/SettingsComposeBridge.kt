@@ -657,7 +657,7 @@ private fun SettingsChoiceRow(
                 modifier = Modifier
                     .size(22.dp)
                     .background(
-                        AccentPalette.fromKey(selected.value).previewColor(isSystemInDarkTheme()),
+                        AccentPalette.fromKey(selected.value).previewColor(isSystemInDarkTheme(), LocalContext.current),
                         CircleShape,
                     ),
             )
@@ -723,7 +723,7 @@ private fun SettingsChoiceDialog(
                                             .size(22.dp)
                                             .background(
                                                 AccentPalette.fromKey(option.value)
-                                                    .previewColor(isSystemInDarkTheme()),
+                                                    .previewColor(isSystemInDarkTheme(), LocalContext.current),
                                                 CircleShape,
                                             ),
                                     )
