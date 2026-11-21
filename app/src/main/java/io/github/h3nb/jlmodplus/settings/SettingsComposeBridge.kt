@@ -17,6 +17,7 @@ package io.github.h3nb.jlmodplus.settings
 import androidx.activity.compose.BackHandler
 import androidx.compose.foundation.clickable
 import androidx.compose.foundation.background
+import androidx.compose.foundation.border
 import androidx.compose.foundation.selection.selectable
 import androidx.compose.foundation.selection.selectableGroup
 import androidx.compose.foundation.selection.toggleable
@@ -659,7 +660,8 @@ private fun SettingsChoiceRow(
                     .background(
                         AccentPalette.fromKey(selected.value).previewColor(isSystemInDarkTheme(), LocalContext.current),
                         CircleShape,
-                    ),
+                    )
+                    .border(1.dp, MaterialTheme.colorScheme.outlineVariant, CircleShape),
             )
         }
     }
@@ -725,7 +727,8 @@ private fun SettingsChoiceDialog(
                                                 AccentPalette.fromKey(option.value)
                                                     .previewColor(isSystemInDarkTheme(), LocalContext.current),
                                                 CircleShape,
-                                            ),
+                                            )
+                                            .border(1.dp, MaterialTheme.colorScheme.outlineVariant, CircleShape),
                                     )
                                 }
                             } else {
