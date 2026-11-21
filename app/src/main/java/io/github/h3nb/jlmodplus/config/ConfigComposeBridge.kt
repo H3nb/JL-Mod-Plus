@@ -359,6 +359,7 @@ internal fun ConfigScreen(
     var systemPropertiesSession by rememberSaveable { mutableIntStateOf(0) }
     var renderingSubpage by rememberSaveable { mutableStateOf<RenderingSubpage?>(null) }
     var detailPage by rememberSaveable { mutableStateOf<ConfigDetail?>(null) }
+    var revealSection by remember { mutableStateOf<String?>(null) }
     val backRendering: () -> Unit = { renderingSubpage = null }
     var presetPickerVisible by rememberSaveable { mutableStateOf(false) }
     var savePresetVisible by rememberSaveable { mutableStateOf(false) }
@@ -520,6 +521,11 @@ internal fun ConfigScreen(
                                 ) { page ->
                                     val pageScrollState = if (destinations[page] == ConfigDestination.Display)
                                         displayScrollState else rememberScrollState()
+                                    androidx.compose.runtime.CompositionLocalProvider(
+                                        LocalConfigSectionReveal provides revealSection?.let { section ->
+                                            ConfigSectionReveal(section) { revealSection = null }
+                                        },
+                                    ) {
                                     Column(
                                         modifier = Modifier
                                             .fillMaxSize()
@@ -555,6 +561,7 @@ internal fun ConfigScreen(
                                                 modifier = Modifier.widthIn(max = 880.dp),
                                             )
                                         }
+                                    }
                                     }
                                 }
                                 if (tabMotion.isJumping) {
@@ -708,13 +715,13 @@ private fun ConfigDestinationContent(
                 ScreenGeometrySection(state, form, onFormChanged, events, cutoutAvailable)
                 ScreenSection(form, state, onFormChanged, events, onOpenShaders)
                 ConfigSection(title = stringResource(R.string.config_display_more)) {
-                    ConfigCompactValuePreference(
+                    ConfigNavigationPreference(
                         title = stringResource(R.string.config_display_text),
                         value = stringResource(R.string.config_font_sizes_value,
                             form.fontSizeSmall, form.fontSizeMedium, form.fontSizeLarge),
                         onClick = { onOpenDetail(ConfigDetail.Font) },
                     )
-                    ConfigCompactValuePreference(
+                    ConfigNavigationPreference(
                         title = stringResource(R.string.config_display_performance),
                         value = stringResource(R.string.config_display_performance_summary),
                         onClick = { onOpenDetail(ConfigDetail.Performance) },
@@ -779,18 +786,18 @@ private fun GeneralDestination(
         }
     }
     ConfigSection(title = stringResource(R.string.config_overview_quick_access)) {
-        ConfigCompactValuePreference(
+        ConfigNavigationPreference(
             title = stringResource(R.string.config_destination_graphics),
             value = "${form.screenWidth} × ${form.screenHeight}",
             onClick = { onNavigate(ConfigDestination.Display) },
         )
-        ConfigCompactValuePreference(
+        ConfigNavigationPreference(
             title = stringResource(R.string.config_destination_controls),
             value = stringResource(if (form.showKeyboard) R.string.config_overview_enabled
                 else R.string.config_overview_disabled),
             onClick = { onNavigate(ConfigDestination.Controls) },
         )
-        ConfigCompactValuePreference(
+        ConfigNavigationPreference(
             title = stringResource(R.string.config_destination_media),
             value = stringResource(R.string.config_overview_media_summary),
             onClick = { onNavigate(ConfigDestination.Media) },
