@@ -161,8 +161,8 @@ class InstallerComposeTest {
 
         composeRule.onAllNodesWithText(uiString(R.string.bulk_install_source, source.path))
             .assertCountEquals(0)
-        composeRule.onAllNodesWithContentDescription(uiString(R.string.bulk_install_show_details))
-            .onFirst().performClick()
+        composeRule.onAllNodesWithContentDescription(uiString(R.string.bulk_install_show_details))[0]
+            .performClick()
         composeRule.onNodeWithText(uiString(R.string.bulk_install_source, source.path))
             .assertIsDisplayed()
         composeRule.onNodeWithContentDescription(uiString(R.string.bulk_install_selection_options))

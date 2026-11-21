@@ -1005,8 +1005,8 @@
     <string name="perf_overlay_display">Display refresh rate (DISP)</string>
 
     <string name="settings_section_appearance">App appearance</string>
-    <string name="settings_section_appearance_language">Appearance and language</string>
-    <string name="settings_section_storage_profiles">Storage and profiles</string>
+    <string name="settings_section_appearance_language" tools:ignore="MissingTranslation">Appearance and language</string>
+    <string name="settings_section_storage_profiles" tools:ignore="MissingTranslation">Storage and profiles</string>
     <string name="settings_section_language">Language</string>
     <string name="settings_section_library_appearance">Library appearance</string>
     <string name="settings_section_midlet_runtime">MIDlet runtime</string>
