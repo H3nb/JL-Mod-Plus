@@ -50,6 +50,7 @@ internal fun ConfigQuickSettings(
     onOpenCategory: (ConfigDestination) -> Unit,
     onOpenPerformance: () -> Unit,
     onOpenQuickSetting: (QuickSetting) -> Unit,
+    onRequestAction: (ConfigAction) -> Unit,
 ) {
     if (isProfile) {
         Text(stringResource(R.string.config_overview_profile_draft_summary),
@@ -176,6 +177,7 @@ internal fun ConfigQuickSettings(
                 }
         }
     }
+    ConfigGlobalActionsSection(isProfile, onRequestAction)
 }
 
 @Composable

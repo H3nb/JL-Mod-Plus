@@ -245,7 +245,8 @@
     <string name="pref_skip_resume_call">Skip startApp() on resume</string>
     <string name="pref_soundbank_title">MIDI soundbank</string>
     <string name="PREF_SYS_PROPS">System properties</string>
-    <string name="config_destination_graphics">Display</string>
+    <string name="config_destination_display" tools:ignore="MissingTranslation">Display</string>
+    <string name="config_destination_graphics">Graphics &amp; performance</string>
     <string name="config_destination_media">Media</string>
     <string name="config_camera_title">Camera</string>
     <string name="config_camera_default_title">Default camera</string>
@@ -825,11 +826,16 @@
     <string name="config_controls_color_skin_notice">A full-button skin can replace the default button colors, shape, and outline.</string>
     <string name="config_current_value">Current value</string>
     <string name="config_maintenance">Reset &amp; data</string>
-    <string name="config_reset_all_settings">Reset all settings</string>
+    <string name="config_midlet_actions" tools:ignore="MissingTranslation">MIDlet actions</string>
+    <string name="config_profile_maintenance" tools:ignore="MissingTranslation">Profile actions</string>
+    <string name="config_reset_profile_settings" tools:ignore="MissingTranslation">Reset profile draft</string>
+    <string name="config_reset_profile_settings_summary" tools:ignore="MissingTranslation">Restore this draft’s settings and virtual controls to defaults.</string>
+    <string name="config_system_compatibility" tools:ignore="MissingTranslation">Compatibility</string>
+    <string name="config_reset_all_settings">Reset MIDlet configuration</string>
     <string name="config_reset_all_settings_summary">Restore this MIDlet’s settings and virtual controls to their defaults without deleting its data.</string>
     <string name="config_delete_app_data">Delete MIDlet data</string>
     <string name="config_delete_app_data_summary">Permanently delete this MIDlet’s data, including saves. Its settings will be kept.</string>
-    <string name="config_message_reset_settings">Reset this MIDlet’s settings and virtual controls to their defaults? MIDlet data will not be deleted.</string>
+    <string name="config_message_reset_settings">Restore the MIDlet configuration and virtual controls to defaults? Saved data stays intact. Any linked profile will stop being followed.</string>
     <string name="config_message_reset_profile_settings">Reset this profile’s settings and virtual controls to their defaults? You can still edit or cancel before saving.</string>
     <string name="config_message_delete_app_data">Permanently delete all saves and data created by this MIDlet? MIDlet settings will not be deleted.</string>
     <string name="config_lock_custom_resolution_ratio">Lock aspect ratio</string>

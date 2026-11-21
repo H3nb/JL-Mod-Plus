@@ -306,7 +306,8 @@ data class EncodingPickerRequest(
 
 internal enum class ConfigDestination(val label: Int, val icon: Int) {
     Basic(R.string.config_quick_settings, R.drawable.ic_config_general),
-    Display(R.string.config_destination_graphics, R.drawable.ic_config_graphics),
+    Display(R.string.config_destination_display, R.drawable.ic_config_graphics),
+    Graphics(R.string.config_destination_graphics, R.drawable.ic_runtime_fps),
     Controls(R.string.config_destination_controls, R.drawable.ic_config_controls),
     Media(R.string.config_destination_media, R.drawable.ic_config_media),
     System(R.string.config_destination_system, R.drawable.ic_settings),
@@ -407,6 +408,7 @@ internal fun ConfigScreen(
 
     val quickScrollState = rememberScrollState()
     val displayScrollState = rememberScrollState()
+    val graphicsScrollState = rememberScrollState()
     val controlsScrollState = rememberScrollState()
     val mediaScrollState = rememberScrollState()
     val systemScrollState = rememberScrollState()
@@ -482,6 +484,7 @@ internal fun ConfigScreen(
                     val scrollState = when (destination) {
                         ConfigDestination.Basic -> quickScrollState
                         ConfigDestination.Display -> displayScrollState
+                        ConfigDestination.Graphics -> graphicsScrollState
                         ConfigDestination.Controls -> controlsScrollState
                         ConfigDestination.Media -> mediaScrollState
                         ConfigDestination.System -> systemScrollState
@@ -530,8 +533,13 @@ internal fun ConfigScreen(
                                 horizontalAlignment = Alignment.CenterHorizontally,
                             ) {
                                 if (destination == ConfigDestination.Basic) {
-                                    Column(
-                                        modifier = Modifier.widthIn(max = 880.dp),
+                                    androidx.compose.runtime.CompositionLocalProvider(
+                                        LocalConfigSectionReveal provides revealSection?.let { section ->
+                                            ConfigSectionReveal(section) { revealSection = null }
+                                        },
+                                    ) {
+                                        Column(
+                                            modifier = Modifier.widthIn(max = 880.dp),
                                         verticalArrangement = Arrangement.spacedBy(8.dp),
                                     ) {
                                         ConfigQuickSettings(
@@ -544,7 +552,9 @@ internal fun ConfigScreen(
                                             onOpenCategory = { selectedDestination = it },
                                             onOpenPerformance = { detailPage = ConfigDetail.Performance },
                                             onOpenQuickSetting = { quickSetting = it },
+                                            onRequestAction = { pendingAction = it },
                                         )
+                                        }
                                     }
                                 } else {
                                     androidx.compose.runtime.CompositionLocalProvider(
@@ -712,16 +722,21 @@ private fun ConfigDestinationContent(
             ConfigDestination.Basic -> Unit
             ConfigDestination.Display -> {
                 ScreenGeometrySection(state, form, onFormChanged, events, cutoutAvailable)
-                ScreenSection(form, state, onFormChanged, events, onOpenShaders)
-                ConfigSection(title = stringResource(R.string.config_display_more)) {
+                ScreenAppearanceSection(form, state, onFormChanged, events)
+                ConfigSection(title = stringResource(R.string.config_display_text)) {
                     ConfigNavigationPreference(
-                        title = stringResource(R.string.config_display_text),
+                        title = stringResource(R.string.config_font_page_title),
                         value = stringResource(R.string.config_font_sizes_value,
                             form.fontSizeSmall, form.fontSizeMedium, form.fontSizeLarge),
                         onClick = { onOpenDetail(ConfigDetail.Font) },
                     )
+                }
+            }
+            ConfigDestination.Graphics -> {
+                RenderingSection(form, state, onFormChanged, onOpenShaders)
+                ConfigSection(title = stringResource(R.string.config_display_performance)) {
                     ConfigNavigationPreference(
-                        title = stringResource(R.string.config_display_performance),
+                        title = stringResource(R.string.config_performance_page_title),
                         value = if (form.fpsLimit == "0" || form.fpsLimit.isBlank())
                             stringResource(R.string.fps_limit_maximum)
                         else "${form.fpsLimit} FPS",
@@ -739,7 +754,6 @@ private fun ConfigDestinationContent(
             }
             ConfigDestination.System -> {
                 SystemSection(state, form, onFormChanged, events, !isProfile, onEditSystemProperties)
-                ConfigMaintenanceSection(!isProfile, onRequestAction)
             }
         }
     }
@@ -894,19 +908,29 @@ private fun ConfigBasicInputSection(
 }
 
 @Composable
-private fun ConfigMaintenanceSection(
-    showClearData: Boolean,
+internal fun ConfigGlobalActionsSection(
+    isProfile: Boolean,
     onRequestAction: (ConfigAction) -> Unit,
 ) {
-    ConfigSection(title = stringResource(R.string.config_maintenance)) {
+    ConfigSection(
+        title = stringResource(
+            if (isProfile) R.string.config_profile_maintenance else R.string.config_midlet_actions,
+        ),
+    ) {
         ConfigActionPreference(
-            title = stringResource(R.string.config_reset_all_settings),
-            description = stringResource(R.string.config_reset_all_settings_summary),
+            title = stringResource(
+                if (isProfile) R.string.config_reset_profile_settings
+                else R.string.config_reset_all_settings,
+            ),
+            description = stringResource(
+                if (isProfile) R.string.config_reset_profile_settings_summary
+                else R.string.config_reset_all_settings_summary,
+            ),
             destructive = true,
             testTag = "config_reset_settings_action",
             onClick = { onRequestAction(ConfigAction.ResetSettings) },
         )
-        if (showClearData) {
+        if (!isProfile) {
             ConfigActionPreference(
                 title = stringResource(R.string.config_delete_app_data),
                 description = stringResource(R.string.config_delete_app_data_summary),
@@ -941,22 +965,21 @@ private val configSearchIndex = listOf(
     ConfigSearchItem(R.string.config_background_mode, R.string.config_display_appearance, ConfigDestination.Display),
     ConfigSearchItem(R.string.config_background_custom_color, R.string.config_display_appearance, ConfigDestination.Display, keywords = "background color"),
     ConfigSearchItem(R.string.pref_skin_title, R.string.config_display_appearance, ConfigDestination.Display, keywords = "skin frame bezel"),
-    ConfigSearchItem(R.string.pref_graphics_mode_title, R.string.config_display_rendering, ConfigDestination.Display, keywords = "renderer OpenGL ES"),
-    ConfigSearchItem(R.string.internal_resolution_title, R.string.config_display_rendering, ConfigDestination.Display, keywords = "resolution scaling"),
-    ConfigSearchItem(R.string.bitmap_upscaling_title, R.string.config_display_rendering, ConfigDestination.Display, keywords = "MMPX nearest bilinear edge aware sprites"),
-    ConfigSearchItem(R.string.render_shader_effects, R.string.config_display_rendering, ConfigDestination.Display, keywords = "shader GLSL effects"),
-    ConfigSearchItem(R.string.render_texture_filtering, R.string.config_display_rendering, ConfigDestination.Display, keywords = "texture filtering"),
-    ConfigSearchItem(R.string.parallel_screen_redrawing, R.string.config_display_rendering, ConfigDestination.Display),
+    ConfigSearchItem(R.string.pref_graphics_mode_title, R.string.config_display_rendering, ConfigDestination.Graphics, keywords = "renderer OpenGL ES"),
+    ConfigSearchItem(R.string.internal_resolution_title, R.string.config_display_rendering, ConfigDestination.Graphics, keywords = "resolution scaling"),
+    ConfigSearchItem(R.string.bitmap_upscaling_title, R.string.config_display_rendering, ConfigDestination.Graphics, keywords = "MMPX nearest bilinear edge aware sprites"),
+    ConfigSearchItem(R.string.render_shader_effects, R.string.config_display_rendering, ConfigDestination.Graphics, keywords = "shader GLSL effects"),
+    ConfigSearchItem(R.string.render_texture_filtering, R.string.config_display_rendering, ConfigDestination.Graphics, keywords = "texture filtering"),
+    ConfigSearchItem(R.string.parallel_screen_redrawing, R.string.config_display_rendering, ConfigDestination.Graphics),
     ConfigSearchItem(R.string.config_font_sizes, R.string.config_display_text, ConfigDestination.Display, ConfigDetail.Font, "font text"),
     ConfigSearchItem(R.string.SIZE_PRESETS, R.string.config_display_text, ConfigDestination.Display, ConfigDetail.Font),
     ConfigSearchItem(R.string.PREF_FONT_SIZE_IN_SP, R.string.config_display_text, ConfigDestination.Display, ConfigDetail.Font),
     ConfigSearchItem(R.string.PREF_FONT_ANTI_ALIASING, R.string.config_display_text, ConfigDestination.Display, ConfigDetail.Font),
-    ConfigSearchItem(R.string.PREF_LIMIT_FPS, R.string.config_display_performance, ConfigDestination.Display, ConfigDetail.Performance, "framerate fps"),
-    ConfigSearchItem(R.string.perf_overlay_title, R.string.config_display_performance, ConfigDestination.Display, ConfigDetail.Performance, "stats performance"),
-    ConfigSearchItem(R.string.PREF_IMMEDIATE, R.string.config_display_performance, ConfigDestination.Display, ConfigDetail.Performance),
-    ConfigSearchItem(R.string.perf_overlay_preset, R.string.config_display_performance, ConfigDestination.Display, ConfigDetail.Performance),
-    ConfigSearchItem(R.string.perf_overlay_parameters, R.string.config_display_performance, ConfigDestination.Display, ConfigDetail.Performance),
-    ConfigSearchItem(R.string.perf_overlay_position, R.string.config_display_performance, ConfigDestination.Display, ConfigDetail.Performance),
+    ConfigSearchItem(R.string.PREF_LIMIT_FPS, R.string.config_display_performance, ConfigDestination.Graphics, ConfigDetail.Performance, "framerate fps"),
+    ConfigSearchItem(R.string.perf_overlay_title, R.string.config_display_performance, ConfigDestination.Graphics, ConfigDetail.Performance, "stats performance"),
+    ConfigSearchItem(R.string.perf_overlay_preset, R.string.config_display_performance, ConfigDestination.Graphics, ConfigDetail.Performance),
+    ConfigSearchItem(R.string.perf_overlay_parameters, R.string.config_display_performance, ConfigDestination.Graphics, ConfigDetail.Performance),
+    ConfigSearchItem(R.string.perf_overlay_position, R.string.config_display_performance, ConfigDestination.Graphics, ConfigDetail.Performance),
     ConfigSearchItem(R.string.PREF_VIRTUAL_KEYBOARD_OPTIONS, R.string.config_basic_input, ConfigDestination.Controls, keywords = "virtual keys controls"),
     ConfigSearchItem(R.string.PREF_TOUCH_INPUT, R.string.config_basic_input, ConfigDestination.Controls),
     ConfigSearchItem(R.string.PREF_LAYOUT, R.string.config_controls_key_input, ConfigDestination.Controls),
@@ -977,12 +1000,14 @@ private val configSearchIndex = listOf(
     ConfigSearchItem(R.string.midlet_storage_mode_title, R.string.midlet_permissions_settings_title, ConfigDestination.System, keywords = "files storage"),
     ConfigSearchItem(R.string.midlet_permissions_read, R.string.midlet_permissions_settings_title, ConfigDestination.System),
     ConfigSearchItem(R.string.midlet_permissions_write, R.string.midlet_permissions_settings_title, ConfigDestination.System),
-    ConfigSearchItem(R.string.pref_skip_resume_call, R.string.pref_title_emulation, ConfigDestination.System),
+    ConfigSearchItem(R.string.pref_skip_resume_call, R.string.config_system_compatibility, ConfigDestination.System),
+    ConfigSearchItem(R.string.PREF_IMMEDIATE, R.string.config_system_compatibility, ConfigDestination.System),
     ConfigSearchItem(R.string.PREF_TIMING_MODE, R.string.config_system_timing, ConfigDestination.System),
     ConfigSearchItem(R.string.pref_encoding_title, R.string.PREF_SYS_PROPS, ConfigDestination.System),
     ConfigSearchItem(R.string.config_edit_system_properties, R.string.PREF_SYS_PROPS, ConfigDestination.System, keywords = "properties CLDC Java ME"),
-    ConfigSearchItem(R.string.config_reset_all_settings, R.string.config_maintenance, ConfigDestination.System),
-    ConfigSearchItem(R.string.config_delete_app_data, R.string.config_maintenance, ConfigDestination.System, keywords = "clear data"),
+    ConfigSearchItem(R.string.config_reset_all_settings, R.string.config_midlet_actions, ConfigDestination.Basic),
+    ConfigSearchItem(R.string.config_reset_profile_settings, R.string.config_profile_maintenance, ConfigDestination.Basic),
+    ConfigSearchItem(R.string.config_delete_app_data, R.string.config_midlet_actions, ConfigDestination.Basic, keywords = "clear data"),
 )
 
 @Composable
@@ -999,7 +1024,10 @@ private fun ConfigSearchResults(
         R.string.pref_map_keys, R.string.PREF_TIMING_MODE,
     )
     val filtered = configSearchIndex.filter { entry ->
-        if (isProfile && entry.destination == ConfigDestination.Basic) return@filter false
+        if (isProfile && entry.title in listOf(
+                R.string.config_reset_all_settings, R.string.config_delete_app_data,
+            )) return@filter false
+        if (!isProfile && entry.title == R.string.config_reset_profile_settings) return@filter false
         if (query.isBlank()) entry.title in suggestions
         else resources.getString(entry.title).contains(query.trim(), ignoreCase = true) ||
             resources.getString(entry.section).contains(query.trim(), ignoreCase = true) ||
@@ -1154,12 +1182,11 @@ private fun ConfigTopBar(
 }
 
 @Composable
-private fun ScreenSection(
+private fun ScreenAppearanceSection(
     form: ConfigFormState,
     state: ConfigUiState,
     onFormChanged: (ConfigFormState) -> Unit,
     events: ConfigFormEvents,
-    onOpenShaders: () -> Unit,
 ) {
     ConfigSection(title = stringResource(R.string.config_display_appearance)) {
         val backgroundModes = listOf(
@@ -1214,6 +1241,15 @@ private fun ScreenSection(
             onDelete = { name -> events.onDeleteAsset(ConfigFormEvents.AssetKind.SKIN, name) },
         )
     }
+}
+
+@Composable
+private fun RenderingSection(
+    form: ConfigFormState,
+    state: ConfigUiState,
+    onFormChanged: (ConfigFormState) -> Unit,
+    onOpenShaders: () -> Unit,
+) {
     ConfigSection(title = stringResource(R.string.config_display_rendering)) {
         val graphicsOptions = stringArrayResource(R.array.pref_graphics_mode_entries).toList()
         ConfigChoicePreference(
@@ -1308,12 +1344,6 @@ private fun PerformanceSection(
         if (form.showFps) {
             PerformanceOverlayPreferences(form, onFormChanged)
         }
-        ConfigSwitchPreference(
-            title = stringResource(R.string.PREF_IMMEDIATE),
-            description = stringResource(R.string.config_help_immediate),
-            checked = form.immediateMode,
-            onCheckedChange = { checked -> onFormChanged(form.toBuilder().immediateMode(checked).build()) },
-        )
     }
 }
 
@@ -2312,16 +2342,22 @@ private fun AnalogColorSample(
 }
 
 @Composable
-private fun EmulationSection(
+private fun CompatibilitySection(
     form: ConfigFormState,
     onFormChanged: (ConfigFormState) -> Unit,
 ) {
-    ConfigSection(title = stringResource(R.string.pref_title_emulation)) {
+    ConfigSection(title = stringResource(R.string.config_system_compatibility)) {
         ConfigSwitchPreference(
             title = stringResource(R.string.pref_skip_resume_call),
             description = stringResource(R.string.config_help_skip_resume),
             checked = form.skipResumeCall,
             onCheckedChange = { checked -> onFormChanged(form.toBuilder().skipResumeCall(checked).build()) },
+        )
+        ConfigSwitchPreference(
+            title = stringResource(R.string.PREF_IMMEDIATE),
+            description = stringResource(R.string.config_help_immediate),
+            checked = form.immediateMode,
+            onCheckedChange = { checked -> onFormChanged(form.toBuilder().immediateMode(checked).build()) },
         )
     }
 }
@@ -2439,7 +2475,7 @@ private fun SystemSection(
             }
         }
     }
-    EmulationSection(form, onFormChanged)
+    CompatibilitySection(form, onFormChanged)
     ConfigSection(title = stringResource(R.string.config_system_timing)) {
         val timingModes = TimingMode.values().toList()
         val timingModeOptions = listOf(
@@ -2640,9 +2676,12 @@ private fun ConfigActionConfirmationDialog(
     } else {
         action.message
     }
+    val actionTitle = if (action == ConfigAction.ResetSettings && isProfile) {
+        R.string.config_reset_profile_settings
+    } else action.title
     AlertDialog(
         onDismissRequest = onDismissRequest,
-        title = { Text(stringResource(action.title)) },
+        title = { Text(stringResource(actionTitle)) },
         text = { Text(stringResource(message)) },
         dismissButton = {
             TextButton(onClick = onDismissRequest) {
@@ -2654,7 +2693,7 @@ private fun ConfigActionConfirmationDialog(
                 onClick = onConfirm,
                 colors = ButtonDefaults.textButtonColors(contentColor = MaterialTheme.colorScheme.error),
             ) {
-                Text(stringResource(action.title))
+                Text(stringResource(actionTitle))
             }
         },
     )
