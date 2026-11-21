@@ -1042,6 +1042,10 @@
     <string name="settings_section_appearance_language" tools:ignore="MissingTranslation">Appearance and language</string>
     <string name="settings_section_storage_profiles" tools:ignore="MissingTranslation">Storage and profiles</string>
     <string name="settings_section_language">Language</string>
+    <string name="settings_section_library_icons" tools:ignore="MissingTranslation">Library icons</string>
+    <string name="settings_section_library_grid" tools:ignore="MissingTranslation">Grid layout</string>
+    <string name="settings_section_runtime_screen" tools:ignore="MissingTranslation">Screen while playing</string>
+    <string name="settings_section_runtime_features" tools:ignore="MissingTranslation">In-game features</string>
     <string name="settings_section_library_appearance">Library appearance</string>
     <string name="settings_section_midlet_runtime">MIDlet runtime</string>
     <string name="settings_section_storage">Storage</string>
