@@ -158,6 +158,48 @@ class LibraryComposeTest {
     }
 
     @Test
+    fun landscapeAppActionsUseAtLeastThreeColumnsInRequestedOrder() {
+        composeRule.setContent {
+            DeviceConfigurationOverride(
+                DeviceConfigurationOverride.WindowSize(DpSize(800.dp, 360.dp)),
+            ) {
+                JLModPlusTheme {
+                    AppActionsDialog(
+                        app = LibraryAppUiItem(7, "Demo MIDlet", "Vendor", "1.0", null, true),
+                        onDismiss = {},
+                        onShortcut = {},
+                        onSettings = {},
+                        onReinstall = {},
+                        onDelete = {},
+                        onDetails = {},
+                        onSelect = {},
+                        onAddToCollection = {},
+                        onExportAppBundle = {},
+                    )
+                }
+            }
+        }
+
+        val firstRow = listOf(
+            R.string.library_action_select,
+            R.string.library_details_action,
+            R.string.action_settings,
+            R.string.library_bulk_add_collection,
+        ).map { id ->
+            composeRule.onNodeWithText(uiString(id)).fetchSemanticsNode().boundsInRoot
+        }
+        firstRow.zipWithNext { left, right ->
+            assertTrue("Landscape actions must follow reading order", left.left < right.left)
+            assertEquals(left.top, right.top, 1f)
+        }
+        val secondRow = composeRule.onNodeWithText(
+            uiString(R.string.action_context_shortcut),
+        ).fetchSemanticsNode().boundsInRoot
+        assertTrue("Next actions must flow onto a new row", secondRow.top > firstRow[0].top)
+        assertEquals(firstRow[0].left, secondRow.left, 1f)
+    }
+
+    @Test
     fun listOverflowOpensTheMidletActionsWithoutLongPress() {
         val actions = RecordingLibraryActions()
         setLibraryContent(actions = actions)
