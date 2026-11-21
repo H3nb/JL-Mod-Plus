@@ -973,6 +973,11 @@
     <string name="library_bulk_share_apps">Bagikan aplikasi</string>
     <string name="library_bulk_reinstall_apps">Instal ulang</string>
     <string name="library_bulk_export_apps">Ekspor bundel</string>
+    <string name="library_export_jar_only">JAR saja</string>
+    <string name="library_export_jars_only">JAR saja (ZIP)</string>
+    <string name="library_selection_action_delete">Hapus</string>
+    <string name="library_selection_action_collection">Koleksi</string>
+    <string name="library_selection_action_export">Ekspor</string>
     <string name="library_enhanced_icons_title">Penyempurnaan ikon</string>
     <string name="library_enhanced_icons_summary">Menyesuaikan ukuran dan warna ikon agar lebih konsisten di pustaka.</string>
 
