@@ -126,8 +126,8 @@ internal fun ConfigNavigationPreference(
         PreferenceChevron()
     }
 }
-/** One accessible target for a preference that opens an editor or action. */
 
+/** One accessible target for a preference that opens an editor or action. */
 @Composable
 internal fun ConfigCompactValuePreference(
     title: String,
@@ -141,9 +141,9 @@ internal fun ConfigCompactValuePreference(
     Row(
         modifier = modifier
             .fillMaxWidth()
-            .heightIn(min = 60.dp)
+            .heightIn(min = 56.dp)
             .clickable(enabled = enabled, role = Role.Button, onClick = onClick)
-            .padding(horizontal = 16.dp, vertical = 10.dp),
+            .padding(horizontal = 16.dp, vertical = 8.dp),
         verticalAlignment = Alignment.CenterVertically,
         horizontalArrangement = Arrangement.spacedBy(12.dp),
     ) {
@@ -155,7 +155,7 @@ internal fun ConfigCompactValuePreference(
             destructive = destructive,
             modifier = Modifier.weight(1f),
         )
-        PreferenceChevron(modifier = Modifier.then(if (enabled) Modifier else Modifier.alpha(0.38f)))
+        PreferenceChevron(enabled = enabled)
     }
 }
 
@@ -209,7 +209,7 @@ internal fun ConfigValuePreference(
                 enabled = enabled,
                 modifier = Modifier.weight(1f),
             )
-            PreferenceChevron(modifier = Modifier.then(if (enabled) Modifier else Modifier.alpha(0.38f)))
+            PreferenceChevron(enabled = enabled)
         }
         if (message != null) {
             Box(modifier = Modifier.padding(horizontal = 16.dp, vertical = 2.dp)) {
