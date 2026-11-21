@@ -455,7 +455,6 @@ private fun LibraryManagedCollectionRow(
                 if (checked) MaterialTheme.colorScheme.secondaryContainer
                 else MaterialTheme.colorScheme.surfaceContainerLow,
             )
-            .clickable(enabled = enabled, onClick = onOpen)
             .heightIn(min = 76.dp)
             .padding(start = 4.dp),
         verticalAlignment = Alignment.CenterVertically,
@@ -466,30 +465,35 @@ private fun LibraryManagedCollectionRow(
             onCheckedChange = { onToggle() },
             modifier = Modifier.semantics { contentDescription = checkboxLabel },
         )
-        Icon(
-            painter = painterResource(R.drawable.ic_folder),
-            contentDescription = null,
-            tint = MaterialTheme.colorScheme.onSurfaceVariant,
-            modifier = Modifier.padding(start = 4.dp).size(24.dp),
-        )
-        Column(
-            modifier = Modifier.weight(1f).padding(start = 12.dp),
+        Row(
+            modifier = Modifier.weight(1f)
+                .heightIn(min = 76.dp)
+                .clickable(enabled = enabled, onClick = onOpen),
+            verticalAlignment = Alignment.CenterVertically,
         ) {
-            Text(
-                text = collection.name,
-                style = MaterialTheme.typography.titleMedium,
-                maxLines = 2,
-                overflow = TextOverflow.Ellipsis,
+            Icon(
+                painter = painterResource(R.drawable.ic_folder),
+                contentDescription = null,
+                tint = MaterialTheme.colorScheme.onSurfaceVariant,
+                modifier = Modifier.padding(start = 4.dp).size(24.dp),
             )
-            Text(
-                text = pluralStringResource(
-                    R.plurals.library_collection_member_count,
-                    collection.appCount,
-                    collection.appCount,
-                ),
-                style = MaterialTheme.typography.bodySmall,
-                color = MaterialTheme.colorScheme.onSurfaceVariant,
-            )
+            Column(modifier = Modifier.weight(1f).padding(start = 12.dp)) {
+                Text(
+                    text = collection.name,
+                    style = MaterialTheme.typography.titleMedium,
+                    maxLines = 2,
+                    overflow = TextOverflow.Ellipsis,
+                )
+                Text(
+                    text = pluralStringResource(
+                        R.plurals.library_collection_member_count,
+                        collection.appCount,
+                        collection.appCount,
+                    ),
+                    style = MaterialTheme.typography.bodySmall,
+                    color = MaterialTheme.colorScheme.onSurfaceVariant,
+                )
+            }
         }
         IconButton(
             onClick = onOpen,
