@@ -489,6 +489,10 @@ public class SettingsActivity extends AppCompatActivity {
 		String[] labels = getResources().getStringArray(R.array.pref_accent_entries);
 		List<SettingsOption> options = new ArrayList<>(Math.min(values.length, labels.length));
 		for (int i = 0; i < Math.min(values.length, labels.length); i++) {
+			if ("wallpaper".equals(values[i]) &&
+					android.os.Build.VERSION.SDK_INT < android.os.Build.VERSION_CODES.S) {
+				continue;
+			}
 			options.add(new SettingsOption(values[i], labels[i]));
 		}
 		return options;
