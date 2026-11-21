@@ -434,6 +434,7 @@
     <string name="library_collection_add_apps">Tambah aplikasi</string>
     <string name="library_collection_manage_apps">Pilih aplikasi</string>
     <string name="library_collection_manage">Kelola koleksi</string>
+    <string name="library_collection_delete_confirmation">Hapus koleksi “%1$s”? Aplikasi di dalamnya tetap terpasang.</string>
     <string name="library_collection_manage_apps_summary">Pilih aplikasi untuk dimasukkan ke koleksi ini.</string>
     <string name="library_collection_name">Nama koleksi</string>
     <string name="library_collection_members_empty">Belum ada aplikasi dalam koleksi ini.</string>

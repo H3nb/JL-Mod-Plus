@@ -272,6 +272,35 @@ class LibraryCollectionsNavigationTest {
     }
 
     @Test
+    fun collectionsManagerExposesCreationAndDoesNotImplyUninstallOnDelete() {
+        val host = RecordingCollectionsHost()
+        composeRule.setContent {
+            DeviceConfigurationOverride(
+                DeviceConfigurationOverride.WindowSize(DpSize(360.dp, 640.dp)),
+            ) {
+                JLModPlusTheme {
+                    LibraryScreen(state = sampleLibraryState(), actions = host)
+                }
+            }
+        }
+
+        openCollectionsManagement()
+        composeRule.onNodeWithText(uiString(R.string.library_collection_manage)).assertIsDisplayed()
+        composeRule.onNodeWithContentDescription(uiString(R.string.library_collection_new))
+            .performClick()
+        composeRule.onNode(hasSetTextAction()).assertIsDisplayed()
+        pressBack()
+
+        composeRule.onNodeWithContentDescription(
+            uiString(R.string.library_collection_more_actions, COLLECTION_NAME),
+        ).performClick()
+        composeRule.onNodeWithText(uiString(R.string.action_context_delete)).performClick()
+        composeRule.onNodeWithText(
+            uiString(R.string.library_collection_delete_confirmation, COLLECTION_NAME),
+        ).assertIsDisplayed()
+    }
+
+    @Test
     fun collectionOverflowUsesAnAnchoredMenu() {
         val host = RecordingCollectionsHost()
         composeRule.setContent {

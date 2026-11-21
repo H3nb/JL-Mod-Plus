@@ -229,9 +229,9 @@ internal fun LibraryLayoutButton(
     Surface(
         onClick = { onLayoutChange(nextLayout) },
         enabled = enabled,
-        modifier = Modifier.size(librarySearchControlHeight()),
-        shape = MaterialTheme.shapes.large,
-        color = MaterialTheme.colorScheme.surfaceContainerHigh,
+        modifier = Modifier.size(48.dp),
+        shape = MaterialTheme.shapes.medium,
+        color = MaterialTheme.colorScheme.surfaceContainerLow,
         contentColor = if (enabled) MaterialTheme.colorScheme.onSurfaceVariant
             else MaterialTheme.colorScheme.onSurface.copy(alpha = 0.38f),
     ) {
@@ -256,9 +256,9 @@ internal fun LibrarySortButton(
     Surface(
         onClick = onClick,
         enabled = enabled,
-        modifier = modifier.size(librarySearchControlHeight()),
-        shape = MaterialTheme.shapes.large,
-        color = MaterialTheme.colorScheme.surfaceContainerHigh,
+        modifier = modifier.size(48.dp),
+        shape = MaterialTheme.shapes.medium,
+        color = MaterialTheme.colorScheme.surfaceContainerLow,
         contentColor = if (enabled) {
             MaterialTheme.colorScheme.onSurfaceVariant
         } else {

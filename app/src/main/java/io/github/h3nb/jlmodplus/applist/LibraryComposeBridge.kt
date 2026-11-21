@@ -2881,7 +2881,7 @@ private fun LibraryAppsHeader(
         modifier = modifier
             .fillMaxWidth()
             .windowInsetsPadding(WindowInsets.safeDrawing.only(WindowInsetsSides.Top))
-            .padding(horizontal = 16.dp, vertical = 8.dp),
+            .padding(horizontal = 16.dp, vertical = 4.dp),
     ) {
         AnimatedContent(
             targetState = searchActive && !selectionState.isActive && title == null && onBack == null,
@@ -3019,7 +3019,7 @@ private fun LibraryAppsHeader(
         Row(
             modifier = Modifier
                 .fillMaxWidth()
-                .padding(top = 8.dp)
+                .padding(top = 4.dp)
                 .then(searchGate.positionModifier)
                 .then(if (searchActionsEnabled) Modifier else Modifier.clearAndSetSemantics { }),
             verticalAlignment = Alignment.CenterVertically,
@@ -3139,85 +3139,64 @@ private fun LibraryAppsHeader(
                 Text(
                     text = stringResource(R.string.library_destination_collections),
                     style = MaterialTheme.typography.titleLarge,
-                    modifier = Modifier.padding(horizontal = 24.dp, vertical = 12.dp),
+                    modifier = Modifier.padding(horizontal = 20.dp, vertical = 8.dp),
                 )
                 LazyColumn(modifier = Modifier.weight(1f, fill = false)) {
                     item(key = "all") {
-                        ListItem(
-                            headlineContent = { Text(stringResource(R.string.library_destination_apps)) },
-                            colors = ListItemDefaults.colors(
-                                containerColor = if (selectedCollection == null) {
-                                    MaterialTheme.colorScheme.secondaryContainer
-                                } else MaterialTheme.colorScheme.surfaceContainerLow,
-                            ),
-                            modifier = Modifier
-                                .padding(horizontal = 12.dp, vertical = 3.dp)
-                                .clip(MaterialTheme.shapes.large)
-                                .clickable { closeScopeThen(onSelectAllApps) }
-                                .semantics { selected = selectedCollection == null },
-                            leadingContent = {
-                                Icon(painterResource(R.drawable.ic_apps), contentDescription = null)
-                            },
-                            trailingContent = {
-                                if (selectedCollection == null) {
-                                    Icon(painterResource(R.drawable.ic_check), contentDescription = null)
+                        LibraryCollectionChoiceRow(
+                            collection = null,
+                            selected = selectedCollection == null,
+                            modifier = Modifier.padding(horizontal = 16.dp, vertical = 2.dp),
+                            onClick = { closeScopeThen(onSelectAllApps) },
+                            trailingContent = if (selectedCollection == null) {
+                                {
+                                    Icon(
+                                        painter = painterResource(R.drawable.ic_check),
+                                        contentDescription = null,
+                                    )
                                 }
-                            },
+                            } else null,
                         )
                     }
                     items(collections, key = { it.id }) { collection ->
-                        ListItem(
-                            headlineContent = {
-                                Text(collection.name, maxLines = 2, overflow = TextOverflow.Ellipsis)
-                            },
-                            supportingContent = {
-                                Text(
-                                    pluralStringResource(
-                                        R.plurals.library_collection_member_count,
-                                        collection.appCount, collection.appCount,
-                                    ),
-                                )
-                            },
-                            colors = ListItemDefaults.colors(
-                                containerColor = if (selectedCollection?.id == collection.id) {
-                                    MaterialTheme.colorScheme.secondaryContainer
-                                } else MaterialTheme.colorScheme.surfaceContainerLow,
-                            ),
-                            modifier = Modifier
-                                .padding(horizontal = 12.dp, vertical = 3.dp)
-                                .clip(MaterialTheme.shapes.large)
-                                .clickable {
-                                    closeScopeThen { onSelectCollection(collection.id) }
+                        val selected = selectedCollection?.id == collection.id
+                        LibraryCollectionChoiceRow(
+                            collection = collection,
+                            selected = selected,
+                            modifier = Modifier.padding(horizontal = 16.dp, vertical = 2.dp),
+                            onClick = { closeScopeThen { onSelectCollection(collection.id) } },
+                            trailingContent = if (selected) {
+                                {
+                                    Icon(
+                                        painter = painterResource(R.drawable.ic_check),
+                                        contentDescription = null,
+                                    )
                                 }
-                                .semantics { selected = selectedCollection?.id == collection.id },
-                            leadingContent = {
-                                Icon(painterResource(R.drawable.ic_folder), contentDescription = null)
-                            },
-                            trailingContent = {
-                                if (selectedCollection?.id == collection.id) {
-                                    Icon(painterResource(R.drawable.ic_check), contentDescription = null)
-                                }
-                            },
+                            } else null,
                         )
                     }
                 }
                 HorizontalDivider()
-                TextButton(
-                    onClick = {
-                        closeScopeThen(onManageCollections)
+                ListItem(
+                    headlineContent = {
+                        Text(
+                            stringResource(R.string.library_collection_manage),
+                            color = MaterialTheme.colorScheme.primary,
+                        )
                     },
+                    leadingContent = {
+                        Icon(
+                            painter = painterResource(R.drawable.ic_collections),
+                            contentDescription = null,
+                            tint = MaterialTheme.colorScheme.primary,
+                        )
+                    },
+                    colors = ListItemDefaults.colors(containerColor = Color.Transparent),
                     modifier = Modifier
-                        .align(Alignment.End)
-                        .padding(horizontal = 16.dp, vertical = 8.dp),
-                ) {
-                    Icon(
-                        painter = painterResource(R.drawable.ic_collections),
-                        contentDescription = null,
-                        modifier = Modifier.size(20.dp),
-                    )
-                    Spacer(Modifier.width(8.dp))
-                    Text(stringResource(R.string.library_collection_manage))
-                }
+                        .fillMaxWidth()
+                        .clip(MaterialTheme.shapes.large)
+                        .clickable { closeScopeThen(onManageCollections) },
+                )
             }
         }
     }
@@ -3720,7 +3699,7 @@ private fun LibraryListItem(
     Column(
         modifier = Modifier
             .fillMaxWidth()
-            .padding(horizontal = 12.dp, vertical = 4.dp)
+            .padding(horizontal = 12.dp, vertical = 3.dp)
             .clip(MaterialTheme.shapes.large)
             .background(
                 if (selectionMode && selected) MaterialTheme.colorScheme.secondaryContainer
@@ -3756,7 +3735,7 @@ private fun LibraryListItem(
         Row(
             modifier = Modifier
                 .fillMaxWidth()
-                .padding(start = 16.dp, end = 12.dp, top = 8.dp, bottom = 8.dp),
+                .padding(start = 16.dp, end = 12.dp, top = 6.dp, bottom = 6.dp),
             verticalAlignment = Alignment.CenterVertically,
         ) {
             LibraryIconSlot(
@@ -3810,7 +3789,7 @@ private fun LibraryListItem(
             }
         }
         if (showDescription && app.description.isNotBlank()) {
-            Box(modifier = Modifier.padding(start = 80.dp, end = 16.dp, bottom = 10.dp)) {
+            Box(modifier = Modifier.padding(start = 80.dp, end = 16.dp, bottom = 8.dp)) {
                 LibraryDescription(app.description, app.databaseId)
             }
         }

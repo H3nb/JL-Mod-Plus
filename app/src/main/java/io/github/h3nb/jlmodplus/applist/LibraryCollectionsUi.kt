@@ -92,6 +92,59 @@ data class LibraryCollectionUiItem(
     val appCount: Int,
 )
 
+/**
+ * The scope picker and Manage collections share one row style. Membership is catalog state,
+ * not a folder hierarchy: the All apps row is the only synthetic entry.
+ */
+@Composable
+internal fun LibraryCollectionChoiceRow(
+    collection: LibraryCollectionUiItem?,
+    selected: Boolean,
+    onClick: () -> Unit,
+    modifier: Modifier = Modifier,
+    trailingContent: @Composable (() -> Unit)? = null,
+) {
+    ListItem(
+        headlineContent = {
+            Text(
+                text = collection?.name ?: stringResource(R.string.library_destination_apps),
+                maxLines = 1,
+                overflow = TextOverflow.Ellipsis,
+            )
+        },
+        supportingContent = if (collection != null) {
+            {
+                Text(
+                    pluralStringResource(
+                        R.plurals.library_collection_member_count,
+                        collection.appCount,
+                        collection.appCount,
+                    ),
+                    color = MaterialTheme.colorScheme.onSurfaceVariant,
+                )
+            }
+        } else null,
+        leadingContent = {
+            Icon(
+                painter = painterResource(
+                    if (collection == null) R.drawable.ic_apps else R.drawable.ic_folder,
+                ),
+                contentDescription = null,
+            )
+        },
+        trailingContent = trailingContent,
+        colors = ListItemDefaults.colors(
+            containerColor = if (selected) MaterialTheme.colorScheme.secondaryContainer
+                else Color.Transparent,
+        ),
+        modifier = modifier
+            .fillMaxWidth()
+            .clip(MaterialTheme.shapes.large)
+            .clickable(onClick = onClick)
+            .semantics { this.selected = selected },
+    )
+}
+
 data class LibraryCollectionMembersUi(
     val collectionId: Long,
     val revision: Long,
@@ -429,7 +482,7 @@ private fun LibraryCollectionsOverview(
             modifier = modifier
                 .fillMaxWidth()
                 .windowInsetsPadding(WindowInsets.safeDrawing.only(WindowInsetsSides.Top))
-                .padding(horizontal = 16.dp, vertical = 12.dp)
+                .padding(horizontal = 16.dp, vertical = 8.dp)
                 .then(titleGate.positionModifier)
                 .then(if (titleActionsEnabled) Modifier else Modifier.clearAndSetSemantics { }),
             verticalAlignment = Alignment.CenterVertically,
@@ -443,21 +496,18 @@ private fun LibraryCollectionsOverview(
                 }
             }
             Text(
-                text = stringResource(R.string.library_destination_collections),
+                text = stringResource(R.string.library_collection_manage),
                 modifier = Modifier.weight(1f),
-                style = MaterialTheme.typography.headlineSmall,
+                style = MaterialTheme.typography.titleLarge,
             )
-            TextButton(
+            IconButton(
                 enabled = titleActionsEnabled,
                 onClick = { if (currentActive) createDialog = true },
             ) {
                 Icon(
                     painter = painterResource(R.drawable.ic_create_folder),
-                    contentDescription = null,
-                    modifier = Modifier.size(18.dp),
+                    contentDescription = stringResource(R.string.library_collection_new),
                 )
-                Spacer(Modifier.width(6.dp))
-                Text(stringResource(R.string.library_collection_new))
             }
         }
     }
@@ -517,43 +567,19 @@ private fun LibraryCollectionsOverview(
                                 color = MaterialTheme.colorScheme.onSurfaceVariant,
                                 textAlign = TextAlign.Center,
                             )
+                            TextButton(onClick = { if (currentActive) createDialog = true }) {
+                                Text(stringResource(R.string.library_collection_new))
+                            }
                         }
                     }
                 }
             } else {
                 items(state.collections, key = { it.id }) { collection ->
-                    val selected = collection.id == selectedCollectionId
-                    ListItem(
-                        colors = ListItemDefaults.colors(
-                            containerColor = if (selected) {
-                                MaterialTheme.colorScheme.secondaryContainer
-                            } else {
-                                MaterialTheme.colorScheme.surfaceContainerLow
-                            },
-                        ),
-                        headlineContent = {
-                            Text(
-                                text = collection.name,
-                                maxLines = 1,
-                                overflow = TextOverflow.Ellipsis,
-                            )
-                        },
-                        supportingContent = {
-                            Text(
-                                text = pluralStringResource(
-                                    R.plurals.library_collection_member_count,
-                                    collection.appCount,
-                                    collection.appCount,
-                                ),
-                                color = MaterialTheme.colorScheme.onSurfaceVariant,
-                            )
-                        },
-                        leadingContent = {
-                            Icon(
-                                painter = painterResource(R.drawable.ic_folder),
-                                contentDescription = null,
-                            )
-                        },
+                    LibraryCollectionChoiceRow(
+                        collection = collection,
+                        selected = collection.id == selectedCollectionId,
+                        onClick = { if (currentActive) onOpenCollection(collection.id) },
+                        modifier = Modifier.padding(horizontal = 16.dp, vertical = 2.dp),
                         trailingContent = {
                             Box {
                                 IconButton(onClick = { if (currentActive) actionsTarget = collection }) {
@@ -600,12 +626,6 @@ private fun LibraryCollectionsOverview(
                                 }
                             }
                         },
-                        modifier = Modifier
-                            .fillMaxWidth()
-                            .padding(horizontal = 16.dp, vertical = 4.dp)
-                            .clip(MaterialTheme.shapes.large)
-                            .clickable { if (currentActive) onOpenCollection(collection.id) }
-                            .semantics { this.selected = selected },
                     )
                 }
             }
@@ -654,7 +674,9 @@ private fun LibraryCollectionsOverview(
         AlertDialog(
             onDismissRequest = { deleteTarget = null },
             title = { Text(stringResource(R.string.action_context_delete)) },
-            text = { Text(collection.name) },
+            text = {
+                Text(stringResource(R.string.library_collection_delete_confirmation, collection.name))
+            },
             confirmButton = {
                 TextButton(onClick = {
                     deleteTarget = null
