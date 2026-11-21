@@ -9,7 +9,6 @@ package io.github.h3nb.jlmodplus.applist
 import androidx.activity.compose.BackHandler
 import androidx.compose.foundation.background
 import androidx.compose.foundation.clickable
-import androidx.compose.foundation.focusGroup
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
 import androidx.activity.compose.BackHandler
@@ -37,7 +36,6 @@ import io.github.h3nb.jlmodplus.ui.adaptiveDialogLayout
 import androidx.compose.material3.CircularProgressIndicator
 import androidx.compose.material3.DropdownMenu
 import androidx.compose.material3.DropdownMenuItem
-import androidx.compose.material3.HorizontalDivider
 import androidx.compose.material3.Icon
 import androidx.compose.material3.IconButton
 import androidx.compose.material3.ListItem
@@ -47,27 +45,17 @@ import androidx.compose.material3.OutlinedTextField
 import androidx.compose.material3.Surface
 import androidx.compose.material3.Text
 import androidx.compose.material3.TextButton
-import androidx.compose.material3.adaptive.ExperimentalMaterial3AdaptiveApi
-import androidx.compose.material3.adaptive.currentWindowAdaptiveInfoV2
-import androidx.compose.material3.adaptive.layout.AnimatedPane
-import androidx.compose.material3.adaptive.layout.ListDetailPaneScaffold
-import androidx.compose.material3.adaptive.layout.PaneAdaptedValue
-import androidx.compose.material3.adaptive.layout.ThreePaneScaffoldValue
-import androidx.compose.material3.adaptive.layout.calculatePaneScaffoldDirective
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.derivedStateOf
 import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.key
 import androidx.compose.runtime.collectAsState
-import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
 import androidx.compose.runtime.rememberUpdatedState
 import androidx.compose.runtime.saveable.rememberSaveable
-import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.semantics.Role
-import androidx.compose.ui.focus.focusProperties
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.alpha
 import androidx.compose.ui.draw.clip
@@ -85,7 +73,6 @@ import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.text.style.TextOverflow
 import androidx.compose.ui.unit.dp
-import kotlinx.coroutines.flow.Flow
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.StateFlow
 import kotlinx.coroutines.flow.asStateFlow
@@ -287,279 +274,6 @@ interface LibraryCollectionsHost : LibraryActions, LibraryBulkActions {
     fun onAddAppsToCollection(appIds: Set<Long>, collectionId: Long)
     fun onRemoveAppsFromCollection(appIds: Set<Long>, collectionId: Long)
     fun onRemoveAppFromCollection(appId: Int, collectionId: Long)
-}
-
-/** READY Collections destination. Collections overview and member browsing share Library scroll chrome. */
-@OptIn(ExperimentalMaterial3AdaptiveApi::class)
-@Composable
-internal fun LibraryCollectionsDestination(
-    host: LibraryCollectionsHost,
-    libraryState: LibraryUiState,
-    scaffoldPadding: PaddingValues,
-    overviewScaffoldPadding: PaddingValues = scaffoldPadding,
-    collectionScaffoldPadding: PaddingValues = scaffoldPadding,
-    navigationState: LibraryNavigationState = LibraryNavigationState(),
-    overviewViewport: LibraryViewportState = rememberLibraryViewportState(libraryState.libraryScope),
-    collectionViewport: LibraryViewportState = rememberLibraryViewportState(libraryState.libraryScope, navigationState.selectedCollectionId),
-    pickerViewport: LibraryViewportState = rememberLibraryViewportState(libraryState.libraryScope, navigationState.selectedCollectionId),
-    onNavigationStateChanged: (LibraryNavigationState) -> Unit = {},
-    onOpenActions: (LibraryAppUiItem, Long) -> Unit,
-    selectionState: LibrarySelectionState = LibrarySelectionState(),
-    onSelectionStateChanged: (LibrarySelectionState) -> Unit = {},
-    onNavigationVisibilityChanged: (Boolean) -> Unit = {},
-    active: Boolean = true,
-    onOpenSearch: () -> Unit = {},
-    searchActive: Boolean = false,
-    searchQuery: String = "",
-    onSearchQueryChange: (String) -> Unit = {},
-    onCloseSearch: () -> Unit = {},
-    resolveUiId: (Long) -> Int? = { null },
-    controllerEvents: Flow<LibraryControllerEvent>? = null,
-) {
-    val state by host.collectionsStore().state.collectAsState()
-    if (!state.ready) {
-        LibraryCollectionsDestination(scaffoldPadding)
-        return
-    }
-
-    val persistedCollectionId = navigationState.selectedCollectionId
-    val collectionScopeMatches = persistedCollectionId == null ||
-        libraryState.libraryScope.isEmpty() ||
-        navigationState.selectedCollectionScope == libraryState.libraryScope
-    val selectedCollectionId = persistedCollectionId.takeIf { collectionScopeMatches }
-    val selectedCollection = selectedCollectionId?.let { collectionId ->
-        state.collections.firstOrNull { it.id == collectionId }
-    }
-    LaunchedEffect(
-        selectionState,
-        selectedCollectionId,
-        state.members?.collectionId,
-        state.members?.revision,
-        libraryState.generation,
-    ) {
-        val members = state.members
-        if (
-            !selectionState.isActive ||
-            selectedCollectionId == null ||
-            selectionState.collectionId != selectedCollectionId ||
-            members?.collectionId != selectedCollectionId
-        ) {
-            return@LaunchedEffect
-        }
-        val retained = selectionState.retainAvailable(
-            libraryState.generation,
-            members.memberIds,
-            collectionId = selectedCollectionId,
-        )
-        if (retained != selectionState) onSelectionStateChanged(retained)
-    }
-
-    LaunchedEffect(
-        persistedCollectionId,
-        selectedCollectionId,
-        state.collections,
-        state.members?.collectionId,
-        libraryState.libraryScope,
-    ) {
-        when {
-            persistedCollectionId != null && !collectionScopeMatches -> {
-                onSelectionStateChanged(selectionState.clear())
-                onNavigationStateChanged(
-                    navigationState.copy(
-                        selectedCollectionId = null,
-                        selectedCollectionScope = null,
-                        collectionManageApps = false,
-                    ),
-                )
-                host.onDismissCollectionMembers()
-            }
-            selectedCollectionId == null && state.members != null -> {
-                host.onDismissCollectionMembers()
-            }
-            selectedCollectionId != null && selectedCollection == null -> {
-                onNavigationStateChanged(
-                    navigationState.copy(
-                        selectedCollectionId = null,
-                        selectedCollectionScope = null,
-                        collectionManageApps = false,
-                    ),
-                )
-                host.onDismissCollectionMembers()
-            }
-            selectedCollectionId != null && state.members?.collectionId != selectedCollectionId -> {
-                host.onOpenCollection(selectedCollectionId)
-            }
-        }
-    }
-
-    val currentActive by rememberUpdatedState(active)
-    val currentOnNavigationVisibilityChanged by rememberUpdatedState(
-        onNavigationVisibilityChanged,
-    )
-    val activeNavigationVisibilityChanged: (Boolean) -> Unit = remember {
-        { visible ->
-            if (currentActive) {
-                currentOnNavigationVisibilityChanged(visible)
-            }
-        }
-    }
-    val closeCollection = {
-        onSelectionStateChanged(selectionState.clear())
-        activeNavigationVisibilityChanged(true)
-        onNavigationStateChanged(
-            navigationState.copy(
-                selectedCollectionId = null,
-                selectedCollectionScope = null,
-                collectionManageApps = false,
-            ),
-        )
-        host.onDismissCollectionMembers()
-    }
-    val adaptiveInfo = currentWindowAdaptiveInfoV2()
-    val directive = remember(adaptiveInfo) {
-        calculatePaneScaffoldDirective(adaptiveInfo).copy(horizontalPartitionSpacerSize = 0.dp)
-    }
-    val showDetailBack = directive.maxHorizontalPartitions == 1
-    // Keep neighbouring pager pages on their last visual state. "active" owns interaction,
-    // not which Collection is rendered, so returning to this tab cannot flash the overview.
-    val displayedCollectionId = selectedCollectionId
-    val scaffoldValue = remember(
-        directive.maxHorizontalPartitions,
-        displayedCollectionId != null,
-    ) {
-        val multiPane = directive.maxHorizontalPartitions > 1
-        ThreePaneScaffoldValue(
-            // ListDetailPaneScaffold maps Detail -> primary and List -> secondary.
-            primary = if (multiPane || displayedCollectionId != null) {
-                PaneAdaptedValue.Expanded
-            } else {
-                PaneAdaptedValue.Hidden
-            },
-            secondary = if (multiPane || displayedCollectionId == null) {
-                PaneAdaptedValue.Expanded
-            } else {
-                PaneAdaptedValue.Hidden
-            },
-            tertiary = PaneAdaptedValue.Hidden,
-        )
-    }
-
-    BackHandler(enabled = active && selectedCollectionId != null) {
-        closeCollection()
-    }
-
-    ListDetailPaneScaffold(
-        directive = directive,
-        value = scaffoldValue,
-        modifier = Modifier
-            .fillMaxSize()
-            .focusProperties {
-                onEnter = { if (!currentActive) cancelFocusChange() }
-            }
-            .focusGroup()
-            .windowInsetsPadding(WindowInsets.safeDrawing.only(WindowInsetsSides.Horizontal)),
-        listPane = {
-            AnimatedPane {
-                LibraryCollectionsOverview(
-                    host = host,
-                    state = state,
-                    libraryState = libraryState,
-                    scaffoldPadding = overviewScaffoldPadding,
-                    viewportState = overviewViewport,
-                    selectedCollectionId = selectedCollectionId,
-                    active = active,
-                    onOpenCollection = { collectionId ->
-                        if (currentActive) {
-                            onNavigationStateChanged(
-                                navigationState.copy(
-                                    selectedCollectionId = collectionId,
-                                    selectedCollectionScope =
-                                        libraryState.libraryScope.takeIf(String::isNotEmpty),
-                                    collectionManageApps = false,
-                                ),
-                            )
-                        }
-                    },
-                    onNavigationVisibilityChanged = activeNavigationVisibilityChanged,
-                )
-            }
-        },
-        detailPane = {
-            AnimatedPane {
-                val collectionId = displayedCollectionId
-                if (collectionId == null) {
-                    LibraryCollectionDetailPlaceholder(scaffoldPadding)
-                } else {
-                    val collection = state.collections.firstOrNull { it.id == collectionId }
-                    val members = state.members?.takeIf { it.collectionId == collectionId }
-                    if (collection == null || members == null) {
-                        LibraryCollectionDetailLoading(
-                            name = collection?.name,
-                            scaffoldPadding = scaffoldPadding,
-                        )
-                    } else {
-                        key(collection.id) {
-                            LibraryCollectionBrowser(
-                                collection = collection,
-                                members = members.members,
-                                memberIds = members.memberIds,
-                                membersRevision = members.revision,
-                                allApps = state.allApps,
-                                allAppsPrepared = state.allAppsPrepared,
-                                allAppsRevision = state.allAppsRevision,
-                                libraryState = libraryState,
-                                scaffoldPadding = collectionScaffoldPadding,
-                                viewportState = collectionViewport,
-                                pickerViewport = pickerViewport,
-                                onBack = {
-                                    if (active) closeCollection()
-                                },
-                                onOpenApp = { id ->
-                                    if (searchActive) onCloseSearch()
-                                    host.onOpenApp(id)
-                                },
-                                onOpenActions = { app -> onOpenActions(app, collection.id) },
-                                selectionState = selectionState,
-                                onSelectionStateChanged = onSelectionStateChanged,
-                                manageApps = navigationState.collectionManageApps,
-                                onManageAppsChanged = { visible ->
-                                    if (!visible) {
-                                        host.collectionsStore().dismissPicker()
-                                        pickerViewport.collectionProjection = null
-                                    }
-                                    onNavigationStateChanged(
-                                        navigationState.copy(collectionManageApps = visible),
-                                    )
-                                },
-                                onSetMembership = { appId, included, callback ->
-                                    host.onSetCollectionMembershipByDatabaseId(
-                                        appId,
-                                        collection.id,
-                                        included,
-                                        callback,
-                                    )
-                                },
-                                onPrepareAppPicker = host::onPrepareCollectionAppPicker,
-                                onSort = host::onSort,
-                                onLayoutChange = host::onLayoutChange,
-                                onNavigationVisibilityChanged = activeNavigationVisibilityChanged,
-                                showBackButton = showDetailBack,
-                                handleSystemBack = false,
-                                interactionActive = active,
-                                onOpenSearch = onOpenSearch,
-                                searchActive = searchActive,
-                                searchQuery = searchQuery,
-                                onSearchQueryChange = onSearchQueryChange,
-                                onCloseSearch = onCloseSearch,
-                                resolveUiId = resolveUiId,
-                                controllerEvents = controllerEvents,
-                            )
-                        }
-                    }
-                }
-            }
-        },
-    )
 }
 
 /** Collection management is a child of Library, not a second application browser. */
@@ -947,71 +661,6 @@ private fun LibraryCollectionsOverview(
                 }
             },
         )
-    }
-}
-
-@Composable
-private fun LibraryCollectionDetailPlaceholder(scaffoldPadding: PaddingValues) {
-    Box(
-        modifier = Modifier
-            .fillMaxSize()
-            .padding(scaffoldPadding)
-            .windowInsetsPadding(WindowInsets.safeDrawing.only(WindowInsetsSides.Top))
-            .padding(24.dp),
-        contentAlignment = Alignment.Center,
-    ) {
-        Column(
-            horizontalAlignment = Alignment.CenterHorizontally,
-            verticalArrangement = Arrangement.spacedBy(12.dp),
-        ) {
-            Icon(
-                painter = painterResource(R.drawable.ic_folder),
-                contentDescription = null,
-                modifier = Modifier.size(52.dp),
-                tint = MaterialTheme.colorScheme.primary,
-            )
-            Text(
-                text = stringResource(R.string.library_collection_select_title),
-                style = MaterialTheme.typography.titleLarge,
-                textAlign = TextAlign.Center,
-            )
-            Text(
-                text = stringResource(R.string.library_collection_select_message),
-                style = MaterialTheme.typography.bodyMedium,
-                color = MaterialTheme.colorScheme.onSurfaceVariant,
-                textAlign = TextAlign.Center,
-            )
-        }
-    }
-}
-
-@Composable
-private fun LibraryCollectionDetailLoading(
-    name: String?,
-    scaffoldPadding: PaddingValues,
-) {
-    Box(
-        modifier = Modifier
-            .fillMaxSize()
-            .padding(scaffoldPadding)
-            .windowInsetsPadding(WindowInsets.safeDrawing.only(WindowInsetsSides.Top)),
-        contentAlignment = Alignment.Center,
-    ) {
-        Column(
-            horizontalAlignment = Alignment.CenterHorizontally,
-            verticalArrangement = Arrangement.spacedBy(12.dp),
-        ) {
-            CircularProgressIndicator()
-            name?.let {
-                Text(
-                    text = it,
-                    style = MaterialTheme.typography.titleMedium,
-                    textAlign = TextAlign.Center,
-                    maxLines = 2,
-                    overflow = TextOverflow.Ellipsis,
-                )
-            }
-        }
     }
 }
 
