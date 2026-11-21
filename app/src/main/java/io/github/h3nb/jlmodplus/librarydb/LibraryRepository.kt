@@ -300,6 +300,10 @@ class LibraryRepository(
         }
     }
 
+    suspend fun reorderCollections(expected: LibraryGenerationToken, orderedIds: List<Long>) {
+        withActiveDatabase(expected) { dao -> dao.reorderCollections(orderedIds) }
+    }
+
     suspend fun setCollectionMembership(
         expected: LibraryGenerationToken,
         collectionId: Long,
