@@ -4,7 +4,7 @@ A profile is a reusable setup for MIDlets that share display, controls, or other
 
 ## Reusable setups versus local changes
 
-Open **Profiles** in the Library to create or manage reusable configurations. You can edit, rename, and delete supported profiles. A profile can also be chosen as the **default for new MIDlets**.
+From a MIDlet's **Quick settings**, select its profile to apply another setup, or open the profile actions menu to **Save as profile**, **Stop following profile**, or update an available source. Open **Profiles** in global Settings to create or manage reusable configurations. You can edit, rename, and delete supported profiles. A profile can also be chosen as the **default for new MIDlets**.
 
 The built-in **JL-Mod Defaults** is the baseline configuration. If a previously selected default cannot be read or applied, the app can fall back to this built-in setup rather than inventing a new one.
 
@@ -22,7 +22,7 @@ The options are deliberately different:
 
 If you apply only one part, the result is a custom configuration. It is not equivalent to making the MIDlet fully follow a shared profile.
 
-This matters when you edit a profile later. Linked MIDlets can receive subsequent updates, but games with independent configurations do not have to follow them. If one game appears unchanged, inspect its profile association before copying settings repeatedly.
+This matters when you edit a profile later. Linked MIDlets can receive subsequent updates when their configuration is prepared again, but games with independent configurations do not have to follow them. **Stop following profile** keeps the MIDlet's current settings and virtual controls; **Follow profile again** replaces those local choices with the latest named profile and reconnects it. If one game appears unchanged, inspect its profile association before copying settings repeatedly.
 
 ## Updating or removing a profile
 
