@@ -7,6 +7,13 @@
 package io.github.h3nb.jlmodplus.applist
 
 import androidx.activity.compose.BackHandler
+import androidx.compose.animation.AnimatedContent
+import androidx.compose.animation.togetherWith
+import androidx.compose.animation.fadeIn
+import androidx.compose.animation.fadeOut
+import androidx.compose.animation.slideInHorizontally
+import androidx.compose.animation.slideOutHorizontally
+import androidx.compose.animation.core.tween
 import androidx.compose.foundation.ExperimentalFoundationApi
 import androidx.compose.foundation.background
 import androidx.compose.foundation.combinedClickable
@@ -33,6 +40,8 @@ import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.layout.width
 import androidx.compose.foundation.layout.windowInsetsPadding
 import androidx.compose.foundation.lazy.LazyColumn
+import androidx.compose.foundation.lazy.rememberLazyListState
+import androidx.compose.foundation.lazy.grid.rememberLazyGridState
 import androidx.compose.foundation.lazy.items
 import androidx.compose.foundation.lazy.grid.GridCells
 import androidx.compose.foundation.lazy.grid.GridItemSpan
@@ -48,6 +57,7 @@ import androidx.compose.material3.Text
 import androidx.compose.material3.TextButton
 import androidx.compose.runtime.derivedStateOf
 import androidx.compose.runtime.rememberUpdatedState
+import androidx.compose.runtime.produceState
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.MutableFloatState
@@ -122,6 +132,11 @@ internal fun LibraryCollectionBrowser(
     handleSystemBack: Boolean = true,
     interactionActive: Boolean = true,
     onOpenSearch: () -> Unit = {},
+    searchActive: Boolean = false,
+    searchQuery: String = "",
+    onSearchQueryChange: (String) -> Unit = {},
+    onCloseSearch: () -> Unit = {},
+    resolveUiId: (Long) -> Int? = { null },
 ) {
     val currentInteractionActive by rememberUpdatedState(interactionActive)
     val currentOnNavigationVisibilityChanged by rememberUpdatedState(onNavigationVisibilityChanged)
@@ -215,6 +230,28 @@ internal fun LibraryCollectionBrowser(
         viewportState, members, libraryState.sortVariant,
         sourceRevision = membersRevision.takeIf { it != 0L },
     )
+    val searchResults by produceState<List<LibraryAppUiItem>?>(
+        initialValue = null, searchActive, searchQuery, members, membersRevision,
+        libraryState.sortVariant,
+    ) {
+        if (!searchActive || searchQuery.isBlank()) return@produceState
+        value = withContext(Dispatchers.Default) {
+            val context = currentCoroutineContext()
+            projectCollectionApps(members, searchQuery, libraryState.sortVariant) {
+                context.ensureActive()
+            }
+        }
+    }
+    val shownApps = if (searchActive && searchQuery.isNotBlank()) searchResults else projected
+    val visibleApps = shownApps.orEmpty()
+    val searchListState = rememberLazyListState()
+    val searchGridState = rememberLazyGridState()
+    LaunchedEffect(searchActive, searchQuery) {
+        if (searchActive) {
+            searchListState.scrollToItem(0)
+            searchGridState.scrollToItem(0)
+        }
+    }
     val projectedIds = remember(
         viewportState.collectionProjection, projected == null, selectionState.isActive,
     ) {
@@ -225,6 +262,17 @@ internal fun LibraryCollectionBrowser(
     val gridState = viewportState.gridState
     val headerHeightPx = viewportState.headerHeightPx
     val headerOffsetPx = viewportState.headerOffsetPx
+    var savedHeaderOffset by remember(viewportState) { mutableStateOf<Float?>(null) }
+    LaunchedEffect(searchActive) {
+        if (searchActive) {
+            savedHeaderOffset = headerOffsetPx.floatValue
+            headerOffsetPx.floatValue = 0f
+            viewportState.chromeVisible = true
+        } else {
+            savedHeaderOffset?.let { headerOffsetPx.floatValue = it }
+            savedHeaderOffset = null
+        }
+    }
     val headerHidden by remember(headerHeightPx, headerOffsetPx) {
         derivedStateOf {
             headerHeightPx.intValue > 0 &&
@@ -235,7 +283,7 @@ internal fun LibraryCollectionBrowser(
         viewport = viewportState,
         layout = libraryState.layout,
         headerHeightPx = headerHeightPx,
-        enabled = interactionActive,
+        enabled = interactionActive && !searchActive,
         onVisibilityChanged = publishNavigationVisibility,
     )
 
@@ -271,6 +319,10 @@ internal fun LibraryCollectionBrowser(
                 )
             },
             onOpenSearch = { if (currentInteractionActive) onOpenSearch() },
+            searchActive = searchActive,
+            searchQuery = searchQuery,
+            onSearchQueryChange = onSearchQueryChange,
+            onCloseSearch = onCloseSearch,
             onSortVisibilityChanged = { sortVisible = currentInteractionActive && it },
             onSort = { if (currentInteractionActive) onSort(it) },
             onManageApps = { setManageApps(true) },
@@ -287,7 +339,7 @@ internal fun LibraryCollectionBrowser(
             .clipToBounds()
             .nestedScroll(scrollConnection),
     ) {
-        if (projected == null) {
+        if (shownApps == null) {
             Box(Modifier.fillMaxSize().padding(scaffoldPadding), contentAlignment = Alignment.Center) {
                 CircularProgressIndicator()
             }
@@ -299,7 +351,7 @@ internal fun LibraryCollectionBrowser(
                     modifier = Modifier
                     .fillMaxSize()
                     .padding(horizontal = LibraryGridHorizontalPadding),
-                    state = gridState,
+                    state = if (searchActive) searchGridState else gridState,
                     contentPadding = scaffoldPadding,
                 ) {
                     item(span = { GridItemSpan(maxLineSpan) }) {
@@ -312,12 +364,12 @@ internal fun LibraryCollectionBrowser(
                             LibraryChromeSpacer(headerHeightPx, headerOffsetPx)
                         }
                     }
-                    if (projected.isEmpty()) {
+                    if (visibleApps.isEmpty()) {
                         item(span = { GridItemSpan(maxLineSpan) }) {
-                            LibraryCollectionEmptyState(query)
+                            LibraryCollectionEmptyState(if (searchActive) searchQuery else query)
                         }
                     } else {
-                        items(projected, key = { it.databaseId }) { app ->
+                        items(visibleApps, key = { it.databaseId }) { app ->
                             LibraryCollectionGridItem(
                                 app = app,
                                 iconRatio = libraryState.iconRatio,
@@ -325,8 +377,18 @@ internal fun LibraryCollectionBrowser(
                                 enhancedIcons = libraryState.enhancedIcons,
                                 hideTitle = libraryState.hideGridTitles,
                                 gridSpacing = libraryState.gridSpacing.value,
-                                onOpenApp = openApp,
-                                onOpenActions = openActions,
+                                onOpenApp = { id ->
+                                    if (searchActive) {
+                                        val live = resolveUiId(app.databaseId) ?: id.takeIf { it != 0 }
+                                        if (live != null) openApp(live)
+                                    } else openApp(id)
+                                },
+                                onOpenActions = { item ->
+                                    if (searchActive) {
+                                        val live = resolveUiId(app.databaseId) ?: item.id.takeIf { it != 0 }
+                                        if (live != null) openActions(item.copy(id = live))
+                                    } else openActions(item)
+                                },
                                 selectionMode = selectionState.isActive,
                                 selected = app.databaseId in selectionState.selectedAppIds,
                                 onToggleSelection = {
@@ -346,7 +408,7 @@ internal fun LibraryCollectionBrowser(
         } else {
             LazyColumn(
                 modifier = Modifier.fillMaxSize(),
-                state = listState,
+                state = if (searchActive) searchListState else listState,
                 contentPadding = scaffoldPadding,
             ) {
                 item {
@@ -359,18 +421,28 @@ internal fun LibraryCollectionBrowser(
                         LibraryChromeSpacer(headerHeightPx, headerOffsetPx)
                     }
                 }
-                if (projected.isEmpty()) {
-                    item { LibraryCollectionEmptyState(query) }
+                if (visibleApps.isEmpty()) {
+                    item { LibraryCollectionEmptyState(if (searchActive) searchQuery else query) }
                 } else {
-                    items(projected, key = { it.databaseId }) { app ->
+                    items(visibleApps, key = { it.databaseId }) { app ->
                         LibraryCollectionListItem(
                             app = app,
                             iconRatio = libraryState.iconRatio,
                             iconShape = libraryState.iconShape,
                             enhancedIcons = libraryState.enhancedIcons,
                             showDescription = libraryState.showListDescription,
-                            onOpenApp = openApp,
-                            onOpenActions = openActions,
+                            onOpenApp = { id ->
+                                if (searchActive) {
+                                    val live = resolveUiId(app.databaseId) ?: id.takeIf { it != 0 }
+                                    if (live != null) openApp(live)
+                                } else openApp(id)
+                            },
+                            onOpenActions = { item ->
+                                if (searchActive) {
+                                    val live = resolveUiId(app.databaseId) ?: item.id.takeIf { it != 0 }
+                                    if (live != null) openActions(item.copy(id = live))
+                                } else openActions(item)
+                            },
                             selectionMode = selectionState.isActive,
                             selected = app.databaseId in selectionState.selectedAppIds,
                             onToggleSelection = {
