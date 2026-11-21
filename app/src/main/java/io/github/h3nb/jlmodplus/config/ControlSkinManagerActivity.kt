@@ -7,7 +7,6 @@ import android.graphics.BitmapFactory
 import io.github.h3nb.jlmodplus.util.SvgRasterizer
 import android.os.Bundle
 import android.os.Environment
-import android.widget.Toast
 import androidx.activity.compose.BackHandler
 import androidx.appcompat.app.AppCompatActivity
 import androidx.compose.animation.AnimatedContent
@@ -95,6 +94,8 @@ import io.github.h3nb.jlmodplus.filepicker.FilePickerContract
 import io.github.h3nb.jlmodplus.filepicker.FilePickerResultContract
 import io.github.h3nb.jlmodplus.filepicker.FilteredFilePickerActivity
 import io.github.h3nb.jlmodplus.ui.JLModPlusTheme
+import io.github.h3nb.jlmodplus.ui.TransientNoticeHost
+import io.github.h3nb.jlmodplus.ui.TransientNoticeState
 import io.github.h3nb.jlmodplus.ui.PAGE_TRAVEL_DP
 import io.github.h3nb.jlmodplus.ui.pageMotionDirection
 import io.github.h3nb.jlmodplus.ui.pageEnter
@@ -167,6 +168,7 @@ class ControlSkinManagerActivity : AppCompatActivity() {
     private var editingId by mutableStateOf<String?>(null)
     private var selectedId by mutableStateOf<String?>(null)
     private var selectedKey by mutableStateOf<String?>(null)
+    private val notices = TransientNoticeState()
     private var menuId by mutableStateOf<String?>(null)
     private var namePrompt by mutableStateOf<NamePrompt?>(null)
     private var deleteId by mutableStateOf<String?>(null)
@@ -270,7 +272,14 @@ class ControlSkinManagerActivity : AppCompatActivity() {
         EdgeToEdgeCompat.enableForComposeSurface(this)
         val view = ComposeView(this)
         view.setViewCompositionStrategy(ViewCompositionStrategy.DisposeOnViewTreeLifecycleDestroyed)
-        view.setContent { JLModPlusTheme { ManagerScreen() } }
+        view.setContent {
+            JLModPlusTheme {
+                Box(Modifier.fillMaxSize()) {
+                    ManagerScreen()
+                    TransientNoticeHost(notices, Modifier.align(Alignment.BottomCenter))
+                }
+            }
+        }
         setContentView(view)
         perform { editingId }
     }
@@ -297,11 +306,11 @@ class ControlSkinManagerActivity : AppCompatActivity() {
     }
 
     private fun notifyError(message: String) {
-        Toast.makeText(this, message, Toast.LENGTH_LONG).show()
+        notices.show(message, 6_000L)
     }
 
     private fun notifyInfo(message: String) {
-        Toast.makeText(this, message, Toast.LENGTH_SHORT).show()
+        notices.show(message)
     }
 
     /** Serializes writes, refreshes list/counts and decodes previews off the UI thread. */
