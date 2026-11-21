@@ -1,12 +1,14 @@
 <?xml version="1.0" encoding="utf-8"?>
 <resources xmlns:tools="http://schemas.android.com/tools">
     <string-array name="pref_theme_entries" tools:ignore="InconsistentArrays">
+        <item>@string/pref_theme_system</item>
         <item>@string/pref_theme_light</item>
         <item>@string/pref_theme_night</item>
         <item>@string/pref_theme_auto_time</item>
         <item>@string/pref_theme_auto_battery</item>
     </string-array>
     <string-array name="pref_theme_values" translatable="false" tools:ignore="InconsistentArrays">
+        <item>system</item>
         <item>light</item>
         <item>dark</item>
         <item>auto-time</item>
@@ -21,6 +23,7 @@
         <item>@string/pref_accent_green</item>
         <item>@string/pref_accent_amber</item>
         <item>@string/pref_accent_classic_blue</item>
+        <item>@string/pref_accent_wallpaper</item>
     </string-array>
     <string-array name="pref_accent_values" translatable="false" tools:ignore="InconsistentArrays">
         <item>sapphire</item>
@@ -31,6 +34,7 @@
         <item>green</item>
         <item>amber</item>
         <item>blue</item>
+        <item>wallpaper</item>
     </string-array>
     <string-array name="pref_app_sort_entries">
         <item>@string/pref_app_sort_name</item>
