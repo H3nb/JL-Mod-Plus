@@ -1167,6 +1167,9 @@
     <string name="bulk_install_choose_folder">Folder</string>
     <string name="bulk_install_unreadable_archives">Unreadable archives: %1$d</string>
     <string name="bulk_install_skipped_entries">Skipped archive entries: %1$d</string>
+    <string name="bulk_install_selection_options" tools:ignore="MissingTranslation">Selection options</string>
+    <string name="bulk_install_show_details" tools:ignore="MissingTranslation">Show details</string>
+    <string name="bulk_install_hide_details" tools:ignore="MissingTranslation">Hide details</string>
     <string name="bulk_install_filter_all">All</string>
     <string name="bulk_install_filter_selected">Selected</string>
     <string name="bulk_install_filter_review">Review</string>
