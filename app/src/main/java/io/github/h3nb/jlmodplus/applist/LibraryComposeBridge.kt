@@ -873,6 +873,7 @@ fun LibraryScreen(
             updatePrompt != null || searchOpen,
     )
     val currentControllerSearchOpen by rememberUpdatedState(searchOpen)
+    val currentControllerImeVisible by rememberUpdatedState(isImeVisible)
 
     LaunchedEffect(state.generation, state.databaseControlsReady) {
         if (!state.databaseControlsReady) return@LaunchedEffect
@@ -1158,7 +1159,7 @@ fun LibraryScreen(
                         currentControllerUpdatesPageVisible -> updatesPageVisible = false
                         currentControllerSelectionActive -> selectionState = selectionState.clear()
                         currentControllerSearchOpen -> {
-                            if (isImeVisible) searchKeyboard?.hide()
+                            if (currentControllerImeVisible) searchKeyboard?.hide()
                             else {
                                 searchOpen = false
                                 searchQuery = ""
