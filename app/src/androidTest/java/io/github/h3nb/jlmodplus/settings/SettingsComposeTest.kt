@@ -287,6 +287,36 @@ class SettingsComposeTest {
         assertEquals(1, actions.directoryClicks)
     }
 
+    @Test
+    fun settingsIntegrateMaintenanceAboutAndVoluntarySupport() {
+        val actions = RecordingSettingsActions()
+        setSettingsContent(actions = actions, windowSize = DpSize(360.dp, 640.dp))
+
+        scrollSettingsTo(uiString(R.string.updates_title))
+        composeRule.onNodeWithText(uiString(R.string.updates_title)).performClick()
+        composeRule.onNodeWithText(uiString(R.string.updates_channel)).assertIsDisplayed()
+        composeRule.onNodeWithContentDescription(uiString(R.string.action_back)).performClick()
+
+        scrollSettingsTo(uiString(R.string.about))
+        composeRule.onNodeWithText(uiString(R.string.about)).performClick()
+        composeRule.onNodeWithText(uiString(R.string.about_build_title))
+            .performScrollTo().assertIsDisplayed()
+        composeRule.onNodeWithText(uiString(R.string.licenses))
+            .performScrollTo().performClick()
+        composeRule.onNode(hasText(uiString(R.string.licenses)) and hasAnyAncestor(isDialog()))
+            .assertIsDisplayed()
+        composeRule.onNodeWithText(uiString(R.string.close)).performClick()
+        composeRule.onNodeWithContentDescription(uiString(R.string.action_back)).performClick()
+
+        scrollSettingsTo(uiString(R.string.library_donation_action))
+        composeRule.onNodeWithText(uiString(R.string.library_donation_action)).performClick()
+        composeRule.onNodeWithText(uiString(R.string.library_donation_not_now)).performClick()
+        assertEquals(0, actions.donationClicks)
+        composeRule.onNodeWithText(uiString(R.string.library_donation_action)).performClick()
+        composeRule.onNodeWithText(uiString(R.string.library_donation_continue)).performClick()
+        assertEquals(1, actions.donationClicks)
+    }
+
     private fun sampleState() = SettingsUiState(
         theme = SettingsOption("dark", "Dark"),
         themes = listOf(
@@ -357,6 +387,7 @@ class SettingsComposeTest {
         val toggles = mutableListOf<String>()
         var profileClicks = 0
         var directoryClicks = 0
+        var donationClicks = 0
 
         override fun onBack() = Unit
 
@@ -390,5 +421,7 @@ class SettingsComposeTest {
         }
 
         override fun onDismissDirectoryError() = Unit
+
+        override fun onOpenDonation() { donationClicks++ }
     }
 }
