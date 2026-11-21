@@ -2285,6 +2285,7 @@ internal fun LibraryAppsDestination(
     onSelectCollection: (Long) -> Unit = {},
     onManageCollections: () -> Unit = {},
     onOpenSearch: () -> Unit = {},
+    onOpenNotifications: () -> Unit = {},
     onOpenGlobalSettings: () -> Unit = {},
     searchActive: Boolean = false,
     searchQuery: String = "",
@@ -2481,6 +2482,7 @@ internal fun LibraryAppsDestination(
             onSelectCollection = onSelectCollection,
             onManageCollections = onManageCollections,
             onOpenSearch = onOpenSearch,
+            onOpenNotifications = onOpenNotifications,
             onOpenGlobalSettings = onOpenGlobalSettings,
             searchActive = searchActive,
             searchQuery = searchQuery,
@@ -2943,6 +2945,7 @@ private fun LibraryAppsHeader(
     onSelectCollection: (Long) -> Unit = {},
     onManageCollections: () -> Unit = {},
     onOpenSearch: () -> Unit = {},
+    onOpenNotifications: () -> Unit = {},
     onOpenGlobalSettings: () -> Unit = {},
     searchActive: Boolean = false,
     searchQuery: String = "",
@@ -3077,6 +3080,7 @@ private fun LibraryAppsHeader(
                             if (!compactHeaderActions) {
                                 LibraryHeaderActions(
                                     onOpenSearch = onOpenSearch,
+                                    onOpenNotifications = onOpenNotifications,
                                     onOpenSettings = onOpenGlobalSettings,
                                     enabled = titleActionsEnabled,
                                 )
@@ -3130,6 +3134,7 @@ private fun LibraryAppsHeader(
             ) {
                 LibraryHeaderActions(
                     onOpenSearch = onOpenSearch,
+                    onOpenNotifications = onOpenNotifications,
                     onOpenSettings = onOpenGlobalSettings,
                     enabled = titleActionsEnabled,
                 )
@@ -3335,16 +3340,44 @@ private fun LibraryAppsHeader(
 @Composable
 private fun LibraryHeaderActions(
     onOpenSearch: () -> Unit,
+    onOpenNotifications: () -> Unit,
     onOpenSettings: () -> Unit,
     enabled: Boolean,
+    hasUnreadNotifications: Boolean = false,
 ) {
     IconButton(onClick = onOpenSearch, enabled = enabled) {
-        Icon(painterResource(R.drawable.ic_search),
-            contentDescription = stringResource(R.string.library_search_placeholder))
+        Icon(
+            painter = painterResource(R.drawable.ic_search),
+            contentDescription = stringResource(R.string.library_search_placeholder),
+        )
+    }
+    IconButton(
+        onClick = onOpenNotifications,
+        enabled = enabled,
+        modifier = Modifier.semantics {
+            contentDescription = stringResource(R.string.library_notifications_title)
+        },
+    ) {
+        Box(modifier = Modifier.size(24.dp)) {
+            Icon(
+                painter = painterResource(R.drawable.ic_notifications),
+                contentDescription = null,
+            )
+            if (hasUnreadNotifications) {
+                Box(
+                    modifier = Modifier.align(Alignment.TopEnd)
+                        .size(7.dp)
+                        .clip(RoundedCornerShape(50))
+                        .background(MaterialTheme.colorScheme.primary),
+                )
+            }
+        }
     }
     IconButton(onClick = onOpenSettings, enabled = enabled) {
-        Icon(painterResource(R.drawable.ic_settings),
-            contentDescription = stringResource(R.string.action_settings))
+        Icon(
+            painter = painterResource(R.drawable.ic_settings),
+            contentDescription = stringResource(R.string.action_settings),
+        )
     }
 }
 
