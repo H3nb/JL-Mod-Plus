@@ -958,7 +958,7 @@ class ConfigComposeTest {
     }
 
     @Test
-    fun screenPresetSelectionCommitsImmediatelyAndSwapIsDirect() {
+    fun screenPresetSwapTogglesChoicesWithoutChangingCurrentSize() {
         val events = RecordingConfigEvents()
         composeRule.setContent {
             JLModPlusTheme {
@@ -977,8 +977,11 @@ class ConfigComposeTest {
         scrollTo(uiString(R.string.config_screen_size))
         composeRule.onNodeWithText(uiString(R.string.config_screen_size)).performClick()
         composeRule.onNodeWithContentDescription(uiString(R.string.config_swap_screen_size)).performClick()
-        assertEquals("320", events.lastForm?.screenWidth)
-        assertEquals("240", events.lastForm?.screenHeight)
+        assertEquals("360", events.lastForm?.screenWidth)
+        assertEquals("640", events.lastForm?.screenHeight)
+        composeRule.onNodeWithText("640 x 360").performClick()
+        assertEquals("640", events.lastForm?.screenWidth)
+        assertEquals("360", events.lastForm?.screenHeight)
     }
 
     @Test
