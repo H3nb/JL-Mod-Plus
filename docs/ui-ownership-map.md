@@ -76,17 +76,18 @@ CI debug job compiles/assembles the host and Android-test artifacts and runs
 lint/unit tests; it does not execute connected instrumentation tests. See
 [Build and validation](development.md). When a change affects these platform or runtime behaviors, use a connected emulator or device for the relevant smoke cases across exported JAR/JAD/KJX intents, raw-path/file-picker results, permission recovery, install/overwrite/cancel/error cleanup, guest launch, hardware key/touch dispatch, rotation, and IME behavior. Use the coverage scope in [runtime validation](runtime-ui.md#validation-gates); report unavailable checks as described in [Validation through CI](development.md#validation-through-ci).
 
-Collections overview-to-members uses Material 3 Adaptive list-detail layout without a
-separate navigation back stack. `LibraryNavigationState.selectedCollectionId` owns the
-selected Collection route, and `collectionManageApps` owns that route's full-screen
-membership-editor submode. Pane and parent-navigation visibility are derived from those
-states and the current window directive instead of being reconstructed by delayed child
-effects. Saved Room-backed scroll anchors carry the active Library workdir identity; Collection
-detail anchors additionally carry the Collection id. The Collection member payload remains a
-Room-backed projection in the UI store.
+Collections are a workdir-scoped Library view, not another application browser.
+`LibraryNavigationState.selectedCollectionId` selects the active Library scope; the same
+list/grid, title row, Search, sorting, selection and app actions serve All apps and named
+Collections. `collectionManageApps` owns the full-screen membership editor for the active
+collection. Manage collections remains a Library child page for collection CRUD.
+The Collection member payload is a Room-backed projection in the UI store. Save and
+restore list/grid viewport state with the active workdir and Collection identity; never
+interpret removing membership as uninstalling an app. The membership editor and App
+Actions both write the same catalog records, without duplicating data ownership.
 File Picker navigation likewise remains controller-owned because a second back stack
 would only mirror its current directory; the Activity still owns results and root exit policy.
-Adaptive UI is active where it has a concrete presentation benefit: Library and Config
-choose bottom navigation or a rail from the available container width, and Library,
-Collections, and File Picker use adaptive layouts or grids. Multiple back stacks remain
-unnecessary until a verified independent-history requirement exists.
+Adaptive UI is active where simultaneous or responsive content helps: the Library uses
+an adaptive single-root list/grid, Config retains its own tab navigation, and File Picker
+adapts its file layout. Multiple back stacks remain unnecessary until a verified
+independent-history requirement exists.
