@@ -1434,4 +1434,6 @@
     <string name="profile_local_changes_pending">Perubahan lokal tidak disimpan ke profil</string>
     <string name="profile_not_following">Berdasarkan %1$s · Tidak mengikuti pembaruan</string>
     <string name="profile_stop_following">Berhenti mengikuti profil</string>
+    <string name="profile_follow_again">Ikuti lagi profil</string>
+    <string name="profile_follow_again_summary">Ganti pengaturan dan kontrol virtual lokal MIDlet ini dengan profil %1$s terbaru, lalu ikuti pembaruannya?</string>
 </resources>
