@@ -338,6 +338,19 @@ abstract class LibraryDao {
     @Query("DELETE FROM collections WHERE id = :collectionId")
     abstract suspend fun deleteCollection(collectionId: Long): Int
 
+    @Query("DELETE FROM collections WHERE id IN (:collectionIds)")
+    abstract suspend fun deleteCollectionsByIds(collectionIds: List<Long>): Int
+
+    @Transaction
+    open suspend fun deleteCollections(collectionIds: List<Long>) {
+        require(collectionIds.isNotEmpty() && collectionIds.size == collectionIds.toSet().size) {
+            "Invalid selected collections"
+        }
+        check(deleteCollectionsByIds(collectionIds) == collectionIds.size) {
+            "One or more selected collections disappeared"
+        }
+    }
+
     @Insert(onConflict = OnConflictStrategy.IGNORE)
     abstract suspend fun insertCollectionMembership(membership: LibraryCollectionAppEntity): Long
 
