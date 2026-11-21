@@ -61,9 +61,10 @@ preserving a poor historical mapping for consistency.
 
 - Top app bar titles use `titleLarge` or the component default.
 - Standard preference titles use `bodyLarge` (16 sp). When a preference has
-  a current value, place it directly below the title in semi-bold `labelLarge`
-  (14 sp) with `onSurface`. Supporting descriptions follow the value, where
-  needed, in `bodySmall` (12 sp) with `onSurfaceVariant`. Use the shared
+  a current value, place it directly below the title in medium-weight `labelLarge`
+  (14 sp) with `onSurfaceVariant`, subordinate to the title rather than
+  competing with it. Supporting descriptions follow the value, where needed,
+  in `bodySmall` (12 sp) with `onSurfaceVariant`. Use the shared
   `PreferenceTextContent` for this hierarchy in MIDlet Config and global Settings.
   These are semantic roles, not measured sizes from another app.
   Preserve font scaling and readable wrapping; disabled values and descriptions
@@ -169,9 +170,18 @@ For asset handling and accessibility:
 ## Preference help and contextual notices
 
 - Use progressive disclosure consistently: choice, number, and slider rows
-  show their title and current value; the existing selection/edit dialog
-  displays their full description. A description must not be silently dropped
-  unless there is an accessible, discoverable place to read it.
+  show their title and current value with a trailing chevron, indicating the
+  whole row opens an editor/chooser. The existing selection/edit dialog displays
+  their full description. A description must not be silently dropped unless
+  there is an accessible, discoverable place to read it. For the MIDlet screen
+  resolution, keep the explanatory text in the preset chooser rather than in
+  the scan path.
+- The trailing control communicates the interaction: chevron for a chooser,
+  editor, or child page; switch for a boolean setting; expand/collapse icon for
+  disclosure. Do not leave interactive rows visually indistinguishable from
+  passive text, and do not add a chevron beside switches. The full row remains
+  the accessible tap target; the chevron is decorative, not a second button.
+  Keep rows at least 48 dp tall and let font scaling increase their height.
 - Switches and standalone actions have no separate choice dialog. Keep their
   supporting explanation in the row when it is needed for an informed decision,
   rather than truncating away important compatibility or data-loss details.
