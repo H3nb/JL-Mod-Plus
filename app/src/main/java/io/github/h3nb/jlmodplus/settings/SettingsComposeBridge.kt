@@ -91,6 +91,7 @@ import io.github.h3nb.jlmodplus.updates.UpdateStatus
 import io.github.h3nb.jlmodplus.updates.UpdatesScreen
 import io.github.h3nb.jlmodplus.ui.JLModPlusTheme
 import io.github.h3nb.jlmodplus.ui.PreferenceTextContent
+import io.github.h3nb.jlmodplus.ui.PreferenceChevron
 import io.github.h3nb.jlmodplus.ui.TransientNoticeHost
 import io.github.h3nb.jlmodplus.ui.TransientNoticeState
 import io.github.h3nb.jlmodplus.ui.AccentPalette
@@ -625,8 +626,9 @@ private fun SettingsChoiceRow(
     Row(
         modifier = Modifier
             .fillMaxWidth()
+            .heightIn(min = 60.dp)
             .clickable(role = Role.Button, onClick = onClick)
-            .padding(horizontal = 16.dp, vertical = 11.dp),
+            .padding(horizontal = 16.dp, vertical = 10.dp),
         verticalAlignment = Alignment.CenterVertically,
         horizontalArrangement = Arrangement.spacedBy(12.dp),
     ) {
@@ -646,6 +648,7 @@ private fun SettingsChoiceRow(
                     .border(1.dp, MaterialTheme.colorScheme.outlineVariant, CircleShape),
             )
         }
+        PreferenceChevron()
     }
 }
 
@@ -789,16 +792,21 @@ private fun SettingsActionRow(
     value: String? = null,
     onClick: () -> Unit,
 ) {
-    Box(
+    Row(
         modifier = Modifier
             .fillMaxWidth()
+            .heightIn(min = 60.dp)
             .clickable(role = Role.Button, onClick = onClick)
-            .padding(horizontal = 16.dp, vertical = 11.dp),
+            .padding(horizontal = 16.dp, vertical = 10.dp),
+        verticalAlignment = Alignment.CenterVertically,
+        horizontalArrangement = Arrangement.spacedBy(12.dp),
     ) {
         PreferenceTextContent(
             title = title,
             value = value,
             description = summary,
+            modifier = Modifier.weight(1f),
         )
+        PreferenceChevron()
     }
 }
