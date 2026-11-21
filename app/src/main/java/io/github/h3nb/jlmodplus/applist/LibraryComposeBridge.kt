@@ -3148,6 +3148,7 @@ private fun LibraryAppsHeader(
                 modifier = Modifier
                     .weight(1f)
                     .height(52.dp)
+                    .testTag("library_scope_picker")
                     .clip(MaterialTheme.shapes.large)
                     .background(MaterialTheme.colorScheme.surfaceContainerLow)
                     .clickable(
@@ -3342,7 +3343,12 @@ private fun LibraryHeaderActions(
         val showLabel = availableWindowWidthDp() >= 400.dp &&
             LocalDensity.current.fontScale < 1.3f
         if (showLabel) {
-            TextButton(onClick = onEnterSelection, enabled = enabled) {
+            val label = stringResource(R.string.library_action_select)
+            TextButton(
+                onClick = onEnterSelection,
+                enabled = enabled,
+                modifier = Modifier.semantics { contentDescription = label },
+            ) {
                 Icon(
                     painter = painterResource(R.drawable.ic_select_all),
                     contentDescription = null,
