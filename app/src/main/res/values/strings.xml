@@ -493,6 +493,14 @@
     <string name="library_collection_delete_confirmation" tools:ignore="MissingTranslation">Delete “%1$s”? The apps in this collection will remain installed.</string>
     <string name="library_collection_rename_action" tools:ignore="MissingTranslation">Rename collection %1$s</string>
     <string name="library_collection_delete_action" tools:ignore="MissingTranslation">Delete collection %1$s</string>
+    <string name="library_collection_select_action" tools:ignore="MissingTranslation">Select collection %1$s</string>
+    <string name="library_collection_open_action" tools:ignore="MissingTranslation">Open collection %1$s</string>
+    <string name="library_collection_rename_selected" tools:ignore="MissingTranslation">Rename selected collection</string>
+    <string name="library_collection_delete_selected" tools:ignore="MissingTranslation">Delete selected collections</string>
+    <plurals name="library_collection_delete_many_confirmation" tools:ignore="MissingTranslation">
+        <item quantity="one">Delete %d collection? Apps will remain installed.</item>
+        <item quantity="other">Delete %d collections? Apps will remain installed.</item>
+    </plurals>
     <string name="library_notifications_title" tools:ignore="MissingTranslation">Notifications</string>
     <string name="library_notifications_empty_title" tools:ignore="MissingTranslation">No notifications yet</string>
     <string name="library_notifications_empty_summary" tools:ignore="MissingTranslation">Updates and MIDlet notifications will appear here when available.</string>
