@@ -64,7 +64,6 @@ import androidx.compose.material3.ButtonDefaults
 import androidx.compose.material3.Checkbox
 import androidx.compose.material3.ExperimentalMaterial3Api
 import androidx.compose.material3.FilterChip
-import androidx.compose.material3.FilledTonalIconButton
 import androidx.compose.material3.HorizontalDivider
 import androidx.compose.material3.Icon
 import androidx.compose.material3.IconButton
@@ -1131,9 +1130,8 @@ private fun ConfigTopBar(
                         Text(stringResource(R.string.save))
                     }
                 } else {
-                    FilledTonalIconButton(onClick = onStart) {
+                    IconButton(onClick = onStart) {
                         Icon(painterResource(R.drawable.ic_play),
-                            modifier = Modifier.size(24.dp),
                             contentDescription = stringResource(R.string.START_CMD))
                     }
                 }
