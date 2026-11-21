@@ -924,6 +924,8 @@
     <string name="perf_overlay_display">Refresh rate layar (DISP)</string>
 
     <string name="settings_section_appearance">Tampilan aplikasi</string>
+    <string name="settings_section_appearance_language">Tampilan dan bahasa</string>
+    <string name="settings_section_storage_profiles">Penyimpanan dan profil</string>
     <string name="settings_section_language">Bahasa</string>
     <string name="settings_section_library_appearance">Tampilan pustaka</string>
     <string name="settings_section_midlet_runtime">Runtime MIDlet</string>
