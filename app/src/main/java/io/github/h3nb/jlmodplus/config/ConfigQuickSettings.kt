@@ -15,12 +15,14 @@ import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.heightIn
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.size
+import androidx.compose.material3.HorizontalDivider
 import androidx.compose.material3.Icon
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Surface
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
 import androidx.compose.ui.Alignment
+import androidx.compose.ui.platform.LocalDensity
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.platform.testTag
 import androidx.compose.ui.res.painterResource
@@ -86,7 +88,9 @@ internal fun ConfigQuickSettings(
                 stringResource(R.string.fps_limit_maximum) else form.fpsLimit + " FPS"),
     )
     BoxWithConstraints(modifier = Modifier.fillMaxWidth()) {
-        val columns = if (maxWidth >= 560.dp) 3 else 2
+        val fontScale = LocalDensity.current.fontScale.coerceAtLeast(1f)
+        val minTileWidth = 154.dp * fontScale
+        val columns = ((maxWidth + 8.dp) / (minTileWidth + 8.dp)).toInt().coerceIn(1, 3)
         FlowRow(
             maxItemsInEachRow = columns,
             horizontalArrangement = Arrangement.spacedBy(8.dp),
@@ -94,7 +98,7 @@ internal fun ConfigQuickSettings(
         ) {
             tiles.forEach { (setting, title, value) ->
                 Surface(
-                    modifier = Modifier.weight(1f).heightIn(min = 96.dp)
+                    modifier = Modifier.weight(1f).heightIn(min = 72.dp)
                         .testTag("config_quick_" + setting.name.lowercase())
                         .clickable(role = Role.Button) {
                             if (setting == QuickSetting.Fps) onOpenPerformance()
@@ -103,9 +107,10 @@ internal fun ConfigQuickSettings(
                     shape = MaterialTheme.shapes.large,
                     color = MaterialTheme.colorScheme.surfaceContainerLow,
                 ) {
-                    Column(
-                        modifier = Modifier.padding(12.dp),
-                        verticalArrangement = Arrangement.spacedBy(5.dp),
+                    Row(
+                        modifier = Modifier.padding(horizontal = 12.dp, vertical = 10.dp),
+                        verticalAlignment = Alignment.CenterVertically,
+                        horizontalArrangement = Arrangement.spacedBy(10.dp),
                     ) {
                         Icon(
                             painter = painterResource(
@@ -120,34 +125,55 @@ internal fun ConfigQuickSettings(
                             ),
                             contentDescription = null,
                             tint = MaterialTheme.colorScheme.onSurfaceVariant,
-                            modifier = Modifier.size(20.dp),
+                            modifier = Modifier.size(22.dp),
                         )
-                        Text(stringResource(title), style = MaterialTheme.typography.bodyMedium,
-                            maxLines = 2, overflow = TextOverflow.Ellipsis)
-                        Text(value, style = MaterialTheme.typography.bodySmall,
-                            color = MaterialTheme.colorScheme.onSurfaceVariant,
-                            maxLines = 2, overflow = TextOverflow.Ellipsis)
+                        Column(
+                            modifier = Modifier.weight(1f),
+                            verticalArrangement = Arrangement.spacedBy(3.dp),
+                        ) {
+                            Text(stringResource(title), style = MaterialTheme.typography.bodyMedium,
+                                maxLines = 3, overflow = TextOverflow.Ellipsis)
+                            Text(value, style = MaterialTheme.typography.bodySmall,
+                                color = MaterialTheme.colorScheme.onSurfaceVariant,
+                                maxLines = 2, overflow = TextOverflow.Ellipsis)
+                        }
                     }
                 }
             }
         }
     }
     ConfigQuickHeading(R.string.config_all_settings)
-    ConfigDestination.entries.filter { it != ConfigDestination.Basic }.forEach { destination ->
-        Row(
-            modifier = Modifier.fillMaxWidth().heightIn(min = 56.dp)
-                .testTag("config_category_" + destination.name.lowercase())
-                .clickable(role = Role.Button) { onOpenCategory(destination) }
-                .padding(horizontal = 12.dp, vertical = 8.dp),
-            verticalAlignment = Alignment.CenterVertically,
-            horizontalArrangement = Arrangement.spacedBy(12.dp),
-        ) {
-            Icon(painterResource(destination.icon), contentDescription = null,
-                tint = MaterialTheme.colorScheme.onSurfaceVariant, modifier = Modifier.size(22.dp))
-            Text(stringResource(destination.label), modifier = Modifier.weight(1f),
-                style = MaterialTheme.typography.bodyLarge)
-            Icon(painterResource(R.drawable.ic_chevron_right), contentDescription = null,
-                tint = MaterialTheme.colorScheme.onSurfaceVariant, modifier = Modifier.size(20.dp))
+    Surface(
+        modifier = Modifier.fillMaxWidth(),
+        shape = MaterialTheme.shapes.large,
+        color = MaterialTheme.colorScheme.surfaceContainerLow,
+    ) {
+        Column {
+            ConfigDestination.entries.filter { it != ConfigDestination.Basic }
+                .forEachIndexed { index, destination ->
+                    if (index > 0) {
+                        HorizontalDivider(
+                            color = MaterialTheme.colorScheme.outlineVariant.copy(alpha = 0.45f),
+                        )
+                    }
+                    Row(
+                        modifier = Modifier.fillMaxWidth().heightIn(min = 56.dp)
+                            .testTag("config_category_" + destination.name.lowercase())
+                            .clickable(role = Role.Button) { onOpenCategory(destination) }
+                            .padding(horizontal = 14.dp, vertical = 8.dp),
+                        verticalAlignment = Alignment.CenterVertically,
+                        horizontalArrangement = Arrangement.spacedBy(12.dp),
+                    ) {
+                        Icon(painterResource(destination.icon), contentDescription = null,
+                            tint = MaterialTheme.colorScheme.onSurfaceVariant,
+                            modifier = Modifier.size(22.dp))
+                        Text(stringResource(destination.label), modifier = Modifier.weight(1f),
+                            style = MaterialTheme.typography.bodyLarge)
+                        Icon(painterResource(R.drawable.ic_chevron_right), contentDescription = null,
+                            tint = MaterialTheme.colorScheme.onSurfaceVariant,
+                            modifier = Modifier.size(20.dp))
+                    }
+                }
         }
     }
 }
