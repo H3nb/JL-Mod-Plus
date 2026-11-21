@@ -224,35 +224,37 @@ internal fun ConfigSwitchPreference(
     message: String? = null,
     messageLevel: ConfigMessageLevel = ConfigMessageLevel.Info,
 ) {
-    Row(
-        modifier = modifier
-            .fillMaxWidth()
-            .heightIn(min = 64.dp)
-            .toggleable(
-                value = checked,
-                enabled = enabled,
-                role = Role.Switch,
-                onValueChange = onCheckedChange,
-            )
-            .semantics(mergeDescendants = true) {}
-            .padding(horizontal = 16.dp, vertical = 10.dp),
-        verticalAlignment = Alignment.CenterVertically,
-        horizontalArrangement = Arrangement.spacedBy(12.dp),
-    ) {
-        Column(
-            modifier = Modifier.weight(1f),
-            verticalArrangement = Arrangement.spacedBy(4.dp),
+    Column(modifier = modifier.fillMaxWidth()) {
+        Row(
+            modifier = Modifier
+                .fillMaxWidth()
+                .heightIn(min = 64.dp)
+                .toggleable(
+                    value = checked,
+                    enabled = enabled,
+                    role = Role.Switch,
+                    onValueChange = onCheckedChange,
+                )
+                .semantics(mergeDescendants = true) {}
+                .padding(horizontal = 16.dp, vertical = 10.dp),
+            verticalAlignment = Alignment.CenterVertically,
+            horizontalArrangement = Arrangement.spacedBy(12.dp),
         ) {
             PreferenceTextContent(
                 title = title,
                 description = description,
                 enabled = enabled,
+                modifier = Modifier.weight(1f),
             )
-            if (message != null) {
+            Switch(enabled = enabled, checked = checked, onCheckedChange = null)
+        }
+        if (message != null) {
+            androidx.compose.foundation.layout.Box(
+                modifier = Modifier.padding(horizontal = 16.dp, vertical = 2.dp),
+            ) {
                 PreferenceNotice(message, messageLevel)
             }
         }
-        Switch(enabled = enabled, checked = checked, onCheckedChange = null)
     }
 }
 
