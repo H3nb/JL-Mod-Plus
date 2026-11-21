@@ -1642,6 +1642,8 @@ fun LibraryScreen(
                             onQuickView = { view ->
                                 if (activeCollectionId != null) {
                                     selectionState = selectionState.clear()
+                                    appsListState.requestScrollToItem(0)
+                                    appsGridState.requestScrollToItem(0)
                                     navigationState = navigationState.copy(
                                         selectedCollectionId = null,
                                         selectedCollectionScope = null,

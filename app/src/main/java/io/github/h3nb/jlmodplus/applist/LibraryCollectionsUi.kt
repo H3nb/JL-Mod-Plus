@@ -98,8 +98,8 @@ data class LibraryCollectionUiItem(
 )
 
 /**
- * The scope picker and Manage collections share one row style. Membership is catalog state,
- * not a folder hierarchy: the All apps row is the only synthetic entry.
+ * Collection management and membership dialogs share a row style; the Library scope
+ * picker uses adaptive browse tiles. Membership is catalog state, not a folder hierarchy.
  */
 @Composable
 internal fun LibraryCollectionChoiceRow(

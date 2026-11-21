@@ -60,6 +60,7 @@ import org.junit.Test
 import org.junit.runner.RunWith
 import io.github.h3nb.jlmodplus.R
 import io.github.h3nb.jlmodplus.librarydb.LibraryCollectionRow
+import io.github.h3nb.jlmodplus.librarydb.LibraryQuickView
 import io.github.h3nb.jlmodplus.ui.JLModPlusTheme
 
 private fun selectionCount(count: Int): String =
@@ -100,6 +101,32 @@ class LibraryCollectionsNavigationTest {
         pressBack()
         composeRule.waitForIdle()
         composeRule.onNodeWithTag("library_scope_picker").assertIsDisplayed()
+    }
+
+    @Test
+    fun selectingQuickViewInsideCollectionReturnsToAllApps() {
+        val host = RecordingCollectionsHost().apply {
+            store.showMembers(COLLECTION_ID, listOf(SAMPLE_MEMBER))
+        }
+        composeRule.setContent {
+            DeviceConfigurationOverride(
+                DeviceConfigurationOverride.WindowSize(DpSize(360.dp, 640.dp)),
+            ) {
+                JLModPlusTheme {
+                    LibraryScreen(state = sampleLibraryState(), actions = host)
+                }
+            }
+        }
+        composeRule.onNodeWithTag("library_scope_picker").performClick()
+        composeRule.onNodeWithText(COLLECTION_NAME).performClick()
+        waitForMember()
+        composeRule.onNodeWithTag("library_scope_picker").performClick()
+        composeRule.onNodeWithText(uiString(R.string.library_filter_favorites)).performClick()
+        composeRule.waitForIdle()
+
+        assertEquals(LibraryQuickView.Favorites, host.lastQuickView)
+        composeRule.onNodeWithTag("library_scope_picker").assertIsDisplayed()
+        composeRule.onNodeWithText(uiString(R.string.library_destination_apps)).assertExists()
     }
 
     @Test
@@ -795,6 +822,7 @@ class LibraryCollectionsNavigationTest {
             )
         }
         val openedCollectionIds = mutableListOf<Long>()
+        var lastQuickView: LibraryQuickView? = null
         val reorderRequests = mutableListOf<List<Long>>()
         val bulkCollectionDeletions = mutableListOf<List<Long>>()
         val bulkRemovals = mutableListOf<Pair<Set<Long>, Long>>()
@@ -895,6 +923,9 @@ class LibraryCollectionsNavigationTest {
         }
         override fun onRemoveAppFromCollection(appId: Int, collectionId: Long) {
             singleRemovals += appId to collectionId
+        }
+        override fun onQuickView(quickView: LibraryQuickView) {
+            lastQuickView = quickView
         }
         override fun onSearch(query: String) = Unit
         override fun onLayoutChange(layout: LibraryLayout) = Unit
