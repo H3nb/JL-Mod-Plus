@@ -1468,7 +1468,6 @@ fun LibraryScreen(
                                 bulkActions.onAddSelectedToCollection(selectionState.selectedAppIds)
                             }
                         },
-                        onShare = { bulkActions.onShareSelected(selectionState.selectedAppIds) },
                         onReinstall = { bulkActions.onReinstallSelected(selectionState.selectedAppIds) },
                         onExport = { bulkActions.onExportSelectedBundle(selectionState.selectedAppIds) },
                     )
@@ -2734,49 +2733,47 @@ private fun LibrarySelectionBottomBar(
     contextActionIcon: Int,
     contextActionLabel: String,
     onContextAction: () -> Unit,
-    onShare: () -> Unit,
     onReinstall: () -> Unit,
     onExport: () -> Unit,
 ) {
-    NavigationBar(
-        modifier = Modifier.fillMaxWidth(),
-        windowInsets = NavigationBarDefaults.windowInsets,
-        containerColor = MaterialTheme.colorScheme.surfaceContainer,
+    Surface(
+        color = MaterialTheme.colorScheme.surfaceContainer,
         tonalElevation = 3.dp,
+        shape = RoundedCornerShape(topStart = 24.dp, topEnd = 24.dp),
     ) {
         Row(
             modifier = Modifier
                 .fillMaxWidth()
-                .heightIn(min = 80.dp)
-                .padding(horizontal = 4.dp, vertical = 4.dp),
-            horizontalArrangement = Arrangement.SpaceEvenly,
-            // Keep every icon at the same top edge. Centering columns with
-            // different label heights makes one-line actions drift downward.
-            verticalAlignment = Alignment.Top,
+                .windowInsetsPadding(WindowInsets.safeDrawing.only(WindowInsetsSides.Bottom))
+                .padding(horizontal = 8.dp, vertical = 6.dp),
+            horizontalArrangement = Arrangement.spacedBy(4.dp),
+            verticalAlignment = Alignment.CenterVertically,
         ) {
             LibrarySelectionAction(
                 icon = R.drawable.ic_delete,
-                label = stringResource(R.string.library_bulk_delete_apps),
+                label = stringResource(R.string.library_selection_action_delete),
                 onClick = onDelete,
                 enabled = enabled,
                 destructive = true,
             )
             LibrarySelectionAction(
                 icon = contextActionIcon,
-                label = contextActionLabel,
+                label = stringResource(R.string.library_selection_action_collection),
                 onClick = onContextAction,
+                enabled = enabled,
+                description = contextActionLabel,
+            )
+            LibrarySelectionAction(
+                icon = R.drawable.ic_file_download,
+                label = stringResource(R.string.library_selection_action_export),
+                onClick = onExport,
                 enabled = enabled,
             )
             LibrarySelectionAction(
-                icon = R.drawable.ic_share,
-                label = stringResource(R.string.library_bulk_share_apps),
-                onClick = onShare,
+                icon = R.drawable.ic_reinstall,
+                label = stringResource(R.string.library_selection_action_reinstall),
+                onClick = onReinstall,
                 enabled = enabled,
-            )
-            LibrarySelectionOverflowAction(
-                enabled = enabled,
-                onReinstall = onReinstall,
-                onExport = onExport,
             )
         }
     }
@@ -2789,97 +2786,34 @@ private fun RowScope.LibrarySelectionAction(
     onClick: () -> Unit,
     enabled: Boolean,
     destructive: Boolean = false,
+    description: String = label,
 ) {
-    val contentColor = if (!enabled) {
-        MaterialTheme.colorScheme.onSurface.copy(alpha = 0.38f)
-    } else if (destructive) {
-        MaterialTheme.colorScheme.error
-    } else {
-        MaterialTheme.colorScheme.onSurfaceVariant
+    val color = when {
+        !enabled -> MaterialTheme.colorScheme.onSurface.copy(alpha = 0.38f)
+        destructive -> MaterialTheme.colorScheme.error
+        else -> MaterialTheme.colorScheme.onSurfaceVariant
     }
     Column(
-        modifier = Modifier.weight(1f),
+        modifier = Modifier
+            .weight(1f)
+            .clip(MaterialTheme.shapes.large)
+            .clickable(enabled = enabled, role = Role.Button, onClick = onClick)
+            .semantics { contentDescription = description }
+            .padding(vertical = 8.dp),
         horizontalAlignment = Alignment.CenterHorizontally,
+        verticalArrangement = Arrangement.spacedBy(4.dp),
     ) {
-        IconButton(
-            onClick = onClick,
-            enabled = enabled,
-            modifier = Modifier.semantics { contentDescription = label },
-        ) {
-            Icon(
-                painter = painterResource(icon),
-                contentDescription = null,
-                tint = contentColor,
-            )
-        }
-        Text(
-            text = label,
-            color = contentColor,
-            style = MaterialTheme.typography.labelSmall,
-            maxLines = 2,
-            overflow = TextOverflow.Ellipsis,
-            textAlign = TextAlign.Center,
+        Icon(
+            painter = painterResource(icon),
+            contentDescription = null,
+            tint = color,
+            modifier = Modifier.size(24.dp),
         )
-    }
-}
-
-@Composable
-private fun RowScope.LibrarySelectionOverflowAction(
-    enabled: Boolean,
-    onReinstall: () -> Unit,
-    onExport: () -> Unit,
-) {
-    var expanded by remember { mutableStateOf(false) }
-    val label = stringResource(R.string.library_actions_more)
-    val contentColor = if (enabled) MaterialTheme.colorScheme.onSurfaceVariant
-        else MaterialTheme.colorScheme.onSurface.copy(alpha = 0.38f)
-    Column(
-        modifier = Modifier.weight(1f),
-        horizontalAlignment = Alignment.CenterHorizontally,
-    ) {
-        Box {
-            IconButton(
-                onClick = { expanded = true },
-                enabled = enabled,
-                modifier = Modifier.semantics { contentDescription = label },
-            ) {
-                Icon(
-                    painter = painterResource(R.drawable.ic_more_vert),
-                    contentDescription = null,
-                    tint = contentColor,
-                )
-            }
-            DropdownMenu(
-                expanded = expanded,
-                onDismissRequest = { expanded = false },
-            ) {
-                DropdownMenuItem(
-                    text = { Text(stringResource(R.string.library_bulk_reinstall_apps)) },
-                    onClick = {
-                        expanded = false
-                        onReinstall()
-                    },
-                    leadingIcon = {
-                        Icon(painterResource(R.drawable.ic_reinstall), contentDescription = null)
-                    },
-                )
-                DropdownMenuItem(
-                    text = { Text(stringResource(R.string.library_bulk_export_apps)) },
-                    onClick = {
-                        expanded = false
-                        onExport()
-                    },
-                    leadingIcon = {
-                        Icon(painterResource(R.drawable.ic_file_download), contentDescription = null)
-                    },
-                )
-            }
-        }
         Text(
             text = label,
-            color = contentColor,
+            color = color,
             style = MaterialTheme.typography.labelSmall,
-            maxLines = 2,
+            maxLines = 1,
             overflow = TextOverflow.Ellipsis,
             textAlign = TextAlign.Center,
         )
