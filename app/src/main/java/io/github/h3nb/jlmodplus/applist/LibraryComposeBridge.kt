@@ -1343,7 +1343,8 @@ fun LibraryScreen(
         state.databaseControlsReady && !isImeVisible &&
         hostActivity?.isHostDialogVisible() == false && !fragmentDialogVisible &&
         !collectionDialogVisible && !installSourceMenuVisible &&
-        !libraryOverlayVisible && !selectionActiveHere && !searchOpen
+        !libraryOverlayVisible && !selectionActiveHere && !searchOpen &&
+        !collectionManageAppsActive
     LaunchedEffect(availableUpdate, updateDialogReady, updateRepository?.automaticChecks,
         sessionDismissedUpdate, updateRepository?.channel) {
         val repository = updateRepository

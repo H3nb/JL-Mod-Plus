@@ -13,6 +13,8 @@ import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
 import androidx.activity.compose.BackHandler
 import androidx.compose.foundation.selection.toggleable
+import androidx.compose.foundation.layout.ExperimentalLayoutApi
+import androidx.compose.foundation.layout.isImeVisible
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.PaddingValues
 import androidx.compose.foundation.layout.Row
@@ -57,6 +59,7 @@ import androidx.compose.runtime.saveable.rememberSaveable
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.semantics.Role
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.platform.LocalSoftwareKeyboardController
 import androidx.compose.ui.draw.alpha
 import androidx.compose.ui.draw.clip
 import androidx.compose.ui.draw.clipToBounds
@@ -308,6 +311,7 @@ internal fun LibraryCollectionsManagementDestination(
 }
 
 /** Single membership editor reused for every active Library collection. */
+@OptIn(ExperimentalLayoutApi::class)
 @Composable
 internal fun LibraryCollectionMembershipEditor(
     host: LibraryCollectionsHost,
@@ -318,13 +322,17 @@ internal fun LibraryCollectionMembershipEditor(
     onBack: () -> Unit,
 ) {
     val state by host.collectionsStore().state.collectAsState()
+    val keyboard = LocalSoftwareKeyboardController.current
+    val imeVisible = WindowInsets.isImeVisible
     var pending by remember(collection.id) { mutableStateOf<Map<Long, Boolean>>(emptyMap()) }
     val memberIds = members?.memberIds.orEmpty()
     LaunchedEffect(members?.revision) {
         pending = pending.filter { (id, included) -> (id in memberIds) != included }
     }
     LaunchedEffect(collection.id) { host.onPrepareCollectionAppPicker() }
-    BackHandler(onBack = onBack)
+    BackHandler {
+        if (imeVisible) keyboard?.hide() else onBack()
+    }
     Surface(modifier = Modifier.fillMaxSize(), color = MaterialTheme.colorScheme.background) {
         LibraryCollectionAppPicker(
             collection = collection,
