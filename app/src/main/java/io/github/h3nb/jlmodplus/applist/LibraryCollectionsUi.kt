@@ -839,22 +839,45 @@ private fun LibraryCollectionsOverview(
             onConfirm = { name ->
                 renameTarget = null
                 if (currentActive) host.onRenameCollection(collection.id, name)
+                selectedIds = selectedIds - collection.id
             },
         )
     }
 
-    deleteTarget?.takeIf { active }?.let { collection ->
+    deleteTargetIds?.takeIf { active }?.let { ids ->
+        val message = if (ids.size == 1) {
+            val name = state.collections.firstOrNull { it.id == ids.single() }?.name
+            stringResource(R.string.library_collection_delete_confirmation, name.orEmpty())
+        } else {
+            pluralStringResource(
+                R.plurals.library_collection_delete_many_confirmation,
+                ids.size,
+                ids.size,
+            )
+        }
         AlertDialog(
-            onDismissRequest = { deleteTarget = null },
+            onDismissRequest = { if (!deleting) deleteTargetIds = null },
             title = { Text(stringResource(R.string.action_context_delete)) },
-            text = {
-                Text(stringResource(R.string.library_collection_delete_confirmation, collection.name))
-            },
+            text = { Text(message) },
             confirmButton = {
-                TextButton(onClick = {
-                    deleteTarget = null
-                    if (currentActive) host.onDeleteCollection(collection.id)
-                }) {
+                TextButton(
+                    enabled = !deleting,
+                    onClick = {
+                        if (currentActive && !deleting) {
+                            deleting = true
+                            host.onDeleteCollections(
+                                ids,
+                                CollectionMembershipResultCallback { success ->
+                                    deleting = false
+                                    if (success) {
+                                        selectedIds = selectedIds - ids.toSet()
+                                        deleteTargetIds = null
+                                    }
+                                },
+                            )
+                        }
+                    },
+                ) {
                     Text(
                         text = stringResource(R.string.action_context_delete),
                         color = MaterialTheme.colorScheme.error,
@@ -862,7 +885,10 @@ private fun LibraryCollectionsOverview(
                 }
             },
             dismissButton = {
-                TextButton(onClick = { deleteTarget = null }) {
+                TextButton(
+                    enabled = !deleting,
+                    onClick = { deleteTargetIds = null },
+                ) {
                     Text(stringResource(android.R.string.cancel))
                 }
             },
