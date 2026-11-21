@@ -25,7 +25,8 @@ Use this guidance for app-owned UI architecture, adaptation, and navigation work
 
 - MIDlet Config and global Settings share `PreferenceTextContent` for title,
   current value, and supporting explanation; `PreferenceNavigationRow` and
-  `PreferenceSwitchRow` also keep interaction semantics consistent. Choice/number/slider rows remain
+  `PreferenceSwitchRow` also keep interaction semantics consistent.
+  Choice/number/slider rows remain
   scannable, show a shared decorative trailing chevron, and reveal their full
   help in the existing dialog; switches retain their distinct trailing control
   and essential inline guidance, while navigation/action rows also provide a
