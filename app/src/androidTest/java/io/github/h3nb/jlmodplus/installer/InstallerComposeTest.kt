@@ -419,11 +419,11 @@ class InstallerComposeTest {
             .assertCountEquals(1)
         composeRule.onNodeWithTag("bulk-results").performScrollToIndex(4)
         composeRule.onNodeWithText("Game four").assertIsDisplayed()
-        composeRule.onNodeWithTag("bulk-results").performScrollToIndex(5)
+        // Fullscreen batch actions remain outside the scrollable results list.
         composeRule.onNodeWithText(targetString(R.string.installer_retry_remaining))
-            .performScrollTo().assertIsDisplayed().performClick()
+            .assertIsDisplayed().performClick()
         composeRule.onNodeWithText(targetString(R.string.bulk_install_close))
-            .performScrollTo().assertIsDisplayed().performClick()
+            .assertIsDisplayed().performClick()
         assertEquals(1, retries)
         assertEquals(1, closes)
     }
