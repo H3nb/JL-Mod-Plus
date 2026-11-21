@@ -690,10 +690,7 @@ private fun BundleComponentsDialog(
     var config by remember { mutableStateOf(false) }
     var saveData by remember { mutableStateOf(false) }
     var saved by remember { mutableStateOf(false) }
-    val layout = libraryDialogLayout()
     AlertDialog(
-        modifier = layout.modifier,
-        properties = layout.properties,
         onDismissRequest = onDismiss,
         title = { Text(stringResource(R.string.library_bundle_components_title)) },
         text = {
@@ -1979,13 +1976,10 @@ fun LibraryScreen(
         )
     }
     deleteTarget?.let { app ->
-        val layout = libraryDialogLayout()
         AlertDialog(
             onControllerKeyEvent = controllerKeyEventHandler?.let { handler ->
                 { event -> handler.onControllerKeyEvent(event) }
             },
-            modifier = layout.modifier,
-            properties = layout.properties,
             onDismissRequest = { deleteTarget = null },
             title = { Text(stringResource(R.string.action_context_delete)) },
             text = { Text(stringResource(R.string.message_delete)) },
@@ -2008,13 +2002,10 @@ fun LibraryScreen(
         )
     }
     pendingBulkDeleteIds?.let { selectedIds ->
-        val layout = libraryDialogLayout()
         AlertDialog(
             onControllerKeyEvent = controllerKeyEventHandler?.let { handler ->
                 { event -> handler.onControllerKeyEvent(event) }
             },
-            modifier = layout.modifier,
-            properties = layout.properties,
             onDismissRequest = { pendingBulkDeleteIds = null },
             title = { Text(stringResource(R.string.library_bulk_delete_apps)) },
             text = {
@@ -2050,13 +2041,10 @@ fun LibraryScreen(
     updatePrompt?.let { candidate ->
         val repository = updateRepository
         if (repository != null) {
-            val layout = libraryDialogLayout()
             AlertDialog(
                 onControllerKeyEvent = controllerKeyEventHandler?.let { handler ->
                     { event -> handler.onControllerKeyEvent(event) }
                 },
-                modifier = layout.modifier,
-                properties = layout.properties,
                 onDismissRequest = {
                     sessionDismissedUpdate = repository.candidateKey(candidate)
                     updatePrompt = null
@@ -4742,22 +4730,6 @@ internal fun LibrarySortMenu(
     }
 }
 
-private data class LibraryDialogLayout(
-    val modifier: Modifier,
-    val properties: DialogProperties,
-)
-
-@Composable
-private fun libraryDialogLayout(): LibraryDialogLayout {
-    return LibraryDialogLayout(
-        modifier = Modifier,
-        properties = DialogProperties(),
-    )
-}
-
-@Composable
-private fun libraryDialogListHeight() = adaptiveDialogLayout().maxHeight
-
 private data class DialogActionEntry(
     val label: Int,
     val icon: Int?,
@@ -5045,12 +5017,9 @@ internal fun AppActionsDialog(
             body()
         }
     } else {
-        val layout = libraryDialogLayout()
         AlertDialog(
             textScrollable = false,
             onControllerKeyEvent = dialogControllerKeyEvent,
-            modifier = layout.modifier,
-            properties = layout.properties,
             onDismissRequest = onDismiss,
             shape = MaterialTheme.shapes.extraLarge,
             containerColor = MaterialTheme.colorScheme.surfaceContainerHigh,
@@ -5123,12 +5092,9 @@ private fun RenameAppDialog(
         )
     }
     val valid = value.text.trim().isNotEmpty()
-    val layout = libraryDialogLayout()
     AlertDialog(
         textScrollable = false,
         onControllerKeyEvent = onControllerKeyEvent,
-        modifier = layout.modifier,
-        properties = layout.properties,
         onDismissRequest = onDismiss,
         title = { Text(stringResource(R.string.action_context_rename)) },
         text = {
@@ -5167,8 +5133,7 @@ internal fun LibraryInformationDialog(
         LibraryInfoDialog.Licenses -> null
         LibraryInfoDialog.Donation -> R.drawable.ic_favorite
     }
-    val layout = libraryDialogLayout()
-    val maxMessageHeight = libraryDialogListHeight()
+    val maxMessageHeight = adaptiveDialogLayout().maxHeight
     val linkStyles = TextLinkStyles(SpanStyle(color = MaterialTheme.colorScheme.primary))
     val licenseMessage = if (dialog == LibraryInfoDialog.Licenses) {
         try {
@@ -5186,8 +5151,6 @@ internal fun LibraryInformationDialog(
     AlertDialog(
         textScrollable = false,
         onControllerKeyEvent = onControllerKeyEvent,
-        modifier = layout.modifier,
-        properties = layout.properties,
         onDismissRequest = onDismiss,
         title = {
             if (dialog == LibraryInfoDialog.Licenses) {
