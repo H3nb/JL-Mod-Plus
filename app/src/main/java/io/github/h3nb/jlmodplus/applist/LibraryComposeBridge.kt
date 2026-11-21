@@ -2922,13 +2922,21 @@ private fun LibraryAppsHeader(
 ) {
     val focusManager = androidx.compose.ui.platform.LocalFocusManager.current
     var scopePickerVisible by remember { mutableStateOf(false) }
+    val scopeWindowHeight = availableWindowHeightDp()
+    val useScopeDialog = scopeWindowHeight < 480.dp
+    val scopeMaxHeight = (scopeWindowHeight - 136.dp).coerceAtLeast(120.dp)
     val scopeSheetState = rememberModalBottomSheetState(skipPartiallyExpanded = true)
     val scopeSheetCoroutine = rememberCoroutineScope()
     fun closeScopeThen(action: () -> Unit) {
-        scopeSheetCoroutine.launch {
-            scopeSheetState.hide()
+        if (useScopeDialog) {
             scopePickerVisible = false
             action()
+        } else {
+            scopeSheetCoroutine.launch {
+                scopeSheetState.hide()
+                scopePickerVisible = false
+                action()
+            }
         }
     }
     val sortEntries = stringArrayResource(R.array.pref_app_sort_entries).toList()
@@ -3228,14 +3236,18 @@ private fun LibraryAppsHeader(
         }
     }
     if (scopePickerVisible) {
-        ModalBottomSheet(
-            onDismissRequest = { scopePickerVisible = false },
-            sheetState = scopeSheetState,
-        ) {
+        val scopeContent: @Composable (Boolean) -> Unit = { insideSheet ->
             Column(
                 modifier = Modifier
                     .fillMaxWidth()
-                    .heightIn(max = (availableWindowHeightDp() - 48.dp).coerceAtLeast(0.dp)),
+                    .heightIn(max = scopeMaxHeight)
+                    .then(
+                        if (insideSheet) {
+                            Modifier.windowInsetsPadding(
+                                WindowInsets.safeDrawing.only(WindowInsetsSides.Bottom),
+                            )
+                        } else Modifier
+                    ),
             ) {
                 Text(
                     text = stringResource(R.string.library_destination_collections),
@@ -3298,6 +3310,23 @@ private fun LibraryAppsHeader(
                         .clip(MaterialTheme.shapes.large)
                         .clickable { closeScopeThen(onManageCollections) },
                 )
+            }
+        }
+        if (useScopeDialog) {
+            AlertDialog(
+                onDismissRequest = { scopePickerVisible = false },
+                textScrollable = false,
+                text = { scopeContent(false) },
+                confirmButton = null,
+            )
+        } else {
+            ModalBottomSheet(
+                onDismissRequest = { scopePickerVisible = false },
+                sheetState = scopeSheetState,
+                // Do not let offset-dependent top inset consumption resize the sheet.
+                contentWindowInsets = { WindowInsets(0, 0, 0, 0) },
+            ) {
+                scopeContent(true)
             }
         }
     }
