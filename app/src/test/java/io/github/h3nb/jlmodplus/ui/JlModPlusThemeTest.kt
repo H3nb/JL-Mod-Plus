@@ -30,11 +30,14 @@ class JlModPlusThemeTest {
     }
     @Test
     fun unsupportedAccentPreferencesResolveToTheNewDefault() {
-        assertEquals(8, AccentPalette.entries.size)
+        assertEquals(9, AccentPalette.entries.size)
         for (removed in listOf(null, "indigo", "cyan", "orange", "pink", "invalid")) {
             assertEquals(AccentPalette.Sapphire, AccentPalette.fromKey(removed))
         }
         assertEquals(AccentPalette.DefaultBlue, AccentPalette.fromKey("blue"))
+        assertEquals(AccentPalette.Wallpaper, AccentPalette.fromKey("wallpaper"))
+        assertEquals(AccentPalette.Sapphire.colorScheme(false), AccentPalette.Wallpaper.colorScheme(false))
+        assertEquals(AccentPalette.Sapphire.colorScheme(true), AccentPalette.Wallpaper.colorScheme(true))
         assertEquals(AccentPalette.Teal, AccentPalette.fromKey("teal"))
         assertEquals(AccentPalette.Violet, AccentPalette.fromKey("violet"))
         assertEquals(AccentPalette.Rose, AccentPalette.fromKey("rose"))
