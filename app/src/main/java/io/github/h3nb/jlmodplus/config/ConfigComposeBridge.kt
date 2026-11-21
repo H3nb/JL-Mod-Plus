@@ -40,6 +40,8 @@ import androidx.compose.foundation.layout.imePadding
 import androidx.compose.foundation.layout.offset
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.safeDrawing
+import androidx.compose.foundation.layout.statusBars
+import androidx.compose.foundation.layout.windowInsetsPadding
 import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.layout.width
 import androidx.compose.foundation.layout.widthIn
@@ -1088,37 +1090,39 @@ private fun ConfigTopBar(
     onQueryChange: (String) -> Unit,
     onCloseSearch: () -> Unit,
 ) {
-    val focusManager = androidx.compose.ui.platform.LocalFocusManager.current
-    TopAppBar(
-        title = {
-            if (searchVisible) {
-                io.github.h3nb.jlmodplus.applist.LibrarySearchField(
-                    query = searchQuery,
-                    onQueryChange = onQueryChange,
-                    modifier = Modifier.fillMaxWidth(),
-                    onDismissInput = { focusManager.clearFocus() },
-                    onClose = onCloseSearch,
-                    placeholder = stringResource(R.string.config_search_hint),
-                    autoFocus = true,
-                )
-            } else {
+    if (searchVisible) {
+        val focusManager = androidx.compose.ui.platform.LocalFocusManager.current
+        Surface(
+            modifier = Modifier.fillMaxWidth().windowInsetsPadding(WindowInsets.statusBars),
+            color = MaterialTheme.colorScheme.surface,
+        ) {
+            io.github.h3nb.jlmodplus.applist.LibrarySearchField(
+                query = searchQuery,
+                onQueryChange = onQueryChange,
+                modifier = Modifier.fillMaxWidth()
+                    .padding(horizontal = 16.dp, vertical = 6.dp),
+                onDismissInput = { focusManager.clearFocus() },
+                onClose = onCloseSearch,
+                placeholder = stringResource(R.string.config_search_hint),
+                autoFocus = true,
+            )
+        }
+    } else {
+        TopAppBar(
+            title = {
                 Text(
                     text = title.ifBlank { stringResource(R.string.action_settings) },
                     maxLines = 1,
                     overflow = TextOverflow.Ellipsis,
                 )
-            }
-        },
-        navigationIcon = {
-            if (!searchVisible) {
+            },
+            navigationIcon = {
                 IconButton(onClick = onBack) {
                     Icon(painterResource(R.drawable.ic_arrow_back),
                         contentDescription = stringResource(R.string.action_back))
                 }
-            }
-        },
-        actions = {
-            if (!searchVisible) {
+            },
+            actions = {
                 IconButton(onClick = onSearch) {
                     Icon(painterResource(R.drawable.ic_search),
                         contentDescription = stringResource(R.string.config_search_title))
@@ -1134,9 +1138,9 @@ private fun ConfigTopBar(
                             contentDescription = stringResource(R.string.START_CMD))
                     }
                 }
-            }
-        },
-    )
+            },
+        )
+    }
 }
 
 @Composable
