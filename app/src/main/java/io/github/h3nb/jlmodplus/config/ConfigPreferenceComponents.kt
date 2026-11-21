@@ -75,7 +75,7 @@ internal fun ConfigSection(
     }
     Column(
         modifier = Modifier.bringIntoViewRequester(requester),
-        verticalArrangement = Arrangement.spacedBy(8.dp),
+        verticalArrangement = Arrangement.spacedBy(4.dp),
     ) {
         Text(
             text = title,
@@ -83,18 +83,16 @@ internal fun ConfigSection(
             color = if (accentTitle) MaterialTheme.colorScheme.onSurfaceVariant
                 else MaterialTheme.colorScheme.onSurface,
             modifier = Modifier.semantics { heading() }
-                .padding(start = 12.dp, top = 8.dp, end = 12.dp, bottom = 0.dp),
+                .padding(start = 12.dp, top = 8.dp, end = 12.dp, bottom = 4.dp),
         )
         Surface(
             modifier = Modifier.fillMaxWidth(),
-            shape = MaterialTheme.shapes.extraLarge,
+            shape = MaterialTheme.shapes.large,
             color = if (highlighted) MaterialTheme.colorScheme.primaryContainer
-                else MaterialTheme.colorScheme.surfaceContainerLowest,
-            border = BorderStroke(
-                1.dp,
-                if (highlighted) MaterialTheme.colorScheme.primary.copy(alpha = 0.42f)
-                else MaterialTheme.colorScheme.outlineVariant.copy(alpha = 0.55f),
-            ),
+                else MaterialTheme.colorScheme.surfaceContainerLow,
+            border = if (highlighted) BorderStroke(
+                1.dp, MaterialTheme.colorScheme.primary.copy(alpha = 0.42f),
+            ) else null,
         ) {
             Column(content = content)
         }
