@@ -978,6 +978,7 @@
     <string name="library_selection_action_delete">Hapus</string>
     <string name="library_selection_action_collection">Koleksi</string>
     <string name="library_selection_action_export">Ekspor</string>
+    <string name="library_selection_action_reinstall">Instal ulang</string>
     <string name="library_enhanced_icons_title">Penyempurnaan ikon</string>
     <string name="library_enhanced_icons_summary">Menyesuaikan ukuran dan warna ikon agar lebih konsisten di pustaka.</string>
 
