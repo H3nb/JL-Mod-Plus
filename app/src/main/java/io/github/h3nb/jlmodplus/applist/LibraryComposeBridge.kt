@@ -1613,6 +1613,9 @@ fun LibraryScreen(
                             onNavigationVisibilityChanged = {},
                             collections = collectionDialogState?.collections.orEmpty(),
                             selectedCollection = activeCollection,
+                            onManageCollectionMembers = {
+                                navigationState = navigationState.copy(collectionManageApps = true)
+                            },
                             onSelectAllApps = {
                                 if (activeCollectionId != null) {
                                     selectionState = selectionState.clear()
@@ -1714,6 +1717,28 @@ fun LibraryScreen(
                             },
                         )
                 }
+            }
+        }
+
+        if (collectionManageAppsActive && collectionsHost != null &&
+            activeCollection != null
+        ) {
+            Box(
+                modifier = Modifier.fillMaxSize().zIndex(3f)
+                    .windowInsetsPadding(WindowInsets.safeDrawing.only(WindowInsetsSides.Bottom)),
+            ) {
+                LibraryCollectionMembershipEditor(
+                    host = collectionsHost,
+                    collection = activeCollection,
+                    members = activeMembers,
+                    libraryState = state,
+                    viewportState = collectionPickerViewport,
+                    onBack = {
+                        collectionsHost.collectionsStore().dismissPicker()
+                        collectionPickerViewport.collectionProjection = null
+                        navigationState = navigationState.copy(collectionManageApps = false)
+                    },
+                )
             }
         }
 
@@ -2184,6 +2209,7 @@ internal fun LibraryAppsDestination(
     onNavigationVisibilityChanged: (Boolean) -> Unit,
     collections: List<LibraryCollectionUiItem> = emptyList(),
     selectedCollection: LibraryCollectionUiItem? = null,
+    onManageCollectionMembers: () -> Unit = {},
     onSelectAllApps: () -> Unit = {},
     onSelectCollection: (Long) -> Unit = {},
     onManageCollections: () -> Unit = {},
@@ -2446,7 +2472,11 @@ internal fun LibraryAppsDestination(
                                     contentAlignment = Alignment.Center) { CircularProgressIndicator() }
                             }
                         visibleApps.isEmpty() -> item(span = { GridItemSpan(maxLineSpan) }) {
-                            LibraryEmptyState(if (searchActive) searchQuery else state.appliedFilter)
+                            if (selectedCollection != null && !searchActive) {
+                                LibraryCollectionBrowseEmptyState(onManageCollectionMembers)
+                            } else {
+                                LibraryEmptyState(if (searchActive) searchQuery else state.appliedFilter)
+                            }
                         }
                         else -> items(visibleApps, key = { it.databaseId }) { app ->
                             LibraryGridItem(
@@ -2509,8 +2539,13 @@ internal fun LibraryAppsDestination(
                             Box(Modifier.fillMaxWidth().heightIn(min = 160.dp),
                                 contentAlignment = Alignment.Center) { CircularProgressIndicator() }
                         }
-                    visibleApps.isEmpty() ->
-                        item { LibraryEmptyState(if (searchActive) searchQuery else state.appliedFilter) }
+                    visibleApps.isEmpty() -> item {
+                        if (selectedCollection != null && !searchActive) {
+                            LibraryCollectionBrowseEmptyState(onManageCollectionMembers)
+                        } else {
+                            LibraryEmptyState(if (searchActive) searchQuery else state.appliedFilter)
+                        }
+                    }
                     else -> items(visibleApps, key = { it.databaseId }) { app ->
                         LibraryListItem(
                             app = app,
@@ -3293,6 +3328,30 @@ private fun LibraryErrorState(onRetry: () -> Unit) {
             modifier = Modifier.padding(top = 8.dp),
         ) {
             Text(stringResource(R.string.library_retry))
+        }
+    }
+}
+
+@Composable
+private fun LibraryCollectionBrowseEmptyState(onAddApps: () -> Unit) {
+    Column(
+        modifier = Modifier.fillMaxWidth().heightIn(min = 180.dp).padding(24.dp),
+        horizontalAlignment = Alignment.CenterHorizontally,
+        verticalArrangement = Arrangement.Center,
+    ) {
+        Text(
+            text = stringResource(R.string.library_collection_members_empty),
+            style = MaterialTheme.typography.bodyMedium,
+            color = MaterialTheme.colorScheme.onSurfaceVariant,
+            textAlign = TextAlign.Center,
+        )
+        TextButton(onClick = onAddApps) {
+            Icon(
+                painter = painterResource(R.drawable.ic_add_to_collection),
+                contentDescription = null,
+            )
+            Spacer(Modifier.width(8.dp))
+            Text(stringResource(R.string.library_collection_add_apps))
         }
     }
 }
