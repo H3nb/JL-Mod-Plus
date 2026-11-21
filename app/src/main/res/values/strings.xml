@@ -1525,4 +1525,9 @@
     <string name="library_details_view_details" tools:ignore="MissingTranslation">View details</string>
     <string name="library_actions_more" tools:ignore="MissingTranslation">More actions</string>
     <string name="library_actions_less" tools:ignore="MissingTranslation">Fewer actions</string>
+    <string name="config_quick_settings">Quick settings</string>
+    <string name="config_all_settings">All settings</string>
+    <string name="profile_local_changes_pending">Local changes not saved to the profile</string>
+    <string name="profile_not_following">Based on %1$s · Not following updates</string>
+    <string name="profile_stop_following">Stop following profile</string>
 </resources>
