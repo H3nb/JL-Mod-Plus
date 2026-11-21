@@ -43,6 +43,10 @@ import static io.github.h3nb.jlmodplus.util.Constants.LIBRARY_LAYOUT_GRID;
 import static io.github.h3nb.jlmodplus.util.Constants.LIBRARY_LAYOUT_LIST;
 
 import android.annotation.SuppressLint;
+import android.content.ActivityNotFoundException;
+import android.content.ClipData;
+import android.content.ClipboardManager;
+import android.content.Context;
 import android.content.Intent;
 import android.content.SharedPreferences;
 import android.content.res.Resources;
@@ -74,6 +78,7 @@ import io.github.h3nb.jlmodplus.ui.AppPageTransitions;
 import io.github.h3nb.jlmodplus.ui.AccentPalette;
 import io.github.h3nb.jlmodplus.config.Config;
 import io.github.h3nb.jlmodplus.config.ProfilesActivity;
+import io.github.h3nb.jlmodplus.crashes.CrashReportsActivity;
 import io.github.h3nb.jlmodplus.util.EdgeToEdgeCompat;
 import io.github.h3nb.jlmodplus.util.FileUtils;
 import io.github.h3nb.jlmodplus.util.PickDirResultContract;
@@ -172,10 +177,6 @@ public class SettingsActivity extends AppCompatActivity {
 			public void onLibraryChoiceChanged(@NonNull String key, @NonNull String value) {
 				SharedPreferences.Editor editor = preferences.edit();
 				switch (key) {
-					case PREF_APPS_VIEW:
-						editor.putInt(PREF_APPS_VIEW,
-								"grid".equals(value) ? LIBRARY_LAYOUT_GRID : LIBRARY_LAYOUT_LIST);
-						break;
 					case PREF_APPS_ICON_RATIO:
 						editor.putInt(PREF_APPS_ICON_RATIO,
 								"portrait".equals(value)
@@ -228,7 +229,62 @@ public class SettingsActivity extends AppCompatActivity {
 				directoryError = null;
 				refreshState();
 			}
+
+			@Override
+			public void onOpenCrashReports() {
+				startActivity(new Intent(SettingsActivity.this, CrashReportsActivity.class));
+			}
+
+			@Override
+			public void onOpenDonation() {
+				openExternalPage("https://sociabuzz.com/h3nb/tribe", "Sociabuzz",
+						R.string.library_donation_link_copied,
+						R.string.library_donation_browser_unavailable);
+			}
+
+			@Override
+			public void onOpenProjectRepository() {
+				openExternalPage("https://github.com/H3nb/JL-Mod-Plus", "GitHub",
+						R.string.about_github_link_copied, R.string.about_github_browser_unavailable);
+			}
+
+			@Override
+			public void onOpenUpdateRelease(@NonNull String url) {
+				if (url.startsWith("https://github.com/H3nb/JL-Mod-Plus/releases/tag/v")) {
+					openExternalPage(url, "GitHub Releases",
+							R.string.updates_link_copied, R.string.updates_browser_unavailable);
+				}
+			}
+
+			@Override
+			public void onOpenUpdateDownload(@NonNull String url) {
+				if (url.startsWith("https://github.com/H3nb/JL-Mod-Plus/releases/download/v")
+						&& url.endsWith(".apk")) {
+					openExternalPage(url, "GitHub Releases",
+							R.string.updates_link_copied, R.string.updates_browser_unavailable);
+				}
+			}
 		};
+	}
+
+	private void openExternalPage(
+			@NonNull String url, @NonNull String label, int copiedMessage, int unavailableMessage) {
+		try {
+			startActivity(new Intent(Intent.ACTION_VIEW, Uri.parse(url))
+					.addCategory(Intent.CATEGORY_BROWSABLE));
+		} catch (ActivityNotFoundException | SecurityException exception) {
+			boolean copied = false;
+			try {
+				ClipboardManager clipboard = (ClipboardManager) getSystemService(Context.CLIPBOARD_SERVICE);
+				if (clipboard != null) {
+					clipboard.setPrimaryClip(ClipData.newPlainText(label, url));
+					copied = true;
+				}
+			} catch (SecurityException ignored) {
+				// Fall back to the unavailable-browser message.
+			}
+			Toast.makeText(this, copied ? copiedMessage : unavailableMessage, Toast.LENGTH_LONG).show();
+		}
 	}
 
 	private void refreshState() {
@@ -314,18 +370,6 @@ public class SettingsActivity extends AppCompatActivity {
 		List<SettingsChoice> choices = new ArrayList<>();
 		boolean gridView = preferences.getInt(PREF_APPS_VIEW, LIBRARY_LAYOUT_LIST)
 				== LIBRARY_LAYOUT_GRID;
-		List<SettingsOption> viewOptions = Arrays.asList(
-				new SettingsOption("list", getString(R.string.library_view_list)),
-				new SettingsOption("grid", getString(R.string.library_view_grid)));
-		choices.add(new SettingsChoice(
-				PREF_APPS_VIEW,
-				getString(R.string.pref_apps_view),
-				findOption(viewOptions,
-						preferences.getInt(PREF_APPS_VIEW, LIBRARY_LAYOUT_LIST) == LIBRARY_LAYOUT_GRID
-								? "grid" : "list",
-						viewOptions.get(0)),
-				viewOptions));
-
 		List<SettingsOption> ratioOptions = Arrays.asList(
 				new SettingsOption("square", getString(R.string.library_icon_ratio_square)),
 				new SettingsOption("portrait", getString(R.string.library_icon_ratio_portrait)));
