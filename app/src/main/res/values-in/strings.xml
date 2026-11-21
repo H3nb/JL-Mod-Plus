@@ -691,6 +691,8 @@
         <item quantity="other">%1$d aplikasi pustaka yang dipilih sudah tidak tersedia.</item>
     </plurals>
 
+    <string name="config_display_more">Teks dan performa</string>
+    <string name="config_display_performance_summary">Frame rate dan overlay performa</string>
     <string name="config_destination_home">Utama</string>
     <string name="config_overview_profile_draft">Draf profil</string>
     <string name="config_overview_profile_draft_summary">Sesuaikan profil yang dapat digunakan kembali, lalu simpan perubahan melalui bilah atas.</string>
