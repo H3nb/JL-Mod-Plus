@@ -739,7 +739,7 @@ public class ConfigActivity extends AppCompatActivity {
 
 			@Override
 			public void onControllerNotice(@NonNull String message) {
-				Toast.makeText(ConfigActivity.this, message, Toast.LENGTH_SHORT).show();
+				showConfigNotice(message);
 			}
 
 			@Override
@@ -1270,7 +1270,7 @@ public class ConfigActivity extends AppCompatActivity {
         if (kind == null || uris.isEmpty() || workDir == null) return;
         Uri uri = uris.get(0);
         if (uri.getPath() == null || (uri.getScheme() != null && !"file".equals(uri.getScheme()))) {
-            ThemedToast.show(this, R.string.config_asset_invalid, Toast.LENGTH_SHORT);
+            showConfigNotice(R.string.config_asset_invalid);
             return;
         }
         File source = new File(uri.getPath());
@@ -1367,7 +1367,7 @@ public class ConfigActivity extends AppCompatActivity {
                                 AssetAction action) {
         if (workDir == null || currentForm == null || assetTasks == null) return;
         if (!assetTasks.submit(new File(workDir), kind, oldName, action)) {
-            ThemedToast.show(this, R.string.config_asset_busy, Toast.LENGTH_SHORT);
+            showConfigNotice(R.string.config_asset_busy);
         }
     }
 
@@ -1390,7 +1390,7 @@ public class ConfigActivity extends AppCompatActivity {
                         || "Invalid asset file".equals(message)
                         || "Invalid asset format".equals(message))
                     ? R.string.config_asset_invalid : R.string.config_asset_operation_failed;
-            ThemedToast.show(this, resource, Toast.LENGTH_SHORT);
+            showConfigNotice(resource);
             return;
         }
         AssetOutcome outcome = result.outcome;
@@ -1411,7 +1411,7 @@ public class ConfigActivity extends AppCompatActivity {
         } else if (composeController != null) {
             composeController.update(createUiState());
         }
-        ThemedToast.show(this, getString(outcome.message, outcome.displayName), Toast.LENGTH_SHORT);
+        showConfigNotice(getString(outcome.message, outcome.displayName));
     }
 
 	private void initSkinOptions() {
@@ -2424,6 +2424,18 @@ public class ConfigActivity extends AppCompatActivity {
 		}
 	}
 
+	private void showConfigNotice(@NonNull String message) {
+		if (composeController != null && !isDestroyed() && !isFinishing()) {
+			composeController.showNotice(message);
+		} else {
+			ThemedToast.show(this, message, Toast.LENGTH_SHORT);
+		}
+	}
+
+	private void showConfigNotice(int messageRes) {
+		showConfigNotice(getString(messageRes));
+	}
+
 	private void addResolutionToPresets(@NonNull Size size) {
 		if (size.width <= 0 || size.height <= 0) {
 			ThemedToast.show(this, R.string.invalid_resolution_not_saved, Toast.LENGTH_SHORT);
@@ -2443,7 +2455,7 @@ public class ConfigActivity extends AppCompatActivity {
 		if (composeController != null) {
 			composeController.update(createUiState());
 		}
-		ThemedToast.show(this, getString(R.string.saved, size.toString()), Toast.LENGTH_SHORT);
+		showConfigNotice(getString(R.string.saved, size.toString()));
 	}
 
 	private void removeResolutionPreset(Size size) {
