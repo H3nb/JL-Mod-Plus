@@ -207,7 +207,7 @@ class SettingsComposeTest {
     }
 
     @Test
-    fun listOnlyLibraryOptionsAreNotShownInGridMode() {
+    fun listLibraryOptionsExcludeGridOnlyChoices() {
         val listState = sampleState().copy(
             libraryChoices = listOf(
                 SettingsChoice(
@@ -222,18 +222,12 @@ class SettingsComposeTest {
             ),
             librarySwitches = listOf(
                 SettingsSwitch("pref_apps_enhanced_icons", uiString(R.string.library_enhanced_icons_title), null, true),
-                SettingsSwitch(
-                    "pref_apps_show_list_description",
-                    uiString(R.string.library_show_list_description),
-                    null,
-                    true,
-                ),
+
             ),
         )
         setSettingsContent(state = listState, actions = RecordingSettingsActions())
 
-        scrollSettingsTo(uiString(R.string.library_show_list_description))
-        composeRule.onNodeWithText(uiString(R.string.library_show_list_description)).assertIsDisplayed()
+        composeRule.onNodeWithText(uiString(R.string.library_show_list_description)).assertDoesNotExist()
         composeRule.onNodeWithText(uiString(R.string.library_grid_spacing_title)).assertDoesNotExist()
         composeRule.onNodeWithText(uiString(R.string.library_hide_grid_titles)).assertDoesNotExist()
     }
@@ -254,8 +248,8 @@ class SettingsComposeTest {
                 libraryChoices = listOf(viewChoice),
                 librarySwitches = listOf(
                     SettingsSwitch(
-                        "pref_apps_show_list_description",
-                        uiString(R.string.library_show_list_description),
+                        "pref_apps_enhanced_icons",
+                        uiString(R.string.library_enhanced_icons_title),
                         null,
                         true,
                     ),
