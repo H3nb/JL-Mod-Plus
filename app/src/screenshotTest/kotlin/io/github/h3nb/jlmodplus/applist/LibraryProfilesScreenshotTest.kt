@@ -320,36 +320,29 @@ fun LibraryFilteredEmptyScreenshot() {
 fun LibraryCollectionBrowserScreenshot() {
     JLModPlusTheme(darkTheme = false) {
         val members = remember { PreviewApps.take(3) }
-        val viewport = rememberLibraryViewportState(collectionId = 1L)
-        remember(viewport, members) {
-            // Layoutlib captures the completed state without running background projection work.
-            viewport.collectionProjection = LibraryCollectionProjection(members, "", 1, members)
-        }
-        LibraryCollectionBrowser(
-            collection = LibraryCollectionUiItem(1L, "RPG Favorites", 3),
-            members = members,
-            allApps = PreviewApps,
-            libraryState = LibraryUiState(
+        LibraryAppsDestination(
+            state = LibraryUiState(
                 loading = false,
-                apps = PreviewApps,
+                apps = members,
                 layout = LibraryLayout.List,
                 sortVariant = 1,
                 databaseControlsReady = true,
             ),
             scaffoldPadding = PaddingValues(),
-            viewportState = viewport,
-            onBack = {},
+            viewportState = rememberLibraryViewportState(collectionId = 1L),
+            selectedCollection = LibraryCollectionUiItem(1L, "RPG Favorites", members.size),
+            collections = listOf(LibraryCollectionUiItem(1L, "RPG Favorites", members.size)),
             onOpenApp = {},
             onOpenActions = {},
-            manageApps = false,
-            onManageAppsChanged = {},
-            onSetMembership = { _, _, _ -> },
-            onPrepareAppPicker = {},
+            onQuickView = {},
+            onFavorite = { _, _ -> },
             onSort = {},
+            onRetry = {},
+            onFabVisibilityChanged = {},
+            onNavigationVisibilityChanged = {},
         )
     }
 }
-
 
 @PreviewTest
 @Preview(name = "Library collection add apps", widthDp = 360, heightDp = 640, showBackground = true)
@@ -460,22 +453,16 @@ fun LibraryOptionsScreenshot() {
 }
 
 @PreviewTest
-@Preview(name = "Library collections list detail", widthDp = 900, heightDp = 700, showBackground = true)
+@Preview(name = "Library collection management", widthDp = 900, heightDp = 700, showBackground = true)
 @Composable
 fun LibraryCollectionsScreenshot() {
     val host = remember { PreviewCollectionsHost() }
-    val members = checkNotNull(host.collectionsStore().state.value.members).members
-    val collectionViewport = rememberLibraryViewportState(collectionId = 1L)
-    remember(collectionViewport, members) {
-        // Preview rendering receives the completed collection projection directly.
-        collectionViewport.collectionProjection = LibraryCollectionProjection(members, "", 1, members)
-    }
     val navigationEventDispatcherOwner = rememberNavigationEventDispatcherOwner(parent = null)
     CompositionLocalProvider(
         LocalNavigationEventDispatcherOwner provides navigationEventDispatcherOwner,
     ) {
         JLModPlusTheme(darkTheme = false) {
-            LibraryCollectionsDestination(
+            LibraryCollectionsManagementDestination(
                 host = host,
                 libraryState = LibraryUiState(
                     loading = false,
@@ -485,12 +472,10 @@ fun LibraryCollectionsScreenshot() {
                     databaseControlsReady = true,
                 ),
                 scaffoldPadding = PaddingValues(),
-                navigationState = LibraryNavigationState(
-                    destination = LibraryDestinationKey.Collections,
-                    selectedCollectionId = 1L,
-                ),
-                collectionViewport = collectionViewport,
-                onOpenActions = { _, _ -> },
+                viewportState = rememberLibraryViewportState(),
+                selectedCollectionId = 1L,
+                onBack = {},
+                onOpenCollection = {},
             )
         }
     }
