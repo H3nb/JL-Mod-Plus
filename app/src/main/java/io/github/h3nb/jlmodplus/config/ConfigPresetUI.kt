@@ -27,7 +27,6 @@ import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.lazy.LazyColumn
 import androidx.compose.foundation.lazy.items
-import androidx.compose.foundation.BorderStroke
 import androidx.compose.foundation.selection.selectable
 import androidx.compose.material3.Icon
 import androidx.compose.material3.IconButton
@@ -495,9 +494,8 @@ private fun PresetPickerRow(
             .selectable(selected = selected, onClick = onClick, role = Role.RadioButton)
             .heightIn(min = 72.dp),
         shape = MaterialTheme.shapes.medium,
-        color = if (selected) colors.secondaryContainer else colors.surfaceContainerLow,
-        contentColor = if (selected) colors.onSecondaryContainer else colors.onSurface,
-        border = if (selected) BorderStroke(1.dp, colors.secondary) else null,
+        color = if (selected) colors.primaryContainer else colors.surfaceContainerLow,
+        contentColor = if (selected) colors.onPrimaryContainer else colors.onSurface,
     ) {
         Row(
             modifier = Modifier.padding(horizontal = 12.dp, vertical = 10.dp),
@@ -514,7 +512,7 @@ private fun PresetPickerRow(
                 Text(
                     text = summary,
                     style = MaterialTheme.typography.bodySmall,
-                    color = if (selected) colors.onSecondaryContainer.copy(alpha = 0.78f) else colors.onSurfaceVariant,
+                    color = if (selected) colors.onPrimaryContainer else colors.onSurfaceVariant,
                     maxLines = 2,
                     overflow = TextOverflow.Ellipsis,
                 )
