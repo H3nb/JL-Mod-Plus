@@ -15,6 +15,7 @@
 package io.github.h3nb.jlmodplus.applist
 
 import androidx.compose.runtime.mutableStateOf
+import androidx.compose.ui.geometry.Offset
 import androidx.compose.ui.test.DeviceConfigurationOverride
 import androidx.compose.ui.test.ExperimentalTestApi
 import androidx.compose.ui.test.WindowSize
@@ -365,6 +366,37 @@ class LibraryCollectionsNavigationTest {
     }
 
     @Test
+    fun longPressDragReordersCollectionsAndPersistsOnce() {
+        val host = RecordingCollectionsHost()
+        host.store.publishCollections(
+            listOf(
+                LibraryCollectionRow(COLLECTION_ID, COLLECTION_NAME, 0, 1L, 2),
+                LibraryCollectionRow(2L, "RPG", 1, 2L, 0),
+            ),
+        )
+        composeRule.setContent {
+            DeviceConfigurationOverride(
+                DeviceConfigurationOverride.WindowSize(DpSize(360.dp, 640.dp)),
+            ) {
+                JLModPlusTheme { LibraryScreen(state = sampleLibraryState(), actions = host) }
+            }
+        }
+        openCollectionsManagement()
+        composeRule.onNodeWithText(COLLECTION_NAME).performTouchInput {
+            down(center)
+            advanceEventTime(650)
+            moveBy(Offset(0f, 120f))
+            up()
+        }
+        composeRule.waitForIdle()
+        assertEquals(listOf(2L, COLLECTION_ID), host.reorderRequests.single())
+        assertEquals(
+            listOf(2L, COLLECTION_ID),
+            host.store.state.value.collections.map { it.id },
+        )
+    }
+
+    @Test
     fun collectionSelectionBackExitsSelectionBeforeLeavingCollection() {
         val host = RecordingCollectionsHost()
         composeRule.setContent {
@@ -705,6 +737,7 @@ class LibraryCollectionsNavigationTest {
             )
         }
         val openedCollectionIds = mutableListOf<Long>()
+        val reorderRequests = mutableListOf<List<Long>>()
         val bulkRemovals = mutableListOf<Pair<Set<Long>, Long>>()
         val singleRemovals = mutableListOf<Pair<Int, Long>>()
         val membershipRequests = mutableListOf<Triple<Long, Long, Boolean>>()
@@ -730,6 +763,18 @@ class LibraryCollectionsNavigationTest {
         }
         override fun onRenameCollection(collectionId: Long, name: String) = Unit
         override fun onDeleteCollection(collectionId: Long) = Unit
+        override fun onReorderCollections(
+            orderedIds: List<Long>,
+            callback: CollectionMembershipResultCallback,
+        ) {
+            reorderRequests += orderedIds
+            val current = store.state.value.collections.associateBy { it.id }
+            store.publishCollections(orderedIds.mapIndexed { index, id ->
+                val collection = requireNotNull(current[id])
+                LibraryCollectionRow(id, collection.name, index, index.toLong(), collection.appCount)
+            })
+            callback.onResult(true)
+        }
         override fun onPrepareCollectionAppPicker() {
             store.publishAllApps(pickerApps)
         }
