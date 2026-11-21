@@ -783,13 +783,17 @@ fun LibraryScreen(
     var aboutPageVisible by rememberSaveable { mutableStateOf(false) }
     var installSourceMenuVisible by remember { mutableStateOf(false) }
     var updatesPageVisible by rememberSaveable { mutableStateOf(false) }
+    var notificationsPageVisible by rememberSaveable { mutableStateOf(false) }
     // Keep full-screen navigation blocking until the outgoing page finishes fading away.
     val aboutPageMotion = remember { MutableTransitionState(false) }
     aboutPageMotion.targetState = aboutPageVisible
     val updatesPageMotion = remember { MutableTransitionState(false) }
     updatesPageMotion.targetState = updatesPageVisible
+    val notificationsPageMotion = remember { MutableTransitionState(false) }
+    notificationsPageMotion.targetState = notificationsPageVisible
     val auxiliaryPageOnScreen = aboutPageMotion.currentState || aboutPageMotion.targetState ||
-        updatesPageMotion.currentState || updatesPageMotion.targetState
+        updatesPageMotion.currentState || updatesPageMotion.targetState ||
+        notificationsPageMotion.currentState || notificationsPageMotion.targetState
     var updatePrompt by remember { mutableStateOf<UpdateCandidate?>(null) }
     var sessionDismissedUpdate by rememberSaveable { mutableStateOf<String?>(null) }
     var pendingBulkDeleteIds by remember { mutableStateOf<Set<Long>?>(null) }
@@ -923,6 +927,9 @@ fun LibraryScreen(
     )
     val currentControllerUpdatesPageVisible by rememberUpdatedState(
         updatesPageMotion.currentState || updatesPageMotion.targetState,
+    )
+    val currentControllerNotificationsPageVisible by rememberUpdatedState(
+        notificationsPageMotion.currentState || notificationsPageMotion.targetState,
     )
     val currentControllerUpdatePrompt by rememberUpdatedState(updatePrompt)
     val currentControllerBulkDeleteIds by rememberUpdatedState(pendingBulkDeleteIds)
@@ -1247,6 +1254,7 @@ fun LibraryScreen(
                         currentControllerInfoDialog != null -> infoDialog = null
                         currentControllerAboutPageVisible -> aboutPageVisible = false
                         currentControllerUpdatesPageVisible -> updatesPageVisible = false
+                        currentControllerNotificationsPageVisible -> notificationsPageVisible = false
                         currentControllerSelectionActive -> selectionState = selectionState.clear()
                         currentControllerSearchOpen -> {
                             if (currentControllerImeVisible) searchKeyboard?.hide()
@@ -1679,6 +1687,7 @@ fun LibraryScreen(
                                 )
                             },
                             onOpenSearch = { searchOpen = true },
+                            onOpenNotifications = { notificationsPageVisible = true },
                             onOpenGlobalSettings = { selectDestination(LibraryDestination.More) },
                             searchActive = searchOpen && destination == LibraryDestination.Apps,
                             searchQuery = searchQuery,
@@ -1805,6 +1814,30 @@ fun LibraryScreen(
                 }
                 // Outgoing content is still drawn, but must not accept actions or focus.
                 if (!updatesPageVisible) {
+                    Box(
+                        Modifier.matchParentSize()
+                            .clickable(
+                                interactionSource = remember { MutableInteractionSource() },
+                                indication = null,
+                            ) {}
+                            .clearAndSetSemantics {},
+                    )
+                }
+            }
+        }
+        AnimatedVisibility(
+            visibleState = notificationsPageMotion,
+            modifier = Modifier.fillMaxSize().zIndex(4f),
+            enter = auxiliaryEnter,
+            exit = auxiliaryExit,
+        ) {
+            Box(
+                Modifier.fillMaxSize()
+                    .background(MaterialTheme.colorScheme.background)
+                    .then(if (notificationsPageVisible) Modifier else Modifier.clearAndSetSemantics {}),
+            ) {
+                LibraryNotificationsScreen(onBack = { notificationsPageVisible = false })
+                if (!notificationsPageVisible) {
                     Box(
                         Modifier.matchParentSize()
                             .clickable(
