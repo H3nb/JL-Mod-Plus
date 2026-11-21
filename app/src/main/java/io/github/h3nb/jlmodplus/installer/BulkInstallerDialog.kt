@@ -438,7 +438,7 @@ private fun SingleReviewContent(
         Column(
             modifier = Modifier
                 .fillMaxWidth()
-                .weight(1f, fill = false)
+                .weight(1f, fill = !single)
                 .verticalScroll(rememberScrollState()),
             verticalArrangement = Arrangement.spacedBy(8.dp),
         ) {
@@ -576,9 +576,10 @@ private fun ReviewContent(
         ) {
             item {
                 Column(verticalArrangement = Arrangement.spacedBy(8.dp)) {
-                    Row(
+                    FlowRow(
                         modifier = Modifier.fillMaxWidth(),
                         horizontalArrangement = Arrangement.SpaceBetween,
+                        verticalArrangement = Arrangement.spacedBy(4.dp),
                     ) {
                         Text(
                             pluralStringResource(
@@ -861,7 +862,7 @@ private fun FinishedContent(
         Box(
             modifier = Modifier
                 .fillMaxWidth()
-                .weight(1f, fill = false),
+                .weight(1f, fill = !single),
         ) {
             LazyColumn(
                 modifier = Modifier.fillMaxWidth().testTag("bulk-results"),
@@ -925,7 +926,7 @@ private fun FinishedContent(
                     }
                     HorizontalDivider()
                 }
-                if (compactHeight) {
+                if (compactHeight && single) {
                     item {
                         FinishedActions(
                             hasRetryableResults = hasRetryableResults,
@@ -936,7 +937,7 @@ private fun FinishedContent(
                 }
             }
         }
-        if (!compactHeight) {
+        if (!compactHeight || !single) {
             HorizontalDivider()
             FinishedActions(
                 hasRetryableResults = hasRetryableResults,
