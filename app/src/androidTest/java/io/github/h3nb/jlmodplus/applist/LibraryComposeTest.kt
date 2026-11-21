@@ -121,6 +121,7 @@ class LibraryComposeTest {
         }
 
         val deleteLabel = uiString(R.string.action_context_delete)
+        composeRule.onNodeWithText(uiString(R.string.library_actions_more)).performClick()
         composeRule.onNode(hasScrollAction() and hasAnyAncestor(isDialog()))
             .performScrollToNode(hasText(deleteLabel))
         composeRule.onNodeWithText(deleteLabel).assertIsDisplayed()
@@ -136,9 +137,8 @@ class LibraryComposeTest {
             uiString(R.string.library_app_more_actions, "Demo MIDlet"),
         ).performClick()
 
-        composeRule.onNodeWithText(uiString(R.string.library_actions_group_customize))
-            .assertIsDisplayed()
         composeRule.onNodeWithText(uiString(R.string.action_settings)).assertIsDisplayed()
+        composeRule.onNodeWithText(uiString(R.string.library_actions_more)).assertIsDisplayed()
     }
 
     @Test
@@ -157,8 +157,7 @@ class LibraryComposeTest {
         composeRule.onNodeWithContentDescription("Demo MIDlet")
             .performTouchInput { longClick() }
 
-        composeRule.onNodeWithText(uiString(R.string.library_actions_group_customize))
-            .assertIsDisplayed()
+        composeRule.onNodeWithText(uiString(R.string.action_settings)).assertIsDisplayed()
     }
 
     @Test
@@ -182,8 +181,9 @@ class LibraryComposeTest {
             }
         }
 
-        composeRule.onNodeWithText(uiString(R.string.library_remove_from_favorites_action))
-            .performClick()
+        composeRule.onNodeWithContentDescription(
+            uiString(R.string.library_remove_from_favorites_action),
+        ).performClick()
         assertEquals(1, favoriteRequests)
     }
 
@@ -996,7 +996,7 @@ class LibraryComposeTest {
     }
 
     @Test
-    fun descriptionToggleOnlyAppearsWhenDescriptionOverflows() {
+    fun longDescriptionOpensDetailsWithoutExpandingTheListCard() {
         val actions = RecordingLibraryActions()
         val longDescription = "A MIDlet description that is long enough to require an expandable preview. ".repeat(8)
         setLibraryContent(
@@ -1028,10 +1028,11 @@ class LibraryComposeTest {
 
         composeRule.onAllNodesWithTag("library_description_toggle").assertCountEquals(1)
         composeRule.onNodeWithTag("library_description_toggle").assertHasClickAction().performClick()
+        composeRule.onNodeWithText(uiString(R.string.library_details_title)).assertIsDisplayed()
+        composeRule.onNodeWithText(longDescription).assertIsDisplayed()
         assertEquals(null, actions.openedId)
-        composeRule.onNodeWithText(uiString(R.string.library_description_less)).assertIsDisplayed()
-        composeRule.onNodeWithTag("library_description_toggle").performClick()
-        composeRule.onNodeWithText(uiString(R.string.library_description_more)).assertIsDisplayed()
+        composeRule.onNodeWithContentDescription(uiString(R.string.action_back)).performClick()
+        composeRule.onNodeWithText("Short description").assertIsDisplayed()
     }
 
     @Test

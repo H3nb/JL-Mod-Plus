@@ -1379,4 +1379,6 @@
     <string name="library_details_unavailable">Tidak tersedia</string>
     <string name="library_details_action">Rincian</string>
     <string name="library_details_view_details">Lihat rincian</string>
+    <string name="library_actions_more">Tindakan lainnya</string>
+    <string name="library_actions_less">Lebih sedikit tindakan</string>
 </resources>

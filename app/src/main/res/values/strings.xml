@@ -1475,4 +1475,6 @@
     <string name="library_details_unavailable" tools:ignore="MissingTranslation">Unavailable</string>
     <string name="library_details_action" tools:ignore="MissingTranslation">Details</string>
     <string name="library_details_view_details" tools:ignore="MissingTranslation">View details</string>
+    <string name="library_actions_more" tools:ignore="MissingTranslation">More actions</string>
+    <string name="library_actions_less" tools:ignore="MissingTranslation">Fewer actions</string>
 </resources>

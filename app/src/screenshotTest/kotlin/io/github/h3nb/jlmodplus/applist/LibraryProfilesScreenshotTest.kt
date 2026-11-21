@@ -400,6 +400,7 @@ fun LibraryAppActionsScreenshot() {
             onSettings = {},
             onReinstall = {},
             onDelete = {},
+            onDetails = {},
             onEditMetadata = {},
             onSelect = {},
             onAddToCollection = {},
@@ -428,11 +429,43 @@ fun LibraryAppActionsCompactLandscapeLargeTextScreenshot() {
             onSettings = {},
             onReinstall = {},
             onDelete = {},
+            onDetails = {},
             onEditMetadata = {},
             onSelect = {},
             onAddToCollection = {},
             onShareApp = {},
             onExportAppBundle = {},
+        )
+    }
+}
+
+@PreviewTest
+@Preview(name = "MIDlet details", widthDp = 360, heightDp = 640, showBackground = true)
+@Composable
+fun LibraryMidletDetailsScreenshot() {
+    JLModPlusTheme(darkTheme = false) {
+        LibraryMidletDetailsScreen(
+            app = PreviewApps.first(),
+            libraryScope = "preview",
+            iconRatio = LibraryIconRatio.Square,
+            iconShape = LibraryIconShape.Round,
+            enhancedIcons = true,
+            onBack = {},
+            onEditMetadata = {},
+            onLoad = { callback ->
+                callback.complete(
+                    io.github.h3nb.jlmodplus.librarydb.LibraryMidletDetailsData(
+                        descriptorAttributes = mapOf(
+                            "MicroEdition-Profile" to "MIDP-2.0",
+                            "MicroEdition-Configuration" to "CLDC-1.1",
+                            "MIDlet-1" to "Sample,/icon.png,com.example.Sample",
+                        ),
+                        retainedJarSizeBytes = 184_320L,
+                        collectionNames = listOf("RPG"),
+                    ),
+                    null,
+                )
+            },
         )
     }
 }

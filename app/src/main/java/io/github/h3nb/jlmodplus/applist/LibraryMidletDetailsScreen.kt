@@ -16,6 +16,7 @@ import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.PaddingValues
 import androidx.compose.foundation.layout.Spacer
 import androidx.compose.foundation.layout.WindowInsets
+import androidx.compose.foundation.layout.fillMaxHeight
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.heightIn
@@ -110,10 +111,9 @@ internal fun LibraryMidletDetailsScreen(
         modifier = Modifier.fillMaxSize()
             .windowInsetsPadding(WindowInsets.safeDrawing),
     ) {
-        val wide = maxWidth >= 700.dp
         Column(
-            modifier = Modifier.fillMaxSize().align(Alignment.TopCenter)
-                .widthIn(max = 880.dp),
+            modifier = Modifier.align(Alignment.TopCenter)
+                .widthIn(max = 880.dp).fillMaxHeight(),
         ) {
             Row(
                 modifier = Modifier.fillMaxWidth().heightIn(min = 56.dp)
@@ -305,8 +305,8 @@ internal fun LibraryMidletDetailsScreen(
                     ) {
                         Icon(
                             painter = painterResource(
-                                if (advancedExpanded) R.drawable.ic_expand_less
-                                else R.drawable.ic_expand_more,
+                                if (advancedExpanded) R.drawable.ic_keyboard_arrow_up
+                                else R.drawable.ic_keyboard_arrow_down,
                             ),
                             contentDescription = null,
                             modifier = Modifier.size(20.dp),
