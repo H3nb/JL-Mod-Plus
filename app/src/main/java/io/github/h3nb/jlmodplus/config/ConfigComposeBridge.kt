@@ -138,9 +138,6 @@ import io.github.h3nb.jlmodplus.ui.pageExit
 import io.github.h3nb.jlmodplus.ui.rememberLazyListCanScrollForward
 import kotlin.math.roundToInt
 
-internal const val CONFIG_NAVIGATION_BAR_TAG = "config_navigation_bar"
-internal const val CONFIG_NAVIGATION_RAIL_TAG = "config_navigation_rail"
-
 /** Host bridge; ConfigActivity remains the owner of persistence and platform-sensitive flows. */
 class ConfigComposeController @JvmOverloads constructor(
     composeView: ComposeView,
@@ -288,7 +285,7 @@ data class EncodingPickerRequest(
 )
 
 internal enum class ConfigDestination(val label: Int, val icon: Int) {
-    Basic(R.string.config_destination_home, R.drawable.ic_config_general),
+    Basic(R.string.config_quick_settings, R.drawable.ic_config_general),
     Display(R.string.config_destination_graphics, R.drawable.ic_config_graphics),
     Controls(R.string.config_destination_controls, R.drawable.ic_config_controls),
     Media(R.string.config_destination_media, R.drawable.ic_config_media),
@@ -493,6 +490,7 @@ internal fun ConfigScreen(
                         if (searchVisible) {
                             ConfigSearchResults(
                                 query = searchQuery,
+                                isProfile = isProfile,
                                 modifier = Modifier.fillMaxSize().padding(padding)
                                     .consumeWindowInsets(padding),
                                 onSelected = { nextDestination, section, detail ->
@@ -977,6 +975,7 @@ private val configSearchIndex = listOf(
 @Composable
 private fun ConfigSearchResults(
     query: String,
+    isProfile: Boolean,
     onSelected: (ConfigDestination, String, ConfigDetail?) -> Unit,
     modifier: Modifier = Modifier,
 ) {
@@ -987,6 +986,7 @@ private fun ConfigSearchResults(
         R.string.pref_map_keys, R.string.PREF_TIMING_MODE,
     )
     val filtered = configSearchIndex.filter { entry ->
+        if (isProfile && entry.destination == ConfigDestination.Basic) return@filter false
         if (query.isBlank()) entry.title in suggestions
         else resources.getString(entry.title).contains(query.trim(), ignoreCase = true) ||
             resources.getString(entry.section).contains(query.trim(), ignoreCase = true) ||
