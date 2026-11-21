@@ -134,6 +134,7 @@ enum class AccentPalette(val key: String) {
         }
     }
 
+    @JvmOverloads
     fun previewColor(dark: Boolean, context: Context? = null): Color {
         if (this == Wallpaper && context != null && Build.VERSION.SDK_INT >= Build.VERSION_CODES.S) {
             return colorScheme(dark, context).primary
