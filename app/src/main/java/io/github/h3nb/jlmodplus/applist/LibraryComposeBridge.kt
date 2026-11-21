@@ -5074,7 +5074,8 @@ internal fun AppActionsDialog(
     val windowHeight = remember(app.databaseId, windowWidth) { measuredWindowHeight }
     val useSheet = windowWidth < 600.dp && windowHeight >= 500.dp
     val compactHeader = windowHeight < 480.dp
-    val listState = rememberLazyListState()
+    var moreExpanded by rememberSaveable(app.databaseId) { mutableStateOf(false) }
+    val listState = key(app.databaseId, moreExpanded) { rememberLazyListState() }
     val sheetFocusRequester = remember { FocusRequester() }
     LaunchedEffect(useSheet) {
         if (useSheet) {
@@ -5082,8 +5083,7 @@ internal fun AppActionsDialog(
             sheetFocusRequester.requestFocus()
         }
     }
-    var moreExpanded by rememberSaveable(app.databaseId) { mutableStateOf(false) }
-    var focusedIndex by rememberSaveable(app.databaseId) { mutableIntStateOf(0) }
+    var focusedIndex by rememberSaveable(app.databaseId, moreExpanded) { mutableIntStateOf(0) }
     var controllerFocusVisible by remember(app.databaseId) { mutableStateOf(false) }
     val dialogControllerKeyEvent = onControllerKeyEvent?.let { handler ->
         { event: KeyEvent ->
@@ -5192,10 +5192,6 @@ internal fun AppActionsDialog(
     }
 
     val currentEntries by rememberUpdatedState(entries)
-    LaunchedEffect(moreExpanded) {
-        focusedIndex = 0
-        listState.scrollToItem(0)
-    }
     LaunchedEffect(entries.size) {
         focusedIndex = focusedIndex.coerceIn(0, (entries.size - 1).coerceAtLeast(0))
     }
