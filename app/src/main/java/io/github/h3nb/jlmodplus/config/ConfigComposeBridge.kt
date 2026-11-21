@@ -419,6 +419,7 @@ internal fun ConfigScreen(
     val displayScrollState = rememberScrollState()
     val useNavigationRail = availableWindowWidthDp() >= 600.dp
     val density = LocalDensity.current
+    val iconOnlyBottomNavigation = density.fontScale >= 1.5f
     val imeVisible = WindowInsets.ime.getBottom(density) > 0
     val cutoutAvailable = cutoutSupportOverride ?: deviceHasDisplayCutout(density)
 
@@ -532,6 +533,7 @@ internal fun ConfigScreen(
                                         destinations = destinations,
                                         selected = selectedDestination,
                                         onSelected = selectDestination,
+                                        iconOnly = iconOnlyBottomNavigation,
                                     )
                                 }
                             },
@@ -562,6 +564,13 @@ internal fun ConfigScreen(
                                                 .padding(horizontal = 12.dp, vertical = 8.dp),
                                             verticalArrangement = Arrangement.spacedBy(8.dp),
                                         ) {
+                                            if (iconOnlyBottomNavigation && !useNavigationRail) {
+                                                Text(
+                                                    stringResource(destinations[page].label),
+                                                    modifier = Modifier.padding(horizontal = 12.dp, vertical = 4.dp),
+                                                    style = MaterialTheme.typography.titleMedium,
+                                                )
+                                            }
                                             Box(
                                                 modifier = Modifier.fillMaxWidth(),
                                                 contentAlignment = Alignment.TopCenter,
@@ -1229,6 +1238,7 @@ private fun ConfigNavigationBar(
     destinations: List<ConfigDestination>,
     selected: ConfigDestination,
     onSelected: (ConfigDestination) -> Unit,
+    iconOnly: Boolean,
 ) {
     NavigationBar(
         modifier = Modifier.testTag(CONFIG_NAVIGATION_BAR_TAG),
@@ -1246,9 +1256,10 @@ private fun ConfigNavigationBar(
                         contentDescription = label,
                     )
                 },
-                label = {
-                    Text(label, maxLines = 1, softWrap = false, overflow = TextOverflow.Ellipsis)
+                label = if (iconOnly) null else {
+                    { Text(label, maxLines = 1, softWrap = false, overflow = TextOverflow.Ellipsis) }
                 },
+                alwaysShowLabel = !iconOnly,
             )
         }
     }
