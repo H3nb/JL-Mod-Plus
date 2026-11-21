@@ -5318,7 +5318,12 @@ internal fun AppActionsDialog(
         }
     }
 
-    if (useSheet) {
+    if (useSheet && LocalInspectionMode.current) {
+        Surface(
+            color = MaterialTheme.colorScheme.surfaceContainerLow,
+            shape = MaterialTheme.shapes.extraLarge,
+        ) { body() }
+    } else if (useSheet) {
         ModalBottomSheet(
             onDismissRequest = onDismiss,
             sheetState = rememberModalBottomSheetState(skipPartiallyExpanded = true),

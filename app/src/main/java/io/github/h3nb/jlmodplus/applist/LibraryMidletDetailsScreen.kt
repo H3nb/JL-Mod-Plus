@@ -10,7 +10,6 @@ import android.text.format.Formatter
 import androidx.activity.compose.BackHandler
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
-import androidx.compose.foundation.layout.BoxWithConstraints
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.PaddingValues
@@ -107,7 +106,7 @@ internal fun LibraryMidletDetailsScreen(
         timestamp?.takeIf { it > 0 }?.let { dateFormat.format(Date(it)) } ?: unavailable
     }
 
-    BoxWithConstraints(
+    Box(
         modifier = Modifier.fillMaxSize()
             .windowInsetsPadding(WindowInsets.safeDrawing),
     ) {
