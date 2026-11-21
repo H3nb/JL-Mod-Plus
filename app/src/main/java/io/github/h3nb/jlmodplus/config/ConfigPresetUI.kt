@@ -306,6 +306,7 @@ private fun PresetPickerDialog(
     }
     var scopeKey by rememberSaveable(selectedKey) { mutableStateOf(availableScopes.firstOrNull()?.name) }
     val selectedScope = availableScopes.firstOrNull { it.name == scopeKey }
+    var scopesExpanded by rememberSaveable(selectedKey) { mutableStateOf(false) }
     AlertDialog(
         maxWidth = PresetPickerMaximumWidth,
         textScrollable = false,
@@ -341,23 +342,58 @@ private fun PresetPickerDialog(
                     )
                 }
                 if (selectedChoice != null && !selectedChoice.isBuiltIn) {
-                    item(key = "apply-scope-title") {
-                        Text(
-                            text = stringResource(R.string.preset_choose_parts),
-                            style = MaterialTheme.typography.titleSmall,
-                            modifier = Modifier.padding(top = 8.dp),
-                        )
+                    if (availableScopes.size > 1) {
+                        item(key = "apply-scope-toggle") {
+                            Row(
+                                modifier = Modifier.fillMaxWidth()
+                                    .clickable(role = Role.Button) {
+                                        scopesExpanded = !scopesExpanded
+                                    }
+                                    .heightIn(min = 56.dp)
+                                    .padding(top = 8.dp, bottom = 4.dp),
+                                verticalAlignment = Alignment.CenterVertically,
+                            ) {
+                                Column(modifier = Modifier.weight(1f)) {
+                                    Text(stringResource(R.string.preset_choose_parts),
+                                        style = MaterialTheme.typography.titleSmall)
+                                    Text(
+                                        stringResource(
+                                            when (selectedScope) {
+                                                ConfigFormEvents.PresetApplyScope.WHOLE_PROFILE ->
+                                                    R.string.profile_apply_whole
+                                                ConfigFormEvents.PresetApplyScope.SETTINGS ->
+                                                    R.string.profile_apply_settings_only
+                                                ConfigFormEvents.PresetApplyScope.KEYBOARD_LAYOUT ->
+                                                    R.string.profile_apply_layout_only
+                                                null -> R.string.preset_choose_parts
+                                            },
+                                        ),
+                                        style = MaterialTheme.typography.bodySmall,
+                                        color = MaterialTheme.colorScheme.onSurfaceVariant,
+                                    )
+                                }
+                                Icon(
+                                    painterResource(if (scopesExpanded) R.drawable.ic_keyboard_arrow_up
+                                        else R.drawable.ic_keyboard_arrow_down),
+                                    contentDescription = null,
+                                    modifier = Modifier.size(24.dp),
+                                    tint = MaterialTheme.colorScheme.onSurfaceVariant,
+                                )
+                            }
+                        }
                     }
-                    items(availableScopes, key = { "scope:${it.name}" }) { scope ->
-                        PresetScopeRow(
-                            scope = scope,
-                            selected = selectedScope == scope,
-                            hasLayout = selectedChoice.hasKeyboardLayout,
-                            onClick = {
-                                scopeKey = scope.name
-                                applyErrorVisible = false
-                            },
-                        )
+                    if (scopesExpanded || availableScopes.size == 1) {
+                        items(availableScopes, key = { "scope:" + it.name }) { scope ->
+                            PresetScopeRow(
+                                scope = scope,
+                                selected = selectedScope == scope,
+                                hasLayout = selectedChoice.hasKeyboardLayout,
+                                onClick = {
+                                    scopeKey = scope.name
+                                    applyErrorVisible = false
+                                },
+                            )
+                        }
                     }
                 }
                 if (selectedChoice != null && applyErrorVisible) item(key = "apply-error") {
