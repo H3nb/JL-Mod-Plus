@@ -73,12 +73,12 @@ public class Image extends com.siemens.mp.ui.Image {
 
 	public static int getPixelColor(javax.microedition.lcdui.Image image, int x, int y)
 			throws IllegalArgumentException {
-		return image.getBitmap().getPixel(x, y);
+		return image.getLogicalPixel(x, y);
 	}
 
 	public static void setPixelColor(javax.microedition.lcdui.Image image, int x, int y, int color)
 			throws IllegalArgumentException {
-		image.getBitmap().setPixel(x, y, color);
+		image.setLogicalPixel(x, y, color);
 	}
 
 	public static void writeImageToFile(javax.microedition.lcdui.Image img, String file)
@@ -90,12 +90,15 @@ public class Image extends com.siemens.mp.ui.Image {
 		} else if (file.startsWith("\\") || file.startsWith("/")) {
 			file = "a:" + file;
 		}
+		Bitmap backing = img.getBitmap();
+		Bitmap output = img.getPixelScale() == 1 ? backing : Bitmap.createScaledBitmap(
+				backing, img.getWidth(), img.getHeight(), false);
 		try (OutputStream stream = Connector.openOutputStream("file:///" + file)) {
-			if (TextUtils.endsWithIgnoreCase(file, ".jpg")) {
-				img.getBitmap().compress(Bitmap.CompressFormat.JPEG, 100, stream);
-			} else {
-				img.getBitmap().compress(Bitmap.CompressFormat.PNG, 100, stream);
-			}
+			Bitmap.CompressFormat format = TextUtils.endsWithIgnoreCase(file, ".jpg")
+					? Bitmap.CompressFormat.JPEG : Bitmap.CompressFormat.PNG;
+			output.compress(format, 100, stream);
+		} finally {
+			if (output != backing) output.recycle();
 		}
 	}
 

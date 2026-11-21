@@ -41,14 +41,17 @@ public class ImageEncoder {
 
 	public byte[] encodeOffscreen(Image src, int x, int y, int width, int height) throws IOException {
 		Image resultImage = Image.createImage(src, x, y, width, height, 0);
-		Bitmap bmp = resultImage.getBitmap();
-		ByteArrayOutputStream stream = new ByteArrayOutputStream();
-		Bitmap.CompressFormat compressFormat =
-				(format == FORMAT_PNG) ? Bitmap.CompressFormat.PNG : Bitmap.CompressFormat.JPEG;
-		bmp.compress(compressFormat, 100, stream);
-		byte[] byteArray = stream.toByteArray();
-		stream.close();
-		return byteArray;
+		Bitmap backing = resultImage.getBitmap();
+		Bitmap output = resultImage.getPixelScale() == 1 ? backing : Bitmap.createScaledBitmap(
+				backing, resultImage.getWidth(), resultImage.getHeight(), false);
+		try (ByteArrayOutputStream stream = new ByteArrayOutputStream()) {
+			Bitmap.CompressFormat compressFormat =
+					(format == FORMAT_PNG) ? Bitmap.CompressFormat.PNG : Bitmap.CompressFormat.JPEG;
+			output.compress(compressFormat, 100, stream);
+			return stream.toByteArray();
+		} finally {
+			if (output != backing) output.recycle();
+		}
 	}
 
 	public void setJpegOption(int size) {

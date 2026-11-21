@@ -1121,13 +1121,13 @@
     <string name="memory_editor_panel_opacity">面板不透明度</string>
     <string name="memory_editor_panel_opacity_help">调整面板背景，不会淡化文字或图标。</string>
     <string name="bitmap_upscaling_bilinear">双线性</string>
-    <string name="bitmap_upscaling_description">增强不可变的 2D 精灵与不透明的 Micro3D 模型贴图。M3G 贴图不受影响。</string>
+    <string name="bitmap_upscaling_description">增强不可变的 2D 精灵与不透明的 Micro3D 模型贴图。M3G 贴图不受影响；重启后生效。</string>
     <string name="bitmap_upscaling_edge_aware">xBR Lv3（边缘感知）</string>
     <string name="bitmap_upscaling_mmpx">MMPX</string>
     <string name="bitmap_upscaling_nearest">最近邻</string>
     <string name="bitmap_upscaling_title">位图放大</string>
     <string name="config_system_properties_reset">恢复默认</string>
-    <string name="config_system_properties_reset_message">用当前 JL-Mod Plus 的默认值替换编辑框内容？其他设置不受影响。</string>
+    <string name="config_system_properties_reset_message">用当前 JL-Mod Plus 的默认值替换编辑框内容？其他设置不受影响。保存后才会应用重置。</string>
     <string name="config_system_properties_reset_title">恢复系统属性默认值？</string>
     <string name="control_skin_already_available">%1$s 已存在</string>
     <string name="control_skin_analog">摇杆</string>
@@ -1242,7 +1242,7 @@
     <string name="effect_vignette">暗角</string>
     <string name="effect_vignette_desc">压暗四周，让视线聚焦中心。</string>
     <string name="installer_choose_another_jar">选择其他 JAR</string>
-    <string name="installer_running_update_warning">此应用正在运行。安装会先将其停止，再替换文件。</string>
+    <string name="installer_running_update_warning">此应用正在运行。安装会先将其停止，再替换文件。未保存的游戏进度可能丢失。</string>
     <string name="installer_select_companion_jar">这个 JAD 引用了单独的 JAR 文件。请选择匹配的 JAR 以继续。</string>
     <string name="installer_select_jar">选择 JAR</string>
     <string name="installer_wrong_companion_jar">该 JAR 与所选 JAD 不匹配。请选择匹配的 JAR，以保留 JAD 中的设置。</string>
@@ -1294,7 +1294,7 @@
     <string name="memory_builder_subtract">减</string>
     <string name="memory_builder_view_json">查看 JSON</string>
     <string name="memory_editor_minimize">最小化内存编辑器</string>
-    <string name="memory_editor_reconversion_required">此 MIDlet 的已装转换版本与内存编辑器不兼容。请关闭游戏后重新导入。</string>
+    <string name="memory_editor_reconversion_required">此 MIDlet 的已安装转换版本与内存编辑器不兼容。请先关闭游戏，再使用 JL-Mod Plus 重新转换或重新安装。</string>
     <string name="memory_editor_refine_scan">缩小范围</string>
     <string name="memory_list_add">书签</string>
     <string name="memory_list_empty">列表为空</string>

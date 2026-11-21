@@ -171,22 +171,16 @@ public abstract class Canvas extends Displayable {
 	protected int maxHeight;
 	/** Session density only decreases on resize or allocation failure; restart resets it. */
 	private volatile int internalResolutionScale = 1;
-	/** 最近一次生效的内部分辨率倍率；游戏自建可变图片按它分配，避免 1× 缓冲被放大后发虚 */
-	private static volatile int lastInternalResolutionScale = 1;
+	/** 0 until a canvas resolves its scale; 1 is a valid effective scale. */
+	private static volatile int lastInternalResolutionScale;
 
-	/**
-	 * 供 Image.createImage 使用：可变图片也应跟随内部分辨率。
-	 * 画布尚未建立时（游戏在类静态初始化里就建图）退回配置值，而不是固定 1×。
-	 */
+	/** Mutable images may be created in guest static initializers before any Canvas exists. */
 	static int mutableImageScale(int width, int height) {
 		int scale = lastInternalResolutionScale;
-		if (scale <= 1) {
-			try {
-				int requested = settings == null ? 0 : settings.internalResolutionScale;
-				scale = requested > 0 ? requested : 2;
-			} catch (Throwable t) {
-				scale = 1;
-			}
+		if (scale == 0) {
+			ProfileModel profile = settings;
+			int requested = profile == null ? 1 : profile.internalResolutionScale;
+			scale = requested > 0 ? requested : 2;
 		}
 		scale = Math.max(1, Math.min(InternalResolution.MAX_SCALE, scale));
 		while (scale > 1 && !InternalResolution.fitsBitmap(width, height, scale)) {
@@ -359,6 +353,7 @@ public abstract class Canvas extends Displayable {
 	public static void setSettings(ProfileModel settings, java.io.File shaderDirectory) {
 		Canvas.shaderDirectory = shaderDirectory;
 		Canvas.settings = settings;
+		lastInternalResolutionScale = 0;
 		Graphics.configureBitmapUpscaling(settings.bitmapUpscalingMode);
 		io.github.h3nb.jlmodplus.micro3d.TextureImpl.configureEnhancement(settings.bitmapUpscalingMode);
 		fpsLimit = settings.fpsLimit;
@@ -1206,6 +1201,7 @@ public abstract class Canvas extends Displayable {
 				// All allocations precede the GameCanvas rebind. On failure
 				// the previous published and paint buffers remain available.
 				internalResolutionScale = scale;
+				int previousMutableScale = lastInternalResolutionScale;
 				lastInternalResolutionScale = scale;
 				try {
 					onDisplayTargetResized();
@@ -1213,6 +1209,7 @@ public abstract class Canvas extends Displayable {
 					offscreen = nextPaint;
 				} catch (OutOfMemoryError error) {
 					internalResolutionScale = previousScale;
+					lastInternalResolutionScale = previousMutableScale;
 					throw error;
 				}
 			});
