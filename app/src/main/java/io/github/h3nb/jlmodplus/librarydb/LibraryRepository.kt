@@ -304,6 +304,10 @@ class LibraryRepository(
         withActiveDatabase(expected) { dao -> dao.reorderCollections(orderedIds) }
     }
 
+    suspend fun deleteCollections(expected: LibraryGenerationToken, ids: List<Long>) {
+        withActiveDatabase(expected) { dao -> dao.deleteCollections(ids) }
+    }
+
     suspend fun setCollectionMembership(
         expected: LibraryGenerationToken,
         collectionId: Long,
