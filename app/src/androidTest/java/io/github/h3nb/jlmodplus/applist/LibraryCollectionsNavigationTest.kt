@@ -106,6 +106,37 @@ class LibraryCollectionsNavigationTest {
     }
 
     @Test
+    fun searchInCollectionOnlyShowsItsMembersAndRestoresBrowsing() {
+        val host = RecordingCollectionsHost()
+        val outside = LibraryAppUiItem(25, "Outside Demo", "Other Vendor", "1.0", null, true)
+        composeRule.setContent {
+            DeviceConfigurationOverride(
+                DeviceConfigurationOverride.WindowSize(DpSize(360.dp, 640.dp)),
+            ) {
+                JLModPlusTheme {
+                    LibraryScreen(
+                        state = sampleLibraryState().copy(apps = listOf(outside)),
+                        actions = host,
+                    )
+                }
+            }
+        }
+
+        openCollectionsManagement()
+        openCollection()
+        composeRule.onNodeWithContentDescription(uiString(R.string.library_search_placeholder))
+            .performClick()
+        composeRule.onNode(hasSetTextAction()).performTextInput("Demo")
+        composeRule.waitUntil(5_000) {
+            composeRule.onAllNodesWithText(MEMBER_TITLE).fetchSemanticsNodes().isNotEmpty()
+        }
+        composeRule.onAllNodesWithText("Outside Demo").assertCountEquals(0)
+        composeRule.onAllNodesWithText(SAMPLE_MEMBER_2.title).assertCountEquals(0)
+        composeRule.onNodeWithContentDescription(uiString(R.string.action_back)).performClick()
+        composeRule.onNodeWithText(SAMPLE_MEMBER_2.title).assertIsDisplayed()
+    }
+
+    @Test
     fun selectedCollectionRestoresAndBackReturnsToOverview() {
         val host = RecordingCollectionsHost()
         val restorationTester = StateRestorationTester(composeRule)

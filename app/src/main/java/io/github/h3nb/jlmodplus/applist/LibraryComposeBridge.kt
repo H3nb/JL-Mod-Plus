@@ -105,11 +105,6 @@ import androidx.compose.material3.ExperimentalMaterial3Api
 import androidx.compose.material3.FilterChip
 import androidx.compose.material3.FloatingActionButton
 import androidx.compose.material3.ExtendedFloatingActionButton
-import androidx.compose.material3.rememberSearchBarState
-import androidx.compose.material3.SearchBarDefaults
-import androidx.compose.material3.ExpandedFullScreenSearchBar
-import androidx.compose.foundation.text.input.rememberTextFieldState
-import androidx.compose.foundation.text.input.setTextAndPlaceCursorAtEnd
 import androidx.compose.material3.Icon
 import androidx.compose.material3.IconButton
 import androidx.compose.material3.ListItem
@@ -819,9 +814,11 @@ fun LibraryScreen(
     val density = LocalDensity.current
     val layoutDirection = LocalLayoutDirection.current
     val collectionsHost = actions as? LibraryCollectionsHost
-    LaunchedEffect(searchOpen, state.libraryScope, state.databaseControlsReady,
+    LaunchedEffect(searchOpen, destination, state.libraryScope, state.databaseControlsReady,
         state.projectionRevision) {
-        if (searchOpen && state.databaseControlsReady) collectionsHost?.onPrepareSearchApps()
+        if (searchOpen && destination == LibraryDestination.Apps && state.databaseControlsReady) {
+            collectionsHost?.onPrepareSearchApps()
+        }
     }
     val collectionDialogState = collectionsHost?.collectionsStore()?.state?.collectAsState()?.value
     val collectionDialogVisible = collectionDialogState?.addTarget != null ||
@@ -1438,7 +1435,8 @@ fun LibraryScreen(
             val travelPx = with(density) { PAGE_TRAVEL_DP.dp.roundToPx() }
             AnimatedContent(
                 targetState = destination,
-                modifier = Modifier.fillMaxSize(),
+                modifier = Modifier.fillMaxSize()
+                    .then(if (searchOpen) Modifier.clearAndSetSemantics { } else Modifier),
                 transitionSpec = {
                     val direction = if (targetState == LibraryDestination.Apps) -1 else 1
                     pageEnter(direction, travelPx) togetherWith pageExit(direction, travelPx)
@@ -1555,6 +1553,7 @@ fun LibraryScreen(
                                 onSelectionStateChanged = { next -> selectionState = next },
                                 onNavigationVisibilityChanged = {},
                                 active = destination == LibraryDestination.Collections,
+                                onOpenSearch = { searchOpen = true },
                             )
                         } else {
                             LibraryCollectionsDestination(padding)
@@ -1583,22 +1582,43 @@ fun LibraryScreen(
             }
         }
 
-        if (searchOpen) {
+        val searchCollectionId = navigationState.selectedCollectionId.takeIf {
+            destination == LibraryDestination.Collections && selectedCollectionMatchesLibrary &&
+                !navigationState.collectionManageApps
+        }
+        val searchMembers = collectionDialogState?.members?.takeIf {
+            it.collectionId == searchCollectionId
+        }
+        AnimatedVisibility(
+            visible = searchOpen,
+            modifier = Modifier.fillMaxSize().zIndex(2f),
+            enter = fadeIn(tween(200)) + slideInVertically(
+                initialOffsetY = { -it / 20 }, animationSpec = tween(220),
+            ),
+            exit = fadeOut(tween(160)) + slideOutVertically(
+                targetOffsetY = { -it / 20 }, animationSpec = tween(180),
+            ),
+        ) {
             LibrarySearchOverlay(
                 state = state,
-                apps = collectionDialogState?.allApps ?: state.apps,
-                appsPrepared = collectionDialogState?.allAppsPrepared ?: !state.loading,
+                apps = if (searchCollectionId != null) searchMembers?.members.orEmpty()
+                    else collectionDialogState?.allApps ?: state.apps,
+                appsPrepared = if (searchCollectionId != null) searchMembers != null
+                    else collectionDialogState?.allAppsPrepared ?: !state.loading,
+                scopeName = searchCollectionId?.let { id ->
+                    collectionDialogState?.collections?.firstOrNull { it.id == id }?.name
+                },
                 onDismiss = { searchOpen = false },
                 onOpenApp = actions::onOpenApp,
                 onOpenActions = { app ->
                     appActions = app
-                    appActionsCollectionId = null
+                    appActionsCollectionId = searchCollectionId
                 },
                 onFavorite = actions::onFavorite,
                 resolveUiId = actions::resolveAppUiId,
                 controllerEvents = controllerEvents,
                 actionsBlocked = libraryOverlayVisible || updatePrompt != null,
-                modifier = Modifier.fillMaxSize().zIndex(2f),
+                modifier = Modifier.fillMaxSize(),
             )
         }
 
@@ -2042,7 +2062,6 @@ internal class LibraryChromeScrollHysteresis(
     }
 }
 
-@OptIn(ExperimentalMaterial3Api::class, ExperimentalLayoutApi::class)
 @Composable
 internal fun LibrarySearchOverlay(
     state: LibraryUiState,
@@ -2056,28 +2075,22 @@ internal fun LibrarySearchOverlay(
     controllerEvents: Flow<LibraryControllerEvent>? = null,
     actionsBlocked: Boolean = false,
     modifier: Modifier = Modifier,
+    scopeName: String? = null,
 ) {
-    val textField = androidx.compose.runtime.key(state.libraryScope) { rememberTextFieldState() }
-    val query = textField.text.toString()
-    val searchState = rememberSearchBarState()
+    var query by rememberSaveable(state.libraryScope, scopeName) { mutableStateOf("") }
     val inputFocus = remember { FocusRequester() }
     val closeFocus = remember { FocusRequester() }
     val keyboard = LocalSoftwareKeyboardController.current
-    val transitionScope = rememberCoroutineScope()
     val imeVisible = WindowInsets.isImeVisible
     var fieldFocused by remember { mutableStateOf(false) }
     var imeWasVisible by remember { mutableStateOf(false) }
 
     fun closeSearch() {
-        transitionScope.launch {
-            keyboard?.hide()
-            closeFocus.requestFocus()
-            searchState.animateToCollapsed()
-            onDismiss()
-        }
+        keyboard?.hide()
+        closeFocus.requestFocus()
+        onDismiss()
     }
     LaunchedEffect(Unit) {
-        searchState.animateToExpanded()
         withFrameNanos { }
         inputFocus.requestFocus()
         keyboard?.show()
@@ -2181,19 +2194,38 @@ internal fun LibrarySearchOverlay(
         }
     }
 
-    val inputField: @Composable () -> Unit = {
-        SearchBarDefaults.InputField(
-            textFieldState = textField,
-            searchBarState = searchState,
-            onSearch = {
-                keyboard?.hide()
-                closeFocus.requestFocus()
-            },
+
+    BackHandler {
+        if (imeVisible || fieldFocused) {
+            keyboard?.hide()
+            closeFocus.requestFocus()
+        } else {
+            closeSearch()
+        }
+    }
+    val hint = if (scopeName == null) {
+        stringResource(R.string.library_search_placeholder)
+    } else {
+        stringResource(R.string.library_search_in_collection, scopeName)
+    }
+    Surface(
+        modifier = modifier.fillMaxSize(),
+        color = MaterialTheme.colorScheme.background,
+    ) {
+        Column(
             modifier = Modifier
-                .focusRequester(inputFocus)
-                .onFocusChanged { fieldFocused = it.hasFocus },
-            placeholder = { Text(stringResource(R.string.library_search_placeholder)) },
-            leadingIcon = {
+                .fillMaxSize()
+                .windowInsetsPadding(WindowInsets.safeDrawing.only(WindowInsetsSides.Top))
+                .imePadding(),
+        ) {
+            Row(
+                modifier = Modifier
+                    .fillMaxWidth()
+                    .windowInsetsPadding(WindowInsets.safeDrawing.only(WindowInsetsSides.Horizontal))
+                    .padding(horizontal = 16.dp, vertical = 8.dp),
+                verticalAlignment = Alignment.CenterVertically,
+                horizontalArrangement = Arrangement.spacedBy(4.dp),
+            ) {
                 IconButton(
                     onClick = ::closeSearch,
                     modifier = Modifier.focusRequester(closeFocus),
@@ -2203,29 +2235,16 @@ internal fun LibrarySearchOverlay(
                         contentDescription = stringResource(R.string.action_back),
                     )
                 }
-            },
-            trailingIcon = if (query.isNotEmpty()) {{
-                IconButton(onClick = { textField.setTextAndPlaceCursorAtEnd("") }) {
-                    Icon(
-                        painter = painterResource(R.drawable.ic_close),
-                        contentDescription = stringResource(R.string.library_search_clear),
-                    )
-                }
-            }} else null,
-        )
-    }
-    ExpandedFullScreenSearchBar(
-        state = searchState,
-        inputField = inputField,
-        modifier = modifier,
-        properties = DialogProperties(dismissOnBackPress = false, dismissOnClickOutside = false),
-    ) {
-        BackHandler {
-            if (imeVisible || fieldFocused) {
-                keyboard?.hide()
-                closeFocus.requestFocus()
-            } else closeSearch()
-        }
+                LibrarySearchField(
+                    query = query,
+                    onQueryChange = { query = it },
+                    modifier = Modifier.weight(1f).focusRequester(inputFocus),
+                    onFocusChanged = { fieldFocused = it },
+                    onDismissInput = { closeFocus.requestFocus() },
+                    placeholder = hint,
+                )
+            }
+            Box(modifier = Modifier.fillMaxSize()) {
         when {
             query.isBlank() -> Box(
                 modifier = Modifier.fillMaxSize().padding(24.dp),
@@ -2275,6 +2294,8 @@ internal fun LibrarySearchOverlay(
                         showDescription = false,
                     )
                 }
+            }
+        }
             }
         }
     }

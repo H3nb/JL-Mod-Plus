@@ -60,6 +60,7 @@ internal fun LibrarySearchField(
     enabled: Boolean = true,
     onFocusChanged: (Boolean) -> Unit = {},
     onDismissInput: () -> Unit,
+    placeholder: String? = null,
 ) {
     val keyboard = LocalSoftwareKeyboardController.current
     TextField(
@@ -112,7 +113,7 @@ internal fun LibrarySearchField(
         ),
         placeholder = {
             Text(
-                text = stringResource(R.string.library_search_placeholder),
+                text = placeholder ?: stringResource(R.string.library_search_placeholder),
                 maxLines = 1,
                 overflow = TextOverflow.Ellipsis,
             )

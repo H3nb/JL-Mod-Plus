@@ -123,6 +123,7 @@ internal fun LibraryCollectionBrowser(
     showBackButton: Boolean = true,
     handleSystemBack: Boolean = true,
     interactionActive: Boolean = true,
+    onOpenSearch: () -> Unit = {},
 ) {
     val currentInteractionActive by rememberUpdatedState(interactionActive)
     val currentOnNavigationVisibilityChanged by rememberUpdatedState(onNavigationVisibilityChanged)
@@ -203,30 +204,11 @@ internal fun LibraryCollectionBrowser(
     }
 
     var query by viewportState.queryState
-    var searchFocused by remember { mutableStateOf(false) }
-    val searchDismissFocus = remember { FocusRequester() }
-    val searchKeyboard = LocalSoftwareKeyboardController.current
-    val searchImeVisible = WindowInsets.ime.getBottom(LocalDensity.current) > 0
-    var searchImeWasVisible by remember { mutableStateOf(false) }
-    LaunchedEffect(interactionActive, searchFocused, searchImeVisible) {
-        when {
-            !interactionActive || !searchFocused -> searchImeWasVisible = false
-            searchImeVisible -> searchImeWasVisible = true
-            searchImeWasVisible -> {
-                searchDismissFocus.requestFocus()
-                searchImeWasVisible = false
-            }
-        }
-    }
-    BackHandler(enabled = interactionActive && searchFocused) {
-        searchKeyboard?.hide()
-        searchDismissFocus.requestFocus()
-    }
+    LaunchedEffect(collection.id) { query = "" }
     var sortVisible by remember { mutableStateOf(false) }
     LaunchedEffect(interactionActive) {
         if (!interactionActive) {
             sortVisible = false
-            searchFocused = false
         }
     }
     val openApp: (Int) -> Unit = { if (currentInteractionActive) onOpenApp(it) }
@@ -255,27 +237,14 @@ internal fun LibraryCollectionBrowser(
         viewport = viewportState,
         layout = libraryState.layout,
         headerHeightPx = headerHeightPx,
-        enabled = interactionActive && !searchFocused,
+        enabled = interactionActive,
         onVisibilityChanged = publishNavigationVisibility,
     )
 
-    val searchScope = rememberCoroutineScope()
-    fun revealSearchResults() {
-        viewportState.headerOffsetPx.floatValue = 0f
-        viewportState.chromeVisible = true
-        searchScope.launch {
-            if (libraryState.layout == LibraryLayout.List) listState.scrollToItem(0)
-            else gridState.scrollToItem(0)
-        }
-    }
-    LaunchedEffect(searchFocused) {
-        if (searchFocused) revealSearchResults()
-    }
     val renderHeader: @Composable (Modifier, Boolean) -> Unit = { modifier, interactive ->
         LibraryCollectionHeader(
             modifier = modifier,
             title = collection.name,
-            query = query,
             headerOffsetPx = headerOffsetPx,
             sortVariant = libraryState.sortVariant,
             sortVisible = interactionActive && sortVisible,
@@ -303,14 +272,7 @@ internal fun LibraryCollectionBrowser(
                     ),
                 )
             },
-            onQueryChange = {
-                if (currentInteractionActive) {
-                    query = it
-                    revealSearchResults()
-                }
-            },
-            onSearchFocusChanged = { if (interactive) searchFocused = it },
-            dismissFocusRequester = searchDismissFocus,
+            onOpenSearch = { if (currentInteractionActive) onOpenSearch() },
             onSortVisibilityChanged = { sortVisible = currentInteractionActive && it },
             onSort = { if (currentInteractionActive) onSort(it) },
             onManageApps = { setManageApps(true) },
@@ -469,7 +431,6 @@ private fun LibraryCollectionEmptyState(query: String) {
 private fun LibraryCollectionHeader(
     modifier: Modifier = Modifier,
     title: String,
-    query: String,
     headerOffsetPx: MutableFloatState,
     sortVariant: Int,
     sortVisible: Boolean,
@@ -479,9 +440,7 @@ private fun LibraryCollectionHeader(
     onExitSelection: () -> Unit,
     onSelectAll: () -> Unit,
     onUnselectAll: () -> Unit,
-    onQueryChange: (String) -> Unit,
-    onSearchFocusChanged: (Boolean) -> Unit = {},
-    dismissFocusRequester: FocusRequester,
+    onOpenSearch: () -> Unit,
     onSortVisibilityChanged: (Boolean) -> Unit,
     onSort: (Int) -> Unit,
     onManageApps: () -> Unit,
@@ -569,17 +528,13 @@ private fun LibraryCollectionHeader(
                     Text(toggleLabel)
                 }
             } else {
-                TextButton(onClick = onManageApps, enabled = titleActionsEnabled) {
+                IconButton(onClick = onOpenSearch, enabled = titleActionsEnabled) {
                     Icon(
-                        painter = painterResource(R.drawable.ic_add_to_collection),
-                        contentDescription = null,
-                        modifier = Modifier.size(18.dp),
+                        painter = painterResource(R.drawable.ic_search),
+                        contentDescription = stringResource(R.string.library_search_placeholder),
                     )
-                    Spacer(Modifier.width(4.dp))
-                    Text(stringResource(R.string.library_collection_add_apps))
                 }
-            }
-        }
+            }        }
         Row(
             modifier = Modifier
                 .fillMaxWidth()
@@ -589,20 +544,18 @@ private fun LibraryCollectionHeader(
             verticalAlignment = Alignment.CenterVertically,
             horizontalArrangement = Arrangement.spacedBy(8.dp),
         ) {
-            LibrarySearchField(
-                query = query,
-                onQueryChange = onQueryChange,
-                modifier = Modifier.weight(1f),
-                enabled = searchActionsEnabled,
-                onFocusChanged = onSearchFocusChanged,
-                onDismissInput = { dismissFocusRequester.requestFocus() },
-            )
+            TextButton(onClick = onManageApps, enabled = searchActionsEnabled) {
+                Icon(
+                    painter = painterResource(R.drawable.ic_add_to_collection),
+                    contentDescription = null,
+                    modifier = Modifier.size(18.dp),
+                )
+                Spacer(Modifier.width(4.dp))
+                Text(stringResource(R.string.library_collection_add_apps))
+            }
             Box {
                 LibrarySortButton(
                     onClick = { onSortVisibilityChanged(true) },
-                    modifier = if (searchActionsEnabled) {
-                        Modifier.focusRequester(dismissFocusRequester).focusProperties { canFocus = true }
-                    } else Modifier,
                     enabled = searchActionsEnabled,
                 )
                 LibrarySortMenu(

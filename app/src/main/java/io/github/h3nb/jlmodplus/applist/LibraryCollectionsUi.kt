@@ -267,6 +267,7 @@ internal fun LibraryCollectionsDestination(
     onSelectionStateChanged: (LibrarySelectionState) -> Unit = {},
     onNavigationVisibilityChanged: (Boolean) -> Unit = {},
     active: Boolean = true,
+    onOpenSearch: () -> Unit = {},
 ) {
     val state by host.collectionsStore().state.collectAsState()
     if (!state.ready) {
@@ -494,6 +495,7 @@ internal fun LibraryCollectionsDestination(
                                 showBackButton = showDetailBack,
                                 handleSystemBack = false,
                                 interactionActive = active,
+                                onOpenSearch = onOpenSearch,
                             )
                         }
                     }
