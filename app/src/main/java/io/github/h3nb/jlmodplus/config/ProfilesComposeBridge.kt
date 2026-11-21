@@ -375,9 +375,8 @@ internal fun ProfileRow(
     onEdit: () -> Unit,
     onRename: () -> Unit,
     onDelete: () -> Unit,
-    initiallyExpanded: Boolean = false,
 ) {
-    var actionsExpanded by remember(initiallyExpanded) { mutableStateOf(initiallyExpanded) }
+    var actionsExpanded by remember { mutableStateOf(false) }
     val editable = !profile.isKeyboardOnly && !profile.isUnavailable && profile.canEdit
     val orientationOptions = stringArrayResource(R.array.PREF_ORIENTATION_ENTRIES)
     val summary = when {
