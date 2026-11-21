@@ -2,13 +2,13 @@
 <resources>
     <color name="ic_launcher_background">#06143A</color>
 
-    <!--light theme colors-->
+    <!-- AppCompat/Android View fallback roles; keep in sync with JLModPlusTheme. -->
     <color name="primary">#212121</color>
     <color name="primary_dark">#1c1c1c</color>
-    <color name="accent">#34536B</color>
-    <color name="background">#fafafa</color>
-    <color name="text_primary">#000000</color>
-    <color name="text_secondary">#353535</color>
+    <color name="accent">#285BC2</color>
+    <color name="background">#F7F9FA</color>
+    <color name="text_primary">#1B252B</color>
+    <color name="text_secondary">#51616B</color>
     <color name="library_default_icon">#8093B8</color>
     <color name="library_default_icon_background">#EEF1F5</color>
     <color name="btn_bg_normal">#2e2e2e</color>
