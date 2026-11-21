@@ -511,6 +511,10 @@ private fun LibraryCollectionHeader(
     onSelectAll: () -> Unit,
     onUnselectAll: () -> Unit,
     onOpenSearch: () -> Unit,
+    searchActive: Boolean = false,
+    searchQuery: String = "",
+    onSearchQueryChange: (String) -> Unit = {},
+    onCloseSearch: () -> Unit = {},
     onSortVisibilityChanged: (Boolean) -> Unit,
     onSort: (Int) -> Unit,
     onManageApps: () -> Unit,
@@ -540,70 +544,99 @@ private fun LibraryCollectionHeader(
             .windowInsetsPadding(WindowInsets.safeDrawing.only(WindowInsetsSides.Top))
             .padding(horizontal = 16.dp, vertical = 8.dp),
     ) {
-        Row(
-            modifier = Modifier
-                .fillMaxWidth()
+        AnimatedContent(
+            targetState = searchActive && !selectionMode,
+            modifier = Modifier.fillMaxWidth()
                 .then(titleGate.positionModifier)
-                .then(if (titleActionsEnabled) Modifier else Modifier.clearAndSetSemantics { }),
-            verticalAlignment = Alignment.CenterVertically,
-        ) {
-            if (selectionMode || showBackButton) {
-                IconButton(
-                    onClick = if (selectionMode) onExitSelection else onBack,
+                .then(if (titleActionsEnabled) Modifier else Modifier.clearAndSetSemantics {}),
+            transitionSpec = {
+                (fadeIn(tween(180)) + slideInHorizontally(
+                    animationSpec = tween(220), initialOffsetX = { it / 12 },
+                )) togetherWith (fadeOut(tween(120)) + slideOutHorizontally(
+                    animationSpec = tween(180), targetOffsetX = { -it / 12 },
+                ))
+            },
+            label = "Collection search header",
+        ) { searching ->
+            if (searching) {
+                val focusManager = androidx.compose.ui.platform.LocalFocusManager.current
+                LibrarySearchField(
+                    query = searchQuery,
+                    onQueryChange = onSearchQueryChange,
+                    modifier = Modifier.fillMaxWidth(),
                     enabled = titleActionsEnabled,
-                ) {
-                    Icon(
-                        painter = painterResource(R.drawable.ic_arrow_back),
-                        contentDescription = stringResource(R.string.library_back),
+                    onDismissInput = { focusManager.clearFocus() },
+                    placeholder = stringResource(R.string.library_search_in_collection, title),
+                    onClose = onCloseSearch,
+                    autoFocus = interactive,
+                )
+            } else {
+            Row(
+                modifier = Modifier
+                    .fillMaxWidth()
+                    .heightIn(min = 56.dp),
+                verticalAlignment = Alignment.CenterVertically,
+            ) {
+                if (selectionMode || showBackButton) {
+                    IconButton(
+                        onClick = if (selectionMode) onExitSelection else onBack,
+                        enabled = titleActionsEnabled,
+                    ) {
+                        Icon(
+                            painter = painterResource(R.drawable.ic_arrow_back),
+                            contentDescription = stringResource(R.string.library_back),
+                        )
+                    }
+                }
+                Text(
+                    text = if (selectionMode) {
+                        pluralStringResource(
+                            R.plurals.library_selection_count,
+                            selectionState.selectedCount,
+                            selectionState.selectedCount,
+                        )
+                    } else {
+                        title
+                    },
+                    modifier = Modifier.weight(1f),
+                    style = MaterialTheme.typography.headlineSmall,
+                    fontWeight = FontWeight.SemiBold,
+                    maxLines = 1,
+                    overflow = TextOverflow.Ellipsis,
+                )
+                if (selectionMode) {
+                    val toggleLabel = stringResource(
+                        if (allVisibleSelected) {
+                            R.string.library_selection_unselect_all
+                        } else {
+                            R.string.library_selection_select_all
+                        },
                     )
+                    TextButton(
+                        onClick = if (allVisibleSelected) onUnselectAll else onSelectAll,
+                        enabled = visibleAppIds.isNotEmpty() && titleActionsEnabled,
+                    ) {
+                        Icon(
+                            painter = painterResource(
+                                if (allVisibleSelected) R.drawable.ic_deselect
+                                else R.drawable.ic_select_all,
+                            ),
+                            contentDescription = null,
+                            modifier = Modifier.size(18.dp),
+                        )
+                        Spacer(Modifier.width(4.dp))
+                        Text(toggleLabel)
+                    }
+                } else {
+                    IconButton(onClick = onOpenSearch, enabled = titleActionsEnabled) {
+                        Icon(
+                            painter = painterResource(R.drawable.ic_search),
+                            contentDescription = stringResource(R.string.library_search_placeholder),
+                        )
+                    }
                 }
             }
-            Text(
-                text = if (selectionMode) {
-                    pluralStringResource(
-                        R.plurals.library_selection_count,
-                        selectionState.selectedCount,
-                        selectionState.selectedCount,
-                    )
-                } else {
-                    title
-                },
-                modifier = Modifier.weight(1f),
-                style = MaterialTheme.typography.headlineSmall,
-                fontWeight = FontWeight.SemiBold,
-                maxLines = 1,
-                overflow = TextOverflow.Ellipsis,
-            )
-            if (selectionMode) {
-                val toggleLabel = stringResource(
-                    if (allVisibleSelected) {
-                        R.string.library_selection_unselect_all
-                    } else {
-                        R.string.library_selection_select_all
-                    },
-                )
-                TextButton(
-                    onClick = if (allVisibleSelected) onUnselectAll else onSelectAll,
-                    enabled = visibleAppIds.isNotEmpty() && titleActionsEnabled,
-                ) {
-                    Icon(
-                        painter = painterResource(
-                            if (allVisibleSelected) R.drawable.ic_deselect
-                            else R.drawable.ic_select_all,
-                        ),
-                        contentDescription = null,
-                        modifier = Modifier.size(18.dp),
-                    )
-                    Spacer(Modifier.width(4.dp))
-                    Text(toggleLabel)
-                }
-            } else {
-                IconButton(onClick = onOpenSearch, enabled = titleActionsEnabled) {
-                    Icon(
-                        painter = painterResource(R.drawable.ic_search),
-                        contentDescription = stringResource(R.string.library_search_placeholder),
-                    )
-                }
+
             }
         }
         Row(
