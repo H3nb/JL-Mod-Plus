@@ -324,6 +324,7 @@
     <string name="config_gamepad_diagnosis_no_controller">(no connected controller)</string>
     <string name="config_gamepad_diagnosis_samples_not_sent">Input samples are intentionally not sent to the MIDlet.</string>
     <string name="config_destination_system">System</string>
+    <string name="config_screen_behavior">Screen behavior</string>
     <string name="config_screen_size">Screen size</string>
     <string name="config_select_screen_size">Select screen size</string>
     <string name="config_current_screen_size">Current size: %1$s</string>
