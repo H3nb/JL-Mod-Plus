@@ -208,10 +208,18 @@ class LibraryCollectionsUiStore {
         )
     }
 
-    fun updateTargetMembership(appId: Int, collectionId: Long, included: Boolean) {
+    fun currentTargetRequestId(appId: Int): Long? =
+        mutableState.value.addTarget?.takeIf { it.appId == appId }?.requestId
+
+    fun updateTargetMembership(
+        appId: Int,
+        requestId: Long?,
+        collectionId: Long,
+        included: Boolean,
+    ) {
         val current = mutableState.value
         val target = current.addTarget ?: return
-        if (target.appId != appId) return
+        if (target.appId != appId || target.requestId != requestId) return
         val existing = target.memberCollectionIds ?: return
         mutableState.value = current.copy(
             addTarget = target.copy(

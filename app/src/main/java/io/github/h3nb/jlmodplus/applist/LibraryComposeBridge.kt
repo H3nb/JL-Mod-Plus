@@ -5103,8 +5103,8 @@ internal fun AppActionsDialog(
         }
         if (onAddToCollection != null) {
             add(DialogActionEntry(
-                label = R.string.library_collection_add_app,
-                icon = R.drawable.ic_add_to_collection,
+                label = R.string.library_destination_collections,
+                icon = R.drawable.ic_collections,
                 group = R.string.library_actions_group_organize,
                 action = onAddToCollection,
             ))

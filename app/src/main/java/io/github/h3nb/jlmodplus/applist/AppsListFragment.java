@@ -635,6 +635,33 @@ public class AppsListFragment extends Fragment {
             }
 
             @Override
+            public void onCreateCollectionForApp(int appId, @NonNull String name) {
+                LibraryAppRow app = findRow(appId);
+                LibraryGenerationToken generation = libraryViewModel.readyGeneration();
+                File workdir = activeWorkdir;
+                if (app == null || generation == null || workdir == null ||
+                        activeGeneration != generation.getGeneration() ||
+                        !workdir.equals(generation.getEmulatorDir())) return;
+                libraryViewModel.createCollection(name, (collectionId, error) -> {
+                    if (error != null) {
+                        showError(error);
+                        return;
+                    }
+                    if (collectionId == null || !isAdded() ||
+                            !libraryViewModel.isReadyGeneration(generation.getGeneration(), workdir) ||
+                            activeGeneration != generation.getGeneration() ||
+                            activeWorkdir == null || !activeWorkdir.equals(workdir)) return;
+                    LibraryAppRow current = findRow(appId);
+                    if (current == null || current.getId() != app.getId() ||
+                            !current.getStorageKey().equals(app.getStorageKey())) return;
+                    libraryViewModel.setCollectionMembership(
+                            collectionId, app.getId(), true, (ignored, membershipError) -> {
+                                if (membershipError != null) showError(membershipError);
+                            });
+                });
+            }
+
+            @Override
             public void onRenameCollection(long collectionId, @NonNull String name) {
                 libraryViewModel.renameCollection(collectionId, name, (ignored, error) -> {
                     if (error != null) showError(error);
@@ -678,7 +705,28 @@ public class AppsListFragment extends Fragment {
             @Override
             public void onRequestAddToCollection(int appId) {
                 LibraryAppRow app = findRow(appId);
-                if (app != null) collectionsUiStore.showAddTarget(appId, app.getTitle());
+                LibraryGenerationToken generation = libraryViewModel.readyGeneration();
+                File workdir = activeWorkdir;
+                if (app == null || generation == null || workdir == null ||
+                        activeGeneration != generation.getGeneration() ||
+                        !workdir.equals(generation.getEmulatorDir())) return;
+                long requestId = collectionsUiStore.showAddTarget(appId, app.getTitle());
+                libraryViewModel.getAppCollectionIds(app.getId(), (ids, error) -> {
+                    if (!isAdded() || activeGeneration != generation.getGeneration() ||
+                            activeWorkdir == null || !activeWorkdir.equals(workdir) ||
+                            !libraryViewModel.isReadyGeneration(generation.getGeneration(), workdir)) {
+                        return;
+                    }
+                    LibraryAppRow current = findRow(appId);
+                    if (current == null || current.getId() != app.getId() ||
+                            !current.getStorageKey().equals(app.getStorageKey())) return;
+                    if (error != null || ids == null) {
+                        collectionsUiStore.dismissAddTarget();
+                        if (error != null) showError(error);
+                        return;
+                    }
+                    collectionsUiStore.publishTargetMemberships(appId, requestId, ids);
+                });
             }
 
             @Override
@@ -725,11 +773,31 @@ public class AppsListFragment extends Fragment {
                     boolean included,
                     @NonNull CollectionMembershipResultCallback callback) {
                 LibraryAppRow app = findRow(appId);
-                if (app == null) {
+                LibraryGenerationToken generation = libraryViewModel.readyGeneration();
+                File workdir = activeWorkdir;
+                if (app == null || generation == null || workdir == null ||
+                        activeGeneration != generation.getGeneration() ||
+                        !workdir.equals(generation.getEmulatorDir())) {
                     callback.onResult(false);
                     return;
                 }
-                onSetCollectionMembershipByDatabaseId(app.getId(), collectionId, included, callback);
+                Long requestId = collectionsUiStore.currentTargetRequestId(appId);
+                libraryViewModel.setCollectionMembership(
+                        collectionId, app.getId(), included, (ignored, error) -> {
+                            if (error != null) showError(error);
+                            if (error == null && isAdded() &&
+                                    activeGeneration == generation.getGeneration() &&
+                                    activeWorkdir != null && activeWorkdir.equals(workdir) &&
+                                    libraryViewModel.isReadyGeneration(generation.getGeneration(), workdir)) {
+                                LibraryAppRow current = findRow(appId);
+                                if (current != null && current.getId() == app.getId() &&
+                                        current.getStorageKey().equals(app.getStorageKey())) {
+                                    collectionsUiStore.updateTargetMembership(
+                                            appId, requestId, collectionId, included);
+                                }
+                            }
+                            callback.onResult(error == null);
+                        });
             }
 
             @Override
