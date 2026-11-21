@@ -59,7 +59,7 @@ private val PreviewSettingsState = SettingsUiState(
         ),
         SettingsSwitch("pref_vibration_switch", "Vibration", null, true),
     ),
-    experimentalSwitches = listOf(
+    diagnosticSwitches = listOf(
         SettingsSwitch(
             "micro3d_using_message",
             "Mascot Capsule 3D notification",
