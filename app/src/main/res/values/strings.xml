@@ -1446,4 +1446,33 @@
     <string name="library_settings_preferences" tools:ignore="MissingTranslation">App preferences</string>
     <string name="library_settings_section_maintenance" tools:ignore="MissingTranslation">Updates and diagnostics</string>
     <string name="library_settings_section_support" tools:ignore="MissingTranslation">About and support</string>
+    <string name="library_details_title" tools:ignore="MissingTranslation">MIDlet details</string>
+    <string name="library_details_description" tools:ignore="MissingTranslation">Description</string>
+    <string name="library_details_play_stats" tools:ignore="MissingTranslation">Play statistics</string>
+    <string name="library_details_launches" tools:ignore="MissingTranslation">Launches</string>
+    <string name="library_details_total_time" tools:ignore="MissingTranslation">Total time</string>
+    <string name="library_details_last_played" tools:ignore="MissingTranslation">Last played</string>
+    <string name="library_details_library_info" tools:ignore="MissingTranslation">Library information</string>
+    <string name="library_details_added" tools:ignore="MissingTranslation">Added to Library</string>
+    <string name="library_details_collections" tools:ignore="MissingTranslation">Collections</string>
+    <string name="library_details_none" tools:ignore="MissingTranslation">None</string>
+    <string name="library_details_technical" tools:ignore="MissingTranslation">Technical information</string>
+    <string name="library_details_profile" tools:ignore="MissingTranslation">Profile</string>
+    <string name="library_details_configuration" tools:ignore="MissingTranslation">Configuration</string>
+    <string name="library_details_jar_size" tools:ignore="MissingTranslation">Retained JAR size</string>
+    <string name="library_details_entry_points" tools:ignore="MissingTranslation">MIDlet entries</string>
+    <string name="library_details_original_metadata" tools:ignore="MissingTranslation">Original metadata</string>
+    <string name="library_details_name" tools:ignore="MissingTranslation">Name</string>
+    <string name="library_details_vendor" tools:ignore="MissingTranslation">Vendor</string>
+    <string name="library_details_version" tools:ignore="MissingTranslation">Version</string>
+    <string name="library_details_version_value" tools:ignore="MissingTranslation">Version %1$s</string>
+    <string name="library_details_original_description" tools:ignore="MissingTranslation">Original description</string>
+    <string name="library_details_permissions" tools:ignore="MissingTranslation">Declared permissions</string>
+    <string name="library_details_required" tools:ignore="MissingTranslation">Required</string>
+    <string name="library_details_optional" tools:ignore="MissingTranslation">Optional</string>
+    <string name="library_details_no_permissions" tools:ignore="MissingTranslation">No permissions declared</string>
+    <string name="library_details_descriptor_attributes" tools:ignore="MissingTranslation">Descriptor attributes</string>
+    <string name="library_details_unavailable" tools:ignore="MissingTranslation">Unavailable</string>
+    <string name="library_details_action" tools:ignore="MissingTranslation">Details</string>
+    <string name="library_details_view_details" tools:ignore="MissingTranslation">View details</string>
 </resources>
