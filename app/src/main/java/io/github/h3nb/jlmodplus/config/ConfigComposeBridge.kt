@@ -1190,8 +1190,8 @@ private fun ConfigDetailPage(
             TopAppBar(
                 title = {
                     Text(stringResource(
-                        if (detail == ConfigDetail.Font) R.string.config_display_text
-                        else R.string.config_display_performance,
+                        if (detail == ConfigDetail.Font) R.string.config_font_page_title
+                        else R.string.config_performance_page_title,
                     ))
                 },
                 navigationIcon = {

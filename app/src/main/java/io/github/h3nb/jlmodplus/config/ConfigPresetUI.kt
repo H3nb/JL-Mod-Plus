@@ -80,6 +80,7 @@ internal fun PresetSummary(
     var updateConfirmation by rememberSaveable { mutableStateOf<String?>(null) }
     ConfigSection(
         title = stringResource(R.string.presets),
+        highlighted = true,
     ) {
         Column(
             modifier = Modifier
