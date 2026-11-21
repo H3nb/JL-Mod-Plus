@@ -268,6 +268,11 @@ internal fun LibraryCollectionsDestination(
     onNavigationVisibilityChanged: (Boolean) -> Unit = {},
     active: Boolean = true,
     onOpenSearch: () -> Unit = {},
+    searchActive: Boolean = false,
+    searchQuery: String = "",
+    onSearchQueryChange: (String) -> Unit = {},
+    onCloseSearch: () -> Unit = {},
+    resolveUiId: (Long) -> Int? = { null },
 ) {
     val state by host.collectionsStore().state.collectAsState()
     if (!state.ready) {
@@ -467,7 +472,10 @@ internal fun LibraryCollectionsDestination(
                                 onBack = {
                                     if (active) closeCollection()
                                 },
-                                onOpenApp = host::onOpenApp,
+                                onOpenApp = { id ->
+                                    if (searchActive) onCloseSearch()
+                                    host.onOpenApp(id)
+                                },
                                 onOpenActions = { app -> onOpenActions(app, collection.id) },
                                 selectionState = selectionState,
                                 onSelectionStateChanged = onSelectionStateChanged,
@@ -496,6 +504,11 @@ internal fun LibraryCollectionsDestination(
                                 handleSystemBack = false,
                                 interactionActive = active,
                                 onOpenSearch = onOpenSearch,
+                                searchActive = searchActive,
+                                searchQuery = searchQuery,
+                                onSearchQueryChange = onSearchQueryChange,
+                                onCloseSearch = onCloseSearch,
+                                resolveUiId = resolveUiId,
                             )
                         }
                     }
