@@ -43,6 +43,8 @@
     <string name="error">Galat</string>
     <string name="error_name">Masukkan nama.</string>
     <string name="exit">Keluar</string>
+    <string name="runtime_restart">Mulai ulang</string>
+    <string name="runtime_restart_confirmation">Mulai ulang MIDlet ini? Progres yang belum disimpan mungkin hilang.</string>
     <string name="FORCE_CLOSE_CONFIRMATION">Hentikan MIDlet ini? Perubahan yang belum disimpan mungkin hilang.</string>
     <string name="help">Bantuan</string>
     <string name="identity_filter">Tidak ada (paling cepat)</string>

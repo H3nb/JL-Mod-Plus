@@ -28,6 +28,7 @@ import io.github.h3nb.jlmodplus.ui.JLModPlusTheme
 
 private object NoOpRuntimeMenuActions : RuntimeMenuActions {
     override fun onExit() = Unit
+    override fun onRestart() = Unit
     override fun onSaveLog() = Unit
     override fun onToggleOrientationLock() = Unit
     override fun onOpenImeKeyboard() = Unit
@@ -50,6 +51,7 @@ private object NoOpRuntimeHostDialogActions : RuntimeHostDialogActions {
     override fun onMidletCancelled() = Unit
     override fun onErrorAcknowledged() = Unit
     override fun onExitConfirmed(openSettings: Boolean) = Unit
+    override fun onRestartConfirmed() = Unit
     override fun onShowControlsConfirmed(hidden: BooleanArray) = Unit
     override fun onSaveVirtualKeyboard(updateTarget: String?) = Unit
     override fun onLayoutSelected(index: Int, updateTarget: String?) = Unit

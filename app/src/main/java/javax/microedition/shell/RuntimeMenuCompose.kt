@@ -82,6 +82,7 @@ import androidx.compose.ui.semantics.semantics
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.font.FontFamily
 import androidx.compose.ui.text.input.KeyboardType
+import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.text.style.TextOverflow
 import androidx.compose.ui.unit.Constraints
 import androidx.compose.ui.unit.LayoutDirection
@@ -140,6 +141,7 @@ internal data class RuntimeMenuUiState(
 
 interface RuntimeMenuActions {
     fun onExit()
+    fun onRestart()
     fun onSaveLog()
     fun onToggleOrientationLock()
     fun onToggleFullscreen() {}
@@ -498,7 +500,8 @@ class RuntimeMenuComposeController @JvmOverloads constructor(
         val count = controllerItems().size
         if (count == 0) return
         controllerFocusIndex = runtimeMenuNextFocus(
-            controllerFocusIndex, count, menuGridColumns, hasExit = !virtualKeyboardPage, command,
+            controllerFocusIndex, count, menuGridColumns,
+            footerCount = if (virtualKeyboardPage) 0 else 2, command = command,
         )
     }
 
@@ -558,6 +561,10 @@ class RuntimeMenuComposeController @JvmOverloads constructor(
 
     fun showExitConfirmation() {
         changeControllerSurface { hostDialogState = RuntimeHostDialogState.ExitConfirmation }
+    }
+
+    fun showRestartConfirmation() {
+        changeControllerSurface { hostDialogState = RuntimeHostDialogState.RestartConfirmation }
     }
 
     fun showControls(names: Array<String>, hidden: BooleanArray) {
@@ -1019,8 +1026,8 @@ private fun RuntimeMenuDialog(
     onNavigationFocusChanged: (Boolean) -> Unit,
     onGridColumnsChanged: (Int) -> Unit,
 ) {
-    val exit = if (virtualKeyboardPage) null else entries.lastOrNull { it.label == R.string.exit }
-    val tiles = if (exit == null) entries else entries.dropLast(1)
+    val footer = if (virtualKeyboardPage) emptyList() else entries.takeLast(2)
+    val tiles = entries.dropLast(footer.size)
     AlertDialog(
         textScrollable = false,
         modifier = Modifier
@@ -1101,8 +1108,20 @@ private fun RuntimeMenuDialog(
                             modifier = Modifier.align(Alignment.BottomCenter),
                         )
                     }
-                    if (exit != null) {
-                        RuntimeExitTile(exit, focused = controllerFocusIndex == tiles.size)
+                    if (footer.isNotEmpty()) {
+                        Row(
+                            modifier = Modifier.fillMaxWidth().height(IntrinsicSize.Min),
+                            horizontalArrangement = Arrangement.spacedBy(8.dp),
+                        ) {
+                            footer.forEachIndexed { index, entry ->
+                                RuntimeActionTile(
+                                    entry = entry,
+                                    focused = controllerFocusIndex == tiles.size + index,
+                                    modifier = Modifier.weight(1f).fillMaxHeight(),
+                                    compact = true,
+                                )
+                            }
+                        }
                     }
                 }
             }
@@ -1115,33 +1134,43 @@ internal fun runtimeMenuNextFocus(
     currentIndex: Int,
     itemCount: Int,
     columns: Int,
-    hasExit: Boolean,
+    footerCount: Int,
     command: HostCommand,
 ): Int {
     if (itemCount == 0) return 0
     val index = currentIndex.coerceIn(0, itemCount - 1)
-    val tileCount = itemCount - (if (hasExit) 1 else 0)
+    val footers = footerCount.coerceIn(0, itemCount)
+    val tileCount = itemCount - footers
     val columnCount = columns.coerceAtLeast(1)
     return when (command) {
         HostCommand.PreviousTab -> (index - 1).mod(itemCount)
         HostCommand.NextTab -> (index + 1).mod(itemCount)
         HostCommand.NavigateUp -> when {
-            index >= tileCount -> (tileCount - 1).coerceAtLeast(0)
-            index >= columnCount -> index - columnCount
+            index >= tileCount && tileCount > 0 -> {
+                val lastRowStart = (tileCount - 1) / columnCount * columnCount
+                if (index == tileCount) lastRowStart else tileCount - 1
+            }
+            index >= columnCount && index < tileCount -> index - columnCount
             else -> index
         }
         HostCommand.NavigateDown -> when {
             index >= tileCount -> index
             index / columnCount < (tileCount - 1) / columnCount ->
                 minOf(index + columnCount, tileCount - 1)
-            hasExit -> itemCount - 1
+            footers > 0 -> tileCount +
+                if (footers == 1 || (index % columnCount) * 2 < columnCount) 0 else 1
             else -> index
         }
-        HostCommand.NavigateLeft ->
-            if (index < tileCount && index % columnCount != 0) index - 1 else index
-        HostCommand.NavigateRight ->
-            if (index < tileCount && (index + 1) % columnCount != 0 && index + 1 < tileCount)
-                index + 1 else index
+        HostCommand.NavigateLeft -> when {
+            index > tileCount && footers > 1 -> index - 1
+            index < tileCount && index % columnCount != 0 -> index - 1
+            else -> index
+        }
+        HostCommand.NavigateRight -> when {
+            index >= tileCount && index < itemCount - 1 -> index + 1
+            index < tileCount && (index + 1) % columnCount != 0 && index + 1 < tileCount -> index + 1
+            else -> index
+        }
         else -> index
     }
 }
@@ -1157,10 +1186,10 @@ private fun RuntimeActionTile(
     entry: RuntimeMenuEntry,
     focused: Boolean,
     modifier: Modifier = Modifier,
+    compact: Boolean = false,
 ) {
     val colors = MaterialTheme.colorScheme
     val active = entry.checked == true
-    val foreground = if (active) colors.onPrimaryContainer else colors.onSurface
     val accessibleLabel = stringResource(entry.label)
     Surface(
         modifier = modifier
@@ -1181,70 +1210,26 @@ private fun RuntimeActionTile(
         border = if (focused) BorderStroke(2.dp, colors.primary) else null,
     ) {
         Column(
-            modifier = Modifier.fillMaxWidth().heightIn(min = 80.dp).padding(10.dp),
-            verticalArrangement = Arrangement.spacedBy(8.dp),
+            modifier = Modifier.fillMaxWidth()
+                .heightIn(min = if (compact) 64.dp else 88.dp)
+                .padding(10.dp),
+            horizontalAlignment = Alignment.CenterHorizontally,
+            verticalArrangement = Arrangement.Center,
         ) {
-            Row(
-                modifier = Modifier.fillMaxWidth(),
-                horizontalArrangement = Arrangement.SpaceBetween,
-                verticalAlignment = Alignment.CenterVertically,
-            ) {
-                Icon(
-                    painter = painterResource(entry.icon),
-                    contentDescription = null,
-                    modifier = Modifier.size(22.dp),
-                    tint = if (active) colors.primary else colors.onSurfaceVariant,
-                )
-                if (active) {
-                    Text(
-                        text = "✓",
-                        color = colors.primary,
-                        style = MaterialTheme.typography.labelLarge,
-                        modifier = Modifier.clearAndSetSemantics {},
-                    )
-                }
-            }
+            Icon(
+                painter = painterResource(entry.icon),
+                contentDescription = null,
+                modifier = Modifier.size(if (compact) 20.dp else 24.dp),
+                tint = if (active) colors.primary else colors.onSurfaceVariant,
+            )
+            Spacer(Modifier.height(if (compact) 6.dp else 8.dp))
             Text(
                 text = stringResource(entry.displayLabel),
                 style = MaterialTheme.typography.labelLarge,
                 fontWeight = FontWeight.Medium,
-                color = foreground,
+                color = if (active) colors.onPrimaryContainer else colors.onSurface,
+                textAlign = TextAlign.Center,
             )
-        }
-    }
-}
-
-@Composable
-private fun RuntimeExitTile(entry: RuntimeMenuEntry, focused: Boolean) {
-    val colors = MaterialTheme.colorScheme
-    val accessibleLabel = stringResource(entry.label)
-    Row(modifier = Modifier.fillMaxWidth(), horizontalArrangement = Arrangement.End) {
-        Surface(
-            modifier = Modifier
-                .then(if (focused) Modifier.testTag("runtime-controller-focus-indicator") else Modifier)
-                .semantics { contentDescription = accessibleLabel }
-                .clickable(role = Role.Button, onClick = entry.activate),
-            shape = MaterialTheme.shapes.large,
-            color = colors.surfaceContainerHighest,
-            border = if (focused) BorderStroke(2.dp, colors.primary) else null,
-        ) {
-            Row(
-                modifier = Modifier.heightIn(min = 48.dp).padding(horizontal = 16.dp, vertical = 10.dp),
-                verticalAlignment = Alignment.CenterVertically,
-                horizontalArrangement = Arrangement.spacedBy(8.dp),
-            ) {
-                Icon(
-                    painter = painterResource(entry.icon),
-                    contentDescription = null,
-                    tint = colors.onSurfaceVariant,
-                    modifier = Modifier.size(20.dp),
-                )
-                Text(
-                    text = stringResource(entry.displayLabel),
-                    style = MaterialTheme.typography.labelLarge,
-                    fontWeight = FontWeight.Medium,
-                )
-            }
         }
     }
 }
@@ -1316,6 +1301,7 @@ internal fun runtimeMenuEntries(
             action(R.string.PREF_EMULATION_SPEED, R.drawable.ic_speed, callback = actions::onEmulationSpeed)
         }
     }
+    action(R.string.runtime_restart, R.drawable.ic_refresh, callback = actions::onRestart)
     action(R.string.exit, R.drawable.ic_exit, callback = actions::onExit)
 }
 

@@ -166,6 +166,11 @@ during `startApp()`.
   (Android 6+), with no native window blur or framebuffer sampling.
   Controller arrows follow grid rows and columns, with the same action and
   dismiss behavior as touch.
+- Restart and Exit are equal-width footer actions below the quick-action grid.
+  Tiles center their icon and text, with accent surfaces indicating active toggles.
+  Restart asks for confirmation, then uses the existing main-process runtime
+  replacement handoff to stop the old Java ME heap before relaunching the same
+  installed MIDlet; it never reuses the live heap.
 - The explicit Exit item remains the only host-menu exit path and continues to
   use `showExitConfirmation()`. A MIDlet-owned Exit command and system-level
   task removal/force-stop remain independent termination paths.

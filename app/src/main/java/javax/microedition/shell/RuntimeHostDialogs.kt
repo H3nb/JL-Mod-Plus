@@ -70,6 +70,7 @@ interface RuntimeHostDialogActions {
     fun onMidletCancelled()
     fun onErrorAcknowledged()
     fun onExitConfirmed(openSettings: Boolean)
+    fun onRestartConfirmed()
     fun onShowControlsConfirmed(hidden: BooleanArray)
     fun onSaveVirtualKeyboard(updateTarget: String?)
     fun onVirtualKeyboardEditSaved(updateTarget: String?) = Unit
@@ -83,6 +84,7 @@ internal sealed interface RuntimeHostDialogState {
     data class MidletSelection(val names: List<String>) : RuntimeHostDialogState
     data class Error(val message: String) : RuntimeHostDialogState
     data object ExitConfirmation : RuntimeHostDialogState
+    data object RestartConfirmation : RuntimeHostDialogState
     data class ShowControls(
         val names: List<String>,
         val hidden: BooleanArray,
@@ -122,6 +124,10 @@ internal fun RuntimeHostDialogs(
             },
         )
         RuntimeHostDialogState.ExitConfirmation -> ExitConfirmationDialog(
+            actions = actions,
+            onDismiss = onDismiss,
+        )
+        RuntimeHostDialogState.RestartConfirmation -> RestartConfirmationDialog(
             actions = actions,
             onDismiss = onDismiss,
         )
@@ -305,6 +311,31 @@ private fun ExitConfirmationDialog(
                 ) {
                     Text(stringResource(R.string.exit))
                 }
+            }
+        },
+    )
+}
+
+@Composable
+private fun RestartConfirmationDialog(
+    actions: RuntimeHostDialogActions,
+    onDismiss: () -> Unit,
+) {
+    AlertDialog(
+        onDismissRequest = onDismiss,
+        icon = {
+            Icon(painter = painterResource(R.drawable.ic_refresh), contentDescription = null)
+        },
+        title = { Text(stringResource(R.string.runtime_restart)) },
+        text = { Text(stringResource(R.string.runtime_restart_confirmation)) },
+        dismissButton = {
+            TextButton(onClick = onDismiss) {
+                Text(stringResource(android.R.string.cancel))
+            }
+        },
+        confirmButton = {
+            Button(onClick = { onDismiss(); actions.onRestartConfirmed() }) {
+                Text(stringResource(R.string.runtime_restart))
             }
         },
     )

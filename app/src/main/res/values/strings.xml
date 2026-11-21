@@ -49,6 +49,8 @@
     <string name="runtime_replacement_failed">The running MIDlet could not be stopped. Try opening the new MIDlet again.</string>
     <string name="error_name">Enter a name.</string>
     <string name="exit">Exit</string>
+    <string name="runtime_restart" tools:ignore="MissingTranslation">Restart</string>
+    <string name="runtime_restart_confirmation" tools:ignore="MissingTranslation">Restart this MIDlet? Unsaved progress may be lost.</string>
     <string name="FORCE_CLOSE_CONFIRMATION">Stop this MIDlet? Unsaved changes may be lost.</string>
     <string name="help">Help</string>
     <string name="identity_filter">None (fastest)</string>

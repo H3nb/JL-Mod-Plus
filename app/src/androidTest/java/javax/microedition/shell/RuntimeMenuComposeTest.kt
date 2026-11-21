@@ -1403,6 +1403,10 @@ private class RecordingRuntimeMenuActions(
         events += "exit"
     }
 
+    override fun onRestart() {
+        events += "restart"
+    }
+
     override fun onSaveLog() {
         events += "saveLog"
     }
@@ -1496,6 +1500,10 @@ private class RecordingRuntimeHostDialogActions(
 
     override fun onExitConfirmed(openSettings: Boolean) {
         events += if (openSettings) "settings" else "exit"
+    }
+
+    override fun onRestartConfirmed() {
+        events += "restart-confirmed"
     }
 
     override fun onShowControlsConfirmed(hidden: BooleanArray) {

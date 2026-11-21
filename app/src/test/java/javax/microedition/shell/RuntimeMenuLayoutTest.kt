@@ -79,7 +79,7 @@ class RuntimeMenuLayoutTest {
                 R.string.pref_runtime_fullscreen_title, R.string.PREF_LIMIT_FPS,
                 R.string.runtime_virtual_controls_title, R.string.save_log,
                 R.string.action_keyboard_ime, R.string.take_screenshot,
-                R.string.PREF_EMULATION_SPEED, R.string.exit,
+                R.string.PREF_EMULATION_SPEED, R.string.runtime_restart, R.string.exit,
             ),
             entries.map { it.label },
         )
@@ -103,13 +103,14 @@ class RuntimeMenuLayoutTest {
 
     @Test
     fun gridNavigationReachesPartialRowsAndTheExitFooter() {
-        assertEquals(4, runtimeMenuNextFocus(2, 6, 3, true, HostCommand.NavigateDown))
-        assertEquals(5, runtimeMenuNextFocus(4, 6, 3, true, HostCommand.NavigateDown))
-        assertEquals(4, runtimeMenuNextFocus(5, 6, 3, true, HostCommand.NavigateUp))
-        assertEquals(3, runtimeMenuNextFocus(3, 6, 3, true, HostCommand.NavigateLeft))
-        assertEquals(2, runtimeMenuNextFocus(2, 6, 3, true, HostCommand.NavigateRight))
-        assertEquals(0, runtimeMenuNextFocus(5, 6, 3, true, HostCommand.NextTab))
-        assertEquals(2, runtimeMenuNextFocus(1, 3, 2, false, HostCommand.NavigateDown))
+        assertEquals(4, runtimeMenuNextFocus(2, 7, 3, 2, HostCommand.NavigateDown))
+        assertEquals(5, runtimeMenuNextFocus(4, 7, 3, 2, HostCommand.NavigateDown))
+        assertEquals(6, runtimeMenuNextFocus(5, 7, 3, 2, HostCommand.NavigateRight))
+        assertEquals(5, runtimeMenuNextFocus(6, 7, 3, 2, HostCommand.NavigateLeft))
+        assertEquals(3, runtimeMenuNextFocus(5, 7, 3, 2, HostCommand.NavigateUp))
+        assertEquals(4, runtimeMenuNextFocus(6, 7, 3, 2, HostCommand.NavigateUp))
+        assertEquals(0, runtimeMenuNextFocus(6, 7, 3, 2, HostCommand.NextTab))
+        assertEquals(2, runtimeMenuNextFocus(1, 3, 2, 0, HostCommand.NavigateDown))
     }
 
     @Test
@@ -117,7 +118,8 @@ class RuntimeMenuLayoutTest {
         val form = canvas.copy(isCanvas = false)
         assertTrue(runtimeToolbarShortcuts(form, 640f).isEmpty())
         assertEquals(
-            listOf(R.string.action_lock_orientation, R.string.memory_editor_bubble, R.string.save_log, R.string.exit),
+            listOf(R.string.action_lock_orientation, R.string.memory_editor_bubble, R.string.save_log,
+                R.string.runtime_restart, R.string.exit),
             menu(form).map { it.label },
         )
         val incompatible = canvas.copy(emulationSpeedAvailable = false, imeAvailable = false)
@@ -267,6 +269,7 @@ class RuntimeMenuLayoutTest {
 
     private open class NoOpMenuActions : RuntimeMenuActions {
         override fun onExit() = Unit
+        override fun onRestart() = Unit
         override fun onSaveLog() = Unit
         override fun onToggleOrientationLock() = Unit
         override fun onOpenImeKeyboard() = Unit
