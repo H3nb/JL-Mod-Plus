@@ -84,17 +84,24 @@ object ScreenshotCapture {
     }
 
     private fun saveBitmap(bitmap: Bitmap): String {
-        val name = "Screenshot_" + SimpleDateFormat("yyyyMMdd-HHmmss", Locale.US)
-            .format(Date()) + ".png"
+        val prefix = "Screenshot_" + SimpleDateFormat("yyyyMMdd-HHmmss", Locale.US)
+            .format(Date()) + "-"
         val directory = File(Config.SCREENSHOTS_DIR)
         if (!directory.exists() && !directory.mkdirs()) {
             throw IOException("Can't create directory: $directory")
         }
-        val file = File(directory, name)
-        BufferedOutputStream(FileOutputStream(file)).use {
-            bitmap.compress(Bitmap.CompressFormat.PNG, 100, it)
+        val file = File.createTempFile(prefix, ".png", directory)
+        try {
+            BufferedOutputStream(FileOutputStream(file)).use {
+                if (!bitmap.compress(Bitmap.CompressFormat.PNG, 100, it)) {
+                    throw IOException("Failed to encode screenshot")
+                }
+            }
+            return file.absolutePath
+        } catch (error: Exception) {
+            file.delete()
+            throw error
         }
-        return file.absolutePath
     }
 
     private data class GlPixels(val pixels: IntArray, val width: Int, val height: Int)
