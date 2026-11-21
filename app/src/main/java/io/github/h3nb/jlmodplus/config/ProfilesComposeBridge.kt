@@ -370,13 +370,14 @@ private fun DefaultPolicyRow(
 }
 
 @Composable
-private fun ProfileRow(
+internal fun ProfileRow(
     profile: ProfileUiItem,
     onEdit: () -> Unit,
     onRename: () -> Unit,
     onDelete: () -> Unit,
+    initiallyExpanded: Boolean = false,
 ) {
-    var actionsExpanded by remember { mutableStateOf(false) }
+    var actionsExpanded by remember(initiallyExpanded) { mutableStateOf(initiallyExpanded) }
     val editable = !profile.isKeyboardOnly && !profile.isUnavailable && profile.canEdit
     val orientationOptions = stringArrayResource(R.array.PREF_ORIENTATION_ENTRIES)
     val summary = when {
