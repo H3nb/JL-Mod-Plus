@@ -93,6 +93,11 @@ public interface ConfigFormEvents {
 		return true;
 	}
 
+    /** Keep the current MIDlet snapshot but stop synchronizing a named profile. */
+    default boolean onStopFollowingProfile() {
+        return false;
+    }
+
 	/** Starts the host-owned controller calibration flow. */
 	default void onGamepadCalibration() {
 	}
