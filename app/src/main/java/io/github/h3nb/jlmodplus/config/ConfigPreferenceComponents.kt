@@ -49,7 +49,6 @@ import androidx.compose.ui.text.input.KeyboardType
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.style.TextOverflow
 import androidx.compose.ui.unit.dp
-import androidx.compose.ui.text.style.TextAlign
 import io.github.h3nb.jlmodplus.R
 
 internal enum class ConfigMessageLevel { Info, Warning, Danger }
@@ -82,7 +81,7 @@ internal fun ConfigSection(
             text = title,
             style = MaterialTheme.typography.titleSmall,
             color = if (accentTitle) MaterialTheme.colorScheme.onSurfaceVariant
-                else MaterialTheme.colorScheme.onSurfaceVariant,
+                else MaterialTheme.colorScheme.onSurface,
             modifier = Modifier.semantics { heading() }
                 .padding(start = 12.dp, top = 8.dp, end = 12.dp, bottom = 0.dp),
         )
