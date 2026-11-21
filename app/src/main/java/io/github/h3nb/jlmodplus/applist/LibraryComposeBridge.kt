@@ -1633,8 +1633,7 @@ fun LibraryScreen(
                                         collectionManageApps = false,
                                     )
                                     collectionsHost?.onDismissCollectionMembers()
-                                }
-                                if (state.quickView != LibraryQuickView.All) {
+                                } else if (state.quickView != LibraryQuickView.All) {
                                     actions.onQuickView(LibraryQuickView.All)
                                 }
                             },
