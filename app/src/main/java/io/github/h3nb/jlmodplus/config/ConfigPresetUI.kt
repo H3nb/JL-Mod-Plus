@@ -94,7 +94,7 @@ internal fun PresetSummary(
         status.sourceProfile != null ->
             stringResource(R.string.profile_not_following, status.sourceProfile)
         status.builtInDefault -> stringResource(R.string.preset_builtin_summary)
-        else -> stringResource(R.string.preset_custom_configuration)
+        else -> stringResource(R.string.profile_local_configuration_summary)
     }
     Surface(
         modifier = Modifier.fillMaxWidth(),
