@@ -909,15 +909,11 @@ class RuntimeMenuComposeTest {
         composeRule.waitForIdle()
 
         composeRule.runOnIdle {
-            checkNotNull(handler)(HostCommand.NavigateDown, true)
-        }
-        composeRule.waitForIdle()
-        composeRule.runOnIdle {
             val current = checkNotNull(handler)
+            current(HostCommand.NavigateDown, true)
             current(HostCommand.Activate, true)
             current(HostCommand.Activate, false)
         }
-        composeRule.waitForIdle()
 
         assertEquals(listOf("dismiss", "midlet:1"), events)
     }

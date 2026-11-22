@@ -507,7 +507,7 @@ internal fun MemoryEditorRuntimeRoot(
                     modifier = Modifier.align(Alignment.BottomCenter)
                         .fillMaxWidth()
                         .windowInsetsPadding(
-                            WindowInsets.safeGestures.only(WindowInsetsSides.Horizontal)
+                            WindowInsets.safeDrawing.only(WindowInsetsSides.Horizontal)
                                 .union(WindowInsets.navigationBars.only(WindowInsetsSides.Bottom)),
                         )
                         .padding(memoryEditorBottomCornerPadding()),
