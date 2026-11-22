@@ -230,10 +230,10 @@ internal fun ScreenPresetDialog(
                         }
                     }
                 }
-                Row(
+                FlowRow(
                     modifier = Modifier.fillMaxWidth(),
-                    verticalAlignment = Alignment.CenterVertically,
                     horizontalArrangement = Arrangement.SpaceBetween,
+                    verticalArrangement = Arrangement.spacedBy(4.dp),
                 ) {
                     TextButton(onClick = { customResolutionVisible = true }) {
                         Icon(
