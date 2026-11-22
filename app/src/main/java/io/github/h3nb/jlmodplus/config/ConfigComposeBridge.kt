@@ -940,14 +940,6 @@ private fun RenderingSection(
                 },
             )
         }
-        if (form.graphicsMode == 1) {
-            ConfigValuePreference(
-                title = stringResource(R.string.render_shader_effects),
-                description = stringResource(R.string.render_shader_picker_help),
-                value = selectedShaderLabel(state),
-                onClick = onOpenShaders,
-            )
-        }
         if (isTextureFilteringApplicable(state)) {
             val filterOptions = listOf(
                 stringResource(R.string.render_custom_nearest),
@@ -961,6 +953,14 @@ private fun RenderingSection(
                 onSelected = { index ->
                     onFormChanged(form.toBuilder().screenFilter(index == 1).build())
                 },
+            )
+        }
+        if (form.graphicsMode == 1) {
+            ConfigValuePreference(
+                title = stringResource(R.string.render_shader_effects),
+                description = stringResource(R.string.render_shader_picker_help),
+                value = selectedShaderLabel(state),
+                onClick = onOpenShaders,
             )
         }
     }
