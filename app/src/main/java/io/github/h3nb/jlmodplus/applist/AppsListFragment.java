@@ -1148,14 +1148,14 @@ public class AppsListFragment extends Fragment {
 
         if (!generationChanged && activeSourceRevision != state.getSourceRevision()) {
             pruneUiCaches(state.getAvailableAppIds());
+            cachedAllReadyRows = null;
         }
         localizedDescriptions = state.getLocalizedDescriptions();
         iconFiles = state.getIconFiles();
         activeSourceRevision = state.getSourceRevision();
         collectionsUiStore.publishCollections(state.getCollections());
-        // The complete READY snapshot stays indexed; Collection picker preparation also avoids
-        // materializing every presentation item on the UI thread.
-        cachedAllReadyRows = null;
+        // Filter, sort and quick-view changes retain the cached unfiltered source.
+        // Presentation items are still mapped lazily when the picker needs them.
 
         Long requestedCollectionId = collectionMembersRequests.targetCollectionId();
         if (requestedCollectionId != null) {
@@ -1175,11 +1175,11 @@ public class AppsListFragment extends Fragment {
                 state.getApps(), LibraryAppRow::getId);
         LibraryComposeController controller = composeController;
         if (controller != null) {
-            controller.updateSort(state.getSortVariant());
             controller.updateApps(
                     uiItems,
                     state.getFilter(),
                     state.getQuickView(),
+                    state.getSortVariant(),
                     generation,
                     state.getAvailableAppIds(),
                     projectedAppIds,
