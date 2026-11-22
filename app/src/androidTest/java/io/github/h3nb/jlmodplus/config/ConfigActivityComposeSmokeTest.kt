@@ -289,6 +289,7 @@ class ConfigActivityComposeSmokeTest {
         val blocker = File(configDir, Config.MIDLET_CONFIG_FILE.substring(1) + ".new")
 
         ActivityScenario.launch<ConfigActivity>(intent).use { scenario ->
+            InstrumentationRegistry.getInstrumentation().waitForIdleSync()
             scenario.onActivity { activity ->
                 updateProfileForm(activity) { it.toBuilder().screenWidth("360").build() }
                 assertTrue(blocker.mkdirs())
