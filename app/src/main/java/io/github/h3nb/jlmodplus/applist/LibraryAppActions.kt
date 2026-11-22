@@ -158,9 +158,8 @@ internal fun LibrarySortMenu(
 
 private data class DialogActionEntry(
     val label: Int,
-    val icon: Int?,
+    val icon: Int,
     val destructive: Boolean = false,
-    val dismissOnClick: Boolean = true,
     val action: () -> Unit,
 )
 
@@ -304,7 +303,7 @@ internal fun AppActionsDialog(
                 }
                 LibraryControllerCommand.Activate -> {
                     currentEntries.getOrNull(focusedIndex)?.let { entry ->
-                        if (entry.dismissOnClick) onDismiss()
+                        onDismiss()
                         entry.action()
                     }
                 }
@@ -483,7 +482,7 @@ private fun RowScope.DialogActionTile(
         horizontalArrangement = Arrangement.spacedBy(10.dp),
     ) {
         Icon(
-            painter = painterResource(requireNotNull(entry.icon)),
+            painter = painterResource(entry.icon),
             contentDescription = null,
             tint = foreground,
             modifier = Modifier.size(22.dp),
