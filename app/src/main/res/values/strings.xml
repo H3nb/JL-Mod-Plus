@@ -787,6 +787,11 @@
     <string name="config_search_hint" tools:ignore="MissingTranslation">Find a setting, e.g. MMPX or orientation</string>
     <string name="config_search_no_results" tools:ignore="MissingTranslation">No matching settings</string>
     <string name="config_search_upscaling_requires_resolution" tools:ignore="MissingTranslation">To use MMPX or another bitmap filter, first select Auto or 2×–10× under Internal resolution.</string>
+    <string name="config_search_requires_manual_scale" tools:ignore="MissingTranslation">Choose Manual under Screen scaling to adjust the scale ratio.</string>
+    <string name="config_search_requires_custom_background" tools:ignore="MissingTranslation">Choose Custom under Background mode to edit the background color.</string>
+    <string name="config_search_requires_gles" tools:ignore="MissingTranslation">Choose OpenGL ES under Renderer to configure shader effects.</string>
+    <string name="config_search_requires_renderer_mode" tools:ignore="MissingTranslation">Choose Software or Surface under Renderer to configure asynchronous screen updates.</string>
+    <string name="config_search_requires_performance_overlay" tools:ignore="MissingTranslation">Enable Performance overlay before changing these options.</string>
     <string name="config_font_page_title" tools:ignore="MissingTranslation">Font settings</string>
     <string name="config_performance_page_title" tools:ignore="MissingTranslation">Performance settings</string>
     <string name="config_display_more" tools:ignore="MissingTranslation">Text and performance</string>

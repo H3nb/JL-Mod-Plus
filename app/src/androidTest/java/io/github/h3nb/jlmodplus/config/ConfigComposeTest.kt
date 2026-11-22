@@ -323,37 +323,37 @@ class ConfigComposeTest {
     }
 
     @Test
-    fun searchExcludesOptionsHiddenByProfileAndRendererConditions() {
+    fun searchKeepsDependentSettingsDiscoverableAndRoutesToPrerequisites() {
         val base = sampleState()
         val state = ConfigUiState(
             base.form.toBuilder().graphicsMode(0).internalResolutionScale(1)
                 .screenScaleType(1).showFps(false).build(),
-            base.screenPresets,
-            base.fontPresets,
-            base.skins,
-            base.soundBanks,
-            base.shaders,
-            base.removableScreenPresets,
+            base.screenPresets, base.fontPresets, base.skins,
+            base.soundBanks, base.shaders, base.removableScreenPresets,
         )
         val query = mutableStateOf("shader GLSL effects")
+        var selected: String? = null
         composeRule.setContent {
             JLModPlusTheme {
                 ConfigSearchResults(
                     query = query.value,
                     state = state,
                     isProfile = true,
-                    onSelected = { _, _, _, _ -> },
+                    onSelected = { _, _, _, option -> selected = option },
                 )
             }
         }
-        composeRule.onNodeWithText(uiString(R.string.config_search_no_results)).assertIsDisplayed()
+        composeRule.onNodeWithText(uiString(R.string.render_shader_effects)).performClick()
+        assertEquals(uiString(R.string.pref_graphics_mode_title), selected)
+        composeRule.runOnIdle { query.value = uiString(R.string.perf_overlay_parameters) }
+        composeRule.onNodeWithText(uiString(R.string.perf_overlay_parameters)).performClick()
+        assertEquals(uiString(R.string.perf_overlay_title), selected)
+        composeRule.runOnIdle { query.value = uiString(R.string.PREF_SCALE_RATIO) }
+        composeRule.onNodeWithText(uiString(R.string.PREF_SCALE_RATIO)).performClick()
+        assertEquals(uiString(R.string.pref_screen_scale_type), selected)
         composeRule.runOnIdle { query.value = "files storage" }
         composeRule.onNodeWithText(uiString(R.string.config_search_no_results)).assertIsDisplayed()
-        composeRule.runOnIdle { query.value = uiString(R.string.perf_overlay_parameters) }
-        composeRule.onNodeWithText(uiString(R.string.config_search_no_results)).assertIsDisplayed()
         composeRule.runOnIdle { query.value = "notch punch hole camera" }
-        composeRule.onNodeWithText(uiString(R.string.config_search_no_results)).assertIsDisplayed()
-        composeRule.runOnIdle { query.value = uiString(R.string.PREF_SCALE_RATIO) }
         composeRule.onNodeWithText(uiString(R.string.config_search_no_results)).assertIsDisplayed()
     }
 

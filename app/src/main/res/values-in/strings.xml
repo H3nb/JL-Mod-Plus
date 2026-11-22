@@ -703,6 +703,11 @@
     <string name="config_search_hint">Cari opsi, mis. MMPX atau orientasi</string>
     <string name="config_search_no_results">Tidak ada pengaturan yang cocok</string>
     <string name="config_search_upscaling_requires_resolution">Untuk memakai MMPX atau filter bitmap lainnya, pilih Otomatis atau 2×–10× pada Resolusi internal terlebih dahulu.</string>
+    <string name="config_search_requires_manual_scale">Pilih Manual pada jenis penskalaan layar untuk mengatur rasio skala.</string>
+    <string name="config_search_requires_custom_background">Pilih Kustom pada mode latar belakang untuk mengubah warnanya.</string>
+    <string name="config_search_requires_gles">Pilih OpenGL ES pada renderer untuk mengatur efek shader.</string>
+    <string name="config_search_requires_renderer_mode">Pilih Software atau Surface pada renderer untuk mengatur pembaruan layar asinkron.</string>
+    <string name="config_search_requires_performance_overlay">Aktifkan overlay performa sebelum mengubah opsi-opsi ini.</string>
     <string name="config_font_page_title">Pengaturan font</string>
     <string name="config_performance_page_title">Pengaturan performa</string>
     <string name="config_display_more">Teks dan performa</string>

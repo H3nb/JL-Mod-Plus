@@ -41,6 +41,40 @@ private data class ConfigSearchItem(
     val optionLabels: List<Int> = emptyList(),
 )
 
+
+private data class ConfigSearchPrerequisite(
+    @StringRes val setting: Int,
+    @StringRes val explanation: Int,
+)
+
+private fun searchPrerequisite(title: Int, form: ConfigFormState): ConfigSearchPrerequisite? =
+    when (title) {
+        R.string.PREF_SCALE_RATIO -> if (form.screenScaleType != 0)
+            ConfigSearchPrerequisite(R.string.pref_screen_scale_type,
+                R.string.config_search_requires_manual_scale) else null
+        R.string.config_background_custom_color -> if (
+            BackgroundMode.sanitize(form.screenBackgroundMode) != BackgroundMode.CUSTOM &&
+            BackgroundMode.sanitize(form.screenBackgroundMode) != BackgroundMode.DYNAMIC_SOLID
+        ) ConfigSearchPrerequisite(R.string.config_background_mode,
+            R.string.config_search_requires_custom_background) else null
+        R.string.bitmap_upscaling_title -> if (form.internalResolutionScale == 1)
+            ConfigSearchPrerequisite(R.string.internal_resolution_title,
+                R.string.config_search_upscaling_requires_resolution) else null
+        R.string.render_shader_effects -> if (form.graphicsMode != 1)
+            ConfigSearchPrerequisite(R.string.pref_graphics_mode_title,
+                R.string.config_search_requires_gles) else null
+        R.string.parallel_screen_redrawing -> if (form.graphicsMode != 0 && form.graphicsMode != 3)
+            ConfigSearchPrerequisite(R.string.pref_graphics_mode_title,
+                R.string.config_search_requires_renderer_mode) else null
+        R.string.perf_overlay_preset,
+        R.string.perf_overlay_parameters,
+        R.string.perf_overlay_position,
+        -> if (!form.showFps)
+            ConfigSearchPrerequisite(R.string.perf_overlay_title,
+                R.string.config_search_requires_performance_overlay) else null
+        else -> null
+    }
+
 // A small index of existing options, not a second configuration model.
 private val configSearchIndex = listOf(
     ConfigSearchItem(R.string.preset_use, R.string.presets, ConfigDestination.Basic, keywords = "profile template"),
@@ -133,25 +167,8 @@ internal fun ConfigSearchResults(
                 R.string.midlet_permissions_read,
                 R.string.midlet_permissions_write,
             )) return@filter false
-        when (entry.title) {
-            R.string.PREF_SCALE_RATIO ->
-                if (state.form.screenScaleType != 0) return@filter false
-            R.string.config_avoid_camera_cutout_title ->
-                if (!cutoutAvailable) return@filter false
-            R.string.config_background_custom_color -> {
-                val mode = BackgroundMode.sanitize(state.form.screenBackgroundMode)
-                if (mode != BackgroundMode.CUSTOM &&
-                    mode != BackgroundMode.DYNAMIC_SOLID
-                ) return@filter false
-            }
-            R.string.render_shader_effects ->
-                if (state.form.graphicsMode != 1) return@filter false
-            R.string.parallel_screen_redrawing ->
-                if (state.form.graphicsMode != 0 && state.form.graphicsMode != 3) return@filter false
-            R.string.perf_overlay_preset,
-            R.string.perf_overlay_parameters,
-            R.string.perf_overlay_position,
-            -> if (!state.form.showFps) return@filter false
+        if (entry.title == R.string.config_avoid_camera_cutout_title && !cutoutAvailable) {
+            return@filter false
         }
         if (searchTerm.isEmpty()) entry.title in suggestions
         else resources.getString(entry.title).contains(searchTerm, ignoreCase = true) ||
@@ -177,8 +194,7 @@ internal fun ConfigSearchResults(
             }
         }
         itemsIndexed(filtered, key = { _, entry -> entry.title }) { _, entry ->
-            val requiresScaleChange = entry.title == R.string.bitmap_upscaling_title &&
-                state.form.internalResolutionScale == 1
+            val prerequisite = searchPrerequisite(entry.title, state.form)
             val matchedOption = entry.optionLabels.firstOrNull {
                 searchTerm.isNotEmpty() && resources.getString(it).contains(searchTerm, ignoreCase = true)
             }
@@ -191,8 +207,8 @@ internal fun ConfigSearchResults(
                         if (matchedOption != null) {
                             Text(stringResource(matchedOption), style = MaterialTheme.typography.bodySmall)
                         }
-                        if (requiresScaleChange) {
-                            Text(stringResource(R.string.config_search_upscaling_requires_resolution),
+                        if (prerequisite != null) {
+                            Text(stringResource(prerequisite.explanation),
                                 style = MaterialTheme.typography.bodySmall)
                         }
                     }
@@ -202,10 +218,7 @@ internal fun ConfigSearchResults(
                         entry.destination,
                         resources.getString(entry.section),
                         entry.detail,
-                        resources.getString(
-                            if (requiresScaleChange) R.string.internal_resolution_title
-                            else entry.title
-                        ),
+                        resources.getString(prerequisite?.setting ?: entry.title),
                     )
                 },
             )
