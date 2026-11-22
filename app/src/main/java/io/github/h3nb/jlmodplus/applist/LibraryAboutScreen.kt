@@ -52,6 +52,19 @@ import io.github.h3nb.jlmodplus.BuildConfig
 import io.github.h3nb.jlmodplus.R
 import io.github.h3nb.jlmodplus.ui.ScrollableContentHint
 import io.github.h3nb.jlmodplus.ui.rememberScrollCanScrollForward
+import android.view.KeyEvent
+import androidx.compose.foundation.layout.height
+import androidx.compose.foundation.layout.heightIn
+import androidx.compose.material3.Button
+import androidx.compose.material3.TextButton
+import androidx.compose.ui.layout.ContentScale
+import androidx.compose.ui.platform.LocalContext
+import androidx.compose.ui.text.AnnotatedString
+import androidx.compose.ui.text.TextLinkStyles
+import androidx.compose.ui.text.SpanStyle
+import androidx.compose.ui.unit.Dp
+import io.github.h3nb.jlmodplus.ui.AdaptiveAlertDialog as AlertDialog
+import io.github.h3nb.jlmodplus.ui.adaptiveDialogLayout
 
 /**
  * Full-screen About page reused as a Settings child destination.
@@ -267,6 +280,149 @@ private fun AboutLinkRow(
             contentDescription = null,
             modifier = Modifier.size(20.dp),
             tint = MaterialTheme.colorScheme.onSurfaceVariant,
+        )
+    }
+}
+
+internal enum class LibraryInfoDialog {
+    Licenses,
+    Donation,
+}
+
+@Composable
+internal fun LibraryInformationDialog(
+    dialog: LibraryInfoDialog,
+    onControllerKeyEvent: ((KeyEvent) -> Boolean)? = null,
+    onDismiss: () -> Unit,
+    onDonate: () -> Unit = {},
+) {
+    val context = LocalContext.current
+    val title = when (dialog) {
+        LibraryInfoDialog.Licenses -> stringResource(R.string.licenses)
+        LibraryInfoDialog.Donation -> stringResource(R.string.library_donation_title)
+    }
+    val icon = when (dialog) {
+        LibraryInfoDialog.Licenses -> null
+        LibraryInfoDialog.Donation -> R.drawable.ic_favorite
+    }
+    val maxMessageHeight = adaptiveDialogLayout().maxHeight
+    val linkStyles = TextLinkStyles(SpanStyle(color = MaterialTheme.colorScheme.primary))
+    val licenseMessage = if (dialog == LibraryInfoDialog.Licenses) {
+        try {
+            AnnotatedString.fromHtml(
+                context.assets.open("licenses.html").bufferedReader().use { it.readText() },
+                linkStyles = linkStyles,
+            )
+        } catch (_: Exception) {
+            AnnotatedString(stringResource(R.string.licenses_unavailable))
+        }
+    } else {
+        null
+    }
+
+    AlertDialog(
+        textScrollable = false,
+        onControllerKeyEvent = onControllerKeyEvent,
+        onDismissRequest = onDismiss,
+        title = {
+            if (dialog == LibraryInfoDialog.Licenses) {
+                Box(
+                    modifier = Modifier.fillMaxWidth(),
+                    contentAlignment = Alignment.Center,
+                ) {
+                    Text(title)
+                }
+            } else {
+                Row(
+                    verticalAlignment = Alignment.CenterVertically,
+                    horizontalArrangement = Arrangement.spacedBy(10.dp),
+                ) {
+                    Icon(
+                        painter = painterResource(requireNotNull(icon)),
+                        contentDescription = null,
+                        modifier = Modifier.size(26.dp),
+                        tint = MaterialTheme.colorScheme.primary,
+                    )
+                    Text(title)
+                }
+            }
+        },
+        text = {
+            when (dialog) {
+                LibraryInfoDialog.Donation -> LibraryDonationBody(maxHeight = maxMessageHeight)
+                LibraryInfoDialog.Licenses -> {
+                    val scrollState = rememberScrollState()
+                    val canScrollForward = rememberScrollCanScrollForward(scrollState)
+                    Box(
+                        modifier = Modifier
+                            .fillMaxWidth()
+                            .heightIn(max = maxMessageHeight),
+                    ) {
+                        Text(
+                            text = requireNotNull(licenseMessage),
+                            modifier = Modifier
+                                .fillMaxWidth()
+                                .heightIn(max = maxMessageHeight)
+                                .verticalScroll(scrollState),
+                            style = MaterialTheme.typography.bodyMedium,
+                            color = MaterialTheme.colorScheme.onSurfaceVariant,
+                        )
+                        ScrollableContentHint(
+                            visible = canScrollForward,
+                            modifier = Modifier
+                                .align(Alignment.BottomCenter),
+                        )
+                    }
+                }
+            }
+        },
+        confirmButton = {
+            if (dialog == LibraryInfoDialog.Donation) {
+                Button(onClick = { onDismiss(); onDonate() }) {
+                    Text(stringResource(R.string.library_donation_continue))
+                }
+            } else {
+                TextButton(onClick = onDismiss) { Text(stringResource(R.string.close)) }
+            }
+        },
+        dismissButton = if (dialog == LibraryInfoDialog.Donation) {
+            { TextButton(onClick = onDismiss) { Text(stringResource(R.string.library_donation_not_now)) } }
+        } else null,
+    )
+}
+
+@Composable
+private fun LibraryDonationBody(maxHeight: Dp) {
+    val scrollState = rememberScrollState()
+    val canScrollForward = rememberScrollCanScrollForward(scrollState)
+    Box(modifier = Modifier.fillMaxWidth().heightIn(max = maxHeight)) {
+        Column(
+            modifier = Modifier.fillMaxWidth().heightIn(max = maxHeight).verticalScroll(scrollState),
+            horizontalAlignment = Alignment.CenterHorizontally,
+            verticalArrangement = Arrangement.spacedBy(12.dp),
+        ) {
+            Text(
+                text = stringResource(R.string.library_donation_message),
+                modifier = Modifier.fillMaxWidth(),
+                style = MaterialTheme.typography.bodyMedium,
+                color = MaterialTheme.colorScheme.onSurfaceVariant,
+            )
+            Image(
+                painter = painterResource(R.drawable.sociabuzz_wordmark),
+                contentDescription = null, // Provider named in the action and supporting text.
+                modifier = Modifier.fillMaxWidth().height(64.dp).padding(horizontal = 24.dp),
+                contentScale = ContentScale.Fit,
+            )
+            Text(
+                text = stringResource(R.string.library_donation_provider_note),
+                modifier = Modifier.fillMaxWidth(),
+                style = MaterialTheme.typography.bodySmall,
+                color = MaterialTheme.colorScheme.onSurfaceVariant,
+            )
+        }
+        ScrollableContentHint(
+            visible = canScrollForward,
+            modifier = Modifier.align(Alignment.BottomCenter),
         )
     }
 }

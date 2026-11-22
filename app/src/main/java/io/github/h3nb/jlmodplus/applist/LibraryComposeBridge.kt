@@ -14,11 +14,6 @@
 
 package io.github.h3nb.jlmodplus.applist
 
-import io.github.h3nb.jlmodplus.librarydb.LibraryIconDraft
-import io.github.h3nb.jlmodplus.librarydb.LibraryLocalizedDescriptionEditorData
-import io.github.h3nb.jlmodplus.librarydb.LibraryMidletDetailsData
-import io.github.h3nb.jlmodplus.librarydb.LibraryViewModel
-import io.github.h3nb.jlmodplus.librarydb.LibraryBundleComponents
 import android.view.KeyEvent
 import androidx.activity.compose.BackHandler
 import androidx.activity.compose.LocalActivity
@@ -41,11 +36,9 @@ import androidx.compose.animation.core.tween
 import androidx.compose.foundation.ExperimentalFoundationApi
 import androidx.compose.foundation.MutatePriority
 import androidx.compose.foundation.gestures.stopScroll
-import androidx.compose.foundation.Image
 import androidx.compose.foundation.background
 import androidx.compose.foundation.clickable
 import androidx.compose.foundation.interaction.MutableInteractionSource
-import androidx.compose.foundation.selection.toggleable
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.BoxWithConstraints
@@ -86,13 +79,9 @@ import androidx.compose.foundation.lazy.grid.items
 import androidx.compose.foundation.lazy.grid.rememberLazyGridState
 import androidx.compose.foundation.lazy.items
 import androidx.compose.foundation.lazy.rememberLazyListState
-import androidx.compose.foundation.rememberScrollState
 import androidx.compose.foundation.shape.RoundedCornerShape
-import androidx.compose.foundation.verticalScroll
 import io.github.h3nb.jlmodplus.ui.AdaptiveAlertDialog as AlertDialog
-import io.github.h3nb.jlmodplus.ui.adaptiveDialogLayout
 import androidx.compose.material3.Button
-import androidx.compose.material3.Checkbox
 import androidx.compose.material3.CircularProgressIndicator
 import androidx.compose.material3.DropdownMenu
 import androidx.compose.material3.DropdownMenuItem
@@ -112,7 +101,6 @@ import androidx.compose.material3.Scaffold
 import androidx.compose.material3.Surface
 import androidx.compose.material3.Text
 import androidx.compose.material3.TextButton
-import androidx.compose.material3.OutlinedButton
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.MutableFloatState
 import androidx.compose.runtime.derivedStateOf
@@ -140,15 +128,12 @@ import androidx.compose.ui.draw.clipToBounds
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.graphics.graphicsLayer
 import androidx.compose.ui.input.nestedscroll.nestedScroll
-import androidx.compose.ui.layout.ContentScale
 import androidx.compose.ui.layout.onSizeChanged
-import androidx.compose.ui.platform.ComposeView
 import androidx.compose.ui.platform.LocalInspectionMode
 import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.platform.LocalSoftwareKeyboardController
 import androidx.compose.ui.platform.LocalDensity
 import androidx.compose.ui.platform.LocalLayoutDirection
-import androidx.compose.ui.platform.ViewCompositionStrategy
 import androidx.compose.ui.res.painterResource
 import androidx.compose.ui.res.pluralStringResource
 import androidx.compose.ui.res.stringArrayResource
@@ -160,17 +145,13 @@ import androidx.compose.ui.semantics.role
 import androidx.compose.ui.semantics.selected
 import androidx.compose.ui.semantics.semantics
 import androidx.compose.ui.platform.testTag
-import androidx.compose.ui.text.AnnotatedString
-import androidx.compose.ui.text.TextLinkStyles
 import androidx.compose.ui.text.SpanStyle
 import androidx.compose.ui.text.TextRange
 import androidx.compose.ui.text.buildAnnotatedString
 import androidx.compose.ui.text.font.FontWeight
-import androidx.compose.ui.text.fromHtml
 import androidx.compose.ui.text.input.TextFieldValue
 import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.text.style.TextOverflow
-import androidx.compose.ui.unit.Dp
 import androidx.compose.ui.unit.dp
 import androidx.core.graphics.get
 import androidx.compose.ui.zIndex
@@ -193,13 +174,7 @@ import io.github.h3nb.jlmodplus.librarydb.LibraryQuickView
 import io.github.h3nb.jlmodplus.updates.UpdateCandidate
 import io.github.h3nb.jlmodplus.updates.UpdateRepository
 import io.github.h3nb.jlmodplus.updates.UpdateStatus
-import io.github.h3nb.jlmodplus.ui.JLModPlusTheme
 import io.github.h3nb.jlmodplus.ui.GlassSystemBarScrim
-import io.github.h3nb.jlmodplus.ui.ScrollableContentHint
-import io.github.h3nb.jlmodplus.ui.rememberScrollCanScrollForward
-import io.github.h3nb.jlmodplus.input.HostCommand
-import io.github.h3nb.jlmodplus.ui.TransientNoticeHost
-import io.github.h3nb.jlmodplus.ui.TransientNoticeState
 import io.github.h3nb.jlmodplus.ui.availableWindowWidthDp
 import io.github.h3nb.jlmodplus.ui.availableWindowHeightDp
 import io.github.h3nb.jlmodplus.ui.PAGE_TRAVEL_DP
@@ -283,11 +258,6 @@ private data class LibraryProjectionKey(
     val revision: Long,
     val apps: List<LibraryAppUiItem>,
 )
-
-internal enum class LibraryInfoDialog {
-    Licenses,
-    Donation,
-}
 
 @OptIn(ExperimentalFoundationApi::class, ExperimentalLayoutApi::class, ExperimentalMaterial3Api::class)
 @Composable
@@ -3080,142 +3050,3 @@ private fun RenameAppDialog(
         },
     )
 }
-
-@Composable
-internal fun LibraryInformationDialog(
-    dialog: LibraryInfoDialog,
-    onControllerKeyEvent: ((KeyEvent) -> Boolean)? = null,
-    onDismiss: () -> Unit,
-    onDonate: () -> Unit = {},
-) {
-    val context = LocalContext.current
-    val title = when (dialog) {
-        LibraryInfoDialog.Licenses -> stringResource(R.string.licenses)
-        LibraryInfoDialog.Donation -> stringResource(R.string.library_donation_title)
-    }
-    val icon = when (dialog) {
-        LibraryInfoDialog.Licenses -> null
-        LibraryInfoDialog.Donation -> R.drawable.ic_favorite
-    }
-    val maxMessageHeight = adaptiveDialogLayout().maxHeight
-    val linkStyles = TextLinkStyles(SpanStyle(color = MaterialTheme.colorScheme.primary))
-    val licenseMessage = if (dialog == LibraryInfoDialog.Licenses) {
-        try {
-            AnnotatedString.fromHtml(
-                context.assets.open("licenses.html").bufferedReader().use { it.readText() },
-                linkStyles = linkStyles,
-            )
-        } catch (_: Exception) {
-            AnnotatedString(stringResource(R.string.licenses_unavailable))
-        }
-    } else {
-        null
-    }
-
-    AlertDialog(
-        textScrollable = false,
-        onControllerKeyEvent = onControllerKeyEvent,
-        onDismissRequest = onDismiss,
-        title = {
-            if (dialog == LibraryInfoDialog.Licenses) {
-                Box(
-                    modifier = Modifier.fillMaxWidth(),
-                    contentAlignment = Alignment.Center,
-                ) {
-                    Text(title)
-                }
-            } else {
-                Row(
-                    verticalAlignment = Alignment.CenterVertically,
-                    horizontalArrangement = Arrangement.spacedBy(10.dp),
-                ) {
-                    Icon(
-                        painter = painterResource(requireNotNull(icon)),
-                        contentDescription = null,
-                        modifier = Modifier.size(26.dp),
-                        tint = MaterialTheme.colorScheme.primary,
-                    )
-                    Text(title)
-                }
-            }
-        },
-        text = {
-            when (dialog) {
-                LibraryInfoDialog.Donation -> LibraryDonationBody(maxHeight = maxMessageHeight)
-                LibraryInfoDialog.Licenses -> {
-                    val scrollState = rememberScrollState()
-                    val canScrollForward = rememberScrollCanScrollForward(scrollState)
-                    Box(
-                        modifier = Modifier
-                            .fillMaxWidth()
-                            .heightIn(max = maxMessageHeight),
-                    ) {
-                        Text(
-                            text = requireNotNull(licenseMessage),
-                            modifier = Modifier
-                                .fillMaxWidth()
-                                .heightIn(max = maxMessageHeight)
-                                .verticalScroll(scrollState),
-                            style = MaterialTheme.typography.bodyMedium,
-                            color = MaterialTheme.colorScheme.onSurfaceVariant,
-                        )
-                        ScrollableContentHint(
-                            visible = canScrollForward,
-                            modifier = Modifier
-                                .align(Alignment.BottomCenter),
-                        )
-                    }
-                }
-            }
-        },
-        confirmButton = {
-            if (dialog == LibraryInfoDialog.Donation) {
-                Button(onClick = { onDismiss(); onDonate() }) {
-                    Text(stringResource(R.string.library_donation_continue))
-                }
-            } else {
-                TextButton(onClick = onDismiss) { Text(stringResource(R.string.close)) }
-            }
-        },
-        dismissButton = if (dialog == LibraryInfoDialog.Donation) {
-            { TextButton(onClick = onDismiss) { Text(stringResource(R.string.library_donation_not_now)) } }
-        } else null,
-    )
-}
-
-@Composable
-private fun LibraryDonationBody(maxHeight: Dp) {
-    val scrollState = rememberScrollState()
-    val canScrollForward = rememberScrollCanScrollForward(scrollState)
-    Box(modifier = Modifier.fillMaxWidth().heightIn(max = maxHeight)) {
-        Column(
-            modifier = Modifier.fillMaxWidth().heightIn(max = maxHeight).verticalScroll(scrollState),
-            horizontalAlignment = Alignment.CenterHorizontally,
-            verticalArrangement = Arrangement.spacedBy(12.dp),
-        ) {
-            Text(
-                text = stringResource(R.string.library_donation_message),
-                modifier = Modifier.fillMaxWidth(),
-                style = MaterialTheme.typography.bodyMedium,
-                color = MaterialTheme.colorScheme.onSurfaceVariant,
-            )
-            Image(
-                painter = painterResource(R.drawable.sociabuzz_wordmark),
-                contentDescription = null, // Provider named in the action and supporting text.
-                modifier = Modifier.fillMaxWidth().height(64.dp).padding(horizontal = 24.dp),
-                contentScale = ContentScale.Fit,
-            )
-            Text(
-                text = stringResource(R.string.library_donation_provider_note),
-                modifier = Modifier.fillMaxWidth(),
-                style = MaterialTheme.typography.bodySmall,
-                color = MaterialTheme.colorScheme.onSurfaceVariant,
-            )
-        }
-        ScrollableContentHint(
-            visible = canScrollForward,
-            modifier = Modifier.align(Alignment.BottomCenter),
-        )
-    }
-}
-
