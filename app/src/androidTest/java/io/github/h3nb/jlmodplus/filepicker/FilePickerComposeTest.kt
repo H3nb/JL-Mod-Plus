@@ -139,6 +139,12 @@ class FilePickerComposeTest {
                                     allowMultiple = true,
                                     singleClick = false,
                                 ),
+                                selectedPaths = setOf("/storage/emulated/0/zeta.jar"),
+                                entries = sampleState().entries + FilePickerEntry(
+                                    "/storage/emulated/0/alpha.jar",
+                                    "alpha.jar",
+                                    FilePickerEntryKind.FILE,
+                                ),
                             ),
                             actions = RecordingActions(events),
                         )
