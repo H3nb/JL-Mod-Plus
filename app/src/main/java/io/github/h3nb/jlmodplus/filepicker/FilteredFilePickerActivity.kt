@@ -91,6 +91,7 @@ class FilteredFilePickerActivity : AppCompatActivity() {
             onFilesPicked = ::finishWithFiles,
         )
         pickerState = controller.currentState()
+        val actions = createActions()
 
         val composeView = ComposeView(this).apply {
             id = R.id.file_picker_compose_root
@@ -98,7 +99,7 @@ class FilteredFilePickerActivity : AppCompatActivity() {
             setContent {
                 val state = pickerState ?: return@setContent
                 JLModPlusTheme {
-                    FilePickerHost(state = state, actions = createActions())
+                    FilePickerHost(state = state, actions = actions)
                 }
             }
         }
