@@ -77,8 +77,8 @@ internal fun screenPresetColumnCount(availableWidthDp: Float, fontScale: Float):
         availableWidthDp >= 250f -> 2
         else -> 1
     }
-    val tileWidth = 112f * fontScale.coerceAtLeast(1f)
-    val fittingColumns = ((availableWidthDp + 8f) / (tileWidth + 8f)).toInt().coerceAtLeast(1)
+    val minimumTileWidth = 112f * fontScale.coerceAtLeast(1f)
+    val fittingColumns = ((availableWidthDp + 8f) / (minimumTileWidth + 8f)).toInt().coerceAtLeast(1)
     return minOf(normalColumns, fittingColumns)
 }
 
