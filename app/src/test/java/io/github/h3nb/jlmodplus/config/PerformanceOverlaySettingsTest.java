@@ -18,149 +18,37 @@ import static org.junit.jupiter.api.Assertions.assertEquals;
 import static org.junit.jupiter.api.Assertions.assertFalse;
 import static org.junit.jupiter.api.Assertions.assertTrue;
 
-
-
 import org.junit.jupiter.api.Test;
-
-import java.nio.file.Files;
-import java.io.File;
 
 public class PerformanceOverlaySettingsTest {
 	private final ProfileFixtures gson = new ProfileFixtures();
 
 	@Test
-	public void legacyShowFpsUsesStandardWithoutChangingEnablement() {
-		ProfileModel legacy = gson.fromJson("{\"ShowFps\":true}", ProfileModel.class);
+	public void legacyShowFpsRemainsEnabledWithoutOldMetricSettings() {
+		ProfileModel legacy = gson.fromJson(
+				"{\"ShowFps\":true,\"PerformanceOverlayMetrics\":0,\"PerformanceOverlayPosition\":3}",
+				ProfileModel.class);
 		ConfigFormState draft = ConfigFormState.fromProfile(legacy, "");
 		ProfileModel saved = gson.fromJson(gson.toJson(draft.applyTo(legacy)), ProfileModel.class);
 
 		assertTrue(saved.showFps);
-		assertEquals(PerformanceOverlayOptions.STANDARD, saved.performanceOverlayMetrics);
-		assertEquals(PerformanceOverlayOptions.TOP_LEFT, saved.performanceOverlayPosition);
+		assertEquals(PerformanceOverlayOptions.BOTTOM_RIGHT, saved.performanceOverlayPosition);
+		assertFalse(gson.toJson(saved).contains("PerformanceOverlayMetrics"));
 		assertFalse(gson.fromJson("{}", ProfileModel.class).showFps);
 	}
 
 	@Test
-	public void customAndEmptySelectionsSurviveDraftEditingAndPersistence() throws Exception {
-		ProfileModel profile = new ProfileModel();
-		File profileDir = Files.createTempDirectory("jlmod-perf-overlay").toFile();
-		profileDir.deleteOnExit();
-		profile.version = ProfileModel.VERSION;
-		int custom = PerformanceOverlayOptions.CPU | PerformanceOverlayOptions.NATIVE_HEAP;
-		ConfigFormState draft = ConfigFormState.fromProfile(profile, "")
-				.toBuilder().performanceOverlayMetrics(custom)
-				.performanceOverlayPosition(PerformanceOverlayOptions.BOTTOM_RIGHT)
-				.showFps(false).build();
-		assertTrue(ProfilesManager.saveConfig(profileDir, draft.applyTo(profile)));
-		ProfileModel saved = ProfilesManager.loadConfig(profileDir);
-		ConfigFormState reloaded = ConfigFormState.fromProfile(saved, "").toBuilder()
-				.fpsLimit("60").build();
-		assertEquals(custom, reloaded.performanceOverlayMetrics);
-		assertEquals(PerformanceOverlayOptions.BOTTOM_RIGHT, reloaded.performanceOverlayPosition);
-		assertFalse(reloaded.showFps);
-
-		ProfileModel empty = reloaded.toBuilder().showFps(true).performanceOverlayMetrics(0)
-				.build().applyTo(saved);
-		assertTrue(ProfilesManager.saveConfig(profileDir, empty));
-		ProfileModel emptyReloaded = ProfilesManager.loadConfig(profileDir);
-		assertTrue(emptyReloaded.showFps);
-		assertEquals(0, ConfigFormState.fromProfile(emptyReloaded, "").performanceOverlayMetrics);
-	}
-
-	@Test
-	public void overlayEditsAreEffectivePresetChangesAndRestoringIsANoOp() {
+	public void positionChangesAreEffectiveOnlyWhenEditedAndInvalidPositionsAreSanitized() {
 		ProfileModel profile = new ProfileModel();
 		ProfileModel baseline = ProfileConfigMatcher.copyConfig(profile);
 		ConfigFormState draft = ConfigFormState.fromProfile(profile, "").toBuilder()
-				.performanceOverlayMetrics(PerformanceOverlayOptions.MINIMAL).build();
-		assertFalse(ProfileConfigMatcher.sameEffectiveConfig(profile, draft, baseline));
-		draft = draft.toBuilder().performanceOverlayMetrics(PerformanceOverlayOptions.STANDARD)
 				.performanceOverlayPosition(PerformanceOverlayOptions.BOTTOM_LEFT).build();
 		assertFalse(ProfileConfigMatcher.sameEffectiveConfig(profile, draft, baseline));
-		draft = draft.toBuilder().performanceOverlayPosition(PerformanceOverlayOptions.TOP_LEFT).build();
-		assertTrue(ProfileConfigMatcher.sameEffectiveConfig(profile, draft, baseline));
-	}
+		assertTrue(ProfileConfigMatcher.sameEffectiveConfig(profile, draft.toBuilder()
+				.performanceOverlayPosition(PerformanceOverlayOptions.TOP_LEFT).build(), baseline));
 
-	@Test
-	public void frameMetricsAreRequiredOnlyForFrameTrafficSelections() {
-		assertFalse(PerformanceOverlayOptions.requiresFrameMetrics(0));
-		assertFalse(PerformanceOverlayOptions.requiresFrameMetrics(
-				PerformanceOverlayOptions.CAP
-						| PerformanceOverlayOptions.SPEED
-						| PerformanceOverlayOptions.CPU
-						| PerformanceOverlayOptions.RAM
-						| PerformanceOverlayOptions.FRAME_INTERVAL
-						| PerformanceOverlayOptions.P95_INTERVAL
-						| PerformanceOverlayOptions.MAX_INTERVAL
-						| PerformanceOverlayOptions.PAINT
-						| PerformanceOverlayOptions.COPY
-						| PerformanceOverlayOptions.SUBMIT
-						| PerformanceOverlayOptions.INPUT_QUEUE
-						| PerformanceOverlayOptions.FRAME_QUEUE
-						| PerformanceOverlayOptions.RENDER_INTERVAL
-						| PerformanceOverlayOptions.RENDER_P95_INTERVAL
-						| PerformanceOverlayOptions.RENDER_MAX_INTERVAL));
-		assertTrue(PerformanceOverlayOptions.requiresFrameMetrics(
-				PerformanceOverlayOptions.FPS));
-		assertTrue(PerformanceOverlayOptions.requiresFrameMetrics(
-				PerformanceOverlayOptions.GUEST_FPS));
-		assertTrue(PerformanceOverlayOptions.requiresFrameMetrics(
-				PerformanceOverlayOptions.COALESCED));
-	}
-
-	@Test
-	public void rendererMetricsAreRequiredOnlyForRenderConsumptionSelections() {
-		assertFalse(PerformanceOverlayOptions.requiresRendererMetrics(0));
-		assertFalse(PerformanceOverlayOptions.requiresRendererMetrics(
-				PerformanceOverlayOptions.GUEST_FPS
-						| PerformanceOverlayOptions.CPU
-						| PerformanceOverlayOptions.RAM
-						| PerformanceOverlayOptions.SUBMIT
-						| PerformanceOverlayOptions.FRAME_QUEUE));
-		assertTrue(PerformanceOverlayOptions.requiresRendererMetrics(
-				PerformanceOverlayOptions.FPS));
-		assertTrue(PerformanceOverlayOptions.requiresRendererMetrics(
-				PerformanceOverlayOptions.COALESCED));
-		assertTrue(PerformanceOverlayOptions.requiresRendererMetrics(
-				PerformanceOverlayOptions.FPS | PerformanceOverlayOptions.COALESCED));
-	}
-
-	@Test
-	public void debugIsCuratedAndCustomCanStillSelectAll() {
-		assertTrue((PerformanceOverlayOptions.DEBUG & PerformanceOverlayOptions.FPS) != 0);
-		assertTrue((PerformanceOverlayOptions.DEBUG & PerformanceOverlayOptions.INPUT_QUEUE) != 0);
-		assertEquals(0, PerformanceOverlayOptions.DEBUG & PerformanceOverlayOptions.DISPLAY);
-		assertTrue(PerformanceOverlayOptions.DEBUG != PerformanceOverlayOptions.ALL);
-		assertFalse(PerformanceOverlayOptions.requiresFrameMetrics(
-				PerformanceOverlayOptions.RENDER_INTERVAL));
-		assertFalse(PerformanceOverlayOptions.requiresRendererMetrics(
-				PerformanceOverlayOptions.RENDER_INTERVAL));
-	}
-
-	@Test
-	public void retiredTemperatureBitsAreClearedWithoutRenumberingActiveMetrics() {
-		int retired = (1 << 17) | (1 << 18) | (1 << 19);
-		assertEquals(23, Integer.bitCount(PerformanceOverlayOptions.ALL));
-		assertEquals(0, PerformanceOverlayOptions.sanitize(retired));
-		int expected = PerformanceOverlayOptions.THERMAL
-				| PerformanceOverlayOptions.RENDER_MAX_INTERVAL;
-		assertEquals(expected, PerformanceOverlayOptions.sanitize(retired | expected));
-		ProfileModel oldCustomProfile = new ProfileModel();
-		oldCustomProfile.performanceOverlayMetrics = retired | expected;
-		assertEquals(expected,
-				ConfigFormState.fromProfile(oldCustomProfile, "").performanceOverlayMetrics);
-	}
-
-	@Test
-	public void malformedPersistedValuesAreSanitizedAtTheFormBoundary() {
-		ProfileModel profile = gson.fromJson(
-				"{\"PerformanceOverlayMetrics\":1073741825,\"PerformanceOverlayPosition\":99}",
-				ProfileModel.class);
-		ConfigFormState draft = ConfigFormState.fromProfile(profile, "");
-		assertEquals(PerformanceOverlayOptions.FPS, draft.performanceOverlayMetrics);
-		assertEquals(PerformanceOverlayOptions.TOP_LEFT, draft.performanceOverlayPosition);
-		ProfileModel saved = draft.applyTo(profile);
-		assertEquals(PerformanceOverlayOptions.FPS, saved.performanceOverlayMetrics);
-		assertEquals(PerformanceOverlayOptions.TOP_LEFT, saved.performanceOverlayPosition);
+		ProfileModel malformed = gson.fromJson("{\"PerformanceOverlayPosition\":99}", ProfileModel.class);
+		assertEquals(PerformanceOverlayOptions.TOP_LEFT,
+				ConfigFormState.fromProfile(malformed, "").performanceOverlayPosition);
 	}
 }

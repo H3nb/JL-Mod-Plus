@@ -56,7 +56,6 @@ data class ProfileModel(
     @SerialName("PostEffects") @JvmField var effects: List<EffectEntry> = emptyList(),
     @SerialName("ParallelRedrawScreen") @JvmField var parallelRedrawScreen: Boolean = false,
     @SerialName("ShowFps") @JvmField var showFps: Boolean = false,
-    @SerialName("PerformanceOverlayMetrics") @JvmField var performanceOverlayMetrics: Int = PerformanceOverlayOptions.STANDARD,
     @SerialName("PerformanceOverlayPosition") @JvmField var performanceOverlayPosition: Int = PerformanceOverlayOptions.TOP_LEFT,
     @SerialName("TimingMode") @JvmField var timingMode: Int = TimingMode.FULL_GUEST_TIME,
     @SerialName("FpsLimit") @JvmField var fpsLimit: Int = 0,

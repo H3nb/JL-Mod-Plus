@@ -915,8 +915,8 @@
     <string name="library_metadata_reset_to_original">Kembalikan ke aslinya</string>
     <string name="library_metadata_save">Simpan</string>
 
-    <string name="perf_overlay_title">Overlay performa</string>
-    <string name="perf_overlay_help">Menampilkan metrik performa dan diagnostik di atas layar MIDlet.</string>
+    <string name="perf_overlay_title">Tampilkan FPS</string>
+    <string name="perf_overlay_help">Menampilkan frame rate selama bermain.</string>
     <string name="perf_overlay_preset">Preset overlay</string>
     <string name="perf_overlay_preset_help">Terapkan preset atau sesuaikan pilihan.</string>
     <string name="perf_overlay_minimal">Minimal</string>

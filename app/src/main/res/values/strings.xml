@@ -995,8 +995,8 @@
     <string name="library_selection_select_all">Select all</string>
     <string name="library_selection_unselect_all">Deselect all</string>
 
-    <string name="perf_overlay_title">Performance overlay</string>
-    <string name="perf_overlay_help">Shows selected performance and diagnostic metrics over the MIDlet screen.</string>
+    <string name="perf_overlay_title">Show FPS</string>
+    <string name="perf_overlay_help">Displays the frame rate while playing.</string>
     <string name="perf_overlay_preset">Overlay preset</string>
     <string name="perf_overlay_preset_help">Apply a preset or customize the selection.</string>
     <string name="perf_overlay_minimal">Minimal</string>

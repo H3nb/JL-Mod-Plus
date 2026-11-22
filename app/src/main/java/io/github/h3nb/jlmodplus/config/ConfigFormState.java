@@ -81,7 +81,6 @@ public final class ConfigFormState {
 	public final boolean forceFullscreen;
 	public final boolean allowDisplayCutout;
 	public final boolean showFps;
-	public final int performanceOverlayMetrics;
 	public final int performanceOverlayPosition;
 	public final int timingMode;
 	public final boolean fontApplyDimensions;
@@ -135,7 +134,6 @@ public final class ConfigFormState {
 		forceFullscreen = builder.forceFullscreen;
 		allowDisplayCutout = builder.allowDisplayCutout;
 		showFps = builder.showFps;
-		performanceOverlayMetrics = PerformanceOverlayOptions.sanitize(builder.performanceOverlayMetrics);
 		performanceOverlayPosition = PerformanceOverlayOptions.sanitizePosition(builder.performanceOverlayPosition);
 		timingMode = TimingMode.sanitize(builder.timingMode);
 		fontApplyDimensions = builder.fontApplyDimensions;
@@ -181,7 +179,6 @@ public final class ConfigFormState {
 				.effects(params.effects)
 					.controller(params.controller)
 				.showFps(params.showFps)
-				.performanceOverlayMetrics(params.performanceOverlayMetrics)
 				.performanceOverlayPosition(params.performanceOverlayPosition)
 				.timingMode(TimingMode.sanitize(params.timingMode))
 				.fpsLimit(optionalInt(params.fpsLimit))
@@ -238,7 +235,6 @@ public final class ConfigFormState {
 		params.forceFullscreen = forceFullscreen;
 		params.allowDisplayCutout = allowDisplayCutout;
 		params.showFps = showFps;
-		params.performanceOverlayMetrics = performanceOverlayMetrics;
 		params.performanceOverlayPosition = performanceOverlayPosition;
 		params.timingMode = TimingMode.sanitize(timingMode);
 		params.fpsLimit = parseInt(fpsLimit, 0);
@@ -360,7 +356,6 @@ public final class ConfigFormState {
 		private boolean forceFullscreen;
 		private boolean allowDisplayCutout = true;
 		private boolean showFps;
-		private int performanceOverlayMetrics = PerformanceOverlayOptions.STANDARD;
 		private int performanceOverlayPosition = PerformanceOverlayOptions.TOP_LEFT;
 		private int timingMode = TimingMode.FULL_GUEST_TIME;
 		private boolean fontApplyDimensions;
@@ -416,7 +411,6 @@ public final class ConfigFormState {
 			forceFullscreen = source.forceFullscreen;
 			allowDisplayCutout = source.allowDisplayCutout;
 			showFps = source.showFps;
-			performanceOverlayMetrics = source.performanceOverlayMetrics;
 			performanceOverlayPosition = source.performanceOverlayPosition;
 			timingMode = source.timingMode;
 			fontApplyDimensions = source.fontApplyDimensions;
@@ -475,7 +469,6 @@ public final class ConfigFormState {
 		public Builder forceFullscreen(boolean value) { forceFullscreen = value; return this; }
 		public Builder allowDisplayCutout(boolean value) { allowDisplayCutout = value; return this; }
 		public Builder showFps(boolean value) { showFps = value; return this; }
-		public Builder performanceOverlayMetrics(int value) { performanceOverlayMetrics = value; return this; }
 		public Builder performanceOverlayPosition(int value) { performanceOverlayPosition = value; return this; }
 		public Builder timingMode(int value) { timingMode = TimingMode.sanitize(value); return this; }
 		public Builder fontApplyDimensions(boolean value) { fontApplyDimensions = value; return this; }
