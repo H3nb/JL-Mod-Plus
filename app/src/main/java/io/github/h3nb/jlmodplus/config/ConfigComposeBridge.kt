@@ -827,7 +827,7 @@ private fun ConfigTopBar(
             modifier = Modifier.fillMaxWidth().windowInsetsPadding(WindowInsets.statusBars),
             color = MaterialTheme.colorScheme.surface,
         ) {
-            io.github.h3nb.jlmodplus.applist.LibrarySearchField(
+            io.github.h3nb.jlmodplus.ui.InlineSearchField(
                 query = searchQuery,
                 onQueryChange = onQueryChange,
                 modifier = Modifier.fillMaxWidth()
