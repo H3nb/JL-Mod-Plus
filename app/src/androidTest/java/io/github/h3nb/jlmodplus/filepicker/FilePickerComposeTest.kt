@@ -24,6 +24,7 @@ import androidx.compose.ui.test.WindowSize
 import androidx.compose.ui.test.junit4.v2.createComposeRule
 import androidx.compose.ui.test.assertCountEquals
 import androidx.compose.ui.test.assertIsEnabled
+import androidx.compose.ui.test.assertIsDisplayed
 import androidx.compose.ui.test.getUnclippedBoundsInRoot
 import androidx.compose.ui.test.onNodeWithContentDescription
 import androidx.compose.ui.test.onNodeWithText
@@ -247,7 +248,7 @@ class FilePickerComposeTest {
         val first = composeRule.onNodeWithText("alpha.jar").getUnclippedBoundsInRoot()
         val second = composeRule.onNodeWithText("zeta.jar").getUnclippedBoundsInRoot()
         assertTrue("Wide picker must actually use multiple columns", first.left < second.left)
-        assertEquals(first.top, second.top, 1f)
+        assertEquals(first.top.value, second.top.value, 1f)
         composeRule.onNodeWithText("zeta.jar").performClick()
         assertEquals("open:zeta.jar", events.get())
     }
