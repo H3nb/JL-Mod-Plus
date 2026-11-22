@@ -218,43 +218,16 @@ public class AppsListFragment extends Fragment {
 
     @Override
     public void onViewCreated(@NonNull View view, @Nullable Bundle savedInstanceState) {
-        int storedLayout = preferences.getInt(PREF_APPS_VIEW, LIBRARY_LAYOUT_LIST);
-        LibraryLayout layout = storedLayout == LIBRARY_LAYOUT_LIST
-                ? LibraryLayout.List : LibraryLayout.Grid;
-        int storedIconRatio = preferences.getInt(PREF_APPS_ICON_RATIO, LIBRARY_ICON_RATIO_SQUARE);
-        LibraryIconRatio iconRatio = storedIconRatio == LIBRARY_ICON_RATIO_PORTRAIT
-                ? LibraryIconRatio.Portrait : LibraryIconRatio.Square;
-        int storedIconShape = preferences.getInt(PREF_APPS_ICON_SHAPE, LIBRARY_ICON_SHAPE_ROUND);
-        LibraryIconShape iconShape = storedIconShape == LIBRARY_ICON_SHAPE_SQUARE
-                ? LibraryIconShape.Square : LibraryIconShape.Round;
-        int storedGridSpacing = preferences.getInt(
-                PREF_APPS_GRID_SPACING, LIBRARY_GRID_SPACING_STANDARD);
-        LibraryGridSpacing gridSpacing;
-        switch (storedGridSpacing) {
-            case LIBRARY_GRID_SPACING_COMPACT:
-                gridSpacing = LibraryGridSpacing.Compact;
-                break;
-            case LIBRARY_GRID_SPACING_SPACIOUS:
-                gridSpacing = LibraryGridSpacing.Spacious;
-                break;
-            case LIBRARY_GRID_SPACING_STANDARD:
-            default:
-                gridSpacing = LibraryGridSpacing.Standard;
-                break;
-            case LIBRARY_GRID_SPACING_NONE:
-                gridSpacing = LibraryGridSpacing.None;
-                break;
-        }
         composeController = new LibraryComposeController(
                 (ComposeView) view,
                 createActions(),
-                layout,
+                readLayout(),
                 preferences.getInt(PREF_APP_SORT, 0),
-                iconRatio,
-                iconShape,
+                readIconRatio(),
+                readIconShape(),
                 preferences.getBoolean(PREF_APPS_ENHANCED_ICONS, true),
                 preferences.getBoolean(PREF_APPS_HIDE_GRID_TITLES, false),
-                gridSpacing,
+                readGridSpacing(),
                 readGridIconSize(),
                 ShortcutManagerCompat.isRequestPinShortcutSupported(requireContext()),
                 new LibraryControllerKeyEventHandler() {
@@ -306,39 +279,42 @@ public class AppsListFragment extends Fragment {
         LibraryComposeController controller = composeController;
         if (controller == null || preferences == null) return;
 
-        int storedLayout = preferences.getInt(PREF_APPS_VIEW, LIBRARY_LAYOUT_LIST);
-        int storedIconRatio = preferences.getInt(
-                PREF_APPS_ICON_RATIO, LIBRARY_ICON_RATIO_SQUARE);
-        int storedIconShape = preferences.getInt(
-                PREF_APPS_ICON_SHAPE, LIBRARY_ICON_SHAPE_ROUND);
-        int storedGridSpacing = preferences.getInt(
-                PREF_APPS_GRID_SPACING, LIBRARY_GRID_SPACING_STANDARD);
-        LibraryGridSpacing gridSpacing;
-        switch (storedGridSpacing) {
-            case LIBRARY_GRID_SPACING_COMPACT:
-                gridSpacing = LibraryGridSpacing.Compact;
-                break;
-            case LIBRARY_GRID_SPACING_SPACIOUS:
-                gridSpacing = LibraryGridSpacing.Spacious;
-                break;
-            case LIBRARY_GRID_SPACING_NONE:
-                gridSpacing = LibraryGridSpacing.None;
-                break;
-            case LIBRARY_GRID_SPACING_STANDARD:
-            default:
-                gridSpacing = LibraryGridSpacing.Standard;
-                break;
-        }
         controller.updateAppearance(
-                storedLayout == LIBRARY_LAYOUT_GRID ? LibraryLayout.Grid : LibraryLayout.List,
-                storedIconRatio == LIBRARY_ICON_RATIO_PORTRAIT
-                        ? LibraryIconRatio.Portrait : LibraryIconRatio.Square,
-                storedIconShape == LIBRARY_ICON_SHAPE_SQUARE
-                        ? LibraryIconShape.Square : LibraryIconShape.Round,
+                readLayout(),
+                readIconRatio(),
+                readIconShape(),
                 preferences.getBoolean(PREF_APPS_ENHANCED_ICONS, true),
                 preferences.getBoolean(PREF_APPS_HIDE_GRID_TITLES, false),
-                gridSpacing,
+                readGridSpacing(),
                 readGridIconSize());
+    }
+
+    private LibraryLayout readLayout() {
+        return preferences.getInt(PREF_APPS_VIEW, LIBRARY_LAYOUT_LIST) == LIBRARY_LAYOUT_GRID
+                ? LibraryLayout.Grid : LibraryLayout.List;
+    }
+
+    private LibraryIconRatio readIconRatio() {
+        return preferences.getInt(PREF_APPS_ICON_RATIO, LIBRARY_ICON_RATIO_SQUARE)
+                == LIBRARY_ICON_RATIO_PORTRAIT ? LibraryIconRatio.Portrait : LibraryIconRatio.Square;
+    }
+
+    private LibraryIconShape readIconShape() {
+        return preferences.getInt(PREF_APPS_ICON_SHAPE, LIBRARY_ICON_SHAPE_ROUND)
+                == LIBRARY_ICON_SHAPE_SQUARE ? LibraryIconShape.Square : LibraryIconShape.Round;
+    }
+
+    private LibraryGridSpacing readGridSpacing() {
+        switch (preferences.getInt(PREF_APPS_GRID_SPACING, LIBRARY_GRID_SPACING_STANDARD)) {
+            case LIBRARY_GRID_SPACING_NONE:
+                return LibraryGridSpacing.None;
+            case LIBRARY_GRID_SPACING_COMPACT:
+                return LibraryGridSpacing.Compact;
+            case LIBRARY_GRID_SPACING_SPACIOUS:
+                return LibraryGridSpacing.Spacious;
+            default:
+                return LibraryGridSpacing.Standard;
+        }
     }
 
     private LibraryGridIconSize readGridIconSize() {
@@ -475,8 +451,6 @@ public class AppsListFragment extends Fragment {
                 int value = layout == LibraryLayout.Grid
                         ? LIBRARY_LAYOUT_GRID : LIBRARY_LAYOUT_LIST;
                 preferences.edit().putInt(PREF_APPS_VIEW, value).apply();
-                LibraryComposeController controller = composeController;
-                if (controller != null) controller.updateLayout(layout);
             }
 
             @Override
@@ -484,8 +458,6 @@ public class AppsListFragment extends Fragment {
                 int value = iconRatio == LibraryIconRatio.Portrait
                         ? LIBRARY_ICON_RATIO_PORTRAIT : LIBRARY_ICON_RATIO_SQUARE;
                 preferences.edit().putInt(PREF_APPS_ICON_RATIO, value).apply();
-                LibraryComposeController controller = composeController;
-                if (controller != null) controller.updateIconRatio(iconRatio);
             }
 
             @Override
@@ -493,22 +465,16 @@ public class AppsListFragment extends Fragment {
                 int value = iconShape == LibraryIconShape.Square
                         ? LIBRARY_ICON_SHAPE_SQUARE : LIBRARY_ICON_SHAPE_ROUND;
                 preferences.edit().putInt(PREF_APPS_ICON_SHAPE, value).apply();
-                LibraryComposeController controller = composeController;
-                if (controller != null) controller.updateIconShape(iconShape);
             }
 
             @Override
             public void onEnhancedIconsChange(boolean enabled) {
                 preferences.edit().putBoolean(PREF_APPS_ENHANCED_ICONS, enabled).apply();
-                LibraryComposeController controller = composeController;
-                if (controller != null) controller.updateEnhancedIcons(enabled);
             }
 
             @Override
             public void onHideGridTitlesChange(boolean hide) {
                 preferences.edit().putBoolean(PREF_APPS_HIDE_GRID_TITLES, hide).apply();
-                LibraryComposeController controller = composeController;
-                if (controller != null) controller.updateHideGridTitles(hide);
             }
 
             @Override
@@ -530,8 +496,6 @@ public class AppsListFragment extends Fragment {
                         break;
                 }
                 preferences.edit().putInt(PREF_APPS_GRID_SPACING, value).apply();
-                LibraryComposeController controller = composeController;
-                if (controller != null) controller.updateGridSpacing(spacing);
             }
 
             @Override

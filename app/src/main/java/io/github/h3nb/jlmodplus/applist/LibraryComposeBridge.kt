@@ -567,30 +567,6 @@ class LibraryComposeController(
         )
     }
 
-    fun updateLayout(layout: LibraryLayout) {
-        state = state.copy(layout = layout)
-    }
-
-    fun updateIconRatio(iconRatio: LibraryIconRatio) {
-        state = state.copy(iconRatio = iconRatio)
-    }
-
-    fun updateIconShape(iconShape: LibraryIconShape) {
-        state = state.copy(iconShape = iconShape)
-    }
-
-    fun updateEnhancedIcons(enabled: Boolean) {
-        state = state.copy(enhancedIcons = enabled)
-    }
-
-    fun updateHideGridTitles(hide: Boolean) {
-        state = state.copy(hideGridTitles = hide)
-    }
-
-    fun updateGridSpacing(spacing: LibraryGridSpacing) {
-        state = state.copy(gridSpacing = spacing)
-    }
-
     fun updateAppearance(
         layout: LibraryLayout,
         iconRatio: LibraryIconRatio,
