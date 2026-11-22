@@ -179,12 +179,16 @@ during `startApp()`.
   the launch request and waits for the old process's Binder death before starting
   a fresh heap. Reopening the same live runtime retains its session and heap.
 - Android Home retains the live runtime and its keep-alive service. Removing an
-  emulator task from Recents or explicitly exiting the emulator completes the
-  session as a user stop, removes emulator tasks, and terminates runtime, memory
-  engine, and main processes. MIDlet Exit returns to Library after runtime
-  termination, including when a hung `destroyApp()` requires forced cleanup.
-  Normal emulator shutdown stops auxiliary processes, then runtime, then main.
-  If dispatch to the main coordinator fails, emergency shutdown stops auxiliary
+  emulator task from Recents completes the session as a user stop and terminates
+  the isolated MIDlet process immediately. The removed task has no UI to retain;
+  the main process may remain cached rather than being terminated by a delayed
+  shutdown request that could hit a new Library launch. The memory engine
+  invalidates its target when the runtime process disconnects. Explicit emulator
+  Exit still removes emulator tasks and terminates runtime, memory engine, and
+  main processes. MIDlet Exit returns to Library after runtime termination,
+  including when a hung `destroyApp()` requires forced cleanup. Normal explicit
+  emulator shutdown stops auxiliary processes, then runtime, then main. If
+  dispatch to the main coordinator fails, emergency shutdown stops auxiliary
   processes first and keeps its caller alive until peer termination is requested;
   a runtime caller therefore stops main immediately before terminating itself.
 - A `Displayable` transition closes the menu before replacing its View, then

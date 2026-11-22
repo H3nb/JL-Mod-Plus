@@ -135,9 +135,9 @@ public final class MidletKeepAliveService extends Service {
 
     @Override
     public void onTaskRemoved(Intent rootIntent) {
-        // Home/Activity recreation do not remove the task. A Recents dismissal does, and must
-        // stop the entire emulator rather than leave the foreground service and guest resident.
-        MidletThread.stopEmulator(getApplicationContext());
+        // Recents dismissal ends the old runtime. Do not schedule a delayed main-process
+        // shutdown that could also kill a new Library launch.
+        MidletThread.stopRemovedTask(getApplicationContext());
     }
 
     @Override
