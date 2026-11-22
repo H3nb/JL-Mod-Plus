@@ -328,6 +328,7 @@ internal fun ConfigScreen(
                                 query = searchQuery,
                                 state = state,
                                 isProfile = isProfile,
+                                cutoutAvailable = cutoutAvailable,
                                 modifier = Modifier.fillMaxSize().padding(padding)
                                     .consumeWindowInsets(padding),
                                 onSelected = { nextDestination, section, detail, option ->

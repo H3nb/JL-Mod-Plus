@@ -104,6 +104,7 @@ internal fun ConfigSearchResults(
     query: String,
     state: ConfigUiState,
     isProfile: Boolean,
+    cutoutAvailable: Boolean = false,
     onSelected: (ConfigDestination, String, ConfigDetail?, String) -> Unit,
     modifier: Modifier = Modifier,
 ) {
@@ -123,6 +124,16 @@ internal fun ConfigSearchResults(
                 R.string.midlet_permissions_write,
             )) return@filter false
         when (entry.title) {
+            R.string.PREF_SCALE_RATIO ->
+                if (state.form.screenScaleType != 0) return@filter false
+            R.string.config_avoid_camera_cutout_title ->
+                if (!cutoutAvailable) return@filter false
+            R.string.config_background_custom_color -> {
+                val mode = BackgroundMode.sanitize(state.form.screenBackgroundMode)
+                if (mode != BackgroundMode.CUSTOM &&
+                    mode != BackgroundMode.DYNAMIC_SOLID
+                ) return@filter false
+            }
             R.string.bitmap_upscaling_title ->
                 if (state.form.internalResolutionScale == 1) return@filter false
             R.string.render_shader_effects ->
