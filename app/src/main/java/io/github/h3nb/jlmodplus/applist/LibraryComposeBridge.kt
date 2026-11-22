@@ -2505,7 +2505,7 @@ private fun LibraryAppsHeader(
         ) {
             Surface(
                 modifier = Modifier.weight(1f),
-                shape = MaterialTheme.shapes.extraLarge,
+                shape = RoundedCornerShape(20.dp),
                 color = MaterialTheme.colorScheme.surfaceContainerLow,
                 border = BorderStroke(1.dp, MaterialTheme.colorScheme.outlineVariant),
             ) {
@@ -2559,7 +2559,7 @@ private fun LibraryAppsHeader(
                 }
             }
             Surface(
-                shape = MaterialTheme.shapes.extraLarge,
+                shape = RoundedCornerShape(20.dp),
                 color = MaterialTheme.colorScheme.surfaceContainerLow,
                 border = BorderStroke(1.dp, MaterialTheme.colorScheme.outlineVariant),
             ) {
