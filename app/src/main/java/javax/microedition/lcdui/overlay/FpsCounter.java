@@ -39,6 +39,7 @@ public final class FpsCounter extends TimerTask implements Layer {
 	private final int contentColor;
 	private final Timer timer = new Timer("FpsCounter", true);
 	private final RectF drawingBounds = new RectF();
+	private final RectF badgeBounds = new RectF();
 	private final int[] viewLocation = new int[2];
 	private final int[] rootLocation = new int[2];
 
@@ -93,11 +94,18 @@ public final class FpsCounter extends TimerTask implements Layer {
 		if (drawingBounds.width() <= 0 || drawingBounds.height() <= 0) return;
 		boolean right = position == TOP_RIGHT || position == BOTTOM_RIGHT;
 		boolean bottom = position == BOTTOM_LEFT || position == BOTTOM_RIGHT;
-		float x = right ? drawingBounds.right - graphics.measureDiagnosticText(text) : drawingBounds.left;
-		float y = bottom ? drawingBounds.bottom - graphics.getDiagnosticTextHeight() : drawingBounds.top;
+		float density = view.getResources().getDisplayMetrics().density;
+		float horizontalPadding = 6f * density;
+		float verticalPadding = 3f * density;
+		float width = graphics.measureDiagnosticText(text) + 2f * horizontalPadding;
+		float height = graphics.getDiagnosticTextHeight() + 2f * verticalPadding;
+		float x = right ? drawingBounds.right - width : drawingBounds.left;
+		float y = bottom ? drawingBounds.bottom - height : drawingBounds.top;
+		badgeBounds.set(x, y, x + width, y + height);
 		int save = graphics.clipDiagnostics(drawingBounds);
 		try {
-			graphics.drawDiagnosticText(text, contentColor, x, y);
+			graphics.fillControlRoundRect(badgeBounds, 5f * density, 0xB8000000);
+			graphics.drawDiagnosticText(text, contentColor, x + horizontalPadding, y + verticalPadding);
 		} finally {
 			graphics.restoreDiagnostics(save);
 		}

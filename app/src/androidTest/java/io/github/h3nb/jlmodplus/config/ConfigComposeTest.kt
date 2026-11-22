@@ -238,6 +238,10 @@ class ConfigComposeTest {
         composeRule.onNodeWithTag("config_category_graphics").performScrollTo().performClick()
         scrollTo(uiString(R.string.config_display_rendering))
         composeRule.onNodeWithText(uiString(R.string.pref_graphics_mode_title)).assertExists()
+        scrollTo(uiString(R.string.config_image_quality_section))
+        composeRule.onNodeWithText(uiString(R.string.internal_resolution_title)).assertExists()
+        scrollTo(uiString(R.string.config_frame_rate_section))
+        composeRule.onNodeWithText(uiString(R.string.config_show_fps_title)).assertExists()
         composeRule.onNodeWithContentDescription(uiString(R.string.action_back)).performClick()
 
         composeRule.onNodeWithTag("config_category_media").performScrollTo().performClick()
@@ -333,21 +337,27 @@ class ConfigComposeTest {
         )
         val query = mutableStateOf("shader GLSL effects")
         var selected: String? = null
+        var selectedSection: String? = null
         composeRule.setContent {
             JLModPlusTheme {
                 ConfigSearchResults(
                     query = query.value,
                     state = state,
                     isProfile = true,
-                    onSelected = { _, _, _, option -> selected = option },
+                    onSelected = { _, section, _, option ->
+                        selectedSection = section
+                        selected = option
+                    },
                 )
             }
         }
         composeRule.onNodeWithText(uiString(R.string.render_shader_effects)).performClick()
         assertEquals(uiString(R.string.pref_graphics_mode_title), selected)
-        composeRule.runOnIdle { query.value = uiString(R.string.perf_overlay_position) }
-        composeRule.onNodeWithText(uiString(R.string.perf_overlay_position)).performClick()
+        assertEquals(uiString(R.string.config_display_rendering), selectedSection)
+        composeRule.runOnIdle { query.value = uiString(R.string.config_fps_position_title) }
+        composeRule.onNodeWithText(uiString(R.string.config_fps_position_title)).performClick()
         assertEquals(uiString(R.string.config_show_fps_title), selected)
+        assertEquals(uiString(R.string.config_frame_rate_section), selectedSection)
         composeRule.runOnIdle { query.value = uiString(R.string.PREF_SCALE_RATIO) }
         composeRule.onNodeWithText(uiString(R.string.PREF_SCALE_RATIO)).performClick()
         assertEquals(uiString(R.string.pref_screen_scale_type), selected)
@@ -375,17 +385,18 @@ class ConfigComposeTest {
     }
 
     @Test
-    fun searchCanOpenPerformanceDetailAndReturnToGraphics() {
+    fun searchOpensFrameRateOnGraphicsWithoutAnExtraPage() {
         composeRule.setContent {
             JLModPlusTheme { ConfigScreen(sampleState(), RecordingConfigEvents()) }
         }
         composeRule.onNodeWithContentDescription(uiString(R.string.config_search_title)).performClick()
         composeRule.onNode(hasSetTextAction()).performTextInput("framerate")
         composeRule.onNodeWithText(uiString(R.string.PREF_LIMIT_FPS)).performClick()
+        scrollTo(uiString(R.string.config_frame_rate_section))
         composeRule.onNodeWithText(uiString(R.string.PREF_LIMIT_FPS)).assertExists()
+        composeRule.onNodeWithText(uiString(R.string.config_performance_page_title)).assertDoesNotExist()
         composeRule.onNodeWithContentDescription(uiString(R.string.action_back)).performClick()
-        scrollTo(uiString(R.string.config_display_performance))
-        composeRule.onNodeWithText(uiString(R.string.config_performance_page_title)).assertExists()
+        composeRule.onNodeWithText(uiString(R.string.config_quick_settings)).assertExists()
     }
 
     @Test
@@ -714,6 +725,22 @@ class ConfigComposeTest {
     }
 
     @Test
+    fun quickFpsShortcutEditsValueWithoutOpeningAnotherPage() {
+        val events = RecordingConfigEvents()
+        composeRule.setContent {
+            JLModPlusTheme { ConfigScreen(sampleState(), events) }
+        }
+        composeRule.onNodeWithTag("config_quick_fps").performScrollTo().performClick()
+        composeRule.onNode(isDialog()).assertExists()
+        composeRule.onNode(hasSetTextAction()).performTextReplacement("45")
+        composeRule.onNode(
+            hasText(uiString(android.R.string.ok)) and hasClickAction() and hasAnyAncestor(isDialog()),
+        ).performClick()
+        assertEquals("45", events.lastForm?.fpsLimit)
+        composeRule.onNodeWithText(uiString(R.string.config_quick_settings)).assertExists()
+    }
+
+    @Test
     fun quickSettingsStayAvailableOnMediumPortraitWindow() {
         composeRule.setContent {
             DeviceConfigurationOverride(
@@ -803,8 +830,7 @@ class ConfigComposeTest {
             }
         }
 
-        scrollTo(uiString(R.string.config_performance_page_title))
-        composeRule.onNodeWithText(uiString(R.string.config_performance_page_title)).performClick()
+        scrollTo(uiString(R.string.config_frame_rate_section))
         scrollTo(uiString(R.string.PREF_LIMIT_FPS))
         composeRule.onNodeWithText(uiString(R.string.PREF_LIMIT_FPS)).assertIsDisplayed()
         composeRule.onNodeWithText(uiString(R.string.fps_limit_maximum)).assertIsDisplayed()

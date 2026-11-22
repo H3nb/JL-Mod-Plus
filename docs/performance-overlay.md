@@ -16,8 +16,8 @@ game is not automatically a performance problem, and Java ME games have no
 universal target frame rate.
 
 The counter uses the existing non-interactive `OverlayView` layer. It draws
-one white, regular 12sp monospaced line with a soft dark shadow, no panel
-and no outline, following system font scaling. The selected corner is anchored
+one white, regular 12sp monospaced line over a compact translucent dark
+rounded background with small padding and a soft shadow, following system font scaling. The selected corner is anchored
 inside the safe host viewport (including system bars and cutouts). The counter
 does not intercept game input.
 

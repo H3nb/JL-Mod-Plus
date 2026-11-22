@@ -42,19 +42,19 @@ class PerformanceOverlayOptionsComposeTest {
         var form by mutableStateOf(ConfigFormState.builder().build())
         composeRule.setContent {
             JLModPlusTheme {
-                PerformanceSection(form, onFormChanged = { form = it })
+                FrameRateSection(form, onFormChanged = { form = it })
             }
         }
-        composeRule.onNodeWithText(string(R.string.perf_overlay_position)).assertDoesNotExist()
+        composeRule.onNodeWithText(string(R.string.config_fps_position_title)).assertDoesNotExist()
         composeRule.onNodeWithText(string(R.string.config_show_fps_title)).performClick()
-        composeRule.onNodeWithText(string(R.string.perf_overlay_position))
+        composeRule.onNodeWithText(string(R.string.config_fps_position_title))
             .assertIsDisplayed().performClick()
         composeRule.onNodeWithText(string(R.string.perf_overlay_bottom_right)).performClick()
         composeRule.runOnIdle {
             assertEquals(PerformanceOverlayOptions.BOTTOM_RIGHT, form.performanceOverlayPosition)
         }
         composeRule.onNodeWithText(string(R.string.config_show_fps_title)).performClick()
-        composeRule.onNodeWithText(string(R.string.perf_overlay_position)).assertDoesNotExist()
+        composeRule.onNodeWithText(string(R.string.config_fps_position_title)).assertDoesNotExist()
         composeRule.runOnIdle {
             assertEquals(PerformanceOverlayOptions.BOTTOM_RIGHT, form.performanceOverlayPosition)
         }
