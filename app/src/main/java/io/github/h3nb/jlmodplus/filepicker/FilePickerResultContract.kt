@@ -38,7 +38,7 @@ class FilePickerResultContract : ActivityResultContract<Intent, List<Uri>>() {
             }
         }
         addNormalized(uris, intent.data)
-        return uris.toList()
+        return ArrayList(uris)
     }
 
     private fun addNormalized(uris: MutableSet<Uri>, uri: Uri?) {
