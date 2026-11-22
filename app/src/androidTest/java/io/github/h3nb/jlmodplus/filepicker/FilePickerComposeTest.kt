@@ -186,6 +186,11 @@ class FilePickerComposeTest {
                                 allowMultiple = true,
                                 singleClick = false,
                             ),
+                            entries = sampleState().entries + FilePickerEntry(
+                                "/storage/emulated/0/alpha.jar",
+                                "alpha.jar",
+                                FilePickerEntryKind.FILE,
+                            ),
                         ),
                         actions = RecordingActions(events),
                     )
@@ -193,7 +198,11 @@ class FilePickerComposeTest {
             }
         }
 
-        composeRule.onAllNodesWithTag("file_picker_selection_checkbox").assertCountEquals(1)
+        composeRule.onAllNodesWithTag("file_picker_selection_checkbox").assertCountEquals(2)
+        val first = composeRule.onNodeWithText("alpha.jar").getUnclippedBoundsInRoot()
+        val second = composeRule.onNodeWithText("zeta.jar").getUnclippedBoundsInRoot()
+        assertTrue("Wide picker must actually use multiple columns", first.left < second.left)
+        assertEquals(first.top, second.top, 1f)
         composeRule.onNodeWithText("zeta.jar").performClick()
         assertEquals("open:zeta.jar", events.get())
     }

@@ -317,6 +317,17 @@ private fun PickerContent(
     onPreviewEntry: (FilePickerEntry) -> Unit,
     modifier: Modifier,
 ) {
+    val allowFileSelection = state.request.allowMultiple && state.request.allowsFiles
+    val renderEntry: @Composable (FilePickerEntry) -> Unit = { entry ->
+        PickerEntryRow(
+            entry = entry,
+            selected = entry.path in state.selectedPaths,
+            allowSelection = allowFileSelection && entry.kind == FilePickerEntryKind.FILE,
+            actions = actions,
+            imageLoader = imageLoader,
+            onPreviewEntry = onPreviewEntry,
+        )
+    }
     Column(modifier) {
         Box(modifier = Modifier.weight(1f)) {
             when {
@@ -376,13 +387,7 @@ private fun PickerContent(
                                     }
                                 }
                                 items(visibleEntries, key = { it.path }) { entry ->
-                                    PickerEntryRow(
-                                        entry = entry,
-                                        state = state,
-                                        actions = actions,
-                                        imageLoader = imageLoader,
-                                        onPreviewEntry = onPreviewEntry,
-                                    )
+                                    renderEntry(entry)
                                 }
                             }
                         } else {
@@ -408,13 +413,7 @@ private fun PickerContent(
                                     }
                                 }
                                 items(visibleEntries, key = { it.path }) { entry ->
-                                    PickerEntryRow(
-                                        entry = entry,
-                                        state = state,
-                                        actions = actions,
-                                        imageLoader = imageLoader,
-                                        onPreviewEntry = onPreviewEntry,
-                                    )
+                                    renderEntry(entry)
                                 }
                             }
                         }
@@ -503,14 +502,12 @@ internal fun FilePickerSortMenu(
 @Composable
 private fun PickerEntryRow(
     entry: FilePickerEntry,
-    state: FilePickerState,
+    selected: Boolean,
+    allowSelection: Boolean,
     actions: FilePickerActions,
     imageLoader: FilePickerImageLoader,
     onPreviewEntry: (FilePickerEntry) -> Unit,
 ) {
-    val selected = entry.path in state.selectedPaths
-    val allowSelection = state.request.allowMultiple && state.request.allowsFiles &&
-        entry.kind == FilePickerEntryKind.FILE
     val onPreview: (() -> Unit)? = if (entry.kind == FilePickerEntryKind.FILE &&
         isPickerImage(entry.name)
     ) {

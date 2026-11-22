@@ -126,6 +126,40 @@ class LibraryComposeTest {
     }
 
     @Test
+    fun largeFontCompactHeightActionsKeepDeleteReachable() {
+        composeRule.setContent {
+            DeviceConfigurationOverride(
+                DeviceConfigurationOverride.WindowSize(DpSize(480.dp, 240.dp)),
+            ) {
+                val density = androidx.compose.ui.platform.LocalDensity.current
+                androidx.compose.runtime.CompositionLocalProvider(
+                    androidx.compose.ui.platform.LocalDensity provides
+                        androidx.compose.ui.unit.Density(density.density, fontScale = 2f),
+                ) {
+                    JLModPlusTheme {
+                        AppActionsDialog(
+                            app = LibraryAppUiItem(7, "Demo MIDlet", "Example Vendor", "1.0", null, true),
+                            onDismiss = {},
+                            onShortcut = {},
+                            onSettings = {},
+                            onReinstall = {},
+                            onDelete = {},
+                            onDetails = {},
+                            onSelect = {},
+                            onAddToCollection = {},
+                            onExportAppBundle = {},
+                        )
+                    }
+                }
+            }
+        }
+        val deleteLabel = uiString(R.string.action_context_delete)
+        composeRule.onNode(hasScrollAction() and hasAnyAncestor(isDialog()))
+            .performScrollToNode(hasText(deleteLabel))
+        composeRule.onNodeWithText(deleteLabel).assertIsDisplayed().assertHasClickAction()
+    }
+
+    @Test
     fun allMidletActionsShareOneSheetWithoutMoreNavigation() {
         composeRule.setContent {
             DeviceConfigurationOverride(
