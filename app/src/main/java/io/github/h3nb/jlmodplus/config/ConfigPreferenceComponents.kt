@@ -49,6 +49,7 @@ import io.github.h3nb.jlmodplus.R
 import io.github.h3nb.jlmodplus.ui.PreferenceNavigationRow
 import io.github.h3nb.jlmodplus.ui.PreferenceSwitchRow
 import io.github.h3nb.jlmodplus.ui.PreferenceTextContent
+import io.github.h3nb.jlmodplus.ui.PreferenceChevron
 import io.github.h3nb.jlmodplus.ui.PreferenceNotice
 import io.github.h3nb.jlmodplus.ui.PreferenceMessageLevel
 
@@ -435,14 +436,25 @@ internal fun ConfigActionPreference(
         color = Color.Transparent,
         shape = MaterialTheme.shapes.medium,
     ) {
-        PreferenceNavigationRow(
-            title = title,
-            description = description,
-            onClick = onClick,
-            destructive = destructive,
-            enabled = enabled,
-            modifier = if (testTag == null) Modifier else Modifier.testTag(testTag),
-        )
+        Row(
+            modifier = Modifier
+                .fillMaxWidth()
+                .heightIn(min = 60.dp)
+                .clickable(enabled = enabled, role = Role.Button, onClick = onClick)
+                .then(if (testTag == null) Modifier else Modifier.testTag(testTag))
+                .padding(horizontal = 16.dp, vertical = 10.dp),
+            verticalAlignment = Alignment.CenterVertically,
+            horizontalArrangement = Arrangement.spacedBy(12.dp),
+        ) {
+            PreferenceTextContent(
+                title = title,
+                description = description,
+                destructive = destructive,
+                enabled = enabled,
+                modifier = Modifier.weight(1f),
+            )
+            PreferenceChevron(enabled = enabled)
+        }
     }
 }
 
