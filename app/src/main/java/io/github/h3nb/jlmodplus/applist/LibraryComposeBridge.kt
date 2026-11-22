@@ -899,10 +899,10 @@ fun LibraryScreen(
         || deleteTarget != null || pendingBulkDeleteIds != null
         || auxiliaryPageOnScreen
     val libraryModalVisible = libraryOverlayVisible || updatePrompt != null ||
-        collectionDialogVisible || installSourceMenuVisible || collectionManageAppsActive
-    LaunchedEffect(libraryModalVisible, selectionActiveHere, searchOpen, destination) {
+        collectionDialogVisible || collectionManageAppsActive
+    LaunchedEffect(libraryModalVisible, installSourceMenuVisible, selectionActiveHere, searchOpen, destination) {
         onControllerBackAvailabilityChanged(
-            libraryModalVisible || selectionActiveHere || searchOpen ||
+            libraryModalVisible || installSourceMenuVisible || selectionActiveHere || searchOpen ||
                 activeCollectionId != null || destination != LibraryDestinationKey.Apps,
         )
     }
