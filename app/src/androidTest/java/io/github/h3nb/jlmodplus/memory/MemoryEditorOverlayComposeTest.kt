@@ -123,11 +123,17 @@ class MemoryEditorOverlayComposeTest {
         }
         // Check the rendered composite, not just a window attribute: every modal and its dim
         // must disappear so the original underlay is visible through their former centers.
-        val screenshot = InstrumentationRegistry.getInstrumentation().uiAutomation.takeScreenshot()
-        try {
-            assertEquals(android.graphics.Color.MAGENTA, screenshot.getPixel(screenshot.width / 2, screenshot.height / 2))
-        } finally {
-            screenshot.recycle()
+        val automation = InstrumentationRegistry.getInstrumentation().uiAutomation
+        // Window-manager dim transactions can become visible after Compose has reached idle.
+        // Keep the pixel contract, but wait for the actual composed frame.
+        rule.waitUntil(timeoutMillis = 5_000) {
+            val screenshot = automation.takeScreenshot()
+            try {
+                screenshot.getPixel(screenshot.width / 2, screenshot.height / 2) ==
+                    android.graphics.Color.MAGENTA
+            } finally {
+                screenshot.recycle()
+            }
         }
         rule.onNodeWithTag("memory-editor-peek").performTouchInput {
             moveTo(Offset(center.x - 64f, center.y - 64f))

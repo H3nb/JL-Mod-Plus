@@ -305,14 +305,25 @@ class MemoryEditorAdaptiveComposeTest {
         val viewport = rule.onNodeWithTag("memory-editor-dialog-viewport").getUnclippedBoundsInRoot()
         val surface = rule.onNodeWithTag("adaptive-dialog-surface").getUnclippedBoundsInRoot()
         val peek = rule.onNodeWithTag("memory-editor-peek").getUnclippedBoundsInRoot()
-        assertEquals(
-            "Wide dialog should remain centered on the whole safe viewport",
-            (viewport.top.value + viewport.bottom.value) / 2f,
-            (surface.top.value + surface.bottom.value) / 2f, 2f,
-        )
-        assertTrue("Peek must have a clear side lane", surface.right <= peek.left)
-        assertTrue("Wide landscape dialog should use available height",
-            surface.bottom - surface.top > (viewport.bottom - viewport.top) * 0.75f)
+        // WindowSize overrides configuration, not the real dialog-window bounds.
+        // Only demand a side lane when the measured window actually has room.
+        if (viewport.width >= 800.dp) {
+            assertEquals(
+                "Wide dialog should remain centered on the whole safe viewport",
+                (viewport.top.value + viewport.bottom.value) / 2f,
+                (surface.top.value + surface.bottom.value) / 2f, 2f,
+            )
+            assertTrue("Peek must have a clear side lane", surface.right <= peek.left)
+            assertTrue("Wide landscape dialog should use available height",
+                surface.bottom - surface.top > (viewport.bottom - viewport.top) * 0.75f)
+        } else {
+            assertEquals(
+                "A smaller actual window must center the dialog above Peek",
+                (viewport.top.value + peek.top.value) / 2f,
+                (surface.top.value + surface.bottom.value) / 2f, 2f,
+            )
+            assertTrue("Peek must not cover dialog actions", surface.bottom <= peek.top)
+        }
         rule.onNodeWithText("Apply").assertIsDisplayed()
     }
 
