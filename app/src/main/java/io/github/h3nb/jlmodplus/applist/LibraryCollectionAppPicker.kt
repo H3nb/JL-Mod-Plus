@@ -6,6 +6,8 @@
  */
 package io.github.h3nb.jlmodplus.applist
 
+import io.github.h3nb.jlmodplus.ui.InlineSearchField
+
 import androidx.compose.foundation.selection.toggleable
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
@@ -129,7 +131,7 @@ internal fun LibraryCollectionAppPicker(
             color = MaterialTheme.colorScheme.onSurfaceVariant,
             style = MaterialTheme.typography.bodySmall,
         )
-        LibrarySearchField(
+        InlineSearchField(
             query = query,
             onQueryChange = {
                 query = it

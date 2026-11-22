@@ -175,6 +175,7 @@ import io.github.h3nb.jlmodplus.updates.UpdateCandidate
 import io.github.h3nb.jlmodplus.updates.UpdateRepository
 import io.github.h3nb.jlmodplus.updates.UpdateStatus
 import io.github.h3nb.jlmodplus.ui.GlassSystemBarScrim
+import io.github.h3nb.jlmodplus.ui.InlineSearchField
 import io.github.h3nb.jlmodplus.ui.availableWindowWidthDp
 import io.github.h3nb.jlmodplus.ui.availableWindowHeightDp
 import io.github.h3nb.jlmodplus.ui.PAGE_TRAVEL_DP
@@ -2371,7 +2372,7 @@ private fun LibraryAppsHeader(
             label = "Library search header",
         ) { searching ->
             if (searching) {
-                LibrarySearchField(
+                InlineSearchField(
                     query = searchQuery,
                     onQueryChange = onSearchQueryChange,
                     modifier = Modifier.fillMaxWidth(),
