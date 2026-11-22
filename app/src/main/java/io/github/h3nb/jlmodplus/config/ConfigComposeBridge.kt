@@ -1765,8 +1765,9 @@ internal fun FontSizesDialog(
     var smallDraft by remember(small) { mutableStateOf(small) }
     var mediumDraft by remember(medium) { mutableStateOf(medium) }
     var largeDraft by remember(large) { mutableStateOf(large) }
-    val useHorizontalFields = adaptiveDialogLayout().width >=
-        600.dp * LocalDensity.current.fontScale.coerceAtLeast(1f)
+    val fontScale = LocalDensity.current.fontScale.coerceAtLeast(1f)
+    val minimumThreeFieldWidth = (132f * 3 * fontScale).dp + 24.dp
+    val useHorizontalFields = adaptiveDialogLayout().width >= minimumThreeFieldWidth
     AlertDialog(
         onDismissRequest = onDismissRequest,
         title = { Text(stringResource(R.string.config_font_sizes)) },
