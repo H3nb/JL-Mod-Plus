@@ -203,7 +203,7 @@ internal fun ConfigScreen(
             }
         }
     }
-    BackHandler(enabled = searchVisible || childPage != null ||
+    BackHandler(enabled = menuActions != null || searchVisible || childPage != null ||
         selectedDestination != ConfigDestination.Basic || isProfile) {
         requestBack()
     }

@@ -272,6 +272,48 @@ class ConfigActivityComposeSmokeTest {
     }
 
     @Test
+    fun failedBackSaveKeepsInstalledConfigEditorOpenUntilRetrySucceeds() {
+        val context = InstrumentationRegistry.getInstrumentation().targetContext
+        val root = File(context.filesDir, "config-failed-back-${System.nanoTime()}")
+        fixtureRoot = root
+        val appDir = File(root, "converted/fixture")
+        val configDir = File(root, "configs/fixture")
+        assertTrue(appDir.mkdirs())
+        writeConfig(configDir, 176)
+        val appId = installIdentity(context, root, "fixture")
+        val intent = Intent(
+            Constants.ACTION_EDIT, Uri.parse(appDir.absolutePath),
+            context, ConfigActivity::class.java,
+        ).putExtra(Constants.KEY_MIDLET_NAME, "Config Save Fixture")
+            .putExtra(Constants.KEY_LIBRARY_APP_ID, appId)
+        val blocker = File(configDir, Config.MIDLET_CONFIG_FILE.substring(1) + ".new")
+
+        ActivityScenario.launch<ConfigActivity>(intent).use { scenario ->
+            scenario.onActivity { activity ->
+                updateProfileForm(activity) { it.toBuilder().screenWidth("360").build() }
+                assertTrue(blocker.mkdirs())
+                File(blocker, "nonempty").writeText("prevent atomic temporary cleanup")
+                activity.onBackPressedDispatcher.onBackPressed()
+                assertFalse("Failed save must not close the editor", activity.isFinishing)
+                assertEquals("360", profileForm(activity).screenWidth)
+            }
+            assertEquals(
+                176,
+                ProfilesManager.loadPreparedMidletConfig(configDir, false)!!.screenWidth,
+            )
+            deleteRecursively(blocker)
+            scenario.onActivity { activity ->
+                activity.onBackPressedDispatcher.onBackPressed()
+                assertTrue("Editor should close after the draft is durable", activity.isFinishing)
+            }
+        }
+        assertEquals(
+            360,
+            ProfilesManager.loadPreparedMidletConfig(configDir, false)!!.screenWidth,
+        )
+    }
+
+    @Test
     fun newProfileCanBeSavedWithoutChangingDefaults() {
         val context = InstrumentationRegistry.getInstrumentation().targetContext
         val root = File(context.filesDir, "new-profile-editor-${System.nanoTime()}")

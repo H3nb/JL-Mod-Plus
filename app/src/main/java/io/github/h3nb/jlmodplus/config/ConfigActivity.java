@@ -1945,6 +1945,12 @@ public class ConfigActivity extends AppCompatActivity {
 	}
 
 	private void handleBackRequest() {
+		if (operationRunning) return;
+		// Back must not destroy a local edit whose onPause auto-save would fail.
+		if (!isProfile && needShow && configDir != null && !saveParams()) {
+			showConfigNotice(R.string.error);
+			return;
+		}
 		finish();
 	}
 
