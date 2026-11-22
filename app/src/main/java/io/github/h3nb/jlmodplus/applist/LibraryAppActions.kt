@@ -348,7 +348,7 @@ internal fun AppActionsDialog(
                         app.title,
                         style = if (compactHeader) MaterialTheme.typography.titleMedium
                         else MaterialTheme.typography.titleLarge,
-                        maxLines = 2,
+                        maxLines = if (compactHeader) 1 else 2,
                         overflow = TextOverflow.Ellipsis,
                     )
                     Text(

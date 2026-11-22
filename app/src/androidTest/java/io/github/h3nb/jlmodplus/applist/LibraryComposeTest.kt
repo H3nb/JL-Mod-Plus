@@ -138,7 +138,7 @@ class LibraryComposeTest {
                 ) {
                     JLModPlusTheme {
                         AppActionsDialog(
-                            app = LibraryAppUiItem(7, "Demo MIDlet", "Example Vendor", "1.0", null, true),
+                            app = LibraryAppUiItem(7, "An intentionally long MIDlet title that should not displace actions", "Example Vendor", "1.0", null, true),
                             onDismiss = {},
                             onShortcut = {},
                             onSettings = {},
