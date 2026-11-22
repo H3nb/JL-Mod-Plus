@@ -1285,6 +1285,7 @@
     <string name="config_asset_deleted">Deleted %1$s</string>
     <string name="config_asset_invalid">Unsupported or invalid file.</string>
     <string name="config_asset_operation_failed">Could not complete the file operation.</string>
+    <string name="config_save_failed" tools:ignore="MissingTranslation">Could not save settings. Your changes are still open; try again.</string>
     <string name="config_asset_busy">Finish the current file operation first.</string>
     <string name="control_skin_title">Virtual control skin</string>
     <string name="control_skin_create" tools:ignore="MissingTranslation">Create set</string>

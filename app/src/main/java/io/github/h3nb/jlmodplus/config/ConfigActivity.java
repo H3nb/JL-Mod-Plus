@@ -1620,7 +1620,7 @@ public class ConfigActivity extends AppCompatActivity {
 				skipNextAssetPickerReload = false;
 				assetResultAppliedAfterPause = false;
 				if (!isFinishing()) {
-					ThemedToast.show(this, R.string.error, Toast.LENGTH_SHORT);
+					showConfigNotice(R.string.config_save_failed);
 				}
 			} else if (skipNextAssetPickerReload || assetResultAppliedAfterPause) {
 				skipNextAssetPickerReload = false;
@@ -1948,7 +1948,7 @@ public class ConfigActivity extends AppCompatActivity {
 		if (operationRunning) return;
 		// Back must not destroy a local edit whose onPause auto-save would fail.
 		if (!isProfile && needShow && configDir != null && !saveParams()) {
-			showConfigNotice(R.string.error);
+			showConfigNotice(R.string.config_save_failed);
 			return;
 		}
 		finish();

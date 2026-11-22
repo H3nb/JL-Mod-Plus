@@ -1156,7 +1156,6 @@ fun LibraryScreen(
                                 appActions = it
                                 appActionsCollectionId = activeCollectionId
                             },
-                            onOpenDetails = { detailsTarget = it },
                             onQuickView = { view ->
                                 if (activeCollectionId != null) {
                                     selectionState = selectionState.clear()
@@ -1691,7 +1690,6 @@ internal fun LibraryAppsDestination(
     controllerFocusedDatabaseId: Long? = null,
     onOpenApp: (Int) -> Unit,
     onOpenActions: (LibraryAppUiItem) -> Unit,
-    onOpenDetails: (LibraryAppUiItem) -> Unit = {},
     onQuickView: (LibraryQuickView) -> Unit,
     onFavorite: (Int, Boolean) -> Unit,
     onToggleSelection: (LibraryAppUiItem) -> Unit = {},
@@ -1772,7 +1770,6 @@ internal fun LibraryAppsDestination(
     // Read eligibility when an action arrives, retaining callback identity across tab changes.
     val openApp: (Int) -> Unit = { if (currentActive) onOpenApp(it) }
     val openActions: (LibraryAppUiItem) -> Unit = { if (currentActive) onOpenActions(it) }
-    val openDetails: (LibraryAppUiItem) -> Unit = { if (currentActive) onOpenDetails(it) }
     val toggleSelection: (LibraryAppUiItem) -> Unit = { if (currentActive) onToggleSelection(it) }
     val favoriteApp: (Int, Boolean) -> Unit = { id, favorite ->
         if (currentActive) onFavorite(id, favorite)

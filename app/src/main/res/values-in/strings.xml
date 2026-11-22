@@ -1205,6 +1205,7 @@
     <string name="config_asset_deleted">%1$s dihapus</string>
     <string name="config_asset_invalid">File tidak valid atau tidak didukung.</string>
     <string name="config_asset_operation_failed">Operasi file tidak dapat diselesaikan.</string>
+    <string name="config_save_failed">Pengaturan tidak dapat disimpan. Perubahan masih terbuka; coba lagi.</string>
     <string name="config_asset_busy">Selesaikan operasi file yang sedang berjalan terlebih dahulu.</string>
     <string name="control_skin_title">Skin kontrol virtual</string>
     <string name="control_skin_create">Buat set</string>
