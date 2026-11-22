@@ -1259,7 +1259,10 @@ fun LibraryScreen(
                             } else state.quickView != LibraryQuickView.All ||
                                 collectionsHost == null || collectionDialogState?.allAppsPrepared == true,
                             resolveUiId = actions::resolveAppUiId,
-                            controllerEvents = controllerEvents,
+                            // The visible dialog consumes controller input, not the obscured list.
+                            controllerEvents = controllerEvents.takeUnless {
+                                libraryModalVisible || installSourceMenuVisible
+                            },
                             active = destination == LibraryDestinationKey.Apps &&
                                 !collectionManageAppsActive,
                         )

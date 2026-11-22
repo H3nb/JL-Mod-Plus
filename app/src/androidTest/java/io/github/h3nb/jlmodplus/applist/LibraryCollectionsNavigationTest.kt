@@ -393,6 +393,32 @@ class LibraryCollectionsNavigationTest {
     }
 
     @Test
+    fun collectionAppActionsDoNotActivateTheObscuredCollection() {
+        val host = RecordingCollectionsHost()
+        val events = MutableSharedFlow<LibraryControllerEvent>(extraBufferCapacity = 8)
+        composeRule.setContent {
+            JLModPlusTheme {
+                LibraryScreen(
+                    state = sampleLibraryState(),
+                    actions = host,
+                    controllerEvents = events,
+                )
+            }
+        }
+        openCollectionsManagement()
+        openCollection()
+        composeRule.onNodeWithContentDescription(
+            uiString(R.string.library_app_more_actions, MEMBER_TITLE),
+        ).performClick()
+        composeRule.onNodeWithText(uiString(R.string.library_action_select)).assertIsDisplayed()
+        composeRule.waitForIdle()
+
+        assertTrue(events.tryEmit(LibraryControllerEvent(1L, LibraryControllerCommand.Activate)))
+        composeRule.waitForIdle()
+        assertEquals(0, host.openedAppCount)
+    }
+
+    @Test
     fun collectionsManagerExposesCreationAndDoesNotImplyUninstallOnDelete() {
         val host = RecordingCollectionsHost()
         composeRule.setContent {
