@@ -345,8 +345,8 @@ class ConfigComposeTest {
         }
         composeRule.onNodeWithText(uiString(R.string.render_shader_effects)).performClick()
         assertEquals(uiString(R.string.pref_graphics_mode_title), selected)
-        composeRule.runOnIdle { query.value = uiString(R.string.perf_overlay_parameters) }
-        composeRule.onNodeWithText(uiString(R.string.perf_overlay_parameters)).performClick()
+        composeRule.runOnIdle { query.value = uiString(R.string.perf_overlay_position) }
+        composeRule.onNodeWithText(uiString(R.string.perf_overlay_position)).performClick()
         assertEquals(uiString(R.string.perf_overlay_title), selected)
         composeRule.runOnIdle { query.value = uiString(R.string.PREF_SCALE_RATIO) }
         composeRule.onNodeWithText(uiString(R.string.PREF_SCALE_RATIO)).performClick()
