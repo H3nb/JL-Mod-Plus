@@ -70,8 +70,8 @@ private fun searchPrerequisite(title: Int, form: ConfigFormState): ConfigSearchP
                 R.string.config_search_requires_renderer_mode) else null
         R.string.perf_overlay_position,
         -> if (!form.showFps)
-            ConfigSearchPrerequisite(R.string.perf_overlay_title,
-                R.string.config_search_requires_performance_overlay) else null
+            ConfigSearchPrerequisite(R.string.config_show_fps_title,
+                R.string.config_search_requires_fps) else null
         else -> null
     }
 
@@ -108,7 +108,7 @@ private val configSearchIndex = listOf(
     ConfigSearchItem(R.string.PREF_FONT_SIZE_IN_SP, R.string.config_display_text, ConfigDestination.Display, ConfigDetail.Font),
     ConfigSearchItem(R.string.PREF_FONT_ANTI_ALIASING, R.string.config_display_text, ConfigDestination.Display, ConfigDetail.Font),
     ConfigSearchItem(R.string.PREF_LIMIT_FPS, R.string.config_display_performance, ConfigDestination.Graphics, ConfigDetail.Performance, "framerate fps"),
-    ConfigSearchItem(R.string.perf_overlay_title, R.string.config_display_performance, ConfigDestination.Graphics, ConfigDetail.Performance, "fps frame rate"),
+    ConfigSearchItem(R.string.config_show_fps_title, R.string.config_display_performance, ConfigDestination.Graphics, ConfigDetail.Performance, "fps frame rate"),
     ConfigSearchItem(R.string.perf_overlay_position, R.string.config_display_performance, ConfigDestination.Graphics, ConfigDetail.Performance),
     ConfigSearchItem(R.string.PREF_VIRTUAL_KEYBOARD_OPTIONS, R.string.config_basic_input, ConfigDestination.Controls, keywords = "virtual keys controls"),
     ConfigSearchItem(R.string.PREF_TOUCH_INPUT, R.string.config_basic_input, ConfigDestination.Controls),

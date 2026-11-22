@@ -34,8 +34,8 @@ internal fun PerformanceSection(
             onValueChange = { value -> onFormChanged(form.toBuilder().fpsLimit(value).build()) },
         )
         ConfigSwitchPreference(
-            title = stringResource(R.string.perf_overlay_title),
-            description = stringResource(R.string.perf_overlay_help),
+            title = stringResource(R.string.config_show_fps_title),
+            description = stringResource(R.string.config_show_fps_help),
             checked = form.showFps,
             onCheckedChange = { checked -> onFormChanged(form.toBuilder().showFps(checked).build()) },
         )

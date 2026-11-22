@@ -347,7 +347,7 @@ class ConfigComposeTest {
         assertEquals(uiString(R.string.pref_graphics_mode_title), selected)
         composeRule.runOnIdle { query.value = uiString(R.string.perf_overlay_position) }
         composeRule.onNodeWithText(uiString(R.string.perf_overlay_position)).performClick()
-        assertEquals(uiString(R.string.perf_overlay_title), selected)
+        assertEquals(uiString(R.string.config_show_fps_title), selected)
         composeRule.runOnIdle { query.value = uiString(R.string.PREF_SCALE_RATIO) }
         composeRule.onNodeWithText(uiString(R.string.PREF_SCALE_RATIO)).performClick()
         assertEquals(uiString(R.string.pref_screen_scale_type), selected)
