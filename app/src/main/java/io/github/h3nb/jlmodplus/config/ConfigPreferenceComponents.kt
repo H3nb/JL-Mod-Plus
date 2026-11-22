@@ -67,13 +67,13 @@ private val LocalConfigOptionReveal = compositionLocalOf<ConfigSectionReveal?> {
 
 @Composable
 internal fun Modifier.revealConfigOption(title: String): Modifier {
-    val reveal = LocalConfigOptionReveal.current
+    val reveal = LocalConfigOptionReveal.current ?: return this
+    if (reveal.option != title) return this
+
     val requester = remember { BringIntoViewRequester() }
-    LaunchedEffect(reveal, title) {
-        if (reveal?.option == title) {
-            requester.bringIntoView()
-            reveal.onReached()
-        }
+    LaunchedEffect(reveal) {
+        requester.bringIntoView()
+        reveal.onReached()
     }
     return bringIntoViewRequester(requester)
 }
