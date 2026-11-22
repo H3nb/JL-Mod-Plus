@@ -233,6 +233,8 @@ class ConfigComposeTest {
         composeRule.onNodeWithText(uiString(R.string.PREF_TOUCH_INPUT)).assertExists()
         scrollTo(uiString(R.string.pref_map_keys))
         composeRule.onNodeWithText(uiString(R.string.pref_map_keys)).assertExists()
+        scrollTo(uiString(R.string.config_controls_virtual_keyboard))
+        composeRule.onNodeWithText(uiString(R.string.PREF_VIRTUAL_KEYBOARD_OPTIONS)).assertExists()
         composeRule.onNodeWithContentDescription(uiString(R.string.action_back)).performClick()
 
         composeRule.onNodeWithTag("config_category_graphics").performScrollTo().performClick()
@@ -252,6 +254,9 @@ class ConfigComposeTest {
         composeRule.onNodeWithTag("config_category_system").performScrollTo().performClick()
         scrollTo(uiString(R.string.config_system_compatibility))
         composeRule.onNodeWithText(uiString(R.string.PREF_IMMEDIATE)).assertExists()
+        scrollTo(uiString(R.string.PREF_TIMING_MODE))
+        composeRule.onNodeWithText(uiString(R.string.PREF_TIMING_MODE)).assertExists()
+        composeRule.onNodeWithText(uiString(R.string.config_system_timing)).assertDoesNotExist()
         composeRule.onNodeWithContentDescription(uiString(R.string.action_back)).performClick()
         scrollTo(uiString(R.string.config_midlet_actions))
         composeRule.onNodeWithTag("config_reset_settings_action").assertExists()
