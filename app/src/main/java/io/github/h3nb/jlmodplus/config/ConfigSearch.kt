@@ -129,6 +129,10 @@ internal fun ConfigSearchResults(
                 if (state.form.graphicsMode != 1) return@filter false
             R.string.parallel_screen_redrawing ->
                 if (state.form.graphicsMode != 0 && state.form.graphicsMode != 3) return@filter false
+            R.string.perf_overlay_preset,
+            R.string.perf_overlay_parameters,
+            R.string.perf_overlay_position,
+            -> if (!state.form.showFps) return@filter false
         }
         if (query.isBlank()) entry.title in suggestions
         else resources.getString(entry.title).contains(query.trim(), ignoreCase = true) ||

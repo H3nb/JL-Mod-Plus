@@ -282,7 +282,8 @@ class ConfigComposeTest {
     fun searchExcludesOptionsHiddenByProfileAndRendererConditions() {
         val base = sampleState()
         val state = ConfigUiState(
-            base.form.toBuilder().graphicsMode(0).internalResolutionScale(1).build(),
+            base.form.toBuilder().graphicsMode(0).internalResolutionScale(1)
+                .showFps(false).build(),
             base.screenPresets,
             base.fontPresets,
             base.skins,
@@ -305,6 +306,8 @@ class ConfigComposeTest {
         composeRule.runOnIdle { query.value = "shader GLSL effects" }
         composeRule.onNodeWithText(uiString(R.string.config_search_no_results)).assertIsDisplayed()
         composeRule.runOnIdle { query.value = "files storage" }
+        composeRule.onNodeWithText(uiString(R.string.config_search_no_results)).assertIsDisplayed()
+        composeRule.runOnIdle { query.value = uiString(R.string.perf_overlay_parameters) }
         composeRule.onNodeWithText(uiString(R.string.config_search_no_results)).assertIsDisplayed()
     }
 
