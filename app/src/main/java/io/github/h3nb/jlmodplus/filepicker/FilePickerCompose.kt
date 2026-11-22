@@ -15,6 +15,7 @@
 package io.github.h3nb.jlmodplus.filepicker
 
 import androidx.activity.compose.BackHandler
+import androidx.compose.animation.Crossfade
 import androidx.compose.foundation.clickable
 import androidx.compose.foundation.selection.toggleable
 import androidx.compose.foundation.layout.Arrangement
@@ -43,6 +44,7 @@ import androidx.compose.material3.HorizontalDivider
 import androidx.compose.material3.Icon
 import androidx.compose.material3.IconButton
 import androidx.compose.material3.ListItem
+import androidx.compose.material3.ListItemDefaults
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.OutlinedTextField
 import androidx.compose.material3.Scaffold
@@ -60,6 +62,9 @@ import androidx.compose.runtime.saveable.rememberSaveable
 import androidx.compose.runtime.rememberUpdatedState
 import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
+import androidx.compose.ui.graphics.Color
+import androidx.compose.ui.platform.LocalFocusManager
+import androidx.compose.ui.platform.LocalInspectionMode
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.platform.testTag
 import androidx.compose.ui.res.painterResource
@@ -73,6 +78,7 @@ import androidx.compose.ui.text.style.TextOverflow
 import androidx.compose.ui.unit.dp
 import androidx.window.core.layout.WindowSizeClass.Companion.WIDTH_DP_MEDIUM_LOWER_BOUND
 import io.github.h3nb.jlmodplus.R
+import io.github.h3nb.jlmodplus.ui.InlineSearchField
 
 /** Event surface for the picker presentation. File-system work stays in the controller. */
 interface FilePickerActions {
@@ -99,7 +105,7 @@ fun FilePickerHost(
     modifier: Modifier = Modifier,
 ) {
     val latestActions = rememberUpdatedState(actions)
-    BackHandler {
+    BackHandler(enabled = !state.searchVisible) {
         latestActions.value.onNavigateBack()
     }
     FilePickerScreen(state = state, actions = actions, modifier = modifier)
@@ -120,16 +126,20 @@ fun FilePickerScreen(
     var previewPath by rememberSaveable(state.currentPath) { mutableStateOf<String?>(null) }
     val imageLoader = remember { FilePickerImageLoader() }
     DisposableEffect(imageLoader) { onDispose { imageLoader.close() } }
-    val selectablePaths = remember(state.entries) {
-        FilePickerRules.selectablePaths(state.entries)
+    val visibleEntries = remember(state.entries, state.searchQuery, state.sortOrder) {
+        FilePickerRules.filterAndSort(state.entries, state.searchQuery, state.sortOrder)
     }
+    val selectablePaths = remember(visibleEntries) {
+        FilePickerRules.selectablePaths(visibleEntries)
+    }
+    val focusManager = LocalFocusManager.current
 
     Scaffold(
         modifier = modifier.fillMaxSize(),
         topBar = {
             TopAppBar(
                 navigationIcon = {
-                    if (state.canGoUp) {
+                    if (!state.searchVisible && state.canGoUp) {
                         IconButton(onClick = actions::onNavigateBack) {
                             Icon(
                                 painter = painterResource(R.drawable.ic_arrow_back),
@@ -140,22 +150,64 @@ fun FilePickerScreen(
                     }
                 },
                 title = {
-                    Column {
-                        Text(
-                            text = state.request.title ?: stringResource(pickerTitle(state.request)),
-                            maxLines = 1,
-                            overflow = TextOverflow.Ellipsis,
-                        )
-                        Text(
-                            text = state.currentPath,
-                            style = MaterialTheme.typography.labelSmall,
-                            maxLines = 1,
-                            overflow = TextOverflow.MiddleEllipsis,
-                            color = MaterialTheme.colorScheme.onSurfaceVariant,
-                        )
+                    Crossfade(targetState = state.searchVisible, label = "file picker inline search") { searching ->
+                        if (searching) {
+                            InlineSearchField(
+                                query = state.searchQuery,
+                                onQueryChange = actions::onSearchQueryChanged,
+                                modifier = Modifier.fillMaxWidth(),
+                                enabled = state.searchVisible,
+                                placeholder = stringResource(R.string.file_picker_search),
+                                onDismissInput = { focusManager.clearFocus() },
+                                onClose = actions::onToggleSearch,
+                                autoFocus = !LocalInspectionMode.current,
+                            )
+                        } else {
+                            Column {
+                                Text(
+                                    text = state.request.title ?: stringResource(pickerTitle(state.request)),
+                                    maxLines = 1,
+                                    overflow = TextOverflow.Ellipsis,
+                                )
+                                Text(
+                                    text = state.currentPath,
+                                    style = MaterialTheme.typography.labelSmall,
+                                    maxLines = 1,
+                                    overflow = TextOverflow.MiddleEllipsis,
+                                    color = MaterialTheme.colorScheme.onSurfaceVariant,
+                                )
+                            }
+                        }
                     }
                 },
                 actions = {
+                    if (!state.searchVisible) {
+                        IconButton(onClick = actions::onToggleSearch) {
+                            Icon(
+                                painter = painterResource(R.drawable.ic_search),
+                                contentDescription = stringResource(R.string.file_picker_search),
+                                tint = MaterialTheme.colorScheme.onSurfaceVariant,
+                            )
+                        }
+                        Box {
+                            IconButton(onClick = { sortMenuExpanded = true }) {
+                                Icon(
+                                    painter = painterResource(R.drawable.ic_sort),
+                                    contentDescription = stringResource(R.string.file_picker_sort),
+                                    tint = MaterialTheme.colorScheme.onSurfaceVariant,
+                                )
+                            }
+                            FilePickerSortMenu(
+                                expanded = sortMenuExpanded,
+                                selected = state.sortOrder,
+                                onDismissRequest = { sortMenuExpanded = false },
+                                onSelected = { sortOrder ->
+                                    sortMenuExpanded = false
+                                    actions.onSortOrderSelected(sortOrder)
+                                },
+                            )
+                        }
+                    }
                     if (state.request.allowMultiple && state.request.allowsFiles) {
                         val allSelected = selectablePaths.isNotEmpty() &&
                             state.selectedPaths.containsAll(selectablePaths)
@@ -177,43 +229,6 @@ fun FilePickerScreen(
                             )
                         }
                     }
-                    Box {
-                        IconButton(onClick = { sortMenuExpanded = true }) {
-                            Icon(
-                                painter = painterResource(R.drawable.ic_sort),
-                                contentDescription = stringResource(R.string.file_picker_sort),
-                                tint = MaterialTheme.colorScheme.onSurfaceVariant,
-                            )
-                        }
-                        FilePickerSortMenu(
-                            expanded = sortMenuExpanded,
-                            selected = state.sortOrder,
-                            onDismissRequest = { sortMenuExpanded = false },
-                            onSelected = { sortOrder ->
-                                sortMenuExpanded = false
-                                actions.onSortOrderSelected(sortOrder)
-                            },
-                        )
-                    }
-                    IconButton(onClick = actions::onToggleSearch) {
-                        Icon(
-                            painter = painterResource(R.drawable.ic_search),
-                            contentDescription = stringResource(R.string.file_picker_search),
-                            tint = MaterialTheme.colorScheme.onSurfaceVariant,
-                        )
-                    }
-                    if (state.request.allowCreateDirectory) {
-                        IconButton(
-                            onClick = actions::onShowCreateFolder,
-                            enabled = !state.loading && !state.permissionRequired,
-                        ) {
-                            Icon(
-                                painter = painterResource(R.drawable.ic_create_folder),
-                                contentDescription = stringResource(R.string.file_picker_create_folder),
-                                tint = MaterialTheme.colorScheme.onSurfaceVariant,
-                            )
-                        }
-                    }
                 },
             )
         },
@@ -226,26 +241,30 @@ fun FilePickerScreen(
                     }
                 }
             } else BottomAppBar {
-                Text(
-                    text = when {
-                        state.request.mode == FilePickerContract.MODE_DIR ||
-                            (state.request.mode == FilePickerContract.MODE_FILE_AND_DIR &&
-                                state.selectedPaths.isEmpty()) -> {
-                            stringResource(R.string.file_picker_current_folder)
-                        }
-                        state.selectedPaths.isNotEmpty() -> {
-                            pluralStringResource(
-                                R.plurals.file_picker_selected_count,
-                                state.selectedPaths.size,
-                                state.selectedPaths.size,
-                            )
-                        }
-                        else -> stringResource(R.string.file_picker_select_file)
-                    },
-                    modifier = Modifier.weight(1f),
-                    maxLines = 1,
-                    overflow = TextOverflow.Ellipsis,
-                )
+                val summary = when {
+                    state.request.mode == FilePickerContract.MODE_DIR ||
+                        (state.request.mode == FilePickerContract.MODE_FILE_AND_DIR &&
+                            state.selectedPaths.isEmpty()) ->
+                        stringResource(R.string.file_picker_current_folder)
+                    state.selectedPaths.isNotEmpty() -> pluralStringResource(
+                        R.plurals.file_picker_selected_count,
+                        state.selectedPaths.size,
+                        state.selectedPaths.size,
+                    )
+                    else -> null
+                }
+                if (summary == null) {
+                    Spacer(Modifier.weight(1f))
+                } else {
+                    Text(
+                        text = summary,
+                        modifier = Modifier.weight(1f),
+                        style = MaterialTheme.typography.bodySmall,
+                        color = MaterialTheme.colorScheme.onSurfaceVariant,
+                        maxLines = 1,
+                        overflow = TextOverflow.Ellipsis,
+                    )
+                }
                 TextButton(onClick = actions::onExit) {
                     Text(stringResource(R.string.file_picker_cancel))
                 }
@@ -260,6 +279,7 @@ fun FilePickerScreen(
 ) { padding ->
         PickerContent(
             state = state,
+            visibleEntries = visibleEntries,
             actions = actions,
             imageLoader = imageLoader,
             onPreviewEntry = { entry -> previewPath = entry.path },
@@ -291,30 +311,24 @@ fun FilePickerScreen(
 @Composable
 private fun PickerContent(
     state: FilePickerState,
+    visibleEntries: List<FilePickerEntry>,
     actions: FilePickerActions,
     imageLoader: FilePickerImageLoader,
     onPreviewEntry: (FilePickerEntry) -> Unit,
     modifier: Modifier,
 ) {
-    val visibleEntries = remember(state.entries, state.searchQuery, state.sortOrder) {
-        FilePickerRules.filterAndSort(
-            state.entries,
-            state.searchQuery,
-            state.sortOrder,
+    val allowFileSelection = state.request.allowMultiple && state.request.allowsFiles
+    val renderEntry: @Composable (FilePickerEntry) -> Unit = { entry ->
+        PickerEntryRow(
+            entry = entry,
+            selected = entry.path in state.selectedPaths,
+            allowSelection = allowFileSelection && entry.kind == FilePickerEntryKind.FILE,
+            actions = actions,
+            imageLoader = imageLoader,
+            onPreviewEntry = onPreviewEntry,
         )
     }
     Column(modifier) {
-        if (state.searchVisible) {
-            OutlinedTextField(
-                value = state.searchQuery,
-                onValueChange = actions::onSearchQueryChanged,
-                modifier = Modifier
-                    .fillMaxWidth()
-                    .padding(horizontal = 16.dp, vertical = 8.dp),
-                label = { Text(stringResource(R.string.file_picker_search)) },
-                singleLine = true,
-            )
-        }
         Box(modifier = Modifier.weight(1f)) {
             when {
                 state.permissionRequired -> PermissionContent(state, actions, Modifier.fillMaxSize())
@@ -324,7 +338,8 @@ private fun PickerContent(
                     actions,
                     Modifier.fillMaxSize(),
                 )
-                state.entries.isEmpty() -> EmptyContent(
+                state.entries.isEmpty() &&
+                    (state.searchVisible || (!state.canGoUp && !state.request.allowCreateDirectory)) -> EmptyContent(
                     request = state.request,
                     modifier = Modifier.fillMaxSize(),
                     message = if (state.searchQuery.isBlank()) {
@@ -334,7 +349,7 @@ private fun PickerContent(
                     },
                 )
                 else -> {
-                    if (visibleEntries.isEmpty()) {
+                    if (visibleEntries.isEmpty() && state.entries.isNotEmpty()) {
                         EmptyContent(
                             request = state.request,
                             modifier = Modifier.fillMaxSize(),
@@ -361,20 +376,18 @@ private fun PickerContent(
                                         ParentFolderRow(onClick = actions::onNavigateBack)
                                     }
                                 }
+                                if (state.request.allowCreateDirectory && !state.searchVisible) {
+                                    item(key = "create-folder", span = { GridItemSpan(maxLineSpan) }) {
+                                        CreateFolderRow(onClick = actions::onShowCreateFolder)
+                                    }
+                                }
+                                if (visibleEntries.isEmpty()) {
+                                    item(key = "empty", span = { GridItemSpan(maxLineSpan) }) {
+                                        EmptyContent(state.request, Modifier.fillMaxWidth())
+                                    }
+                                }
                                 items(visibleEntries, key = { it.path }) { entry ->
-                                    PickerEntryRow(
-                                        entry = entry,
-                                        selected = state.selectedPaths.contains(entry.path),
-                                        allowSelection = state.request.allowMultiple &&
-                                            state.request.allowsFiles &&
-                                            entry.kind == FilePickerEntryKind.FILE,
-                                        imageLoader = imageLoader,
-                                        onPreview = if (entry.kind == FilePickerEntryKind.FILE &&
-                                            isPickerImage(entry.name)) {
-                                            { onPreviewEntry(entry) }
-                                        } else null,
-                                        onClick = { actions.onOpen(entry) },
-                                    )
+                                    renderEntry(entry)
                                 }
                             }
                         } else {
@@ -389,20 +402,18 @@ private fun PickerContent(
                                         ParentFolderRow(onClick = actions::onNavigateBack)
                                     }
                                 }
+                                if (state.request.allowCreateDirectory && !state.searchVisible) {
+                                    item(key = "create-folder") {
+                                        CreateFolderRow(onClick = actions::onShowCreateFolder)
+                                    }
+                                }
+                                if (visibleEntries.isEmpty()) {
+                                    item(key = "empty") {
+                                        EmptyContent(state.request, Modifier.fillMaxWidth())
+                                    }
+                                }
                                 items(visibleEntries, key = { it.path }) { entry ->
-                                    PickerEntryRow(
-                                        entry = entry,
-                                        selected = state.selectedPaths.contains(entry.path),
-                                        allowSelection = state.request.allowMultiple &&
-                                            state.request.allowsFiles &&
-                                            entry.kind == FilePickerEntryKind.FILE,
-                                        imageLoader = imageLoader,
-                                        onPreview = if (entry.kind == FilePickerEntryKind.FILE &&
-                                            isPickerImage(entry.name)) {
-                                            { onPreviewEntry(entry) }
-                                        } else null,
-                                        onClick = { actions.onOpen(entry) },
-                                    )
+                                    renderEntry(entry)
                                 }
                             }
                         }
@@ -433,6 +444,22 @@ private fun ParentFolderRow(onClick: () -> Unit) {
         )
         HorizontalDivider()
     }
+}
+
+@Composable
+private fun CreateFolderRow(onClick: () -> Unit) {
+    ListItem(
+        modifier = Modifier.fillMaxWidth().clickable(role = Role.Button, onClick = onClick),
+        headlineContent = { Text(stringResource(R.string.file_picker_create_folder)) },
+        leadingContent = {
+            Icon(
+                painter = painterResource(R.drawable.ic_create_folder),
+                contentDescription = null,
+                tint = MaterialTheme.colorScheme.primary,
+                modifier = Modifier.size(28.dp),
+            )
+        },
+    )
 }
 
 @Composable
@@ -477,11 +504,25 @@ private fun PickerEntryRow(
     entry: FilePickerEntry,
     selected: Boolean,
     allowSelection: Boolean,
+    actions: FilePickerActions,
     imageLoader: FilePickerImageLoader,
-    onPreview: (() -> Unit)?,
-    onClick: () -> Unit,
+    onPreviewEntry: (FilePickerEntry) -> Unit,
 ) {
+    val onPreview: (() -> Unit)? = if (entry.kind == FilePickerEntryKind.FILE &&
+        isPickerImage(entry.name)
+    ) {
+        { onPreviewEntry(entry) }
+    } else null
+    val onClick = { actions.onOpen(entry) }
     ListItem(
+        colors = ListItemDefaults.colors(
+            containerColor = if (selected) MaterialTheme.colorScheme.primaryContainer
+                else Color.Transparent,
+            headlineColor = if (selected) MaterialTheme.colorScheme.onPrimaryContainer
+                else MaterialTheme.colorScheme.onSurface,
+            supportingColor = if (selected) MaterialTheme.colorScheme.onPrimaryContainer
+                else MaterialTheme.colorScheme.onSurfaceVariant,
+        ),
         modifier = Modifier
             .fillMaxWidth()
             .then(
@@ -500,7 +541,7 @@ private fun PickerEntryRow(
         headlineContent = {
             Text(
                 text = entry.name,
-                maxLines = if (onPreview != null) 2 else 1,
+                maxLines = 2,
                 overflow = TextOverflow.Ellipsis,
             )
         },

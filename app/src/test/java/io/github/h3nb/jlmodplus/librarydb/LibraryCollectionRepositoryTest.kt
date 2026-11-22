@@ -102,6 +102,67 @@ class LibraryCollectionRepositoryTest {
     }
 
     @Test
+    fun collectionCreationOrderCanBeRearrangedWithoutLosingNewCollections() = runBlocking {
+        val root = TempFiles.newFolder(temporaryFolder, "reorder")
+        createConvertedApp(root, "game", "Game")
+        repository.setEmulatorDirectory(root)
+        val token = awaitReady(root).token()
+
+        val first = repository.createCollection(token, "First", createdAt = 100L)
+        val second = repository.createCollection(token, "Second", createdAt = 200L)
+        val third = repository.createCollection(token, "Third", createdAt = 300L)
+        awaitReady(root) { it.collections.map(LibraryCollectionRow::id) == listOf(first, second, third) }
+
+        repository.reorderCollections(token, listOf(third, first, second))
+        awaitReady(root) { it.collections.map(LibraryCollectionRow::id) == listOf(third, first, second) }
+
+        try {
+            repository.reorderCollections(token, listOf(second, first))
+            throw AssertionError("An incomplete reorder must be rejected")
+        } catch (_: IllegalArgumentException) {
+            assertEquals(
+                listOf(third, first, second),
+                awaitReady(root).collections.map(LibraryCollectionRow::id),
+            )
+        }
+
+        val fourth = repository.createCollection(token, "Fourth", createdAt = 400L)
+        awaitReady(root) {
+            it.collections.map(LibraryCollectionRow::id) == listOf(third, first, second, fourth)
+        }
+    }
+
+    @Test
+    fun bulkCollectionDeletionIsAtomicAndLeavesAppsInstalled() = runBlocking {
+        val root = TempFiles.newFolder(temporaryFolder, "batch-delete")
+        createConvertedApp(root, "game", "Game")
+        repository.setEmulatorDirectory(root)
+        val initial = awaitReady(root)
+        val token = initial.token()
+        val appId = initial.apps.single().id
+        val one = repository.createCollection(token, "One", createdAt = 10L)
+        val two = repository.createCollection(token, "Two", createdAt = 20L)
+        val three = repository.createCollection(token, "Three", createdAt = 30L)
+        awaitReady(root) { it.collections.size == 3 }
+        repository.setCollectionMembership(token, two, appId, true, addedAt = 40L)
+
+        try {
+            repository.deleteCollections(token, listOf(one, Long.MAX_VALUE))
+            throw AssertionError("Missing collections must roll back the entire deletion")
+        } catch (_: IllegalStateException) {
+            assertEquals(
+                setOf(one, two, three),
+                awaitReady(root).collections.map { it.id }.toSet(),
+            )
+        }
+
+        repository.deleteCollections(token, listOf(one, two))
+        val remaining = awaitReady(root) { it.collections.map { row -> row.id } == listOf(three) }
+        assertEquals(listOf(three), remaining.collections.map { it.id })
+        assertEquals(listOf(appId), remaining.apps.map { it.id })
+    }
+
+    @Test
     fun staleCollectionMutationIsRejectedAfterWorkdirRoundTrip() = runBlocking {
         val first = TempFiles.newFolder(temporaryFolder, "first")
         val second = TempFiles.newFolder(temporaryFolder, "second")

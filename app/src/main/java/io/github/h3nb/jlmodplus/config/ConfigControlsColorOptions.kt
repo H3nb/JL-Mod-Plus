@@ -97,6 +97,7 @@ internal fun ConfigControlsColorOptions(
         modifier = Modifier
             .fillMaxWidth()
             .testTag("controls_colors_section")
+            .revealConfigOption(stringResource(R.string.config_controls_virtual_keyboard_colors))
             .padding(horizontal = 12.dp, vertical = 12.dp),
         verticalArrangement = Arrangement.spacedBy(8.dp),
     ) {

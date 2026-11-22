@@ -68,6 +68,8 @@ import androidx.compose.ui.text.style.TextOverflow
 import androidx.compose.ui.unit.dp
 import io.github.h3nb.jlmodplus.R
 import io.github.h3nb.jlmodplus.ui.JLModPlusTheme
+import io.github.h3nb.jlmodplus.ui.TransientNoticeHost
+import io.github.h3nb.jlmodplus.ui.TransientNoticeState
 import java.text.DateFormat
 import java.util.Date
 
@@ -138,6 +140,7 @@ data class CrashReportsListState(
 class CrashReportsListController internal constructor(
     private val context: android.content.Context,
 ) {
+    internal val notices = TransientNoticeState()
     var state by mutableStateOf(
         CrashReportsListState(loading = true, records = emptyList()),
     )
@@ -156,6 +159,11 @@ class CrashReportsListController internal constructor(
 
     fun setProcessingReports(sharing: Boolean) {
         state = state.copy(processingReports = sharing)
+    }
+
+    @JvmOverloads
+    fun showNotice(message: String, durationMillis: Long = 3_500L) {
+        notices.show(message, durationMillis)
     }
 }
 
@@ -630,10 +638,13 @@ object CrashReportsComposeBridge {
         val controller = CrashReportsListController(view.context)
         view.setContent {
             JLModPlusTheme {
-                CrashReportsScreen(
-                    state = controller.state,
-                    actions = actions,
-                )
+                Box(Modifier.fillMaxSize()) {
+                    CrashReportsScreen(
+                        state = controller.state,
+                        actions = actions,
+                    )
+                    TransientNoticeHost(controller.notices, Modifier.align(Alignment.BottomCenter))
+                }
             }
         }
         return controller

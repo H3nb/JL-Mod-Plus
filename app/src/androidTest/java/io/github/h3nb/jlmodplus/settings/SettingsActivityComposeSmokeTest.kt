@@ -28,6 +28,7 @@ import androidx.preference.PreferenceManager
 import androidx.test.ext.junit.runners.AndroidJUnit4
 import androidx.test.platform.app.InstrumentationRegistry
 import org.junit.After
+import org.junit.Assert.assertEquals
 import org.junit.Assert.assertTrue
 import org.junit.Before
 import org.junit.Rule
@@ -42,6 +43,12 @@ class SettingsActivityComposeSmokeTest {
     private lateinit var preferences: SharedPreferences
     private var hadKeepScreen = false
     private var previousKeepScreen = false
+    private var hadLayout = false
+    private var previousLayout = 0
+    private var hadGridIconSize = false
+    private var previousGridIconSize = 1
+    private var hadHiddenGridTitles = false
+    private var previousHiddenGridTitles = false
 
     @Before
     fun capturePreferences() {
@@ -50,6 +57,12 @@ class SettingsActivityComposeSmokeTest {
         )
         hadKeepScreen = preferences.contains("pref_wakelock_switch")
         previousKeepScreen = preferences.getBoolean("pref_wakelock_switch", false)
+        hadLayout = preferences.contains("pref_apps_view")
+        previousLayout = preferences.getInt("pref_apps_view", 0)
+        hadGridIconSize = preferences.contains("pref_apps_grid_icon_size")
+        previousGridIconSize = preferences.getInt("pref_apps_grid_icon_size", 1)
+        hadHiddenGridTitles = preferences.contains("pref_apps_hide_grid_titles")
+        previousHiddenGridTitles = preferences.getBoolean("pref_apps_hide_grid_titles", false)
     }
 
     @After
@@ -60,7 +73,38 @@ class SettingsActivityComposeSmokeTest {
         } else {
             editor.remove("pref_wakelock_switch")
         }
+        if (hadLayout) editor.putInt("pref_apps_view", previousLayout)
+        else editor.remove("pref_apps_view")
+        if (hadGridIconSize) editor.putInt("pref_apps_grid_icon_size", previousGridIconSize)
+        else editor.remove("pref_apps_grid_icon_size")
+        if (hadHiddenGridTitles) editor.putBoolean("pref_apps_hide_grid_titles", previousHiddenGridTitles)
+        else editor.remove("pref_apps_hide_grid_titles")
         editor.commit()
+    }
+
+    @Test
+    fun gridPreferencesRemainAccessibleWhileLibraryUsesListView() {
+        preferences.edit()
+            .putInt("pref_apps_view", 0)
+            .putInt("pref_apps_grid_icon_size", 1)
+            .putBoolean("pref_apps_hide_grid_titles", false)
+            .commit()
+        InstrumentationRegistry.getInstrumentation().runOnMainSync {
+            composeRule.activity.recreate()
+        }
+        composeRule.waitForIdle()
+
+        val sizeOption = hasText(composeRule.activity.getString(R.string.library_grid_icon_size_title)) and hasClickAction()
+        composeRule.onNode(hasScrollAction()).performScrollToNode(sizeOption)
+        composeRule.onNode(sizeOption).performClick()
+        composeRule.onNodeWithText(composeRule.activity.getString(R.string.library_grid_icon_size_large))
+            .performClick()
+        assertEquals(2, preferences.getInt("pref_apps_grid_icon_size", 1))
+
+        val hideOption = hasText(composeRule.activity.getString(R.string.library_hide_grid_titles)) and hasClickAction()
+        composeRule.onNode(hasScrollAction()).performScrollToNode(hideOption)
+        composeRule.onNode(hideOption).performClick()
+        assertTrue(preferences.getBoolean("pref_apps_hide_grid_titles", false))
     }
 
     @Test

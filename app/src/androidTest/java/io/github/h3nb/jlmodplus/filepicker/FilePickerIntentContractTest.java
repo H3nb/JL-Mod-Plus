@@ -20,12 +20,15 @@ import static org.junit.Assert.assertNull;
 import static org.junit.Assert.assertTrue;
 
 import android.app.Activity;
+import android.content.ClipData;
 import android.content.Context;
 import android.content.Intent;
 import android.net.Uri;
 
 import java.io.File;
 import java.util.Arrays;
+import java.util.ArrayList;
+import java.util.Collections;
 
 import androidx.test.ext.junit.runners.AndroidJUnit4;
 import androidx.test.platform.app.InstrumentationRegistry;
@@ -135,4 +138,28 @@ public class FilePickerIntentContractTest {
 						Uri.fromFile(new File("/storage/emulated/0/two.zip"))),
 				contract.parseResult(Activity.RESULT_OK, multipleResult));
 	}
+
+    @Test
+    public void resultContractDeduplicatesPathsAndPreservesContentUris() {
+        FilePickerResultContract contract = new FilePickerResultContract();
+        Intent result = new Intent();
+        result.putStringArrayListExtra(
+                FilePickerContract.EXTRA_PATHS,
+                new ArrayList<>(Arrays.asList(
+                        "/storage/emulated/0/one.jar",
+                        "/storage/emulated/0/two.jar",
+                        "/storage/emulated/0/one.jar",
+                        null,
+                        "  ")));
+        Uri contentUri = Uri.parse("content://files.example/document/123");
+        result.setClipData(ClipData.newRawUri("Paths", contentUri));
+        result.setData(Uri.parse("/storage/emulated/0/two.jar"));
+
+        assertEquals(Arrays.asList(
+                        Uri.fromFile(new File("/storage/emulated/0/one.jar")),
+                        Uri.fromFile(new File("/storage/emulated/0/two.jar")),
+                        contentUri),
+                contract.parseResult(Activity.RESULT_OK, result));
+        assertEquals(Collections.emptyList(), contract.parseResult(Activity.RESULT_CANCELED, result));
+    }
 }

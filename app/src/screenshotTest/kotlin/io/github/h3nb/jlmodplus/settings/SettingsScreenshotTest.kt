@@ -59,7 +59,7 @@ private val PreviewSettingsState = SettingsUiState(
         ),
         SettingsSwitch("pref_vibration_switch", "Vibration", null, true),
     ),
-    experimentalSwitches = listOf(
+    diagnosticSwitches = listOf(
         SettingsSwitch(
             "micro3d_using_message",
             "Mascot Capsule 3D notification",
@@ -70,12 +70,6 @@ private val PreviewSettingsState = SettingsUiState(
     showProfiles = true,
     workingDirectory = "/storage/emulated/0/JL-Mod Plus",
     libraryChoices = listOf(
-        SettingsChoice(
-            "pref_apps_view",
-            "Layout",
-            SettingsOption("grid", "Grid"),
-            listOf(SettingsOption("list", "List"), SettingsOption("grid", "Grid")),
-        ),
         SettingsChoice(
             "pref_apps_icon_ratio",
             "Icon aspect ratio",
@@ -89,6 +83,17 @@ private val PreviewSettingsState = SettingsUiState(
             listOf(SettingsOption("round", "Rounded corners"), SettingsOption("square", "Sharp corners")),
         ),
         SettingsChoice(
+            "pref_apps_grid_icon_size",
+            "Grid icon size",
+            SettingsOption("standard", "Standard"),
+            listOf(
+                SettingsOption("small", "Small"),
+                SettingsOption("standard", "Standard"),
+                SettingsOption("large", "Large"),
+            ),
+            "Changes icon size and column count in Grid view.",
+        ),
+        SettingsChoice(
             "pref_apps_grid_spacing",
             "Grid spacing",
             SettingsOption("standard", "Standard (8 dp)"),
@@ -98,6 +103,7 @@ private val PreviewSettingsState = SettingsUiState(
                 SettingsOption("standard", "Standard (8 dp)"),
                 SettingsOption("spacious", "Spacious (12 dp)"),
             ),
+            "Only applies to Grid view.",
         ),
     ),
     librarySwitches = listOf(
@@ -110,7 +116,7 @@ private val PreviewSettingsState = SettingsUiState(
         SettingsSwitch(
             "pref_apps_hide_grid_titles",
             "Hide MIDlet titles",
-            "Show only MIDlet icons in grid view.",
+            "Hide MIDlet names in Grid view. List view keeps them visible.",
             false,
         ),
     ),

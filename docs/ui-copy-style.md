@@ -60,11 +60,13 @@ different role when the actual hierarchy or readability requires it rather than
 preserving a poor historical mapping for consistency.
 
 - Top app bar titles use `titleLarge` or the component default.
-- Standard preference titles use `bodyLarge` (16 sp); concise preference
-  descriptions and summaries use `bodySmall` (12 sp) with `onSurfaceVariant`.
-  Values below descriptions use `labelLarge` (14 sp) with semi-bold weight
-  and `onSurface`. This gives the title the largest role while keeping the value
-  easy to find. These are semantic roles, not measured sizes from another app.
+- Standard preference titles use `bodyLarge` (16 sp). When a preference has
+  a current value, place it directly below the title in medium-weight `labelLarge`
+  (14 sp) with `onSurfaceVariant`, subordinate to the title rather than
+  competing with it. Supporting descriptions follow the value, where needed,
+  in `bodySmall` (12 sp) with `onSurfaceVariant`. Use the shared
+  `PreferenceTextContent` for this hierarchy in MIDlet Config and global Settings.
+  These are semantic roles, not measured sizes from another app.
   Preserve font scaling and readable wrapping; disabled values and descriptions
   retain disabled emphasis. Longer instructions, messages, and dialog body text
   retain `bodyMedium` (14 sp), rather than shrinking actionable explanations.
@@ -75,8 +77,9 @@ preserving a poor historical mapping for consistency.
 - Disabled settings retain the same semantic type roles while lowering ordinary title,
   supporting, and value text with the Material 3 disabled emphasis. Do not leave
   supporting text at active contrast when its control is disabled.
-- Section titles generally use `titleMedium`. Screen headings may use
-  `headlineSmall`; alert/dialog headlines use `headlineSmall`.
+- Grouped Settings and MIDlet Config section labels use `titleSmall` with
+  `onSurfaceVariant`. Screen headings may use `headlineSmall`; app-owned
+  adaptive dialog titles use `titleLarge`.
 - Dialog body text uses `bodyMedium`; actions use `labelLarge` or their Material
   component default.
 - `bodySmall` is for concise preference summaries and compact secondary content such as metadata,
@@ -164,6 +167,38 @@ For asset handling and accessibility:
   it preserves or improves the intended meaning; avoid repository-wide icon
   churn solely for source uniformity.
 
+## Preference help and contextual notices
+
+- Use progressive disclosure consistently: choice, number, and slider rows
+  show their title and current value with a trailing chevron, indicating the
+  whole row opens an editor/chooser. The existing selection/edit dialog displays
+  their full description. A description must not be silently dropped unless
+  there is an accessible, discoverable place to read it. For the MIDlet screen
+  resolution, keep the explanatory text in the preset chooser rather than in
+  the scan path.
+- The trailing control communicates the interaction: chevron for a chooser,
+  editor, or child page; switch for a boolean setting; expand/collapse icon for
+  disclosure. Do not leave interactive rows visually indistinguishable from
+  passive text, and do not add a chevron beside switches. The full row remains
+  the accessible tap target; the chevron is decorative, not a second button.
+  Keep rows at least 48 dp tall and let font scaling increase their height.
+- Switches and standalone actions have no separate choice dialog. Keep their
+  supporting explanation in the row when it is needed for an informed decision,
+  rather than truncating away important compatibility or data-loss details.
+  Omit redundant copy on self-explanatory settings.
+- Use shared `PreferenceNotice` roles for conditional messages across app-owned
+  preference surfaces. Info uses a neutral icon and text, not an accent-filled
+  banner; Warning uses the themed tertiary container, and Danger the error
+  container. Show warnings while the relevant condition exists, explaining the
+  consequence or recovery step. Do not make a persistent warning disappear on
+  tap or use a transient toast for required configuration guidance.
+- In System, unavailable timing shows its conversion/reinstall warning next to
+  the disabled option; enabling a compatibility override shows its guidance as
+  a persistent warning. General advice about Java ME system properties belongs
+  in the editor rather than consuming space in the settings list.
+- Never derive the severity of a message from its length. Icons support the text;
+  do not convey risk through color or icon alone.
+
 ## Popup layout and overflow
 
 ### Text alignment
@@ -219,6 +254,14 @@ This readability choice follows [W3C guidance on one-sided text alignment](https
   title/actions cannot sensibly fit outside the body. Never clip an action
   permanently or rely on a hidden gesture to find it.
 
+## Transient feedback
+
+- Prefer the app-owned `TransientNoticeHost` for short, foreground feedback. Its neutral Material 3 Snackbar appearance comes from the active theme; place it over the current screen rather than creating a second host or a global queue.
+- Use `SnackbarHostState` when the notice must provide an action such as Undo. Do not show an automatically disappearing snackbar as the only explanation of an error that requires recovery; keep validation with its input and durable failure state with the owning task.
+- Do not announce every successful toggle or setting change. Use short confirmation only when completion is otherwise unclear, such as a saved profile or exported file. Progress belongs with the active operation, not in a succession of toasts.
+- Standard Android Toast remains a fallback before Compose is mounted, when its notice would be hidden by another modal/window, or when the user has already navigated away from the owning screen. Avoid deprecated custom Toast views.
+- Transient feedback must respect navigation bars and the IME. Long text can wrap without covering required controls; do not show a hidden in-app snackbar behind a modal as the sole failure signal.
+
 ## Theme, accent, and readable content
 
 - Resolve surface, text, icons, controls, links, selection, errors, and scroll
@@ -233,6 +276,46 @@ This readability choice follows [W3C guidance on one-sided text alignment](https
 - Follow the [Localization contract](localization.md#ui-roles) for title, action,
   and error meaning. Keep technical diagnostics behind an explicit copy/details
   action.
+
+## Appearance and modal depth
+
+- Keep the existing Material 3 typography and shape scale. Screen headings, section
+  headings, setting names, supporting values, and action labels use semantic roles,
+  not a custom per-screen font size. Respect Android font scaling; reflow content
+  rather than shrinking text or requiring fixed tile heights.
+- Theme chooses light or dark appearance; the explicit Follow system option uses
+  AppCompat's system night mode. Existing saved light/dark/time/battery choices
+  retain their meanings, and the historical light default is unchanged for
+  preferences without a stored choice.
+- Accent selects the shared color scheme. Eight static palettes preserve neutral
+  surfaces and map actionable, selected, and toggle-on states to primary/container
+  roles; focus remains visibly distinct. Wallpaper colors are an opt-in choice on
+  Android 12+, resolved through Material 3 dynamic color. The stored wallpaper
+  choice falls back to the Sapphire palette if loaded on an older Android version.
+  The selected palette also colors legacy host accents, not guest framebuffer pixels
+  or user-customized virtual controls.
+- Use neutral surfaces for ordinary actions, `primaryContainer` and
+  `onPrimaryContainer` for active/selected states, and `error` for destructive
+  actions. A setting shortcut that *reports* an enabled value is not itself an
+  active toggle.
+- Use the base surface for pages, `surfaceContainerLow` for cards and option
+  tiles, and `surfaceContainer` for app-owned dialogs, with
+  `onSurface` for primary dialog text and `onSurfaceVariant` for supporting
+  text. Use `primaryContainer`/`onPrimaryContainer` for selected tiles and
+  presets; avoid mixing a different selection family into one flow. The shared
+  adaptive dialog uses `titleLarge`, the same extra-large shape and neutral
+  surface as standalone grid dialogs, and no extra tonal elevation. Prefer
+  tonal separation over decorative borders, gradients, or shadows.
+  Runtime Quick Actions uses the same solid Material 3 dialog across
+  Android 6+, without fake glass or version-dependent window blur. Keep the game
+  behind the menu visible through normal modal dimming, without sampling or
+  blurring its framebuffer. An actual backdrop-blur effect would require
+  separate renderer-independent capture/compositing work on older devices;
+  do not add it without demonstrated visual and performance value.
+- Preserve the existing short directional child-page and Search transitions.
+  Selection color changes may animate briefly; transitions must honor platform
+  animation settings and never delay a MIDlet launch, guest input, or controller
+  focus movement. Prefer no animation to a long or continuous decorative effect.
 
 ## Presentation review
 

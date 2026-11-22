@@ -38,6 +38,7 @@ import androidx.compose.ui.test.assertIsOn
 import androidx.compose.ui.test.assertWidthIsAtLeast
 import androidx.compose.ui.test.getUnclippedBoundsInRoot
 import androidx.compose.ui.test.hasAnyAncestor
+import androidx.compose.ui.test.hasClickAction
 import androidx.compose.ui.test.hasScrollAction
 import androidx.compose.ui.test.hasText
 import androidx.compose.ui.test.isDialog
@@ -674,6 +675,24 @@ class RuntimeMenuComposeTest {
     }
 
     @Test
+    fun restartActionDismissesBeforeRequestingConfirmation() {
+        val events = mutableListOf<String>()
+        composeRule.setContent {
+            JLModPlusTheme {
+                RuntimeMenuHost(
+                    state = RuntimeMenuUiState(title = "MIDlet"),
+                    menuVisible = true,
+                    actions = RecordingRuntimeMenuActions(events),
+                    onDismissMenu = { events += "dismiss" },
+                )
+            }
+        }
+
+        composeRule.onNodeWithText(uiString(R.string.runtime_restart)).performClick()
+        assertEquals(listOf("dismiss", "restart"), events)
+    }
+
+    @Test
     fun fullscreenToggleDismissesBeforeChangingGlobalPreference() {
         val events = mutableListOf<String>()
         composeRule.setContent {
@@ -727,7 +746,7 @@ class RuntimeMenuComposeTest {
 
         val memoryEditorLabel = InstrumentationRegistry.getInstrumentation()
             .targetContext.getString(R.string.memory_editor_bubble)
-        composeRule.onNodeWithText(memoryEditorLabel).performScrollTo().performClick()
+        composeRule.onNodeWithContentDescription(memoryEditorLabel).performScrollTo().performClick()
 
         assertEquals(listOf("dismiss", "memoryEditor"), events)
     }
@@ -941,6 +960,26 @@ class RuntimeMenuComposeTest {
 
         composeRule.onNodeWithText("Cancel").performClick()
         assertEquals(listOf("dismiss"), events)
+    }
+
+    @Test
+    fun restartConfirmationIsRequiredBeforeRelaunch() {
+        val events = mutableListOf<String>()
+        composeRule.setContent {
+            JLModPlusTheme {
+                RuntimeHostDialogs(
+                    state = RuntimeHostDialogState.RestartConfirmation,
+                    actions = RecordingRuntimeHostDialogActions(events),
+                    onDismiss = { events += "dismiss" },
+                )
+            }
+        }
+
+        composeRule.onNodeWithText(uiString(R.string.runtime_restart_confirmation)).assertIsDisplayed()
+        assertEquals(emptyList<String>(), events)
+        composeRule.onNode(hasText(uiString(R.string.runtime_restart)) and hasClickAction())
+            .performClick()
+        assertEquals(listOf("dismiss", "restart-confirmed"), events)
     }
 
     @Test
@@ -1403,6 +1442,10 @@ private class RecordingRuntimeMenuActions(
         events += "exit"
     }
 
+    override fun onRestart() {
+        events += "restart"
+    }
+
     override fun onSaveLog() {
         events += "saveLog"
     }
@@ -1496,6 +1539,10 @@ private class RecordingRuntimeHostDialogActions(
 
     override fun onExitConfirmed(openSettings: Boolean) {
         events += if (openSettings) "settings" else "exit"
+    }
+
+    override fun onRestartConfirmed() {
+        events += "restart-confirmed"
     }
 
     override fun onShowControlsConfirmed(hidden: BooleanArray) {

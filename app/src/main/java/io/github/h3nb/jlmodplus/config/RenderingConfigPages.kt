@@ -24,12 +24,17 @@ import androidx.compose.foundation.lazy.LazyColumn
 import androidx.compose.foundation.lazy.items
 import androidx.compose.foundation.lazy.itemsIndexed
 import androidx.compose.foundation.lazy.rememberLazyListState
+import androidx.compose.foundation.lazy.grid.GridCells
+import androidx.compose.foundation.lazy.grid.GridItemSpan
+import androidx.compose.foundation.lazy.grid.LazyVerticalGrid
+import androidx.compose.foundation.lazy.grid.items as gridItems
 import androidx.compose.foundation.rememberScrollState
 import androidx.compose.foundation.verticalScroll
 import androidx.compose.material3.DropdownMenu
 import androidx.compose.material3.DropdownMenuItem
 import androidx.compose.material3.ExperimentalMaterial3Api
 import androidx.compose.material3.FilledTonalButton
+import androidx.compose.material3.HorizontalDivider
 import androidx.compose.material3.Icon
 import androidx.compose.material3.IconButton
 import androidx.compose.material3.MaterialTheme
@@ -264,6 +269,18 @@ internal fun RenderingSettingsPage(
                             contentDescription = stringResource(R.string.action_back))
                     }
                 },
+                actions = {
+                    if (page == EffectPage.STACK && form.effects.isNotEmpty()) {
+                        IconButton(onClick = {
+                            catalogTab = 0
+                            error = null
+                            page = EffectPage.CATALOG
+                        }) {
+                            Icon(painterResource(R.drawable.ic_add),
+                                contentDescription = stringResource(R.string.render_effect_add))
+                        }
+                    }
+                },
             )
         },
     ) { padding ->
@@ -352,29 +369,54 @@ private fun EffectStackContent(
         horizontalAlignment = Alignment.CenterHorizontally,
     ) {
         item(key = "intro") {
-            Column(
-                modifier = Modifier.fillMaxWidth().widthIn(max = 640.dp),
-                verticalArrangement = Arrangement.spacedBy(8.dp),
-            ) {
+            if (effects.isEmpty()) {
+                Surface(
+                    onClick = onAdd,
+                    modifier = Modifier.fillMaxWidth().widthIn(max = 840.dp),
+                    shape = MaterialTheme.shapes.large,
+                    color = MaterialTheme.colorScheme.surfaceContainerLow,
+                ) {
+                    Row(
+                        modifier = Modifier.padding(16.dp),
+                        verticalAlignment = Alignment.CenterVertically,
+                        horizontalArrangement = Arrangement.spacedBy(12.dp),
+                    ) {
+                        Icon(
+                            painterResource(R.drawable.ic_add),
+                            contentDescription = null,
+                            tint = MaterialTheme.colorScheme.primary,
+                        )
+                        Column(
+                            modifier = Modifier.weight(1f),
+                            verticalArrangement = Arrangement.spacedBy(4.dp),
+                        ) {
+                            Text(
+                                stringResource(R.string.render_effect_add),
+                                style = MaterialTheme.typography.titleSmall,
+                            )
+                            Text(
+                                stringResource(R.string.render_effect_empty),
+                                style = MaterialTheme.typography.bodySmall,
+                                color = MaterialTheme.colorScheme.onSurfaceVariant,
+                            )
+                        }
+                    }
+                }
+            } else {
                 Text(
-                    text = stringResource(
-                        if (effects.isEmpty()) R.string.render_effect_empty
-                        else R.string.render_effect_hint
-                    ),
-                    style = if (effects.isEmpty()) MaterialTheme.typography.bodyMedium
-                        else MaterialTheme.typography.bodySmall,
+                    stringResource(R.string.render_effect_hint),
+                    modifier = Modifier.fillMaxWidth().widthIn(max = 840.dp),
+                    style = MaterialTheme.typography.bodySmall,
                     color = MaterialTheme.colorScheme.onSurfaceVariant,
                 )
-                if (graphicsMode != 1) {
-                    Text(stringResource(R.string.render_effect_gles),
-                        style = MaterialTheme.typography.bodySmall,
-                        color = MaterialTheme.colorScheme.onSurfaceVariant)
-                }
-                FilledTonalButton(onClick = onAdd, modifier = Modifier.fillMaxWidth()) {
-                    Icon(painterResource(R.drawable.ic_add), contentDescription = null)
-                    Spacer(Modifier.width(8.dp))
-                    Text(stringResource(R.string.render_effect_add))
-                }
+            }
+            if (graphicsMode != 1) {
+                Text(
+                    stringResource(R.string.render_effect_gles),
+                    modifier = Modifier.fillMaxWidth().widthIn(max = 840.dp),
+                    style = MaterialTheme.typography.bodySmall,
+                    color = MaterialTheme.colorScheme.onSurfaceVariant,
+                )
             }
         }
         itemsIndexed(effects, key = { _, entry -> "effect:" + entry.key }) { index, entry ->
@@ -388,7 +430,7 @@ private fun EffectStackContent(
             val summary = effectStackSummary(entry, definition, legacy)
             val rowKey = "effect:" + entry.key
             Surface(
-                modifier = Modifier.fillMaxWidth().widthIn(max = 640.dp)
+                modifier = Modifier.fillMaxWidth().widthIn(max = 840.dp)
                     .zIndex(if (draggingKey == entry.key) 1f else 0f)
                     .graphicsLayer {
                         translationY = if (draggingKey == entry.key) dragOffset else 0f
@@ -459,94 +501,98 @@ private fun EffectStackContent(
                     },
                 onClick = { onSelect(entry.key) },
                 shape = MaterialTheme.shapes.large,
-                color = MaterialTheme.colorScheme.surfaceContainer,
+                color = MaterialTheme.colorScheme.surfaceContainerLow,
             ) {
-                Row(
-                    modifier = Modifier.padding(
-                        start = 16.dp, top = 8.dp, end = 8.dp, bottom = 8.dp
-                    ),
-                    verticalAlignment = Alignment.CenterVertically,
-                    horizontalArrangement = Arrangement.spacedBy(4.dp),
+                Column(
+                    modifier = Modifier.padding(top = 10.dp, bottom = 4.dp),
                 ) {
-                    Column(
-                        modifier = Modifier.weight(1f),
-                        verticalArrangement = Arrangement.spacedBy(2.dp),
+                    Row(
+                        modifier = Modifier.fillMaxWidth()
+                            .padding(start = 16.dp, end = 8.dp, bottom = 8.dp),
+                        verticalAlignment = Alignment.CenterVertically,
+                        horizontalArrangement = Arrangement.spacedBy(12.dp),
                     ) {
-                        Text(
-                            title,
-                            style = MaterialTheme.typography.bodyLarge,
-                            maxLines = 2,
-                            overflow = TextOverflow.Ellipsis,
-                        )
-                        Text(
-                            summary,
-                            style = MaterialTheme.typography.bodySmall,
-                            color = MaterialTheme.colorScheme.onSurfaceVariant,
-                            maxLines = 2,
-                            overflow = TextOverflow.Ellipsis,
-                        )
-                        if (missing) {
+                        Column(
+                            modifier = Modifier.weight(1f),
+                            verticalArrangement = Arrangement.spacedBy(4.dp),
+                        ) {
                             Text(
-                                stringResource(R.string.render_effect_missing, title),
+                                title,
+                                style = MaterialTheme.typography.titleMedium,
+                                maxLines = 2,
+                                overflow = TextOverflow.Ellipsis,
+                            )
+                            Text(
+                                summary,
                                 style = MaterialTheme.typography.bodySmall,
-                                color = MaterialTheme.colorScheme.error,
+                                color = MaterialTheme.colorScheme.onSurfaceVariant,
+                                maxLines = 2,
+                                overflow = TextOverflow.Ellipsis,
+                            )
+                            if (missing) {
+                                Text(
+                                    stringResource(R.string.render_effect_missing, title),
+                                    style = MaterialTheme.typography.bodySmall,
+                                    color = MaterialTheme.colorScheme.error,
+                                )
+                            }
+                        }
+                        Icon(
+                            painterResource(R.drawable.ic_chevron_right),
+                            contentDescription = null,
+                            modifier = Modifier.size(20.dp),
+                            tint = MaterialTheme.colorScheme.onSurfaceVariant,
+                        )
+                    }
+                    HorizontalDivider(
+                        modifier = Modifier.padding(horizontal = 16.dp),
+                        color = MaterialTheme.colorScheme.outlineVariant.copy(alpha = 0.45f),
+                    )
+                    Row(
+                        modifier = Modifier.fillMaxWidth()
+                            .padding(start = 8.dp, end = 8.dp, top = 4.dp),
+                        verticalAlignment = Alignment.CenterVertically,
+                        horizontalArrangement = Arrangement.spacedBy(4.dp),
+                    ) {
+                        IconButton(
+                            onClick = { onMove(index, index - 1) },
+                            enabled = index > 0,
+                            modifier = Modifier.size(40.dp),
+                        ) {
+                            Icon(
+                                painterResource(R.drawable.ic_arrow_upward),
+                                contentDescription = upLabel,
+                                modifier = Modifier.size(20.dp),
+                                tint = MaterialTheme.colorScheme.onSurfaceVariant.copy(
+                                    alpha = if (index > 0) 1f else 0.38f,
+                                ),
                             )
                         }
-                    }
-                    Column(horizontalAlignment = Alignment.End) {
-                        Row(verticalAlignment = Alignment.CenterVertically) {
-                            Box(
-                                modifier = Modifier.size(40.dp),
-                                contentAlignment = Alignment.Center,
-                            ) {
-                                Icon(
-                                    painterResource(R.drawable.ic_chevron_right),
-                                    contentDescription = null,
-                                    modifier = Modifier.size(20.dp),
-                                    tint = MaterialTheme.colorScheme.onSurfaceVariant,
-                                )
-                            }
-                            IconButton(
-                                onClick = { onRemove(entry.key) },
-                                modifier = Modifier.size(40.dp),
-                            ) {
-                                Icon(
-                                    painterResource(R.drawable.ic_delete),
-                                    contentDescription = removeLabel,
-                                    modifier = Modifier.size(20.dp),
-                                    tint = MaterialTheme.colorScheme.error,
-                                )
-                            }
+                        IconButton(
+                            onClick = { onMove(index, index + 1) },
+                            enabled = index < effects.lastIndex,
+                            modifier = Modifier.size(40.dp),
+                        ) {
+                            Icon(
+                                painterResource(R.drawable.ic_arrow_downward),
+                                contentDescription = downLabel,
+                                modifier = Modifier.size(20.dp),
+                                tint = MaterialTheme.colorScheme.onSurfaceVariant.copy(
+                                    alpha = if (index < effects.lastIndex) 1f else 0.38f,
+                                ),
+                            )
                         }
-                        Row(verticalAlignment = Alignment.CenterVertically) {
-                            IconButton(
-                                onClick = { onMove(index, index - 1) },
-                                enabled = index > 0,
-                                modifier = Modifier.size(40.dp),
-                            ) {
-                                Icon(
-                                    painterResource(R.drawable.ic_arrow_upward),
-                                    contentDescription = upLabel,
-                                    modifier = Modifier.size(20.dp),
-                                    tint = MaterialTheme.colorScheme.onSurfaceVariant.copy(
-                                        alpha = if (index > 0) 1f else 0.38f
-                                    ),
-                                )
-                            }
-                            IconButton(
-                                onClick = { onMove(index, index + 1) },
-                                enabled = index < effects.lastIndex,
-                                modifier = Modifier.size(40.dp),
-                            ) {
-                                Icon(
-                                    painterResource(R.drawable.ic_arrow_downward),
-                                    contentDescription = downLabel,
-                                    modifier = Modifier.size(20.dp),
-                                    tint = MaterialTheme.colorScheme.onSurfaceVariant.copy(
-                                        alpha = if (index < effects.lastIndex) 1f else 0.38f
-                                    ),
-                                )
-                            }
+                        Spacer(Modifier.weight(1f))
+                        IconButton(
+                            onClick = { onRemove(entry.key) },
+                            modifier = Modifier.size(40.dp),
+                        ) {
+                            Icon(
+                                painterResource(R.drawable.ic_delete),
+                                contentDescription = removeLabel,
+                                modifier = Modifier.size(20.dp),
+                                tint = MaterialTheme.colorScheme.error,
+                            )
                         }
                     }
                 }
@@ -576,27 +622,28 @@ private fun EffectCatalogContent(
             Tab(selected = tab == 1, onClick = { onTabChanged(1) },
                 text = { Text(stringResource(R.string.render_effect_user)) })
         }
-        LazyColumn(
+        LazyVerticalGrid(
+            columns = GridCells.Adaptive(minSize = 272.dp),
             modifier = Modifier.fillMaxSize(),
             contentPadding = PaddingValues(horizontal = 16.dp, vertical = 12.dp),
-            verticalArrangement = Arrangement.spacedBy(10.dp),
-            horizontalAlignment = Alignment.CenterHorizontally,
+            horizontalArrangement = Arrangement.spacedBy(8.dp),
+            verticalArrangement = Arrangement.spacedBy(8.dp),
         ) {
             if (error != null) {
-                item(key = "error") {
-                    Text(error, modifier = Modifier.fillMaxWidth().widthIn(max = 640.dp),
+                item(key = "error", span = { GridItemSpan(maxLineSpan) }) {
+                    Text(error, modifier = Modifier.fillMaxWidth().widthIn(max = 840.dp),
                         color = MaterialTheme.colorScheme.error,
                         style = MaterialTheme.typography.bodyMedium)
                 }
             }
             if (tab == 0) {
-                item(key = "catalog-hint") {
+                item(key = "catalog-hint", span = { GridItemSpan(maxLineSpan) }) {
                     Text(stringResource(R.string.render_effect_catalog_hint),
-                        modifier = Modifier.fillMaxWidth().widthIn(max = 640.dp),
+                        modifier = Modifier.fillMaxWidth().widthIn(max = 840.dp),
                         style = MaterialTheme.typography.bodySmall,
                         color = MaterialTheme.colorScheme.onSurfaceVariant)
                 }
-                items(builtInEffects, key = { it.id }) { effect ->
+                gridItems(builtInEffects, key = { it.id }) { effect ->
                     EffectCatalogRow(
                         title = stringResource(effect.title),
                         description = stringResource(effect.description),
@@ -604,8 +651,8 @@ private fun EffectCatalogContent(
                     )
                 }
             } else {
-                item(key = "user-file") {
-                    Column(Modifier.fillMaxWidth().widthIn(max = 640.dp),
+                item(key = "user-file", span = { GridItemSpan(maxLineSpan) }) {
+                    Column(Modifier.fillMaxWidth().widthIn(max = 840.dp),
                         verticalArrangement = Arrangement.spacedBy(8.dp)) {
                         FilledTonalButton(onClick = onPickUserFile,
                             modifier = Modifier.fillMaxWidth()) {
@@ -619,12 +666,12 @@ private fun EffectCatalogContent(
                     }
                 }
                 if (legacyVariants.isNotEmpty()) {
-                    item(key = "variants") {
+                    item(key = "variants", span = { GridItemSpan(maxLineSpan) }) {
                         Text(stringResource(R.string.render_legacy_select_variant),
-                            modifier = Modifier.fillMaxWidth().widthIn(max = 640.dp),
+                            modifier = Modifier.fillMaxWidth().widthIn(max = 840.dp),
                             style = MaterialTheme.typography.titleSmall)
                     }
-                    items(legacyVariants) { variant ->
+                    gridItems(legacyVariants) { variant ->
                         EffectCatalogRow(
                             title = variant.toString(),
                             description = legacyCatalogSubtitle(variant),
@@ -638,14 +685,14 @@ private fun EffectCatalogContent(
                 } else {
                     val available = shaders.filter { it.vertex != null && it.fragment != null }
                     if (available.isEmpty()) {
-                        item(key = "empty") {
+                        item(key = "empty", span = { GridItemSpan(maxLineSpan) }) {
                             Text(stringResource(R.string.render_effect_user_empty),
-                                modifier = Modifier.fillMaxWidth().widthIn(max = 640.dp),
+                                modifier = Modifier.fillMaxWidth().widthIn(max = 840.dp),
                                 color = MaterialTheme.colorScheme.onSurfaceVariant,
                                 style = MaterialTheme.typography.bodyMedium)
                         }
                     } else {
-                        items(available) { shader ->
+                        gridItems(available) { shader ->
                             EffectCatalogRow(
                                 title = shader.toString(),
                                 description = legacyCatalogSubtitle(shader),
@@ -670,10 +717,10 @@ private fun EffectCatalogRow(
     onClick: () -> Unit,
 ) {
     Surface(
-        modifier = Modifier.fillMaxWidth().widthIn(max = 640.dp),
+        modifier = Modifier.fillMaxWidth(),
         onClick = onClick,
         shape = MaterialTheme.shapes.large,
-        color = MaterialTheme.colorScheme.surfaceContainer,
+        color = MaterialTheme.colorScheme.surfaceContainerLow,
     ) {
         Row(Modifier.padding(16.dp), verticalAlignment = Alignment.CenterVertically,
             horizontalArrangement = Arrangement.spacedBy(8.dp)) {
@@ -703,7 +750,7 @@ private fun EffectParametersContent(
         horizontalAlignment = Alignment.CenterHorizontally,
     ) {
         Column(
-            modifier = Modifier.fillMaxWidth().widthIn(max = 640.dp),
+            modifier = Modifier.fillMaxWidth().widthIn(max = 840.dp),
             verticalArrangement = Arrangement.spacedBy(18.dp),
         ) {
             if (definition != null) {

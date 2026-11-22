@@ -19,15 +19,20 @@ import android.graphics.Typeface
 import android.text.TextPaint
 import android.util.TypedValue
 
+import androidx.compose.foundation.BorderStroke
 import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.Arrangement
+import androidx.compose.foundation.layout.IntrinsicSize
+import androidx.compose.foundation.layout.Spacer
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.BoxWithConstraints
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.PaddingValues
+import androidx.compose.foundation.layout.fillMaxHeight
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.fillMaxWidth
+import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.heightIn
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.size
@@ -39,18 +44,17 @@ import androidx.compose.foundation.text.KeyboardOptions
 import androidx.compose.foundation.verticalScroll
 import androidx.compose.material3.Icon
 import androidx.compose.material3.IconButton
-import androidx.compose.material3.ListItem
-import androidx.compose.material3.ListItemDefaults
 import androidx.compose.material3.LocalMinimumInteractiveComponentSize
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.OutlinedTextField
 import androidx.compose.material3.Slider
 import androidx.compose.material3.SliderDefaults
 import androidx.compose.material3.Surface
-import androidx.compose.material3.Switch
 import androidx.compose.material3.Text
 import androidx.compose.material3.TextButton
 import androidx.compose.runtime.Composable
+import androidx.compose.runtime.LaunchedEffect
+import androidx.compose.runtime.SideEffect
 import androidx.compose.runtime.CompositionLocalProvider
 import androidx.compose.runtime.derivedStateOf
 import androidx.compose.runtime.getValue
@@ -72,17 +76,18 @@ import androidx.compose.ui.platform.testTag
 import androidx.compose.ui.res.painterResource
 import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.semantics.Role
+import androidx.compose.ui.semantics.clearAndSetSemantics
 import androidx.compose.ui.semantics.contentDescription
 import androidx.compose.ui.semantics.semantics
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.font.FontFamily
 import androidx.compose.ui.text.input.KeyboardType
+import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.text.style.TextOverflow
 import androidx.compose.ui.unit.Constraints
 import androidx.compose.ui.unit.LayoutDirection
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
-import androidx.compose.ui.window.DialogProperties
 import io.github.h3nb.jlmodplus.R
 import io.github.h3nb.jlmodplus.input.HostCommand
 import io.github.h3nb.jlmodplus.ui.AdaptiveAlertDialog as AlertDialog
@@ -136,6 +141,7 @@ internal data class RuntimeMenuUiState(
 
 interface RuntimeMenuActions {
     fun onExit()
+    fun onRestart()
     fun onSaveLog()
     fun onToggleOrientationLock()
     fun onToggleFullscreen() {}
@@ -177,6 +183,7 @@ class RuntimeMenuComposeController @JvmOverloads constructor(
     private var hostDialogState by mutableStateOf<RuntimeHostDialogState?>(null)
     private var virtualKeyboardPage by mutableStateOf(false)
     private var controllerFocusIndex by mutableIntStateOf(0)
+    private var menuGridColumns = 1
     private var controllerFocusVisible by mutableStateOf(false)
     private var dialogHostCommandHandler: ControllerHostCommandHandler? = null
     private fun changeControllerSurface(change: () -> Unit) {
@@ -243,6 +250,7 @@ class RuntimeMenuComposeController @JvmOverloads constructor(
                             controllerFocusIndex = 0
                         },
                         onNavigationFocusChanged = { controllerFocusVisible = it },
+                        onGridColumnsChanged = { menuGridColumns = it },
                     )
                     if (limitFpsVisible) {
                         ControllerDialogInputScope(
@@ -470,11 +478,10 @@ class RuntimeMenuComposeController @JvmOverloads constructor(
             HostCommand.NavigateUp,
             HostCommand.NavigateLeft,
             HostCommand.PreviousTab,
-            -> moveControllerFocus(-1)
             HostCommand.NavigateDown,
             HostCommand.NavigateRight,
             HostCommand.NextTab,
-            -> moveControllerFocus(1)
+            -> moveControllerFocus(command)
             HostCommand.Back,
             HostCommand.OpenKeypad,
             -> if (virtualKeyboardPage) {
@@ -489,10 +496,13 @@ class RuntimeMenuComposeController @JvmOverloads constructor(
         return true
     }
 
-    private fun moveControllerFocus(delta: Int) {
+    private fun moveControllerFocus(command: HostCommand) {
         val count = controllerItems().size
         if (count == 0) return
-        controllerFocusIndex = (controllerFocusIndex + delta).mod(count)
+        controllerFocusIndex = runtimeMenuNextFocus(
+            controllerFocusIndex, count, menuGridColumns,
+            footerCount = if (virtualKeyboardPage) 0 else 2, command = command,
+        )
     }
 
     private fun controllerItems(): List<RuntimeMenuEntry> = runtimeMenuEntries(
@@ -553,6 +563,10 @@ class RuntimeMenuComposeController @JvmOverloads constructor(
         changeControllerSurface { hostDialogState = RuntimeHostDialogState.ExitConfirmation }
     }
 
+    fun showRestartConfirmation() {
+        changeControllerSurface { hostDialogState = RuntimeHostDialogState.RestartConfirmation }
+    }
+
     fun showControls(names: Array<String>, hidden: BooleanArray) {
         changeControllerSurface {
             hostDialogState = RuntimeHostDialogState.ShowControls(names.toList(), hidden.copyOf())
@@ -596,17 +610,6 @@ private data class PlatformPackageChoice(
     val onCancel: Runnable,
 )
 
-private data class RuntimeMenuDialogLayout(
-    val modifier: Modifier,
-    val properties: DialogProperties,
-)
-
-@Composable
-private fun runtimeMenuDialogLayout(): RuntimeMenuDialogLayout = RuntimeMenuDialogLayout(
-    modifier = Modifier,
-    properties = DialogProperties(),
-)
-
 @Composable
 private fun runtimeMenuDialogContentHeight() = adaptiveDialogLayout().maxHeight
 
@@ -617,10 +620,7 @@ internal fun RuntimeLimitFpsDialog(
     onReset: () -> Unit,
 ) {
     var value by remember { mutableStateOf("") }
-    val layout = runtimeMenuDialogLayout()
     AlertDialog(
-        modifier = layout.modifier,
-        properties = layout.properties,
         onDismissRequest = onDismiss,
         title = { Text(stringResource(R.string.PREF_LIMIT_FPS)) },
         text = {
@@ -663,14 +663,11 @@ internal fun RuntimeEmulationSpeedDialog(
     var draftIndex by remember(currentIndex, presetValues) { mutableFloatStateOf(currentIndex.toFloat()) }
     val selectedIndex = draftIndex.roundToInt().coerceIn(presetValues.indices)
     val selectedValue = presetValues[selectedIndex]
-    val layout = runtimeMenuDialogLayout()
     val dialogBounds = adaptiveDialogLayout()
     val scrollState = rememberScrollState()
     val canScrollForward by remember(scrollState) { derivedStateOf { scrollState.canScrollForward } }
     AlertDialog(
         textScrollable = false,
-        modifier = layout.modifier,
-        properties = layout.properties,
         onDismissRequest = onDismiss,
         title = { Text(stringResource(R.string.PREF_EMULATION_SPEED)) },
         text = {
@@ -753,6 +750,7 @@ internal fun RuntimeMenuHost(
     onOpenVirtualKeyboardPage: () -> Unit = {},
     onCloseVirtualKeyboardPage: () -> Unit = {},
     onNavigationFocusChanged: (Boolean) -> Unit = {},
+    onGridColumnsChanged: (Int) -> Unit = {},
 ) {
     BoxWithConstraints(
         modifier = modifier
@@ -776,7 +774,6 @@ internal fun RuntimeMenuHost(
 
         if (menuVisible) {
             RuntimeMenuDialog(
-                state = state,
                 entries = runtimeMenuEntries(
                     state, shortcuts, virtualKeyboardPage, actions,
                     onDismissMenu, onOpenVirtualKeyboardPage,
@@ -786,6 +783,7 @@ internal fun RuntimeMenuHost(
                 onDismiss = onDismissMenu,
                 onCloseVirtualKeyboardPage = onCloseVirtualKeyboardPage,
                 onNavigationFocusChanged = onNavigationFocusChanged,
+                onGridColumnsChanged = onGridColumnsChanged,
             )
         }
     }
@@ -1020,24 +1018,24 @@ private fun RuntimeToolbarAction(
 
 @Composable
 private fun RuntimeMenuDialog(
-    state: RuntimeMenuUiState,
     entries: List<RuntimeMenuEntry>,
     virtualKeyboardPage: Boolean,
     controllerFocusIndex: Int,
     onDismiss: () -> Unit,
     onCloseVirtualKeyboardPage: () -> Unit,
     onNavigationFocusChanged: (Boolean) -> Unit,
+    onGridColumnsChanged: (Int) -> Unit,
 ) {
-    val layout = runtimeMenuDialogLayout()
+    val footer = if (virtualKeyboardPage) emptyList() else entries.takeLast(2)
+    val tiles = entries.dropLast(footer.size)
     AlertDialog(
         textScrollable = false,
-        modifier = layout.modifier
+        modifier = Modifier
             .clearNavigationFocusOnTouch { onNavigationFocusChanged(false) }
             .showNavigationFocusForKey { onNavigationFocusChanged(true) },
-        properties = layout.properties,
         onDismissRequest = onDismiss,
-        title = {
-            if (virtualKeyboardPage) {
+        title = if (virtualKeyboardPage) {
+            {
                 Row(
                     verticalAlignment = Alignment.CenterVertically,
                     modifier = Modifier.fillMaxWidth(),
@@ -1051,53 +1049,189 @@ private fun RuntimeMenuDialog(
                             contentDescription = stringResource(R.string.action_back),
                         )
                     }
-                    Text(
-                        text = stringResource(R.string.runtime_virtual_controls_title),
-                        maxLines = 2,
-                        overflow = TextOverflow.Ellipsis,
-                    )
+                    Text(text = stringResource(R.string.runtime_virtual_controls_title))
                 }
-            } else {
-                Text(
-                    text = state.title,
-                    maxLines = 2,
-                    overflow = TextOverflow.Ellipsis,
-                )
             }
-        },
+        } else null,
         text = {
-            val listState = rememberLazyListState()
-            val maxListHeight = runtimeMenuDialogContentHeight()
-            val canScrollForward = rememberLazyListCanScrollForward(listState)
-            Box(modifier = Modifier.fillMaxWidth().heightIn(max = maxListHeight)) {
-                LazyColumn(
-                    state = listState,
-                    modifier = Modifier.fillMaxWidth().heightIn(max = maxListHeight),
+            BoxWithConstraints(modifier = Modifier.fillMaxWidth()) {
+                val columns = runtimeMenuGridColumns(
+                    maxWidth.value, LocalDensity.current.fontScale, tiles.size,
+                )
+                SideEffect { onGridColumnsChanged(columns) }
+                val listState = rememberLazyListState()
+                val rowCount = (tiles.size + columns - 1) / columns
+                LaunchedEffect(controllerFocusIndex, columns, virtualKeyboardPage) {
+                    if (controllerFocusIndex in tiles.indices) {
+                        val row = controllerFocusIndex / columns
+                        if (listState.layoutInfo.visibleItemsInfo.none { it.index == row }) {
+                            listState.scrollToItem(row)
+                        }
+                    }
+                }
+                Column(
+                    modifier = Modifier.fillMaxWidth().heightIn(max = runtimeMenuDialogContentHeight()),
+                    verticalArrangement = Arrangement.spacedBy(8.dp),
                 ) {
-                    entries.forEachIndexed { index, entry ->
-                        item(key = entry.label) {
-                            if (entry.checked != null) {
-                                RuntimeToggleItem(
-                                    entry.label, entry.checked, entry.icon,
-                                    controllerFocusIndex == index, entry.activate,
-                                )
-                            } else {
-                                RuntimeMenuItem(
-                                    entry.label, entry.icon,
-                                    controllerFocusIndex == index, entry.enabled, entry.activate,
+                    val canScrollForward = rememberLazyListCanScrollForward(listState)
+                    Box(modifier = Modifier.fillMaxWidth().weight(1f, fill = false)) {
+                        LazyColumn(
+                            state = listState,
+                            modifier = Modifier.fillMaxWidth(),
+                            verticalArrangement = Arrangement.spacedBy(8.dp),
+                        ) {
+                            (0 until rowCount).forEach { rowIndex ->
+                                item(key = rowIndex) {
+                                    Row(
+                                        modifier = Modifier.fillMaxWidth().height(IntrinsicSize.Min),
+                                        horizontalArrangement = Arrangement.spacedBy(8.dp),
+                                    ) {
+                                        repeat(columns) { column ->
+                                            val index = rowIndex * columns + column
+                                            val entry = tiles.getOrNull(index)
+                                            if (entry == null) {
+                                                Spacer(Modifier.weight(1f))
+                                            } else {
+                                                RuntimeActionTile(
+                                                    entry = entry,
+                                                    focused = controllerFocusIndex == index,
+                                                    modifier = Modifier.weight(1f).fillMaxHeight(),
+                                                )
+                                            }
+                                        }
+                                    }
+                                }
+                            }
+                        }
+                        ScrollableContentHint(
+                            visible = canScrollForward,
+                            modifier = Modifier.align(Alignment.BottomCenter),
+                        )
+                    }
+                    if (footer.isNotEmpty()) {
+                        Row(
+                            modifier = Modifier.fillMaxWidth().height(IntrinsicSize.Min),
+                            horizontalArrangement = Arrangement.spacedBy(8.dp),
+                        ) {
+                            footer.forEachIndexed { index, entry ->
+                                RuntimeActionTile(
+                                    entry = entry,
+                                    focused = controllerFocusIndex == tiles.size + index,
+                                    modifier = Modifier.weight(1f).fillMaxHeight(),
+                                    compact = true,
                                 )
                             }
                         }
                     }
                 }
-                ScrollableContentHint(
-                    visible = canScrollForward,
-                    modifier = Modifier.align(Alignment.BottomCenter),
-                )
             }
         },
         confirmButton = null,
     )
+}
+
+internal fun runtimeMenuNextFocus(
+    currentIndex: Int,
+    itemCount: Int,
+    columns: Int,
+    footerCount: Int,
+    command: HostCommand,
+): Int {
+    if (itemCount == 0) return 0
+    val index = currentIndex.coerceIn(0, itemCount - 1)
+    val footers = footerCount.coerceIn(0, itemCount)
+    val tileCount = itemCount - footers
+    val columnCount = columns.coerceAtLeast(1)
+    return when (command) {
+        HostCommand.PreviousTab -> (index - 1).mod(itemCount)
+        HostCommand.NextTab -> (index + 1).mod(itemCount)
+        HostCommand.NavigateUp -> when {
+            index >= tileCount && tileCount > 0 -> {
+                val lastRowStart = (tileCount - 1) / columnCount * columnCount
+                if (index == tileCount) lastRowStart else tileCount - 1
+            }
+            index >= columnCount && index < tileCount -> index - columnCount
+            else -> index
+        }
+        HostCommand.NavigateDown -> when {
+            index >= tileCount -> index
+            index / columnCount < (tileCount - 1) / columnCount ->
+                minOf(index + columnCount, tileCount - 1)
+            footers > 0 -> tileCount +
+                if (footers == 1 || (index % columnCount) * 2 < columnCount) 0 else 1
+            else -> index
+        }
+        HostCommand.NavigateLeft -> when {
+            index > tileCount && footers > 1 -> index - 1
+            index < tileCount && index % columnCount != 0 -> index - 1
+            else -> index
+        }
+        HostCommand.NavigateRight -> when {
+            index >= tileCount && index < itemCount - 1 -> index + 1
+            index < tileCount && (index + 1) % columnCount != 0 && index + 1 < tileCount -> index + 1
+            else -> index
+        }
+        else -> index
+    }
+}
+
+internal fun runtimeMenuGridColumns(widthDp: Float, fontScale: Float, count: Int): Int {
+    val minTileWidth = 92f * fontScale.coerceAtLeast(1f)
+    return ((widthDp + 8f) / (minTileWidth + 8f)).toInt().coerceIn(1, 5)
+        .coerceAtMost(count.coerceAtLeast(1))
+}
+
+@Composable
+private fun RuntimeActionTile(
+    entry: RuntimeMenuEntry,
+    focused: Boolean,
+    modifier: Modifier = Modifier,
+    compact: Boolean = false,
+) {
+    val colors = MaterialTheme.colorScheme
+    val active = entry.checked == true
+    val accessibleLabel = stringResource(entry.label)
+    Surface(
+        modifier = modifier
+            .then(if (focused) Modifier.testTag("runtime-controller-focus-indicator") else Modifier)
+            .semantics { contentDescription = accessibleLabel }
+            .then(if (entry.checked != null) {
+                Modifier.toggleable(
+                    value = entry.checked,
+                    enabled = entry.enabled,
+                    role = Role.Switch,
+                    onValueChange = { entry.activate() },
+                )
+            } else {
+                Modifier.clickable(enabled = entry.enabled, role = Role.Button, onClick = entry.activate)
+            }),
+        shape = MaterialTheme.shapes.large,
+        color = if (active) colors.primaryContainer else colors.surfaceContainerHighest,
+        border = if (focused) BorderStroke(2.dp, colors.primary) else null,
+    ) {
+        Column(
+            modifier = Modifier.fillMaxWidth().fillMaxHeight()
+                .heightIn(min = if (compact) 64.dp else 88.dp)
+                .padding(10.dp),
+            horizontalAlignment = Alignment.CenterHorizontally,
+            verticalArrangement = Arrangement.Center,
+        ) {
+            Icon(
+                painter = painterResource(entry.icon),
+                contentDescription = null,
+                modifier = Modifier.size(if (compact) 20.dp else 24.dp),
+                tint = if (active) colors.primary else colors.onSurfaceVariant,
+            )
+            Spacer(Modifier.height(if (compact) 6.dp else 8.dp))
+            Text(
+                text = stringResource(entry.displayLabel),
+                style = MaterialTheme.typography.labelLarge,
+                fontWeight = FontWeight.Medium,
+                color = if (active) colors.onPrimaryContainer else colors.onSurface,
+                textAlign = TextAlign.Center,
+            )
+        }
+    }
 }
 
 internal data class RuntimeMenuEntry(
@@ -1105,6 +1239,7 @@ internal data class RuntimeMenuEntry(
     val icon: Int,
     val checked: Boolean? = null,
     val enabled: Boolean = true,
+    val displayLabel: Int = label,
     val activate: () -> Unit,
 )
 
@@ -1119,9 +1254,9 @@ internal fun runtimeMenuEntries(
 ): List<RuntimeMenuEntry> = buildList {
     fun action(
         label: Int, icon: Int, checked: Boolean? = null,
-        enabled: Boolean = true, callback: () -> Unit,
+        enabled: Boolean = true, displayLabel: Int = label, callback: () -> Unit,
     ) {
-        add(RuntimeMenuEntry(label, icon, checked, enabled) {
+        add(RuntimeMenuEntry(label, icon, checked, enabled, displayLabel) {
             if (enabled) { onDismiss(); callback() }
         })
     }
@@ -1135,117 +1270,38 @@ internal fun runtimeMenuEntries(
         action(R.string.runtime_virtual_controls_show_controls, R.drawable.ic_visibility, callback = actions::onShowControls)
         return@buildList
     }
-    action(R.string.exit, R.drawable.ic_exit, callback = actions::onExit)
-    action(R.string.save_log, R.drawable.ic_save, callback = actions::onSaveLog)
     action(R.string.action_lock_orientation, R.drawable.ic_screen_lock_rotation, state.orientationLocked, callback = actions::onToggleOrientationLock)
-    action(R.string.memory_editor_bubble, R.drawable.ic_runtime_memory, state.memoryEditorBubbleEnabled, callback = actions::onMemoryEditor)
+    action(R.string.memory_editor_bubble, R.drawable.ic_runtime_memory, state.memoryEditorBubbleEnabled,
+        displayLabel = R.string.runtime_memory_button_short, callback = actions::onMemoryEditor)
+    if (state.isCanvas) {
+        action(R.string.pref_runtime_fullscreen_title, R.drawable.ic_runtime_fullscreen, !state.toolbarVisible,
+            callback = actions::onToggleFullscreen)
+        action(R.string.PREF_LIMIT_FPS, R.drawable.ic_runtime_fps, callback = actions::onLimitFps)
+        if (state.virtualKeyboardAvailable) {
+            add(RuntimeMenuEntry(R.string.runtime_virtual_controls_title, R.drawable.ic_virtual_controls,
+                activate = onOpenVirtualKeyboardPage))
+        }
+    }
+    action(R.string.save_log, R.drawable.ic_save, callback = actions::onSaveLog)
     if (state.cameraSwitchAvailable && RuntimeToolbarShortcut.Camera !in shortcuts) {
         action(
             if (state.cameraFrontFacing) R.string.runtime_camera_use_rear else R.string.runtime_camera_use_front,
             R.drawable.ic_camera_switch,
-            // The host must explain busy states instead of silently ignoring taps.
             callback = actions::onSwitchCamera,
         )
     }
     if (state.isCanvas) {
-        action(R.string.pref_runtime_fullscreen_title, R.drawable.ic_runtime_fullscreen, !state.toolbarVisible, callback = actions::onToggleFullscreen)
         if (state.imeAvailable && RuntimeToolbarShortcut.Ime !in shortcuts) {
             action(R.string.action_keyboard_ime, R.drawable.ic_action_keyboard, callback = actions::onOpenImeKeyboard)
         }
         if (RuntimeToolbarShortcut.Screenshot !in shortcuts) {
             action(R.string.take_screenshot, R.drawable.ic_action_screenshot, callback = actions::onTakeScreenshot)
         }
-        action(R.string.PREF_LIMIT_FPS, R.drawable.ic_runtime_fps, callback = actions::onLimitFps)
         if (state.emulationSpeedAvailable && RuntimeToolbarShortcut.Speed !in shortcuts) {
             action(R.string.PREF_EMULATION_SPEED, R.drawable.ic_speed, callback = actions::onEmulationSpeed)
         }
-        if (state.virtualKeyboardAvailable) {
-            add(RuntimeMenuEntry(R.string.runtime_virtual_controls_title, R.drawable.ic_virtual_controls,
-                activate = onOpenVirtualKeyboardPage))
-        }
     }
+    action(R.string.runtime_restart, R.drawable.ic_refresh, callback = actions::onRestart)
+    action(R.string.exit, R.drawable.ic_exit, callback = actions::onExit)
 }
 
-@Composable
-private fun RuntimeToggleItem(
-    label: Int,
-    checked: Boolean,
-    leadingIcon: Int? = null,
-    focused: Boolean = false,
-    onClick: () -> Unit,
-) {
-    ListItem(
-        colors = ListItemDefaults.colors(
-            containerColor = if (focused) MaterialTheme.colorScheme.primaryContainer.copy(alpha = 0.55f)
-            else androidx.compose.ui.graphics.Color.Transparent,
-        ),
-        headlineContent = {
-            Text(
-                text = stringResource(label),
-                style = MaterialTheme.typography.bodyLarge,
-                fontWeight = FontWeight.Medium,
-            )
-        },
-        leadingContent = leadingIcon?.let { icon ->
-            {
-                Icon(
-                    painter = painterResource(icon),
-                    contentDescription = null,
-                    tint = MaterialTheme.colorScheme.onSurfaceVariant,
-                )
-            }
-        },
-        trailingContent = {
-            Switch(checked = checked, onCheckedChange = null)
-        },
-        modifier = Modifier
-            .fillMaxWidth()
-            .then(
-                if (focused) Modifier.testTag("runtime-controller-focus-indicator") else Modifier,
-            )
-            .toggleable(
-                value = checked,
-                role = Role.Switch,
-                onValueChange = { onClick() },
-            ),
-    )
-}
-
-@Composable
-private fun RuntimeMenuItem(
-    label: Int,
-    leadingIcon: Int? = null,
-    focused: Boolean = false,
-    enabled: Boolean = true,
-    onClick: () -> Unit,
-) {
-    ListItem(
-        colors = ListItemDefaults.colors(
-            containerColor = if (focused) MaterialTheme.colorScheme.primaryContainer.copy(alpha = 0.55f)
-            else androidx.compose.ui.graphics.Color.Transparent,
-        ),
-        headlineContent = {
-            Text(
-                text = stringResource(label),
-                style = MaterialTheme.typography.bodyLarge,
-                fontWeight = FontWeight.Medium,
-                color = MaterialTheme.colorScheme.onSurface.copy(alpha = if (enabled) 1f else 0.38f),
-            )
-        },
-        leadingContent = leadingIcon?.let { icon ->
-            {
-                Icon(
-                    painter = painterResource(icon),
-                    contentDescription = null,
-                    tint = MaterialTheme.colorScheme.onSurfaceVariant.copy(alpha = if (enabled) 1f else 0.38f),
-                )
-            }
-        },
-        modifier = Modifier
-            .fillMaxWidth()
-            .then(
-                if (focused) Modifier.testTag("runtime-controller-focus-indicator") else Modifier,
-            )
-            .clickable(enabled = enabled, role = Role.Button, onClick = onClick),
-    )
-}

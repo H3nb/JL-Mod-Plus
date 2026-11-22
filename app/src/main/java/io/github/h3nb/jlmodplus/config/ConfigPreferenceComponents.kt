@@ -7,8 +7,9 @@ package io.github.h3nb.jlmodplus.config
 import androidx.compose.foundation.background
 import androidx.compose.foundation.BorderStroke
 import androidx.compose.foundation.border
+import androidx.compose.foundation.relocation.BringIntoViewRequester
+import androidx.compose.foundation.relocation.bringIntoViewRequester
 import androidx.compose.foundation.clickable
-import androidx.compose.foundation.selection.toggleable
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
@@ -24,9 +25,11 @@ import androidx.compose.material3.TextButton
 import io.github.h3nb.jlmodplus.ui.AdaptiveAlertDialog as AlertDialog
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Surface
-import androidx.compose.material3.Switch
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
+import androidx.compose.runtime.LaunchedEffect
+import androidx.compose.runtime.CompositionLocalProvider
+import androidx.compose.runtime.compositionLocalOf
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
@@ -42,14 +45,38 @@ import androidx.compose.ui.semantics.Role
 import androidx.compose.ui.semantics.heading
 import androidx.compose.ui.semantics.semantics
 import androidx.compose.ui.text.input.KeyboardType
-import androidx.compose.ui.text.font.FontWeight
-import androidx.compose.ui.text.style.TextOverflow
 import androidx.compose.ui.unit.dp
 import io.github.h3nb.jlmodplus.R
+import io.github.h3nb.jlmodplus.ui.PreferenceNavigationRow
+import io.github.h3nb.jlmodplus.ui.PreferenceSwitchRow
+import io.github.h3nb.jlmodplus.ui.PreferenceTextContent
+import io.github.h3nb.jlmodplus.ui.PreferenceChevron
+import io.github.h3nb.jlmodplus.ui.PreferenceNotice
+import io.github.h3nb.jlmodplus.ui.PreferenceMessageLevel
 
-internal enum class ConfigMessageLevel { Info, Warning, Danger }
+internal typealias ConfigMessageLevel = PreferenceMessageLevel
 
-private const val DISABLED_TEXT_ALPHA = 0.38f
+
+internal data class ConfigSectionReveal(
+    val section: String,
+    val option: String,
+    val onReached: () -> Unit,
+)
+internal val LocalConfigSectionReveal = compositionLocalOf<ConfigSectionReveal?> { null }
+private val LocalConfigOptionReveal = compositionLocalOf<ConfigSectionReveal?> { null }
+
+@Composable
+internal fun Modifier.revealConfigOption(title: String): Modifier {
+    val reveal = LocalConfigOptionReveal.current ?: return this
+    if (reveal.option != title) return this
+
+    val requester = remember { BringIntoViewRequester() }
+    LaunchedEffect(reveal) {
+        requester.bringIntoView()
+        reveal.onReached()
+    }
+    return bringIntoViewRequester(requester)
+}
 
 @Composable
 internal fun ConfigSection(
@@ -58,41 +85,49 @@ internal fun ConfigSection(
     accentTitle: Boolean = true,
     content: @Composable ColumnScope.() -> Unit,
 ) {
-    Column(verticalArrangement = Arrangement.spacedBy(8.dp)) {
+    val reveal = LocalConfigSectionReveal.current?.takeIf { it.section == title }
+    Column(
+        verticalArrangement = Arrangement.spacedBy(4.dp),
+    ) {
         Text(
             text = title,
-            style = MaterialTheme.typography.titleMedium,
-            color = if (accentTitle) {
-                MaterialTheme.colorScheme.primary
-            } else {
-                MaterialTheme.colorScheme.onSurfaceVariant
-            },
-            modifier = Modifier
-                .semantics { heading() }
-                .padding(start = 12.dp, top = 6.dp, end = 12.dp, bottom = 1.dp),
+            style = MaterialTheme.typography.titleSmall,
+            color = if (accentTitle) MaterialTheme.colorScheme.onSurfaceVariant
+                else MaterialTheme.colorScheme.onSurface,
+            modifier = Modifier.semantics { heading() }
+                .padding(start = 12.dp, top = 8.dp, end = 12.dp, bottom = 4.dp),
         )
         Surface(
             modifier = Modifier.fillMaxWidth(),
             shape = MaterialTheme.shapes.large,
-            color = if (highlighted) {
-                MaterialTheme.colorScheme.primaryContainer
-            } else {
-                MaterialTheme.colorScheme.surfaceContainerLow
-            },
-            border = if (highlighted) {
-                BorderStroke(1.dp, MaterialTheme.colorScheme.primary.copy(alpha = 0.42f))
-            } else {
-                null
-            },
-            tonalElevation = if (highlighted) 2.dp else 0.dp,
-            shadowElevation = if (highlighted) 2.dp else 0.dp,
+            color = if (highlighted) MaterialTheme.colorScheme.primaryContainer
+                else MaterialTheme.colorScheme.surfaceContainerLow,
+            border = if (highlighted) BorderStroke(
+                1.dp, MaterialTheme.colorScheme.primary.copy(alpha = 0.42f),
+            ) else null,
         ) {
-            Column(content = content)
+            CompositionLocalProvider(LocalConfigOptionReveal provides reveal) {
+                Column(content = content)
+            }
         }
     }
 }
 
-/** A single accessible target for compact configuration rows. Values remain visible and localized. */
+@Composable
+internal fun ConfigNavigationPreference(
+    title: String,
+    value: String?,
+    onClick: () -> Unit,
+) {
+    PreferenceNavigationRow(
+        title = title,
+        value = value,
+        onClick = onClick,
+        modifier = Modifier.revealConfigOption(title),
+    )
+}
+
+/** One accessible target for a preference that opens an editor or action. */
 @Composable
 internal fun ConfigCompactValuePreference(
     title: String,
@@ -103,42 +138,17 @@ internal fun ConfigCompactValuePreference(
     destructive: Boolean = false,
     description: String? = null,
 ) {
-    Column(
-        modifier = modifier
-            .fillMaxWidth()
-            .heightIn(min = 56.dp)
-            .clickable(enabled = enabled, role = Role.Button, onClick = onClick)
-            .padding(horizontal = 16.dp, vertical = 10.dp),
-        verticalArrangement = Arrangement.spacedBy(2.dp),
-    ) {
-        Text(
-            text = title,
-            style = MaterialTheme.typography.bodyLarge,
-            color = when {
-                !enabled -> MaterialTheme.colorScheme.onSurface.copy(alpha = DISABLED_TEXT_ALPHA)
-                destructive -> MaterialTheme.colorScheme.error
-                else -> MaterialTheme.colorScheme.onSurface
-            },
-        )
-        if (!description.isNullOrEmpty()) {
-            Text(
-                text = description,
-                style = MaterialTheme.typography.bodySmall,
-                color = if (enabled) MaterialTheme.colorScheme.onSurfaceVariant
-                    else MaterialTheme.colorScheme.onSurface.copy(alpha = DISABLED_TEXT_ALPHA),
-            )
-        }
-        if (!value.isNullOrEmpty()) {
-            Text(
-                text = value,
-                style = MaterialTheme.typography.labelLarge.copy(fontWeight = FontWeight.SemiBold),
-                color = if (enabled) MaterialTheme.colorScheme.onSurface
-                    else MaterialTheme.colorScheme.onSurface.copy(alpha = DISABLED_TEXT_ALPHA),
-                maxLines = 2,
-                overflow = TextOverflow.Ellipsis,
-            )
-        }
-    }
+    PreferenceNavigationRow(
+        title = title,
+        value = value,
+        description = description,
+        enabled = enabled,
+        destructive = destructive,
+        onClick = onClick,
+        modifier = modifier.revealConfigOption(title),
+        minHeight = 56.dp,
+        verticalPadding = 8.dp,
+    )
 }
 
 @Composable
@@ -151,56 +161,32 @@ internal fun ConfigValuePreference(
     enabled: Boolean = true,
     message: String? = null,
     messageLevel: ConfigMessageLevel = ConfigMessageLevel.Info,
-    compact: Boolean = false,
+    compact: Boolean = true,
+    showInlineDescription: Boolean = true,
 ) {
-    if (compact && message == null) {
-        ConfigCompactValuePreference(
-            title = title,
-            onClick = onClick,
-            modifier = modifier,
-            value = value,
-            enabled = enabled,
-            description = description,
-        )
-        return
-    }
-    Column(
-        modifier = modifier
-            .fillMaxWidth()
-            .clickable(enabled = enabled, role = Role.Button, onClick = onClick)
-            .padding(horizontal = 16.dp, vertical = 11.dp),
-        verticalArrangement = Arrangement.spacedBy(4.dp),
-    ) {
-        Text(
-            text = title,
-            style = MaterialTheme.typography.bodyLarge,
-            color = if (enabled) MaterialTheme.colorScheme.onSurface
-            else MaterialTheme.colorScheme.onSurface.copy(alpha = DISABLED_TEXT_ALPHA),
-        )
-        if (!description.isNullOrEmpty()) {
-            Text(
-                text = description,
-                style = MaterialTheme.typography.bodySmall,
-                color = if (enabled) MaterialTheme.colorScheme.onSurfaceVariant
-                else MaterialTheme.colorScheme.onSurface.copy(alpha = DISABLED_TEXT_ALPHA),
+    Column(modifier = if (compact) modifier else modifier.fillMaxWidth()) {
+        if (compact) {
+            ConfigCompactValuePreference(
+                title = title,
+                value = value,
+                description = if (showInlineDescription) description else null,
+                enabled = enabled,
+                onClick = onClick,
+            )
+        } else {
+            PreferenceNavigationRow(
+                title = title,
+                value = value,
+                description = description,
+                enabled = enabled,
+                onClick = onClick,
+                modifier = Modifier.revealConfigOption(title),
             )
         }
         if (message != null) {
-            ConfigInlineMessage(message, messageLevel)
-        }
-        Row(
-            modifier = Modifier.fillMaxWidth().padding(top = 2.dp),
-            verticalAlignment = Alignment.CenterVertically,
-        ) {
-            Text(
-                text = value,
-                modifier = Modifier.weight(1f),
-                style = MaterialTheme.typography.labelLarge.copy(fontWeight = FontWeight.SemiBold),
-                color = if (enabled) MaterialTheme.colorScheme.onSurface
-                else MaterialTheme.colorScheme.onSurface.copy(alpha = DISABLED_TEXT_ALPHA),
-                maxLines = 2,
-                overflow = TextOverflow.Ellipsis,
-            )
+            Box(modifier = Modifier.padding(horizontal = 16.dp, vertical = 2.dp)) {
+                PreferenceNotice(message, messageLevel)
+            }
         }
     }
 }
@@ -216,41 +202,19 @@ internal fun ConfigSwitchPreference(
     message: String? = null,
     messageLevel: ConfigMessageLevel = ConfigMessageLevel.Info,
 ) {
-    Row(
-        modifier = modifier
-            .fillMaxWidth()
-            .heightIn(min = 64.dp)
-            .toggleable(
-                value = checked,
-                enabled = enabled,
-                role = Role.Switch,
-                onValueChange = onCheckedChange,
-            )
-            .semantics(mergeDescendants = true) {}
-            .padding(horizontal = 16.dp, vertical = 10.dp),
-        verticalAlignment = Alignment.CenterVertically,
-        horizontalArrangement = Arrangement.spacedBy(12.dp),
-    ) {
-        Column(modifier = Modifier.weight(1f), verticalArrangement = Arrangement.spacedBy(3.dp)) {
-            Text(
-                text = title,
-                style = MaterialTheme.typography.bodyLarge,
-                color = if (enabled) MaterialTheme.colorScheme.onSurface
-                else MaterialTheme.colorScheme.onSurface.copy(alpha = DISABLED_TEXT_ALPHA),
-            )
-            if (!description.isNullOrEmpty()) {
-                Text(
-                    text = description,
-                    style = MaterialTheme.typography.bodySmall,
-                    color = if (enabled) MaterialTheme.colorScheme.onSurfaceVariant
-                    else MaterialTheme.colorScheme.onSurface.copy(alpha = DISABLED_TEXT_ALPHA),
-                )
-            }
-            if (message != null) {
-                ConfigInlineMessage(message, messageLevel)
+    Column(modifier = modifier.fillMaxWidth().revealConfigOption(title)) {
+        PreferenceSwitchRow(
+            title = title,
+            description = description,
+            checked = checked,
+            onCheckedChange = onCheckedChange,
+            enabled = enabled,
+        )
+        if (message != null) {
+            Box(modifier = Modifier.padding(horizontal = 16.dp, vertical = 2.dp)) {
+                PreferenceNotice(message, messageLevel)
             }
         }
-        Switch(enabled = enabled, checked = checked, onCheckedChange = null)
     }
 }
 
@@ -268,9 +232,9 @@ internal fun ConfigChoicePreference(
     onImport: (() -> Unit)? = null,
     onRename: ((String, String) -> Unit)? = null,
     onDelete: ((String) -> Unit)? = null,
-    compact: Boolean = false,
+    compact: Boolean = true,
 ) {
-    var dialogVisible by remember(selected, options) { mutableStateOf(false) }
+    var dialogVisible by remember { mutableStateOf(false) }
     var renameFile by remember { mutableStateOf<String?>(null) }
     var deleteFile by remember { mutableStateOf<String?>(null) }
     ConfigValuePreference(
@@ -281,6 +245,7 @@ internal fun ConfigChoicePreference(
         message = message,
         messageLevel = messageLevel,
         compact = compact,
+        showInlineDescription = false,
         modifier = modifier,
         onClick = { dialogVisible = true },
     )
@@ -374,7 +339,7 @@ internal fun ConfigNumberPreference(
     valueSuffix: String? = null,
     resetValue: String? = null,
     validIntegerRange: IntRange? = null,
-    compact: Boolean = false,
+    compact: Boolean = true,
 ) {
     var dialogVisible by remember(value) { mutableStateOf(false) }
     val display = buildString {
@@ -389,6 +354,7 @@ internal fun ConfigNumberPreference(
         description = description,
         value = display,
         compact = compact,
+        showInlineDescription = false,
         enabled = enabled,
         modifier = modifier,
         onClick = { dialogVisible = true },
@@ -420,7 +386,7 @@ internal fun ConfigSliderPreference(
     valueRange: IntRange,
     onSelected: (Int) -> Unit,
     modifier: Modifier = Modifier,
-    compact: Boolean = false,
+    compact: Boolean = true,
     valueSuffix: String = "",
 ) {
     var dialogVisible by remember(value) { mutableStateOf(false) }
@@ -429,6 +395,7 @@ internal fun ConfigSliderPreference(
         description = description,
         value = "$value$valueSuffix",
         compact = compact,
+        showInlineDescription = false,
         modifier = modifier,
         onClick = { dialogVisible = true },
     )
@@ -450,30 +417,19 @@ internal fun ConfigSliderPreference(
 @Composable
 internal fun ConfigColorPreference(
     title: String,
-    description: String,
+    description: String?,
     value: String,
     onClick: () -> Unit,
     displayLabel: String? = null,
 ) {
-    Column(
-        modifier = Modifier
-            .fillMaxWidth()
-            .clickable(role = Role.Button, onClick = onClick)
-            .padding(horizontal = 16.dp, vertical = 11.dp),
-        verticalArrangement = Arrangement.spacedBy(4.dp),
-    ) {
-        Text(text = title, style = MaterialTheme.typography.bodyLarge)
-        Text(
-            text = description,
-            style = MaterialTheme.typography.bodySmall,
-            color = MaterialTheme.colorScheme.onSurfaceVariant,
-        )
-        Row(
-            modifier = Modifier.fillMaxWidth().padding(top = 2.dp),
-            verticalAlignment = Alignment.CenterVertically,
-            horizontalArrangement = Arrangement.spacedBy(8.dp),
-        ) {
-            if (displayLabel == null) {
+    PreferenceNavigationRow(
+        title = title,
+        value = displayLabel ?: "#${value.ifEmpty { "000000" }}",
+        description = description,
+        onClick = onClick,
+        modifier = Modifier.revealConfigOption(title),
+        trailingContent = if (displayLabel == null) {
+            {
                 Box(
                     modifier = Modifier
                         .size(24.dp)
@@ -482,14 +438,8 @@ internal fun ConfigColorPreference(
                         .border(1.dp, MaterialTheme.colorScheme.outlineVariant, MaterialTheme.shapes.extraSmall),
                 )
             }
-            Text(
-                text = displayLabel ?: "#${value.ifEmpty { "000000" }}",
-                modifier = Modifier.weight(1f),
-                style = MaterialTheme.typography.labelLarge.copy(fontWeight = FontWeight.SemiBold),
-                color = MaterialTheme.colorScheme.onSurface,
-            )
-        }
-    }
+        } else null,
+    )
 }
 
 @Composable
@@ -502,34 +452,18 @@ internal fun ConfigActionPreference(
     testTag: String? = null,
 ) {
     Surface(
-        modifier = Modifier.fillMaxWidth(),
+        modifier = Modifier.fillMaxWidth().revealConfigOption(title),
         color = Color.Transparent,
         shape = MaterialTheme.shapes.medium,
     ) {
-        Column(
-            modifier = Modifier
-                .fillMaxWidth()
-                .clickable(enabled = enabled, role = Role.Button, onClick = onClick)
-                .then(if (testTag == null) Modifier else Modifier.testTag(testTag))
-                .padding(horizontal = 16.dp, vertical = 11.dp),
-            verticalArrangement = Arrangement.spacedBy(3.dp),
-        ) {
-            Text(
-                text = title,
-                style = MaterialTheme.typography.bodyLarge,
-                color = when {
-                    !enabled -> MaterialTheme.colorScheme.onSurface.copy(alpha = DISABLED_TEXT_ALPHA)
-                    destructive -> MaterialTheme.colorScheme.error
-                    else -> MaterialTheme.colorScheme.onSurface
-                },
-            )
-            Text(
-                text = description,
-                style = MaterialTheme.typography.bodySmall,
-                color = if (enabled) MaterialTheme.colorScheme.onSurfaceVariant
-                else MaterialTheme.colorScheme.onSurface.copy(alpha = DISABLED_TEXT_ALPHA),
-            )
-        }
+        PreferenceNavigationRow(
+            title = title,
+            description = description,
+            onClick = onClick,
+            destructive = destructive,
+            enabled = enabled,
+            modifier = if (testTag == null) Modifier else Modifier.testTag(testTag),
+        )
     }
 }
 
@@ -545,18 +479,12 @@ internal fun ConfigDisclosurePreference(
             .fillMaxWidth()
             .heightIn(min = 64.dp)
             .clickable(role = Role.Button) { onExpandedChange(!expanded) }
+            .revealConfigOption(title)
             .padding(horizontal = 16.dp, vertical = 10.dp),
         verticalAlignment = Alignment.CenterVertically,
         horizontalArrangement = Arrangement.spacedBy(12.dp),
     ) {
-        Column(modifier = Modifier.weight(1f), verticalArrangement = Arrangement.spacedBy(3.dp)) {
-            Text(text = title, style = MaterialTheme.typography.bodyLarge, color = MaterialTheme.colorScheme.onSurface)
-            Text(
-                text = description,
-                style = MaterialTheme.typography.bodySmall,
-                color = MaterialTheme.colorScheme.onSurfaceVariant,
-            )
-        }
+        PreferenceTextContent(title = title, description = description, modifier = Modifier.weight(1f))
         Icon(
             painter = painterResource(
                 if (expanded) R.drawable.ic_keyboard_arrow_up else R.drawable.ic_keyboard_arrow_down,
@@ -570,35 +498,10 @@ internal fun ConfigDisclosurePreference(
 
 @Composable
 internal fun ConfigMessageBlock(text: String, level: ConfigMessageLevel = ConfigMessageLevel.Info) {
-    Box(modifier = Modifier.padding(horizontal = 12.dp, vertical = 8.dp)) {
-        ConfigInlineMessage(text, level)
-    }
-}
-
-@Composable
-private fun ConfigInlineMessage(text: String, level: ConfigMessageLevel) {
-    val container = when (level) {
-        ConfigMessageLevel.Info -> MaterialTheme.colorScheme.primaryContainer
-        ConfigMessageLevel.Warning -> MaterialTheme.colorScheme.tertiaryContainer
-        ConfigMessageLevel.Danger -> MaterialTheme.colorScheme.errorContainer
-    }
-    val content = when (level) {
-        ConfigMessageLevel.Info -> MaterialTheme.colorScheme.onPrimaryContainer
-        ConfigMessageLevel.Warning -> MaterialTheme.colorScheme.onTertiaryContainer
-        ConfigMessageLevel.Danger -> MaterialTheme.colorScheme.onErrorContainer
-    }
-    val prefix = when (level) {
-        ConfigMessageLevel.Info -> "ⓘ "
-        ConfigMessageLevel.Warning -> "⚠ "
-        ConfigMessageLevel.Danger -> "⚠ "
-    }
-    Surface(shape = MaterialTheme.shapes.small, color = container) {
-        Text(
-            text = prefix + text,
-            modifier = Modifier.fillMaxWidth().padding(horizontal = 10.dp, vertical = 8.dp),
-            style = MaterialTheme.typography.bodyMedium,
-            color = content,
-        )
+    androidx.compose.foundation.layout.Box(
+        modifier = Modifier.padding(horizontal = 12.dp, vertical = 8.dp),
+    ) {
+        PreferenceNotice(text, level)
     }
 }
 

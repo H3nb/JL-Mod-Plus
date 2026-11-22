@@ -58,7 +58,6 @@ import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.semantics.Role
 import androidx.compose.ui.text.style.TextOverflow
 import androidx.compose.ui.unit.dp
-import androidx.compose.ui.window.DialogProperties
 import io.github.h3nb.jlmodplus.R
 import io.github.h3nb.jlmodplus.ui.adaptiveDialogLayout
 import io.github.h3nb.jlmodplus.ui.ScrollableContentHint
@@ -71,6 +70,7 @@ interface RuntimeHostDialogActions {
     fun onMidletCancelled()
     fun onErrorAcknowledged()
     fun onExitConfirmed(openSettings: Boolean)
+    fun onRestartConfirmed()
     fun onShowControlsConfirmed(hidden: BooleanArray)
     fun onSaveVirtualKeyboard(updateTarget: String?)
     fun onVirtualKeyboardEditSaved(updateTarget: String?) = Unit
@@ -84,6 +84,7 @@ internal sealed interface RuntimeHostDialogState {
     data class MidletSelection(val names: List<String>) : RuntimeHostDialogState
     data class Error(val message: String) : RuntimeHostDialogState
     data object ExitConfirmation : RuntimeHostDialogState
+    data object RestartConfirmation : RuntimeHostDialogState
     data class ShowControls(
         val names: List<String>,
         val hidden: BooleanArray,
@@ -126,6 +127,10 @@ internal fun RuntimeHostDialogs(
             actions = actions,
             onDismiss = onDismiss,
         )
+        RuntimeHostDialogState.RestartConfirmation -> RestartConfirmationDialog(
+            actions = actions,
+            onDismiss = onDismiss,
+        )
         is RuntimeHostDialogState.ShowControls -> ShowControlsDialog(
             state = state,
             actions = actions,
@@ -153,19 +158,6 @@ internal fun RuntimeHostDialogs(
     }
 }
 
-private data class RuntimeDialogLayout(
-    val modifier: Modifier,
-    val properties: DialogProperties,
-)
-
-@Composable
-private fun runtimeDialogLayout(): RuntimeDialogLayout {
-    return RuntimeDialogLayout(
-        modifier = Modifier.imePadding(),
-        properties = DialogProperties(),
-    )
-}
-
 @Composable
 private fun runtimeDialogListHeight() =
     adaptiveDialogLayout().maxHeight
@@ -176,14 +168,12 @@ private fun MidletSelectionDialog(
     actions: RuntimeHostDialogActions,
     onDismiss: () -> Unit,
 ) {
-    val layout = runtimeDialogLayout()
     val listState = rememberLazyListState()
     val maxListHeight = runtimeDialogListHeight()
     val canScrollForward = rememberLazyListCanScrollForward(listState)
     AlertDialog(
         textScrollable = false,
-        modifier = layout.modifier,
-        properties = layout.properties,
+        modifier = Modifier.imePadding(),
         onDismissRequest = {
             onDismiss()
             actions.onMidletCancelled()
@@ -236,11 +226,9 @@ private fun ErrorDialog(
     message: String,
     onAcknowledge: () -> Unit,
 ) {
-    val layout = runtimeDialogLayout()
     AlertDialog(
         textScrollable = false,
-        modifier = layout.modifier,
-        properties = layout.properties,
+        modifier = Modifier.imePadding(),
         onDismissRequest = onAcknowledge,
         icon = {
             Icon(
@@ -284,10 +272,8 @@ private fun ExitConfirmationDialog(
     actions: RuntimeHostDialogActions,
     onDismiss: () -> Unit,
 ) {
-    val layout = runtimeDialogLayout()
     AlertDialog(
-        modifier = layout.modifier,
-        properties = layout.properties,
+        modifier = Modifier.imePadding(),
         onDismissRequest = onDismiss,
         icon = {
             Icon(
@@ -330,6 +316,31 @@ private fun ExitConfirmationDialog(
     )
 }
 
+@Composable
+private fun RestartConfirmationDialog(
+    actions: RuntimeHostDialogActions,
+    onDismiss: () -> Unit,
+) {
+    AlertDialog(
+        onDismissRequest = onDismiss,
+        icon = {
+            Icon(painter = painterResource(R.drawable.ic_refresh), contentDescription = null)
+        },
+        title = { Text(stringResource(R.string.runtime_restart)) },
+        text = { Text(stringResource(R.string.runtime_restart_confirmation)) },
+        dismissButton = {
+            TextButton(onClick = onDismiss) {
+                Text(stringResource(android.R.string.cancel))
+            }
+        },
+        confirmButton = {
+            Button(onClick = { onDismiss(); actions.onRestartConfirmed() }) {
+                Text(stringResource(R.string.runtime_restart))
+            }
+        },
+    )
+}
+
 private const val ShowControlsColumnCount = 3
 private val ShowControlsCellGap = 4.dp
 private val ShowControlsPaneGap = 16.dp
@@ -351,14 +362,12 @@ private fun ShowControlsDialog(
         mutableStateOf(BooleanArray(state.hidden.size) { !state.hidden[it] })
     }
     val plan = remember(state.names) { ShowControlsPlan.resolve(state.names) }
-    val layout = runtimeDialogLayout()
     val scrollState = rememberScrollState()
     val maxListHeight = runtimeDialogListHeight()
     val canScrollForward = rememberScrollCanScrollForward(scrollState)
     AlertDialog(
         textScrollable = false,
-        modifier = layout.modifier,
-        properties = layout.properties,
+        modifier = Modifier.imePadding(),
         onDismissRequest = onDismiss,
         title = { Text(stringResource(R.string.runtime_virtual_controls_show_controls)) },
         text = {
@@ -558,7 +567,6 @@ private fun FinishVirtualKeyboardEditDialog(
     onDismiss: () -> Unit,
 ) {
     var updatePreset by remember(state) { mutableStateOf(false) }
-    val layout = runtimeDialogLayout()
     val maxContentHeight = runtimeDialogListHeight()
 
     fun continueEditing() {
@@ -568,8 +576,7 @@ private fun FinishVirtualKeyboardEditDialog(
 
     AlertDialog(
         textScrollable = false,
-        modifier = layout.modifier,
-        properties = layout.properties,
+        modifier = Modifier.imePadding(),
         onDismissRequest = ::continueEditing,
         title = { Text(stringResource(R.string.CONFIRMATION_REQUIRED)) },
         text = {
@@ -635,12 +642,10 @@ private fun SaveVirtualKeyboardDialog(
     onDismiss: () -> Unit,
 ) {
     var updatePreset by remember(state) { mutableStateOf(false) }
-    val layout = runtimeDialogLayout()
     val maxContentHeight = runtimeDialogListHeight()
     AlertDialog(
         textScrollable = false,
-        modifier = layout.modifier,
-        properties = layout.properties,
+        modifier = Modifier.imePadding(),
         onDismissRequest = onDismiss,
         title = {
             Text(stringResource(R.string.CONFIRMATION_REQUIRED))
@@ -697,11 +702,9 @@ private fun LayoutEditGuideDialog(
     onDismiss: () -> Unit,
 ) {
     var dontShowAgain by remember { mutableStateOf(false) }
-    val layout = runtimeDialogLayout()
     AlertDialog(
         textScrollable = false,
-        modifier = layout.modifier,
-        properties = layout.properties,
+        modifier = Modifier.imePadding(),
         onDismissRequest = onDismiss,
         title = { Text(stringResource(R.string.runtime_virtual_controls_edit_guide_title)) },
         text = {
@@ -780,7 +783,6 @@ private fun LayoutSelectionDialog(
 ) {
     var pendingLayout by remember(state) { mutableStateOf<Int?>(null) }
     var updatePreset by remember(state) { mutableStateOf(false) }
-    val layout = runtimeDialogLayout()
     val pendingIndex = pendingLayout
 
     if (pendingIndex == null) {
@@ -789,8 +791,7 @@ private fun LayoutSelectionDialog(
         val canScrollForward = rememberLazyListCanScrollForward(listState)
         AlertDialog(
             textScrollable = false,
-            modifier = layout.modifier,
-            properties = layout.properties,
+            modifier = Modifier.imePadding(),
             onDismissRequest = onDismiss,
             title = { Text(stringResource(R.string.layout_switch)) },
             text = {
@@ -850,8 +851,7 @@ private fun LayoutSelectionDialog(
 
     val layoutName = state.entries.getOrNull(pendingIndex) ?: return
     AlertDialog(
-        modifier = layout.modifier,
-        properties = layout.properties,
+        modifier = Modifier.imePadding(),
         onDismissRequest = onDismiss,
         title = {
             Text(stringResource(R.string.runtime_layout_apply_title, layoutName))

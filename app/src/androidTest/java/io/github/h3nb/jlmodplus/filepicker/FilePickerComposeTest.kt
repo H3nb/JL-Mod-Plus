@@ -18,9 +18,14 @@ import io.github.h3nb.jlmodplus.R
 import android.graphics.Bitmap
 import java.io.File
 import androidx.test.platform.app.InstrumentationRegistry
+import androidx.compose.ui.test.DeviceConfigurationOverride
+import androidx.compose.ui.test.ExperimentalTestApi
+import androidx.compose.ui.test.WindowSize
 import androidx.compose.ui.test.junit4.v2.createComposeRule
 import androidx.compose.ui.test.assertCountEquals
 import androidx.compose.ui.test.assertIsEnabled
+import androidx.compose.ui.test.assertIsDisplayed
+import androidx.compose.ui.test.getUnclippedBoundsInRoot
 import androidx.compose.ui.test.onNodeWithContentDescription
 import androidx.compose.ui.test.onNodeWithText
 import androidx.compose.ui.test.onNodeWithTag
@@ -30,10 +35,13 @@ import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
 import androidx.compose.runtime.setValue
+import androidx.compose.ui.unit.DpSize
+import androidx.compose.ui.unit.dp
 import androidx.test.ext.junit.runners.AndroidJUnit4
 import androidx.test.espresso.Espresso.pressBack
 import java.util.concurrent.atomic.AtomicReference
 import org.junit.Assert.assertEquals
+import org.junit.Assert.assertTrue
 import org.junit.Rule
 import org.junit.Test
 import org.junit.runner.RunWith
@@ -75,12 +83,86 @@ class FilePickerComposeTest {
 
         composeRule.onNodeWithContentDescription(uiString(R.string.file_picker_search)).performClick()
         composeRule.onNodeWithText(uiString(R.string.file_picker_search)).assertExists()
+        composeRule.onNodeWithContentDescription(uiString(R.string.action_back)).performClick()
         composeRule.onNodeWithContentDescription(uiString(R.string.file_picker_sort)).performClick()
         composeRule.onNodeWithText(uiString(R.string.file_picker_sort_name_ascending)).assertExists()
         composeRule.onNodeWithText(uiString(R.string.file_picker_sort_modified_newest)).assertExists()
         composeRule.onNodeWithText("zeta.jar").assertExists()
         composeRule.onNodeWithText(uiString(R.string.file_picker_sort_modified_newest)).performClick()
         assertEquals("sort:MODIFIED_NEWEST", events.get())
+    }
+
+    @Test
+    fun toolbarPlacesSearchBeforeSortAndSelectAll() {
+        composeRule.setContent {
+            JLModPlusTheme {
+                FilePickerScreen(
+                    state = sampleState().copy(
+                        request = sampleState().request.copy(
+                            allowMultiple = true,
+                            singleClick = false,
+                        ),
+                    ),
+                    actions = RecordingActions(AtomicReference("")),
+                )
+            }
+        }
+
+        val search = composeRule.onNodeWithContentDescription(
+            uiString(R.string.file_picker_search),
+        ).getUnclippedBoundsInRoot()
+        val sort = composeRule.onNodeWithContentDescription(
+            uiString(R.string.file_picker_sort),
+        ).getUnclippedBoundsInRoot()
+        val select = composeRule.onNodeWithContentDescription(
+            uiString(R.string.file_picker_select_all),
+        ).getUnclippedBoundsInRoot()
+        assertTrue(search.left < sort.left && sort.left < select.left)
+    }
+
+    @Test
+    @OptIn(ExperimentalTestApi::class)
+    fun compactLargeTextPickerKeepsPrimaryActionsReachable() {
+        val events = AtomicReference("")
+        composeRule.setContent {
+            DeviceConfigurationOverride(
+                DeviceConfigurationOverride.WindowSize(DpSize(320.dp, 400.dp)),
+            ) {
+                val density = androidx.compose.ui.platform.LocalDensity.current
+                androidx.compose.runtime.CompositionLocalProvider(
+                    androidx.compose.ui.platform.LocalDensity provides
+                        androidx.compose.ui.unit.Density(density.density, fontScale = 2f),
+                ) {
+                    JLModPlusTheme {
+                        FilePickerScreen(
+                            state = sampleState().copy(
+                                request = sampleState().request.copy(
+                                    allowMultiple = true,
+                                    singleClick = false,
+                                ),
+                                selectedPaths = setOf("/storage/emulated/0/zeta.jar"),
+                                entries = sampleState().entries + FilePickerEntry(
+                                    "/storage/emulated/0/alpha.jar",
+                                    "alpha.jar",
+                                    FilePickerEntryKind.FILE,
+                                ),
+                            ),
+                            actions = RecordingActions(events),
+                        )
+                    }
+                }
+            }
+        }
+
+        val select = composeRule.onNodeWithContentDescription(
+            uiString(R.string.file_picker_select_all),
+        )
+        select.assertIsDisplayed().assertIsEnabled().performClick()
+        assertEquals("select-all", events.get())
+        composeRule.onNodeWithText(uiString(R.string.file_picker_choose))
+            .assertIsDisplayed()
+            .performClick()
+        assertEquals("confirm", events.get())
     }
 
     @Test
@@ -136,6 +218,42 @@ class FilePickerComposeTest {
     }
 
     @Test
+    @OptIn(ExperimentalTestApi::class)
+    fun wideGridUsesTheSameFileSelectionActionsAsCompactList() {
+        val events = AtomicReference<String>("")
+        composeRule.setContent {
+            DeviceConfigurationOverride(
+                DeviceConfigurationOverride.WindowSize(DpSize(900.dp, 640.dp)),
+            ) {
+                JLModPlusTheme {
+                    FilePickerScreen(
+                        state = sampleState().copy(
+                            request = sampleState().request.copy(
+                                allowMultiple = true,
+                                singleClick = false,
+                            ),
+                            entries = sampleState().entries + FilePickerEntry(
+                                "/storage/emulated/0/alpha.jar",
+                                "alpha.jar",
+                                FilePickerEntryKind.FILE,
+                            ),
+                        ),
+                        actions = RecordingActions(events),
+                    )
+                }
+            }
+        }
+
+        composeRule.onAllNodesWithTag("file_picker_selection_checkbox").assertCountEquals(2)
+        val first = composeRule.onNodeWithText("alpha.jar").getUnclippedBoundsInRoot()
+        val second = composeRule.onNodeWithText("zeta.jar").getUnclippedBoundsInRoot()
+        assertTrue("Wide picker must actually use multiple columns", first.left < second.left)
+        assertEquals(first.top.value, second.top.value, 1f)
+        composeRule.onNodeWithText("zeta.jar").performClick()
+        assertEquals("open:zeta.jar", events.get())
+    }
+
+    @Test
     fun directoryModeOffersCurrentFolderAsTheSelection() {
         val events = AtomicReference<String>("")
         val request = FilePickerRequest(
@@ -156,6 +274,7 @@ class FilePickerComposeTest {
         }
 
         composeRule.onNodeWithText(uiString(R.string.file_picker_current_folder)).assertExists()
+        composeRule.onNodeWithText(uiString(R.string.file_picker_create_folder)).assertExists()
         composeRule.onNodeWithText("Choose").assertIsEnabled().performClick()
         assertEquals("confirm", events.get())
     }

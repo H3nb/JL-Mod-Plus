@@ -16,16 +16,17 @@
 package io.github.h3nb.jlmodplus.ui
 
 import android.app.Activity
+import android.content.Context
+import android.os.Build
 import android.content.SharedPreferences
 import androidx.core.content.edit
 import androidx.compose.foundation.isSystemInDarkTheme
 import androidx.compose.material3.MaterialTheme
-import androidx.compose.material3.FilterChipDefaults
-import androidx.compose.material3.NavigationBarItemDefaults
-import androidx.compose.material3.NavigationRailItemDefaults
 import androidx.compose.material3.Shapes
 import androidx.compose.material3.Typography
 import androidx.compose.material3.darkColorScheme
+import androidx.compose.material3.dynamicDarkColorScheme
+import androidx.compose.material3.dynamicLightColorScheme
 import androidx.compose.material3.lightColorScheme
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.DisposableEffect
@@ -41,6 +42,7 @@ import androidx.compose.ui.graphics.luminance
 import androidx.compose.ui.graphics.toArgb
 import androidx.compose.ui.platform.LocalView
 import androidx.compose.ui.platform.LocalContext
+import androidx.compose.ui.platform.LocalConfiguration
 import androidx.compose.ui.text.font.FontFamily
 import androidx.compose.ui.unit.dp
 import androidx.core.view.WindowCompat
@@ -109,7 +111,8 @@ enum class AccentPalette(val key: String) {
     Rose("rose"),
     Green("green"),
     Amber("amber"),
-    DefaultBlue("blue");
+    DefaultBlue("blue"),
+    Wallpaper("wallpaper");
 
     companion object {
         val Default: AccentPalette = Sapphire
@@ -128,7 +131,13 @@ enum class AccentPalette(val key: String) {
         }
     }
 
-    fun previewColor(dark: Boolean): Color = if (dark) tones().dark.primary else tones().light.primary
+    @JvmOverloads
+    fun previewColor(dark: Boolean, context: Context? = null): Color {
+        if (this == Wallpaper && context != null && Build.VERSION.SDK_INT >= Build.VERSION_CODES.S) {
+            return colorScheme(dark, context).primary
+        }
+        return if (dark) tones().dark.primary else tones().light.primary
+    }
 }
 
 private data class AccentRoles(
@@ -371,10 +380,14 @@ private val AccentToneSets = mapOf(
     ),
 )
 
-private fun AccentPalette.tones(): AccentTones = checkNotNull(AccentToneSets[this])
+private fun AccentPalette.tones(): AccentTones =
+    checkNotNull(AccentToneSets[if (this == AccentPalette.Wallpaper) AccentPalette.Default else this])
 
 /** Complete accent-specific Material 3 roles, including invariant fixed colors. */
-internal fun AccentPalette.colorScheme(dark: Boolean): androidx.compose.material3.ColorScheme {
+internal fun AccentPalette.colorScheme(dark: Boolean, context: Context? = null): androidx.compose.material3.ColorScheme {
+    if (this == AccentPalette.Wallpaper && context != null && Build.VERSION.SDK_INT >= Build.VERSION_CODES.S) {
+        return if (dark) dynamicDarkColorScheme(context) else dynamicLightColorScheme(context)
+    }
     val base = if (dark) DarkColors else LightColors
     val tones = tones()
     val roles = if (dark) tones.dark else tones.light
@@ -407,43 +420,6 @@ internal fun AccentPalette.colorScheme(dark: Boolean): androidx.compose.material
         onTertiaryFixedVariant = tones.onTertiaryFixedVariant,
     )
 }
-
-/**
- * Accent-aware colors for navigation destinations.
- *
- * Material 3 uses a secondary container for the selected indicator by default. That
- * container is intentionally neutral in our base scheme, so expose one shared mapping for
- * every app-owned navigation surface instead of repeating ad-hoc colors at each call site.
- */
-@Composable
-internal fun jlModPlusNavigationBarItemColors() = NavigationBarItemDefaults.colors(
-    selectedIconColor = MaterialTheme.colorScheme.onPrimaryContainer,
-    selectedTextColor = MaterialTheme.colorScheme.onPrimaryContainer,
-    indicatorColor = MaterialTheme.colorScheme.primaryContainer,
-    unselectedIconColor = MaterialTheme.colorScheme.onSurfaceVariant,
-    unselectedTextColor = MaterialTheme.colorScheme.onSurfaceVariant,
-)
-
-@Composable
-internal fun jlModPlusNavigationRailItemColors() = NavigationRailItemDefaults.colors(
-    selectedIconColor = MaterialTheme.colorScheme.onPrimaryContainer,
-    selectedTextColor = MaterialTheme.colorScheme.onPrimaryContainer,
-    indicatorColor = MaterialTheme.colorScheme.primaryContainer,
-    unselectedIconColor = MaterialTheme.colorScheme.onSurfaceVariant,
-    unselectedTextColor = MaterialTheme.colorScheme.onSurfaceVariant,
-)
-
-/** Shared selected/unselected treatment for quick filters and library option chips. */
-@Composable
-internal fun jlModPlusFilterChipColors() = FilterChipDefaults.filterChipColors(
-    containerColor = MaterialTheme.colorScheme.surfaceContainerLow,
-    labelColor = MaterialTheme.colorScheme.onSurfaceVariant,
-    iconColor = MaterialTheme.colorScheme.onSurfaceVariant,
-    selectedContainerColor = MaterialTheme.colorScheme.primaryContainer,
-    selectedLabelColor = MaterialTheme.colorScheme.onPrimaryContainer,
-    selectedLeadingIconColor = MaterialTheme.colorScheme.primary,
-    selectedTrailingIconColor = MaterialTheme.colorScheme.primary,
-)
 
 private val MaterialTypography = Typography()
 
@@ -478,7 +454,7 @@ private val AppShapes = Shapes(
     extraLarge = RoundedCornerShape(24.dp),
 )
 
-/** Material 3 theme for app-owned Compose surfaces; dynamic color stays off for parity. */
+/** Material 3 theme for app-owned Compose surfaces; wallpaper color is explicit opt-in. */
 @Composable
 fun JLModPlusTheme(
     darkTheme: Boolean = isSystemInDarkTheme(),
@@ -508,7 +484,10 @@ fun JLModPlusTheme(
     }
     val view = LocalView.current
     val selectedAccent = accent ?: AccentPalette.fromKey(preferenceAccentKey)
-    val colorScheme = remember(selectedAccent, darkTheme) { selectedAccent.colorScheme(darkTheme) }
+    val configuration = LocalConfiguration.current
+    val colorScheme = remember(selectedAccent, darkTheme, context, configuration) {
+        selectedAccent.colorScheme(darkTheme, context)
+    }
     if (!view.isInEditMode) {
         SideEffect {
             val window = (view.context as? Activity)?.window ?: return@SideEffect

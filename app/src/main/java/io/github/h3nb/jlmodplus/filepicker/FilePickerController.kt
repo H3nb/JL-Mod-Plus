@@ -136,14 +136,16 @@ class FilePickerController(
         if (!request.allowMultiple || !request.allowsFiles) {
             return
         }
-        val selectablePaths = FilePickerRules.selectablePaths(state.entries)
-        if (selectablePaths.isEmpty()) {
-            return
-        }
-        val selected = if (state.selectedPaths.containsAll(selectablePaths)) {
-            emptySet()
+        val selectablePaths = FilePickerRules.selectablePaths(
+            FilePickerRules.filterAndSort(state.entries, state.searchQuery, state.sortOrder),
+        )
+        if (selectablePaths.isEmpty()) return
+
+        val selected = LinkedHashSet(state.selectedPaths)
+        if (selected.containsAll(selectablePaths)) {
+            selected.removeAll(selectablePaths)
         } else {
-            selectablePaths
+            selected.addAll(selectablePaths)
         }
         publish(state.copy(selectedPaths = selected, errorMessage = null))
     }

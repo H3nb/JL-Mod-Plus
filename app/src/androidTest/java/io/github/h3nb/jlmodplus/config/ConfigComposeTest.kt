@@ -44,6 +44,7 @@ import androidx.compose.ui.test.onNodeWithText
 import androidx.compose.ui.test.onRoot
 import androidx.compose.ui.test.onNodeWithTag
 import androidx.compose.ui.test.performClick
+import androidx.compose.ui.test.performTextInput
 import androidx.compose.ui.test.performTextReplacement
 import androidx.compose.ui.test.performTouchInput
 import androidx.compose.ui.geometry.Offset
@@ -72,6 +73,32 @@ class ConfigComposeTest {
 
     private fun scrollTo(text: String) {
         composeRule.onNodeWithText(text).performScrollTo()
+    }
+
+    @Test
+    fun configChoiceDialogRemainsOpenWhenAvailableOptionsRefresh() {
+        val selected = mutableStateOf("First")
+        val options = mutableStateOf(listOf("First", "Second"))
+        composeRule.setContent {
+            JLModPlusTheme {
+                ConfigChoicePreference(
+                    title = "Choice setting",
+                    description = "Select a value",
+                    selected = selected.value,
+                    options = options.value,
+                    onSelected = {},
+                )
+            }
+        }
+
+        composeRule.onNodeWithText("Choice setting").performClick()
+        composeRule.onNode(hasText("Second") and hasAnyAncestor(isDialog())).assertExists()
+
+        composeRule.runOnIdle {
+            selected.value = "Second"
+            options.value = listOf("First", "Second", "Third")
+        }
+        composeRule.onNode(hasText("Third") and hasAnyAncestor(isDialog())).assertExists()
     }
 
     @Test
@@ -104,6 +131,26 @@ class ConfigComposeTest {
     }
 
     @Test
+    fun activeCompatibilityWarningIsNotPartOfTheToggleTouchTarget() {
+        val base = sampleState()
+        val state = ConfigUiState(
+            base.form.toBuilder().immediateMode(true).build(),
+            base.screenPresets, base.fontPresets, base.skins, base.soundBanks,
+            base.shaders, base.removableScreenPresets,
+        )
+        composeRule.setContent {
+            JLModPlusTheme {
+                ConfigScreen(state, RecordingConfigEvents(), initialDestination = ConfigDestination.System)
+            }
+        }
+
+        scrollTo(uiString(R.string.PREF_IMMEDIATE))
+        composeRule.onNodeWithText(uiString(R.string.config_help_immediate))
+            .assertExists()
+            .assertHasNoClickAction()
+    }
+
+    @Test
     fun groupedGamepadPreferencesHaveSeparateVerticalBounds() {
         composeRule.setContent {
             JLModPlusTheme {
@@ -125,7 +172,8 @@ class ConfigComposeTest {
         val base = sampleState()
         composeRule.setContent {
             JLModPlusTheme {
-                ConfigScreen(base, RecordingConfigEvents(), cutoutSupportOverride = false)
+                ConfigScreen(base, RecordingConfigEvents(),
+                    initialDestination = ConfigDestination.Display, cutoutSupportOverride = false)
             }
         }
         composeRule.onNodeWithText(uiString(R.string.config_avoid_camera_cutout_title)).assertDoesNotExist()
@@ -149,6 +197,7 @@ class ConfigComposeTest {
                     ),
                     events,
                     cutoutSupportOverride = true,
+                    initialDestination = ConfigDestination.Display,
                 )
             }
         }
@@ -162,50 +211,199 @@ class ConfigComposeTest {
     }
 
     @Test
-    fun configRendersGeneralAndAdaptiveDestinations() {
+    fun configGroupsOptionsByTaskAndKeepsProfileOverview() {
         composeRule.setContent {
-            JLModPlusTheme {
-                ConfigScreen(sampleState(), RecordingConfigEvents())
-            }
+            JLModPlusTheme { ConfigScreen(sampleState(), RecordingConfigEvents()) }
         }
 
-        composeRule.onNodeWithText("Current Configuration").assertDoesNotExist()
+        composeRule.onNodeWithText(uiString(R.string.config_quick_settings)).assertExists()
+        composeRule.onNodeWithContentDescription(uiString(R.string.config_search_title)).assertExists()
+        composeRule.onNodeWithTag("config_category_display").performScrollTo().performClick()
         scrollTo(uiString(R.string.config_screen_size))
         composeRule.onNodeWithText(uiString(R.string.config_screen_size)).assertExists()
-        scrollTo(uiString(R.string.PREF_ORIENTATION))
         composeRule.onNodeWithText(uiString(R.string.PREF_ORIENTATION)).assertExists()
-        scrollTo(uiString(R.string.pref_screen_scale_type))
-        composeRule.onNodeWithText(uiString(R.string.pref_screen_scale_type)).assertExists()
-        composeRule.onNodeWithText(uiString(R.string.pref_screen_scale_type_fit)).assertExists()
-        composeRule.onNodeWithText(uiString(R.string.PREF_SCALE_RATIO)).assertDoesNotExist()
-        composeRule.onNodeWithContentDescription("Start").assertExists()
-        composeRule.onNodeWithContentDescription("More").assertDoesNotExist()
-
-        scrollTo(uiString(R.string.config_maintenance))
-        composeRule.onNodeWithText(uiString(R.string.config_maintenance)).assertExists()
-
-        composeRule.onNodeWithContentDescription("Display").performClick()
-        composeRule.onNodeWithText(uiString(R.string.config_display_appearance)).assertExists()
         scrollTo(uiString(R.string.config_display_text))
-        composeRule.onNodeWithText(uiString(R.string.config_display_text)).assertExists()
-        composeRule.onNodeWithText(uiString(R.string.config_screen_size)).assertDoesNotExist()
-        composeRule.onNodeWithText(uiString(R.string.PREF_ORIENTATION)).assertDoesNotExist()
-        composeRule.onNodeWithText(uiString(R.string.pref_screen_scale_type)).assertDoesNotExist()
-        composeRule.onNodeWithText(uiString(R.string.PREF_SCALE_RATIO)).assertDoesNotExist()
+        composeRule.onNodeWithText(uiString(R.string.config_font_page_title)).performClick()
+        composeRule.onNodeWithText(uiString(R.string.config_font_sizes)).assertExists()
+        composeRule.onNodeWithContentDescription(uiString(R.string.action_back)).performClick()
+        composeRule.onNodeWithContentDescription(uiString(R.string.action_back)).performClick()
 
-        composeRule.onNodeWithContentDescription("Controls").performClick()
-        composeRule.onNodeWithText(uiString(R.string.config_controls_key_input)).assertExists()
-        composeRule.onNodeWithText("Controls").assertIsSelected()
+        composeRule.onNodeWithTag("config_category_controls").performScrollTo().performClick()
+        scrollTo(uiString(R.string.PREF_TOUCH_INPUT))
+        composeRule.onNodeWithText(uiString(R.string.PREF_TOUCH_INPUT)).assertExists()
+        scrollTo(uiString(R.string.pref_map_keys))
+        composeRule.onNodeWithText(uiString(R.string.pref_map_keys)).assertExists()
+        composeRule.onNodeWithContentDescription(uiString(R.string.action_back)).performClick()
 
-        composeRule.onNodeWithContentDescription(uiString(R.string.config_destination_media)).performClick()
-        composeRule.onNodeWithText(uiString(R.string.pref_audio_title)).assertIsDisplayed()
-        composeRule.onNodeWithText(uiString(R.string.config_camera_title)).assertIsDisplayed()
+        composeRule.onNodeWithTag("config_category_graphics").performScrollTo().performClick()
+        scrollTo(uiString(R.string.config_display_rendering))
+        composeRule.onNodeWithText(uiString(R.string.pref_graphics_mode_title)).assertExists()
+        composeRule.onNodeWithContentDescription(uiString(R.string.action_back)).performClick()
 
-        composeRule.onNodeWithContentDescription("System").performClick()
-        scrollTo(uiString(R.string.PREF_SYS_PROPS))
-        composeRule.onNodeWithText(uiString(R.string.PREF_SYS_PROPS)).assertExists()
-        composeRule.onNodeWithText(uiString(R.string.config_maintenance)).assertDoesNotExist()
-        composeRule.onNodeWithText("Advanced settings").assertDoesNotExist()
+        composeRule.onNodeWithTag("config_category_media").performScrollTo().performClick()
+        composeRule.onNodeWithText(uiString(R.string.pref_audio_title)).assertExists()
+        composeRule.onNodeWithText(uiString(R.string.config_camera_title)).assertExists()
+        composeRule.onNodeWithContentDescription(uiString(R.string.action_back)).performClick()
+
+        composeRule.onNodeWithTag("config_category_system").performScrollTo().performClick()
+        scrollTo(uiString(R.string.config_system_compatibility))
+        composeRule.onNodeWithText(uiString(R.string.PREF_IMMEDIATE)).assertExists()
+        composeRule.onNodeWithContentDescription(uiString(R.string.action_back)).performClick()
+        scrollTo(uiString(R.string.config_midlet_actions))
+        composeRule.onNodeWithTag("config_reset_settings_action").assertExists()
+    }
+
+    @Test
+    fun searchFindsMmpxAtAutoInternalResolutionAndRevealsBitmapOption() {
+        val base = sampleState()
+        val state = ConfigUiState(
+            base.form.toBuilder().internalResolutionScale(0).build(),
+            base.screenPresets, base.fontPresets, base.skins, base.soundBanks,
+            base.shaders, base.removableScreenPresets,
+        )
+        composeRule.setContent {
+            JLModPlusTheme { ConfigScreen(state, RecordingConfigEvents()) }
+        }
+        composeRule.onNodeWithContentDescription(uiString(R.string.config_search_title)).performClick()
+        composeRule.onNode(hasSetTextAction()).performTextInput("MMPX")
+        composeRule.onNodeWithText(uiString(R.string.bitmap_upscaling_title)).performClick()
+        composeRule.waitForIdle()
+        composeRule.onNodeWithText(uiString(R.string.bitmap_upscaling_title)).assertIsDisplayed()
+    }
+
+    @Test
+    fun searchRevealsFullscreenInsideTheScreenBehaviorSection() {
+        composeRule.setContent {
+            JLModPlusTheme { ConfigScreen(sampleState(), RecordingConfigEvents()) }
+        }
+        composeRule.onNodeWithContentDescription(uiString(R.string.config_search_title)).performClick()
+        composeRule.onNode(hasSetTextAction()).performTextInput(uiString(R.string.PREF_FORCE_FULLSCREEN))
+        composeRule.onNodeWithText(uiString(R.string.PREF_FORCE_FULLSCREEN)).performClick()
+        composeRule.waitForIdle()
+        composeRule.onNodeWithText(uiString(R.string.PREF_FORCE_FULLSCREEN)).assertIsDisplayed()
+    }
+
+    @Test
+    fun searchRevealsSelectedControlInsideLongSection() {
+        composeRule.setContent {
+            JLModPlusTheme { ConfigScreen(sampleState(), RecordingConfigEvents()) }
+        }
+        composeRule.onNodeWithContentDescription(uiString(R.string.config_search_title)).performClick()
+        composeRule.onNode(hasSetTextAction()).performTextInput("transparency opacity")
+        composeRule.onNodeWithText(uiString(R.string.PREF_VK_ALPHA)).performClick()
+        composeRule.waitForIdle()
+        composeRule.onNodeWithText(uiString(R.string.PREF_VK_ALPHA)).assertIsDisplayed()
+    }
+
+    @Test
+    fun mmpxSearchAtOneXExplainsAndRevealsRequiredInternalResolution() {
+        val base = sampleState()
+        val state = ConfigUiState(
+            base.form.toBuilder().internalResolutionScale(1).build(),
+            base.screenPresets,
+            base.fontPresets,
+            base.skins,
+            base.soundBanks,
+            base.shaders,
+            base.removableScreenPresets,
+        )
+        composeRule.setContent {
+            JLModPlusTheme { ConfigScreen(state, RecordingConfigEvents()) }
+        }
+        composeRule.onNodeWithContentDescription(uiString(R.string.config_search_title)).performClick()
+        composeRule.onNode(hasSetTextAction()).performTextInput("MMPX")
+        composeRule.onNodeWithText(uiString(R.string.bitmap_upscaling_title)).assertIsDisplayed()
+        composeRule.onNodeWithText(uiString(R.string.bitmap_upscaling_mmpx)).assertIsDisplayed()
+        composeRule.onNodeWithText(uiString(R.string.config_search_upscaling_requires_resolution))
+            .assertIsDisplayed()
+
+        composeRule.onNodeWithText(uiString(R.string.bitmap_upscaling_title)).performClick()
+        composeRule.waitForIdle()
+        composeRule.onNodeWithText(uiString(R.string.internal_resolution_title)).assertIsDisplayed()
+    }
+
+    @Test
+    fun searchKeepsDependentSettingsDiscoverableAndRoutesToPrerequisites() {
+        val base = sampleState()
+        val state = ConfigUiState(
+            base.form.toBuilder().graphicsMode(0).internalResolutionScale(1)
+                .screenScaleType(1).showFps(false).build(),
+            base.screenPresets, base.fontPresets, base.skins,
+            base.soundBanks, base.shaders, base.removableScreenPresets,
+        )
+        val query = mutableStateOf("shader GLSL effects")
+        var selected: String? = null
+        composeRule.setContent {
+            JLModPlusTheme {
+                ConfigSearchResults(
+                    query = query.value,
+                    state = state,
+                    isProfile = true,
+                    onSelected = { _, _, _, option -> selected = option },
+                )
+            }
+        }
+        composeRule.onNodeWithText(uiString(R.string.render_shader_effects)).performClick()
+        assertEquals(uiString(R.string.pref_graphics_mode_title), selected)
+        composeRule.runOnIdle { query.value = uiString(R.string.perf_overlay_parameters) }
+        composeRule.onNodeWithText(uiString(R.string.perf_overlay_parameters)).performClick()
+        assertEquals(uiString(R.string.perf_overlay_title), selected)
+        composeRule.runOnIdle { query.value = uiString(R.string.PREF_SCALE_RATIO) }
+        composeRule.onNodeWithText(uiString(R.string.PREF_SCALE_RATIO)).performClick()
+        assertEquals(uiString(R.string.pref_screen_scale_type), selected)
+        composeRule.runOnIdle { query.value = "files storage" }
+        composeRule.onNodeWithText(uiString(R.string.config_search_no_results)).assertIsDisplayed()
+        composeRule.runOnIdle { query.value = "notch punch hole camera" }
+        composeRule.onNodeWithText(uiString(R.string.config_search_no_results)).assertIsDisplayed()
+    }
+
+    @Test
+    fun searchCanReachCustomColorPaletteAndPresetAction() {
+        composeRule.setContent {
+            JLModPlusTheme { ConfigScreen(sampleState(), RecordingConfigEvents()) }
+        }
+        composeRule.onNodeWithContentDescription(uiString(R.string.config_search_title)).performClick()
+        composeRule.onNode(hasSetTextAction()).performTextInput("button colors palette")
+        composeRule.onNodeWithText(uiString(R.string.config_controls_virtual_keyboard_colors)).performClick()
+        composeRule.waitForIdle()
+        composeRule.onNodeWithTag("controls_colors_section").assertIsDisplayed()
+
+        composeRule.onNodeWithContentDescription(uiString(R.string.config_search_title)).performClick()
+        composeRule.onNode(hasSetTextAction()).performTextReplacement(uiString(R.string.preset_use))
+        composeRule.onNodeWithText(uiString(R.string.preset_use)).performClick()
+        composeRule.onNode(isDialog()).assertExists()
+    }
+
+    @Test
+    fun searchCanOpenPerformanceDetailAndReturnToGraphics() {
+        composeRule.setContent {
+            JLModPlusTheme { ConfigScreen(sampleState(), RecordingConfigEvents()) }
+        }
+        composeRule.onNodeWithContentDescription(uiString(R.string.config_search_title)).performClick()
+        composeRule.onNode(hasSetTextAction()).performTextInput("framerate")
+        composeRule.onNodeWithText(uiString(R.string.PREF_LIMIT_FPS)).performClick()
+        composeRule.onNodeWithText(uiString(R.string.PREF_LIMIT_FPS)).assertExists()
+        composeRule.onNodeWithContentDescription(uiString(R.string.action_back)).performClick()
+        scrollTo(uiString(R.string.config_display_performance))
+        composeRule.onNodeWithText(uiString(R.string.config_performance_page_title)).assertExists()
+    }
+
+    @Test
+    fun searchFindsGlobalResetOnRootAndCompatibilityInSystem() {
+        composeRule.setContent {
+            JLModPlusTheme { ConfigScreen(sampleState(), RecordingConfigEvents()) }
+        }
+        composeRule.onNodeWithContentDescription(uiString(R.string.config_search_title)).performClick()
+        composeRule.onNode(hasSetTextAction()).performTextInput("reset")
+        composeRule.onNodeWithText(uiString(R.string.config_reset_all_settings)).performClick()
+        composeRule.waitForIdle()
+        composeRule.onNodeWithTag("config_reset_settings_action").assertExists()
+        composeRule.onNodeWithText(uiString(R.string.config_midlet_actions)).assertExists()
+        composeRule.onNodeWithContentDescription(uiString(R.string.config_search_title)).performClick()
+        composeRule.onNode(hasSetTextAction()).performTextReplacement("immediate")
+        composeRule.onNodeWithText(uiString(R.string.PREF_IMMEDIATE)).performClick()
+        composeRule.waitForIdle()
+        composeRule.onNodeWithText(uiString(R.string.config_system_compatibility)).assertExists()
     }
 
     @Test
@@ -271,6 +469,7 @@ class ConfigComposeTest {
                         base.soundBanks, base.shaders, base.removableScreenPresets,
                     ),
                     events,
+                    initialDestination = ConfigDestination.Display,
                 )
             }
         }
@@ -331,7 +530,7 @@ class ConfigComposeTest {
         }
         composeRule.setContent {
             JLModPlusTheme {
-                ConfigScreen(state.value, events, initialDestination = ConfigDestination.Display)
+                ConfigScreen(state.value, events, initialDestination = ConfigDestination.Graphics)
             }
         }
         scrollTo(uiString(R.string.render_shader_effects))
@@ -380,7 +579,7 @@ class ConfigComposeTest {
         }
         composeRule.setContent {
             JLModPlusTheme {
-                ConfigScreen(state.value, events, initialDestination = ConfigDestination.Display)
+                ConfigScreen(state.value, events, initialDestination = ConfigDestination.Graphics)
             }
         }
         scrollTo(uiString(R.string.render_shader_effects))
@@ -423,7 +622,7 @@ class ConfigComposeTest {
         }
         composeRule.setContent {
             JLModPlusTheme {
-                ConfigScreen(state.value, events, initialDestination = ConfigDestination.Display)
+                ConfigScreen(state.value, events, initialDestination = ConfigDestination.Graphics)
             }
         }
         scrollTo(uiString(R.string.render_shader_effects))
@@ -503,76 +702,63 @@ class ConfigComposeTest {
     }
 
     @Test
-    fun configDestinationsSupportHorizontalSwipe() {
+    fun quickSettingOpensItsOptionWithoutSwitchingCategories() {
+        val events = RecordingConfigEvents()
         composeRule.setContent {
-            JLModPlusTheme {
-                ConfigScreen(sampleState(), RecordingConfigEvents())
-            }
+            JLModPlusTheme { ConfigScreen(sampleState(), events) }
         }
-
-        composeRule.onNodeWithText(uiString(R.string.config_basic_display)).assertExists()
-        composeRule.onRoot().performTouchInput { swipeLeft() }
-        composeRule.waitForIdle()
-        composeRule.onNodeWithText(uiString(R.string.config_display_appearance)).assertExists()
-
-        composeRule.onRoot().performTouchInput { swipeRight() }
-        composeRule.waitForIdle()
-        composeRule.onNodeWithText(uiString(R.string.config_basic_display)).assertExists()
+        composeRule.onNodeWithTag("config_quick_resolution").performClick()
+        composeRule.onNodeWithText(uiString(R.string.config_select_screen_size)).assertIsDisplayed()
+        Espresso.pressBack()
+        composeRule.onNodeWithText(uiString(R.string.config_quick_settings)).assertExists()
     }
 
     @Test
-    fun configUsesRailForMediumPortraitWindow() {
+    fun quickSettingsStayAvailableOnMediumPortraitWindow() {
         composeRule.setContent {
             DeviceConfigurationOverride(
                 DeviceConfigurationOverride.WindowSize(DpSize(700.dp, 1_000.dp)),
             ) {
-                JLModPlusTheme {
-                    ConfigScreen(sampleState(), RecordingConfigEvents())
-                }
+                JLModPlusTheme { ConfigScreen(sampleState(), RecordingConfigEvents()) }
             }
         }
-
-        composeRule.onNodeWithTag(CONFIG_NAVIGATION_RAIL_TAG).assertExists()
-        composeRule.onNodeWithTag(CONFIG_NAVIGATION_BAR_TAG).assertDoesNotExist()
+        composeRule.onNodeWithText(uiString(R.string.config_quick_settings)).assertIsDisplayed()
+        composeRule.onNodeWithTag("config_category_display").performScrollTo().performClick()
+        composeRule.onNodeWithText(uiString(R.string.config_screen_size)).assertExists()
     }
 
     @Test
-    fun configKeepsBottomBarForCompactLandscapeWindow() {
+    fun quickSettingsRemainNavigableInCompactLandscape() {
         composeRule.setContent {
             DeviceConfigurationOverride(
                 DeviceConfigurationOverride.WindowSize(DpSize(500.dp, 360.dp)),
             ) {
-                JLModPlusTheme {
-                    ConfigScreen(sampleState(), RecordingConfigEvents())
-                }
+                JLModPlusTheme { ConfigScreen(sampleState(), RecordingConfigEvents()) }
             }
         }
-
-        composeRule.onNodeWithTag(CONFIG_NAVIGATION_BAR_TAG).assertExists()
-        composeRule.onNodeWithTag(CONFIG_NAVIGATION_RAIL_TAG).assertDoesNotExist()
-        // The compact bar must still expose all five destinations, including the last one.
-        composeRule.onNodeWithContentDescription(uiString(R.string.config_destination_system))
-            .performClick()
+        composeRule.onNodeWithTag("config_category_system").performScrollTo().performClick()
         scrollTo(uiString(R.string.config_edit_system_properties))
         composeRule.onNodeWithText(uiString(R.string.config_edit_system_properties)).assertExists()
+        composeRule.onNodeWithContentDescription(uiString(R.string.action_back)).performClick()
+        composeRule.onNodeWithText(uiString(R.string.config_quick_settings)).assertExists()
     }
 
     @Test
-    fun profileEditorKeepsGeneralSettingsWithoutProfileWorkflow() {
+    fun profileEditorShowsDraftAndPreservesCategoryAccess() {
         composeRule.setContent {
             JLModPlusTheme {
                 ConfigScreen(sampleState(), RecordingConfigEvents(), isProfile = true)
             }
         }
-
-        composeRule.onNodeWithContentDescription(uiString(R.string.config_destination_general), useUnmergedTree = true).assertExists()
+        composeRule.onNodeWithText(uiString(R.string.config_overview_profile_draft_summary)).assertExists()
+        composeRule.onNodeWithTag("config_profile_picker").assertDoesNotExist()
+        composeRule.onNodeWithTag("config_category_display").performScrollTo().performClick()
         scrollTo(uiString(R.string.config_screen_size))
         composeRule.onNodeWithText(uiString(R.string.config_screen_size)).assertExists()
+        composeRule.onNodeWithContentDescription(uiString(R.string.action_back)).performClick()
+        composeRule.onNodeWithTag("config_category_controls").performScrollTo().performClick()
         scrollTo(uiString(R.string.PREF_TOUCH_INPUT))
         composeRule.onNodeWithText(uiString(R.string.PREF_TOUCH_INPUT)).assertExists()
-        composeRule.onNodeWithContentDescription("Start").assertDoesNotExist()
-        composeRule.onNodeWithText(uiString(R.string.preset_use)).assertDoesNotExist()
-        composeRule.onNodeWithText(uiString(R.string.preset_save_as)).assertDoesNotExist()
     }
 
     @Test
@@ -593,14 +779,14 @@ class ConfigComposeTest {
         }
         composeRule.setContent {
             JLModPlusTheme {
-                ConfigScreen(snapshot.value, hostEvents, initialDestination = ConfigDestination.Display)
+                ConfigScreen(snapshot.value, hostEvents, initialDestination = ConfigDestination.Graphics)
             }
         }
 
         scrollTo(uiString(R.string.PREF_FILTER))
         composeRule.onNodeWithText(uiString(R.string.PREF_FILTER)).performClick()
-        composeRule.onNodeWithContentDescription("Controls").performClick()
-        composeRule.onNodeWithContentDescription(uiString(R.string.config_destination_general)).performClick()
+        composeRule.onNodeWithContentDescription(uiString(R.string.action_back)).performClick()
+        composeRule.onNodeWithTag("config_category_controls").performScrollTo().performClick()
         scrollTo(uiString(R.string.PREF_TOUCH_INPUT))
         composeRule.onNodeWithText(uiString(R.string.PREF_TOUCH_INPUT)).performClick()
 
@@ -610,23 +796,25 @@ class ConfigComposeTest {
     }
 
     @Test
-    fun displayFpsZeroUsesMaximumLabel() {
+    fun graphicsFpsZeroUsesMaximumLabel() {
         composeRule.setContent {
             JLModPlusTheme {
-                ConfigScreen(sampleState(), RecordingConfigEvents(), initialDestination = ConfigDestination.Display)
+                ConfigScreen(sampleState(), RecordingConfigEvents(), initialDestination = ConfigDestination.Graphics)
             }
         }
 
+        scrollTo(uiString(R.string.config_performance_page_title))
+        composeRule.onNodeWithText(uiString(R.string.config_performance_page_title)).performClick()
         scrollTo(uiString(R.string.PREF_LIMIT_FPS))
         composeRule.onNodeWithText(uiString(R.string.PREF_LIMIT_FPS)).assertIsDisplayed()
         composeRule.onNodeWithText(uiString(R.string.fps_limit_maximum)).assertIsDisplayed()
     }
 
     @Test
-    fun displaySettingsDoNotExposeRuntimeEmulationSpeed() {
+    fun graphicsSettingsDoNotExposeRuntimeEmulationSpeed() {
         composeRule.setContent {
             JLModPlusTheme {
-                ConfigScreen(sampleState(), RecordingConfigEvents(), initialDestination = ConfigDestination.Display)
+                ConfigScreen(sampleState(), RecordingConfigEvents(), initialDestination = ConfigDestination.Graphics)
             }
         }
 
@@ -643,7 +831,7 @@ class ConfigComposeTest {
   }
         }
 
-        composeRule.onNodeWithText(uiString(R.string.preset_use)).performClick()
+        composeRule.onNodeWithTag("config_profile_picker").performClick()
         composeRule.onNode(hasText(uiString(R.string.preset_picker_title)) and hasAnyAncestor(isDialog())).assertExists()
         composeRule.onNodeWithText(uiString(R.string.preset_manage)).assertExists()
         composeRule.onNodeWithText("JL-Mod Defaults").performClick()
@@ -671,7 +859,7 @@ class ConfigComposeTest {
         }
         composeRule.onNodeWithText("Nokia Classic").assertExists()
         composeRule.onNodeWithText("Follows future profile updates.").assertExists()
-        composeRule.onNodeWithText(uiString(R.string.preset_use)).performClick()
+        composeRule.onNodeWithTag("config_profile_picker").performClick()
         composeRule.onNode(hasText("Nokia Classic") and hasAnyAncestor(isDialog())).assertExists()
     }
 
@@ -696,10 +884,11 @@ class ConfigComposeTest {
         }
 
         composeRule.onNodeWithText("JL-Mod Defaults").assertExists()
-        composeRule.onNodeWithText("Built-in MIDlet settings and virtual controls.").assertDoesNotExist()
-        composeRule.onNodeWithText("Current Configuration").assertDoesNotExist()
-        composeRule.onNodeWithText(uiString(R.string.preset_use)).performClick()
         composeRule.onNodeWithText("Built-in MIDlet settings and virtual controls.").assertExists()
+        composeRule.onNodeWithText("Current Configuration").assertDoesNotExist()
+        composeRule.onNodeWithTag("config_profile_picker").performClick()
+        composeRule.onNode(hasText("Built-in MIDlet settings and virtual controls.") and
+            hasAnyAncestor(isDialog())).assertExists()
         composeRule.onNode(hasText("JL-Mod Defaults") and hasAnyAncestor(isDialog())).performClick()
         composeRule.onNodeWithText(uiString(R.string.preset_choose_parts)).assertDoesNotExist()
         composeRule.onNodeWithTag("profile_scope_settings").assertDoesNotExist()
@@ -728,9 +917,9 @@ class ConfigComposeTest {
         val events = RecordingConfigEvents()
         composeRule.setContent { JLModPlusTheme { ConfigScreen(state, events) } }
 
-        composeRule.onNodeWithText(uiString(R.string.preset_use)).performClick()
+        composeRule.onNodeWithTag("config_profile_picker").performClick()
         composeRule.onNodeWithText("RPG 240×320").performClick()
-        composeRule.onNodeWithText(uiString(R.string.preset_choose_parts)).assertExists()
+        composeRule.onNodeWithText(uiString(R.string.preset_choose_parts)).assertExists().performClick()
         composeRule.onNodeWithTag("profile_scope_whole_profile").assertExists()
         composeRule.onNodeWithTag("profile_scope_settings").assertExists()
         composeRule.onNodeWithTag("profile_scope_keyboard_layout").assertExists()
@@ -761,13 +950,14 @@ class ConfigComposeTest {
         val events = RecordingConfigEvents()
         composeRule.setContent { JLModPlusTheme { ConfigScreen(state, events) } }
 
-        composeRule.onNodeWithText(uiString(R.string.preset_use)).performClick()
+        composeRule.onNodeWithTag("config_profile_picker").performClick()
         composeRule.onNodeWithText("RPG 240×320").performClick()
+        composeRule.onNodeWithText(uiString(R.string.preset_choose_parts)).performClick()
         composeRule.onNodeWithTag("profile_scope_settings").performClick()
         composeRule.onNodeWithText("Apply").performClick()
         assertEquals(ConfigFormEvents.PresetApplyScope.SETTINGS, events.appliedScope)
 
-        composeRule.onNodeWithText(uiString(R.string.preset_use)).performClick()
+        composeRule.onNodeWithTag("config_profile_picker").performClick()
         composeRule.onNodeWithText("Legacy layout").performClick()
         composeRule.onNodeWithTag("profile_scope_whole_profile").assertDoesNotExist()
         composeRule.onNodeWithTag("profile_scope_settings").assertDoesNotExist()
@@ -794,6 +984,7 @@ class ConfigComposeTest {
         val events = RecordingConfigEvents()
         composeRule.setContent { JLModPlusTheme { ConfigScreen(state, events) } }
 
+        composeRule.onNodeWithTag("config_profile_actions").performClick()
         composeRule.onNodeWithText(uiString(R.string.preset_save_as)).performClick()
         composeRule.onNodeWithTag("preset_include_keyboard_layout").assertDoesNotExist()
         composeRule.onNode(hasSetTextAction()).performTextReplacement("Comfortable")
@@ -822,6 +1013,7 @@ class ConfigComposeTest {
         )
         composeRule.setContent { JLModPlusTheme { ConfigScreen(state, RecordingConfigEvents()) } }
 
+        composeRule.onNodeWithTag("config_profile_actions").performClick()
         composeRule.onNodeWithText(uiString(R.string.preset_save_as)).performClick()
         val nameField = composeRule.onNode(hasSetTextAction())
         val saveButton = composeRule.onNode(
@@ -885,6 +1077,7 @@ class ConfigComposeTest {
         composeRule.setContent { JLModPlusTheme { ConfigScreen(state, events) } }
 
         composeRule.onNodeWithText("K800i").assertExists()
+        composeRule.onNodeWithTag("config_profile_actions").performClick()
         composeRule.onNodeWithTag("preset_update_action").assertExists().performClick()
         composeRule.onNodeWithText("Update K800i?").assertExists()
         assertEquals(null, events.updatedTemplate)
@@ -897,47 +1090,28 @@ class ConfigComposeTest {
     }
 
     @Test
-    fun destructiveActionsLiveInGeneralAndRequireExplicitConfirmation() {
+    fun destructiveActionsLiveOnRootAndRequireExplicitConfirmation() {
         val menuActions = RecordingMenuActions()
         composeRule.setContent {
-            JLModPlusTheme {
-                ConfigScreen(
-                    sampleState(),
-                    RecordingConfigEvents(),
-                    menuActions = menuActions,
-                )
-            }
+            JLModPlusTheme { ConfigScreen(sampleState(), RecordingConfigEvents(),
+                menuActions = menuActions) }
         }
-
-        // System no longer contains destructive actions; General does.
-        composeRule.onNodeWithContentDescription(uiString(R.string.config_destination_system)).performClick()
-        composeRule.waitForIdle()
-        composeRule.onNodeWithTag("config_reset_settings_action").assertDoesNotExist()
-        composeRule.onNodeWithTag("config_clear_data_action").assertDoesNotExist()
-        composeRule.onNodeWithContentDescription(uiString(R.string.config_destination_general)).performClick()
-        composeRule.waitForIdle()
         scrollTo(uiString(R.string.config_reset_all_settings))
         composeRule.onNodeWithTag("config_reset_settings_action").assertIsDisplayed().performClick()
-        composeRule.waitForIdle()
-        composeRule.onNodeWithText(
-            "Reset this MIDlet’s settings and virtual controls to their defaults? MIDlet data will not be deleted.",
-        ).assertExists()
-        composeRule.onNode(hasText(uiString(R.string.config_reset_all_settings)) and hasClickAction() and hasAnyAncestor(isDialog())).performClick()
+        composeRule.onNodeWithText(uiString(R.string.config_message_reset_settings)).assertExists()
+        composeRule.onNode(
+            hasText(uiString(R.string.config_reset_all_settings)) and hasClickAction() and hasAnyAncestor(isDialog())
+        ).performClick()
         assertEquals(1, menuActions.resetSettingsCalls)
-
         scrollTo(uiString(R.string.config_delete_app_data))
         composeRule.onNodeWithTag("config_clear_data_action").assertIsDisplayed().performClick()
         composeRule.onNodeWithText(
             "Permanently delete all saves and data created by this MIDlet? MIDlet settings will not be deleted.",
         ).assertExists()
-        composeRule.onNode(hasText(uiString(R.string.config_delete_app_data)) and hasClickAction() and hasAnyAncestor(isDialog())).performClick()
+        composeRule.onNode(
+            hasText(uiString(R.string.config_delete_app_data)) and hasClickAction() and hasAnyAncestor(isDialog())
+        ).performClick()
         assertEquals(1, menuActions.clearDataCalls)
-
-        composeRule.onNodeWithContentDescription(uiString(R.string.config_destination_controls)).performClick()
-        composeRule.waitForIdle()
-        scrollTo(uiString(R.string.RESET_LAYOUT_CMD))
-        composeRule.onNodeWithText(uiString(R.string.RESET_LAYOUT_CMD)).performClick()
-        composeRule.onNodeWithText(uiString(R.string.message_reset_layout)).assertExists()
     }
 
     @Test
@@ -948,14 +1122,13 @@ class ConfigComposeTest {
                     sampleState(),
                     RecordingConfigEvents(),
                     isProfile = true,
-                    initialDestination = ConfigDestination.Basic,
                     menuActions = RecordingMenuActions(),
                 )
             }
         }
 
         composeRule.onNodeWithText(uiString(R.string.config_delete_app_data)).assertDoesNotExist()
-        scrollTo(uiString(R.string.config_reset_all_settings))
+        scrollTo(uiString(R.string.config_reset_profile_settings))
         composeRule.onNodeWithTag("config_reset_settings_action").performClick()
         composeRule.onNodeWithText(
             "Reset this profile’s settings and virtual controls to their defaults? You can still edit or cancel before saving.",
@@ -963,11 +1136,36 @@ class ConfigComposeTest {
     }
 
     @Test
-    fun screenPresetSelectionCommitsImmediatelyAndSwapIsDirect() {
+    fun unsavedFontSizeDraftSurvivesStateRestorationWithoutCommitting() {
+        var committed: Triple<String, String, String>? = null
+        val restoration = StateRestorationTester(composeRule)
+        restoration.setContent {
+            JLModPlusTheme {
+                FontSizesDialog(
+                    small = "18",
+                    medium = "22",
+                    large = "26",
+                    onDismissRequest = {},
+                    onConfirm = { small, medium, large -> committed = Triple(small, medium, large) },
+                )
+            }
+        }
+        composeRule.onNode(hasSetTextAction() and hasText("18")).performTextReplacement("19")
+        restoration.emulateSavedInstanceStateRestore()
+        composeRule.waitForIdle()
+        composeRule.onNode(hasSetTextAction() and hasText("19")).assertIsDisplayed()
+        assertEquals(null, committed)
+        composeRule.onNodeWithText(uiString(android.R.string.ok)).performClick()
+        assertEquals(Triple("19", "22", "26"), committed)
+    }
+
+    @Test
+    fun screenPresetSwapTogglesChoicesWithoutChangingCurrentSize() {
         val events = RecordingConfigEvents()
         composeRule.setContent {
             JLModPlusTheme {
-                ConfigScreen(sampleState(), events)
+                ConfigScreen(sampleState(), events,
+                    initialDestination = ConfigDestination.Display)
             }
         }
 
@@ -980,9 +1178,34 @@ class ConfigComposeTest {
 
         scrollTo(uiString(R.string.config_screen_size))
         composeRule.onNodeWithText(uiString(R.string.config_screen_size)).performClick()
-        composeRule.onNodeWithText("Swap width and height").performClick()
-        assertEquals("320", events.lastForm?.screenWidth)
-        assertEquals("240", events.lastForm?.screenHeight)
+        composeRule.onNodeWithContentDescription(uiString(R.string.config_swap_screen_size)).performClick()
+        assertEquals("360", events.lastForm?.screenWidth)
+        assertEquals("640", events.lastForm?.screenHeight)
+        composeRule.onNodeWithText("640 x 360").assertExists()
+        composeRule.onNodeWithContentDescription(uiString(R.string.config_swap_screen_size)).performClick()
+        composeRule.onNodeWithText("360 x 640").assertExists()
+        composeRule.onNodeWithContentDescription(uiString(R.string.config_swap_screen_size)).performClick()
+        composeRule.onNodeWithText("640 x 360").performClick()
+        assertEquals("640", events.lastForm?.screenWidth)
+        assertEquals("360", events.lastForm?.screenHeight)
+    }
+
+    @Test
+    fun screenSizeActionsRemainVisibleInCompactLandscape() {
+        composeRule.setContent {
+            DeviceConfigurationOverride(
+                DeviceConfigurationOverride.WindowSize(DpSize(640.dp, 360.dp)),
+            ) {
+                JLModPlusTheme { ConfigScreen(sampleState(), RecordingConfigEvents()) }
+            }
+        }
+        composeRule.onNodeWithTag("config_quick_resolution").performClick()
+        composeRule.onNodeWithContentDescription(uiString(R.string.config_swap_screen_size))
+            .assertIsDisplayed()
+        composeRule.onNodeWithText(uiString(R.string.config_custom_resolution))
+            .assertIsDisplayed()
+        composeRule.onNodeWithText(uiString(android.R.string.cancel))
+            .assertIsDisplayed()
     }
 
     @Test
@@ -990,7 +1213,7 @@ class ConfigComposeTest {
         val events = RecordingConfigEvents()
         composeRule.setContent {
             JLModPlusTheme {
-                ConfigScreen(sampleState(), events, initialDestination = ConfigDestination.Basic)
+                ConfigScreen(sampleState(), events, initialDestination = ConfigDestination.Display)
             }
         }
 
@@ -1049,10 +1272,17 @@ class ConfigComposeTest {
             }
         }
         composeRule.onNodeWithText(uiString(R.string.PREF_VIRTUAL_KEYBOARD_OPTIONS)).assertDoesNotExist()
+        scrollTo(uiString(R.string.PREF_LAYOUT))
+        composeRule.onNodeWithText(uiString(R.string.PREF_LAYOUT)).performClick()
         composeRule.onNodeWithText(uiString(R.string.config_help_key_layout)).assertExists()
+        Espresso.pressBack()
+        composeRule.waitForIdle()
         composeRule.onNodeWithText(uiString(R.string.config_controls_disabled_hint)).assertExists()
-        scrollTo(uiString(R.string.config_controls_customization))
+        scrollTo(uiString(R.string.pref_button_shape_title))
+        composeRule.onNodeWithText(uiString(R.string.pref_button_shape_title)).performClick()
         composeRule.onNodeWithText(uiString(R.string.config_help_vk_button_shape)).assertExists()
+        Espresso.pressBack()
+        composeRule.waitForIdle()
         scrollTo(uiString(R.string.config_controls_virtual_keyboard_colors))
         composeRule.onNodeWithTag("color_outline").assertExists()
     }
@@ -1271,7 +1501,8 @@ class ConfigComposeTest {
         val events = RecordingConfigEvents()
         composeRule.setContent {
             JLModPlusTheme {
-                ConfigScreen(sampleState(), events)
+                ConfigScreen(sampleState(), events,
+                    initialDestination = ConfigDestination.Display)
             }
         }
 
@@ -1333,36 +1564,29 @@ class ConfigComposeTest {
     }
 
     @Test
-    fun displaySectionsAppearAsScreenRenderingFontsThenPerformance() {
+    fun screenSectionsKeepPlacementBeforeAppearanceAndFonts() {
         composeRule.setContent {
             JLModPlusTheme {
                 ConfigScreen(sampleState(), RecordingConfigEvents(),
                     initialDestination = ConfigDestination.Display)
             }
         }
-        val screen = composeRule.onNodeWithText(
-            uiString(R.string.config_display_appearance),
-        ).fetchSemanticsNode().boundsInRoot
-        val rendering = composeRule.onNodeWithText(
-            uiString(R.string.config_display_rendering),
-        ).fetchSemanticsNode().boundsInRoot
-        val fonts = composeRule.onNodeWithText(
-            uiString(R.string.config_display_text),
-        ).fetchSemanticsNode().boundsInRoot
-        val performance = composeRule.onNodeWithText(
-            uiString(R.string.config_display_performance),
-        ).fetchSemanticsNode().boundsInRoot
-        assertTrue(screen.top < rendering.top)
-        assertTrue(rendering.top < fonts.top)
-        assertTrue(fonts.top < performance.top)
+        val placement = composeRule.onNodeWithText(uiString(R.string.config_basic_display))
+            .fetchSemanticsNode().boundsInRoot
+        val appearance = composeRule.onNodeWithText(uiString(R.string.config_display_appearance))
+            .fetchSemanticsNode().boundsInRoot
+        val fonts = composeRule.onNodeWithText(uiString(R.string.config_display_text))
+            .fetchSemanticsNode().boundsInRoot
+        assertTrue(placement.top < appearance.top)
+        assertTrue(appearance.top < fonts.top)
     }
 
     @Test
-    fun returningFromShaderPageRetainsDisplayScrollPosition() {
+    fun returningFromShaderPageRetainsGraphicsScrollPosition() {
         composeRule.setContent {
             JLModPlusTheme {
                 ConfigScreen(sampleState(), RecordingConfigEvents(),
-                    initialDestination = ConfigDestination.Display)
+                    initialDestination = ConfigDestination.Graphics)
             }
         }
         val shaderLink = uiString(R.string.render_shader_effects)
@@ -1390,7 +1614,7 @@ class ConfigComposeTest {
         composeRule.setContent {
             JLModPlusTheme {
                 ConfigScreen(state, RecordingConfigEvents(),
-                    initialDestination = ConfigDestination.Display)
+                    initialDestination = ConfigDestination.Graphics)
             }
         }
         composeRule.onNodeWithText(uiString(R.string.render_shader_effects)).assertDoesNotExist()

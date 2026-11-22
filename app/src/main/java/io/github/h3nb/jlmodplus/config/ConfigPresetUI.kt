@@ -16,6 +16,10 @@ package io.github.h3nb.jlmodplus.config
 
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Column
+import androidx.compose.foundation.layout.FlowRow
+import androidx.compose.foundation.layout.ExperimentalLayoutApi
+import androidx.compose.foundation.layout.Box
+import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.heightIn
@@ -23,10 +27,13 @@ import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.lazy.LazyColumn
 import androidx.compose.foundation.lazy.items
-import androidx.compose.foundation.BorderStroke
 import androidx.compose.foundation.selection.selectable
 import androidx.compose.material3.Icon
+import androidx.compose.material3.IconButton
+import androidx.compose.material3.DropdownMenu
+import androidx.compose.material3.DropdownMenuItem
 import androidx.compose.material3.MaterialTheme
+import androidx.compose.material3.OutlinedButton
 import androidx.compose.material3.OutlinedTextField
 import androidx.compose.material3.RadioButton
 import androidx.compose.material3.Surface
@@ -72,52 +79,114 @@ internal fun PresetSummary(
     state: ConfigUiState,
     onUsePreset: () -> Unit,
     onSavePreset: () -> Unit,
+    onStopFollowing: () -> Unit,
     events: ConfigFormEvents,
 ) {
+    var menuExpanded by rememberSaveable { mutableStateOf(false) }
     var updateConfirmation by rememberSaveable { mutableStateOf<String?>(null) }
-    ConfigSection(
-        title = stringResource(R.string.presets),
+    var followConfirmation by rememberSaveable { mutableStateOf<String?>(null) }
+    val status = state.profileStatus
+    val statusSummary = when {
+        status.activeProfile != null && state.updatePresetName != null ->
+            stringResource(R.string.profile_local_changes_pending)
+        status.activeProfile != null -> stringResource(R.string.profile_follows_updates)
+        status.sourceProfile != null ->
+            stringResource(R.string.profile_not_following, status.sourceProfile)
+        status.builtInDefault -> stringResource(R.string.preset_builtin_summary)
+        else -> stringResource(R.string.profile_local_configuration_summary)
+    }
+    Surface(
+        modifier = Modifier.fillMaxWidth(),
+        shape = MaterialTheme.shapes.large,
+        color = MaterialTheme.colorScheme.surfaceContainerLow,
     ) {
-        Column(
-            modifier = Modifier
-                .fillMaxWidth()
-                .padding(vertical = 12.dp),
+        Row(
+            modifier = Modifier.fillMaxWidth().heightIn(min = 80.dp),
+            verticalAlignment = Alignment.CenterVertically,
         ) {
             Column(
-                modifier = Modifier.padding(horizontal = 16.dp),
+                modifier = Modifier.weight(1f)
+                    .clickable(role = Role.Button, onClick = onUsePreset)
+                    .testTag("config_profile_picker")
+                    .padding(horizontal = 16.dp, vertical = 12.dp),
                 verticalArrangement = Arrangement.spacedBy(4.dp),
             ) {
-                Text(
-                    text = presetStatusTitle(state.profileStatus),
-                    style = MaterialTheme.typography.titleMedium,
-                    color = MaterialTheme.colorScheme.onSurface,
-                    maxLines = 1,
-                    overflow = TextOverflow.Ellipsis,
-                )
-                provenanceSummary(state.profileStatus)?.let { provenance ->
-                    Text(
-                        text = provenance,
-                        style = MaterialTheme.typography.bodyMedium,
-                        color = MaterialTheme.colorScheme.onSurfaceVariant,
-                        maxLines = 2,
-                        overflow = TextOverflow.Ellipsis,
+                Text(stringResource(R.string.presets), style = MaterialTheme.typography.labelMedium,
+                    color = MaterialTheme.colorScheme.onSurfaceVariant)
+                Text(presetStatusTitle(status), style = MaterialTheme.typography.titleMedium,
+                    maxLines = 1, overflow = TextOverflow.Ellipsis)
+                Text(statusSummary, style = MaterialTheme.typography.bodySmall,
+                    color = MaterialTheme.colorScheme.onSurfaceVariant,
+                    maxLines = 2, overflow = TextOverflow.Ellipsis)
+            }
+            Box {
+                IconButton(
+                    onClick = { menuExpanded = true },
+                    modifier = Modifier.testTag("config_profile_actions"),
+                ) {
+                    Icon(painterResource(R.drawable.ic_more_vert),
+                        contentDescription = stringResource(R.string.profile_more_actions,
+                            presetStatusTitle(status)))
+                }
+                DropdownMenu(expanded = menuExpanded, onDismissRequest = { menuExpanded = false }) {
+                    DropdownMenuItem(
+                        text = { Text(stringResource(R.string.preset_use)) },
+                        onClick = { menuExpanded = false; onUsePreset() },
+                    )
+                    DropdownMenuItem(
+                        text = { Text(stringResource(R.string.preset_save_as)) },
+                        onClick = { menuExpanded = false; onSavePreset() },
+                    )
+                    state.updatePresetName?.let { name ->
+                        DropdownMenuItem(
+                            text = { Text(stringResource(R.string.preset_update, name)) },
+                            modifier = Modifier.testTag("preset_update_action"),
+                            onClick = { menuExpanded = false; updateConfirmation = name },
+                        )
+                    }
+                    if (status.activeProfile != null) {
+                        DropdownMenuItem(
+                            text = { Text(stringResource(R.string.profile_stop_following)) },
+                            modifier = Modifier.testTag("profile_stop_following_action"),
+                            onClick = { menuExpanded = false; onStopFollowing() },
+                        )
+                    }
+                    status.sourceProfile?.takeIf { source ->
+                        status.activeProfile == null && state.profileTemplates.any {
+                            it.name == source && it.completeSnapshotReady
+                        }
+                    }?.let { source ->
+                        DropdownMenuItem(
+                            text = { Text(stringResource(R.string.profile_follow_again)) },
+                            onClick = { menuExpanded = false; followConfirmation = source },
+                        )
+                    }
+                    DropdownMenuItem(
+                        text = { Text(stringResource(R.string.preset_manage)) },
+                        onClick = { menuExpanded = false; events.onManageProfiles() },
                     )
                 }
-                Text(
-                    text = setupSummary(state.form),
-                    style = MaterialTheme.typography.bodySmall,
-                    color = MaterialTheme.colorScheme.onSurfaceVariant,
-                    maxLines = 2,
-                    overflow = TextOverflow.Ellipsis,
-                )
             }
-            PresetActionRows(
-                onUsePreset = onUsePreset,
-                onSavePreset = onSavePreset,
-                updatePresetName = state.updatePresetName,
-                onUpdatePreset = { updateConfirmation = it },
-            )
         }
+    }
+    followConfirmation?.let { name ->
+        AlertDialog(
+            onDismissRequest = { followConfirmation = null },
+            title = { Text(stringResource(R.string.profile_follow_again)) },
+            text = { Text(stringResource(R.string.profile_follow_again_summary, name)) },
+            dismissButton = {
+                TextButton(onClick = { followConfirmation = null }) {
+                    Text(stringResource(R.string.CANCEL_CMD))
+                }
+            },
+            confirmButton = {
+                TextButton(onClick = {
+                    if (events.onApplyTemplate(name, ConfigFormEvents.PresetApplyScope.WHOLE_PROFILE)) {
+                        followConfirmation = null
+                    }
+                }) { Text(stringResource(R.string.profile_follow_again)) }
+            },
+        )
     }
     updateConfirmation?.let { name ->
         UpdatePresetDialog(
@@ -129,93 +198,6 @@ internal fun PresetSummary(
         )
     }
 }
-
-@Composable
-private fun PresetActionRows(
-    onUsePreset: () -> Unit,
-    onSavePreset: () -> Unit,
-    updatePresetName: String?,
-    onUpdatePreset: (String) -> Unit,
-) {
-    Column(
-        modifier = Modifier
-            .fillMaxWidth()
-            .padding(horizontal = 8.dp),
-    ) {
-        PresetActionRow(
-            label = stringResource(R.string.preset_use),
-            icon = R.drawable.ic_check_circle,
-            onClick = onUsePreset,
-        )
-        PresetActionRow(
-            label = stringResource(R.string.preset_save_as),
-            icon = R.drawable.ic_save_as,
-            onClick = onSavePreset,
-        )
-        updatePresetName?.let { name ->
-            PresetActionRow(
-                label = stringResource(R.string.preset_update_confirm),
-                icon = R.drawable.ic_sync,
-                contentDescription = stringResource(R.string.preset_update, name),
-                modifier = Modifier.testTag("preset_update_action"),
-                onClick = { onUpdatePreset(name) },
-            )
-        }
-    }
-}
-
-@Composable
-private fun PresetActionRow(
-    label: String,
-    icon: Int,
-    onClick: () -> Unit,
-    modifier: Modifier = Modifier,
-    contentDescription: String? = null,
-) {
-    val colors = MaterialTheme.colorScheme
-    Surface(
-        modifier = modifier
-            .fillMaxWidth()
-            .semantics {
-                if (contentDescription != null) {
-                    this.contentDescription = contentDescription
-                }
-            },
-        onClick = onClick,
-        shape = MaterialTheme.shapes.medium,
-        color = Color.Transparent,
-        contentColor = colors.onSurface,
-    ) {
-        Row(
-            modifier = Modifier
-                .fillMaxWidth()
-                .heightIn(min = 48.dp)
-                .padding(horizontal = 12.dp, vertical = 6.dp),
-            verticalAlignment = Alignment.CenterVertically,
-        ) {
-            Icon(
-                painter = painterResource(icon),
-                contentDescription = null,
-                modifier = Modifier.size(24.dp),
-                tint = colors.onSurfaceVariant,
-            )
-            Text(
-                text = label,
-                style = MaterialTheme.typography.bodyLarge,
-                modifier = Modifier
-                    .weight(1f)
-                    .padding(horizontal = 16.dp),
-            )
-            Icon(
-                painter = painterResource(R.drawable.ic_chevron_right),
-                contentDescription = null,
-                modifier = Modifier.size(20.dp),
-                tint = colors.onSurfaceVariant,
-            )
-        }
-    }
-}
-
 
 @Composable
 internal fun PresetDialogs(
@@ -323,6 +305,7 @@ private fun PresetPickerDialog(
     }
     var scopeKey by rememberSaveable(selectedKey) { mutableStateOf(availableScopes.firstOrNull()?.name) }
     val selectedScope = availableScopes.firstOrNull { it.name == scopeKey }
+    var scopesExpanded by rememberSaveable(selectedKey) { mutableStateOf(false) }
     AlertDialog(
         maxWidth = PresetPickerMaximumWidth,
         textScrollable = false,
@@ -358,23 +341,58 @@ private fun PresetPickerDialog(
                     )
                 }
                 if (selectedChoice != null && !selectedChoice.isBuiltIn) {
-                    item(key = "apply-scope-title") {
-                        Text(
-                            text = stringResource(R.string.preset_choose_parts),
-                            style = MaterialTheme.typography.titleSmall,
-                            modifier = Modifier.padding(top = 8.dp),
-                        )
+                    if (availableScopes.size > 1) {
+                        item(key = "apply-scope-toggle") {
+                            Row(
+                                modifier = Modifier.fillMaxWidth()
+                                    .clickable(role = Role.Button) {
+                                        scopesExpanded = !scopesExpanded
+                                    }
+                                    .heightIn(min = 56.dp)
+                                    .padding(top = 8.dp, bottom = 4.dp),
+                                verticalAlignment = Alignment.CenterVertically,
+                            ) {
+                                Column(modifier = Modifier.weight(1f)) {
+                                    Text(stringResource(R.string.preset_choose_parts),
+                                        style = MaterialTheme.typography.titleSmall)
+                                    Text(
+                                        stringResource(
+                                            when (selectedScope) {
+                                                ConfigFormEvents.PresetApplyScope.WHOLE_PROFILE ->
+                                                    R.string.profile_apply_whole
+                                                ConfigFormEvents.PresetApplyScope.SETTINGS ->
+                                                    R.string.profile_apply_settings_only
+                                                ConfigFormEvents.PresetApplyScope.KEYBOARD_LAYOUT ->
+                                                    R.string.profile_apply_layout_only
+                                                null -> R.string.preset_choose_parts
+                                            },
+                                        ),
+                                        style = MaterialTheme.typography.bodySmall,
+                                        color = MaterialTheme.colorScheme.onSurfaceVariant,
+                                    )
+                                }
+                                Icon(
+                                    painterResource(if (scopesExpanded) R.drawable.ic_keyboard_arrow_up
+                                        else R.drawable.ic_keyboard_arrow_down),
+                                    contentDescription = null,
+                                    modifier = Modifier.size(24.dp),
+                                    tint = MaterialTheme.colorScheme.onSurfaceVariant,
+                                )
+                            }
+                        }
                     }
-                    items(availableScopes, key = { "scope:${it.name}" }) { scope ->
-                        PresetScopeRow(
-                            scope = scope,
-                            selected = selectedScope == scope,
-                            hasLayout = selectedChoice.hasKeyboardLayout,
-                            onClick = {
-                                scopeKey = scope.name
-                                applyErrorVisible = false
-                            },
-                        )
+                    if (scopesExpanded || availableScopes.size == 1) {
+                        items(availableScopes, key = { "scope:" + it.name }) { scope ->
+                            PresetScopeRow(
+                                scope = scope,
+                                selected = selectedScope == scope,
+                                hasLayout = selectedChoice.hasKeyboardLayout,
+                                onClick = {
+                                    scopeKey = scope.name
+                                    applyErrorVisible = false
+                                },
+                            )
+                        }
                     }
                 }
                 if (selectedChoice != null && applyErrorVisible) item(key = "apply-error") {
@@ -476,9 +494,8 @@ private fun PresetPickerRow(
             .selectable(selected = selected, onClick = onClick, role = Role.RadioButton)
             .heightIn(min = 72.dp),
         shape = MaterialTheme.shapes.medium,
-        color = if (selected) colors.secondaryContainer else colors.surfaceContainerLow,
-        contentColor = if (selected) colors.onSecondaryContainer else colors.onSurface,
-        border = if (selected) BorderStroke(1.dp, colors.secondary) else null,
+        color = if (selected) colors.primaryContainer else colors.surfaceContainerLow,
+        contentColor = if (selected) colors.onPrimaryContainer else colors.onSurface,
     ) {
         Row(
             modifier = Modifier.padding(horizontal = 12.dp, vertical = 10.dp),
@@ -495,7 +512,7 @@ private fun PresetPickerRow(
                 Text(
                     text = summary,
                     style = MaterialTheme.typography.bodySmall,
-                    color = if (selected) colors.onSecondaryContainer.copy(alpha = 0.78f) else colors.onSurfaceVariant,
+                    color = if (selected) colors.onPrimaryContainer else colors.onSurfaceVariant,
                     maxLines = 2,
                     overflow = TextOverflow.Ellipsis,
                 )

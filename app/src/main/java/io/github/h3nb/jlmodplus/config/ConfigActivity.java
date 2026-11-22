@@ -157,7 +157,9 @@ public class ConfigActivity extends AppCompatActivity {
 	@Nullable private File profileEditDraftDir;
 	@Nullable private ProfilesManager.PresetEditSession profileEditSession;
 	private boolean profileDraftDirty;
-	private boolean profileEditorResumeObserved;
+	@Nullable private ProfileModel pausedProfileConfig;
+	private boolean pauseSaveFailed;
+	private UnsavedConfigDraft retainedDraft;
 	private ConfigFormState currentForm;
 	@Nullable private String cachedControlSkinId;
 	@Nullable private String cachedControlSkinName;
@@ -380,6 +382,11 @@ public class ConfigActivity extends AppCompatActivity {
 			return updatePreset(name);
 		}
 
+        @Override
+        public boolean onStopFollowingProfile() {
+            return stopFollowingProfile();
+        }
+
 		@Override
 		public void onGamepadCalibration() {
 			startGamepadCalibration();
@@ -479,8 +486,10 @@ public class ConfigActivity extends AppCompatActivity {
 				return;
 			}
 			configDir = profileEditDraftDir;
-			profileDraftDirty = savedInstanceState != null
-					&& savedInstanceState.getBoolean(STATE_PROFILE_DRAFT_DIRTY, false);
+			profileDraftDirty = savedInstanceState == null
+					? profileEditSession != null
+							&& profileEditSession.mode == ProfilesManager.ProfileEditMode.CREATE_NEW
+					: savedInstanceState.getBoolean(STATE_PROFILE_DRAFT_DIRTY, false);
 			File root = profileEditTarget.getParentFile();
 			profilesRoot = root;
 			File openedWorkdir = root == null ? null : root.getParentFile();
@@ -578,7 +587,10 @@ public class ConfigActivity extends AppCompatActivity {
 		initSoundBankOptions();
 		initSkinOptions();
 		initShaderSpinner();
-		currentForm = formFromParams();
+		retainedDraft = new ViewModelProvider(this).get(UnsavedConfigDraft.class);
+		currentForm = retainedDraft.failedPauseForm == null
+				? formFromParams() : retainedDraft.failedPauseForm;
+		pauseSaveFailed = retainedDraft.failedPauseForm != null;
 		assetTasks = new ViewModelProvider(this).get(AssetTaskModel.class);
 		assetTasks.completed.observe(this, this::onAssetActionComplete);
 		composeController = new ConfigComposeController(
@@ -643,7 +655,8 @@ public class ConfigActivity extends AppCompatActivity {
 					if (operationRunning) return;
 					operationRunning = true;
 					try {
-						if (isProfile) profileDraftDirty = true;
+						boolean layoutExisted = isProfile
+								&& ProfilesManager.hasRecoverableLocalKeyboardLayout(configDir);
 						boolean removed;
 						if (isProfile) {
 							removed = ProfilesManager.removeLocalKeyboardLayout(configDir);
@@ -673,6 +686,7 @@ public class ConfigActivity extends AppCompatActivity {
 							ThemedToast.show(ConfigActivity.this, R.string.error, Toast.LENGTH_SHORT);
 							return;
 						}
+						if (layoutExisted) profileDraftDirty = true;
 						refreshProfileMatchCache();
 						if (composeController != null) {
 							composeController.update(createUiState());
@@ -734,7 +748,7 @@ public class ConfigActivity extends AppCompatActivity {
 
 			@Override
 			public void onControllerNotice(@NonNull String message) {
-				Toast.makeText(ConfigActivity.this, message, Toast.LENGTH_SHORT).show();
+				showConfigNotice(message);
 			}
 
 			@Override
@@ -1265,7 +1279,7 @@ public class ConfigActivity extends AppCompatActivity {
         if (kind == null || uris.isEmpty() || workDir == null) return;
         Uri uri = uris.get(0);
         if (uri.getPath() == null || (uri.getScheme() != null && !"file".equals(uri.getScheme()))) {
-            ThemedToast.show(this, R.string.config_asset_invalid, Toast.LENGTH_SHORT);
+            showConfigNotice(R.string.config_asset_invalid);
             return;
         }
         File source = new File(uri.getPath());
@@ -1303,6 +1317,11 @@ public class ConfigActivity extends AppCompatActivity {
             this.message = message;
             this.displayName = displayName;
         }
+    }
+
+    /** Retains only a form that could not be saved during Activity recreation. */
+    public static final class UnsavedConfigDraft extends ViewModel {
+        @Nullable ConfigFormState failedPauseForm;
     }
 
     /** Retains an I/O job across configuration changes, never the Activity or its form. */
@@ -1362,7 +1381,7 @@ public class ConfigActivity extends AppCompatActivity {
                                 AssetAction action) {
         if (workDir == null || currentForm == null || assetTasks == null) return;
         if (!assetTasks.submit(new File(workDir), kind, oldName, action)) {
-            ThemedToast.show(this, R.string.config_asset_busy, Toast.LENGTH_SHORT);
+            showConfigNotice(R.string.config_asset_busy);
         }
     }
 
@@ -1385,7 +1404,7 @@ public class ConfigActivity extends AppCompatActivity {
                         || "Invalid asset file".equals(message)
                         || "Invalid asset format".equals(message))
                     ? R.string.config_asset_invalid : R.string.config_asset_operation_failed;
-            ThemedToast.show(this, resource, Toast.LENGTH_SHORT);
+            showConfigNotice(resource);
             return;
         }
         AssetOutcome outcome = result.outcome;
@@ -1406,7 +1425,7 @@ public class ConfigActivity extends AppCompatActivity {
         } else if (composeController != null) {
             composeController.update(createUiState());
         }
-        ThemedToast.show(this, getString(outcome.message, outcome.displayName), Toast.LENGTH_SHORT);
+        showConfigNotice(getString(outcome.message, outcome.displayName));
     }
 
 	private void initSkinOptions() {
@@ -1570,7 +1589,16 @@ public class ConfigActivity extends AppCompatActivity {
 					? 1L : controllerTargetGeneration + 1L;
 		}
 		if (needShow && configDir != null && !operationRunning) {
-			saveParams();
+			if (saveParams()) {
+				pauseSaveFailed = false;
+				if (retainedDraft != null) retainedDraft.failedPauseForm = null;
+				pausedProfileConfig = isProfile
+						? ProfileConfigMatcher.copyConfig(params) : null;
+			} else {
+				pauseSaveFailed = true;
+				if (retainedDraft != null) retainedDraft.failedPauseForm = currentForm;
+				pausedProfileConfig = null;
+			}
 		}
 		super.onPause();
 	}
@@ -1584,18 +1612,28 @@ public class ConfigActivity extends AppCompatActivity {
 				initSkinOptions();
 				initSoundBankOptions();
 			}
-			if (skipNextAssetPickerReload || assetResultAppliedAfterPause) {
+			ProfileModel beforeReload = pausedProfileConfig;
+			pausedProfileConfig = null;
+			if (pauseSaveFailed) {
+				// Retain the in-memory draft instead of restoring an older disk snapshot.
+				pauseSaveFailed = false;
+				skipNextAssetPickerReload = false;
+				assetResultAppliedAfterPause = false;
+				if (!isFinishing()) {
+					showConfigNotice(R.string.config_save_failed);
+				}
+			} else if (skipNextAssetPickerReload || assetResultAppliedAfterPause) {
 				skipNextAssetPickerReload = false;
 				assetResultAppliedAfterPause = false;
 			} else {
 				loadParams(true);
+				if (isProfile && needShow && beforeReload != null
+						&& !ProfileConfigMatcher.sameConfig(beforeReload, params)) {
+					// A native editor changed the isolated profile draft while this Activity was paused.
+					profileDraftDirty = true;
+					if (composeController != null) composeController.update(createUiState());
+				}
 			}
-			if (isProfile && profileEditorResumeObserved) {
-				// A return from a native editor may have changed the isolated draft. Keeping the
-				// editor dirty is safer than committing that writer's result implicitly.
-				profileDraftDirty = true;
-			}
-			profileEditorResumeObserved = true;
 		}
 	}
 
@@ -1907,6 +1945,12 @@ public class ConfigActivity extends AppCompatActivity {
 	}
 
 	private void handleBackRequest() {
+		if (operationRunning) return;
+		// Back must not destroy a local edit whose onPause auto-save would fail.
+		if (!isProfile && needShow && configDir != null && !saveParams()) {
+			showConfigNotice(R.string.config_save_failed);
+			return;
+		}
 		finish();
 	}
 
@@ -2126,6 +2170,7 @@ public class ConfigActivity extends AppCompatActivity {
 					Log.e(TAG, "Unable to update preset editor provenance");
 				}
 				setBuiltInThemeLinked(false);
+				profileDraftDirty = true;
 				loadParams(true);
 				return true;
 			} catch (IOException | RuntimeException failure) {
@@ -2257,6 +2302,31 @@ public class ConfigActivity extends AppCompatActivity {
 			operationRunning = false;
 		}
 	}
+
+
+    private boolean stopFollowingProfile() {
+        if (isProfile || operationRunning || presetLinkage == null) return false;
+        operationRunning = true;
+        try {
+            boolean success = runInstalledWrite(() -> {
+                synchronized (ProfilesManager.presetSourceLock()) {
+                    // An outstanding local draft must be durable before unlinking the source.
+                    if (!saveParamsWithInstalledIdentity()) return false;
+                    return !presetLinkage.isLinked() || presetLinkage.detach();
+                }
+            });
+            if (success) {
+                refreshProfileOriginFromMetadata();
+                refreshProfileMatchCache();
+                if (composeController != null) composeController.update(createUiState());
+            } else {
+                ThemedToast.show(this, R.string.profile_template_operation_failed, Toast.LENGTH_SHORT);
+            }
+            return success;
+        } finally {
+            operationRunning = false;
+        }
+    }
 
 	private boolean saveTemplateWithInstalledIdentity(@NonNull String name) {
 		if (!saveParamsWithInstalledIdentity()) {
@@ -2394,6 +2464,18 @@ public class ConfigActivity extends AppCompatActivity {
 		}
 	}
 
+	private void showConfigNotice(@NonNull String message) {
+		if (composeController != null && !isDestroyed() && !isFinishing()) {
+			composeController.showNotice(message);
+		} else {
+			ThemedToast.show(this, message, Toast.LENGTH_SHORT);
+		}
+	}
+
+	private void showConfigNotice(int messageRes) {
+		showConfigNotice(getString(messageRes));
+	}
+
 	private void addResolutionToPresets(@NonNull Size size) {
 		if (size.width <= 0 || size.height <= 0) {
 			ThemedToast.show(this, R.string.invalid_resolution_not_saved, Toast.LENGTH_SHORT);
@@ -2413,7 +2495,7 @@ public class ConfigActivity extends AppCompatActivity {
 		if (composeController != null) {
 			composeController.update(createUiState());
 		}
-		ThemedToast.show(this, getString(R.string.saved, size.toString()), Toast.LENGTH_SHORT);
+		showConfigNotice(getString(R.string.saved, size.toString()));
 	}
 
 	private void removeResolutionPreset(Size size) {
@@ -2629,13 +2711,18 @@ public class ConfigActivity extends AppCompatActivity {
 	}
 
 	private void updateForm(ConfigFormState state) {
+		if (isProfile && !profileDraftDirty && params != null && currentForm != null
+				&& !ProfileConfigMatcher.sameConfig(
+						ProfileConfigMatcher.effectiveConfig(params, currentForm),
+						ProfileConfigMatcher.effectiveConfig(params, state))) {
+			profileDraftDirty = true;
+		}
 		currentForm = state;
 		if (state.screenBackgroundMode != BackgroundMode.CUSTOM
 				&& state.screenBackgroundMode != BackgroundMode.DYNAMIC_SOLID
 				&& composeController != null) {
 			composeController.dismissColorPicker(ColorField.SCREEN_BACKGROUND);
 		}
-		if (isProfile) profileDraftDirty = true;
 		if (composeController != null) {
 			composeController.update(createUiState());
 		}

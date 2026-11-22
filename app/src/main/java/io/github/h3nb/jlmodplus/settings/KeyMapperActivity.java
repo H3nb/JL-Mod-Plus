@@ -236,7 +236,7 @@ public class KeyMapperActivity extends AppCompatActivity {
 			return true;
 		}
 		params.keyMappings = oldMap;
-		ThemedToast.show(this, R.string.error, Toast.LENGTH_SHORT);
+		composeController.showNotice(getString(R.string.error));
 		return false;
 	}
 

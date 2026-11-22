@@ -15,6 +15,7 @@
 package javax.microedition.shell
 
 import io.github.h3nb.jlmodplus.R
+import io.github.h3nb.jlmodplus.input.HostCommand
 import org.junit.jupiter.api.Assertions.assertEquals
 import org.junit.jupiter.api.Assertions.assertFalse
 import org.junit.jupiter.api.Assertions.assertTrue
@@ -74,20 +75,42 @@ class RuntimeMenuLayoutTest {
         )
         assertEquals(
             listOf(
-                R.string.exit, R.string.save_log, R.string.action_lock_orientation,
-                R.string.memory_editor_bubble, R.string.pref_runtime_fullscreen_title,
+                R.string.action_lock_orientation, R.string.memory_editor_bubble,
+                R.string.pref_runtime_fullscreen_title, R.string.PREF_LIMIT_FPS,
+                R.string.runtime_virtual_controls_title, R.string.save_log,
                 R.string.action_keyboard_ime, R.string.take_screenshot,
-                R.string.PREF_LIMIT_FPS, R.string.PREF_EMULATION_SPEED,
-                R.string.runtime_virtual_controls_title,
+                R.string.PREF_EMULATION_SPEED, R.string.runtime_restart, R.string.exit,
             ),
             entries.map { it.label },
         )
         // Controller activation uses this same ordered list as the rendered rows.
-        entries[4].activate()
-        entries[5].activate()
+        entries[2].activate()
+        entries[6].activate()
         entries[8].activate()
-        entries[9].activate()
+        entries[4].activate()
         assertEquals(listOf("dismiss", "fullscreen", "dismiss", "ime", "dismiss", "speed", "virtualControls"), events)
+    }
+
+    @Test
+    fun runtimeQuickActionsAdaptToDialogWidthAndFontScale() {
+        assertEquals(2, runtimeMenuGridColumns(288f, 1f, 7))
+        assertEquals(3, runtimeMenuGridColumns(344f, 1f, 7))
+        assertEquals(2, runtimeMenuGridColumns(344f, 1.5f, 7))
+        assertEquals(5, runtimeMenuGridColumns(568f, 1f, 7))
+        assertEquals(2, runtimeMenuGridColumns(408f, 2f, 7))
+        assertEquals(1, runtimeMenuGridColumns(320f, 2f, 7))
+    }
+
+    @Test
+    fun gridNavigationReachesPartialRowsAndTheExitFooter() {
+        assertEquals(4, runtimeMenuNextFocus(2, 7, 3, 2, HostCommand.NavigateDown))
+        assertEquals(5, runtimeMenuNextFocus(4, 7, 3, 2, HostCommand.NavigateDown))
+        assertEquals(6, runtimeMenuNextFocus(5, 7, 3, 2, HostCommand.NavigateRight))
+        assertEquals(5, runtimeMenuNextFocus(6, 7, 3, 2, HostCommand.NavigateLeft))
+        assertEquals(3, runtimeMenuNextFocus(5, 7, 3, 2, HostCommand.NavigateUp))
+        assertEquals(4, runtimeMenuNextFocus(6, 7, 3, 2, HostCommand.NavigateUp))
+        assertEquals(0, runtimeMenuNextFocus(6, 7, 3, 2, HostCommand.NextTab))
+        assertEquals(2, runtimeMenuNextFocus(1, 3, 2, 0, HostCommand.NavigateDown))
     }
 
     @Test
@@ -95,7 +118,8 @@ class RuntimeMenuLayoutTest {
         val form = canvas.copy(isCanvas = false)
         assertTrue(runtimeToolbarShortcuts(form, 640f).isEmpty())
         assertEquals(
-            listOf(R.string.exit, R.string.save_log, R.string.action_lock_orientation, R.string.memory_editor_bubble),
+            listOf(R.string.action_lock_orientation, R.string.memory_editor_bubble, R.string.save_log,
+                R.string.runtime_restart, R.string.exit),
             menu(form).map { it.label },
         )
         val incompatible = canvas.copy(emulationSpeedAvailable = false, imeAvailable = false)
@@ -245,6 +269,7 @@ class RuntimeMenuLayoutTest {
 
     private open class NoOpMenuActions : RuntimeMenuActions {
         override fun onExit() = Unit
+        override fun onRestart() = Unit
         override fun onSaveLog() = Unit
         override fun onToggleOrientationLock() = Unit
         override fun onOpenImeKeyboard() = Unit

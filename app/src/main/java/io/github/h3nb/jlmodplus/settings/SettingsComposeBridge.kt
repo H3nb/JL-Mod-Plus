@@ -14,21 +14,18 @@
 
 package io.github.h3nb.jlmodplus.settings
 
-import androidx.compose.foundation.clickable
+import androidx.activity.compose.BackHandler
 import androidx.compose.foundation.background
+import androidx.compose.foundation.border
 import androidx.compose.foundation.selection.selectable
 import androidx.compose.foundation.selection.selectableGroup
-import androidx.compose.foundation.selection.toggleable
 import androidx.compose.foundation.shape.CircleShape
 import androidx.compose.foundation.shape.CornerSize
-import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
-import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.heightIn
 import androidx.compose.foundation.layout.padding
-import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.widthIn
 import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.rememberScrollState
@@ -47,7 +44,6 @@ import androidx.compose.material3.ListItemDefaults
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.RadioButton
 import androidx.compose.material3.Scaffold
-import androidx.compose.material3.Switch
 import androidx.compose.material3.Text
 import androidx.compose.material3.TextButton
 import androidx.compose.material3.TopAppBar
@@ -55,11 +51,14 @@ import androidx.compose.runtime.Composable
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
+import androidx.compose.runtime.saveable.rememberSaveable
 import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
 import androidx.compose.ui.graphics.Color
+import androidx.compose.ui.platform.LocalInspectionMode
+import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.platform.ComposeView
 import androidx.compose.ui.platform.ViewCompositionStrategy
 import androidx.compose.ui.res.painterResource
@@ -68,11 +67,25 @@ import androidx.compose.ui.semantics.Role
 import androidx.compose.ui.semantics.heading
 import androidx.compose.ui.semantics.isTraversalGroup
 import androidx.compose.ui.semantics.semantics
-import androidx.compose.ui.text.font.FontWeight
-import androidx.compose.ui.text.style.TextOverflow
 import androidx.compose.ui.unit.dp
 import io.github.h3nb.jlmodplus.R
+import io.github.h3nb.jlmodplus.util.Constants.PREF_APPS_ENHANCED_ICONS
+import io.github.h3nb.jlmodplus.util.Constants.PREF_APPS_ICON_RATIO
+import io.github.h3nb.jlmodplus.util.Constants.PREF_APPS_ICON_SHAPE
+import io.github.h3nb.jlmodplus.util.Constants.PREF_KEEP_SCREEN
+import io.github.h3nb.jlmodplus.util.Constants.PREF_STATUSBAR
+import io.github.h3nb.jlmodplus.util.Constants.PREF_TOOLBAR
+import io.github.h3nb.jlmodplus.applist.LibraryAboutScreen
+import io.github.h3nb.jlmodplus.applist.LibraryInfoDialog
+import io.github.h3nb.jlmodplus.applist.LibraryInformationDialog
+import io.github.h3nb.jlmodplus.updates.UpdateRepository
+import io.github.h3nb.jlmodplus.updates.UpdateStatus
+import io.github.h3nb.jlmodplus.updates.UpdatesScreen
 import io.github.h3nb.jlmodplus.ui.JLModPlusTheme
+import io.github.h3nb.jlmodplus.ui.PreferenceNavigationRow
+import io.github.h3nb.jlmodplus.ui.PreferenceSwitchRow
+import io.github.h3nb.jlmodplus.ui.TransientNoticeHost
+import io.github.h3nb.jlmodplus.ui.TransientNoticeState
 import io.github.h3nb.jlmodplus.ui.AccentPalette
 import io.github.h3nb.jlmodplus.ui.ScrollableContentHint
 import io.github.h3nb.jlmodplus.ui.adaptiveDialogLayout
@@ -84,11 +97,12 @@ data class SettingsOption(
     val label: String,
 )
 
-data class SettingsChoice(
+data class SettingsChoice @JvmOverloads constructor(
     val key: String,
     val title: String,
     val selected: SettingsOption,
     val options: List<SettingsOption>,
+    val summary: String? = null,
 )
 
 data class SettingsSwitch @JvmOverloads constructor(
@@ -105,7 +119,7 @@ data class SettingsUiState(
     val language: SettingsOption,
     val languages: List<SettingsOption>,
     val switches: List<SettingsSwitch>,
-    val experimentalSwitches: List<SettingsSwitch>,
+    val diagnosticSwitches: List<SettingsSwitch>,
     val showProfiles: Boolean,
     val workingDirectory: String,
     val directoryError: String? = null,
@@ -125,6 +139,11 @@ interface SettingsActions {
     fun onOpenProfiles()
     fun onChooseDirectory()
     fun onDismissDirectoryError()
+    fun onOpenCrashReports() = Unit
+    fun onOpenDonation() = Unit
+    fun onOpenProjectRepository() = Unit
+    fun onOpenUpdateRelease(url: String) = Unit
+    fun onOpenUpdateDownload(url: String) = Unit
 }
 
 /** Host bridge; SharedPreferences and activity-result ownership remain in SettingsActivity. */
@@ -134,6 +153,7 @@ class SettingsComposeController(
     private val actions: SettingsActions,
 ) {
     private var state by mutableStateOf(initialState)
+    private val notices = TransientNoticeState()
 
     init {
         composeView.id = R.id.settings_compose_root
@@ -142,13 +162,20 @@ class SettingsComposeController(
         )
         composeView.setContent {
             JLModPlusTheme {
-                SettingsScreen(state = state, actions = actions)
+                Box(Modifier.fillMaxSize()) {
+                    SettingsScreen(state = state, actions = actions)
+                    TransientNoticeHost(notices, Modifier.align(Alignment.BottomCenter))
+                }
             }
         }
     }
 
     fun update(nextState: SettingsUiState) {
         state = nextState
+    }
+
+    fun showNotice(message: String) {
+        notices.show(message)
     }
 }
 
@@ -161,6 +188,51 @@ fun SettingsScreen(
 ) {
     var choiceDialog by remember { mutableStateOf<SettingsDialogChoice?>(null) }
     var libraryChoiceDialog by remember { mutableStateOf<SettingsChoice?>(null) }
+    var page by rememberSaveable { mutableStateOf(SettingsPage.Main) }
+    var infoDialog by remember { mutableStateOf<LibraryInfoDialog?>(null) }
+    val context = LocalContext.current
+    val updates = if (LocalInspectionMode.current) null else remember(context) {
+        UpdateRepository.get(context)
+    }
+    val settingsListState = rememberLazyListState()
+
+    val libraryOptions = state.libraryChoices.map { SettingsOptionEntry.Choice(it) } +
+        state.librarySwitches.map { SettingsOptionEntry.Toggle(it) }
+    val libraryIconOptions = libraryOptions.filter { it.key in libraryIconKeys }
+    val libraryGridOptions = libraryOptions.filterNot { it.key in libraryIconKeys }
+    val runtimeScreenOptions = state.switches
+        .filter { it.key in runtimeScreenKeys }
+        .map { SettingsOptionEntry.Toggle(it) }
+    val runtimeFeatureOptions = state.switches
+        .filterNot { it.key in runtimeScreenKeys }
+        .map { SettingsOptionEntry.Toggle(it) }
+
+    BackHandler(enabled = infoDialog != null) { infoDialog = null }
+    BackHandler(enabled = page != SettingsPage.Main && infoDialog == null) {
+        page = SettingsPage.Main
+    }
+    if (page != SettingsPage.Main) {
+        when (page) {
+            SettingsPage.Updates -> if (updates != null) {
+                UpdatesScreen(
+                    repository = updates,
+                    onBack = { page = SettingsPage.Main },
+                    onOpenRelease = actions::onOpenUpdateRelease,
+                    onOpenDownload = actions::onOpenUpdateDownload,
+                )
+            }
+            SettingsPage.About -> LibraryAboutScreen(
+                onBack = { page = SettingsPage.Main },
+                onLicenses = { infoDialog = LibraryInfoDialog.Licenses },
+                onOpenGitHub = actions::onOpenProjectRepository,
+            )
+            SettingsPage.Main -> Unit
+        }
+        infoDialog?.let { dialog ->
+            LibraryInformationDialog(dialog = dialog, onDismiss = { infoDialog = null })
+        }
+        return
+    }
     Scaffold(
         modifier = modifier.fillMaxSize(),
         contentColor = MaterialTheme.colorScheme.onSurface,
@@ -180,6 +252,7 @@ fun SettingsScreen(
     ) { padding ->
         Box(modifier = Modifier.fillMaxSize()) {
             LazyColumn(
+                state = settingsListState,
                 modifier = Modifier
                     .align(Alignment.TopCenter)
                     .fillMaxWidth()
@@ -187,63 +260,109 @@ fun SettingsScreen(
                 contentPadding = padding,
             ) {
                 settingsSection(
-                    key = "appearance",
-                    title = R.string.settings_section_appearance,
-                    rowCount = 2,
-                    rowKey = { if (it == 0) "theme" else "accent" },
+                    key = "appearance-and-language",
+                    title = R.string.settings_section_appearance_language,
+                    rowCount = 3,
+                    rowKey = { when (it) { 0 -> "theme"; 1 -> "accent"; else -> "language" } },
                     rowType = { SettingsItemType.Choice },
                 ) { index ->
-                    if (index == 0) {
-                        SettingsChoiceRow(
+                    when (index) {
+                        0 -> SettingsChoiceRow(
                             title = stringResource(R.string.pref_theme_title),
                             selected = state.theme,
                             onClick = { choiceDialog = SettingsDialogChoice.Theme },
                         )
-                    } else {
-                        SettingsChoiceRow(
+                        1 -> SettingsChoiceRow(
                             title = stringResource(R.string.pref_accent_title),
                             selected = state.accent,
                             showAccentPreview = true,
                             onClick = { choiceDialog = SettingsDialogChoice.Accent },
                         )
+                        else -> SettingsChoiceRow(
+                            title = stringResource(R.string.pref_language),
+                            selected = state.language,
+                            onClick = { choiceDialog = SettingsDialogChoice.Language },
+                        )
+                    }
+                }
+                settingsOptionSection(
+                    key = "library-icons",
+                    title = R.string.settings_section_library_icons,
+                    entries = libraryIconOptions,
+                    onChoice = { libraryChoiceDialog = it },
+                    onToggle = { setting, checked -> actions.onToggle(setting.key, checked) },
+                )
+                settingsOptionSection(
+                    key = "library-grid",
+                    title = R.string.settings_section_library_grid,
+                    entries = libraryGridOptions,
+                    onChoice = { libraryChoiceDialog = it },
+                    onToggle = { setting, checked -> actions.onToggle(setting.key, checked) },
+                )
+                settingsOptionSection(
+                    key = "runtime-screen",
+                    title = R.string.settings_section_runtime_screen,
+                    entries = runtimeScreenOptions,
+                    onChoice = { libraryChoiceDialog = it },
+                    onToggle = { setting, checked -> actions.onToggle(setting.key, checked) },
+                )
+                settingsOptionSection(
+                    key = "runtime-features",
+                    title = R.string.settings_section_runtime_features,
+                    entries = runtimeFeatureOptions,
+                    onChoice = { libraryChoiceDialog = it },
+                    onToggle = { setting, checked -> actions.onToggle(setting.key, checked) },
+                )
+                settingsSection(
+                    key = "storage-and-profiles",
+                    title = R.string.settings_section_storage_profiles,
+                    rowCount = if (state.showProfiles) 2 else 1,
+                    rowKey = { if (it == 0) "directory" else "profiles" },
+                    rowType = { SettingsItemType.Action },
+                ) { index ->
+                    if (index == 0) {
+                        SettingsActionRow(
+                            title = stringResource(R.string.pref_emulator_dir),
+                            value = state.workingDirectory,
+                            onClick = actions::onChooseDirectory,
+                        )
+                    } else {
+                        SettingsActionRow(
+                            title = stringResource(R.string.preset_manage),
+                            summary = stringResource(R.string.settings_profiles_summary),
+                            onClick = actions::onOpenProfiles,
+                        )
                     }
                 }
                 settingsSection(
-                    key = "language",
-                    title = R.string.settings_section_language,
-                    rowCount = 1,
-                    rowKey = { "language" },
-                    rowType = { SettingsItemType.Choice },
-                ) {
-                    SettingsChoiceRow(
-                        title = stringResource(R.string.pref_language),
-                        selected = state.language,
-                        onClick = { choiceDialog = SettingsDialogChoice.Language },
-                    )
-                }
-                if (state.libraryChoices.isNotEmpty() || state.librarySwitches.isNotEmpty()) {
-                    val choiceCount = state.libraryChoices.size
-                    settingsSection(
-                        key = "library",
-                        title = R.string.settings_section_library_appearance,
-                        rowCount = choiceCount + state.librarySwitches.size,
-                        rowKey = { index ->
-                            if (index < choiceCount) "choice:${state.libraryChoices[index].key}"
-                            else "switch:${state.librarySwitches[index - choiceCount].key}"
-                        },
-                        rowType = { index ->
-                            if (index < choiceCount) SettingsItemType.Choice else SettingsItemType.Switch
-                        },
-                    ) { index ->
-                        if (index < choiceCount) {
-                            val choice = state.libraryChoices[index]
-                            SettingsChoiceRow(
-                                title = choice.title,
-                                selected = choice.selected,
-                                onClick = { libraryChoiceDialog = choice },
-                            )
-                        } else {
-                            val setting = state.librarySwitches[index - choiceCount]
+                    key = "maintenance",
+                    title = R.string.library_settings_section_maintenance,
+                    rowCount = 2 + state.diagnosticSwitches.size,
+                    rowKey = { index ->
+                        when (index) {
+                            0 -> "updates"
+                            1 -> "diagnostics"
+                            else -> state.diagnosticSwitches[index - 2].key
+                        }
+                    },
+                    rowType = { if (it < 2) SettingsItemType.Action else SettingsItemType.Switch },
+                ) { index ->
+                    when (index) {
+                        0 -> SettingsActionRow(
+                            title = stringResource(R.string.updates_title),
+                            summary = stringResource(
+                                if (updates?.status is UpdateStatus.Available) R.string.updates_more_available
+                                else R.string.updates_more_summary,
+                            ),
+                            onClick = { page = SettingsPage.Updates },
+                        )
+                        1 -> SettingsActionRow(
+                            title = stringResource(R.string.crash_reports),
+                            summary = stringResource(R.string.library_action_crash_reports_summary),
+                            onClick = actions::onOpenCrashReports,
+                        )
+                        else -> {
+                            val setting = state.diagnosticSwitches[index - 2]
                             SettingsSwitchRow(
                                 setting = setting,
                                 onCheckedChange = { checked -> actions.onToggle(setting.key, checked) },
@@ -252,63 +371,35 @@ fun SettingsScreen(
                     }
                 }
                 settingsSection(
-                    key = "runtime",
-                    title = R.string.settings_section_midlet_runtime,
-                    rowCount = state.switches.size,
-                    rowKey = { state.switches[it].key },
-                    rowType = { SettingsItemType.Switch },
-                ) { index ->
-                    val setting = state.switches[index]
-                    SettingsSwitchRow(
-                        setting = setting,
-                        onCheckedChange = { checked -> actions.onToggle(setting.key, checked) },
-                    )
-                }
-                settingsSection(
-                    key = "storage",
-                    title = R.string.settings_section_storage,
-                    rowCount = 1,
-                    rowKey = { "directory" },
+                    key = "support",
+                    title = R.string.library_settings_section_support,
+                    rowCount = 2,
+                    rowKey = { if (it == 0) "about" else "donate" },
                     rowType = { SettingsItemType.Action },
-                ) {
-                    SettingsActionRow(
-                        title = stringResource(R.string.pref_emulator_dir),
-                        value = state.workingDirectory,
-                        onClick = actions::onChooseDirectory,
-                    )
-                }
-                if (state.showProfiles) {
-                    settingsSection(
-                        key = "profiles",
-                        title = R.string.settings_section_profiles,
-                        rowCount = 1,
-                        rowKey = { "manage" },
-                        rowType = { SettingsItemType.Action },
-                    ) {
+                ) { index ->
+                    if (index == 0) {
                         SettingsActionRow(
-                            title = stringResource(R.string.preset_manage),
-                            summary = stringResource(R.string.settings_profiles_summary),
-                            onClick = actions::onOpenProfiles,
+                            title = stringResource(R.string.about),
+                            summary = stringResource(R.string.library_action_about_summary),
+                            onClick = { page = SettingsPage.About },
                         )
-                    }
-                }
-                if (state.experimentalSwitches.isNotEmpty()) {
-                    settingsSection(
-                        key = "experimental",
-                        title = R.string.pref_category_experimental,
-                        rowCount = state.experimentalSwitches.size,
-                        rowKey = { state.experimentalSwitches[it].key },
-                        rowType = { SettingsItemType.Switch },
-                    ) { index ->
-                        val setting = state.experimentalSwitches[index]
-                        SettingsSwitchRow(
-                            setting = setting,
-                            onCheckedChange = { checked -> actions.onToggle(setting.key, checked) },
+                    } else {
+                        SettingsActionRow(
+                            title = stringResource(R.string.library_donation_action),
+                            summary = stringResource(R.string.library_donation_summary),
+                            onClick = { infoDialog = LibraryInfoDialog.Donation },
                         )
                     }
                 }
             }
         }
+    }
+    infoDialog?.let { dialog ->
+        LibraryInformationDialog(
+            dialog = dialog,
+            onDismiss = { infoDialog = null },
+            onDonate = actions::onOpenDonation,
+        )
     }
 
     state.directoryError?.let { message ->
@@ -398,12 +489,66 @@ fun SettingsScreen(
             title = choice.title,
             selected = choice.selected,
             options = choice.options,
+            summary = choice.summary,
             onDismiss = { libraryChoiceDialog = null },
             onSelected = { value ->
                 libraryChoiceDialog = null
                 actions.onLibraryChoiceChanged(choice.key, value)
             },
         )
+    }
+}
+
+private enum class SettingsPage { Main, Updates, About }
+
+private val libraryIconKeys = setOf(
+    PREF_APPS_ICON_RATIO, PREF_APPS_ICON_SHAPE, PREF_APPS_ENHANCED_ICONS,
+)
+private val runtimeScreenKeys = setOf(PREF_TOOLBAR, PREF_STATUSBAR, PREF_KEEP_SCREEN)
+
+private sealed interface SettingsOptionEntry {
+    val key: String
+
+    data class Choice(val option: SettingsChoice) : SettingsOptionEntry {
+        override val key get() = option.key
+    }
+
+    data class Toggle(val option: SettingsSwitch) : SettingsOptionEntry {
+        override val key get() = option.key
+    }
+}
+
+private fun LazyListScope.settingsOptionSection(
+    key: String,
+    title: Int,
+    entries: List<SettingsOptionEntry>,
+    onChoice: (SettingsChoice) -> Unit,
+    onToggle: (SettingsSwitch, Boolean) -> Unit,
+) {
+    if (entries.isEmpty()) return
+    settingsSection(
+        key = key,
+        title = title,
+        rowCount = entries.size,
+        rowKey = { entries[it].key },
+        rowType = {
+            when (entries[it]) {
+                is SettingsOptionEntry.Choice -> SettingsItemType.Choice
+                is SettingsOptionEntry.Toggle -> SettingsItemType.Switch
+            }
+        },
+    ) { index ->
+        when (val entry = entries[index]) {
+            is SettingsOptionEntry.Choice -> SettingsChoiceRow(
+                title = entry.option.title,
+                selected = entry.option.selected,
+                onClick = { onChoice(entry.option) },
+            )
+            is SettingsOptionEntry.Toggle -> SettingsSwitchRow(
+                setting = entry.option,
+                onCheckedChange = { checked -> onToggle(entry.option, checked) },
+            )
+        }
     }
 }
 
@@ -426,8 +571,8 @@ private fun LazyListScope.settingsSection(
                 .padding(top = 8.dp, bottom = if (rowCount == 0) 16.dp else 8.dp)
                 .semantics { heading() }
                 .padding(start = 12.dp, top = 6.dp, end = 12.dp, bottom = 1.dp),
-            style = MaterialTheme.typography.titleMedium,
-            color = MaterialTheme.colorScheme.primary,
+            style = MaterialTheme.typography.titleSmall,
+            color = MaterialTheme.colorScheme.onSurfaceVariant,
         )
     }
     items(
@@ -464,47 +609,36 @@ private fun SettingsSectionRow(first: Boolean, last: Boolean, content: @Composab
 }
 
 @Composable
+private fun SettingsAccentSwatch(accentKey: String) {
+    Box(
+        modifier = Modifier
+            .size(22.dp)
+            .background(
+                AccentPalette.fromKey(accentKey)
+                    .previewColor(isSystemInDarkTheme(), LocalContext.current),
+                CircleShape,
+            )
+            .border(1.dp, MaterialTheme.colorScheme.outlineVariant, CircleShape),
+    )
+}
+
+@Composable
 private fun SettingsChoiceRow(
     title: String,
     selected: SettingsOption,
     showAccentPreview: Boolean = false,
     onClick: () -> Unit,
 ) {
-    Row(
-        modifier = Modifier
-            .fillMaxWidth()
-            .clickable(role = Role.Button, onClick = onClick)
-            .padding(horizontal = 16.dp, vertical = 11.dp),
-        verticalAlignment = Alignment.CenterVertically,
-        horizontalArrangement = Arrangement.spacedBy(12.dp),
-    ) {
-        Column(
-            modifier = Modifier.weight(1f),
-            verticalArrangement = Arrangement.spacedBy(4.dp),
-        ) {
-            Text(
-                text = title,
-                style = MaterialTheme.typography.bodyLarge,
-            )
-            Text(
-                text = selected.label,
-                color = MaterialTheme.colorScheme.onSurface,
-                style = MaterialTheme.typography.labelLarge.copy(fontWeight = FontWeight.SemiBold),
-                maxLines = 2,
-                overflow = TextOverflow.Ellipsis,
-            )
-        }
-        if (showAccentPreview) {
-            androidx.compose.foundation.layout.Box(
-                modifier = Modifier
-                    .size(22.dp)
-                    .background(
-                        AccentPalette.fromKey(selected.value).previewColor(isSystemInDarkTheme()),
-                        CircleShape,
-                    ),
-            )
-        }
-    }
+    PreferenceNavigationRow(
+        title = title,
+        value = selected.label,
+        onClick = onClick,
+        trailingContent = if (showAccentPreview) {
+            {
+                SettingsAccentSwatch(selected.value)
+            }
+        } else null,
+    )
 }
 
 private enum class SettingsDialogChoice {
@@ -519,6 +653,7 @@ private fun SettingsChoiceDialog(
     selected: SettingsOption,
     options: List<SettingsOption>,
     showAccentPreview: Boolean = false,
+    summary: String? = null,
     onDismiss: () -> Unit,
     onSelected: (String) -> Unit,
 ) {
@@ -542,6 +677,16 @@ private fun SettingsChoiceDialog(
                         .selectableGroup(),
                     state = listState,
                 ) {
+                    if (!summary.isNullOrBlank()) {
+                        item(key = "explanation") {
+                            Text(
+                                text = summary,
+                                style = MaterialTheme.typography.bodyMedium,
+                                color = MaterialTheme.colorScheme.onSurfaceVariant,
+                                modifier = Modifier.padding(horizontal = 16.dp, vertical = 8.dp),
+                            )
+                        }
+                    }
                     items(options, key = { it.value }) { option ->
                         val selectedOption = option.value == selected.value
                         ListItem(
@@ -560,15 +705,7 @@ private fun SettingsChoiceDialog(
                             },
                             trailingContent = if (showAccentPreview) {
                                 {
-                                    androidx.compose.foundation.layout.Box(
-                                        modifier = Modifier
-                                            .size(22.dp)
-                                            .background(
-                                                AccentPalette.fromKey(option.value)
-                                                    .previewColor(isSystemInDarkTheme()),
-                                                CircleShape,
-                                            ),
-                                    )
+                                    SettingsAccentSwatch(option.value)
                                 }
                             } else {
                                 null
@@ -599,46 +736,13 @@ private fun SettingsSwitchRow(
     setting: SettingsSwitch,
     onCheckedChange: (Boolean) -> Unit,
 ) {
-    Row(
-        modifier = Modifier
-            .fillMaxWidth()
-            .heightIn(min = 64.dp)
-            .toggleable(
-                value = setting.checked,
-                enabled = setting.enabled,
-                role = Role.Switch,
-                onValueChange = onCheckedChange,
-            )
-            .semantics(mergeDescendants = true) {}
-            .padding(horizontal = 16.dp, vertical = 10.dp),
-        verticalAlignment = Alignment.CenterVertically,
-        horizontalArrangement = Arrangement.spacedBy(12.dp),
-    ) {
-        Column(
-            modifier = Modifier.weight(1f),
-            verticalArrangement = Arrangement.spacedBy(3.dp),
-        ) {
-            Text(
-                text = setting.title,
-                style = MaterialTheme.typography.bodyLarge,
-                color = if (setting.enabled) MaterialTheme.colorScheme.onSurface
-                else MaterialTheme.colorScheme.onSurface.copy(alpha = 0.38f),
-            )
-            setting.summary?.let { summary ->
-                Text(
-                    text = summary,
-                    color = if (setting.enabled) MaterialTheme.colorScheme.onSurfaceVariant
-                    else MaterialTheme.colorScheme.onSurface.copy(alpha = 0.38f),
-                    style = MaterialTheme.typography.bodySmall,
-                )
-            }
-        }
-        Switch(
-            checked = setting.checked,
-            onCheckedChange = null,
-            enabled = setting.enabled,
-        )
-    }
+    PreferenceSwitchRow(
+        title = setting.title,
+        description = setting.summary,
+        checked = setting.checked,
+        enabled = setting.enabled,
+        onCheckedChange = onCheckedChange,
+    )
 }
 
 @Composable
@@ -648,34 +752,10 @@ private fun SettingsActionRow(
     value: String? = null,
     onClick: () -> Unit,
 ) {
-    Column(
-        modifier = Modifier
-            .fillMaxWidth()
-            .clickable(role = Role.Button, onClick = onClick)
-            .padding(horizontal = 16.dp, vertical = 11.dp),
-        verticalArrangement = Arrangement.spacedBy(4.dp),
-    ) {
-        Text(
-            text = title,
-            style = MaterialTheme.typography.bodyLarge,
-        )
-        summary?.let { description ->
-            Text(
-                text = description,
-                color = MaterialTheme.colorScheme.onSurfaceVariant,
-                style = MaterialTheme.typography.bodySmall,
-                maxLines = 2,
-                overflow = TextOverflow.Ellipsis,
-            )
-        }
-        value?.let { currentValue ->
-            Text(
-                text = currentValue,
-                color = MaterialTheme.colorScheme.onSurface,
-                style = MaterialTheme.typography.labelLarge.copy(fontWeight = FontWeight.SemiBold),
-                maxLines = 2,
-                overflow = TextOverflow.Ellipsis,
-            )
-        }
-    }
+    PreferenceNavigationRow(
+        title = title,
+        value = value,
+        description = summary,
+        onClick = onClick,
+    )
 }

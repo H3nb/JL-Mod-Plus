@@ -38,7 +38,9 @@ data class LibraryNavigationState(
     val collectionManageApps: Boolean = false,
 ) {
     companion object {
-        /** Accept the previous nine-slot saved state without retaining duplicated presentation state. */
+        // Older saved states used Collections as the destination of a selected collection.
+        private const val SCOPE_ROUTE_VERSION = "scope-v2"
+
         val Saver: Saver<LibraryNavigationState, Any> = listSaver(
             save = { state ->
                 listOf(
@@ -46,11 +48,12 @@ data class LibraryNavigationState(
                     state.selectedCollectionId ?: Long.MIN_VALUE,
                     state.selectedCollectionScope.orEmpty(),
                     state.collectionManageApps,
+                    SCOPE_ROUTE_VERSION,
                 )
             },
             restore = { saved ->
                 val destination = (saved.firstOrNull() as? String)?.let { value ->
-                    val compatible = if (value == "Options") "More" else value
+                    val compatible = if (value == "Options" || value == "More") "Apps" else value
                     runCatching { LibraryDestinationKey.valueOf(compatible) }.getOrNull()
                 } ?: LibraryDestinationKey.Apps
                 // The previous format placed Layout.name in slot 1; newer state places an id.
@@ -62,7 +65,11 @@ data class LibraryNavigationState(
                 val collectionId = (saved.getOrNull(idSlot) as? Number)?.toLong()
                     ?.takeUnless { it == Long.MIN_VALUE }
                 LibraryNavigationState(
-                    destination = destination,
+                    destination = if (
+                        destination == LibraryDestinationKey.Collections &&
+                        collectionId != null &&
+                        saved.getOrNull(4) != SCOPE_ROUTE_VERSION
+                    ) LibraryDestinationKey.Apps else destination,
                     selectedCollectionId = collectionId,
                     selectedCollectionScope = (saved.getOrNull(scopeSlot) as? String)
                         ?.takeIf(String::isNotEmpty),
@@ -95,5 +102,4 @@ data class ResolvedLibraryScrollAnchor(
 enum class LibraryDestinationKey {
     Apps,
     Collections,
-    More,
 }

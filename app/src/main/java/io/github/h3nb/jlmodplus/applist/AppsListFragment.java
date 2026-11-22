@@ -21,24 +21,14 @@
 package io.github.h3nb.jlmodplus.applist;
 
 import static io.github.h3nb.jlmodplus.util.Constants.PREF_APPS_GRID_SPACING;
+import static io.github.h3nb.jlmodplus.util.Constants.PREF_APPS_GRID_ICON_SIZE;
 import static io.github.h3nb.jlmodplus.util.Constants.PREF_APPS_HIDE_GRID_TITLES;
 import static io.github.h3nb.jlmodplus.util.Constants.PREF_APPS_ICON_RATIO;
 import static io.github.h3nb.jlmodplus.util.Constants.PREF_APPS_ICON_SHAPE;
 import static io.github.h3nb.jlmodplus.util.Constants.PREF_APPS_ENHANCED_ICONS;
-import static io.github.h3nb.jlmodplus.util.Constants.PREF_APPS_SHOW_LIST_DESCRIPTION;
 import static io.github.h3nb.jlmodplus.util.Constants.PREF_APPS_VIEW;
 import static io.github.h3nb.jlmodplus.util.Constants.PREF_APP_SORT;
 import static io.github.h3nb.jlmodplus.util.Constants.PREF_LAST_PATH;
-import static io.github.h3nb.jlmodplus.util.Constants.LIBRARY_GRID_SPACING_COMPACT;
-import static io.github.h3nb.jlmodplus.util.Constants.LIBRARY_GRID_SPACING_NONE;
-import static io.github.h3nb.jlmodplus.util.Constants.LIBRARY_GRID_SPACING_SPACIOUS;
-import static io.github.h3nb.jlmodplus.util.Constants.LIBRARY_GRID_SPACING_STANDARD;
-import static io.github.h3nb.jlmodplus.util.Constants.LIBRARY_ICON_RATIO_PORTRAIT;
-import static io.github.h3nb.jlmodplus.util.Constants.LIBRARY_ICON_RATIO_SQUARE;
-import static io.github.h3nb.jlmodplus.util.Constants.LIBRARY_ICON_SHAPE_ROUND;
-import static io.github.h3nb.jlmodplus.util.Constants.LIBRARY_ICON_SHAPE_SQUARE;
-import static io.github.h3nb.jlmodplus.util.Constants.LIBRARY_LAYOUT_GRID;
-import static io.github.h3nb.jlmodplus.util.Constants.LIBRARY_LAYOUT_LIST;
 
 import android.app.Activity;
 import android.content.ActivityNotFoundException;
@@ -89,6 +79,7 @@ import io.github.h3nb.jlmodplus.filepicker.FilePickerResultContract;
 import io.github.h3nb.jlmodplus.filepicker.FilteredFilePickerActivity;
 import io.github.h3nb.jlmodplus.librarydb.LibraryAppRow;
 import io.github.h3nb.jlmodplus.librarydb.LibraryLocalizedDescriptionEditorData;
+import io.github.h3nb.jlmodplus.librarydb.LibraryMidletDetailsData;
 import io.github.h3nb.jlmodplus.librarydb.LibraryGenerationToken;
 import io.github.h3nb.jlmodplus.librarydb.LibraryIconOverride;
 import io.github.h3nb.jlmodplus.librarydb.LibraryIconFiles;
@@ -214,44 +205,17 @@ public class AppsListFragment extends Fragment {
 
     @Override
     public void onViewCreated(@NonNull View view, @Nullable Bundle savedInstanceState) {
-        int storedLayout = preferences.getInt(PREF_APPS_VIEW, LIBRARY_LAYOUT_LIST);
-        LibraryLayout layout = storedLayout == LIBRARY_LAYOUT_LIST
-                ? LibraryLayout.List : LibraryLayout.Grid;
-        int storedIconRatio = preferences.getInt(PREF_APPS_ICON_RATIO, LIBRARY_ICON_RATIO_SQUARE);
-        LibraryIconRatio iconRatio = storedIconRatio == LIBRARY_ICON_RATIO_PORTRAIT
-                ? LibraryIconRatio.Portrait : LibraryIconRatio.Square;
-        int storedIconShape = preferences.getInt(PREF_APPS_ICON_SHAPE, LIBRARY_ICON_SHAPE_ROUND);
-        LibraryIconShape iconShape = storedIconShape == LIBRARY_ICON_SHAPE_SQUARE
-                ? LibraryIconShape.Square : LibraryIconShape.Round;
-        int storedGridSpacing = preferences.getInt(
-                PREF_APPS_GRID_SPACING, LIBRARY_GRID_SPACING_STANDARD);
-        LibraryGridSpacing gridSpacing;
-        switch (storedGridSpacing) {
-            case LIBRARY_GRID_SPACING_COMPACT:
-                gridSpacing = LibraryGridSpacing.Compact;
-                break;
-            case LIBRARY_GRID_SPACING_SPACIOUS:
-                gridSpacing = LibraryGridSpacing.Spacious;
-                break;
-            case LIBRARY_GRID_SPACING_STANDARD:
-            default:
-                gridSpacing = LibraryGridSpacing.Standard;
-                break;
-            case LIBRARY_GRID_SPACING_NONE:
-                gridSpacing = LibraryGridSpacing.None;
-                break;
-        }
         composeController = new LibraryComposeController(
                 (ComposeView) view,
                 createActions(),
-                layout,
+                readLayout(),
                 preferences.getInt(PREF_APP_SORT, 0),
-                iconRatio,
-                iconShape,
+                readIconRatio(),
+                readIconShape(),
                 preferences.getBoolean(PREF_APPS_ENHANCED_ICONS, true),
                 preferences.getBoolean(PREF_APPS_HIDE_GRID_TITLES, false),
-                preferences.getBoolean(PREF_APPS_SHOW_LIST_DESCRIPTION, true),
-                gridSpacing,
+                readGridSpacing(),
+                readGridIconSize(),
                 ShortcutManagerCompat.isRequestPinShortcutSupported(requireContext()),
                 new LibraryControllerKeyEventHandler() {
                     @Override
@@ -302,48 +266,48 @@ public class AppsListFragment extends Fragment {
         LibraryComposeController controller = composeController;
         if (controller == null || preferences == null) return;
 
-        int storedLayout = preferences.getInt(PREF_APPS_VIEW, LIBRARY_LAYOUT_LIST);
-        int storedIconRatio = preferences.getInt(
-                PREF_APPS_ICON_RATIO, LIBRARY_ICON_RATIO_SQUARE);
-        int storedIconShape = preferences.getInt(
-                PREF_APPS_ICON_SHAPE, LIBRARY_ICON_SHAPE_ROUND);
-        int storedGridSpacing = preferences.getInt(
-                PREF_APPS_GRID_SPACING, LIBRARY_GRID_SPACING_STANDARD);
-        LibraryGridSpacing gridSpacing;
-        switch (storedGridSpacing) {
-            case LIBRARY_GRID_SPACING_COMPACT:
-                gridSpacing = LibraryGridSpacing.Compact;
-                break;
-            case LIBRARY_GRID_SPACING_SPACIOUS:
-                gridSpacing = LibraryGridSpacing.Spacious;
-                break;
-            case LIBRARY_GRID_SPACING_NONE:
-                gridSpacing = LibraryGridSpacing.None;
-                break;
-            case LIBRARY_GRID_SPACING_STANDARD:
-            default:
-                gridSpacing = LibraryGridSpacing.Standard;
-                break;
-        }
         controller.updateAppearance(
-                storedLayout == LIBRARY_LAYOUT_GRID ? LibraryLayout.Grid : LibraryLayout.List,
-                storedIconRatio == LIBRARY_ICON_RATIO_PORTRAIT
-                        ? LibraryIconRatio.Portrait : LibraryIconRatio.Square,
-                storedIconShape == LIBRARY_ICON_SHAPE_SQUARE
-                        ? LibraryIconShape.Square : LibraryIconShape.Round,
+                readLayout(),
+                readIconRatio(),
+                readIconShape(),
                 preferences.getBoolean(PREF_APPS_ENHANCED_ICONS, true),
                 preferences.getBoolean(PREF_APPS_HIDE_GRID_TITLES, false),
-                preferences.getBoolean(PREF_APPS_SHOW_LIST_DESCRIPTION, true),
-                gridSpacing);
+                readGridSpacing(),
+                readGridIconSize());
+    }
+
+    private LibraryLayout readLayout() {
+        return LibraryLayout.fromStoredValue(
+                preferences.getInt(PREF_APPS_VIEW, LibraryLayout.List.getStoredValue()));
+    }
+
+    private LibraryIconRatio readIconRatio() {
+        return LibraryIconRatio.fromStoredValue(preferences.getInt(
+                PREF_APPS_ICON_RATIO, LibraryIconRatio.Square.getStoredValue()));
+    }
+
+    private LibraryIconShape readIconShape() {
+        return LibraryIconShape.fromStoredValue(preferences.getInt(
+                PREF_APPS_ICON_SHAPE, LibraryIconShape.Round.getStoredValue()));
+    }
+
+    private LibraryGridSpacing readGridSpacing() {
+        return LibraryGridSpacing.fromStoredValue(
+                preferences.getInt(PREF_APPS_GRID_SPACING, LibraryGridSpacing.Standard.getStoredValue()));
+    }
+
+    private LibraryGridIconSize readGridIconSize() {
+        return LibraryGridIconSize.fromStoredValue(preferences.getInt(
+                PREF_APPS_GRID_ICON_SIZE, LibraryGridIconSize.Standard.getStoredValue()));
     }
 
     private static boolean isLibraryAppearancePreference(String key) {
         return PREF_APPS_VIEW.equals(key)
+                || PREF_APPS_GRID_ICON_SIZE.equals(key)
                 || PREF_APPS_ICON_RATIO.equals(key)
                 || PREF_APPS_ICON_SHAPE.equals(key)
                 || PREF_APPS_ENHANCED_ICONS.equals(key)
                 || PREF_APPS_HIDE_GRID_TITLES.equals(key)
-                || PREF_APPS_SHOW_LIST_DESCRIPTION.equals(key)
                 || PREF_APPS_GRID_SPACING.equals(key);
     }
 
@@ -353,6 +317,12 @@ public class AppsListFragment extends Fragment {
             @Override
             public LibraryCollectionsUiStore collectionsStore() {
                 return collectionsUiStore;
+            }
+
+            @Nullable
+            @Override
+            public Integer resolveAppUiId(long databaseId) {
+                return resolveSearchUiId(databaseId);
             }
 
             @Override
@@ -372,6 +342,18 @@ public class AppsListFragment extends Fragment {
                 libraryViewModel.setFavorite(row.getId(), favorite, (ignored, error) -> {
                     if (error != null) showError(error);
                 });
+            }
+
+            @Override
+            public void onLoadMidletDetails(
+                    int appId,
+                    @NonNull LibraryViewModel.MutationCallback<LibraryMidletDetailsData> callback) {
+                LibraryAppRow row = findRow(appId);
+                if (row == null) {
+                    callback.complete(null, new IllegalStateException("Library app is not available"));
+                    return;
+                }
+                libraryViewModel.loadMidletDetails(row.getId(), callback);
             }
 
             @Override
@@ -439,73 +421,32 @@ public class AppsListFragment extends Fragment {
 
             @Override
             public void onLayoutChange(@NonNull LibraryLayout layout) {
-                int value = layout == LibraryLayout.Grid
-                        ? LIBRARY_LAYOUT_GRID : LIBRARY_LAYOUT_LIST;
-                preferences.edit().putInt(PREF_APPS_VIEW, value).apply();
-                LibraryComposeController controller = composeController;
-                if (controller != null) controller.updateLayout(layout);
+                preferences.edit().putInt(PREF_APPS_VIEW, layout.getStoredValue()).apply();
             }
 
             @Override
             public void onIconRatioChange(@NonNull LibraryIconRatio iconRatio) {
-                int value = iconRatio == LibraryIconRatio.Portrait
-                        ? LIBRARY_ICON_RATIO_PORTRAIT : LIBRARY_ICON_RATIO_SQUARE;
-                preferences.edit().putInt(PREF_APPS_ICON_RATIO, value).apply();
-                LibraryComposeController controller = composeController;
-                if (controller != null) controller.updateIconRatio(iconRatio);
+                preferences.edit().putInt(PREF_APPS_ICON_RATIO, iconRatio.getStoredValue()).apply();
             }
 
             @Override
             public void onIconShapeChange(@NonNull LibraryIconShape iconShape) {
-                int value = iconShape == LibraryIconShape.Square
-                        ? LIBRARY_ICON_SHAPE_SQUARE : LIBRARY_ICON_SHAPE_ROUND;
-                preferences.edit().putInt(PREF_APPS_ICON_SHAPE, value).apply();
-                LibraryComposeController controller = composeController;
-                if (controller != null) controller.updateIconShape(iconShape);
+                preferences.edit().putInt(PREF_APPS_ICON_SHAPE, iconShape.getStoredValue()).apply();
             }
 
             @Override
             public void onEnhancedIconsChange(boolean enabled) {
                 preferences.edit().putBoolean(PREF_APPS_ENHANCED_ICONS, enabled).apply();
-                LibraryComposeController controller = composeController;
-                if (controller != null) controller.updateEnhancedIcons(enabled);
             }
 
             @Override
             public void onHideGridTitlesChange(boolean hide) {
                 preferences.edit().putBoolean(PREF_APPS_HIDE_GRID_TITLES, hide).apply();
-                LibraryComposeController controller = composeController;
-                if (controller != null) controller.updateHideGridTitles(hide);
-            }
-
-            @Override
-            public void onShowListDescriptionChange(boolean show) {
-                preferences.edit().putBoolean(PREF_APPS_SHOW_LIST_DESCRIPTION, show).apply();
-                LibraryComposeController controller = composeController;
-                if (controller != null) controller.updateShowListDescription(show);
             }
 
             @Override
             public void onGridSpacingChange(@NonNull LibraryGridSpacing spacing) {
-                int value;
-                switch (spacing) {
-                    case Compact:
-                        value = LIBRARY_GRID_SPACING_COMPACT;
-                        break;
-                    case Spacious:
-                        value = LIBRARY_GRID_SPACING_SPACIOUS;
-                        break;
-                    case None:
-                        value = LIBRARY_GRID_SPACING_NONE;
-                        break;
-                    case Standard:
-                    default:
-                        value = LIBRARY_GRID_SPACING_STANDARD;
-                        break;
-                }
-                preferences.edit().putInt(PREF_APPS_GRID_SPACING, value).apply();
-                LibraryComposeController controller = composeController;
-                if (controller != null) controller.updateGridSpacing(spacing);
+                preferences.edit().putInt(PREF_APPS_GRID_SPACING, spacing.getStoredValue()).apply();
             }
 
             @Override
@@ -569,10 +510,7 @@ public class AppsListFragment extends Fragment {
                 }
             }
 
-            @Override
-            public void onShareApp(int appId) {
-                LibraryAppRow app = findRow(appId);
-                if (app == null) return;
+            private void exportJarOnly(LibraryAppRow app) {
                 LibraryTransferActions.prepareShareApp(libraryViewModel, app.getId(), (prepared, error) -> {
                     if (error != null) {
                         showTransferError(error);
@@ -580,7 +518,7 @@ public class AppsListFragment extends Fragment {
                     }
                     if (!isAdded() || prepared == null) return;
                     try {
-                        startActivity(LibraryTransferIntents.shareApp(
+                        startActivity(LibraryTransferIntents.exportJar(
                                 requireContext(), prepared, app.getTitle()));
                     } catch (ActivityNotFoundException | SecurityException exception) {
                         showTransferError(exception);
@@ -618,12 +556,25 @@ public class AppsListFragment extends Fragment {
                             } catch (ActivityNotFoundException | SecurityException exception) {
                                 showTransferError(exception);
                             }
-                        }));
+                        }), () -> exportJarOnly(app), false);
             }
 
             @Override
             public void onCreateCollection(@NonNull String name) {
                 libraryViewModel.createCollection(name, (ignored, error) -> {
+                    if (error != null) showError(error);
+                });
+            }
+
+            @Override
+            public void onCreateCollectionForApp(int appId, @NonNull String name) {
+                LibraryAppRow app = findRow(appId);
+                LibraryGenerationToken generation = libraryViewModel.readyGeneration();
+                File workdir = activeWorkdir;
+                if (app == null || generation == null || workdir == null ||
+                        activeGeneration != generation.getGeneration() ||
+                        !workdir.equals(generation.getEmulatorDir())) return;
+                libraryViewModel.createCollectionWithApp(app.getId(), name, (id, error) -> {
                     if (error != null) showError(error);
                 });
             }
@@ -647,6 +598,40 @@ public class AppsListFragment extends Fragment {
             }
 
             @Override
+            public void onDeleteCollections(
+                    @NonNull java.util.List<Long> collectionIds,
+                    @NonNull CollectionMembershipResultCallback callback) {
+                if (collectionIds.isEmpty()) {
+                    callback.onResult(false);
+                    return;
+                }
+                libraryViewModel.deleteCollections(collectionIds, (ignored, error) -> {
+                    if (error == null) {
+                        for (long id : collectionIds) {
+                            if (collectionMembersRequests.targets(id)) {
+                                collectionMembersRequests.invalidate();
+                                collectionsUiStore.dismissMembers();
+                                break;
+                            }
+                        }
+                    } else {
+                        showError(error);
+                    }
+                    callback.onResult(error == null);
+                });
+            }
+
+            @Override
+            public void onReorderCollections(
+                    @NonNull java.util.List<Long> orderedIds,
+                    @NonNull CollectionMembershipResultCallback callback) {
+                libraryViewModel.reorderCollections(orderedIds, (ignored, error) -> {
+                    if (error != null) showError(error);
+                    callback.onResult(error == null);
+                });
+            }
+
+            @Override
             public void onOpenCollection(long collectionId) {
                 loadCollectionMembers(collectionId);
             }
@@ -654,11 +639,12 @@ public class AppsListFragment extends Fragment {
             @Override
             public void onPrepareCollectionAppPicker() {
                 pickerGeneration = libraryViewModel.readyGeneration();
-                if (pickerGeneration != null && activeGeneration == pickerGeneration.getGeneration()
-                        && activeWorkdir != null
-                        && activeWorkdir.equals(pickerGeneration.getEmulatorDir())) {
-                    publishCollectionAllApps(currentAllReadyRows());
-                }
+                publishCurrentAllAppsIfReady();
+            }
+
+            @Override
+            public void onPrepareSearchApps() {
+                publishCurrentAllAppsIfReady();
             }
 
             @Override
@@ -671,7 +657,31 @@ public class AppsListFragment extends Fragment {
             @Override
             public void onRequestAddToCollection(int appId) {
                 LibraryAppRow app = findRow(appId);
-                if (app != null) collectionsUiStore.showAddTarget(appId, app.getTitle());
+                LibraryGenerationToken generation = libraryViewModel.readyGeneration();
+                File workdir = activeWorkdir;
+                if (app == null || generation == null || workdir == null ||
+                        activeGeneration != generation.getGeneration() ||
+                        !workdir.equals(generation.getEmulatorDir())) return;
+                long requestId = collectionsUiStore.showAddTarget(appId, app.getTitle());
+                libraryViewModel.getAppCollectionIds(app.getId(), (ids, error) -> {
+                    if (!isAdded() || activeGeneration != generation.getGeneration() ||
+                            activeWorkdir == null || !activeWorkdir.equals(workdir) ||
+                            !libraryViewModel.isReadyGeneration(generation.getGeneration(), workdir)) {
+                        return;
+                    }
+                    LibraryAppRow current = findRow(appId);
+                    if (current == null || current.getId() != app.getId() ||
+                            !current.getStorageKey().equals(app.getStorageKey())) return;
+                    if (error != null || ids == null) {
+                        Long currentRequestId = collectionsUiStore.currentTargetRequestId(appId);
+                        if (currentRequestId != null && currentRequestId == requestId) {
+                            collectionsUiStore.dismissAddTarget();
+                        }
+                        if (error != null) showError(error);
+                        return;
+                    }
+                    collectionsUiStore.publishTargetMemberships(appId, requestId, ids);
+                });
             }
 
             @Override
@@ -718,11 +728,31 @@ public class AppsListFragment extends Fragment {
                     boolean included,
                     @NonNull CollectionMembershipResultCallback callback) {
                 LibraryAppRow app = findRow(appId);
-                if (app == null) {
+                LibraryGenerationToken generation = libraryViewModel.readyGeneration();
+                File workdir = activeWorkdir;
+                if (app == null || generation == null || workdir == null ||
+                        activeGeneration != generation.getGeneration() ||
+                        !workdir.equals(generation.getEmulatorDir())) {
                     callback.onResult(false);
                     return;
                 }
-                onSetCollectionMembershipByDatabaseId(app.getId(), collectionId, included, callback);
+                Long requestId = collectionsUiStore.currentTargetRequestId(appId);
+                libraryViewModel.setCollectionMembership(
+                        collectionId, app.getId(), included, (ignored, error) -> {
+                            if (error != null) showError(error);
+                            if (error == null && isAdded() &&
+                                    activeGeneration == generation.getGeneration() &&
+                                    activeWorkdir != null && activeWorkdir.equals(workdir) &&
+                                    libraryViewModel.isReadyGeneration(generation.getGeneration(), workdir)) {
+                                LibraryAppRow current = findRow(appId);
+                                if (current != null && current.getId() == app.getId() &&
+                                        current.getStorageKey().equals(app.getStorageKey())) {
+                                    collectionsUiStore.updateTargetMembership(
+                                            appId, requestId, collectionId, included);
+                                }
+                            }
+                            callback.onResult(error == null);
+                        });
             }
 
             @Override
@@ -861,8 +891,7 @@ public class AppsListFragment extends Fragment {
                 });
             }
 
-            @Override
-            public void onShareSelected(@NonNull Set<Long> appIds) {
+            private void exportJarsOnly(@NonNull Set<Long> appIds) {
                 LibraryTransferActions.prepareShareApps(
                         libraryViewModel,
                         appIds,
@@ -873,8 +902,8 @@ public class AppsListFragment extends Fragment {
                             }
                             if (!isAdded() || prepared == null) return;
                             try {
-                                startActivity(LibraryTransferIntents.shareApp(
-                                        requireContext(), prepared, getString(R.string.library_bulk_share_apps)));
+                                startActivity(LibraryTransferIntents.exportJar(
+                                        requireContext(), prepared, getString(R.string.library_bulk_export_apps)));
                             } catch (ActivityNotFoundException | SecurityException exception) {
                                 showTransferError(exception);
                             }
@@ -909,7 +938,7 @@ public class AppsListFragment extends Fragment {
                             } catch (ActivityNotFoundException | SecurityException exception) {
                                 showTransferError(exception);
                             }
-                        }));
+                        }), () -> exportJarsOnly(appIds), true);
             }
 
             @Override
@@ -1119,14 +1148,14 @@ public class AppsListFragment extends Fragment {
 
         if (!generationChanged && activeSourceRevision != state.getSourceRevision()) {
             pruneUiCaches(state.getAvailableAppIds());
+            cachedAllReadyRows = null;
         }
         localizedDescriptions = state.getLocalizedDescriptions();
         iconFiles = state.getIconFiles();
         activeSourceRevision = state.getSourceRevision();
         collectionsUiStore.publishCollections(state.getCollections());
-        // The complete READY snapshot stays indexed; Collection picker preparation also avoids
-        // materializing every presentation item on the UI thread.
-        cachedAllReadyRows = null;
+        // Filter, sort and quick-view changes retain the cached unfiltered source.
+        // Presentation items are still mapped lazily when the picker needs them.
 
         Long requestedCollectionId = collectionMembersRequests.targetCollectionId();
         if (requestedCollectionId != null) {
@@ -1146,11 +1175,11 @@ public class AppsListFragment extends Fragment {
                 state.getApps(), LibraryAppRow::getId);
         LibraryComposeController controller = composeController;
         if (controller != null) {
-            controller.updateSort(state.getSortVariant());
             controller.updateApps(
                     uiItems,
                     state.getFilter(),
                     state.getQuickView(),
+                    state.getSortVariant(),
                     generation,
                     state.getAvailableAppIds(),
                     projectedAppIds,
@@ -1175,6 +1204,14 @@ public class AppsListFragment extends Fragment {
         rows = libraryViewModel.getAllApps();
         cachedAllReadyRows = rows;
         return rows;
+    }
+
+    private void publishCurrentAllAppsIfReady() {
+        LibraryGenerationToken ready = libraryViewModel.readyGeneration();
+        if (ready != null && activeGeneration == ready.getGeneration()
+                && activeWorkdir != null && activeWorkdir.equals(ready.getEmulatorDir())) {
+            publishCollectionAllApps(currentAllReadyRows());
+        }
     }
 
     private void publishCollectionAllApps(List<LibraryAppRow> rows) {
@@ -1211,7 +1248,8 @@ public class AppsListFragment extends Fragment {
                 row.getId(), row.getDescription(),
                 (resolved ? files.getPortraitIconPresent() : portrait.isFile())
                         ? portrait.getAbsolutePath() : null,
-                resolved ? files.getCustomIconPresent() : custom.isFile(), row.getAddedAt());
+                resolved ? files.getCustomIconPresent() : custom.isFile(), row.getAddedAt(),
+                row.getLastPlayedAt());
     }
 
     private LibraryAppUiItem toLibraryUiItem(LibraryAppRow row) {
@@ -1230,6 +1268,19 @@ public class AppsListFragment extends Fragment {
                 row, uiId, activeWorkdir, localizedDescriptions, iconFiles);
         cachedUiItemsByDatabaseId.put(row.getId(), new CachedUiItem(row, item));
         return item;
+    }
+
+    @Nullable
+    private Integer resolveSearchUiId(long databaseId) {
+        if (activeWorkdir == null) return null;
+        for (LibraryAppRow row : currentAllReadyRows()) {
+            if (row.getId() == databaseId) {
+                int uiId = uiIdFor(databaseId);
+                rowsByUiId.put(uiId, databaseId);
+                return uiId;
+            }
+        }
+        return null;
     }
 
     private int uiIdFor(long databaseId) {
@@ -1366,9 +1417,12 @@ public class AppsListFragment extends Fragment {
                 .commitAllowingStateLoss();
     }
 
-    private void showBundleOptions(@NonNull LibraryBundleExportHandler onExport) {
+    private void showBundleOptions(
+            @NonNull LibraryBundleExportHandler onExport,
+            @NonNull Runnable onJarOnly,
+            boolean isBulk) {
         LibraryComposeController controller = composeController;
-        if (controller != null) controller.showBundleOptions(onExport);
+        if (controller != null) controller.showBundleOptions(onExport, onJarOnly, isBulk);
     }
 
     private void onImportBundlePicked(Uri uri) {

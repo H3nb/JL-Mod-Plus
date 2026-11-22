@@ -271,6 +271,200 @@ class ConfigActivityComposeSmokeTest {
         }
     }
 
+    @Test
+    fun failedBackSaveKeepsInstalledConfigEditorOpenUntilRetrySucceeds() {
+        val context = InstrumentationRegistry.getInstrumentation().targetContext
+        val root = File(context.filesDir, "config-failed-back-${System.nanoTime()}")
+        fixtureRoot = root
+        val appDir = File(root, "converted/fixture")
+        val configDir = File(root, "configs/fixture")
+        assertTrue(appDir.mkdirs())
+        writeConfig(configDir, 176)
+        val appId = installIdentity(context, root, "fixture")
+        val intent = Intent(
+            Constants.ACTION_EDIT, Uri.parse(appDir.absolutePath),
+            context, ConfigActivity::class.java,
+        ).putExtra(Constants.KEY_MIDLET_NAME, "Config Save Fixture")
+            .putExtra(Constants.KEY_LIBRARY_APP_ID, appId)
+        val blocker = File(configDir, Config.MIDLET_CONFIG_FILE.substring(1) + ".new")
+
+        ActivityScenario.launch<ConfigActivity>(intent).use { scenario ->
+            InstrumentationRegistry.getInstrumentation().waitForIdleSync()
+            scenario.onActivity { activity ->
+                updateProfileForm(activity) { it.toBuilder().screenWidth("360").build() }
+                assertTrue(blocker.mkdirs())
+                File(blocker, "nonempty").writeText("prevent atomic temporary cleanup")
+                activity.onBackPressedDispatcher.onBackPressed()
+                assertFalse("Failed save must not close the editor", activity.isFinishing)
+                assertEquals("360", profileForm(activity).screenWidth)
+            }
+            assertEquals(
+                176,
+                ProfilesManager.loadPreparedMidletConfig(configDir, false)!!.screenWidth,
+            )
+            deleteRecursively(blocker)
+            scenario.onActivity { activity ->
+                activity.onBackPressedDispatcher.onBackPressed()
+                assertTrue("Editor should close after the draft is durable", activity.isFinishing)
+            }
+        }
+        assertEquals(
+            360,
+            ProfilesManager.loadPreparedMidletConfig(configDir, false)!!.screenWidth,
+        )
+    }
+
+    @Test
+    fun newProfileCanBeSavedWithoutChangingDefaults() {
+        val context = InstrumentationRegistry.getInstrumentation().targetContext
+        val root = File(context.filesDir, "new-profile-editor-${System.nanoTime()}")
+        fixtureRoot = root
+        val target = File(root, "templates/New Profile")
+        assertTrue(target.parentFile!!.mkdirs())
+        val intent = Intent(
+            Constants.ACTION_EDIT_PROFILE, Uri.parse(target.absolutePath),
+            context, ConfigActivity::class.java,
+        )
+
+        ActivityScenario.launch<ConfigActivity>(intent).use { scenario ->
+            scenario.onActivity { activity ->
+                assertTrue(profileDraftDirty(activity))
+                ConfigActivity::class.java.getDeclaredMethod("saveProfileDraft").apply {
+                    isAccessible = true
+                }.invoke(activity)
+            }
+        }
+        assertTrue(target.isDirectory)
+        assertNotNull(ProfilesManager.loadConfig(
+            target, false, ProfilesManager.BackgroundMigrationContext.NAMED_PROFILE, false,
+        ))
+    }
+
+    @Test
+    fun unchangedProfileAndNoOpFormUpdateStayCleanAfterResume() {
+        val context = InstrumentationRegistry.getInstrumentation().targetContext
+        val root = File(context.filesDir, "profile-clean-resume-${System.nanoTime()}")
+        fixtureRoot = root
+        val target = File(root, "templates/Existing")
+        writeConfig(target, 176)
+        val intent = Intent(
+            Constants.ACTION_EDIT_PROFILE, Uri.parse(target.absolutePath),
+            context, ConfigActivity::class.java,
+        )
+
+        ActivityScenario.launch<ConfigActivity>(intent).use { scenario ->
+            scenario.onActivity { activity ->
+                assertFalse(profileDraftDirty(activity))
+                updateProfileForm(activity) { it.toBuilder().build() }
+                assertFalse(profileDraftDirty(activity))
+            }
+            scenario.moveToState(androidx.lifecycle.Lifecycle.State.STARTED)
+            scenario.moveToState(androidx.lifecycle.Lifecycle.State.RESUMED)
+            scenario.onActivity { activity ->
+                assertFalse(profileDraftDirty(activity))
+                updateProfileForm(activity) { it.toBuilder().screenWidth("360").build() }
+                assertTrue(profileDraftDirty(activity))
+            }
+        }
+    }
+
+    @Test
+    fun externalProfileConfigEditMarksDraftDirtyOnReturn() {
+        val context = InstrumentationRegistry.getInstrumentation().targetContext
+        val root = File(context.filesDir, "profile-external-edit-${System.nanoTime()}")
+        fixtureRoot = root
+        val target = File(root, "templates/Existing")
+        writeConfig(target, 176)
+        val intent = Intent(
+            Constants.ACTION_EDIT_PROFILE, Uri.parse(target.absolutePath),
+            context, ConfigActivity::class.java,
+        )
+        lateinit var draft: File
+
+        ActivityScenario.launch<ConfigActivity>(intent).use { scenario ->
+            scenario.onActivity { activity ->
+                assertFalse(profileDraftDirty(activity))
+                draft = profileDraftDir(activity)
+            }
+            scenario.moveToState(androidx.lifecycle.Lifecycle.State.STARTED)
+            val changed = ProfilesManager.loadConfig(
+                draft, false, ProfilesManager.BackgroundMigrationContext.NAMED_PROFILE, false,
+            )!!
+            changed.screenWidth = 640
+            assertTrue(ProfilesManager.saveConfig(draft, changed))
+            scenario.moveToState(androidx.lifecycle.Lifecycle.State.RESUMED)
+            scenario.onActivity { activity ->
+                assertTrue(profileDraftDirty(activity))
+                assertEquals("640", profileForm(activity).screenWidth)
+            }
+        }
+    }
+
+    @Test
+    fun failedPauseSaveKeepsUnsavedFormOnResume() {
+        val context = InstrumentationRegistry.getInstrumentation().targetContext
+        val root = File(context.filesDir, "profile-failed-pause-${System.nanoTime()}")
+        fixtureRoot = root
+        val target = File(root, "templates/Existing")
+        writeConfig(target, 176)
+        val intent = Intent(
+            Constants.ACTION_EDIT_PROFILE, Uri.parse(target.absolutePath),
+            context, ConfigActivity::class.java,
+        )
+        lateinit var blocker: File
+        ActivityScenario.launch<ConfigActivity>(intent).use { scenario ->
+            scenario.onActivity { activity ->
+                updateProfileForm(activity) { it.toBuilder().screenWidth("360").build() }
+                blocker = File(profileDraftDir(activity),
+                    Config.MIDLET_CONFIG_FILE.substring(1) + ".new")
+                assertTrue(blocker.mkdirs())
+                File(blocker, "nonempty").writeText("prevent atomic temporary cleanup")
+            }
+            scenario.moveToState(androidx.lifecycle.Lifecycle.State.STARTED)
+            assertEquals(176, ProfilesManager.loadConfig(
+                blocker.parentFile, false,
+                ProfilesManager.BackgroundMigrationContext.NAMED_PROFILE, false,
+            )!!.screenWidth)
+            scenario.moveToState(androidx.lifecycle.Lifecycle.State.RESUMED)
+            scenario.onActivity { activity ->
+                assertEquals("360", profileForm(activity).screenWidth)
+                assertTrue(profileDraftDirty(activity))
+            }
+            scenario.recreate()
+            scenario.onActivity { activity ->
+                assertEquals("360", profileForm(activity).screenWidth)
+                assertTrue(profileDraftDirty(activity))
+            }
+            deleteRecursively(blocker)
+        }
+    }
+
+    private fun profileDraftDirty(activity: ConfigActivity): Boolean =
+        ConfigActivity::class.java.getDeclaredField("profileDraftDirty").apply {
+            isAccessible = true
+        }.getBoolean(activity)
+
+    private fun profileDraftDir(activity: ConfigActivity): File =
+        ConfigActivity::class.java.getDeclaredField("profileEditDraftDir").apply {
+            isAccessible = true
+        }.get(activity) as File
+
+    private fun profileForm(activity: ConfigActivity): ConfigFormState =
+        ConfigActivity::class.java.getDeclaredField("currentForm").apply {
+            isAccessible = true
+        }.get(activity) as ConfigFormState
+
+    private fun updateProfileForm(
+        activity: ConfigActivity,
+        transform: (ConfigFormState) -> ConfigFormState,
+    ) {
+        ConfigActivity::class.java.getDeclaredMethod(
+            "updateForm", ConfigFormState::class.java,
+        ).apply {
+            isAccessible = true
+        }.invoke(activity, transform(profileForm(activity)))
+    }
+
     private fun installIdentity(
         context: android.content.Context,
         root: File,

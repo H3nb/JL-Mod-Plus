@@ -300,17 +300,7 @@ public class MicroActivity extends AppCompatActivity {
 		if (!reattachingRuntime && MidletThread.hasRuntimeHeap()) {
 			// A different or retiring guest heap cannot host this request. Keep the original intent
 			// in the main process, which waits for this exact process to die before launching it.
-			Messenger control = new Messenger(new Handler(Looper.getMainLooper(), message -> {
-				if (message.what == RuntimeReplacementActivity.STOP_RUNTIME) {
-					MidletThread.forceStopForReplacement();
-				}
-				return true;
-			}));
-			startActivity(new Intent(this, RuntimeReplacementActivity.class)
-					.addFlags(Intent.FLAG_ACTIVITY_CLEAR_TOP | Intent.FLAG_ACTIVITY_SINGLE_TOP)
-					.putExtra(RuntimeReplacementActivity.EXTRA_LAUNCH, new Intent(intent))
-					.putExtra(RuntimeReplacementActivity.EXTRA_CONTROL, control));
-			finish();
+			requestRuntimeReplacement(new Intent(intent));
 			return;
 		}
 		if (reattachingRuntime) {
@@ -475,6 +465,11 @@ public class MicroActivity extends AppCompatActivity {
 					}
 
 					@Override
+					public void onRestart() {
+						if (runtimeMenuController != null) runtimeMenuController.showRestartConfirmation();
+					}
+
+					@Override
 					public void onSaveLog() {
 						saveLog();
 					}
@@ -586,6 +581,7 @@ public class MicroActivity extends AppCompatActivity {
 						String[] classes = pendingMidletClasses;
 						pendingMidletClasses = null;
 						if (classes != null && index >= 0 && index < classes.length && microLoader != null) {
+							getIntent().putExtra(KEY_MIDLET_CLASS, classes[index]);
 							microLoader.loadMidlet(classes[index], appName);
 						}
 					}
@@ -605,6 +601,11 @@ public class MicroActivity extends AppCompatActivity {
 								|| !MidletThread.destroyApp(true)) {
 							finishUnstartedRuntime(true);
 						}
+					}
+
+					@Override
+					public void onRestartConfirmed() {
+						restartMIDlet();
 					}
 
 					@Override
@@ -1450,6 +1451,28 @@ public class MicroActivity extends AppCompatActivity {
 		if (runtimeMenuController != null) {
 			runtimeMenuController.showExitConfirmation();
 		}
+	}
+
+	private void restartMIDlet() {
+		if (ContextHolder.getActivity() != this || isFinishing() || isDestroyed()
+				|| !MidletThread.hasRuntimeHeap()) return;
+		// A fresh Java ME heap requires the existing cross-process replacement handoff.
+		Intent launch = new Intent(getIntent()).setClass(this, MicroActivity.class);
+		requestRuntimeReplacement(launch);
+	}
+
+	private void requestRuntimeReplacement(@NonNull Intent launch) {
+		Messenger control = new Messenger(new Handler(Looper.getMainLooper(), message -> {
+			if (message.what == RuntimeReplacementActivity.STOP_RUNTIME) {
+				MidletThread.forceStopForReplacement();
+			}
+			return true;
+		}));
+		startActivity(new Intent(this, RuntimeReplacementActivity.class)
+				.addFlags(Intent.FLAG_ACTIVITY_CLEAR_TOP | Intent.FLAG_ACTIVITY_SINGLE_TOP)
+				.putExtra(RuntimeReplacementActivity.EXTRA_LAUNCH, launch)
+				.putExtra(RuntimeReplacementActivity.EXTRA_CONTROL, control));
+		finish();
 	}
 
 	@Override

@@ -38,7 +38,7 @@ class ConfigPageTransitionTest {
     fun shaderToolbarBackReturnsToDisplay() {
         composeRule.setContent {
             JLModPlusTheme {
-                ConfigScreen(state(graphicsMode = 1), events, initialDestination = ConfigDestination.Display)
+                ConfigScreen(state(graphicsMode = 1), events, initialDestination = ConfigDestination.Graphics)
             }
         }
         composeRule.onNodeWithText(label(R.string.render_shader_effects))
