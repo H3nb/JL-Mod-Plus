@@ -22,8 +22,8 @@ import androidx.activity.result.contract.ActivityResultContract
 import java.io.File
 
 /** Converts raw picker paths into stable URIs for both Java and Kotlin callers. */
-@JvmSuppressWildcards
-class FilePickerResultContract : ActivityResultContract<Intent, List<Uri>>() {
+class FilePickerResultContract :
+    ActivityResultContract<Intent, @JvmSuppressWildcards List<Uri>>() {
     override fun createIntent(context: Context, input: Intent): Intent = input
 
     override fun parseResult(resultCode: Int, intent: Intent?): List<Uri> {
