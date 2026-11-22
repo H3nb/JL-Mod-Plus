@@ -68,6 +68,20 @@ import io.github.h3nb.jlmodplus.ui.AdaptiveAlertDialog as AlertDialog
 import io.github.h3nb.jlmodplus.ui.adaptiveDialogLayout
 import kotlin.math.roundToInt
 
+/**
+ * Preserve the normal compact layout while avoiding squeezed resolution labels at large text sizes.
+ */
+internal fun screenPresetColumnCount(availableWidthDp: Float, fontScale: Float): Int {
+    val normalColumns = when {
+        availableWidthDp >= 480f -> 3
+        availableWidthDp >= 250f -> 2
+        else -> 1
+    }
+    val tileWidth = 112f * fontScale.coerceAtLeast(1f)
+    val fittingColumns = ((availableWidthDp + 8f) / (tileWidth + 8f)).toInt().coerceAtLeast(1)
+    return minOf(normalColumns, fittingColumns)
+}
+
 @OptIn(ExperimentalLayoutApi::class)
 @Composable
 internal fun ScreenPresetDialog(
@@ -153,11 +167,10 @@ internal fun ScreenPresetDialog(
                         .verticalScroll(rememberScrollState()),
                 ) {
                     BoxWithConstraints(Modifier.fillMaxWidth()) {
-                        val columns = when {
-                            maxWidth >= 480.dp -> 3
-                            maxWidth >= 250.dp -> 2
-                            else -> 1
-                        }
+                        val columns = screenPresetColumnCount(
+                            maxWidth.value,
+                            LocalDensity.current.fontScale,
+                        )
                         val tileWidth = (maxWidth - 8.dp * (columns - 1)) / columns
                         FlowRow(
                             maxItemsInEachRow = columns,
