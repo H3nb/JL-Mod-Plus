@@ -18,6 +18,8 @@ import io.github.h3nb.jlmodplus.R
 import android.graphics.Bitmap
 import java.io.File
 import androidx.test.platform.app.InstrumentationRegistry
+import androidx.compose.ui.test.DeviceConfigurationOverride
+import androidx.compose.ui.test.ExperimentalTestApi
 import androidx.compose.ui.test.junit4.v2.createComposeRule
 import androidx.compose.ui.test.assertCountEquals
 import androidx.compose.ui.test.assertIsEnabled
@@ -31,6 +33,8 @@ import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
 import androidx.compose.runtime.setValue
+import androidx.compose.ui.unit.DpSize
+import androidx.compose.ui.unit.dp
 import androidx.test.ext.junit.runners.AndroidJUnit4
 import androidx.test.espresso.Espresso.pressBack
 import java.util.concurrent.atomic.AtomicReference
@@ -164,6 +168,33 @@ class FilePickerComposeTest {
         composeRule.onNodeWithContentDescription("Select all files in this folder").performClick()
         assertEquals("select-all", events.get())
         composeRule.onAllNodesWithTag("file_picker_selection_checkbox").assertCountEquals(1)
+    }
+
+    @Test
+    @OptIn(ExperimentalTestApi::class)
+    fun wideGridUsesTheSameFileSelectionActionsAsCompactList() {
+        val events = AtomicReference<String>("")
+        composeRule.setContent {
+            DeviceConfigurationOverride(
+                DeviceConfigurationOverride.WindowSize(DpSize(900.dp, 640.dp)),
+            ) {
+                JLModPlusTheme {
+                    FilePickerScreen(
+                        state = sampleState().copy(
+                            request = sampleState().request.copy(
+                                allowMultiple = true,
+                                singleClick = false,
+                            ),
+                        ),
+                        actions = RecordingActions(events),
+                    )
+                }
+            }
+        }
+
+        composeRule.onAllNodesWithTag("file_picker_selection_checkbox").assertCountEquals(1)
+        composeRule.onNodeWithText("zeta.jar").performClick()
+        assertEquals("open:zeta.jar", events.get())
     }
 
     @Test
