@@ -2615,7 +2615,7 @@ private fun LibraryAppsHeader(
                     ) {
                         Icon(
                             painter = painterResource(
-                                if (state.layout == LibraryLayout.List) R.drawable.ic_editor_grid
+                                if (state.layout == LibraryLayout.List) R.drawable.ic_view_grid
                                 else R.drawable.ic_view_list,
                             ),
                             contentDescription = stringResource(
