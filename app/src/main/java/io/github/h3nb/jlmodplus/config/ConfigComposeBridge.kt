@@ -39,9 +39,7 @@ import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.heightIn
-import androidx.compose.foundation.layout.ime
 import androidx.compose.foundation.layout.imePadding
-import androidx.compose.foundation.layout.offset
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.safeDrawing
 import androidx.compose.foundation.layout.statusBars
@@ -65,7 +63,6 @@ import androidx.compose.material3.ButtonDefaults
 import androidx.compose.material3.Checkbox
 import androidx.compose.material3.ExperimentalMaterial3Api
 import androidx.compose.material3.FilterChip
-import androidx.compose.material3.HorizontalDivider
 import androidx.compose.material3.Icon
 import androidx.compose.material3.IconButton
 import androidx.compose.material3.IconToggleButton
@@ -84,7 +81,6 @@ import androidx.compose.material3.Text
 import androidx.compose.material3.TextButton
 import androidx.compose.material3.TopAppBar
 import androidx.compose.runtime.Composable
-import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.key
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableIntStateOf
@@ -99,7 +95,6 @@ import androidx.compose.ui.geometry.Offset
 import androidx.compose.ui.geometry.Size as ComposeSize
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.graphics.Brush
-import androidx.compose.ui.graphics.graphicsLayer
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.graphics.Path
 import androidx.compose.ui.graphics.RectangleShape
@@ -107,8 +102,6 @@ import androidx.compose.ui.graphics.lerp
 import androidx.compose.ui.graphics.toArgb
 import androidx.compose.ui.graphics.drawscope.Stroke
 import androidx.compose.ui.platform.ComposeView
-import androidx.compose.ui.focus.FocusRequester
-import androidx.compose.ui.focus.focusRequester
 import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.platform.LocalResources
 import androidx.compose.ui.platform.LocalDensity
@@ -126,7 +119,6 @@ import androidx.compose.ui.semantics.semantics
 import androidx.compose.ui.semantics.clearAndSetSemantics
 import androidx.compose.ui.text.font.FontFamily
 import androidx.compose.ui.text.input.KeyboardType
-import androidx.compose.ui.text.input.ImeAction
 import androidx.compose.ui.text.style.TextOverflow
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.window.Dialog
@@ -141,7 +133,6 @@ import io.github.h3nb.jlmodplus.ui.JLModPlusTheme
 import io.github.h3nb.jlmodplus.ui.TransientNoticeHost
 import io.github.h3nb.jlmodplus.ui.TransientNoticeState
 import io.github.h3nb.jlmodplus.ui.ScrollableContentHint
-import io.github.h3nb.jlmodplus.ui.availableWindowWidthDp
 import io.github.h3nb.jlmodplus.ui.PAGE_TRAVEL_DP
 import io.github.h3nb.jlmodplus.ui.pageMotionDirection
 import io.github.h3nb.jlmodplus.ui.pageEnter
@@ -2709,90 +2700,6 @@ private fun ConfigActionConfirmationDialog(
 }
 
 @Composable
-private fun ConfigRow(
-    label: String,
-    content: @Composable () -> Unit,
-) {
-    Row(
-        modifier = Modifier
-            .fillMaxWidth()
-            .heightIn(min = 52.dp)
-            .padding(horizontal = 14.dp, vertical = 5.dp),
-        verticalAlignment = Alignment.CenterVertically,
-        horizontalArrangement = Arrangement.spacedBy(10.dp),
-    ) {
-        Text(
-            text = label,
-            modifier = Modifier.weight(1f),
-            color = MaterialTheme.colorScheme.onSurface,
-            style = MaterialTheme.typography.bodyLarge,
-        )
-        Box(modifier = Modifier.weight(0.9f), contentAlignment = Alignment.CenterEnd) {
-            content()
-        }
-    }
-}
-
-@Composable
-private fun CompactTextField(
-    value: String,
-    label: String,
-    keyboardType: KeyboardType,
-    modifier: Modifier = Modifier,
-    dialogTitle: String = label,
-    showLabel: Boolean = true,
-    valueSuffix: String? = null,
-    onValueChange: (String) -> Unit,
-) {
-    var dialogVisible by remember(value) { mutableStateOf(false) }
-    val shownValue = buildString {
-        append(value.ifEmpty { label })
-        if (value.isNotEmpty() && valueSuffix != null) append(" ").append(valueSuffix)
-    }
-
-    Column(
-        modifier = modifier
-            .fillMaxWidth()
-            .heightIn(min = 48.dp)
-            .clickable { dialogVisible = true },
-        horizontalAlignment = Alignment.End,
-        verticalArrangement = Arrangement.Center,
-    ) {
-        if (showLabel) {
-            Text(
-                text = label,
-                style = MaterialTheme.typography.labelSmall,
-                color = MaterialTheme.colorScheme.onSurfaceVariant,
-                maxLines = 1,
-                overflow = TextOverflow.Ellipsis,
-            )
-        }
-        Text(
-            text = shownValue,
-            style = MaterialTheme.typography.bodyMedium,
-            color = MaterialTheme.colorScheme.primary,
-            maxLines = 1,
-            overflow = TextOverflow.Ellipsis,
-        )
-    }
-
-    if (dialogVisible) {
-        ConfigNumberDialog(
-            title = dialogTitle,
-            initialValue = value,
-            label = label.takeIf { showLabel },
-            keyboardType = keyboardType,
-            valueSuffix = valueSuffix,
-            onDismissRequest = { dialogVisible = false },
-            onConfirm = { nextValue ->
-                dialogVisible = false
-                onValueChange(nextValue)
-            },
-        )
-    }
-}
-
-@Composable
 internal fun ConfigNumberDialog(
     title: String,
     description: String? = null,
@@ -2853,40 +2760,6 @@ internal fun ConfigNumberDialog(
             }
         },
     )
-}
-
-@Composable
-private fun SliderField(
-    value: Int,
-    valueRange: IntRange,
-    onSelected: (Int) -> Unit,
-) {
-    var dialogVisible by remember(value) { mutableStateOf(false) }
-    Box(
-        modifier = Modifier
-            .fillMaxWidth()
-            .heightIn(min = 48.dp)
-            .clickable { dialogVisible = true },
-        contentAlignment = Alignment.CenterEnd,
-    ) {
-        Text(
-            text = value.toString(),
-            style = MaterialTheme.typography.bodyMedium,
-            color = MaterialTheme.colorScheme.primary,
-        )
-    }
-    if (dialogVisible) {
-        ConfigSliderDialog(
-            title = stringResource(R.string.PREF_VK_ALPHA),
-            initialValue = value,
-            valueRange = valueRange,
-            onDismissRequest = { dialogVisible = false },
-            onConfirm = { nextValue ->
-                dialogVisible = false
-                onSelected(nextValue)
-            },
-        )
-    }
 }
 
 @Composable
@@ -2965,45 +2838,6 @@ internal fun ConfigSliderDialog(
             }
         },
     )
-}
-
-@Composable
-private fun ChoiceField(
-    selected: String,
-    options: List<String>,
-    dialogTitle: String,
-    onSelected: (Int) -> Unit,
-    modifier: Modifier = Modifier,
-) {
-    var dialogVisible by remember(selected, options) { mutableStateOf(false) }
-    val enabled = options.isNotEmpty()
-    Box(
-        modifier = modifier
-            .fillMaxWidth()
-            .heightIn(min = 48.dp)
-            .clickable(enabled = enabled) { dialogVisible = true },
-        contentAlignment = Alignment.CenterEnd,
-    ) {
-        Text(
-            text = selected,
-            maxLines = 2,
-            overflow = TextOverflow.Ellipsis,
-            color = if (enabled) MaterialTheme.colorScheme.primary else MaterialTheme.colorScheme.onSurfaceVariant,
-            style = MaterialTheme.typography.bodyMedium,
-        )
-    }
-    if (dialogVisible) {
-        ConfigChoiceDialog(
-            title = dialogTitle,
-            selected = selected,
-            options = options,
-            onDismissRequest = { dialogVisible = false },
-            onSelected = { index ->
-                dialogVisible = false
-                onSelected(index)
-            },
-        )
-    }
 }
 
 @Composable
@@ -3140,20 +2974,6 @@ private fun SwitchRow(
         description = description,
         checked = checked,
         onCheckedChange = onCheckedChange,
-    )
-}
-
-@Composable
-private fun ColorRow(
-    label: String,
-    value: String,
-    onPick: () -> Unit,
-) {
-    ConfigColorPreference(
-        title = label,
-        description = null,
-        value = value,
-        onClick = onPick,
     )
 }
 
