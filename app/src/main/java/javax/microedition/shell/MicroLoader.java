@@ -548,7 +548,6 @@ public class MicroLoader {
 
 			EventQueue.setImmediate(params.immediateMode);
 			Canvas.setSettings(params, new File(workDir + Config.SHADERS_DIR));
-			Canvas.setTimingOverlayEnabled(timingTransformCompatible);
 
 			Font.applySettings(params);
 
