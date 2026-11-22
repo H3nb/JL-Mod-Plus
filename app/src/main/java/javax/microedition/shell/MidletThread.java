@@ -172,7 +172,20 @@ public class MidletThread extends HandlerThread implements Handler.Callback {
 		}
 	}
 
-	/** Removing the emulator task is an explicit stop, independent of guest callbacks. */
+	/** Recents removal is terminal for the old guest, but must not kill a fresh Library launch. */
+	public static void stopRemovedTask(android.content.Context context) {
+		try {
+			// Make launcher routing stale before the old runtime process exits.
+			MidletSessionStore.clear(context);
+			finalizeForcedUserStop();
+		} finally {
+			// No delayed main-process shutdown: Android already removed the task, and a new
+			// launcher tap may be creating a replacement task in the main process.
+			Process.killProcess(Process.myPid());
+		}
+	}
+
+	/** Explicit emulator exit shuts down all emulator processes and tasks. */
 	public static void stopEmulator(android.content.Context context) {
 		try {
 			finalizeForcedUserStop();
