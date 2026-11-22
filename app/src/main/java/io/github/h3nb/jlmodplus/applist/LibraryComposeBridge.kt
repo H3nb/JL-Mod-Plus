@@ -33,6 +33,7 @@ import androidx.compose.animation.slideInVertically
 import androidx.compose.animation.slideOutVertically
 import androidx.compose.animation.core.FastOutSlowInEasing
 import androidx.compose.animation.core.tween
+import androidx.compose.foundation.BorderStroke
 import androidx.compose.foundation.ExperimentalFoundationApi
 import androidx.compose.foundation.MutatePriority
 import androidx.compose.foundation.gestures.stopScroll
@@ -2493,22 +2494,24 @@ private fun LibraryAppsHeader(
                 )
             }
         }
-        Surface(
+        Row(
             modifier = Modifier
                 .fillMaxWidth()
-                .padding(top = 8.dp)
+                .padding(top = 20.dp, bottom = 12.dp)
                 .then(searchGate.positionModifier)
                 .then(if (searchActionsEnabled) Modifier else Modifier.clearAndSetSemantics {}),
-            shape = MaterialTheme.shapes.large,
-            color = MaterialTheme.colorScheme.surfaceContainerLow,
+            horizontalArrangement = Arrangement.spacedBy(12.dp),
+            verticalAlignment = Alignment.CenterVertically,
         ) {
-            Row(
-                modifier = Modifier.fillMaxWidth().heightIn(min = 56.dp),
-                verticalAlignment = Alignment.CenterVertically,
+            Surface(
+                modifier = Modifier.weight(1f),
+                shape = MaterialTheme.shapes.extraLarge,
+                color = MaterialTheme.colorScheme.surfaceContainerLow,
+                border = BorderStroke(1.dp, MaterialTheme.colorScheme.outlineVariant),
             ) {
                 Row(
                     modifier = Modifier
-                        .weight(1f)
+                        .fillMaxWidth()
                         .heightIn(min = 56.dp)
                         .testTag("library_scope_picker")
                         .clickable(
@@ -2554,58 +2557,74 @@ private fun LibraryAppsHeader(
                         modifier = Modifier.size(20.dp),
                     )
                 }
-                Box(
-                    modifier = Modifier.width(1.dp).height(24.dp)
-                        .background(MaterialTheme.colorScheme.outlineVariant),
-                )
-                Box {
-                    IconButton(
-                        onClick = { onSortVisibilityChanged(true) },
-                        enabled = searchActionsEnabled,
+            }
+            Surface(
+                shape = MaterialTheme.shapes.extraLarge,
+                color = MaterialTheme.colorScheme.surfaceContainerLow,
+                border = BorderStroke(1.dp, MaterialTheme.colorScheme.outlineVariant),
+            ) {
+                Row(
+                    modifier = Modifier
+                        .heightIn(min = 56.dp)
+                        .padding(horizontal = 4.dp),
+                    verticalAlignment = Alignment.CenterVertically,
+                ) {
+                    Box {
+                        IconButton(
+                            onClick = { onSortVisibilityChanged(true) },
+                            enabled = searchActionsEnabled,
+                            modifier = Modifier
+                                .size(48.dp)
+                                .focusRequester(dismissFocusRequester)
+                                .focusProperties { canFocus = searchActionsEnabled },
+                        ) {
+                            Icon(
+                                painter = painterResource(R.drawable.ic_sort),
+                                contentDescription = stringResource(R.string.library_sort),
+                                tint = MaterialTheme.colorScheme.onSurfaceVariant,
+                            )
+                        }
+                        LibrarySortMenu(
+                            expanded = sortVisible && searchActionsEnabled,
+                            entries = sortEntries,
+                            selectedSort = selectedSort,
+                            ascending = ascending,
+                            onDismissRequest = { onSortVisibilityChanged(false) },
+                            onSelected = { index ->
+                                onSortVisibilityChanged(false)
+                                onSort(index)
+                            },
+                        )
+                    }
+                    Box(
                         modifier = Modifier
-                            .size(48.dp)
-                            .focusRequester(dismissFocusRequester)
-                            .focusProperties { canFocus = searchActionsEnabled },
+                            .padding(horizontal = 4.dp)
+                            .width(1.dp)
+                            .height(24.dp)
+                            .background(MaterialTheme.colorScheme.outlineVariant),
+                    )
+                    IconButton(
+                        onClick = {
+                            onLayoutChange(
+                                if (state.layout == LibraryLayout.List) LibraryLayout.Grid
+                                else LibraryLayout.List,
+                            )
+                        },
+                        enabled = searchActionsEnabled,
+                        modifier = Modifier.size(48.dp),
                     ) {
                         Icon(
-                            painter = painterResource(R.drawable.ic_sort),
-                            contentDescription = stringResource(R.string.library_sort),
+                            painter = painterResource(
+                                if (state.layout == LibraryLayout.List) R.drawable.ic_editor_grid
+                                else R.drawable.ic_view_list,
+                            ),
+                            contentDescription = stringResource(
+                                if (state.layout == LibraryLayout.List) R.string.library_view_grid
+                                else R.string.library_view_list,
+                            ),
                             tint = MaterialTheme.colorScheme.onSurfaceVariant,
                         )
                     }
-                    LibrarySortMenu(
-                        expanded = sortVisible && searchActionsEnabled,
-                        entries = sortEntries,
-                        selectedSort = selectedSort,
-                        ascending = ascending,
-                        onDismissRequest = { onSortVisibilityChanged(false) },
-                        onSelected = { index ->
-                            onSortVisibilityChanged(false)
-                            onSort(index)
-                        },
-                    )
-                }
-                IconButton(
-                    onClick = {
-                        onLayoutChange(
-                            if (state.layout == LibraryLayout.List) LibraryLayout.Grid
-                            else LibraryLayout.List,
-                        )
-                    },
-                    enabled = searchActionsEnabled,
-                    modifier = Modifier.size(48.dp),
-                ) {
-                    Icon(
-                        painter = painterResource(
-                            if (state.layout == LibraryLayout.List) R.drawable.ic_editor_grid
-                            else R.drawable.ic_view_list,
-                        ),
-                        contentDescription = stringResource(
-                            if (state.layout == LibraryLayout.List) R.string.library_view_grid
-                            else R.string.library_view_list,
-                        ),
-                        tint = MaterialTheme.colorScheme.onSurfaceVariant,
-                    )
                 }
             }
         }
