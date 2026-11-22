@@ -90,9 +90,6 @@ final class LegacyV7Profile {
 	@SerializedName("ShowFps")
 	public boolean showFps;
 
-	@SerializedName("PerformanceOverlayMetrics")
-	public int performanceOverlayMetrics = PerformanceOverlayOptions.STANDARD;
-
 	@SerializedName("PerformanceOverlayPosition")
 	public int performanceOverlayPosition = PerformanceOverlayOptions.TOP_LEFT;
 
