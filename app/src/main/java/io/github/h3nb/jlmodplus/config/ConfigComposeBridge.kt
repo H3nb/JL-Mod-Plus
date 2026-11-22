@@ -117,6 +117,8 @@ internal enum class ConfigDetail { Font, Performance }
 
 private enum class ConfigChildPage { Font, Performance, SystemProperties, Shaders }
 
+private data class ConfigSearchTarget(val section: String, val option: String)
+
 private fun ConfigDetail.toChildPage(): ConfigChildPage = when (this) {
     ConfigDetail.Font -> ConfigChildPage.Font
     ConfigDetail.Performance -> ConfigChildPage.Performance
@@ -177,7 +179,14 @@ internal fun ConfigScreen(
     }
     var searchVisible by rememberSaveable { mutableStateOf(false) }
     var searchQuery by rememberSaveable { mutableStateOf("") }
-    var revealSection by remember { mutableStateOf<String?>(null) }
+    var searchTarget by remember { mutableStateOf<ConfigSearchTarget?>(null) }
+    val sectionReveal = remember(searchTarget) {
+        searchTarget?.let { target ->
+            ConfigSectionReveal(target.section, target.option) {
+                if (searchTarget == target) searchTarget = null
+            }
+        }
+    }
     var quickSetting by rememberSaveable { mutableStateOf<QuickSetting?>(null) }
     var presetPickerVisible by rememberSaveable { mutableStateOf(false) }
     var savePresetVisible by rememberSaveable { mutableStateOf(false) }
@@ -240,13 +249,17 @@ internal fun ConfigScreen(
         ) {
             when (shownPage) {
                 is ConfigPage.Detail -> {
-                    ConfigDetailPage(
-                        detail = shownPage.type,
-                        form = form,
-                        state = state,
-                        onFormChanged = updateForm,
-                        onBack = { if (active) childPage = null },
-                    )
+                    androidx.compose.runtime.CompositionLocalProvider(
+                        LocalConfigSectionReveal provides sectionReveal,
+                    ) {
+                        ConfigDetailPage(
+                            detail = shownPage.type,
+                            form = form,
+                            state = state,
+                            onFormChanged = updateForm,
+                            onBack = { if (active) childPage = null },
+                        )
+                    }
                 }
                 is ConfigPage.Rendering -> {
                     RenderingSettingsPage(
@@ -314,10 +327,10 @@ internal fun ConfigScreen(
                                 isProfile = isProfile,
                                 modifier = Modifier.fillMaxSize().padding(padding)
                                     .consumeWindowInsets(padding),
-                                onSelected = { nextDestination, section, detail ->
+                                onSelected = { nextDestination, section, detail, option ->
                                     closeSearch()
+                                    searchTarget = ConfigSearchTarget(section, option)
                                     selectedDestination = nextDestination
-                                    revealSection = if (detail == null) section else null
                                     childPage = detail?.toChildPage()
                                 },
                             )
@@ -332,9 +345,7 @@ internal fun ConfigScreen(
                             ) {
                                 if (destination == ConfigDestination.Basic) {
                                     androidx.compose.runtime.CompositionLocalProvider(
-                                        LocalConfigSectionReveal provides revealSection?.let { section ->
-                                            ConfigSectionReveal(section) { revealSection = null }
-                                        },
+                                        LocalConfigSectionReveal provides sectionReveal,
                                     ) {
                                         Column(
                                             modifier = Modifier.widthIn(max = 880.dp),
@@ -356,9 +367,7 @@ internal fun ConfigScreen(
                                     }
                                 } else {
                                     androidx.compose.runtime.CompositionLocalProvider(
-                                        LocalConfigSectionReveal provides revealSection?.let { section ->
-                                            ConfigSectionReveal(section) { revealSection = null }
-                                        },
+                                        LocalConfigSectionReveal provides sectionReveal,
                                     ) {
                                         ConfigDestinationContent(
                                             destination = destination,

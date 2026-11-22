@@ -28,6 +28,7 @@ import androidx.compose.material3.Surface
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.LaunchedEffect
+import androidx.compose.runtime.CompositionLocalProvider
 import androidx.compose.runtime.compositionLocalOf
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateOf
@@ -56,8 +57,26 @@ import io.github.h3nb.jlmodplus.ui.PreferenceMessageLevel
 internal typealias ConfigMessageLevel = PreferenceMessageLevel
 
 
-internal data class ConfigSectionReveal(val title: String, val onReached: () -> Unit)
+internal data class ConfigSectionReveal(
+    val section: String,
+    val option: String,
+    val onReached: () -> Unit,
+)
 internal val LocalConfigSectionReveal = compositionLocalOf<ConfigSectionReveal?> { null }
+private val LocalConfigOptionReveal = compositionLocalOf<ConfigSectionReveal?> { null }
+
+@Composable
+private fun Modifier.revealConfigOption(title: String): Modifier {
+    val reveal = LocalConfigOptionReveal.current
+    val requester = remember { BringIntoViewRequester() }
+    LaunchedEffect(reveal, title) {
+        if (reveal?.option == title) {
+            requester.bringIntoView()
+            reveal.onReached()
+        }
+    }
+    return bringIntoViewRequester(requester)
+}
 
 @Composable
 internal fun ConfigSection(
@@ -66,12 +85,11 @@ internal fun ConfigSection(
     accentTitle: Boolean = true,
     content: @Composable ColumnScope.() -> Unit,
 ) {
-    val reveal = LocalConfigSectionReveal.current
+    val reveal = LocalConfigSectionReveal.current?.takeIf { it.section == title }
     val requester = remember { BringIntoViewRequester() }
-    LaunchedEffect(reveal, title) {
-        if (reveal?.title == title) {
+    LaunchedEffect(reveal) {
+        if (reveal != null) {
             requester.bringIntoView()
-            reveal.onReached()
         }
     }
     Column(
@@ -95,7 +113,9 @@ internal fun ConfigSection(
                 1.dp, MaterialTheme.colorScheme.primary.copy(alpha = 0.42f),
             ) else null,
         ) {
-            Column(content = content)
+            CompositionLocalProvider(LocalConfigOptionReveal provides reveal) {
+                Column(content = content)
+            }
         }
     }
 }
@@ -106,7 +126,12 @@ internal fun ConfigNavigationPreference(
     value: String?,
     onClick: () -> Unit,
 ) {
-    PreferenceNavigationRow(title = title, value = value, onClick = onClick)
+    PreferenceNavigationRow(
+        title = title,
+        value = value,
+        onClick = onClick,
+        modifier = Modifier.revealConfigOption(title),
+    )
 }
 
 /** One accessible target for a preference that opens an editor or action. */
@@ -127,7 +152,7 @@ internal fun ConfigCompactValuePreference(
         enabled = enabled,
         destructive = destructive,
         onClick = onClick,
-        modifier = modifier,
+        modifier = modifier.revealConfigOption(title),
         minHeight = 56.dp,
         verticalPadding = 8.dp,
     )
@@ -162,6 +187,7 @@ internal fun ConfigValuePreference(
                 description = description,
                 enabled = enabled,
                 onClick = onClick,
+                modifier = Modifier.revealConfigOption(title),
             )
         }
         if (message != null) {
@@ -183,7 +209,7 @@ internal fun ConfigSwitchPreference(
     message: String? = null,
     messageLevel: ConfigMessageLevel = ConfigMessageLevel.Info,
 ) {
-    Column(modifier = modifier.fillMaxWidth()) {
+    Column(modifier = modifier.fillMaxWidth().revealConfigOption(title)) {
         PreferenceSwitchRow(
             title = title,
             description = description,
@@ -408,6 +434,7 @@ internal fun ConfigColorPreference(
         value = displayLabel ?: "#${value.ifEmpty { "000000" }}",
         description = description,
         onClick = onClick,
+        modifier = Modifier.revealConfigOption(title),
         trailingContent = if (displayLabel == null) {
             {
                 Box(
@@ -432,7 +459,7 @@ internal fun ConfigActionPreference(
     testTag: String? = null,
 ) {
     Surface(
-        modifier = Modifier.fillMaxWidth(),
+        modifier = Modifier.fillMaxWidth().revealConfigOption(title),
         color = Color.Transparent,
         shape = MaterialTheme.shapes.medium,
     ) {
@@ -459,6 +486,7 @@ internal fun ConfigDisclosurePreference(
             .fillMaxWidth()
             .heightIn(min = 64.dp)
             .clickable(role = Role.Button) { onExpandedChange(!expanded) }
+            .revealConfigOption(title)
             .padding(horizontal = 16.dp, vertical = 10.dp),
         verticalAlignment = Alignment.CenterVertically,
         horizontalArrangement = Arrangement.spacedBy(12.dp),

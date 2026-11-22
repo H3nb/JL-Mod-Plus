@@ -267,6 +267,18 @@ class ConfigComposeTest {
     }
 
     @Test
+    fun searchRevealsSelectedControlInsideLongSection() {
+        composeRule.setContent {
+            JLModPlusTheme { ConfigScreen(sampleState(), RecordingConfigEvents()) }
+        }
+        composeRule.onNodeWithContentDescription(uiString(R.string.config_search_title)).performClick()
+        composeRule.onNode(hasSetTextAction()).performTextInput("transparency opacity")
+        composeRule.onNodeWithText(uiString(R.string.PREF_VK_ALPHA)).performClick()
+        composeRule.waitForIdle()
+        composeRule.onNodeWithText(uiString(R.string.PREF_VK_ALPHA)).assertIsDisplayed()
+    }
+
+    @Test
     fun searchCanOpenPerformanceDetailAndReturnToGraphics() {
         composeRule.setContent {
             JLModPlusTheme { ConfigScreen(sampleState(), RecordingConfigEvents()) }

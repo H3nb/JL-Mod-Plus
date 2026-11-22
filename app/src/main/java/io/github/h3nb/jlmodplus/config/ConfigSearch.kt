@@ -103,7 +103,7 @@ private val configSearchIndex = listOf(
 internal fun ConfigSearchResults(
     query: String,
     isProfile: Boolean,
-    onSelected: (ConfigDestination, String, ConfigDetail?) -> Unit,
+    onSelected: (ConfigDestination, String, ConfigDetail?, String) -> Unit,
     modifier: Modifier = Modifier,
 ) {
     val resources = LocalResources.current
@@ -146,7 +146,12 @@ internal fun ConfigSearchResults(
                         stringResource(entry.section))
                 },
                 modifier = Modifier.clickable {
-                    onSelected(entry.destination, resources.getString(entry.section), entry.detail)
+                    onSelected(
+                        entry.destination,
+                        resources.getString(entry.section),
+                        entry.detail,
+                        resources.getString(entry.title),
+                    )
                 },
             )
         }
