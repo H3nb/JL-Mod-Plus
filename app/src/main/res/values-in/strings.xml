@@ -745,6 +745,8 @@
     <string name="config_display_text">Teks dan font</string>
     <string name="config_system_timing">Waktu</string>
     <string name="config_controls_key_input">Input fisik</string>
+    <string name="config_input_mapping_section">Input dan pemetaan</string>
+    <string name="config_controls_appearance_section">Tampilan kontrol</string>
     <string name="config_controls_virtual_keyboard">Kontrol virtual</string>
     <string name="config_controls_virtual_keyboard_colors">Warna kontrol virtual</string>
     <string name="config_virtual_controls_color_preview">Pratinjau warna</string>

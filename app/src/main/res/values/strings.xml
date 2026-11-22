@@ -816,6 +816,8 @@
     <string name="config_display_text">Text &amp; fonts</string>
     <string name="config_system_timing">Timing</string>
     <string name="config_controls_key_input">Physical input</string>
+    <string name="config_input_mapping_section" tools:ignore="MissingTranslation">Input &amp; mapping</string>
+    <string name="config_controls_appearance_section" tools:ignore="MissingTranslation">Control appearance</string>
     <string name="config_controls_virtual_keyboard">Virtual controls</string>
     <string name="config_controls_virtual_keyboard_colors">Virtual control colors</string>
     <string name="config_virtual_controls_color_preview">Color preview</string>

@@ -1050,7 +1050,7 @@ private fun InputSection(
     events: ConfigFormEvents,
     onRequestAction: (ConfigAction) -> Unit,
 ) {
-    ConfigSection(title = stringResource(R.string.config_controls_key_input)) {
+    ConfigSection(title = stringResource(R.string.config_input_mapping_section)) {
         ConfigSwitchPreference(
             title = stringResource(R.string.PREF_TOUCH_INPUT),
             description = stringResource(R.string.config_help_touch_input),
@@ -1115,7 +1115,7 @@ private fun InputSection(
             onValueChange = { value -> onFormChanged(form.toBuilder().vkHideDelay(value).build()) },
         )
     }
-    ConfigSection(title = stringResource(R.string.config_controls_customization)) {
+    ConfigSection(title = stringResource(R.string.config_controls_appearance_section)) {
         val shapeOptions = stringArrayResource(R.array.pref_button_shape_entries).toList()
         ConfigChoicePreference(
             title = stringResource(R.string.pref_button_shape_title),
