@@ -32,9 +32,6 @@ import static io.github.h3nb.jlmodplus.util.Constants.PREF_LAST_PATH;
 import static io.github.h3nb.jlmodplus.util.Constants.LIBRARY_GRID_ICON_SIZE_SMALL;
 import static io.github.h3nb.jlmodplus.util.Constants.LIBRARY_GRID_ICON_SIZE_STANDARD;
 import static io.github.h3nb.jlmodplus.util.Constants.LIBRARY_GRID_ICON_SIZE_LARGE;
-import static io.github.h3nb.jlmodplus.util.Constants.LIBRARY_GRID_SPACING_COMPACT;
-import static io.github.h3nb.jlmodplus.util.Constants.LIBRARY_GRID_SPACING_NONE;
-import static io.github.h3nb.jlmodplus.util.Constants.LIBRARY_GRID_SPACING_SPACIOUS;
 import static io.github.h3nb.jlmodplus.util.Constants.LIBRARY_GRID_SPACING_STANDARD;
 import static io.github.h3nb.jlmodplus.util.Constants.LIBRARY_ICON_RATIO_PORTRAIT;
 import static io.github.h3nb.jlmodplus.util.Constants.LIBRARY_ICON_RATIO_SQUARE;
@@ -305,16 +302,8 @@ public class AppsListFragment extends Fragment {
     }
 
     private LibraryGridSpacing readGridSpacing() {
-        switch (preferences.getInt(PREF_APPS_GRID_SPACING, LIBRARY_GRID_SPACING_STANDARD)) {
-            case LIBRARY_GRID_SPACING_NONE:
-                return LibraryGridSpacing.None;
-            case LIBRARY_GRID_SPACING_COMPACT:
-                return LibraryGridSpacing.Compact;
-            case LIBRARY_GRID_SPACING_SPACIOUS:
-                return LibraryGridSpacing.Spacious;
-            default:
-                return LibraryGridSpacing.Standard;
-        }
+        return LibraryGridSpacing.fromStoredValue(
+                preferences.getInt(PREF_APPS_GRID_SPACING, LIBRARY_GRID_SPACING_STANDARD));
     }
 
     private LibraryGridIconSize readGridIconSize() {
@@ -479,23 +468,7 @@ public class AppsListFragment extends Fragment {
 
             @Override
             public void onGridSpacingChange(@NonNull LibraryGridSpacing spacing) {
-                int value;
-                switch (spacing) {
-                    case Compact:
-                        value = LIBRARY_GRID_SPACING_COMPACT;
-                        break;
-                    case Spacious:
-                        value = LIBRARY_GRID_SPACING_SPACIOUS;
-                        break;
-                    case None:
-                        value = LIBRARY_GRID_SPACING_NONE;
-                        break;
-                    case Standard:
-                    default:
-                        value = LIBRARY_GRID_SPACING_STANDARD;
-                        break;
-                }
-                preferences.edit().putInt(PREF_APPS_GRID_SPACING, value).apply();
+                preferences.edit().putInt(PREF_APPS_GRID_SPACING, spacing.getStoredValue()).apply();
             }
 
             @Override

@@ -34,9 +34,6 @@ import static io.github.h3nb.jlmodplus.util.Constants.PREF_VIBRATION;
 import static io.github.h3nb.jlmodplus.util.Constants.LIBRARY_GRID_ICON_SIZE_SMALL;
 import static io.github.h3nb.jlmodplus.util.Constants.LIBRARY_GRID_ICON_SIZE_STANDARD;
 import static io.github.h3nb.jlmodplus.util.Constants.LIBRARY_GRID_ICON_SIZE_LARGE;
-import static io.github.h3nb.jlmodplus.util.Constants.LIBRARY_GRID_SPACING_COMPACT;
-import static io.github.h3nb.jlmodplus.util.Constants.LIBRARY_GRID_SPACING_NONE;
-import static io.github.h3nb.jlmodplus.util.Constants.LIBRARY_GRID_SPACING_SPACIOUS;
 import static io.github.h3nb.jlmodplus.util.Constants.LIBRARY_GRID_SPACING_STANDARD;
 import static io.github.h3nb.jlmodplus.util.Constants.LIBRARY_ICON_RATIO_PORTRAIT;
 import static io.github.h3nb.jlmodplus.util.Constants.LIBRARY_ICON_RATIO_SQUARE;
@@ -78,6 +75,7 @@ import io.github.h3nb.jlmodplus.R;
 import io.github.h3nb.jlmodplus.ui.AppPageTransitions;
 import io.github.h3nb.jlmodplus.ui.AccentPalette;
 import io.github.h3nb.jlmodplus.config.Config;
+import io.github.h3nb.jlmodplus.applist.LibraryGridSpacing;
 import io.github.h3nb.jlmodplus.config.ProfilesActivity;
 import io.github.h3nb.jlmodplus.crashes.CrashReportsActivity;
 import io.github.h3nb.jlmodplus.util.EdgeToEdgeCompat;
@@ -194,7 +192,8 @@ public class SettingsActivity extends AppCompatActivity {
 										: LIBRARY_GRID_ICON_SIZE_STANDARD);
 						break;
 					case PREF_APPS_GRID_SPACING:
-						editor.putInt(PREF_APPS_GRID_SPACING, gridSpacingValue(value));
+						editor.putInt(PREF_APPS_GRID_SPACING,
+								LibraryGridSpacing.fromPreferenceKey(value).getStoredValue());
 						break;
 					default:
 						return;
@@ -423,8 +422,8 @@ public class SettingsActivity extends AppCompatActivity {
 				PREF_APPS_GRID_SPACING,
 				getString(R.string.library_grid_spacing_title),
 				findOption(spacingOptions,
-						gridSpacingKey(preferences.getInt(
-								PREF_APPS_GRID_SPACING, LIBRARY_GRID_SPACING_STANDARD)),
+						LibraryGridSpacing.fromStoredValue(preferences.getInt(
+								PREF_APPS_GRID_SPACING, LIBRARY_GRID_SPACING_STANDARD)).getPreferenceKey(),
 						spacingOptions.get(2)),
 				spacingOptions,
 				getString(R.string.library_grid_spacing_summary)));
@@ -444,34 +443,6 @@ public class SettingsActivity extends AppCompatActivity {
 				getString(R.string.library_hide_grid_titles_summary),
 				preferences.getBoolean(PREF_APPS_HIDE_GRID_TITLES, false)));
 		return switches;
-	}
-
-	private static int gridSpacingValue(String value) {
-		switch (value) {
-			case "none":
-				return LIBRARY_GRID_SPACING_NONE;
-			case "compact":
-				return LIBRARY_GRID_SPACING_COMPACT;
-			case "spacious":
-				return LIBRARY_GRID_SPACING_SPACIOUS;
-			case "standard":
-			default:
-				return LIBRARY_GRID_SPACING_STANDARD;
-		}
-	}
-
-	private static String gridSpacingKey(int value) {
-		switch (value) {
-			case LIBRARY_GRID_SPACING_NONE:
-				return "none";
-			case LIBRARY_GRID_SPACING_COMPACT:
-				return "compact";
-			case LIBRARY_GRID_SPACING_SPACIOUS:
-				return "spacious";
-			case LIBRARY_GRID_SPACING_STANDARD:
-			default:
-				return "standard";
-		}
 	}
 
 	private List<SettingsOption> buildThemeOptions() {

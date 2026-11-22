@@ -189,6 +189,7 @@ import androidx.fragment.app.DialogFragment
 import androidx.fragment.app.Fragment
 import androidx.fragment.app.FragmentManager
 import io.github.h3nb.jlmodplus.R
+import io.github.h3nb.jlmodplus.util.Constants
 import io.github.h3nb.jlmodplus.librarydb.LibraryQuickView
 import io.github.h3nb.jlmodplus.updates.UpdateCandidate
 import io.github.h3nb.jlmodplus.updates.UpdateRepository
@@ -239,12 +240,24 @@ enum class LibraryGridIconSize(
 
 enum class LibraryGridSpacing(
     val value: Dp,
+    val storedValue: Int,
+    val preferenceKey: String,
 ) {
     /** Tiles touch at their edges; useful when the grid should read as a continuous sheet. */
-    None(0.dp),
-    Compact(4.dp),
-    Standard(8.dp),
-    Spacious(12.dp),
+    None(0.dp, Constants.LIBRARY_GRID_SPACING_NONE, "none"),
+    Compact(4.dp, Constants.LIBRARY_GRID_SPACING_COMPACT, "compact"),
+    Standard(8.dp, Constants.LIBRARY_GRID_SPACING_STANDARD, "standard"),
+    Spacious(12.dp, Constants.LIBRARY_GRID_SPACING_SPACIOUS, "spacious");
+
+    companion object {
+        @JvmStatic
+        fun fromStoredValue(value: Int): LibraryGridSpacing =
+            entries.firstOrNull { it.storedValue == value } ?: Standard
+
+        @JvmStatic
+        fun fromPreferenceKey(key: String): LibraryGridSpacing =
+            entries.firstOrNull { it.preferenceKey == key } ?: Standard
+    }
 }
 
 enum class LibraryControllerCommand {
