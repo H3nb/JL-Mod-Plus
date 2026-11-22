@@ -312,6 +312,13 @@ internal enum class ConfigAction(val title: Int, val message: Int) {
 
 private enum class ConfigDetail { Font, Performance }
 
+private enum class ConfigChildPage { Font, Performance, SystemProperties, Shaders }
+
+private fun ConfigDetail.toChildPage(): ConfigChildPage = when (this) {
+    ConfigDetail.Font -> ConfigChildPage.Font
+    ConfigDetail.Performance -> ConfigChildPage.Performance
+}
+
 private sealed interface ConfigPage {
     data object Main : ConfigPage
     data class Category(val destination: ConfigDestination) : ConfigPage
@@ -360,10 +367,8 @@ internal fun ConfigScreen(
 ) {
     val form = state.form
     var pendingAction by remember { mutableStateOf<ConfigAction?>(null) }
-    var systemPropertiesEditorVisible by rememberSaveable { mutableStateOf(false) }
+    var childPage by rememberSaveable { mutableStateOf<ConfigChildPage?>(null) }
     var systemPropertiesSession by rememberSaveable { mutableIntStateOf(0) }
-    var renderingSubpage by rememberSaveable { mutableStateOf<RenderingSubpage?>(null) }
-    var detailPage by rememberSaveable { mutableStateOf<ConfigDetail?>(null) }
     var selectedDestination by rememberSaveable {
         mutableStateOf(initialDestination ?: ConfigDestination.Basic)
     }
@@ -379,9 +384,7 @@ internal fun ConfigScreen(
     val requestBack = {
         when {
             searchVisible -> closeSearch()
-            renderingSubpage != null -> renderingSubpage = null
-            detailPage != null -> detailPage = null
-            systemPropertiesEditorVisible -> systemPropertiesEditorVisible = false
+            childPage != null -> childPage = null
             selectedDestination != ConfigDestination.Basic ->
                 selectedDestination = ConfigDestination.Basic
             isProfile && menuActions?.hasUnsavedProfileChanges() == true ->
@@ -392,8 +395,8 @@ internal fun ConfigScreen(
             }
         }
     }
-    BackHandler(enabled = searchVisible || renderingSubpage != null || detailPage != null ||
-        systemPropertiesEditorVisible || selectedDestination != ConfigDestination.Basic || isProfile) {
+    BackHandler(enabled = searchVisible || childPage != null ||
+        selectedDestination != ConfigDestination.Basic || isProfile) {
         requestBack()
     }
 
@@ -405,12 +408,13 @@ internal fun ConfigScreen(
     val systemScrollState = rememberScrollState()
     val density = LocalDensity.current
     val cutoutAvailable = cutoutSupportOverride ?: deviceHasDisplayCutout(density)
-    val currentPage = when {
-        renderingSubpage != null -> ConfigPage.Rendering(requireNotNull(renderingSubpage))
-        detailPage != null -> ConfigPage.Detail(requireNotNull(detailPage))
-        systemPropertiesEditorVisible -> ConfigPage.SystemProperties
-        selectedDestination != ConfigDestination.Basic -> ConfigPage.Category(selectedDestination)
-        else -> ConfigPage.Main
+    val currentPage = when (childPage) {
+        ConfigChildPage.Font -> ConfigPage.Detail(ConfigDetail.Font)
+        ConfigChildPage.Performance -> ConfigPage.Detail(ConfigDetail.Performance)
+        ConfigChildPage.SystemProperties -> ConfigPage.SystemProperties
+        ConfigChildPage.Shaders -> ConfigPage.Rendering(RenderingSubpage.SHADERS)
+        null -> if (selectedDestination == ConfigDestination.Basic) ConfigPage.Main
+            else ConfigPage.Category(selectedDestination)
     }
     val motionOffsetPx = with(density) { PAGE_TRAVEL_DP.dp.roundToPx() }
     AnimatedContent(
@@ -438,7 +442,7 @@ internal fun ConfigScreen(
                         form = form,
                         state = state,
                         onFormChanged = updateForm,
-                        onBack = { detailPage = null },
+                        onBack = { if (active) childPage = null },
                     )
                 }
                 is ConfigPage.Rendering -> {
@@ -446,7 +450,7 @@ internal fun ConfigScreen(
                         state = state,
                         onFormChanged = updateForm,
                         onShaderPickerOpened = events::onShaderPickerOpened,
-                        onBack = { if (active) renderingSubpage = null },
+                        onBack = { if (active) childPage = null },
                     )
                 }
                 ConfigPage.SystemProperties -> {
@@ -460,9 +464,9 @@ internal fun ConfigScreen(
                         ConfigSystemPropertiesPage(
                             value = form.systemProperties,
                             defaultValue = defaultProperties,
-                            onBack = { if (active) systemPropertiesEditorVisible = false },
+                            onBack = { if (active) childPage = null },
                             onSave = { value ->
-                                systemPropertiesEditorVisible = false
+                                childPage = null
                                 updateForm(form.toBuilder().systemProperties(value).build())
                             },
                             modifier = Modifier,
@@ -511,7 +515,7 @@ internal fun ConfigScreen(
                                     closeSearch()
                                     selectedDestination = nextDestination
                                     revealSection = if (detail == null) section else null
-                                    detailPage = detail
+                                    childPage = detail?.toChildPage()
                                 },
                             )
                         } else {
@@ -541,7 +545,7 @@ internal fun ConfigScreen(
                                                 onSavePreset = { savePresetVisible = true },
                                                 onStopFollowing = { events.onStopFollowingProfile() },
                                                 onOpenCategory = { selectedDestination = it },
-                                                onOpenPerformance = { detailPage = ConfigDetail.Performance },
+                                                onOpenPerformance = { childPage = ConfigChildPage.Performance },
                                                 onOpenQuickSetting = { quickSetting = it },
                                                 onRequestAction = { pendingAction = it },
                                             )
@@ -564,12 +568,12 @@ internal fun ConfigScreen(
                                             onRequestAction = { pendingAction = it },
                                             onEditSystemProperties = {
                                                 systemPropertiesSession++
-                                                systemPropertiesEditorVisible = true
+                                                childPage = ConfigChildPage.SystemProperties
                                             },
                                             onOpenShaders = {
-                                                renderingSubpage = RenderingSubpage.SHADERS
+                                                childPage = ConfigChildPage.Shaders
                                             },
-                                            onOpenDetail = { detailPage = it },
+                                            onOpenDetail = { childPage = it.toChildPage() },
                                             modifier = Modifier.widthIn(max = 880.dp),
                                         )
                                     }
