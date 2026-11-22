@@ -107,16 +107,13 @@ internal enum class ConfigAction(val title: Int, val message: Int) {
     ResetLayout(R.string.RESET_LAYOUT_CMD, R.string.message_reset_layout),
 }
 
-internal enum class ConfigDetail { Font, Performance }
+internal enum class ConfigDetail { Font }
 
-private enum class ConfigChildPage { Font, Performance, SystemProperties, Shaders }
+private enum class ConfigChildPage { Font, SystemProperties, Shaders }
 
 private data class ConfigSearchTarget(val section: String, val option: String)
 
-private fun ConfigDetail.toChildPage(): ConfigChildPage = when (this) {
-    ConfigDetail.Font -> ConfigChildPage.Font
-    ConfigDetail.Performance -> ConfigChildPage.Performance
-}
+private fun ConfigDetail.toChildPage(): ConfigChildPage = ConfigChildPage.Font
 
 private sealed interface ConfigPage {
     data object Main : ConfigPage
@@ -218,7 +215,6 @@ internal fun ConfigScreen(
     val cutoutAvailable = cutoutSupportOverride ?: deviceHasDisplayCutout(density)
     val currentPage = when (childPage) {
         ConfigChildPage.Font -> ConfigPage.Detail(ConfigDetail.Font)
-        ConfigChildPage.Performance -> ConfigPage.Detail(ConfigDetail.Performance)
         ConfigChildPage.SystemProperties -> ConfigPage.SystemProperties
         ConfigChildPage.Shaders -> ConfigPage.Rendering(RenderingSubpage.SHADERS)
         null -> if (selectedDestination == ConfigDestination.Basic) ConfigPage.Main
@@ -248,8 +244,7 @@ internal fun ConfigScreen(
                     androidx.compose.runtime.CompositionLocalProvider(
                         LocalConfigSectionReveal provides sectionReveal,
                     ) {
-                        ConfigDetailPage(
-                            detail = shownPage.type,
+                        FontDetailPage(
                             form = form,
                             state = state,
                             onFormChanged = updateForm,
@@ -367,7 +362,6 @@ internal fun ConfigScreen(
                                                 onSavePreset = { savePresetVisible = true },
                                                 onStopFollowing = { events.onStopFollowingProfile() },
                                                 onOpenCategory = { selectedDestination = it },
-                                                onOpenPerformance = { childPage = ConfigChildPage.Performance },
                                                 onOpenQuickSetting = { quickSetting = it },
                                                 onRequestAction = { pendingAction = it },
                                             )
@@ -549,22 +543,13 @@ private fun ConfigDestinationContent(
             }
             ConfigDestination.Graphics -> {
                 RenderingSection(form, state, onFormChanged, onOpenShaders)
-                ConfigSection(title = stringResource(R.string.config_display_performance)) {
-                    ConfigNavigationPreference(
-                        title = stringResource(R.string.config_performance_page_title),
-                        value = if (form.fpsLimit == "0" || form.fpsLimit.isBlank())
-                            stringResource(R.string.fps_limit_maximum)
-                        else "${form.fpsLimit} FPS",
-                        onClick = { onOpenDetail(ConfigDetail.Performance) },
-                    )
-                }
+                FrameRateSection(form, onFormChanged)
             }
             ConfigDestination.Media -> {
                 AudioSection(form, state, onFormChanged, events)
                 CameraSection(form, onFormChanged)
             }
             ConfigDestination.Controls -> {
-                ConfigBasicInputSection(form, onFormChanged)
                 InputSection(form, state, onFormChanged, events, onRequestAction)
             }
             ConfigDestination.System -> {
@@ -698,31 +683,6 @@ private fun ScreenGeometrySection(
 
 
 @Composable
-private fun ConfigBasicInputSection(
-    form: ConfigFormState,
-    onFormChanged: (ConfigFormState) -> Unit,
-) {
-    ConfigSection(title = stringResource(R.string.config_basic_input)) {
-        ConfigSwitchPreference(
-            title = stringResource(R.string.PREF_VIRTUAL_KEYBOARD_OPTIONS),
-            description = stringResource(R.string.config_help_virtual_keyboard),
-            checked = form.showKeyboard,
-            onCheckedChange = { checked ->
-                onFormChanged(form.toBuilder().showKeyboard(checked).build())
-            },
-        )
-        ConfigSwitchPreference(
-            title = stringResource(R.string.PREF_TOUCH_INPUT),
-            description = stringResource(R.string.config_help_touch_input),
-            checked = form.touchInput,
-            onCheckedChange = { checked ->
-                onFormChanged(form.toBuilder().touchInput(checked).build())
-            },
-        )
-    }
-}
-
-@Composable
 internal fun ConfigGlobalActionsSection(
     isProfile: Boolean,
     onRequestAction: (ConfigAction) -> Unit,
@@ -759,8 +719,7 @@ internal fun ConfigGlobalActionsSection(
 
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
-private fun ConfigDetailPage(
-    detail: ConfigDetail,
+private fun FontDetailPage(
     form: ConfigFormState,
     state: ConfigUiState,
     onFormChanged: (ConfigFormState) -> Unit,
@@ -770,12 +729,7 @@ private fun ConfigDetailPage(
         contentWindowInsets = WindowInsets.safeDrawing,
         topBar = {
             TopAppBar(
-                title = {
-                    Text(stringResource(
-                        if (detail == ConfigDetail.Font) R.string.config_font_page_title
-                        else R.string.config_performance_page_title,
-                    ))
-                },
+                title = { Text(stringResource(R.string.config_font_page_title)) },
                 navigationIcon = {
                     IconButton(onClick = onBack) {
                         Icon(
@@ -797,10 +751,7 @@ private fun ConfigDetailPage(
                 modifier = Modifier.widthIn(max = 880.dp),
                 verticalArrangement = Arrangement.spacedBy(12.dp),
             ) {
-                when (detail) {
-                    ConfigDetail.Font -> FontSection(form, state, onFormChanged)
-                    ConfigDetail.Performance -> PerformanceSection(form, onFormChanged)
-                }
+                FontSection(form, state, onFormChanged)
             }
         }
     }
@@ -951,6 +902,18 @@ private fun RenderingSection(
             options = graphicsOptions,
             onSelected = { index -> onFormChanged(form.toBuilder().graphicsMode(index).build()) },
         )
+        if (form.graphicsMode == 0 || form.graphicsMode == 3) {
+            ConfigSwitchPreference(
+                title = stringResource(R.string.parallel_screen_redrawing),
+                description = stringResource(R.string.config_help_parallel_redraw),
+                checked = form.parallelRedrawScreen,
+                onCheckedChange = { checked ->
+                    onFormChanged(form.toBuilder().parallelRedrawScreen(checked).build())
+                },
+            )
+        }
+    }
+    ConfigSection(title = stringResource(R.string.config_image_quality_section)) {
         val internalScaleOptions = listOf(stringResource(R.string.internal_resolution_auto)) +
             (1..10).map { "${it}×" }
         ConfigChoicePreference(
@@ -997,16 +960,6 @@ private fun RenderingSection(
                 options = filterOptions,
                 onSelected = { index ->
                     onFormChanged(form.toBuilder().screenFilter(index == 1).build())
-                },
-            )
-        }
-        if (form.graphicsMode == 0 || form.graphicsMode == 3) {
-            ConfigSwitchPreference(
-                title = stringResource(R.string.parallel_screen_redrawing),
-                description = stringResource(R.string.config_help_parallel_redraw),
-                checked = form.parallelRedrawScreen,
-                onCheckedChange = { checked ->
-                    onFormChanged(form.toBuilder().parallelRedrawScreen(checked).build())
                 },
             )
         }
@@ -1098,6 +1051,14 @@ private fun InputSection(
     onRequestAction: (ConfigAction) -> Unit,
 ) {
     ConfigSection(title = stringResource(R.string.config_controls_key_input)) {
+        ConfigSwitchPreference(
+            title = stringResource(R.string.PREF_TOUCH_INPUT),
+            description = stringResource(R.string.config_help_touch_input),
+            checked = form.touchInput,
+            onCheckedChange = { checked ->
+                onFormChanged(form.toBuilder().touchInput(checked).build())
+            },
+        )
         val layoutOptions = stringArrayResource(R.array.PREF_LAYOUT_ENTRIES).toList()
         ConfigChoicePreference(
             title = stringResource(R.string.PREF_LAYOUT),
@@ -1121,6 +1082,14 @@ private fun InputSection(
         )
     }
     ConfigSection(title = stringResource(R.string.config_controls_virtual_keyboard)) {
+        ConfigSwitchPreference(
+            title = stringResource(R.string.PREF_VIRTUAL_KEYBOARD_OPTIONS),
+            description = stringResource(R.string.config_help_virtual_keyboard),
+            checked = form.showKeyboard,
+            onCheckedChange = { checked ->
+                onFormChanged(form.toBuilder().showKeyboard(checked).build())
+            },
+        )
         if (!form.showKeyboard) {
             Text(
                 text = stringResource(R.string.config_controls_disabled_hint),
@@ -1197,6 +1166,7 @@ private fun InputSection(
 
 @Composable
 private fun CompatibilitySection(
+    state: ConfigUiState,
     form: ConfigFormState,
     onFormChanged: (ConfigFormState) -> Unit,
 ) {
@@ -1217,6 +1187,29 @@ private fun CompatibilitySection(
             message = if (form.immediateMode) stringResource(R.string.config_help_immediate) else null,
             messageLevel = ConfigMessageLevel.Warning,
             onCheckedChange = { checked -> onFormChanged(form.toBuilder().immediateMode(checked).build()) },
+        )
+        val timingModes = TimingMode.values().toList()
+        val timingModeOptions = listOf(
+            stringResource(R.string.config_timing_mode_full_guest),
+            stringResource(R.string.config_timing_mode_real_wall),
+        )
+        val currentTimingMode = TimingMode.sanitize(form.timingMode)
+        val timingModeIndex = timingModes.indexOf(currentTimingMode).coerceAtLeast(0)
+        val timingUnavailableMessage = if (state.timingControlsEnabled) null
+        else stringResource(R.string.config_help_timing_unavailable)
+        ConfigChoicePreference(
+            title = stringResource(R.string.PREF_TIMING_MODE),
+            description = stringResource(R.string.config_help_timing_mode),
+            selected = timingModeOptions.getOrElse(timingModeIndex) { timingModeOptions.first() },
+            options = timingModeOptions,
+            enabled = state.timingControlsEnabled,
+            message = timingUnavailableMessage,
+            messageLevel = ConfigMessageLevel.Warning,
+            onSelected = { index ->
+                timingModes.getOrNull(index)?.let { mode ->
+                    onFormChanged(form.toBuilder().timingMode(mode).build())
+                }
+            },
         )
     }
 }
@@ -1334,32 +1327,7 @@ private fun SystemSection(
             }
         }
     }
-    CompatibilitySection(form, onFormChanged)
-    ConfigSection(title = stringResource(R.string.config_system_timing)) {
-        val timingModes = TimingMode.values().toList()
-        val timingModeOptions = listOf(
-            stringResource(R.string.config_timing_mode_full_guest),
-            stringResource(R.string.config_timing_mode_real_wall),
-        )
-        val currentTimingMode = TimingMode.sanitize(form.timingMode)
-        val timingModeIndex = timingModes.indexOf(currentTimingMode).coerceAtLeast(0)
-        val timingUnavailableMessage = if (state.timingControlsEnabled) null
-        else stringResource(R.string.config_help_timing_unavailable)
-        ConfigChoicePreference(
-            title = stringResource(R.string.PREF_TIMING_MODE),
-            description = stringResource(R.string.config_help_timing_mode),
-            selected = timingModeOptions.getOrElse(timingModeIndex) { timingModeOptions.first() },
-            options = timingModeOptions,
-            enabled = state.timingControlsEnabled,
-            message = timingUnavailableMessage,
-            messageLevel = ConfigMessageLevel.Warning,
-            onSelected = { index ->
-                timingModes.getOrNull(index)?.let { mode ->
-                    onFormChanged(form.toBuilder().timingMode(mode).build())
-                }
-            },
-        )
-    }
+    CompatibilitySection(state, form, onFormChanged)
     ConfigSection(title = stringResource(R.string.PREF_SYS_PROPS)) {
         ConfigActionPreference(
   title = stringResource(R.string.pref_encoding_title),
