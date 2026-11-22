@@ -436,25 +436,14 @@ internal fun ConfigActionPreference(
         color = Color.Transparent,
         shape = MaterialTheme.shapes.medium,
     ) {
-        Row(
-            modifier = Modifier
-                .fillMaxWidth()
-                .heightIn(min = 60.dp)
-                .clickable(enabled = enabled, role = Role.Button, onClick = onClick)
-                .then(if (testTag == null) Modifier else Modifier.testTag(testTag))
-                .padding(horizontal = 16.dp, vertical = 10.dp),
-            verticalAlignment = Alignment.CenterVertically,
-            horizontalArrangement = Arrangement.spacedBy(12.dp),
-        ) {
-            PreferenceTextContent(
-                title = title,
-                description = description,
-                destructive = destructive,
-                enabled = enabled,
-                modifier = Modifier.weight(1f),
-            )
-            PreferenceChevron(enabled = enabled)
-        }
+        PreferenceNavigationRow(
+            title = title,
+            description = description,
+            onClick = onClick,
+            destructive = destructive,
+            enabled = enabled,
+            modifier = if (testTag == null) Modifier else Modifier.testTag(testTag),
+        )
     }
 }
 
