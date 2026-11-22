@@ -157,7 +157,8 @@ public class ConfigActivity extends AppCompatActivity {
 	@Nullable private File profileEditDraftDir;
 	@Nullable private ProfilesManager.PresetEditSession profileEditSession;
 	private boolean profileDraftDirty;
-	private boolean profileEditorResumeObserved;
+	@Nullable private ProfileModel pausedProfileConfig;
+	private boolean pauseSaveFailed;
 	private ConfigFormState currentForm;
 	@Nullable private String cachedControlSkinId;
 	@Nullable private String cachedControlSkinName;
@@ -484,8 +485,10 @@ public class ConfigActivity extends AppCompatActivity {
 				return;
 			}
 			configDir = profileEditDraftDir;
-			profileDraftDirty = savedInstanceState != null
-					&& savedInstanceState.getBoolean(STATE_PROFILE_DRAFT_DIRTY, false);
+			profileDraftDirty = savedInstanceState == null
+					? profileEditSession != null
+							&& profileEditSession.mode == ProfilesManager.ProfileEditMode.CREATE_NEW
+					: savedInstanceState.getBoolean(STATE_PROFILE_DRAFT_DIRTY, false);
 			File root = profileEditTarget.getParentFile();
 			profilesRoot = root;
 			File openedWorkdir = root == null ? null : root.getParentFile();
@@ -648,7 +651,8 @@ public class ConfigActivity extends AppCompatActivity {
 					if (operationRunning) return;
 					operationRunning = true;
 					try {
-						if (isProfile) profileDraftDirty = true;
+						boolean layoutExisted = isProfile
+								&& ProfilesManager.hasRecoverableLocalKeyboardLayout(configDir);
 						boolean removed;
 						if (isProfile) {
 							removed = ProfilesManager.removeLocalKeyboardLayout(configDir);
@@ -678,6 +682,7 @@ public class ConfigActivity extends AppCompatActivity {
 							ThemedToast.show(ConfigActivity.this, R.string.error, Toast.LENGTH_SHORT);
 							return;
 						}
+						if (layoutExisted) profileDraftDirty = true;
 						refreshProfileMatchCache();
 						if (composeController != null) {
 							composeController.update(createUiState());
@@ -1575,7 +1580,14 @@ public class ConfigActivity extends AppCompatActivity {
 					? 1L : controllerTargetGeneration + 1L;
 		}
 		if (needShow && configDir != null && !operationRunning) {
-			saveParams();
+			if (saveParams()) {
+				pauseSaveFailed = false;
+				pausedProfileConfig = isProfile
+						? ProfileConfigMatcher.copyConfig(params) : null;
+			} else {
+				pauseSaveFailed = true;
+				pausedProfileConfig = null;
+			}
 		}
 		super.onPause();
 	}
@@ -1589,18 +1601,28 @@ public class ConfigActivity extends AppCompatActivity {
 				initSkinOptions();
 				initSoundBankOptions();
 			}
-			if (skipNextAssetPickerReload || assetResultAppliedAfterPause) {
+			ProfileModel beforeReload = pausedProfileConfig;
+			pausedProfileConfig = null;
+			if (pauseSaveFailed) {
+				// Retain the in-memory draft instead of restoring an older disk snapshot.
+				pauseSaveFailed = false;
+				skipNextAssetPickerReload = false;
+				assetResultAppliedAfterPause = false;
+				if (!isFinishing()) {
+					ThemedToast.show(this, R.string.error, Toast.LENGTH_SHORT);
+				}
+			} else if (skipNextAssetPickerReload || assetResultAppliedAfterPause) {
 				skipNextAssetPickerReload = false;
 				assetResultAppliedAfterPause = false;
 			} else {
 				loadParams(true);
+				if (isProfile && needShow && beforeReload != null
+						&& !ProfileConfigMatcher.sameConfig(beforeReload, params)) {
+					// A native editor changed the isolated profile draft while this Activity was paused.
+					profileDraftDirty = true;
+					if (composeController != null) composeController.update(createUiState());
+				}
 			}
-			if (isProfile && profileEditorResumeObserved) {
-				// A return from a native editor may have changed the isolated draft. Keeping the
-				// editor dirty is safer than committing that writer's result implicitly.
-				profileDraftDirty = true;
-			}
-			profileEditorResumeObserved = true;
 		}
 	}
 
@@ -2131,6 +2153,7 @@ public class ConfigActivity extends AppCompatActivity {
 					Log.e(TAG, "Unable to update preset editor provenance");
 				}
 				setBuiltInThemeLinked(false);
+				profileDraftDirty = true;
 				loadParams(true);
 				return true;
 			} catch (IOException | RuntimeException failure) {
@@ -2671,13 +2694,18 @@ public class ConfigActivity extends AppCompatActivity {
 	}
 
 	private void updateForm(ConfigFormState state) {
+		if (isProfile && !profileDraftDirty && params != null && currentForm != null
+				&& !ProfileConfigMatcher.sameConfig(
+						ProfileConfigMatcher.effectiveConfig(params, currentForm),
+						ProfileConfigMatcher.effectiveConfig(params, state))) {
+			profileDraftDirty = true;
+		}
 		currentForm = state;
 		if (state.screenBackgroundMode != BackgroundMode.CUSTOM
 				&& state.screenBackgroundMode != BackgroundMode.DYNAMIC_SOLID
 				&& composeController != null) {
 			composeController.dismissColorPicker(ColorField.SCREEN_BACKGROUND);
 		}
-		if (isProfile) profileDraftDirty = true;
 		if (composeController != null) {
 			composeController.update(createUiState());
 		}
