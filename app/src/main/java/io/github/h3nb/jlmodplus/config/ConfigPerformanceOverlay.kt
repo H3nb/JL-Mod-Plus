@@ -37,6 +37,8 @@ import androidx.compose.runtime.saveable.rememberSaveable
 import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.semantics.heading
+import androidx.compose.ui.semantics.semantics
 import androidx.compose.ui.platform.testTag
 import androidx.compose.ui.res.pluralStringResource
 import androidx.compose.ui.res.stringResource
@@ -206,7 +208,8 @@ internal fun PerformanceOverlayParametersDialog(
                                 stringResource(group.title),
                                 style = MaterialTheme.typography.titleSmall,
                                 color = MaterialTheme.colorScheme.primary,
-                                modifier = Modifier.padding(top = 8.dp, bottom = 4.dp),
+                                modifier = Modifier.semantics { heading() }
+                                    .padding(top = 8.dp, bottom = 4.dp),
                             )
                         }
                         itemsIndexed(group.parameters, key = { _, parameter -> parameter.bit }) { _, parameter ->
