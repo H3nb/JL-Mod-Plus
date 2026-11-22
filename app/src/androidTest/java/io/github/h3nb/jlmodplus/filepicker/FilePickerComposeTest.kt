@@ -120,6 +120,45 @@ class FilePickerComposeTest {
     }
 
     @Test
+    @OptIn(ExperimentalTestApi::class)
+    fun compactLargeTextPickerKeepsPrimaryActionsReachable() {
+        val events = AtomicReference("")
+        composeRule.setContent {
+            DeviceConfigurationOverride(
+                DeviceConfigurationOverride.WindowSize(DpSize(320.dp, 400.dp)),
+            ) {
+                val density = androidx.compose.ui.platform.LocalDensity.current
+                androidx.compose.runtime.CompositionLocalProvider(
+                    androidx.compose.ui.platform.LocalDensity provides
+                        androidx.compose.ui.unit.Density(density.density, fontScale = 2f),
+                ) {
+                    JLModPlusTheme {
+                        FilePickerScreen(
+                            state = sampleState().copy(
+                                request = sampleState().request.copy(
+                                    allowMultiple = true,
+                                    singleClick = false,
+                                ),
+                            ),
+                            actions = RecordingActions(events),
+                        )
+                    }
+                }
+            }
+        }
+
+        val select = composeRule.onNodeWithContentDescription(
+            uiString(R.string.file_picker_select_all),
+        )
+        select.assertIsDisplayed().assertIsEnabled().performClick()
+        assertEquals("select-all", events.get())
+        composeRule.onNodeWithText(uiString(R.string.file_picker_choose))
+            .assertIsDisplayed()
+            .performClick()
+        assertEquals("confirm", events.get())
+    }
+
+    @Test
     fun directoryAndFileRowsExposeActions() {
         val events = AtomicReference<String>("")
         composeRule.setContent {
