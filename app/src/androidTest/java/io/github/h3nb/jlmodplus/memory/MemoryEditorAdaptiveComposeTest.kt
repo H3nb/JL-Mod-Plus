@@ -307,7 +307,7 @@ class MemoryEditorAdaptiveComposeTest {
         val peek = rule.onNodeWithTag("memory-editor-peek").getUnclippedBoundsInRoot()
         // WindowSize overrides configuration, not the real dialog-window bounds.
         // Only demand a side lane when the measured window actually has room.
-        if (viewport.width >= 800.dp) {
+        if (viewport.right - viewport.left >= 800.dp) {
             assertEquals(
                 "Wide dialog should remain centered on the whole safe viewport",
                 (viewport.top.value + viewport.bottom.value) / 2f,
