@@ -80,19 +80,14 @@ internal fun LibraryGridItem(
         if (selected) R.string.library_selection_checked
         else R.string.library_selection_unchecked,
     )
-    val interactionModifier = if (selectionMode) {
-        Modifier.toggleable(
-            value = selected,
-            role = Role.Checkbox,
-            onValueChange = { onToggleSelection(app) },
-        )
-    } else {
-        Modifier.combinedClickable(
-            onClick = { onOpenApp(app.id) },
-            onLongClickLabel = stringResource(R.string.library_app_more_actions, app.title),
-            onLongClick = { onOpenActions(app) },
-        )
-    }
+    val interactionModifier = libraryAppInteractionModifier(
+        app = app,
+        selectionMode = selectionMode,
+        selected = selected,
+        onToggleSelection = onToggleSelection,
+        onOpenApp = onOpenApp,
+        onOpenActions = onOpenActions,
+    )
     Column(
         modifier = Modifier
             .fillMaxWidth()
@@ -190,19 +185,14 @@ internal fun LibraryListItem(
     val selectionStateDescription = stringResource(
         if (selected) R.string.library_selection_checked else R.string.library_selection_unchecked,
     )
-    val interactionModifier = if (selectionMode) {
-        Modifier.toggleable(
-            value = selected,
-            role = Role.Checkbox,
-            onValueChange = { onToggleSelection(app) },
-        )
-    } else {
-        Modifier.combinedClickable(
-            onClick = { onOpenApp(app.id) },
-            onLongClickLabel = stringResource(R.string.library_app_more_actions, app.title),
-            onLongClick = { onOpenActions(app) },
-        )
-    }
+    val interactionModifier = libraryAppInteractionModifier(
+        app = app,
+        selectionMode = selectionMode,
+        selected = selected,
+        onToggleSelection = onToggleSelection,
+        onOpenApp = onOpenApp,
+        onOpenActions = onOpenActions,
+    )
     Row(
         modifier = Modifier.fillMaxWidth()
             .padding(horizontal = 12.dp, vertical = 4.dp)
@@ -317,4 +307,26 @@ private fun LibraryFavoriteButton(
             }
         }
     }
+}
+
+@Composable
+private fun libraryAppInteractionModifier(
+    app: LibraryAppUiItem,
+    selectionMode: Boolean,
+    selected: Boolean,
+    onToggleSelection: (LibraryAppUiItem) -> Unit,
+    onOpenApp: (Int) -> Unit,
+    onOpenActions: (LibraryAppUiItem) -> Unit,
+): Modifier = if (selectionMode) {
+    Modifier.toggleable(
+        value = selected,
+        role = Role.Checkbox,
+        onValueChange = { onToggleSelection(app) },
+    )
+} else {
+    Modifier.combinedClickable(
+        onClick = { onOpenApp(app.id) },
+        onLongClickLabel = stringResource(R.string.library_app_more_actions, app.title),
+        onLongClick = { onOpenActions(app) },
+    )
 }
