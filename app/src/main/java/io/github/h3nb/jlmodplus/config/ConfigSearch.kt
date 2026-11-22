@@ -102,6 +102,7 @@ private val configSearchIndex = listOf(
 @Composable
 internal fun ConfigSearchResults(
     query: String,
+    state: ConfigUiState,
     isProfile: Boolean,
     onSelected: (ConfigDestination, String, ConfigDetail?, String) -> Unit,
     modifier: Modifier = Modifier,
@@ -116,6 +117,19 @@ internal fun ConfigSearchResults(
         if (isProfile && entry.destination == ConfigDestination.Basic &&
                 entry.title != R.string.config_reset_profile_settings) return@filter false
         if (!isProfile && entry.title == R.string.config_reset_profile_settings) return@filter false
+        if (isProfile && entry.title in setOf(
+                R.string.midlet_storage_mode_title,
+                R.string.midlet_permissions_read,
+                R.string.midlet_permissions_write,
+            )) return@filter false
+        when (entry.title) {
+            R.string.bitmap_upscaling_title ->
+                if (state.form.internalResolutionScale == 1) return@filter false
+            R.string.render_shader_effects ->
+                if (state.form.graphicsMode != 1) return@filter false
+            R.string.parallel_screen_redrawing ->
+                if (state.form.graphicsMode != 0 && state.form.graphicsMode != 3) return@filter false
+        }
         if (query.isBlank()) entry.title in suggestions
         else resources.getString(entry.title).contains(query.trim(), ignoreCase = true) ||
             resources.getString(entry.section).contains(query.trim(), ignoreCase = true) ||

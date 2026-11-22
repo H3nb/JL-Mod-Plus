@@ -279,6 +279,36 @@ class ConfigComposeTest {
     }
 
     @Test
+    fun searchExcludesOptionsHiddenByProfileAndRendererConditions() {
+        val base = sampleState()
+        val state = ConfigUiState(
+            base.form.toBuilder().graphicsMode(0).internalResolutionScale(1).build(),
+            base.screenPresets,
+            base.fontPresets,
+            base.skins,
+            base.soundBanks,
+            base.shaders,
+            base.removableScreenPresets,
+        )
+        val query = mutableStateOf("MMPX")
+        composeRule.setContent {
+            JLModPlusTheme {
+                ConfigSearchResults(
+                    query = query.value,
+                    state = state,
+                    isProfile = true,
+                    onSelected = { _, _, _, _ -> },
+                )
+            }
+        }
+        composeRule.onNodeWithText(uiString(R.string.config_search_no_results)).assertIsDisplayed()
+        composeRule.runOnIdle { query.value = "shader GLSL effects" }
+        composeRule.onNodeWithText(uiString(R.string.config_search_no_results)).assertIsDisplayed()
+        composeRule.runOnIdle { query.value = "files storage" }
+        composeRule.onNodeWithText(uiString(R.string.config_search_no_results)).assertIsDisplayed()
+    }
+
+    @Test
     fun searchCanOpenPerformanceDetailAndReturnToGraphics() {
         composeRule.setContent {
             JLModPlusTheme { ConfigScreen(sampleState(), RecordingConfigEvents()) }

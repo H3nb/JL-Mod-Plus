@@ -324,6 +324,7 @@ internal fun ConfigScreen(
                         if (searchVisible) {
                             ConfigSearchResults(
                                 query = searchQuery,
+                                state = state,
                                 isProfile = isProfile,
                                 modifier = Modifier.fillMaxSize().padding(padding)
                                     .consumeWindowInsets(padding),
