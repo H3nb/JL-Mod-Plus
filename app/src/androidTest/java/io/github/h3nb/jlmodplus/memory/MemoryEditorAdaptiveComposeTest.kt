@@ -528,9 +528,7 @@ class MemoryEditorAdaptiveComposeTest {
         rule.onNodeWithContentDescription(
             context.getString(R.string.memory_editor_edit)
         ).assertIsDisplayed().assertIsEnabled()
-        rule.onNodeWithContentDescription(
-            context.getString(R.string.memory_editor_inspect_memory)
-        ).assertIsEnabled().performClick()
+        openSelectedInspector()
         rule.runOnIdle {
             assertEquals(1L, inspectedId)
             assertTrue(inspectedAsWatch)
@@ -759,9 +757,7 @@ class MemoryEditorAdaptiveComposeTest {
         rule.onNodeWithContentDescription(
             context.getString(R.string.memory_editor_select_result_value)
         ).performClick()
-        rule.onNodeWithContentDescription(
-            context.getString(R.string.memory_editor_inspector)
-        ).assertIsEnabled().performClick()
+        openSelectedInspector()
         rule.runOnIdle { assertEquals(1L, inspectedId) }
     }
 
@@ -794,6 +790,17 @@ class MemoryEditorAdaptiveComposeTest {
         }
     }
 
+
+    private fun openSelectedInspector() {
+        val context = InstrumentationRegistry.getInstrumentation().targetContext
+        val inspectLabel = context.getString(R.string.memory_editor_inspect_memory)
+        if (rule.onAllNodesWithContentDescription(inspectLabel).fetchSemanticsNodes().isNotEmpty()) {
+            rule.onNodeWithContentDescription(inspectLabel).assertIsEnabled().performClick()
+        } else {
+            rule.onNodeWithContentDescription(context.getString(R.string.more)).performClick()
+            rule.onNodeWithText(inspectLabel).assertIsEnabled().performClick()
+        }
+    }
 
     private fun inspectorSnapshot() = MemoryInspectorSnapshot(
         candidateId = 1L, type = MemoryEngineContract.TYPE_INT, label = "Values",
