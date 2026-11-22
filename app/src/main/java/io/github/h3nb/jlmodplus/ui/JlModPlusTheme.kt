@@ -22,9 +22,6 @@ import android.content.SharedPreferences
 import androidx.core.content.edit
 import androidx.compose.foundation.isSystemInDarkTheme
 import androidx.compose.material3.MaterialTheme
-import androidx.compose.material3.FilterChipDefaults
-import androidx.compose.material3.NavigationBarItemDefaults
-import androidx.compose.material3.NavigationRailItemDefaults
 import androidx.compose.material3.Shapes
 import androidx.compose.material3.Typography
 import androidx.compose.material3.darkColorScheme
@@ -423,43 +420,6 @@ internal fun AccentPalette.colorScheme(dark: Boolean, context: Context? = null):
         onTertiaryFixedVariant = tones.onTertiaryFixedVariant,
     )
 }
-
-/**
- * Accent-aware colors for navigation destinations.
- *
- * Material 3 uses a secondary container for the selected indicator by default. That
- * container is intentionally neutral in our base scheme, so expose one shared mapping for
- * every app-owned navigation surface instead of repeating ad-hoc colors at each call site.
- */
-@Composable
-internal fun jlModPlusNavigationBarItemColors() = NavigationBarItemDefaults.colors(
-    selectedIconColor = MaterialTheme.colorScheme.onPrimaryContainer,
-    selectedTextColor = MaterialTheme.colorScheme.onPrimaryContainer,
-    indicatorColor = MaterialTheme.colorScheme.primaryContainer,
-    unselectedIconColor = MaterialTheme.colorScheme.onSurfaceVariant,
-    unselectedTextColor = MaterialTheme.colorScheme.onSurfaceVariant,
-)
-
-@Composable
-internal fun jlModPlusNavigationRailItemColors() = NavigationRailItemDefaults.colors(
-    selectedIconColor = MaterialTheme.colorScheme.onPrimaryContainer,
-    selectedTextColor = MaterialTheme.colorScheme.onPrimaryContainer,
-    indicatorColor = MaterialTheme.colorScheme.primaryContainer,
-    unselectedIconColor = MaterialTheme.colorScheme.onSurfaceVariant,
-    unselectedTextColor = MaterialTheme.colorScheme.onSurfaceVariant,
-)
-
-/** Shared selected/unselected treatment for quick filters and library option chips. */
-@Composable
-internal fun jlModPlusFilterChipColors() = FilterChipDefaults.filterChipColors(
-    containerColor = MaterialTheme.colorScheme.surfaceContainerLow,
-    labelColor = MaterialTheme.colorScheme.onSurfaceVariant,
-    iconColor = MaterialTheme.colorScheme.onSurfaceVariant,
-    selectedContainerColor = MaterialTheme.colorScheme.primaryContainer,
-    selectedLabelColor = MaterialTheme.colorScheme.onPrimaryContainer,
-    selectedLeadingIconColor = MaterialTheme.colorScheme.primary,
-    selectedTrailingIconColor = MaterialTheme.colorScheme.primary,
-)
 
 private val MaterialTypography = Typography()
 
