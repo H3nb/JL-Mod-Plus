@@ -76,6 +76,32 @@ class ConfigComposeTest {
     }
 
     @Test
+    fun configChoiceDialogRemainsOpenWhenAvailableOptionsRefresh() {
+        val selected = mutableStateOf("First")
+        val options = mutableStateOf(listOf("First", "Second"))
+        composeRule.setContent {
+            JLModPlusTheme {
+                ConfigChoicePreference(
+                    title = "Choice setting",
+                    description = "Select a value",
+                    selected = selected.value,
+                    options = options.value,
+                    onSelected = {},
+                )
+            }
+        }
+
+        composeRule.onNodeWithText("Choice setting").performClick()
+        composeRule.onNode(hasText("Second") and hasAnyAncestor(isDialog())).assertExists()
+
+        composeRule.runOnIdle {
+            selected.value = "Second"
+            options.value = listOf("First", "Second", "Third")
+        }
+        composeRule.onNode(hasText("Third") and hasAnyAncestor(isDialog())).assertExists()
+    }
+
+    @Test
     fun sharedPermissionChangeDoesNotEditTheReusableProfile() {
         val base = sampleState()
         val state = ConfigUiState(

@@ -609,6 +609,20 @@ private fun SettingsSectionRow(first: Boolean, last: Boolean, content: @Composab
 }
 
 @Composable
+private fun SettingsAccentSwatch(accentKey: String) {
+    Box(
+        modifier = Modifier
+            .size(22.dp)
+            .background(
+                AccentPalette.fromKey(accentKey)
+                    .previewColor(isSystemInDarkTheme(), LocalContext.current),
+                CircleShape,
+            )
+            .border(1.dp, MaterialTheme.colorScheme.outlineVariant, CircleShape),
+    )
+}
+
+@Composable
 private fun SettingsChoiceRow(
     title: String,
     selected: SettingsOption,
@@ -621,16 +635,7 @@ private fun SettingsChoiceRow(
         onClick = onClick,
         trailingContent = if (showAccentPreview) {
             {
-                Box(
-                    modifier = Modifier
-                        .size(22.dp)
-                        .background(
-                            AccentPalette.fromKey(selected.value)
-                                .previewColor(isSystemInDarkTheme(), LocalContext.current),
-                            CircleShape,
-                        )
-                        .border(1.dp, MaterialTheme.colorScheme.outlineVariant, CircleShape),
-                )
+                SettingsAccentSwatch(selected.value)
             }
         } else null,
     )
@@ -700,16 +705,7 @@ private fun SettingsChoiceDialog(
                             },
                             trailingContent = if (showAccentPreview) {
                                 {
-                                    androidx.compose.foundation.layout.Box(
-                                        modifier = Modifier
-                                            .size(22.dp)
-                                            .background(
-                                                AccentPalette.fromKey(option.value)
-                                                    .previewColor(isSystemInDarkTheme(), LocalContext.current),
-                                                CircleShape,
-                                            )
-                                            .border(1.dp, MaterialTheme.colorScheme.outlineVariant, CircleShape),
-                                    )
+                                    SettingsAccentSwatch(option.value)
                                 }
                             } else {
                                 null

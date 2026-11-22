@@ -871,9 +871,12 @@ fun LibraryScreen(
             }
         }
     }
+    val projectedMemberIds = remember(sortedMembers) {
+        sortedMembers.orEmpty().map(LibraryAppUiItem::databaseId)
+    }
     val displayedState = if (activeCollectionId == null) state else state.copy(
         apps = sortedMembers.orEmpty(),
-        projectedAppIds = sortedMembers.orEmpty().map(LibraryAppUiItem::databaseId),
+        projectedAppIds = projectedMemberIds,
         availableAppIds = activeMembers?.memberIds.orEmpty(),
         quickView = LibraryQuickView.All,
         appliedFilter = "",

@@ -49,7 +49,6 @@ import io.github.h3nb.jlmodplus.R
 import io.github.h3nb.jlmodplus.ui.PreferenceNavigationRow
 import io.github.h3nb.jlmodplus.ui.PreferenceSwitchRow
 import io.github.h3nb.jlmodplus.ui.PreferenceTextContent
-import io.github.h3nb.jlmodplus.ui.PreferenceChevron
 import io.github.h3nb.jlmodplus.ui.PreferenceNotice
 import io.github.h3nb.jlmodplus.ui.PreferenceMessageLevel
 
@@ -146,9 +145,8 @@ internal fun ConfigValuePreference(
     compact: Boolean = true,
     showInlineDescription: Boolean = true,
 ) {
-    if (compact) {
-        Column(modifier = modifier) {
-            // Hide help only when the caller's selection/edit dialog displays it.
+    Column(modifier = if (compact) modifier else modifier.fillMaxWidth()) {
+        if (compact) {
             ConfigCompactValuePreference(
                 title = title,
                 value = value,
@@ -156,24 +154,15 @@ internal fun ConfigValuePreference(
                 enabled = enabled,
                 onClick = onClick,
             )
-            if (message != null) {
-                androidx.compose.foundation.layout.Box(
-                    modifier = Modifier.padding(horizontal = 16.dp, vertical = 2.dp),
-                ) {
-                    PreferenceNotice(message, messageLevel)
-                }
-            }
+        } else {
+            PreferenceNavigationRow(
+                title = title,
+                value = value,
+                description = description,
+                enabled = enabled,
+                onClick = onClick,
+            )
         }
-        return
-    }
-    Column(modifier = modifier.fillMaxWidth()) {
-        PreferenceNavigationRow(
-            title = title,
-            value = value,
-            description = description,
-            enabled = enabled,
-            onClick = onClick,
-        )
         if (message != null) {
             Box(modifier = Modifier.padding(horizontal = 16.dp, vertical = 2.dp)) {
                 PreferenceNotice(message, messageLevel)
@@ -225,7 +214,7 @@ internal fun ConfigChoicePreference(
     onDelete: ((String) -> Unit)? = null,
     compact: Boolean = true,
 ) {
-    var dialogVisible by remember(selected, options) { mutableStateOf(false) }
+    var dialogVisible by remember { mutableStateOf(false) }
     var renameFile by remember { mutableStateOf<String?>(null) }
     var deleteFile by remember { mutableStateOf<String?>(null) }
     ConfigValuePreference(
@@ -446,25 +435,14 @@ internal fun ConfigActionPreference(
         color = Color.Transparent,
         shape = MaterialTheme.shapes.medium,
     ) {
-        Row(
-            modifier = Modifier
-                .fillMaxWidth()
-                .heightIn(min = 60.dp)
-                .clickable(enabled = enabled, role = Role.Button, onClick = onClick)
-                .then(if (testTag == null) Modifier else Modifier.testTag(testTag))
-                .padding(horizontal = 16.dp, vertical = 10.dp),
-            verticalAlignment = Alignment.CenterVertically,
-            horizontalArrangement = Arrangement.spacedBy(12.dp),
-        ) {
-            PreferenceTextContent(
-                title = title,
-                description = description,
-                destructive = destructive,
-                enabled = enabled,
-                modifier = Modifier.weight(1f),
-            )
-            PreferenceChevron(enabled = enabled)
-        }
+        PreferenceNavigationRow(
+            title = title,
+            description = description,
+            onClick = onClick,
+            destructive = destructive,
+            enabled = enabled,
+            modifier = if (testTag == null) Modifier else Modifier.testTag(testTag),
+        )
     }
 }
 
@@ -484,14 +462,7 @@ internal fun ConfigDisclosurePreference(
         verticalAlignment = Alignment.CenterVertically,
         horizontalArrangement = Arrangement.spacedBy(12.dp),
     ) {
-        Column(modifier = Modifier.weight(1f), verticalArrangement = Arrangement.spacedBy(3.dp)) {
-            Text(text = title, style = MaterialTheme.typography.bodyLarge, color = MaterialTheme.colorScheme.onSurface)
-            Text(
-                text = description,
-                style = MaterialTheme.typography.bodySmall,
-                color = MaterialTheme.colorScheme.onSurfaceVariant,
-            )
-        }
+        PreferenceTextContent(title = title, description = description, modifier = Modifier.weight(1f))
         Icon(
             painter = painterResource(
                 if (expanded) R.drawable.ic_keyboard_arrow_up else R.drawable.ic_keyboard_arrow_down,
