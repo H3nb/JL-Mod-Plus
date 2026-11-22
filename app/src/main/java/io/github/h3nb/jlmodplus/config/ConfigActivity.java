@@ -159,6 +159,7 @@ public class ConfigActivity extends AppCompatActivity {
 	private boolean profileDraftDirty;
 	@Nullable private ProfileModel pausedProfileConfig;
 	private boolean pauseSaveFailed;
+	private UnsavedConfigDraft retainedDraft;
 	private ConfigFormState currentForm;
 	@Nullable private String cachedControlSkinId;
 	@Nullable private String cachedControlSkinName;
@@ -586,7 +587,10 @@ public class ConfigActivity extends AppCompatActivity {
 		initSoundBankOptions();
 		initSkinOptions();
 		initShaderSpinner();
-		currentForm = formFromParams();
+		retainedDraft = new ViewModelProvider(this).get(UnsavedConfigDraft.class);
+		currentForm = retainedDraft.failedPauseForm == null
+				? formFromParams() : retainedDraft.failedPauseForm;
+		pauseSaveFailed = retainedDraft.failedPauseForm != null;
 		assetTasks = new ViewModelProvider(this).get(AssetTaskModel.class);
 		assetTasks.completed.observe(this, this::onAssetActionComplete);
 		composeController = new ConfigComposeController(
@@ -1315,6 +1319,11 @@ public class ConfigActivity extends AppCompatActivity {
         }
     }
 
+    /** Retains only a form that could not be saved during Activity recreation. */
+    public static final class UnsavedConfigDraft extends ViewModel {
+        @Nullable ConfigFormState failedPauseForm;
+    }
+
     /** Retains an I/O job across configuration changes, never the Activity or its form. */
     public static final class AssetTaskModel extends ViewModel {
         private final ExecutorService worker = Executors.newSingleThreadExecutor();
@@ -1582,10 +1591,12 @@ public class ConfigActivity extends AppCompatActivity {
 		if (needShow && configDir != null && !operationRunning) {
 			if (saveParams()) {
 				pauseSaveFailed = false;
+				if (retainedDraft != null) retainedDraft.failedPauseForm = null;
 				pausedProfileConfig = isProfile
 						? ProfileConfigMatcher.copyConfig(params) : null;
 			} else {
 				pauseSaveFailed = true;
+				if (retainedDraft != null) retainedDraft.failedPauseForm = currentForm;
 				pausedProfileConfig = null;
 			}
 		}

@@ -387,6 +387,11 @@ class ConfigActivityComposeSmokeTest {
                 assertEquals("360", profileForm(activity).screenWidth)
                 assertTrue(profileDraftDirty(activity))
             }
+            scenario.recreate()
+            scenario.onActivity { activity ->
+                assertEquals("360", profileForm(activity).screenWidth)
+                assertTrue(profileDraftDirty(activity))
+            }
             deleteRecursively(blocker)
         }
     }
