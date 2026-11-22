@@ -31,14 +31,7 @@ import static io.github.h3nb.jlmodplus.util.Constants.PREF_THEME;
 import static io.github.h3nb.jlmodplus.util.Constants.PREF_TOOLBAR;
 import static io.github.h3nb.jlmodplus.util.Constants.PREF_STATUSBAR;
 import static io.github.h3nb.jlmodplus.util.Constants.PREF_VIBRATION;
-import static io.github.h3nb.jlmodplus.util.Constants.LIBRARY_GRID_ICON_SIZE_SMALL;
-import static io.github.h3nb.jlmodplus.util.Constants.LIBRARY_GRID_ICON_SIZE_STANDARD;
-import static io.github.h3nb.jlmodplus.util.Constants.LIBRARY_GRID_ICON_SIZE_LARGE;
 import static io.github.h3nb.jlmodplus.util.Constants.LIBRARY_GRID_SPACING_STANDARD;
-import static io.github.h3nb.jlmodplus.util.Constants.LIBRARY_ICON_RATIO_PORTRAIT;
-import static io.github.h3nb.jlmodplus.util.Constants.LIBRARY_ICON_RATIO_SQUARE;
-import static io.github.h3nb.jlmodplus.util.Constants.LIBRARY_ICON_SHAPE_ROUND;
-import static io.github.h3nb.jlmodplus.util.Constants.LIBRARY_ICON_SHAPE_SQUARE;
 
 import android.annotation.SuppressLint;
 import android.content.ActivityNotFoundException;
@@ -76,6 +69,9 @@ import io.github.h3nb.jlmodplus.ui.AppPageTransitions;
 import io.github.h3nb.jlmodplus.ui.AccentPalette;
 import io.github.h3nb.jlmodplus.config.Config;
 import io.github.h3nb.jlmodplus.applist.LibraryGridSpacing;
+import io.github.h3nb.jlmodplus.applist.LibraryIconRatio;
+import io.github.h3nb.jlmodplus.applist.LibraryIconShape;
+import io.github.h3nb.jlmodplus.applist.LibraryGridIconSize;
 import io.github.h3nb.jlmodplus.config.ProfilesActivity;
 import io.github.h3nb.jlmodplus.crashes.CrashReportsActivity;
 import io.github.h3nb.jlmodplus.util.EdgeToEdgeCompat;
@@ -177,19 +173,15 @@ public class SettingsActivity extends AppCompatActivity {
 				switch (key) {
 					case PREF_APPS_ICON_RATIO:
 						editor.putInt(PREF_APPS_ICON_RATIO,
-								"portrait".equals(value)
-										? LIBRARY_ICON_RATIO_PORTRAIT : LIBRARY_ICON_RATIO_SQUARE);
+								LibraryIconRatio.fromPreferenceKey(value).getStoredValue());
 						break;
 					case PREF_APPS_ICON_SHAPE:
 						editor.putInt(PREF_APPS_ICON_SHAPE,
-								"square".equals(value)
-										? LIBRARY_ICON_SHAPE_SQUARE : LIBRARY_ICON_SHAPE_ROUND);
+								LibraryIconShape.fromPreferenceKey(value).getStoredValue());
 						break;
 					case PREF_APPS_GRID_ICON_SIZE:
 						editor.putInt(PREF_APPS_GRID_ICON_SIZE,
-								"small".equals(value) ? LIBRARY_GRID_ICON_SIZE_SMALL
-										: "large".equals(value) ? LIBRARY_GRID_ICON_SIZE_LARGE
-										: LIBRARY_GRID_ICON_SIZE_STANDARD);
+								LibraryGridIconSize.fromPreferenceKey(value).getStoredValue());
 						break;
 					case PREF_APPS_GRID_SPACING:
 						editor.putInt(PREF_APPS_GRID_SPACING,
@@ -380,8 +372,8 @@ public class SettingsActivity extends AppCompatActivity {
 				PREF_APPS_ICON_RATIO,
 				getString(R.string.library_icon_ratio_title),
 				findOption(ratioOptions,
-						preferences.getInt(PREF_APPS_ICON_RATIO, LIBRARY_ICON_RATIO_SQUARE)
-								== LIBRARY_ICON_RATIO_PORTRAIT ? "portrait" : "square",
+						LibraryIconRatio.fromStoredValue(preferences.getInt(
+								PREF_APPS_ICON_RATIO, LibraryIconRatio.Square.getStoredValue())).getPreferenceKey(),
 						ratioOptions.get(0)),
 				ratioOptions));
 
@@ -392,8 +384,8 @@ public class SettingsActivity extends AppCompatActivity {
 				PREF_APPS_ICON_SHAPE,
 				getString(R.string.library_icon_shape_title),
 				findOption(shapeOptions,
-						preferences.getInt(PREF_APPS_ICON_SHAPE, LIBRARY_ICON_SHAPE_ROUND)
-								== LIBRARY_ICON_SHAPE_SQUARE ? "square" : "round",
+						LibraryIconShape.fromStoredValue(preferences.getInt(
+								PREF_APPS_ICON_SHAPE, LibraryIconShape.Round.getStoredValue())).getPreferenceKey(),
 							shapeOptions.get(0)),
 				shapeOptions));
 
@@ -401,14 +393,12 @@ public class SettingsActivity extends AppCompatActivity {
 				new SettingsOption("small", getString(R.string.library_grid_icon_size_small)),
 				new SettingsOption("standard", getString(R.string.library_grid_icon_size_standard)),
 				new SettingsOption("large", getString(R.string.library_grid_icon_size_large)));
-		int storedIconSize = preferences.getInt(
-				PREF_APPS_GRID_ICON_SIZE, LIBRARY_GRID_ICON_SIZE_STANDARD);
-		choices.add(new SettingsChoice(
+				choices.add(new SettingsChoice(
 				PREF_APPS_GRID_ICON_SIZE,
 				getString(R.string.library_grid_icon_size_title),
 				findOption(iconSizes,
-						storedIconSize == LIBRARY_GRID_ICON_SIZE_SMALL ? "small"
-								: storedIconSize == LIBRARY_GRID_ICON_SIZE_LARGE ? "large" : "standard",
+						LibraryGridIconSize.fromStoredValue(preferences.getInt(
+								PREF_APPS_GRID_ICON_SIZE, LibraryGridIconSize.Standard.getStoredValue())).getPreferenceKey(),
 						iconSizes.get(1)),
 				iconSizes,
 				getString(R.string.library_grid_icon_size_summary)));

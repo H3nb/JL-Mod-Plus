@@ -29,16 +29,6 @@ import static io.github.h3nb.jlmodplus.util.Constants.PREF_APPS_ENHANCED_ICONS;
 import static io.github.h3nb.jlmodplus.util.Constants.PREF_APPS_VIEW;
 import static io.github.h3nb.jlmodplus.util.Constants.PREF_APP_SORT;
 import static io.github.h3nb.jlmodplus.util.Constants.PREF_LAST_PATH;
-import static io.github.h3nb.jlmodplus.util.Constants.LIBRARY_GRID_ICON_SIZE_SMALL;
-import static io.github.h3nb.jlmodplus.util.Constants.LIBRARY_GRID_ICON_SIZE_STANDARD;
-import static io.github.h3nb.jlmodplus.util.Constants.LIBRARY_GRID_ICON_SIZE_LARGE;
-import static io.github.h3nb.jlmodplus.util.Constants.LIBRARY_GRID_SPACING_STANDARD;
-import static io.github.h3nb.jlmodplus.util.Constants.LIBRARY_ICON_RATIO_PORTRAIT;
-import static io.github.h3nb.jlmodplus.util.Constants.LIBRARY_ICON_RATIO_SQUARE;
-import static io.github.h3nb.jlmodplus.util.Constants.LIBRARY_ICON_SHAPE_ROUND;
-import static io.github.h3nb.jlmodplus.util.Constants.LIBRARY_ICON_SHAPE_SQUARE;
-import static io.github.h3nb.jlmodplus.util.Constants.LIBRARY_LAYOUT_GRID;
-import static io.github.h3nb.jlmodplus.util.Constants.LIBRARY_LAYOUT_LIST;
 
 import android.app.Activity;
 import android.content.ActivityNotFoundException;
@@ -287,34 +277,28 @@ public class AppsListFragment extends Fragment {
     }
 
     private LibraryLayout readLayout() {
-        return preferences.getInt(PREF_APPS_VIEW, LIBRARY_LAYOUT_LIST) == LIBRARY_LAYOUT_GRID
-                ? LibraryLayout.Grid : LibraryLayout.List;
+        return LibraryLayout.fromStoredValue(
+                preferences.getInt(PREF_APPS_VIEW, LibraryLayout.List.getStoredValue()));
     }
 
     private LibraryIconRatio readIconRatio() {
-        return preferences.getInt(PREF_APPS_ICON_RATIO, LIBRARY_ICON_RATIO_SQUARE)
-                == LIBRARY_ICON_RATIO_PORTRAIT ? LibraryIconRatio.Portrait : LibraryIconRatio.Square;
+        return LibraryIconRatio.fromStoredValue(preferences.getInt(
+                PREF_APPS_ICON_RATIO, LibraryIconRatio.Square.getStoredValue()));
     }
 
     private LibraryIconShape readIconShape() {
-        return preferences.getInt(PREF_APPS_ICON_SHAPE, LIBRARY_ICON_SHAPE_ROUND)
-                == LIBRARY_ICON_SHAPE_SQUARE ? LibraryIconShape.Square : LibraryIconShape.Round;
+        return LibraryIconShape.fromStoredValue(preferences.getInt(
+                PREF_APPS_ICON_SHAPE, LibraryIconShape.Round.getStoredValue()));
     }
 
     private LibraryGridSpacing readGridSpacing() {
         return LibraryGridSpacing.fromStoredValue(
-                preferences.getInt(PREF_APPS_GRID_SPACING, LIBRARY_GRID_SPACING_STANDARD));
+                preferences.getInt(PREF_APPS_GRID_SPACING, LibraryGridSpacing.Standard.getStoredValue()));
     }
 
     private LibraryGridIconSize readGridIconSize() {
-        switch (preferences.getInt(PREF_APPS_GRID_ICON_SIZE, LIBRARY_GRID_ICON_SIZE_STANDARD)) {
-            case LIBRARY_GRID_ICON_SIZE_SMALL:
-                return LibraryGridIconSize.Small;
-            case LIBRARY_GRID_ICON_SIZE_LARGE:
-                return LibraryGridIconSize.Large;
-            default:
-                return LibraryGridIconSize.Standard;
-        }
+        return LibraryGridIconSize.fromStoredValue(preferences.getInt(
+                PREF_APPS_GRID_ICON_SIZE, LibraryGridIconSize.Standard.getStoredValue()));
     }
 
     private static boolean isLibraryAppearancePreference(String key) {
@@ -437,23 +421,17 @@ public class AppsListFragment extends Fragment {
 
             @Override
             public void onLayoutChange(@NonNull LibraryLayout layout) {
-                int value = layout == LibraryLayout.Grid
-                        ? LIBRARY_LAYOUT_GRID : LIBRARY_LAYOUT_LIST;
-                preferences.edit().putInt(PREF_APPS_VIEW, value).apply();
+                preferences.edit().putInt(PREF_APPS_VIEW, layout.getStoredValue()).apply();
             }
 
             @Override
             public void onIconRatioChange(@NonNull LibraryIconRatio iconRatio) {
-                int value = iconRatio == LibraryIconRatio.Portrait
-                        ? LIBRARY_ICON_RATIO_PORTRAIT : LIBRARY_ICON_RATIO_SQUARE;
-                preferences.edit().putInt(PREF_APPS_ICON_RATIO, value).apply();
+                preferences.edit().putInt(PREF_APPS_ICON_RATIO, iconRatio.getStoredValue()).apply();
             }
 
             @Override
             public void onIconShapeChange(@NonNull LibraryIconShape iconShape) {
-                int value = iconShape == LibraryIconShape.Square
-                        ? LIBRARY_ICON_SHAPE_SQUARE : LIBRARY_ICON_SHAPE_ROUND;
-                preferences.edit().putInt(PREF_APPS_ICON_SHAPE, value).apply();
+                preferences.edit().putInt(PREF_APPS_ICON_SHAPE, iconShape.getStoredValue()).apply();
             }
 
             @Override
