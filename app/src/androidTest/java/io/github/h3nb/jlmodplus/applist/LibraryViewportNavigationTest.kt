@@ -423,6 +423,33 @@ class LibraryViewportNavigationTest {
     }
 
     @Test
+    fun searchRestoresWithinItsLibraryAndClosesOnScopeChange() {
+        val host = ViewportHost()
+        val state = mutableStateOf(libraryState(LibraryLayout.List))
+        val restoration = StateRestorationTester(composeRule)
+        restoration.setContent {
+            DeviceConfigurationOverride(
+                DeviceConfigurationOverride.WindowSize(DpSize(360.dp, 640.dp)),
+            ) {
+                JLModPlusTheme { LibraryScreen(state = state.value, actions = host) }
+            }
+        }
+
+        composeRule.onNodeWithContentDescription(uiString(R.string.library_search_placeholder)).performClick()
+        composeRule.onNode(hasSetTextAction()).performTextInput("Library")
+        composeRule.waitForIdle()
+        restoration.emulateSavedInstanceStateRestore()
+        composeRule.waitForIdle()
+        composeRule.onNode(hasSetTextAction()).assertTextEquals("Library")
+
+        composeRule.runOnIdle { state.value = state.value.copy(libraryScope = "/test/another-library") }
+        composeRule.waitForIdle()
+        composeRule.onAllNodes(hasSetTextAction()).assertCountEquals(0)
+        composeRule.onNodeWithContentDescription(uiString(R.string.library_search_placeholder))
+            .assertIsDisplayed()
+    }
+
+    @Test
     fun viewportRestoresAcrossRecreationAndResetsForDifferentLibrary() {
         val host = ViewportHost()
         val state = mutableStateOf(libraryState(LibraryLayout.List))

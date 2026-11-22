@@ -398,9 +398,9 @@ internal fun FontSizesDialog(
     onDismissRequest: () -> Unit,
     onConfirm: (String, String, String) -> Unit,
 ) {
-    var smallDraft by remember(small) { mutableStateOf(small) }
-    var mediumDraft by remember(medium) { mutableStateOf(medium) }
-    var largeDraft by remember(large) { mutableStateOf(large) }
+    var smallDraft by rememberSaveable(small) { mutableStateOf(small) }
+    var mediumDraft by rememberSaveable(medium) { mutableStateOf(medium) }
+    var largeDraft by rememberSaveable(large) { mutableStateOf(large) }
     val fontScale = LocalDensity.current.fontScale.coerceAtLeast(1f)
     val minimumThreeFieldWidth = (132f * 3 * fontScale).dp + 24.dp
     val useHorizontalFields = adaptiveDialogLayout().width >= minimumThreeFieldWidth

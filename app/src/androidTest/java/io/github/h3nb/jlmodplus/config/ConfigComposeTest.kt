@@ -1028,6 +1028,30 @@ class ConfigComposeTest {
     }
 
     @Test
+    fun unsavedFontSizeDraftSurvivesStateRestorationWithoutCommitting() {
+        var committed: Triple<String, String, String>? = null
+        val restoration = StateRestorationTester(composeRule)
+        restoration.setContent {
+            JLModPlusTheme {
+                FontSizesDialog(
+                    small = "18",
+                    medium = "22",
+                    large = "26",
+                    onDismissRequest = {},
+                    onConfirm = { small, medium, large -> committed = Triple(small, medium, large) },
+                )
+            }
+        }
+        composeRule.onNode(hasSetTextAction() and hasText("18")).performTextReplacement("19")
+        restoration.emulateSavedInstanceStateRestore()
+        composeRule.waitForIdle()
+        composeRule.onNode(hasSetTextAction() and hasText("19")).assertIsDisplayed()
+        assertEquals(null, committed)
+        composeRule.onNodeWithText(uiString(android.R.string.ok)).performClick()
+        assertEquals(Triple("19", "22", "26"), committed)
+    }
+
+    @Test
     fun screenPresetSwapTogglesChoicesWithoutChangingCurrentSize() {
         val events = RecordingConfigEvents()
         composeRule.setContent {

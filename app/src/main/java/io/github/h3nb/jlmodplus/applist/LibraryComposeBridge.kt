@@ -759,8 +759,13 @@ fun LibraryScreen(
     val showInstallFab = if (navigationState.selectedCollectionId == null) {
         appsViewport.chromeVisible
     } else collectionViewport.chromeVisible
-    var searchOpen by rememberSaveable { mutableStateOf(false) }
-    var searchQuery by rememberSaveable(state.libraryScope) { mutableStateOf("") }
+    // Search is restored only within the Library context that owns its query.
+    var searchOpen by rememberSaveable(
+        state.libraryScope, destination, navigationState.selectedCollectionId,
+    ) { mutableStateOf(false) }
+    var searchQuery by rememberSaveable(
+        state.libraryScope, destination, navigationState.selectedCollectionId,
+    ) { mutableStateOf("") }
     val searchKeyboard = LocalSoftwareKeyboardController.current
     val isImeVisible = WindowInsets.isImeVisible
     val scaffoldInsets = WindowInsets.safeDrawing
@@ -1223,10 +1228,6 @@ fun LibraryScreen(
     }
 
     LaunchedEffect(state.libraryScope) { detailsTarget = null }
-    LaunchedEffect(destination, navigationState.selectedCollectionId, state.libraryScope) {
-        searchOpen = false
-        searchQuery = ""
-    }
     BackHandler(enabled = destination == LibraryDestinationKey.Apps &&
         activeCollectionId != null && !selectionActiveHere && !searchOpen &&
         !collectionManageAppsActive) {
