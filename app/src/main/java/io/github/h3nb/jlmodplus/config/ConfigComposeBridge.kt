@@ -192,6 +192,8 @@ internal fun ConfigScreen(
     var savePresetVisible by rememberSaveable { mutableStateOf(false) }
     var discardProfileChangesVisible by rememberSaveable { mutableStateOf(false) }
     val updateForm: (ConfigFormState) -> Unit = events::onFormChanged
+    val usePresetTitle = stringResource(R.string.preset_use)
+    val savePresetTitle = stringResource(R.string.preset_save_as)
     val closeSearch = { searchVisible = false; searchQuery = "" }
     val requestBack = {
         when {
@@ -330,9 +332,19 @@ internal fun ConfigScreen(
                                     .consumeWindowInsets(padding),
                                 onSelected = { nextDestination, section, detail, option ->
                                     closeSearch()
-                                    searchTarget = ConfigSearchTarget(section, option)
                                     selectedDestination = nextDestination
                                     childPage = detail?.toChildPage()
+                                    when (option) {
+                                        usePresetTitle -> {
+                                            searchTarget = null
+                                            presetPickerVisible = true
+                                        }
+                                        savePresetTitle -> {
+                                            searchTarget = null
+                                            savePresetVisible = true
+                                        }
+                                        else -> searchTarget = ConfigSearchTarget(section, option)
+                                    }
                                 },
                             )
                         } else {

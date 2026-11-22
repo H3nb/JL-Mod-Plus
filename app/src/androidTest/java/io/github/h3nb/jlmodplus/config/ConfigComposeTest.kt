@@ -309,6 +309,23 @@ class ConfigComposeTest {
     }
 
     @Test
+    fun searchCanReachCustomColorPaletteAndPresetAction() {
+        composeRule.setContent {
+            JLModPlusTheme { ConfigScreen(sampleState(), RecordingConfigEvents()) }
+        }
+        composeRule.onNodeWithContentDescription(uiString(R.string.config_search_title)).performClick()
+        composeRule.onNode(hasSetTextAction()).performTextInput("button colors palette")
+        composeRule.onNodeWithText(uiString(R.string.config_controls_virtual_keyboard_colors)).performClick()
+        composeRule.waitForIdle()
+        composeRule.onNodeWithTag("controls_colors_section").assertIsDisplayed()
+
+        composeRule.onNodeWithContentDescription(uiString(R.string.config_search_title)).performClick()
+        composeRule.onNode(hasSetTextAction()).performTextReplacement(uiString(R.string.preset_use))
+        composeRule.onNodeWithText(uiString(R.string.preset_use)).performClick()
+        composeRule.onNode(isDialog()).assertExists()
+    }
+
+    @Test
     fun searchCanOpenPerformanceDetailAndReturnToGraphics() {
         composeRule.setContent {
             JLModPlusTheme { ConfigScreen(sampleState(), RecordingConfigEvents()) }

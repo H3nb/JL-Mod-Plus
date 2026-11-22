@@ -66,7 +66,7 @@ internal val LocalConfigSectionReveal = compositionLocalOf<ConfigSectionReveal?>
 private val LocalConfigOptionReveal = compositionLocalOf<ConfigSectionReveal?> { null }
 
 @Composable
-private fun Modifier.revealConfigOption(title: String): Modifier {
+internal fun Modifier.revealConfigOption(title: String): Modifier {
     val reveal = LocalConfigOptionReveal.current
     val requester = remember { BringIntoViewRequester() }
     LaunchedEffect(reveal, title) {
