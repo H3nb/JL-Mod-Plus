@@ -86,14 +86,7 @@ internal fun ConfigSection(
     content: @Composable ColumnScope.() -> Unit,
 ) {
     val reveal = LocalConfigSectionReveal.current?.takeIf { it.section == title }
-    val requester = remember { BringIntoViewRequester() }
-    LaunchedEffect(reveal) {
-        if (reveal != null) {
-            requester.bringIntoView()
-        }
-    }
     Column(
-        modifier = Modifier.bringIntoViewRequester(requester),
         verticalArrangement = Arrangement.spacedBy(4.dp),
     ) {
         Text(

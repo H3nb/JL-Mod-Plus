@@ -254,16 +254,33 @@ class ConfigComposeTest {
     }
 
     @Test
-    fun searchFindsTechnicalRenderingOptionsAndOpensTheirSection() {
+    fun searchFindsMmpxAtAutoInternalResolutionAndRevealsBitmapOption() {
+        val base = sampleState()
+        val state = ConfigUiState(
+            base.form.toBuilder().internalResolutionScale(0).build(),
+            base.screenPresets, base.fontPresets, base.skins, base.soundBanks,
+            base.shaders, base.removableScreenPresets,
+        )
         composeRule.setContent {
-            JLModPlusTheme { ConfigScreen(sampleState(), RecordingConfigEvents()) }
+            JLModPlusTheme { ConfigScreen(state, RecordingConfigEvents()) }
         }
         composeRule.onNodeWithContentDescription(uiString(R.string.config_search_title)).performClick()
         composeRule.onNode(hasSetTextAction()).performTextInput("MMPX")
         composeRule.onNodeWithText(uiString(R.string.bitmap_upscaling_title)).performClick()
         composeRule.waitForIdle()
-        composeRule.onNodeWithText(uiString(R.string.config_display_rendering)).assertIsDisplayed()
-        composeRule.onNodeWithText(uiString(R.string.bitmap_upscaling_title)).assertExists()
+        composeRule.onNodeWithText(uiString(R.string.bitmap_upscaling_title)).assertIsDisplayed()
+    }
+
+    @Test
+    fun searchRevealsFullscreenInsideTheScreenBehaviorSection() {
+        composeRule.setContent {
+            JLModPlusTheme { ConfigScreen(sampleState(), RecordingConfigEvents()) }
+        }
+        composeRule.onNodeWithContentDescription(uiString(R.string.config_search_title)).performClick()
+        composeRule.onNode(hasSetTextAction()).performTextInput(uiString(R.string.PREF_FORCE_FULLSCREEN))
+        composeRule.onNodeWithText(uiString(R.string.PREF_FORCE_FULLSCREEN)).performClick()
+        composeRule.waitForIdle()
+        composeRule.onNodeWithText(uiString(R.string.PREF_FORCE_FULLSCREEN)).assertIsDisplayed()
     }
 
     @Test
