@@ -478,8 +478,9 @@ class LibraryComposeTest {
                 composeRule.onAllNodesWithText("Second MIDlet").fetchSemanticsNodes().isNotEmpty()
         }
         assertTrue(events.tryEmit(LibraryControllerEvent(1L, LibraryControllerCommand.Activate)))
-        composeRule.waitUntil(5_000) { actions.openedId == 8 }
-        assertEquals(8, actions.openedId)
+        composeRule.waitUntil(5_000) { actions.openedIds.isNotEmpty() }
+        composeRule.waitForIdle()
+        assertEquals(listOf(8), actions.openedIds)
     }
 
     @Test
@@ -1457,6 +1458,7 @@ class LibraryComposeTest {
         var folderInstallCount = 0
         var importCount = 0
         var openedId: Int? = null
+        val openedIds = mutableListOf<Int>()
         var resolvedSearchId: Int? = null
         var favoritedId: Int? = null
         var renamed: Pair<Int, String>? = null
@@ -1480,7 +1482,10 @@ class LibraryComposeTest {
         override fun onFavorite(appId: Int, favorite: Boolean) {
             if (favorite) favoritedId = appId
         }
-        override fun onOpenApp(appId: Int) { openedId = appId }
+        override fun onOpenApp(appId: Int) {
+            openedId = appId
+            openedIds += appId
+        }
         override fun onAddShortcut(appId: Int) = Unit
         override fun onRename(appId: Int, title: String) { renamed = appId to title }
         override fun onOpenAppSettings(appId: Int) = Unit

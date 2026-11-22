@@ -738,7 +738,8 @@ fun LibraryScreen(
             if (currentControllerAppActions != null) return@collect
             if (currentControllerDetailsTarget != null &&
                 event.command != LibraryControllerCommand.Back) return@collect
-            if (currentControllerCollectionId != null &&
+            // Search and Collections own their visible app navigation. The root retains Back.
+            if ((currentControllerCollectionId != null || currentControllerSearchOpen) &&
                 event.command != LibraryControllerCommand.Back
             ) return@collect
             controllerFocusVisible = true
