@@ -549,7 +549,9 @@ class LibraryCollectionsNavigationTest {
         composeRule.onNodeWithContentDescription(
             uiString(R.string.library_selection_checkbox_description, SAMPLE_MEMBER.title),
         ).assertIsDisplayed()
-        composeRule.onNodeWithText("Remove from collection").assertIsDisplayed()
+        composeRule.onNodeWithContentDescription(
+            uiString(R.string.library_collection_remove_from_current),
+        ).assertIsDisplayed()
 
         pressBack()
         composeRule.waitForIdle()
@@ -594,11 +596,19 @@ class LibraryCollectionsNavigationTest {
             uiString(R.string.library_selection_checkbox_description, SAMPLE_MEMBER.title),
         ).assertIsDisplayed()
         composeRule.onNodeWithContentDescription(uiString(R.string.library_selection_select_all)).assertIsDisplayed()
-        composeRule.onNodeWithText("Delete apps").assertIsDisplayed()
-        composeRule.onNodeWithText("Remove from collection").assertIsDisplayed()
-        composeRule.onNodeWithText("Share apps").assertIsDisplayed()
-        composeRule.onNodeWithText("Reinstall").assertIsDisplayed()
-        composeRule.onNodeWithText("Export bundle").assertIsDisplayed()
+        composeRule.onNodeWithContentDescription(
+            uiString(R.string.library_selection_action_delete),
+        ).assertIsDisplayed()
+        composeRule.onNodeWithContentDescription(
+            uiString(R.string.library_collection_remove_from_current),
+        ).assertIsDisplayed()
+        composeRule.onNodeWithContentDescription(
+            uiString(R.string.library_selection_action_reinstall),
+        ).assertIsDisplayed()
+        composeRule.onNodeWithContentDescription(
+            uiString(R.string.library_selection_action_export),
+        ).assertIsDisplayed()
+        composeRule.onAllNodesWithText("Share apps").assertCountEquals(0)
         composeRule.onAllNodesWithText("Add to collection").assertCountEquals(0)
 
         composeRule.onNodeWithContentDescription(uiString(R.string.library_selection_select_all)).performClick()
@@ -700,7 +710,7 @@ class LibraryCollectionsNavigationTest {
 
         openCollectionsManagement()
         openCollection()
-        composeRule.onNodeWithText(uiString(R.string.library_collection_add_apps)).performClick()
+        composeRule.onNodeWithContentDescription(uiString(R.string.library_collection_add_apps)).performClick()
         composeRule.onNodeWithText(uiString(R.string.library_collection_manage_apps))
             .assertIsDisplayed()
         composeRule.waitForIdle()
@@ -744,7 +754,7 @@ class LibraryCollectionsNavigationTest {
             host.store.showMembers(COLLECTION_ID, listOf(SAMPLE_MEMBER))
         }
         composeRule.waitForIdle()
-        composeRule.onNodeWithText(uiString(R.string.library_collection_add_apps)).performClick()
+        composeRule.onNodeWithContentDescription(uiString(R.string.library_collection_add_apps)).performClick()
 
         val target = composeRule.onNodeWithTag(
             "collection-membership-${SAMPLE_MEMBER_2.databaseId}",
@@ -803,7 +813,7 @@ class LibraryCollectionsNavigationTest {
         }
         openCollectionsManagement()
         openCollection()
-        composeRule.onNodeWithText(uiString(R.string.library_collection_add_apps)).performClick()
+        composeRule.onNodeWithContentDescription(uiString(R.string.library_collection_add_apps)).performClick()
         composeRule.waitUntil(timeoutMillis = 5_000) {
             composeRule.onAllNodesWithTag("collection-membership-10000")
                 .fetchSemanticsNodes().isNotEmpty()

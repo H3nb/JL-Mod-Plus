@@ -20,6 +20,7 @@ import androidx.compose.ui.test.DeviceConfigurationOverride
 import androidx.compose.ui.test.ExperimentalTestApi
 import androidx.compose.ui.test.WindowSize
 import androidx.compose.ui.test.assertIsDisplayed
+import androidx.compose.ui.test.hasAnyDescendant
 import androidx.compose.ui.test.hasAnyAncestor
 import androidx.compose.ui.test.hasClickAction
 import androidx.compose.ui.test.hasContentDescription
@@ -74,8 +75,10 @@ class SettingsComposeTest {
         composeRule.onNode(languageSetting).performClick()
 
         val lastLanguage = hasText("Language option 20")
-        composeRule.onNode(hasScrollAction() and hasAnyAncestor(isDialog()))
-            .performScrollToNode(lastLanguage)
+        composeRule.onNode(
+            hasScrollAction() and hasAnyDescendant(hasText("Language option 1")),
+            useUnmergedTree = true,
+        ).performScrollToNode(lastLanguage)
         composeRule.onNode(lastLanguage)
             .assertIsDisplayed()
             .performClick()
