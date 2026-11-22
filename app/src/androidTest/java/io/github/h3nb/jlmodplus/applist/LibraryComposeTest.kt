@@ -235,6 +235,47 @@ class LibraryComposeTest {
     }
 
     @Test
+    fun controllerNavigationTracksResizedActionGridColumns() {
+        val width = mutableStateOf(800.dp)
+        val controllerEvents = MutableSharedFlow<LibraryControllerEvent>(extraBufferCapacity = 8)
+        composeRule.setContent {
+            DeviceConfigurationOverride(
+                DeviceConfigurationOverride.WindowSize(DpSize(width.value, 360.dp)),
+            ) {
+                JLModPlusTheme {
+                    AppActionsDialog(
+                        app = LibraryAppUiItem(7, "Demo MIDlet", "Vendor", "1.0", null, true),
+                        controllerEvents = controllerEvents,
+                        onDismiss = {},
+                        onShortcut = {},
+                        onSettings = {},
+                        onReinstall = {},
+                        onDelete = {},
+                        onDetails = {},
+                        onSelect = {},
+                        onAddToCollection = {},
+                        onExportAppBundle = {},
+                    )
+                }
+            }
+        }
+        composeRule.waitUntil(5_000) { controllerEvents.subscriptionCount.value > 0 }
+        composeRule.runOnIdle { width.value = 600.dp }
+        composeRule.waitForIdle()
+        assertTrue(controllerEvents.tryEmit(
+            LibraryControllerEvent(1L, LibraryControllerCommand.MoveDown),
+        ))
+        composeRule.waitUntil(5_000) {
+            composeRule.onAllNodes(
+                hasText(uiString(R.string.library_bulk_add_collection)) and isSelected(),
+            ).fetchSemanticsNodes().isNotEmpty()
+        }
+        composeRule.onNode(
+            hasText(uiString(R.string.library_bulk_add_collection)) and isSelected(),
+        ).assertIsDisplayed()
+    }
+
+    @Test
     fun listOverflowOpensTheMidletActionsWithoutLongPress() {
         val actions = RecordingLibraryActions()
         setLibraryContent(actions = actions)

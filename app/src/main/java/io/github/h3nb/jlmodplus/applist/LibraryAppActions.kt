@@ -280,6 +280,8 @@ internal fun AppActionsDialog(
     val gridRows = (entries.size + gridColumns - 1) / gridColumns
 
     val currentEntries by rememberUpdatedState(entries)
+    val currentGridColumns by rememberUpdatedState(gridColumns)
+    val currentOnDismiss by rememberUpdatedState(onDismiss)
     LaunchedEffect(entries.size) {
         focusedIndex = focusedIndex.coerceIn(0, (entries.size - 1).coerceAtLeast(0))
     }
@@ -291,23 +293,24 @@ internal fun AppActionsDialog(
                     val current = currentEntries
                     if (current.isNotEmpty()) {
                         controllerFocusVisible = true
+                        val columns = currentGridColumns
                         val delta = when (event.command) {
-                            LibraryControllerCommand.MoveUp -> -gridColumns
-                            LibraryControllerCommand.MoveDown -> gridColumns
+                            LibraryControllerCommand.MoveUp -> -columns
+                            LibraryControllerCommand.MoveDown -> columns
                             LibraryControllerCommand.MoveLeft -> -1
                             else -> 1
                         }
                         focusedIndex = (focusedIndex + delta).coerceIn(0, current.lastIndex)
-                        listState.animateScrollToItem(focusedIndex / gridColumns)
+                        listState.animateScrollToItem(focusedIndex / columns)
                     }
                 }
                 LibraryControllerCommand.Activate -> {
                     currentEntries.getOrNull(focusedIndex)?.let { entry ->
-                        onDismiss()
+                        currentOnDismiss()
                         entry.action()
                     }
                 }
-                LibraryControllerCommand.Back -> onDismiss()
+                LibraryControllerCommand.Back -> currentOnDismiss()
                 LibraryControllerCommand.OpenActions,
                 LibraryControllerCommand.NextTab,
                 LibraryControllerCommand.PreviousTab -> Unit
