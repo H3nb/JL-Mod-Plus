@@ -209,7 +209,6 @@ internal fun ConfigQuickSettingDialog(
             selectedPreset = selected,
             onDismissRequest = onDismiss,
             onSelected = { size ->
-                onDismiss()
                 onFormChanged(form.toBuilder()
                     .screenWidth(size.width.toString())
                     .screenHeight(size.height.toString()).build())

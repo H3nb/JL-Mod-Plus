@@ -683,7 +683,6 @@ private fun ScreenGeometrySection(
             selectedPreset = selectedPreset,
             onDismissRequest = { presetsDialogVisible = false },
             onSelected = { preset ->
-                presetsDialogVisible = false
                 onFormChanged(
                     form.toBuilder()
                         .screenWidth(preset.width.toString())
