@@ -809,6 +809,9 @@
     <string name="config_basic_input">Input</string>
     <string name="config_display_appearance">Screen appearance</string>
     <string name="config_display_rendering">Rendering</string>
+    <string name="config_image_quality_section" tools:ignore="MissingTranslation">Image quality</string>
+    <string name="config_frame_rate_section" tools:ignore="MissingTranslation">Frame rate</string>
+    <string name="config_fps_position_title" tools:ignore="MissingTranslation">FPS position</string>
     <string name="config_display_performance">Performance &amp; diagnostics</string>
     <string name="config_display_text">Text &amp; fonts</string>
     <string name="config_system_timing">Timing</string>
@@ -838,7 +841,7 @@
     <string name="config_profile_maintenance" tools:ignore="MissingTranslation">Profile actions</string>
     <string name="config_reset_profile_settings" tools:ignore="MissingTranslation">Reset profile draft</string>
     <string name="config_reset_profile_settings_summary" tools:ignore="MissingTranslation">Restore this draft’s settings and virtual controls to defaults.</string>
-    <string name="config_system_compatibility" tools:ignore="MissingTranslation">Compatibility</string>
+    <string name="config_system_compatibility" tools:ignore="MissingTranslation">Emulation compatibility</string>
     <string name="config_reset_all_settings">Reset MIDlet configuration</string>
     <string name="config_reset_all_settings_summary">Restore this MIDlet’s settings and virtual controls to their defaults without deleting its data.</string>
     <string name="config_delete_app_data">Delete MIDlet data</string>

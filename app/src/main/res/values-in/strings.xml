@@ -738,6 +738,9 @@
     <string name="config_basic_input">Input</string>
     <string name="config_display_appearance">Tampilan layar</string>
     <string name="config_display_rendering">Rendering</string>
+    <string name="config_image_quality_section">Kualitas gambar</string>
+    <string name="config_frame_rate_section">Frame rate</string>
+    <string name="config_fps_position_title">Posisi FPS</string>
     <string name="config_display_performance">Performa dan diagnostik</string>
     <string name="config_display_text">Teks dan font</string>
     <string name="config_system_timing">Waktu</string>
@@ -769,7 +772,7 @@
     <string name="config_profile_maintenance">Tindakan profil</string>
     <string name="config_reset_profile_settings">Atur ulang draf profil</string>
     <string name="config_reset_profile_settings_summary">Kembalikan pengaturan dan kontrol virtual draf ini ke bawaan.</string>
-    <string name="config_system_compatibility">Kompatibilitas</string>
+    <string name="config_system_compatibility">Kompatibilitas emulasi</string>
     <string name="config_reset_all_settings">Atur ulang konfigurasi</string>
     <string name="config_reset_all_settings_summary">Mengembalikan pengaturan dan kontrol virtual ke bawaan tanpa menghapus data MIDlet.</string>
     <string name="config_delete_app_data">Hapus data MIDlet</string>

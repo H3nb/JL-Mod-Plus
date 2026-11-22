@@ -20,11 +20,11 @@ import androidx.compose.ui.text.input.KeyboardType
 import io.github.h3nb.jlmodplus.R
 
 @Composable
-internal fun PerformanceSection(
+internal fun FrameRateSection(
     form: ConfigFormState,
     onFormChanged: (ConfigFormState) -> Unit,
 ) {
-    ConfigSection(title = stringResource(R.string.config_display_performance)) {
+    ConfigSection(title = stringResource(R.string.config_frame_rate_section)) {
         ConfigNumberPreference(
             title = stringResource(R.string.PREF_LIMIT_FPS),
             description = stringResource(R.string.config_help_fps_limit),
@@ -47,7 +47,7 @@ internal fun PerformanceSection(
                 stringResource(R.string.perf_overlay_bottom_right),
             )
             ConfigChoicePreference(
-                title = stringResource(R.string.perf_overlay_position),
+                title = stringResource(R.string.config_fps_position_title),
                 description = stringResource(R.string.perf_overlay_position_help),
                 selected = positions[form.performanceOverlayPosition],
                 options = positions,
