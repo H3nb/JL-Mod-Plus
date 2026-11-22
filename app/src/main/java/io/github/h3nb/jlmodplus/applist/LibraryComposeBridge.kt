@@ -247,11 +247,6 @@ enum class LibraryGridSpacing(
     Spacious(12.dp),
 }
 
-private enum class LibraryDestination {
-    Apps,
-    Collections,
-}
-
 enum class LibraryControllerCommand {
     MoveUp,
     MoveDown,
@@ -734,9 +729,9 @@ fun LibraryScreen(
     var navigationState by rememberSaveable(stateSaver = LibraryNavigationState.Saver) {
         mutableStateOf(LibraryNavigationState())
     }
-    val destination = LibraryDestination.valueOf(navigationState.destination.name)
-    val selectDestination: (LibraryDestination) -> Unit = { section ->
-        navigationState = navigationState.copy(destination = LibraryDestinationKey.valueOf(section.name))
+    val destination = navigationState.destination
+    val selectDestination: (LibraryDestinationKey) -> Unit = { section ->
+        navigationState = navigationState.copy(destination = section)
     }
     val context = LocalContext.current.applicationContext
     // Screenshot previews have no persistent preferences or active network stack.
@@ -837,7 +832,7 @@ fun LibraryScreen(
     val collectionsHost = actions as? LibraryCollectionsHost
     LaunchedEffect(searchOpen, destination, state.libraryScope, state.databaseControlsReady,
         state.projectionRevision) {
-        if (searchOpen && destination == LibraryDestination.Apps && state.databaseControlsReady) {
+        if (searchOpen && destination == LibraryDestinationKey.Apps && state.databaseControlsReady) {
             collectionsHost?.onPrepareSearchApps()
         }
     }
@@ -916,11 +911,11 @@ fun LibraryScreen(
         }
     }
     val selectionMatchesDestination = when (destination) {
-        LibraryDestination.Apps -> selectionState.collectionId == activeCollectionId
-        LibraryDestination.Collections -> false
+        LibraryDestinationKey.Apps -> selectionState.collectionId == activeCollectionId
+        LibraryDestinationKey.Collections -> false
     }
     val collectionManageAppsActive =
-        destination == LibraryDestination.Apps &&
+        destination == LibraryDestinationKey.Apps &&
             activeCollection != null &&
             navigationState.collectionManageApps
     val selectionActiveHere =
@@ -1006,7 +1001,7 @@ fun LibraryScreen(
 
     suspend fun moveControllerFocus(command: LibraryControllerCommand) {
         val currentState = currentControllerState
-        if (currentControllerDestination != LibraryDestination.Apps ||
+        if (currentControllerDestination != LibraryDestinationKey.Apps ||
             currentControllerCollectionId != null ||
             currentState.apps.isEmpty() || currentControllerSelectionActive
         ) return
@@ -1068,7 +1063,7 @@ fun LibraryScreen(
     }
 
     BackHandler(
-        enabled = destination == LibraryDestination.Apps && selectionActiveHere,
+        enabled = destination == LibraryDestinationKey.Apps && selectionActiveHere,
     ) {
         selectionState = selectionState.clear()
     }
@@ -1150,10 +1145,10 @@ fun LibraryScreen(
         metadataRestoreRequest = null
         metadataViewportLocked = true
         metadataImeWasVisible = isImeVisible
-        metadataCapturedAnchor = if (destination == LibraryDestination.Apps) {
+        metadataCapturedAnchor = if (destination == LibraryDestinationKey.Apps) {
             captureAppsAnchor(app.databaseId)
         } else null
-        metadataCapturedViewport = if (destination == LibraryDestination.Apps) {
+        metadataCapturedViewport = if (destination == LibraryDestinationKey.Apps) {
             captureAppsViewport()
         } else null
         metadataBackRequest = 0
@@ -1206,7 +1201,7 @@ fun LibraryScreen(
                     -> moveControllerFocus(event.command)
                     LibraryControllerCommand.Activate -> {
                         val currentState = currentControllerState
-                        if (currentControllerDestination != LibraryDestination.Apps ||
+                        if (currentControllerDestination != LibraryDestinationKey.Apps ||
                             currentState.apps.isEmpty()
                         ) return@collect
                         val focus = reconcileLibraryControllerFocus(
@@ -1225,7 +1220,7 @@ fun LibraryScreen(
                     }
                     LibraryControllerCommand.OpenActions -> {
                         val currentState = currentControllerState
-                        if (currentControllerDestination != LibraryDestination.Apps ||
+                        if (currentControllerDestination != LibraryDestinationKey.Apps ||
                             currentState.apps.isEmpty() || currentControllerSelectionActive
                         ) return@collect
                         val focus = reconcileLibraryControllerFocus(
@@ -1257,12 +1252,12 @@ fun LibraryScreen(
                                 searchQuery = ""
                             }
                         }
-                        currentControllerDestination == LibraryDestination.Apps &&
+                        currentControllerDestination == LibraryDestinationKey.Apps &&
                             currentNavigationState.collectionManageApps -> {
                             collectionsHost?.collectionsStore()?.dismissPicker()
                             navigationState = currentNavigationState.copy(collectionManageApps = false)
                         }
-                        currentControllerDestination == LibraryDestination.Apps &&
+                        currentControllerDestination == LibraryDestinationKey.Apps &&
                             currentNavigationState.selectedCollectionId != null -> {
                             navigationState = currentNavigationState.copy(
                                 selectedCollectionId = null,
@@ -1272,8 +1267,8 @@ fun LibraryScreen(
                             )
                             collectionsHost?.onDismissCollectionMembers()
                         }
-                        currentControllerDestination != LibraryDestination.Apps ->
-                            selectDestination(LibraryDestination.Apps)
+                        currentControllerDestination != LibraryDestinationKey.Apps ->
+                            selectDestination(LibraryDestinationKey.Apps)
                         else -> Unit
                     }
                     LibraryControllerCommand.NextTab,
@@ -1293,7 +1288,7 @@ fun LibraryScreen(
         searchOpen = false
         searchQuery = ""
     }
-    BackHandler(enabled = destination == LibraryDestination.Apps &&
+    BackHandler(enabled = destination == LibraryDestinationKey.Apps &&
         activeCollectionId != null && !selectionActiveHere && !searchOpen &&
         !collectionManageAppsActive) {
         navigationState = navigationState.copy(
@@ -1302,21 +1297,21 @@ fun LibraryScreen(
         )
         collectionsHost?.onDismissCollectionMembers()
     }
-    BackHandler(enabled = destination != LibraryDestination.Apps) {
-        selectDestination(LibraryDestination.Apps)
+    BackHandler(enabled = destination != LibraryDestinationKey.Apps) {
+        selectDestination(LibraryDestinationKey.Apps)
     }
     LaunchedEffect(destination, activeCollectionId, state.libraryScope) {
         when (destination) {
-            LibraryDestination.Apps -> {
+            LibraryDestinationKey.Apps -> {
                 if (activeCollectionId == null) appsViewport.chromeVisible = true
                 else collectionViewport.chromeVisible = true
             }
-            LibraryDestination.Collections -> {
+            LibraryDestinationKey.Collections -> {
                 collectionsViewport.chromeVisible = true
                 collectionViewport.chromeVisible = true
             }
         }
-        if (destination != LibraryDestination.Apps) {
+        if (destination != LibraryDestinationKey.Apps) {
             appActions = null
             appActionsCollectionId = null
         }
@@ -1358,10 +1353,10 @@ fun LibraryScreen(
     LaunchedEffect(libraryModalVisible, selectionActiveHere, searchOpen, destination) {
         onControllerBackAvailabilityChanged(
             libraryModalVisible || selectionActiveHere || searchOpen ||
-                activeCollectionId != null || destination != LibraryDestination.Apps,
+                activeCollectionId != null || destination != LibraryDestinationKey.Apps,
         )
     }
-    val updateDialogReady = hostResumed && destination == LibraryDestination.Apps &&
+    val updateDialogReady = hostResumed && destination == LibraryDestinationKey.Apps &&
         state.databaseControlsReady && !isImeVisible &&
         hostActivity?.isHostDialogVisible() == false && !fragmentDialogVisible &&
         !collectionDialogVisible && !installSourceMenuVisible &&
@@ -1439,7 +1434,7 @@ fun LibraryScreen(
             floatingActionButton = {
                 if (
                     !imeHidesLibraryChrome &&
-                    destination == LibraryDestination.Apps &&
+                    destination == LibraryDestinationKey.Apps &&
                     !selectionActiveHere && !searchOpen && !collectionManageAppsActive
                 ) {
                     AnimatedVisibility(
@@ -1565,15 +1560,15 @@ fun LibraryScreen(
                 targetState = destination,
                 modifier = Modifier.fillMaxSize(),
                 transitionSpec = {
-                    val direction = if (targetState == LibraryDestination.Apps) -1 else 1
+                    val direction = if (targetState == LibraryDestinationKey.Apps) -1 else 1
                     pageEnter(direction, travelPx) togetherWith pageExit(direction, travelPx)
                 },
                 label = "Library context",
             ) { displayedDestination ->
                 when (displayedDestination) {
-                        LibraryDestination.Apps -> LibraryAppsDestination(
+                        LibraryDestinationKey.Apps -> LibraryAppsDestination(
                             state = displayedState,
-                            scaffoldPadding = if (selectionActiveHere && destination == LibraryDestination.Apps) {
+                            scaffoldPadding = if (selectionActiveHere && destination == LibraryDestinationKey.Apps) {
                                 padding
                             } else {
                                 viewportPadding()
@@ -1695,7 +1690,7 @@ fun LibraryScreen(
                             onOpenSearch = { searchOpen = true },
                             onOpenNotifications = { notificationsPageVisible = true },
                             onOpenGlobalSettings = actions::onOpenSettings,
-                            searchActive = searchOpen && destination == LibraryDestination.Apps,
+                            searchActive = searchOpen && destination == LibraryDestinationKey.Apps,
                             searchQuery = searchQuery,
                             onSearchQueryChange = { searchQuery = it },
                             onCloseSearch = {
@@ -1714,18 +1709,18 @@ fun LibraryScreen(
                                 collectionsHost == null || collectionDialogState?.allAppsPrepared == true,
                             resolveUiId = actions::resolveAppUiId,
                             controllerEvents = controllerEvents,
-                            active = destination == LibraryDestination.Apps &&
+                            active = destination == LibraryDestinationKey.Apps &&
                                 !collectionManageAppsActive,
                         )
-                        LibraryDestination.Collections -> if (collectionsHost != null) {
+                        LibraryDestinationKey.Collections -> if (collectionsHost != null) {
                             LibraryCollectionsManagementDestination(
                                 host = collectionsHost,
                                 libraryState = state,
                                 scaffoldPadding = viewportPadding(),
                                 viewportState = collectionsViewport,
                                 selectedCollectionId = activeCollectionId,
-                                active = destination == LibraryDestination.Collections,
-                                onBack = { selectDestination(LibraryDestination.Apps) },
+                                active = destination == LibraryDestinationKey.Collections,
+                                onBack = { selectDestination(LibraryDestinationKey.Apps) },
                                 onOpenCollection = { collectionId ->
                                     selectionState = selectionState.clear()
                                     navigationState = navigationState.copy(

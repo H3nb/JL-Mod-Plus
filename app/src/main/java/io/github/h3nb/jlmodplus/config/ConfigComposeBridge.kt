@@ -1648,7 +1648,7 @@ internal fun CustomResolutionDialog(
                         modifier = Modifier.weight(1f),
                     )
                 }
-                SwitchRow(
+                ConfigSwitchPreference(
                     title = stringResource(R.string.config_lock_custom_resolution_ratio),
                     description = stringResource(R.string.config_help_lock_custom_resolution_ratio),
                     checked = lockAspect,
@@ -2290,20 +2290,5 @@ private fun ConfigActionConfirmationDialog(
                 Text(stringResource(actionTitle))
             }
         },
-    )
-}
-
-@Composable
-private fun SwitchRow(
-    title: String,
-    description: String,
-    checked: Boolean,
-    onCheckedChange: (Boolean) -> Unit,
-) {
-    ConfigSwitchPreference(
-        title = title,
-        description = description,
-        checked = checked,
-        onCheckedChange = onCheckedChange,
     )
 }
