@@ -85,6 +85,7 @@ import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.text.style.TextOverflow
 import androidx.compose.ui.unit.dp
 import kotlin.math.abs
+import kotlinx.coroutines.flow.Flow
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.StateFlow
 import kotlinx.coroutines.flow.asStateFlow
@@ -913,9 +914,27 @@ private fun LibraryCollectionsOverview(
 
 /** Collection dialogs live at LibraryScreen scope so Add-to-Collection works from any app browser. */
 @Composable
-internal fun LibraryCollectionsDialogHost(host: LibraryCollectionsHost) {
+internal fun LibraryCollectionsDialogHost(
+    host: LibraryCollectionsHost,
+    controllerEvents: Flow<LibraryControllerEvent>? = null,
+) {
     val state by host.collectionsStore().state.collectAsState()
     var createForAdd by rememberSaveable { mutableStateOf(false) }
+    val dialogVisible = state.addTarget != null || state.bulkAddTargetAppIds != null
+    val currentDialogVisible by rememberUpdatedState(dialogVisible)
+    val currentCreateForAdd by rememberUpdatedState(createForAdd)
+
+    LaunchedEffect(state.addTarget?.requestId) {
+        if (state.addTarget == null) createForAdd = false
+    }
+    LaunchedEffect(controllerEvents) {
+        controllerEvents?.collect { event ->
+            if (event.command == LibraryControllerCommand.Back && currentDialogVisible) {
+                if (currentCreateForAdd) createForAdd = false
+                else host.onDismissAddToCollection()
+            }
+        }
+    }
 
     state.addTarget?.takeUnless { createForAdd }?.let { target ->
         AddToCollectionDialog(

@@ -484,10 +484,12 @@ fun LibraryScreen(
     val currentControllerUpdatePrompt by rememberUpdatedState(updatePrompt)
     val currentControllerBulkDeleteIds by rememberUpdatedState(pendingBulkDeleteIds)
     val currentControllerSelectionActive by rememberUpdatedState(selectionActiveHere)
+    val currentControllerCollectionDialogVisible by rememberUpdatedState(collectionDialogVisible)
+    val currentControllerInstallMenuVisible by rememberUpdatedState(installSourceMenuVisible)
     val currentControllerOtherModalVisible by rememberUpdatedState(
         renameTarget != null || metadataTarget != null || detailsTarget != null ||
             deleteTarget != null || pendingBulkDeleteIds != null ||
-            auxiliaryPageOnScreen ||
+            auxiliaryPageOnScreen || collectionDialogVisible || installSourceMenuVisible ||
             updatePrompt != null || searchOpen,
     )
     val currentControllerSearchOpen by rememberUpdatedState(searchOpen)
@@ -788,6 +790,8 @@ fun LibraryScreen(
                             sessionDismissedUpdate = updateRepository?.candidateKey(currentControllerUpdatePrompt!!)
                             updatePrompt = null
                         }
+                        currentControllerCollectionDialogVisible -> Unit
+                        currentControllerInstallMenuVisible -> installSourceMenuVisible = false
                         currentControllerRenameTarget != null -> renameTarget = null
                         currentControllerMetadataTarget != null -> metadataBackRequest++
                         currentControllerDetailsTarget != null -> detailsTarget = null
@@ -895,7 +899,7 @@ fun LibraryScreen(
         || deleteTarget != null || pendingBulkDeleteIds != null
         || auxiliaryPageOnScreen
     val libraryModalVisible = libraryOverlayVisible || updatePrompt != null ||
-        collectionManageAppsActive
+        collectionDialogVisible || installSourceMenuVisible || collectionManageAppsActive
     LaunchedEffect(libraryModalVisible, selectionActiveHere, searchOpen, destination) {
         onControllerBackAvailabilityChanged(
             libraryModalVisible || selectionActiveHere || searchOpen ||
@@ -1555,7 +1559,7 @@ fun LibraryScreen(
             },
         )
     }
-    collectionsHost?.let { LibraryCollectionsDialogHost(it) }
+    collectionsHost?.let { LibraryCollectionsDialogHost(it, controllerEvents) }
     updatePrompt?.let { candidate ->
         val repository = updateRepository
         if (repository != null) {

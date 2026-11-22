@@ -15,6 +15,7 @@
 package io.github.h3nb.jlmodplus.applist
 
 import androidx.compose.runtime.mutableStateOf
+import kotlinx.coroutines.flow.MutableSharedFlow
 import androidx.compose.ui.geometry.Offset
 import androidx.compose.ui.test.DeviceConfigurationOverride
 import androidx.compose.ui.test.ExperimentalTestApi
@@ -348,6 +349,47 @@ class LibraryCollectionsNavigationTest {
         assertNull(store.state.value.addTarget?.memberCollectionIds)
         store.publishTargetMemberships(SAMPLE_MEMBER.id, current, emptySet())
         assertEquals(emptySet<Long>(), store.state.value.addTarget?.memberCollectionIds)
+    }
+
+    @Test
+    fun collectionDialogConsumesControllerActionsAndBackBeforeLibrary() {
+        val host = RecordingCollectionsHost()
+        val events = MutableSharedFlow<LibraryControllerEvent>(extraBufferCapacity = 8)
+        val request = host.store.showAddTarget(SAMPLE_MEMBER.id, MEMBER_TITLE)
+        host.store.publishTargetMemberships(SAMPLE_MEMBER.id, request, emptySet())
+        val app = SAMPLE_MEMBER
+        composeRule.setContent {
+            JLModPlusTheme {
+                LibraryScreen(
+                    state = sampleLibraryState().copy(
+                        apps = listOf(app),
+                        availableAppIds = setOf(app.databaseId),
+                        projectedAppIds = listOf(app.databaseId),
+                    ),
+                    actions = host,
+                    controllerEvents = events,
+                )
+            }
+        }
+        composeRule.onNodeWithText(uiString(R.string.library_destination_collections))
+            .assertIsDisplayed()
+        composeRule.waitUntil(timeoutMillis = 5_000) {
+            events.subscriptionCount.value >= 2
+        }
+        composeRule.runOnIdle {
+            assertTrue(events.tryEmit(LibraryControllerEvent(1L, LibraryControllerCommand.Activate)))
+        }
+        composeRule.waitForIdle()
+        assertEquals(0, host.openedAppCount)
+        assertTrue(host.store.state.value.addTarget != null)
+
+        composeRule.runOnIdle {
+            assertTrue(events.tryEmit(LibraryControllerEvent(2L, LibraryControllerCommand.Back)))
+        }
+        composeRule.waitUntil(timeoutMillis = 5_000) {
+            host.store.state.value.addTarget == null
+        }
+        assertEquals(0, host.openedAppCount)
     }
 
     @Test
@@ -833,6 +875,7 @@ class LibraryCollectionsNavigationTest {
         var pickerApps: List<LibraryAppUiItem> = listOf(SAMPLE_MEMBER, SAMPLE_MEMBER_2)
         private var pendingMembershipResult: CollectionMembershipResultCallback? = null
         var loadMembersOnOpen = true
+        var openedAppCount = 0
 
         override fun collectionsStore(): LibraryCollectionsUiStore = store
 
@@ -883,7 +926,7 @@ class LibraryCollectionsNavigationTest {
             store.publishAllApps(pickerApps)
         }
         override fun onRequestAddToCollection(appId: Int) = Unit
-        override fun onDismissAddToCollection() = Unit
+        override fun onDismissAddToCollection() = store.dismissAddTarget()
         override fun onAddAppToCollection(appId: Int, collectionId: Long) = Unit
         override fun onSetCollectionMembership(
             appId: Int,
@@ -931,7 +974,7 @@ class LibraryCollectionsNavigationTest {
         override fun onLayoutChange(layout: LibraryLayout) = Unit
         override fun onSort(sortIndex: Int) = Unit
         override fun onInstall() = Unit
-        override fun onOpenApp(appId: Int) = Unit
+        override fun onOpenApp(appId: Int) { openedAppCount++ }
         override fun onAddShortcut(appId: Int) = Unit
         override fun onRename(appId: Int, title: String) = Unit
         override fun onOpenAppSettings(appId: Int) = Unit
