@@ -13,9 +13,7 @@
  */
 package javax.microedition.lcdui.overlay;
 
-import static io.github.h3nb.jlmodplus.config.PerformanceOverlayOptions.ALL;
 import static org.junit.Assert.assertEquals;
-import static org.junit.Assert.assertFalse;
 import static org.junit.Assert.assertTrue;
 
 import android.content.Context;
@@ -31,11 +29,6 @@ import androidx.test.platform.app.InstrumentationRegistry;
 import org.junit.Test;
 import org.junit.runner.RunWith;
 
-import java.io.File;
-import java.io.FileOutputStream;
-import java.util.ArrayList;
-import java.util.Arrays;
-import java.util.List;
 
 import javax.microedition.lcdui.graphics.CanvasWrapper;
 
@@ -76,7 +69,7 @@ public class PerformanceOverlayRenderingTest {
 	@Test
 	public void diagnosticFontIsRegularWithOnlyAnOffsetShadow() {
 		CanvasWrapper graphics = new CanvasWrapper(false);
-		String text = "FPS 30 | GFPS 30 | CAP 60";
+		String text = "FPS 30";
 		Bitmap actual = Bitmap.createBitmap(600, 120, Bitmap.Config.ARGB_8888);
 		Bitmap expected = Bitmap.createBitmap(600, 120, Bitmap.Config.ARGB_8888);
 		graphics.bind(new android.graphics.Canvas(actual));
@@ -107,9 +100,9 @@ public class PerformanceOverlayRenderingTest {
 		graphics.bind(new android.graphics.Canvas(actual));
 		expectedGraphics.bind(new android.graphics.Canvas(expected));
 
-		graphics.measureDiagnosticText("FPS 30 | GFPS 30 | CAP 60 | SPD 1.00x");
+		graphics.measureDiagnosticText("FPS 30");
 		graphics.getDiagnosticTextHeight();
-		graphics.drawDiagnosticText("FPS 30 | CAP 60", Color.WHITE, 10, 10);
+		graphics.drawDiagnosticText("FPS 30", Color.WHITE, 10, 10);
 		assertEquals(width, graphics.measureStringWidth("Ordinary controls"), 0.01f);
 		assertEquals(height, graphics.getTextHeight(), 0.01f);
 		graphics.clear(Color.TRANSPARENT);
@@ -120,78 +113,6 @@ public class PerformanceOverlayRenderingTest {
 		assertTrue("Ordinary font, color, alignment and baseline must be unchanged", actual.sameAs(expected));
 		actual.recycle();
 		expected.recycle();
-	}
-
-	@Test
-	public void allMetricsWrapAtNativeFontSizeAndRenderPreview() throws Exception {
-		Context context = targetContext();
-		CanvasWrapper graphics = new CanvasWrapper(false);
-		String[][] groups = PerformanceOverlayText.format(ALL, exampleValues());
-		List<String> originalCells = new ArrayList<>();
-		for (String[] group : groups) originalCells.addAll(Arrays.asList(group));
-		assertEquals(23, Integer.bitCount(ALL));
-		// FPS, GFPS and CAP are independent measurement cells.
-		assertEquals(23, originalCells.size());
-		assertEquals("FPS 46", originalCells.get(0));
-		List<String> labels = new ArrayList<>();
-		for (String cell : originalCells) labels.add(cell.substring(0, cell.indexOf(' ')));
-		assertEquals(Arrays.asList("FPS", "GFPS", "CAP", "SPD", "GFI", "GP95", "GMAX",
-				"RFI", "RP95", "RMAX", "PAINT", "COPY", "SUB", "INQ", "FRQ",
-				"COAL", "CPU", "RAM", "JAVA", "NATIVE", "REN", "DISP", "THRM"), labels);
-
-		float margin = 12 * density();
-		int panelWidth = (int) Math.ceil(360 * density());
-		float availableWidth = panelWidth - margin * 2;
-		String[] rows = PerformanceOverlayText.wrap(groups, availableWidth, graphics::measureDiagnosticText);
-		List<String> wrappedCells = new ArrayList<>();
-		for (String row : rows) {
-			assertTrue("Native font row exceeds the available width: " + row,
-					graphics.measureDiagnosticText(row) <= availableWidth + 0.01f);
-			assertFalse(row.startsWith("|") || row.endsWith("|"));
-			wrappedCells.addAll(Arrays.asList(row.split(" \\| ")));
-		}
-		assertEquals("Wrapping must preserve every complete metric cell in order", originalCells, wrappedCells);
-
-		float lineHeight = graphics.getDiagnosticTextHeight() + 2 * density();
-		int panelHeight = (int) Math.ceil(margin * 2 + (rows.length + 2) * lineHeight);
-		Bitmap preview = Bitmap.createBitmap(panelWidth * 3, panelHeight, Bitmap.Config.ARGB_8888);
-		android.graphics.Canvas canvas = new android.graphics.Canvas(preview);
-		graphics.bind(canvas);
-		Paint background = new Paint();
-		int foreground = ContextCompat.getColor(context, R.color.fps_overlay_content);
-		assertEquals("Diagnostic overlay uses white text", Color.WHITE, foreground);
-		assertEquals("Diagnostic shadow has 80% black opacity", 0xCC000000,
-				ContextCompat.getColor(context, R.color.fps_overlay_shadow));
-		String[] titles = {"DARK | ALL METRICS", "BRIGHT | ALL METRICS", "CONTRAST | ALL METRICS"};
-		for (int panel = 0; panel < 3; panel++) {
-			float left = panel * panelWidth;
-			background.setColor(panel == 0 ? 0xFF171A20 : 0xFFF5F5F5);
-			canvas.drawRect(left, 0, left + panelWidth, panelHeight, background);
-			if (panel == 2) {
-				int tile = Math.max(1, Math.round(24 * density()));
-				for (int y = 0; y < panelHeight; y += tile) {
-					for (int x = 0; x < panelWidth; x += tile) {
-						background.setColor(((x / tile + y / tile) & 1) == 0 ? 0xFFB5D8E8 : 0xFF23373E);
-						canvas.drawRect(left + x, y, left + Math.min(x + tile, panelWidth),
-								Math.min(y + tile, panelHeight), background);
-					}
-				}
-			}
-			graphics.drawDiagnosticText(titles[panel], foreground, left + margin, margin);
-			for (int i = 0; i < rows.length; i++) {
-				float rowLeft = DiagnosticOverlayLayout.rowLeft(left + margin,
-						left + panelWidth - margin, graphics.measureDiagnosticText(rows[i]),
-						panel != 0, 0, 1, availableWidth);
-				graphics.drawDiagnosticText(rows[i], foreground, rowLeft,
-						margin + (i + 2) * lineHeight);
-			}
-		}
-		File output = new File(context.getCacheDir(), "perf-overlay-preview.png");
-		try (FileOutputStream stream = new FileOutputStream(output)) {
-			assertTrue(preview.compress(Bitmap.CompressFormat.PNG, 100, stream));
-		}
-		assertTrue("Native render preview must exist", output.length() > 0);
-		preview.recycle();
 	}
 
 	private static CanvasWrapper ordinaryGraphics() {
@@ -210,31 +131,5 @@ public class PerformanceOverlayRenderingTest {
 		return targetContext().getResources().getDisplayMetrics().density;
 	}
 
-	private static PerformanceOverlayText.Values exampleValues() {
-		PerformanceOverlayText.Values v = new PerformanceOverlayText.Values();
-		v.fps = 46;
-		v.cap = 60;
-		v.guestFps = 45;
-		v.renderInterval = 22.1;
-		v.renderP95 = 32.3;
-		v.renderMaximum = 72.0;
-		v.speedPercent = 100;
-		v.interval = 21.7;
-		v.p95 = 30.2;
-		v.maximum = 68.4;
-		v.displayHz = 120;
-		v.paint = 2.4;
-		v.copy = 0.3;
-		v.submit = 1.1;
-		v.inputQueue = 1.8;
-		v.frameQueue = 3.2;
-		v.coalesced = 1;
-		v.cpu = 82;
-		v.ram = 146;
-		v.javaHeap = 38;
-		v.nativeHeap = 24;
-		v.thermal = 0;
-		v.renderer = "GLES";
-		return v;
-	}
+
 }

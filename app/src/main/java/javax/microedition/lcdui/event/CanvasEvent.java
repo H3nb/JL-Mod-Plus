@@ -21,7 +21,6 @@ package javax.microedition.lcdui.event;
 import android.util.Log;
 
 import javax.microedition.lcdui.Canvas;
-import javax.microedition.shell.timing.PerformanceDiagnostics;
 import javax.microedition.util.ArrayStack;
 
 public class CanvasEvent extends Event {
@@ -47,8 +46,6 @@ public class CanvasEvent extends Event {
 	private int pointer, x, y;
 
 	private int width, height;
-	private long queuedAtNanos;
-	private long queuedGeneration;
 	private long dispatchGeneration;
 
 	private CanvasEvent() {}
@@ -85,8 +82,6 @@ public class CanvasEvent extends Event {
 		}
 		instance.canvas = canvas;
 		instance.eventType = eventType;
-		instance.queuedAtNanos = 0L;
-		instance.queuedGeneration = 0L;
 		instance.dispatchGeneration = 0L;
 		instance.asGuestCallback();
 		return instance;
@@ -94,14 +89,6 @@ public class CanvasEvent extends Event {
 
 	@Override
 	public void process() {
-		if (queuedAtNanos != 0L && queuedGeneration == canvas.getPerformanceGeneration()) {
-			PerformanceDiagnostics diagnostics = canvas.getPerformanceDiagnostics();
-			if (diagnostics != null && diagnostics.enabled(PerformanceDiagnostics.INPUT_QUEUE)) {
-				diagnostics.recordDuration(PerformanceDiagnostics.INPUT_QUEUE,
-						queuedAtNanos, System.nanoTime());
-			}
-		}
-		queuedAtNanos = 0L;
 		// Input from a previous visibility interval must not leak after hide/return.
 		if (eventType >= KEY_PRESSED && eventType <= POINTER_RELEASED
 				&& (!canvas.isShown() || dispatchGeneration != canvas.getPerformanceGeneration())) {
@@ -177,8 +164,6 @@ public class CanvasEvent extends Event {
 	@Override
 	protected void recycleEvent() {
 		canvas = null;
-		queuedAtNanos = 0L;
-		queuedGeneration = 0L;
 		dispatchGeneration = 0L;
 		recycled.push(this);
 	}
@@ -187,11 +172,6 @@ public class CanvasEvent extends Event {
 	public void enterQueue() {
 		if (eventType >= KEY_PRESSED && eventType <= POINTER_RELEASED) {
 			dispatchGeneration = canvas.getPerformanceGeneration();
-			PerformanceDiagnostics diagnostics = canvas.getPerformanceDiagnostics();
-			if (diagnostics != null && diagnostics.enabled(PerformanceDiagnostics.INPUT_QUEUE)) {
-				queuedGeneration = canvas.getPerformanceGeneration();
-				queuedAtNanos = System.nanoTime();
-			}
 		}
 	}
 

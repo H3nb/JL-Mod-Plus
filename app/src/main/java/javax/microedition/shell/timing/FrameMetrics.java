@@ -14,71 +14,28 @@
 
 package javax.microedition.shell.timing;
 
-import java.util.concurrent.atomic.AtomicLong;
-
 /**
- * Optional frame-traffic counters for one Canvas surface generation.
- *
- * <p>{@link PresentationMailbox} owns the publication sequence. A game frame is counted only
- * after a complete guest buffer publication. A render frame is counted only when a renderer
- * consumes a newer mailbox sequence, so repeated host redraws do not inflate renderer FPS.</p>
+ * Optional count of distinct guest mailbox sequences consumed by the host renderer.
+ * PresentationMailbox owns the sequence; this counter never modifies pacing.
  */
 public final class FrameMetrics {
 	private long lastRenderedSequence;
-	private final AtomicLong gameFrames = new AtomicLong();
-	private final AtomicLong renderFrames = new AtomicLong();
-	private final AtomicLong coalescedFrames = new AtomicLong();
+	private volatile long renderedFrames;
 
-	/** Records one complete guest publication. Sequence ownership remains with the mailbox. */
-	public void recordGameFrame() {
-		incrementSaturated(gameFrames);
-	}
-
-	/**
-	 * Records consumption of a canonical mailbox sequence. Repeated and stale consumption is
-	 * ignored. Serialized with abandonment so a pre-resume callback cannot enter a new window.
-	 */
 	public synchronized void recordRender(long mailboxSequence) {
-		if (mailboxSequence <= 0L || mailboxSequence <= lastRenderedSequence) {
-			return;
-		}
-		long skipped = mailboxSequence - lastRenderedSequence - 1L;
+		if (mailboxSequence <= 0L || mailboxSequence <= lastRenderedSequence) return;
 		lastRenderedSequence = mailboxSequence;
-		if (skipped > 0L) {
-			addSaturated(coalescedFrames, skipped);
-		}
-		incrementSaturated(renderFrames);
+		if (renderedFrames != Long.MAX_VALUE) renderedFrames++;
 	}
 
-	/**
-	 * Marks every publication up to the supplied canonical mailbox boundary as already accounted
-	 * for without changing lifetime counters.
-	 */
+	/** Discard frames pending before the current visibility window. */
 	public synchronized void abandonPendingFrames(long mailboxBoundary) {
 		if (mailboxBoundary > lastRenderedSequence) {
 			lastRenderedSequence = mailboxBoundary;
 		}
 	}
 
-	/** Returns lifetime totals for this surface generation. */
-	public FrameMetricsSnapshot snapshot() {
-		return new FrameMetricsSnapshot(
-				gameFrames.get(),
-				renderFrames.get(),
-				coalescedFrames.get());
-	}
-
-	private static void incrementSaturated(AtomicLong counter) {
-		addSaturated(counter, 1L);
-	}
-
-	private static void addSaturated(AtomicLong counter, long increment) {
-		long current;
-		long updated;
-		do {
-			current = counter.get();
-			updated = increment > Long.MAX_VALUE - current
-					? Long.MAX_VALUE : current + increment;
-		} while (!counter.compareAndSet(current, updated));
+	public long renderedFrames() {
+		return renderedFrames;
 	}
 }
