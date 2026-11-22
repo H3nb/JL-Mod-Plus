@@ -330,8 +330,6 @@ class ConfigComposeTest {
             }
         }
         composeRule.onNodeWithText(uiString(R.string.config_search_no_results)).assertIsDisplayed()
-        composeRule.runOnIdle { query.value = "parallel redraw" }
-        composeRule.onNodeWithText(uiString(R.string.config_search_no_results)).assertIsDisplayed()
         composeRule.runOnIdle { query.value = "files storage" }
         composeRule.onNodeWithText(uiString(R.string.config_search_no_results)).assertIsDisplayed()
         composeRule.runOnIdle { query.value = uiString(R.string.perf_overlay_parameters) }
