@@ -279,6 +279,33 @@ class ConfigComposeTest {
     }
 
     @Test
+    fun mmpxSearchAtOneXExplainsAndRevealsRequiredInternalResolution() {
+        val base = sampleState()
+        val state = ConfigUiState(
+            base.form.toBuilder().internalResolutionScale(1).build(),
+            base.screenPresets,
+            base.fontPresets,
+            base.skins,
+            base.soundBanks,
+            base.shaders,
+            base.removableScreenPresets,
+        )
+        composeRule.setContent {
+            JLModPlusTheme { ConfigScreen(state, RecordingConfigEvents()) }
+        }
+        composeRule.onNodeWithContentDescription(uiString(R.string.config_search_title)).performClick()
+        composeRule.onNode(hasSetTextAction()).performTextInput("MMPX")
+        composeRule.onNodeWithText(uiString(R.string.bitmap_upscaling_title)).assertIsDisplayed()
+        composeRule.onNodeWithText(uiString(R.string.bitmap_upscaling_mmpx)).assertIsDisplayed()
+        composeRule.onNodeWithText(uiString(R.string.config_search_upscaling_requires_resolution))
+            .assertIsDisplayed()
+
+        composeRule.onNodeWithText(uiString(R.string.bitmap_upscaling_title)).performClick()
+        composeRule.waitForIdle()
+        composeRule.onNodeWithText(uiString(R.string.internal_resolution_title)).assertIsDisplayed()
+    }
+
+    @Test
     fun searchExcludesOptionsHiddenByProfileAndRendererConditions() {
         val base = sampleState()
         val state = ConfigUiState(
@@ -291,7 +318,7 @@ class ConfigComposeTest {
             base.shaders,
             base.removableScreenPresets,
         )
-        val query = mutableStateOf("MMPX")
+        val query = mutableStateOf("shader GLSL effects")
         composeRule.setContent {
             JLModPlusTheme {
                 ConfigSearchResults(
@@ -303,7 +330,7 @@ class ConfigComposeTest {
             }
         }
         composeRule.onNodeWithText(uiString(R.string.config_search_no_results)).assertIsDisplayed()
-        composeRule.runOnIdle { query.value = "shader GLSL effects" }
+        composeRule.runOnIdle { query.value = "parallel redraw" }
         composeRule.onNodeWithText(uiString(R.string.config_search_no_results)).assertIsDisplayed()
         composeRule.runOnIdle { query.value = "files storage" }
         composeRule.onNodeWithText(uiString(R.string.config_search_no_results)).assertIsDisplayed()

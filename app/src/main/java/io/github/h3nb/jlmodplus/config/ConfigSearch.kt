@@ -16,6 +16,7 @@ package io.github.h3nb.jlmodplus.config
 
 import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.Arrangement
+import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.imePadding
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.lazy.LazyColumn
@@ -37,6 +38,7 @@ private data class ConfigSearchItem(
     val destination: ConfigDestination,
     val detail: ConfigDetail? = null,
     val keywords: String = "",
+    val optionLabels: List<Int> = emptyList(),
 )
 
 // A small index of existing options, not a second configuration model.
@@ -56,7 +58,14 @@ private val configSearchIndex = listOf(
     ConfigSearchItem(R.string.pref_skin_title, R.string.config_display_appearance, ConfigDestination.Display, keywords = "skin frame bezel"),
     ConfigSearchItem(R.string.pref_graphics_mode_title, R.string.config_display_rendering, ConfigDestination.Graphics, keywords = "renderer OpenGL ES"),
     ConfigSearchItem(R.string.internal_resolution_title, R.string.config_display_rendering, ConfigDestination.Graphics, keywords = "resolution scaling"),
-    ConfigSearchItem(R.string.bitmap_upscaling_title, R.string.config_display_rendering, ConfigDestination.Graphics, keywords = "MMPX nearest bilinear edge aware sprites"),
+    ConfigSearchItem(
+        R.string.bitmap_upscaling_title, R.string.config_display_rendering, ConfigDestination.Graphics,
+        keywords = "edge aware sprites",
+        optionLabels = listOf(
+            R.string.bitmap_upscaling_nearest, R.string.bitmap_upscaling_bilinear,
+            R.string.bitmap_upscaling_mmpx, R.string.bitmap_upscaling_edge_aware,
+        ),
+    ),
     ConfigSearchItem(R.string.render_shader_effects, R.string.config_display_rendering, ConfigDestination.Graphics, keywords = "shader GLSL effects"),
     ConfigSearchItem(R.string.render_texture_filtering, R.string.config_display_rendering, ConfigDestination.Graphics, keywords = "texture filtering"),
     ConfigSearchItem(R.string.parallel_screen_redrawing, R.string.config_display_rendering, ConfigDestination.Graphics),
@@ -114,6 +123,7 @@ internal fun ConfigSearchResults(
         R.string.pref_graphics_mode_title, R.string.PREF_VIRTUAL_KEYBOARD_OPTIONS,
         R.string.pref_map_keys, R.string.PREF_TIMING_MODE,
     )
+    val searchTerm = query.trim()
     val filtered = configSearchIndex.filter { entry ->
         if (isProfile && entry.destination == ConfigDestination.Basic &&
                 entry.title != R.string.config_reset_profile_settings) return@filter false
@@ -134,8 +144,6 @@ internal fun ConfigSearchResults(
                     mode != BackgroundMode.DYNAMIC_SOLID
                 ) return@filter false
             }
-            R.string.bitmap_upscaling_title ->
-                if (state.form.internalResolutionScale == 1) return@filter false
             R.string.render_shader_effects ->
                 if (state.form.graphicsMode != 1) return@filter false
             R.string.parallel_screen_redrawing ->
@@ -145,10 +153,11 @@ internal fun ConfigSearchResults(
             R.string.perf_overlay_position,
             -> if (!state.form.showFps) return@filter false
         }
-        if (query.isBlank()) entry.title in suggestions
-        else resources.getString(entry.title).contains(query.trim(), ignoreCase = true) ||
-            resources.getString(entry.section).contains(query.trim(), ignoreCase = true) ||
-            entry.keywords.contains(query.trim(), ignoreCase = true)
+        if (searchTerm.isEmpty()) entry.title in suggestions
+        else resources.getString(entry.title).contains(searchTerm, ignoreCase = true) ||
+            resources.getString(entry.section).contains(searchTerm, ignoreCase = true) ||
+            entry.keywords.contains(searchTerm, ignoreCase = true) ||
+            entry.optionLabels.any { resources.getString(it).contains(searchTerm, ignoreCase = true) }
     }
     LazyColumn(modifier = modifier.imePadding().padding(horizontal = 16.dp),
         verticalArrangement = Arrangement.spacedBy(2.dp)) {
@@ -168,18 +177,35 @@ internal fun ConfigSearchResults(
             }
         }
         itemsIndexed(filtered, key = { _, entry -> entry.title }) { _, entry ->
+            val requiresScaleChange = entry.title == R.string.bitmap_upscaling_title &&
+                state.form.internalResolutionScale == 1
+            val matchedOption = entry.optionLabels.firstOrNull {
+                searchTerm.isNotEmpty() && resources.getString(it).contains(searchTerm, ignoreCase = true)
+            }
             ListItem(
                 headlineContent = { Text(stringResource(entry.title)) },
                 supportingContent = {
-                    Text(stringResource(entry.destination.label) + " · " +
-                        stringResource(entry.section))
+                    Column(verticalArrangement = Arrangement.spacedBy(2.dp)) {
+                        Text(stringResource(entry.destination.label) + " · " +
+                            stringResource(entry.section))
+                        if (matchedOption != null) {
+                            Text(stringResource(matchedOption), style = MaterialTheme.typography.bodySmall)
+                        }
+                        if (requiresScaleChange) {
+                            Text(stringResource(R.string.config_search_upscaling_requires_resolution),
+                                style = MaterialTheme.typography.bodySmall)
+                        }
+                    }
                 },
                 modifier = Modifier.clickable {
                     onSelected(
                         entry.destination,
                         resources.getString(entry.section),
                         entry.detail,
-                        resources.getString(entry.title),
+                        resources.getString(
+                            if (requiresScaleChange) R.string.internal_resolution_title
+                            else entry.title
+                        ),
                     )
                 },
             )
