@@ -985,9 +985,6 @@
     <string name="runtime_replacement_failed">无法停止正在运行的 MIDlet。请重新尝试打开新的 MIDlet。</string>
     <string name="runtime_storage_in_use">MIDlet 存储已被另一个运行时占用。</string>
     <string name="runtime_storage_unavailable">无法准备 MIDlet 存储。</string>
-    <plurals name="perf_overlay_selected">
-        <item quantity="other">已选择 %d 个参数</item>
-    </plurals>
     <plurals name="crash_reports_batch_delete_title">
         <item quantity="other">删除 %1$d 份诊断报告？</item>
     </plurals>
