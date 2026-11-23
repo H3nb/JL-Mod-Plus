@@ -20,7 +20,7 @@ import static org.junit.jupiter.api.Assertions.assertTrue;
 
 import org.junit.jupiter.api.Test;
 
-public class PerformanceOverlaySettingsTest {
+public class FpsSettingsTest {
 	private final ProfileFixtures gson = new ProfileFixtures();
 
 	@Test

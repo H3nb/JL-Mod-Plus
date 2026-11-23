@@ -31,7 +31,7 @@ import org.junit.Test
 import org.junit.runner.RunWith
 
 @RunWith(AndroidJUnit4::class)
-class PerformanceOverlayOptionsComposeTest {
+class FrameRateSectionComposeTest {
     @get:Rule val composeRule = createComposeRule()
 
     private fun string(id: Int) =

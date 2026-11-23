@@ -29,16 +29,15 @@ import androidx.test.platform.app.InstrumentationRegistry;
 import org.junit.Test;
 import org.junit.runner.RunWith;
 
-
 import javax.microedition.lcdui.graphics.CanvasWrapper;
 
 import io.github.h3nb.jlmodplus.R;
 
 @RunWith(AndroidJUnit4.class)
-public class PerformanceOverlayRenderingTest {
+public class DiagnosticTextRenderingTest {
 
 	@Test
-	public void diagnosticTextPaintsOnlyGlyphsWithoutBackground() {
+	public void diagnosticTextPainterDoesNotFillBackground() {
 		CanvasWrapper graphics = new CanvasWrapper(false);
 		float margin = 12 * density();
 		String text = "H   H";
@@ -57,7 +56,7 @@ public class PerformanceOverlayRenderingTest {
 			}
 		}
 		assertTrue("The native renderer must paint glyphs", painted > 0);
-		assertTrue("No rectangular text background may be painted", painted < pixels.length / 2);
+		assertTrue("Diagnostic glyph painter must not fill a background", painted < pixels.length / 2);
 		int gap = Math.round(margin + graphics.measureDiagnosticText("H  "));
 		for (int y = 0; y < height; y++) {
 			assertEquals("Space between glyphs must stay transparent", 0, bitmap.getPixel(gap, y));
@@ -130,6 +129,5 @@ public class PerformanceOverlayRenderingTest {
 	private static float density() {
 		return targetContext().getResources().getDisplayMetrics().density;
 	}
-
 
 }
