@@ -225,7 +225,6 @@
     <string name="updates_available">යාවත්කාලීනයක් ඇත</string>
     <string name="updates_browser_unavailable">නිකුතුව විවෘත කිරීමට බ්‍රවුසරයක් නොමැත.</string>
     <string name="updates_build_code">බිල්ඩ් %1$d</string>
-    <string name="updates_channel">යාවත්කාලීන නාලිකාව</string>
     <string name="updates_check">යාවත්කාලීන සඳහා පරීක්ෂා කරන්න</string>
     <string name="updates_checking">යාවත්කාලීන සඳහා පරීක්ෂා කරමින්…</string>
     <string name="updates_current">ඔබ සතුව නවතම අනුවාදය ඇත.</string>
@@ -236,12 +235,10 @@
     <string name="updates_link_copied">බ්‍රවුසරයක් නොමැත. නිකුතු සබැඳිය පිටපත් කර ඇත.</string>
     <string name="updates_more_available">වඩා අලුත් අනුවාදයක් ඇත.</string>
     <string name="updates_more_summary">JL-Mod Plus හි නව අනුවාද සඳහා පරීක්ෂා කරන්න.</string>
-    <string name="updates_no_release">මෙම නාලිකාවේ ගැළපෙන ප්‍රකාශිත නිකුතුවක් නොමැත.</string>
+    <string name="updates_no_release">ගැළපෙන ප්‍රකාශිත නිකුතුවක් නොමැත.</string>
     <string name="updates_not_checked">තවම යාවත්කාලීන පරීක්ෂාවක් සම්පූර්ණ කර නැත.</string>
     <string name="updates_not_installable">වඩා අලුත් නිකුතුවක් ඇතත්, එහි බිල්ඩ් අංකයෙන් මෙම ස්ථාපනය යාවත්කාලීන කළ නොහැක.</string>
     <string name="updates_notice">JL-Mod Plus %1$s ලබා ගත හැක. “තව” යටතේ “යාවත්කාලීන” බලන්න.</string>
-    <string name="updates_preview">පෙරදසුන</string>
-    <string name="updates_stable">ස්ථාවර</string>
     <string name="updates_title">යාවත්කාලීන</string>
     <string name="updates_view_release">නිකුතුව බලන්න</string>
     <plurals name="file_picker_selected_count">

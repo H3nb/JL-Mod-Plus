@@ -35,13 +35,6 @@ internal class UpdateRepository private constructor(context: Context) {
         PreferenceManager.getDefaultSharedPreferences(context.applicationContext)
     private val mutex = Mutex()
 
-    var channel by mutableStateOf(
-        preferences.getString(KEY_CHANNEL, null)?.let { value ->
-            UpdateChannel.entries.firstOrNull { it.name == value }
-        } ?: if ('-' in BuildConfig.VERSION_NAME) UpdateChannel.Preview else UpdateChannel.Stable
-    )
-        private set
-
     var automaticChecks by mutableStateOf(preferences.getBoolean(KEY_ENABLED, true))
         private set
 
@@ -57,29 +50,19 @@ internal class UpdateRepository private constructor(context: Context) {
 
     init {
         val identity = BuildConfig.VERSION_NAME + "#" + BuildConfig.VERSION_CODE
-        if (preferences.getString(KEY_INSTALLED, null) != identity) {
+        val legacyChannelKey = "jlmod_updates_channel"
+        if (preferences.getString(KEY_INSTALLED, null) != identity ||
+            preferences.contains(legacyChannelKey)) {
             preferences.edit {
                 putString(KEY_INSTALLED, identity)
+                remove(legacyChannelKey)
                 remove(KEY_SUCCESS).remove(KEY_ATTEMPT).remove(KEY_RESULT)
-                remove(KEY_VERSION).remove(KEY_CODE).remove(KEY_URL)
-                remove(KEY_HANDLED + "_Stable").remove(KEY_HANDLED + "_Preview")
+                remove(KEY_VERSION).remove(KEY_CODE).remove(KEY_URL).remove(KEY_DOWNLOAD_URL)
+                remove(KEY_HANDLED).remove(KEY_HANDLED + "_Stable").remove(KEY_HANDLED + "_Preview")
             }
             lastChecked = 0L
             status = UpdateStatus.NotChecked
         }
-    }
-
-    fun selectChannel(value: UpdateChannel) {
-        if (channel == value) return
-        channel = value
-        preferences.edit {
-            putString(KEY_CHANNEL, value.name)
-            remove(KEY_SUCCESS).remove(KEY_ATTEMPT).remove(KEY_RESULT)
-            remove(KEY_VERSION).remove(KEY_CODE).remove(KEY_URL)
-        }
-        lastChecked = 0L
-        status = UpdateStatus.NotChecked
-        refreshFailed = false
     }
 
     fun configureAutomaticChecks(enabled: Boolean) {
@@ -88,15 +71,13 @@ internal class UpdateRepository private constructor(context: Context) {
     }
 
     fun candidateKey(candidate: UpdateCandidate): String =
-        channel.name + "|" + candidate.versionName + "|" + candidate.versionCode
-
-    private fun handledPreferenceKey(): String = KEY_HANDLED + "_" + channel.name
+        candidate.versionName + "|" + candidate.versionCode
 
     fun isHandled(candidate: UpdateCandidate): Boolean =
-        preferences.getString(handledPreferenceKey(), null) == candidateKey(candidate)
+        preferences.getString(KEY_HANDLED, null) == candidateKey(candidate)
 
     fun handle(candidate: UpdateCandidate) {
-        preferences.edit { putString(handledPreferenceKey(), candidateKey(candidate)) }
+        preferences.edit { putString(KEY_HANDLED, candidateKey(candidate)) }
     }
 
     /** Polling is active only while the Library is resumed. No background worker is needed. */
@@ -119,7 +100,6 @@ internal class UpdateRepository private constructor(context: Context) {
         if (!manual && now - attempted in 0 until RETRY_DELAY_MS) return@withLock
 
         preferences.edit { putLong(KEY_ATTEMPT, now) }
-        val requestedChannel = channel
         val previous = status
         checking = true
         refreshFailed = false
@@ -127,8 +107,7 @@ internal class UpdateRepository private constructor(context: Context) {
             status = UpdateStatus.Checking
         }
         try {
-            val result = withContext(Dispatchers.IO) { fetchLatest(requestedChannel) }
-            if (channel != requestedChannel) return@withLock
+            val result = withContext(Dispatchers.IO) { fetchLatest() }
             lastChecked = System.currentTimeMillis()
             status = result
             val editor = preferences.edit()
@@ -150,28 +129,22 @@ internal class UpdateRepository private constructor(context: Context) {
             }
             editor.apply()
         } catch (cancelled: CancellationException) {
-            if (channel == requestedChannel) {
-                status = previous
-                // Lifecycle cancellation is not a network failure; allow a prompt retry on resume.
-                if (preferences.getLong(KEY_ATTEMPT, 0L) == now) {
-                    preferences.edit { remove(KEY_ATTEMPT) }
-                }
+            status = previous
+            // Lifecycle cancellation is not a network failure; allow a prompt retry on resume.
+            if (preferences.getLong(KEY_ATTEMPT, 0L) == now) {
+                preferences.edit { remove(KEY_ATTEMPT) }
             }
             throw cancelled
         } catch (_: IOException) {
-            if (channel == requestedChannel) {
-                status = if (previous == UpdateStatus.NotChecked || previous == UpdateStatus.Failed) {
-                    UpdateStatus.Failed
-                } else previous
-                refreshFailed = true
-            }
+            status = if (previous == UpdateStatus.NotChecked || previous == UpdateStatus.Failed) {
+                UpdateStatus.Failed
+            } else previous
+            refreshFailed = true
         } catch (_: JSONException) {
-            if (channel == requestedChannel) {
-                status = if (previous == UpdateStatus.NotChecked || previous == UpdateStatus.Failed) {
-                    UpdateStatus.Failed
-                } else previous
-                refreshFailed = true
-            }
+            status = if (previous == UpdateStatus.NotChecked || previous == UpdateStatus.Failed) {
+                UpdateStatus.Failed
+            } else previous
+            refreshFailed = true
         } finally {
             checking = false
         }
@@ -199,7 +172,7 @@ internal class UpdateRepository private constructor(context: Context) {
         }
     }
 
-    private fun fetchLatest(requestedChannel: UpdateChannel): UpdateStatus {
+    private fun fetchLatest(): UpdateStatus {
         val connection = URL(MANIFEST_URL).openConnection() as HttpURLConnection
         connection.connectTimeout = 5000
         connection.readTimeout = 5000
@@ -230,7 +203,6 @@ internal class UpdateRepository private constructor(context: Context) {
             val parsed = ReleaseVersion.parse(version) ?: continue
             val prerelease = release.getBoolean("prerelease")
             if (prerelease != ('-' in version)) continue
-            if (requestedChannel == UpdateChannel.Stable && prerelease) continue
             hasPublished = true
             if (parsed <= installed) continue
             val code = release.getInt("versionCode")
@@ -283,7 +255,6 @@ internal class UpdateRepository private constructor(context: Context) {
         private const val MANIFEST_URL = "https://h3nb.github.io/JL-Mod-Plus/updates.json"
         private val SUPPORTED_ASSET_ABIS =
             setOf("arm64-v8a", "armeabi-v7a", "x86", "x86_64", "universal")
-        private const val KEY_CHANNEL = "jlmod_updates_channel"
         private const val KEY_INSTALLED = "jlmod_updates_installed_identity"
         private const val KEY_ENABLED = "jlmod_updates_enabled"
         private const val KEY_ATTEMPT = "jlmod_updates_last_attempt"

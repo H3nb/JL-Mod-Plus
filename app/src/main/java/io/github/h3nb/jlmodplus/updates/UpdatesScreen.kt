@@ -1,6 +1,7 @@
 package io.github.h3nb.jlmodplus.updates
 
 import androidx.compose.foundation.layout.Arrangement
+import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.WindowInsets
@@ -8,16 +9,17 @@ import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.safeDrawing
+import androidx.compose.foundation.layout.widthIn
 import androidx.compose.foundation.rememberScrollState
 import androidx.compose.foundation.verticalScroll
 import androidx.compose.material3.Button
 import androidx.compose.material3.ExperimentalMaterial3Api
-import androidx.compose.material3.FilterChip
 import androidx.compose.material3.Icon
 import androidx.compose.material3.IconButton
 import androidx.compose.material3.MaterialTheme
+import androidx.compose.material3.OutlinedButton
 import androidx.compose.material3.Scaffold
-import androidx.compose.material3.Switch
+import androidx.compose.material3.Surface
 import androidx.compose.material3.Text
 import androidx.compose.material3.TopAppBar
 import androidx.compose.runtime.Composable
@@ -29,6 +31,7 @@ import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.unit.dp
 import io.github.h3nb.jlmodplus.BuildConfig
 import io.github.h3nb.jlmodplus.R
+import io.github.h3nb.jlmodplus.ui.PreferenceSwitchRow
 import kotlinx.coroutines.launch
 import java.text.DateFormat
 import java.util.Date
@@ -43,6 +46,16 @@ internal fun UpdatesScreen(
 ) {
     val scope = rememberCoroutineScope()
     val status = repository.status
+    val message = when (status) {
+        UpdateStatus.NotChecked -> R.string.updates_not_checked
+        UpdateStatus.Checking -> R.string.updates_checking
+        UpdateStatus.Current -> R.string.updates_current
+        UpdateStatus.NoRelease -> R.string.updates_no_release
+        UpdateStatus.NotInstallable -> R.string.updates_not_installable
+        UpdateStatus.Failed -> R.string.updates_failed
+        is UpdateStatus.Available -> R.string.updates_available
+    }
+
     Scaffold(
         containerColor = MaterialTheme.colorScheme.background,
         contentWindowInsets = WindowInsets.safeDrawing,
@@ -60,101 +73,120 @@ internal fun UpdatesScreen(
             )
         },
     ) { padding ->
-        Column(
-            modifier = Modifier
-                .fillMaxSize()
-                .padding(padding)
-                .verticalScroll(rememberScrollState())
-                .padding(horizontal = 24.dp, vertical = 20.dp),
-            verticalArrangement = Arrangement.spacedBy(20.dp),
-        ) {
-            Column(verticalArrangement = Arrangement.spacedBy(6.dp)) {
-                Text(
-                    stringResource(R.string.updates_installed_version, BuildConfig.VERSION_NAME),
-                    style = MaterialTheme.typography.titleMedium,
-                )
-                Text(
-                    stringResource(R.string.updates_build_code, BuildConfig.VERSION_CODE),
-                    color = MaterialTheme.colorScheme.onSurfaceVariant,
-                    style = MaterialTheme.typography.bodySmall,
-                )
-                if (BuildConfig.DEBUG) {
-                    Text(
-                        stringResource(R.string.updates_debug_build),
-                        style = MaterialTheme.typography.bodySmall,
-                        color = MaterialTheme.colorScheme.onSurfaceVariant,
-                    )
-                }
-            }
-            Column(verticalArrangement = Arrangement.spacedBy(8.dp)) {
-                Text(stringResource(R.string.updates_channel), style = MaterialTheme.typography.titleMedium)
-                Row(horizontalArrangement = Arrangement.spacedBy(12.dp)) {
-                    FilterChip(
-                        selected = repository.channel == UpdateChannel.Stable,
-                        onClick = {
-                            repository.selectChannel(UpdateChannel.Stable)
-                            scope.launch { repository.check(manual = true) }
-                        },
-                        label = { Text(stringResource(R.string.updates_stable)) },
-                    )
-                    FilterChip(
-                        selected = repository.channel == UpdateChannel.Preview,
-                        onClick = {
-                            repository.selectChannel(UpdateChannel.Preview)
-                            scope.launch { repository.check(manual = true) }
-                        },
-                        label = { Text(stringResource(R.string.updates_preview)) },
-                    )
-                }
-            }
-            Row(
-                modifier = Modifier.fillMaxWidth(),
-                verticalAlignment = Alignment.CenterVertically,
-                horizontalArrangement = Arrangement.SpaceBetween,
+        Box(modifier = Modifier.fillMaxSize().padding(padding)) {
+            Column(
+                modifier = Modifier
+                    .align(Alignment.TopCenter)
+                    .fillMaxWidth()
+                    .widthIn(max = 720.dp)
+                    .verticalScroll(rememberScrollState())
+                    .padding(horizontal = 24.dp, vertical = 16.dp),
+                verticalArrangement = Arrangement.spacedBy(16.dp),
             ) {
-                Text(
-                    stringResource(R.string.updates_automatic),
-                    modifier = Modifier.weight(1f).padding(end = 12.dp),
-                )
-                Switch(
-                    checked = repository.automaticChecks,
-                    onCheckedChange = repository::configureAutomaticChecks,
-                )
-            }
-            val message = when (status) {
-                UpdateStatus.NotChecked -> R.string.updates_not_checked
-                UpdateStatus.Checking -> R.string.updates_checking
-                UpdateStatus.Current -> R.string.updates_current
-                UpdateStatus.NoRelease -> R.string.updates_no_release
-                UpdateStatus.NotInstallable -> R.string.updates_not_installable
-                UpdateStatus.Failed -> R.string.updates_failed
-                is UpdateStatus.Available -> R.string.updates_available
-            }
-            Column(verticalArrangement = Arrangement.spacedBy(8.dp)) {
-                Text(stringResource(message), style = MaterialTheme.typography.bodyMedium)
-                if (repository.checking && status != UpdateStatus.Checking) {
-                    Text(stringResource(R.string.updates_checking))
-                }
-                if (repository.refreshFailed && status != UpdateStatus.Failed) {
-                    Text(stringResource(R.string.updates_failed))
-                }
-                if (status is UpdateStatus.Available) {
-                    Text(
-                        status.candidate.versionName,
-                        style = MaterialTheme.typography.titleMedium,
-                    )
-                    status.candidate.downloadUrl?.let { url ->
-                        Button(onClick = { onOpenDownload(url) }) {
-                            Text(stringResource(R.string.updates_download_apk))
+                Surface(
+                    modifier = Modifier.fillMaxWidth(),
+                    shape = MaterialTheme.shapes.large,
+                    color = MaterialTheme.colorScheme.surfaceContainerLow,
+                ) {
+                    Column(
+                        modifier = Modifier.padding(20.dp),
+                        verticalArrangement = Arrangement.spacedBy(6.dp),
+                    ) {
+                        Text(
+                            stringResource(R.string.updates_installed_version, BuildConfig.VERSION_NAME),
+                            style = MaterialTheme.typography.titleLarge,
+                        )
+                        Text(
+                            stringResource(R.string.updates_build_code, BuildConfig.VERSION_CODE),
+                            style = MaterialTheme.typography.bodySmall,
+                            color = MaterialTheme.colorScheme.onSurfaceVariant,
+                        )
+                        if (BuildConfig.DEBUG) {
+                            Text(
+                                stringResource(R.string.updates_debug_build),
+                                style = MaterialTheme.typography.bodySmall,
+                                color = MaterialTheme.colorScheme.onSurfaceVariant,
+                            )
                         }
                     }
-                    Button(onClick = { onOpenRelease(status.candidate.releaseUrl) }) {
-                        Text(stringResource(R.string.updates_view_release))
+                }
+
+                Surface(
+                    modifier = Modifier.fillMaxWidth(),
+                    shape = MaterialTheme.shapes.large,
+                    color = MaterialTheme.colorScheme.surfaceContainerLow,
+                ) {
+                    PreferenceSwitchRow(
+                        title = stringResource(R.string.updates_automatic),
+                        description = null,
+                        checked = repository.automaticChecks,
+                        onCheckedChange = repository::configureAutomaticChecks,
+                    )
+                }
+
+                Surface(
+                    modifier = Modifier.fillMaxWidth(),
+                    shape = MaterialTheme.shapes.large,
+                    color = if (status is UpdateStatus.Available) {
+                        MaterialTheme.colorScheme.surfaceContainerHigh
+                    } else {
+                        MaterialTheme.colorScheme.surfaceContainerLow
+                    },
+                ) {
+                    Column(
+                        modifier = Modifier.padding(20.dp),
+                        verticalArrangement = Arrangement.spacedBy(12.dp),
+                    ) {
+                        Text(
+                            stringResource(message),
+                            style = if (status is UpdateStatus.Available) {
+                                MaterialTheme.typography.titleMedium
+                            } else {
+                                MaterialTheme.typography.bodyMedium
+                            },
+                            color = if (status is UpdateStatus.Available) {
+                                MaterialTheme.colorScheme.primary
+                            } else {
+                                MaterialTheme.colorScheme.onSurface
+                            },
+                        )
+                        if (repository.checking && status != UpdateStatus.Checking) {
+                            Text(stringResource(R.string.updates_checking))
+                        }
+                        if (repository.refreshFailed && status != UpdateStatus.Failed) {
+                            Text(stringResource(R.string.updates_failed))
+                        }
+                        if (status is UpdateStatus.Available) {
+                            Text(
+                                status.candidate.versionName,
+                                style = MaterialTheme.typography.headlineSmall,
+                            )
+                            Row(
+                                modifier = Modifier.fillMaxWidth(),
+                                horizontalArrangement = Arrangement.spacedBy(8.dp),
+                            ) {
+                                status.candidate.downloadUrl?.let { url ->
+                                    Button(
+                                        onClick = { onOpenDownload(url) },
+                                        modifier = Modifier.weight(1f),
+                                    ) {
+                                        Text(stringResource(R.string.updates_download_apk))
+                                    }
+                                }
+                                OutlinedButton(
+                                    onClick = { onOpenRelease(status.candidate.releaseUrl) },
+                                    modifier = Modifier.weight(1f),
+                                ) {
+                                    Text(stringResource(R.string.updates_view_release))
+                                }
+                            }
+                        }
                     }
                 }
+
                 if (repository.lastChecked != 0L) {
                     val checkedAt = DateFormat.getDateTimeInstance(
-                        DateFormat.SHORT, DateFormat.SHORT
+                        DateFormat.SHORT, DateFormat.SHORT,
                     ).format(Date(repository.lastChecked))
                     Text(
                         stringResource(R.string.updates_last_checked, checkedAt),
@@ -162,12 +194,14 @@ internal fun UpdatesScreen(
                         color = MaterialTheme.colorScheme.onSurfaceVariant,
                     )
                 }
-            }
-            Button(
-                onClick = { scope.launch { repository.check(manual = true) } },
-                enabled = !repository.checking,
-            ) {
-                Text(stringResource(R.string.updates_check))
+
+                OutlinedButton(
+                    onClick = { scope.launch { repository.check(manual = true) } },
+                    modifier = Modifier.fillMaxWidth(),
+                    enabled = !repository.checking,
+                ) {
+                    Text(stringResource(R.string.updates_check))
+                }
             }
         }
     }

@@ -1108,7 +1108,6 @@
     <string name="updates_available">Доступно обновление</string>
     <string name="updates_browser_unavailable">Нет браузера для открытия страницы выпуска.</string>
     <string name="updates_build_code">Сборка %1$d</string>
-    <string name="updates_channel">Канал обновлений</string>
     <string name="updates_check">Проверить обновления</string>
     <string name="updates_checking">Проверка обновлений…</string>
     <string name="updates_current">У вас последняя версия.</string>
@@ -1119,12 +1118,10 @@
     <string name="updates_link_copied">Браузер недоступен. Ссылка на выпуск скопирована.</string>
     <string name="updates_more_available">Доступна новая версия.</string>
     <string name="updates_more_summary">Проверить наличие новых версий JL-Mod Plus.</string>
-    <string name="updates_no_release">В этом канале нет совместимого опубликованного выпуска.</string>
+    <string name="updates_no_release">Нет доступного совместимого опубликованного выпуска.</string>
     <string name="updates_not_checked">Проверка обновлений ещё ни разу не была завершена.</string>
     <string name="updates_not_installable">Есть более новый выпуск, но его номер сборки не позволяет обновить эту установку.</string>
     <string name="updates_notice">Доступна версия JL-Mod Plus %1$s. Откройте «Обновления» в разделе «Ещё».</string>
-    <string name="updates_preview">Предварительный</string>
-    <string name="updates_stable">Стабильный</string>
     <string name="updates_title">Обновления</string>
     <string name="updates_view_release">Открыть страницу выпуска</string>
     <plurals name="installer_conversion_omitted_details">

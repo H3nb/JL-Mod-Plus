@@ -272,7 +272,6 @@
     <string name="updates_available">Жаңарту қолжетімді</string>
     <string name="updates_browser_unavailable">Шығарылымды ашатын браузер жоқ.</string>
     <string name="updates_build_code">Құрастырылым %1$d</string>
-    <string name="updates_channel">Жаңарту арнасы</string>
     <string name="updates_check">Жаңартуларды тексеру</string>
     <string name="updates_checking">Жаңартулар тексерілуде…</string>
     <string name="updates_current">Сізде ең соңғы нұсқа бар.</string>
@@ -283,12 +282,10 @@
     <string name="updates_link_copied">Браузер жоқ. Шығарылым сілтемесі көшірілді.</string>
     <string name="updates_more_available">Жаңарақ нұсқа қолжетімді.</string>
     <string name="updates_more_summary">JL-Mod Plus жаңа нұсқаларын тексеру.</string>
-    <string name="updates_no_release">Бұл арнада үйлесімді жарияланған шығарылым жоқ.</string>
+    <string name="updates_no_release">Үйлесімді жарияланған шығарылым жоқ.</string>
     <string name="updates_not_checked">Әзірге жаңартуларды тексеру аяқталған жоқ.</string>
     <string name="updates_not_installable">Жаңарақ шығарылым бар, бірақ оның құрастырылым нөмірі бұл орнатылымды жаңартуға жарамайды.</string>
     <string name="updates_notice">JL-Mod Plus %1$s қолжетімді. «Тағы» бөліміндегі «Жаңартуларды» қараңыз.</string>
-    <string name="updates_preview">Алдын ала нұсқа</string>
-    <string name="updates_stable">Тұрақты</string>
     <string name="updates_title">Жаңартулар</string>
     <string name="updates_view_release">Шығарылымды қарау</string>
     <plurals name="file_picker_selected_count">

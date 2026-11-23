@@ -309,7 +309,6 @@
     <string name="updates_available">Налична е актуализация</string>
     <string name="updates_browser_unavailable">Няма наличен браузър за отваряне на изданието.</string>
     <string name="updates_build_code">Компилация %1$d</string>
-    <string name="updates_channel">Канал за актуализации</string>
     <string name="updates_check">Проверка за актуализации</string>
     <string name="updates_checking">Проверка за актуализации…</string>
     <string name="updates_current">Имате най-новата версия.</string>
@@ -320,12 +319,10 @@
     <string name="updates_link_copied">Няма наличен браузър. Връзката към изданието е копирана.</string>
     <string name="updates_more_available">Налична е по-нова версия.</string>
     <string name="updates_more_summary">Проверка за нови версии на JL-Mod Plus.</string>
-    <string name="updates_no_release">В този канал няма налично съвместимо публикувано издание.</string>
+    <string name="updates_no_release">Няма налично съвместимо публикувано издание.</string>
     <string name="updates_not_checked">Все още не е завършена проверка за актуализации.</string>
     <string name="updates_not_installable">Съществува по-ново издание, но номерът на компилацията му не позволява актуализиране на тази инсталация.</string>
     <string name="updates_notice">JL-Mod Plus %1$s е наличен. Вижте Актуализации в Още.</string>
-    <string name="updates_preview">Предварителни версии</string>
-    <string name="updates_stable">Стабилни версии</string>
     <string name="updates_title">Актуализации</string>
     <string name="updates_view_release">Преглед на изданието</string>
     <plurals name="file_picker_selected_count">

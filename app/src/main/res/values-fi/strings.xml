@@ -1046,7 +1046,6 @@
     <string name="updates_available">Päivitys saatavilla</string>
     <string name="updates_browser_unavailable">Julkaisun avaamiseen ei ole käytettävissä selainta.</string>
     <string name="updates_build_code">Koontiversio %1$d</string>
-    <string name="updates_channel">Päivityskanava</string>
     <string name="updates_check">Tarkista päivitykset</string>
     <string name="updates_checking">Tarkistetaan päivityksiä…</string>
     <string name="updates_current">Käytössä on uusin versio.</string>
@@ -1057,12 +1056,10 @@
     <string name="updates_link_copied">Selainta ei ole käytettävissä. Julkaisun linkki kopioitiin.</string>
     <string name="updates_more_available">Uudempi versio on saatavilla.</string>
     <string name="updates_more_summary">Tarkista JL-Mod Plusin uudet versiot.</string>
-    <string name="updates_no_release">Tällä kanavalla ei ole saatavilla yhteensopivaa julkaistua versiota.</string>
+    <string name="updates_no_release">Yhteensopivaa julkaistua versiota ei ole saatavilla.</string>
     <string name="updates_not_checked">Yhtään päivitystarkistusta ei ole vielä tehty loppuun.</string>
     <string name="updates_not_installable">Uudempi julkaisu on olemassa, mutta sen koontinumero ei mahdollista tämän asennuksen päivittämistä.</string>
     <string name="updates_notice">JL-Mod Plus %1$s on saatavilla. Katso Päivitykset kohdasta Lisää.</string>
-    <string name="updates_preview">Ennakkoversio</string>
-    <string name="updates_stable">Vakaa</string>
     <string name="updates_title">Päivitykset</string>
     <string name="updates_view_release">Näytä julkaisu</string>
     <plurals name="installer_conversion_omitted_details">

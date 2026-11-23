@@ -225,7 +225,6 @@
     <string name="updates_available">Opdatering beskikbaar</string>
     <string name="updates_browser_unavailable">Geen blaaier is beskikbaar om die vrystelling oop te maak nie.</string>
     <string name="updates_build_code">Bou %1$d</string>
-    <string name="updates_channel">Opdateringskanaal</string>
     <string name="updates_check">Kyk vir opdaterings</string>
     <string name="updates_checking">Besig om vir opdaterings te kyk…</string>
     <string name="updates_current">Jy gebruik die jongste weergawe.</string>
@@ -236,12 +235,10 @@
     <string name="updates_link_copied">Geen blaaier is beskikbaar nie. Die vrystellingskakel is gekopieer.</string>
     <string name="updates_more_available">’n Nuwer weergawe is beskikbaar.</string>
     <string name="updates_more_summary">Kyk vir nuwe weergawes van JL-Mod Plus.</string>
-    <string name="updates_no_release">Geen versoenbare gepubliseerde vrystelling is op hierdie kanaal beskikbaar nie.</string>
+    <string name="updates_no_release">Geen versoenbare gepubliseerde vrystelling is beskikbaar nie.</string>
     <string name="updates_not_checked">Daar is nog nie vir opdaterings gekyk nie.</string>
     <string name="updates_not_installable">’n Nuwer vrystelling bestaan, maar sy bounommer kan nie hierdie installasie opdateer nie.</string>
     <string name="updates_notice">JL-Mod Plus %1$s is beskikbaar. Sien Opdaterings onder Meer.</string>
-    <string name="updates_preview">Voorskou</string>
-    <string name="updates_stable">Stabiel</string>
     <string name="updates_title">Opdaterings</string>
     <string name="updates_view_release">Bekyk vrystelling</string>
     <plurals name="file_picker_selected_count">

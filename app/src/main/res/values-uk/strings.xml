@@ -327,7 +327,6 @@
     <string name="updates_available">Доступне оновлення</string>
     <string name="updates_browser_unavailable">Немає браузера для відкриття випуску.</string>
     <string name="updates_build_code">Збірка %1$d</string>
-    <string name="updates_channel">Канал оновлень</string>
     <string name="updates_check">Перевірити оновлення</string>
     <string name="updates_checking">Перевірка оновлень…</string>
     <string name="updates_current">Установлено найновішу версію.</string>
@@ -338,12 +337,10 @@
     <string name="updates_link_copied">Немає доступного браузера. Посилання на випуск скопійовано.</string>
     <string name="updates_more_available">Доступна новіша версія.</string>
     <string name="updates_more_summary">Перевірити наявність нових версій JL-Mod Plus.</string>
-    <string name="updates_no_release">У цьому каналі немає сумісного опублікованого випуску.</string>
+    <string name="updates_no_release">Немає сумісного опублікованого випуску.</string>
     <string name="updates_not_checked">Перевірку оновлень ще жодного разу не завершено.</string>
     <string name="updates_not_installable">Є новіший випуск, але його номер збірки не дає змоги оновити цю інсталяцію.</string>
     <string name="updates_notice">Доступний JL-Mod Plus %1$s. Дивіться розділ «Оновлення» у вкладці «Більше».</string>
-    <string name="updates_preview">Попередній</string>
-    <string name="updates_stable">Стабільний</string>
     <string name="updates_title">Оновлення</string>
     <string name="updates_view_release">Переглянути випуск</string>
     <plurals name="file_picker_selected_count">

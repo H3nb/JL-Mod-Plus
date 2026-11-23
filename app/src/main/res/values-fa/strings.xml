@@ -283,7 +283,6 @@
     <string name="updates_available">به‌روزرسانی موجود است</string>
     <string name="updates_browser_unavailable">مرورگری برای باز کردن انتشار در دسترس نیست.</string>
     <string name="updates_build_code">ساخت %1$d</string>
-    <string name="updates_channel">کانال به‌روزرسانی</string>
     <string name="updates_check">بررسی به‌روزرسانی‌ها</string>
     <string name="updates_checking">در حال بررسی به‌روزرسانی‌ها…</string>
     <string name="updates_current">از آخرین نسخه استفاده می‌کنید.</string>
@@ -294,12 +293,10 @@
     <string name="updates_link_copied">مرورگری در دسترس نیست. پیوند انتشار کپی شد.</string>
     <string name="updates_more_available">نسخهٔ جدیدتری موجود است.</string>
     <string name="updates_more_summary">بررسی نسخه‌های جدید JL-Mod Plus.</string>
-    <string name="updates_no_release">هیچ انتشار سازگاری در این کانال منتشر نشده است.</string>
+    <string name="updates_no_release">هیچ انتشار سازگار و منتشرشده‌ای در دسترس نیست.</string>
     <string name="updates_not_checked">هنوز هیچ بررسی به‌روزرسانی‌ای کامل نشده است.</string>
     <string name="updates_not_installable">انتشار جدیدتری وجود دارد، اما شمارهٔ ساخت آن نمی‌تواند این نصب را به‌روزرسانی کند.</string>
     <string name="updates_notice">JL-Mod Plus %1$s موجود است. در بخش «بیشتر»، «به‌روزرسانی‌ها» را ببینید.</string>
-    <string name="updates_preview">پیش‌نمایش</string>
-    <string name="updates_stable">پایدار</string>
     <string name="updates_title">به‌روزرسانی‌ها</string>
     <string name="updates_view_release">مشاهدهٔ انتشار</string>
     <plurals name="file_picker_selected_count">

@@ -225,7 +225,6 @@
     <string name="updates_available">עדכון זמין</string>
     <string name="updates_browser_unavailable">אין דפדפן זמין לפתיחת הגרסה.</string>
     <string name="updates_build_code">בנייה %1$d</string>
-    <string name="updates_channel">ערוץ עדכונים</string>
     <string name="updates_check">בדיקת עדכונים</string>
     <string name="updates_checking">מתבצעת בדיקת עדכונים…</string>
     <string name="updates_current">הגרסה שלך מעודכנת.</string>
@@ -236,12 +235,10 @@
     <string name="updates_link_copied">אין דפדפן זמין. הקישור לגרסה הועתק.</string>
     <string name="updates_more_available">גרסה חדשה יותר זמינה.</string>
     <string name="updates_more_summary">בדיקת גרסאות חדשות של JL-Mod Plus.</string>
-    <string name="updates_no_release">אין גרסה שפורסמה ותואמת בערוץ הזה.</string>
+    <string name="updates_no_release">אין גרסה תואמת שפורסמה וזמינה.</string>
     <string name="updates_not_checked">עדיין לא הושלמה בדיקת עדכונים.</string>
     <string name="updates_not_installable">קיימת גרסה חדשה יותר, אך מספר הבנייה שלה אינו מאפשר לעדכן את ההתקנה הזו.</string>
     <string name="updates_notice">JL-Mod Plus %1$s זמין. העדכונים נמצאים ב״עוד״ תחת ״עדכונים״.</string>
-    <string name="updates_preview">תצוגה מקדימה</string>
-    <string name="updates_stable">יציב</string>
     <string name="updates_title">עדכונים</string>
     <string name="updates_view_release">הצגת הגרסה</string>
     <plurals name="file_picker_selected_count">

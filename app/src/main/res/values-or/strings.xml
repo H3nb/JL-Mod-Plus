@@ -271,7 +271,6 @@
     <string name="updates_available">ଅପଡେଟ୍ ଉପଲବ୍ଧ</string>
     <string name="updates_browser_unavailable">ରିଲିଜ୍ ଖୋଲିବା ପାଇଁ କୌଣସି ବ୍ରାଉଜର୍ ଉପଲବ୍ଧ ନାହିଁ।</string>
     <string name="updates_build_code">ବିଲ୍ଡ %1$d</string>
-    <string name="updates_channel">ଅପଡେଟ୍ ଚ୍ୟାନେଲ୍</string>
     <string name="updates_check">ଅପଡେଟ୍ ଯାଞ୍ଚ କରନ୍ତୁ</string>
     <string name="updates_checking">ଅପଡେଟ୍ ଯାଞ୍ଚ ହେଉଛି…</string>
     <string name="updates_current">ଆପଣଙ୍କ ପାଖରେ ସର୍ବଶେଷ ସଂସ୍କରଣ ଅଛି।</string>
@@ -282,12 +281,10 @@
     <string name="updates_link_copied">କୌଣସି ବ୍ରାଉଜର୍ ଉପଲବ୍ଧ ନାହିଁ। ରିଲିଜ୍ ଲିଙ୍କ୍ କପି କରାଯାଇଛି।</string>
     <string name="updates_more_available">ଏକ ନୂଆ ସଂସ୍କରଣ ଉପଲବ୍ଧ।</string>
     <string name="updates_more_summary">JL-Mod Plus ର ନୂଆ ସଂସ୍କରଣ ଯାଞ୍ଚ କରନ୍ତୁ।</string>
-    <string name="updates_no_release">ଏହି ଚ୍ୟାନେଲ୍‌ରେ କୌଣସି ସୁସଙ୍ଗତ ପ୍ରକାଶିତ ରିଲିଜ୍ ଉପଲବ୍ଧ ନାହିଁ।</string>
+    <string name="updates_no_release">କୌଣସି ସୁସଙ୍ଗତ ପ୍ରକାଶିତ ରିଲିଜ୍ ଉପଲବ୍ଧ ନାହିଁ।</string>
     <string name="updates_not_checked">ଏପର୍ଯ୍ୟନ୍ତ କୌଣସି ଅପଡେଟ୍ ଯାଞ୍ଚ ସମ୍ପୂର୍ଣ୍ଣ ହୋଇ ନାହିଁ।</string>
     <string name="updates_not_installable">ନୂଆ ରିଲିଜ୍ ଅଛି, କିନ୍ତୁ ତାହାର ବିଲ୍ଡ ନମ୍ବର ଦ୍ୱାରା ଏହି ଇନଷ୍ଟଲେସନ୍ ଅପଡେଟ୍ କରାଯାଇପାରିବ ନାହିଁ।</string>
     <string name="updates_notice">JL-Mod Plus %1$s ଉପଲବ୍ଧ। “ଅଧିକ” ରେ “ଅପଡେଟ୍” ଦେଖନ୍ତୁ।</string>
-    <string name="updates_preview">ପ୍ରିଭ୍ୟୁ</string>
-    <string name="updates_stable">ସ୍ଥିର</string>
     <string name="updates_title">ଅପଡେଟ୍</string>
     <string name="updates_view_release">ରିଲିଜ୍ ଦେଖନ୍ତୁ</string>
     <plurals name="file_picker_selected_count">
