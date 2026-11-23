@@ -837,10 +837,6 @@
     <string name="library_action_select">Välj</string>
     <string name="library_selection_select_all">Välj alla</string>
     <string name="library_selection_unselect_all">Avmarkera alla</string>
-    <plurals name="perf_overlay_selected">
-        <item quantity="one">%d parameter vald</item>
-        <item quantity="other">%d parametrar valda</item>
-    </plurals>
     <string name="perf_overlay_position_help">Välj ett hörn.</string>
     <string name="perf_overlay_top_left">Överst till vänster</string>
     <string name="perf_overlay_top_right">Överst till höger</string>

@@ -1075,12 +1075,6 @@
     <string name="runtime_replacement_failed">Nie udało się zatrzymać działającego MIDletu. Spróbuj ponownie otworzyć nowy MIDlet.</string>
     <string name="runtime_storage_in_use">Magazyn danych MIDletu jest już używany przez inne środowisko uruchomieniowe.</string>
     <string name="runtime_storage_unavailable">Nie udało się przygotować magazynu danych MIDletu.</string>
-    <plurals name="perf_overlay_selected">
-        <item quantity="one">Wybrano %d parametr</item>
-        <item quantity="few">Wybrano %d parametry</item>
-        <item quantity="many">Wybrano %d parametrów</item>
-        <item quantity="other">Wybrano %d parametru</item>
-    </plurals>
     <plurals name="crash_reports_batch_delete_title">
         <item quantity="one">Usunąć %1$d raport diagnostyczny?</item>
         <item quantity="few">Usunąć %1$d raporty diagnostyczne?</item>

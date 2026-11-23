@@ -1045,11 +1045,6 @@
     <string name="runtime_storage_in_use">Spațiul de stocare al MIDletului este deja folosit de alt mediu de execuție.</string>
     <string name="runtime_storage_unavailable">Spațiul de stocare al MIDletului nu a putut fi pregătit.</string>
     <string name="saved">Salvat %1$s</string>
-    <plurals name="perf_overlay_selected">
-        <item quantity="one">%d parametru selectat</item>
-        <item quantity="few">%d parametri selectați</item>
-        <item quantity="other">%d de parametri selectați</item>
-    </plurals>
     <plurals name="crash_reports_batch_delete_title">
         <item quantity="one">Ștergi %1$d raport de diagnostic?</item>
         <item quantity="few">Ștergi %1$d rapoarte de diagnostic?</item>

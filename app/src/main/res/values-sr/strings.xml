@@ -1044,11 +1044,6 @@
     <string name="runtime_storage_in_use">MIDlet складиште већ користи друго окружење за извршавање.</string>
     <string name="runtime_storage_unavailable">Није могуће припремити MIDlet складиште.</string>
     <string name="saved">Сачувано: %1$s</string>
-    <plurals name="perf_overlay_selected">
-        <item quantity="one">Изабран је %d параметар</item>
-        <item quantity="few">Изабрана су %d параметра</item>
-        <item quantity="other">Изабрано је %d параметара</item>
-    </plurals>
     <plurals name="crash_reports_batch_delete_title">
         <item quantity="one">Обрисати %1$d дијагностички извештај?</item>
         <item quantity="few">Обрисати %1$d дијагностичка извештаја?</item>

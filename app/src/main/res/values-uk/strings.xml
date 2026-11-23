@@ -1075,12 +1075,6 @@
     <string name="runtime_replacement_failed">Не вдалося зупинити запущений MIDlet. Спробуйте ще раз відкрити новий MIDlet.</string>
     <string name="runtime_storage_in_use">Сховище MIDlet уже використовується іншим середовищем виконання.</string>
     <string name="runtime_storage_unavailable">Не вдалося підготувати сховище MIDlet.</string>
-    <plurals name="perf_overlay_selected">
-        <item quantity="one">Вибрано %d параметр</item>
-        <item quantity="few">Вибрано %d параметри</item>
-        <item quantity="many">Вибрано %d параметрів</item>
-        <item quantity="other">Вибрано %d параметра</item>
-    </plurals>
     <plurals name="crash_reports_batch_delete_title">
         <item quantity="one">Видалити %1$d діагностичний звіт?</item>
         <item quantity="few">Видалити %1$d діагностичні звіти?</item>

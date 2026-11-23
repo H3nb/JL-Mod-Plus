@@ -1010,10 +1010,6 @@
         <item quantity="one">තෝරාගත් පුස්තකාල යෙදුම් %1$dක් තවදුරටත් ලබා ගත නොහැක.</item>
         <item quantity="other">තෝරාගත් පුස්තකාල යෙදුම් %1$dක් තවදුරටත් ලබා ගත නොහැක.</item>
     </plurals>
-    <plurals name="perf_overlay_selected">
-        <item quantity="one">පරාමිතීන් %dක් තෝරා ඇත</item>
-        <item quantity="other">පරාමිතීන් %dක් තෝරා ඇත</item>
-    </plurals>
     <plurals name="bulk_install_reason_ambiguous_match">
         <item quantity="one">ස්ථාපිත යෙදුම් %1$dක් මෙම මූලාශ්‍රයට ගැළපේ.</item>
         <item quantity="other">ස්ථාපිත යෙදුම් %1$dක් මෙම මූලාශ්‍රයට ගැළපේ.</item>

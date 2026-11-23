@@ -950,12 +950,6 @@
     <string name="library_retry">Повторить</string>
     <string name="library_reinstall_source_missing">Сохранённый JAR для переустановки недоступен.</string>
     <string name="library_action_select">Выбрать</string>
-    <plurals name="perf_overlay_selected">
-        <item quantity="one">Выбран %1$d параметр</item>
-        <item quantity="few">Выбрано %1$d параметра</item>
-        <item quantity="many">Выбрано %1$d параметров</item>
-        <item quantity="other">Выбрано параметров: %1$d</item>
-    </plurals>
     <string name="perf_overlay_position_help">Выберите угол.</string>
     <string name="perf_overlay_top_left">Сверху слева</string>
     <string name="perf_overlay_top_right">Сверху справа</string>

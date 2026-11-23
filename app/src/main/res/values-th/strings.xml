@@ -985,9 +985,6 @@
     <string name="runtime_storage_in_use">รันไทม์อื่นกำลังใช้พื้นที่เก็บข้อมูลของ MIDlet อยู่แล้ว</string>
     <string name="runtime_storage_unavailable">ไม่สามารถเตรียมพื้นที่เก็บข้อมูลของ MIDlet ได้</string>
     <string name="saved">บันทึก %1$s แล้ว</string>
-    <plurals name="perf_overlay_selected">
-        <item quantity="other">เลือกพารามิเตอร์ %d รายการแล้ว</item>
-    </plurals>
     <plurals name="crash_reports_batch_delete_title">
         <item quantity="other">ลบรายงานการวินิจฉัย %1$d รายการหรือไม่</item>
     </plurals>

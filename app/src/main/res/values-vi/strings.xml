@@ -985,9 +985,6 @@
     <string name="runtime_replacement_failed">Không thể dừng MIDlet đang chạy. Hãy thử mở MIDlet mới lần nữa.</string>
     <string name="runtime_storage_in_use">Môi trường thực thi khác đang dùng vùng lưu trữ MIDlet.</string>
     <string name="runtime_storage_unavailable">Không thể chuẩn bị vùng lưu trữ MIDlet.</string>
-    <plurals name="perf_overlay_selected">
-        <item quantity="other">Đã chọn %d thông số</item>
-    </plurals>
     <plurals name="crash_reports_batch_delete_title">
         <item quantity="other">Xóa %1$d báo cáo chẩn đoán?</item>
     </plurals>
