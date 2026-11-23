@@ -89,6 +89,8 @@ import androidx.compose.material3.DropdownMenuItem
 import androidx.compose.material3.ExperimentalMaterial3Api
 import androidx.compose.material3.FloatingActionButton
 import androidx.compose.material3.ExtendedFloatingActionButton
+import androidx.compose.material3.Badge
+import androidx.compose.material3.BadgedBox
 import androidx.compose.material3.Icon
 import androidx.compose.material3.IconButton
 import androidx.compose.material3.ListItem
@@ -1241,6 +1243,7 @@ fun LibraryScreen(
                             },
                             onOpenSearch = { searchOpen = true },
                             onOpenNotifications = { notificationsPageVisible = true },
+                            notificationCount = if (availableUpdate != null) 1 else 0,
                             onOpenGlobalSettings = actions::onOpenSettings,
                             searchActive = searchOpen && destination == LibraryDestinationKey.Apps,
                             searchQuery = searchQuery,
@@ -1332,7 +1335,11 @@ fun LibraryScreen(
                 color = MaterialTheme.colorScheme.background,
                 contentColor = MaterialTheme.colorScheme.onBackground,
             ) {
-                LibraryNotificationsScreen(onBack = { notificationsPageVisible = false })
+                LibraryNotificationsScreen(
+                    update = availableUpdate,
+                    onBack = { notificationsPageVisible = false },
+                    onOpenUpdate = actions::onOpenUpdates,
+                )
                 if (!notificationsPageVisible) {
                     Box(
                         Modifier.matchParentSize()
@@ -1714,6 +1721,7 @@ internal fun LibraryAppsDestination(
     onManageCollections: () -> Unit = {},
     onOpenSearch: () -> Unit = {},
     onOpenNotifications: () -> Unit = {},
+    notificationCount: Int = 0,
     onOpenGlobalSettings: () -> Unit = {},
     searchActive: Boolean = false,
     searchQuery: String = "",
@@ -1909,6 +1917,7 @@ internal fun LibraryAppsDestination(
             onManageCollections = onManageCollections,
             onOpenSearch = onOpenSearch,
             onOpenNotifications = onOpenNotifications,
+            notificationCount = notificationCount,
             onOpenGlobalSettings = onOpenGlobalSettings,
             searchActive = searchActive,
             searchQuery = searchQuery,
@@ -2307,6 +2316,7 @@ private fun LibraryAppsHeader(
     onManageCollections: () -> Unit = {},
     onOpenSearch: () -> Unit = {},
     onOpenNotifications: () -> Unit = {},
+    notificationCount: Int = 0,
     onOpenGlobalSettings: () -> Unit = {},
     searchActive: Boolean = false,
     searchQuery: String = "",
@@ -2435,6 +2445,7 @@ private fun LibraryAppsHeader(
                                 LibraryHeaderActions(
                                     onOpenSearch = onOpenSearch,
                                     onOpenNotifications = onOpenNotifications,
+                                    notificationCount = notificationCount,
                                     onOpenSettings = onOpenGlobalSettings,
                                     enabled = titleActionsEnabled,
                                 )
@@ -2489,6 +2500,7 @@ private fun LibraryAppsHeader(
                 LibraryHeaderActions(
                     onOpenSearch = onOpenSearch,
                     onOpenNotifications = onOpenNotifications,
+                    notificationCount = notificationCount,
                     onOpenSettings = onOpenGlobalSettings,
                     enabled = titleActionsEnabled,
                 )
@@ -2774,7 +2786,7 @@ private fun LibraryHeaderActions(
     onOpenNotifications: () -> Unit,
     onOpenSettings: () -> Unit,
     enabled: Boolean,
-    hasUnreadNotifications: Boolean = false,
+    notificationCount: Int = 0,
 ) {
     IconButton(onClick = onOpenSearch, enabled = enabled) {
         Icon(
@@ -2783,24 +2795,25 @@ private fun LibraryHeaderActions(
         )
     }
     val notificationsLabel = stringResource(R.string.library_notifications_title)
+    val notificationsDescription = if (notificationCount > 0) {
+        "$notificationsLabel ($notificationCount)"
+    } else notificationsLabel
     IconButton(
         onClick = onOpenNotifications,
         enabled = enabled,
-        modifier = Modifier.semantics { contentDescription = notificationsLabel },
+        modifier = Modifier.semantics { contentDescription = notificationsDescription },
     ) {
-        Box(modifier = Modifier.size(24.dp)) {
+        BadgedBox(
+            badge = {
+                if (notificationCount > 0) {
+                    Badge { Text(if (notificationCount > 99) "99+" else notificationCount.toString()) }
+                }
+            },
+        ) {
             Icon(
                 painter = painterResource(R.drawable.ic_notifications),
                 contentDescription = null,
             )
-            if (hasUnreadNotifications) {
-                Box(
-                    modifier = Modifier.align(Alignment.TopEnd)
-                        .size(7.dp)
-                        .clip(RoundedCornerShape(50))
-                        .background(MaterialTheme.colorScheme.primary),
-                )
-            }
         }
     }
     IconButton(onClick = onOpenSettings, enabled = enabled) {
