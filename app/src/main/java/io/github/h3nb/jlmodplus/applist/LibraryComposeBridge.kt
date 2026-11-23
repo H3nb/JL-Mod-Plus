@@ -33,6 +33,7 @@ import androidx.compose.animation.slideInVertically
 import androidx.compose.animation.slideOutVertically
 import androidx.compose.animation.core.FastOutSlowInEasing
 import androidx.compose.animation.core.tween
+import androidx.compose.foundation.BorderStroke
 import androidx.compose.foundation.ExperimentalFoundationApi
 import androidx.compose.foundation.MutatePriority
 import androidx.compose.foundation.gestures.stopScroll
@@ -88,6 +89,8 @@ import androidx.compose.material3.DropdownMenuItem
 import androidx.compose.material3.ExperimentalMaterial3Api
 import androidx.compose.material3.FloatingActionButton
 import androidx.compose.material3.ExtendedFloatingActionButton
+import androidx.compose.material3.Badge
+import androidx.compose.material3.BadgedBox
 import androidx.compose.material3.Icon
 import androidx.compose.material3.IconButton
 import androidx.compose.material3.ListItem
@@ -1240,6 +1243,7 @@ fun LibraryScreen(
                             },
                             onOpenSearch = { searchOpen = true },
                             onOpenNotifications = { notificationsPageVisible = true },
+                            notificationCount = if (availableUpdate != null) 1 else 0,
                             onOpenGlobalSettings = actions::onOpenSettings,
                             searchActive = searchOpen && destination == LibraryDestinationKey.Apps,
                             searchQuery = searchQuery,
@@ -1331,7 +1335,11 @@ fun LibraryScreen(
                 color = MaterialTheme.colorScheme.background,
                 contentColor = MaterialTheme.colorScheme.onBackground,
             ) {
-                LibraryNotificationsScreen(onBack = { notificationsPageVisible = false })
+                LibraryNotificationsScreen(
+                    update = availableUpdate,
+                    onBack = { notificationsPageVisible = false },
+                    onOpenUpdate = actions::onOpenUpdates,
+                )
                 if (!notificationsPageVisible) {
                     Box(
                         Modifier.matchParentSize()
@@ -1713,6 +1721,7 @@ internal fun LibraryAppsDestination(
     onManageCollections: () -> Unit = {},
     onOpenSearch: () -> Unit = {},
     onOpenNotifications: () -> Unit = {},
+    notificationCount: Int = 0,
     onOpenGlobalSettings: () -> Unit = {},
     searchActive: Boolean = false,
     searchQuery: String = "",
@@ -1908,6 +1917,7 @@ internal fun LibraryAppsDestination(
             onManageCollections = onManageCollections,
             onOpenSearch = onOpenSearch,
             onOpenNotifications = onOpenNotifications,
+            notificationCount = notificationCount,
             onOpenGlobalSettings = onOpenGlobalSettings,
             searchActive = searchActive,
             searchQuery = searchQuery,
@@ -2306,6 +2316,7 @@ private fun LibraryAppsHeader(
     onManageCollections: () -> Unit = {},
     onOpenSearch: () -> Unit = {},
     onOpenNotifications: () -> Unit = {},
+    notificationCount: Int = 0,
     onOpenGlobalSettings: () -> Unit = {},
     searchActive: Boolean = false,
     searchQuery: String = "",
@@ -2434,6 +2445,7 @@ private fun LibraryAppsHeader(
                                 LibraryHeaderActions(
                                     onOpenSearch = onOpenSearch,
                                     onOpenNotifications = onOpenNotifications,
+                                    notificationCount = notificationCount,
                                     onOpenSettings = onOpenGlobalSettings,
                                     enabled = titleActionsEnabled,
                                 )
@@ -2488,27 +2500,30 @@ private fun LibraryAppsHeader(
                 LibraryHeaderActions(
                     onOpenSearch = onOpenSearch,
                     onOpenNotifications = onOpenNotifications,
+                    notificationCount = notificationCount,
                     onOpenSettings = onOpenGlobalSettings,
                     enabled = titleActionsEnabled,
                 )
             }
         }
-        Surface(
+        Row(
             modifier = Modifier
                 .fillMaxWidth()
-                .padding(top = 8.dp)
+                .padding(top = 20.dp, bottom = 12.dp)
                 .then(searchGate.positionModifier)
                 .then(if (searchActionsEnabled) Modifier else Modifier.clearAndSetSemantics {}),
-            shape = MaterialTheme.shapes.large,
-            color = MaterialTheme.colorScheme.surfaceContainerLow,
+            horizontalArrangement = Arrangement.spacedBy(12.dp),
+            verticalAlignment = Alignment.CenterVertically,
         ) {
-            Row(
-                modifier = Modifier.fillMaxWidth().heightIn(min = 56.dp),
-                verticalAlignment = Alignment.CenterVertically,
+            Surface(
+                modifier = Modifier.weight(1f),
+                shape = RoundedCornerShape(20.dp),
+                color = MaterialTheme.colorScheme.surfaceContainerLow,
+                border = BorderStroke(1.dp, MaterialTheme.colorScheme.outlineVariant),
             ) {
                 Row(
                     modifier = Modifier
-                        .weight(1f)
+                        .fillMaxWidth()
                         .heightIn(min = 56.dp)
                         .testTag("library_scope_picker")
                         .clickable(
@@ -2554,58 +2569,74 @@ private fun LibraryAppsHeader(
                         modifier = Modifier.size(20.dp),
                     )
                 }
-                Box(
-                    modifier = Modifier.width(1.dp).height(24.dp)
-                        .background(MaterialTheme.colorScheme.outlineVariant),
-                )
-                Box {
-                    IconButton(
-                        onClick = { onSortVisibilityChanged(true) },
-                        enabled = searchActionsEnabled,
+            }
+            Surface(
+                shape = RoundedCornerShape(20.dp),
+                color = MaterialTheme.colorScheme.surfaceContainerLow,
+                border = BorderStroke(1.dp, MaterialTheme.colorScheme.outlineVariant),
+            ) {
+                Row(
+                    modifier = Modifier
+                        .heightIn(min = 56.dp)
+                        .padding(horizontal = 4.dp),
+                    verticalAlignment = Alignment.CenterVertically,
+                ) {
+                    Box {
+                        IconButton(
+                            onClick = { onSortVisibilityChanged(true) },
+                            enabled = searchActionsEnabled,
+                            modifier = Modifier
+                                .size(48.dp)
+                                .focusRequester(dismissFocusRequester)
+                                .focusProperties { canFocus = searchActionsEnabled },
+                        ) {
+                            Icon(
+                                painter = painterResource(R.drawable.ic_sort),
+                                contentDescription = stringResource(R.string.library_sort),
+                                tint = MaterialTheme.colorScheme.onSurfaceVariant,
+                            )
+                        }
+                        LibrarySortMenu(
+                            expanded = sortVisible && searchActionsEnabled,
+                            entries = sortEntries,
+                            selectedSort = selectedSort,
+                            ascending = ascending,
+                            onDismissRequest = { onSortVisibilityChanged(false) },
+                            onSelected = { index ->
+                                onSortVisibilityChanged(false)
+                                onSort(index)
+                            },
+                        )
+                    }
+                    Box(
                         modifier = Modifier
-                            .size(48.dp)
-                            .focusRequester(dismissFocusRequester)
-                            .focusProperties { canFocus = searchActionsEnabled },
+                            .padding(horizontal = 4.dp)
+                            .width(1.dp)
+                            .height(24.dp)
+                            .background(MaterialTheme.colorScheme.outlineVariant),
+                    )
+                    IconButton(
+                        onClick = {
+                            onLayoutChange(
+                                if (state.layout == LibraryLayout.List) LibraryLayout.Grid
+                                else LibraryLayout.List,
+                            )
+                        },
+                        enabled = searchActionsEnabled,
+                        modifier = Modifier.size(48.dp),
                     ) {
                         Icon(
-                            painter = painterResource(R.drawable.ic_sort),
-                            contentDescription = stringResource(R.string.library_sort),
+                            painter = painterResource(
+                                if (state.layout == LibraryLayout.List) R.drawable.ic_view_grid
+                                else R.drawable.ic_view_list,
+                            ),
+                            contentDescription = stringResource(
+                                if (state.layout == LibraryLayout.List) R.string.library_view_grid
+                                else R.string.library_view_list,
+                            ),
                             tint = MaterialTheme.colorScheme.onSurfaceVariant,
                         )
                     }
-                    LibrarySortMenu(
-                        expanded = sortVisible && searchActionsEnabled,
-                        entries = sortEntries,
-                        selectedSort = selectedSort,
-                        ascending = ascending,
-                        onDismissRequest = { onSortVisibilityChanged(false) },
-                        onSelected = { index ->
-                            onSortVisibilityChanged(false)
-                            onSort(index)
-                        },
-                    )
-                }
-                IconButton(
-                    onClick = {
-                        onLayoutChange(
-                            if (state.layout == LibraryLayout.List) LibraryLayout.Grid
-                            else LibraryLayout.List,
-                        )
-                    },
-                    enabled = searchActionsEnabled,
-                    modifier = Modifier.size(48.dp),
-                ) {
-                    Icon(
-                        painter = painterResource(
-                            if (state.layout == LibraryLayout.List) R.drawable.ic_editor_grid
-                            else R.drawable.ic_view_list,
-                        ),
-                        contentDescription = stringResource(
-                            if (state.layout == LibraryLayout.List) R.string.library_view_grid
-                            else R.string.library_view_list,
-                        ),
-                        tint = MaterialTheme.colorScheme.onSurfaceVariant,
-                    )
                 }
             }
         }
@@ -2755,7 +2786,7 @@ private fun LibraryHeaderActions(
     onOpenNotifications: () -> Unit,
     onOpenSettings: () -> Unit,
     enabled: Boolean,
-    hasUnreadNotifications: Boolean = false,
+    notificationCount: Int = 0,
 ) {
     IconButton(onClick = onOpenSearch, enabled = enabled) {
         Icon(
@@ -2764,24 +2795,25 @@ private fun LibraryHeaderActions(
         )
     }
     val notificationsLabel = stringResource(R.string.library_notifications_title)
+    val notificationsDescription = if (notificationCount > 0) {
+        "$notificationsLabel ($notificationCount)"
+    } else notificationsLabel
     IconButton(
         onClick = onOpenNotifications,
         enabled = enabled,
-        modifier = Modifier.semantics { contentDescription = notificationsLabel },
+        modifier = Modifier.semantics { contentDescription = notificationsDescription },
     ) {
-        Box(modifier = Modifier.size(24.dp)) {
+        BadgedBox(
+            badge = {
+                if (notificationCount > 0) {
+                    Badge { Text(if (notificationCount > 99) "99+" else notificationCount.toString()) }
+                }
+            },
+        ) {
             Icon(
                 painter = painterResource(R.drawable.ic_notifications),
                 contentDescription = null,
             )
-            if (hasUnreadNotifications) {
-                Box(
-                    modifier = Modifier.align(Alignment.TopEnd)
-                        .size(7.dp)
-                        .clip(RoundedCornerShape(50))
-                        .background(MaterialTheme.colorScheme.primary),
-                )
-            }
         }
     }
     IconButton(onClick = onOpenSettings, enabled = enabled) {

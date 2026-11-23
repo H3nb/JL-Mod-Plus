@@ -151,6 +151,7 @@ class SettingsComposeController(
     composeView: ComposeView,
     initialState: SettingsUiState,
     private val actions: SettingsActions,
+    private val openUpdates: Boolean,
 ) {
     private var state by mutableStateOf(initialState)
     private val notices = TransientNoticeState()
@@ -163,7 +164,7 @@ class SettingsComposeController(
         composeView.setContent {
             JLModPlusTheme {
                 Box(Modifier.fillMaxSize()) {
-                    SettingsScreen(state = state, actions = actions)
+                    SettingsScreen(state = state, actions = actions, openUpdates = openUpdates)
                     TransientNoticeHost(notices, Modifier.align(Alignment.BottomCenter))
                 }
             }
@@ -185,10 +186,13 @@ fun SettingsScreen(
     state: SettingsUiState,
     actions: SettingsActions,
     modifier: Modifier = Modifier,
+    openUpdates: Boolean = false,
 ) {
     var choiceDialog by remember { mutableStateOf<SettingsDialogChoice?>(null) }
     var libraryChoiceDialog by remember { mutableStateOf<SettingsChoice?>(null) }
-    var page by rememberSaveable { mutableStateOf(SettingsPage.Main) }
+    var page by rememberSaveable {
+        mutableStateOf(if (openUpdates) SettingsPage.Updates else SettingsPage.Main)
+    }
     var infoDialog by remember { mutableStateOf<LibraryInfoDialog?>(null) }
     val context = LocalContext.current
     val updates = if (LocalInspectionMode.current) null else remember(context) {
@@ -207,16 +211,19 @@ fun SettingsScreen(
         .filterNot { it.key in runtimeScreenKeys }
         .map { SettingsOptionEntry.Toggle(it) }
 
+    val onChildBack: () -> Unit = {
+        if (openUpdates) actions.onBack() else page = SettingsPage.Main
+    }
     BackHandler(enabled = infoDialog != null) { infoDialog = null }
     BackHandler(enabled = page != SettingsPage.Main && infoDialog == null) {
-        page = SettingsPage.Main
+        onChildBack()
     }
     if (page != SettingsPage.Main) {
         when (page) {
             SettingsPage.Updates -> if (updates != null) {
                 UpdatesScreen(
                     repository = updates,
-                    onBack = { page = SettingsPage.Main },
+                    onBack = onChildBack,
                     onOpenRelease = actions::onOpenUpdateRelease,
                     onOpenDownload = actions::onOpenUpdateDownload,
                 )
