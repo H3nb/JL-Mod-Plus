@@ -69,6 +69,7 @@ import androidx.compose.material3.OutlinedTextField
 import androidx.compose.material3.PlainTooltip
 import androidx.compose.material3.RadioButton
 import androidx.compose.material3.SecondaryScrollableTabRow
+import androidx.compose.material3.SecondaryTabRow
 import androidx.compose.material3.Surface
 import androidx.compose.material3.Tab
 import androidx.compose.material3.Text
@@ -623,14 +624,8 @@ private fun RuntimeMemoryTabs(
     val destinations = listOf(
         MemoryEditorTab.RESULTS, MemoryEditorTab.VARIABLES, MemoryEditorTab.SCRIPTS,
     )
-    SecondaryScrollableTabRow(
-        selectedTabIndex = destinations.indexOf(state.activeTab).coerceAtLeast(0),
-        modifier = modifier.fillMaxWidth(),
-        edgePadding = 0.dp,
-        containerColor = Color.Transparent,
-        indicator = {},
-        divider = {},
-    ) {
+    val selectedIndex = destinations.indexOf(state.activeTab).coerceAtLeast(0)
+    val tabs: @Composable () -> Unit = {
         destinations.forEach { tab ->
             val description = stringResource(when (tab) {
                 MemoryEditorTab.RESULTS -> R.string.memory_editor_search_tab
@@ -642,7 +637,7 @@ private fun RuntimeMemoryTabs(
                 selected = state.activeTab == tab,
                 enabled = !navigationLocked,
                 onClick = { onTab(tab) },
-                modifier = Modifier.padding(horizontal = 2.dp, vertical = 4.dp)
+                modifier = Modifier.padding(horizontal = 2.dp)
                     .clip(MaterialTheme.shapes.large)
                     .background(
                         if (state.activeTab == tab) MaterialTheme.colorScheme.secondaryContainer
@@ -666,6 +661,26 @@ private fun RuntimeMemoryTabs(
                         Text(description, maxLines = 1)
                     }
                 },
+            )
+        }
+    }
+    BoxWithConstraints(modifier.fillMaxWidth()) {
+        if (maxWidth >= 336.dp * LocalDensity.current.fontScale.coerceAtLeast(1f)) {
+            SecondaryTabRow(
+                selectedTabIndex = selectedIndex,
+                containerColor = Color.Transparent,
+                indicator = {},
+                divider = {},
+                tabs = tabs,
+            )
+        } else {
+            SecondaryScrollableTabRow(
+                selectedTabIndex = selectedIndex,
+                edgePadding = 0.dp,
+                containerColor = Color.Transparent,
+                indicator = {},
+                divider = {},
+                tabs = tabs,
             )
         }
     }
@@ -831,9 +846,10 @@ private fun RuntimeSearchResultsTab(
         )
         if (state.sessionStage != MemorySessionStage.EMPTY || state.results.isNotEmpty() ||
             state.canUndo) {
-            BoxWithConstraints(Modifier.fillMaxWidth().windowInsetsPadding(
-                WindowInsets.safeGestures.only(WindowInsetsSides.Horizontal),
-            )) {
+            BoxWithConstraints(Modifier.fillMaxWidth()
+                .background(MaterialTheme.colorScheme.surfaceContainer)
+                .windowInsetsPadding(WindowInsets.safeGestures.only(WindowInsetsSides.Horizontal)),
+            ) {
                 val showExtra = maxWidth >=
                     480.dp * LocalDensity.current.fontScale.coerceAtLeast(1f)
                 val summary: @Composable RowScope.() -> Unit = {
@@ -1234,9 +1250,9 @@ private fun RuntimeVariablesTab(
     )
     Column(modifier.fillMaxWidth()) {
         Row(
-            Modifier.fillMaxWidth().windowInsetsPadding(
-                WindowInsets.safeGestures.only(WindowInsetsSides.Horizontal),
-            ).padding(horizontal = 8.dp, vertical = 4.dp),
+            Modifier.fillMaxWidth().background(MaterialTheme.colorScheme.surfaceContainer)
+                .windowInsetsPadding(WindowInsets.safeGestures.only(WindowInsetsSides.Horizontal))
+                .padding(horizontal = 8.dp, vertical = 4.dp),
             verticalAlignment = Alignment.CenterVertically,
         ) {
             val allSelected = entries.isNotEmpty() &&

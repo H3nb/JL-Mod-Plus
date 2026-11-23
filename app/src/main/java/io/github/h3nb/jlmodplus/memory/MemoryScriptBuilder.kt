@@ -44,6 +44,7 @@ import androidx.compose.ui.Modifier
 import androidx.compose.ui.platform.testTag
 import androidx.compose.ui.platform.LocalFocusManager
 import androidx.compose.ui.res.painterResource
+import androidx.compose.ui.res.pluralStringResource
 import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.text.font.FontFamily
 import androidx.compose.ui.text.style.TextOverflow
@@ -491,7 +492,6 @@ private fun BookmarkPicker(
     var query by remember { mutableStateOf("") }
     var selected by remember { mutableStateOf(emptySet<String>()) }
     var error by remember { mutableStateOf<String?>(null) }
-    val focusManager = LocalFocusManager.current
     val available = state.savedVariables.filter { it.id !in used }
     val matches = available.filter {
         query.isBlank() || it.label.contains(query, ignoreCase = true) ||
@@ -504,50 +504,61 @@ private fun BookmarkPicker(
         maxDialogWidth = 480.dp,
         textScrollable = false,
         text = {
-            Column(verticalArrangement = Arrangement.spacedBy(8.dp)) {
-                InlineSearchField(
-                    query = query,
-                    onQueryChange = { query = it },
-                    placeholder = stringResource(R.string.memory_builder_search_bookmarks),
-                    onDismissInput = { focusManager.clearFocus() },
-                    modifier = Modifier.fillMaxWidth(),
-                )
-                if (matches.isEmpty()) {
-                    Text(stringResource(R.string.memory_builder_no_bookmarks),
-                        style = MaterialTheme.typography.bodySmall)
-                    TextButton(onClick = onOpenSaved) {
-                        Text(stringResource(R.string.memory_builder_open_saved))
+            val focusManager = LocalFocusManager.current
+            LazyColumn(verticalArrangement = Arrangement.spacedBy(4.dp)) {
+                item(key = "search") {
+                    InlineSearchField(
+                        query = query,
+                        onQueryChange = { query = it },
+                        placeholder = stringResource(R.string.memory_builder_search_bookmarks),
+                        onDismissInput = { focusManager.clearFocus() },
+                        modifier = Modifier.fillMaxWidth(),
+                    )
+                }
+                if (eligibleSelection.isNotEmpty()) item(key = "selection") {
+                    Text(pluralStringResource(
+                        R.plurals.memory_editor_selected, eligibleSelection.size, eligibleSelection.size,
+                    ), style = MaterialTheme.typography.labelMedium,
+                        color = MaterialTheme.colorScheme.onSurfaceVariant,
+                        modifier = Modifier.padding(vertical = 4.dp))
+                }
+                if (matches.isEmpty() || available.none { it.hasLocator }) item(key = "empty") {
+                    Column {
+                        if (matches.isEmpty()) Text(stringResource(R.string.memory_builder_no_bookmarks),
+                            style = MaterialTheme.typography.bodyMedium)
+                        TextButton(onClick = onOpenSaved) {
+                            Text(stringResource(R.string.memory_builder_open_saved))
+                        }
                     }
                 }
-                error?.let {
-                    Text(it, color = MaterialTheme.colorScheme.error,
-                        style = MaterialTheme.typography.bodySmall)
+                error?.let { message ->
+                    item(key = "error") {
+                        Text(message, color = MaterialTheme.colorScheme.error,
+                            style = MaterialTheme.typography.bodyMedium)
+                    }
                 }
-                LazyColumn(
-                    modifier = Modifier.weight(1f, fill = false),
-                    verticalArrangement = Arrangement.spacedBy(4.dp),
-                ) {
-                    items(matches, key = SavedVariableRow::id) { row ->
-                        Surface(
-                            color = if (row.id in selected && row.hasLocator)
-                                MaterialTheme.colorScheme.secondaryContainer
+                items(matches, key = { "bookmark:" + it.id }) { row ->
+                    val checked = row.id in selected && row.hasLocator
+                    Surface(
+                        color = if (checked) MaterialTheme.colorScheme.secondaryContainer
                             else MaterialTheme.colorScheme.surfaceContainerLow,
-                            shape = MaterialTheme.shapes.medium,
-                        ) {
+                        contentColor = if (checked) MaterialTheme.colorScheme.onSecondaryContainer
+                            else MaterialTheme.colorScheme.onSurface,
+                        shape = MaterialTheme.shapes.medium,
+                    ) {
                         Row(
                             Modifier.fillMaxWidth().heightIn(min = 56.dp)
                                 .toggleable(
-                                    value = row.id in selected,
+                                    value = checked,
                                     enabled = row.hasLocator,
-                                    onValueChange = { checked ->
-                                        selected = if (checked) selected + row.id else selected - row.id
+                                    onValueChange = { enabled ->
+                                        selected = if (enabled) selected + row.id else selected - row.id
                                     },
                                 ).padding(horizontal = 8.dp, vertical = 4.dp),
                             verticalAlignment = Alignment.CenterVertically,
                             horizontalArrangement = Arrangement.spacedBy(12.dp),
                         ) {
-                            Checkbox(checked = row.id in selected && row.hasLocator,
-                                onCheckedChange = null, enabled = row.hasLocator)
+                            Checkbox(checked = checked, onCheckedChange = null, enabled = row.hasLocator)
                             Column(Modifier.weight(1f).padding(end = 4.dp)) {
                                 Text(row.label, style = MaterialTheme.typography.bodyLarge)
                                 Text(if (row.hasLocator) row.path
@@ -556,7 +567,6 @@ private fun BookmarkPicker(
                                     color = MaterialTheme.colorScheme.onSurfaceVariant,
                                     maxLines = 2, overflow = TextOverflow.Ellipsis)
                             }
-                        }
                         }
                     }
                 }
@@ -568,8 +578,7 @@ private fun BookmarkPicker(
                     error = onAdd(eligibleSelection)
                     if (error == null) onDismiss()
                 }) {
-                Text(stringResource(R.string.memory_builder_add_selected) +
-                    " (" + eligibleSelection.size + ")")
+                Text(stringResource(R.string.memory_builder_add_selected))
             }
         },
         dismissButton = {
