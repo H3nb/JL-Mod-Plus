@@ -256,8 +256,8 @@ internal fun MemoryEditorPeekDock(
     leadingContent: (@Composable () -> Unit)? = null,
     centerContent: (@Composable () -> Unit)? = null,
 ) {
-    // The workspace already paints behind this dock; another tint would compound opacity.
-    // Dialog windows use the same transparent dock so Peek needs no second panel.
+    // The workspace supplies its themed chrome; dialog docks remain transparent.
+    // Peek removes the workspace chrome without changing dock geometry.
     Surface(
         modifier = modifier.fillMaxWidth(),
         color = Color.Transparent,

@@ -33,6 +33,7 @@ import androidx.compose.foundation.layout.safeGestures
 import androidx.compose.foundation.layout.safeDrawing
 import androidx.compose.foundation.layout.statusBars
 import androidx.compose.foundation.layout.navigationBars
+import androidx.compose.foundation.layout.ime
 import androidx.compose.foundation.layout.fillMaxHeight
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.fillMaxWidth
@@ -89,6 +90,7 @@ import androidx.compose.runtime.snapshotFlow
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.alpha
+import androidx.compose.ui.draw.clip
 import androidx.compose.ui.draw.clipToBounds
 import androidx.compose.ui.focus.FocusRequester
 import androidx.compose.ui.focus.focusProperties
@@ -176,9 +178,7 @@ internal fun MemoryEditorRuntimeRoot(
 ) {
     if (!state.visible) return
     MemoryEditorOverlayScope(overlayState) { overlay ->
-        val controlsBackdrop = MaterialTheme.colorScheme.surface.copy(
-            alpha = (MemoryEditorOverlayState.DEFAULT_OPACITY - overlay.opacity).coerceAtLeast(0f),
-        )
+        val controlsBackdrop = MaterialTheme.colorScheme.surfaceContainer
         val tab = state.activeTab
         val tabTravelPx = with(LocalDensity.current) { PAGE_TRAVEL_DP.dp.roundToPx() }
         var opacityDialog by remember { mutableStateOf(false) }
@@ -370,7 +370,7 @@ internal fun MemoryEditorRuntimeRoot(
                 modifier = Modifier.fillMaxSize()
                     .testTag("memory-editor-workspace")
                     .alpha(if (overlay.peeking) 0f else 1f),
-                color = MaterialTheme.colorScheme.surfaceContainerHigh.copy(alpha = overlay.opacity),
+                color = MaterialTheme.colorScheme.surface.copy(alpha = overlay.opacity),
                 contentColor = MaterialTheme.colorScheme.onSurface,
             ) {
                 BoxWithConstraints(
@@ -508,7 +508,8 @@ internal fun MemoryEditorRuntimeRoot(
                         .fillMaxWidth()
                         .windowInsetsPadding(
                             WindowInsets.safeDrawing.only(WindowInsetsSides.Horizontal)
-                                .union(WindowInsets.navigationBars.only(WindowInsetsSides.Bottom)),
+                                .union(WindowInsets.navigationBars.only(WindowInsetsSides.Bottom))
+                                .union(WindowInsets.ime.only(WindowInsetsSides.Bottom)),
                         )
                         .padding(memoryEditorBottomCornerPadding()),
                 ) {
@@ -627,6 +628,8 @@ private fun RuntimeMemoryTabs(
         modifier = modifier.fillMaxWidth(),
         edgePadding = 0.dp,
         containerColor = Color.Transparent,
+        indicator = {},
+        divider = {},
     ) {
         destinations.forEach { tab ->
             val description = stringResource(when (tab) {
@@ -639,7 +642,14 @@ private fun RuntimeMemoryTabs(
                 selected = state.activeTab == tab,
                 enabled = !navigationLocked,
                 onClick = { onTab(tab) },
-                modifier = Modifier.semantics { contentDescription = description },
+                modifier = Modifier.padding(horizontal = 2.dp, vertical = 4.dp)
+                    .clip(MaterialTheme.shapes.large)
+                    .background(
+                        if (state.activeTab == tab) MaterialTheme.colorScheme.secondaryContainer
+                        else Color.Transparent,
+                    ).semantics { contentDescription = description },
+                selectedContentColor = MaterialTheme.colorScheme.onSecondaryContainer,
+                unselectedContentColor = MaterialTheme.colorScheme.onSurfaceVariant,
                 text = {
                     Row(verticalAlignment = Alignment.CenterVertically,
                         horizontalArrangement = Arrangement.spacedBy(6.dp)) {
@@ -673,7 +683,7 @@ private fun RuntimeOperationStrip(state: MemoryEditorUiState, actions: MemoryEdi
     val progress = if (state.scanBytesTotal > 0L) {
         (state.scanBytesScanned.toFloat() / state.scanBytesTotal.toFloat()).coerceIn(0f, 1f)
     } else null
-    Surface(color = MaterialTheme.colorScheme.secondaryContainer.copy(alpha = 0.72f)) {
+    Surface(color = MaterialTheme.colorScheme.secondaryContainer) {
         Column(
             modifier = Modifier.fillMaxWidth().padding(horizontal = 12.dp, vertical = 6.dp),
             verticalArrangement = Arrangement.spacedBy(4.dp),
@@ -730,7 +740,7 @@ private fun RuntimeMessage(message: String, isError: Boolean) {
     else MaterialTheme.colorScheme.secondaryContainer
     val content = if (isError) MaterialTheme.colorScheme.onErrorContainer
     else MaterialTheme.colorScheme.onSecondaryContainer
-    Surface(color = container.copy(alpha = 0.82f)) {
+    Surface(color = container) {
         Text(
             message,
             modifier = Modifier
@@ -922,7 +932,7 @@ private fun RuntimeSearchResultsTab(
             if (state.results.isEmpty()) {
                 item(key = "empty") {
                     Column(
-                        modifier = Modifier.fillMaxWidth().padding(20.dp),
+                        modifier = Modifier.fillMaxWidth().padding(8.dp, 12.dp),
                         verticalArrangement = Arrangement.spacedBy(12.dp),
                     ) {
                         Text(
@@ -933,21 +943,23 @@ private fun RuntimeSearchResultsTab(
                             ),
                             style = MaterialTheme.typography.titleMedium,
                         )
-                        quickActions.take(2).forEachIndexed { index, action ->
-                            val label = stringResource(action.label)
-                            val buttonModifier = Modifier.fillMaxWidth().heightIn(min = 48.dp)
-                                .semantics { contentDescription = label }
-                            val content: @Composable () -> Unit = {
-                                Icon(painterResource(action.icon), contentDescription = null)
-                                Spacer(Modifier.width(12.dp))
-                                Text(label, modifier = Modifier.weight(1f))
-                            }
-                            if (index == 0) {
-                                Button(onClick = action.onClick, enabled = action.enabled,
-                                    modifier = buttonModifier, shape = MaterialTheme.shapes.medium) { content() }
-                            } else {
-                                OutlinedButton(onClick = action.onClick, enabled = action.enabled,
-                                    modifier = buttonModifier, shape = MaterialTheme.shapes.medium) { content() }
+                        Surface(
+                            color = MaterialTheme.colorScheme.surfaceContainerLow,
+                            shape = MaterialTheme.shapes.large,
+                        ) {
+                            Column {
+                                quickActions.forEachIndexed { index, action ->
+                                    if (index > 0) HorizontalDivider(
+                                        modifier = Modifier.padding(horizontal = 16.dp),
+                                        color = MaterialTheme.colorScheme.outlineVariant,
+                                    )
+                                    MemoryEditorNavigationRow(
+                                        icon = action.icon,
+                                        title = stringResource(action.label),
+                                        enabled = action.enabled,
+                                        onClick = action.onClick,
+                                    )
+                                }
                             }
                         }
                     }
@@ -1471,8 +1483,12 @@ private fun RuntimeListRow(
             }.orEmpty()
     }
     val selectDescription = stringResource(R.string.memory_editor_select_result_value)
-    Surface(color = if (selected) MaterialTheme.colorScheme.primaryContainer
-        else Color.Transparent) {
+    Surface(
+        color = if (selected) MaterialTheme.colorScheme.secondaryContainer
+            else MaterialTheme.colorScheme.surfaceContainerLow,
+        contentColor = if (selected) MaterialTheme.colorScheme.onSecondaryContainer
+            else MaterialTheme.colorScheme.onSurface,
+    ) {
         Row(
             Modifier.fillMaxWidth()
                 .combinedClickable(
@@ -1581,8 +1597,10 @@ private fun RuntimeResultRow(
     onClick: () -> Unit,
 ) {
     Surface(
-        color = if (selected) MaterialTheme.colorScheme.primaryContainer.copy(alpha = 0.72f)
-        else Color.Transparent,
+        color = if (selected) MaterialTheme.colorScheme.secondaryContainer
+            else MaterialTheme.colorScheme.surfaceContainerLow,
+        contentColor = if (selected) MaterialTheme.colorScheme.onSecondaryContainer
+            else MaterialTheme.colorScheme.onSurface,
     ) {
         Row(
             modifier = Modifier.fillMaxWidth().clickable(onClick = onClick)
@@ -1667,7 +1685,9 @@ private fun RuntimeSelectedActionBar(
 ) {
     var showMore by remember { mutableStateOf(false) }
     BoxWithConstraints(
-        Modifier.fillMaxWidth().background(MaterialTheme.colorScheme.secondaryContainer)
+        Modifier.fillMaxWidth().padding(horizontal = 4.dp, vertical = 4.dp)
+            .clip(MaterialTheme.shapes.large)
+            .background(MaterialTheme.colorScheme.secondaryContainer)
             .padding(horizontal = 12.dp, vertical = 4.dp),
     ) {
         val fontScale = LocalDensity.current.fontScale.coerceAtLeast(1f)

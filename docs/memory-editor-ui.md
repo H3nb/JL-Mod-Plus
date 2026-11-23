@@ -87,9 +87,9 @@ freeze timing or polling cadence. It makes no frame-time or allocation claim.
   Batch Edit remains limited to compatible session-only Watch entries; mixed
   selections support Remove. The stable top row preserves selection/count affordances.
 - Place result counts and scan controls above the scrolling results, while
-  target provenance remains with its row or Inspector. The workspace, header,
-  data viewport and footer must respect the user's opacity setting without
-  independent opaque layers obscuring the live game. Keep numeric values legible
+  target provenance remains with its row or Inspector. The workspace background respects the user's opacity setting; compact header,
+  footer, data rows and interactive groups use opaque theme surfaces to preserve
+  contrast without covering unused viewport space. Keep numeric values legible
   and truncate only secondary source summaries. Technical values and identifiers
   use a readable monospace style; prose uses the normal Material text family.
   A single-row selected-action bar overlays the list rather than resizing
@@ -128,7 +128,7 @@ but their Bookmark can always be renamed or removed.
 
 Boolean is explicit true/false; numeric Auto excludes it. Inspector remains a
 checked snapshot in a contextual detail page. Scroll state survives tab and
-width changes. Primary tabs use short directional motion.
+width changes. Primary tabs use short directional motion and a tonal selected surface.
 
 
 ## Action Script authoring
@@ -141,7 +141,8 @@ width changes. Primary tabs use short directional motion.
   preloads them into the visual builder, without scanning or executing anything.
 - A builder with no targets links directly to Search and Saved. Leaving for either
   destination preserves the in-session builder draft; returning to Scripts resumes it.
-  The Bookmark picker also provides Open Saved when no eligible targets exist.
+  The Bookmark picker uses the shared inline search, matches names and paths, and
+  also provides Open Saved when no matching targets exist.
 - The visual builder never silently guesses a target. It captures verified rooted
   locators and must keep save-time revalidation, empty initial write values, and
   lossless JSON round-trip checks. JSON Editor remains independent of Bookmarks
@@ -154,7 +155,7 @@ width changes. Primary tabs use short directional motion.
   a matching saved script opens its detail; otherwise the draft remains editable.
   Show active Freeze state and distinguish last-read values from proposed edits.
 - An open Script subpage replaces tabs with the shared Back/title/Minimize header;
-  Peek remains global. Script type choices use concise icon-supported rows.
+  Peek remains global. Script type choices use concise icon-supported rows grouped on a themed surface.
   The visual builder puts targets and their operations first, keeps description
   and form limits optional, and pins the primary Save action outside the
   scrolling form. JSON editor likewise keeps Paste and Save reachable beside
@@ -194,18 +195,17 @@ Hidden bodies have no actionable semantics; a pointer shield and key handling pr
 editing invisible content. Peek is a view-only action, not touch-through game control.
 Tooltips dismiss when Peek starts. Input dialogs keep opaque surfaces for legibility.
 
-The workspace footer sits over the same user-selected translucent backdrop
-without painting a second surface, which would compound opacity. Its controls
+The workspace footer uses the same solid themed chrome as the header. Its controls
 respect the system-safe bounds. Dialog footers remain transparent; the workspace
 dock disappears during Peek. Keep dialog surfaces solid so users can safely
 inspect or edit inputs.
 
-Panel opacity controls the workspace backdrop, including its header, data
-viewport and footer, without fading text or icons. The initial default is 72%,
+Panel opacity controls the workspace backdrop without fading text, icons or
+interactive surfaces. The initial default is 72%,
 adjustable from 0% to 100%; previously saved preferences remain unchanged.
 At 0%, the main backdrop is transparent and the game remains visible behind
-editor controls. The header and bottom navigation receive a small local backing
-as opacity decreases, keeping controls legible without obscuring the data viewport.
+editor controls. The header and bottom navigation use stable themed surfaces so game text cannot
+compete with editor navigation.
 At 100%, the backdrop is opaque. Local action surfaces may remain
 solid for usability, but must not cover the entire data viewport. Do not blur the
 live game: players need to read its numbers while comparing results. Peek still

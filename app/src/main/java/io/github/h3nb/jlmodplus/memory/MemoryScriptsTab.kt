@@ -5,7 +5,6 @@ package io.github.h3nb.jlmodplus.memory
 
 import android.content.ClipboardManager
 import androidx.activity.compose.BackHandler
-import androidx.compose.foundation.BorderStroke
 import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.BoxWithConstraints
@@ -235,6 +234,8 @@ internal fun RuntimeScriptsTab(
                 style = MaterialTheme.typography.bodySmall,
                 color = MaterialTheme.colorScheme.onSurfaceVariant)
             OutlinedTextField(
+                colors = memoryEditorFieldColors(),
+                shape = MaterialTheme.shapes.medium,
                 value = draft.text,
                 onValueChange = {
                     if (!saving && it.toByteArray(Charsets.UTF_8).size <= MemoryEngineContract.MAX_RECIPE_BYTES) {
@@ -371,6 +372,8 @@ internal fun RuntimeScriptsTab(
                     color = MaterialTheme.colorScheme.error)
                 metadata?.parameters?.forEach { (name, _) ->
                     OutlinedTextField(
+                        colors = memoryEditorFieldColors(),
+                        shape = MaterialTheme.shapes.medium,
                         value = inputs[name].orEmpty(),
                         onValueChange = {
                             if (it.length <= 32) {
@@ -437,7 +440,7 @@ internal fun RuntimeScriptsTab(
         return
     }
 
-    Column(modifier.fillMaxSize().padding(horizontal = 12.dp, vertical = 8.dp),
+    Column(modifier.fillMaxSize().padding(horizontal = 8.dp, vertical = 8.dp),
         verticalArrangement = Arrangement.spacedBy(12.dp)) {
         Row(modifier = Modifier.fillMaxWidth(), verticalAlignment = Alignment.CenterVertically) {
             Text(stringResource(R.string.memory_scripts_saved_count, state.scripts.size),
@@ -487,8 +490,7 @@ internal fun RuntimeScriptsTab(
                     val active = state.scriptActiveFreezes.any { it.first == script.id }
                     Surface(modifier = Modifier.fillMaxWidth().clickable { onSelectedId(script.id) },
                         shape = MaterialTheme.shapes.large,
-                        color = MaterialTheme.colorScheme.surfaceContainerLow,
-                        border = BorderStroke(1.dp, MaterialTheme.colorScheme.outlineVariant)) {
+                        color = MaterialTheme.colorScheme.surfaceContainerLow) {
                         Row(Modifier.fillMaxWidth().padding(12.dp),
                             verticalAlignment = Alignment.CenterVertically,
                             horizontalArrangement = Arrangement.spacedBy(12.dp)) {
@@ -497,8 +499,14 @@ internal fun RuntimeScriptsTab(
                                 "form" -> R.drawable.ic_memory_editor_edit_value
                                 else -> R.drawable.ic_auto_mode
                             }
-                            Icon(painterResource(icon), contentDescription = null,
-                                tint = MaterialTheme.colorScheme.onSurfaceVariant)
+                            Surface(
+                                color = MaterialTheme.colorScheme.secondaryContainer,
+                                contentColor = MaterialTheme.colorScheme.onSecondaryContainer,
+                                shape = MaterialTheme.shapes.medium,
+                            ) {
+                                Icon(painterResource(icon), contentDescription = null,
+                                    modifier = Modifier.padding(8.dp))
+                            }
                             Column(Modifier.weight(1f),
                                 verticalArrangement = Arrangement.spacedBy(2.dp)) {
                                 Text(script.name, style = MaterialTheme.typography.titleSmall,

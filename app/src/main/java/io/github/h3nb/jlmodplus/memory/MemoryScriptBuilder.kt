@@ -4,11 +4,12 @@
 package io.github.h3nb.jlmodplus.memory
 
 import androidx.compose.animation.AnimatedVisibility
-import androidx.compose.foundation.clickable
 import androidx.compose.foundation.text.selection.SelectionContainer
 import androidx.compose.foundation.horizontalScroll
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Column
+import androidx.compose.foundation.layout.FlowRow
+import androidx.compose.foundation.layout.ExperimentalLayoutApi
 import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.Spacer
 import androidx.compose.foundation.layout.width
@@ -26,7 +27,6 @@ import androidx.compose.material3.Checkbox
 import androidx.compose.material3.FilterChip
 import androidx.compose.material3.Icon
 import androidx.compose.material3.MaterialTheme
-import androidx.compose.material3.OutlinedButton
 import androidx.compose.material3.OutlinedTextField
 import androidx.compose.material3.Surface
 import androidx.compose.material3.Text
@@ -35,18 +35,21 @@ import androidx.compose.material3.FilledTonalButton
 import androidx.compose.material3.HorizontalDivider
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.getValue
+import androidx.compose.runtime.key
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
 import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.platform.testTag
+import androidx.compose.ui.platform.LocalFocusManager
 import androidx.compose.ui.res.painterResource
 import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.text.font.FontFamily
 import androidx.compose.ui.text.style.TextOverflow
 import androidx.compose.ui.unit.dp
 import io.github.h3nb.jlmodplus.R
+import io.github.h3nb.jlmodplus.ui.InlineSearchField
 import java.util.UUID
 import kotlinx.serialization.json.JsonObject
 
@@ -107,7 +110,7 @@ internal fun MemoryScriptTypeChooser(
 ) {
     Column(
         modifier.fillMaxSize().verticalScroll(rememberScrollState())
-            .padding(horizontal = 16.dp, vertical = 12.dp),
+            .padding(horizontal = 8.dp, vertical = 12.dp),
         verticalArrangement = Arrangement.spacedBy(12.dp),
     ) {
         Text(
@@ -115,57 +118,42 @@ internal fun MemoryScriptTypeChooser(
             style = MaterialTheme.typography.bodyMedium,
             color = MaterialTheme.colorScheme.onSurfaceVariant,
         )
-        MemoryScriptBuilderMode.entries.forEach { mode ->
-            val description = when (mode) {
-                MemoryScriptBuilderMode.FREEZE -> R.string.memory_builder_freeze_short
-                MemoryScriptBuilderMode.FORM -> R.string.memory_builder_form_short
-                MemoryScriptBuilderMode.ACTIONS -> R.string.memory_builder_actions_short
-            }
-            val icon = when (mode) {
-                MemoryScriptBuilderMode.FREEZE -> R.drawable.ic_lock
-                MemoryScriptBuilderMode.FORM -> R.drawable.ic_memory_editor_edit_value
-                MemoryScriptBuilderMode.ACTIONS -> R.drawable.ic_auto_mode
-            }
-            Surface(
-                modifier = Modifier.fillMaxWidth().clickable { onChoose(mode) },
-                shape = MaterialTheme.shapes.large,
-                color = MaterialTheme.colorScheme.surfaceContainerLow,
-                border = androidx.compose.foundation.BorderStroke(
-                    1.dp, MaterialTheme.colorScheme.outlineVariant,
-                ),
-            ) {
-                Row(Modifier.fillMaxWidth().padding(16.dp),
-                    verticalAlignment = Alignment.CenterVertically,
-                    horizontalArrangement = Arrangement.spacedBy(16.dp)) {
-                    Surface(
-                        color = MaterialTheme.colorScheme.secondaryContainer,
-                        shape = MaterialTheme.shapes.medium,
-                    ) {
-                        Icon(painterResource(icon), contentDescription = null,
-                            modifier = Modifier.padding(12.dp),
-                            tint = MaterialTheme.colorScheme.onSecondaryContainer)
+        Surface(
+            color = MaterialTheme.colorScheme.surfaceContainerLow,
+            shape = MaterialTheme.shapes.large,
+        ) {
+            Column {
+                MemoryScriptBuilderMode.entries.forEachIndexed { index, mode ->
+                    val description = when (mode) {
+                        MemoryScriptBuilderMode.FREEZE -> R.string.memory_builder_freeze_short
+                        MemoryScriptBuilderMode.FORM -> R.string.memory_builder_form_short
+                        MemoryScriptBuilderMode.ACTIONS -> R.string.memory_builder_actions_short
                     }
-                    Column(Modifier.weight(1f), verticalArrangement = Arrangement.spacedBy(2.dp)) {
-                        Text(modeTitle(mode), style = MaterialTheme.typography.titleMedium)
-                        Text(stringResource(description),
-                            style = MaterialTheme.typography.bodySmall,
-                            color = MaterialTheme.colorScheme.onSurfaceVariant)
+                    val icon = when (mode) {
+                        MemoryScriptBuilderMode.FREEZE -> R.drawable.ic_lock
+                        MemoryScriptBuilderMode.FORM -> R.drawable.ic_memory_editor_edit_value
+                        MemoryScriptBuilderMode.ACTIONS -> R.drawable.ic_auto_mode
                     }
-                    Icon(painterResource(R.drawable.ic_chevron_right), contentDescription = null,
-                        tint = MaterialTheme.colorScheme.onSurfaceVariant)
+                    if (index > 0) HorizontalDivider(
+                        modifier = Modifier.padding(horizontal = 16.dp),
+                        color = MaterialTheme.colorScheme.outlineVariant,
+                    )
+                    MemoryEditorNavigationRow(icon, modeTitle(mode),
+                        onClick = { onChoose(mode) }, description = stringResource(description))
                 }
             }
         }
-        HorizontalDivider(color = MaterialTheme.colorScheme.outlineVariant)
-        TextButton(onClick = onJson, modifier = Modifier.fillMaxWidth()) {
-            Icon(painterResource(R.drawable.ic_file_picker_file),
-                contentDescription = null)
-            Spacer(Modifier.width(8.dp))
-            Text(stringResource(R.string.memory_builder_json_editor))
+        Surface(
+            color = MaterialTheme.colorScheme.surfaceContainerLow,
+            shape = MaterialTheme.shapes.large,
+        ) {
+            MemoryEditorNavigationRow(R.drawable.ic_file_picker_file,
+                stringResource(R.string.memory_builder_json_editor), onClick = onJson)
         }
     }
 }
 
+@OptIn(ExperimentalLayoutApi::class)
 @Composable
 internal fun MemoryScriptBuilderScreen(
     draft: MemoryScriptBuilderDraft,
@@ -197,7 +185,7 @@ internal fun MemoryScriptBuilderScreen(
         MemoryScriptBuilderMode.FORM -> R.string.memory_builder_fields
         MemoryScriptBuilderMode.ACTIONS -> R.string.memory_builder_actions
     }
-    Column(modifier.fillMaxSize().padding(horizontal = 12.dp),
+    Column(modifier.fillMaxSize().padding(horizontal = 8.dp),
         verticalArrangement = Arrangement.spacedBy(8.dp)) {
         error?.let {
             Text(it, color = MaterialTheme.colorScheme.error,
@@ -206,7 +194,15 @@ internal fun MemoryScriptBuilderScreen(
         }
         Column(Modifier.weight(1f).verticalScroll(rememberScrollState()),
             verticalArrangement = Arrangement.spacedBy(12.dp)) {
+            Surface(
+                color = MaterialTheme.colorScheme.surfaceContainerLow,
+                shape = MaterialTheme.shapes.large,
+            ) {
+            Column(Modifier.fillMaxWidth().padding(12.dp),
+                verticalArrangement = Arrangement.spacedBy(4.dp)) {
             OutlinedTextField(
+                colors = memoryEditorFieldColors(),
+                shape = MaterialTheme.shapes.medium,
                 value = draft.name,
                 onValueChange = { if (it.length <= 80) onDraft(draft.copy(name = it)) },
                 label = { Text(stringResource(R.string.memory_builder_name)) },
@@ -221,12 +217,16 @@ internal fun MemoryScriptBuilderScreen(
             }
             AnimatedVisibility(showDescription || draft.description.isNotBlank()) {
                 OutlinedTextField(
+                    colors = memoryEditorFieldColors(),
+                    shape = MaterialTheme.shapes.medium,
                     value = draft.description,
                     onValueChange = { if (it.length <= 2048) onDraft(draft.copy(description = it)) },
                     label = { Text(stringResource(R.string.memory_scripts_description)) },
                     enabled = !saving,
                     minLines = 1, maxLines = 3, modifier = Modifier.fillMaxWidth(),
                 )
+            }
+            }
             }
             if (draft.actions.isEmpty()) {
                 Text(stringResource(when (draft.mode) {
@@ -236,37 +236,53 @@ internal fun MemoryScriptBuilderScreen(
                 }), style = MaterialTheme.typography.bodySmall,
                     color = MaterialTheme.colorScheme.onSurfaceVariant)
             }
-            Row(verticalAlignment = Alignment.CenterVertically) {
+            FlowRow(
+                modifier = Modifier.fillMaxWidth(),
+                horizontalArrangement = Arrangement.SpaceBetween,
+                verticalArrangement = Arrangement.spacedBy(4.dp),
+            ) {
                 Text(stringResource(section) + " · " + draft.actions.size,
                     style = MaterialTheme.typography.titleMedium,
-                    modifier = Modifier.weight(1f))
-                FilledTonalButton(enabled = !saving, onClick = { picking = true }) {
-                    Icon(painterResource(R.drawable.ic_add), contentDescription = null)
-                    Spacer(Modifier.width(6.dp))
-                    Text(stringResource(R.string.memory_builder_add_target))
+                    modifier = Modifier.align(Alignment.CenterVertically))
+                if (draft.actions.isNotEmpty()) {
+                    FilledTonalButton(enabled = !saving, onClick = { picking = true }) {
+                        Icon(painterResource(R.drawable.ic_add), contentDescription = null)
+                        Spacer(Modifier.width(6.dp))
+                        Text(stringResource(R.string.memory_builder_add_target))
+                    }
                 }
             }
             if (draft.actions.isEmpty()) {
-                Column(verticalArrangement = Arrangement.spacedBy(4.dp)) {
-                    Text(stringResource(R.string.memory_builder_empty),
-                        color = MaterialTheme.colorScheme.onSurfaceVariant,
-                        style = MaterialTheme.typography.bodySmall)
-                    Row(horizontalArrangement = Arrangement.spacedBy(8.dp)) {
-                        TextButton(onClick = { actions.setVariablesTab(false) }) {
-                            Text(stringResource(R.string.memory_builder_find_values))
+                Surface(color = MaterialTheme.colorScheme.surfaceContainerLow,
+                    shape = MaterialTheme.shapes.large) {
+                    Column(Modifier.fillMaxWidth().padding(12.dp),
+                        verticalArrangement = Arrangement.spacedBy(8.dp)) {
+                        Text(stringResource(R.string.memory_builder_empty),
+                            color = MaterialTheme.colorScheme.onSurfaceVariant,
+                            style = MaterialTheme.typography.bodyMedium)
+                        FilledTonalButton(
+                            enabled = !saving,
+                            onClick = { picking = true },
+                            modifier = Modifier.fillMaxWidth().heightIn(min = 48.dp),
+                        ) {
+                            Icon(painterResource(R.drawable.ic_add), contentDescription = null)
+                            Spacer(Modifier.width(8.dp))
+                            Text(stringResource(R.string.memory_builder_add_target))
                         }
-                        TextButton(onClick = { actions.setVariablesTab(true) }) {
-                            Text(stringResource(R.string.memory_builder_open_saved))
+                        FlowRow(horizontalArrangement = Arrangement.spacedBy(8.dp)) {
+                            TextButton(onClick = { actions.setVariablesTab(false) }) {
+                                Text(stringResource(R.string.memory_builder_find_values))
+                            }
+                            TextButton(onClick = { actions.setVariablesTab(true) }) {
+                                Text(stringResource(R.string.memory_builder_open_saved))
+                            }
                         }
                     }
                 }
             }
-            draft.actions.forEach { item ->
+            draft.actions.forEach { item -> key(item.bookmarkId) {
                 Surface(color = MaterialTheme.colorScheme.surfaceContainerLow,
-                    shape = MaterialTheme.shapes.large,
-                    border = androidx.compose.foundation.BorderStroke(
-                        1.dp, MaterialTheme.colorScheme.outlineVariant,
-                    )) {
+                    shape = MaterialTheme.shapes.large) {
                     Column(Modifier.fillMaxWidth().padding(12.dp),
                         verticalArrangement = Arrangement.spacedBy(8.dp)) {
                         Row(verticalAlignment = Alignment.CenterVertically) {
@@ -286,6 +302,8 @@ internal fun MemoryScriptBuilderScreen(
                         when (draft.mode) {
                             MemoryScriptBuilderMode.FORM -> {
                                 OutlinedTextField(
+                                    colors = memoryEditorFieldColors(),
+                                    shape = MaterialTheme.shapes.medium,
                                     value = item.label,
                                     onValueChange = { changed ->
                                         if (changed.length <= 80) onDraft(draft.copy(
@@ -313,6 +331,8 @@ internal fun MemoryScriptBuilderScreen(
                                 AnimatedVisibility(showLimits) {
                                     Column(verticalArrangement = Arrangement.spacedBy(8.dp)) {
                                     OutlinedTextField(
+                                        colors = memoryEditorFieldColors(),
+                                        shape = MaterialTheme.shapes.medium,
                                         value = item.min,
                                         onValueChange = { changed ->
                                             if (changed.length <= 20) onDraft(draft.copy(
@@ -327,6 +347,8 @@ internal fun MemoryScriptBuilderScreen(
                                         singleLine = true, modifier = Modifier.fillMaxWidth(),
                                     )
                                     OutlinedTextField(
+                                        colors = memoryEditorFieldColors(),
+                                        shape = MaterialTheme.shapes.medium,
                                         value = item.max,
                                         onValueChange = { changed ->
                                             if (changed.length <= 20) onDraft(draft.copy(
@@ -369,6 +391,8 @@ internal fun MemoryScriptBuilderScreen(
                                     }
                                 }
                                 OutlinedTextField(
+                                    colors = memoryEditorFieldColors(),
+                                    shape = MaterialTheme.shapes.medium,
                                     value = item.value,
                                     onValueChange = { changed ->
                                         if (changed.length <= 32) onDraft(draft.copy(
@@ -391,9 +415,13 @@ internal fun MemoryScriptBuilderScreen(
                         }
                     }
                 }
-            }
+            } }
         }
-        Row(Modifier.fillMaxWidth(), horizontalArrangement = Arrangement.spacedBy(8.dp),
+        Surface(
+            color = MaterialTheme.colorScheme.surfaceContainer,
+            shape = MaterialTheme.shapes.large,
+        ) {
+        Row(Modifier.fillMaxWidth().padding(4.dp), horizontalArrangement = Arrangement.spacedBy(8.dp),
             verticalAlignment = Alignment.CenterVertically) {
             TextButton(enabled = !saving && draft.actions.isNotEmpty(),
                 onClick = { generate { preview = it } }) {
@@ -411,6 +439,7 @@ internal fun MemoryScriptBuilderScreen(
                     }
                 },
             ) { Text(stringResource(R.string.memory_scripts_save)) }
+        }
         }
     }
     if (picking) BookmarkPicker(state, draft.actions.mapTo(HashSet()) { it.bookmarkId },
@@ -462,17 +491,27 @@ private fun BookmarkPicker(
     var query by remember { mutableStateOf("") }
     var selected by remember { mutableStateOf(emptySet<String>()) }
     var error by remember { mutableStateOf<String?>(null) }
-    val matches = state.savedVariables.filter {
-        (query.isBlank() || it.label.contains(query, ignoreCase = true)) && it.id !in used
+    val focusManager = LocalFocusManager.current
+    val available = state.savedVariables.filter { it.id !in used }
+    val matches = available.filter {
+        query.isBlank() || it.label.contains(query, ignoreCase = true) ||
+            it.path.contains(query, ignoreCase = true)
     }
+    val eligibleSelection = available.filter { it.id in selected && it.hasLocator }
     MemoryEditorDialog(
         onDismissRequest = onDismiss,
         title = { Text(stringResource(R.string.memory_builder_add_bookmarks)) },
+        maxDialogWidth = 480.dp,
+        textScrollable = false,
         text = {
             Column(verticalArrangement = Arrangement.spacedBy(8.dp)) {
-                OutlinedTextField(query, onValueChange = { query = it },
-                    label = { Text(stringResource(R.string.memory_builder_search_bookmarks)) },
-                    singleLine = true, modifier = Modifier.fillMaxWidth())
+                InlineSearchField(
+                    query = query,
+                    onQueryChange = { query = it },
+                    placeholder = stringResource(R.string.memory_builder_search_bookmarks),
+                    onDismissInput = { focusManager.clearFocus() },
+                    modifier = Modifier.fillMaxWidth(),
+                )
                 if (matches.isEmpty()) {
                     Text(stringResource(R.string.memory_builder_no_bookmarks),
                         style = MaterialTheme.typography.bodySmall)
@@ -484,23 +523,33 @@ private fun BookmarkPicker(
                     Text(it, color = MaterialTheme.colorScheme.error,
                         style = MaterialTheme.typography.bodySmall)
                 }
-                LazyColumn(modifier = Modifier.heightIn(max = 320.dp)) {
+                LazyColumn(
+                    modifier = Modifier.weight(1f, fill = false),
+                    verticalArrangement = Arrangement.spacedBy(4.dp),
+                ) {
                     items(matches, key = SavedVariableRow::id) { row ->
+                        Surface(
+                            color = if (row.id in selected && row.hasLocator)
+                                MaterialTheme.colorScheme.secondaryContainer
+                            else MaterialTheme.colorScheme.surfaceContainerLow,
+                            shape = MaterialTheme.shapes.medium,
+                        ) {
                         Row(
-                            Modifier.fillMaxWidth()
+                            Modifier.fillMaxWidth().heightIn(min = 56.dp)
                                 .toggleable(
                                     value = row.id in selected,
                                     enabled = row.hasLocator,
                                     onValueChange = { checked ->
                                         selected = if (checked) selected + row.id else selected - row.id
                                     },
-                                ).padding(vertical = 8.dp),
+                                ).padding(horizontal = 8.dp, vertical = 4.dp),
                             verticalAlignment = Alignment.CenterVertically,
+                            horizontalArrangement = Arrangement.spacedBy(12.dp),
                         ) {
-                            Checkbox(checked = row.id in selected,
+                            Checkbox(checked = row.id in selected && row.hasLocator,
                                 onCheckedChange = null, enabled = row.hasLocator)
-                            Column {
-                                Text(row.label)
+                            Column(Modifier.weight(1f).padding(end = 4.dp)) {
+                                Text(row.label, style = MaterialTheme.typography.bodyLarge)
                                 Text(if (row.hasLocator) row.path
                                     else stringResource(R.string.memory_builder_needs_relink),
                                     style = MaterialTheme.typography.bodySmall,
@@ -508,17 +557,19 @@ private fun BookmarkPicker(
                                     maxLines = 2, overflow = TextOverflow.Ellipsis)
                             }
                         }
+                        }
                     }
                 }
             }
         },
         confirmButton = {
-            TextButton(enabled = selected.isNotEmpty(),
+            Button(enabled = eligibleSelection.isNotEmpty(),
                 onClick = {
-                    error = onAdd(state.savedVariables.filter { it.id in selected && it.hasLocator })
+                    error = onAdd(eligibleSelection)
                     if (error == null) onDismiss()
                 }) {
-                Text(stringResource(R.string.memory_builder_add_selected))
+                Text(stringResource(R.string.memory_builder_add_selected) +
+                    " (" + eligibleSelection.size + ")")
             }
         },
         dismissButton = {
