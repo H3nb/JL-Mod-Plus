@@ -256,7 +256,6 @@ class ConfigComposeTest {
         composeRule.onNodeWithText(uiString(R.string.PREF_IMMEDIATE)).assertExists()
         scrollTo(uiString(R.string.PREF_TIMING_MODE))
         composeRule.onNodeWithText(uiString(R.string.PREF_TIMING_MODE)).assertExists()
-        composeRule.onNodeWithText(uiString(R.string.config_system_timing)).assertDoesNotExist()
         composeRule.onNodeWithContentDescription(uiString(R.string.action_back)).performClick()
         scrollTo(uiString(R.string.config_midlet_actions))
         composeRule.onNodeWithTag("config_reset_settings_action").assertExists()
@@ -399,7 +398,6 @@ class ConfigComposeTest {
         composeRule.onNodeWithText(uiString(R.string.PREF_LIMIT_FPS)).performClick()
         scrollTo(uiString(R.string.config_frame_rate_section))
         composeRule.onNodeWithText(uiString(R.string.PREF_LIMIT_FPS)).assertExists()
-        composeRule.onNodeWithText(uiString(R.string.config_performance_page_title)).assertDoesNotExist()
         composeRule.onNodeWithContentDescription(uiString(R.string.action_back)).performClick()
         composeRule.onNodeWithText(uiString(R.string.config_quick_settings)).assertExists()
     }

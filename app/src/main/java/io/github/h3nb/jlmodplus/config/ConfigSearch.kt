@@ -68,8 +68,7 @@ private fun searchPrerequisite(title: Int, form: ConfigFormState): ConfigSearchP
         R.string.parallel_screen_redrawing -> if (form.graphicsMode != 0 && form.graphicsMode != 3)
             ConfigSearchPrerequisite(R.string.pref_graphics_mode_title,
                 R.string.config_search_requires_renderer_mode) else null
-        R.string.config_fps_position_title,
-        -> if (!form.showFps)
+        R.string.config_fps_position_title -> if (!form.showFps)
             ConfigSearchPrerequisite(R.string.config_show_fps_title,
                 R.string.config_search_requires_fps) else null
         else -> null

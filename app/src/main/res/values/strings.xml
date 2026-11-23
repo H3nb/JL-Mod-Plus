@@ -791,11 +791,8 @@
     <string name="config_search_requires_custom_background" tools:ignore="MissingTranslation">Choose Custom under Background mode to edit the background color.</string>
     <string name="config_search_requires_gles" tools:ignore="MissingTranslation">Choose OpenGL ES under Renderer to configure shader effects.</string>
     <string name="config_search_requires_renderer_mode" tools:ignore="MissingTranslation">Choose Software or Surface under Renderer to configure asynchronous screen updates.</string>
-    <string name="config_search_requires_performance_overlay" tools:ignore="MissingTranslation">Enable Performance overlay before changing these options.</string>
     <string name="config_font_page_title" tools:ignore="MissingTranslation">Font settings</string>
-    <string name="config_performance_page_title" tools:ignore="MissingTranslation">Performance settings</string>
     <string name="config_display_more" tools:ignore="MissingTranslation">Text and performance</string>
-    <string name="config_display_performance_summary" tools:ignore="MissingTranslation">Frame rate and performance overlay</string>
     <string name="config_destination_home" tools:ignore="MissingTranslation">Home</string>
     <string name="config_overview_profile_draft" tools:ignore="MissingTranslation">Profile draft</string>
     <string name="config_overview_profile_draft_summary" tools:ignore="MissingTranslation">Edit this reusable profile, then save your changes from the toolbar.</string>
@@ -806,16 +803,12 @@
     <string name="config_overview_hint" tools:ignore="MissingTranslation">Choose a category to customize your game. Every setting has one home; these shortcuts take you there.</string>
     <string name="config_destination_general">General</string>
     <string name="config_basic_display">MIDlet screen</string>
-    <string name="config_basic_input">Input</string>
     <string name="config_display_appearance">Screen appearance</string>
     <string name="config_display_rendering">Rendering</string>
     <string name="config_image_quality_section" tools:ignore="MissingTranslation">Image quality</string>
     <string name="config_frame_rate_section" tools:ignore="MissingTranslation">Frame rate</string>
     <string name="config_fps_position_title" tools:ignore="MissingTranslation">FPS position</string>
-    <string name="config_display_performance">Performance &amp; diagnostics</string>
     <string name="config_display_text">Text &amp; fonts</string>
-    <string name="config_system_timing">Timing</string>
-    <string name="config_controls_key_input">Physical input</string>
     <string name="config_input_mapping_section" tools:ignore="MissingTranslation">Input &amp; mapping</string>
     <string name="config_controls_appearance_section" tools:ignore="MissingTranslation">Control appearance</string>
     <string name="config_controls_virtual_keyboard">Virtual controls</string>
@@ -824,7 +817,6 @@
     <string name="config_virtual_controls_preview_normal">Released</string>
     <string name="config_virtual_controls_preview_pressed">Pressed</string>
     <string name="config_controls_maintenance">Layout</string>
-    <string name="config_controls_customization">Customization</string>
     <string name="config_controls_skin_help">Changes the appearance of keypad buttons, the D-pad, and the analog stick using custom images.</string>
     <string name="config_controls_color_button_normal">Released button</string>
     <string name="config_controls_color_button_pressed">Pressed button</string>
@@ -1003,56 +995,15 @@
     <string name="config_show_fps_title" tools:ignore="MissingTranslation">Show FPS</string>
     <string name="config_show_fps_help" tools:ignore="MissingTranslation">Displays the frame rate while playing.</string>
     <string name="config_search_requires_fps" tools:ignore="MissingTranslation">Turn on Show FPS to change the position.</string>
-    <string name="perf_overlay_title">Performance overlay</string>
-    <string name="perf_overlay_help">Shows selected performance and diagnostic metrics over the MIDlet screen.</string>
-    <string name="perf_overlay_preset">Overlay preset</string>
-    <string name="perf_overlay_preset_help">Apply a preset or customize the selection.</string>
-    <string name="perf_overlay_minimal">Minimal</string>
-    <string name="perf_overlay_standard">Standard</string>
-    <string name="perf_overlay_debug">Debug</string>
-    <string name="perf_overlay_custom">Custom</string>
-    <string name="perf_overlay_parameters">Overlay parameters</string>
-    <string name="perf_overlay_parameters_help">Choose metrics. FPS counts frames consumed by the renderer; GFPS counts all guest frame publications.</string>
     <plurals name="perf_overlay_selected">
         <item quantity="one">%d parameter selected</item>
         <item quantity="other">%d parameters selected</item>
     </plurals>
-    <string name="perf_overlay_position">Overlay position</string>
     <string name="perf_overlay_position_help">Choose a corner.</string>
     <string name="perf_overlay_top_left">Top left</string>
     <string name="perf_overlay_top_right">Top right</string>
     <string name="perf_overlay_bottom_left">Bottom left</string>
     <string name="perf_overlay_bottom_right">Bottom right</string>
-    <string name="perf_overlay_done">Done</string>
-    <string name="perf_overlay_group_rate">Frame rate</string>
-    <string name="perf_overlay_group_timing">Frame timing</string>
-    <string name="perf_overlay_group_pipeline">Pipeline timing</string>
-    <string name="perf_overlay_group_queue">Input and queue</string>
-    <string name="perf_overlay_group_resources">Resources</string>
-    <string name="perf_overlay_group_runtime">Runtime information</string>
-    <string name="perf_overlay_fps">Renderer frames per second (FPS)</string>
-    <string name="perf_overlay_cap">FPS cap (CAP)</string>
-    <string name="perf_overlay_guest_fps">Guest frame publications per second (GFPS)</string>
-    <string name="perf_overlay_speed">Configured emulation speed (SPD)</string>
-    <string name="perf_overlay_interval">Guest frame interval (GFI)</string>
-    <string name="perf_overlay_p95">95th percentile guest interval (GP95)</string>
-    <string name="perf_overlay_render_interval">Renderer frame interval (RFI)</string>
-    <string name="perf_overlay_render_p95">95th percentile renderer interval (RP95)</string>
-    <string name="perf_overlay_render_max">Maximum renderer interval (RMAX)</string>
-    <string name="perf_overlay_max">Maximum guest interval (GMAX)</string>
-    <string name="perf_overlay_coalesced">Frames replaced before render (COAL)</string>
-    <string name="perf_overlay_paint">Paint duration (PAINT)</string>
-    <string name="perf_overlay_copy">Buffer copy duration (COPY)</string>
-    <string name="perf_overlay_submit">Render submission duration (SUB)</string>
-    <string name="perf_overlay_input_queue">Input queue time (INQ)</string>
-    <string name="perf_overlay_frame_queue">Frame queue time (FRQ)</string>
-    <string name="perf_overlay_cpu">Process CPU usage (CPU, core equivalents)</string>
-    <string name="perf_overlay_ram">RAM usage (RAM)</string>
-    <string name="perf_overlay_java">Java heap usage (JAVA)</string>
-    <string name="perf_overlay_native">Native heap usage (NATIVE)</string>
-    <string name="perf_overlay_thermal">Thermal status (THRM)</string>
-    <string name="perf_overlay_renderer">Renderer (REN)</string>
-    <string name="perf_overlay_display">Display refresh rate (DISP)</string>
 
     <string name="settings_section_appearance">App appearance</string>
     <string name="settings_section_appearance_language" tools:ignore="MissingTranslation">Appearance and language</string>
