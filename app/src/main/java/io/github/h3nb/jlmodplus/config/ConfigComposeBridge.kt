@@ -107,26 +107,22 @@ internal enum class ConfigAction(val title: Int, val message: Int) {
     ResetLayout(R.string.RESET_LAYOUT_CMD, R.string.message_reset_layout),
 }
 
-internal enum class ConfigDetail { Font }
-
-private enum class ConfigChildPage { Font, SystemProperties, Shaders }
+internal enum class ConfigChildPage { Font, SystemProperties, Shaders }
 
 private data class ConfigSearchTarget(val section: String, val option: String)
-
-private fun ConfigDetail.toChildPage(): ConfigChildPage = ConfigChildPage.Font
 
 private sealed interface ConfigPage {
     data object Main : ConfigPage
     data class Category(val destination: ConfigDestination) : ConfigPage
     data object SystemProperties : ConfigPage
-    data class Detail(val type: ConfigDetail) : ConfigPage
+    data object Font : ConfigPage
     data class Rendering(val subpage: RenderingSubpage) : ConfigPage
 }
 
 private fun ConfigPage.depth(): Int = when (this) {
     ConfigPage.Main -> 0
     is ConfigPage.Category -> 1
-    ConfigPage.SystemProperties, is ConfigPage.Detail, is ConfigPage.Rendering -> 2
+    ConfigPage.SystemProperties, ConfigPage.Font, is ConfigPage.Rendering -> 2
 }
 
 private fun ConfigPage.siblingOrder(): Int = when (this) {
@@ -214,7 +210,7 @@ internal fun ConfigScreen(
     val density = LocalDensity.current
     val cutoutAvailable = cutoutSupportOverride ?: deviceHasDisplayCutout(density)
     val currentPage = when (childPage) {
-        ConfigChildPage.Font -> ConfigPage.Detail(ConfigDetail.Font)
+        ConfigChildPage.Font -> ConfigPage.Font
         ConfigChildPage.SystemProperties -> ConfigPage.SystemProperties
         ConfigChildPage.Shaders -> ConfigPage.Rendering(RenderingSubpage.SHADERS)
         null -> if (selectedDestination == ConfigDestination.Basic) ConfigPage.Main
@@ -240,7 +236,7 @@ internal fun ConfigScreen(
             ),
         ) {
             when (shownPage) {
-                is ConfigPage.Detail -> {
+                ConfigPage.Font -> {
                     androidx.compose.runtime.CompositionLocalProvider(
                         LocalConfigSectionReveal provides sectionReveal,
                     ) {
@@ -320,10 +316,10 @@ internal fun ConfigScreen(
                                 cutoutAvailable = cutoutAvailable,
                                 modifier = Modifier.fillMaxSize().padding(padding)
                                     .consumeWindowInsets(padding),
-                                onSelected = { nextDestination, section, detail, option ->
+                                onSelected = { nextDestination, section, targetChildPage, option ->
                                     closeSearch()
                                     selectedDestination = nextDestination
-                                    childPage = detail?.toChildPage()
+                                    childPage = targetChildPage
                                     when (option) {
                                         usePresetTitle -> {
                                             searchTarget = null
@@ -387,7 +383,7 @@ internal fun ConfigScreen(
                                             onOpenShaders = {
                                                 childPage = ConfigChildPage.Shaders
                                             },
-                                            onOpenDetail = { childPage = it.toChildPage() },
+                                            onOpenFont = { childPage = ConfigChildPage.Font },
                                             modifier = Modifier.widthIn(max = 880.dp),
                                         )
                                     }
@@ -523,7 +519,7 @@ private fun ConfigDestinationContent(
     onRequestAction: (ConfigAction) -> Unit,
     onEditSystemProperties: () -> Unit,
     onOpenShaders: () -> Unit,
-    onOpenDetail: (ConfigDetail) -> Unit,
+    onOpenFont: () -> Unit,
     modifier: Modifier = Modifier,
 ) {
     Column(modifier = modifier, verticalArrangement = Arrangement.spacedBy(8.dp)) {
@@ -537,7 +533,7 @@ private fun ConfigDestinationContent(
                         title = stringResource(R.string.config_font_page_title),
                         value = stringResource(R.string.config_font_sizes_value,
                             form.fontSizeSmall, form.fontSizeMedium, form.fontSizeLarge),
-                        onClick = { onOpenDetail(ConfigDetail.Font) },
+                        onClick = onOpenFont,
                     )
                 }
             }
