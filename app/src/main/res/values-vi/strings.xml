@@ -322,7 +322,6 @@
     <string name="updates_available">Có bản cập nhật</string>
     <string name="updates_browser_unavailable">Không có trình duyệt để mở trang phát hành.</string>
     <string name="updates_build_code">Bản dựng %1$d</string>
-    <string name="updates_channel">Kênh cập nhật</string>
     <string name="updates_check">Kiểm tra cập nhật</string>
     <string name="updates_checking">Đang kiểm tra cập nhật…</string>
     <string name="updates_current">Bạn đang dùng phiên bản mới nhất.</string>
@@ -333,12 +332,10 @@
     <string name="updates_link_copied">Không có trình duyệt khả dụng. Đã sao chép liên kết trang phát hành.</string>
     <string name="updates_more_available">Có phiên bản mới hơn.</string>
     <string name="updates_more_summary">Kiểm tra phiên bản mới của JL-Mod Plus.</string>
-    <string name="updates_no_release">Không có bản phát hành tương thích đã được công bố trên kênh này.</string>
+    <string name="updates_no_release">Không có bản phát hành tương thích nào đã được công bố.</string>
     <string name="updates_not_checked">Chưa hoàn tất lần kiểm tra cập nhật nào.</string>
     <string name="updates_not_installable">Có bản phát hành mới hơn nhưng số bản dựng của nó không thể cập nhật bản đang cài đặt.</string>
     <string name="updates_notice">Đã có JL-Mod Plus %1$s. Xem mục Cập nhật trong Thêm.</string>
-    <string name="updates_preview">Xem trước</string>
-    <string name="updates_stable">Ổn định</string>
     <string name="updates_title">Cập nhật</string>
     <string name="updates_view_release">Xem bản phát hành</string>
     <plurals name="file_picker_selected_count">

@@ -290,7 +290,6 @@
     <string name="updates_available">Frissítés érhető el</string>
     <string name="updates_browser_unavailable">Nincs elérhető böngésző a kiadás megnyitásához.</string>
     <string name="updates_build_code">Build %1$d</string>
-    <string name="updates_channel">Frissítési csatorna</string>
     <string name="updates_check">Frissítések keresése</string>
     <string name="updates_checking">Frissítések keresése…</string>
     <string name="updates_current">A legújabb verziót használja.</string>
@@ -301,12 +300,10 @@
     <string name="updates_link_copied">Nincs elérhető böngésző. A kiadás hivatkozása másolva.</string>
     <string name="updates_more_available">Újabb verzió érhető el.</string>
     <string name="updates_more_summary">A JL-Mod Plus új verzióinak keresése.</string>
-    <string name="updates_no_release">Ezen a csatornán nincs kompatibilis közzétett kiadás.</string>
+    <string name="updates_no_release">Nem érhető el kompatibilis közzétett kiadás.</string>
     <string name="updates_not_checked">Még nem fejeződött be frissítéskeresés.</string>
     <string name="updates_not_installable">Létezik újabb kiadás, de a buildszáma nem alkalmas ennek a telepítésnek a frissítésére.</string>
     <string name="updates_notice">Elérhető a JL-Mod Plus %1$s. Lásd a Frissítések pontot a Továbbiak alatt.</string>
-    <string name="updates_preview">Előzetes</string>
-    <string name="updates_stable">Stabil</string>
     <string name="updates_title">Frissítések</string>
     <string name="updates_view_release">Kiadás megtekintése</string>
     <plurals name="file_picker_selected_count">

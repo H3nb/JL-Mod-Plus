@@ -224,7 +224,6 @@
     <string name="updates_available">Oppdatering tilgjengelig</string>
     <string name="updates_browser_unavailable">Ingen nettleser er tilgjengelig for å åpne utgivelsen.</string>
     <string name="updates_build_code">Bygg %1$d</string>
-    <string name="updates_channel">Oppdateringskanal</string>
     <string name="updates_check">Se etter oppdateringer</string>
     <string name="updates_checking">Ser etter oppdateringer…</string>
     <string name="updates_current">Du har den nyeste versjonen.</string>
@@ -235,12 +234,10 @@
     <string name="updates_link_copied">Ingen nettleser er tilgjengelig. Lenken til utgivelsen ble kopiert.</string>
     <string name="updates_more_available">En nyere versjon er tilgjengelig.</string>
     <string name="updates_more_summary">Se etter nye versjoner av JL-Mod Plus.</string>
-    <string name="updates_no_release">Ingen kompatibel publisert utgivelse er tilgjengelig på denne kanalen.</string>
+    <string name="updates_no_release">Ingen kompatibel publisert utgivelse er tilgjengelig.</string>
     <string name="updates_not_checked">Ingen oppdateringssjekk er fullført ennå.</string>
     <string name="updates_not_installable">En nyere utgivelse finnes, men byggnummeret kan ikke oppdatere denne installasjonen.</string>
     <string name="updates_notice">JL-Mod Plus %1$s er tilgjengelig. Se Oppdateringer under Mer.</string>
-    <string name="updates_preview">Forhåndsversjon</string>
-    <string name="updates_stable">Stabil</string>
     <string name="updates_title">Oppdateringer</string>
     <string name="updates_view_release">Vis utgivelse</string>
     <plurals name="file_picker_selected_count">

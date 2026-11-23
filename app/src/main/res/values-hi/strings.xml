@@ -329,7 +329,6 @@
     <string name="updates_available">अपडेट उपलब्ध है</string>
     <string name="updates_browser_unavailable">रिलीज़ खोलने के लिए कोई ब्राउज़र उपलब्ध नहीं है।</string>
     <string name="updates_build_code">बिल्ड %1$d</string>
-    <string name="updates_channel">अपडेट चैनल</string>
     <string name="updates_check">अपडेट देखें</string>
     <string name="updates_checking">अपडेट की जाँच हो रही है…</string>
     <string name="updates_current">आपके पास नवीनतम संस्करण है।</string>
@@ -340,12 +339,10 @@
     <string name="updates_link_copied">कोई ब्राउज़र उपलब्ध नहीं है। रिलीज़ का लिंक कॉपी कर दिया गया है।</string>
     <string name="updates_more_available">नया संस्करण उपलब्ध है।</string>
     <string name="updates_more_summary">JL-Mod Plus के नए संस्करण देखें।</string>
-    <string name="updates_no_release">इस चैनल पर कोई संगत प्रकाशित रिलीज़ उपलब्ध नहीं है।</string>
+    <string name="updates_no_release">कोई संगत प्रकाशित रिलीज़ उपलब्ध नहीं है।</string>
     <string name="updates_not_checked">अभी तक अपडेट की कोई जाँच पूरी नहीं हुई है।</string>
     <string name="updates_not_installable">नई रिलीज़ मौजूद है, लेकिन उसके बिल्ड नंबर से इस इंस्टॉलेशन को अपडेट नहीं किया जा सकता।</string>
     <string name="updates_notice">JL-Mod Plus %1$s उपलब्ध है। “और” में “अपडेट” देखें।</string>
-    <string name="updates_preview">प्रीव्यू</string>
-    <string name="updates_stable">स्थिर</string>
     <string name="updates_title">अपडेट</string>
     <string name="updates_view_release">रिलीज़ देखें</string>
     <plurals name="file_picker_selected_count">

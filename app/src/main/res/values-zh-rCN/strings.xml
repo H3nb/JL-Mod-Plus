@@ -329,7 +329,6 @@
     <string name="updates_available">有可用更新</string>
     <string name="updates_browser_unavailable">没有可用于打开发布页面的浏览器。</string>
     <string name="updates_build_code">构建 %1$d</string>
-    <string name="updates_channel">更新渠道</string>
     <string name="updates_check">检查更新</string>
     <string name="updates_checking">正在检查更新…</string>
     <string name="updates_current">已是最新版本。</string>
@@ -340,12 +339,10 @@
     <string name="updates_link_copied">没有可用的浏览器。发布页面链接已复制。</string>
     <string name="updates_more_available">有新版本可用。</string>
     <string name="updates_more_summary">检查 JL-Mod Plus 的新版本。</string>
-    <string name="updates_no_release">此渠道没有已发布的兼容版本。</string>
+    <string name="updates_no_release">没有已发布的兼容版本。</string>
     <string name="updates_not_checked">尚未完成过更新检查。</string>
     <string name="updates_not_installable">已有更新的发布版本，但其构建编号无法更新当前安装的应用。</string>
     <string name="updates_notice">JL-Mod Plus %1$s 已发布。请在“更多”中查看“更新”。</string>
-    <string name="updates_preview">预览版</string>
-    <string name="updates_stable">稳定版</string>
     <string name="updates_title">更新</string>
     <string name="updates_view_release">查看发布页面</string>
     <plurals name="file_picker_selected_count">

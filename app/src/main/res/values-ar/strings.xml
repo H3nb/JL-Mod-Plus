@@ -329,7 +329,6 @@
     <string name="updates_available">يتوفر تحديث</string>
     <string name="updates_browser_unavailable">لا يوجد متصفح متاح لفتح الإصدار.</string>
     <string name="updates_build_code">البنية %1$d</string>
-    <string name="updates_channel">قناة التحديث</string>
     <string name="updates_check">البحث عن تحديثات</string>
     <string name="updates_checking">جارٍ البحث عن تحديثات…</string>
     <string name="updates_current">لديك أحدث إصدار.</string>
@@ -340,12 +339,10 @@
     <string name="updates_link_copied">لا يوجد متصفح متاح. نُسخ رابط الإصدار.</string>
     <string name="updates_more_available">يتوفر إصدار أحدث.</string>
     <string name="updates_more_summary">البحث عن إصدارات جديدة من JL-Mod Plus.</string>
-    <string name="updates_no_release">لا يوجد إصدار منشور متوافق على هذه القناة.</string>
+    <string name="updates_no_release">لا يوجد إصدار منشور متوافق متاح.</string>
     <string name="updates_not_checked">لم يكتمل أي بحث عن تحديثات بعد.</string>
     <string name="updates_not_installable">يتوفر إصدار أحدث، لكن رقم بنيته لا يسمح بتحديث هذا التثبيت.</string>
     <string name="updates_notice">يتوفر JL-Mod Plus %1$s. راجع «التحديثات» في «المزيد».</string>
-    <string name="updates_preview">تجريبي</string>
-    <string name="updates_stable">مستقر</string>
     <string name="updates_title">التحديثات</string>
     <string name="updates_view_release">عرض الإصدار</string>
     <plurals name="file_picker_selected_count">

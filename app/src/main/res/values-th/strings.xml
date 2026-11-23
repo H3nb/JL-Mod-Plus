@@ -260,7 +260,6 @@
     <string name="updates_available">มีอัปเดต</string>
     <string name="updates_browser_unavailable">ไม่มีเบราว์เซอร์ที่สามารถเปิดหน้ารุ่นที่เผยแพร่ได้</string>
     <string name="updates_build_code">บิลด์ %1$d</string>
-    <string name="updates_channel">ช่องทางอัปเดต</string>
     <string name="updates_check">ตรวจสอบอัปเดต</string>
     <string name="updates_checking">กำลังตรวจสอบอัปเดต…</string>
     <string name="updates_current">เป็นเวอร์ชันล่าสุดแล้ว</string>
@@ -271,12 +270,10 @@
     <string name="updates_link_copied">ไม่มีเบราว์เซอร์ที่พร้อมใช้งาน ลิงก์หน้ารุ่นที่เผยแพร่ถูกคัดลอกแล้ว</string>
     <string name="updates_more_available">มีเวอร์ชันใหม่</string>
     <string name="updates_more_summary">ตรวจสอบเวอร์ชันใหม่ของ JL-Mod Plus</string>
-    <string name="updates_no_release">ไม่มีรุ่นที่เผยแพร่และเข้ากันได้ในช่องทางนี้</string>
+    <string name="updates_no_release">ไม่มีรุ่นที่เผยแพร่แล้วและเข้ากันได้</string>
     <string name="updates_not_checked">ยังไม่มีการตรวจสอบอัปเดตที่เสร็จสมบูรณ์</string>
     <string name="updates_not_installable">มีรุ่นใหม่ที่เผยแพร่แล้ว แต่หมายเลขบิลด์ของรุ่นนั้นไม่สามารถอัปเดตแอปที่ติดตั้งอยู่ได้</string>
     <string name="updates_notice">มี JL-Mod Plus %1$s แล้ว ดูที่อัปเดตในเพิ่มเติม</string>
-    <string name="updates_preview">รุ่นพรีวิว</string>
-    <string name="updates_stable">รุ่นเสถียร</string>
     <string name="updates_title">อัปเดต</string>
     <string name="updates_view_release">ดูรุ่นที่เผยแพร่</string>
     <plurals name="file_picker_selected_count">

@@ -996,7 +996,6 @@
     <string name="updates_available">Update beschikbaar</string>
     <string name="updates_browser_unavailable">Er is geen browser beschikbaar om de release te openen.</string>
     <string name="updates_build_code">Build %1$d</string>
-    <string name="updates_channel">Updatekanaal</string>
     <string name="updates_check">Controleren op updates</string>
     <string name="updates_checking">Controleren op updates…</string>
     <string name="updates_current">Je bent up-to-date.</string>
@@ -1007,12 +1006,10 @@
     <string name="updates_link_copied">Geen browser beschikbaar. De releaselink is gekopieerd.</string>
     <string name="updates_more_available">Er is een nieuwere versie beschikbaar.</string>
     <string name="updates_more_summary">Controleren op nieuwe versies van JL-Mod Plus.</string>
-    <string name="updates_no_release">Er is geen compatibele gepubliceerde release beschikbaar op dit kanaal.</string>
+    <string name="updates_no_release">Er is geen compatibele gepubliceerde release beschikbaar.</string>
     <string name="updates_not_checked">Er is nog geen controle op updates voltooid.</string>
     <string name="updates_not_installable">Er is een nieuwere release, maar het buildnummer ervan kan deze installatie niet bijwerken.</string>
     <string name="updates_notice">JL-Mod Plus %1$s is beschikbaar. Bekijk Updates onder Meer.</string>
-    <string name="updates_preview">Preview</string>
-    <string name="updates_stable">Stabiel</string>
     <string name="updates_title">Updates</string>
     <string name="updates_view_release">Release bekijken</string>
     <plurals name="installer_conversion_omitted_details">

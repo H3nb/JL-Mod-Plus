@@ -996,7 +996,6 @@
     <string name="updates_available">Uppdatering tillgänglig</string>
     <string name="updates_browser_unavailable">Ingen webbläsare är tillgänglig för att öppna utgåvan.</string>
     <string name="updates_build_code">Versionskod %1$d</string>
-    <string name="updates_channel">Uppdateringskanal</string>
     <string name="updates_check">Sök efter uppdateringar</string>
     <string name="updates_checking">Söker efter uppdateringar…</string>
     <string name="updates_current">Du har den senaste versionen.</string>
@@ -1007,12 +1006,10 @@
     <string name="updates_link_copied">Ingen webbläsare är tillgänglig. Länken till utgåvan kopierades.</string>
     <string name="updates_more_available">En nyare version är tillgänglig.</string>
     <string name="updates_more_summary">Sök efter nya versioner av JL-Mod Plus.</string>
-    <string name="updates_no_release">Ingen kompatibel publicerad utgåva är tillgänglig i den här kanalen.</string>
+    <string name="updates_no_release">Ingen kompatibel publicerad utgåva är tillgänglig.</string>
     <string name="updates_not_checked">Ingen sökning efter uppdateringar har slutförts ännu.</string>
     <string name="updates_not_installable">Det finns en nyare utgåva, men dess versionskod kan inte uppdatera den här installationen.</string>
     <string name="updates_notice">JL-Mod Plus %1$s är tillgänglig. Se Uppdateringar under Mer.</string>
-    <string name="updates_preview">Förhandsversion</string>
-    <string name="updates_stable">Stabil</string>
     <string name="updates_title">Uppdateringar</string>
     <string name="updates_view_release">Visa utgåva</string>
     <plurals name="installer_conversion_omitted_details">

@@ -997,7 +997,6 @@
     <string name="updates_available">Update verfügbar</string>
     <string name="updates_browser_unavailable">Zum Öffnen der Veröffentlichung ist kein Browser verfügbar.</string>
     <string name="updates_build_code">Build %1$d</string>
-    <string name="updates_channel">Update-Kanal</string>
     <string name="updates_check">Nach Updates suchen</string>
     <string name="updates_checking">Suche nach Updates…</string>
     <string name="updates_current">Du bist auf dem neuesten Stand.</string>
@@ -1008,12 +1007,10 @@
     <string name="updates_link_copied">Kein Browser verfügbar. Der Link zur Veröffentlichung wurde kopiert.</string>
     <string name="updates_more_available">Eine neuere Version ist verfügbar.</string>
     <string name="updates_more_summary">Nach neuen Versionen von JL-Mod Plus suchen.</string>
-    <string name="updates_no_release">In diesem Kanal ist keine kompatible Veröffentlichung verfügbar.</string>
+    <string name="updates_no_release">Es ist keine kompatible veröffentlichte Version verfügbar.</string>
     <string name="updates_not_checked">Es wurde noch keine Update-Prüfung abgeschlossen.</string>
     <string name="updates_not_installable">Es gibt eine neuere Veröffentlichung, aber ihre Build-Nummer erlaubt kein Update dieser Installation.</string>
     <string name="updates_notice">JL-Mod Plus %1$s ist verfügbar. Sieh unter Mehr → Updates nach.</string>
-    <string name="updates_preview">Vorschau</string>
-    <string name="updates_stable">Stabil</string>
     <string name="updates_title">Updates</string>
     <string name="updates_view_release">Veröffentlichung ansehen</string>
     <plurals name="installer_conversion_omitted_details">

@@ -272,7 +272,6 @@
     <string name="updates_available">আপডেট উপলব্ধ</string>
     <string name="updates_browser_unavailable">রিলিজ খোলার জন্য কোনো ব্রাউজার উপলব্ধ নেই।</string>
     <string name="updates_build_code">বিল্ড %1$d</string>
-    <string name="updates_channel">আপডেট চ্যানেল</string>
     <string name="updates_check">আপডেট আছে কি না দেখুন</string>
     <string name="updates_checking">আপডেট আছে কি না যাচাই হচ্ছে…</string>
     <string name="updates_current">আপনার কাছে সর্বশেষ সংস্করণ আছে।</string>
@@ -283,12 +282,10 @@
     <string name="updates_link_copied">কোনো ব্রাউজার উপলব্ধ নেই। রিলিজের লিঙ্ক কপি করা হয়েছে।</string>
     <string name="updates_more_available">নতুন সংস্করণ উপলব্ধ।</string>
     <string name="updates_more_summary">JL-Mod Plus-এর নতুন সংস্করণ আছে কি না দেখুন।</string>
-    <string name="updates_no_release">এই চ্যানেলে কোনো সামঞ্জস্যপূর্ণ প্রকাশিত রিলিজ উপলব্ধ নেই।</string>
+    <string name="updates_no_release">কোনো সামঞ্জস্যপূর্ণ প্রকাশিত রিলিজ উপলব্ধ নেই।</string>
     <string name="updates_not_checked">এখনও কোনো আপডেট যাচাই সম্পন্ন হয়নি।</string>
     <string name="updates_not_installable">নতুন রিলিজ আছে, কিন্তু সেটির বিল্ড নম্বর দিয়ে এই ইনস্টলেশন আপডেট করা যাবে না।</string>
     <string name="updates_notice">JL-Mod Plus %1$s উপলব্ধ। “আরও”-তে “আপডেট” দেখুন।</string>
-    <string name="updates_preview">প্রিভিউ</string>
-    <string name="updates_stable">স্থিতিশীল</string>
     <string name="updates_title">আপডেট</string>
     <string name="updates_view_release">রিলিজ দেখুন</string>
     <plurals name="file_picker_selected_count">

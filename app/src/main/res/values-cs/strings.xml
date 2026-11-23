@@ -329,7 +329,6 @@
     <string name="updates_available">Je dostupná aktualizace</string>
     <string name="updates_browser_unavailable">Není dostupný žádný prohlížeč pro otevření vydání.</string>
     <string name="updates_build_code">Sestavení %1$d</string>
-    <string name="updates_channel">Kanál aktualizací</string>
     <string name="updates_check">Zkontrolovat aktualizace</string>
     <string name="updates_checking">Kontrola aktualizací…</string>
     <string name="updates_current">Máte nejnovější verzi.</string>
@@ -340,12 +339,10 @@
     <string name="updates_link_copied">Není dostupný žádný prohlížeč. Odkaz na vydání byl zkopírován.</string>
     <string name="updates_more_available">Je dostupná novější verze.</string>
     <string name="updates_more_summary">Zkontrolovat nové verze JL-Mod Plus.</string>
-    <string name="updates_no_release">Na tomto kanálu není dostupné žádné kompatibilní publikované vydání.</string>
+    <string name="updates_no_release">Není dostupné žádné kompatibilní publikované vydání.</string>
     <string name="updates_not_checked">Zatím nebyla dokončena žádná kontrola aktualizací.</string>
     <string name="updates_not_installable">Existuje novější vydání, ale jeho číslo sestavení neumožňuje aktualizovat tuto instalaci.</string>
     <string name="updates_notice">JL-Mod Plus %1$s je k dispozici. Otevřete Aktualizace v části Další.</string>
-    <string name="updates_preview">Předběžný</string>
-    <string name="updates_stable">Stabilní</string>
     <string name="updates_title">Aktualizace</string>
     <string name="updates_view_release">Zobrazit vydání</string>
     <plurals name="file_picker_selected_count">

@@ -224,7 +224,6 @@
     <string name="updates_available">Actualització disponible</string>
     <string name="updates_browser_unavailable">No hi ha cap navegador disponible per obrir la versió publicada.</string>
     <string name="updates_build_code">Compilació %1$d</string>
-    <string name="updates_channel">Canal d’actualitzacions</string>
     <string name="updates_check">Comprova si hi ha actualitzacions</string>
     <string name="updates_checking">S’estan comprovant les actualitzacions…</string>
     <string name="updates_current">Tens la versió més recent.</string>
@@ -235,12 +234,10 @@
     <string name="updates_link_copied">No hi ha cap navegador disponible. S’ha copiat l’enllaç de la versió publicada.</string>
     <string name="updates_more_available">Hi ha una versió més recent disponible.</string>
     <string name="updates_more_summary">Comprova si hi ha versions noves de JL-Mod Plus.</string>
-    <string name="updates_no_release">No hi ha cap versió publicada compatible disponible en aquest canal.</string>
+    <string name="updates_no_release">No hi ha cap versió publicada compatible disponible.</string>
     <string name="updates_not_checked">Encara no s’ha completat cap comprovació d’actualitzacions.</string>
     <string name="updates_not_installable">Hi ha una versió publicada més recent, però el seu número de compilació no permet actualitzar aquesta instal·lació.</string>
     <string name="updates_notice">JL-Mod Plus %1$s està disponible. Consulta Actualitzacions a Més.</string>
-    <string name="updates_preview">Preliminar</string>
-    <string name="updates_stable">Estable</string>
     <string name="updates_title">Actualitzacions</string>
     <string name="updates_view_release">Mostra la versió publicada</string>
     <plurals name="file_picker_selected_count">

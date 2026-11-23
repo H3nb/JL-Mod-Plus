@@ -273,7 +273,6 @@
     <string name="updates_available">Actualizare disponibilă</string>
     <string name="updates_browser_unavailable">Nu este disponibil niciun browser pentru a deschide versiunea publicată.</string>
     <string name="updates_build_code">Compilare %1$d</string>
-    <string name="updates_channel">Canal de actualizare</string>
     <string name="updates_check">Verifică actualizările</string>
     <string name="updates_checking">Se verifică actualizările…</string>
     <string name="updates_current">Ai cea mai nouă versiune.</string>
@@ -284,12 +283,10 @@
     <string name="updates_link_copied">Nu este disponibil niciun browser. Linkul versiunii publicate a fost copiat.</string>
     <string name="updates_more_available">Este disponibilă o versiune mai nouă.</string>
     <string name="updates_more_summary">Verifică versiunile noi ale JL-Mod Plus.</string>
-    <string name="updates_no_release">Nu este disponibilă nicio versiune publicată compatibilă pe acest canal.</string>
+    <string name="updates_no_release">Nu este disponibilă nicio versiune publicată compatibilă.</string>
     <string name="updates_not_checked">Încă nu s-a finalizat nicio verificare a actualizărilor.</string>
     <string name="updates_not_installable">Există o versiune publicată mai nouă, dar numărul ei de compilare nu poate actualiza această instalare.</string>
     <string name="updates_notice">JL-Mod Plus %1$s este disponibil. Vezi Actualizări în Mai multe.</string>
-    <string name="updates_preview">Previzualizare</string>
-    <string name="updates_stable">Stabil</string>
     <string name="updates_title">Actualizări</string>
     <string name="updates_view_release">Vezi versiunea publicată</string>
     <plurals name="file_picker_selected_count">

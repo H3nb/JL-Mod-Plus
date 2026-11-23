@@ -224,7 +224,6 @@
     <string name="updates_available">Διαθέσιμη ενημέρωση</string>
     <string name="updates_browser_unavailable">Δεν υπάρχει διαθέσιμο πρόγραμμα περιήγησης για άνοιγμα της έκδοσης.</string>
     <string name="updates_build_code">Αριθμός κατασκευής %1$d</string>
-    <string name="updates_channel">Κανάλι ενημερώσεων</string>
     <string name="updates_check">Έλεγχος για ενημερώσεις</string>
     <string name="updates_checking">Έλεγχος για ενημερώσεις…</string>
     <string name="updates_current">Έχετε την πιο πρόσφατη έκδοση.</string>
@@ -235,12 +234,10 @@
     <string name="updates_link_copied">Δεν υπάρχει διαθέσιμο πρόγραμμα περιήγησης. Ο σύνδεσμος της έκδοσης αντιγράφηκε.</string>
     <string name="updates_more_available">Είναι διαθέσιμη μια νεότερη έκδοση.</string>
     <string name="updates_more_summary">Έλεγχος για νέες εκδόσεις του JL-Mod Plus.</string>
-    <string name="updates_no_release">Δεν υπάρχει συμβατή δημοσιευμένη έκδοση σε αυτό το κανάλι.</string>
+    <string name="updates_no_release">Δεν υπάρχει διαθέσιμη συμβατή δημοσιευμένη έκδοση.</string>
     <string name="updates_not_checked">Δεν έχει ολοκληρωθεί ακόμη έλεγχος για ενημερώσεις.</string>
     <string name="updates_not_installable">Υπάρχει νεότερη έκδοση, αλλά ο αριθμός κατασκευής της δεν επιτρέπει την ενημέρωση αυτής της εγκατάστασης.</string>
     <string name="updates_notice">Το JL-Mod Plus %1$s είναι διαθέσιμο. Δείτε τις Ενημερώσεις στα Περισσότερα.</string>
-    <string name="updates_preview">Προεπισκόπηση</string>
-    <string name="updates_stable">Σταθερή</string>
     <string name="updates_title">Ενημερώσεις</string>
     <string name="updates_view_release">Προβολή έκδοσης</string>
     <plurals name="file_picker_selected_count">

@@ -269,7 +269,7 @@ class SettingsComposeTest {
 
         scrollSettingsTo(uiString(R.string.updates_title))
         composeRule.onNodeWithText(uiString(R.string.updates_title)).performClick()
-        composeRule.onNodeWithText(uiString(R.string.updates_channel)).assertIsDisplayed()
+        composeRule.onNodeWithText(uiString(R.string.updates_automatic)).assertIsDisplayed()
         composeRule.onNodeWithContentDescription(uiString(R.string.action_back)).performClick()
 
         scrollSettingsTo(uiString(R.string.about))

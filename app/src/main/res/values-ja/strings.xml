@@ -285,7 +285,6 @@
     <string name="updates_available">アップデートがあります</string>
     <string name="updates_browser_unavailable">リリースを開けるブラウザがありません。</string>
     <string name="updates_build_code">ビルド %1$d</string>
-    <string name="updates_channel">アップデートチャネル</string>
     <string name="updates_check">アップデートを確認</string>
     <string name="updates_checking">アップデートを確認中…</string>
     <string name="updates_current">最新の状態です。</string>
@@ -296,12 +295,10 @@
     <string name="updates_link_copied">利用できるブラウザがありません。リリースのリンクをコピーしました。</string>
     <string name="updates_more_available">新しいバージョンがあります。</string>
     <string name="updates_more_summary">JL-Mod Plusの新しいバージョンを確認します。</string>
-    <string name="updates_no_release">このチャネルには互換性のある公開リリースがありません。</string>
+    <string name="updates_no_release">互換性のある公開リリースはありません。</string>
     <string name="updates_not_checked">アップデートの確認はまだ完了していません。</string>
     <string name="updates_not_installable">新しいリリースがありますが、そのビルド番号では現在のインストールを更新できません。</string>
     <string name="updates_notice">JL-Mod Plus %1$sが利用可能です。「その他」の「アップデート」を確認してください。</string>
-    <string name="updates_preview">プレビュー</string>
-    <string name="updates_stable">安定版</string>
     <string name="updates_title">アップデート</string>
     <string name="updates_view_release">リリースを表示</string>
     <plurals name="file_picker_selected_count">

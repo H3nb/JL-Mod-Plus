@@ -1147,14 +1147,11 @@
     <string name="updates_more_available">A newer version is available.</string>
     <string name="updates_installed_version">Installed version: %1$s</string>
     <string name="updates_build_code">Build %1$d</string>
-    <string name="updates_channel">Update channel</string>
-    <string name="updates_stable">Stable</string>
-    <string name="updates_preview">Preview</string>
     <string name="updates_automatic">Check automatically while Library is active</string>
     <string name="updates_not_checked">No update check has been completed yet.</string>
     <string name="updates_checking">Checking for updates…</string>
     <string name="updates_current">You’re up to date.</string>
-    <string name="updates_no_release">No compatible published release is available on this channel.</string>
+    <string name="updates_no_release">No compatible published release is available.</string>
     <string name="updates_not_installable">A newer release exists but is not compatible with this device or installation.</string>
     <string name="updates_failed">Couldn’t check for updates. Check your connection and try again.</string>
     <string name="updates_available">Update available</string>

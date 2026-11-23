@@ -54,8 +54,6 @@ internal class ReleaseVersion private constructor(
     }
 }
 
-internal enum class UpdateChannel { Stable, Preview }
-
 internal data class UpdateCandidate(
     val versionName: String,
     val versionCode: Int,

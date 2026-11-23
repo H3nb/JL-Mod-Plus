@@ -918,7 +918,7 @@ fun LibraryScreen(
         !libraryOverlayVisible && !selectionActiveHere && !searchOpen &&
         !collectionManageAppsActive
     LaunchedEffect(availableUpdate, updateDialogReady, updateRepository?.automaticChecks,
-        sessionDismissedUpdate, updateRepository?.channel) {
+        sessionDismissedUpdate) {
         val repository = updateRepository
         val candidate = availableUpdate
         if (BuildConfig.DEBUG || repository == null || !repository.automaticChecks ||

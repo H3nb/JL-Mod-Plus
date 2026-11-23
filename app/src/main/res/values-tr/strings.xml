@@ -327,7 +327,6 @@
     <string name="updates_available">Güncelleme mevcut</string>
     <string name="updates_browser_unavailable">Sürümü açmak için kullanılabilir bir tarayıcı yok.</string>
     <string name="updates_build_code">Derleme %1$d</string>
-    <string name="updates_channel">Güncelleme kanalı</string>
     <string name="updates_check">Güncellemeleri denetle</string>
     <string name="updates_checking">Güncellemeler denetleniyor…</string>
     <string name="updates_current">Güncelsiniz.</string>
@@ -338,12 +337,10 @@
     <string name="updates_link_copied">Kullanılabilir tarayıcı yok. Sürüm bağlantısı kopyalandı.</string>
     <string name="updates_more_available">Daha yeni bir sürüm mevcut.</string>
     <string name="updates_more_summary">JL-Mod Plus\'ın yeni sürümlerini denetleyin.</string>
-    <string name="updates_no_release">Bu kanalda yayımlanmış uyumlu bir sürüm yok.</string>
+    <string name="updates_no_release">Yayımlanmış uyumlu bir sürüm yok.</string>
     <string name="updates_not_checked">Henüz bir güncelleme denetimi tamamlanmadı.</string>
     <string name="updates_not_installable">Daha yeni bir sürüm var, ancak derleme numarası bu kurulumu güncelleyemiyor.</string>
     <string name="updates_notice">JL-Mod Plus %1$s mevcut. Diğer bölümündeki Güncellemeler\'e bakın.</string>
-    <string name="updates_preview">Önizleme</string>
-    <string name="updates_stable">Kararlı</string>
     <string name="updates_title">Güncellemeler</string>
     <string name="updates_view_release">Sürümü görüntüle</string>
     <plurals name="file_picker_selected_count">

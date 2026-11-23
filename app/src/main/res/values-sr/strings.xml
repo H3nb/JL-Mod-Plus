@@ -224,7 +224,6 @@
     <string name="updates_available">Доступно је ажурирање</string>
     <string name="updates_browser_unavailable">Нема доступног прегледача за отварање издања.</string>
     <string name="updates_build_code">Број израде %1$d</string>
-    <string name="updates_channel">Канал ажурирања</string>
     <string name="updates_check">Провери ажурирања</string>
     <string name="updates_checking">Провера ажурирања…</string>
     <string name="updates_current">Имате најновију верзију.</string>
@@ -235,12 +234,10 @@
     <string name="updates_link_copied">Нема доступног прегледача. Веза ка издању је копирана.</string>
     <string name="updates_more_available">Доступна је новија верзија.</string>
     <string name="updates_more_summary">Проверите да ли постоје нове верзије JL-Mod Plus.</string>
-    <string name="updates_no_release">На овом каналу није доступно компатибилно објављено издање.</string>
+    <string name="updates_no_release">Није доступно компатибилно објављено издање.</string>
     <string name="updates_not_checked">Још није завршена ниједна провера ажурирања.</string>
     <string name="updates_not_installable">Постоји новије издање, али његов број израде не омогућава ажурирање ове инсталације.</string>
     <string name="updates_notice">JL-Mod Plus %1$s је доступан. Погледајте Ажурирања у одељку Још.</string>
-    <string name="updates_preview">Прелиминарни</string>
-    <string name="updates_stable">Стабилни</string>
     <string name="updates_title">Ажурирања</string>
     <string name="updates_view_release">Погледај издање</string>
     <plurals name="file_picker_selected_count">
