@@ -11,14 +11,18 @@ import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.heightIn
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.size
+import androidx.compose.foundation.shape.CornerSize
 import androidx.compose.material3.Icon
+import androidx.compose.material3.HorizontalDivider
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.OutlinedTextFieldDefaults
+import androidx.compose.material3.TextFieldDefaults
 import androidx.compose.material3.Surface
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.res.painterResource
 import androidx.compose.ui.semantics.Role
 import androidx.compose.ui.semantics.contentDescription
@@ -50,7 +54,7 @@ internal fun MemoryEditorNavigationRow(
             contentColor = colors.onSecondaryContainer,
         ) {
             Icon(painterResource(icon), contentDescription = null,
-                modifier = Modifier.padding(10.dp).size(24.dp),
+                modifier = Modifier.padding(8.dp).size(24.dp),
                 tint = colors.onSecondaryContainer.copy(alpha = emphasis))
         }
         Column(Modifier.weight(1f), verticalArrangement = Arrangement.spacedBy(2.dp)) {
@@ -70,4 +74,46 @@ internal fun memoryEditorFieldColors() = OutlinedTextFieldDefaults.colors(
     unfocusedContainerColor = MaterialTheme.colorScheme.surfaceContainerHigh,
     disabledContainerColor = MaterialTheme.colorScheme.surfaceContainerHigh,
     errorContainerColor = MaterialTheme.colorScheme.surfaceContainerHigh,
+)
+
+/** Adjacent lazy rows form one tonal group without drawing a background over empty space. */
+@Composable
+internal fun MemoryEditorDataRow(
+    first: Boolean,
+    last: Boolean,
+    selected: Boolean,
+    content: @Composable () -> Unit,
+) {
+    val colors = MaterialTheme.colorScheme
+    val rounded = MaterialTheme.shapes.large
+    val flat = CornerSize(0.dp)
+    Surface(
+        modifier = Modifier.fillMaxWidth(),
+        shape = rounded.copy(
+            topStart = if (first) rounded.topStart else flat,
+            topEnd = if (first) rounded.topEnd else flat,
+            bottomStart = if (last) rounded.bottomStart else flat,
+            bottomEnd = if (last) rounded.bottomEnd else flat,
+        ),
+        color = if (selected) colors.secondaryContainer else colors.surfaceContainerLow,
+        contentColor = if (selected) colors.onSecondaryContainer else colors.onSurface,
+    ) {
+        Column {
+            content()
+            if (!last) HorizontalDivider(
+                modifier = Modifier.padding(horizontal = 16.dp),
+                color = colors.outlineVariant.copy(alpha = 0.55f),
+            )
+        }
+    }
+}
+
+@Composable
+internal fun memoryEditorBuilderFieldColors() = TextFieldDefaults.colors(
+    focusedContainerColor = MaterialTheme.colorScheme.surfaceContainerHigh,
+    unfocusedContainerColor = MaterialTheme.colorScheme.surfaceContainerHigh,
+    disabledContainerColor = MaterialTheme.colorScheme.surfaceContainerHigh,
+    errorContainerColor = MaterialTheme.colorScheme.surfaceContainerHigh,
+    unfocusedIndicatorColor = Color.Transparent,
+    disabledIndicatorColor = Color.Transparent,
 )

@@ -93,14 +93,16 @@ freeze timing or polling cadence. It makes no frame-time or allocation claim.
   contrast without covering unused viewport space. Keep numeric values legible
   and truncate only secondary source summaries. Technical values and identifiers
   use a readable monospace style; prose uses the normal Material text family.
-  A single-row selected-action bar overlays the list rather than resizing
-  its viewport, with width-sensitive overflow and enough scroll padding
-  to reach the last result even in short landscape windows.
+  Selected actions occupy a measured row directly above the persistent dock,
+  sharing its tonal surface. The lazy list uses the remaining height rather
+  than estimated overlay padding. The first and last data rows round the group;
+  partial page/list selection uses an indeterminate select-all checkbox.
 - Input dialogs use one scroll owner. In wide windows, title/controls and keypad
   sit side by side. Otherwise they stack. The title participates in body scrolling;
   confirmation/cancel remain outside it. Large fonts favor scrolling over smaller keys.
 - Compose owns selection, cursor and horizontal text scrolling. The custom numeric
-  keypad remains the input method; `InterceptPlatformTextInput` suppresses the Android
+  keypad remains the input method; neutral entry keys and tonal editing keys
+  distinguish the key roles. `InterceptPlatformTextInput` suppresses the Android
   IME without replacing text-editing semantics. Existing value validation still applies.
 - Inspector is a snapshot. Initial positioning uses actual row size; passive changes
   must not repeatedly move the reader back to the anchor. Refresh remains explicit.
@@ -130,6 +132,8 @@ but their Bookmark can always be renamed or removed.
 Boolean is explicit true/false; numeric Auto excludes it. Inspector remains a
 checked snapshot in a contextual detail page. Scroll state survives tab and
 width changes. Primary tabs use short directional motion and a tonal selected surface.
+Tab widths accommodate localized labels; icons are omitted in narrow space
+and the tab row can scroll if labels need more room.
 
 
 ## Action Script authoring
@@ -197,6 +201,7 @@ Hidden bodies have no actionable semantics; a pointer shield and key handling pr
 editing invisible content. Peek is a view-only action, not touch-through game control.
 Tooltips dismiss when Peek starts. Input dialogs keep opaque surfaces for legibility.
 
+The workspace header and footer paint edge-to-edge; safe insets belong to their controls.
 The workspace footer uses the same solid themed chrome as the header. Its controls
 respect the system-safe bounds and move above the IME when it is visible. Dialog footers remain transparent; the workspace
 dock disappears during Peek. Keep dialog surfaces solid so users can safely

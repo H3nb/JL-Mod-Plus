@@ -27,7 +27,8 @@ import androidx.compose.material3.Checkbox
 import androidx.compose.material3.FilterChip
 import androidx.compose.material3.Icon
 import androidx.compose.material3.MaterialTheme
-import androidx.compose.material3.OutlinedTextField
+import androidx.compose.material3.TextField
+import androidx.compose.material3.IconButton
 import androidx.compose.material3.Surface
 import androidx.compose.material3.Text
 import androidx.compose.material3.TextButton
@@ -111,7 +112,7 @@ internal fun MemoryScriptTypeChooser(
 ) {
     Column(
         modifier.fillMaxSize().verticalScroll(rememberScrollState())
-            .padding(horizontal = 8.dp, vertical = 12.dp),
+            .padding(horizontal = 16.dp, vertical = 12.dp),
         verticalArrangement = Arrangement.spacedBy(12.dp),
     ) {
         Text(
@@ -186,14 +187,14 @@ internal fun MemoryScriptBuilderScreen(
         MemoryScriptBuilderMode.FORM -> R.string.memory_builder_fields
         MemoryScriptBuilderMode.ACTIONS -> R.string.memory_builder_actions
     }
-    Column(modifier.fillMaxSize().padding(horizontal = 8.dp),
-        verticalArrangement = Arrangement.spacedBy(8.dp)) {
+    Column(modifier.fillMaxSize()) {
         error?.let {
             Text(it, color = MaterialTheme.colorScheme.error,
                 style = MaterialTheme.typography.bodySmall,
-                modifier = Modifier.fillMaxWidth())
+                modifier = Modifier.fillMaxWidth().padding(horizontal = 16.dp))
         }
-        Column(Modifier.weight(1f).verticalScroll(rememberScrollState()),
+        Column(Modifier.weight(1f).verticalScroll(rememberScrollState())
+            .padding(horizontal = 16.dp, vertical = 12.dp),
             verticalArrangement = Arrangement.spacedBy(12.dp)) {
             Surface(
                 color = MaterialTheme.colorScheme.surfaceContainerLow,
@@ -201,8 +202,8 @@ internal fun MemoryScriptBuilderScreen(
             ) {
                 Column(Modifier.fillMaxWidth().padding(12.dp),
                     verticalArrangement = Arrangement.spacedBy(4.dp)) {
-                    OutlinedTextField(
-                        colors = memoryEditorFieldColors(),
+                    TextField(
+                        colors = memoryEditorBuilderFieldColors(),
                         shape = MaterialTheme.shapes.medium,
                         value = draft.name,
                         onValueChange = { if (it.length <= 80) onDraft(draft.copy(name = it)) },
@@ -217,8 +218,8 @@ internal fun MemoryScriptBuilderScreen(
                         }
                     }
                     AnimatedVisibility(showDescription || draft.description.isNotBlank()) {
-                        OutlinedTextField(
-                            colors = memoryEditorFieldColors(),
+                        TextField(
+                            colors = memoryEditorBuilderFieldColors(),
                             shape = MaterialTheme.shapes.medium,
                             value = draft.description,
                             onValueChange = { if (it.length <= 2048) onDraft(draft.copy(description = it)) },
@@ -246,7 +247,7 @@ internal fun MemoryScriptBuilderScreen(
                     style = MaterialTheme.typography.titleMedium,
                     modifier = Modifier.align(Alignment.CenterVertically))
                 if (draft.actions.isNotEmpty()) {
-                    FilledTonalButton(enabled = !saving, onClick = { picking = true }) {
+                    TextButton(enabled = !saving, onClick = { picking = true }) {
                         Icon(painterResource(R.drawable.ic_add), contentDescription = null)
                         Spacer(Modifier.width(6.dp))
                         Text(stringResource(R.string.memory_builder_add_target))
@@ -288,23 +289,28 @@ internal fun MemoryScriptBuilderScreen(
                         Column(Modifier.fillMaxWidth().padding(12.dp),
                             verticalArrangement = Arrangement.spacedBy(8.dp)) {
                             Row(verticalAlignment = Alignment.CenterVertically) {
-                                Icon(painterResource(R.drawable.ic_memory_editor_watch),
+                                Icon(painterResource(R.drawable.ic_bookmark),
                                     contentDescription = null,
                                     tint = MaterialTheme.colorScheme.onSurfaceVariant)
                                 Spacer(Modifier.width(8.dp))
                                 Text(item.label, modifier = Modifier.weight(1f),
                                     maxLines = 2, overflow = TextOverflow.Ellipsis,
                                     style = MaterialTheme.typography.titleSmall)
-                                TextButton(enabled = !saving, onClick = {
+                                IconButton(enabled = !saving, onClick = {
                                     onDraft(draft.copy(actions = draft.actions.filterNot {
                                         it.bookmarkId == item.bookmarkId
                                     }))
-                                }) { Text(stringResource(R.string.memory_editor_remove)) }
+                                }) {
+                                    Icon(painterResource(R.drawable.ic_delete),
+                                        contentDescription = stringResource(R.string.memory_editor_remove),
+                                        tint = MaterialTheme.colorScheme.onSurfaceVariant.copy(
+                                            alpha = if (saving) 0.38f else 1f))
+                                }
                             }
                             when (draft.mode) {
                                 MemoryScriptBuilderMode.FORM -> {
-                                    OutlinedTextField(
-                                        colors = memoryEditorFieldColors(),
+                                    TextField(
+                                        colors = memoryEditorBuilderFieldColors(),
                                         shape = MaterialTheme.shapes.medium,
                                         value = item.label,
                                         onValueChange = { changed ->
@@ -332,8 +338,8 @@ internal fun MemoryScriptBuilderScreen(
                                     }
                                     AnimatedVisibility(showLimits) {
                                         Column(verticalArrangement = Arrangement.spacedBy(8.dp)) {
-                                        OutlinedTextField(
-                                            colors = memoryEditorFieldColors(),
+                                        TextField(
+                                            colors = memoryEditorBuilderFieldColors(),
                                             shape = MaterialTheme.shapes.medium,
                                             value = item.min,
                                             onValueChange = { changed ->
@@ -348,8 +354,8 @@ internal fun MemoryScriptBuilderScreen(
                                             enabled = !saving,
                                             singleLine = true, modifier = Modifier.fillMaxWidth(),
                                         )
-                                        OutlinedTextField(
-                                            colors = memoryEditorFieldColors(),
+                                        TextField(
+                                            colors = memoryEditorBuilderFieldColors(),
                                             shape = MaterialTheme.shapes.medium,
                                             value = item.max,
                                             onValueChange = { changed ->
@@ -392,8 +398,8 @@ internal fun MemoryScriptBuilderScreen(
                                             }
                                         }
                                     }
-                                    OutlinedTextField(
-                                        colors = memoryEditorFieldColors(),
+                                    TextField(
+                                        colors = memoryEditorBuilderFieldColors(),
                                         shape = MaterialTheme.shapes.medium,
                                         value = item.value,
                                         onValueChange = { changed ->
@@ -420,11 +426,8 @@ internal fun MemoryScriptBuilderScreen(
                 }
             }
         }
-        Surface(
-            color = MaterialTheme.colorScheme.surfaceContainer,
-            shape = MaterialTheme.shapes.large,
-        ) {
-            Row(Modifier.fillMaxWidth().padding(4.dp), horizontalArrangement = Arrangement.spacedBy(8.dp),
+        Surface(color = MaterialTheme.colorScheme.surfaceContainer) {
+            Row(Modifier.fillMaxWidth().padding(horizontal = 16.dp, vertical = 4.dp), horizontalArrangement = Arrangement.spacedBy(8.dp),
                 verticalAlignment = Alignment.CenterVertically) {
                 TextButton(enabled = !saving && draft.actions.isNotEmpty(),
                     onClick = { generate { preview = it } }) {

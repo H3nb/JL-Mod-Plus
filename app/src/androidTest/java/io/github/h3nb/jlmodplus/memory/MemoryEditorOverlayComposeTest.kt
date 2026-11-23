@@ -22,6 +22,7 @@ import androidx.compose.ui.test.WindowSize
 import androidx.compose.ui.unit.DpSize
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.test.assertIsDisplayed
+import androidx.compose.ui.test.SemanticsMatcher
 import androidx.compose.ui.test.assertIsEnabled
 import androidx.compose.ui.test.assertIsNotEnabled
 import androidx.compose.ui.test.assertTextContains
@@ -38,6 +39,8 @@ import androidx.compose.ui.test.performTextInputSelection
 import androidx.compose.ui.test.performTextReplacement
 import androidx.compose.ui.test.performTouchInput
 import androidx.compose.ui.semantics.SemanticsActions
+import androidx.compose.ui.semantics.SemanticsProperties
+import androidx.compose.ui.state.ToggleableState
 import androidx.compose.ui.text.TextRange
 import androidx.compose.ui.window.DialogWindowProvider
 import androidx.core.view.ViewCompat
@@ -221,6 +224,30 @@ class MemoryEditorOverlayComposeTest {
         val menuBounds = rule.onNodeWithTag("adaptive-dialog-surface").getUnclippedBoundsInRoot()
         assertTrue(menuBounds.right - menuBounds.left <= 400.dp)
         rule.onNodeWithText("Undo scan").performScrollTo().assertIsEnabled()
+    }
+
+    @Test fun partialResultSelectionUsesIndeterminatePageCheckbox() {
+        val result = MemoryResultRow(
+            id = 1, valueText = "42", locationText = "score",
+            aliasMask = 1 shl MemoryEngineContract.TYPE_INT,
+            primaryType = MemoryEngineContract.TYPE_INT,
+            state = MemoryEngineContract.CANDIDATE_STABLE, relocations = 0,
+        )
+        val state = mutableStateOf(MemoryEditorUiState(
+            visible = true, connected = true, supported = true, writeSupported = true,
+            sessionStage = MemorySessionStage.CANDIDATES,
+            resultCount = 2, results = listOf(result, result.copy(id = 2)),
+            selected = setOf(1L),
+        ))
+        rule.setContent {
+            JLModPlusTheme { MemoryEditorRuntimeRoot(state.value, TestMemoryEditorActions()) }
+        }
+        val mixed = SemanticsMatcher.expectValue(
+            SemanticsProperties.ToggleableState, ToggleableState.Indeterminate,
+        )
+        rule.onNode(mixed).assertIsDisplayed()
+        rule.runOnIdle { state.value = state.value.copy(selected = setOf(1L, 2L)) }
+        rule.onNode(mixed).assertDoesNotExist()
     }
 
     @Test fun unsupportedRuntimeExplainsUnavailabilityAndDisablesBothSearches() {

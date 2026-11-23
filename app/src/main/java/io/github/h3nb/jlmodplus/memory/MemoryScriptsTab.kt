@@ -228,7 +228,7 @@ internal fun RuntimeScriptsTab(
         val parsed = remember(draft.text) { runCatching { memoryScriptMetadata(draft.text) } }
         BoxWithConstraints(modifier.fillMaxSize()) {
         val compactEditor = maxHeight < 280.dp
-        Column(Modifier.fillMaxSize().padding(horizontal = 8.dp),
+        Column(Modifier.fillMaxSize().padding(horizontal = 16.dp),
             verticalArrangement = Arrangement.spacedBy(if (compactEditor) 4.dp else 8.dp)) {
             if (!compactEditor) Text(stringResource(R.string.memory_scripts_editor_hint),
                 style = MaterialTheme.typography.bodySmall,
@@ -308,7 +308,7 @@ internal fun RuntimeScriptsTab(
     }
 
     if (selected != null) {
-        Column(modifier.fillMaxSize().padding(8.dp),
+        Column(modifier.fillMaxSize().padding(horizontal = 16.dp, vertical = 8.dp),
             verticalArrangement = Arrangement.spacedBy(8.dp)) {
             Row(Modifier.fillMaxWidth(), horizontalArrangement = Arrangement.End) {
                 TextButton(onClick = { editScript(selected) }) {
@@ -440,7 +440,7 @@ internal fun RuntimeScriptsTab(
         return
     }
 
-    Column(modifier.fillMaxSize().padding(horizontal = 8.dp, vertical = 8.dp),
+    Column(modifier.fillMaxSize().padding(horizontal = 16.dp, vertical = 8.dp),
         verticalArrangement = Arrangement.spacedBy(12.dp)) {
         Row(modifier = Modifier.fillMaxWidth(), verticalAlignment = Alignment.CenterVertically) {
             Text(stringResource(R.string.memory_scripts_saved_count, state.scripts.size),

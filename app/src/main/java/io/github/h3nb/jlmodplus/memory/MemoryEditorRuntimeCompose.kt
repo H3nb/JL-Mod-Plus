@@ -50,10 +50,12 @@ import androidx.compose.ui.platform.testTag
 import androidx.compose.foundation.lazy.LazyColumn
 import androidx.compose.foundation.lazy.LazyListState
 import androidx.compose.foundation.lazy.items
+import androidx.compose.foundation.lazy.itemsIndexed
 import androidx.compose.foundation.lazy.rememberLazyListState
 import androidx.compose.material3.Button
 import androidx.compose.material3.ButtonDefaults
 import androidx.compose.material3.Checkbox
+import androidx.compose.material3.TriStateCheckbox
 import androidx.compose.material3.CircularProgressIndicator
 import androidx.compose.material3.DropdownMenu
 import androidx.compose.material3.DropdownMenuItem
@@ -69,7 +71,6 @@ import androidx.compose.material3.OutlinedTextField
 import androidx.compose.material3.PlainTooltip
 import androidx.compose.material3.RadioButton
 import androidx.compose.material3.SecondaryScrollableTabRow
-import androidx.compose.material3.SecondaryTabRow
 import androidx.compose.material3.Surface
 import androidx.compose.material3.Tab
 import androidx.compose.material3.Text
@@ -111,6 +112,7 @@ import androidx.compose.ui.semantics.contentDescription
 import androidx.compose.ui.semantics.liveRegion
 import androidx.compose.ui.semantics.onClick
 import androidx.compose.ui.semantics.semantics
+import androidx.compose.ui.state.ToggleableState
 import androidx.compose.ui.text.TextRange
 import androidx.compose.ui.text.font.FontFamily
 import androidx.compose.ui.text.font.FontWeight
@@ -137,6 +139,7 @@ private data class RuntimeKeypadCell(
     val onClick: () -> Unit,
     val enabled: Boolean = true,
     val span: Int = 1,
+    val functionKey: Boolean = false,
 )
 
 private val RuntimeMemoryValueTypes = intArrayOf(
@@ -377,11 +380,8 @@ internal fun MemoryEditorRuntimeRoot(
                 BoxWithConstraints(
                     modifier = Modifier.fillMaxSize()
                         .windowInsetsPadding(
-                            memoryEditorWorkspaceInsets().only(
-                                WindowInsetsSides.Horizontal + WindowInsetsSides.Bottom,
-                            ),
-                        )
-                        .padding(horizontal = 8.dp),
+                            memoryEditorWorkspaceInsets().only(WindowInsetsSides.Bottom),
+                        ),
                 ) {
                     val wideWorkspace = maxWidth >=
                         600.dp * LocalDensity.current.fontScale.coerceAtLeast(1f)
@@ -409,7 +409,8 @@ internal fun MemoryEditorRuntimeRoot(
                             .then(if (overlay.peeking) Modifier.clearAndSetSemantics {} else Modifier),
                     ) {
                         Column(Modifier.fillMaxWidth().background(controlsBackdrop).windowInsetsPadding(
-                            WindowInsets.safeGestures.only(WindowInsetsSides.Horizontal),
+                            memoryEditorWorkspaceInsets().union(WindowInsets.safeGestures)
+                                .only(WindowInsetsSides.Horizontal),
                         )) {
                             RuntimeMemoryHeader(
                                 state = state, inlineNavigation = showLabels || !showTitle,
@@ -442,7 +443,9 @@ internal fun MemoryEditorRuntimeRoot(
                         AnimatedContent(
                             targetState = state,
                             contentKey = { it.activeTab },
-                            modifier = Modifier.weight(1f).fillMaxWidth().clipToBounds(),
+                            modifier = Modifier.weight(1f).fillMaxWidth()
+                                .windowInsetsPadding(memoryEditorWorkspaceInsets().only(WindowInsetsSides.Horizontal))
+                                .clipToBounds(),
                             transitionSpec = {
                                 val direction = pageMotionDirection(
                                     0, 0, initialState.activeTab.ordinal, targetState.activeTab.ordinal,
@@ -507,8 +510,9 @@ internal fun MemoryEditorRuntimeRoot(
                 Box(
                     modifier = Modifier.align(Alignment.BottomCenter)
                         .fillMaxWidth()
+                        .background(if (overlay.peeking) Color.Transparent else controlsBackdrop)
                         .windowInsetsPadding(
-                            WindowInsets.safeDrawing.only(WindowInsetsSides.Horizontal)
+                            memoryEditorWorkspaceInsets().only(WindowInsetsSides.Horizontal)
                                 .union(WindowInsets.navigationBars.only(WindowInsetsSides.Bottom))
                                 .union(WindowInsets.ime.only(WindowInsetsSides.Bottom)),
                         )
@@ -516,9 +520,6 @@ internal fun MemoryEditorRuntimeRoot(
                 ) {
                     MemoryEditorPeekDock(
                         overlay = overlay,
-                        modifier = Modifier.background(
-                            if (overlay.peeking) Color.Transparent else controlsBackdrop,
-                        ),
                         leadingContent = {
                             RuntimeActionIcon(R.drawable.ic_settings, R.string.memory_editor_panel_opacity) {
                                 opacityDialog = true
@@ -594,12 +595,12 @@ private fun RuntimeMemoryHeader(
                         style = MaterialTheme.typography.titleMedium,
                         maxLines = 1,
                         overflow = TextOverflow.Ellipsis,
-                        modifier = if (inlineNavigation) Modifier.padding(end = 12.dp)
-                            else Modifier.widthIn(max = titleMaxWidth),
+                        modifier = if (inlineNavigation) Modifier.widthIn(max = titleMaxWidth)
+                            .padding(end = 12.dp) else Modifier.weight(1f),
                     )
                     if (inlineNavigation) {
                         RuntimeMemoryTabs(state, onTab, Modifier.weight(1f), navigationLocked)
-                    } else Spacer(Modifier.weight(1f))
+                    } else if (!showTitle) Spacer(Modifier.weight(1f))
                 }
                 RuntimeIconTooltip(stringResource(R.string.memory_editor_minimize)) {
                     IconButton(onClick = onMinimize, enabled = !navigationLocked) {
@@ -625,63 +626,46 @@ private fun RuntimeMemoryTabs(
         MemoryEditorTab.RESULTS, MemoryEditorTab.VARIABLES, MemoryEditorTab.SCRIPTS,
     )
     val selectedIndex = destinations.indexOf(state.activeTab).coerceAtLeast(0)
-    val tabs: @Composable () -> Unit = {
-        destinations.forEach { tab ->
-            val description = stringResource(when (tab) {
-                MemoryEditorTab.RESULTS -> R.string.memory_editor_search_tab
-                MemoryEditorTab.VARIABLES -> R.string.memory_variables_tab
-                MemoryEditorTab.SCRIPTS -> R.string.memory_scripts_title
-                MemoryEditorTab.INSPECTOR -> error("Inspector is a detail, not a destination")
-            })
-            Tab(
-                selected = state.activeTab == tab,
-                enabled = !navigationLocked,
-                onClick = { onTab(tab) },
-                modifier = Modifier.padding(horizontal = 2.dp)
-                    .clip(MaterialTheme.shapes.large)
-                    .background(
-                        if (state.activeTab == tab) MaterialTheme.colorScheme.secondaryContainer
-                        else Color.Transparent,
-                    ).semantics { contentDescription = description },
-                selectedContentColor = MaterialTheme.colorScheme.onSecondaryContainer,
-                unselectedContentColor = MaterialTheme.colorScheme.onSurfaceVariant,
-                text = {
-                    Row(verticalAlignment = Alignment.CenterVertically,
-                        horizontalArrangement = Arrangement.spacedBy(6.dp)) {
-                        if (LocalDensity.current.fontScale <= 1.3f) {
-                            val icon = when (tab) {
-                                MemoryEditorTab.RESULTS -> R.drawable.ic_search
-                                MemoryEditorTab.VARIABLES -> R.drawable.ic_memory_editor_watch
-                                MemoryEditorTab.SCRIPTS -> R.drawable.ic_auto_mode
-                                MemoryEditorTab.INSPECTOR -> error("Not a tab")
-                            }
-                            Icon(painterResource(icon), contentDescription = null,
-                                modifier = Modifier.size(18.dp))
-                        }
-                        Text(description, maxLines = 1)
-                    }
-                },
-            )
-        }
-    }
     BoxWithConstraints(modifier.fillMaxWidth()) {
-        if (maxWidth >= 336.dp * LocalDensity.current.fontScale.coerceAtLeast(1f)) {
-            SecondaryTabRow(
-                selectedTabIndex = selectedIndex,
-                containerColor = Color.Transparent,
-                indicator = {},
-                divider = {},
-                tabs = tabs,
-            )
-        } else {
-            SecondaryScrollableTabRow(
-                selectedTabIndex = selectedIndex,
-                edgePadding = 0.dp,
-                containerColor = Color.Transparent,
-                indicator = {},
-                divider = {},
-                tabs = tabs,
-            )
+        val showIcons = maxWidth >= 420.dp * LocalDensity.current.fontScale.coerceAtLeast(1f)
+        SecondaryScrollableTabRow(
+            selectedTabIndex = selectedIndex,
+            edgePadding = 0.dp,
+            minTabWidth = maxWidth / destinations.size,
+            containerColor = Color.Transparent,
+            indicator = {},
+            divider = {},
+        ) {
+            destinations.forEach { tab ->
+                val (label, icon) = when (tab) {
+                    MemoryEditorTab.RESULTS -> R.string.memory_editor_search_tab to R.drawable.ic_search
+                    MemoryEditorTab.VARIABLES -> R.string.memory_variables_tab to R.drawable.ic_bookmark
+                    MemoryEditorTab.SCRIPTS -> R.string.memory_scripts_title to R.drawable.ic_auto_mode
+                    MemoryEditorTab.INSPECTOR -> error("Inspector is a detail, not a destination")
+                }
+                val description = stringResource(label)
+                val selected = state.activeTab == tab
+                Tab(
+                    selected = selected,
+                    enabled = !navigationLocked,
+                    onClick = { onTab(tab) },
+                    modifier = Modifier.padding(horizontal = 4.dp, vertical = 2.dp)
+                        .clip(MaterialTheme.shapes.large)
+                        .background(if (selected) MaterialTheme.colorScheme.secondaryContainer
+                            else Color.Transparent)
+                        .semantics { contentDescription = description },
+                    selectedContentColor = MaterialTheme.colorScheme.onSecondaryContainer,
+                    unselectedContentColor = MaterialTheme.colorScheme.onSurfaceVariant,
+                    text = {
+                        Row(verticalAlignment = Alignment.CenterVertically,
+                            horizontalArrangement = Arrangement.spacedBy(6.dp)) {
+                            if (showIcons) Icon(painterResource(icon), contentDescription = null,
+                                modifier = Modifier.size(18.dp))
+                            Text(description)
+                        }
+                    },
+                )
+            }
         }
     }
 }
@@ -855,6 +839,7 @@ private fun RuntimeSearchResultsTab(
                 val summary: @Composable RowScope.() -> Unit = {
                     RuntimePageSelectionCheckbox(
                         checked = allVisibleSelected,
+                        partiallySelected = selectedRows.isNotEmpty() && !allVisibleSelected,
                         enabled = state.results.isNotEmpty() && !state.busy,
                         description = visibleSelectionDescription,
                         onToggle = { if (it) actions.selectVisible() else actions.clearSelection() },
@@ -897,7 +882,7 @@ private fun RuntimeSearchResultsTab(
                 val largeTextCompact = maxWidth < 400.dp &&
                     LocalDensity.current.fontScale >= 1.5f
                 val rowModifier = Modifier.fillMaxWidth()
-                    .padding(horizontal = 12.dp, vertical = 4.dp)
+                    .padding(horizontal = 16.dp, vertical = 4.dp)
                 if (largeTextCompact) {
                     Column {
                         Row(rowModifier, verticalAlignment = Alignment.CenterVertically) {
@@ -936,19 +921,15 @@ private fun RuntimeSearchResultsTab(
             HorizontalDivider()
         }
 
-        Box(Modifier.fillMaxWidth().weight(1f)) {
-            LazyColumn(
-                state = listState,
-                modifier = Modifier.fillMaxSize(),
-                contentPadding = PaddingValues(
-                    bottom = if (selectedRows.isNotEmpty())
-                        96.dp * LocalDensity.current.fontScale.coerceAtLeast(1f) else 0.dp,
-                ),
-            ) {
+        LazyColumn(
+            state = listState,
+            modifier = Modifier.fillMaxWidth().weight(1f),
+            contentPadding = PaddingValues(horizontal = 16.dp, vertical = 8.dp),
+        ) {
             if (state.results.isEmpty()) {
                 item(key = "empty") {
                     Column(
-                        modifier = Modifier.fillMaxWidth().padding(8.dp, 12.dp),
+                        modifier = Modifier.fillMaxWidth().padding(vertical = 4.dp),
                         verticalArrangement = Arrangement.spacedBy(12.dp),
                     ) {
                         Text(
@@ -981,9 +962,11 @@ private fun RuntimeSearchResultsTab(
                     }
                 }
             } else {
-                items(state.results, key = { it.id }) { row ->
+                itemsIndexed(state.results, key = { _, item -> item.id }) { index, row ->
                     RuntimeResultRow(
                         row = row,
+                        first = index == 0,
+                        last = index == state.results.lastIndex,
                         compactRows = compactRows,
                         selected = row.id in state.selected,
                         onToggle = { actions.toggleSelection(row.id) },
@@ -999,16 +982,13 @@ private fun RuntimeSearchResultsTab(
                 }
             }
         }
-            if (selectedRows.isNotEmpty()) {
-                Box(Modifier.align(Alignment.BottomCenter)) {
-                    RuntimeSelectedActionBar(
-                        label = pluralStringResource(
-                            R.plurals.memory_editor_selected, selectedRows.size, selectedRows.size,
-                        ),
-                        actions = selectedActions,
-                    )
-                }
-            }
+        if (selectedRows.isNotEmpty()) {
+            RuntimeSelectedActionBar(
+                label = pluralStringResource(
+                    R.plurals.memory_editor_selected, selectedRows.size, selectedRows.size,
+                ),
+                actions = selectedActions,
+            )
         }
     }
 
@@ -1252,13 +1232,14 @@ private fun RuntimeVariablesTab(
         Row(
             Modifier.fillMaxWidth().background(MaterialTheme.colorScheme.surfaceContainer)
                 .windowInsetsPadding(WindowInsets.safeGestures.only(WindowInsetsSides.Horizontal))
-                .padding(horizontal = 8.dp, vertical = 4.dp),
+                .padding(horizontal = 16.dp, vertical = 4.dp),
             verticalAlignment = Alignment.CenterVertically,
         ) {
             val allSelected = entries.isNotEmpty() &&
                 entries.all { it.key in selectedKeys }
             RuntimePageSelectionCheckbox(
                 checked = allSelected,
+                partiallySelected = selectedEntries.isNotEmpty() && !allSelected,
                 enabled = entries.isNotEmpty() && !state.busy,
                 description = stringResource(if (allSelected)
                     R.string.memory_editor_clear_selection
@@ -1285,15 +1266,11 @@ private fun RuntimeVariablesTab(
             Text(it, color = MaterialTheme.colorScheme.error,
                 style = MaterialTheme.typography.bodySmall, modifier = Modifier.padding(12.dp))
         }
-        Box(Modifier.fillMaxWidth().weight(1f)) {
-            LazyColumn(
-                state = listState,
-                modifier = Modifier.fillMaxSize(),
-                contentPadding = PaddingValues(
-                    bottom = if (selectedEntries.isNotEmpty())
-                        96.dp * LocalDensity.current.fontScale.coerceAtLeast(1f) else 0.dp,
-                ),
-            ) {
+        LazyColumn(
+            state = listState,
+            modifier = Modifier.fillMaxWidth().weight(1f),
+            contentPadding = PaddingValues(horizontal = 16.dp, vertical = 8.dp),
+        ) {
             if (state.savedError != null) item(key = "list-error") {
                 Text(state.savedError,
                     color = MaterialTheme.colorScheme.error,
@@ -1301,7 +1278,7 @@ private fun RuntimeVariablesTab(
                     modifier = Modifier.padding(12.dp))
             }
             if (entries.isEmpty()) item(key = "list-empty") {
-                Column(Modifier.fillMaxWidth().padding(20.dp),
+                Column(Modifier.fillMaxWidth().padding(vertical = 12.dp),
                     verticalArrangement = Arrangement.spacedBy(8.dp)) {
                     Text(stringResource(R.string.memory_list_empty),
                         style = MaterialTheme.typography.titleSmall)
@@ -1310,13 +1287,15 @@ private fun RuntimeVariablesTab(
                         style = MaterialTheme.typography.bodySmall)
                 }
             }
-            items(entries, key = MemoryListEntry::key) { entry ->
+            itemsIndexed(entries, key = { _, item -> item.key }) { index, entry ->
                 val current = entry.saved?.let { state.savedValues[it.id] }
                 val editable = !state.busy && state.writeSupported &&
                     (current?.resolved == true ||
                         entry.watch?.let { it.state != MemoryEngineContract.CANDIDATE_LOST } == true)
                 RuntimeListRow(
                     entry = entry,
+                    first = index == 0,
+                    last = index == entries.lastIndex,
                     value = current,
                     selected = entry.key in selectedKeys,
                     selectionActive = selectedKeys.isNotEmpty(),
@@ -1329,16 +1308,13 @@ private fun RuntimeVariablesTab(
                 )
             }
         }
-            if (selectedEntries.isNotEmpty()) {
-                Box(Modifier.align(Alignment.BottomCenter)) {
-                    RuntimeSelectedActionBar(
-                        label = pluralStringResource(
-                            R.plurals.memory_editor_selected, selectedEntries.size, selectedEntries.size,
-                        ),
-                        actions = selectionActions,
-                    )
-                }
-            }
+        if (selectedEntries.isNotEmpty()) {
+            RuntimeSelectedActionBar(
+                label = pluralStringResource(
+                    R.plurals.memory_editor_selected, selectedEntries.size, selectedEntries.size,
+                ),
+                actions = selectionActions,
+            )
         }
     }
 
@@ -1479,6 +1455,8 @@ private fun RuntimeVariablesTab(
 @Composable
 private fun RuntimeListRow(
     entry: MemoryListEntry,
+    first: Boolean,
+    last: Boolean,
     value: SavedVariableRuntimeValue?,
     selected: Boolean,
     selectionActive: Boolean,
@@ -1501,12 +1479,7 @@ private fun RuntimeListRow(
             }.orEmpty()
     }
     val selectDescription = stringResource(R.string.memory_editor_select_result_value)
-    Surface(
-        color = if (selected) MaterialTheme.colorScheme.secondaryContainer
-            else MaterialTheme.colorScheme.surfaceContainerLow,
-        contentColor = if (selected) MaterialTheme.colorScheme.onSecondaryContainer
-            else MaterialTheme.colorScheme.onSurface,
-    ) {
+    MemoryEditorDataRow(first = first, last = last, selected = selected) {
         Row(
             Modifier.fillMaxWidth()
                 .combinedClickable(
@@ -1576,7 +1549,6 @@ private fun RuntimeListRow(
             }
         }
     }
-    HorizontalDivider()
 }
 
 @Composable
@@ -1609,17 +1581,14 @@ private fun runtimeCandidateLocation(id: Long, source: MemoryCandidateSource, fa
 @Composable
 private fun RuntimeResultRow(
     row: MemoryResultRow,
+    first: Boolean,
+    last: Boolean,
     compactRows: Boolean,
     selected: Boolean,
     onToggle: () -> Unit,
     onClick: () -> Unit,
 ) {
-    Surface(
-        color = if (selected) MaterialTheme.colorScheme.secondaryContainer
-            else MaterialTheme.colorScheme.surfaceContainerLow,
-        contentColor = if (selected) MaterialTheme.colorScheme.onSecondaryContainer
-            else MaterialTheme.colorScheme.onSurface,
-    ) {
+    MemoryEditorDataRow(first = first, last = last, selected = selected) {
         Row(
             modifier = Modifier.fillMaxWidth().clickable(onClick = onClick)
                 .padding(horizontal = 12.dp, vertical = if (compactRows) 2.dp else 8.dp),
@@ -1642,7 +1611,7 @@ private fun RuntimeResultRow(
                         )
                         Text(
                             typeLabel, style = MaterialTheme.typography.labelSmall,
-                            color = MaterialTheme.colorScheme.primary,
+                            color = MaterialTheme.colorScheme.onSurfaceVariant,
                             modifier = Modifier.padding(start = 8.dp),
                         )
                     }
@@ -1663,7 +1632,7 @@ private fun RuntimeResultRow(
                         )
                         Text(
                             typeLabel, style = MaterialTheme.typography.labelSmall,
-                            color = MaterialTheme.colorScheme.primary,
+                            color = MaterialTheme.colorScheme.onSurfaceVariant,
                         )
                     }
                     FlowRow(horizontalArrangement = Arrangement.spacedBy(8.dp)) {
@@ -1678,20 +1647,24 @@ private fun RuntimeResultRow(
             }
         }
     }
-    HorizontalDivider()
 }
 
 @Composable
 private fun RuntimePageSelectionCheckbox(
     checked: Boolean,
+    partiallySelected: Boolean,
     enabled: Boolean,
     description: String,
     onToggle: (Boolean) -> Unit,
 ) {
-    Checkbox(
-        checked = checked,
+    TriStateCheckbox(
+        state = when {
+            checked -> ToggleableState.On
+            partiallySelected -> ToggleableState.Indeterminate
+            else -> ToggleableState.Off
+        },
         enabled = enabled,
-        onCheckedChange = onToggle,
+        onClick = { onToggle(!checked) },
         modifier = Modifier.semantics { contentDescription = description },
     )
 }
@@ -1703,10 +1676,9 @@ private fun RuntimeSelectedActionBar(
 ) {
     var showMore by remember { mutableStateOf(false) }
     BoxWithConstraints(
-        Modifier.fillMaxWidth().padding(horizontal = 4.dp, vertical = 4.dp)
-            .clip(MaterialTheme.shapes.large)
-            .background(MaterialTheme.colorScheme.secondaryContainer)
-            .padding(horizontal = 12.dp, vertical = 4.dp),
+        Modifier.fillMaxWidth()
+            .background(MaterialTheme.colorScheme.surfaceContainer)
+            .padding(horizontal = 16.dp, vertical = 4.dp),
     ) {
         val fontScale = LocalDensity.current.fontScale.coerceAtLeast(1f)
         val slots = when {
@@ -1725,7 +1697,7 @@ private fun RuntimeSelectedActionBar(
             horizontalArrangement = Arrangement.spacedBy(4.dp),
         ) {
             Text(label, style = MaterialTheme.typography.labelMedium,
-                color = MaterialTheme.colorScheme.onSecondaryContainer,
+                color = MaterialTheme.colorScheme.onSurfaceVariant,
                 modifier = Modifier.weight(1f), maxLines = 1,
                 overflow = TextOverflow.Ellipsis)
             direct.forEach { action ->
@@ -2795,32 +2767,32 @@ private fun RuntimeSearchKeypad(
     val cells = if (landscape) {
         listOf(
             token("1"), token("2"), token("3"),
-            RuntimeKeypadCell("⌫", onClick = onBackspace),
-            RuntimeKeypadCell("←", onClick = { onMove(-1) }),
+            RuntimeKeypadCell("⌫", onClick = onBackspace, functionKey = true),
+            RuntimeKeypadCell("←", onClick = { onMove(-1) }, functionKey = true),
             token("4"), token("5"), token("6"),
-            RuntimeKeypadCell("→", onClick = { onMove(1) }),
+            RuntimeKeypadCell("→", onClick = { onMove(1) }, functionKey = true),
             token("-", enabled = valueSpec?.signed ?: true),
             token("7"), token("8"), token("9"),
             token(".", enabled = valueSpec?.decimal ?: true),
             token("E", enabled = valueSpec?.exponent ?: true),
             token("0"),
             token(";", enabled = allowGroup),
-            RuntimeKeypadCell(clearLabel, onClick = onClear, span = 3),
+            RuntimeKeypadCell(clearLabel, onClick = onClear, span = 3, functionKey = true),
         )
     } else {
         listOf(
             token("1"), token("2"), token("3"),
-            RuntimeKeypadCell("⌫", onClick = onBackspace),
+            RuntimeKeypadCell("⌫", onClick = onBackspace, functionKey = true),
             token("4"), token("5"), token("6"),
-            RuntimeKeypadCell("←", onClick = { onMove(-1) }),
+            RuntimeKeypadCell("←", onClick = { onMove(-1) }, functionKey = true),
             token("7"), token("8"), token("9"),
-            RuntimeKeypadCell("→", onClick = { onMove(1) }),
+            RuntimeKeypadCell("→", onClick = { onMove(1) }, functionKey = true),
             token("-", enabled = valueSpec?.signed ?: true),
             token("0"),
             token(".", enabled = valueSpec?.decimal ?: true),
             token("E", enabled = valueSpec?.exponent ?: true),
             token(";", enabled = allowGroup),
-            RuntimeKeypadCell(clearLabel, onClick = onClear, span = 3),
+            RuntimeKeypadCell(clearLabel, onClick = onClear, span = 3, functionKey = true),
         )
     }
 
@@ -2848,6 +2820,12 @@ private fun RuntimeKeypadButton(cell: RuntimeKeypadCell, modifier: Modifier = Mo
         onClick = cell.onClick,
         enabled = cell.enabled,
         shape = MaterialTheme.shapes.medium,
+        colors = ButtonDefaults.filledTonalButtonColors(
+            containerColor = if (cell.functionKey) MaterialTheme.colorScheme.secondaryContainer
+                else MaterialTheme.colorScheme.surfaceContainerHighest,
+            contentColor = if (cell.functionKey) MaterialTheme.colorScheme.onSecondaryContainer
+                else MaterialTheme.colorScheme.onSurface,
+        ),
         contentPadding = PaddingValues(horizontal = 4.dp, vertical = 8.dp),
         // Retain text-field focus while entering a number with the on-screen keypad.
         modifier = modifier.heightIn(min = 48.dp).focusProperties { canFocus = false },
