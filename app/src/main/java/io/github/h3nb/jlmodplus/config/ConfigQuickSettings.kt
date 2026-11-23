@@ -32,6 +32,7 @@ import androidx.compose.ui.semantics.Role
 import androidx.compose.ui.semantics.heading
 import androidx.compose.ui.semantics.semantics
 import androidx.compose.ui.text.style.TextOverflow
+import androidx.compose.ui.text.input.KeyboardType
 import androidx.compose.ui.unit.dp
 import io.github.h3nb.jlmodplus.R
 import io.github.h3nb.jlmodplus.config.model.Size
@@ -50,7 +51,6 @@ internal fun ConfigQuickSettings(
     onSavePreset: () -> Unit,
     onStopFollowing: () -> Unit,
     onOpenCategory: (ConfigDestination) -> Unit,
-    onOpenPerformance: () -> Unit,
     onOpenQuickSetting: (QuickSetting) -> Unit,
     onRequestAction: (ConfigAction) -> Unit,
 ) {
@@ -104,8 +104,7 @@ internal fun ConfigQuickSettings(
                     modifier = Modifier.weight(1f).heightIn(min = 72.dp)
                         .testTag("config_quick_" + setting.name.lowercase())
                         .clickable(role = Role.Button) {
-                            if (setting == QuickSetting.Fps) onOpenPerformance()
-                            else onOpenQuickSetting(setting)
+                            onOpenQuickSetting(setting)
                         },
                     shape = MaterialTheme.shapes.large,
                     color = MaterialTheme.colorScheme.surfaceContainerLow,
@@ -218,6 +217,21 @@ internal fun ConfigQuickSettingDialog(
             },
             onAdd = events::onAddResolutionPreset,
             onRemove = events::onRemoveResolutionPreset,
+        )
+        return
+    }
+    if (setting == QuickSetting.Fps) {
+        ConfigNumberDialog(
+            title = stringResource(R.string.PREF_LIMIT_FPS),
+            description = stringResource(R.string.config_help_fps_limit),
+            initialValue = form.fpsLimit,
+            label = null,
+            keyboardType = KeyboardType.Number,
+            onDismissRequest = onDismiss,
+            onConfirm = { value ->
+                onDismiss()
+                onFormChanged(form.toBuilder().fpsLimit(value).build())
+            },
         )
         return
     }

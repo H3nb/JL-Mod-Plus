@@ -20,127 +20,50 @@ import static org.junit.jupiter.api.Assertions.assertTrue;
 
 import java.util.concurrent.CountDownLatch;
 import java.util.concurrent.TimeUnit;
-
 import org.junit.jupiter.api.Test;
 
 public class FrameMetricsTest {
 	@Test
-	public void gameFramesCountCompletePublicationsAndRenderOnlyNewMailboxSequences() {
-		FrameMetrics metrics = new FrameMetrics();
-		metrics.recordGameFrame();
-		metrics.recordGameFrame();
-		metrics.recordRender(2L);
-		metrics.recordRender(2L);
-
-		FrameMetricsSnapshot snapshot = metrics.snapshot();
-		assertEquals(2L, snapshot.gameFrames());
-		assertEquals(1L, snapshot.renderFrames());
-		assertEquals(1L, snapshot.coalescedFrames());
-	}
-
-	@Test
-	public void staleAndEmptyRenderCallbacksDoNotCount() {
+	public void onlyDistinctRenderedSequencesCount() {
 		FrameMetrics metrics = new FrameMetrics();
 		metrics.recordRender(0L);
 		metrics.recordRender(-1L);
-		metrics.recordGameFrame();
+		metrics.recordRender(2L);
+		metrics.recordRender(2L);
 		metrics.recordRender(1L);
-		metrics.recordRender(1L);
-		metrics.recordRender(0L);
-
-		FrameMetricsSnapshot snapshot = metrics.snapshot();
-		assertEquals(1L, snapshot.gameFrames());
-		assertEquals(1L, snapshot.renderFrames());
-		assertEquals(0L, snapshot.coalescedFrames());
+		assertEquals(1L, metrics.renderedFrames());
+		metrics.recordRender(5L);
+		assertEquals(2L, metrics.renderedFrames());
 	}
 
 	@Test
-	public void newSurfaceGetsFreshMetricsAndFreshMailboxSequence() {
-		PresentationMailbox mailbox = new PresentationMailbox();
-		FrameMetrics firstSurface = new FrameMetrics();
-		mailbox.begin();
-		long first = mailbox.publish();
-		firstSurface.recordGameFrame();
-		firstSurface.recordRender(first);
-		long second = mailbox.publish();
-		firstSurface.recordGameFrame();
-		firstSurface.recordRender(second);
-		assertEquals(2L, firstSurface.snapshot().gameFrames());
-
-		mailbox.close();
-		FrameMetrics replacementSurface = new FrameMetrics();
-		mailbox.begin();
-		long replacement = mailbox.publish();
-		replacementSurface.recordGameFrame();
-		replacementSurface.recordRender(replacement);
-
-		assertEquals(1L, replacement);
-		assertEquals(1L, replacementSurface.snapshot().gameFrames());
-		assertEquals(1L, replacementSurface.snapshot().renderFrames());
-		assertEquals(0L, replacementSurface.snapshot().coalescedFrames());
-		assertEquals(2L, firstSurface.snapshot().gameFrames());
-		assertEquals(2L, firstSurface.snapshot().renderFrames());
-	}
-
-	@Test
-	public void activationAbandonsOldPendingMailboxSequencesWithoutResettingCounters()
-			throws Exception {
-		PresentationMailbox mailbox = new PresentationMailbox();
-		long generation = mailbox.begin();
+	public void resumedSurfaceDoesNotCountPendingOldFrames() throws Exception {
 		FrameMetrics metrics = new FrameMetrics();
-
-		long first = mailbox.publish();
-		metrics.recordGameFrame();
-		metrics.recordRender(first);
-		long stale = mailbox.publish();
-		metrics.recordGameFrame();
-		long boundary = mailbox.publish();
-		metrics.recordGameFrame();
-
-		CountDownLatch staleCallbackReady = new CountDownLatch(1);
-		Thread staleRenderer = new Thread(() -> {
-			staleCallbackReady.countDown();
-			metrics.recordRender(stale);
+		metrics.recordRender(1L);
+		CountDownLatch ready = new CountDownLatch(1);
+		Thread stale = new Thread(() -> {
+			ready.countDown();
+			metrics.recordRender(2L);
 		});
-		FrameMetricsSnapshot atActivation;
 		synchronized (metrics) {
-			staleRenderer.start();
-			assertTrue(staleCallbackReady.await(1, TimeUnit.SECONDS));
-			metrics.abandonPendingFrames(boundary);
-			atActivation = metrics.snapshot();
-			assertEquals(3L, atActivation.gameFrames());
-			assertEquals(1L, atActivation.renderFrames());
-			assertEquals(0L, atActivation.coalescedFrames());
+			stale.start();
+			assertTrue(ready.await(1, TimeUnit.SECONDS));
+			metrics.abandonPendingFrames(3L);
 		}
-		staleRenderer.join(1000L);
-		assertFalse(staleRenderer.isAlive());
-		assertEquals(atActivation.renderFrames(), metrics.snapshot().renderFrames());
-		assertEquals(atActivation.coalescedFrames(), metrics.snapshot().coalescedFrames());
-
-		long firstVisible = mailbox.publish();
-		metrics.recordGameFrame();
-		metrics.recordRender(firstVisible);
-		assertEquals(2L, metrics.snapshot().renderFrames());
-		assertEquals(0L, metrics.snapshot().coalescedFrames());
-
-		mailbox.publish();
-		metrics.recordGameFrame();
-		long latestVisible = mailbox.publish();
-		metrics.recordGameFrame();
-		metrics.recordRender(latestVisible);
-		assertEquals(3L, metrics.snapshot().renderFrames());
-		assertEquals(1L, metrics.snapshot().coalescedFrames());
-
-		assertFalse(mailbox.complete(generation, 0L));
+		stale.join(1000L);
+		assertFalse(stale.isAlive());
+		assertEquals(1L, metrics.renderedFrames());
+		metrics.recordRender(4L);
+		assertEquals(2L, metrics.renderedFrames());
 	}
 
 	@Test
-	public void cumulativeSnapshotDoesNotConsumeAnotherObserversData() {
-		FrameMetrics metrics = new FrameMetrics();
-		metrics.recordGameFrame();
-
-		assertEquals(1L, metrics.snapshot().gameFrames());
-		assertEquals(1L, metrics.snapshot().gameFrames());
-		assertEquals(1L, metrics.snapshot().gameFrames());
+	public void replacementSurfaceHasIndependentCounters() {
+		FrameMetrics oldSurface = new FrameMetrics();
+		oldSurface.recordRender(3L);
+		FrameMetrics nextSurface = new FrameMetrics();
+		nextSurface.recordRender(1L);
+		assertEquals(1L, oldSurface.renderedFrames());
+		assertEquals(1L, nextSurface.renderedFrames());
 	}
 }

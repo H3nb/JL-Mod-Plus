@@ -36,20 +36,14 @@ The compatibility frame ceiling scales with the selected multiplier. Host
 presentation and UI scheduling use host time. Media playback retains its own
 timebase and is not accelerated by this control.
 
-Canvas owns per-surface frame metrics only when the selected Performance Overlay
-metrics need frame-traffic counters (FPS, RFPS, or COAL). The presentation
-mailbox owns the canonical publication sequence. Optional frame metrics and
-host-time publication diagnostics are installed before opening that mailbox,
-under the publication buffer lock, so each accepted publication belongs to the
-new surface's diagnostic owners. They are released with the surface. The
-overlay reads manual speed from the Canvas's timing session and never changes
-it.
+Canvas creates an optional per-surface frame counter only when Show FPS is
+enabled. The presentation mailbox owns publication sequences, and the counter
+observes distinct frames consumed by the renderer. It resets across visibility
+and surface lifecycle transitions and does not affect pacing or guest clocks.
 
-Publication FPS, renderer consumption FPS, and coalesced frames describe buffer
-traffic. They do not measure simulation steps or prove that gameplay achieves
-the selected multiplier. The speed value describes the virtual clock mapping,
-not the amount of game work completed. CPU-bound work, I/O, scheduler precision,
-and game-specific loop behavior can limit the effect of a speed selection.
+The displayed FPS describes renderer consumption, not game simulation steps or
+the emulation-speed multiplier. CPU-bound work, I/O, scheduler precision, and
+game-specific loop behavior can limit the effect of a speed selection.
 
 The former Auto mode has been removed. Frame throughput cannot establish a
 general fastest stable gameplay speed across MIDlets with different update,

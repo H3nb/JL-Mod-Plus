@@ -38,7 +38,7 @@ private data class ConfigSearchItem(
     @StringRes val title: Int,
     @StringRes val section: Int,
     val destination: ConfigDestination,
-    val detail: ConfigDetail? = null,
+    val childPage: ConfigChildPage? = null,
     val keywords: String = "",
     val optionLabels: List<Int> = emptyList(),
 )
@@ -68,12 +68,9 @@ private fun searchPrerequisite(title: Int, form: ConfigFormState): ConfigSearchP
         R.string.parallel_screen_redrawing -> if (form.graphicsMode != 0 && form.graphicsMode != 3)
             ConfigSearchPrerequisite(R.string.pref_graphics_mode_title,
                 R.string.config_search_requires_renderer_mode) else null
-        R.string.perf_overlay_preset,
-        R.string.perf_overlay_parameters,
-        R.string.perf_overlay_position,
-        -> if (!form.showFps)
-            ConfigSearchPrerequisite(R.string.perf_overlay_title,
-                R.string.config_search_requires_performance_overlay) else null
+        R.string.config_fps_position_title -> if (!form.showFps)
+            ConfigSearchPrerequisite(R.string.config_show_fps_title,
+                R.string.config_search_requires_fps) else null
         else -> null
     }
 
@@ -93,40 +90,38 @@ private val configSearchIndex = listOf(
     ConfigSearchItem(R.string.config_background_custom_color, R.string.config_display_appearance, ConfigDestination.Display, keywords = "background color"),
     ConfigSearchItem(R.string.pref_skin_title, R.string.config_display_appearance, ConfigDestination.Display, keywords = "skin frame bezel"),
     ConfigSearchItem(R.string.pref_graphics_mode_title, R.string.config_display_rendering, ConfigDestination.Graphics, keywords = "renderer OpenGL ES"),
-    ConfigSearchItem(R.string.internal_resolution_title, R.string.config_display_rendering, ConfigDestination.Graphics, keywords = "resolution scaling"),
+    ConfigSearchItem(R.string.internal_resolution_title, R.string.config_image_quality_section, ConfigDestination.Graphics, keywords = "resolution scaling"),
     ConfigSearchItem(
-        R.string.bitmap_upscaling_title, R.string.config_display_rendering, ConfigDestination.Graphics,
+        R.string.bitmap_upscaling_title, R.string.config_image_quality_section, ConfigDestination.Graphics,
         keywords = "edge aware sprites",
         optionLabels = listOf(
             R.string.bitmap_upscaling_nearest, R.string.bitmap_upscaling_bilinear,
             R.string.bitmap_upscaling_mmpx, R.string.bitmap_upscaling_edge_aware,
         ),
     ),
-    ConfigSearchItem(R.string.render_shader_effects, R.string.config_display_rendering, ConfigDestination.Graphics, keywords = "shader GLSL effects"),
-    ConfigSearchItem(R.string.render_texture_filtering, R.string.config_display_rendering, ConfigDestination.Graphics, keywords = "texture filtering"),
+    ConfigSearchItem(R.string.render_shader_effects, R.string.config_image_quality_section, ConfigDestination.Graphics, keywords = "shader GLSL effects"),
+    ConfigSearchItem(R.string.render_texture_filtering, R.string.config_image_quality_section, ConfigDestination.Graphics, keywords = "texture filtering"),
     ConfigSearchItem(R.string.parallel_screen_redrawing, R.string.config_display_rendering, ConfigDestination.Graphics),
-    ConfigSearchItem(R.string.config_font_sizes, R.string.config_display_text, ConfigDestination.Display, ConfigDetail.Font, "font text"),
-    ConfigSearchItem(R.string.SIZE_PRESETS, R.string.config_display_text, ConfigDestination.Display, ConfigDetail.Font),
-    ConfigSearchItem(R.string.PREF_FONT_SIZE_IN_SP, R.string.config_display_text, ConfigDestination.Display, ConfigDetail.Font),
-    ConfigSearchItem(R.string.PREF_FONT_ANTI_ALIASING, R.string.config_display_text, ConfigDestination.Display, ConfigDetail.Font),
-    ConfigSearchItem(R.string.PREF_LIMIT_FPS, R.string.config_display_performance, ConfigDestination.Graphics, ConfigDetail.Performance, "framerate fps"),
-    ConfigSearchItem(R.string.perf_overlay_title, R.string.config_display_performance, ConfigDestination.Graphics, ConfigDetail.Performance, "stats performance"),
-    ConfigSearchItem(R.string.perf_overlay_preset, R.string.config_display_performance, ConfigDestination.Graphics, ConfigDetail.Performance),
-    ConfigSearchItem(R.string.perf_overlay_parameters, R.string.config_display_performance, ConfigDestination.Graphics, ConfigDetail.Performance),
-    ConfigSearchItem(R.string.perf_overlay_position, R.string.config_display_performance, ConfigDestination.Graphics, ConfigDetail.Performance),
-    ConfigSearchItem(R.string.PREF_VIRTUAL_KEYBOARD_OPTIONS, R.string.config_basic_input, ConfigDestination.Controls, keywords = "virtual keys controls"),
-    ConfigSearchItem(R.string.PREF_TOUCH_INPUT, R.string.config_basic_input, ConfigDestination.Controls),
-    ConfigSearchItem(R.string.PREF_LAYOUT, R.string.config_controls_key_input, ConfigDestination.Controls),
-    ConfigSearchItem(R.string.pref_map_keys, R.string.config_controls_key_input, ConfigDestination.Controls, keywords = "key mapping keyboard"),
-    ConfigSearchItem(R.string.config_analog_stick, R.string.config_controls_key_input, ConfigDestination.Controls, keywords = "gamepad joystick"),
-    ConfigSearchItem(R.string.config_gamepad_calibrate, R.string.config_controls_key_input, ConfigDestination.Controls, keywords = "gamepad calibration"),
+    ConfigSearchItem(R.string.config_font_sizes, R.string.config_display_text, ConfigDestination.Display, ConfigChildPage.Font, "font text"),
+    ConfigSearchItem(R.string.SIZE_PRESETS, R.string.config_display_text, ConfigDestination.Display, ConfigChildPage.Font),
+    ConfigSearchItem(R.string.PREF_FONT_SIZE_IN_SP, R.string.config_display_text, ConfigDestination.Display, ConfigChildPage.Font),
+    ConfigSearchItem(R.string.PREF_FONT_ANTI_ALIASING, R.string.config_display_text, ConfigDestination.Display, ConfigChildPage.Font),
+    ConfigSearchItem(R.string.PREF_LIMIT_FPS, R.string.config_frame_rate_section, ConfigDestination.Graphics, keywords = "framerate fps"),
+    ConfigSearchItem(R.string.config_show_fps_title, R.string.config_frame_rate_section, ConfigDestination.Graphics, keywords = "fps frame rate"),
+    ConfigSearchItem(R.string.config_fps_position_title, R.string.config_frame_rate_section, ConfigDestination.Graphics),
+    ConfigSearchItem(R.string.PREF_VIRTUAL_KEYBOARD_OPTIONS, R.string.config_controls_virtual_keyboard, ConfigDestination.Controls, keywords = "virtual keys controls"),
+    ConfigSearchItem(R.string.PREF_TOUCH_INPUT, R.string.config_input_mapping_section, ConfigDestination.Controls),
+    ConfigSearchItem(R.string.PREF_LAYOUT, R.string.config_input_mapping_section, ConfigDestination.Controls),
+    ConfigSearchItem(R.string.pref_map_keys, R.string.config_input_mapping_section, ConfigDestination.Controls, keywords = "key mapping keyboard"),
+    ConfigSearchItem(R.string.config_analog_stick, R.string.config_input_mapping_section, ConfigDestination.Controls, keywords = "gamepad joystick"),
+    ConfigSearchItem(R.string.config_gamepad_calibrate, R.string.config_input_mapping_section, ConfigDestination.Controls, keywords = "gamepad calibration"),
     ConfigSearchItem(R.string.PREF_VK_FEEDBACK, R.string.config_controls_virtual_keyboard, ConfigDestination.Controls),
     ConfigSearchItem(R.string.PREF_VK_HIDE_DELAY, R.string.config_controls_virtual_keyboard, ConfigDestination.Controls),
-    ConfigSearchItem(R.string.pref_button_shape_title, R.string.config_controls_customization, ConfigDestination.Controls),
-    ConfigSearchItem(R.string.control_skin_title, R.string.config_controls_customization, ConfigDestination.Controls),
-    ConfigSearchItem(R.string.PREF_VK_ALPHA, R.string.config_controls_customization, ConfigDestination.Controls, keywords = "transparency opacity"),
-    ConfigSearchItem(R.string.config_controls_opaque_outside, R.string.config_controls_customization, ConfigDestination.Controls),
-    ConfigSearchItem(R.string.config_controls_virtual_keyboard_colors, R.string.config_controls_customization, ConfigDestination.Controls, keywords = "button colors palette"),
+    ConfigSearchItem(R.string.pref_button_shape_title, R.string.config_controls_appearance_section, ConfigDestination.Controls),
+    ConfigSearchItem(R.string.control_skin_title, R.string.config_controls_appearance_section, ConfigDestination.Controls),
+    ConfigSearchItem(R.string.PREF_VK_ALPHA, R.string.config_controls_appearance_section, ConfigDestination.Controls, keywords = "transparency opacity"),
+    ConfigSearchItem(R.string.config_controls_opaque_outside, R.string.config_controls_appearance_section, ConfigDestination.Controls),
+    ConfigSearchItem(R.string.config_controls_virtual_keyboard_colors, R.string.config_controls_appearance_section, ConfigDestination.Controls, keywords = "button colors palette"),
     ConfigSearchItem(R.string.RESET_LAYOUT_CMD, R.string.config_controls_maintenance, ConfigDestination.Controls),
     ConfigSearchItem(R.string.pref_soundbank_title, R.string.pref_audio_title, ConfigDestination.Media, keywords = "MIDI audio"),
     ConfigSearchItem(R.string.config_camera_default_title, R.string.config_camera_title, ConfigDestination.Media),
@@ -136,7 +131,7 @@ private val configSearchIndex = listOf(
     ConfigSearchItem(R.string.midlet_permissions_write, R.string.midlet_permissions_settings_title, ConfigDestination.System),
     ConfigSearchItem(R.string.pref_skip_resume_call, R.string.config_system_compatibility, ConfigDestination.System),
     ConfigSearchItem(R.string.PREF_IMMEDIATE, R.string.config_system_compatibility, ConfigDestination.System),
-    ConfigSearchItem(R.string.PREF_TIMING_MODE, R.string.config_system_timing, ConfigDestination.System),
+    ConfigSearchItem(R.string.PREF_TIMING_MODE, R.string.config_system_compatibility, ConfigDestination.System),
     ConfigSearchItem(R.string.pref_encoding_title, R.string.PREF_SYS_PROPS, ConfigDestination.System),
     ConfigSearchItem(R.string.config_edit_system_properties, R.string.PREF_SYS_PROPS, ConfigDestination.System, keywords = "properties CLDC Java ME"),
     ConfigSearchItem(R.string.config_reset_all_settings, R.string.config_midlet_actions, ConfigDestination.Basic),
@@ -150,7 +145,7 @@ internal fun ConfigSearchResults(
     state: ConfigUiState,
     isProfile: Boolean,
     cutoutAvailable: Boolean = false,
-    onSelected: (ConfigDestination, String, ConfigDetail?, String) -> Unit,
+    onSelected: (ConfigDestination, String, ConfigChildPage?, String) -> Unit,
     modifier: Modifier = Modifier,
 ) {
     val resources = LocalResources.current
@@ -217,11 +212,14 @@ internal fun ConfigSearchResults(
                     }
                 },
                 modifier = Modifier.clickable {
+                    val target = prerequisite?.setting ?: entry.title
+                    val targetSection = configSearchIndex.firstOrNull { it.title == target }?.section
+                        ?: entry.section
                     onSelected(
                         entry.destination,
-                        resources.getString(entry.section),
-                        entry.detail,
-                        resources.getString(prerequisite?.setting ?: entry.title),
+                        resources.getString(targetSection),
+                        entry.childPage,
+                        resources.getString(target),
                     )
                 },
             )

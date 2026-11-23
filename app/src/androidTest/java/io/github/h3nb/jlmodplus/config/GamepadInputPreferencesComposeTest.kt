@@ -32,7 +32,7 @@ class GamepadInputPreferencesComposeTest {
     fun analogChoiceDoesNotRequireControllerButCalibrationDoes() {
         composeRule.setContent {
             JLModPlusTheme {
-                ConfigSection(title = uiString(R.string.config_controls_key_input)) {
+                ConfigSection(title = uiString(R.string.config_input_mapping_section)) {
                     GamepadInputPreferences(
                         form = ConfigFormState.builder().build(),
                         controllerAvailable = false,
@@ -57,7 +57,7 @@ class GamepadInputPreferencesComposeTest {
         }
         composeRule.setContent {
             JLModPlusTheme {
-                ConfigSection(title = uiString(R.string.config_controls_key_input)) {
+                ConfigSection(title = uiString(R.string.config_input_mapping_section)) {
                     GamepadInputPreferences(
                         form = ConfigFormState.builder().build(),
                         controllerAvailable = true,
