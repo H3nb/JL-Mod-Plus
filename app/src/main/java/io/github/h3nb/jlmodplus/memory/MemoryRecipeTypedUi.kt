@@ -167,6 +167,8 @@ internal fun TypedMemoryRecipeDetail(
             }
             if (metadata.mode != "toggle") metadata.fields.forEach { field ->
                 OutlinedTextField(
+                    colors = memoryEditorFieldColors(),
+                    shape = MaterialTheme.shapes.medium,
                     value = inputs[field.name].orEmpty(),
                     onValueChange = { next ->
                         if (!busy && next.length <= 32) {

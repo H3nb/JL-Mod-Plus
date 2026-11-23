@@ -1430,6 +1430,8 @@ private fun RuntimeVariablesTab(
             title = { Text(stringResource(R.string.memory_saved_rename)) },
             text = {
                 OutlinedTextField(
+                    colors = memoryEditorFieldColors(),
+                    shape = MaterialTheme.shapes.medium,
                     value = name,
                     onValueChange = { if (it.length <= 64) name = it },
                     label = { Text(stringResource(R.string.memory_saved_name)) },
@@ -2533,7 +2535,7 @@ internal fun RuntimeInspectorTab(
             }
             LazyColumn(state = listState, modifier = modifier.fillMaxWidth()) {
                 item(key = "source") {
-                    Column {
+                    Column(Modifier.fillMaxWidth().background(MaterialTheme.colorScheme.surfaceContainer)) {
                         Row(
                             modifier = Modifier.fillMaxWidth().padding(horizontal = 12.dp, vertical = 6.dp),
                             verticalAlignment = Alignment.CenterVertically,
@@ -2610,9 +2612,12 @@ internal fun RuntimeInspectorTab(
                 items(logicalRows, key = { it.id }) { row ->
                     var rowMenuOpen by remember(row.id) { mutableStateOf(false) }
                     Surface(
-                        color = if (row.relativeOffset == 0) {
-                            MaterialTheme.colorScheme.secondaryContainer.copy(alpha = 0.58f)
-                        } else Color.Transparent,
+                        color = if (row.relativeOffset == 0)
+                            MaterialTheme.colorScheme.secondaryContainer
+                        else MaterialTheme.colorScheme.surfaceContainerLow,
+                        contentColor = if (row.relativeOffset == 0)
+                            MaterialTheme.colorScheme.onSecondaryContainer
+                        else MaterialTheme.colorScheme.onSurface,
                     ) {
                         Row(
                             modifier = Modifier
@@ -2762,7 +2767,8 @@ private fun RuntimeSearchField(
                 },
             label = { Text(label) },
             singleLine = true,
-            shape = MaterialTheme.shapes.small,
+            shape = MaterialTheme.shapes.medium,
+            colors = memoryEditorFieldColors(),
             textStyle = runtimeMemoryDataTextStyle(),
         )
     }
@@ -2838,10 +2844,10 @@ private fun RuntimeSearchKeypad(
 
 @Composable
 private fun RuntimeKeypadButton(cell: RuntimeKeypadCell, modifier: Modifier = Modifier) {
-    OutlinedButton(
+    FilledTonalButton(
         onClick = cell.onClick,
         enabled = cell.enabled,
-        shape = MaterialTheme.shapes.small,
+        shape = MaterialTheme.shapes.medium,
         contentPadding = PaddingValues(horizontal = 4.dp, vertical = 8.dp),
         // Retain text-field focus while entering a number with the on-screen keypad.
         modifier = modifier.heightIn(min = 48.dp).focusProperties { canFocus = false },
