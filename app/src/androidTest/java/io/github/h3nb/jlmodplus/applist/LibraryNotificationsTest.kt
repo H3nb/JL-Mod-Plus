@@ -23,6 +23,7 @@ import androidx.compose.ui.test.performClick
 import androidx.compose.ui.test.performTouchInput
 import androidx.compose.ui.test.swipeLeft
 import androidx.test.ext.junit.runners.AndroidJUnit4
+import androidx.test.platform.app.InstrumentationRegistry
 import io.github.h3nb.jlmodplus.R
 import io.github.h3nb.jlmodplus.ui.JLModPlusTheme
 import io.github.h3nb.jlmodplus.updates.UpdateCandidate
@@ -76,7 +77,9 @@ class LibraryNotificationsTest {
         composeRule.runOnIdle { update.value = null }
         composeRule.onNodeWithText("JL-Mod Plus 1.3.0").assertDoesNotExist()
         composeRule.onNodeWithText(
-            composeRule.activity.getString(R.string.library_notifications_empty_title)
+            InstrumentationRegistry.getInstrumentation().targetContext.getString(
+                R.string.library_notifications_empty_title,
+            )
         ).assertIsDisplayed()
     }
 
