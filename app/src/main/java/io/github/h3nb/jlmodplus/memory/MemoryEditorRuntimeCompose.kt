@@ -928,35 +928,33 @@ private fun RuntimeSearchResultsTab(
         ) {
             if (state.results.isEmpty()) {
                 item(key = "empty") {
-                    Column(
-                        modifier = Modifier.fillMaxWidth().padding(vertical = 4.dp),
-                        verticalArrangement = Arrangement.spacedBy(12.dp),
+                    Surface(
+                        color = MaterialTheme.colorScheme.surfaceContainerLow,
+                        shape = MaterialTheme.shapes.large,
+                        modifier = Modifier.fillMaxWidth(),
                     ) {
-                        Text(
-                            stringResource(
-                                if (state.sessionStage == MemorySessionStage.EMPTY) R.string.memory_editor_new_search
-                                else if (unknownBaseline) R.string.memory_editor_no_candidates
-                                else R.string.memory_editor_no_results,
-                            ),
-                            style = MaterialTheme.typography.titleMedium,
-                        )
-                        Surface(
-                            color = MaterialTheme.colorScheme.surfaceContainerLow,
-                            shape = MaterialTheme.shapes.large,
-                        ) {
-                            Column {
-                                quickActions.forEachIndexed { index, action ->
-                                    if (index > 0) HorizontalDivider(
-                                        modifier = Modifier.padding(horizontal = 16.dp),
-                                        color = MaterialTheme.colorScheme.outlineVariant,
-                                    )
-                                    MemoryEditorNavigationRow(
-                                        icon = action.icon,
-                                        title = stringResource(action.label),
-                                        enabled = action.enabled,
-                                        onClick = action.onClick,
-                                    )
-                                }
+                        Column {
+                            Text(
+                                stringResource(
+                                    if (state.sessionStage == MemorySessionStage.EMPTY) R.string.memory_editor_new_search
+                                    else if (unknownBaseline) R.string.memory_editor_no_candidates
+                                    else R.string.memory_editor_no_results,
+                                ),
+                                style = MaterialTheme.typography.titleSmall,
+                                color = MaterialTheme.colorScheme.onSurfaceVariant,
+                                modifier = Modifier.padding(start = 16.dp, top = 12.dp, end = 16.dp, bottom = 4.dp),
+                            )
+                            quickActions.forEachIndexed { index, action ->
+                                if (index > 0) HorizontalDivider(
+                                    modifier = Modifier.padding(horizontal = 16.dp),
+                                    color = MaterialTheme.colorScheme.outlineVariant.copy(alpha = 0.55f),
+                                )
+                                MemoryEditorNavigationRow(
+                                    icon = action.icon,
+                                    title = stringResource(action.label),
+                                    enabled = action.enabled,
+                                    onClick = action.onClick,
+                                )
                             }
                         }
                     }

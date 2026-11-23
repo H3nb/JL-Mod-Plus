@@ -133,7 +133,8 @@ Boolean is explicit true/false; numeric Auto excludes it. Inspector remains a
 checked snapshot in a contextual detail page. Scroll state survives tab and
 width changes. Primary tabs use short directional motion and a tonal selected surface.
 Tab widths accommodate localized labels; icons are omitted in narrow space
-and the tab row can scroll if labels need more room.
+and the tab row can scroll if labels need more room. Search choices and Script
+Builder targets include their heading within the tonal group for contrast.
 
 
 ## Action Script authoring
