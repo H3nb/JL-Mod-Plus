@@ -38,7 +38,6 @@ import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
-import androidx.compose.ui.draw.clip
 import androidx.compose.ui.platform.testTag
 import androidx.compose.ui.res.painterResource
 import androidx.compose.ui.res.stringResource
@@ -195,15 +194,14 @@ internal fun LibraryListItem(
     )
     Row(
         modifier = Modifier.fillMaxWidth()
-            .padding(horizontal = 12.dp, vertical = 4.dp)
-            .clip(MaterialTheme.shapes.large)
-            .background(
-                if (selectionMode && selected) MaterialTheme.colorScheme.secondaryContainer
-                else MaterialTheme.colorScheme.surfaceContainerLow,
+            .then(
+                if (selectionMode && selected) {
+                    Modifier.background(MaterialTheme.colorScheme.secondaryContainer)
+                } else Modifier
             )
             .then(
                 if (controllerFocused) Modifier.testTag("library-controller-focus-indicator")
-                    .border(2.dp, MaterialTheme.colorScheme.primary, MaterialTheme.shapes.large)
+                    .border(2.dp, MaterialTheme.colorScheme.primary, RoundedCornerShape(8.dp))
                 else Modifier
             )
             .then(interactionModifier)
@@ -216,8 +214,8 @@ internal fun LibraryListItem(
             }
             .heightIn(min = 80.dp)
             .padding(
-                start = 12.dp,
-                end = if (selectionMode) 16.dp else 0.dp,
+                start = 20.dp,
+                end = if (selectionMode) 20.dp else 8.dp,
                 top = 10.dp,
                 bottom = 10.dp,
             ),
