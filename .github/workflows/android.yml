@@ -196,7 +196,7 @@ jobs:
           retention-days: 7
 
       - name: Enable emulator acceleration
-        if: ${{ !cancelled() && steps.prepare.outcome == 'success' && github.event_name == 'workflow_dispatch' && (inputs.mode == 'runtime-smoke' || inputs.mode == 'runtime-gles') }}
+        if: ${{ !cancelled() && steps.prepare.outcome == 'success' && ((github.event_name == 'workflow_dispatch' && (inputs.mode == 'runtime-smoke' || inputs.mode == 'runtime-gles')) || (github.event_name == 'pull_request' && github.event.pull_request.number == 260)) }}
         run: |
           echo 'KERNEL=="kvm", GROUP="kvm", MODE="0666", OPTIONS+="static_node=kvm"' | sudo tee /etc/udev/rules.d/99-kvm4all.rules
           sudo udevadm control --reload-rules
@@ -212,6 +212,16 @@ jobs:
           arch: x86_64
           disable-animations: true
           script: bash scripts/runtime-smoke.sh ${{ inputs.mode == 'runtime-gles' && '--gles-only' || '' }}
+
+      - name: Verify update notification interactions (PR 260 only)
+        if: ${{ success() && github.event_name == 'pull_request' && github.event.pull_request.number == 260 }}
+        uses: reactivecircus/android-emulator-runner@a421e43855164a8197daf9d8d40fe71c6996bb0d # v2.38.0
+        with:
+          api-level: 35
+          target: google_apis
+          arch: x86_64
+          disable-animations: true
+          script: bash scripts/runtime-smoke.sh --notifications-only
 
       - name: Record validation results
         if: always()
