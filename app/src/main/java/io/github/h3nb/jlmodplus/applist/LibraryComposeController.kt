@@ -133,6 +133,7 @@ interface LibraryActions {
     fun onReinstall(appId: Int)
     fun onDelete(appId: Int)
     fun onOpenSettings()
+    fun onOpenUpdates() = onOpenSettings()
     fun onOpenProfiles()
     fun onOpenCrashReports()
     fun onOpenDonation() = Unit

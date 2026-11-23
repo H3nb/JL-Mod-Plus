@@ -80,6 +80,13 @@ import io.github.h3nb.jlmodplus.util.PickDirResultContract;
 import io.github.h3nb.jlmodplus.util.XmlUtils;
 
 public class SettingsActivity extends AppCompatActivity {
+	public static final String EXTRA_OPEN_UPDATES = "io.github.h3nb.jlmodplus.settings.OPEN_UPDATES";
+
+	@NonNull
+	public static Intent updatesIntent(@NonNull Context context) {
+		return new Intent(context, SettingsActivity.class).putExtra(EXTRA_OPEN_UPDATES, true);
+	}
+
 	private SharedPreferences preferences;
 	private SettingsComposeController composeController;
 	private String directoryError;
@@ -106,7 +113,8 @@ public class SettingsActivity extends AppCompatActivity {
 		composeController = new SettingsComposeController(
 				composeView,
 				buildState(),
-				createActions());
+				createActions(),
+				getIntent().getBooleanExtra(EXTRA_OPEN_UPDATES, false));
 		chromeClient = new RuntimeChromeClient(this, new RuntimeChromeClient.Listener() {
 			@Override
 			public void onChromeChanged(@NonNull RuntimeChromeState state) {

@@ -961,6 +961,11 @@ public class AppsListFragment extends Fragment {
             }
 
             @Override
+            public void onOpenUpdates() {
+                startActivity(SettingsActivity.updatesIntent(requireActivity()));
+            }
+
+            @Override
             public void onOpenProfiles() {
                 startActivity(new Intent(requireActivity(), ProfilesActivity.class));
             }
