@@ -7,6 +7,7 @@
 package io.github.h3nb.jlmodplus.applist
 
 import androidx.activity.compose.BackHandler
+import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
@@ -22,19 +23,28 @@ import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.layout.windowInsetsPadding
 import androidx.compose.material3.Icon
 import androidx.compose.material3.IconButton
+import androidx.compose.material3.ListItem
+import androidx.compose.material3.ListItemDefaults
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.draw.clip
+import androidx.compose.ui.semantics.Role
 import androidx.compose.ui.res.painterResource
 import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.unit.dp
 import io.github.h3nb.jlmodplus.R
+import io.github.h3nb.jlmodplus.updates.UpdateCandidate
 
 @Composable
-internal fun LibraryNotificationsScreen(onBack: () -> Unit) {
+internal fun LibraryNotificationsScreen(
+    update: UpdateCandidate?,
+    onBack: () -> Unit,
+    onOpenUpdate: () -> Unit,
+) {
     BackHandler(onBack = onBack)
     Column(
         modifier = Modifier
@@ -59,10 +69,40 @@ internal fun LibraryNotificationsScreen(onBack: () -> Unit) {
                 style = MaterialTheme.typography.titleLarge,
             )
         }
-        Box(
-            modifier = Modifier.weight(1f).fillMaxWidth(),
-            contentAlignment = Alignment.Center,
-        ) {
+        if (update != null) {
+            ListItem(
+                headlineContent = {
+                    Text(
+                        text = stringResource(R.string.updates_available),
+                        style = MaterialTheme.typography.titleMedium,
+                    )
+                },
+                supportingContent = { Text("JL-Mod Plus ${update.versionName}") },
+                leadingContent = {
+                    Icon(
+                        painter = painterResource(R.drawable.ic_notifications),
+                        contentDescription = null,
+                    )
+                },
+                trailingContent = {
+                    Icon(
+                        painter = painterResource(R.drawable.ic_chevron_right),
+                        contentDescription = null,
+                    )
+                },
+                colors = ListItemDefaults.colors(
+                    containerColor = MaterialTheme.colorScheme.surfaceContainerLow,
+                ),
+                modifier = Modifier.fillMaxWidth()
+                    .padding(top = 12.dp)
+                    .clip(MaterialTheme.shapes.large)
+                    .clickable(role = Role.Button, onClick = onOpenUpdate),
+            )
+        } else {
+            Box(
+                modifier = Modifier.weight(1f).fillMaxWidth(),
+                contentAlignment = Alignment.Center,
+            ) {
             Column(
                 modifier = Modifier.widthIn(max = 400.dp).padding(24.dp),
                 horizontalAlignment = Alignment.CenterHorizontally,
@@ -85,6 +125,7 @@ internal fun LibraryNotificationsScreen(onBack: () -> Unit) {
                     color = MaterialTheme.colorScheme.onSurfaceVariant,
                     textAlign = TextAlign.Center,
                 )
+            }
             }
         }
     }
