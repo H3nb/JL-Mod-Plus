@@ -51,6 +51,7 @@ class LibraryNotificationsTest {
         composeRule.onNodeWithText("JL-Mod Plus 1.2.0")
             .performTouchInput { swipeLeft() }
         composeRule.onNodeWithText("JL-Mod Plus 1.2.0").assertIsDisplayed()
+        composeRule.runOnIdle { assertEquals(0, opens) }
         composeRule.onNodeWithText("JL-Mod Plus 1.2.0").performClick()
         composeRule.runOnIdle { assertEquals(1, opens) }
     }
