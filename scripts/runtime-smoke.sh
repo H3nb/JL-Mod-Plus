@@ -20,6 +20,7 @@ selectors=(
   'io.github.h3nb.jlmodplus.applist.LibraryViewportNavigationTest'
   'io.github.h3nb.jlmodplus.applist.LibraryIconRefreshTest'
   'io.github.h3nb.jlmodplus.applist.LibraryIconNormalizationTest'
+  'io.github.h3nb.jlmodplus.applist.LibraryNotificationsTest'
   'io.github.h3nb.jlmodplus.applist.LibraryComposeTest#compactHeightAppActionsKeepLastActionReachable'
   'io.github.h3nb.jlmodplus.applist.LibraryComposeTest#largeFontCompactHeightActionsKeepDeleteReachable'
   'io.github.h3nb.jlmodplus.applist.LibraryComposeTest#controllerNavigationTracksResizedActionGridColumns'
@@ -135,6 +136,11 @@ run_selector_batch() {
     --log "$instrumentation_log" --output "$verified_selectors" "${batch[@]}"
 
 }
+
+if [[ "${1:-}" == '--notifications-only' ]]; then
+  run_selector_batch notifications-isolated 'io.github.h3nb.jlmodplus.applist.LibraryNotificationsTest'
+  exit 0
+fi
 
 if [[ "${1:-}" == '--gles-only' ]]; then
   run_selector_batch gles-isolated "${gles_selectors[@]}"
