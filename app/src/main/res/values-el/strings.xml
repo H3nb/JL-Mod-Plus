@@ -1014,10 +1014,6 @@
     <string name="runtime_storage_in_use">Ο χώρος αποθήκευσης του MIDlet χρησιμοποιείται ήδη από άλλο περιβάλλον εκτέλεσης.</string>
     <string name="runtime_storage_unavailable">Δεν ήταν δυνατή η προετοιμασία του χώρου αποθήκευσης του MIDlet.</string>
     <string name="saved">Αποθηκεύτηκε το %1$s</string>
-    <plurals name="perf_overlay_selected">
-        <item quantity="one">Επιλέχθηκε %d παράμετρος</item>
-        <item quantity="other">Επιλέχθηκαν %d παράμετροι</item>
-    </plurals>
     <plurals name="crash_reports_batch_delete_title">
         <item quantity="one">Να διαγραφεί %1$d διαγνωστική αναφορά;</item>
         <item quantity="other">Να διαγραφούν %1$d διαγνωστικές αναφορές;</item>

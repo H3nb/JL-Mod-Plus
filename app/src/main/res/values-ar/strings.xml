@@ -1135,14 +1135,6 @@
     <string name="runtime_replacement_failed">تعذّر إيقاف MIDlet الجاري تشغيله. حاول فتح MIDlet الجديد مرة أخرى.</string>
     <string name="runtime_storage_in_use">تخزين MIDlet مستخدم بالفعل بواسطة بيئة تشغيل أخرى.</string>
     <string name="runtime_storage_unavailable">تعذّر تجهيز تخزين MIDlet.</string>
-    <plurals name="perf_overlay_selected">
-        <item quantity="zero">%d معلمات محددة</item>
-        <item quantity="one">معلمة واحدة محددة (%d)</item>
-        <item quantity="two">معلمتان محددتان (%d)</item>
-        <item quantity="few">%d معلمات محددة</item>
-        <item quantity="many">%d معلمة محددة</item>
-        <item quantity="other">%d معلمة محددة</item>
-    </plurals>
     <plurals name="crash_reports_batch_delete_title">
         <item quantity="zero">حذف %1$d تقارير تشخيص؟</item>
         <item quantity="one">حذف تقرير تشخيص واحد (%1$d)؟</item>

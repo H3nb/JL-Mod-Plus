@@ -1015,10 +1015,6 @@
     <string name="runtime_storage_in_use">MIDlet-berging word reeds deur ’n ander looptydomgewing gebruik.</string>
     <string name="runtime_storage_unavailable">MIDlet-berging kon nie voorberei word nie.</string>
     <string name="saved">%1$s gestoor</string>
-    <plurals name="perf_overlay_selected">
-        <item quantity="one">%d parameter gekies</item>
-        <item quantity="other">%d parameters gekies</item>
-    </plurals>
     <plurals name="crash_reports_batch_delete_title">
         <item quantity="one">Vee %1$d diagnostiese verslag uit?</item>
         <item quantity="other">Vee %1$d diagnostiese verslae uit?</item>

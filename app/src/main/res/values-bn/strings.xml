@@ -1015,10 +1015,6 @@
     <string name="runtime_storage_in_use">অন্য একটি রানটাইম ইতিমধ্যে MIDlet স্টোরেজ ব্যবহার করছে।</string>
     <string name="runtime_storage_unavailable">MIDlet স্টোরেজ প্রস্তুত করা যায়নি।</string>
     <string name="saved">%1$s সংরক্ষণ করা হয়েছে</string>
-    <plurals name="perf_overlay_selected">
-        <item quantity="one">%d প্যারামিটার নির্বাচিত</item>
-        <item quantity="other">%d প্যারামিটার নির্বাচিত</item>
-    </plurals>
     <plurals name="crash_reports_batch_delete_title">
         <item quantity="one">%1$d ডায়াগনস্টিক রিপোর্ট মুছে ফেলবেন?</item>
         <item quantity="other">%1$d ডায়াগনস্টিক রিপোর্ট মুছে ফেলবেন?</item>

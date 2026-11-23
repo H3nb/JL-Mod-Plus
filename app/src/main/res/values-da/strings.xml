@@ -837,10 +837,6 @@
     <string name="library_action_select">Vælg</string>
     <string name="library_selection_select_all">Vælg alle</string>
     <string name="library_selection_unselect_all">Fravælg alle</string>
-    <plurals name="perf_overlay_selected">
-        <item quantity="one">%d parameter valgt</item>
-        <item quantity="other">%d parametre valgt</item>
-    </plurals>
     <string name="perf_overlay_position_help">Vælg et hjørne.</string>
     <string name="perf_overlay_top_left">Øverst til venstre</string>
     <string name="perf_overlay_top_right">Øverst til højre</string>

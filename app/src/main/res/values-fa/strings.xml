@@ -1015,10 +1015,6 @@
     <string name="runtime_storage_in_use">فضای ذخیره‌سازی MIDlet از قبل توسط محیط اجرای دیگری در حال استفاده است.</string>
     <string name="runtime_storage_unavailable">آماده‌سازی فضای ذخیره‌سازی MIDlet ممکن نشد.</string>
     <string name="saved">%1$s ذخیره شد</string>
-    <plurals name="perf_overlay_selected">
-        <item quantity="one">%d پارامتر انتخاب شده است</item>
-        <item quantity="other">%d پارامتر انتخاب شده است</item>
-    </plurals>
     <plurals name="crash_reports_batch_delete_title">
         <item quantity="one">%1$d گزارش عیب‌یابی حذف شود؟</item>
         <item quantity="other">%1$d گزارش عیب‌یابی حذف شود؟</item>

@@ -1044,11 +1044,6 @@
     <string name="runtime_storage_in_use">L’emmagatzematge del MIDlet ja està en ús en un altre entorn d’execució.</string>
     <string name="runtime_storage_unavailable">No s’ha pogut preparar l’emmagatzematge del MIDlet.</string>
     <string name="saved">S’ha desat %1$s</string>
-    <plurals name="perf_overlay_selected">
-        <item quantity="one">%d paràmetre seleccionat</item>
-        <item quantity="other">%d paràmetres seleccionats</item>
-        <item quantity="many">Paràmetres seleccionats: %d</item>
-    </plurals>
     <plurals name="crash_reports_batch_delete_title">
         <item quantity="one">Vols suprimir %1$d informe de diagnòstic?</item>
         <item quantity="many">Vols suprimir %1$d informes de diagnòstic?</item>

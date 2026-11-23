@@ -837,10 +837,6 @@
     <string name="library_action_select">Valitse</string>
     <string name="library_selection_select_all">Valitse kaikki</string>
     <string name="library_selection_unselect_all">Poista kaikkien valinta</string>
-    <plurals name="perf_overlay_selected">
-        <item quantity="one">%d parametri valittu</item>
-        <item quantity="other">%d parametria valittu</item>
-    </plurals>
     <string name="perf_overlay_position_help">Valitse kulma.</string>
     <string name="perf_overlay_top_left">Ylhäällä vasemmalla</string>
     <string name="perf_overlay_top_right">Ylhäällä oikealla</string>
