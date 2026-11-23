@@ -837,10 +837,6 @@
     <string name="library_action_select">Selecteren</string>
     <string name="library_selection_select_all">Alles selecteren</string>
     <string name="library_selection_unselect_all">Alles deselecteren</string>
-    <plurals name="perf_overlay_selected">
-        <item quantity="one">%d parameter geselecteerd</item>
-        <item quantity="other">%d parameters geselecteerd</item>
-    </plurals>
     <string name="perf_overlay_position_help">Kies een hoek.</string>
     <string name="perf_overlay_top_left">Linksboven</string>
     <string name="perf_overlay_top_right">Rechtsboven</string>

@@ -985,9 +985,6 @@
     <string name="runtime_storage_in_use">MIDlet のストレージは、すでに別のランタイムで使用されています。</string>
     <string name="runtime_storage_unavailable">MIDlet のストレージを準備できませんでした。</string>
     <string name="saved">%1$s を保存しました</string>
-    <plurals name="perf_overlay_selected">
-        <item quantity="other">%d 個の項目を選択</item>
-    </plurals>
     <plurals name="crash_reports_batch_delete_title">
         <item quantity="other">診断レポートを %1$d 件削除しますか？</item>
     </plurals>

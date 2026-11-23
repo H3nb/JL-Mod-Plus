@@ -1014,10 +1014,6 @@
     <string name="shader_tuning">ଶେଡର୍ ସମନ୍ୱୟ</string>
     <string name="take_screenshot">ସ୍କ୍ରିନସଟ୍ ନିଅନ୍ତୁ</string>
     <string name="virtual_controls_save_failed">ଭର୍ଚୁଆଲ୍ ନିୟନ୍ତ୍ରଣ ସଞ୍ଚୟ କରାଯାଇପାରିଲା ନାହିଁ। ପୁଣି ଚେଷ୍ଟା କରନ୍ତୁ।</string>
-    <plurals name="perf_overlay_selected">
-        <item quantity="one">%dଟି ପାରାମିଟର୍ ଚୟନ ହୋଇଛି</item>
-        <item quantity="other">%dଟି ପାରାମିଟର୍ ଚୟନ ହୋଇଛି</item>
-    </plurals>
     <string name="config_avoid_camera_cutout_title">କ୍ୟାମେରା କିମ୍ବା ସ୍କ୍ରିନ କଟ୍‌ଆଉଟ୍ ଅଞ୍ଚଳକୁ ଏଡ଼ାନ୍ତୁ</string>
     <string name="config_avoid_camera_cutout_summary">ଖେଳକୁ ସାମ୍ନା କ୍ୟାମେରା କିମ୍ବା ସ୍କ୍ରିନ କଟ୍‌ଆଉଟ୍‌ରୁ ଦୂରେ ରଖନ୍ତୁ। କଣ୍ଟ୍ରୋଲ୍ ଢାଙ୍କି ହେଲେ ଚାଲୁ କରନ୍ତୁ।</string>
     <string name="pref_runtime_fullscreen_title">ପୂର୍ଣ୍ଣ ସ୍କ୍ରିନ୍</string>

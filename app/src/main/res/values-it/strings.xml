@@ -872,11 +872,6 @@
     <string name="library_action_select">Seleziona</string>
     <string name="library_selection_select_all">Seleziona tutto</string>
     <string name="library_selection_unselect_all">Deseleziona tutto</string>
-    <plurals name="perf_overlay_selected">
-        <item quantity="one">%d parametro selezionato</item>
-        <item quantity="other">%d parametri selezionati</item>
-        <item quantity="many">%d di parametri selezionati</item>
-    </plurals>
     <string name="perf_overlay_position_help">Scegli un angolo.</string>
     <string name="perf_overlay_top_left">In alto a sinistra</string>
     <string name="perf_overlay_top_right">In alto a destra</string>

@@ -958,10 +958,6 @@
     <string name="alert_msg_workdir_not_exists">Жұмыс бумасы табылмады:\n%1$s\nОны жасау керек пе, әлде басқа буманы таңдайсыз ба?</string>
     <string name="crash_report_bundle_ready_message">%1$s\n\nЖүктеп алынғандар → JL-Mod Plus Diagnostics ішінде сақталды.\n\nGitHub мәселесін жібермес бұрын осы файлды тіркеңіз. Диагностика пакеті мәселеге тіркелгеннен кейін жалпыға қолжетімді болады.</string>
     <string name="msg_no_matches">«%1$s» үшін сәйкестік табылмады</string>
-    <plurals name="perf_overlay_selected">
-        <item quantity="one">%d параметр таңдалды</item>
-        <item quantity="other">%d параметр таңдалды</item>
-    </plurals>
     <plurals name="bulk_install_omitted_sources">
         <item quantity="one">Тексерудің жылдам жұмыс істеуі үшін қосымша %1$d файл қарастырылмады.</item>
         <item quantity="other">Тексерудің жылдам жұмыс істеуі үшін қосымша %1$d файл қарастырылмады.</item>

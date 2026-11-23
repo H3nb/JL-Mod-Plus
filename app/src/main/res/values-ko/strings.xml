@@ -985,9 +985,6 @@
     <string name="runtime_replacement_failed">실행 중인 MIDlet을 중지하지 못했습니다. 새 MIDlet을 다시 열어 보세요.</string>
     <string name="runtime_storage_in_use">MIDlet 저장소를 다른 런타임이 이미 사용 중입니다.</string>
     <string name="runtime_storage_unavailable">MIDlet 저장소를 준비하지 못했습니다.</string>
-    <plurals name="perf_overlay_selected">
-        <item quantity="other">매개변수 %d개 선택됨</item>
-    </plurals>
     <plurals name="crash_reports_batch_delete_title">
         <item quantity="other">진단 보고서 %1$d개를 삭제하시겠습니까?</item>
     </plurals>

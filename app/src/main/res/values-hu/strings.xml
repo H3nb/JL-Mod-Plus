@@ -1015,10 +1015,6 @@
     <string name="runtime_replacement_failed">A futó MIDletet nem sikerült leállítani. Próbálja újra megnyitni az új MIDletet.</string>
     <string name="runtime_storage_in_use">A MIDlet tárhelyét már használja egy másik futtatókörnyezet.</string>
     <string name="runtime_storage_unavailable">Nem sikerült előkészíteni a MIDlet tárhelyét.</string>
-    <plurals name="perf_overlay_selected">
-        <item quantity="one">%d paraméter kiválasztva</item>
-        <item quantity="other">%d paraméter kiválasztva</item>
-    </plurals>
     <plurals name="crash_reports_batch_delete_title">
         <item quantity="one">Töröl %1$d diagnosztikai jelentést?</item>
         <item quantity="other">Töröl %1$d diagnosztikai jelentést?</item>

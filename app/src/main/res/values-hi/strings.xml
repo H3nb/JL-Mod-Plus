@@ -1015,10 +1015,6 @@
     <string name="runtime_replacement_failed">चल रहे MIDlet को बंद नहीं किया जा सका। नया MIDlet फिर से खोलने की कोशिश करें।</string>
     <string name="runtime_storage_in_use">MIDlet स्टोरेज का इस्तेमाल पहले से कोई दूसरा रनटाइम कर रहा है।</string>
     <string name="runtime_storage_unavailable">MIDlet स्टोरेज तैयार नहीं किया जा सका।</string>
-    <plurals name="perf_overlay_selected">
-        <item quantity="one">%d पैरामीटर चुना गया</item>
-        <item quantity="other">%d पैरामीटर चुने गए</item>
-    </plurals>
     <plurals name="crash_reports_batch_delete_title">
         <item quantity="one">%1$d निदान रिपोर्ट हटाएँ?</item>
         <item quantity="other">%1$d निदान रिपोर्ट हटाएँ?</item>

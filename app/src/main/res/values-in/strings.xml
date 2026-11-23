@@ -915,9 +915,6 @@
     <string name="config_show_fps_title">Tampilkan FPS</string>
     <string name="config_show_fps_help">Menampilkan frame rate selama bermain.</string>
     <string name="config_search_requires_fps">Aktifkan Tampilkan FPS untuk mengubah posisinya.</string>
-    <plurals name="perf_overlay_selected">
-        <item quantity="other">%d parameter dipilih</item>
-    </plurals>
     <string name="perf_overlay_position_help">Pilih sudut layar.</string>
     <string name="perf_overlay_top_left">Kiri atas</string>
     <string name="perf_overlay_top_right">Kanan atas</string>
