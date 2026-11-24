@@ -225,8 +225,10 @@ class MemoryEditorOverlayComposeTest {
                 selected = emptySet())
         }
         rule.onNodeWithContentDescription("More").performClick()
-        val menuBounds = rule.onNodeWithTag("adaptive-dialog-surface").getUnclippedBoundsInRoot()
-        assertTrue(menuBounds.right - menuBounds.left <= 400.dp)
+        val menu = rule.onNodeWithTag("adaptive-dialog-surface").fetchSemanticsNode()
+        val maximumWidthPx = with(menu.layoutInfo.density) { 400.dp.roundToPx() }
+        assertTrue("More dialog width ${menu.size.width}px exceeds ${maximumWidthPx}px",
+            menu.size.width <= maximumWidthPx)
         rule.onNodeWithText("Undo scan").performScrollTo().assertIsEnabled()
     }
 

@@ -144,7 +144,16 @@ if [[ "${1:-}" == '--notifications-only' ]]; then
   exit 0
 fi
 
-if [[ "${1:-}" == '--gles-only' ]]; then
+if [[ "${1:-}" == '--memory-only' ]]; then
+  memory_selectors=()
+  for selector in "${selectors[@]}"; do
+    if [[ "$selector" == io.github.h3nb.jlmodplus.memory.* ]]; then
+      memory_selectors+=("$selector")
+    fi
+  done
+  run_selector_batch memory "${memory_selectors[@]}"
+  expected_selector_count=${#memory_selectors[@]}
+elif [[ "${1:-}" == '--gles-only' ]]; then
   run_selector_batch gles-isolated "${gles_selectors[@]}"
   expected_selector_count=${#gles_selectors[@]}
 else
