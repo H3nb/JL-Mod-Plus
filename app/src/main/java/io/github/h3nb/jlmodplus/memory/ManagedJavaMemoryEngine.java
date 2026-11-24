@@ -613,13 +613,18 @@ final class ManagedJavaMemoryEngine {
 		if (start >= revision.count) return ManagedPage.empty(revision.id);
 		int outputCount = (int) Math.min((long) limit, revision.count - start);
 		ManagedPage page = ManagedPage.allocate(outputCount, revision.id);
-		long ordinal = 0L;
+		long remainingOffset = start;
 		int output = 0;
 		long[] value = new long[1];
 		for (BucketView bucket : revision.buckets) {
+			if (remainingOffset >= bucket.slots.length) {
+				remainingOffset -= bucket.slots.length;
+				continue;
+			}
 			Object strongOwner = bucket.owner.strongOwner();
-			for (int index = 0; index < bucket.slots.length; index++) {
-				if (ordinal++ < start) continue;
+			int firstSlot = (int) remainingOffset;
+			remainingOffset = 0L;
+			for (int index = firstSlot; index < bucket.slots.length; index++) {
 				if (output >= outputCount) return page;
 				int slot = bucket.slots[index];
 				int type = valueTypeFor(bucket.owner, slot);

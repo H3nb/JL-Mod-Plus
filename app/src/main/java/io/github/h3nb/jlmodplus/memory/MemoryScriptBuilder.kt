@@ -91,6 +91,9 @@ internal data class MemoryScriptBuilderDraft(
         name != it.name || description != it.description || actions != it.actions
     } ?: (name.isNotEmpty() || description.isNotEmpty() || actions.isNotEmpty())
 
+    fun updateAction(bookmarkId: String, update: (MemoryScriptBuilderAction) -> MemoryScriptBuilderAction) =
+        copy(actions = actions.map { if (it.bookmarkId == bookmarkId) update(it) else it })
+
     companion object {
         fun create(mode: MemoryScriptBuilderMode) = MemoryScriptBuilderDraft(
             "builder." + UUID.randomUUID(), mode,
@@ -310,12 +313,7 @@ internal fun MemoryScriptBuilderScreen(
                                     shape = MaterialTheme.shapes.medium,
                                     value = item.label,
                                     onValueChange = { changed ->
-                                        if (changed.length <= 80) onDraft(draft.copy(
-                                            actions = draft.actions.map {
-                                                if (it.bookmarkId == item.bookmarkId)
-                                                    it.copy(label = changed) else it
-                                            },
-                                        ))
+                                        if (changed.length <= 80) onDraft(draft.updateAction(item.bookmarkId) { it.copy(label = changed) })
                                     },
                                     label = { Text(stringResource(R.string.memory_builder_field_label)) },
                                     enabled = !saving,
@@ -339,12 +337,7 @@ internal fun MemoryScriptBuilderScreen(
                                             shape = MaterialTheme.shapes.medium,
                                             value = item.min,
                                             onValueChange = { changed ->
-                                                if (changed.length <= 20) onDraft(draft.copy(
-                                                    actions = draft.actions.map {
-                                                        if (it.bookmarkId == item.bookmarkId)
-                                                            it.copy(min = changed) else it
-                                                    },
-                                                ))
+                                                if (changed.length <= 20) onDraft(draft.updateAction(item.bookmarkId) { it.copy(min = changed) })
                                             },
                                             label = { Text(stringResource(R.string.memory_builder_min)) },
                                             enabled = !saving,
@@ -355,12 +348,7 @@ internal fun MemoryScriptBuilderScreen(
                                             shape = MaterialTheme.shapes.medium,
                                             value = item.max,
                                             onValueChange = { changed ->
-                                                if (changed.length <= 20) onDraft(draft.copy(
-                                                    actions = draft.actions.map {
-                                                        if (it.bookmarkId == item.bookmarkId)
-                                                            it.copy(max = changed) else it
-                                                    },
-                                                ))
+                                                if (changed.length <= 20) onDraft(draft.updateAction(item.bookmarkId) { it.copy(max = changed) })
                                             },
                                             label = { Text(stringResource(R.string.memory_builder_max)) },
                                             enabled = !saving,
@@ -383,12 +371,7 @@ internal fun MemoryScriptBuilderScreen(
                                             FilterChip(
                                                 selected = item.operation == operation,
                                                 enabled = !saving,
-                                                onClick = { onDraft(draft.copy(
-                                                    actions = draft.actions.map {
-                                                        if (it.bookmarkId == item.bookmarkId)
-                                                            it.copy(operation = operation) else it
-                                                    },
-                                                )) },
+                                                onClick = { onDraft(draft.updateAction(item.bookmarkId) { it.copy(operation = operation) }) },
                                                 label = { Text(stringResource(label)) },
                                             )
                                         }
@@ -399,12 +382,7 @@ internal fun MemoryScriptBuilderScreen(
                                     shape = MaterialTheme.shapes.medium,
                                     value = item.value,
                                     onValueChange = { changed ->
-                                        if (changed.length <= 32) onDraft(draft.copy(
-                                            actions = draft.actions.map {
-                                                if (it.bookmarkId == item.bookmarkId)
-                                                    it.copy(value = changed) else it
-                                            },
-                                        ))
+                                        if (changed.length <= 32) onDraft(draft.updateAction(item.bookmarkId) { it.copy(value = changed) })
                                     },
                                     label = { Text(stringResource(
                                         if (draft.mode == MemoryScriptBuilderMode.FREEZE)

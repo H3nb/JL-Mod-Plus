@@ -52,7 +52,6 @@ import io.github.h3nb.jlmodplus.R
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.delay
 import kotlinx.coroutines.withContext
-import kotlinx.serialization.json.Json
 import kotlinx.serialization.json.JsonArray
 import kotlinx.serialization.json.JsonObject
 import kotlinx.serialization.json.JsonPrimitive
@@ -79,25 +78,18 @@ internal data class MemoryScriptMetadata(
 )
 
 internal fun memoryScriptMetadata(document: String): MemoryScriptMetadata {
-    MemoryRecipeRuntime.validateDocument(document)
-    val obj = Json.parseToJsonElement(document) as? JsonObject ?: error("Expected JSON object")
+    val obj = MemoryRecipeRuntime.validatedDocument(document)
     val version = (obj["formatVersion"] as? JsonPrimitive)?.content
     val mode = when (version) {
         "1" -> "legacy"
         "2" -> (obj["mode"] as? JsonPrimitive)?.content ?: error("Missing recipe mode")
         else -> error("Unsupported Memory Recipe version")
     }
-    val id = (obj["id"] as? JsonPrimitive)?.content.orEmpty()
-    if (!id.matches(Regex("[A-Za-z0-9_.-]{1,64}"))) error("Invalid recipe ID")
+    val id = (obj.getValue("id") as JsonPrimitive).content
     val name = (obj["name"] as? JsonPrimitive)?.content?.takeIf(String::isNotBlank) ?: id
     val description = (obj["description"] as? JsonPrimitive)?.content.orEmpty()
-    val game = obj["game"] as? JsonObject ?: error("Missing game")
-    if ((game["mainClass"] as? JsonPrimitive)?.content.isNullOrBlank())
-        error("Missing game.mainClass")
-    val actions = obj["actions"] as? JsonArray ?: error("Actions must be an array")
-    if (actions.isEmpty()) error("Recipe has no actions")
+    val actions = obj.getValue("actions") as JsonArray
     val inputs = obj["inputs"] as? JsonObject ?: JsonObject(emptyMap())
-    if (inputs.size > 64) error("Too many recipe parameters")
     val selectors = actions.asSequence().mapNotNull { it as? JsonObject }
         .flatMap { (it["path"] as? JsonArray).orEmpty().asSequence() }
         .mapNotNull { (it as? JsonObject)?.get("indexInput") as? JsonPrimitive }

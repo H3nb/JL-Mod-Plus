@@ -97,6 +97,32 @@ public class ManagedJavaMemoryEngineTest {
     }
 
 	@Test
+	public void resultPagesPreserveOrderAcrossOffsetsAndLargeBuckets() {
+		root.array = new int[512];
+		Arrays.fill(root.array, 7);
+		ManagedJavaMemoryEngine.ManagedOperationResult search = startExact();
+		assertEquals(MemoryEngineContract.RESULT_OK, search.code);
+		assertTrue(search.resultCount > 512);
+
+		ArrayList<Long> ids = new ArrayList<>();
+		for (int offset = 0; offset < search.resultCount; offset += 100) {
+			ManagedJavaMemoryEngine.ManagedPage page = engine.resultPage(TOKEN, search.revision, offset, 100);
+			for (long id : page.ids) ids.add(id);
+		}
+		assertEquals(search.resultCount, (long) ids.size());
+		assertEquals(ids.size(), new java.util.HashSet<>(ids).size());
+		for (int offset : new int[]{1, 97, 255, 499, ids.size() - 1}) {
+			ManagedJavaMemoryEngine.ManagedPage page = engine.resultPage(TOKEN, search.revision, offset, 7);
+			assertEquals(Math.min(7, ids.size() - offset), page.ids.length);
+			for (int i = 0; i < page.ids.length; i++) {
+				assertEquals(ids.get(offset + i).longValue(), page.ids[i]);
+				assertEquals("7", page.values[i]);
+			}
+		}
+		assertEquals(0, engine.resultPage(TOKEN, search.revision, ids.size(), 7).ids.length);
+	}
+
+	@Test
 	public void exactScanFindsIntFieldsArraysAndExactContainersButStopsSubclasses() {
 		ManagedJavaMemoryEngine.ManagedOperationResult result = startExact();
 		assertEquals(MemoryEngineContract.RESULT_OK, result.code);

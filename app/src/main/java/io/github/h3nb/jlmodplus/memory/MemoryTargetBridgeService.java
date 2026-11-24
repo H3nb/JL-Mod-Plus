@@ -567,9 +567,8 @@ public final class MemoryTargetBridgeService extends Service {
 		result.putLong(MemoryEngineContract.KEY_MANAGED_BASELINE_COUNT, state.baselineCount);
 		result.putInt(MemoryEngineContract.KEY_SEARCH_HISTORY_DEPTH, state.historyDepth);
 		result.putInt(MemoryEngineContract.KEY_MANAGED_WATCH_COUNT, state.watchCount);
-		result.putInt(MemoryEngineContract.KEY_MANAGED_FREEZE_COUNT, state.freezeCount + recipes.activeCount(runtimeToken));
-		result.putStringArray("recipeFreezeIds", recipes.activeIds(runtimeToken));
-        result.putStringArray("recipeFreezeNames", recipes.activeNames(runtimeToken));
+		int recipeCount = recipes.appendActiveStatus(runtimeToken, result);
+		result.putInt(MemoryEngineContract.KEY_MANAGED_FREEZE_COUNT, state.freezeCount + recipeCount);
 		if (state.message != null && !state.message.isBlank()) {
 			result.putString(MemoryEngineContract.KEY_DIAGNOSTIC_DETAIL,
 					MemoryEngineContract.truncateMessage(state.message));

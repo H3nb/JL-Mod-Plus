@@ -78,29 +78,12 @@ class MemoryRecipeRuntime {
         fun write(value: Long) {
             validate(value)
             val boxed: Any = when (type) {
-                java.lang.Byte.TYPE -> {
-                    checkRange(value, Byte.MIN_VALUE.toLong(), Byte.MAX_VALUE.toLong())
-                    value.toByte()
-                }
-                java.lang.Short.TYPE -> {
-                    checkRange(value, Short.MIN_VALUE.toLong(), Short.MAX_VALUE.toLong())
-                    value.toShort()
-                }
-                java.lang.Integer.TYPE -> {
-                    checkRange(value, Int.MIN_VALUE.toLong(), Int.MAX_VALUE.toLong())
-                    value.toInt()
-                }
+                java.lang.Byte.TYPE -> value.toByte()
+                java.lang.Short.TYPE -> value.toShort()
+                java.lang.Integer.TYPE -> value.toInt()
                 java.lang.Long.TYPE -> value
-                java.lang.Character.TYPE -> {
-                    checkRange(value, 0L, 65535L)
-                    value.toInt().toChar()
-                }
-                java.lang.Boolean.TYPE -> {
-                    if (value != 0L && value != 1L) throw Problem(
-                        MemoryEngineContract.RESULT_INVALID_REQUEST, "Boolean requires 0 or 1"
-                    )
-                    value != 0L
-                }
+                java.lang.Character.TYPE -> value.toInt().toChar()
+                java.lang.Boolean.TYPE -> value != 0L
                 else -> throw Problem(MemoryEngineContract.RESULT_UNSUPPORTED, "Unsupported write type")
             }
             if (field == null) ReflectArray.set(owner, index, boxed)
@@ -129,14 +112,22 @@ class MemoryRecipeRuntime {
     @Synchronized
     fun activeCount(token: Long): Int = if (token == frozenToken) frozen.size else 0
 
+    /** Publish matching IDs and names from one held-state snapshot. */
     @Synchronized
-    fun activeIds(token: Long): Array<String> =
-        if (token == frozenToken) frozen.keys.toTypedArray() else emptyArray()
-
-    @Synchronized
-    fun activeNames(token: Long): Array<String> =
-        if (token == frozenToken) frozen.values.map { it.recipe.name }.toTypedArray()
-        else emptyArray()
+    fun appendActiveStatus(token: Long, result: Bundle): Int {
+        val count = if (token == frozenToken) frozen.size else 0
+        val ids = Array(count) { "" }
+        val names = Array(count) { "" }
+        if (count > 0) {
+            frozen.entries.forEachIndexed { index, (id, hold) ->
+                ids[index] = id
+                names[index] = hold.recipe.name
+            }
+        }
+        result.putStringArray("recipeFreezeIds", ids)
+        result.putStringArray("recipeFreezeNames", names)
+        return count
+    }
 
     @Synchronized
     fun runtimeClosed(token: Long) {
@@ -165,7 +156,7 @@ class MemoryRecipeRuntime {
     ): Bundle {
         try {
             if (json == null || json.toByteArray(Charsets.UTF_8).size > MemoryEngineContract.MAX_RECIPE_BYTES) bad("Recipe is missing or too large")
-            val recipe = parse(json)
+            val recipe = parse(parseObject(json))
             if (!preview && recipe.mode == "toggle" && !hold)
                 bad("Toggle scripts must be enabled with Freeze")
             if (!preview && hold && recipe.mode != "toggle" && recipe.mode != "legacy")
@@ -566,8 +557,7 @@ class MemoryRecipeRuntime {
         return snapshot
     }
 
-    private fun parse(json: String): Recipe {
-        val obj = Json.parseToJsonElement(json) as? JsonObject ?: bad("Expected JSON object")
+    private fun parse(obj: JsonObject): Recipe {
         obj.expectOnly("formatVersion", "id", "name", "description", "game", "inputs", "root", "actions", "mode")
         val version = obj.int("formatVersion")
         if (version !in 1..2) bad("Unsupported recipe version")
@@ -789,10 +779,17 @@ class MemoryRecipeRuntime {
         /** Validate a recipe without resolving or touching guest memory. */
         @JvmStatic
         fun validateDocument(json: String) {
+            validatedDocument(json)
+        }
+
+        internal fun validatedDocument(json: String): JsonObject {
             if (json.toByteArray(Charsets.UTF_8).size > MemoryEngineContract.MAX_RECIPE_BYTES)
                 bad("Recipe exceeds 64 KiB")
-            MemoryRecipeRuntime().parse(json)
+            return parseObject(json).also { MemoryRecipeRuntime().parse(it) }
         }
+
+        private fun parseObject(json: String): JsonObject =
+            Json.parseToJsonElement(json) as? JsonObject ?: bad("Expected JSON object")
 
         private fun bad(detail: String): Nothing = throw Problem(
             MemoryEngineContract.RESULT_INVALID_REQUEST, detail
