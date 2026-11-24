@@ -4,6 +4,9 @@ set -euo pipefail
 
 trap 'adb logcat -d -v threadtime > runtime-logcat.txt 2>&1 || true' EXIT
 
+# Prevent Android's first-use immersive-mode prompt from taking focus during UI tests.
+adb shell settings put secure immersive_mode_confirmations confirmed
+
 selectors=(
   'javax.microedition.lcdui.graphics.AmbientColorSamplerTest'
   'javax.microedition.lcdui.overlay.DiagnosticTextRenderingTest'
