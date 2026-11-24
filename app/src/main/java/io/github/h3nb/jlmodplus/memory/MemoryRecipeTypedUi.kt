@@ -48,6 +48,7 @@ internal fun TypedMemoryRecipeDetail(
     onEdit: () -> Unit,
     onDeleted: () -> Unit,
     modifier: Modifier = Modifier,
+    editEnabled: Boolean = true,
 ) {
     val restoredInputs = remember(script.id, script.document, state.runtimeToken) {
         MemoryEditorSessionNavigation.script(state.runtimeToken).takeIf {
@@ -121,7 +122,7 @@ internal fun TypedMemoryRecipeDetail(
             }), modifier = Modifier.weight(1f),
                 style = MaterialTheme.typography.labelLarge,
                 color = MaterialTheme.colorScheme.onSurfaceVariant)
-            TextButton(onClick = onEdit) {
+            TextButton(enabled = editEnabled, onClick = onEdit) {
                 Text(stringResource(R.string.memory_scripts_edit))
             }
         }

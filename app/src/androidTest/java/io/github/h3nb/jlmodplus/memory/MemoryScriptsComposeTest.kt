@@ -6,6 +6,8 @@ import androidx.compose.foundation.layout.height
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.test.performScrollTo
+import androidx.compose.ui.test.performScrollToNode
+import androidx.compose.ui.test.hasTestTag
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.platform.testTag
 import androidx.compose.ui.semantics.SemanticsProperties
@@ -29,6 +31,7 @@ import androidx.test.espresso.Espresso.pressBack
 import org.junit.Assert.assertEquals
 import org.junit.Assert.assertFalse
 import org.junit.Assert.assertTrue
+import kotlinx.coroutines.CompletableDeferred
 import kotlinx.serialization.json.Json
 import kotlinx.serialization.json.JsonArray
 import kotlinx.serialization.json.JsonObject
@@ -430,7 +433,9 @@ class MemoryScriptsComposeTest {
         openChooser()
         rule.onNodeWithText("Quick Actions").performClick()
         rule.onNodeWithText("Coins").assertIsDisplayed()
-        rule.onNodeWithTag("memory-builder-value").performScrollTo().assertIsDisplayed()
+        rule.onNodeWithTag("memory-builder-targets")
+            .performScrollToNode(hasTestTag("memory-builder-value"))
+        rule.onNodeWithTag("memory-builder-value").assertIsDisplayed()
     }
 
     @Test fun builderCreatesQuickActionFromBookmarkWithoutExecutingOnSave() {
@@ -440,6 +445,7 @@ class MemoryScriptsComposeTest {
             savedVariables = listOf(SavedVariableRow("coin-id", "Coins", "coins", true)),
         )
         var generated: MemoryScriptBuilderDraft? = null
+        val finishGeneration = CompletableDeferred<Unit>()
         var saved: String? = null
         var completeSave: ((Boolean) -> Unit)? = null
         val sampleJson = Json.parseToJsonElement(sample) as JsonObject
@@ -455,6 +461,7 @@ class MemoryScriptsComposeTest {
             }
             override suspend fun generateMemoryScript(draft: MemoryScriptBuilderDraft): String {
                 generated = draft
+                finishGeneration.await()
                 return JsonObject(sampleJson + ("id" to JsonPrimitive(draft.id))).toString()
             }
             override fun saveMemoryScript(
@@ -478,9 +485,21 @@ class MemoryScriptsComposeTest {
         rule.onNodeWithText("Coins").performClick()
         rule.onNodeWithTag("memory-bookmark-search").performTextReplacement("not-a-bookmark")
         rule.onNodeWithText("Add selected").assertIsEnabled().performClick()
-        rule.onNodeWithText("Add").performClick()
+        rule.onNodeWithTag("memory-builder-targets")
+            .performScrollToNode(hasTestTag("memory-builder-value"))
+        rule.onNodeWithText("Add").performScrollTo().performClick()
         rule.onNodeWithText("Save").performClick()
+        rule.onNodeWithTag("memory-builder-targets")
+            .performScrollToNode(hasTestTag("memory-builder-name"))
         rule.onNodeWithTag("memory-builder-name").assertIsNotEnabled()
+        rule.runOnIdle {
+            assertEquals(null, saved)
+            finishGeneration.complete(Unit)
+        }
+        rule.waitUntil(5_000) { saved != null }
+        rule.onNodeWithTag("memory-builder-name").assertIsNotEnabled()
+        rule.onNodeWithTag("memory-builder-targets")
+            .performScrollToNode(hasTestTag("memory-builder-value"))
         rule.onNodeWithTag("memory-builder-value").assertIsNotEnabled()
         rule.onNodeWithText("Subtract").assertIsNotEnabled()
         rule.runOnIdle {

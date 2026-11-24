@@ -38,8 +38,6 @@ import androidx.compose.runtime.State
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
-import androidx.compose.runtime.rememberCoroutineScope
-import androidx.compose.runtime.rememberUpdatedState
 import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
@@ -53,7 +51,6 @@ import androidx.compose.ui.unit.dp
 import io.github.h3nb.jlmodplus.R
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.delay
-import kotlinx.coroutines.launch
 import kotlinx.coroutines.withContext
 import kotlinx.serialization.json.JsonArray
 import kotlinx.serialization.json.JsonObject
@@ -161,22 +158,18 @@ internal fun RuntimeScriptsTab(
     val metadata = remember(selected?.document) {
         selected?.let { runCatching { memoryScriptMetadata(it.document) }.getOrNull() }
     }
-    val scope = rememberCoroutineScope()
-    val currentSelection by rememberUpdatedState(selectedId)
-    var restoring by remember(selectedId) { mutableStateOf(false) }
-    fun editScript(script: MemoryScriptRow) {
-        if (restoring) return
-        restoring = true
-        scope.launch {
-            try {
-                val visual = actions.restoreMemoryScriptBuilder(script.document)
-                if (currentSelection == script.id) {
-                    if (visual != null) onBuilder(visual)
-                    else onDraft(MemoryScriptDraft(script.id, script.document, script.document))
-                }
-            } finally {
-                restoring = false
-            }
+    var restoring by remember(selected?.id, selected?.document, state.runtimeToken) {
+        mutableStateOf(false)
+    }
+    LaunchedEffect(restoring, selected?.id, selected?.document, state.runtimeToken) {
+        val script = selected ?: return@LaunchedEffect
+        if (!restoring) return@LaunchedEffect
+        try {
+            val visual = actions.restoreMemoryScriptBuilder(script.document)
+            if (visual != null) onBuilder(visual)
+            else onDraft(MemoryScriptDraft(script.id, script.document, script.document))
+        } finally {
+            restoring = false
         }
     }
 
@@ -333,7 +326,8 @@ internal fun RuntimeScriptsTab(
     if (selected != null && metadata != null && metadata.mode != "legacy") {
         TypedMemoryRecipeDetail(
             script = selected, metadata = metadata, state = state, actions = actions,
-            onEdit = { editScript(selected) },
+            onEdit = { restoring = true },
+            editEnabled = !restoring,
             onDeleted = { onSelectedId(null) },
             modifier = modifier,
         )
@@ -344,7 +338,7 @@ internal fun RuntimeScriptsTab(
         Column(modifier.fillMaxSize().padding(horizontal = 16.dp, vertical = 8.dp),
             verticalArrangement = Arrangement.spacedBy(8.dp)) {
             Row(Modifier.fillMaxWidth(), horizontalArrangement = Arrangement.End) {
-                TextButton(enabled = !restoring, onClick = { editScript(selected) }) {
+                TextButton(enabled = !restoring, onClick = { restoring = true }) {
                     Text(stringResource(R.string.memory_scripts_edit))
                 }
             }

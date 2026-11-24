@@ -40,6 +40,7 @@ import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
 import androidx.compose.runtime.rememberCoroutineScope
+import androidx.compose.runtime.rememberUpdatedState
 import androidx.compose.runtime.saveable.rememberSaveable
 import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
@@ -178,6 +179,7 @@ internal fun MemoryScriptBuilderScreen(
     val saveFailedText = stringResource(R.string.memory_scripts_save_failed)
     val scope = rememberCoroutineScope()
     var generating by remember(draft.id) { mutableStateOf(false) }
+    val currentDraft by rememberUpdatedState(draft)
     val locked = saving || generating
     var picking by remember { mutableStateOf(false) }
     var preview by remember(draft) { mutableStateOf<String?>(null) }
@@ -186,12 +188,13 @@ internal fun MemoryScriptBuilderScreen(
         mutableStateOf(draft.description.isNotBlank())
     }
     fun generate(onReady: (String) -> Unit) {
-        if (locked) return
+        if (generating || saving) return
         generating = true
         error = null
         scope.launch {
             try {
-                onReady(actions.generateMemoryScript(draft))
+                val document = actions.generateMemoryScript(draft)
+                if (currentDraft == draft) onReady(document)
             } catch (cancelled: CancellationException) {
                 throw cancelled
             } catch (failure: Exception) {
@@ -213,7 +216,7 @@ internal fun MemoryScriptBuilderScreen(
                 modifier = Modifier.fillMaxWidth().padding(horizontal = 16.dp))
         }
         LazyColumn(
-            modifier = Modifier.weight(1f).fillMaxWidth(),
+            modifier = Modifier.weight(1f).fillMaxWidth().testTag("memory-builder-targets"),
             contentPadding = PaddingValues(horizontal = 16.dp, vertical = 12.dp),
         ) {
             item(key = "identity") {
