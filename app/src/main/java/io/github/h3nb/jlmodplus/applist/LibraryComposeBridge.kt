@@ -2493,7 +2493,7 @@ private fun LibraryAppsHeader(
                     }
                 }
             }
-            AnimatedVisibility(
+            androidx.compose.animation.AnimatedVisibility(
                 visible = searching,
                 modifier = Modifier.matchParentSize(),
                 enter = fadeIn(tween(180)) + slideInHorizontally(
