@@ -11,6 +11,7 @@ import android.graphics.drawable.GradientDrawable
 import androidx.appcompat.view.ContextThemeWrapper
 import androidx.appcompat.widget.AppCompatImageView
 import androidx.test.ext.junit.runners.AndroidJUnit4
+import androidx.test.filters.SdkSuppress
 import androidx.test.platform.app.InstrumentationRegistry
 import io.github.h3nb.jlmodplus.R
 import io.github.h3nb.jlmodplus.ui.AccentPalette
@@ -23,6 +24,7 @@ import org.junit.runner.RunWith
 @RunWith(AndroidJUnit4::class)
 class RuntimeHostViewThemeTest {
     @Test
+    @SdkSuppress(minSdkVersion = 24)
     fun refreshingThemeRecolorsNativeChromeAndRetainsToolState() {
         val instrumentation = InstrumentationRegistry.getInstrumentation()
         instrumentation.runOnMainSync {

@@ -66,6 +66,7 @@ import androidx.compose.material3.MaterialTheme
 import androidx.compose.runtime.SideEffect
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.ui.graphics.Color
+import androidx.compose.ui.graphics.toArgb
 import androidx.compose.ui.graphics.toPixelMap
 import androidx.compose.ui.test.captureToImage
 import androidx.test.filters.SdkSuppress
@@ -222,7 +223,7 @@ class LibraryComposeTest {
             node.assertIsDisplayed()
             val pixels = node.captureToImage().toPixelMap()
             // The center of the top padding avoids the text, icon and rounded corners.
-            assertEquals(neutralTileColor, pixels[pixels.width / 2, pixels.height / 12])
+            assertEquals(neutralTileColor.toArgb(), pixels[pixels.width / 2, pixels.height / 12].toArgb())
         }
         for (darkTheme in listOf(false, true)) {
             composeRule.runOnIdle { dark.value = darkTheme }
@@ -234,7 +235,7 @@ class LibraryComposeTest {
             ).performClick()
             assertNeutralTile(uiString(R.string.library_details_action))
             composeRule.onNodeWithText(uiString(R.string.library_details_action)).performClick()
-            composeRule.onNodeWithContentDescription(uiString(R.string.library_back)).performClick()
+            composeRule.onNodeWithContentDescription(uiString(R.string.action_back)).performClick()
         }
     }
 

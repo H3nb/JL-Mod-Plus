@@ -2110,7 +2110,7 @@ internal fun LibraryAppsDestination(
                     orientation = Orientation.Vertical,
                     reverseDirection = true,
                     enabled = active && !freezeViewport && !searchActive &&
-                        !state.loading && state.errorMessage == null && !headerHidden,
+                        !state.loading && state.errorMessage == null,
                 )
                 .then(
                     if (!headerHidden) {
