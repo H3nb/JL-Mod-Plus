@@ -133,12 +133,13 @@ final class ManagedJavaMemoryEngine {
 	}
 
 	ManagedCapabilities capabilities(long token) {
-		MemoryDiscoveryBridge.Snapshot snapshot = MemoryDiscoveryBridge.snapshot(token);
+		MemoryDiscoveryBridge.Snapshot snapshot = MemoryDiscoveryBridge.snapshotWithoutClasses(token);
 		long revision;
 		long count;
 		long baseline;
 		int watchCount;
 		int freezeCount;
+		int historyDepth;
 		synchronized (stateLock) {
 			if (snapshot.loader() != null && snapshot.token() == token) {
 				activateRuntimeLocked(token, snapshot.loader());
@@ -148,6 +149,7 @@ final class ManagedJavaMemoryEngine {
 			baseline = baselineCountLocked();
 			watchCount = watches.count;
 			freezeCount = watches.freezeCount();
+			historyDepth = searchHistory.size();
 		}
 		return new ManagedCapabilities(
 				snapshot.isAvailable(),
@@ -158,12 +160,12 @@ final class ManagedJavaMemoryEngine {
 				baseline,
 				watchCount,
 				freezeCount,
-				searchHistory.size(),
+				historyDepth,
 				snapshot.failure());
 	}
 
 	ManagedSession session(long token) {
-		MemoryDiscoveryBridge.Snapshot snapshot = MemoryDiscoveryBridge.snapshot(token);
+		MemoryDiscoveryBridge.Snapshot snapshot = MemoryDiscoveryBridge.snapshotWithoutClasses(token);
 			synchronized (stateLock) {
 			long revision = committed == null ? 0L : committed.id;
 			long count = visibleResultCountLocked();
@@ -613,13 +615,18 @@ final class ManagedJavaMemoryEngine {
 		if (start >= revision.count) return ManagedPage.empty(revision.id);
 		int outputCount = (int) Math.min((long) limit, revision.count - start);
 		ManagedPage page = ManagedPage.allocate(outputCount, revision.id);
-		long ordinal = 0L;
+		long remainingOffset = start;
 		int output = 0;
 		long[] value = new long[1];
 		for (BucketView bucket : revision.buckets) {
+			if (remainingOffset >= bucket.slots.length) {
+				remainingOffset -= bucket.slots.length;
+				continue;
+			}
 			Object strongOwner = bucket.owner.strongOwner();
-			for (int index = 0; index < bucket.slots.length; index++) {
-				if (ordinal++ < start) continue;
+			int firstSlot = (int) remainingOffset;
+			remainingOffset = 0L;
+			for (int index = firstSlot; index < bucket.slots.length; index++) {
 				if (output >= outputCount) return page;
 				int slot = bucket.slots[index];
 				int type = valueTypeFor(bucket.owner, slot);

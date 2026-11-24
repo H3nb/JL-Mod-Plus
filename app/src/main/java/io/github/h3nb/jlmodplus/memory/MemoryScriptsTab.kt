@@ -5,7 +5,6 @@ package io.github.h3nb.jlmodplus.memory
 
 import android.content.ClipboardManager
 import androidx.activity.compose.BackHandler
-import androidx.compose.foundation.BorderStroke
 import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.BoxWithConstraints
@@ -35,6 +34,7 @@ import androidx.compose.material3.Text
 import androidx.compose.material3.TextButton
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.LaunchedEffect
+import androidx.compose.runtime.State
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
@@ -49,7 +49,9 @@ import androidx.compose.ui.text.font.FontFamily
 import androidx.compose.ui.text.style.TextOverflow
 import androidx.compose.ui.unit.dp
 import io.github.h3nb.jlmodplus.R
-import kotlinx.serialization.json.Json
+import kotlinx.coroutines.Dispatchers
+import kotlinx.coroutines.delay
+import kotlinx.coroutines.withContext
 import kotlinx.serialization.json.JsonArray
 import kotlinx.serialization.json.JsonObject
 import kotlinx.serialization.json.JsonPrimitive
@@ -76,25 +78,18 @@ internal data class MemoryScriptMetadata(
 )
 
 internal fun memoryScriptMetadata(document: String): MemoryScriptMetadata {
-    MemoryRecipeRuntime.validateDocument(document)
-    val obj = Json.parseToJsonElement(document) as? JsonObject ?: error("Expected JSON object")
+    val obj = MemoryRecipeRuntime.validatedDocument(document)
     val version = (obj["formatVersion"] as? JsonPrimitive)?.content
     val mode = when (version) {
         "1" -> "legacy"
         "2" -> (obj["mode"] as? JsonPrimitive)?.content ?: error("Missing recipe mode")
         else -> error("Unsupported Memory Recipe version")
     }
-    val id = (obj["id"] as? JsonPrimitive)?.content.orEmpty()
-    if (!id.matches(Regex("[A-Za-z0-9_.-]{1,64}"))) error("Invalid recipe ID")
+    val id = (obj.getValue("id") as JsonPrimitive).content
     val name = (obj["name"] as? JsonPrimitive)?.content?.takeIf(String::isNotBlank) ?: id
     val description = (obj["description"] as? JsonPrimitive)?.content.orEmpty()
-    val game = obj["game"] as? JsonObject ?: error("Missing game")
-    if ((game["mainClass"] as? JsonPrimitive)?.content.isNullOrBlank())
-        error("Missing game.mainClass")
-    val actions = obj["actions"] as? JsonArray ?: error("Actions must be an array")
-    if (actions.isEmpty()) error("Recipe has no actions")
+    val actions = obj.getValue("actions") as JsonArray
     val inputs = obj["inputs"] as? JsonObject ?: JsonObject(emptyMap())
-    if (inputs.size > 64) error("Too many recipe parameters")
     val selectors = actions.asSequence().mapNotNull { it as? JsonObject }
         .flatMap { (it["path"] as? JsonArray).orEmpty().asSequence() }
         .mapNotNull { (it as? JsonObject)?.get("indexInput") as? JsonPrimitive }
@@ -121,18 +116,20 @@ internal fun RuntimeScriptsTab(
     actions: MemoryEditorActions,
     selectedId: String?,
     onSelectedId: (String?) -> Unit,
-    draft: MemoryScriptDraft?,
+    draftState: State<MemoryScriptDraft?>,
     onDraft: (MemoryScriptDraft?) -> Unit,
-    builder: MemoryScriptBuilderDraft?,
+    builderState: State<MemoryScriptBuilderDraft?>,
     onBuilder: (MemoryScriptBuilderDraft?) -> Unit,
     saving: Boolean,
-    onSaveScript: (String, String?, (Boolean) -> Unit) -> Unit,
+    onSaveScript: (MemoryEditorPendingScriptSave, String?, (Boolean) -> Unit) -> Unit,
     choosingType: Boolean,
     onChoosingTypeChange: (Boolean) -> Unit,
     initialTargets: List<MemoryScriptBuilderAction>,
     onTargetsUsed: () -> Unit,
     modifier: Modifier = Modifier,
 ) {
+    val draft = draftState.value
+    val builder = builderState.value
     val context = LocalContext.current
     val saveErrorText = stringResource(R.string.memory_scripts_save_failed)
     val clipboardErrorText = stringResource(R.string.memory_scripts_clipboard_invalid)
@@ -155,12 +152,25 @@ internal fun RuntimeScriptsTab(
     var currentError by remember(selectedId, state.runtimeToken) { mutableStateOf<String?>(null) }
     var readingCurrent by remember(selectedId, state.runtimeToken) { mutableStateOf(false) }
     var readGeneration by remember(selectedId, state.runtimeToken) { mutableStateOf(0L) }
-    val selected = state.scripts.firstOrNull { it.id == selectedId }
-    val metadata = selected?.let { runCatching { memoryScriptMetadata(it.document) }.getOrNull() }
-    fun editScript(script: MemoryScriptRow) {
-        val visual = actions.restoreMemoryScriptBuilder(script.document)
-        if (visual != null) onBuilder(visual)
-        else onDraft(MemoryScriptDraft(script.id, script.document, script.document))
+    val selected = remember(state.scripts, selectedId) {
+        state.scripts.firstOrNull { it.id == selectedId }
+    }
+    val metadata = remember(selected?.document) {
+        selected?.let { runCatching { memoryScriptMetadata(it.document) }.getOrNull() }
+    }
+    var restoring by remember(selected?.id, selected?.document, state.runtimeToken) {
+        mutableStateOf(false)
+    }
+    LaunchedEffect(restoring, selected?.id, selected?.document, state.runtimeToken) {
+        val script = selected ?: return@LaunchedEffect
+        if (!restoring) return@LaunchedEffect
+        try {
+            val visual = actions.restoreMemoryScriptBuilder(script.document)
+            if (visual != null) onBuilder(visual)
+            else onDraft(MemoryScriptDraft(script.id, script.document, script.document))
+        } finally {
+            restoring = false
+        }
     }
 
     LaunchedEffect(state.scripts, selectedId) {
@@ -226,72 +236,89 @@ internal fun RuntimeScriptsTab(
     }
 
     if (draft != null) {
-        val parsed = remember(draft.text) { runCatching { memoryScriptMetadata(draft.text) } }
-        BoxWithConstraints(modifier.fillMaxSize()) {
-        val compactEditor = maxHeight < 280.dp
-        Column(Modifier.fillMaxSize().padding(horizontal = 8.dp),
-            verticalArrangement = Arrangement.spacedBy(if (compactEditor) 4.dp else 8.dp)) {
-            if (!compactEditor) Text(stringResource(R.string.memory_scripts_editor_hint),
-                style = MaterialTheme.typography.bodySmall,
-                color = MaterialTheme.colorScheme.onSurfaceVariant)
-            OutlinedTextField(
-                value = draft.text,
-                onValueChange = {
-                    if (!saving && it.toByteArray(Charsets.UTF_8).size <= MemoryEngineContract.MAX_RECIPE_BYTES) {
-                        onDraft(draft.copy(text = it))
-                        localError = null
-                    }
-                },
-                modifier = Modifier.fillMaxWidth().weight(1f).testTag("memory-script-editor"),
-                label = { Text("JSON") },
-                placeholder = { Text(stringResource(R.string.memory_scripts_paste_hint)) },
-                textStyle = MaterialTheme.typography.bodySmall.copy(fontFamily = FontFamily.Monospace),
-                enabled = !saving,
-                minLines = if (compactEditor) 2 else 6,
-            )
-            Row(verticalAlignment = Alignment.CenterVertically,
-                horizontalArrangement = Arrangement.spacedBy(8.dp),
-                modifier = Modifier.fillMaxWidth()) {
-                Text("${draft.text.toByteArray(Charsets.UTF_8).size}/${MemoryEngineContract.MAX_RECIPE_BYTES} B",
-                    style = MaterialTheme.typography.labelSmall, modifier = Modifier.weight(1f),
-                    color = MaterialTheme.colorScheme.onSurfaceVariant)
-                TextButton(enabled = !saving, onClick = {
-                    val clipboard = context.getSystemService(ClipboardManager::class.java)
-                    val clip = clipboard?.primaryClip
-                    val pasted = if (clip != null && clip.itemCount > 0)
-                        clip.getItemAt(0).coerceToText(context)?.toString() else null
-                    if (pasted != null &&
-                        pasted.toByteArray(Charsets.UTF_8).size <= MemoryEngineContract.MAX_RECIPE_BYTES) {
-                        onDraft(draft.copy(text = pasted))
-                        localError = null
-                    } else localError = clipboardErrorText
-                }) { Text(stringResource(R.string.memory_scripts_paste)) }
-                Button(
-                    modifier = Modifier.heightIn(min = 48.dp),
-                    enabled = !saving && draft.text.isNotBlank() &&
-                        draft.text.toByteArray(Charsets.UTF_8).size <= MemoryEngineContract.MAX_RECIPE_BYTES &&
-                        parsed.isSuccess &&
-                        (draft.replacingId == null || parsed.getOrNull()?.id == draft.replacingId),
-                    onClick = {
-                        localError = null
-                        onSaveScript(draft.text, draft.replacingId) { success ->
-                            if (success) {
-                                onSelectedId(parsed.getOrNull()?.id)
-                                onDraft(null)
-                            } else localError = saveErrorText
-                        }
-                    },
-                ) { Text(stringResource(R.string.memory_scripts_save)) }
-            }
-            if (draft.text.isNotBlank()) parsed.exceptionOrNull()?.message?.let {
-                Text(it, color = MaterialTheme.colorScheme.error,
-                    style = MaterialTheme.typography.bodySmall)
-            }
-            localError?.let {
-                Text(it, color = MaterialTheme.colorScheme.error,
-                    style = MaterialTheme.typography.bodySmall)
+        // Each text revision owns its result. Do not enable Save using a previous revision.
+        val byteCount = remember(draft.text) { draft.text.toByteArray(Charsets.UTF_8).size }
+        var parsed by remember(draft.text) { mutableStateOf<Result<MemoryScriptMetadata>?>(null) }
+        LaunchedEffect(draft.text) {
+            if (draft.text.isBlank() || byteCount > MemoryEngineContract.MAX_RECIPE_BYTES) return@LaunchedEffect
+            delay(100)
+            parsed = withContext(Dispatchers.Default) {
+                runCatching { memoryScriptMetadata(draft.text) }
             }
         }
+        val validMetadata = parsed?.getOrNull()
+        BoxWithConstraints(modifier.fillMaxSize()) {
+            val compactEditor = maxHeight < 280.dp
+            Column(Modifier.fillMaxSize().padding(horizontal = 16.dp),
+                verticalArrangement = Arrangement.spacedBy(if (compactEditor) 4.dp else 8.dp)) {
+                if (!compactEditor) Text(stringResource(R.string.memory_scripts_editor_hint),
+                    style = MaterialTheme.typography.bodySmall,
+                    color = MaterialTheme.colorScheme.onSurfaceVariant)
+                OutlinedTextField(
+                    colors = memoryEditorFieldColors(),
+                    shape = MaterialTheme.shapes.medium,
+                    value = draft.text,
+                    onValueChange = {
+                        if (!saving && it.toByteArray(Charsets.UTF_8).size <= MemoryEngineContract.MAX_RECIPE_BYTES) {
+                            onDraft(draft.copy(text = it))
+                            localError = null
+                        }
+                    },
+                    modifier = Modifier.fillMaxWidth().weight(1f).testTag("memory-script-editor"),
+                    label = { Text("JSON") },
+                    placeholder = { Text(stringResource(R.string.memory_scripts_paste_hint)) },
+                    textStyle = MaterialTheme.typography.bodySmall.copy(fontFamily = FontFamily.Monospace),
+                    enabled = !saving,
+                    minLines = if (compactEditor) 2 else 6,
+                )
+                Row(verticalAlignment = Alignment.CenterVertically,
+                    horizontalArrangement = Arrangement.spacedBy(8.dp),
+                    modifier = Modifier.fillMaxWidth()) {
+                    Text("$byteCount/${MemoryEngineContract.MAX_RECIPE_BYTES} B",
+                        style = MaterialTheme.typography.labelSmall, modifier = Modifier.weight(1f),
+                        color = MaterialTheme.colorScheme.onSurfaceVariant)
+                    TextButton(enabled = !saving, onClick = {
+                        val clipboard = context.getSystemService(ClipboardManager::class.java)
+                        val clip = clipboard?.primaryClip
+                        val pasted = if (clip != null && clip.itemCount > 0)
+                            clip.getItemAt(0).coerceToText(context)?.toString() else null
+                        if (pasted != null &&
+                            pasted.toByteArray(Charsets.UTF_8).size <= MemoryEngineContract.MAX_RECIPE_BYTES) {
+                            onDraft(draft.copy(text = pasted))
+                            localError = null
+                        } else localError = clipboardErrorText
+                    }) { Text(stringResource(R.string.memory_scripts_paste)) }
+                    Button(
+                        modifier = Modifier.heightIn(min = 48.dp).testTag("memory-script-save"),
+                        enabled = !saving && validMetadata != null &&
+                            (draft.replacingId == null || validMetadata.id == draft.replacingId),
+                        onClick = {
+                            val validated = validMetadata
+                            if (validated != null &&
+                                (draft.replacingId == null || validated.id == draft.replacingId)) {
+                                localError = null
+                                onSaveScript(
+                                    MemoryEditorPendingScriptSave(validated.id, draft.text),
+                                    draft.replacingId,
+                                ) { success ->
+                                    if (success) {
+                                        onSelectedId(validated.id)
+                                        onDraft(null)
+                                    } else localError = saveErrorText
+                                }
+                            }
+                        },
+                    ) { Text(stringResource(R.string.memory_scripts_save)) }
+                }
+                if (draft.text.isNotBlank()) parsed?.exceptionOrNull()?.message?.let {
+                    Text(it, color = MaterialTheme.colorScheme.error,
+                        style = MaterialTheme.typography.bodySmall)
+                }
+                localError?.let {
+                    Text(it, color = MaterialTheme.colorScheme.error,
+                        style = MaterialTheme.typography.bodySmall)
+                }
+            }
         }
         return
     }
@@ -299,7 +326,8 @@ internal fun RuntimeScriptsTab(
     if (selected != null && metadata != null && metadata.mode != "legacy") {
         TypedMemoryRecipeDetail(
             script = selected, metadata = metadata, state = state, actions = actions,
-            onEdit = { editScript(selected) },
+            onEdit = { restoring = true },
+            editEnabled = !restoring,
             onDeleted = { onSelectedId(null) },
             modifier = modifier,
         )
@@ -307,10 +335,10 @@ internal fun RuntimeScriptsTab(
     }
 
     if (selected != null) {
-        Column(modifier.fillMaxSize().padding(8.dp),
+        Column(modifier.fillMaxSize().padding(horizontal = 16.dp, vertical = 8.dp),
             verticalArrangement = Arrangement.spacedBy(8.dp)) {
             Row(Modifier.fillMaxWidth(), horizontalArrangement = Arrangement.End) {
-                TextButton(onClick = { editScript(selected) }) {
+                TextButton(enabled = !restoring, onClick = { restoring = true }) {
                     Text(stringResource(R.string.memory_scripts_edit))
                 }
             }
@@ -371,6 +399,8 @@ internal fun RuntimeScriptsTab(
                     color = MaterialTheme.colorScheme.error)
                 metadata?.parameters?.forEach { (name, _) ->
                     OutlinedTextField(
+                        colors = memoryEditorFieldColors(),
+                        shape = MaterialTheme.shapes.medium,
                         value = inputs[name].orEmpty(),
                         onValueChange = {
                             if (it.length <= 32) {
@@ -437,7 +467,7 @@ internal fun RuntimeScriptsTab(
         return
     }
 
-    Column(modifier.fillMaxSize().padding(horizontal = 12.dp, vertical = 8.dp),
+    Column(modifier.fillMaxSize().padding(horizontal = 16.dp, vertical = 8.dp),
         verticalArrangement = Arrangement.spacedBy(12.dp)) {
         Row(modifier = Modifier.fillMaxWidth(), verticalAlignment = Alignment.CenterVertically) {
             Text(stringResource(R.string.memory_scripts_saved_count, state.scripts.size),
@@ -487,8 +517,7 @@ internal fun RuntimeScriptsTab(
                     val active = state.scriptActiveFreezes.any { it.first == script.id }
                     Surface(modifier = Modifier.fillMaxWidth().clickable { onSelectedId(script.id) },
                         shape = MaterialTheme.shapes.large,
-                        color = MaterialTheme.colorScheme.surfaceContainerLow,
-                        border = BorderStroke(1.dp, MaterialTheme.colorScheme.outlineVariant)) {
+                        color = MaterialTheme.colorScheme.surfaceContainerLow) {
                         Row(Modifier.fillMaxWidth().padding(12.dp),
                             verticalAlignment = Alignment.CenterVertically,
                             horizontalArrangement = Arrangement.spacedBy(12.dp)) {
@@ -497,8 +526,14 @@ internal fun RuntimeScriptsTab(
                                 "form" -> R.drawable.ic_memory_editor_edit_value
                                 else -> R.drawable.ic_auto_mode
                             }
-                            Icon(painterResource(icon), contentDescription = null,
-                                tint = MaterialTheme.colorScheme.onSurfaceVariant)
+                            Surface(
+                                color = MaterialTheme.colorScheme.secondaryContainer,
+                                contentColor = MaterialTheme.colorScheme.onSecondaryContainer,
+                                shape = MaterialTheme.shapes.medium,
+                            ) {
+                                Icon(painterResource(icon), contentDescription = null,
+                                    modifier = Modifier.padding(8.dp))
+                            }
                             Column(Modifier.weight(1f),
                                 verticalArrangement = Arrangement.spacedBy(2.dp)) {
                                 Text(script.name, style = MaterialTheme.typography.titleSmall,

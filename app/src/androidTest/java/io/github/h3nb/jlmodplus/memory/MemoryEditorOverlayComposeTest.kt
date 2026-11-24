@@ -7,7 +7,6 @@ import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.graphics.Color
-import android.view.KeyEvent
 import android.view.Window
 import androidx.compose.material3.Text
 import androidx.compose.material3.TextButton
@@ -22,6 +21,7 @@ import androidx.compose.ui.test.WindowSize
 import androidx.compose.ui.unit.DpSize
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.test.assertIsDisplayed
+import androidx.compose.ui.test.SemanticsMatcher
 import androidx.compose.ui.test.assertIsEnabled
 import androidx.compose.ui.test.assertIsNotEnabled
 import androidx.compose.ui.test.assertTextContains
@@ -38,6 +38,8 @@ import androidx.compose.ui.test.performTextInputSelection
 import androidx.compose.ui.test.performTextReplacement
 import androidx.compose.ui.test.performTouchInput
 import androidx.compose.ui.semantics.SemanticsActions
+import androidx.compose.ui.semantics.SemanticsProperties
+import androidx.compose.ui.state.ToggleableState
 import androidx.compose.ui.text.TextRange
 import androidx.compose.ui.window.DialogWindowProvider
 import androidx.core.view.ViewCompat
@@ -123,11 +125,15 @@ class MemoryEditorOverlayComposeTest {
         }
         // Check the rendered composite, not just a window attribute: every modal and its dim
         // must disappear so the original underlay is visible through their former centers.
-        val screenshot = InstrumentationRegistry.getInstrumentation().uiAutomation.takeScreenshot()
-        try {
-            assertEquals(android.graphics.Color.MAGENTA, screenshot.getPixel(screenshot.width / 2, screenshot.height / 2))
-        } finally {
-            screenshot.recycle()
+        rule.waitUntil(5_000) {
+            val screenshot = InstrumentationRegistry.getInstrumentation().uiAutomation.takeScreenshot()
+                ?: return@waitUntil false
+            try {
+                screenshot.getPixel(screenshot.width / 2, screenshot.height / 2) ==
+                    android.graphics.Color.MAGENTA
+            } finally {
+                screenshot.recycle()
+            }
         }
         rule.onNodeWithTag("memory-editor-peek").performTouchInput {
             moveTo(Offset(center.x - 64f, center.y - 64f))
@@ -141,7 +147,7 @@ class MemoryEditorOverlayComposeTest {
             windows.values.forEach { assertEquals(1f, it.attributes.alpha, 0f) }
             assertTrue(nested.value)
         }
-        pressBack()
+        rule.pressMemoryEditorBack()
         rule.onNodeWithText("Nested choice").assertDoesNotExist()
         assertEquals(originalBounds, rule.onNodeWithTag("memory-editor-peek").getUnclippedBoundsInRoot())
     }
@@ -161,7 +167,7 @@ class MemoryEditorOverlayComposeTest {
         rule.onNodeWithTag("memory-editor-peek").performTouchInput { down(center) }
         rule.runOnIdle { assertTrue(overlay.peeking) }
         rule.onNodeWithTag("memory-editor-peek").performTouchInput { up() }
-        pressBack()
+        rule.pressMemoryEditorBack()
         field.assertTextContains("31415")
         rule.onNodeWithText("7").performScrollTo().performClick()
         field.assertTextContains("317415")
@@ -180,10 +186,10 @@ class MemoryEditorOverlayComposeTest {
         rule.onNodeWithTag("memory-editor-peek").performSemanticsAction(SemanticsActions.OnClick) { it() }
         rule.runOnIdle { assertTrue(overlay.peeking) }
         rule.onNode(hasSetTextAction()).assertDoesNotExist()
-        pressBack()
+        rule.pressMemoryEditorBack()
         rule.runOnIdle { assertFalse(overlay.peeking) }
         rule.onNode(hasSetTextAction()).assertTextContains("42")
-        pressBack()
+        rule.pressMemoryEditorBack()
         rule.onNode(hasSetTextAction()).assertDoesNotExist()
     }
 
@@ -218,9 +224,35 @@ class MemoryEditorOverlayComposeTest {
                 selected = emptySet())
         }
         rule.onNodeWithContentDescription("More").performClick()
-        val menuBounds = rule.onNodeWithTag("adaptive-dialog-surface").getUnclippedBoundsInRoot()
-        assertTrue(menuBounds.right - menuBounds.left <= 400.dp)
+        val menu = rule.onNodeWithTag("adaptive-dialog-surface").fetchSemanticsNode()
+        val maximumWidthPx = with(menu.layoutInfo.density) { 400.dp.roundToPx() }
+        assertTrue("More dialog width ${menu.size.width}px exceeds ${maximumWidthPx}px",
+            menu.size.width <= maximumWidthPx)
         rule.onNodeWithText("Undo scan").performScrollTo().assertIsEnabled()
+    }
+
+    @Test fun partialResultSelectionUsesIndeterminatePageCheckbox() {
+        val result = MemoryResultRow(
+            id = 1, valueText = "42", locationText = "score",
+            aliasMask = 1 shl MemoryEngineContract.TYPE_INT,
+            primaryType = MemoryEngineContract.TYPE_INT,
+            state = MemoryEngineContract.CANDIDATE_STABLE, relocations = 0,
+        )
+        val state = mutableStateOf(MemoryEditorUiState(
+            visible = true, connected = true, supported = true, writeSupported = true,
+            sessionStage = MemorySessionStage.CANDIDATES,
+            resultCount = 2, results = listOf(result, result.copy(id = 2)),
+            selected = setOf(1L),
+        ))
+        rule.setContent {
+            JLModPlusTheme { MemoryEditorRuntimeRoot(state.value, TestMemoryEditorActions()) }
+        }
+        val mixed = SemanticsMatcher.expectValue(
+            SemanticsProperties.ToggleableState, ToggleableState.Indeterminate,
+        )
+        rule.onNode(mixed).assertIsDisplayed()
+        rule.runOnIdle { state.value = state.value.copy(selected = setOf(1L, 2L)) }
+        rule.onNode(mixed).assertDoesNotExist()
     }
 
     @Test fun unsupportedRuntimeExplainsUnavailabilityAndDisablesBothSearches() {
@@ -264,11 +296,6 @@ class MemoryEditorOverlayComposeTest {
                 if (existed) putFloat("panel_opacity", previous) else remove("panel_opacity")
             }.commit()
         }
-    }
-    private fun pressBack() {
-        // Inject system Back into the focused dialog, not Espresso's Activity root.
-        InstrumentationRegistry.getInstrumentation().sendKeyDownUpSync(KeyEvent.KEYCODE_BACK)
-        rule.waitForIdle()
     }
 
 }

@@ -6,6 +6,9 @@ import androidx.compose.foundation.layout.height
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.test.performScrollTo
+import androidx.compose.ui.test.performScrollToNode
+import androidx.compose.ui.test.hasTestTag
+import androidx.compose.ui.test.hasText
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.platform.testTag
 import androidx.compose.ui.semantics.SemanticsProperties
@@ -25,13 +28,14 @@ import androidx.compose.ui.test.performTextReplacement
 import io.github.h3nb.jlmodplus.R
 import io.github.h3nb.jlmodplus.ui.JLModPlusTheme
 import androidx.test.platform.app.InstrumentationRegistry
-import androidx.test.espresso.Espresso.pressBack
 import org.junit.Assert.assertEquals
 import org.junit.Assert.assertFalse
 import org.junit.Assert.assertTrue
+import kotlinx.coroutines.CompletableDeferred
 import kotlinx.serialization.json.Json
 import kotlinx.serialization.json.JsonArray
 import kotlinx.serialization.json.JsonObject
+import kotlinx.serialization.json.JsonPrimitive
 import org.junit.Rule
 import org.junit.Test
 
@@ -84,6 +88,13 @@ class MemoryScriptsComposeTest {
         rule.onNodeWithText(note).assertIsDisplayed()
     }
 
+    private fun waitForJsonValidation() {
+        rule.waitUntil(timeoutMillis = 5_000) {
+            !rule.onNodeWithTag("memory-script-save").fetchSemanticsNode()
+                .config.contains(SemanticsProperties.Disabled)
+        }
+    }
+
     @Test fun pastedScriptSavesWithoutRunningThenExecutesWithExplicitParameter() {
         val ui = mutableStateOf(MemoryEditorUiState(
             visible = true, connected = true, supported = true, writeSupported = true,
@@ -108,6 +119,11 @@ class MemoryScriptsComposeTest {
         rule.onAllNodesWithText("New script")[0].performClick()
         rule.onNodeWithText("JSON Editor").performClick()
         rule.onNodeWithTag("memory-script-editor").performTextReplacement(sample)
+        waitForJsonValidation()
+        rule.onNodeWithTag("memory-script-editor").performTextReplacement("{")
+        rule.onNodeWithTag("memory-script-save").assertIsNotEnabled()
+        rule.onNodeWithTag("memory-script-editor").performTextReplacement(sample)
+        waitForJsonValidation()
         rule.onNodeWithText("Save").performClick()
         rule.runOnIdle {
             assertEquals(sample, saved)
@@ -174,10 +190,11 @@ class MemoryScriptsComposeTest {
         rule.onAllNodesWithText("New script")[0].performClick()
         rule.onNodeWithText("JSON Editor").performClick()
         rule.onNodeWithTag("memory-script-editor").performTextReplacement(sample)
+        waitForJsonValidation()
         rule.onNodeWithText("Save").performClick()
         rule.onNodeWithContentDescription("Back").assertIsNotEnabled()
         rule.onNodeWithContentDescription("Minimize Memory Editor").assertIsNotEnabled()
-        pressBack()
+        rule.pressMemoryEditorBack()
         rule.onNodeWithTag("memory-script-editor").assertIsDisplayed()
         rule.runOnIdle {
             assertFalse(closed)
@@ -210,6 +227,7 @@ class MemoryScriptsComposeTest {
         rule.onAllNodesWithText("New script")[0].performClick()
         rule.onNodeWithText("JSON Editor").performClick()
         rule.onNodeWithTag("memory-script-editor").performTextReplacement(sample)
+        waitForJsonValidation()
         rule.onNodeWithText("Save").performClick()
         rule.runOnIdle {
             assertEquals(sample, MemoryEditorSessionNavigation.script(token).pendingSave?.document)
@@ -306,9 +324,9 @@ class MemoryScriptsComposeTest {
         rule.onNodeWithText("Sample Coins").performClick()
         rule.onNodeWithTag("memory-script-input-coins").assertTextContains("10")
         rule.onNodeWithTag("memory-script-input-coins").performTextReplacement("37")
-        rule.onNodeWithText("Refresh").performClick()
+        rule.onNodeWithText("Refresh").performScrollTo().assertIsDisplayed().performClick()
         rule.onNodeWithTag("memory-script-input-coins").assertTextContains("37")
-        rule.onNodeWithTag("memory-script-apply").performClick()
+        rule.onNodeWithTag("memory-script-apply").assertIsEnabled().assertIsDisplayed().performClick()
         rule.runOnIdle {
             assertEquals("37", applied.single().first["coins"])
             assertEquals(listOf("10"), applied.single().second)
@@ -415,7 +433,9 @@ class MemoryScriptsComposeTest {
         openChooser()
         rule.onNodeWithText("Quick Actions").performClick()
         rule.onNodeWithText("Coins").assertIsDisplayed()
-        rule.onNodeWithTag("memory-builder-value").performScrollTo().assertIsDisplayed()
+        rule.onNodeWithTag("memory-builder-targets")
+            .performScrollToNode(hasTestTag("memory-builder-value"))
+        rule.onNodeWithTag("memory-builder-value").assertIsDisplayed()
     }
 
     @Test fun builderCreatesQuickActionFromBookmarkWithoutExecutingOnSave() {
@@ -425,6 +445,7 @@ class MemoryScriptsComposeTest {
             savedVariables = listOf(SavedVariableRow("coin-id", "Coins", "coins", true)),
         )
         var generated: MemoryScriptBuilderDraft? = null
+        val finishGeneration = CompletableDeferred<Unit>()
         var saved: String? = null
         var completeSave: ((Boolean) -> Unit)? = null
         val sampleJson = Json.parseToJsonElement(sample) as JsonObject
@@ -438,11 +459,10 @@ class MemoryScriptsComposeTest {
             ): List<MemoryScriptBuilderAction> = bookmarks.map {
                 MemoryScriptBuilderAction(it.id, it.label, originalTarget = target)
             }
-            override fun generateMemoryScript(
-                draft: MemoryScriptBuilderDraft, onReady: (String?, String?) -> Unit,
-            ) {
+            override suspend fun generateMemoryScript(draft: MemoryScriptBuilderDraft): String {
                 generated = draft
-                onReady(sample, null)
+                finishGeneration.await()
+                return JsonObject(sampleJson + ("id" to JsonPrimitive(draft.id))).toString()
             }
             override fun saveMemoryScript(
                 document: String, replacingId: String?, onComplete: (Boolean) -> Unit,
@@ -459,12 +479,29 @@ class MemoryScriptsComposeTest {
         rule.onAllNodesWithText("New script")[0].performClick()
         rule.onNodeWithText("Quick Actions").performClick()
         rule.onNodeWithTag("memory-builder-name").performTextReplacement("Add coins")
-        rule.onNodeWithText("Add target").performClick()
+        rule.onNodeWithTag("memory-builder-targets")
+            .performScrollToNode(hasText("Add target"))
+        rule.onNodeWithText("Add target").assertIsDisplayed().performClick()
+        rule.onNodeWithText("Add selected").assertIsDisplayed().assertIsNotEnabled()
+        rule.onNodeWithTag("memory-bookmark-search").performTextReplacement("coins")
         rule.onNodeWithText("Coins").performClick()
-        rule.onNodeWithText("Add selected").performClick()
-        rule.onNodeWithText("Add").performClick()
+        rule.onNodeWithTag("memory-bookmark-search").performTextReplacement("not-a-bookmark")
+        rule.onNodeWithText("Add selected").assertIsDisplayed().assertIsEnabled().performClick()
+        rule.onNodeWithTag("memory-builder-targets")
+            .performScrollToNode(hasTestTag("memory-builder-value"))
+        rule.onNodeWithText("Add").performScrollTo().performClick()
         rule.onNodeWithText("Save").performClick()
+        rule.onNodeWithTag("memory-builder-targets")
+            .performScrollToNode(hasTestTag("memory-builder-name"))
         rule.onNodeWithTag("memory-builder-name").assertIsNotEnabled()
+        rule.runOnIdle {
+            assertEquals(null, saved)
+            finishGeneration.complete(Unit)
+        }
+        rule.waitUntil(5_000) { saved != null }
+        rule.onNodeWithTag("memory-builder-name").assertIsNotEnabled()
+        rule.onNodeWithTag("memory-builder-targets")
+            .performScrollToNode(hasTestTag("memory-builder-value"))
         rule.onNodeWithTag("memory-builder-value").assertIsNotEnabled()
         rule.onNodeWithText("Subtract").assertIsNotEnabled()
         rule.runOnIdle {
@@ -472,7 +509,10 @@ class MemoryScriptsComposeTest {
             assertEquals("add", generated?.actions?.single()?.operation)
             assertEquals("coin-id", generated?.actions?.single()?.bookmarkId)
             assertEquals(target, generated?.actions?.single()?.originalTarget)
-            assertEquals(sample, saved)
+            assertEquals(
+                JsonObject(sampleJson + ("id" to JsonPrimitive(generated!!.id))).toString(),
+                saved,
+            )
             completeSave?.invoke(true)
         }
     }
@@ -535,6 +575,7 @@ class MemoryScriptsComposeTest {
         rule.onAllNodesWithText("New script")[0].performClick()
         rule.onNodeWithText("JSON Editor").performClick()
         rule.onNodeWithTag("memory-script-editor").performTextReplacement(sample)
+        waitForJsonValidation()
         rule.onNodeWithText("Save").performClick()
         val editor = rule.onNodeWithTag("memory-script-editor").assertIsDisplayed()
             .fetchSemanticsNode()

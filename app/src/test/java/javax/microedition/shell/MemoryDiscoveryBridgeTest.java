@@ -48,6 +48,32 @@ public class MemoryDiscoveryBridgeTest {
 	}
 
 	@Test
+	public void statusSnapshotPreservesLifecycleWithoutCopyingClassRegistry() {
+		long token = 253L;
+		ClassLoader loader = getClass().getClassLoader();
+		Fixture root = new Fixture();
+		MemoryDiscoveryBridge.install(token, loader);
+		try {
+			assertFalse(MemoryDiscoveryBridge.snapshotWithoutClasses(token).isAvailable());
+			MemoryDiscoveryBridge.tailSeen(Fixture.class);
+			MemoryDiscoveryBridge.setMidletRoot(token, root);
+			MemoryDiscoveryBridge.Snapshot full = MemoryDiscoveryBridge.snapshot(token);
+			MemoryDiscoveryBridge.Snapshot status = MemoryDiscoveryBridge.snapshotWithoutClasses(token);
+			assertTrue(status.isAvailable());
+			assertEquals(full.token(), status.token());
+			assertSame(full.loader(), status.loader());
+			assertSame(full.root(), status.root());
+			assertEquals(full.failure(), status.failure());
+			assertEquals(1, full.classes().length);
+			assertEquals(0, status.classes().length);
+			assertEquals(1, MemoryDiscoveryBridge.snapshot(token).classes().length);
+		} finally {
+			MemoryDiscoveryBridge.close(token);
+		}
+		assertFalse(MemoryDiscoveryBridge.snapshotWithoutClasses(token).isAvailable());
+	}
+
+	@Test
 	public void guestDisplayableRootIgnoresParentOwnedReplacement() {
 		long token = 252L;
 		ClassLoader loader = getClass().getClassLoader();

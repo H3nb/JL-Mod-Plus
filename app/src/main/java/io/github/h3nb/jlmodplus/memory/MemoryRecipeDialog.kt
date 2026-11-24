@@ -60,6 +60,8 @@ internal fun MemoryRecipeDialog(
                     style = MaterialTheme.typography.bodySmall,
                 )
                 OutlinedTextField(
+                    colors = memoryEditorFieldColors(),
+                    shape = MaterialTheme.shapes.medium,
                     value = generatedValue,
                     onValueChange = {
                         if (it.length <= 32) {

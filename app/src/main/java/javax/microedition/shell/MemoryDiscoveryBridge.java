@@ -154,12 +154,22 @@ public final class MemoryDiscoveryBridge {
 
 	/** Returns a detached snapshot. No caller may hold the registry lock during guest reads. */
 	public static Snapshot snapshot(long token) {
+		return snapshot(token, true);
+	}
+
+	/** Lifecycle and root state for callers that do not enumerate initialized classes. */
+	public static Snapshot snapshotWithoutClasses(long token) {
+		return snapshot(token, false);
+	}
+
+	private static Snapshot snapshot(long token, boolean includeClasses) {
 		synchronized (LOCK) {
 			if (token == 0L || activeToken != token) {
 				return new Snapshot(token, null, null, null, new Class<?>[0], false,
 						"Managed runtime token is not active");
 			}
-			Class<?>[] classes = Arrays.copyOf(TAIL_CLASSES, tailCount);
+			Class<?>[] classes = includeClasses
+					? Arrays.copyOf(TAIL_CLASSES, tailCount) : new Class<?>[0];
 			Object displayableRoot =
 					currentDisplayableRoot == null ? null : currentDisplayableRoot.get();
 			boolean rootReady = midletRoot != null;

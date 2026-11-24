@@ -25,7 +25,9 @@ The October 2026 UI reassessment prioritizes these findings:
 The default opacity, typography and icon density are presentation choices, not
 measured performance improvements. This work does not
 change global application typography, Java ME font rendering, engine operations,
-freeze timing or polling cadence. It makes no frame-time or allocation claim.
+freeze execution timing or live value polling cadence. Script Freeze status is
+refreshed on the existing nominal 250 ms foreground tick, with the existing
+single-flight guard. It makes no frame-time or allocation claim.
 
 ## Layout and interaction contracts
 
@@ -75,7 +77,7 @@ freeze timing or polling cadence. It makes no frame-time or allocation claim.
   eligible actions. Both use More for genuine overflow and avoid icon-only
   command strips. Inspect still requires exactly one eligible target.
   Undo scan names the search-history operation, not a memory-write rollback.
-  More adapts to window width and font scale.
+  More uses a bounded, scrollable action list that accommodates long labels.
 - Search retains its select-page checkbox, limited to the current result page
   (up to 100 candidates). Saved also has a select-all checkbox in
   its toolbar and a checkbox on every row; long-press remains an optional
@@ -87,19 +89,22 @@ freeze timing or polling cadence. It makes no frame-time or allocation claim.
   Batch Edit remains limited to compatible session-only Watch entries; mixed
   selections support Remove. The stable top row preserves selection/count affordances.
 - Place result counts and scan controls above the scrolling results, while
-  target provenance remains with its row or Inspector. The workspace, header,
-  data viewport and footer must respect the user's opacity setting without
-  independent opaque layers obscuring the live game. Keep numeric values legible
+  target provenance remains with its row or Inspector. The workspace background
+  respects the user's opacity setting; compact header, footer, data rows and
+  interactive groups use opaque theme surfaces to preserve
+  contrast without covering unused viewport space. Keep numeric values legible
   and truncate only secondary source summaries. Technical values and identifiers
   use a readable monospace style; prose uses the normal Material text family.
-  A single-row selected-action bar overlays the list rather than resizing
-  its viewport, with width-sensitive overflow and enough scroll padding
-  to reach the last result even in short landscape windows.
+  Selected actions occupy a measured row directly above the persistent dock,
+  sharing its tonal surface. The lazy list uses the remaining height rather
+  than estimated overlay padding. The first and last data rows round the group;
+  partial page/list selection uses an indeterminate select-all checkbox.
 - Input dialogs use one scroll owner. In wide windows, title/controls and keypad
   sit side by side. Otherwise they stack. The title participates in body scrolling;
   confirmation/cancel remain outside it. Large fonts favor scrolling over smaller keys.
 - Compose owns selection, cursor and horizontal text scrolling. The custom numeric
-  keypad remains the input method; `InterceptPlatformTextInput` suppresses the Android
+  keypad remains the input method; neutral entry keys and tonal editing keys
+  distinguish the key roles. `InterceptPlatformTextInput` suppresses the Android
   IME without replacing text-editing semantics. Existing value validation still applies.
 - Inspector is a snapshot. Initial positioning uses actual row size; passive changes
   must not repeatedly move the reader back to the anchor. Refresh remains explicit.
@@ -128,7 +133,10 @@ but their Bookmark can always be renamed or removed.
 
 Boolean is explicit true/false; numeric Auto excludes it. Inspector remains a
 checked snapshot in a contextual detail page. Scroll state survives tab and
-width changes. Primary tabs use short directional motion.
+width changes. Primary tabs switch directly without page transitions, retaining a tonal selected surface.
+Tab widths accommodate localized labels; icons are omitted in narrow space
+and the tab row can scroll if labels need more room. Search choices and Script
+Builder targets include their heading within the tonal group for contrast.
 
 
 ## Action Script authoring
@@ -141,7 +149,9 @@ width changes. Primary tabs use short directional motion.
   preloads them into the visual builder, without scanning or executing anything.
 - A builder with no targets links directly to Search and Saved. Leaving for either
   destination preserves the in-session builder draft; returning to Scripts resumes it.
-  The Bookmark picker also provides Open Saved when no eligible targets exist.
+  The Bookmark picker uses the shared inline search, matches names and paths,
+  preserves selections across filters and provides Open Saved when no matching
+  or eligible targets exist. One bounded lazy list owns its scrolling.
 - The visual builder never silently guesses a target. It captures verified rooted
   locators and must keep save-time revalidation, empty initial write values, and
   lossless JSON round-trip checks. JSON Editor remains independent of Bookmarks
@@ -154,7 +164,13 @@ width changes. Primary tabs use short directional motion.
   a matching saved script opens its detail; otherwise the draft remains editable.
   Show active Freeze state and distinguish last-read values from proposed edits.
 - An open Script subpage replaces tabs with the shared Back/title/Minimize header;
-  Peek remains global. Script type choices use concise icon-supported rows.
+  Peek remains global. Script type choices use concise icon-supported rows grouped on a themed surface.
+  Builder targets are lazy rows, and optional fields appear without size animations.
+  JSON input is immediate; full validation runs off the UI thread after 100 ms
+  without edits. Save requires the latest document's successful validation and
+  reuses its validated ID; storage still performs authoritative validation. Builder generation and restoration
+  run on a worker using the captured Bookmark catalog, with completion scoped to
+  the active editor.
   The visual builder puts targets and their operations first, keeps description
   and form limits optional, and pins the primary Save action outside the
   scrolling form. JSON editor likewise keeps Paste and Save reachable beside
@@ -194,18 +210,24 @@ Hidden bodies have no actionable semantics; a pointer shield and key handling pr
 editing invisible content. Peek is a view-only action, not touch-through game control.
 Tooltips dismiss when Peek starts. Input dialogs keep opaque surfaces for legibility.
 
-The workspace footer sits over the same user-selected translucent backdrop
-without painting a second surface, which would compound opacity. Its controls
-respect the system-safe bounds. Dialog footers remain transparent; the workspace
+The workspace header and footer paint edge-to-edge; safe insets belong to their controls.
+The workspace footer uses the same solid themed chrome as the header. The body
+and dock consume bottom system/IME insets once in layout, below a stable
+full-window size calculation. The dock is measured as part of the body layout rather than reserved by a fixed height.
+Pagination reserves both navigation controls before allocating room to the count.
+Script forms pin Apply below the scrollable details; opening the Bookmark picker
+releases the parent text field and its IME.
+Both move together above the native IME without
+additional editor animation. Dialog footers remain transparent; the workspace
 dock disappears during Peek. Keep dialog surfaces solid so users can safely
 inspect or edit inputs.
 
-Panel opacity controls the workspace backdrop, including its header, data
-viewport and footer, without fading text or icons. The initial default is 72%,
+Panel opacity controls the workspace backdrop without fading text, icons or
+interactive surfaces. The initial default is 72%,
 adjustable from 0% to 100%; previously saved preferences remain unchanged.
-At 0%, the main backdrop is transparent and the game remains visible behind
-editor controls. The header and bottom navigation receive a small local backing
-as opacity decreases, keeping controls legible without obscuring the data viewport.
+At 0%, the main backdrop is transparent and the game remains visible in the
+unoccupied workspace. The header and bottom navigation use stable themed surfaces so game text cannot
+compete with editor navigation.
 At 100%, the backdrop is opaque. Local action surfaces may remain
 solid for usability, but must not cover the entire data viewport. Do not blur the
 live game: players need to read its numbers while comparing results. Peek still
@@ -236,7 +258,7 @@ changes; screenshot comparison alone cannot prove gestures, IME suppression or a
 ## Separate follow-up work
 
 Audit other app-owned menus/dialogs against their own workflows before extending
-these changes. Profile runtime UI work before proposing performance optimizations.
+these changes. Frame pacing and input latency still require profiling on a device.
 Validate long translations, TalkBack traversal and physical-device rotation/IME
 behavior independently of host-rendered previews. Keep MIDlet font settings a
 separate compatibility concern.
