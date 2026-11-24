@@ -77,7 +77,7 @@ single-flight guard. It makes no frame-time or allocation claim.
   eligible actions. Both use More for genuine overflow and avoid icon-only
   command strips. Inspect still requires exactly one eligible target.
   Undo scan names the search-history operation, not a memory-write rollback.
-  More adapts to window width and font scale.
+  More uses a bounded, scrollable action list that accommodates long labels.
 - Search retains its select-page checkbox, limited to the current result page
   (up to 100 candidates). Saved also has a select-all checkbox in
   its toolbar and a checkbox on every row; long-press remains an optional

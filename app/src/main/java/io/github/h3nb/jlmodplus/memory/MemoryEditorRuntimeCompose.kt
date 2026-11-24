@@ -1735,33 +1735,18 @@ private fun RuntimeOverflowActionsDialog(
 ) {
     AlertDialog(
         onDismissRequest = onDismiss,
-        maxDialogWidth = 720.dp,
+        maxDialogWidth = 400.dp,
         text = {
-            BoxWithConstraints(Modifier.fillMaxWidth()) {
-                val twoColumns = maxWidth >= 520.dp * LocalDensity.current.fontScale.coerceAtLeast(1f)
-                val gap = 8.dp
-                val itemWidth = if (twoColumns) (maxWidth - gap) / 2 else maxWidth
-                FlowRow(
-                    horizontalArrangement = Arrangement.spacedBy(gap),
-                    verticalArrangement = Arrangement.spacedBy(4.dp),
-                ) {
-                    actions.forEach { action ->
-                        DropdownMenuItem(
-                            modifier = Modifier.width(itemWidth),
-                            text = {
-                                Text(
-                                    stringResource(action.label),
-                                    maxLines = 2,
-                                    overflow = TextOverflow.Ellipsis,
-                                )
-                            },
-                            leadingIcon = {
-                                Icon(painterResource(action.icon), contentDescription = null)
-                            },
-                            enabled = action.enabled,
-                            onClick = { onDismiss(); action.onClick() },
-                        )
-                    }
+            Column {
+                actions.forEach { action ->
+                    DropdownMenuItem(
+                        text = { Text(stringResource(action.label)) },
+                        leadingIcon = {
+                            Icon(painterResource(action.icon), contentDescription = null)
+                        },
+                        enabled = action.enabled,
+                        onClick = { onDismiss(); action.onClick() },
+                    )
                 }
             }
         },
