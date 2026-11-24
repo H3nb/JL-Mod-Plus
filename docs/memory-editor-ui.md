@@ -168,7 +168,9 @@ Builder targets include their heading within the tonal group for contrast.
   Builder targets are lazy rows, and optional fields appear without size animations.
   JSON input is immediate; full validation runs off the UI thread after 100 ms
   without edits. Save requires the latest document's successful validation and
-  reuses its validated ID; storage still performs authoritative validation.
+  reuses its validated ID; storage still performs authoritative validation. Builder generation and restoration
+  run on a worker using the captured Bookmark catalog, with completion scoped to
+  the active editor.
   The visual builder puts targets and their operations first, keeps description
   and form limits optional, and pins the primary Save action outside the
   scrolling form. JSON editor likewise keeps Paste and Save reachable beside
@@ -211,7 +213,8 @@ Tooltips dismiss when Peek starts. Input dialogs keep opaque surfaces for legibi
 The workspace header and footer paint edge-to-edge; safe insets belong to their controls.
 The workspace footer uses the same solid themed chrome as the header. The body
 and dock consume bottom system/IME insets once in layout, below a stable
-full-window size calculation. Both move together above the native IME without
+full-window size calculation. The dock is measured as part of the body layout rather than reserved by a fixed height.
+Both move together above the native IME without
 additional editor animation. Dialog footers remain transparent; the workspace
 dock disappears during Peek. Keep dialog surfaces solid so users can safely
 inspect or edit inputs.

@@ -790,7 +790,7 @@ class MemoryEditorAdaptiveComposeTest {
             context.getString(R.string.memory_editor_select_result_value)
         ).performClick()
         rule.onNodeWithContentDescription(
-            context.getString(R.string.memory_editor_inspector)
+            context.getString(R.string.memory_editor_inspect_memory)
         ).assertIsEnabled().performClick()
         rule.runOnIdle { assertEquals(1L, inspectedId) }
     }

@@ -39,6 +39,7 @@ import androidx.compose.runtime.Composable
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
+import androidx.compose.runtime.rememberCoroutineScope
 import androidx.compose.runtime.saveable.rememberSaveable
 import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
@@ -54,6 +55,8 @@ import androidx.compose.ui.unit.dp
 import io.github.h3nb.jlmodplus.R
 import io.github.h3nb.jlmodplus.ui.InlineSearchField
 import java.util.UUID
+import kotlinx.coroutines.CancellationException
+import kotlinx.coroutines.launch
 import kotlinx.serialization.json.JsonObject
 
 internal enum class MemoryScriptBuilderMode(val recipeMode: String) {
@@ -173,6 +176,9 @@ internal fun MemoryScriptBuilderScreen(
     modifier: Modifier = Modifier,
 ) {
     val saveFailedText = stringResource(R.string.memory_scripts_save_failed)
+    val scope = rememberCoroutineScope()
+    var generating by remember(draft.id) { mutableStateOf(false) }
+    val locked = saving || generating
     var picking by remember { mutableStateOf(false) }
     var preview by remember(draft) { mutableStateOf<String?>(null) }
     var error by remember { mutableStateOf<String?>(null) }
@@ -180,10 +186,19 @@ internal fun MemoryScriptBuilderScreen(
         mutableStateOf(draft.description.isNotBlank())
     }
     fun generate(onReady: (String) -> Unit) {
+        if (locked) return
+        generating = true
         error = null
-        actions.generateMemoryScript(draft) { document, failure ->
-            if (document == null) error = failure ?: "Could not generate script"
-            else onReady(document)
+        scope.launch {
+            try {
+                onReady(actions.generateMemoryScript(draft))
+            } catch (cancelled: CancellationException) {
+                throw cancelled
+            } catch (failure: Exception) {
+                error = failure.message ?: saveFailedText
+            } finally {
+                generating = false
+            }
         }
     }
     val section = when (draft.mode) {
@@ -215,12 +230,12 @@ internal fun MemoryScriptBuilderScreen(
                             value = draft.name,
                             onValueChange = { if (it.length <= 80) onDraft(draft.copy(name = it)) },
                             label = { Text(stringResource(R.string.memory_builder_name)) },
-                            enabled = !saving,
+                            enabled = !locked,
                             singleLine = true, modifier = Modifier.fillMaxWidth()
                                 .testTag("memory-builder-name"),
                         )
                         if (!showDescription && draft.description.isBlank()) {
-                            TextButton(onClick = { showDescription = true }, enabled = !saving) {
+                            TextButton(onClick = { showDescription = true }, enabled = !locked) {
                                 Text(stringResource(R.string.memory_builder_add_description))
                             }
                         }
@@ -231,7 +246,7 @@ internal fun MemoryScriptBuilderScreen(
                                 value = draft.description,
                                 onValueChange = { if (it.length <= 2048) onDraft(draft.copy(description = it)) },
                                 label = { Text(stringResource(R.string.memory_scripts_description)) },
-                                enabled = !saving,
+                                enabled = !locked,
                                 minLines = 1, maxLines = 3, modifier = Modifier.fillMaxWidth(),
                             )
                         }
@@ -249,7 +264,7 @@ internal fun MemoryScriptBuilderScreen(
                             style = MaterialTheme.typography.titleMedium,
                             modifier = Modifier.align(Alignment.CenterVertically))
                         if (draft.actions.isNotEmpty()) {
-                            TextButton(enabled = !saving, onClick = { picking = true }) {
+                            TextButton(enabled = !locked, onClick = { picking = true }) {
                                 Icon(painterResource(R.drawable.ic_add), contentDescription = null)
                                 Spacer(Modifier.width(6.dp))
                                 Text(stringResource(R.string.memory_builder_add_target))
@@ -263,7 +278,7 @@ internal fun MemoryScriptBuilderScreen(
                                 color = MaterialTheme.colorScheme.onSurfaceVariant,
                                 style = MaterialTheme.typography.bodyMedium)
                             FilledTonalButton(
-                                enabled = !saving,
+                                enabled = !locked,
                                 onClick = { picking = true },
                                 modifier = Modifier.fillMaxWidth().heightIn(min = 48.dp),
                             ) {
@@ -272,10 +287,10 @@ internal fun MemoryScriptBuilderScreen(
                                 Text(stringResource(R.string.memory_builder_add_target))
                             }
                             FlowRow(horizontalArrangement = Arrangement.spacedBy(8.dp)) {
-                                TextButton(onClick = { actions.setVariablesTab(false) }) {
+                                TextButton(enabled = !locked, onClick = { actions.setVariablesTab(false) }) {
                                     Text(stringResource(R.string.memory_builder_find_values))
                                 }
-                                TextButton(onClick = { actions.setVariablesTab(true) }) {
+                                TextButton(enabled = !locked, onClick = { actions.setVariablesTab(true) }) {
                                     Text(stringResource(R.string.memory_builder_open_saved))
                                 }
                             }
@@ -295,7 +310,7 @@ internal fun MemoryScriptBuilderScreen(
                             Text(item.label, modifier = Modifier.weight(1f),
                                 maxLines = 2, overflow = TextOverflow.Ellipsis,
                                 style = MaterialTheme.typography.titleSmall)
-                            IconButton(enabled = !saving, onClick = {
+                            IconButton(enabled = !locked, onClick = {
                                 onDraft(draft.copy(actions = draft.actions.filterNot {
                                     it.bookmarkId == item.bookmarkId
                                 }))
@@ -303,7 +318,7 @@ internal fun MemoryScriptBuilderScreen(
                                 Icon(painterResource(R.drawable.ic_delete),
                                     contentDescription = stringResource(R.string.memory_editor_remove),
                                     tint = MaterialTheme.colorScheme.onSurfaceVariant.copy(
-                                        alpha = if (saving) 0.38f else 1f))
+                                        alpha = if (locked) 0.38f else 1f))
                             }
                         }
                         when (draft.mode) {
@@ -316,14 +331,14 @@ internal fun MemoryScriptBuilderScreen(
                                         if (changed.length <= 80) onDraft(draft.updateAction(item.bookmarkId) { it.copy(label = changed) })
                                     },
                                     label = { Text(stringResource(R.string.memory_builder_field_label)) },
-                                    enabled = !saving,
+                                    enabled = !locked,
                                     singleLine = true, modifier = Modifier.fillMaxWidth(),
                                 )
                                 var showLimits by rememberSaveable(draft.id, item.bookmarkId) {
                                     mutableStateOf(item.min.isNotBlank() || item.max.isNotBlank())
                                 }
                                 TextButton(onClick = { showLimits = !showLimits },
-                                    enabled = !saving) {
+                                    enabled = !locked) {
                                     Text(stringResource(R.string.memory_builder_limits))
                                     Icon(painterResource(
                                         if (showLimits) R.drawable.ic_keyboard_arrow_up
@@ -340,7 +355,7 @@ internal fun MemoryScriptBuilderScreen(
                                                 if (changed.length <= 20) onDraft(draft.updateAction(item.bookmarkId) { it.copy(min = changed) })
                                             },
                                             label = { Text(stringResource(R.string.memory_builder_min)) },
-                                            enabled = !saving,
+                                            enabled = !locked,
                                             singleLine = true, modifier = Modifier.fillMaxWidth(),
                                         )
                                         TextField(
@@ -351,7 +366,7 @@ internal fun MemoryScriptBuilderScreen(
                                                 if (changed.length <= 20) onDraft(draft.updateAction(item.bookmarkId) { it.copy(max = changed) })
                                             },
                                             label = { Text(stringResource(R.string.memory_builder_max)) },
-                                            enabled = !saving,
+                                            enabled = !locked,
                                             singleLine = true, modifier = Modifier.fillMaxWidth(),
                                         )
                                     }
@@ -370,7 +385,7 @@ internal fun MemoryScriptBuilderScreen(
                                             }
                                             FilterChip(
                                                 selected = item.operation == operation,
-                                                enabled = !saving,
+                                                enabled = !locked,
                                                 onClick = { onDraft(draft.updateAction(item.bookmarkId) { it.copy(operation = operation) }) },
                                                 label = { Text(stringResource(label)) },
                                             )
@@ -389,7 +404,7 @@ internal fun MemoryScriptBuilderScreen(
                                             R.string.memory_builder_keep_at
                                         else R.string.memory_builder_amount,
                                     )) },
-                                    enabled = !saving,
+                                    enabled = !locked,
                                     singleLine = true, modifier = Modifier.fillMaxWidth()
                                         .testTag("memory-builder-value"),
                                 )
@@ -402,13 +417,13 @@ internal fun MemoryScriptBuilderScreen(
         Surface(color = MaterialTheme.colorScheme.surfaceContainer) {
             Row(Modifier.fillMaxWidth().padding(horizontal = 16.dp, vertical = 4.dp), horizontalArrangement = Arrangement.spacedBy(8.dp),
                 verticalAlignment = Alignment.CenterVertically) {
-                TextButton(enabled = !saving && draft.actions.isNotEmpty(),
+                TextButton(enabled = !locked && draft.actions.isNotEmpty(),
                     onClick = { generate { preview = it } }) {
                     Text(stringResource(R.string.memory_builder_view_json))
                 }
                 Button(
                     modifier = Modifier.weight(1f).heightIn(min = 48.dp),
-                    enabled = !saving && draft.name.isNotBlank() && draft.actions.isNotEmpty(),
+                    enabled = !locked && draft.name.isNotBlank() && draft.actions.isNotEmpty(),
                     onClick = {
                         generate { document ->
                             onSaveScript(

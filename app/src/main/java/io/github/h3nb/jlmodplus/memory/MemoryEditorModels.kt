@@ -607,10 +607,9 @@ internal interface MemoryEditorActions {
     fun refreshMemoryScripts() = Unit
     fun captureMemoryScriptBuilderActions(bookmarks: List<SavedVariableRow>): List<MemoryScriptBuilderAction> =
         error("Script Builder unavailable")
-    fun generateMemoryScript(
-        draft: MemoryScriptBuilderDraft, onReady: (String?, String?) -> Unit,
-    ) = onReady(null, "Script Builder unavailable")
-    fun restoreMemoryScriptBuilder(document: String): MemoryScriptBuilderDraft? = null
+    suspend fun generateMemoryScript(draft: MemoryScriptBuilderDraft): String =
+        error("Script Builder unavailable")
+    suspend fun restoreMemoryScriptBuilder(document: String): MemoryScriptBuilderDraft? = null
     fun saveMemoryScript(document: String, replacingId: String?,
                          onComplete: (Boolean) -> Unit) = onComplete(false)
     fun deleteMemoryScript(id: String, onComplete: (Boolean) -> Unit) = onComplete(false)

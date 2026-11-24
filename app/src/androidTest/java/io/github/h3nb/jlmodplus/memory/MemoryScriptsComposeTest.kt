@@ -453,11 +453,9 @@ class MemoryScriptsComposeTest {
             ): List<MemoryScriptBuilderAction> = bookmarks.map {
                 MemoryScriptBuilderAction(it.id, it.label, originalTarget = target)
             }
-            override fun generateMemoryScript(
-                draft: MemoryScriptBuilderDraft, onReady: (String?, String?) -> Unit,
-            ) {
+            override suspend fun generateMemoryScript(draft: MemoryScriptBuilderDraft): String {
                 generated = draft
-                onReady(JsonObject(sampleJson + ("id" to JsonPrimitive(draft.id))).toString(), null)
+                return JsonObject(sampleJson + ("id" to JsonPrimitive(draft.id))).toString()
             }
             override fun saveMemoryScript(
                 document: String, replacingId: String?, onComplete: (Boolean) -> Unit,

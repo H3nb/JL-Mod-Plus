@@ -397,7 +397,9 @@ internal fun MemoryEditorRuntimeRoot(
                         600.dp * LocalDensity.current.fontScale.coerceAtLeast(1f)
                     val compactResults = wideWorkspace
                     val showLabels = wideWorkspace
-                    val showTitle = maxHeight >= 360.dp || LocalDensity.current.fontScale <= 1.3f
+                    val shortWide = maxHeight < 360.dp && maxWidth >= 480.dp
+                    val showTitle = !shortWide &&
+                        (maxHeight >= 360.dp || LocalDensity.current.fontScale <= 1.3f)
                     val inspectorPage = tab == MemoryEditorTab.INSPECTOR
                     val detailTitle = when {
                         inspectorPage -> stringResource(R.string.memory_editor_inspector)
@@ -416,95 +418,97 @@ internal fun MemoryEditorRuntimeRoot(
                     }
                     // Read animated bottom insets during layout, not in the window-size
                     // subcomposition. Both the editor and dock consume them once.
-                    Box(
+                    Column(
                         Modifier.fillMaxSize().windowInsetsPadding(
                             memoryEditorWorkspaceInsets().only(WindowInsetsSides.Bottom),
                         ),
                     ) {
-                        Column(
-                            Modifier.fillMaxSize().padding(bottom = 48.dp)
-                                .alpha(if (overlay.peeking) 0f else 1f)
-                                .then(if (overlay.peeking) Modifier.clearAndSetSemantics {} else Modifier),
-                        ) {
-                            Column(Modifier.fillMaxWidth().background(controlsBackdrop).windowInsetsPadding(
-                                memoryEditorWorkspaceInsets().union(WindowInsets.safeGestures)
-                                    .only(WindowInsetsSides.Horizontal),
-                            )) {
-                                RuntimeMemoryHeader(
-                                    state = state, inlineNavigation = showLabels || !showTitle,
-                                    onTab = selectTab, onMinimize = closeWorkspace,
-                                    navigationLocked = scriptSavePending,
-                                    showTitle = showTitle, detailTitle = detailTitle,
-                                    onDetailBack = {
-                                        if (pendingScriptSave == null) when {
-                                            inspectorPage -> actions.closeInspector()
-                                            builderMode != null -> backFromScriptBuilder()
-                                            scriptEditing -> backFromScriptEditor()
-                                            choosingScriptType -> {
-                                                val fromSaved = scriptTargets.isNotEmpty()
-                                                choosingScriptType = false
-                                                scriptTargets = emptyList()
-                                                if (fromSaved) actions.setVariablesTab(true)
-                                            }
-                                            selectedScriptId != null -> selectedScriptId = null
-                                        }
-                                    },
-                                )
-                            }
-                            if (state.busy) RuntimeOperationStrip(state, actions)
-                            state.message?.takeIf(String::isNotBlank)?.let {
-                                RuntimeMessage(it, state.messageIsError)
-                            }
-                            // A live workspace changes destination immediately; keep only the active page mounted.
-                            Box(
-                                modifier = Modifier.weight(1f).fillMaxWidth()
-                                    .windowInsetsPadding(memoryEditorWorkspaceInsets().only(WindowInsetsSides.Horizontal))
-                                    .clipToBounds(),
+                        Box(Modifier.weight(1f).fillMaxWidth()) {
+                            Column(
+                                Modifier.fillMaxSize()
+                                    .alpha(if (overlay.peeking) 0f else 1f)
+                                    .then(if (overlay.peeking) Modifier.clearAndSetSemantics {} else Modifier),
                             ) {
-                                when (tab) {
-                                    MemoryEditorTab.RESULTS -> RuntimeSearchResultsTab(
-                                        state, actions, inspectSelected, relinkingBookmarkId,
-                                        { relinkingBookmarkId = null }, resultsListState,
-                                        compactResults, Modifier.fillMaxSize(),
-                                    )
-                                    MemoryEditorTab.VARIABLES -> RuntimeVariablesTab(
-                                        state, actions, listEntries, listSelection,
-                                        { listSelection = it },
-                                        { id ->
-                                            relinkingBookmarkId = id
-                                            actions.setVariablesTab(false)
+                                Column(Modifier.fillMaxWidth().background(controlsBackdrop).windowInsetsPadding(
+                                    memoryEditorWorkspaceInsets().union(WindowInsets.safeGestures)
+                                        .only(WindowInsetsSides.Horizontal),
+                                )) {
+                                    RuntimeMemoryHeader(
+                                        state = state, inlineNavigation = showLabels || shortWide || !showTitle,
+                                        onTab = selectTab, onMinimize = closeWorkspace,
+                                        navigationLocked = scriptSavePending,
+                                        showTitle = showTitle, detailTitle = detailTitle,
+                                        onDetailBack = {
+                                            if (pendingScriptSave == null) when {
+                                                inspectorPage -> actions.closeInspector()
+                                                builderMode != null -> backFromScriptBuilder()
+                                                scriptEditing -> backFromScriptEditor()
+                                                choosingScriptType -> {
+                                                    val fromSaved = scriptTargets.isNotEmpty()
+                                                    choosingScriptType = false
+                                                    scriptTargets = emptyList()
+                                                    if (fromSaved) actions.setVariablesTab(true)
+                                                }
+                                                selectedScriptId != null -> selectedScriptId = null
+                                            }
                                         },
-                                        createScriptFromSaved,
-                                        variablesListState, compactResults, Modifier.fillMaxSize(),
-                                    )
-                                    MemoryEditorTab.SCRIPTS -> RuntimeScriptsTab(
-                                        state, actions, selectedScriptId,
-                                        { if (pendingScriptSave == null) selectedScriptId = it }, scriptDraftState,
-                                        { if (pendingScriptSave == null) setScriptDraft(it) },
-                                        scriptBuilderState, { if (pendingScriptSave == null) scriptBuilder = it },
-                                        scriptSavePending, saveScript,
-                                        choosingScriptType, { choosingScriptType = it },
-                                        scriptTargets, { scriptTargets = emptyList() },
-                                        Modifier.fillMaxSize(),
-                                    )
-                                    MemoryEditorTab.INSPECTOR -> RuntimeInspectorTab(
-                                        state, actions, Modifier.fillMaxSize(),
                                     )
                                 }
+                                if (state.busy) RuntimeOperationStrip(state, actions)
+                                state.message?.takeIf(String::isNotBlank)?.let {
+                                    RuntimeMessage(it, state.messageIsError)
+                                }
+                                // A live workspace changes destination immediately; keep only the active page mounted.
+                                Box(
+                                    modifier = Modifier.weight(1f).fillMaxWidth()
+                                        .windowInsetsPadding(memoryEditorWorkspaceInsets().only(WindowInsetsSides.Horizontal))
+                                        .clipToBounds(),
+                                ) {
+                                    when (tab) {
+                                        MemoryEditorTab.RESULTS -> RuntimeSearchResultsTab(
+                                            state, actions, inspectSelected, relinkingBookmarkId,
+                                            { relinkingBookmarkId = null }, resultsListState,
+                                            compactResults, Modifier.fillMaxSize(),
+                                        )
+                                        MemoryEditorTab.VARIABLES -> RuntimeVariablesTab(
+                                            state, actions, listEntries, listSelection,
+                                            { listSelection = it },
+                                            { id ->
+                                                relinkingBookmarkId = id
+                                                actions.setVariablesTab(false)
+                                            },
+                                            createScriptFromSaved,
+                                            variablesListState, compactResults, Modifier.fillMaxSize(),
+                                        )
+                                        MemoryEditorTab.SCRIPTS -> RuntimeScriptsTab(
+                                            state, actions, selectedScriptId,
+                                            { if (pendingScriptSave == null) selectedScriptId = it }, scriptDraftState,
+                                            { if (pendingScriptSave == null) setScriptDraft(it) },
+                                            scriptBuilderState, { if (pendingScriptSave == null) scriptBuilder = it },
+                                            scriptSavePending, saveScript,
+                                            choosingScriptType, { choosingScriptType = it },
+                                            scriptTargets, { scriptTargets = emptyList() },
+                                            Modifier.fillMaxSize(),
+                                        )
+                                        MemoryEditorTab.INSPECTOR -> RuntimeInspectorTab(
+                                            state, actions, Modifier.fillMaxSize(),
+                                        )
+                                    }
+                                }
                             }
+                            MemoryEditorPeekShield(overlay)
                         }
-                        MemoryEditorPeekShield(overlay)
-                        // The dock and body share the same IME-safe viewport.
-                        if (overlay.layers.isEmpty()) {
-                            Box(
-                                modifier = Modifier.align(Alignment.BottomCenter)
-                                    .fillMaxWidth()
-                                    .background(if (overlay.peeking) Color.Transparent else controlsBackdrop)
-                                    .windowInsetsPadding(
-                                        memoryEditorWorkspaceInsets().only(WindowInsetsSides.Horizontal),
-                                    )
-                                    .padding(memoryEditorBottomCornerPadding()),
-                            ) {
+                        // Measure the actual dock instead of reserving an estimated height.
+                        Box(
+                            modifier = Modifier.fillMaxWidth().heightIn(min = 48.dp)
+                                .background(if (overlay.peeking) Color.Transparent else controlsBackdrop)
+                                .windowInsetsPadding(
+                                    memoryEditorWorkspaceInsets().union(WindowInsets.safeGestures)
+                                        .only(WindowInsetsSides.Horizontal),
+                                )
+                                .padding(memoryEditorBottomCornerPadding()),
+                        ) {
+                            if (overlay.layers.isEmpty()) {
                                 MemoryEditorPeekDock(
                                     overlay = overlay,
                                     leadingContent = {
@@ -566,7 +570,8 @@ private fun RuntimeMemoryHeader(
         BoxWithConstraints(Modifier.fillMaxWidth()) {
             val titleMaxWidth = (maxWidth * 0.44f - 16.dp).coerceAtLeast(0.dp)
             Row(
-                Modifier.fillMaxWidth().padding(start = 16.dp, end = 4.dp, top = topPadding),
+                Modifier.fillMaxWidth().padding(memoryEditorBottomCornerPadding())
+                    .padding(start = 12.dp, top = topPadding),
                 verticalAlignment = Alignment.CenterVertically,
             ) {
                 if (detailTitle != null) {
@@ -1190,13 +1195,13 @@ private fun RuntimeVariablesTab(
     val selectionActions = listOf(
         RuntimeToolbarAction(R.drawable.ic_memory_editor_edit_value,
             R.string.memory_editor_edit, editEnabled, ::editSelection),
-        RuntimeToolbarAction(R.drawable.ic_auto_mode,
-            R.string.memory_scripts_create_from_bookmarks, canCreateScript) {
-            createScriptError = onCreateScript(scriptBookmarks)
-        },
         RuntimeToolbarAction(R.drawable.ic_memory_editor_inspector,
             R.string.memory_editor_inspect_memory, singleReady && !state.busy) {
             single?.let(::inspect)
+        },
+        RuntimeToolbarAction(R.drawable.ic_auto_mode,
+            R.string.memory_scripts_create_from_bookmarks, canCreateScript) {
+            createScriptError = onCreateScript(scriptBookmarks)
         },
         RuntimeToolbarAction(
             if ((single?.watch?.freezeMode ?: -1) >= 0) R.drawable.ic_unlock
@@ -1672,12 +1677,10 @@ private fun RuntimeSelectedActionBar(
             .padding(horizontal = 16.dp, vertical = 4.dp),
     ) {
         val fontScale = LocalDensity.current.fontScale.coerceAtLeast(1f)
-        val slots = when {
-            maxWidth >= 720.dp * fontScale -> 5
-            maxWidth >= 460.dp * fontScale -> 4
-            maxWidth >= 320.dp * fontScale -> 3
-            else -> 2
-        }
+        val iconOnly = maxWidth < 460.dp * fontScale
+        val slots = if (iconOnly) {
+            ((maxWidth - 92.dp * fontScale) / 52.dp).toInt().coerceIn(2, 5)
+        } else if (maxWidth >= 720.dp * fontScale) 5 else 4
         val available = actions.filter(RuntimeToolbarAction::enabled)
         val directCount = if (available.size > slots) slots - 1 else slots
         val direct = available.take(directCount)
@@ -1700,14 +1703,18 @@ private fun RuntimeSelectedActionBar(
                         stringResource(R.string.memory_scripts_title)
                     else -> description
                 }
-                TextButton(
-                    onClick = action.onClick, enabled = action.enabled,
-                    modifier = Modifier.heightIn(min = 48.dp)
-                        .semantics { contentDescription = description },
-                ) {
-                    Icon(painterResource(action.icon), contentDescription = null)
-                    Spacer(Modifier.width(4.dp))
-                    Text(compactLabel, maxLines = 1)
+                if (iconOnly) {
+                    RuntimeActionIcon(action.icon, action.label, action.enabled, action.onClick)
+                } else {
+                    TextButton(
+                        onClick = action.onClick, enabled = action.enabled,
+                        modifier = Modifier.heightIn(min = 48.dp)
+                            .semantics { contentDescription = description },
+                    ) {
+                        Icon(painterResource(action.icon), contentDescription = null)
+                        Spacer(Modifier.width(4.dp))
+                        Text(compactLabel, maxLines = 1)
+                    }
                 }
             }
             if (overflow.isNotEmpty()) RuntimeActionIcon(

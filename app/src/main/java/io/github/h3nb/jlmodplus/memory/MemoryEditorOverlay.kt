@@ -375,7 +375,8 @@ internal fun MemoryEditorDialog(
                         val peekGutter = 48.dp + 8.dp +
                             memoryEditorBottomCornerPadding()
                                 .calculateRightPadding(LocalLayoutDirection.current)
-                        val sidePeek = maxWidth - peekGutter * 2 >= minOf(maxDialogWidth, 600.dp)
+                        val sidePeek = maxWidth >= 600.dp &&
+                            maxWidth - peekGutter * 2 >= minOf(maxDialogWidth, 480.dp)
                         val dialogMaxWidth = if (sidePeek) {
                             minOf(maxDialogWidth, maxWidth - peekGutter * 2)
                         } else maxDialogWidth
@@ -503,18 +504,13 @@ private fun applyMemoryEditorWindowState(
     val targetDimAmount = if (peeking) 0f else baseline.dimAmount
     val targetDimEnabled = !peeking &&
         baseline.flags and WindowManager.LayoutParams.FLAG_DIM_BEHIND != 0
-    val currentFlags = window.attributes.flags
-    val currentDimEnabled = currentFlags and WindowManager.LayoutParams.FLAG_DIM_BEHIND != 0
-    if (currentDimEnabled != targetDimEnabled) {
-        if (targetDimEnabled) {
-            window.addFlags(WindowManager.LayoutParams.FLAG_DIM_BEHIND)
-        } else {
-            window.clearFlags(WindowManager.LayoutParams.FLAG_DIM_BEHIND)
-        }
-    }
     val attributes = window.attributes
-    if (attributes.dimAmount != targetDimAmount) {
+    val dimFlag = WindowManager.LayoutParams.FLAG_DIM_BEHIND
+    val flags = if (targetDimEnabled) attributes.flags or dimFlag
+        else attributes.flags and dimFlag.inv()
+    if (attributes.flags != flags || attributes.dimAmount != targetDimAmount) {
         window.attributes = attributes.apply {
+            this.flags = flags
             dimAmount = targetDimAmount
         }
     }
