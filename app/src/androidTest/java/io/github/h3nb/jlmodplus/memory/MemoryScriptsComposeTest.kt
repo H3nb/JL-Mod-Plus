@@ -32,6 +32,7 @@ import org.junit.Assert.assertTrue
 import kotlinx.serialization.json.Json
 import kotlinx.serialization.json.JsonArray
 import kotlinx.serialization.json.JsonObject
+import kotlinx.serialization.json.JsonPrimitive
 import org.junit.Rule
 import org.junit.Test
 
@@ -456,7 +457,7 @@ class MemoryScriptsComposeTest {
                 draft: MemoryScriptBuilderDraft, onReady: (String?, String?) -> Unit,
             ) {
                 generated = draft
-                onReady(sample, null)
+                onReady(JsonObject(sampleJson + ("id" to JsonPrimitive(draft.id))).toString(), null)
             }
             override fun saveMemoryScript(
                 document: String, replacingId: String?, onComplete: (Boolean) -> Unit,
@@ -489,7 +490,10 @@ class MemoryScriptsComposeTest {
             assertEquals("add", generated?.actions?.single()?.operation)
             assertEquals("coin-id", generated?.actions?.single()?.bookmarkId)
             assertEquals(target, generated?.actions?.single()?.originalTarget)
-            assertEquals(sample, saved)
+            assertEquals(
+                JsonObject(sampleJson + ("id" to JsonPrimitive(generated!!.id))).toString(),
+                saved,
+            )
             completeSave?.invoke(true)
         }
     }

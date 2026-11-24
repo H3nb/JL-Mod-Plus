@@ -165,7 +165,8 @@ Builder targets include their heading within the tonal group for contrast.
   Peek remains global. Script type choices use concise icon-supported rows grouped on a themed surface.
   Builder targets are lazy rows, and optional fields appear without size animations.
   JSON input is immediate; full validation runs off the UI thread after 100 ms
-  without edits. Save requires the latest document's successful validation.
+  without edits. Save requires the latest document's successful validation and
+  reuses its validated ID; storage still performs authoritative validation.
   The visual builder puts targets and their operations first, keeps description
   and form limits optional, and pins the primary Save action outside the
   scrolling form. JSON editor likewise keeps Paste and Save reachable beside

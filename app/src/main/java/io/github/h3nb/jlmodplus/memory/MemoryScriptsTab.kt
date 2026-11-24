@@ -34,6 +34,7 @@ import androidx.compose.material3.Text
 import androidx.compose.material3.TextButton
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.LaunchedEffect
+import androidx.compose.runtime.State
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
@@ -123,18 +124,20 @@ internal fun RuntimeScriptsTab(
     actions: MemoryEditorActions,
     selectedId: String?,
     onSelectedId: (String?) -> Unit,
-    draft: MemoryScriptDraft?,
+    draftState: State<MemoryScriptDraft?>,
     onDraft: (MemoryScriptDraft?) -> Unit,
-    builder: MemoryScriptBuilderDraft?,
+    builderState: State<MemoryScriptBuilderDraft?>,
     onBuilder: (MemoryScriptBuilderDraft?) -> Unit,
     saving: Boolean,
-    onSaveScript: (String, String?, (Boolean) -> Unit) -> Unit,
+    onSaveScript: (MemoryEditorPendingScriptSave, String?, (Boolean) -> Unit) -> Unit,
     choosingType: Boolean,
     onChoosingTypeChange: (Boolean) -> Unit,
     initialTargets: List<MemoryScriptBuilderAction>,
     onTargetsUsed: () -> Unit,
     modifier: Modifier = Modifier,
 ) {
+    val draft = draftState.value
+    val builder = builderState.value
     val context = LocalContext.current
     val saveErrorText = stringResource(R.string.memory_scripts_save_failed)
     val clipboardErrorText = stringResource(R.string.memory_scripts_clipboard_invalid)
@@ -244,70 +247,77 @@ internal fun RuntimeScriptsTab(
         }
         val validMetadata = parsed?.getOrNull()
         BoxWithConstraints(modifier.fillMaxSize()) {
-        val compactEditor = maxHeight < 280.dp
-        Column(Modifier.fillMaxSize().padding(horizontal = 16.dp),
-            verticalArrangement = Arrangement.spacedBy(if (compactEditor) 4.dp else 8.dp)) {
-            if (!compactEditor) Text(stringResource(R.string.memory_scripts_editor_hint),
-                style = MaterialTheme.typography.bodySmall,
-                color = MaterialTheme.colorScheme.onSurfaceVariant)
-            OutlinedTextField(
-                colors = memoryEditorFieldColors(),
-                shape = MaterialTheme.shapes.medium,
-                value = draft.text,
-                onValueChange = {
-                    if (!saving && it.toByteArray(Charsets.UTF_8).size <= MemoryEngineContract.MAX_RECIPE_BYTES) {
-                        onDraft(draft.copy(text = it))
-                        localError = null
-                    }
-                },
-                modifier = Modifier.fillMaxWidth().weight(1f).testTag("memory-script-editor"),
-                label = { Text("JSON") },
-                placeholder = { Text(stringResource(R.string.memory_scripts_paste_hint)) },
-                textStyle = MaterialTheme.typography.bodySmall.copy(fontFamily = FontFamily.Monospace),
-                enabled = !saving,
-                minLines = if (compactEditor) 2 else 6,
-            )
-            Row(verticalAlignment = Alignment.CenterVertically,
-                horizontalArrangement = Arrangement.spacedBy(8.dp),
-                modifier = Modifier.fillMaxWidth()) {
-                Text("$byteCount/${MemoryEngineContract.MAX_RECIPE_BYTES} B",
-                    style = MaterialTheme.typography.labelSmall, modifier = Modifier.weight(1f),
+            val compactEditor = maxHeight < 280.dp
+            Column(Modifier.fillMaxSize().padding(horizontal = 16.dp),
+                verticalArrangement = Arrangement.spacedBy(if (compactEditor) 4.dp else 8.dp)) {
+                if (!compactEditor) Text(stringResource(R.string.memory_scripts_editor_hint),
+                    style = MaterialTheme.typography.bodySmall,
                     color = MaterialTheme.colorScheme.onSurfaceVariant)
-                TextButton(enabled = !saving, onClick = {
-                    val clipboard = context.getSystemService(ClipboardManager::class.java)
-                    val clip = clipboard?.primaryClip
-                    val pasted = if (clip != null && clip.itemCount > 0)
-                        clip.getItemAt(0).coerceToText(context)?.toString() else null
-                    if (pasted != null &&
-                        pasted.toByteArray(Charsets.UTF_8).size <= MemoryEngineContract.MAX_RECIPE_BYTES) {
-                        onDraft(draft.copy(text = pasted))
-                        localError = null
-                    } else localError = clipboardErrorText
-                }) { Text(stringResource(R.string.memory_scripts_paste)) }
-                Button(
-                    modifier = Modifier.heightIn(min = 48.dp).testTag("memory-script-save"),
-                    enabled = !saving && validMetadata != null &&
-                        (draft.replacingId == null || validMetadata.id == draft.replacingId),
-                    onClick = {
-                        localError = null
-                        onSaveScript(draft.text, draft.replacingId) { success ->
-                            if (success) {
-                                onSelectedId(validMetadata?.id)
-                                onDraft(null)
-                            } else localError = saveErrorText
+                OutlinedTextField(
+                    colors = memoryEditorFieldColors(),
+                    shape = MaterialTheme.shapes.medium,
+                    value = draft.text,
+                    onValueChange = {
+                        if (!saving && it.toByteArray(Charsets.UTF_8).size <= MemoryEngineContract.MAX_RECIPE_BYTES) {
+                            onDraft(draft.copy(text = it))
+                            localError = null
                         }
                     },
-                ) { Text(stringResource(R.string.memory_scripts_save)) }
+                    modifier = Modifier.fillMaxWidth().weight(1f).testTag("memory-script-editor"),
+                    label = { Text("JSON") },
+                    placeholder = { Text(stringResource(R.string.memory_scripts_paste_hint)) },
+                    textStyle = MaterialTheme.typography.bodySmall.copy(fontFamily = FontFamily.Monospace),
+                    enabled = !saving,
+                    minLines = if (compactEditor) 2 else 6,
+                )
+                Row(verticalAlignment = Alignment.CenterVertically,
+                    horizontalArrangement = Arrangement.spacedBy(8.dp),
+                    modifier = Modifier.fillMaxWidth()) {
+                    Text("$byteCount/${MemoryEngineContract.MAX_RECIPE_BYTES} B",
+                        style = MaterialTheme.typography.labelSmall, modifier = Modifier.weight(1f),
+                        color = MaterialTheme.colorScheme.onSurfaceVariant)
+                    TextButton(enabled = !saving, onClick = {
+                        val clipboard = context.getSystemService(ClipboardManager::class.java)
+                        val clip = clipboard?.primaryClip
+                        val pasted = if (clip != null && clip.itemCount > 0)
+                            clip.getItemAt(0).coerceToText(context)?.toString() else null
+                        if (pasted != null &&
+                            pasted.toByteArray(Charsets.UTF_8).size <= MemoryEngineContract.MAX_RECIPE_BYTES) {
+                            onDraft(draft.copy(text = pasted))
+                            localError = null
+                        } else localError = clipboardErrorText
+                    }) { Text(stringResource(R.string.memory_scripts_paste)) }
+                    Button(
+                        modifier = Modifier.heightIn(min = 48.dp).testTag("memory-script-save"),
+                        enabled = !saving && validMetadata != null &&
+                            (draft.replacingId == null || validMetadata.id == draft.replacingId),
+                        onClick = {
+                            val validated = validMetadata
+                            if (validated != null &&
+                                (draft.replacingId == null || validated.id == draft.replacingId)) {
+                                localError = null
+                                onSaveScript(
+                                    MemoryEditorPendingScriptSave(validated.id, draft.text),
+                                    draft.replacingId,
+                                ) { success ->
+                                    if (success) {
+                                        onSelectedId(validated.id)
+                                        onDraft(null)
+                                    } else localError = saveErrorText
+                                }
+                            }
+                        },
+                    ) { Text(stringResource(R.string.memory_scripts_save)) }
+                }
+                if (draft.text.isNotBlank()) parsed?.exceptionOrNull()?.message?.let {
+                    Text(it, color = MaterialTheme.colorScheme.error,
+                        style = MaterialTheme.typography.bodySmall)
+                }
+                localError?.let {
+                    Text(it, color = MaterialTheme.colorScheme.error,
+                        style = MaterialTheme.typography.bodySmall)
+                }
             }
-            if (draft.text.isNotBlank()) parsed?.exceptionOrNull()?.message?.let {
-                Text(it, color = MaterialTheme.colorScheme.error,
-                    style = MaterialTheme.typography.bodySmall)
-            }
-            localError?.let {
-                Text(it, color = MaterialTheme.colorScheme.error,
-                    style = MaterialTheme.typography.bodySmall)
-            }
-        }
         }
         return
     }

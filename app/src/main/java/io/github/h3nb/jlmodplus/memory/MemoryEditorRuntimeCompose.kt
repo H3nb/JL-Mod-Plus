@@ -85,6 +85,7 @@ import androidx.compose.runtime.mutableIntStateOf
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
 import androidx.compose.runtime.SideEffect
+import androidx.compose.runtime.structuralEqualityPolicy
 import androidx.compose.runtime.saveable.rememberSaveable
 import androidx.compose.runtime.snapshotFlow
 import androidx.compose.ui.Alignment
@@ -210,9 +211,10 @@ internal fun MemoryEditorRuntimeRoot(
         var selectedScriptId by rememberSaveable(state.runtimeToken) {
             mutableStateOf(savedScript.selectedId)
         }
-        var scriptBuilder by remember(state.runtimeToken) {
+        val scriptBuilderState = remember(state.runtimeToken) {
             mutableStateOf(savedScript.builder)
         }
+        var scriptBuilder by scriptBuilderState
         var pendingScriptSave by remember(state.runtimeToken) {
             mutableStateOf(savedScript.pendingSave)
         }
@@ -231,17 +233,20 @@ internal fun MemoryEditorRuntimeRoot(
                 builder = scriptBuilder,
             )
         }
-        val scriptDraft by remember(state.runtimeToken) {
+        val scriptDraftState = remember(state.runtimeToken) {
             derivedStateOf {
                 if (scriptEditing) MemoryScriptDraft(scriptReplacingId, scriptInitialText, scriptText)
                 else null
             }
         }
+        val scriptDraft by scriptDraftState
         val builderMode by remember(state.runtimeToken) {
-            derivedStateOf { scriptBuilder?.mode }
+            derivedStateOf(structuralEqualityPolicy()) { scriptBuilder?.mode }
         }
         val hasUnsavedScript by remember(state.runtimeToken) {
-            derivedStateOf { scriptDraft?.dirty == true || scriptBuilder?.hasChanges == true }
+            derivedStateOf(structuralEqualityPolicy()) {
+                scriptDraft?.dirty == true || scriptBuilder?.hasChanges == true
+            }
         }
         val setScriptDraft: (MemoryScriptDraft?) -> Unit = { draft ->
             scriptEditing = draft != null
@@ -263,18 +268,18 @@ internal fun MemoryEditorRuntimeRoot(
                 MemoryEditorSessionNavigation.rememberPendingScriptSave(state.runtimeToken, null)
             }
         }
-        val saveScript: (String, String?, (Boolean) -> Unit) -> Unit =
-            { document, replacingId, onComplete ->
+        val saveScript: (MemoryEditorPendingScriptSave, String?, (Boolean) -> Unit) -> Unit =
+            { pending, replacingId, onComplete ->
                 if (pendingScriptSave == null) {
-                    val id = runCatching { memoryScriptMetadata(document).id }.getOrNull()
-                    if (id == null) {
+                    // JSON validation and the visual generator have already supplied the document's
+                    // ID. The controller still validates the document before committing storage.
+                    if (scriptEditing && scriptText != pending.document) {
                         onComplete(false)
                     } else {
-                        val pending = MemoryEditorPendingScriptSave(id, document)
                         pendingScriptSave = pending
                         saveStartedHere = true
                         MemoryEditorSessionNavigation.rememberPendingScriptSave(state.runtimeToken, pending)
-                        actions.saveMemoryScript(document, replacingId) { success ->
+                        actions.saveMemoryScript(pending.document, replacingId) { success ->
                             saveStartedHere = false
                             pendingScriptSave = null
                             MemoryEditorSessionNavigation.rememberPendingScriptSave(state.runtimeToken, null)
@@ -472,9 +477,9 @@ internal fun MemoryEditorRuntimeRoot(
                                 )
                                 MemoryEditorTab.SCRIPTS -> RuntimeScriptsTab(
                                     state, actions, selectedScriptId,
-                                    { if (pendingScriptSave == null) selectedScriptId = it }, scriptDraft,
+                                    { if (pendingScriptSave == null) selectedScriptId = it }, scriptDraftState,
                                     { if (pendingScriptSave == null) setScriptDraft(it) },
-                                    scriptBuilder, { if (pendingScriptSave == null) scriptBuilder = it },
+                                    scriptBuilderState, { if (pendingScriptSave == null) scriptBuilder = it },
                                     scriptSavePending, saveScript,
                                     choosingScriptType, { choosingScriptType = it },
                                     scriptTargets, { scriptTargets = emptyList() },
