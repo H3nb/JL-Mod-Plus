@@ -2685,7 +2685,7 @@ internal class MemoryEditorComposeController(
         private const val ENGINE_RECONNECT_DELAY_MS = 250L
         private const val LIVE_REFRESH_INITIAL_DELAY_MS = 100L
         private const val LIVE_REFRESH_INTERVAL_MS = 250L
-        private const val SCRIPT_FREEZE_REFRESH_INTERVAL_MS = 1_000L
+        private const val SCRIPT_FREEZE_REFRESH_INTERVAL_MS = LIVE_REFRESH_INTERVAL_MS
         private const val SAVED_RESOLVE_INTERVAL_MS = 1_000L
         private const val SAVED_REBOUND_NOTICE_MS = 4_000L
         private const val CAPABILITY_RETRY_IDLE_MS = 1_000L

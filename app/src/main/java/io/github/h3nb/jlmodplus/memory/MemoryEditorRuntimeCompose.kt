@@ -29,8 +29,6 @@ import androidx.compose.foundation.layout.union
 import androidx.compose.foundation.layout.safeGestures
 import androidx.compose.foundation.layout.safeDrawing
 import androidx.compose.foundation.layout.statusBars
-import androidx.compose.foundation.layout.navigationBars
-import androidx.compose.foundation.layout.ime
 import androidx.compose.foundation.layout.fillMaxHeight
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.fillMaxWidth
@@ -388,17 +386,13 @@ internal fun MemoryEditorRuntimeRoot(
         ) {
             Surface(
                 modifier = Modifier.fillMaxSize()
-                    .testTag("memory-editor-workspace")
-                    .alpha(if (overlay.peeking) 0f else 1f),
-                color = MaterialTheme.colorScheme.surface.copy(alpha = overlay.opacity),
+                    .testTag("memory-editor-workspace"),
+                color = MaterialTheme.colorScheme.surface.copy(
+                    alpha = if (overlay.peeking) 0f else overlay.opacity,
+                ),
                 contentColor = MaterialTheme.colorScheme.onSurface,
             ) {
-                BoxWithConstraints(
-                    modifier = Modifier.fillMaxSize()
-                        .windowInsetsPadding(
-                            memoryEditorWorkspaceInsets().only(WindowInsetsSides.Bottom),
-                        ),
-                ) {
+                BoxWithConstraints(Modifier.fillMaxSize()) {
                     val wideWorkspace = maxWidth >=
                         600.dp * LocalDensity.current.fontScale.coerceAtLeast(1f)
                     val compactResults = wideWorkspace
@@ -420,105 +414,111 @@ internal fun MemoryEditorRuntimeRoot(
                         }?.name ?: stringResource(R.string.memory_scripts_title)
                         else -> null
                     }
-                    Column(
-                        Modifier.fillMaxSize().padding(bottom = 48.dp)
-                            .then(if (overlay.peeking) Modifier.clearAndSetSemantics {} else Modifier),
+                    // Read animated bottom insets during layout, not in the window-size
+                    // subcomposition. Both the editor and dock consume them once.
+                    Box(
+                        Modifier.fillMaxSize().windowInsetsPadding(
+                            memoryEditorWorkspaceInsets().only(WindowInsetsSides.Bottom),
+                        ),
                     ) {
-                        Column(Modifier.fillMaxWidth().background(controlsBackdrop).windowInsetsPadding(
-                            memoryEditorWorkspaceInsets().union(WindowInsets.safeGestures)
-                                .only(WindowInsetsSides.Horizontal),
-                        )) {
-                            RuntimeMemoryHeader(
-                                state = state, inlineNavigation = showLabels || !showTitle,
-                                onTab = selectTab, onMinimize = closeWorkspace,
-                                navigationLocked = scriptSavePending,
-                                showTitle = showTitle, detailTitle = detailTitle,
-                                onDetailBack = {
-                                    if (pendingScriptSave == null) when {
-                                        inspectorPage -> actions.closeInspector()
-                                        builderMode != null -> backFromScriptBuilder()
-                                        scriptEditing -> backFromScriptEditor()
-                                        choosingScriptType -> {
-                                            val fromSaved = scriptTargets.isNotEmpty()
-                                            choosingScriptType = false
-                                            scriptTargets = emptyList()
-                                            if (fromSaved) actions.setVariablesTab(true)
-                                        }
-                                        selectedScriptId != null -> selectedScriptId = null
-                                    }
-                                },
-                            )
-                        }
-                        if (state.busy) RuntimeOperationStrip(state, actions)
-                        state.message?.takeIf(String::isNotBlank)?.let {
-                            RuntimeMessage(it, state.messageIsError)
-                        }
-                        // A live workspace changes destination immediately; keep only the active page mounted.
-                        Box(
-                            modifier = Modifier.weight(1f).fillMaxWidth()
-                                .windowInsetsPadding(memoryEditorWorkspaceInsets().only(WindowInsetsSides.Horizontal))
-                                .clipToBounds(),
+                        Column(
+                            Modifier.fillMaxSize().padding(bottom = 48.dp)
+                                .alpha(if (overlay.peeking) 0f else 1f)
+                                .then(if (overlay.peeking) Modifier.clearAndSetSemantics {} else Modifier),
                         ) {
-                            when (tab) {
-                                MemoryEditorTab.RESULTS -> RuntimeSearchResultsTab(
-                                    state, actions, inspectSelected, relinkingBookmarkId,
-                                    { relinkingBookmarkId = null }, resultsListState,
-                                    compactResults, Modifier.fillMaxSize(),
-                                )
-                                MemoryEditorTab.VARIABLES -> RuntimeVariablesTab(
-                                    state, actions, listEntries, listSelection,
-                                    { listSelection = it },
-                                    { id ->
-                                        relinkingBookmarkId = id
-                                        actions.setVariablesTab(false)
+                            Column(Modifier.fillMaxWidth().background(controlsBackdrop).windowInsetsPadding(
+                                memoryEditorWorkspaceInsets().union(WindowInsets.safeGestures)
+                                    .only(WindowInsetsSides.Horizontal),
+                            )) {
+                                RuntimeMemoryHeader(
+                                    state = state, inlineNavigation = showLabels || !showTitle,
+                                    onTab = selectTab, onMinimize = closeWorkspace,
+                                    navigationLocked = scriptSavePending,
+                                    showTitle = showTitle, detailTitle = detailTitle,
+                                    onDetailBack = {
+                                        if (pendingScriptSave == null) when {
+                                            inspectorPage -> actions.closeInspector()
+                                            builderMode != null -> backFromScriptBuilder()
+                                            scriptEditing -> backFromScriptEditor()
+                                            choosingScriptType -> {
+                                                val fromSaved = scriptTargets.isNotEmpty()
+                                                choosingScriptType = false
+                                                scriptTargets = emptyList()
+                                                if (fromSaved) actions.setVariablesTab(true)
+                                            }
+                                            selectedScriptId != null -> selectedScriptId = null
+                                        }
                                     },
-                                    createScriptFromSaved,
-                                    variablesListState, compactResults, Modifier.fillMaxSize(),
                                 )
-                                MemoryEditorTab.SCRIPTS -> RuntimeScriptsTab(
-                                    state, actions, selectedScriptId,
-                                    { if (pendingScriptSave == null) selectedScriptId = it }, scriptDraftState,
-                                    { if (pendingScriptSave == null) setScriptDraft(it) },
-                                    scriptBuilderState, { if (pendingScriptSave == null) scriptBuilder = it },
-                                    scriptSavePending, saveScript,
-                                    choosingScriptType, { choosingScriptType = it },
-                                    scriptTargets, { scriptTargets = emptyList() },
-                                    Modifier.fillMaxSize(),
-                                )
-                                MemoryEditorTab.INSPECTOR -> RuntimeInspectorTab(
-                                    state, actions, Modifier.fillMaxSize(),
+                            }
+                            if (state.busy) RuntimeOperationStrip(state, actions)
+                            state.message?.takeIf(String::isNotBlank)?.let {
+                                RuntimeMessage(it, state.messageIsError)
+                            }
+                            // A live workspace changes destination immediately; keep only the active page mounted.
+                            Box(
+                                modifier = Modifier.weight(1f).fillMaxWidth()
+                                    .windowInsetsPadding(memoryEditorWorkspaceInsets().only(WindowInsetsSides.Horizontal))
+                                    .clipToBounds(),
+                            ) {
+                                when (tab) {
+                                    MemoryEditorTab.RESULTS -> RuntimeSearchResultsTab(
+                                        state, actions, inspectSelected, relinkingBookmarkId,
+                                        { relinkingBookmarkId = null }, resultsListState,
+                                        compactResults, Modifier.fillMaxSize(),
+                                    )
+                                    MemoryEditorTab.VARIABLES -> RuntimeVariablesTab(
+                                        state, actions, listEntries, listSelection,
+                                        { listSelection = it },
+                                        { id ->
+                                            relinkingBookmarkId = id
+                                            actions.setVariablesTab(false)
+                                        },
+                                        createScriptFromSaved,
+                                        variablesListState, compactResults, Modifier.fillMaxSize(),
+                                    )
+                                    MemoryEditorTab.SCRIPTS -> RuntimeScriptsTab(
+                                        state, actions, selectedScriptId,
+                                        { if (pendingScriptSave == null) selectedScriptId = it }, scriptDraftState,
+                                        { if (pendingScriptSave == null) setScriptDraft(it) },
+                                        scriptBuilderState, { if (pendingScriptSave == null) scriptBuilder = it },
+                                        scriptSavePending, saveScript,
+                                        choosingScriptType, { choosingScriptType = it },
+                                        scriptTargets, { scriptTargets = emptyList() },
+                                        Modifier.fillMaxSize(),
+                                    )
+                                    MemoryEditorTab.INSPECTOR -> RuntimeInspectorTab(
+                                        state, actions, Modifier.fillMaxSize(),
+                                    )
+                                }
+                            }
+                        }
+                        MemoryEditorPeekShield(overlay)
+                        // The dock and body share the same IME-safe viewport.
+                        if (overlay.layers.isEmpty()) {
+                            Box(
+                                modifier = Modifier.align(Alignment.BottomCenter)
+                                    .fillMaxWidth()
+                                    .background(if (overlay.peeking) Color.Transparent else controlsBackdrop)
+                                    .windowInsetsPadding(
+                                        memoryEditorWorkspaceInsets().only(WindowInsetsSides.Horizontal),
+                                    )
+                                    .padding(memoryEditorBottomCornerPadding()),
+                            ) {
+                                MemoryEditorPeekDock(
+                                    overlay = overlay,
+                                    leadingContent = {
+                                        RuntimeActionIcon(R.drawable.ic_settings, R.string.memory_editor_panel_opacity) {
+                                            opacityDialog = true
+                                        }
+                                    },
+                                    centerContent = {
+                                        if (tab == MemoryEditorTab.RESULTS) RuntimePager(state, actions)
+                                    },
                                 )
                             }
                         }
                     }
-                }
-            }
-            MemoryEditorPeekShield(overlay)
-            // The footer paints edge-to-edge, but its controls respect the safe
-            // horizontal and bottom gesture areas (including cutouts and waterfall).
-            if (overlay.layers.isEmpty()) {
-                Box(
-                    modifier = Modifier.align(Alignment.BottomCenter)
-                        .fillMaxWidth()
-                        .background(if (overlay.peeking) Color.Transparent else controlsBackdrop)
-                        .windowInsetsPadding(
-                            memoryEditorWorkspaceInsets().only(WindowInsetsSides.Horizontal)
-                                .union(WindowInsets.navigationBars.only(WindowInsetsSides.Bottom))
-                                .union(WindowInsets.ime.only(WindowInsetsSides.Bottom)),
-                        )
-                        .padding(memoryEditorBottomCornerPadding()),
-                ) {
-                    MemoryEditorPeekDock(
-                        overlay = overlay,
-                        leadingContent = {
-                            RuntimeActionIcon(R.drawable.ic_settings, R.string.memory_editor_panel_opacity) {
-                                opacityDialog = true
-                            }
-                        },
-                        centerContent = {
-                            if (tab == MemoryEditorTab.RESULTS) RuntimePager(state, actions)
-                        },
-                    )
                 }
             }
         }

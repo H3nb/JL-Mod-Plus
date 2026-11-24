@@ -25,7 +25,9 @@ The October 2026 UI reassessment prioritizes these findings:
 The default opacity, typography and icon density are presentation choices, not
 measured performance improvements. This work does not
 change global application typography, Java ME font rendering, engine operations,
-freeze timing or polling cadence. It makes no frame-time or allocation claim.
+freeze execution timing or live value polling cadence. Script Freeze status is
+refreshed on the existing nominal 250 ms foreground tick, with the existing
+single-flight guard. It makes no frame-time or allocation claim.
 
 ## Layout and interaction contracts
 
@@ -207,8 +209,10 @@ editing invisible content. Peek is a view-only action, not touch-through game co
 Tooltips dismiss when Peek starts. Input dialogs keep opaque surfaces for legibility.
 
 The workspace header and footer paint edge-to-edge; safe insets belong to their controls.
-The workspace footer uses the same solid themed chrome as the header. Its controls
-respect the system-safe bounds and move above the IME when it is visible. Dialog footers remain transparent; the workspace
+The workspace footer uses the same solid themed chrome as the header. The body
+and dock consume bottom system/IME insets once in layout, below a stable
+full-window size calculation. Both move together above the native IME without
+additional editor animation. Dialog footers remain transparent; the workspace
 dock disappears during Peek. Keep dialog surfaces solid so users can safely
 inspect or edit inputs.
 

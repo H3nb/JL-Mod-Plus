@@ -30,6 +30,7 @@ import androidx.compose.ui.test.junit4.v2.createComposeRule
 import androidx.compose.ui.test.onNodeWithContentDescription
 import androidx.compose.ui.test.onAllNodesWithContentDescription
 import androidx.compose.ui.test.onNodeWithText
+import androidx.compose.ui.test.onAllNodesWithText
 import androidx.compose.ui.test.performClick
 import androidx.compose.ui.test.performScrollTo
 import androidx.compose.ui.test.performTextReplacement
@@ -259,6 +260,35 @@ class MemoryEditorAdaptiveComposeTest {
         rule.onNode(hasSetTextAction()).assertTextContains("31415")
         rule.onNodeWithText("Cancel").assertIsDisplayed().performClick()
         rule.onNode(hasSetTextAction()).assertDoesNotExist()
+    }
+
+    @Test fun scriptBuilderKeepsDraftAndActionsReachableAsViewportShrinks() {
+        val size = mutableStateOf(DpSize(360.dp, 640.dp))
+        rule.setContent {
+            DeviceConfigurationOverride(DeviceConfigurationOverride.WindowSize(size.value)) {
+                JLModPlusTheme {
+                    MemoryEditorRuntimeRoot(
+                        MemoryEditorUiState(
+                            visible = true, connected = true, supported = true,
+                            writeSupported = true, scriptsTab = true, scriptsLoaded = true,
+                        ),
+                        TestMemoryEditorActions(),
+                    )
+                }
+            }
+        }
+        rule.onAllNodesWithText("New script")[0].performClick()
+        rule.onNodeWithText(InstrumentationRegistry.getInstrumentation().targetContext
+            .getString(R.string.memory_scripts_mode_toggle)).performClick()
+        rule.onNodeWithTag("memory-builder-name").performTextReplacement("Keep score")
+        rule.runOnIdle { size.value = DpSize(360.dp, 320.dp) }
+        rule.onNodeWithTag("memory-builder-name").assertTextContains("Keep score")
+        rule.onNodeWithText("Save").assertIsDisplayed()
+        val save = rule.onNodeWithText("Save").getUnclippedBoundsInRoot()
+        val peek = rule.onNodeWithTag("memory-editor-peek").getUnclippedBoundsInRoot()
+        assertTrue("Save stays above the dock", save.bottom.value <= peek.top.value)
+        rule.runOnIdle { size.value = DpSize(360.dp, 640.dp) }
+        rule.onNodeWithTag("memory-builder-name").assertTextContains("Keep score")
     }
 
     @Test fun modalSurfaceIsCenteredInSafeViewportAndDoesNotCoverPeek() {
