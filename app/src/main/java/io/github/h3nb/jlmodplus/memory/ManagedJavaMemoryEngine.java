@@ -133,12 +133,13 @@ final class ManagedJavaMemoryEngine {
 	}
 
 	ManagedCapabilities capabilities(long token) {
-		MemoryDiscoveryBridge.Snapshot snapshot = MemoryDiscoveryBridge.snapshot(token);
+		MemoryDiscoveryBridge.Snapshot snapshot = MemoryDiscoveryBridge.snapshotWithoutClasses(token);
 		long revision;
 		long count;
 		long baseline;
 		int watchCount;
 		int freezeCount;
+		int historyDepth;
 		synchronized (stateLock) {
 			if (snapshot.loader() != null && snapshot.token() == token) {
 				activateRuntimeLocked(token, snapshot.loader());
@@ -148,6 +149,7 @@ final class ManagedJavaMemoryEngine {
 			baseline = baselineCountLocked();
 			watchCount = watches.count;
 			freezeCount = watches.freezeCount();
+			historyDepth = searchHistory.size();
 		}
 		return new ManagedCapabilities(
 				snapshot.isAvailable(),
@@ -158,12 +160,12 @@ final class ManagedJavaMemoryEngine {
 				baseline,
 				watchCount,
 				freezeCount,
-				searchHistory.size(),
+				historyDepth,
 				snapshot.failure());
 	}
 
 	ManagedSession session(long token) {
-		MemoryDiscoveryBridge.Snapshot snapshot = MemoryDiscoveryBridge.snapshot(token);
+		MemoryDiscoveryBridge.Snapshot snapshot = MemoryDiscoveryBridge.snapshotWithoutClasses(token);
 			synchronized (stateLock) {
 			long revision = committed == null ? 0L : committed.id;
 			long count = visibleResultCountLocked();

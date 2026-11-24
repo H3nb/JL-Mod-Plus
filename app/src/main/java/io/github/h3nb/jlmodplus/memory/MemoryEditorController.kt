@@ -716,16 +716,22 @@ internal class MemoryEditorComposeController(
                         (pageRevision != null && pageRevision != revision)
                     ) return@post
                     if (watchTab) {
-                        val validIds = watches.mapTo(mutableSetOf(), MemoryWatchRow::id)
+                        val selected = state.selected
                         state = state.copy(
                             watches = watches,
-                            selected = state.selected.filterTo(mutableSetOf()) { it in validIds },
+                            selected = if (selected.isEmpty()) selected else {
+                                val validIds = watches.mapTo(HashSet(), MemoryWatchRow::id)
+                                selected.intersect(validIds)
+                            },
                         )
                     } else {
-                        val validIds = results.mapTo(mutableSetOf(), MemoryResultRow::id)
+                        val selected = state.selected
                         state = state.copy(
                             results = results,
-                            selected = state.selected.filterTo(mutableSetOf()) { it in validIds },
+                            selected = if (selected.isEmpty()) selected else {
+                                val validIds = results.mapTo(HashSet(), MemoryResultRow::id)
+                                selected.intersect(validIds)
+                            },
                         )
                     }
                 }
@@ -966,7 +972,9 @@ internal class MemoryEditorComposeController(
                                 current, state.savedValues[id], now, SAVED_REBOUND_NOTICE_MS,
                             )
                         }
-                        state = state.copy(savedValues = state.savedValues + merged)
+                        if (merged.any { (id, value) -> state.savedValues[id] != value }) {
+                            state = state.copy(savedValues = state.savedValues + merged)
+                        }
                     }
                 }
             } finally {
@@ -1851,9 +1859,12 @@ internal class MemoryEditorComposeController(
                 if (reply != null) {
                     val ids = reply.getStringArray("recipeFreezeIds").orEmpty()
                     val names = reply.getStringArray("recipeFreezeNames").orEmpty()
-                    state = state.copy(scriptActiveFreezes = ids.mapIndexed { index, id ->
+                    val active = ids.mapIndexed { index, id ->
                         id to names.getOrNull(index).orEmpty().ifBlank { id }
-                    })
+                    }
+                    if (active != state.scriptActiveFreezes) {
+                        state = state.copy(scriptActiveFreezes = active)
+                    }
                 }
             }
         }

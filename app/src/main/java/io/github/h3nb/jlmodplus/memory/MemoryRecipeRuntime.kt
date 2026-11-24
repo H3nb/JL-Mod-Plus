@@ -324,7 +324,7 @@ class MemoryRecipeRuntime {
         val owners = ArrayList<Any>()
         val readValues = ArrayList<String>()
         val identities = ArrayList<Long?>()
-        val logicalValues = HashMap<String, String>()
+        val logicalValues = HashMap<String, Long>()
         val desiredValues = HashMap<String, Long>()
         val requestedStatics = recipe.actions.asSequence()
             .filter { it.root.kind == "initializedStatic" }
@@ -345,7 +345,7 @@ class MemoryRecipeRuntime {
                 (!array.javaClass.isArray || ReflectArray.getLength(array) != action.arrayLength)
             ) throw Problem(MemoryEngineContract.RESULT_IDENTITY_UNSAFE, "Array length changed")
             val currentLogical = when (action.kind) {
-                "set" -> actual.singleOrNull()?.toString() ?: bad("Expected scalar")
+                "set" -> actual.singleOrNull() ?: bad("Expected scalar")
                 "bitfield" -> {
                     val bits = when (cells.singleOrNull()?.type) {
                         java.lang.Byte.TYPE -> 8
@@ -355,7 +355,7 @@ class MemoryRecipeRuntime {
                     }
                     if (action.width !in 1..31 || action.shift !in 0..31 ||
                         action.width + action.shift > bits) bad("Invalid bitfield")
-                    ((actual[0] ushr action.shift) and ((1L shl action.width) - 1L)).toString()
+                    (actual[0] ushr action.shift) and ((1L shl action.width) - 1L)
                 }
                 "encoded32le" -> {
                     if (cells.size != 4 || cells.any { it.type != java.lang.Byte.TYPE })
@@ -363,14 +363,14 @@ class MemoryRecipeRuntime {
                     var bits = 0L
                     for (i in 0..3) bits = bits or ((actual[i] and 0xFFL) shl (i * 8))
                     try {
-                        Math.subtractExact(action.constant, bits.toInt().toLong()).toString()
+                        Math.subtractExact(action.constant, bits.toInt().toLong())
                     } catch (error: ArithmeticException) {
                         bad("Decoded value exceeds the supported integer range")
                     }
                 }
                 else -> bad("Unsupported action")
             }
-            readValues.add(currentLogical)
+            if (readOnly || recipe.mode == "form") readValues.add(currentLogical.toString())
             if (!readOnly && (recipe.mode == "form" || action.operation == "add")) {
                 val key = action.field ?: action.input
                 if (key != null) {
@@ -389,7 +389,7 @@ class MemoryRecipeRuntime {
             val operand = number(action, inputs)
             val logicalWrite = if (action.operation == "add") {
                 try {
-                    Math.addExact(currentLogical.toLong(), operand)
+                    Math.addExact(currentLogical, operand)
                 } catch (error: ArithmeticException) {
                     bad("Addition exceeds the supported integer range")
                 }
