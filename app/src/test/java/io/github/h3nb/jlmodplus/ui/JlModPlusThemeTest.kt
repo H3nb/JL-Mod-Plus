@@ -5,6 +5,7 @@ package io.github.h3nb.jlmodplus.ui
 
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.graphics.luminance
+import androidx.compose.ui.graphics.toArgb
 import org.junit.jupiter.api.Assertions.assertEquals
 import org.junit.jupiter.api.Assertions.assertFalse
 import org.junit.jupiter.api.Assertions.assertTrue
@@ -141,6 +142,27 @@ class JlModPlusThemeTest {
                 }
                 assertTrue(contrastRatio(scheme.outline, scheme.surfaceContainerHighest) >= 3f)
                 assertTrue(contrastRatio(scheme.inverseOnSurface, scheme.inverseSurface) >= 4.5f)
+            }
+        }
+    }
+
+    @Test
+    fun nativeChromeUsesTheSameReadableRolesAsCompose() {
+        for (palette in AccentPalette.entries) {
+            for (dark in listOf(false, true)) {
+                val scheme = palette.colorScheme(dark)
+                val native = LegacyUiColors(scheme)
+                assertEquals(scheme.primary.toArgb(), native.primary)
+                assertEquals(scheme.onPrimary.toArgb(), native.onPrimary)
+                assertEquals(scheme.primaryContainer.toArgb(), native.primaryContainer)
+                assertEquals(scheme.onPrimaryContainer.toArgb(), native.onPrimaryContainer)
+                assertEquals(scheme.surfaceContainer.toArgb(), native.surfaceContainer)
+                assertEquals(scheme.surfaceContainerLow.toArgb(), native.surfaceContainerLow)
+                assertEquals(scheme.onSurface.toArgb(), native.onSurface)
+                assertEquals(scheme.onSurfaceVariant.toArgb(), native.onSurfaceVariant)
+                assertEquals(scheme.outline.toArgb(), native.outline)
+                assertEquals(scheme.outlineVariant.toArgb(), native.outlineVariant)
+                assertTrue(contrastRatio(scheme.primary, scheme.surfaceContainer) >= 4.5f)
             }
         }
     }

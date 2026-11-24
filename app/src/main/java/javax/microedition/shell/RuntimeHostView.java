@@ -16,7 +16,6 @@ package javax.microedition.shell;
 
 import android.content.Context;
 import android.content.res.ColorStateList;
-import android.graphics.Color;
 import android.graphics.drawable.GradientDrawable;
 import android.util.TypedValue;
 import android.view.Gravity;
@@ -30,14 +29,13 @@ import androidx.appcompat.widget.AppCompatButton;
 import androidx.appcompat.widget.AppCompatImageView;
 import androidx.appcompat.widget.TooltipCompat;
 import androidx.compose.ui.platform.ComposeView;
-import androidx.core.content.ContextCompat;
-import androidx.core.graphics.ColorUtils;
 import androidx.core.view.ViewGroupCompat;
 
 import javax.microedition.lcdui.overlay.OverlayView;
 
 import io.github.h3nb.jlmodplus.R;
 import io.github.h3nb.jlmodplus.ui.LegacyThemeColors;
+import io.github.h3nb.jlmodplus.ui.LegacyUiColors;
 
 /** Structural host for compatibility-sensitive guest Views and app-owned runtime chrome. */
 public final class RuntimeHostView {
@@ -53,7 +51,8 @@ public final class RuntimeHostView {
 	public final AppCompatImageView layoutEditGroupResize;
 	public final AppCompatImageView layoutEditSnap;
 	public final AppCompatButton layoutEditDone;
-	private static final int EDITOR_PANEL_SURFACE = 0xFF232529;
+	private final View layoutEditDivider;
+	private int editorInactiveColor;
 	/** Small Activity-owned bubble. It is a normal View in :midlet, not a system overlay. */
 	public final View memoryEditorBubble;
 	public final View memoryEditorBubbleIcon;
@@ -96,21 +95,16 @@ public final class RuntimeHostView {
 		bubble.setVisibility(View.GONE);
 		GradientDrawable bubbleBackground = new GradientDrawable();
 		bubbleBackground.setShape(GradientDrawable.OVAL);
-		bubbleBackground.setColor(LegacyThemeColors.accent(context));
 		bubble.setBackground(bubbleBackground);
 
 		AppCompatImageView bubbleIcon = new AppCompatImageView(context);
 		bubbleIcon.setImageResource(R.drawable.ic_runtime_memory);
-		bubbleIcon.setImageTintList(ColorStateList.valueOf(
-				resolveThemeColor(context, android.R.attr.textColorPrimaryInverse, Color.WHITE)));
 		bubbleIcon.setPadding(dp(context, 14), dp(context, 14), dp(context, 14), dp(context, 14));
 		bubble.addView(bubbleIcon, new FrameLayout.LayoutParams(
 				ViewGroup.LayoutParams.MATCH_PARENT, ViewGroup.LayoutParams.MATCH_PARENT));
 
 		TextView bubbleProgress = new TextView(context);
 		bubbleProgress.setGravity(Gravity.CENTER);
-		bubbleProgress.setTextColor(resolveThemeColor(
-				context, android.R.attr.textColorPrimaryInverse, Color.WHITE));
 		bubbleProgress.setTextSize(TypedValue.COMPLEX_UNIT_SP, 11);
 		bubbleProgress.setTypeface(android.graphics.Typeface.DEFAULT_BOLD);
 		bubbleProgress.setIncludeFontPadding(false);
@@ -140,7 +134,6 @@ public final class RuntimeHostView {
 		panel.setVisibility(View.GONE);
 		GradientDrawable panelBackground = new GradientDrawable();
 		panelBackground.setCornerRadius(dp(context, 12));
-		panelBackground.setColor(0xF2232529);
 		panel.setBackground(panelBackground);
 
 		LinearLayout tools = new LinearLayout(context);
@@ -160,7 +153,6 @@ public final class RuntimeHostView {
 		panel.addView(tools);
 
 		View divider = new View(context);
-		divider.setBackgroundColor(0x2EFFFFFF);
 		LinearLayout.LayoutParams dividerParams = new LinearLayout.LayoutParams(
 				ViewGroup.LayoutParams.MATCH_PARENT, dp(context, 1));
 		dividerParams.setMargins(dp(context, 8), 0, dp(context, 8), 0);
@@ -170,7 +162,6 @@ public final class RuntimeHostView {
 		done.setText(context.getString(R.string.layout_edit_done));
 		done.setAllCaps(false);
 		done.setGravity(Gravity.CENTER);
-		done.setTextColor(editorAccent(context));
 		done.setTextSize(TypedValue.COMPLEX_UNIT_SP, 14);
 		done.setTypeface(android.graphics.Typeface.DEFAULT_BOLD);
 		done.setMinWidth(dp(context, 144));
@@ -187,14 +178,13 @@ public final class RuntimeHostView {
 		layoutEditGroupResize = groupResize;
 		layoutEditSnap = snap;
 		layoutEditDone = done;
-		setLayoutEditSnapEnabled(true);
-		setLayoutEditGroupEnabled(true);
+		layoutEditDivider = divider;
+		refreshTheme(true, true);
 	}
 
 	private static AppCompatImageView editorTool(Context context, int icon, int label) {
 		AppCompatImageView view = new AppCompatImageView(context);
 		view.setImageResource(icon);
-		view.setImageTintList(ColorStateList.valueOf(0xD9FFFFFF));
 		applyEditorPressFeedback(context, view, android.R.attr.selectableItemBackgroundBorderless);
 		view.setPadding(dp(context, 12), dp(context, 12), dp(context, 12), dp(context, 12));
 		view.setContentDescription(context.getString(label));
@@ -211,7 +201,7 @@ public final class RuntimeHostView {
 		layoutEditSnap.setImageResource(enabled
 				? R.drawable.ic_editor_snap : R.drawable.ic_editor_snap_off);
 		layoutEditSnap.setImageTintList(ColorStateList.valueOf(
-				enabled ? layoutEditDone.getCurrentTextColor() : 0x99FFFFFF));
+				enabled ? layoutEditDone.getCurrentTextColor() : editorInactiveColor));
 		layoutEditSnap.setContentDescription(layoutEditSnap.getContext().getString(label));
 		TooltipCompat.setTooltipText(layoutEditSnap, layoutEditSnap.getContentDescription());
 	}
@@ -219,15 +209,28 @@ public final class RuntimeHostView {
 	public void setLayoutEditGroupEnabled(boolean enabled) {
 		int label = enabled ? R.string.layout_editor_group_on : R.string.layout_editor_group_off;
 		layoutEditGroupResize.setImageTintList(ColorStateList.valueOf(
-				enabled ? layoutEditDone.getCurrentTextColor() : 0x99FFFFFF));
+				enabled ? layoutEditDone.getCurrentTextColor() : editorInactiveColor));
 		layoutEditGroupResize.setContentDescription(layoutEditGroupResize.getContext().getString(label));
 		TooltipCompat.setTooltipText(layoutEditGroupResize, layoutEditGroupResize.getContentDescription());
 	}
 
-	private static int editorAccent(Context context) {
-		int accent = LegacyThemeColors.accent(context) | Color.BLACK;
-		return ColorUtils.calculateContrast(accent, EDITOR_PANEL_SURFACE) >= 4.5
-				? accent : Color.WHITE;
+	/** Apply the same palette as Compose while retaining the keyboard's own tool state. */
+	public void refreshTheme(boolean snapEnabled, boolean groupEnabled) {
+		LegacyUiColors colors = LegacyThemeColors.snapshot(root.getContext());
+		((GradientDrawable) memoryEditorBubble.getBackground()).setColor(colors.getPrimary());
+		((AppCompatImageView) memoryEditorBubbleIcon).setImageTintList(
+				ColorStateList.valueOf(colors.getOnPrimary()));
+		memoryEditorBubbleProgress.setTextColor(colors.getOnPrimary());
+		// Opaque semantic surfaces remain readable over arbitrary guest pixels.
+		((GradientDrawable) layoutEditPanel.getBackground()).setColor(colors.getSurfaceContainer());
+		layoutEditDivider.setBackgroundColor(colors.getOutlineVariant());
+		layoutEditDone.setTextColor(colors.getPrimary());
+		editorInactiveColor = colors.getOnSurfaceVariant();
+		ColorStateList toolTint = ColorStateList.valueOf(editorInactiveColor);
+		layoutEditShowControls.setImageTintList(toolTint);
+		layoutEditGridSize.setImageTintList(toolTint);
+		setLayoutEditSnapEnabled(snapEnabled);
+		setLayoutEditGroupEnabled(groupEnabled);
 	}
 
 	private static void applyEditorPressFeedback(Context context, View view, int attribute) {
@@ -241,21 +244,6 @@ public final class RuntimeHostView {
 	private static int dp(Context context, int value) {
 		return Math.round(TypedValue.applyDimension(
 				TypedValue.COMPLEX_UNIT_DIP, value, context.getResources().getDisplayMetrics()));
-	}
-
-	private static int resolveThemeColor(Context context, int attribute, int fallback) {
-		TypedValue value = new TypedValue();
-		if (!context.getTheme().resolveAttribute(attribute, value, true)) {
-			return fallback;
-		}
-		if (value.resourceId != 0) {
-			try {
-				return ContextCompat.getColor(context, value.resourceId);
-			} catch (RuntimeException ignored) {
-				return fallback;
-			}
-		}
-		return value.data;
 	}
 
 	public FrameLayout getRoot() {

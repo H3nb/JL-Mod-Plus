@@ -53,7 +53,7 @@ import java.util.concurrent.CopyOnWriteArrayList;
 import android.widget.PopupWindow;
 
 import androidx.annotation.NonNull;
-import androidx.core.content.ContextCompat;
+import androidx.core.graphics.ColorUtils;
 
 import java.nio.ByteBuffer;
 import java.nio.ByteOrder;
@@ -99,6 +99,7 @@ import io.github.h3nb.jlmodplus.R;
 import io.github.h3nb.jlmodplus.config.BackgroundMode;
 import io.github.h3nb.jlmodplus.gles.PostProcessRenderer;
 import io.github.h3nb.jlmodplus.ui.LegacyThemeColors;
+import io.github.h3nb.jlmodplus.ui.LegacyUiColors;
 import io.github.h3nb.jlmodplus.ui.AppBackgroundColors;
 import io.github.h3nb.jlmodplus.config.ProfileModel;
 import io.github.h3nb.jlmodplus.input.GuestKeyLedgerAdapter;
@@ -159,6 +160,7 @@ public abstract class Canvas extends Displayable {
 	private final Object bufferLock = new Object();
 	private final Object surfaceLock = new Object();
 	private final PaintEvent paintEvent = new PaintEvent();
+	private final LegacyUiColors hostColors = LegacyThemeColors.snapshot(ContextHolder.getActivity());
 	private final SoftBar softBar = new SoftBar();
 	private final CanvasWrapper canvasWrapper = new CanvasWrapper(settings.screenFilter);
 	private final RectF virtualScreen = new RectF();
@@ -2602,7 +2604,7 @@ public abstract class Canvas extends Displayable {
 			float tx = onX + thumbX * scaleX;
 			float ty = onY + thumbY * scaleY;
 			float tr = Math.max(6f, rr * 0.28f);
-			g.setFillColor(active ? Color.argb(150, 80, 160, 255)
+			g.setFillColor(active ? ColorUtils.setAlphaComponent(hostColors.getPrimary(), 150)
 					: Color.argb(90, 255, 255, 255));
 			g.fillArc(new RectF(tx - tr, ty - tr, tx + tr, ty + tr), 0, 360);
 		}
@@ -2625,8 +2627,8 @@ public abstract class Canvas extends Displayable {
 			this.overlayView = activity.findViewById(R.id.overlay);
 			DisplayMetrics metrics = activity.getResources().getDisplayMetrics();
 			padding = TypedValue.applyDimension(TypedValue.COMPLEX_UNIT_DIP, 5, metrics);
-			textColor = LegacyThemeColors.accent(activity);
-			bgColor = ContextCompat.getColor(activity, R.color.background);
+			textColor = hostColors.getPrimary();
+			bgColor = hostColors.getSurfaceContainer();
 		}
 
 		private void showPopup() {

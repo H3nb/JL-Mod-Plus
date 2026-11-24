@@ -864,6 +864,7 @@ public class MicroActivity extends AppCompatActivity {
 		}
 		externalAndroidHandoff = false;
 		refreshRuntimeBackground();
+		refreshRuntimeThemeColors();
 		// Returning to the runtime must apply the current cutout policy even when
 		// fullscreen did not change and no system-bar callback is dispatched.
 		refreshRuntimeChrome();
@@ -897,6 +898,7 @@ public class MicroActivity extends AppCompatActivity {
 		super.onConfigurationChanged(newConfig);
 		CameraRuntime.onHostConfigurationChanged(this);
 		refreshRuntimeBackground();
+		refreshRuntimeThemeColors();
 		if (binding != null) {
 			ViewCompat.requestApplyInsets(binding.getRoot());
 			binding.getRoot().post(() -> applyGuestInsets(current));
@@ -1027,6 +1029,15 @@ public class MicroActivity extends AppCompatActivity {
 		if (binding != null) {
 			binding.displayableContainer.removeAllViews();
 		}
+	}
+
+	private void refreshRuntimeThemeColors() {
+		if (binding == null) return;
+		VirtualKeyboard keyboard = ContextHolder.getVk();
+		boolean snapEnabled = keyboard == null || keyboard.isEditorSnapGridEnabled()
+				|| keyboard.isEditorSnapControlsEnabled();
+		boolean groupEnabled = keyboard == null || keyboard.isEditorGroupResizeEnabled();
+		binding.refreshTheme(snapEnabled, groupEnabled);
 	}
 
 	private void refreshRuntimeBackground() {
