@@ -50,7 +50,6 @@ import androidx.compose.ui.unit.DpSize
 import androidx.compose.ui.unit.dp
 import androidx.core.view.ViewCompat
 import androidx.core.view.WindowInsetsCompat
-import androidx.test.espresso.Espresso.pressBack
 import androidx.test.platform.app.InstrumentationRegistry
 import io.github.h3nb.jlmodplus.R
 import io.github.h3nb.jlmodplus.ui.JLModPlusTheme
@@ -143,7 +142,7 @@ class MemoryEditorAdaptiveComposeTest {
         rule.onNodeWithText(inspector).assertIsDisplayed()
         rule.onNodeWithContentDescription(context.getString(R.string.memory_variables_tab))
             .assertDoesNotExist()
-        pressBack()
+        rule.pressMemoryEditorBack()
         rule.runOnIdle { assertEquals(1, backCount) }
     }
 
@@ -247,7 +246,7 @@ class MemoryEditorAdaptiveComposeTest {
             override fun close() { closed = true }
         }
         rule.setContent { JLModPlusTheme { MemoryEditorRuntimeRoot(state.value, actions) } }
-        pressBack()
+        rule.pressMemoryEditorBack()
         rule.onNodeWithContentDescription("Search")
             .assertIsSelected()
         rule.runOnIdle { assertFalse(closed) }
@@ -609,7 +608,7 @@ class MemoryEditorAdaptiveComposeTest {
         val context = InstrumentationRegistry.getInstrumentation().targetContext
         val selected = context.resources.getQuantityString(R.plurals.memory_editor_selected, 1, 1)
         rule.onNodeWithText(selected).assertIsDisplayed()
-        pressBack()
+        rule.pressMemoryEditorBack()
         rule.onNodeWithText(selected).assertDoesNotExist()
         rule.onNodeWithContentDescription(
             context.getString(R.string.library_selection_select_all)

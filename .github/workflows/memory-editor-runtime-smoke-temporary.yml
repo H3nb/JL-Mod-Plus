@@ -56,7 +56,9 @@ jobs:
           target: google_apis
           arch: x86_64
           disable-animations: true
-          script: bash scripts/runtime-smoke.sh --memory-only
+          script: |
+            adb shell settings put secure immersive_mode_confirmations confirmed
+            bash scripts/runtime-smoke.sh --memory-only
       - name: Upload runtime evidence
         if: always()
         uses: actions/upload-artifact@043fb46d1a93c77aae656e7c1c64a875d1fc6a0a # v7.0.1

@@ -7,7 +7,6 @@ import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.graphics.Color
-import android.view.KeyEvent
 import android.view.Window
 import androidx.compose.material3.Text
 import androidx.compose.material3.TextButton
@@ -148,7 +147,7 @@ class MemoryEditorOverlayComposeTest {
             windows.values.forEach { assertEquals(1f, it.attributes.alpha, 0f) }
             assertTrue(nested.value)
         }
-        pressBack()
+        rule.pressMemoryEditorBack()
         rule.onNodeWithText("Nested choice").assertDoesNotExist()
         assertEquals(originalBounds, rule.onNodeWithTag("memory-editor-peek").getUnclippedBoundsInRoot())
     }
@@ -168,7 +167,7 @@ class MemoryEditorOverlayComposeTest {
         rule.onNodeWithTag("memory-editor-peek").performTouchInput { down(center) }
         rule.runOnIdle { assertTrue(overlay.peeking) }
         rule.onNodeWithTag("memory-editor-peek").performTouchInput { up() }
-        pressBack()
+        rule.pressMemoryEditorBack()
         field.assertTextContains("31415")
         rule.onNodeWithText("7").performScrollTo().performClick()
         field.assertTextContains("317415")
@@ -187,10 +186,10 @@ class MemoryEditorOverlayComposeTest {
         rule.onNodeWithTag("memory-editor-peek").performSemanticsAction(SemanticsActions.OnClick) { it() }
         rule.runOnIdle { assertTrue(overlay.peeking) }
         rule.onNode(hasSetTextAction()).assertDoesNotExist()
-        pressBack()
+        rule.pressMemoryEditorBack()
         rule.runOnIdle { assertFalse(overlay.peeking) }
         rule.onNode(hasSetTextAction()).assertTextContains("42")
-        pressBack()
+        rule.pressMemoryEditorBack()
         rule.onNode(hasSetTextAction()).assertDoesNotExist()
     }
 
@@ -297,11 +296,6 @@ class MemoryEditorOverlayComposeTest {
                 if (existed) putFloat("panel_opacity", previous) else remove("panel_opacity")
             }.commit()
         }
-    }
-    private fun pressBack() {
-        // Inject system Back into the focused dialog, not Espresso's Activity root.
-        InstrumentationRegistry.getInstrumentation().sendKeyDownUpSync(KeyEvent.KEYCODE_BACK)
-        rule.waitForIdle()
     }
 
 }
