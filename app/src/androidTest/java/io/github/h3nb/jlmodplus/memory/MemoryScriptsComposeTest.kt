@@ -8,6 +8,7 @@ import androidx.compose.ui.Modifier
 import androidx.compose.ui.test.performScrollTo
 import androidx.compose.ui.test.performScrollToNode
 import androidx.compose.ui.test.hasTestTag
+import androidx.compose.ui.test.hasText
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.platform.testTag
 import androidx.compose.ui.semantics.SemanticsProperties
@@ -324,9 +325,9 @@ class MemoryScriptsComposeTest {
         rule.onNodeWithText("Sample Coins").performClick()
         rule.onNodeWithTag("memory-script-input-coins").assertTextContains("10")
         rule.onNodeWithTag("memory-script-input-coins").performTextReplacement("37")
-        rule.onNodeWithText("Refresh").performClick()
+        rule.onNodeWithText("Refresh").performScrollTo().assertIsDisplayed().performClick()
         rule.onNodeWithTag("memory-script-input-coins").assertTextContains("37")
-        rule.onNodeWithTag("memory-script-apply").performClick()
+        rule.onNodeWithTag("memory-script-apply").assertIsEnabled().assertIsDisplayed().performClick()
         rule.runOnIdle {
             assertEquals("37", applied.single().first["coins"])
             assertEquals(listOf("10"), applied.single().second)
@@ -479,12 +480,14 @@ class MemoryScriptsComposeTest {
         rule.onAllNodesWithText("New script")[0].performClick()
         rule.onNodeWithText("Quick Actions").performClick()
         rule.onNodeWithTag("memory-builder-name").performTextReplacement("Add coins")
-        rule.onNodeWithText("Add target").performClick()
-        rule.onNodeWithText("Add selected").assertIsNotEnabled()
+        rule.onNodeWithTag("memory-builder-targets")
+            .performScrollToNode(hasText("Add target"))
+        rule.onNodeWithText("Add target").assertIsDisplayed().performClick()
+        rule.onNodeWithText("Add selected").assertIsDisplayed().assertIsNotEnabled()
         rule.onNodeWithTag("memory-bookmark-search").performTextReplacement("coins")
         rule.onNodeWithText("Coins").performClick()
         rule.onNodeWithTag("memory-bookmark-search").performTextReplacement("not-a-bookmark")
-        rule.onNodeWithText("Add selected").assertIsEnabled().performClick()
+        rule.onNodeWithText("Add selected").assertIsDisplayed().assertIsEnabled().performClick()
         rule.onNodeWithTag("memory-builder-targets")
             .performScrollToNode(hasTestTag("memory-builder-value"))
         rule.onNodeWithText("Add").performScrollTo().performClick()

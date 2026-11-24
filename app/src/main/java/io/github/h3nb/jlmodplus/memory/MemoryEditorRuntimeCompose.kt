@@ -598,9 +598,10 @@ private fun RuntimeMemoryHeader(
                     } else if (!showTitle) Spacer(Modifier.weight(1f))
                 }
                 RuntimeIconTooltip(stringResource(R.string.memory_editor_minimize)) {
-                    IconButton(onClick = onMinimize, enabled = !navigationLocked) {
+                    IconButton(onClick = onMinimize, enabled = !navigationLocked,
+                        modifier = Modifier.size(48.dp)) {
                         Icon(painterResource(R.drawable.ic_remove),
-                            stringResource(R.string.memory_editor_minimize))
+                            stringResource(R.string.memory_editor_minimize), modifier = Modifier.size(24.dp))
                     }
                 }
             }
@@ -3045,11 +3046,11 @@ private fun RuntimePager(state: MemoryEditorUiState, actions: MemoryEditorAction
         horizontalArrangement = Arrangement.Center,
         verticalAlignment = Alignment.CenterVertically,
     ) {
-        TextButton(
+        IconButton(
             onClick = actions::previousPage,
             enabled = state.pageOffset > 0,
             modifier = Modifier
-                .sizeIn(minWidth = 48.dp, minHeight = 48.dp)
+                .size(48.dp)
                 .semantics { contentDescription = previousPageDescription },
         ) {
             Text("‹", modifier = Modifier.clearAndSetSemantics {})
@@ -3058,14 +3059,18 @@ private fun RuntimePager(state: MemoryEditorUiState, actions: MemoryEditorAction
             "${numberFormat.format(state.pageOffset + 1)}–" +
                 "${numberFormat.format(minOf(state.pageOffset.toLong() + MemoryEditorComposeController.PAGE_SIZE, state.resultCount))}" +
                 " / ${numberFormat.format(state.resultCount)}",
+            modifier = Modifier.weight(1f, fill = false),
             style = runtimeMemoryMetaTextStyle(),
             color = MaterialTheme.colorScheme.onSurface,
+            maxLines = 1,
+            overflow = TextOverflow.Ellipsis,
+            textAlign = TextAlign.Center,
         )
-        TextButton(
+        IconButton(
             onClick = actions::nextPage,
             enabled = state.pageOffset.toLong() + MemoryEditorComposeController.PAGE_SIZE < state.resultCount,
             modifier = Modifier
-                .sizeIn(minWidth = 48.dp, minHeight = 48.dp)
+                .size(48.dp)
                 .semantics { contentDescription = nextPageDescription },
         ) {
             Text("›", modifier = Modifier.clearAndSetSemantics {})
@@ -3082,8 +3087,8 @@ private fun RuntimeActionIcon(
 ) {
     val label = stringResource(description)
     RuntimeIconTooltip(label) {
-        IconButton(onClick = onClick, enabled = enabled) {
-            Icon(painterResource(icon), contentDescription = label)
+        IconButton(onClick = onClick, enabled = enabled, modifier = Modifier.size(48.dp)) {
+            Icon(painterResource(icon), contentDescription = label, modifier = Modifier.size(24.dp))
         }
     }
 }

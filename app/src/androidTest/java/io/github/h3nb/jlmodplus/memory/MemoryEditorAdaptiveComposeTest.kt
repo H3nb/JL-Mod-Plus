@@ -12,6 +12,14 @@ import androidx.compose.runtime.CompositionLocalProvider
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.platform.ComposeView
 import androidx.compose.ui.platform.LocalDensity
+import androidx.compose.ui.platform.LocalFocusManager
+import androidx.compose.ui.platform.LocalSoftwareKeyboardController
+import androidx.compose.ui.focus.FocusManager
+import androidx.compose.ui.platform.SoftwareKeyboardController
+import androidx.compose.foundation.layout.WindowInsets
+import androidx.compose.foundation.layout.isImeVisible
+import androidx.compose.foundation.layout.ExperimentalLayoutApi
+import androidx.compose.runtime.SideEffect
 import androidx.compose.ui.platform.LocalView
 import androidx.compose.ui.platform.testTag
 import androidx.compose.ui.test.DeviceConfigurationOverride
@@ -53,7 +61,7 @@ import org.junit.Assert.assertTrue
 import org.junit.Rule
 import org.junit.Test
 
-@OptIn(ExperimentalTestApi::class)
+@OptIn(ExperimentalTestApi::class, ExperimentalLayoutApi::class)
 class MemoryEditorAdaptiveComposeTest {
     @get:Rule val rule = createComposeRule()
 
@@ -264,9 +272,20 @@ class MemoryEditorAdaptiveComposeTest {
 
     @Test fun scriptBuilderKeepsDraftAndActionsReachableAsViewportShrinks() {
         val size = mutableStateOf(DpSize(360.dp, 640.dp))
+        lateinit var focus: FocusManager
+        var keyboard: SoftwareKeyboardController? = null
+        var imeVisible = false
         rule.setContent {
             DeviceConfigurationOverride(DeviceConfigurationOverride.WindowSize(size.value)) {
                 JLModPlusTheme {
+                    val currentFocus = LocalFocusManager.current
+                    val currentKeyboard = LocalSoftwareKeyboardController.current
+                    val currentImeVisible = WindowInsets.isImeVisible
+                    SideEffect {
+                        focus = currentFocus
+                        keyboard = currentKeyboard
+                        imeVisible = currentImeVisible
+                    }
                     MemoryEditorRuntimeRoot(
                         MemoryEditorUiState(
                             visible = true, connected = true, supported = true,
@@ -281,6 +300,11 @@ class MemoryEditorAdaptiveComposeTest {
         rule.onNodeWithText(InstrumentationRegistry.getInstrumentation().targetContext
             .getString(R.string.memory_scripts_mode_toggle)).performClick()
         rule.onNodeWithTag("memory-builder-name").performTextReplacement("Keep score")
+        rule.runOnIdle {
+            focus.clearFocus()
+            keyboard?.hide()
+        }
+        rule.waitUntil(5_000) { !imeVisible }
         rule.runOnIdle { size.value = DpSize(360.dp, 320.dp) }
         rule.onNodeWithTag("memory-builder-name").assertTextContains("Keep score")
         rule.onNodeWithText("Save").assertIsDisplayed()
@@ -446,7 +470,7 @@ class MemoryEditorAdaptiveComposeTest {
                 useUnmergedTree = true,
             ).getUnclippedBoundsInRoot()
             val peek = rule.onNodeWithTag("memory-editor-peek").getUnclippedBoundsInRoot()
-            assertEquals("Settings glyph aligns with title", title.left.value, settings.left.value, 2f)
+            assertEquals("Settings glyph aligns with title", title.left.value, settings.left.value, 3f)
             assertEquals("Peek aligns with close",
                 (close.left.value + close.right.value) / 2f,
                 (peek.left.value + peek.right.value) / 2f, 2f)

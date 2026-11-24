@@ -214,6 +214,9 @@ The workspace header and footer paint edge-to-edge; safe insets belong to their 
 The workspace footer uses the same solid themed chrome as the header. The body
 and dock consume bottom system/IME insets once in layout, below a stable
 full-window size calculation. The dock is measured as part of the body layout rather than reserved by a fixed height.
+Pagination reserves both navigation controls before allocating room to the count.
+Script forms pin Apply below the scrollable details; opening the Bookmark picker
+releases the parent text field and its IME.
 Both move together above the native IME without
 additional editor animation. Dialog footers remain transparent; the workspace
 dock disappears during Peek. Keep dialog surfaces solid so users can safely

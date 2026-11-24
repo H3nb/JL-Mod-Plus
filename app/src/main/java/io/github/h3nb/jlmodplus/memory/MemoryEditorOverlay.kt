@@ -352,68 +352,71 @@ internal fun MemoryEditorDialog(
         }
         val windowWidth = availableWindowWidthDp()
         val windowHeight = availableWindowHeightDp()
+        val windowDensity = LocalDensity.current
         Dialog(
             onDismissRequest = { if (overlay.peeking) overlay.peeking = false else onDismissRequest() },
             properties = DialogProperties(usePlatformDefaultWidth = false, decorFitsSystemWindows = false),
         ) {
             MemoryEditorWindowDimming(overlay.peeking)
-            Box(
-                Modifier.size(windowWidth, windowHeight).windowInsetsPadding(memoryEditorSafeWindowInsets())
-                    .padding(horizontal = 8.dp, vertical = 4.dp)
-                    .memoryEditorPeekKeys(overlay),
-            ) {
-                Box(Modifier.widthIn(max = 960.dp).fillMaxSize().align(Alignment.Center)) {
-                    BoxWithConstraints(
-                        modifier = Modifier.fillMaxSize().testTag("memory-editor-dialog-viewport"),
-                    ) {
-                        Box(Modifier.matchParentSize().pointerInput(onDismissRequest, overlay.peeking) {
-                            detectTapGestures(onTap = { if (!overlay.peeking) onDismissRequest() })
-                        })
-                        // On wide windows Peek fits entirely beside the form, so dialogs
-                        // can use the full height and remain centered on the screen.
-                        // Otherwise reserve only its actual 48 dp bottom touch target.
-                        val peekGutter = 48.dp + 8.dp +
-                            memoryEditorBottomCornerPadding()
-                                .calculateRightPadding(LocalLayoutDirection.current)
-                        val sidePeek = maxWidth >= 600.dp &&
-                            maxWidth - peekGutter * 2 >= minOf(maxDialogWidth, 480.dp)
-                        val dialogMaxWidth = if (sidePeek) {
-                            minOf(maxDialogWidth, maxWidth - peekGutter * 2)
-                        } else maxDialogWidth
+            CompositionLocalProvider(LocalDensity provides windowDensity) {
+                Box(
+                    Modifier.size(windowWidth, windowHeight).windowInsetsPadding(memoryEditorSafeWindowInsets())
+                        .padding(horizontal = 8.dp, vertical = 4.dp)
+                        .memoryEditorPeekKeys(overlay),
+                ) {
+                    Box(Modifier.widthIn(max = 960.dp).fillMaxSize().align(Alignment.Center)) {
                         BoxWithConstraints(
-                            modifier = Modifier.fillMaxSize().then(
-                                if (sidePeek) Modifier else Modifier.padding(bottom = 48.dp),
-                            ),
-                            contentAlignment = Alignment.Center,
+                            modifier = Modifier.fillMaxSize().testTag("memory-editor-dialog-viewport"),
                         ) {
-                            val layout = adaptiveDialogLayout(maxWidth, maxHeight, maxDialogWidth = dialogMaxWidth)
-                                .copy(maxHeight = (maxHeight - 8.dp).coerceAtLeast(0.dp))
-                            Surface(
-                                modifier = layout.modifier.then(modifier)
-                                    .alpha(if (overlay.peeking) 0f else 1f)
-                                    .testTag("adaptive-dialog-surface")
-                                    .then(if (overlay.peeking) Modifier.clearAndSetSemantics {} else Modifier)
-                                    .pointerInput(Unit) { detectTapGestures {} },
-                                shape = MaterialTheme.shapes.large,
-                                color = MaterialTheme.colorScheme.surfaceContainerHigh,
-                                contentColor = MaterialTheme.colorScheme.onSurface,
+                            Box(Modifier.matchParentSize().pointerInput(onDismissRequest, overlay.peeking) {
+                                detectTapGestures(onTap = { if (!overlay.peeking) onDismissRequest() })
+                            })
+                            // On wide windows Peek fits entirely beside the form, so dialogs
+                            // can use the full height and remain centered on the screen.
+                            // Otherwise reserve only its actual 48 dp bottom touch target.
+                            val peekGutter = 48.dp + 8.dp +
+                                memoryEditorBottomCornerPadding()
+                                    .calculateRightPadding(LocalLayoutDirection.current)
+                            val sidePeek = maxWidth >= 600.dp &&
+                                maxWidth - peekGutter * 2 >= minOf(maxDialogWidth, 600.dp)
+                            val dialogMaxWidth = if (sidePeek) {
+                                minOf(maxDialogWidth, maxWidth - peekGutter * 2)
+                            } else maxDialogWidth
+                            BoxWithConstraints(
+                                modifier = Modifier.fillMaxSize().then(
+                                    if (sidePeek) Modifier else Modifier.padding(bottom = 48.dp),
+                                ),
+                                contentAlignment = Alignment.Center,
                             ) {
-                                AdaptiveDialogContent(
-                                    compact = layout.maxHeight < 320.dp,
-                                    title = title, text = text, textScrollable = textScrollable,
-                                    confirmButton = confirmButton, dismissButton = dismissButton,
-                                    dismissButtonBelowWrappedActions = dismissButtonBelowWrappedActions,
-                                )
+                                val layout = adaptiveDialogLayout(maxWidth, maxHeight, maxDialogWidth = dialogMaxWidth)
+                                    .copy(maxHeight = (maxHeight - 8.dp).coerceAtLeast(0.dp))
+                                Surface(
+                                    modifier = layout.modifier.then(modifier)
+                                        .alpha(if (overlay.peeking) 0f else 1f)
+                                        .testTag("adaptive-dialog-surface")
+                                        .then(if (overlay.peeking) Modifier.clearAndSetSemantics {} else Modifier)
+                                        .pointerInput(Unit) { detectTapGestures {} },
+                                    shape = MaterialTheme.shapes.large,
+                                    color = MaterialTheme.colorScheme.surfaceContainerHigh,
+                                    contentColor = MaterialTheme.colorScheme.onSurface,
+                                ) {
+                                    AdaptiveDialogContent(
+                                        compact = layout.maxHeight < 320.dp,
+                                        title = title, text = text, textScrollable = textScrollable,
+                                        confirmButton = confirmButton, dismissButton = dismissButton,
+                                        dismissButtonBelowWrappedActions = dismissButtonBelowWrappedActions,
+                                    )
+                                }
                             }
                         }
-                    }
-                    MemoryEditorPeekShield(overlay)
-                    if (overlay.layers.lastOrNull() == layer) {
-                        MemoryEditorPeekDock(
-                            overlay,
-                            Modifier.align(Alignment.BottomCenter)
-                                .padding(memoryEditorBottomCornerPadding()),
-                        )
+                        MemoryEditorPeekShield(overlay)
+                        if (overlay.layers.lastOrNull() == layer) {
+                            MemoryEditorPeekDock(
+                                overlay,
+                                Modifier.align(Alignment.BottomCenter)
+                                    .padding(memoryEditorBottomCornerPadding()),
+                            )
+                        }
                     }
                 }
             }

@@ -47,6 +47,7 @@ import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.platform.testTag
 import androidx.compose.ui.platform.LocalFocusManager
+import androidx.compose.ui.platform.LocalSoftwareKeyboardController
 import androidx.compose.ui.res.painterResource
 import androidx.compose.ui.res.pluralStringResource
 import androidx.compose.ui.res.stringResource
@@ -182,6 +183,13 @@ internal fun MemoryScriptBuilderScreen(
     val currentDraft by rememberUpdatedState(draft)
     val locked = saving || generating
     var picking by remember { mutableStateOf(false) }
+    val focusManager = LocalFocusManager.current
+    val keyboard = LocalSoftwareKeyboardController.current
+    fun openPicker() {
+        focusManager.clearFocus()
+        keyboard?.hide()
+        picking = true
+    }
     var preview by remember(draft) { mutableStateOf<String?>(null) }
     var error by remember { mutableStateOf<String?>(null) }
     var showDescription by remember(draft.id) {
@@ -210,15 +218,17 @@ internal fun MemoryScriptBuilderScreen(
         MemoryScriptBuilderMode.ACTIONS -> R.string.memory_builder_actions
     }
     Column(modifier.fillMaxSize()) {
-        error?.let {
-            Text(it, color = MaterialTheme.colorScheme.error,
-                style = MaterialTheme.typography.bodySmall,
-                modifier = Modifier.fillMaxWidth().padding(horizontal = 16.dp))
-        }
         LazyColumn(
             modifier = Modifier.weight(1f).fillMaxWidth().testTag("memory-builder-targets"),
             contentPadding = PaddingValues(horizontal = 16.dp, vertical = 12.dp),
         ) {
+            error?.let { message ->
+                item(key = "error") {
+                    Text(message, color = MaterialTheme.colorScheme.error,
+                        style = MaterialTheme.typography.bodySmall,
+                        modifier = Modifier.fillMaxWidth().padding(bottom = 8.dp))
+                }
+            }
             item(key = "identity") {
                 Surface(
                     color = MaterialTheme.colorScheme.surfaceContainerLow,
@@ -267,7 +277,7 @@ internal fun MemoryScriptBuilderScreen(
                             style = MaterialTheme.typography.titleMedium,
                             modifier = Modifier.align(Alignment.CenterVertically))
                         if (draft.actions.isNotEmpty()) {
-                            TextButton(enabled = !locked, onClick = { picking = true }) {
+                            TextButton(enabled = !locked, onClick = ::openPicker) {
                                 Icon(painterResource(R.drawable.ic_add), contentDescription = null)
                                 Spacer(Modifier.width(6.dp))
                                 Text(stringResource(R.string.memory_builder_add_target))
@@ -282,7 +292,7 @@ internal fun MemoryScriptBuilderScreen(
                                 style = MaterialTheme.typography.bodyMedium)
                             FilledTonalButton(
                                 enabled = !locked,
-                                onClick = { picking = true },
+                                onClick = ::openPicker,
                                 modifier = Modifier.fillMaxWidth().heightIn(min = 48.dp),
                             ) {
                                 Icon(painterResource(R.drawable.ic_add), contentDescription = null)

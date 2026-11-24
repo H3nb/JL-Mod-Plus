@@ -27,6 +27,8 @@ import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.platform.testTag
+import androidx.compose.ui.platform.LocalFocusManager
+import androidx.compose.ui.platform.LocalSoftwareKeyboardController
 import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.text.style.TextOverflow
 import androidx.compose.ui.unit.dp
@@ -73,6 +75,8 @@ internal fun TypedMemoryRecipeDetail(
     var deleting by remember(script.id) { mutableStateOf(false) }
     var requestId by remember(script.id, state.runtimeToken) { mutableStateOf(0L) }
     val active = state.scriptActiveFreezes.any { it.first == script.id }
+    val focusManager = LocalFocusManager.current
+    val keyboard = LocalSoftwareKeyboardController.current
 
     fun refresh(requestInputs: Map<String, String>, useActualValues: Boolean = false) {
         val request = ++requestId
@@ -140,7 +144,11 @@ internal fun TypedMemoryRecipeDetail(
                     style = MaterialTheme.typography.titleSmall, modifier = Modifier.weight(1f))
                 TextButton(
                     enabled = !reading && !busy && state.supported && !state.busy,
-                    onClick = { refresh(inputs) },
+                    onClick = {
+                        focusManager.clearFocus()
+                        keyboard?.hide()
+                        refresh(inputs)
+                    },
                 ) { Text(stringResource(R.string.memory_scripts_refresh)) }
             }
             when {
@@ -201,26 +209,7 @@ internal fun TypedMemoryRecipeDetail(
                     Text(stringResource(if (active) R.string.memory_scripts_freeze_active
                         else R.string.memory_scripts_mode_toggle))
                 }
-                "form" -> {
-                    if (expectedValues == null) Text(
-                        stringResource(R.string.memory_scripts_refresh_required),
-                        style = MaterialTheme.typography.bodySmall,
-                        color = MaterialTheme.colorScheme.onSurfaceVariant)
-                    Button(modifier = Modifier.testTag("memory-script-apply"),
-                        enabled = expectedValues != null && snapshotTicket != null && !busy && !reading &&
-                        !state.busy && state.writeSupported, onClick = {
-                        val snapshot = expectedValues ?: return@Button
-                        busy = true
-                        actions.runMemoryRecipeChecked(
-                            script.document, inputs, false, snapshot, snapshotTicket,
-                        ) { success ->
-                            busy = false
-                            expectedValues = null
-                            snapshotTicket = null
-                            if (success) refresh(inputs, useActualValues = true)
-                        }
-                    }) { Text(stringResource(R.string.memory_scripts_apply)) }
-                }
+                "form" -> Unit
                 "oneShot" -> Button(enabled = !busy && !state.busy &&
                         state.writeSupported, onClick = {
                     busy = true
@@ -234,6 +223,27 @@ internal fun TypedMemoryRecipeDetail(
                 Text(stringResource(R.string.memory_scripts_delete),
                     color = MaterialTheme.colorScheme.error)
             }
+        }
+        if (metadata.mode == "form") {
+            if (expectedValues == null) Text(
+                stringResource(R.string.memory_scripts_refresh_required),
+                style = MaterialTheme.typography.bodySmall,
+                color = MaterialTheme.colorScheme.onSurfaceVariant,
+            )
+            Button(modifier = Modifier.fillMaxWidth().testTag("memory-script-apply"),
+                enabled = expectedValues != null && snapshotTicket != null && !busy && !reading &&
+                !state.busy && state.writeSupported, onClick = {
+                val snapshot = expectedValues ?: return@Button
+                busy = true
+                actions.runMemoryRecipeChecked(
+                    script.document, inputs, false, snapshot, snapshotTicket,
+                ) { success ->
+                    busy = false
+                    expectedValues = null
+                    snapshotTicket = null
+                    if (success) refresh(inputs, useActualValues = true)
+                }
+            }) { Text(stringResource(R.string.memory_scripts_apply)) }
         }
     }
     if (deleting) MemoryEditorDialog(
