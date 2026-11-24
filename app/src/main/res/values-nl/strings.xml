@@ -214,8 +214,8 @@
     <string name="library_view_list">Lijst</string>
     <string name="library_view_grid">Raster</string>
     <string name="library_icon_ratio_title">Pictogramverhouding</string>
-    <string name="library_icon_ratio_square">1:1</string>
-    <string name="library_icon_ratio_portrait">3:4</string>
+    <string name="library_icon_ratio_square">Vierkant (1:1)</string>
+    <string name="library_icon_ratio_portrait">Staand (3:4)</string>
     <string name="library_icon_shape_title">Pictogramvorm</string>
     <string name="library_icon_shape_round">Afgerond</string>
     <string name="library_icon_shape_square">Scherpe hoeken</string>

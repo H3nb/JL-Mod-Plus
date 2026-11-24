@@ -114,8 +114,8 @@
     <string name="library_view_list">Daftar</string>
     <string name="library_view_grid">Grid</string>
     <string name="library_icon_ratio_title">Rasio ikon</string>
-    <string name="library_icon_ratio_square">1:1</string>
-    <string name="library_icon_ratio_portrait">3:4</string>
+    <string name="library_icon_ratio_square">Persegi (1:1)</string>
+    <string name="library_icon_ratio_portrait">Potret (3:4)</string>
     <string name="library_icon_shape_title">Bentuk ikon</string>
     <string name="library_icon_shape_round">Sudut membulat</string>
     <string name="library_icon_shape_square">Sudut tajam</string>

@@ -995,7 +995,9 @@ class LibraryComposeTest {
             .assertCountEquals(0)
         composeRule.onNodeWithTag("library_scope_picker").performClick()
         composeRule.onAllNodesWithText(uiString(R.string.library_scope_picker_title)).assertCountEquals(0)
-        composeRule.onNodeWithText(uiString(R.string.library_destination_apps)).assertExists()
+        composeRule.onNode(
+            hasText(uiString(R.string.library_destination_apps)) and isSelected(),
+        ).assertIsDisplayed()
         composeRule.onNodeWithText(uiString(R.string.library_filter_favorites)).assertExists()
         composeRule.onNodeWithText(uiString(R.string.library_filter_recently_opened)).assertExists()
         composeRule.onNodeWithText(uiString(R.string.library_filter_recently_added)).assertExists()

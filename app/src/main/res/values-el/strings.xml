@@ -177,8 +177,8 @@
     <string name="library_grid_spacing_title">Απόσταση πλέγματος</string>
     <string name="library_hide_grid_titles">Απόκρυψη τίτλων MIDlet</string>
     <string name="library_hide_grid_titles_summary">Εμφάνιση μόνο των εικονιδίων MIDlet στην προβολή πλέγματος.</string>
-    <string name="library_icon_ratio_portrait">3:4</string>
-    <string name="library_icon_ratio_square">1:1</string>
+    <string name="library_icon_ratio_portrait">Κατακόρυφο (3:4)</string>
+    <string name="library_icon_ratio_square">Τετράγωνο (1:1)</string>
     <string name="library_icon_ratio_title">Αναλογία διαστάσεων εικονιδίων</string>
     <string name="library_icon_shape_round">Στρογγυλεμένες γωνίες</string>
     <string name="library_icon_shape_square">Ορθές γωνίες</string>

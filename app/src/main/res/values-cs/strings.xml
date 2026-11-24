@@ -282,8 +282,8 @@
     <string name="library_grid_spacing_title">Mezery v mřížce</string>
     <string name="library_hide_grid_titles">Skrýt názvy MIDletů</string>
     <string name="library_hide_grid_titles_summary">V zobrazení mřížky zobrazovat pouze ikony MIDletů.</string>
-    <string name="library_icon_ratio_portrait">3:4</string>
-    <string name="library_icon_ratio_square">1:1</string>
+    <string name="library_icon_ratio_portrait">Na výšku (3:4)</string>
+    <string name="library_icon_ratio_square">Čtverec (1:1)</string>
     <string name="library_icon_ratio_title">Poměr stran ikon</string>
     <string name="library_icon_shape_round">Zaoblené rohy</string>
     <string name="library_icon_shape_square">Ostré rohy</string>

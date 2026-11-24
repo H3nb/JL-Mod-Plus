@@ -178,8 +178,8 @@
     <string name="library_grid_spacing_title">ජාලකයේ පරතරය</string>
     <string name="library_hide_grid_titles">MIDlet මාතෘකා සඟවන්න</string>
     <string name="library_hide_grid_titles_summary">ජාලක දසුනේ MIDlet අයිකන පමණක් පෙන්වන්න.</string>
-    <string name="library_icon_ratio_portrait">3:4</string>
-    <string name="library_icon_ratio_square">1:1</string>
+    <string name="library_icon_ratio_portrait">සිරස් (3:4)</string>
+    <string name="library_icon_ratio_square">හතරැස් (1:1)</string>
     <string name="library_icon_ratio_title">අයිකනයේ දර්ශන අනුපාතය</string>
     <string name="library_icon_shape_round">වටකුරු කොන්</string>
     <string name="library_icon_shape_square">තියුණු කොන්</string>

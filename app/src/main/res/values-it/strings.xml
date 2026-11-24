@@ -211,8 +211,8 @@
     <string name="library_view_list">Elenco</string>
     <string name="library_view_grid">Griglia</string>
     <string name="library_icon_ratio_title">Proporzioni icona</string>
-    <string name="library_icon_ratio_square">1:1</string>
-    <string name="library_icon_ratio_portrait">3:4</string>
+    <string name="library_icon_ratio_square">Quadrato (1:1)</string>
+    <string name="library_icon_ratio_portrait">Verticale (3:4)</string>
     <string name="library_icon_shape_title">Forma icona</string>
     <string name="library_icon_shape_round">Arrotondato</string>
     <string name="library_icon_shape_square">Angoli netti</string>

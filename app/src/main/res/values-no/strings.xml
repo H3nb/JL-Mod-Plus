@@ -177,8 +177,8 @@
     <string name="library_grid_spacing_title">Rutenettavstand</string>
     <string name="library_hide_grid_titles">Skjul MIDlet-titler</string>
     <string name="library_hide_grid_titles_summary">Vis bare MIDlet-ikoner i rutenettvisning.</string>
-    <string name="library_icon_ratio_portrait">3:4</string>
-    <string name="library_icon_ratio_square">1:1</string>
+    <string name="library_icon_ratio_portrait">Stående (3:4)</string>
+    <string name="library_icon_ratio_square">Kvadratisk (1:1)</string>
     <string name="library_icon_ratio_title">Ikonenes sideforhold</string>
     <string name="library_icon_shape_round">Avrundede hjørner</string>
     <string name="library_icon_shape_square">Skarpe hjørner</string>

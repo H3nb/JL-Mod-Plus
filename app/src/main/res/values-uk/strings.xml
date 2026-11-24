@@ -280,8 +280,8 @@
     <string name="library_grid_spacing_title">Проміжки в сітці</string>
     <string name="library_hide_grid_titles">Приховати назви MIDlet</string>
     <string name="library_hide_grid_titles_summary">Показувати лише значки MIDlet у вигляді сітки.</string>
-    <string name="library_icon_ratio_portrait">3:4</string>
-    <string name="library_icon_ratio_square">1:1</string>
+    <string name="library_icon_ratio_portrait">Вертикальний (3:4)</string>
+    <string name="library_icon_ratio_square">Квадратний (1:1)</string>
     <string name="library_icon_ratio_title">Співвідношення сторін значка</string>
     <string name="library_icon_shape_round">Заокруглені кути</string>
     <string name="library_icon_shape_square">Гострі кути</string>

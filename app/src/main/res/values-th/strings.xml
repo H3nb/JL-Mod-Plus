@@ -213,8 +213,8 @@
     <string name="library_grid_spacing_title">ระยะห่างของตาราง</string>
     <string name="library_hide_grid_titles">ซ่อนชื่อ MIDlet</string>
     <string name="library_hide_grid_titles_summary">แสดงเฉพาะไอคอน MIDlet ในมุมมองตาราง</string>
-    <string name="library_icon_ratio_portrait">3:4</string>
-    <string name="library_icon_ratio_square">1:1</string>
+    <string name="library_icon_ratio_portrait">แนวตั้ง (3:4)</string>
+    <string name="library_icon_ratio_square">สี่เหลี่ยมจัตุรัส (1:1)</string>
     <string name="library_icon_ratio_title">อัตราส่วนไอคอน</string>
     <string name="library_icon_shape_round">มุมโค้งมน</string>
     <string name="library_icon_shape_square">มุมเหลี่ยม</string>

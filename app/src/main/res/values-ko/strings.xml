@@ -252,8 +252,8 @@
     <string name="library_grid_spacing_title">그리드 간격</string>
     <string name="library_hide_grid_titles">MIDlet 제목 숨기기</string>
     <string name="library_hide_grid_titles_summary">그리드 보기에서 MIDlet 아이콘만 표시합니다.</string>
-    <string name="library_icon_ratio_portrait">3:4</string>
-    <string name="library_icon_ratio_square">1:1</string>
+    <string name="library_icon_ratio_portrait">세로형 (3:4)</string>
+    <string name="library_icon_ratio_square">정사각형 (1:1)</string>
     <string name="library_icon_ratio_title">아이콘 가로세로 비율</string>
     <string name="library_icon_shape_round">둥근 모서리</string>
     <string name="library_icon_shape_square">각진 모서리</string>

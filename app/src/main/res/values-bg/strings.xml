@@ -262,8 +262,8 @@
     <string name="library_grid_spacing_title">Разстояние в мрежата</string>
     <string name="library_hide_grid_titles">Скриване на заглавията на MIDlet</string>
     <string name="library_hide_grid_titles_summary">Показване само на иконите на MIDlet в изгледа с мрежа.</string>
-    <string name="library_icon_ratio_portrait">3:4</string>
-    <string name="library_icon_ratio_square">1:1</string>
+    <string name="library_icon_ratio_portrait">Портрет (3:4)</string>
+    <string name="library_icon_ratio_square">Квадрат (1:1)</string>
     <string name="library_icon_ratio_title">Съотношение на страните на иконите</string>
     <string name="library_icon_shape_round">Заоблени ъгли</string>
     <string name="library_icon_shape_square">Остри ъгли</string>

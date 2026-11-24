@@ -225,8 +225,8 @@
     <string name="library_grid_spacing_title">格狀檢視間距</string>
     <string name="library_hide_grid_titles">隱藏 MIDlet 標題</string>
     <string name="library_hide_grid_titles_summary">在格狀檢視中僅顯示 MIDlet 圖示。</string>
-    <string name="library_icon_ratio_portrait">3:4</string>
-    <string name="library_icon_ratio_square">1:1</string>
+    <string name="library_icon_ratio_portrait">直式 (3:4)</string>
+    <string name="library_icon_ratio_square">正方形 (1:1)</string>
     <string name="library_icon_ratio_title">圖示長寬比</string>
     <string name="library_icon_shape_round">圓角</string>
     <string name="library_icon_shape_square">直角</string>

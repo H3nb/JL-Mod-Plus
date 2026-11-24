@@ -177,8 +177,8 @@
     <string name="library_grid_spacing_title">Размак у мрежи</string>
     <string name="library_hide_grid_titles">Сакриј наслове MIDlet-а</string>
     <string name="library_hide_grid_titles_summary">Приказуј само иконе MIDlet-а у приказу мреже.</string>
-    <string name="library_icon_ratio_portrait">3:4</string>
-    <string name="library_icon_ratio_square">1:1</string>
+    <string name="library_icon_ratio_portrait">Усправни (3:4)</string>
+    <string name="library_icon_ratio_square">Квадратни (1:1)</string>
     <string name="library_icon_ratio_title">Однос ширине и висине икона</string>
     <string name="library_icon_shape_round">Заобљени углови</string>
     <string name="library_icon_shape_square">Оштри углови</string>

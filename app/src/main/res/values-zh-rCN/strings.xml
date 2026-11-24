@@ -282,8 +282,8 @@
     <string name="library_grid_spacing_title">网格间距</string>
     <string name="library_hide_grid_titles">隐藏 MIDlet 标题</string>
     <string name="library_hide_grid_titles_summary">网格视图中仅显示 MIDlet 图标。</string>
-    <string name="library_icon_ratio_portrait">3:4</string>
-    <string name="library_icon_ratio_square">1:1</string>
+    <string name="library_icon_ratio_portrait">竖版 (3:4)</string>
+    <string name="library_icon_ratio_square">正方形 (1:1)</string>
     <string name="library_icon_ratio_title">图标宽高比</string>
     <string name="library_icon_shape_round">圆角</string>
     <string name="library_icon_shape_square">直角</string>

@@ -54,7 +54,6 @@ import androidx.compose.foundation.layout.WindowInsets
 import androidx.compose.foundation.layout.WindowInsetsSides
 import androidx.compose.foundation.layout.exclude
 import androidx.compose.foundation.layout.fillMaxSize
-import androidx.compose.foundation.layout.fillMaxHeight
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.heightIn
@@ -95,7 +94,6 @@ import androidx.compose.material3.IconButton
 import androidx.compose.material3.ListItem
 import androidx.compose.material3.HorizontalDivider
 import androidx.compose.material3.rememberModalBottomSheetState
-import androidx.compose.material3.ModalBottomSheet
 import androidx.compose.material3.ListItemDefaults
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.OutlinedTextField
@@ -144,7 +142,6 @@ import androidx.compose.ui.semantics.Role
 import androidx.compose.ui.semantics.clearAndSetSemantics
 import androidx.compose.ui.semantics.contentDescription
 import androidx.compose.ui.semantics.role
-import androidx.compose.ui.semantics.selected
 import androidx.compose.ui.semantics.semantics
 import androidx.compose.ui.platform.testTag
 import androidx.compose.ui.text.SpanStyle
@@ -2689,10 +2686,11 @@ private fun LibraryAppsHeader(
                                     if (view == null) {
                                         Spacer(Modifier.weight(1f))
                                     } else {
-                                        LibraryScopeChoiceTile(
+                                        LibrarySheetTile(
                                             title = stringResource(view.second),
                                             icon = view.third,
                                             selected = selectedCollection == null && state.quickView == view.first,
+                                            titleMaxLines = 2,
                                             enabled = view.first == LibraryQuickView.All || state.databaseControlsReady,
                                             onClick = {
                                                 closeScopeThen {
@@ -2731,7 +2729,7 @@ private fun LibraryAppsHeader(
                                     if (collection == null) {
                                         Spacer(Modifier.weight(1f))
                                     } else {
-                                        LibraryScopeChoiceTile(
+                                        LibrarySheetTile(
                                             title = collection.name,
                                             supporting = pluralStringResource(
                                                 R.plurals.library_collection_member_count,
@@ -2740,6 +2738,7 @@ private fun LibraryAppsHeader(
                                             ),
                                             icon = R.drawable.ic_folder,
                                             selected = selectedCollection?.id == collection.id,
+                                            titleMaxLines = 2,
                                             onClick = {
                                                 closeScopeThen { onSelectCollection(collection.id) }
                                             },
@@ -2781,7 +2780,7 @@ private fun LibraryAppsHeader(
                 confirmButton = null,
             )
         } else {
-            ModalBottomSheet(
+            LibraryModalBottomSheet(
                 onDismissRequest = { scopePickerVisible = false },
                 sheetState = scopeSheetState,
                 contentWindowInsets = { WindowInsets(0, 0, 0, 0) },
@@ -2834,63 +2833,6 @@ private fun LibraryHeaderActions(
             painter = painterResource(R.drawable.ic_settings),
             contentDescription = stringResource(R.string.action_settings),
         )
-    }
-}
-
-@Composable
-private fun RowScope.LibraryScopeChoiceTile(
-    title: String,
-    icon: Int,
-    selected: Boolean,
-    onClick: () -> Unit,
-    supporting: String? = null,
-    enabled: Boolean = true,
-) {
-    val background = if (selected) MaterialTheme.colorScheme.secondaryContainer
-        else MaterialTheme.colorScheme.surfaceContainerHigh
-    val foreground = if (selected) MaterialTheme.colorScheme.onSecondaryContainer
-        else MaterialTheme.colorScheme.onSurface
-    Row(
-        modifier = Modifier.weight(1f).fillMaxHeight().heightIn(min = 64.dp)
-            .clip(MaterialTheme.shapes.large).background(background)
-            .semantics { this.selected = selected }
-            .clickable(enabled = enabled, role = Role.Button, onClick = onClick)
-            .padding(horizontal = 12.dp, vertical = 10.dp),
-        horizontalArrangement = Arrangement.spacedBy(8.dp),
-        verticalAlignment = Alignment.CenterVertically,
-    ) {
-        Icon(
-            painter = painterResource(icon),
-            contentDescription = null,
-            tint = foreground.copy(alpha = if (enabled) 1f else 0.38f),
-            modifier = Modifier.size(22.dp),
-        )
-        Column(modifier = Modifier.weight(1f)) {
-            Text(
-                text = title,
-                style = MaterialTheme.typography.bodyMedium,
-                color = foreground.copy(alpha = if (enabled) 1f else 0.38f),
-                maxLines = 2,
-                overflow = TextOverflow.Ellipsis,
-            )
-            if (supporting != null) {
-                Text(
-                    text = supporting,
-                    style = MaterialTheme.typography.bodySmall,
-                    color = MaterialTheme.colorScheme.onSurfaceVariant,
-                    maxLines = 2,
-                    overflow = TextOverflow.Ellipsis,
-                )
-            }
-        }
-        if (selected) {
-            Icon(
-                painter = painterResource(R.drawable.ic_check),
-                contentDescription = null,
-                tint = foreground,
-                modifier = Modifier.size(18.dp),
-            )
-        }
     }
 }
 

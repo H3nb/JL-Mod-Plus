@@ -174,8 +174,8 @@
     <string name="library_view_list">Luettelo</string>
     <string name="library_view_grid">Ruudukko</string>
     <string name="library_icon_ratio_title">Kuvakkeen kuvasuhde</string>
-    <string name="library_icon_ratio_square">1:1</string>
-    <string name="library_icon_ratio_portrait">3:4</string>
+    <string name="library_icon_ratio_square">Neliö (1:1)</string>
+    <string name="library_icon_ratio_portrait">Pysty (3:4)</string>
     <string name="library_icon_shape_title">Kuvakkeen muoto</string>
     <string name="library_icon_shape_round">Pyöristetty</string>
     <string name="library_icon_shape_square">Terävät kulmat</string>

@@ -233,8 +233,8 @@
     <string name="library_view_list">Liste</string>
     <string name="library_view_grid">Raster</string>
     <string name="library_icon_ratio_title">Symbolverhältnis</string>
-    <string name="library_icon_ratio_square">1:1</string>
-    <string name="library_icon_ratio_portrait">3:4</string>
+    <string name="library_icon_ratio_square">Quadratisch (1:1)</string>
+    <string name="library_icon_ratio_portrait">Hochformat (3:4)</string>
     <string name="library_icon_shape_title">Symbolform</string>
     <string name="library_icon_shape_round">Abgerundet</string>
     <string name="library_icon_shape_square">Scharfe Ecken</string>

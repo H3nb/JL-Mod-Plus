@@ -282,8 +282,8 @@
     <string name="library_grid_spacing_title">ग्रिड में अंतर</string>
     <string name="library_hide_grid_titles">MIDlet के नाम छिपाएँ</string>
     <string name="library_hide_grid_titles_summary">ग्रिड दृश्य में केवल MIDlet के आइकॉन दिखाएँ।</string>
-    <string name="library_icon_ratio_portrait">3:4</string>
-    <string name="library_icon_ratio_square">1:1</string>
+    <string name="library_icon_ratio_portrait">लंबवत (3:4)</string>
+    <string name="library_icon_ratio_square">वर्गाकार (1:1)</string>
     <string name="library_icon_ratio_title">आइकॉन का पक्षानुपात</string>
     <string name="library_icon_shape_round">गोल कोने</string>
     <string name="library_icon_shape_square">नुकीले कोने</string>

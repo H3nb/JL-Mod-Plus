@@ -236,8 +236,8 @@
     <string name="library_grid_spacing_title">فاصلهٔ شبکه</string>
     <string name="library_hide_grid_titles">پنهان کردن عنوان‌های MIDlet</string>
     <string name="library_hide_grid_titles_summary">در نمای شبکه‌ای، فقط آیکون‌های MIDlet را نشان می‌دهد.</string>
-    <string name="library_icon_ratio_portrait">3:4</string>
-    <string name="library_icon_ratio_square">1:1</string>
+    <string name="library_icon_ratio_portrait">عمودی (3:4)</string>
+    <string name="library_icon_ratio_square">مربع (1:1)</string>
     <string name="library_icon_ratio_title">نسبت ابعاد آیکون</string>
     <string name="library_icon_shape_round">گوشه‌های گرد</string>
     <string name="library_icon_shape_square">گوشه‌های تیز</string>

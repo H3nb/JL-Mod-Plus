@@ -243,8 +243,8 @@
     <string name="library_grid_spacing_title">Rácsköz</string>
     <string name="library_hide_grid_titles">MIDlet-címek elrejtése</string>
     <string name="library_hide_grid_titles_summary">Rácsnézetben csak a MIDlet-ikonok jelennek meg.</string>
-    <string name="library_icon_ratio_portrait">3:4</string>
-    <string name="library_icon_ratio_square">1:1</string>
+    <string name="library_icon_ratio_portrait">Álló (3:4)</string>
+    <string name="library_icon_ratio_square">Négyzetes (1:1)</string>
     <string name="library_icon_ratio_title">Ikon képaránya</string>
     <string name="library_icon_shape_round">Lekerekített sarkok</string>
     <string name="library_icon_shape_square">Éles sarkok</string>

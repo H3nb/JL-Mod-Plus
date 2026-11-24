@@ -243,8 +243,8 @@
     <string name="library_view_list">Liste</string>
     <string name="library_view_grid">Grille</string>
     <string name="library_icon_ratio_title">Proportions des icônes</string>
-    <string name="library_icon_ratio_square">1:1</string>
-    <string name="library_icon_ratio_portrait">3:4</string>
+    <string name="library_icon_ratio_square">Carré (1:1)</string>
+    <string name="library_icon_ratio_portrait">Portrait (3:4)</string>
     <string name="library_icon_shape_title">Forme des icônes</string>
     <string name="library_icon_shape_round">Arrondi</string>
     <string name="library_icon_shape_square">Angles vifs</string>

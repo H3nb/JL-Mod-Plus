@@ -75,8 +75,8 @@
     <string name="library_view_list">Список</string>
     <string name="library_view_grid">Сетка</string>
     <string name="library_icon_ratio_title">Пропорции значков</string>
-    <string name="library_icon_ratio_square">1:1</string>
-    <string name="library_icon_ratio_portrait">3:4</string>
+    <string name="library_icon_ratio_square">Квадратный (1:1)</string>
+    <string name="library_icon_ratio_portrait">Вертикальный (3:4)</string>
     <string name="library_icon_shape_title">Форма значков</string>
     <string name="library_icon_shape_round">Скруглённые</string>
     <string name="library_icon_shape_square">Острые углы</string>

@@ -238,8 +238,8 @@
     <string name="library_grid_spacing_title">グリッドの間隔</string>
     <string name="library_hide_grid_titles">MIDletのタイトルを非表示</string>
     <string name="library_hide_grid_titles_summary">グリッド表示でMIDletのアイコンのみを表示します。</string>
-    <string name="library_icon_ratio_portrait">3:4</string>
-    <string name="library_icon_ratio_square">1:1</string>
+    <string name="library_icon_ratio_portrait">縦長 (3:4)</string>
+    <string name="library_icon_ratio_square">正方形 (1:1)</string>
     <string name="library_icon_ratio_title">アイコンの縦横比</string>
     <string name="library_icon_shape_round">丸い角</string>
     <string name="library_icon_shape_square">四角い角</string>

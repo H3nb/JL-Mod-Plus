@@ -15,14 +15,10 @@
 package io.github.h3nb.jlmodplus.applist
 
 import android.view.KeyEvent
-import androidx.compose.foundation.background
-import androidx.compose.foundation.border
-import androidx.compose.foundation.clickable
 import androidx.compose.foundation.focusable
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
-import androidx.compose.foundation.layout.fillMaxHeight
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.heightIn
@@ -30,23 +26,19 @@ import androidx.compose.foundation.layout.IntrinsicSize
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.PaddingValues
 import androidx.compose.foundation.layout.Row
-import androidx.compose.foundation.layout.RowScope
 import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.layout.Spacer
 import androidx.compose.foundation.layout.width
 import androidx.compose.foundation.lazy.items
 import androidx.compose.foundation.lazy.LazyColumn
 import androidx.compose.foundation.lazy.rememberLazyListState
-import androidx.compose.material3.Button
 import androidx.compose.material3.DropdownMenu
 import androidx.compose.material3.DropdownMenuItem
 import androidx.compose.material3.ExperimentalMaterial3Api
 import androidx.compose.material3.Icon
 import androidx.compose.material3.IconButton
 import androidx.compose.material3.MaterialTheme
-import androidx.compose.material3.ModalBottomSheet
 import androidx.compose.material3.rememberModalBottomSheetState
-import androidx.compose.material3.Surface
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.getValue
@@ -59,21 +51,13 @@ import androidx.compose.runtime.saveable.rememberSaveable
 import androidx.compose.runtime.setValue
 import androidx.compose.runtime.withFrameNanos
 import androidx.compose.ui.Alignment
-import androidx.compose.ui.draw.alpha
-import androidx.compose.ui.draw.clip
 import androidx.compose.ui.focus.focusRequester
 import androidx.compose.ui.focus.FocusRequester
 import androidx.compose.ui.input.key.onPreviewKeyEvent
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.platform.LocalDensity
-import androidx.compose.ui.platform.LocalInspectionMode
 import androidx.compose.ui.res.painterResource
 import androidx.compose.ui.res.stringResource
-import androidx.compose.ui.semantics.contentDescription
-import androidx.compose.ui.semantics.role
-import androidx.compose.ui.semantics.Role
-import androidx.compose.ui.semantics.selected
-import androidx.compose.ui.semantics.semantics
 import androidx.compose.ui.text.style.TextOverflow
 import androidx.compose.ui.unit.dp
 import io.github.h3nb.jlmodplus.librarydb.LibraryPlayStatsFormatter
@@ -270,9 +254,9 @@ internal fun AppActionsDialog(
     }
     // Adaptive dialogs are narrower than the full landscape window.
     val tileViewportWidth = if (useSheet) {
-        windowWidth - 24.dp
+        windowWidth - 32.dp
     } else {
-        adaptiveDialogLayout().width - 40.dp
+        adaptiveDialogLayout().width - 48.dp
     }
     val tileMinWidth = if (LocalDensity.current.fontScale >= 1.5f) 240.dp else 148.dp
     val gridColumns = ((tileViewportWidth + 8.dp) / (tileMinWidth + 8.dp))
@@ -404,16 +388,22 @@ internal fun AppActionsDialog(
                         Row(
                             modifier = Modifier.fillMaxWidth()
                                 .height(IntrinsicSize.Min)
-                                .padding(horizontal = 12.dp, vertical = 4.dp),
+                                .padding(horizontal = 16.dp, vertical = 4.dp),
                             horizontalArrangement = Arrangement.spacedBy(8.dp),
                         ) {
                             repeat(gridColumns) { columnIndex ->
                                 val index = rowIndex * gridColumns + columnIndex
                                 if (index < entries.size) {
-                                    DialogActionTile(
-                                        entry = entries[index],
-                                        selected = controllerFocusVisible && focusedIndex == index,
-                                        onDismiss = onDismiss,
+                                    val entry = entries[index]
+                                    LibrarySheetTile(
+                                        title = stringResource(entry.label),
+                                        icon = entry.icon,
+                                        focused = controllerFocusVisible && focusedIndex == index,
+                                        destructive = entry.destructive,
+                                        onClick = {
+                                            onDismiss()
+                                            entry.action()
+                                        },
                                     )
                                 } else {
                                     Spacer(Modifier.weight(1f))
@@ -430,18 +420,10 @@ internal fun AppActionsDialog(
         }
     }
 
-    if (useSheet && LocalInspectionMode.current) {
-        Surface(
-            color = MaterialTheme.colorScheme.surfaceContainer,
-            contentColor = MaterialTheme.colorScheme.onSurface,
-            shape = MaterialTheme.shapes.extraLarge,
-        ) { body() }
-    } else if (useSheet) {
-        ModalBottomSheet(
+    if (useSheet) {
+        LibraryModalBottomSheet(
             onDismissRequest = onDismiss,
             sheetState = rememberModalBottomSheetState(skipPartiallyExpanded = true),
-            containerColor = MaterialTheme.colorScheme.surfaceContainer,
-            contentColor = MaterialTheme.colorScheme.onSurface,
         ) {
             body()
         }
@@ -456,45 +438,3 @@ internal fun AppActionsDialog(
     }
 }
 
-@Composable
-private fun RowScope.DialogActionTile(
-    entry: DialogActionEntry,
-    selected: Boolean,
-    onDismiss: () -> Unit,
-) {
-    val colors = MaterialTheme.colorScheme
-    val background = if (entry.destructive) colors.errorContainer.copy(alpha = 0.4f)
-        else colors.surfaceContainerLow
-    val foreground = if (entry.destructive) colors.error else colors.onSurface
-    Row(
-        modifier = Modifier
-            .weight(1f)
-            .fillMaxHeight()
-            .heightIn(min = 64.dp)
-            .clip(MaterialTheme.shapes.large)
-            .background(background)
-            .then(if (selected) Modifier.border(2.dp, colors.primary, MaterialTheme.shapes.large)
-                else Modifier)
-            .semantics { this.selected = selected }
-            .clickable(role = Role.Button) {
-                onDismiss()
-                entry.action()
-            }
-            .padding(horizontal = 12.dp, vertical = 10.dp),
-        verticalAlignment = Alignment.CenterVertically,
-        horizontalArrangement = Arrangement.spacedBy(10.dp),
-    ) {
-        Icon(
-            painter = painterResource(entry.icon),
-            contentDescription = null,
-            tint = foreground,
-            modifier = Modifier.size(22.dp),
-        )
-        Text(
-            text = stringResource(entry.label),
-            color = foreground,
-            style = MaterialTheme.typography.labelLarge,
-            softWrap = true,
-        )
-    }
-}

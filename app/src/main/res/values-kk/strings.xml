@@ -225,8 +225,8 @@
     <string name="library_grid_spacing_title">Тордағы аралық</string>
     <string name="library_hide_grid_titles">MIDlet атауларын жасыру</string>
     <string name="library_hide_grid_titles_summary">Тор көрінісінде тек MIDlet белгішелерін көрсету.</string>
-    <string name="library_icon_ratio_portrait">3:4</string>
-    <string name="library_icon_ratio_square">1:1</string>
+    <string name="library_icon_ratio_portrait">Тік (3:4)</string>
+    <string name="library_icon_ratio_square">Шаршы (1:1)</string>
     <string name="library_icon_ratio_title">Белгішенің арақатынасы</string>
     <string name="library_icon_shape_round">Дөңгелектелген бұрыштар</string>
     <string name="library_icon_shape_square">Өткір бұрыштар</string>

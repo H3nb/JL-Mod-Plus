@@ -153,8 +153,8 @@
     <string name="library_view_list">Lista</string>
     <string name="library_view_grid">Rutnät</string>
     <string name="library_icon_ratio_title">Ikonförhållande</string>
-    <string name="library_icon_ratio_square">1:1</string>
-    <string name="library_icon_ratio_portrait">3:4</string>
+    <string name="library_icon_ratio_square">Kvadratisk (1:1)</string>
+    <string name="library_icon_ratio_portrait">Stående (3:4)</string>
     <string name="library_icon_shape_title">Ikonform</string>
     <string name="library_icon_shape_round">Rundad</string>
     <string name="library_icon_shape_square">Skarpa hörn</string>

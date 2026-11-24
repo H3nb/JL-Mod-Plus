@@ -275,8 +275,8 @@
     <string name="library_grid_spacing_title">Khoảng cách lưới</string>
     <string name="library_hide_grid_titles">Ẩn tiêu đề MIDlet</string>
     <string name="library_hide_grid_titles_summary">Chỉ hiển thị biểu tượng MIDlet trong chế độ xem lưới.</string>
-    <string name="library_icon_ratio_portrait">3:4</string>
-    <string name="library_icon_ratio_square">1:1</string>
+    <string name="library_icon_ratio_portrait">Dọc (3:4)</string>
+    <string name="library_icon_ratio_square">Vuông (1:1)</string>
     <string name="library_icon_ratio_title">Tỷ lệ khung hình biểu tượng</string>
     <string name="library_icon_shape_round">Góc bo tròn</string>
     <string name="library_icon_shape_square">Góc vuông</string>

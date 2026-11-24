@@ -282,8 +282,8 @@
     <string name="library_grid_spacing_title">تباعد الشبكة</string>
     <string name="library_hide_grid_titles">إخفاء عناوين MIDlet</string>
     <string name="library_hide_grid_titles_summary">عرض أيقونات MIDlet فقط في عرض الشبكة.</string>
-    <string name="library_icon_ratio_portrait">3:4</string>
-    <string name="library_icon_ratio_square">1:1</string>
+    <string name="library_icon_ratio_portrait">عمودي (3:4)</string>
+    <string name="library_icon_ratio_square">مربع (1:1)</string>
     <string name="library_icon_ratio_title">نسبة أبعاد الأيقونة</string>
     <string name="library_icon_shape_round">زوايا مستديرة</string>
     <string name="library_icon_shape_square">زوايا حادة</string>

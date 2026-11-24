@@ -225,8 +225,8 @@
     <string name="library_grid_spacing_title">গ্রিডের ফাঁক</string>
     <string name="library_hide_grid_titles">MIDlet-এর শিরোনাম লুকান</string>
     <string name="library_hide_grid_titles_summary">গ্রিড ভিউতে শুধু MIDlet-এর আইকন দেখান।</string>
-    <string name="library_icon_ratio_portrait">3:4</string>
-    <string name="library_icon_ratio_square">1:1</string>
+    <string name="library_icon_ratio_portrait">উল্লম্ব (3:4)</string>
+    <string name="library_icon_ratio_square">বর্গাকার (1:1)</string>
     <string name="library_icon_ratio_title">আইকনের দৈর্ঘ্য-প্রস্থের অনুপাত</string>
     <string name="library_icon_shape_round">গোলাকার কোণ</string>
     <string name="library_icon_shape_square">তীক্ষ্ণ কোণ</string>

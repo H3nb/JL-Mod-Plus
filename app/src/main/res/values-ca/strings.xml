@@ -177,8 +177,8 @@
     <string name="library_grid_spacing_title">Espaiat de la quadrícula</string>
     <string name="library_hide_grid_titles">Amaga els títols dels MIDlets</string>
     <string name="library_hide_grid_titles_summary">Mostra només les icones dels MIDlets a la vista de quadrícula.</string>
-    <string name="library_icon_ratio_portrait">3:4</string>
-    <string name="library_icon_ratio_square">1:1</string>
+    <string name="library_icon_ratio_portrait">Vertical (3:4)</string>
+    <string name="library_icon_ratio_square">Quadrat (1:1)</string>
     <string name="library_icon_ratio_title">Relació d’aspecte de les icones</string>
     <string name="library_icon_shape_round">Cantonades arrodonides</string>
     <string name="library_icon_shape_square">Cantonades rectes</string>
