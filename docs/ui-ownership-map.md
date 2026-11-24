@@ -29,7 +29,8 @@ This document describes UI ownership in JL-Mod Plus. The normative boundary is t
 The Compose theme is authoritative for app-owned page and popup presentation.
 Native runtime editor tools, Memory Editor bubble, and controller keypad resolve
 paired ARGB roles through `LegacyThemeColors` from the same Material color scheme.
-Resolve native palettes at host lifecycle or keypad opening, never per draw;
+Resolve native palettes at host lifecycle, theme/accent changes, Canvas attachment,
+or keypad opening, never per draw;
 use opaque themed surfaces over arbitrary guest content. Diagnostic FPS colors
 remain fixed for legibility over the game, with their palette in color resources.
 AppCompat `res/values*/colors.xml` still supplies compatibility View/window

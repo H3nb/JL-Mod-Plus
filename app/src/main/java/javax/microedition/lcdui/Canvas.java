@@ -160,7 +160,7 @@ public abstract class Canvas extends Displayable {
 	private final Object bufferLock = new Object();
 	private final Object surfaceLock = new Object();
 	private final PaintEvent paintEvent = new PaintEvent();
-	private final LegacyUiColors hostColors = LegacyThemeColors.snapshot(ContextHolder.getActivity());
+	private volatile LegacyUiColors hostColors = LegacyThemeColors.snapshot(ContextHolder.getActivity());
 	private final SoftBar softBar = new SoftBar();
 	private final CanvasWrapper canvasWrapper = new CanvasWrapper(settings.screenFilter);
 	private final RectF virtualScreen = new RectF();
@@ -326,6 +326,13 @@ public abstract class Canvas extends Displayable {
 		fpsLimit = settings.fpsLimit;
 		int mode = settings.graphicsMode;
 		parallelRedraw = (mode == 0 || mode == 3) && settings.parallelRedrawScreen;
+	}
+
+	/** Refresh app-owned overlays without touching the guest framebuffer or profile colors. */
+	public void updateHostColors(LegacyUiColors colors) {
+		hostColors = colors;
+		OverlayView view = controllerOverlayView;
+		if (view != null) view.postInvalidate();
 	}
 
 	/** Receives a host-owned theme snapshot; render paths never read preferences or Compose state. */
@@ -2613,8 +2620,6 @@ public abstract class Canvas extends Displayable {
 	private class SoftBar extends AbstractSoftKeysBar implements Layer {
 		private final OverlayView overlayView;
 		private final float padding;
-		private final int textColor;
-		private final int bgColor;
 		private final RectF bounds = new RectF();
 
 		private String leftLabel;
@@ -2627,8 +2632,6 @@ public abstract class Canvas extends Displayable {
 			this.overlayView = activity.findViewById(R.id.overlay);
 			DisplayMetrics metrics = activity.getResources().getDisplayMetrics();
 			padding = TypedValue.applyDimension(TypedValue.COMPLEX_UNIT_DIP, 5, metrics);
-			textColor = hostColors.getPrimary();
-			bgColor = hostColors.getSurfaceContainer();
 		}
 
 		private void showPopup() {
@@ -2711,7 +2714,8 @@ public abstract class Canvas extends Displayable {
 			if (bounds.isEmpty() || commands.isEmpty()) {
 				return;
 			}
-			g.setFillColor(bgColor);
+			LegacyUiColors colors = hostColors;
+			g.setFillColor(colors.getSurfaceContainer());
 			g.fillRect(bounds);
 
 			if (leftLabel == null) {
@@ -2719,7 +2723,7 @@ public abstract class Canvas extends Displayable {
 			}
 			g.setTextAlign(Paint.Align.LEFT);
 			g.setTextScale(textScale);
-			g.setTextColor(textColor);
+			g.setTextColor(colors.getPrimary());
 			float y = bounds.centerY();
 			g.drawString(leftLabel, bounds.left + padding * textScale, y);
 			if (rightLabel != null) {

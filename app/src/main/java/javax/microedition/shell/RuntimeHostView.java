@@ -179,7 +179,7 @@ public final class RuntimeHostView {
 		layoutEditSnap = snap;
 		layoutEditDone = done;
 		layoutEditDivider = divider;
-		refreshTheme(true, true);
+		refreshTheme(LegacyThemeColors.snapshot(context), true, true);
 	}
 
 	private static AppCompatImageView editorTool(Context context, int icon, int label) {
@@ -215,8 +215,7 @@ public final class RuntimeHostView {
 	}
 
 	/** Apply the same palette as Compose while retaining the keyboard's own tool state. */
-	public void refreshTheme(boolean snapEnabled, boolean groupEnabled) {
-		LegacyUiColors colors = LegacyThemeColors.snapshot(root.getContext());
+	public void refreshTheme(LegacyUiColors colors, boolean snapEnabled, boolean groupEnabled) {
 		((GradientDrawable) memoryEditorBubble.getBackground()).setColor(colors.getPrimary());
 		((AppCompatImageView) memoryEditorBubbleIcon).setImageTintList(
 				ColorStateList.valueOf(colors.getOnPrimary()));

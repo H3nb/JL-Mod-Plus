@@ -35,6 +35,8 @@ import androidx.compose.animation.core.tween
 import androidx.compose.foundation.BorderStroke
 import androidx.compose.foundation.ExperimentalFoundationApi
 import androidx.compose.foundation.MutatePriority
+import androidx.compose.foundation.gestures.Orientation
+import androidx.compose.foundation.gestures.scrollable
 import androidx.compose.foundation.gestures.stopScroll
 import androidx.compose.foundation.background
 import androidx.compose.foundation.clickable
@@ -2103,6 +2105,13 @@ internal fun LibraryAppsDestination(
                 .align(Alignment.TopCenter)
                 .fillMaxWidth()
                 .graphicsLayer { translationY = headerOffsetPx.floatValue }
+                .scrollable(
+                    state = if (state.layout == LibraryLayout.List) listState else gridState,
+                    orientation = Orientation.Vertical,
+                    reverseDirection = true,
+                    enabled = active && !freezeViewport && !searchActive &&
+                        !state.loading && state.errorMessage == null && !headerHidden,
+                )
                 .then(
                     if (!headerHidden) {
                         Modifier
@@ -2353,6 +2362,7 @@ private fun LibraryAppsHeader(
         availableWindowWidthDp() < 600.dp &&
         !selectionState.isActive && title == null && onBack == null
     val titleGate = rememberLibraryHeaderActionGate(headerOffsetPx)
+    val compactActionGate = rememberLibraryHeaderActionGate(headerOffsetPx)
     val searchGate = rememberLibraryHeaderActionGate(headerOffsetPx)
     val titleActionsEnabled = interactive && titleGate.enabled.value
     val searchActionsEnabled = interactive && searchGate.enabled.value
@@ -2368,7 +2378,7 @@ private fun LibraryAppsHeader(
             .padding(horizontal = 12.dp, vertical = 4.dp),
     ) {
         val searching = searchActive && !selectionState.isActive && title == null && onBack == null
-        val titleHeight = (56f + 16f * (LocalDensity.current.fontScale - 1f).coerceAtLeast(0f)).dp
+        val searchHeight = (56f + 16f * (LocalDensity.current.fontScale - 1f).coerceAtLeast(0f)).dp
         val browseActionsEnabled = titleActionsEnabled && !searching
         val titleAlpha by animateFloatAsState(
             targetValue = if (searching) 0f else 1f,
@@ -2379,8 +2389,7 @@ private fun LibraryAppsHeader(
         // accounts for a wrapped debug wordmark and the separate large-font action row.
         Box(
             modifier = Modifier.fillMaxWidth()
-                .then(titleGate.positionModifier)
-                .then(if (titleActionsEnabled) Modifier else Modifier.clearAndSetSemantics {}),
+                .then(titleGate.positionModifier),
         ) {
             Column(
                 modifier = Modifier.fillMaxWidth()
@@ -2390,7 +2399,8 @@ private fun LibraryAppsHeader(
                 Row(
                     modifier = Modifier
                         .fillMaxWidth()
-                        .heightIn(min = titleHeight),
+                        .heightIn(min = if (compactHeaderActions) 56.dp else searchHeight)
+                        .then(if (titleActionsEnabled) Modifier else Modifier.clearAndSetSemantics {}),
                     verticalAlignment = Alignment.CenterVertically,
                 ) {
                     if (selectionState.isActive || onBack != null) {
@@ -2476,8 +2486,11 @@ private fun LibraryAppsHeader(
                     }
                 }
                 if (compactHeaderActions) {
+                    val compactActionsEnabled = interactive && compactActionGate.enabled.value && !searching
                     Row(
-                        modifier = Modifier.fillMaxWidth().padding(top = 4.dp),
+                        modifier = Modifier.fillMaxWidth().padding(top = 4.dp)
+                            .then(compactActionGate.positionModifier)
+                            .then(if (compactActionsEnabled) Modifier else Modifier.clearAndSetSemantics {}),
                         horizontalArrangement = Arrangement.End,
                     ) {
                         LibraryHeaderActions(
@@ -2485,7 +2498,7 @@ private fun LibraryAppsHeader(
                             onOpenNotifications = onOpenNotifications,
                             notificationCount = notificationCount,
                             onOpenSettings = onOpenGlobalSettings,
-                            enabled = browseActionsEnabled,
+                            enabled = compactActionsEnabled,
                         )
                     }
                 }
@@ -2505,13 +2518,13 @@ private fun LibraryAppsHeader(
                         query = searchQuery,
                         onQueryChange = onSearchQueryChange,
                         modifier = Modifier.fillMaxWidth()
-                            .then(if (searching) Modifier else Modifier.clearAndSetSemantics {}),
+                            .then(if (searching && titleActionsEnabled) Modifier else Modifier.clearAndSetSemantics {}),
                         enabled = titleActionsEnabled && searching,
                         onDismissInput = { focusManager.clearFocus() },
                         onClose = onCloseSearch,
                         autoFocus = interactive && searching,
                         placeholder = stringResource(R.string.library_search_placeholder),
-                        controlHeight = titleHeight,
+                        controlHeight = searchHeight,
                     )
                 }
             }

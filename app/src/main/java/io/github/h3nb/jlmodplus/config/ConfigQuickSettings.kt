@@ -121,7 +121,7 @@ internal fun ConfigQuickSettings(
                                     QuickSetting.Scale -> R.drawable.ic_auto_mode
                                     QuickSetting.Renderer -> R.drawable.ic_settings
                                     QuickSetting.VirtualKeys -> R.drawable.ic_virtual_controls
-                                    QuickSetting.RenderResolution -> R.drawable.ic_config_graphics
+                                    QuickSetting.RenderResolution -> R.drawable.ic_editor_group_resize
                                 },
                             ),
                             contentDescription = null,

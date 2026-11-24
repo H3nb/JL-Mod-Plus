@@ -258,7 +258,7 @@ public class VirtualKeyboard implements Overlay, Runnable {
 	private boolean legacyCustomPayloadSeen;
 	private VirtualKeyboardLayoutState storedCustomLayoutState;
 	private boolean controllerKeypadVisible;
-	private LegacyUiColors controllerKeypadColors;
+	private volatile LegacyUiColors controllerKeypadColors;
 	private int controllerKeypadSelection;
 	private VirtualKey controllerKeypadPressed;
 	private long pointerSourceSequence;
@@ -1608,6 +1608,11 @@ public class VirtualKeyboard implements Overlay, Runnable {
 		visible = true;
 		selectControllerKeypadKey();
 		if (overlayView != null) overlayView.postInvalidate();
+	}
+
+	public void updateHostColors(LegacyUiColors colors) {
+		controllerKeypadColors = colors;
+		if (controllerKeypadVisible && overlayView != null) overlayView.postInvalidate();
 	}
 
 	public boolean isControllerKeypadVisible() {

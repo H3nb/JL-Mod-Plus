@@ -720,7 +720,7 @@
     <string name="config_overview_hint">Pilih kategori untuk menyesuaikan game. Pintasan ini membuka pengaturan di lokasi asalnya.</string>
     <string name="config_destination_general">Umum</string>
     <string name="config_destination_graphics">Layar</string>
-    <string name="config_destination_rendering">Grafis &amp; performa</string>
+    <string name="config_destination_rendering">Grafis</string>
     <string name="config_destination_media">Media</string>
     <string name="config_camera_title">Kamera</string>
     <string name="config_camera_default_title">Kamera bawaan</string>

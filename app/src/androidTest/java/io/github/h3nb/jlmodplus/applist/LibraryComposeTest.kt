@@ -61,7 +61,14 @@ import androidx.compose.ui.input.InputModeManager
 import androidx.compose.ui.input.key.Key
 import androidx.compose.ui.test.pressKey
 import androidx.compose.ui.test.performTextInput
+import androidx.compose.foundation.layout.PaddingValues
+import androidx.compose.material3.MaterialTheme
+import androidx.compose.runtime.SideEffect
 import androidx.compose.runtime.mutableStateOf
+import androidx.compose.ui.graphics.Color
+import androidx.compose.ui.graphics.toPixelMap
+import androidx.compose.ui.test.captureToImage
+import androidx.test.filters.SdkSuppress
 import androidx.compose.ui.platform.LocalInputModeManager
 import androidx.compose.ui.platform.LocalView
 import androidx.compose.ui.geometry.Offset
@@ -190,6 +197,45 @@ class LibraryComposeTest {
         composeRule.onNode(hasScrollAction() and hasAnyAncestor(isDialog()))
             .performScrollToNode(hasText(uiString(R.string.library_action_select)))
         composeRule.onNodeWithText(uiString(R.string.library_action_select)).assertIsDisplayed()
+    }
+
+    @Test
+    @SdkSuppress(minSdkVersion = 26)
+    fun librarySheetsUseSameNeutralTileSurfaceInBothThemes() {
+        val dark = mutableStateOf(false)
+        val actions = RecordingLibraryActions()
+        var neutralTileColor = Color.Unspecified
+        val state = LibraryUiState(
+            loading = false,
+            databaseControlsReady = true,
+            apps = listOf(LibraryAppUiItem(7, "Demo MIDlet", "Example Vendor", "1.0", null, true)),
+        )
+        composeRule.setContent {
+            JLModPlusTheme(darkTheme = dark.value) {
+                val color = MaterialTheme.colorScheme.surfaceContainerLow
+                SideEffect { neutralTileColor = color }
+                LibraryScreen(state = state, actions = actions)
+            }
+        }
+        fun assertNeutralTile(label: String) {
+            val node = composeRule.onNode(hasText(label) and hasClickAction())
+            node.assertIsDisplayed()
+            val pixels = node.captureToImage().toPixelMap()
+            // The center of the top padding avoids the text, icon and rounded corners.
+            assertEquals(neutralTileColor, pixels[pixels.width / 2, pixels.height / 12])
+        }
+        for (darkTheme in listOf(false, true)) {
+            composeRule.runOnIdle { dark.value = darkTheme }
+            composeRule.onNodeWithTag("library_scope_picker").performClick()
+            assertNeutralTile(uiString(R.string.library_filter_favorites))
+            composeRule.onNodeWithText(uiString(R.string.library_filter_favorites)).performClick()
+            composeRule.onNodeWithContentDescription(
+                uiString(R.string.library_app_more_actions, "Demo MIDlet"),
+            ).performClick()
+            assertNeutralTile(uiString(R.string.library_details_action))
+            composeRule.onNodeWithText(uiString(R.string.library_details_action)).performClick()
+            composeRule.onNodeWithContentDescription(uiString(R.string.library_back)).performClick()
+        }
     }
 
     @Test
@@ -398,17 +444,30 @@ class LibraryComposeTest {
     }
 
     @Test
-    fun tappingHeaderGapDoesNotOpenCoveredApp() {
+    fun tappingHeaderGapDoesNotOpenCoveredAppAndDraggingStillScrolls() {
         val actions = RecordingLibraryActions()
-        setLibraryContent(
-            state = LibraryUiState(
-                loading = false,
-                apps = (0..24).map { index ->
-                    LibraryAppUiItem(index + 1, "Demo MIDlet $index", "Example Vendor", "1.0", null, true)
-                },
-            ),
-            actions = actions,
-        )
+        val apps = (0..24).map { index ->
+            LibraryAppUiItem(index + 1, "Demo MIDlet $index", "Example Vendor", "1.0", null, true)
+        }
+        lateinit var viewportState: LibraryViewportState
+        composeRule.setContent {
+            JLModPlusTheme {
+                viewportState = rememberLibraryViewportState()
+                LibraryAppsDestination(
+                    state = LibraryUiState(loading = false, apps = apps, layout = LibraryLayout.List),
+                    scaffoldPadding = PaddingValues(),
+                    viewportState = viewportState,
+                    onOpenApp = { actions.openedIds.add(it) },
+                    onOpenActions = {},
+                    onQuickView = {},
+                    onFavorite = { _, _ -> },
+                    onSort = {},
+                    onRetry = {},
+                    onFabVisibilityChanged = {},
+                    onNavigationVisibilityChanged = {},
+                )
+            }
+        }
         val viewport = appViewport()
         viewport.performScrollToIndex(10)
         val title = composeRule.onNodeWithContentDescription(uiString(R.string.app_name))
@@ -416,8 +475,25 @@ class LibraryComposeTest {
         val scope = composeRule.onNodeWithTag("library_scope_picker").fetchSemanticsNode().boundsInRoot
         val origin = viewport.fetchSemanticsNode().boundsInRoot.topLeft
         val gap = Offset(scope.center.x, (title.bottom + scope.top) / 2f) - origin
+        val covered = composeRule.runOnIdle {
+            viewportState.listState.layoutInfo.visibleItemsInfo.first {
+                it.index > 0 && gap.y >= it.offset && gap.y < it.offset + it.size
+            }.index
+        }
         viewport.performTouchInput { click(gap) }
-        assertEquals(null, actions.openedId)
+        assertTrue("Header tap opened a covered app", actions.openedIds.isEmpty())
+
+        val previous = visibleAppAnchor()
+        viewport.performTouchInput {
+            swipe(gap, Offset(gap.x, gap.y + height * 0.35f), 600)
+        }
+        assertTrue("Dragging from the header did not scroll the list", visibleAppAnchor() != previous)
+        assertTrue(actions.openedIds.isEmpty())
+
+        viewport.performScrollToIndex((covered - 2).coerceAtLeast(1))
+        val app = apps[covered - 1]
+        composeRule.onNode(hasText(app.title) and hasClickAction()).performTouchInput { click() }
+        assertEquals(listOf(app.id), actions.openedIds)
     }
 
     @Test
