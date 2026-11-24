@@ -20,6 +20,7 @@ import androidx.compose.animation.togetherWith
 import androidx.compose.foundation.clickable
 import androidx.compose.foundation.interaction.MutableInteractionSource
 import androidx.compose.foundation.layout.Arrangement
+import androidx.compose.foundation.layout.ExperimentalLayoutApi
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.Row
@@ -30,6 +31,7 @@ import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.imePadding
+import androidx.compose.foundation.layout.isImeVisible
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.safeDrawing
 import androidx.compose.foundation.layout.statusBars
@@ -49,6 +51,7 @@ import androidx.compose.material3.Icon
 import androidx.compose.material3.IconButton
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.OutlinedTextField
+import androidx.compose.material3.OutlinedTextFieldDefaults
 import androidx.compose.material3.Scaffold
 import androidx.compose.material3.Surface
 import androidx.compose.material3.Text
@@ -74,8 +77,14 @@ import androidx.compose.ui.res.pluralStringResource
 import androidx.compose.ui.res.stringArrayResource
 import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.semantics.contentDescription
+import androidx.compose.ui.semantics.semantics
 import androidx.compose.ui.semantics.clearAndSetSemantics
+import androidx.compose.ui.text.SpanStyle
+import androidx.compose.ui.text.buildAnnotatedString
 import androidx.compose.ui.text.font.FontFamily
+import androidx.compose.ui.text.input.OffsetMapping
+import androidx.compose.ui.text.input.TransformedText
+import androidx.compose.ui.text.input.VisualTransformation
 import androidx.compose.ui.text.input.KeyboardType
 import androidx.compose.ui.text.style.TextOverflow
 import androidx.compose.ui.unit.dp
@@ -84,6 +93,7 @@ import javax.microedition.shell.timing.TimingMode
 import io.github.h3nb.jlmodplus.R
 import io.github.h3nb.jlmodplus.config.model.Size
 import io.github.h3nb.jlmodplus.mmapi.camera.CameraCaptureOptions
+import io.github.h3nb.jlmodplus.ui.PreferenceNotice
 import io.github.h3nb.jlmodplus.ui.ScrollableContentHint
 import io.github.h3nb.jlmodplus.ui.PAGE_TRAVEL_DP
 import io.github.h3nb.jlmodplus.ui.pageMotionDirection
@@ -910,8 +920,7 @@ private fun RenderingSection(
         }
     }
     ConfigSection(title = stringResource(R.string.config_image_quality_section)) {
-        val internalScaleOptions = listOf(stringResource(R.string.internal_resolution_auto)) +
-            (1..10).map { "${it}×" }
+        val internalScaleOptions = renderResolutionOptions()
         ConfigChoicePreference(
             title = stringResource(R.string.internal_resolution_title),
             description = stringResource(R.string.internal_resolution_description),
@@ -1396,7 +1405,7 @@ private fun ConfigSystemPropertiesPreference(
     )
 }
 
-@OptIn(ExperimentalMaterial3Api::class)
+@OptIn(ExperimentalMaterial3Api::class, ExperimentalLayoutApi::class)
 @Composable
 internal fun ConfigSystemPropertiesPage(
     value: String,
@@ -1407,6 +1416,22 @@ internal fun ConfigSystemPropertiesPage(
 ) {
     var draft by rememberSaveable(value) { mutableStateOf(value) }
     var resetConfirmationVisible by rememberSaveable { mutableStateOf(false) }
+    val editorLabel = stringResource(R.string.config_system_properties_editor_label)
+    val keyColor = MaterialTheme.colorScheme.primary
+    val highlightKeys = remember(keyColor) {
+        val keys = Regex("(?m)^[^:\\r\\n]+(?=:)")
+        VisualTransformation { text ->
+            TransformedText(
+                buildAnnotatedString {
+                    append(text)
+                    keys.findAll(text.text).forEach { match ->
+                        addStyle(SpanStyle(color = keyColor), match.range.first, match.range.last + 1)
+                    }
+                },
+                OffsetMapping.Identity,
+            )
+        }
+    }
 
     Scaffold(
         modifier = modifier.fillMaxSize(),
@@ -1435,17 +1460,25 @@ internal fun ConfigSystemPropertiesPage(
                 .fillMaxSize()
                 .padding(padding)
                 .consumeWindowInsets(padding)
-                .padding(horizontal = 16.dp, vertical = 12.dp),
-            verticalArrangement = Arrangement.spacedBy(12.dp),
+                .imePadding()
+                .padding(horizontal = 16.dp, vertical = 8.dp),
+            verticalArrangement = Arrangement.spacedBy(4.dp),
         ) {
-            Text(
-                text = stringResource(R.string.config_help_system_properties_long),
-                style = MaterialTheme.typography.bodyMedium,
-                color = MaterialTheme.colorScheme.onSurfaceVariant,
-            )
-            ConfigMessageBlock(stringResource(R.string.config_system_properties_info))
-            if (defaultValue.isNotEmpty()) {
-                Row(modifier = Modifier.fillMaxWidth(), horizontalArrangement = Arrangement.End) {
+            if (!WindowInsets.isImeVisible) {
+                PreferenceNotice(stringResource(R.string.config_help_system_properties_long))
+            }
+            Row(
+                modifier = Modifier.fillMaxWidth(),
+                verticalAlignment = Alignment.CenterVertically,
+                horizontalArrangement = Arrangement.SpaceBetween,
+            ) {
+                Text(
+                    text = editorLabel,
+                    style = MaterialTheme.typography.titleSmall,
+                    color = MaterialTheme.colorScheme.onSurfaceVariant,
+                    modifier = Modifier.weight(1f),
+                )
+                if (defaultValue.isNotEmpty()) {
                     TextButton(
                         onClick = { resetConfirmationVisible = true },
                         enabled = draft != defaultValue,
@@ -1457,9 +1490,20 @@ internal fun ConfigSystemPropertiesPage(
             OutlinedTextField(
                 value = draft,
                 onValueChange = { draft = it },
-                modifier = Modifier.fillMaxWidth().weight(1f),
+                modifier = Modifier.fillMaxWidth().weight(1f)
+                    .semantics { contentDescription = editorLabel },
+                shape = MaterialTheme.shapes.large,
+                colors = OutlinedTextFieldDefaults.colors(
+                    focusedContainerColor = MaterialTheme.colorScheme.surfaceContainerLow,
+                    unfocusedContainerColor = MaterialTheme.colorScheme.surfaceContainerLow,
+                    unfocusedBorderColor = MaterialTheme.colorScheme.outlineVariant,
+                ),
                 textStyle = MaterialTheme.typography.bodyMedium.copy(fontFamily = FontFamily.Monospace),
-                keyboardOptions = KeyboardOptions(keyboardType = KeyboardType.Text),
+                visualTransformation = highlightKeys,
+                keyboardOptions = KeyboardOptions(
+                    keyboardType = KeyboardType.Text,
+                    autoCorrectEnabled = false,
+                ),
             )
         }
     }

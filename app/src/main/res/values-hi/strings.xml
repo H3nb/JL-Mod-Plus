@@ -521,6 +521,7 @@
     <string name="config_help_soundbank">MIDI सिंथेसिस के लिए इस्तेमाल होने वाला साउंडबैंक चुनता है।</string>
     <string name="config_help_system_properties">MIDlet को बताई जाने वाली उन्नत Java ME प्रॉपर्टी सेट करता है।</string>
     <string name="config_help_system_properties_long">हर पंक्ति में एक प्रॉपर्टी “name: value” के रूप में बदलें। गलत मान संगतता को प्रभावित कर सकते हैं।</string>
+    <string name="config_system_properties_editor_label">गुण</string>
     <string name="config_help_timing_mode">चुनता है कि MIDlet इम्यूलेशन समय का उपयोग करे या सिस्टम समय का। सापेक्ष विलंब इम्यूलेशन गति के अनुसार स्केल होते रहते हैं।</string>
     <string name="config_help_timing_unavailable">इस MIDlet इंस्टॉलेशन के लिए समय की सेटिंग उपलब्ध नहीं हैं। इन्हें सक्षम करने के लिए MIDlet फिर से इंस्टॉल या कन्वर्ट करें।</string>
     <string name="config_help_touch_input">MIDlet को टचस्क्रीन से पॉइंटर इनपुट लेने देता है।</string>

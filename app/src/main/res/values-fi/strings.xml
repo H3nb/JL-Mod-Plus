@@ -747,6 +747,7 @@
     <string name="config_edit_system_properties">Muokkaa järjestelmäominaisuuksia</string>
     <string name="config_help_system_properties">Asettaa MIDlet-sovellukselle ilmoitettavat Java ME -lisäominaisuudet.</string>
     <string name="config_help_system_properties_long">Muokkaa yksi ominaisuus riviä kohden muodossa ”nimi: arvo”. Virheelliset arvot voivat vaikuttaa yhteensopivuuteen.</string>
+    <string name="config_system_properties_editor_label">Ominaisuudet</string>
     <string name="config_system_properties_info">Useimmat MIDlet-sovellukset eivät tarvitse muutoksia tähän.</string>
     <string name="config_font_sizes">Fonttikoot</string>
     <string name="config_help_font_sizes">Asettaa MIDlet-sovelluksen pienet, keskikokoiset ja suuret Java ME -fonttikoot.</string>

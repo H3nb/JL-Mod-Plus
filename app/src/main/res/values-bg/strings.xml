@@ -501,6 +501,7 @@
     <string name="config_help_soundbank">Избира звуковата банка, използвана за MIDI синтез.</string>
     <string name="config_help_system_properties">Задава разширените свойства на Java ME, съобщавани на MIDlet.</string>
     <string name="config_help_system_properties_long">Редактирайте по едно свойство на ред във формат „име: стойност“. Неправилните стойности може да повлияят на съвместимостта.</string>
+    <string name="config_system_properties_editor_label">Свойства</string>
     <string name="config_help_timing_mode">Избира дали MIDlet да използва време на емулация или системно време. Относителните забавяния продължават да се мащабират със скоростта на емулация.</string>
     <string name="config_help_timing_unavailable">Настройките за време са недостъпни за тази инсталация на MIDlet. Преинсталирайте или преобразувайте отново MIDlet, за да ги активирате.</string>
     <string name="config_help_touch_input">Позволява на MIDlet да получава вход за показалеца от сензорния екран.</string>

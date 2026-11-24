@@ -759,6 +759,7 @@
     <string name="config_help_soundbank">MIDI синтезі үшін қолданылатын дыбыс банкін таңдайды.</string>
     <string name="config_help_system_properties">MIDlet бағдарламасына хабарланатын кеңейтілген Java ME қасиеттерін орнатады.</string>
     <string name="config_help_system_properties_long">Әр жолда бір қасиетті «атау: мән» түрінде өңдеңіз. Қате мәндер үйлесімділікке әсер етуі мүмкін.</string>
+    <string name="config_system_properties_editor_label">Қасиеттер</string>
     <string name="config_help_timing_mode">MIDlet үшін эмуляция уақыты мен жүйе уақытының бірін таңдайды. Салыстырмалы кідірістер эмуляция жылдамдығына сай масштабтала береді.</string>
     <string name="config_help_timing_unavailable">Осы орнатылған MIDlet үшін уақыт баптаулары қолжетімсіз. Оларды іске қосу үшін MIDlet бағдарламасын қайта орнатыңыз немесе қайта түрлендіріңіз.</string>
     <string name="config_help_touch_input">MIDlet бағдарламасына сенсорлық экраннан меңзер енгізуін қабылдауға мүмкіндік береді.</string>

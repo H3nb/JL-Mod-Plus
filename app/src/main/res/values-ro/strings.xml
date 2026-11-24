@@ -470,6 +470,7 @@
     <string name="config_help_soundbank">Alege banca de sunete folosită pentru sinteza MIDI.</string>
     <string name="config_help_system_properties">Setează proprietățile Java ME avansate raportate MIDletului.</string>
     <string name="config_help_system_properties_long">Editați câte o proprietate pe rând, în formatul „nume: valoare”. Valorile incorecte pot afecta compatibilitatea.</string>
+    <string name="config_system_properties_editor_label">Proprietăți</string>
     <string name="config_help_timing_mode">Alege dacă MIDletul folosește timpul de emulare sau timpul sistemului. Întârzierile relative rămân scalate cu viteza de emulare.</string>
     <string name="config_help_timing_unavailable">Setările de timp nu sunt disponibile pentru această instalare a MIDletului. Reinstalați sau reconvertiți MIDletul pentru a le activa.</string>
     <string name="config_help_touch_input">Permite MIDletului să primească intrări de indicator de pe ecranul tactil.</string>

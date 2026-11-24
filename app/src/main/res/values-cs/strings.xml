@@ -531,6 +531,7 @@
     <string name="config_help_soundbank">Vybere zvukovou banku pro syntézu MIDI.</string>
     <string name="config_help_system_properties">Nastaví pokročilé vlastnosti Java ME hlášené MIDletu.</string>
     <string name="config_help_system_properties_long">Upravujte jednu vlastnost na řádek ve formátu „název: hodnota“. Nesprávné hodnoty mohou ovlivnit kompatibilitu.</string>
+    <string name="config_system_properties_editor_label">Vlastnosti</string>
     <string name="config_help_timing_mode">Vybere, zda MIDlet používá čas emulace, nebo systémový čas. Relativní prodlevy se nadále mění s rychlostí emulace.</string>
     <string name="config_help_timing_unavailable">Nastavení času nejsou pro tuto instalaci MIDletu dostupná. Povolíte je přeinstalováním nebo opětovným převodem MIDletu.</string>
     <string name="config_help_touch_input">Umožní MIDletu přijímat vstup ukazatele z dotykové obrazovky.</string>

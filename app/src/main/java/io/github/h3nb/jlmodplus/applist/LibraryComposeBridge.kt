@@ -21,8 +21,7 @@ import androidx.compose.animation.AnimatedVisibility
 import androidx.compose.animation.AnimatedContent
 import androidx.compose.animation.togetherWith
 import androidx.compose.animation.core.MutableTransitionState
-import androidx.compose.animation.expandVertically
-import androidx.compose.animation.shrinkVertically
+import androidx.compose.animation.core.animateFloatAsState
 import androidx.compose.animation.fadeIn
 import androidx.compose.animation.fadeOut
 import androidx.compose.animation.scaleIn
@@ -2099,12 +2098,14 @@ internal fun LibraryAppsDestination(
                 }
             }
         }
-        Box(
+        // A non-clickable Surface owns hit testing across the entire visible header,
+        // including padding and gaps that would otherwise expose covered MIDlets.
+        Surface(
+            color = MaterialTheme.colorScheme.background,
             modifier = Modifier
                 .align(Alignment.TopCenter)
                 .fillMaxWidth()
                 .graphicsLayer { translationY = headerOffsetPx.floatValue }
-                .background(MaterialTheme.colorScheme.background)
                 .then(
                     if (!headerHidden) {
                         Modifier
@@ -2369,42 +2370,36 @@ private fun LibraryAppsHeader(
             .windowInsetsPadding(WindowInsets.safeDrawing.only(WindowInsetsSides.Top))
             .padding(horizontal = 12.dp, vertical = 4.dp),
     ) {
-        AnimatedContent(
-            targetState = searchActive && !selectionState.isActive && title == null && onBack == null,
+        val searching = searchActive && !selectionState.isActive && title == null && onBack == null
+        val titleHeight = (56f + 16f * (LocalDensity.current.fontScale - 1f).coerceAtLeast(0f)).dp
+        val browseActionsEnabled = titleActionsEnabled && !searching
+        val titleAlpha by animateFloatAsState(
+            targetValue = if (searching) 0f else 1f,
+            animationSpec = tween(180),
+            label = "Library title alpha",
+        )
+        // The normal header remains the sizing anchor even during Search. This also
+        // accounts for a wrapped debug wordmark and the separate large-font action row.
+        Box(
             modifier = Modifier.fillMaxWidth()
                 .then(titleGate.positionModifier)
                 .then(if (titleActionsEnabled) Modifier else Modifier.clearAndSetSemantics {}),
-            transitionSpec = {
-                (fadeIn(tween(180)) + slideInHorizontally(
-                    animationSpec = tween(220), initialOffsetX = { it / 12 },
-                )) togetherWith (fadeOut(tween(120)) + slideOutHorizontally(
-                    animationSpec = tween(180), targetOffsetX = { -it / 12 },
-                ))
-            },
-            label = "Library search header",
-        ) { searching ->
-            if (searching) {
-                InlineSearchField(
-                    query = searchQuery,
-                    onQueryChange = onSearchQueryChange,
-                    modifier = Modifier.fillMaxWidth(),
-                    enabled = titleActionsEnabled,
-                    onDismissInput = { focusManager.clearFocus() },
-                    onClose = onCloseSearch,
-                    autoFocus = interactive,
-                    placeholder = stringResource(R.string.library_search_placeholder),
-                )
-            } else {
+        ) {
+            Column(
+                modifier = Modifier.fillMaxWidth()
+                    .graphicsLayer { alpha = titleAlpha }
+                    .then(if (searching) Modifier.clearAndSetSemantics {} else Modifier),
+            ) {
                 Row(
                     modifier = Modifier
                         .fillMaxWidth()
-                        .heightIn(min = 56.dp),
+                        .heightIn(min = titleHeight),
                     verticalAlignment = Alignment.CenterVertically,
                 ) {
                     if (selectionState.isActive || onBack != null) {
                         IconButton(
                             onClick = if (selectionState.isActive) onExitSelection else requireNotNull(onBack),
-                            enabled = titleActionsEnabled,
+                            enabled = browseActionsEnabled,
                         ) {
                             Icon(
                                 painter = painterResource(R.drawable.ic_arrow_back),
@@ -2447,7 +2442,7 @@ private fun LibraryAppsHeader(
                                     onOpenNotifications = onOpenNotifications,
                                     notificationCount = notificationCount,
                                     onOpenSettings = onOpenGlobalSettings,
-                                    enabled = titleActionsEnabled,
+                                    enabled = browseActionsEnabled,
                                 )
                             }
                         }
@@ -2465,7 +2460,7 @@ private fun LibraryAppsHeader(
                         )
                         IconButton(
                             onClick = if (allVisibleSelected) onUnselectAll else onSelectAll,
-                            enabled = visibleAppIds.isNotEmpty() && titleActionsEnabled,
+                            enabled = visibleAppIds.isNotEmpty() && browseActionsEnabled,
                             modifier = Modifier.semantics {
                                 contentDescription = selectionToggleLabel
                             },
@@ -2483,27 +2478,45 @@ private fun LibraryAppsHeader(
                         }
                     }
                 }
-
+                if (compactHeaderActions) {
+                    Row(
+                        modifier = Modifier.fillMaxWidth().padding(top = 4.dp),
+                        horizontalArrangement = Arrangement.End,
+                    ) {
+                        LibraryHeaderActions(
+                            onOpenSearch = onOpenSearch,
+                            onOpenNotifications = onOpenNotifications,
+                            notificationCount = notificationCount,
+                            onOpenSettings = onOpenGlobalSettings,
+                            enabled = browseActionsEnabled,
+                        )
+                    }
+                }
             }
-        }
-        AnimatedVisibility(
-            visible = compactHeaderActions && !searchActive,
-            enter = fadeIn(tween(180)) + expandVertically(animationSpec = tween(220)),
-            exit = fadeOut(tween(120)) + shrinkVertically(animationSpec = tween(180)),
-        ) {
-            Row(
-                modifier = Modifier.fillMaxWidth().padding(top = 4.dp)
-                    .then(titleGate.positionModifier)
-                    .then(if (titleActionsEnabled) Modifier else Modifier.clearAndSetSemantics {}),
-                horizontalArrangement = Arrangement.End,
+            AnimatedVisibility(
+                visible = searching,
+                modifier = Modifier.matchParentSize(),
+                enter = fadeIn(tween(180)) + slideInHorizontally(
+                    animationSpec = tween(220), initialOffsetX = { it / 12 },
+                ),
+                exit = fadeOut(tween(120)) + slideOutHorizontally(
+                    animationSpec = tween(180), targetOffsetX = { -it / 12 },
+                ),
             ) {
-                LibraryHeaderActions(
-                    onOpenSearch = onOpenSearch,
-                    onOpenNotifications = onOpenNotifications,
-                    notificationCount = notificationCount,
-                    onOpenSettings = onOpenGlobalSettings,
-                    enabled = titleActionsEnabled,
-                )
+                Box(Modifier.fillMaxSize(), contentAlignment = Alignment.Center) {
+                    InlineSearchField(
+                        query = searchQuery,
+                        onQueryChange = onSearchQueryChange,
+                        modifier = Modifier.fillMaxWidth()
+                            .then(if (searching) Modifier else Modifier.clearAndSetSemantics {}),
+                        enabled = titleActionsEnabled && searching,
+                        onDismissInput = { focusManager.clearFocus() },
+                        onClose = onCloseSearch,
+                        autoFocus = interactive && searching,
+                        placeholder = stringResource(R.string.library_search_placeholder),
+                        controlHeight = titleHeight,
+                    )
+                }
             }
         }
         Row(

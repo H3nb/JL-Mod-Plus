@@ -472,6 +472,7 @@
     <string name="config_help_soundbank">MIDI 合成に使用するサウンドバンクを選びます。</string>
     <string name="config_help_system_properties">MIDlet に報告する詳細な Java ME プロパティを設定します。</string>
     <string name="config_help_system_properties_long">「name: value」の形式で1行に1つのプロパティを編集します。誤った値は互換性に影響する場合があります。</string>
+    <string name="config_system_properties_editor_label">プロパティ</string>
     <string name="config_help_timing_mode">MIDlet でエミュレーション時間とシステム時間のどちらを使用するかを選びます。相対的な待機時間は引き続きエミュレーション速度に連動します。</string>
     <string name="config_help_timing_unavailable">この MIDlet のインストールでは時間設定を使用できません。有効にするには、MIDlet を再インストールまたは再変換してください。</string>
     <string name="config_help_touch_input">MIDlet がタッチスクリーンからのポインター入力を受け取れるようにします。</string>

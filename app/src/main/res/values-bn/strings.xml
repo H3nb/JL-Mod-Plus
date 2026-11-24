@@ -464,6 +464,7 @@
     <string name="config_help_soundbank">MIDI সংশ্লেষণের জন্য সাউন্ডব্যাংক বেছে নেয়।</string>
     <string name="config_help_system_properties">MIDlet-কে জানানো উন্নত Java ME প্রপার্টি নির্ধারণ করে।</string>
     <string name="config_help_system_properties_long">প্রতি লাইনে একটি প্রপার্টি “name: value” আকারে সম্পাদনা করুন। ভুল মান সামঞ্জস্যে প্রভাব ফেলতে পারে।</string>
+    <string name="config_system_properties_editor_label">বৈশিষ্ট্য</string>
     <string name="config_help_timing_mode">MIDlet এমুলেশন সময় নাকি সিস্টেম সময় ব্যবহার করবে তা বেছে নেয়। আপেক্ষিক বিলম্ব এমুলেশন গতি অনুযায়ী স্কেল হতে থাকে।</string>
     <string name="config_help_timing_unavailable">এই MIDlet ইনস্টলেশনের জন্য সময়ের সেটিংস পাওয়া যাচ্ছে না। সক্রিয় করতে MIDlet আবার ইনস্টল বা রূপান্তর করুন।</string>
     <string name="config_help_touch_input">MIDlet-কে টাচস্ক্রিন থেকে পয়েন্টার ইনপুট নিতে দেয়।</string>

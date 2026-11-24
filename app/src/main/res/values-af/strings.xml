@@ -417,6 +417,7 @@
     <string name="config_help_soundbank">Kies die klankbank wat vir MIDI-sintese gebruik word.</string>
     <string name="config_help_system_properties">Stel gevorderde Java ME-eienskappe wat aan die MIDlet gerapporteer word.</string>
     <string name="config_help_system_properties_long">Wysig een eienskap per reël as “naam: waarde”. Verkeerde waardes kan versoenbaarheid beïnvloed.</string>
+    <string name="config_system_properties_editor_label">Eienskappe</string>
     <string name="config_help_timing_mode">Kies of die MIDlet emulasietyd of stelseltyd gebruik. Relatiewe vertragings bly met die emulasiespoed geskaal.</string>
     <string name="config_help_timing_unavailable">Tydinstellings is nie vir hierdie MIDlet-installasie beskikbaar nie. Herinstalleer of heromskep die MIDlet om hulle te aktiveer.</string>
     <string name="config_help_touch_input">Laat die MIDlet wyserinvoer vanaf die raakskerm ontvang.</string>

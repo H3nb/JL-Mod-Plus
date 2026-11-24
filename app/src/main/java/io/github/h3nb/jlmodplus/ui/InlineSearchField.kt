@@ -15,6 +15,7 @@
 package io.github.h3nb.jlmodplus.ui
 
 import androidx.activity.compose.BackHandler
+import androidx.compose.foundation.border
 import androidx.compose.foundation.layout.ExperimentalLayoutApi
 import androidx.compose.foundation.layout.WindowInsets
 import androidx.compose.foundation.layout.isImeVisible
@@ -53,6 +54,7 @@ import androidx.compose.ui.res.painterResource
 import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.text.input.ImeAction
 import androidx.compose.ui.text.style.TextOverflow
+import androidx.compose.ui.unit.Dp
 import androidx.compose.ui.unit.dp
 import io.github.h3nb.jlmodplus.R
 
@@ -74,6 +76,7 @@ internal fun InlineSearchField(
     placeholder: String? = null,
     onClose: (() -> Unit)? = null,
     autoFocus: Boolean = false,
+    controlHeight: Dp = inlineSearchControlHeight(),
 ) {
     val keyboard = LocalSoftwareKeyboardController.current
     val focus = remember { FocusRequester() }
@@ -103,6 +106,7 @@ internal fun InlineSearchField(
             onClose?.invoke()
         }
     }
+    val shape = RoundedCornerShape(20.dp)
     TextField(
         value = query,
         onValueChange = onQueryChange,
@@ -111,7 +115,8 @@ internal fun InlineSearchField(
             // Exclude an inactive page's editor without overriding the active TextField's
             // own Material focus properties (which must remain responsible for touch refocus).
             .then(if (enabled) Modifier else Modifier.focusProperties { canFocus = false })
-            .height(inlineSearchControlHeight())
+            .height(controlHeight)
+            .border(1.dp, MaterialTheme.colorScheme.outlineVariant, shape)
             .onFocusChanged {
                 fieldFocused = it.hasFocus
                 onFocusChanged(it.hasFocus)
@@ -152,7 +157,7 @@ internal fun InlineSearchField(
                 onDismissInput()
             },
         ),
-        shape = RoundedCornerShape(20.dp),
+        shape = shape,
         colors = TextFieldDefaults.colors(
             focusedContainerColor = MaterialTheme.colorScheme.surfaceContainerLow,
             unfocusedContainerColor = MaterialTheme.colorScheme.surfaceContainerLow,
@@ -175,11 +180,14 @@ internal fun InlineSearchField(
                     contentDescription = null,
                 )
             } else {
-                IconButton(onClick = {
-                    keyboard?.hide()
-                    focusManager.clearFocus()
-                    onClose()
-                }) {
+                IconButton(
+                    enabled = enabled,
+                    onClick = {
+                        keyboard?.hide()
+                        focusManager.clearFocus()
+                        onClose()
+                    },
+                ) {
                     Icon(
                         painter = painterResource(R.drawable.ic_arrow_back),
                         contentDescription = stringResource(R.string.action_back),

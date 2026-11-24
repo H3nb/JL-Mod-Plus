@@ -873,6 +873,7 @@
     <string name="config_edit_system_properties">Изменить системные свойства</string>
     <string name="config_help_system_properties">Задаёт расширенные свойства Java ME, сообщаемые MIDlet.</string>
     <string name="config_help_system_properties_long">Указывайте по одному свойству в строке в формате «имя: значение». Неверные значения могут повлиять на совместимость.</string>
+    <string name="config_system_properties_editor_label">Свойства</string>
     <string name="config_system_properties_info">Большинству MIDlet изменения здесь не нужны.</string>
     <string name="config_font_sizes">Размеры шрифтов</string>
     <string name="config_help_font_sizes">Задаёт малый, средний и большой размеры шрифта Java ME для MIDlet.</string>

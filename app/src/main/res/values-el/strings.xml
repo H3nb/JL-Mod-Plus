@@ -416,6 +416,7 @@
     <string name="config_help_soundbank">Επιλέγει την τράπεζα ήχων για τη σύνθεση MIDI.</string>
     <string name="config_help_system_properties">Ορίζει προηγμένες ιδιότητες Java ME που αναφέρονται στο MIDlet.</string>
     <string name="config_help_system_properties_long">Επεξεργαστείτε μία ιδιότητα ανά γραμμή ως «όνομα: τιμή». Εσφαλμένες τιμές μπορεί να επηρεάσουν τη συμβατότητα.</string>
+    <string name="config_system_properties_editor_label">Ιδιότητες</string>
     <string name="config_help_timing_mode">Επιλέγει αν το MIDlet χρησιμοποιεί χρόνο εξομοίωσης ή χρόνο συστήματος. Οι σχετικές καθυστερήσεις συνεχίζουν να κλιμακώνονται με την ταχύτητα εξομοίωσης.</string>
     <string name="config_help_timing_unavailable">Οι ρυθμίσεις χρόνου δεν είναι διαθέσιμες για αυτή την εγκατάσταση MIDlet. Εγκαταστήστε ξανά ή μετατρέψτε ξανά το MIDlet για να τις ενεργοποιήσετε.</string>
     <string name="config_help_touch_input">Επιτρέπει στο MIDlet να λαμβάνει είσοδο δείκτη από την οθόνη αφής.</string>

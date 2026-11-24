@@ -386,6 +386,41 @@ class LibraryComposeTest {
     }
 
     @Test
+    fun searchKeepsScopeToolbarAtTheSamePosition() {
+        setLibraryContent(actions = RecordingLibraryActions())
+        val scope = composeRule.onNodeWithTag("library_scope_picker")
+        val top = scope.fetchSemanticsNode().boundsInRoot.top
+        composeRule.onNodeWithContentDescription(uiString(R.string.library_search_placeholder)).performClick()
+        composeRule.onNode(hasSetTextAction()).assertIsDisplayed()
+        assertEquals(top, scope.fetchSemanticsNode().boundsInRoot.top, 1f)
+        composeRule.onNodeWithContentDescription(uiString(R.string.action_back)).performClick()
+        assertEquals(top, scope.fetchSemanticsNode().boundsInRoot.top, 1f)
+    }
+
+    @Test
+    fun tappingHeaderGapDoesNotOpenCoveredApp() {
+        val actions = RecordingLibraryActions()
+        setLibraryContent(
+            state = LibraryUiState(
+                loading = false,
+                apps = (0..24).map { index ->
+                    LibraryAppUiItem(index + 1, "Demo MIDlet $index", "Example Vendor", "1.0", null, true)
+                },
+            ),
+            actions = actions,
+        )
+        val viewport = appViewport()
+        viewport.performScrollToIndex(10)
+        val title = composeRule.onNodeWithContentDescription(uiString(R.string.app_name))
+            .fetchSemanticsNode().boundsInRoot
+        val scope = composeRule.onNodeWithTag("library_scope_picker").fetchSemanticsNode().boundsInRoot
+        val origin = viewport.fetchSemanticsNode().boundsInRoot.topLeft
+        val gap = Offset(scope.center.x, (title.bottom + scope.top) / 2f) - origin
+        viewport.performTouchInput { click(gap) }
+        assertEquals(null, actions.openedId)
+    }
+
+    @Test
     fun inlineSearchFiltersTheCurrentLibraryAndRestoresBrowseProjection() {
         val actions = RecordingLibraryActions()
         setLibraryContent(

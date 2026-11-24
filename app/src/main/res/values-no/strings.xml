@@ -416,6 +416,7 @@
     <string name="config_help_soundbank">Velger lydbanken som brukes til MIDI-syntese.</string>
     <string name="config_help_system_properties">Angir avanserte Java ME-egenskaper som rapporteres til MIDlet-en.</string>
     <string name="config_help_system_properties_long">Rediger én egenskap per linje som «navn: verdi». Feil verdier kan påvirke kompatibiliteten.</string>
+    <string name="config_system_properties_editor_label">Egenskaper</string>
     <string name="config_help_timing_mode">Velger om MIDlet-en bruker emuleringstid eller systemtid. Relative forsinkelser skaleres fortsatt med emuleringshastigheten.</string>
     <string name="config_help_timing_unavailable">Tidsinnstillinger er utilgjengelige for denne MIDlet-installasjonen. Installer eller konverter MIDlet-en på nytt for å aktivere dem.</string>
     <string name="config_help_touch_input">Lar MIDlet-en motta pekerinndata fra berøringsskjermen.</string>

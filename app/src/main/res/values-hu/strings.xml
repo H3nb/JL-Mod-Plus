@@ -482,6 +482,7 @@
     <string name="config_help_soundbank">Kiválasztja a MIDI-szintézishez használt hangbankot.</string>
     <string name="config_help_system_properties">Beállítja a MIDletnek jelentett speciális Java ME-tulajdonságokat.</string>
     <string name="config_help_system_properties_long">Soronként egy tulajdonságot szerkesszen „név: érték” formában. A hibás értékek befolyásolhatják a kompatibilitást.</string>
+    <string name="config_system_properties_editor_label">Tulajdonságok</string>
     <string name="config_help_timing_mode">Kiválasztja, hogy a MIDlet emulációs vagy rendszeridőt használjon. A relatív késleltetések továbbra is az emuláció sebességének megfelelően változnak.</string>
     <string name="config_help_timing_unavailable">Az időbeállítások nem érhetők el ennél a MIDlet-telepítésnél. Az engedélyezésükhöz telepítse újra vagy konvertálja újra a MIDletet.</string>
     <string name="config_help_touch_input">Lehetővé teszi, hogy a MIDlet mutatóbevitelt fogadjon az érintőképernyőről.</string>

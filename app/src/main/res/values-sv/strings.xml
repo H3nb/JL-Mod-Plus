@@ -747,6 +747,7 @@
     <string name="config_edit_system_properties">Redigera systemegenskaper</string>
     <string name="config_help_system_properties">Ställer in avancerade Java ME-egenskaper som rapporteras till MIDlet-appen.</string>
     <string name="config_help_system_properties_long">Redigera en egenskap per rad som ”namn: värde”. Felaktiga värden kan påverka kompatibiliteten.</string>
+    <string name="config_system_properties_editor_label">Egenskaper</string>
     <string name="config_system_properties_info">De flesta MIDlet-appar behöver inga ändringar här.</string>
     <string name="config_font_sizes">Teckensnittsstorlekar</string>
     <string name="config_help_font_sizes">Ställer in små, medelstora och stora Java ME-teckensnittsstorlekar för MIDlet-appen.</string>
