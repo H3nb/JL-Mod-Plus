@@ -8,13 +8,10 @@
 package io.github.h3nb.jlmodplus.memory
 
 import androidx.activity.compose.BackHandler
-import androidx.compose.animation.AnimatedContent
-import androidx.compose.animation.togetherWith
 import androidx.compose.foundation.BorderStroke
 import androidx.compose.foundation.background
 import androidx.compose.foundation.clickable
 import androidx.compose.foundation.combinedClickable
-import androidx.compose.foundation.interaction.MutableInteractionSource
 import androidx.compose.foundation.gestures.scrollBy
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
@@ -80,6 +77,7 @@ import androidx.compose.material3.TooltipDefaults
 import androidx.compose.material3.rememberTooltipState
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.DisposableEffect
+import androidx.compose.runtime.derivedStateOf
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.setValue
 import androidx.compose.runtime.LaunchedEffect
@@ -124,10 +122,6 @@ import androidx.core.os.ConfigurationCompat
 import java.text.NumberFormat
 import java.util.Locale
 import io.github.h3nb.jlmodplus.R
-import io.github.h3nb.jlmodplus.ui.PAGE_TRAVEL_DP
-import io.github.h3nb.jlmodplus.ui.pageMotionDirection
-import io.github.h3nb.jlmodplus.ui.tabEnter
-import io.github.h3nb.jlmodplus.ui.tabExit
 import io.github.h3nb.jlmodplus.memory.MemoryEditorDialog as AlertDialog
 import kotlinx.coroutines.awaitCancellation
 import kotlinx.coroutines.flow.first
@@ -173,6 +167,16 @@ private fun runtimeMemoryKeypadTextStyle() = MaterialTheme.typography.labelLarge
     fontFamily = FontFamily.Monospace,
 )
 
+/** Observe draft edits separately from workspace navigation and live memory rendering. */
+@Composable
+private fun PersistMemoryEditorScriptWorkspace(
+    token: Long,
+    readWorkspace: () -> MemoryEditorScriptWorkspace,
+) {
+    val workspace = readWorkspace()
+    SideEffect { MemoryEditorSessionNavigation.rememberScript(token, workspace) }
+}
+
 /** Production Memory Editor shell hosted in the dedicated :memory_engine Activity. */
 @Composable
 internal fun MemoryEditorRuntimeRoot(
@@ -184,7 +188,6 @@ internal fun MemoryEditorRuntimeRoot(
     MemoryEditorOverlayScope(overlayState) { overlay ->
         val controlsBackdrop = MaterialTheme.colorScheme.surfaceContainer
         val tab = state.activeTab
-        val tabTravelPx = with(LocalDensity.current) { PAGE_TRAVEL_DP.dp.roundToPx() }
         var opacityDialog by remember { mutableStateOf(false) }
         // The Activity must finish to return input to the game. These fields survive its
         // destruction in the memory-engine process, scoped to this MIDlet runtime token.
@@ -218,22 +221,28 @@ internal fun MemoryEditorRuntimeRoot(
         var scriptTargets by remember(state.runtimeToken) {
             mutableStateOf(emptyList<MemoryScriptBuilderAction>())
         }
-        SideEffect {
-            MemoryEditorSessionNavigation.rememberScript(
-                state.runtimeToken,
-                MemoryEditorScriptWorkspace(
-                    selectedId = selectedScriptId,
-                    editing = scriptEditing,
-                    replacingId = scriptReplacingId,
-                    initialText = scriptInitialText,
-                    text = scriptText,
-                    builder = scriptBuilder,
-                ),
+        PersistMemoryEditorScriptWorkspace(state.runtimeToken) {
+            MemoryEditorScriptWorkspace(
+                selectedId = selectedScriptId,
+                editing = scriptEditing,
+                replacingId = scriptReplacingId,
+                initialText = scriptInitialText,
+                text = scriptText,
+                builder = scriptBuilder,
             )
         }
-        val scriptDraft = if (scriptEditing) {
-            MemoryScriptDraft(scriptReplacingId, scriptInitialText, scriptText)
-        } else null
+        val scriptDraft by remember(state.runtimeToken) {
+            derivedStateOf {
+                if (scriptEditing) MemoryScriptDraft(scriptReplacingId, scriptInitialText, scriptText)
+                else null
+            }
+        }
+        val builderMode by remember(state.runtimeToken) {
+            derivedStateOf { scriptBuilder?.mode }
+        }
+        val hasUnsavedScript by remember(state.runtimeToken) {
+            derivedStateOf { scriptDraft?.dirty == true || scriptBuilder?.hasChanges == true }
+        }
         val setScriptDraft: (MemoryScriptDraft?) -> Unit = { draft ->
             scriptEditing = draft != null
             scriptReplacingId = draft?.replacingId
@@ -297,12 +306,14 @@ internal fun MemoryEditorRuntimeRoot(
         val listEntries = remember(state.savedVariables, state.watches) {
             memoryListEntries(state.savedVariables, state.watches)
         }
+        val listKeys = remember(listEntries) { listEntries.mapTo(HashSet()) { it.key } }
         var listSelection by remember { mutableStateOf(emptySet<String>()) }
-        LaunchedEffect(listEntries.map(MemoryListEntry::key)) {
-            listSelection = listSelection.intersect(listEntries.mapTo(HashSet()) { it.key })
+        LaunchedEffect(listKeys) {
+            listSelection = listSelection.intersect(listKeys)
         }
-        val selectedListEntry = listEntries.singleOrNull { it.key in listSelection }
-            ?.takeIf { listSelection.size == 1 }
+        val selectedListEntry = remember(listEntries, listSelection) {
+            listSelection.singleOrNull()?.let { key -> listEntries.firstOrNull { it.key == key } }
+        }
         val inspectSelected = {
             if (state.variablesTab) {
                 selectedListEntry?.let { entry ->
@@ -324,7 +335,7 @@ internal fun MemoryEditorRuntimeRoot(
         val existingDraftMessage = stringResource(R.string.memory_scripts_draft_in_progress)
         val createFailedMessage = stringResource(R.string.memory_scripts_create_failed)
         val createScriptFromSaved: (List<SavedVariableRow>) -> String? = { bookmarks ->
-            if (scriptBuilder != null || scriptDraft != null) {
+            if (builderMode != null || scriptEditing) {
                 existingDraftMessage
             } else {
                 runCatching {
@@ -350,18 +361,18 @@ internal fun MemoryEditorRuntimeRoot(
             }
         }
         BackHandler(enabled = scriptSavePending || tab == MemoryEditorTab.INSPECTOR || overlay.peeking ||
-            scriptDraft?.dirty == true || scriptBuilder?.hasChanges == true ||
+            hasUnsavedScript ||
             (tab == MemoryEditorTab.SCRIPTS &&
-                (scriptDraft != null || scriptBuilder != null || selectedScriptId != null)) ||
+                (scriptEditing || builderMode != null || selectedScriptId != null)) ||
             (state.variablesTab && listSelection.isNotEmpty())) {
             when {
                 pendingScriptSave != null -> Unit
                 overlay.peeking -> overlay.peeking = false
                 tab == MemoryEditorTab.INSPECTOR -> actions.closeInspector()
-                tab == MemoryEditorTab.SCRIPTS && scriptDraft != null -> backFromScriptEditor()
-                tab == MemoryEditorTab.SCRIPTS && scriptBuilder != null -> backFromScriptBuilder()
+                tab == MemoryEditorTab.SCRIPTS && scriptEditing -> backFromScriptEditor()
+                tab == MemoryEditorTab.SCRIPTS && builderMode != null -> backFromScriptBuilder()
                 tab == MemoryEditorTab.SCRIPTS -> selectedScriptId = null
-                scriptDraft?.dirty == true || scriptBuilder?.hasChanges == true -> actions.close()
+                hasUnsavedScript -> actions.close()
                 else -> listSelection = emptySet()
             }
         }
@@ -392,12 +403,12 @@ internal fun MemoryEditorRuntimeRoot(
                     val detailTitle = when {
                         inspectorPage -> stringResource(R.string.memory_editor_inspector)
                         tab != MemoryEditorTab.SCRIPTS -> null
-                        scriptBuilder != null -> stringResource(when (scriptBuilder!!.mode) {
+                        builderMode != null -> stringResource(when (builderMode!!) {
                             MemoryScriptBuilderMode.FREEZE -> R.string.memory_scripts_mode_toggle
                             MemoryScriptBuilderMode.FORM -> R.string.memory_scripts_mode_form
                             MemoryScriptBuilderMode.ACTIONS -> R.string.memory_scripts_mode_once
                         })
-                        scriptDraft != null -> stringResource(R.string.memory_builder_json_editor)
+                        scriptEditing -> stringResource(R.string.memory_builder_json_editor)
                         choosingScriptType -> stringResource(R.string.memory_scripts_new)
                         selectedScriptId != null -> state.scripts.firstOrNull {
                             it.id == selectedScriptId
@@ -420,8 +431,8 @@ internal fun MemoryEditorRuntimeRoot(
                                 onDetailBack = {
                                     if (pendingScriptSave == null) when {
                                         inspectorPage -> actions.closeInspector()
-                                        scriptBuilder != null -> backFromScriptBuilder()
-                                        scriptDraft != null -> backFromScriptEditor()
+                                        builderMode != null -> backFromScriptBuilder()
+                                        scriptEditing -> backFromScriptEditor()
                                         choosingScriptType -> {
                                             val fromSaved = scriptTargets.isNotEmpty()
                                             choosingScriptType = false
@@ -437,67 +448,41 @@ internal fun MemoryEditorRuntimeRoot(
                         state.message?.takeIf(String::isNotBlank)?.let {
                             RuntimeMessage(it, state.messageIsError)
                         }
-                        // Use tab identity for motion, not the frequently changing memory snapshot.
-                        // The outgoing snapshot is retained briefly so Inspector can fade out
-                        // without showing an empty state after its target is closed.
-                        AnimatedContent(
-                            targetState = state,
-                            contentKey = { it.activeTab },
+                        // A live workspace changes destination immediately; keep only the active page mounted.
+                        Box(
                             modifier = Modifier.weight(1f).fillMaxWidth()
                                 .windowInsetsPadding(memoryEditorWorkspaceInsets().only(WindowInsetsSides.Horizontal))
                                 .clipToBounds(),
-                            transitionSpec = {
-                                val direction = pageMotionDirection(
-                                    0, 0, initialState.activeTab.ordinal, targetState.activeTab.ordinal,
+                        ) {
+                            when (tab) {
+                                MemoryEditorTab.RESULTS -> RuntimeSearchResultsTab(
+                                    state, actions, inspectSelected, relinkingBookmarkId,
+                                    { relinkingBookmarkId = null }, resultsListState,
+                                    compactResults, Modifier.fillMaxSize(),
                                 )
-                                tabEnter(direction, tabTravelPx).togetherWith(tabExit(direction, tabTravelPx))
-                            },
-                            label = "Memory editor tab",
-                        ) { shownState ->
-                            val active = shownState.activeTab == tab
-                            Box(
-                                Modifier.fillMaxSize().then(
-                                    if (active) Modifier else Modifier.clearAndSetSemantics {},
-                                ),
-                            ) {
-                                when (shownState.activeTab) {
-                                    MemoryEditorTab.RESULTS -> RuntimeSearchResultsTab(
-                                        shownState, actions, inspectSelected, relinkingBookmarkId,
-                                        { relinkingBookmarkId = null }, resultsListState,
-                                        compactResults, Modifier.fillMaxSize(),
-                                    )
-                                    MemoryEditorTab.VARIABLES -> RuntimeVariablesTab(
-                                        shownState, actions, listEntries, listSelection,
-                                        { listSelection = it },
-                                        { id ->
-                                            relinkingBookmarkId = id
-                                            actions.setVariablesTab(false)
-                                        },
-                                        createScriptFromSaved,
-                                        variablesListState, compactResults, Modifier.fillMaxSize(),
-                                    )
-                                    MemoryEditorTab.SCRIPTS -> RuntimeScriptsTab(
-                                        shownState, actions, selectedScriptId,
-                                        { if (pendingScriptSave == null) selectedScriptId = it }, scriptDraft,
-                                        { if (pendingScriptSave == null) setScriptDraft(it) },
-                                        scriptBuilder, { if (pendingScriptSave == null) scriptBuilder = it },
-                                        scriptSavePending, saveScript,
-                                        choosingScriptType, { choosingScriptType = it },
-                                        scriptTargets, { scriptTargets = emptyList() },
-                                        Modifier.fillMaxSize(),
-                                    )
-                                    MemoryEditorTab.INSPECTOR -> RuntimeInspectorTab(
-                                        shownState, actions, Modifier.fillMaxSize(),
-                                    )
-                                }
-                                if (!active) {
-                                    Box(
-                                        Modifier.matchParentSize().clickable(
-                                            interactionSource = remember { MutableInteractionSource() },
-                                            indication = null,
-                                        ) {},
-                                    )
-                                }
+                                MemoryEditorTab.VARIABLES -> RuntimeVariablesTab(
+                                    state, actions, listEntries, listSelection,
+                                    { listSelection = it },
+                                    { id ->
+                                        relinkingBookmarkId = id
+                                        actions.setVariablesTab(false)
+                                    },
+                                    createScriptFromSaved,
+                                    variablesListState, compactResults, Modifier.fillMaxSize(),
+                                )
+                                MemoryEditorTab.SCRIPTS -> RuntimeScriptsTab(
+                                    state, actions, selectedScriptId,
+                                    { if (pendingScriptSave == null) selectedScriptId = it }, scriptDraft,
+                                    { if (pendingScriptSave == null) setScriptDraft(it) },
+                                    scriptBuilder, { if (pendingScriptSave == null) scriptBuilder = it },
+                                    scriptSavePending, saveScript,
+                                    choosingScriptType, { choosingScriptType = it },
+                                    scriptTargets, { scriptTargets = emptyList() },
+                                    Modifier.fillMaxSize(),
+                                )
+                                MemoryEditorTab.INSPECTOR -> RuntimeInspectorTab(
+                                    state, actions, Modifier.fillMaxSize(),
+                                )
                             }
                         }
                     }
@@ -772,10 +757,11 @@ private fun RuntimeSearchResultsTab(
     var editRevision by remember { mutableStateOf(0L) }
     var deleteSnapshot by remember { mutableStateOf<Pair<Long, List<Long>>?>(null) }
     val unknownBaseline = state.sessionStage == MemorySessionStage.UNKNOWN_BASELINE
-    val selectedRows = state.results.filter { it.id in state.selected }
+    val selectedRows = remember(state.results, state.selected) {
+        if (state.selected.isEmpty()) emptyList() else state.results.filter { it.id in state.selected }
+    }
     val selectedWriteSupported = selectedRows.isNotEmpty() && state.writeSupported
-    val allVisibleSelected = state.results.isNotEmpty() &&
-        state.results.all { it.id in state.selected }
+    val allVisibleSelected = state.results.isNotEmpty() && selectedRows.size == state.results.size
 
     val visibleSelectionDescription = stringResource(
         if (allVisibleSelected) R.string.memory_editor_clear_selection else R.string.memory_editor_select_visible,
@@ -1112,8 +1098,10 @@ private fun RuntimeVariablesTab(
     var watchDraft by remember { mutableStateOf<List<MemoryEditTarget>?>(null) }
     var createScriptError by remember { mutableStateOf<String?>(null) }
 
-    val selectedEntries = entries.filter { it.key in selectedKeys }
-    val scriptBookmarks = selectedEntries.mapNotNull { it.saved }
+    val selectedEntries = remember(entries, selectedKeys) {
+        if (selectedKeys.isEmpty()) emptyList() else entries.filter { it.key in selectedKeys }
+    }
+    val scriptBookmarks = remember(selectedEntries) { selectedEntries.mapNotNull { it.saved } }
     val canCreateScript = selectedEntries.isNotEmpty() &&
         scriptBookmarks.size == selectedEntries.size &&
         scriptBookmarks.all { it.hasLocator } && state.supported && !state.busy

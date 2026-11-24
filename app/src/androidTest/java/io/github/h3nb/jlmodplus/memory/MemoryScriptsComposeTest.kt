@@ -84,6 +84,13 @@ class MemoryScriptsComposeTest {
         rule.onNodeWithText(note).assertIsDisplayed()
     }
 
+    private fun waitForJsonValidation() {
+        rule.waitUntil(timeoutMillis = 5_000) {
+            !rule.onNodeWithTag("memory-script-save").fetchSemanticsNode()
+                .config.contains(SemanticsProperties.Disabled)
+        }
+    }
+
     @Test fun pastedScriptSavesWithoutRunningThenExecutesWithExplicitParameter() {
         val ui = mutableStateOf(MemoryEditorUiState(
             visible = true, connected = true, supported = true, writeSupported = true,
@@ -108,6 +115,11 @@ class MemoryScriptsComposeTest {
         rule.onAllNodesWithText("New script")[0].performClick()
         rule.onNodeWithText("JSON Editor").performClick()
         rule.onNodeWithTag("memory-script-editor").performTextReplacement(sample)
+        waitForJsonValidation()
+        rule.onNodeWithTag("memory-script-editor").performTextReplacement("{")
+        rule.onNodeWithTag("memory-script-save").assertIsNotEnabled()
+        rule.onNodeWithTag("memory-script-editor").performTextReplacement(sample)
+        waitForJsonValidation()
         rule.onNodeWithText("Save").performClick()
         rule.runOnIdle {
             assertEquals(sample, saved)
@@ -174,6 +186,7 @@ class MemoryScriptsComposeTest {
         rule.onAllNodesWithText("New script")[0].performClick()
         rule.onNodeWithText("JSON Editor").performClick()
         rule.onNodeWithTag("memory-script-editor").performTextReplacement(sample)
+        waitForJsonValidation()
         rule.onNodeWithText("Save").performClick()
         rule.onNodeWithContentDescription("Back").assertIsNotEnabled()
         rule.onNodeWithContentDescription("Minimize Memory Editor").assertIsNotEnabled()
@@ -210,6 +223,7 @@ class MemoryScriptsComposeTest {
         rule.onAllNodesWithText("New script")[0].performClick()
         rule.onNodeWithText("JSON Editor").performClick()
         rule.onNodeWithTag("memory-script-editor").performTextReplacement(sample)
+        waitForJsonValidation()
         rule.onNodeWithText("Save").performClick()
         rule.runOnIdle {
             assertEquals(sample, MemoryEditorSessionNavigation.script(token).pendingSave?.document)
@@ -538,6 +552,7 @@ class MemoryScriptsComposeTest {
         rule.onAllNodesWithText("New script")[0].performClick()
         rule.onNodeWithText("JSON Editor").performClick()
         rule.onNodeWithTag("memory-script-editor").performTextReplacement(sample)
+        waitForJsonValidation()
         rule.onNodeWithText("Save").performClick()
         val editor = rule.onNodeWithTag("memory-script-editor").assertIsDisplayed()
             .fetchSemanticsNode()

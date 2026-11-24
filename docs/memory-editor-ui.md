@@ -131,7 +131,7 @@ but their Bookmark can always be renamed or removed.
 
 Boolean is explicit true/false; numeric Auto excludes it. Inspector remains a
 checked snapshot in a contextual detail page. Scroll state survives tab and
-width changes. Primary tabs use short directional motion and a tonal selected surface.
+width changes. Primary tabs switch directly without page transitions, retaining a tonal selected surface.
 Tab widths accommodate localized labels; icons are omitted in narrow space
 and the tab row can scroll if labels need more room. Search choices and Script
 Builder targets include their heading within the tonal group for contrast.
@@ -163,6 +163,9 @@ Builder targets include their heading within the tonal group for contrast.
   Show active Freeze state and distinguish last-read values from proposed edits.
 - An open Script subpage replaces tabs with the shared Back/title/Minimize header;
   Peek remains global. Script type choices use concise icon-supported rows grouped on a themed surface.
+  Builder targets are lazy rows, and optional fields appear without size animations.
+  JSON input is immediate; full validation runs off the UI thread after 100 ms
+  without edits. Save requires the latest document's successful validation.
   The visual builder puts targets and their operations first, keeps description
   and form limits optional, and pins the primary Save action outside the
   scrolling form. JSON editor likewise keeps Paste and Save reachable beside
@@ -244,7 +247,7 @@ changes; screenshot comparison alone cannot prove gestures, IME suppression or a
 ## Separate follow-up work
 
 Audit other app-owned menus/dialogs against their own workflows before extending
-these changes. Profile runtime UI work before proposing performance optimizations.
+these changes. Frame pacing and input latency still require profiling on a device.
 Validate long translations, TalkBack traversal and physical-device rotation/IME
 behavior independently of host-rendered previews. Keep MIDlet font settings a
 separate compatibility concern.

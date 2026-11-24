@@ -48,6 +48,9 @@ import androidx.compose.ui.text.font.FontFamily
 import androidx.compose.ui.text.style.TextOverflow
 import androidx.compose.ui.unit.dp
 import io.github.h3nb.jlmodplus.R
+import kotlinx.coroutines.Dispatchers
+import kotlinx.coroutines.delay
+import kotlinx.coroutines.withContext
 import kotlinx.serialization.json.Json
 import kotlinx.serialization.json.JsonArray
 import kotlinx.serialization.json.JsonObject
@@ -154,8 +157,12 @@ internal fun RuntimeScriptsTab(
     var currentError by remember(selectedId, state.runtimeToken) { mutableStateOf<String?>(null) }
     var readingCurrent by remember(selectedId, state.runtimeToken) { mutableStateOf(false) }
     var readGeneration by remember(selectedId, state.runtimeToken) { mutableStateOf(0L) }
-    val selected = state.scripts.firstOrNull { it.id == selectedId }
-    val metadata = selected?.let { runCatching { memoryScriptMetadata(it.document) }.getOrNull() }
+    val selected = remember(state.scripts, selectedId) {
+        state.scripts.firstOrNull { it.id == selectedId }
+    }
+    val metadata = remember(selected?.document) {
+        selected?.let { runCatching { memoryScriptMetadata(it.document) }.getOrNull() }
+    }
     fun editScript(script: MemoryScriptRow) {
         val visual = actions.restoreMemoryScriptBuilder(script.document)
         if (visual != null) onBuilder(visual)
@@ -225,7 +232,17 @@ internal fun RuntimeScriptsTab(
     }
 
     if (draft != null) {
-        val parsed = remember(draft.text) { runCatching { memoryScriptMetadata(draft.text) } }
+        // Each text revision owns its result. Do not enable Save using a previous revision.
+        val byteCount = remember(draft.text) { draft.text.toByteArray(Charsets.UTF_8).size }
+        var parsed by remember(draft.text) { mutableStateOf<Result<MemoryScriptMetadata>?>(null) }
+        LaunchedEffect(draft.text) {
+            if (draft.text.isBlank() || byteCount > MemoryEngineContract.MAX_RECIPE_BYTES) return@LaunchedEffect
+            delay(100)
+            parsed = withContext(Dispatchers.Default) {
+                runCatching { memoryScriptMetadata(draft.text) }
+            }
+        }
+        val validMetadata = parsed?.getOrNull()
         BoxWithConstraints(modifier.fillMaxSize()) {
         val compactEditor = maxHeight < 280.dp
         Column(Modifier.fillMaxSize().padding(horizontal = 16.dp),
@@ -253,7 +270,7 @@ internal fun RuntimeScriptsTab(
             Row(verticalAlignment = Alignment.CenterVertically,
                 horizontalArrangement = Arrangement.spacedBy(8.dp),
                 modifier = Modifier.fillMaxWidth()) {
-                Text("${draft.text.toByteArray(Charsets.UTF_8).size}/${MemoryEngineContract.MAX_RECIPE_BYTES} B",
+                Text("$byteCount/${MemoryEngineContract.MAX_RECIPE_BYTES} B",
                     style = MaterialTheme.typography.labelSmall, modifier = Modifier.weight(1f),
                     color = MaterialTheme.colorScheme.onSurfaceVariant)
                 TextButton(enabled = !saving, onClick = {
@@ -268,23 +285,21 @@ internal fun RuntimeScriptsTab(
                     } else localError = clipboardErrorText
                 }) { Text(stringResource(R.string.memory_scripts_paste)) }
                 Button(
-                    modifier = Modifier.heightIn(min = 48.dp),
-                    enabled = !saving && draft.text.isNotBlank() &&
-                        draft.text.toByteArray(Charsets.UTF_8).size <= MemoryEngineContract.MAX_RECIPE_BYTES &&
-                        parsed.isSuccess &&
-                        (draft.replacingId == null || parsed.getOrNull()?.id == draft.replacingId),
+                    modifier = Modifier.heightIn(min = 48.dp).testTag("memory-script-save"),
+                    enabled = !saving && validMetadata != null &&
+                        (draft.replacingId == null || validMetadata.id == draft.replacingId),
                     onClick = {
                         localError = null
                         onSaveScript(draft.text, draft.replacingId) { success ->
                             if (success) {
-                                onSelectedId(parsed.getOrNull()?.id)
+                                onSelectedId(validMetadata?.id)
                                 onDraft(null)
                             } else localError = saveErrorText
                         }
                     },
                 ) { Text(stringResource(R.string.memory_scripts_save)) }
             }
-            if (draft.text.isNotBlank()) parsed.exceptionOrNull()?.message?.let {
+            if (draft.text.isNotBlank()) parsed?.exceptionOrNull()?.message?.let {
                 Text(it, color = MaterialTheme.colorScheme.error,
                     style = MaterialTheme.typography.bodySmall)
             }

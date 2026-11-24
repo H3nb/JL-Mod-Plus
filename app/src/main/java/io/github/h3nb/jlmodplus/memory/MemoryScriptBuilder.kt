@@ -3,12 +3,12 @@
  */
 package io.github.h3nb.jlmodplus.memory
 
-import androidx.compose.animation.AnimatedVisibility
 import androidx.compose.foundation.text.selection.SelectionContainer
 import androidx.compose.foundation.horizontalScroll
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.FlowRow
+import androidx.compose.foundation.layout.PaddingValues
 import androidx.compose.foundation.layout.ExperimentalLayoutApi
 import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.Spacer
@@ -20,6 +20,7 @@ import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.rememberScrollState
 import androidx.compose.foundation.lazy.LazyColumn
 import androidx.compose.foundation.lazy.items
+import androidx.compose.foundation.lazy.itemsIndexed
 import androidx.compose.foundation.selection.toggleable
 import androidx.compose.foundation.verticalScroll
 import androidx.compose.material3.Button
@@ -36,9 +37,9 @@ import androidx.compose.material3.FilledTonalButton
 import androidx.compose.material3.HorizontalDivider
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.getValue
-import androidx.compose.runtime.key
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
+import androidx.compose.runtime.saveable.rememberSaveable
 import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
@@ -193,48 +194,49 @@ internal fun MemoryScriptBuilderScreen(
                 style = MaterialTheme.typography.bodySmall,
                 modifier = Modifier.fillMaxWidth().padding(horizontal = 16.dp))
         }
-        Column(Modifier.weight(1f).verticalScroll(rememberScrollState())
-            .padding(horizontal = 16.dp, vertical = 12.dp),
-            verticalArrangement = Arrangement.spacedBy(12.dp)) {
-            Surface(
-                color = MaterialTheme.colorScheme.surfaceContainerLow,
-                shape = MaterialTheme.shapes.large,
-            ) {
-                Column(Modifier.fillMaxWidth().padding(12.dp),
-                    verticalArrangement = Arrangement.spacedBy(4.dp)) {
-                    TextField(
-                        colors = memoryEditorBuilderFieldColors(),
-                        shape = MaterialTheme.shapes.medium,
-                        value = draft.name,
-                        onValueChange = { if (it.length <= 80) onDraft(draft.copy(name = it)) },
-                        label = { Text(stringResource(R.string.memory_builder_name)) },
-                        enabled = !saving,
-                        singleLine = true, modifier = Modifier.fillMaxWidth()
-                            .testTag("memory-builder-name"),
-                    )
-                    if (!showDescription && draft.description.isBlank()) {
-                        TextButton(onClick = { showDescription = true }, enabled = !saving) {
-                            Text(stringResource(R.string.memory_builder_add_description))
-                        }
-                    }
-                    AnimatedVisibility(showDescription || draft.description.isNotBlank()) {
+        LazyColumn(
+            modifier = Modifier.weight(1f).fillMaxWidth(),
+            contentPadding = PaddingValues(horizontal = 16.dp, vertical = 12.dp),
+        ) {
+            item(key = "identity") {
+                Surface(
+                    color = MaterialTheme.colorScheme.surfaceContainerLow,
+                    shape = MaterialTheme.shapes.large,
+                    modifier = Modifier.padding(bottom = 12.dp),
+                ) {
+                    Column(Modifier.fillMaxWidth().padding(12.dp),
+                        verticalArrangement = Arrangement.spacedBy(4.dp)) {
                         TextField(
                             colors = memoryEditorBuilderFieldColors(),
                             shape = MaterialTheme.shapes.medium,
-                            value = draft.description,
-                            onValueChange = { if (it.length <= 2048) onDraft(draft.copy(description = it)) },
-                            label = { Text(stringResource(R.string.memory_scripts_description)) },
+                            value = draft.name,
+                            onValueChange = { if (it.length <= 80) onDraft(draft.copy(name = it)) },
+                            label = { Text(stringResource(R.string.memory_builder_name)) },
                             enabled = !saving,
-                            minLines = 1, maxLines = 3, modifier = Modifier.fillMaxWidth(),
+                            singleLine = true, modifier = Modifier.fillMaxWidth()
+                                .testTag("memory-builder-name"),
                         )
+                        if (!showDescription && draft.description.isBlank()) {
+                            TextButton(onClick = { showDescription = true }, enabled = !saving) {
+                                Text(stringResource(R.string.memory_builder_add_description))
+                            }
+                        }
+                        if (showDescription || draft.description.isNotBlank()) {
+                            TextField(
+                                colors = memoryEditorBuilderFieldColors(),
+                                shape = MaterialTheme.shapes.medium,
+                                value = draft.description,
+                                onValueChange = { if (it.length <= 2048) onDraft(draft.copy(description = it)) },
+                                label = { Text(stringResource(R.string.memory_scripts_description)) },
+                                enabled = !saving,
+                                minLines = 1, maxLines = 3, modifier = Modifier.fillMaxWidth(),
+                            )
+                        }
                     }
                 }
             }
-            Surface(
-                color = MaterialTheme.colorScheme.surfaceContainerLow,
-                shape = MaterialTheme.shapes.large,
-            ) {
-                Column(Modifier.fillMaxWidth()) {
+            item(key = "targets-heading") {
+                MemoryEditorDataRow(first = true, last = draft.actions.isEmpty(), selected = false) {
                     FlowRow(
                         modifier = Modifier.fillMaxWidth().padding(horizontal = 12.dp, vertical = 4.dp),
                         horizontalArrangement = Arrangement.SpaceBetween,
@@ -276,150 +278,146 @@ internal fun MemoryScriptBuilderScreen(
                             }
                         }
                     }
-                    draft.actions.forEach { item ->
-                        key(item.bookmarkId) {
-                            HorizontalDivider(
-                                modifier = Modifier.padding(horizontal = 12.dp),
-                                color = MaterialTheme.colorScheme.outlineVariant.copy(alpha = 0.55f),
+                }
+            }
+            itemsIndexed(draft.actions, key = { _, item -> "target:" + item.bookmarkId }) { index, item ->
+                MemoryEditorDataRow(first = false, last = index == draft.actions.lastIndex, selected = false) {
+                Column(Modifier.fillMaxWidth().padding(12.dp),
+                    verticalArrangement = Arrangement.spacedBy(8.dp)) {
+                    Row(verticalAlignment = Alignment.CenterVertically) {
+                        Icon(painterResource(R.drawable.ic_bookmark),
+                            contentDescription = null,
+                            tint = MaterialTheme.colorScheme.onSurfaceVariant)
+                        Spacer(Modifier.width(8.dp))
+                        Text(item.label, modifier = Modifier.weight(1f),
+                            maxLines = 2, overflow = TextOverflow.Ellipsis,
+                            style = MaterialTheme.typography.titleSmall)
+                        IconButton(enabled = !saving, onClick = {
+                            onDraft(draft.copy(actions = draft.actions.filterNot {
+                                it.bookmarkId == item.bookmarkId
+                            }))
+                        }) {
+                            Icon(painterResource(R.drawable.ic_delete),
+                                contentDescription = stringResource(R.string.memory_editor_remove),
+                                tint = MaterialTheme.colorScheme.onSurfaceVariant.copy(
+                                    alpha = if (saving) 0.38f else 1f))
+                        }
+                    }
+                    when (draft.mode) {
+                        MemoryScriptBuilderMode.FORM -> {
+                            TextField(
+                                colors = memoryEditorBuilderFieldColors(),
+                                shape = MaterialTheme.shapes.medium,
+                                value = item.label,
+                                onValueChange = { changed ->
+                                    if (changed.length <= 80) onDraft(draft.copy(
+                                        actions = draft.actions.map {
+                                            if (it.bookmarkId == item.bookmarkId)
+                                                it.copy(label = changed) else it
+                                        },
+                                    ))
+                                },
+                                label = { Text(stringResource(R.string.memory_builder_field_label)) },
+                                enabled = !saving,
+                                singleLine = true, modifier = Modifier.fillMaxWidth(),
                             )
-                            Column(Modifier.fillMaxWidth().padding(12.dp),
-                                verticalArrangement = Arrangement.spacedBy(8.dp)) {
-                                Row(verticalAlignment = Alignment.CenterVertically) {
-                                    Icon(painterResource(R.drawable.ic_bookmark),
-                                        contentDescription = null,
-                                        tint = MaterialTheme.colorScheme.onSurfaceVariant)
-                                    Spacer(Modifier.width(8.dp))
-                                    Text(item.label, modifier = Modifier.weight(1f),
-                                        maxLines = 2, overflow = TextOverflow.Ellipsis,
-                                        style = MaterialTheme.typography.titleSmall)
-                                    IconButton(enabled = !saving, onClick = {
-                                        onDraft(draft.copy(actions = draft.actions.filterNot {
-                                            it.bookmarkId == item.bookmarkId
-                                        }))
-                                    }) {
-                                        Icon(painterResource(R.drawable.ic_delete),
-                                            contentDescription = stringResource(R.string.memory_editor_remove),
-                                            tint = MaterialTheme.colorScheme.onSurfaceVariant.copy(
-                                                alpha = if (saving) 0.38f else 1f))
-                                    }
-                                }
-                                when (draft.mode) {
-                                    MemoryScriptBuilderMode.FORM -> {
-                                        TextField(
-                                            colors = memoryEditorBuilderFieldColors(),
-                                            shape = MaterialTheme.shapes.medium,
-                                            value = item.label,
-                                            onValueChange = { changed ->
-                                                if (changed.length <= 80) onDraft(draft.copy(
-                                                    actions = draft.actions.map {
-                                                        if (it.bookmarkId == item.bookmarkId)
-                                                            it.copy(label = changed) else it
-                                                    },
-                                                ))
+                            var showLimits by rememberSaveable(draft.id, item.bookmarkId) {
+                                mutableStateOf(item.min.isNotBlank() || item.max.isNotBlank())
+                            }
+                            TextButton(onClick = { showLimits = !showLimits },
+                                enabled = !saving) {
+                                Text(stringResource(R.string.memory_builder_limits))
+                                Icon(painterResource(
+                                    if (showLimits) R.drawable.ic_keyboard_arrow_up
+                                    else R.drawable.ic_keyboard_arrow_down,
+                                ), contentDescription = null)
+                            }
+                            if (showLimits) {
+                                Column(verticalArrangement = Arrangement.spacedBy(8.dp)) {
+                                TextField(
+                                    colors = memoryEditorBuilderFieldColors(),
+                                    shape = MaterialTheme.shapes.medium,
+                                    value = item.min,
+                                    onValueChange = { changed ->
+                                        if (changed.length <= 20) onDraft(draft.copy(
+                                            actions = draft.actions.map {
+                                                if (it.bookmarkId == item.bookmarkId)
+                                                    it.copy(min = changed) else it
                                             },
-                                            label = { Text(stringResource(R.string.memory_builder_field_label)) },
+                                        ))
+                                    },
+                                    label = { Text(stringResource(R.string.memory_builder_min)) },
+                                    enabled = !saving,
+                                    singleLine = true, modifier = Modifier.fillMaxWidth(),
+                                )
+                                TextField(
+                                    colors = memoryEditorBuilderFieldColors(),
+                                    shape = MaterialTheme.shapes.medium,
+                                    value = item.max,
+                                    onValueChange = { changed ->
+                                        if (changed.length <= 20) onDraft(draft.copy(
+                                            actions = draft.actions.map {
+                                                if (it.bookmarkId == item.bookmarkId)
+                                                    it.copy(max = changed) else it
+                                            },
+                                        ))
+                                    },
+                                    label = { Text(stringResource(R.string.memory_builder_max)) },
+                                    enabled = !saving,
+                                    singleLine = true, modifier = Modifier.fillMaxWidth(),
+                                )
+                            }
+                            }
+                        }
+                        MemoryScriptBuilderMode.FREEZE,
+                        MemoryScriptBuilderMode.ACTIONS -> {
+                            if (draft.mode == MemoryScriptBuilderMode.ACTIONS) {
+                                Row(Modifier.horizontalScroll(rememberScrollState()),
+                                    horizontalArrangement = Arrangement.spacedBy(8.dp)) {
+                                    for (operation in listOf("set", "add", "subtract")) {
+                                        val label = when (operation) {
+                                            "set" -> R.string.memory_builder_set
+                                            "add" -> R.string.memory_builder_add
+                                            else -> R.string.memory_builder_subtract
+                                        }
+                                        FilterChip(
+                                            selected = item.operation == operation,
                                             enabled = !saving,
-                                            singleLine = true, modifier = Modifier.fillMaxWidth(),
-                                        )
-                                        var showLimits by remember(item.bookmarkId) {
-                                            mutableStateOf(item.min.isNotBlank() || item.max.isNotBlank())
-                                        }
-                                        TextButton(onClick = { showLimits = !showLimits },
-                                            enabled = !saving) {
-                                            Text(stringResource(R.string.memory_builder_limits))
-                                            Icon(painterResource(
-                                                if (showLimits) R.drawable.ic_keyboard_arrow_up
-                                                else R.drawable.ic_keyboard_arrow_down,
-                                            ), contentDescription = null)
-                                        }
-                                        AnimatedVisibility(showLimits) {
-                                            Column(verticalArrangement = Arrangement.spacedBy(8.dp)) {
-                                            TextField(
-                                                colors = memoryEditorBuilderFieldColors(),
-                                                shape = MaterialTheme.shapes.medium,
-                                                value = item.min,
-                                                onValueChange = { changed ->
-                                                    if (changed.length <= 20) onDraft(draft.copy(
-                                                        actions = draft.actions.map {
-                                                            if (it.bookmarkId == item.bookmarkId)
-                                                                it.copy(min = changed) else it
-                                                        },
-                                                    ))
+                                            onClick = { onDraft(draft.copy(
+                                                actions = draft.actions.map {
+                                                    if (it.bookmarkId == item.bookmarkId)
+                                                        it.copy(operation = operation) else it
                                                 },
-                                                label = { Text(stringResource(R.string.memory_builder_min)) },
-                                                enabled = !saving,
-                                                singleLine = true, modifier = Modifier.fillMaxWidth(),
-                                            )
-                                            TextField(
-                                                colors = memoryEditorBuilderFieldColors(),
-                                                shape = MaterialTheme.shapes.medium,
-                                                value = item.max,
-                                                onValueChange = { changed ->
-                                                    if (changed.length <= 20) onDraft(draft.copy(
-                                                        actions = draft.actions.map {
-                                                            if (it.bookmarkId == item.bookmarkId)
-                                                                it.copy(max = changed) else it
-                                                        },
-                                                    ))
-                                                },
-                                                label = { Text(stringResource(R.string.memory_builder_max)) },
-                                                enabled = !saving,
-                                                singleLine = true, modifier = Modifier.fillMaxWidth(),
-                                            )
-                                        }
-                                        }
-                                    }
-                                    MemoryScriptBuilderMode.FREEZE,
-                                    MemoryScriptBuilderMode.ACTIONS -> {
-                                        if (draft.mode == MemoryScriptBuilderMode.ACTIONS) {
-                                            Row(Modifier.horizontalScroll(rememberScrollState()),
-                                                horizontalArrangement = Arrangement.spacedBy(8.dp)) {
-                                                for (operation in listOf("set", "add", "subtract")) {
-                                                    val label = when (operation) {
-                                                        "set" -> R.string.memory_builder_set
-                                                        "add" -> R.string.memory_builder_add
-                                                        else -> R.string.memory_builder_subtract
-                                                    }
-                                                    FilterChip(
-                                                        selected = item.operation == operation,
-                                                        enabled = !saving,
-                                                        onClick = { onDraft(draft.copy(
-                                                            actions = draft.actions.map {
-                                                                if (it.bookmarkId == item.bookmarkId)
-                                                                    it.copy(operation = operation) else it
-                                                            },
-                                                        )) },
-                                                        label = { Text(stringResource(label)) },
-                                                    )
-                                                }
-                                            }
-                                        }
-                                        TextField(
-                                            colors = memoryEditorBuilderFieldColors(),
-                                            shape = MaterialTheme.shapes.medium,
-                                            value = item.value,
-                                            onValueChange = { changed ->
-                                                if (changed.length <= 32) onDraft(draft.copy(
-                                                    actions = draft.actions.map {
-                                                        if (it.bookmarkId == item.bookmarkId)
-                                                            it.copy(value = changed) else it
-                                                    },
-                                                ))
-                                            },
-                                            label = { Text(stringResource(
-                                                if (draft.mode == MemoryScriptBuilderMode.FREEZE)
-                                                    R.string.memory_builder_keep_at
-                                                else R.string.memory_builder_amount,
                                             )) },
-                                            enabled = !saving,
-                                            singleLine = true, modifier = Modifier.fillMaxWidth()
-                                                .testTag("memory-builder-value"),
+                                            label = { Text(stringResource(label)) },
                                         )
                                     }
                                 }
                             }
+                            TextField(
+                                colors = memoryEditorBuilderFieldColors(),
+                                shape = MaterialTheme.shapes.medium,
+                                value = item.value,
+                                onValueChange = { changed ->
+                                    if (changed.length <= 32) onDraft(draft.copy(
+                                        actions = draft.actions.map {
+                                            if (it.bookmarkId == item.bookmarkId)
+                                                it.copy(value = changed) else it
+                                        },
+                                    ))
+                                },
+                                label = { Text(stringResource(
+                                    if (draft.mode == MemoryScriptBuilderMode.FREEZE)
+                                        R.string.memory_builder_keep_at
+                                    else R.string.memory_builder_amount,
+                                )) },
+                                enabled = !saving,
+                                singleLine = true, modifier = Modifier.fillMaxWidth()
+                                    .testTag("memory-builder-value"),
+                            )
                         }
                     }
+                }
                 }
             }
         }
@@ -494,12 +492,17 @@ private fun BookmarkPicker(
     var query by remember { mutableStateOf("") }
     var selected by remember { mutableStateOf(emptySet<String>()) }
     var error by remember { mutableStateOf<String?>(null) }
-    val available = state.savedVariables.filter { it.id !in used }
-    val matches = available.filter {
-        query.isBlank() || it.label.contains(query, ignoreCase = true) ||
-            it.path.contains(query, ignoreCase = true)
+    val available = remember(state.savedVariables, used) {
+        state.savedVariables.filter { it.id !in used }
     }
-    val eligibleSelection = available.filter { it.id in selected && it.hasLocator }
+    val matches = remember(available, query) {
+        if (query.isBlank()) available else available.filter {
+            it.label.contains(query, ignoreCase = true) || it.path.contains(query, ignoreCase = true)
+        }
+    }
+    val eligibleSelection = remember(available, selected) {
+        if (selected.isEmpty()) emptyList() else available.filter { it.id in selected && it.hasLocator }
+    }
     MemoryEditorDialog(
         onDismissRequest = onDismiss,
         title = { Text(stringResource(R.string.memory_builder_add_bookmarks)) },
