@@ -259,4 +259,12 @@
     <string name="memory_saved_storage_unavailable">Није могуће приступити сачуваним ставкама.</string>
     <string name="memory_bookmark_renamed">Обележивач је преименован</string>
     <string name="memory_editor_memory_unavailable">Меморија MIDlet-а није доступна.</string>
+    <string name="memory_bookmark_added">Обележивач је додат</string>
+    <string name="memory_bookmark_relinked">Обележивач је поново повезан</string>
+    <string name="memory_bookmarks_removed">Уклоњено из сачуваних ставки</string>
+    <string name="memory_freeze_enabled">Замрзавање је укључено</string>
+    <string name="memory_freeze_unavailable">Није могуће укључити замрзавање.</string>
+    <string name="memory_list_session_only_failed">Није могуће задржати ову ставку само за тренутну сесију.</string>
+    <string name="memory_list_kept_unlinked">Сачувано за следеће покретање, али није могуће повезати са тренутном сесијом.</string>
+    <string name="memory_list_removal_unavailable">Није могуће уклонити ставке док је веза прекинута. Покушајте поново.</string>
 </resources>

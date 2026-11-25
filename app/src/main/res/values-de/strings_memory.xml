@@ -253,4 +253,12 @@
     <string name="memory_saved_storage_unavailable">Auf gespeicherte Elemente kann nicht zugegriffen werden.</string>
     <string name="memory_bookmark_renamed">Lesezeichen umbenannt</string>
     <string name="memory_editor_memory_unavailable">Der MIDlet-Speicher ist nicht verfügbar.</string>
+    <string name="memory_bookmark_added">Lesezeichen hinzugefügt</string>
+    <string name="memory_bookmark_relinked">Lesezeichen neu verknüpft</string>
+    <string name="memory_bookmarks_removed">Aus gespeicherten Elementen entfernt</string>
+    <string name="memory_freeze_enabled">Fixierung aktiviert</string>
+    <string name="memory_freeze_unavailable">Fixierung konnte nicht aktiviert werden.</string>
+    <string name="memory_list_session_only_failed">Das Element konnte nicht nur für die aktuelle Sitzung beibehalten werden.</string>
+    <string name="memory_list_kept_unlinked">Für den nächsten Start gespeichert, aber nicht mit der aktuellen Sitzung verknüpft.</string>
+    <string name="memory_list_removal_unavailable">Ohne Verbindung können keine Elemente entfernt werden. Versuche es erneut.</string>
 </resources>

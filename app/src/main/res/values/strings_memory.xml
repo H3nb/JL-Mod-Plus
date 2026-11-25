@@ -253,4 +253,12 @@
     <string name="memory_saved_storage_unavailable">Can’t access saved items.</string>
     <string name="memory_bookmark_renamed">Bookmark renamed</string>
     <string name="memory_editor_memory_unavailable">MIDlet memory is unavailable.</string>
+    <string name="memory_bookmark_added">Bookmark added</string>
+    <string name="memory_bookmark_relinked">Bookmark relinked</string>
+    <string name="memory_bookmarks_removed">Removed from Saved</string>
+    <string name="memory_freeze_enabled">Freeze enabled</string>
+    <string name="memory_freeze_unavailable">Couldn’t enable freeze.</string>
+    <string name="memory_list_session_only_failed">Couldn’t keep this item for the current session only.</string>
+    <string name="memory_list_kept_unlinked">Saved for the next launch, but couldn’t link it to the current session.</string>
+    <string name="memory_list_removal_unavailable">Can’t remove items while disconnected. Try again.</string>
 </resources>

@@ -253,4 +253,12 @@
     <string name="memory_saved_storage_unavailable">Kan nie toegang tot gestoorde items kry nie.</string>
     <string name="memory_bookmark_renamed">Boekmerk hernoem</string>
     <string name="memory_editor_memory_unavailable">MIDlet-geheue is nie beskikbaar nie.</string>
+    <string name="memory_bookmark_added">Boekmerk bygevoeg</string>
+    <string name="memory_bookmark_relinked">Boekmerk herskakel</string>
+    <string name="memory_bookmarks_removed">Uit Gestoord verwyder</string>
+    <string name="memory_freeze_enabled">Bevriesing geaktiveer</string>
+    <string name="memory_freeze_unavailable">Kon nie bevriesing aktiveer nie.</string>
+    <string name="memory_list_session_only_failed">Kon nie dié item net vir die huidige sessie behou nie.</string>
+    <string name="memory_list_kept_unlinked">Vir die volgende bekendstelling gestoor, maar kon nie aan die huidige sessie gekoppel word nie.</string>
+    <string name="memory_list_removal_unavailable">Kan nie items verwyder terwyl die verbinding verbreek is nie. Probeer weer.</string>
 </resources>

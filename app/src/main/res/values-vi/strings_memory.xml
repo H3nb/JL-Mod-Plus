@@ -247,4 +247,12 @@
     <string name="memory_saved_storage_unavailable">Không thể truy cập các mục đã lưu.</string>
     <string name="memory_bookmark_renamed">Đã đổi tên dấu trang</string>
     <string name="memory_editor_memory_unavailable">Không thể truy cập bộ nhớ MIDlet.</string>
+    <string name="memory_bookmark_added">Đã thêm dấu trang</string>
+    <string name="memory_bookmark_relinked">Đã liên kết lại dấu trang</string>
+    <string name="memory_bookmarks_removed">Đã xóa khỏi mục đã lưu</string>
+    <string name="memory_freeze_enabled">Đã bật đóng băng giá trị</string>
+    <string name="memory_freeze_unavailable">Không thể bật đóng băng giá trị.</string>
+    <string name="memory_list_session_only_failed">Không thể giữ mục này chỉ trong phiên hiện tại.</string>
+    <string name="memory_list_kept_unlinked">Đã lưu cho lần khởi chạy tiếp theo nhưng không thể liên kết với phiên hiện tại.</string>
+    <string name="memory_list_removal_unavailable">Không thể xóa mục khi mất kết nối. Hãy thử lại.</string>
 </resources>

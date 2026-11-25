@@ -259,4 +259,12 @@
     <string name="memory_saved_storage_unavailable">לא ניתן לגשת לפריטים השמורים.</string>
     <string name="memory_bookmark_renamed">שם הסימנייה שונה</string>
     <string name="memory_editor_memory_unavailable">הזיכרון של ה-MIDlet אינו זמין.</string>
+    <string name="memory_bookmark_added">הסימנייה נוספה</string>
+    <string name="memory_bookmark_relinked">הסימנייה קושרה מחדש</string>
+    <string name="memory_bookmarks_removed">הוסר מהפריטים השמורים</string>
+    <string name="memory_freeze_enabled">ההקפאה הופעלה</string>
+    <string name="memory_freeze_unavailable">לא ניתן להפעיל את ההקפאה.</string>
+    <string name="memory_list_session_only_failed">לא ניתן לשמור את הפריט להפעלה הנוכחית בלבד.</string>
+    <string name="memory_list_kept_unlinked">נשמר להפעלה הבאה, אך לא ניתן היה לקשר אותו להפעלה הנוכחית.</string>
+    <string name="memory_list_removal_unavailable">לא ניתן להסיר פריטים כשהחיבור מנותק. נסו שוב.</string>
 </resources>

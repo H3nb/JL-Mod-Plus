@@ -253,4 +253,12 @@
     <string name="memory_saved_storage_unavailable">Der er ikke adgang til gemte elementer.</string>
     <string name="memory_bookmark_renamed">Bogmærket er omdøbt</string>
     <string name="memory_editor_memory_unavailable">MIDlet-hukommelsen er ikke tilgængelig.</string>
+    <string name="memory_bookmark_added">Bogmærke tilføjet</string>
+    <string name="memory_bookmark_relinked">Bogmærke tilknyttet igen</string>
+    <string name="memory_bookmarks_removed">Fjernet fra gemte</string>
+    <string name="memory_freeze_enabled">Fastfrysning aktiveret</string>
+    <string name="memory_freeze_unavailable">Kunne ikke aktivere fastfrysning.</string>
+    <string name="memory_list_session_only_failed">Kunne ikke beholde elementet kun for den aktuelle session.</string>
+    <string name="memory_list_kept_unlinked">Gemt til næste start, men kunne ikke knyttes til den aktuelle session.</string>
+    <string name="memory_list_removal_unavailable">Kan ikke fjerne elementer, når forbindelsen er afbrudt. Prøv igen.</string>
 </resources>

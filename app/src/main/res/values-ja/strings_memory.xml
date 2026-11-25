@@ -247,4 +247,12 @@
     <string name="memory_saved_storage_unavailable">保存済みの項目にアクセスできません。</string>
     <string name="memory_bookmark_renamed">ブックマーク名を変更しました</string>
     <string name="memory_editor_memory_unavailable">MIDletのメモリを利用できません。</string>
+    <string name="memory_bookmark_added">ブックマークを追加しました</string>
+    <string name="memory_bookmark_relinked">ブックマークを再リンクしました</string>
+    <string name="memory_bookmarks_removed">保存済みから削除しました</string>
+    <string name="memory_freeze_enabled">固定を有効にしました</string>
+    <string name="memory_freeze_unavailable">固定を有効にできませんでした。</string>
+    <string name="memory_list_session_only_failed">この項目を現在のセッションのみに保持できませんでした。</string>
+    <string name="memory_list_kept_unlinked">次回起動用に保存しましたが、現在のセッションにリンクできませんでした。</string>
+    <string name="memory_list_removal_unavailable">接続が切断されているため項目を削除できません。もう一度お試しください。</string>
 </resources>

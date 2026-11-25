@@ -265,4 +265,12 @@
     <string name="memory_saved_storage_unavailable">Не вдалося отримати доступ до збережених елементів.</string>
     <string name="memory_bookmark_renamed">Закладку перейменовано</string>
     <string name="memory_editor_memory_unavailable">Пам’ять MIDlet недоступна.</string>
+    <string name="memory_bookmark_added">Закладку додано</string>
+    <string name="memory_bookmark_relinked">Закладку прив’язано повторно</string>
+    <string name="memory_bookmarks_removed">Вилучено зі збережених</string>
+    <string name="memory_freeze_enabled">Замороження ввімкнено</string>
+    <string name="memory_freeze_unavailable">Не вдалося ввімкнути замороження.</string>
+    <string name="memory_list_session_only_failed">Не вдалося залишити цей елемент лише на поточний сеанс.</string>
+    <string name="memory_list_kept_unlinked">Збережено для наступного запуску, але не вдалося прив’язати до поточного сеансу.</string>
+    <string name="memory_list_removal_unavailable">Неможливо вилучити елементи, коли з’єднання розірвано. Спробуйте ще раз.</string>
 </resources>

@@ -253,4 +253,12 @@
     <string name="memory_saved_storage_unavailable">Det går inte att komma åt sparade objekt.</string>
     <string name="memory_bookmark_renamed">Bokmärket har bytt namn</string>
     <string name="memory_editor_memory_unavailable">MIDlet-minnet är inte tillgängligt.</string>
+    <string name="memory_bookmark_added">Bokmärke tillagt</string>
+    <string name="memory_bookmark_relinked">Bokmärket har länkats om</string>
+    <string name="memory_bookmarks_removed">Borttaget från sparade objekt</string>
+    <string name="memory_freeze_enabled">Frysning aktiverad</string>
+    <string name="memory_freeze_unavailable">Det gick inte att aktivera frysning.</string>
+    <string name="memory_list_session_only_failed">Det gick inte att behålla objektet enbart för den aktuella sessionen.</string>
+    <string name="memory_list_kept_unlinked">Sparat till nästa start, men det gick inte att länka till den aktuella sessionen.</string>
+    <string name="memory_list_removal_unavailable">Det går inte att ta bort objekt när anslutningen är bruten. Försök igen.</string>
 </resources>

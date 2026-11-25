@@ -253,4 +253,12 @@
     <string name="memory_saved_storage_unavailable">Får ikke tilgang til lagrede elementer.</string>
     <string name="memory_bookmark_renamed">Bokmerket har fått nytt navn</string>
     <string name="memory_editor_memory_unavailable">MIDlet-minnet er ikke tilgjengelig.</string>
+    <string name="memory_bookmark_added">Bokmerke lagt til</string>
+    <string name="memory_bookmark_relinked">Bokmerke koblet til på nytt</string>
+    <string name="memory_bookmarks_removed">Fjernet fra lagrede elementer</string>
+    <string name="memory_freeze_enabled">Frysing aktivert</string>
+    <string name="memory_freeze_unavailable">Kunne ikke aktivere frysing.</string>
+    <string name="memory_list_session_only_failed">Kunne ikke beholde elementet bare for gjeldende økt.</string>
+    <string name="memory_list_kept_unlinked">Lagret for neste oppstart, men kunne ikke kobles til gjeldende økt.</string>
+    <string name="memory_list_removal_unavailable">Kan ikke fjerne elementer når forbindelsen er brutt. Prøv igjen.</string>
 </resources>

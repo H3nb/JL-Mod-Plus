@@ -259,4 +259,12 @@
     <string name="memory_saved_storage_unavailable">Não foi possível aceder aos itens guardados.</string>
     <string name="memory_bookmark_renamed">Marcador renomeado</string>
     <string name="memory_editor_memory_unavailable">A memória do MIDlet está indisponível.</string>
+    <string name="memory_bookmark_added">Marcador adicionado</string>
+    <string name="memory_bookmark_relinked">Marcador associado novamente</string>
+    <string name="memory_bookmarks_removed">Removido dos itens guardados</string>
+    <string name="memory_freeze_enabled">Congelamento ativado</string>
+    <string name="memory_freeze_unavailable">Não foi possível ativar o congelamento.</string>
+    <string name="memory_list_session_only_failed">Não foi possível manter este item apenas na sessão atual.</string>
+    <string name="memory_list_kept_unlinked">Guardado para a próxima execução, mas não foi possível associá-lo à sessão atual.</string>
+    <string name="memory_list_removal_unavailable">Não é possível remover itens sem ligação. Tente novamente.</string>
 </resources>

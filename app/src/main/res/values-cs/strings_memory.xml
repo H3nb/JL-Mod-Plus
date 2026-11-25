@@ -265,4 +265,12 @@
     <string name="memory_saved_storage_unavailable">K uloženým položkám nelze získat přístup.</string>
     <string name="memory_bookmark_renamed">Záložka přejmenována</string>
     <string name="memory_editor_memory_unavailable">Paměť MIDletu není dostupná.</string>
+    <string name="memory_bookmark_added">Záložka přidána</string>
+    <string name="memory_bookmark_relinked">Záložka znovu propojena</string>
+    <string name="memory_bookmarks_removed">Odebráno z uložených</string>
+    <string name="memory_freeze_enabled">Zmrazení zapnuto</string>
+    <string name="memory_freeze_unavailable">Zmrazení se nepodařilo zapnout.</string>
+    <string name="memory_list_session_only_failed">Položku se nepodařilo ponechat jen pro aktuální relaci.</string>
+    <string name="memory_list_kept_unlinked">Uloženo pro příští spuštění, ale nepodařilo se propojit s aktuální relací.</string>
+    <string name="memory_list_removal_unavailable">Bez připojení nelze položky odebrat. Zkuste to znovu.</string>
 </resources>

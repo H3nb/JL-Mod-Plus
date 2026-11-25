@@ -253,4 +253,12 @@
     <string name="memory_saved_storage_unavailable">සුරැකි අයිතම වෙත ප්‍රවේශ විය නොහැක.</string>
     <string name="memory_bookmark_renamed">පිටු සලකුණේ නම වෙනස් කරන ලදී</string>
     <string name="memory_editor_memory_unavailable">MIDlet මතකය ලබා ගත නොහැක.</string>
+    <string name="memory_bookmark_added">පිටු සලකුණ එක් කරන ලදී</string>
+    <string name="memory_bookmark_relinked">පිටු සලකුණ නැවත සම්බන්ධ කරන ලදී</string>
+    <string name="memory_bookmarks_removed">සුරැකි අයිතමවලින් ඉවත් කරන ලදී</string>
+    <string name="memory_freeze_enabled">අගය ස්ථිර කිරීම සක්‍රියයි</string>
+    <string name="memory_freeze_unavailable">අගය ස්ථිර කිරීම සක්‍රිය කළ නොහැකි විය.</string>
+    <string name="memory_list_session_only_failed">මෙම අයිතමය වත්මන් සැසිය සඳහා පමණක් තබාගත නොහැකි විය.</string>
+    <string name="memory_list_kept_unlinked">ඊළඟ ආරම්භය සඳහා සුරකින ලදී, නමුත් වත්මන් සැසියට සම්බන්ධ කළ නොහැකි විය.</string>
+    <string name="memory_list_removal_unavailable">සම්බන්ධතාව විසන්ධි වී ඇති විට අයිතම ඉවත් කළ නොහැක. නැවත උත්සාහ කරන්න.</string>
 </resources>

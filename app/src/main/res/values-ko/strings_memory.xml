@@ -247,4 +247,12 @@
     <string name="memory_saved_storage_unavailable">저장된 항목에 액세스할 수 없습니다.</string>
     <string name="memory_bookmark_renamed">북마크 이름을 변경했습니다</string>
     <string name="memory_editor_memory_unavailable">MIDlet 메모리를 사용할 수 없습니다.</string>
+    <string name="memory_bookmark_added">북마크를 추가했습니다</string>
+    <string name="memory_bookmark_relinked">북마크를 다시 연결했습니다</string>
+    <string name="memory_bookmarks_removed">저장 목록에서 삭제했습니다</string>
+    <string name="memory_freeze_enabled">값 고정을 활성화했습니다</string>
+    <string name="memory_freeze_unavailable">값을 고정할 수 없습니다.</string>
+    <string name="memory_list_session_only_failed">이 항목을 현재 세션에만 유지할 수 없습니다.</string>
+    <string name="memory_list_kept_unlinked">다음 실행을 위해 저장했지만 현재 세션에 연결하지 못했습니다.</string>
+    <string name="memory_list_removal_unavailable">연결이 끊긴 상태에서는 항목을 삭제할 수 없습니다. 다시 시도하세요.</string>
 </resources>

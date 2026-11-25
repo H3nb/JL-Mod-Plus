@@ -253,4 +253,12 @@
     <string name="memory_saved_storage_unavailable">Tallennettuja kohteita ei voi käyttää.</string>
     <string name="memory_bookmark_renamed">Kirjanmerkin nimi vaihdettu</string>
     <string name="memory_editor_memory_unavailable">MIDletin muisti ei ole käytettävissä.</string>
+    <string name="memory_bookmark_added">Kirjanmerkki lisätty</string>
+    <string name="memory_bookmark_relinked">Kirjanmerkki linkitetty uudelleen</string>
+    <string name="memory_bookmarks_removed">Poistettu tallennetuista</string>
+    <string name="memory_freeze_enabled">Jäädytys käytössä</string>
+    <string name="memory_freeze_unavailable">Jäädytystä ei voitu ottaa käyttöön.</string>
+    <string name="memory_list_session_only_failed">Kohdetta ei voitu säilyttää vain nykyisen istunnon ajan.</string>
+    <string name="memory_list_kept_unlinked">Tallennettu seuraavaa käynnistystä varten, mutta linkitys nykyiseen istuntoon epäonnistui.</string>
+    <string name="memory_list_removal_unavailable">Kohteita ei voi poistaa yhteyden ollessa katkennut. Yritä uudelleen.</string>
 </resources>

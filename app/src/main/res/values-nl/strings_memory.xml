@@ -253,4 +253,12 @@
     <string name="memory_saved_storage_unavailable">Geen toegang tot opgeslagen items.</string>
     <string name="memory_bookmark_renamed">Bladwijzer hernoemd</string>
     <string name="memory_editor_memory_unavailable">Het MIDlet-geheugen is niet beschikbaar.</string>
+    <string name="memory_bookmark_added">Bladwijzer toegevoegd</string>
+    <string name="memory_bookmark_relinked">Bladwijzer opnieuw gekoppeld</string>
+    <string name="memory_bookmarks_removed">Verwijderd uit Opgeslagen</string>
+    <string name="memory_freeze_enabled">Bevriezing ingeschakeld</string>
+    <string name="memory_freeze_unavailable">Bevriezing kon niet worden ingeschakeld.</string>
+    <string name="memory_list_session_only_failed">Dit item kon niet alleen voor de huidige sessie worden behouden.</string>
+    <string name="memory_list_kept_unlinked">Opgeslagen voor de volgende start, maar koppelen aan de huidige sessie is niet gelukt.</string>
+    <string name="memory_list_removal_unavailable">Items kunnen niet worden verwijderd als de verbinding is verbroken. Probeer het opnieuw.</string>
 </resources>

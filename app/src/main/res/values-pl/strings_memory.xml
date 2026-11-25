@@ -265,4 +265,12 @@
     <string name="memory_saved_storage_unavailable">Nie można uzyskać dostępu do zapisanych elementów.</string>
     <string name="memory_bookmark_renamed">Zmieniono nazwę zakładki</string>
     <string name="memory_editor_memory_unavailable">Pamięć MIDletu jest niedostępna.</string>
+    <string name="memory_bookmark_added">Dodano zakładkę</string>
+    <string name="memory_bookmark_relinked">Ponownie powiązano zakładkę</string>
+    <string name="memory_bookmarks_removed">Usunięto z zapisanych</string>
+    <string name="memory_freeze_enabled">Włączono zamrożenie</string>
+    <string name="memory_freeze_unavailable">Nie udało się włączyć zamrożenia.</string>
+    <string name="memory_list_session_only_failed">Nie udało się zachować tego elementu tylko na bieżącą sesję.</string>
+    <string name="memory_list_kept_unlinked">Zapisano na następne uruchomienie, ale nie udało się powiązać z bieżącą sesją.</string>
+    <string name="memory_list_removal_unavailable">Nie można usuwać elementów po utracie połączenia. Spróbuj ponownie.</string>
 </resources>

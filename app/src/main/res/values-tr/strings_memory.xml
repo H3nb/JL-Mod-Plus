@@ -253,4 +253,12 @@
     <string name="memory_saved_storage_unavailable">Kaydedilen öğelere erişilemiyor.</string>
     <string name="memory_bookmark_renamed">Yer işareti yeniden adlandırıldı</string>
     <string name="memory_editor_memory_unavailable">MIDlet belleği kullanılamıyor.</string>
+    <string name="memory_bookmark_added">Yer işareti eklendi</string>
+    <string name="memory_bookmark_relinked">Yer işareti yeniden bağlandı</string>
+    <string name="memory_bookmarks_removed">Kaydedilenlerden kaldırıldı</string>
+    <string name="memory_freeze_enabled">Dondurma etkinleştirildi</string>
+    <string name="memory_freeze_unavailable">Dondurma etkinleştirilemedi.</string>
+    <string name="memory_list_session_only_failed">Bu öğe yalnızca mevcut oturum için tutulamadı.</string>
+    <string name="memory_list_kept_unlinked">Sonraki başlatma için kaydedildi ancak mevcut oturumla ilişkilendirilemedi.</string>
+    <string name="memory_list_removal_unavailable">Bağlantı kesikken öğeler kaldırılamaz. Tekrar deneyin.</string>
 </resources>

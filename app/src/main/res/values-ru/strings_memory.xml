@@ -265,4 +265,12 @@
     <string name="memory_saved_storage_unavailable">Не удалось получить доступ к сохранённым элементам.</string>
     <string name="memory_bookmark_renamed">Закладка переименована</string>
     <string name="memory_editor_memory_unavailable">Память MIDlet недоступна.</string>
+    <string name="memory_bookmark_added">Закладка добавлена</string>
+    <string name="memory_bookmark_relinked">Закладка привязана заново</string>
+    <string name="memory_bookmarks_removed">Удалено из сохранённых</string>
+    <string name="memory_freeze_enabled">Заморозка включена</string>
+    <string name="memory_freeze_unavailable">Не удалось включить заморозку.</string>
+    <string name="memory_list_session_only_failed">Не удалось сохранить элемент только для текущего сеанса.</string>
+    <string name="memory_list_kept_unlinked">Сохранено для следующего запуска, но не удалось привязать к текущему сеансу.</string>
+    <string name="memory_list_removal_unavailable">Невозможно удалить элементы при разрыве соединения. Повторите попытку.</string>
 </resources>

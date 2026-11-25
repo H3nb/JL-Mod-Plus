@@ -253,4 +253,12 @@
     <string name="memory_saved_storage_unavailable">Сақталған элементтерге қол жеткізу мүмкін емес.</string>
     <string name="memory_bookmark_renamed">Бетбелгі атауы өзгертілді</string>
     <string name="memory_editor_memory_unavailable">MIDlet жады қолжетімсіз.</string>
+    <string name="memory_bookmark_added">Бетбелгі қосылды</string>
+    <string name="memory_bookmark_relinked">Бетбелгі қайта байланыстырылды</string>
+    <string name="memory_bookmarks_removed">Сақталғандардан жойылды</string>
+    <string name="memory_freeze_enabled">Мәнді бекіту қосылды</string>
+    <string name="memory_freeze_unavailable">Мәнді бекіту мүмкін болмады.</string>
+    <string name="memory_list_session_only_failed">Элементті тек ағымдағы сеанс үшін сақтау мүмкін болмады.</string>
+    <string name="memory_list_kept_unlinked">Келесі іске қосуға сақталды, бірақ ағымдағы сеанспен байланыстыру мүмкін болмады.</string>
+    <string name="memory_list_removal_unavailable">Байланыс үзілгенде элементтерді жою мүмкін емес. Қайталап көріңіз.</string>
 </resources>

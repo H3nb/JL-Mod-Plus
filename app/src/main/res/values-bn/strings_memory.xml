@@ -253,4 +253,12 @@
     <string name="memory_saved_storage_unavailable">সংরক্ষিত আইটেম অ্যাক্সেস করা যাচ্ছে না।</string>
     <string name="memory_bookmark_renamed">বুকমার্কের নাম পরিবর্তন করা হয়েছে</string>
     <string name="memory_editor_memory_unavailable">MIDlet মেমোরি উপলভ্য নয়।</string>
+    <string name="memory_bookmark_added">বুকমার্ক যোগ করা হয়েছে</string>
+    <string name="memory_bookmark_relinked">বুকমার্ক আবার লিঙ্ক করা হয়েছে</string>
+    <string name="memory_bookmarks_removed">সংরক্ষিত তালিকা থেকে সরানো হয়েছে</string>
+    <string name="memory_freeze_enabled">ফ্রিজ চালু হয়েছে</string>
+    <string name="memory_freeze_unavailable">ফ্রিজ চালু করা যায়নি।</string>
+    <string name="memory_list_session_only_failed">আইটেমটি শুধু বর্তমান সেশনের জন্য রাখা যায়নি।</string>
+    <string name="memory_list_kept_unlinked">পরেরবার চালুর জন্য সংরক্ষণ করা হয়েছে, তবে বর্তমান সেশনের সঙ্গে লিঙ্ক করা যায়নি।</string>
+    <string name="memory_list_removal_unavailable">সংযোগ বিচ্ছিন্ন থাকলে আইটেম সরানো যায় না। আবার চেষ্টা করুন।</string>
 </resources>

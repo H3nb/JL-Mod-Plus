@@ -253,4 +253,12 @@
     <string name="memory_saved_storage_unavailable">A mentett elemek nem érhetők el.</string>
     <string name="memory_bookmark_renamed">Könyvjelző átnevezve</string>
     <string name="memory_editor_memory_unavailable">A MIDlet memóriája nem érhető el.</string>
+    <string name="memory_bookmark_added">Könyvjelző hozzáadva</string>
+    <string name="memory_bookmark_relinked">Könyvjelző újracsatolva</string>
+    <string name="memory_bookmarks_removed">Eltávolítva a mentett elemek közül</string>
+    <string name="memory_freeze_enabled">Befagyasztás bekapcsolva</string>
+    <string name="memory_freeze_unavailable">Nem sikerült bekapcsolni a befagyasztást.</string>
+    <string name="memory_list_session_only_failed">Az elemet nem sikerült csak a jelenlegi munkamenetre megtartani.</string>
+    <string name="memory_list_kept_unlinked">Mentve a következő indításhoz, de nem sikerült csatolni a jelenlegi munkamenethez.</string>
+    <string name="memory_list_removal_unavailable">Kapcsolat nélkül nem távolíthatók el az elemek. Próbáld újra.</string>
 </resources>

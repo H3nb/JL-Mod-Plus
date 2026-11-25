@@ -243,4 +243,12 @@
     <string name="memory_saved_storage_unavailable">无法访问已保存的项目。</string>
     <string name="memory_bookmark_renamed">书签已重命名</string>
     <string name="memory_editor_memory_unavailable">MIDlet 内存不可用。</string>
+    <string name="memory_bookmark_added">书签已添加</string>
+    <string name="memory_bookmark_relinked">书签已重新关联</string>
+    <string name="memory_bookmarks_removed">已从保存列表移除</string>
+    <string name="memory_freeze_enabled">已启用数值锁定</string>
+    <string name="memory_freeze_unavailable">无法启用数值锁定。</string>
+    <string name="memory_list_session_only_failed">无法仅在当前会话中保留此项目。</string>
+    <string name="memory_list_kept_unlinked">已保存供下次启动使用，但无法关联到当前会话。</string>
+    <string name="memory_list_removal_unavailable">连接断开时无法移除项目。请重试。</string>
 </resources>

@@ -247,4 +247,12 @@
     <string name="memory_saved_storage_unavailable">無法存取已儲存的項目。</string>
     <string name="memory_bookmark_renamed">書籤已重新命名</string>
     <string name="memory_editor_memory_unavailable">MIDlet 記憶體無法使用。</string>
+    <string name="memory_bookmark_added">書籤已新增</string>
+    <string name="memory_bookmark_relinked">書籤已重新連結</string>
+    <string name="memory_bookmarks_removed">已從已儲存清單移除</string>
+    <string name="memory_freeze_enabled">已啟用數值鎖定</string>
+    <string name="memory_freeze_unavailable">無法啟用數值鎖定。</string>
+    <string name="memory_list_session_only_failed">無法僅在目前工作階段保留此項目。</string>
+    <string name="memory_list_kept_unlinked">已儲存供下次啟動使用，但無法連結至目前工作階段。</string>
+    <string name="memory_list_removal_unavailable">連線中斷時無法移除項目。請再試一次。</string>
 </resources>

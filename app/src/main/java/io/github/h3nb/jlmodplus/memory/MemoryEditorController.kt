@@ -913,10 +913,11 @@ internal class MemoryEditorComposeController(
                     )
                     refreshSavedLive()
                 } else {
+                    android.util.Log.w("MemoryEditor", "Could not load saved definitions", records.exceptionOrNull())
                     state = state.copy(
                         savedVariables = emptyList(),
                         savedValues = emptyMap(),
-                        savedError = records.exceptionOrNull()?.message ?: "Unable to load Saved definitions",
+                        savedError = context.getString(R.string.memory_saved_storage_unavailable),
                     )
                 }
             }
@@ -1093,7 +1094,7 @@ internal class MemoryEditorComposeController(
                 if (destroyed || state.runtimeToken != token || service !== engine) return@post
                 state = state.copy(
                     busy = false,
-                    message = if (outcome.isSuccess) "Bookmarked"
+                    message = if (outcome.isSuccess) context.getString(R.string.memory_bookmark_added)
                         else outcome.exceptionOrNull()?.message,
                     messageIsError = outcome.isFailure,
                 )
@@ -1247,7 +1248,7 @@ internal class MemoryEditorComposeController(
             post {
                 if (destroyed || state.runtimeToken != token || service !== engine) return@post
                 state = state.copy(busy = false,
-                    message = if (outcome.isSuccess) "Bookmark relinked"
+                    message = if (outcome.isSuccess) context.getString(R.string.memory_bookmark_relinked)
                         else outcome.exceptionOrNull()?.message,
                     messageIsError = outcome.isFailure)
                 if (state.variablesTab) refreshSavedVariables()
@@ -1313,8 +1314,7 @@ internal class MemoryEditorComposeController(
                             state = state.copy(
                                 savedVariables = rows.map { it.first },
                                 savedValues = state.savedValues.filterKeys { it in retained },
-                                message = if (unique.size == 1) "Bookmark removed"
-                                    else "Bookmarks removed",
+                                message = context.getString(R.string.memory_bookmarks_removed),
                                 messageIsError = false,
                             )
                         } else {
@@ -1644,9 +1644,9 @@ internal class MemoryEditorComposeController(
                 val success = response?.getInt(MemoryEngineContract.KEY_MANAGED_OPERATION_RESULT) ==
                     MemoryEngineContract.RESULT_OK
                 state = state.copy(
-                    message = if (success) "Freeze enabled"
+                    message = if (success) context.getString(R.string.memory_freeze_enabled)
                         else response?.getString(MemoryEngineContract.KEY_DIAGNOSTIC_DETAIL)
-                            ?: result.exceptionOrNull()?.message ?: "Freeze unavailable",
+                            ?: result.exceptionOrNull()?.message ?: context.getString(R.string.memory_freeze_unavailable),
                     messageIsError = !success,
                 )
                 if (success) reloadState()
@@ -1700,8 +1700,8 @@ internal class MemoryEditorComposeController(
                 state = state.copy(
                     message = when {
                         outcome.isFailure -> outcome.exceptionOrNull()?.message
-                        outcome.getOrNull() == true -> "Kept for next launch"
-                        else -> "Kept, but its current Watch could not be linked"
+                        outcome.getOrNull() == true -> context.getString(R.string.memory_list_kept)
+                        else -> context.getString(R.string.memory_list_kept_unlinked)
                     },
                     messageIsError = outcome.isFailure || outcome.getOrNull() != true,
                 )
@@ -1738,7 +1738,7 @@ internal class MemoryEditorComposeController(
                     MemoryEngineContract.RESULT_OK
                 if (success) deleteSavedVariable(id)
                 else state = state.copy(
-                    message = "Cannot make a session-only entry from this target",
+                    message = context.getString(R.string.memory_list_session_only_failed),
                     messageIsError = true,
                 )
             }
@@ -1758,7 +1758,7 @@ internal class MemoryEditorComposeController(
             (saved.isEmpty() && watches.isEmpty())) return
         if (saved.isNotEmpty() && savedAuthority == null ||
             watches.isNotEmpty() && (service == null || state.runtimeToken == 0L)) {
-            state = state.copy(message = "Removal unavailable: backend disconnected", messageIsError = true)
+            state = state.copy(message = context.getString(R.string.memory_list_removal_unavailable), messageIsError = true)
             return
         }
 
@@ -1818,10 +1818,14 @@ internal class MemoryEditorComposeController(
             post {
                 if (destroyed || token != ownedRuntimeToken ||
                     generation != scriptsGeneration) return@post
+                if (result.isFailure) {
+                    android.util.Log.w("MemoryEditor", "Could not load scripts", result.exceptionOrNull())
+                }
                 state = state.copy(
                     scripts = result.getOrNull() ?: state.scripts,
                     scriptsLoaded = result.isSuccess || state.scriptsLoaded,
-                    scriptsError = result.exceptionOrNull()?.message,
+                    scriptsError = if (result.isFailure)
+                        context.getString(R.string.memory_saved_storage_unavailable) else null,
                 )
             }
         }
@@ -2377,7 +2381,7 @@ internal class MemoryEditorComposeController(
             post {
                 if (destroyed || state.runtimeToken != token || service !== engine) return@post
                 state = state.copy(busy = false,
-                    message = if (result.isSuccess) "Bookmarked"
+                    message = if (result.isSuccess) context.getString(R.string.memory_bookmark_added)
                         else result.exceptionOrNull()?.message,
                     messageIsError = result.isFailure)
                 if (state.variablesTab) refreshSavedVariables()

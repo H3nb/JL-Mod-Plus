@@ -253,4 +253,12 @@
     <string name="memory_saved_storage_unavailable">دسترسی به موارد ذخیره‌شده ممکن نیست.</string>
     <string name="memory_bookmark_renamed">نام نشانک تغییر کرد</string>
     <string name="memory_editor_memory_unavailable">حافظه MIDlet در دسترس نیست.</string>
+    <string name="memory_bookmark_added">نشانک اضافه شد</string>
+    <string name="memory_bookmark_relinked">نشانک دوباره پیوند داده شد</string>
+    <string name="memory_bookmarks_removed">از موارد ذخیره‌شده حذف شد</string>
+    <string name="memory_freeze_enabled">ثابت‌سازی فعال شد</string>
+    <string name="memory_freeze_unavailable">فعال‌سازی ثابت‌سازی ممکن نبود.</string>
+    <string name="memory_list_session_only_failed">نگه‌داشتن این مورد فقط برای نشست فعلی ممکن نبود.</string>
+    <string name="memory_list_kept_unlinked">برای اجرای بعدی ذخیره شد، اما به نشست فعلی پیوند داده نشد.</string>
+    <string name="memory_list_removal_unavailable">هنگام قطع اتصال نمی‌توان موارد را حذف کرد. دوباره تلاش کنید.</string>
 </resources>

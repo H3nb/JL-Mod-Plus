@@ -259,4 +259,12 @@
     <string name="memory_saved_storage_unavailable">Elementele salvate nu pot fi accesate.</string>
     <string name="memory_bookmark_renamed">Marcaj redenumit</string>
     <string name="memory_editor_memory_unavailable">Memoria MIDletului nu este disponibilă.</string>
+    <string name="memory_bookmark_added">Marcaj adăugat</string>
+    <string name="memory_bookmark_relinked">Marcaj reconectat</string>
+    <string name="memory_bookmarks_removed">Eliminat din elementele salvate</string>
+    <string name="memory_freeze_enabled">Înghețare activată</string>
+    <string name="memory_freeze_unavailable">Înghețarea nu a putut fi activată.</string>
+    <string name="memory_list_session_only_failed">Elementul nu a putut fi păstrat doar pentru sesiunea curentă.</string>
+    <string name="memory_list_kept_unlinked">Salvat pentru următoarea pornire, dar nu a putut fi asociat cu sesiunea curentă.</string>
+    <string name="memory_list_removal_unavailable">Elementele nu pot fi eliminate fără conexiune. Încercați din nou.</string>
 </resources>

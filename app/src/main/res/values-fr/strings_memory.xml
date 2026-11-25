@@ -259,4 +259,12 @@
     <string name="memory_saved_storage_unavailable">Impossible d’accéder aux éléments enregistrés.</string>
     <string name="memory_bookmark_renamed">Signet renommé</string>
     <string name="memory_editor_memory_unavailable">La mémoire du MIDlet est indisponible.</string>
+    <string name="memory_bookmark_added">Signet ajouté</string>
+    <string name="memory_bookmark_relinked">Signet réassocié</string>
+    <string name="memory_bookmarks_removed">Retiré des éléments enregistrés</string>
+    <string name="memory_freeze_enabled">Figeage activé</string>
+    <string name="memory_freeze_unavailable">Impossible de figer la valeur.</string>
+    <string name="memory_list_session_only_failed">Impossible de conserver cet élément uniquement pour la session actuelle.</string>
+    <string name="memory_list_kept_unlinked">Enregistré pour le prochain lancement, mais impossible de le lier à la session actuelle.</string>
+    <string name="memory_list_removal_unavailable">Impossible de retirer les éléments sans connexion. Réessayez.</string>
 </resources>

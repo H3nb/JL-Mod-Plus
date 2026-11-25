@@ -253,4 +253,12 @@
     <string name="memory_saved_storage_unavailable">सहेजे गए आइटम ऐक्सेस नहीं किए जा सके।</string>
     <string name="memory_bookmark_renamed">बुकमार्क का नाम बदल दिया गया</string>
     <string name="memory_editor_memory_unavailable">MIDlet मेमोरी उपलब्ध नहीं है।</string>
+    <string name="memory_bookmark_added">बुकमार्क जोड़ा गया</string>
+    <string name="memory_bookmark_relinked">बुकमार्क फिर से लिंक किया गया</string>
+    <string name="memory_bookmarks_removed">सहेजे गए आइटम से हटाया गया</string>
+    <string name="memory_freeze_enabled">फ़्रीज़ चालू है</string>
+    <string name="memory_freeze_unavailable">फ़्रीज़ चालू नहीं हो सका।</string>
+    <string name="memory_list_session_only_failed">यह आइटम केवल मौजूदा सत्र के लिए नहीं रखा जा सका।</string>
+    <string name="memory_list_kept_unlinked">अगली बार शुरू करने के लिए सहेजा गया, लेकिन मौजूदा सत्र से लिंक नहीं हो सका।</string>
+    <string name="memory_list_removal_unavailable">कनेक्शन टूटने पर आइटम नहीं हटाए जा सकते। फिर से कोशिश करें।</string>
 </resources>

@@ -259,4 +259,12 @@
     <string name="memory_saved_storage_unavailable">Impossibile accedere agli elementi salvati.</string>
     <string name="memory_bookmark_renamed">Segnalibro rinominato</string>
     <string name="memory_editor_memory_unavailable">La memoria del MIDlet non è disponibile.</string>
+    <string name="memory_bookmark_added">Segnalibro aggiunto</string>
+    <string name="memory_bookmark_relinked">Segnalibro ricollegato</string>
+    <string name="memory_bookmarks_removed">Rimosso dagli elementi salvati</string>
+    <string name="memory_freeze_enabled">Blocco attivato</string>
+    <string name="memory_freeze_unavailable">Impossibile attivare il blocco.</string>
+    <string name="memory_list_session_only_failed">Impossibile mantenere questo elemento solo per la sessione corrente.</string>
+    <string name="memory_list_kept_unlinked">Salvato per il prossimo avvio, ma non è stato possibile collegarlo alla sessione corrente.</string>
+    <string name="memory_list_removal_unavailable">Impossibile rimuovere elementi senza connessione. Riprova.</string>
 </resources>

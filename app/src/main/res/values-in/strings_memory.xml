@@ -247,4 +247,12 @@
     <string name="memory_saved_storage_unavailable">Tidak dapat mengakses item tersimpan.</string>
     <string name="memory_bookmark_renamed">Nama penanda diubah</string>
     <string name="memory_editor_memory_unavailable">Memori MIDlet tidak tersedia.</string>
+    <string name="memory_bookmark_added">Penanda ditambahkan</string>
+    <string name="memory_bookmark_relinked">Penanda ditautkan ulang</string>
+    <string name="memory_bookmarks_removed">Dihapus dari Tersimpan</string>
+    <string name="memory_freeze_enabled">Pembekuan aktif</string>
+    <string name="memory_freeze_unavailable">Tidak dapat mengaktifkan pembekuan.</string>
+    <string name="memory_list_session_only_failed">Tidak dapat mempertahankan item ini hanya untuk sesi saat ini.</string>
+    <string name="memory_list_kept_unlinked">Disimpan untuk peluncuran berikutnya, tetapi tidak dapat ditautkan ke sesi saat ini.</string>
+    <string name="memory_list_removal_unavailable">Tidak dapat menghapus item saat koneksi terputus. Coba lagi.</string>
 </resources>

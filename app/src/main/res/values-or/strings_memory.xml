@@ -253,4 +253,12 @@
     <string name="memory_saved_storage_unavailable">ସେଭ୍ ହୋଇଥିବା ଆଇଟମ୍‌ଗୁଡ଼ିକୁ ଆକ୍ସେସ୍ କରିହେଉନାହିଁ।</string>
     <string name="memory_bookmark_renamed">ବୁକମାର୍କର ନାମ ବଦଳାଗଲା</string>
     <string name="memory_editor_memory_unavailable">MIDlet ମେମୋରୀ ଉପଲବ୍ଧ ନାହିଁ।</string>
+    <string name="memory_bookmark_added">ବୁକମାର୍କ ଯୋଡ଼ାଗଲା</string>
+    <string name="memory_bookmark_relinked">ବୁକମାର୍କ ପୁଣି ଲିଙ୍କ୍ ହେଲା</string>
+    <string name="memory_bookmarks_removed">ସେଭ୍ ହୋଇଥିବା ତାଲିକାରୁ ଅପସାରଣ ହେଲା</string>
+    <string name="memory_freeze_enabled">ଫ୍ରିଜ୍ ସକ୍ରିୟ ହେଲା</string>
+    <string name="memory_freeze_unavailable">ଫ୍ରିଜ୍ ସକ୍ରିୟ କରିହେଲା ନାହିଁ।</string>
+    <string name="memory_list_session_only_failed">ଏହି ଆଇଟମ୍‌କୁ କେବଳ ବର୍ତ୍ତମାନର ସେସନ୍ ପାଇଁ ରଖିହେଲା ନାହିଁ।</string>
+    <string name="memory_list_kept_unlinked">ପରବର୍ତ୍ତୀ ଲଞ୍ଚ ପାଇଁ ସେଭ୍ ହେଲା, କିନ୍ତୁ ବର୍ତ୍ତମାନର ସେସନ୍ ସହ ଲିଙ୍କ୍ କରିହେଲା ନାହିଁ।</string>
+    <string name="memory_list_removal_unavailable">ସଂଯୋଗ ବିଚ୍ଛିନ୍ନ ଥିବାବେଳେ ଆଇଟମ୍ ଅପସାରଣ କରିହେବ ନାହିଁ। ପୁଣି ଚେଷ୍ଟା କରନ୍ତୁ।</string>
 </resources>
