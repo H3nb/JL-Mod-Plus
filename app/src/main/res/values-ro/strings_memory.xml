@@ -255,4 +255,8 @@
     <string name="memory_scripts_saved_count" tools:ignore="MissingTranslation"><xliff:g id="count" example="3">%1$d</xliff:g> salvate</string>
     <string name="memory_scripts_empty_hint" tools:ignore="MissingTranslation">Creați un script pentru a edita sau îngheța valori în timpul jocului.</string>
     <string name="memory_builder_limits" tools:ignore="MissingTranslation">Limite (opțional)</string>
+    <string name="memory_editor_selection_limit">Selectați cel mult %1$d valori.</string>
+    <string name="memory_saved_storage_unavailable">Elementele salvate nu pot fi accesate.</string>
+    <string name="memory_bookmark_renamed">Marcaj redenumit</string>
+    <string name="memory_editor_memory_unavailable">Memoria MIDletului nu este disponibilă.</string>
 </resources>

@@ -249,4 +249,8 @@
     <string name="memory_scripts_saved_count"><xliff:g id="count" example="3">%1$d</xliff:g> saved</string>
     <string name="memory_scripts_empty_hint">Create a script to edit or freeze values while playing.</string>
     <string name="memory_builder_limits">Limits (optional)</string>
+    <string name="memory_editor_selection_limit">Select up to %1$d values.</string>
+    <string name="memory_saved_storage_unavailable">Can’t access saved items.</string>
+    <string name="memory_bookmark_renamed">Bookmark renamed</string>
+    <string name="memory_editor_memory_unavailable">MIDlet memory is unavailable.</string>
 </resources>

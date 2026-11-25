@@ -255,4 +255,8 @@
     <string name="memory_scripts_saved_count" tools:ignore="MissingTranslation"><xliff:g id="count" example="3">%1$d</xliff:g> enregistrés</string>
     <string name="memory_scripts_empty_hint" tools:ignore="MissingTranslation">Créez un script pour modifier ou figer des valeurs en cours de partie.</string>
     <string name="memory_builder_limits" tools:ignore="MissingTranslation">Limites (facultatif)</string>
+    <string name="memory_editor_selection_limit">Sélectionnez au maximum %1$d valeurs.</string>
+    <string name="memory_saved_storage_unavailable">Impossible d’accéder aux éléments enregistrés.</string>
+    <string name="memory_bookmark_renamed">Signet renommé</string>
+    <string name="memory_editor_memory_unavailable">La mémoire du MIDlet est indisponible.</string>
 </resources>

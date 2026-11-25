@@ -249,4 +249,8 @@
     <string name="memory_scripts_saved_count" tools:ignore="MissingTranslation"><xliff:g id="count" example="3">%1$d</xliff:g> ସେଭ୍ ହୋଇଥିବା</string>
     <string name="memory_scripts_empty_hint" tools:ignore="MissingTranslation">ଖେଳିବା ସମୟରେ ମୂଲ୍ୟ ଏଡିଟ୍ କିମ୍ବା ଫ୍ରିଜ୍ କରିବାକୁ ଏକ ସ୍କ୍ରିପ୍ଟ୍ ତିଆରି କରନ୍ତୁ।</string>
     <string name="memory_builder_limits" tools:ignore="MissingTranslation">ସୀମା (ବୈକଳ୍ପିକ)</string>
+    <string name="memory_editor_selection_limit">ସର୍ବାଧିକ %1$dଟି ମୂଲ୍ୟ ଚୟନ କରନ୍ତୁ।</string>
+    <string name="memory_saved_storage_unavailable">ସେଭ୍ ହୋଇଥିବା ଆଇଟମ୍‌ଗୁଡ଼ିକୁ ଆକ୍ସେସ୍ କରିହେଉନାହିଁ।</string>
+    <string name="memory_bookmark_renamed">ବୁକମାର୍କର ନାମ ବଦଳାଗଲା</string>
+    <string name="memory_editor_memory_unavailable">MIDlet ମେମୋରୀ ଉପଲବ୍ଧ ନାହିଁ।</string>
 </resources>

@@ -249,4 +249,8 @@
     <string name="memory_scripts_saved_count" tools:ignore="MissingTranslation"><xliff:g id="count" example="3">%1$d</xliff:g> запазени</string>
     <string name="memory_scripts_empty_hint" tools:ignore="MissingTranslation">Създайте скрипт, за да редактирате или замразявате стойности по време на игра.</string>
     <string name="memory_builder_limits" tools:ignore="MissingTranslation">Ограничения (по избор)</string>
+    <string name="memory_editor_selection_limit">Изберете най-много %1$d стойности.</string>
+    <string name="memory_saved_storage_unavailable">Няма достъп до запазените елементи.</string>
+    <string name="memory_bookmark_renamed">Отметката е преименувана</string>
+    <string name="memory_editor_memory_unavailable">Паметта на MIDlet не е налична.</string>
 </resources>

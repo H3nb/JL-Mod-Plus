@@ -239,4 +239,8 @@
     <string name="memory_scripts_saved_count" tools:ignore="MissingTranslation">已保存 <xliff:g id="count" example="3">%1$d</xliff:g> 个</string>
     <string name="memory_scripts_empty_hint" tools:ignore="MissingTranslation">创建脚本，以便在游玩时编辑或锁定数值。</string>
     <string name="memory_builder_limits" tools:ignore="MissingTranslation">范围限制（可选）</string>
+    <string name="memory_editor_selection_limit">最多选择 %1$d 个数值。</string>
+    <string name="memory_saved_storage_unavailable">无法访问已保存的项目。</string>
+    <string name="memory_bookmark_renamed">书签已重命名</string>
+    <string name="memory_editor_memory_unavailable">MIDlet 内存不可用。</string>
 </resources>

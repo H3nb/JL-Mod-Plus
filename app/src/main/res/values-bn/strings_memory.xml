@@ -249,4 +249,8 @@
     <string name="memory_scripts_saved_count" tools:ignore="MissingTranslation"><xliff:g id="count" example="3">%1$d</xliff:g>টি সেভ করা</string>
     <string name="memory_scripts_empty_hint" tools:ignore="MissingTranslation">খেলার সময় মান সম্পাদনা বা ফ্রিজ করতে একটি স্ক্রিপ্ট তৈরি করুন।</string>
     <string name="memory_builder_limits" tools:ignore="MissingTranslation">সীমা (ঐচ্ছিক)</string>
+    <string name="memory_editor_selection_limit">সর্বাধিক %1$dটি মান নির্বাচন করুন।</string>
+    <string name="memory_saved_storage_unavailable">সংরক্ষিত আইটেম অ্যাক্সেস করা যাচ্ছে না।</string>
+    <string name="memory_bookmark_renamed">বুকমার্কের নাম পরিবর্তন করা হয়েছে</string>
+    <string name="memory_editor_memory_unavailable">MIDlet মেমোরি উপলভ্য নয়।</string>
 </resources>

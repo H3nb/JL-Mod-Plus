@@ -243,4 +243,8 @@
     <string name="memory_scripts_saved_count" tools:ignore="MissingTranslation"><xliff:g id="count" example="3">%1$d</xliff:g>개 저장됨</string>
     <string name="memory_scripts_empty_hint" tools:ignore="MissingTranslation">플레이 중에 값을 편집하거나 고정할 스크립트를 만들어 보세요.</string>
     <string name="memory_builder_limits" tools:ignore="MissingTranslation">제한(선택사항)</string>
+    <string name="memory_editor_selection_limit">최대 %1$d개의 값을 선택하세요.</string>
+    <string name="memory_saved_storage_unavailable">저장된 항목에 액세스할 수 없습니다.</string>
+    <string name="memory_bookmark_renamed">북마크 이름을 변경했습니다</string>
+    <string name="memory_editor_memory_unavailable">MIDlet 메모리를 사용할 수 없습니다.</string>
 </resources>

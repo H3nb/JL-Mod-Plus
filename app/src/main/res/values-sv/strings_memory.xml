@@ -249,4 +249,8 @@
     <string name="memory_scripts_saved_count" tools:ignore="MissingTranslation"><xliff:g id="count" example="3">%1$d</xliff:g> sparade</string>
     <string name="memory_scripts_empty_hint" tools:ignore="MissingTranslation">Skapa ett skript för att redigera eller frysa värden medan du spelar.</string>
     <string name="memory_builder_limits" tools:ignore="MissingTranslation">Gränser (valfritt)</string>
+    <string name="memory_editor_selection_limit">Välj högst %1$d värden.</string>
+    <string name="memory_saved_storage_unavailable">Det går inte att komma åt sparade objekt.</string>
+    <string name="memory_bookmark_renamed">Bokmärket har bytt namn</string>
+    <string name="memory_editor_memory_unavailable">MIDlet-minnet är inte tillgängligt.</string>
 </resources>

@@ -249,4 +249,8 @@
     <string name="memory_scripts_saved_count" tools:ignore="MissingTranslation"><xliff:g id="count" example="3">%1$d</xliff:g> gestoor</string>
     <string name="memory_scripts_empty_hint" tools:ignore="MissingTranslation">Skep ’n skrip om waardes tydens spel te redigeer of te vries.</string>
     <string name="memory_builder_limits" tools:ignore="MissingTranslation">Limiete (opsioneel)</string>
+    <string name="memory_editor_selection_limit">Kies hoogstens %1$d waardes.</string>
+    <string name="memory_saved_storage_unavailable">Kan nie toegang tot gestoorde items kry nie.</string>
+    <string name="memory_bookmark_renamed">Boekmerk hernoem</string>
+    <string name="memory_editor_memory_unavailable">MIDlet-geheue is nie beskikbaar nie.</string>
 </resources>

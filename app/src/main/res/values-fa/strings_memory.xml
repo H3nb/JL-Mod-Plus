@@ -249,4 +249,8 @@
     <string name="memory_scripts_saved_count" tools:ignore="MissingTranslation"><xliff:g id="count" example="3">%1$d</xliff:g> ذخیره‌شده</string>
     <string name="memory_scripts_empty_hint" tools:ignore="MissingTranslation">برای ویرایش یا ثابت کردن مقادیر هنگام بازی، اسکریپتی بسازید.</string>
     <string name="memory_builder_limits" tools:ignore="MissingTranslation">محدودیت‌ها (اختیاری)</string>
+    <string name="memory_editor_selection_limit">حداکثر %1$d مقدار انتخاب کنید.</string>
+    <string name="memory_saved_storage_unavailable">دسترسی به موارد ذخیره‌شده ممکن نیست.</string>
+    <string name="memory_bookmark_renamed">نام نشانک تغییر کرد</string>
+    <string name="memory_editor_memory_unavailable">حافظه MIDlet در دسترس نیست.</string>
 </resources>

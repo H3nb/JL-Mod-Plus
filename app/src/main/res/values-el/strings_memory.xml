@@ -249,4 +249,8 @@
     <string name="memory_scripts_saved_count" tools:ignore="MissingTranslation"><xliff:g id="count" example="3">%1$d</xliff:g> αποθηκευμένα</string>
     <string name="memory_scripts_empty_hint" tools:ignore="MissingTranslation">Δημιουργήστε ένα σενάριο για να επεξεργάζεστε ή να παγώνετε τιμές κατά το παιχνίδι.</string>
     <string name="memory_builder_limits" tools:ignore="MissingTranslation">Όρια (προαιρετικό)</string>
+    <string name="memory_editor_selection_limit">Επιλέξτε έως %1$d τιμές.</string>
+    <string name="memory_saved_storage_unavailable">Δεν είναι δυνατή η πρόσβαση στα αποθηκευμένα στοιχεία.</string>
+    <string name="memory_bookmark_renamed">Ο σελιδοδείκτης μετονομάστηκε</string>
+    <string name="memory_editor_memory_unavailable">Η μνήμη του MIDlet δεν είναι διαθέσιμη.</string>
 </resources>

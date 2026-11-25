@@ -1038,12 +1038,12 @@ internal class MemoryEditorComposeController(
         val token = state.runtimeToken
         if (state.busy || token == 0L || ids.isEmpty()) return
         if (ids.size > maxTargets) {
-            state = state.copy(message = "Select at most $maxTargets Bookmark targets",
+            state = state.copy(message = context.getString(R.string.memory_editor_selection_limit, maxTargets),
                 messageIsError = true)
             return
         }
         if (authority == null) {
-            state = state.copy(message = "Bookmark storage unavailable", messageIsError = true)
+            state = state.copy(message = context.getString(R.string.memory_saved_storage_unavailable), messageIsError = true)
             return
         }
         val known = state.watches.filter {
@@ -1362,7 +1362,7 @@ internal class MemoryEditorComposeController(
                     state = state.copy(
                         savedVariables = rows.map { it.first },
                         savedValues = state.savedValues.filterKeys { it in retained },
-                        message = "Saved variable renamed", messageIsError = false,
+                        message = context.getString(R.string.memory_bookmark_renamed), messageIsError = false,
                     )
                 } else {
                     state = state.copy(message = result.exceptionOrNull()?.message,
@@ -1877,7 +1877,7 @@ internal class MemoryEditorComposeController(
     ) {
         val authority = savedAuthority
         if (authority == null) {
-            state = state.copy(message = "Script storage unavailable", messageIsError = true)
+            state = state.copy(message = context.getString(R.string.memory_saved_storage_unavailable), messageIsError = true)
             onComplete(false)
             return
         }
@@ -1910,7 +1910,7 @@ internal class MemoryEditorComposeController(
     override fun deleteMemoryScript(id: String, onComplete: (Boolean) -> Unit) {
         val authority = savedAuthority
         if (authority == null) {
-            state = state.copy(message = "Script storage unavailable", messageIsError = true)
+            state = state.copy(message = context.getString(R.string.memory_saved_storage_unavailable), messageIsError = true)
             onComplete(false)
             return
         }
@@ -1974,7 +1974,7 @@ internal class MemoryEditorComposeController(
     }
 
     override fun generateSimpleMemoryRecipe(savedId: String, value: String, freeze: Boolean): String? {
-        if (state.busy || !state.writeSupported) return "MIDlet memory is not available"
+        if (state.busy || !state.writeSupported) return context.getString(R.string.memory_editor_memory_unavailable)
         if (state.savedValues[savedId]?.resolved != true)
             return context.getString(R.string.memory_recipes_target_unavailable)
         val document = runCatching {
@@ -1995,7 +1995,7 @@ internal class MemoryEditorComposeController(
         val token = state.runtimeToken
         val engine = service
         if (engine == null || state.busy || token == 0L || !state.supported) {
-            onReady(null, "MIDlet memory is not available")
+            onReady(null, context.getString(R.string.memory_editor_memory_unavailable))
             return
         }
         val parameters = Bundle().apply {
@@ -2415,7 +2415,7 @@ internal class MemoryEditorComposeController(
         runIpc {
             val outcome = runCatching {
                 if (freezeAfter) {
-                    val authority = savedAuthority ?: error("Bookmark storage unavailable")
+                    val authority = savedAuthority ?: error(context.getString(R.string.memory_saved_storage_unavailable))
                     val label = snapshot.logicalRows.first {
                         it.relativeOffset == relativeOffset
                     }.label
@@ -2486,7 +2486,7 @@ internal class MemoryEditorComposeController(
             val connection = connectionGeneration
             runIpc {
                 val outcome = runCatching {
-                    val authority = savedAuthority ?: error("Bookmark storage unavailable")
+                    val authority = savedAuthority ?: error(context.getString(R.string.memory_saved_storage_unavailable))
                     val label = snapshot.logicalRows.firstOrNull {
                         it.relativeOffset == relativeOffset
                     }?.label ?: "Variable"

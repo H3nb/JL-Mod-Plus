@@ -243,4 +243,8 @@
     <string name="memory_scripts_saved_count" tools:ignore="MissingTranslation"><xliff:g id="count" example="3">%1$d</xliff:g> 件保存済み</string>
     <string name="memory_scripts_empty_hint" tools:ignore="MissingTranslation">スクリプトを作成すると、プレイ中に値を編集・固定できます。</string>
     <string name="memory_builder_limits" tools:ignore="MissingTranslation">上限・下限（任意）</string>
+    <string name="memory_editor_selection_limit">選択できる値は最大%1$d個です。</string>
+    <string name="memory_saved_storage_unavailable">保存済みの項目にアクセスできません。</string>
+    <string name="memory_bookmark_renamed">ブックマーク名を変更しました</string>
+    <string name="memory_editor_memory_unavailable">MIDletのメモリを利用できません。</string>
 </resources>
