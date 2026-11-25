@@ -118,7 +118,7 @@
     <string name="memory_editor_next_scan_result">다음 스캔 결과: <xliff:g id="before_count" example="120">%1$d</xliff:g> → <xliff:g id="after_count" example="14">%2$d</xliff:g></string>
     <string name="memory_editor_type_auto">자동</string>
     <string name="memory_editor_remove_candidates_title">선택한 결과를 제거할까요?</string>
-    <string name="memory_editor_remove_candidates_description">제거: 검색 목록에서 선택한 결과를 제거합니다. 게임 메모리의 값은 변경되지 않습니다.\n\n되돌리고 제거: 값이 여전히 일치하는 경우 마지막으로 확인된 편집 이전의 값으로 복원합니다. 고정된 값과 충돌이 있는 결과는 목록에 남습니다.</string>
+    <string name="memory_editor_remove_candidates_description">제거: 검색 목록에서 선택한 결과를 제거합니다. 게임 메모리의 값은 변경되지 않습니다.\n\n되돌리고 제거: 현재 값이 마지막으로 확인된 편집 직후의 값과 여전히 일치하는 경우에만 편집 이전의 값으로 복원합니다. 고정된 값과 충돌이 있는 결과는 목록에 남습니다.</string>
     <string name="memory_editor_revert_and_remove">되돌리고 제거</string>
     <string name="memory_editor_revert_remove_commit_failed">값이 복원되었을 수 있지만 결과를 제거할 수 없습니다. 새로고침한 후 다시 시도하세요. 게임에서 변경한 값은 덮어쓰지 않습니다.</string>
     <string name="memory_editor_revert_remove_outcome">복원됨: <xliff:g id="restored" example="2">%1$d</xliff:g>. 제거됨: <xliff:g id="removed" example="2">%2$d</xliff:g>. 충돌: <xliff:g id="conflicts" example="0">%3$d</xliff:g>. 미확인: <xliff:g id="unconfirmed" example="0">%4$d</xliff:g>. 시도 안 함: <xliff:g id="not_attempted" example="0">%5$d</xliff:g>.</string>

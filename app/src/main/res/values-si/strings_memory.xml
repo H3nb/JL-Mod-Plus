@@ -124,7 +124,7 @@
     <string name="memory_editor_next_scan_result">ඊළඟ ස්කෑන් ප්‍රතිඵල: <xliff:g id="before_count" example="120">%1$d</xliff:g> → <xliff:g id="after_count" example="14">%2$d</xliff:g></string>
     <string name="memory_editor_type_auto">ස්වයංක්‍රීය</string>
     <string name="memory_editor_remove_candidates_title">තෝරාගත් ප්‍රතිඵල ඉවත් කරන්නද?</string>
-    <string name="memory_editor_remove_candidates_description">ඉවත් කරන්න: තෝරාගත් ප්‍රතිඵල සෙවුම් ලැයිස්තුවෙන් ඉවත් කරයි. ක්‍රීඩා මතකයේ අගයන් නොවෙනස්ව පවතී.\n\nප්‍රතිවර්තනය කර ඉවත් කරන්න: තවමත් ගැළපේ නම්, අවසන් තහවුරු කළ සංස්කරණයට පෙර තිබූ අගයන් ද ප්‍රතිස්ථාපනය කරයි. ස්ථිර කළ අගයන් සහ ගැටුම් ඇති ප්‍රතිඵල ලැයිස්තුවේ පවතී.</string>
+    <string name="memory_editor_remove_candidates_description">ඉවත් කරන්න: තෝරාගත් ප්‍රතිඵල සෙවුම් ලැයිස්තුවෙන් ඉවත් කරයි. ක්‍රීඩා මතකයේ අගයන් නොවෙනස්ව පවතී.\n\nප්‍රතිවර්තනය කර ඉවත් කරන්න: අවසන් තහවුරු කළ සංස්කරණයට පෙර තිබූ අගයන් ද ප්‍රතිස්ථාපනය කරයි, නමුත් වත්මන් අගයන් එම සංස්කරණයෙන් පසු අගයන් සමඟ තවමත් ගැළපේ නම් පමණි. ස්ථිර කළ අගයන් සහ ගැටුම් ඇති ප්‍රතිඵල ලැයිස්තුවේ පවතී.</string>
     <string name="memory_editor_revert_and_remove">ප්‍රතිවර්තනය කර ඉවත් කරන්න</string>
     <string name="memory_editor_revert_remove_commit_failed">අගයන් ප්‍රතිස්ථාපනය වී තිබිය හැකි නමුත් ප්‍රතිඵල ඉවත් කිරීමට නොහැකි විය. නැවුම් කර නැවත උත්සාහ කරන්න; ක්‍රීඩාව වෙනස් කළ අගයන් උඩින් ලියනු නොලැබේ.</string>
     <string name="memory_editor_revert_remove_outcome">ප්‍රතිස්ථාපනය කළ: <xliff:g id="restored" example="2">%1$d</xliff:g>. ඉවත් කළ: <xliff:g id="removed" example="2">%2$d</xliff:g>. ගැටුම්: <xliff:g id="conflicts" example="0">%3$d</xliff:g>. තහවුරු නොකළ: <xliff:g id="unconfirmed" example="0">%4$d</xliff:g>. උත්සාහ නොකළ: <xliff:g id="not_attempted" example="0">%5$d</xliff:g>.</string>

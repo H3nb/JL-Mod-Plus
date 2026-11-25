@@ -118,7 +118,7 @@
     <string name="memory_editor_next_scan_result">次のスキャン結果: <xliff:g id="before_count" example="120">%1$d</xliff:g> → <xliff:g id="after_count" example="14">%2$d</xliff:g></string>
     <string name="memory_editor_type_auto">自動</string>
     <string name="memory_editor_remove_candidates_title">選択した結果を削除しますか？</string>
-    <string name="memory_editor_remove_candidates_description">削除: 選択した結果を検索一覧から取り除きます。ゲームメモリ内の値は変更されません。\n\n元に戻して削除: 最後に確認された編集前の値とまだ一致する場合、その値も復元します。固定中の値や競合のある結果は一覧に残ります。</string>
+    <string name="memory_editor_remove_candidates_description">削除: 選択した結果を検索一覧から取り除きます。ゲームメモリ内の値は変更されません。\n\n元に戻して削除: 現在の値が最後に確認された編集後の値とまだ一致する場合に限り、編集前の値に戻します。固定中の値や競合のある結果は一覧に残ります。</string>
     <string name="memory_editor_revert_and_remove">元に戻して削除</string>
     <string name="memory_editor_revert_remove_commit_failed">値は復元された可能性がありますが、結果を一覧から削除できませんでした。更新してからもう一度お試しください。ゲーム側で変更された値は上書きされません。</string>
     <string name="memory_editor_revert_remove_outcome">復元済み: <xliff:g id="restored" example="2">%1$d</xliff:g>、削除済み: <xliff:g id="removed" example="2">%2$d</xliff:g>、競合: <xliff:g id="conflicts" example="0">%3$d</xliff:g>、未確認: <xliff:g id="unconfirmed" example="0">%4$d</xliff:g>、未実行: <xliff:g id="not_attempted" example="0">%5$d</xliff:g>。</string>

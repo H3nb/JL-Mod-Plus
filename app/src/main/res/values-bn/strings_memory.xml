@@ -124,7 +124,7 @@
     <string name="memory_editor_next_scan_result">পরবর্তী স্ক্যানের ফলাফল: <xliff:g id="before_count" example="120">%1$d</xliff:g> → <xliff:g id="after_count" example="14">%2$d</xliff:g></string>
     <string name="memory_editor_type_auto">অটো</string>
     <string name="memory_editor_remove_candidates_title">নির্বাচিত ফলাফল সরাবেন?</string>
-    <string name="memory_editor_remove_candidates_description">সরান: সার্চ তালিকা থেকে নির্বাচিত ফলাফল সরিয়ে দেয়। গেমের মেমোরির মান অপরিবর্তিত থাকে।\n\nপূর্বাবস্থায় ফেরান ও সরান: শেষ নিশ্চিত সম্পাদনার আগের মানও পুনরুদ্ধার করে, যদি সেগুলো এখনও মিলে যায়। ফ্রিজ করা মান এবং দ্বন্দ্বযুক্ত ফলাফল তালিকায় থেকে যাবে।</string>
+    <string name="memory_editor_remove_candidates_description">সরান: সার্চ তালিকা থেকে নির্বাচিত ফলাফল সরিয়ে দেয়। গেমের মেমোরির মান অপরিবর্তিত থাকে।\n\nপূর্বাবস্থায় ফেরান ও সরান: শেষ নিশ্চিত সম্পাদনার আগের মানও পুনরুদ্ধার করে, তবে শুধু তখনই, যখন বর্তমান মান শেষ সম্পাদনার পরের মানের সঙ্গে এখনও মেলে। ফ্রিজ করা মান এবং দ্বন্দ্বযুক্ত ফলাফল তালিকায় থেকে যাবে।</string>
     <string name="memory_editor_revert_and_remove">পূর্বাবস্থায় ফেরান ও সরান</string>
     <string name="memory_editor_revert_remove_commit_failed">মানগুলো পুনরুদ্ধার হয়ে থাকতে পারে, তবে ফলাফল সরানো যায়নি। রিফ্রেশ করে আবার চেষ্টা করুন; গেমের দ্বারা পরিবর্তিত মান ওভাররাইট হবে না।</string>
     <string name="memory_editor_revert_remove_outcome">পুনরুদ্ধার: <xliff:g id="restored" example="2">%1$d</xliff:g>। সরানো হয়েছে: <xliff:g id="removed" example="2">%2$d</xliff:g>। দ্বন্দ্ব: <xliff:g id="conflicts" example="0">%3$d</xliff:g>। অনিশ্চিত: <xliff:g id="unconfirmed" example="0">%4$d</xliff:g>। চেষ্টা করা হয়নি: <xliff:g id="not_attempted" example="0">%5$d</xliff:g>।</string>
