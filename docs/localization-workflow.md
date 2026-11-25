@@ -119,7 +119,7 @@ identifiers, or diagnostic evidence.
    ambiguous controls. Contributions may be written or reviewed by people
    or automated tools; acceptance depends on the resulting text and supporting
    evidence, not the translator's identity or an unverified confidence score.
-3. Modify the affected `strings.xml` elements directly using a small,
+3. Modify the affected resource XML elements directly using a small,
    reviewable patch. Never feed the flattened matrix back as if it were
    lossless Android XML; retain markup, comments, resource order, and
    untouched translations. Re-read the current source before applying
@@ -135,11 +135,14 @@ identifiers, or diagnostic evidence.
    catalog is not automatically a fully verified localization.
 
 For an accepted plain-text batch, `python -B -m scripts.localization_apply
-/path/to/batch.json` validates and reports a proposed single-locale catalog update;
+/path/to/batch.json` validates and reports a proposed single-locale, single-file update;
 add `--apply` to write it. Schema version 1 contains `locale`, byte hashes
 `source_sha256` and `target_sha256`, `strings` (key → decoded UI text),
 `plurals` (key → quantity → decoded UI text), `revisions` (changed existing
 key → material reason), `reviewed_keys`, and `unresolved` (key/reason objects).
+Select at least one key from one canonical XML file. Use byte hashes of that
+file and its same-named counterpart in the target locale; split a cross-module
+batch into separate proposals to preserve atomic single-file edits.
 Use actual newlines and quotes, not XML or Android escapes. Selected changes
 must be reviewed and resolved. The applier escapes plain text, checks resource
 and argument contracts, preserves unrelated bytes/comments/attributes, and

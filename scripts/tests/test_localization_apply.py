@@ -164,6 +164,29 @@ class ApplyTest(unittest.TestCase):
         apply.apply_batch(self.root, batch, True)
         self.assertIn(b'<string name="label">&lt;b&gt; literal</string>', self.target.read_bytes())
 
+    def test_modular_batch_edits_only_matching_catalog(self):
+        self.source = self.source.rename(self.source.with_name("strings_library.xml"))
+        self.target = self.target.rename(self.target.with_name("strings_library.xml"))
+        unrelated = self.xml("values", '<string name="other_label">Other</string>')
+        unrelated_target = self.xml("values-in", '<string name="other_label">Lain</string>')
+        before = unrelated_target.read_bytes()
+        result = apply.apply_batch(self.root, self.batch({"label": "Baru"}), True)
+        self.assertTrue(result["applied"])
+        self.assertTrue(result["file"].endswith("strings_library.xml"))
+        self.assertIn(b"Baru", self.target.read_bytes())
+        self.assertEqual(before, unrelated_target.read_bytes())
+        self.assertTrue(unrelated.exists())
+
+    def test_cross_module_batch_is_rejected_before_writing(self):
+        self.source = self.source.rename(self.source.with_name("strings_library.xml"))
+        self.target = self.target.rename(self.target.with_name("strings_library.xml"))
+        self.xml("values", '<string name="other_label">Other</string>')
+        self.xml("values-in", "")
+        before = self.target.read_bytes()
+        with self.assertRaisesRegex(ValueError, "one canonical resource file"):
+            apply.apply_batch(self.root, self.batch({"label": "Baru", "other_label": "Lain"}), True)
+        self.assertEqual(before, self.target.read_bytes())
+
 
 if __name__ == "__main__":
     unittest.main()
