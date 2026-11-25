@@ -1,0 +1,47 @@
+<?xml version="1.0" encoding="utf-8"?>
+<!-- Shared UI actions, generic labels, dialogs, and About screen. -->
+<resources xmlns:xliff="urn:oasis:names:tc:xliff:document:1.2">
+    <string name="about">පිළිබඳව</string>
+    <string name="about_message">සම්භාව්‍ය යෙදුම් සහ ක්‍රීඩා ධාවනය කරන්න, ඔබේ පුස්තකාලයේ MIDlets සංවිධානය කරන්න, සහ පාලන, සංදර්ශකය, ශ්‍රව්‍ය සහ කාර්ය සාධනය අභිරුචිකරණය කරන්න. JL-Mod Plus නොමිලේ සහ විවෘත මූලාශ්‍ර වේ.</string>
+    <string name="about_subtitle">Android සඳහා Java ME අනුකාරකය</string>
+    <string name="about_compatibility">ගැළපුම MIDlet, උපාංගය සහ සහාය දක්වන Java ME API මත රඳා පවතී. සමහර යෙදුම් ඒවායේ මුල් දුරකථනවලට වඩා වෙනස් ලෙස ක්‍රියා කළ හැකිය.</string>
+    <string name="about_lineage_title">ව්‍යාපෘති මූලාරම්භය</string>
+    <string name="about_build_title">ගොඩනැගීමේ තොරතුරු</string>
+    <string name="about_version_label">අනුවාදය</string>
+    <string name="about_build_label">ගොඩනැගීම</string>
+    <string name="about_revision_label">මූලාශ්‍ර සංශෝධනය</string>
+    <string name="about_links_title">ව්‍යාපෘතිය සහ බලපත්‍ර</string>
+    <string name="about_github_link_copied">බ්‍රව්සරයක් හමු නොවීය. GitHub සබැඳිය පසුරු පුවරුවට පිටපත් කරන ලදී.</string>
+    <string name="about_github_browser_unavailable">GitHub විවෘත කිරීමට බ්‍රව්සරයක් හමු නොවීය.</string>
+    <string name="about_lineage">JL-Mod Plus යනු woesss (Yury Kharchenko) විසින් නිර්මාණය කළ JL-Mod හි ස්වාධීන අනුශාඛාවකි. JL-Mod පදනම් වී ඇත්තේ Nikita Shakarun ගේ J2ME Loader මත වන අතර එය NaikSoftware හි J2meLoader වෙතින් ආරම්භ විය.</string>
+    <string name="about_evolution">JL-Mod Plus එම පදනම මත නවීන අතුරුමුහුණතක්, වඩාත් හැකියාවන් සහිත MIDlet පුස්තකාලයක්, නව විශේෂාංග සහ නව Android අනුවාද සඳහා සහාය සමඟින් ගොඩනගා ඇත.</string>
+    <string name="action_back">ආපසු</string>
+    <string name="action_settings">සැකසීම්</string>
+    <string name="CANCEL_CMD">අවලංගු කරන්න</string>
+    <string name="change">වෙනස් කරන්න</string>
+    <string name="choose">තෝරන්න</string>
+    <string name="close">වසන්න</string>
+    <string name="cmd_menu">මෙනුව</string>
+    <string name="CONFIRMATION_REQUIRED">තහවුරු කිරීම අවශ්‍යයි</string>
+    <string name="create">සාදන්න</string>
+    <string name="default_label"><xliff:g id="name" example="Example">%1$s</xliff:g> (පෙරනිමි)</string>
+    <string name="dismiss">ඉවතලන්න</string>
+    <string name="edit">සංස්කරණය කරන්න</string>
+    <string name="error">දෝෂය</string>
+    <string name="error_name">නමක් ඇතුළත් කරන්න.</string>
+    <string name="exit">පිටවන්න</string>
+    <string name="help">උදවු</string>
+    <string name="install">ස්ථාපනය කරන්න</string>
+    <string name="licenses">බලපත්‍ර</string>
+    <string name="licenses_unavailable">බලපත්‍ර විස්තර ලබා ගත නොහැක.</string>
+    <string name="loading_info">තොරතුරු පූරණය වෙමින්…</string>
+    <string name="more">තවත්</string>
+    <string name="not_saved_exists">දැනටමත් පවතී</string>
+    <string name="reset">යළි පිහිටුවන්න</string>
+    <string name="retry">නැවත උත්සාහ කරන්න</string>
+    <string name="save">සුරකින්න</string>
+    <string name="saved"><xliff:g id="name" example="Example">%1$s</xliff:g> සුරකින ලදී</string>
+    <string name="START_CMD">ආරම්භ කරන්න</string>
+    <string name="warning">අවවාදය</string>
+    <string name="removed"><xliff:g id="name" example="Example">%1$s</xliff:g> ඉවත් කරන ලදී</string>
+</resources>

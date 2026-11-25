@@ -1,0 +1,468 @@
+<?xml version="1.0" encoding="utf-8"?>
+<!-- MIDlet library, collections, metadata editor, bulk/single installer, file picker, and app updates. -->
+<resources xmlns:tools="http://schemas.android.com/tools" xmlns:xliff="urn:oasis:names:tc:xliff:document:1.2">
+    <string name="action_context_delete">මකන්න</string>
+    <string name="action_context_rename">නැවත නම් කරන්න</string>
+    <string name="action_context_shortcut">කෙටිමඟ එක් කරන්න</string>
+    <string name="action_reinstall">නැවත ස්ථාපනය කරන්න</string>
+    <string name="alert_msg_workdir_not_exists">වැඩ කරන ෆෝල්ඩරය හමු නොවීය:\n<xliff:g id="path" example="/storage/emulated/0/JL-Mod-Plus">%1$s</xliff:g>\nඑය සාදන්නද නැතහොත් වෙනත් ෆෝල්ඩරයක් තෝරන්නද?</string>
+    <string name="converting_wait">JAR පරිවර්තනය වෙමින්…</string>
+    <string name="create_apps_dir_failed">වැඩ කරන ෆෝල්ඩරය සූදානම් කිරීමට නොහැකි විය:\n<xliff:g id="path" example="/storage/emulated/0/JL-Mod-Plus">%1$s</xliff:g>\nවෙනත් ෆෝල්ඩරයක් තෝරන්න.</string>
+    <string name="install_done">යෙදුම ස්ථාපනය විය.</string>
+    <string name="install_done_with_warning">යෙදුම අවවාද සමඟින් ස්ථාපනය විය.</string>
+    <string name="installer_title">MIDlet ස්ථාපකය</string>
+    <string name="installer_error_message">තෝරාගත් යෙදුම ස්ථාපනය කිරීමට නොහැකි විය. වලංගු MIDlet ගොනුවක් තෝරා නැවත උත්සාහ කරන්න.</string>
+    <string name="install_jar_non_matched_jad">මෙම යෙදුම JAD හි විස්තර කර ඇති යෙදුමට වඩා වෙනස්ය.\nJAD නොසලකා හැර කෙසේ හෝ ස්ථාපනය කරන්නද?</string>
+    <string name="file_picker_select_file">ගොනුව තෝරන්න</string>
+    <string name="file_picker_select_folder">ෆෝල්ඩරය තෝරන්න</string>
+    <string name="file_picker_select_app_bundle">යෙදුම් පොදිය තෝරන්න</string>
+    <string name="file_picker_select_icon">නිරූපකය තෝරන්න</string>
+    <string name="file_picker_navigate_back">මව් ෆෝල්ඩරය වෙත ආපසු</string>
+    <string name="file_picker_cancel">අවලංගු කරන්න</string>
+    <string name="file_picker_search">සොයන්න</string>
+    <string name="file_picker_sort">වර්ග කරන්න</string>
+    <string name="file_picker_select_all">මෙම ෆෝල්ඩරයේ සියලුම ගොනු තෝරන්න</string>
+    <string name="file_picker_unselect_all">මෙම ෆෝල්ඩරයේ සියලුම ගොනු තේරීම ඉවත් කරන්න</string>
+    <string name="file_picker_sort_type">ෆෝල්ඩර පළමුව</string>
+    <string name="file_picker_sort_name_ascending">නම A–Z</string>
+    <string name="file_picker_sort_name_descending">නම Z–A</string>
+    <string name="file_picker_sort_modified_newest">වෙනස් කළ දිනය: අලුත්ම</string>
+    <string name="file_picker_sort_modified_oldest">වෙනස් කළ දිනය: පැරණිම</string>
+    <string name="file_picker_choose">තෝරන්න</string>
+    <string name="file_picker_current_folder">වත්මන් ෆෝල්ඩරය</string>
+    <string name="file_picker_parent_folder">මව් ෆෝල්ඩරය</string>
+    <string name="file_picker_file">ගොනුව</string>
+    <string name="file_picker_preview_named"><xliff:g id="name" example="Example">%1$s</xliff:g> පෙරදසුන</string>
+    <string name="file_picker_preview_unavailable">පෙරදසුන ලබා ගත නොහැක</string>
+    <string name="file_picker_storage_volume">ගබඩා ඒකකය</string>
+    <string name="file_picker_empty">ගැළපෙන ගොනු නොමැත</string>
+    <string name="file_picker_empty_folder">ෆෝල්ඩර හමු නොවීය</string>
+    <string name="file_picker_no_matches">ගැළපීම් නොමැත</string>
+    <string name="file_picker_permission_required">ගබඩා අවසරය අවශ්‍යයි</string>
+    <string name="file_picker_permission_message">මෙම උපාංගයේ ගොනු සහ ෆෝල්ඩර පිරික්සීමට ගබඩා ප්‍රවේශයට ඉඩ දෙන්න.</string>
+    <string name="file_picker_permission_denied">ගබඩා ප්‍රවේශය ලබා නොදෙන ලදී.</string>
+    <string name="file_picker_grant_access">ප්‍රවේශය දෙන්න</string>
+    <string name="file_picker_retry">නැවත උත්සාහ කරන්න</string>
+    <string name="file_picker_load_failed">මෙම ෆෝල්ඩරය විවෘත කිරීමට නොහැකි විය.</string>
+    <string name="file_picker_create_folder">නව ෆෝල්ඩරය</string>
+    <string name="file_picker_create_folder_title">ෆෝල්ඩරය සාදන්න</string>
+    <string name="file_picker_folder_name">ෆෝල්ඩරයේ නම</string>
+    <string name="file_picker_invalid_folder_name">වලංගු ෆෝල්ඩර නමක් ඇතුළත් කරන්න.</string>
+    <string name="file_picker_folder_exists">මෙම නමින් අයිතමයක් දැනටමත් පවතී.</string>
+    <string name="file_picker_create_folder_failed">ෆෝල්ඩරය සෑදීමට නොහැකි විය.</string>
+    <string name="file_picker_selection_unavailable">තෝරාගත් අයිතමය තවදුරටත් ලබා ගත නොහැක.</string>
+    <string name="loading_apps">යෙදුම් පූරණය වෙමින්</string>
+    <string name="message_delete">මෙම යෙදුම, එහි සැකසීම් සහ සුරැකි දත්ත මකන්නද? මෙය ඔබේ පුස්තකාලයෙන් ද ඉවත් කෙරේ.</string>
+    <string name="msg_no_matches">“<xliff:g id="query" example="Bounce">%1$s</xliff:g>” සඳහා ගැළපීම් නොමැත</string>
+    <string name="library_destination_apps">සියලුම යෙදුම්</string>
+    <string name="library_destination_collections">එකතු</string>
+    <string name="library_scope_picker_title" tools:ignore="MissingTranslation">යෙදුම් පිරික්සන්න</string>
+    <string name="library_destination_more">තවත්</string>
+    <string name="library_search_placeholder">යෙදුම් සොයන්න…</string>
+    <string name="library_filter_all">සියල්ල</string>
+    <string name="library_filter_recently_opened">මෑතකදී විවෘත කළ</string>
+    <string name="library_filter_recently_added">මෑතකදී එක් කළ</string>
+    <string name="library_filter_favorites">ප්‍රියතම</string>
+    <string name="library_add_to_favorites_action">ප්‍රියතම වෙත එක් කරන්න</string>
+    <string name="library_remove_from_favorites_action">ප්‍රියතම වෙතින් ඉවත් කරන්න</string>
+    <string name="library_favorite_coming_soon">ප්‍රියතම ලබා ගත නොහැක</string>
+    <string name="library_vendor_version"><xliff:g id="vendor" example="Nokia">%1$s</xliff:g> · <xliff:g id="version" example="1.0">%2$s</xliff:g></string>
+    <string name="library_view_list">ලැයිස්තුව</string>
+    <string name="library_view_grid">ජාලකය</string>
+    <string name="library_icon_ratio_title">නිරූපක දර්ශන අනුපාතය</string>
+    <string name="library_icon_ratio_square">සමචතුරස්‍රය (1:1)</string>
+    <string name="library_icon_ratio_portrait">සිරස් (3:4)</string>
+    <string name="library_icon_shape_title">නිරූපක හැඩය</string>
+    <string name="library_icon_shape_round">වටකුරු කොන්</string>
+    <string name="library_icon_shape_square">තියුණු කොන්</string>
+    <string name="library_grid_icon_size_title" tools:ignore="MissingTranslation">ජාලක නිරූපක ප්‍රමාණය</string>
+    <string name="library_grid_icon_size_small" tools:ignore="MissingTranslation">කුඩා</string>
+    <string name="library_grid_icon_size_standard" tools:ignore="MissingTranslation">සම්මත</string>
+    <string name="library_grid_icon_size_large" tools:ignore="MissingTranslation">විශාල</string>
+    <string name="library_grid_icon_size_summary" tools:ignore="MissingTranslation">ජාලක දසුනේ නිරූපක ප්‍රමාණය සහ තීරු ගණන වෙනස් කරයි.</string>
+    <string name="library_grid_spacing_title">ජාලක පරතරය</string>
+    <string name="library_grid_spacing_summary" tools:ignore="MissingTranslation">ජාලක දසුනට පමණක් අදාළ වේ.</string>
+    <string name="library_grid_spacing_none">කිසිවක් නැත (0 dp)</string>
+    <string name="library_grid_spacing_compact">සංයුක්ත (4 dp)</string>
+    <string name="library_grid_spacing_standard">සම්මත (8 dp)</string>
+    <string name="library_grid_spacing_spacious">ඉඩකඩ සහිත (12 dp)</string>
+    <string name="library_hide_grid_titles">MIDlet ශීර්ෂ සඟවන්න</string>
+    <string name="library_show_list_description">MIDlet විස්තර පෙන්වන්න</string>
+    <string name="library_collections_empty_title">තවම එකතු නොමැත</string>
+    <string name="library_collections_empty_message">පුස්තකාලය පූරණය වී අවසන් වන තෙක් එකතු ලබා ගත නොහැක.</string>
+    <string name="library_expand_description">විස්තරය විහිදන්න</string>
+    <string name="library_collapse_description">විස්තරය හකුළන්න</string>
+    <string name="no_data_for_display">පෙන්වීමට යෙදුම් නොමැත</string>
+    <string name="permission_request_failed">ගබඩා ලිවීමේ අවසරය අවශ්‍යයි.</string>
+    <string name="reinstall">මෙම යෙදුම දැනටමත් ස්ථාපනය කර ඇත. නැවත ස්ථාපනය කරන්නද?</string>
+    <string name="reinstall_newest">මෙම යෙදුම <xliff:g id="version" example="2.1.0">%1$s</xliff:g> අනුවාදයට යාවත්කාලීන කරන්නද?\n\nදැනට ස්ථාපිත: <xliff:g id="current_version" example="2.0.0">%2$s</xliff:g></string>
+    <string name="reinstall_older">මෙම යෙදුම <xliff:g id="version" example="2.1.0">%1$s</xliff:g> අනුවාදයෙන් ප්‍රතිස්ථාපනය කරන්නද?\n\nදැනට ස්ථාපිත: <xliff:g id="current_version" example="2.0.0">%2$s</xliff:g>\nපැරණි අනුවාදය පවතින දත්ත සමඟ නිවැරදිව ක්‍රියා නොකළ හැකිය.</string>
+    <string name="warn_install_from_net">මෙම ගොනුව අන්තර්ජාලයෙන් බාගත කෙරේ.</string>
+    <string name="installer_ambiguous">ස්ථාපිත යෙදුම් කිහිපයක් මෙම පැකේජයට ගැළපේ. වෙනම පිටපතක් ස්ථාපනය කරන්නද? පවතින යෙදුම් සහ ඒවායේ දත්ත තබා ගනු ලැබේ.</string>
+    <string name="installer_separate_copy">වෙනම පිටපතක් ස්ථාපනය කරන්න</string>
+    <string name="installer_stage_download">යෙදුම බාගත වෙමින්…</string>
+    <string name="installer_stage_wait">වෙනත් මෙහෙයුමක් සඳහා රැඳී සිටිමින්…</string>
+    <string name="installer_stage_save">යෙදුම සුරැකෙමින්…</string>
+    <string name="installer_failed_download">යෙදුම බාගත කිරීමට නොහැකි විය. ඔබේ සම්බන්ධතාවය සහ බාගැනීම් සබැඳිය පරීක්ෂා කර නැවත උත්සාහ කරන්න.</string>
+    <string name="installer_failed_storage">ස්ථාපනය සම්පූර්ණ කිරීමට නොහැකි විය. නැවත උත්සාහ කරන්න.</string>
+    <string name="installer_failed_conversion">යෙදුම පරිවර්තනය කිරීමට නොහැකි විය. ගොනුව සම්පූර්ණ සහ සහාය දක්වන බවට වග බලා ගෙන නැවත උත්සාහ කරන්න.</string>
+    <string name="installer_needs_recovery">යෙදුම් ගොනු සුරකින ලද නමුත් පුස්තකාලය යාවත්කාලීන කිරීම අවසන් කිරීමට නොහැකි විය. නැවත උත්සාහ කිරීමට පෙර පුස්තකාලය නැවුම් කරන්න.</string>
+    <string name="installer_refresh_library">පුස්තකාලය නැවුම් කරන්න</string>
+    <string name="installer_cancel_pending">ඊළඟ ආරක්ෂිත ස්ථානයේදී නවතිමින්…</string>
+    <string name="installer_retry_remaining">අසම්පූර්ණ අයිතම සමාලෝචනය කරන්න</string>
+    <string name="installer_not_processed">සකසා නැත</string>
+    <string name="installer_partial_restore">යෙදුම ස්ථාපනය වූ නමුත් දත්ත හෝ සැකසීම් ප්‍රතිස්ථාපනය කිරීමට නොහැකි විය.</string>
+    <string name="installer_removed_leftovers">යෙදුම ඉවත් කළ නමුත් සමහර සැකසීම් හෝ සුරැකි දත්ත මැකීමට නොහැකි විය.</string>
+    <string name="installer_copy_details">විස්තර පිටපත් කරන්න</string>
+    <string name="installer_show_details">විස්තර පෙන්වන්න</string>
+    <string name="installer_hide_details">විස්තර සඟවන්න</string>
+    <!-- %1$d is the number of source Java class files skipped during conversion. -->
+    <plurals name="installer_conversion_warning_summary">
+        <item quantity="one">කියවීමට නොහැකි වූ බැවින් Java පන්ති ගොනුව <xliff:g id="skipped_count" example="2">%1$d</xliff:g> මඟහරින ලදී. එය භාවිතා කරන විශේෂාංග ක්‍රියා නොකළ හැකිය.</item>
+        <item quantity="other">කියවීමට නොහැකි වූ බැවින් Java පන්ති ගොනු <xliff:g id="skipped_count" example="2">%1$d</xliff:g> මඟහරින ලදී. ඒවා භාවිතා කරන විශේෂාංග ක්‍රියා නොකළ හැකිය.</item>
+    </plurals>
+    <!-- %1$s is the source JAR entry path for the skipped class file. -->
+    <string name="installer_conversion_skipped_entry"><xliff:g id="entry_path" example="com/example/Broken.class">%1$s</xliff:g>\nගැටලුව: Java පන්ති ගොනුව කියවීමට නොහැකි විය.\nක්‍රියාව: පරිවර්තනයේදී මඟහරින ලදී.</string>
+    <!-- %1$d is the number of additional bounded conversion diagnostics not shown. -->
+    <plurals name="installer_conversion_omitted_details">
+        <item quantity="one">අමතර පරිවර්තන ගැටලුව <xliff:g id="omitted_count" example="5">%1$d</xliff:g> පෙන්වා නැත.</item>
+        <item quantity="other">අමතර පරිවර්තන ගැටලු <xliff:g id="omitted_count" example="5">%1$d</xliff:g> පෙන්වා නැත.</item>
+    </plurals>
+    <string name="library_collection_new">නව එකතුව</string>
+    <string name="library_collection_ready_empty_message">ගොනු ගෙන යාමකින් තොරව යෙදුම් සංවිධානය කිරීමට එකතු සාදන්න.</string>
+    <string name="library_collection_add_app">එකතුවට එක් කරන්න</string>
+    <string name="library_collection_add_apps">යෙදුම් එක් කරන්න</string>
+    <string name="library_collection_manage_apps">යෙදුම් තෝරන්න</string>
+    <string name="library_collection_manage" tools:ignore="MissingTranslation">එකතු කළමනාකරණය කරන්න</string>
+    <string name="library_collection_delete_confirmation" tools:ignore="MissingTranslation">“<xliff:g id="collection_name" example="Favorites">%1$s</xliff:g>” මකන්නද? මෙම එකතුවේ ඇති යෙදුම් ස්ථාපිතව පවතී.</string>
+    <string name="library_collection_rename_action" tools:ignore="MissingTranslation">“<xliff:g id="collection_name" example="Favorites">%1$s</xliff:g>” එකතුව නැවත නම් කරන්න</string>
+    <string name="library_collection_delete_action" tools:ignore="MissingTranslation">“<xliff:g id="collection_name" example="Favorites">%1$s</xliff:g>” එකතුව මකන්න</string>
+    <string name="library_collection_select_action" tools:ignore="MissingTranslation">“<xliff:g id="collection_name" example="Favorites">%1$s</xliff:g>” එකතුව තෝරන්න</string>
+    <string name="library_collection_open_action" tools:ignore="MissingTranslation">“<xliff:g id="collection_name" example="Favorites">%1$s</xliff:g>” එකතුව විවෘත කරන්න</string>
+    <string name="library_collection_rename_selected" tools:ignore="MissingTranslation">තෝරාගත් එකතුව නැවත නම් කරන්න</string>
+    <string name="library_collection_delete_selected" tools:ignore="MissingTranslation">තෝරාගත් එකතු මකන්න</string>
+    <plurals name="library_collection_delete_many_confirmation">
+        <item quantity="one">එකතුව <xliff:g id="count" example="3">%d</xliff:g> මකන්නද? යෙදුම් ස්ථාපිතව පවතී.</item>
+        <item quantity="other">එකතු <xliff:g id="count" example="3">%d</xliff:g> මකන්නද? යෙදුම් ස්ථාපිතව පවතී.</item>
+    </plurals>
+    <string name="library_notifications_title" tools:ignore="MissingTranslation">දැනුම්දීම්</string>
+    <string name="library_notifications_empty_title" tools:ignore="MissingTranslation">තවම දැනුම්දීම් නොමැත</string>
+    <string name="library_notifications_empty_summary" tools:ignore="MissingTranslation">යෙදුම් යාවත්කාලීන දැනුම්දීම් තිබෙන විට මෙහි දිස්වේ.</string>
+    <string name="library_collection_manage_apps_summary">මෙම එකතුවට ඇතුළත් කිරීමට යෙදුම් තෝරන්න.</string>
+    <string name="library_collection_name">එකතුවේ නම</string>
+    <string name="library_collection_members_empty">මෙම එකතුවේ යෙදුම් නොමැත.</string>
+    <string name="library_collection_select_title">එකතුවක් තෝරන්න</string>
+    <string name="library_collection_select_message">එහි යෙදුම් බැලීමට එකතුවක් තෝරන්න.</string>
+    <string name="library_collection_remove_from_current">එකතුවෙන් ඉවත් කරන්න</string>
+    <string name="library_no_matches">“<xliff:g id="query" example="Bounce">%1$s</xliff:g>” සඳහා ගැළපීම් නොමැත</string>
+    <string name="library_action_share_app">යෙදුම බෙදා ගන්න</string>
+    <string name="library_action_export_bundle">යෙදුම් පොදිය නිර්යාත කරන්න</string>
+    <string name="library_action_import_bundle">යෙදුම් පොදිය ආයාත කරන්න</string>
+    <string name="library_action_import_bundle_summary">ඇතුළත් ඕනෑම සැකසීම්, සුරැකි දත්ත හෝ පිටුසන් සමඟ නිර්යාත කළ යෙදුම් ප්‍රතිස්ථාපනය කරන්න.</string>
+    <string name="library_import_preparing">යෙදුම් පොදිය කියවමින්…</string>
+    <string name="library_import_restoring">යෙදුම් දත්ත ප්‍රතිස්ථාපනය වෙමින්…</string>
+    <string name="library_import_done">යෙදුම් පොදිය ආයාත කරන ලදී.</string>
+    <string name="library_import_done_with_warning">යෙදුම් පොදිය අවවාද සමඟින් ආයාත කරන ලදී.</string>
+    <string name="library_import_invalid_bundle">තෝරාගත් යෙදුම් පොදිය වලංගු නොවේ, හානි වී ඇත හෝ සහාය නොදක්වයි. වලංගු JL-Mod Plus යෙදුම් පොදියක් තෝරා නැවත උත්සාහ කරන්න.</string>
+    <string name="library_import_restore_existing">මෙම යෙදුම දැනටමත් ස්ථාපනය කර ඇත. ඇතුළත් සැකසීම් සහ සුරැකි දත්ත පවතින දත්ත ප්‍රතිස්ථාපනය කරයි; සැකසීම් ද ඇතුළත් නොවේ නම් පිටුසන් ඒකාබද්ධ කෙරේ.</string>
+    <string name="library_import_restore_failed">යෙදුම ස්ථාපනය වූ නමුත් එහි පොදි දත්ත ප්‍රතිස්ථාපනය කිරීමට නොහැකි විය. ප්‍රතිස්ථාපනය නැවත උත්සාහ කරන්නද?</string>
+    <string name="library_play_stats_summary">දියත් කිරීම්: <xliff:g id="launch_count" example="12">%1$d</xliff:g> · මුළු කාලය: <xliff:g id="total_time" example="2h 15m">%2$s</xliff:g></string>
+    <string name="library_share_chooser_title">යෙදුම බෙදා ගන්න</string>
+    <string name="library_export_chooser_title">නිර්යාත කරන්න</string>
+    <string name="library_export_progress">නිර්යාත වෙමින්… <xliff:g id="completed" example="3">%1$d</xliff:g>/<xliff:g id="total" example="10">%2$d</xliff:g></string>
+    <string name="library_transfer_unavailable">නිර්යාත කිරීම සූදානම් කිරීමට නොහැකි විය. ධාවනය වන ඕනෑම MIDlet එකක් වසා නැවත උත්සාහ කරන්න.</string>
+    <string name="library_back">පුස්තකාලය වෙත ආපසු</string>
+    <string name="library_sort">යෙදුම් වර්ග කරන්න</string>
+    <string name="library_search_clear">සෙවීම හිස් කරන්න</string>
+    <string name="library_description_more">… තවත්</string>
+    <string name="library_description_less">අඩු</string>
+    <plurals name="file_picker_selected_count">
+        <item quantity="one"><xliff:g id="count" example="3">%1$d</xliff:g> තෝරා ඇත</item>
+        <item quantity="other"><xliff:g id="count" example="3">%1$d</xliff:g> තෝරා ඇත</item>
+    </plurals>
+    <plurals name="library_selection_count">
+        <item quantity="one">යෙදුම <xliff:g id="count" example="3">%1$d</xliff:g></item>
+        <item quantity="other">යෙදුම් <xliff:g id="count" example="3">%1$d</xliff:g></item>
+    </plurals>
+    <plurals name="library_collection_member_count">
+        <item quantity="one">යෙදුම <xliff:g id="count" example="3">%1$d</xliff:g></item>
+        <item quantity="other">යෙදුම් <xliff:g id="count" example="3">%1$d</xliff:g></item>
+    </plurals>
+    <plurals name="bulk_install_found">
+        <item quantity="one">යෙදුම <xliff:g id="count" example="3">%1$d</xliff:g> හමු විය</item>
+        <item quantity="other">යෙදුම් <xliff:g id="count" example="3">%1$d</xliff:g> හමු විය</item>
+    </plurals>
+    <plurals name="bulk_install_selected">
+        <item quantity="one"><xliff:g id="count" example="3">%1$d</xliff:g> තෝරා ඇත</item>
+        <item quantity="other"><xliff:g id="count" example="3">%1$d</xliff:g> තෝරා ඇත</item>
+    </plurals>
+    <plurals name="bulk_install_ready_count">
+        <item quantity="one"><xliff:g id="count" example="3">%1$d</xliff:g> සූදානම්</item>
+        <item quantity="other"><xliff:g id="count" example="3">%1$d</xliff:g> සූදානම්</item>
+    </plurals>
+    <plurals name="bulk_install_skipped_count">
+        <item quantity="one">දැනටමත් ස්ථාපිත හෝ අනුපිටපත්: <xliff:g id="count" example="3">%1$d</xliff:g></item>
+        <item quantity="other">දැනටමත් ස්ථාපිත හෝ අනුපිටපත්: <xliff:g id="count" example="3">%1$d</xliff:g></item>
+    </plurals>
+    <plurals name="bulk_install_attention_count">
+        <item quantity="one"><xliff:g id="count" example="3">%1$d</xliff:g> සමාලෝචනය අවශ්‍යයි</item>
+        <item quantity="other"><xliff:g id="count" example="3">%1$d</xliff:g> සමාලෝචනය අවශ්‍යයි</item>
+    </plurals>
+    <plurals name="bulk_install_installed_count">
+        <item quantity="one"><xliff:g id="count" example="3">%1$d</xliff:g> ස්ථාපනය විය</item>
+        <item quantity="other"><xliff:g id="count" example="3">%1$d</xliff:g> ස්ථාපනය විය</item>
+    </plurals>
+    <plurals name="bulk_install_updated_count">
+        <item quantity="one"><xliff:g id="count" example="3">%1$d</xliff:g> යාවත්කාලීන විය</item>
+        <item quantity="other"><xliff:g id="count" example="3">%1$d</xliff:g> යාවත්කාලීන විය</item>
+    </plurals>
+    <plurals name="bulk_install_reinstalled_count">
+        <item quantity="one"><xliff:g id="count" example="3">%1$d</xliff:g> නැවත ස්ථාපනය විය</item>
+        <item quantity="other"><xliff:g id="count" example="3">%1$d</xliff:g> නැවත ස්ථාපනය විය</item>
+    </plurals>
+    <plurals name="bulk_install_skipped_result_count">
+        <item quantity="one"><xliff:g id="count" example="3">%1$d</xliff:g> මඟහරින ලදී</item>
+        <item quantity="other"><xliff:g id="count" example="3">%1$d</xliff:g> මඟහරින ලදී</item>
+    </plurals>
+    <plurals name="bulk_install_failed_count">
+        <item quantity="one"><xliff:g id="count" example="3">%1$d</xliff:g> අසාර්ථක විය</item>
+        <item quantity="other"><xliff:g id="count" example="3">%1$d</xliff:g> අසාර්ථක විය</item>
+    </plurals>
+    <plurals name="bulk_install_warning_count">
+        <item quantity="one">අවවාදය <xliff:g id="count" example="3">%1$d</xliff:g></item>
+        <item quantity="other">අවවාද <xliff:g id="count" example="3">%1$d</xliff:g></item>
+    </plurals>
+    <plurals name="bulk_install_omitted_sources">
+        <item quantity="one">සමාලෝචනය වේගවත්ව තබා ගැනීමට අමතර ගොනුව <xliff:g id="count" example="3">%1$d</xliff:g> ඉවත් කරන ලදී.</item>
+        <item quantity="other">සමාලෝචනය වේගවත්ව තබා ගැනීමට අමතර ගොනු <xliff:g id="count" example="3">%1$d</xliff:g> ඉවත් කරන ලදී.</item>
+    </plurals>
+    <plurals name="library_bulk_delete_confirmation">
+        <item quantity="one">යෙදුම <xliff:g id="count" example="3">%1$d</xliff:g> මකන්නද? එහි ගොනු, සැකසීම් සහ සුරැකි දත්ත ඔබේ පුස්තකාලයෙන් ඉවත් කෙරේ.</item>
+        <item quantity="other">යෙදුම් <xliff:g id="count" example="3">%1$d</xliff:g> මකන්නද? ඒවායේ ගොනු, සැකසීම් සහ සුරැකි දත්ත ඔබේ පුස්තකාලයෙන් ඉවත් කෙරේ.</item>
+    </plurals>
+    <plurals name="library_bulk_delete_result">
+        <item quantity="one">යෙදුම <xliff:g id="deleted_count" example="3">%1$d</xliff:g> මකන ලදී; <xliff:g id="failed_count" example="1">%2$d</xliff:g> අසාර්ථක විය.</item>
+        <item quantity="other">යෙදුම් <xliff:g id="deleted_count" example="3">%1$d</xliff:g> මකන ලදී; <xliff:g id="failed_count" example="1">%2$d</xliff:g> අසාර්ථක විය.</item>
+    </plurals>
+    <string name="bulk_install_title">සමූහ ස්ථාපනය</string>
+    <string name="bulk_install_planning">තෝරාගත් යෙදුම් පරීක්ෂා වෙමින්…</string>
+    <string name="bulk_install_empty">සහාය දක්වන යෙදුම් හමු නොවීය.</string>
+    <string name="bulk_install_recommended">නිර්දේශිත</string>
+    <string name="bulk_install_clear">තේරීම හිස් කරන්න</string>
+    <string name="bulk_install_install_count"><xliff:g id="count" example="3">%1$d</xliff:g> ස්ථාපනය කරන්න</string>
+    <string name="bulk_install_cancel">අවලංගු කරන්න</string>
+    <string name="bulk_install_close">වසන්න</string>
+    <plurals name="bulk_install_running">
+        <item quantity="one"><xliff:g id="total" example="10">%2$d</xliff:g> න් යෙදුම <xliff:g id="processed" example="3">%1$d</xliff:g> සකසන ලදී</item>
+        <item quantity="other"><xliff:g id="total" example="10">%2$d</xliff:g> න් යෙදුම් <xliff:g id="processed" example="3">%1$d</xliff:g> සකසන ලදී</item>
+    </plurals>
+    <string name="bulk_install_cancel_requested">වත්මන් යෙදුමෙන් පසු නවතිමින්…</string>
+    <string name="bulk_install_complete">සමූහ ස්ථාපනය සම්පූර්ණයි</string>
+    <string name="bulk_install_cancelled">සමූහ ස්ථාපනය නවත්වන ලදී</string>
+    <string name="bulk_install_fatal">සමූහ ස්ථාපනය නතර විය. නැවත උත්සාහ කිරීමට පෙර අසම්පූර්ණ අයිතම සමාලෝචනය කරන්න.</string>
+    <string name="bulk_install_result_installed">ස්ථාපනය විය</string>
+    <string name="bulk_install_result_updated">යාවත්කාලීන විය</string>
+    <string name="bulk_install_result_reinstalled">නැවත ස්ථාපනය විය</string>
+    <string name="bulk_install_result_skipped">මඟහරින ලදී</string>
+    <string name="bulk_install_result_failed">අසාර්ථක විය</string>
+    <string name="bulk_install_installed_version">ස්ථාපිත: <xliff:g id="version" example="2.1.0">%1$s</xliff:g></string>
+    <string name="bulk_install_source">මූලාශ්‍රය: <xliff:g id="name" example="Example">%1$s</xliff:g></string>
+    <string name="bulk_install_action_separate_copy">වෙනම පිටපතක් ලෙස ස්ථාපනය කරන්න</string>
+    <string name="bulk_install_action_jar_only">JAR පමණක් ස්ථාපනය කරන්න</string>
+    <string name="single_install_review_jar_only" tools:ignore="MissingTranslation">JAR පමණක් සමාලෝචනය කරන්න</string>
+    <string name="single_install_jar_only_notice" tools:ignore="MissingTranslation">JAR පමණක් ස්ථාපනය කෙරේ. ඉදිරියට යාමට පෙර එහි යෙදුම් නම, අනුවාදය සහ ස්ථාපිත යෙදුම් තත්ත්වය සමාලෝචනය කරන්න.</string>
+    <string name="single_install_running_replacement_warning" tools:ignore="MissingTranslation">මෙම යෙදුම ධාවනය වන්නේ නම්, එහි ගොනු ප්‍රතිස්ථාපනය කිරීමට පෙර ස්ථාපනය මඟින් එය නවත්වනු ලැබේ. සුරකිනු නොලැබූ ප්‍රගතිය අහිමි විය හැකිය.</string>
+    <string name="bulk_install_status_new">නව</string>
+    <string name="bulk_install_status_update">යාවත්කාලීනය</string>
+    <string name="bulk_install_status_downgrade">පැරණි අනුවාදය</string>
+    <string name="bulk_install_status_same">දැනටමත් ස්ථාපිතයි</string>
+    <string name="bulk_install_status_reinstall">එකම අනුවාදය, විය හැකි ප්‍රභේදය</string>
+    <string name="bulk_install_status_ambiguous">ස්ථාපිත යෙදුම් කිහිපයකට ගැළපේ</string>
+    <string name="bulk_install_status_mismatch">JAD/JAR නොගැළපීම</string>
+    <string name="bulk_install_status_duplicate">අනුපිටපත</string>
+    <string name="bulk_install_status_older_batch">කණ්ඩායමේ පැරණි අනුවාදය</string>
+    <string name="bulk_install_status_conflict">කණ්ඩායම් ගැටුම</string>
+    <string name="bulk_install_status_remote">දුරස්ථ මූලාශ්‍රයට සහාය නොදක්වයි</string>
+    <string name="bulk_install_status_error">වලංගු නොවන මූලාශ්‍රය</string>
+    <string name="bulk_install_reinstall_source_missing">නැවත ස්ථාපනය සඳහා සුරැකි JAR ලබා ගත නොහැක.</string>
+    <plurals name="bulk_install_reinstall_missing_apps">
+        <item quantity="one">තෝරාගත් පුස්තකාල යෙදුම <xliff:g id="count" example="3">%1$d</xliff:g> තවදුරටත් ලබා ගත නොහැක.</item>
+        <item quantity="other">තෝරාගත් පුස්තකාල යෙදුම් <xliff:g id="count" example="3">%1$d</xliff:g> තවදුරටත් ලබා ගත නොහැක.</item>
+    </plurals>
+    <string name="library_metadata_edit_title">පාරදත්ත සංස්කරණය කරන්න</string>
+    <string name="library_metadata_icon">නිරූපකය</string>
+    <string name="library_metadata_name">නම</string>
+    <string name="library_metadata_vendor">විකුණුම්කරු</string>
+    <string name="library_metadata_reset_to_original">මුල් තත්ත්වයට යළි පිහිටුවන්න</string>
+    <string name="library_metadata_save">සුරකින්න</string>
+    <string name="library_hide_grid_titles_summary">ජාලක දසුනේ MIDlet නම් සඟවයි. ලැයිස්තු දසුනේ ඒවා දෘශ්‍යමානව පවතී.</string>
+    <string name="library_show_list_description_summary">ශීර්ෂය සහ අනුවාදය යටින් එක් එක් MIDlet විස්තරය පෙන්වයි.</string>
+    <string name="library_indexing_progress">පුස්තකාලය සුචිගත වෙමින්… <xliff:g id="completed" example="3">%1$d</xliff:g>/<xliff:g id="total" example="10">%2$d</xliff:g></string>
+    <string name="library_indexing_current"><xliff:g id="name" example="Example">%1$s</xliff:g> ස්කෑන් වෙමින්</string>
+    <string name="library_load_error_title">පුස්තකාලය ලබා ගත නොහැක</string>
+    <string name="library_retry">නැවත උත්සාහ කරන්න</string>
+    <string name="library_reinstall_source_missing">නැවත ස්ථාපනය සඳහා සුරැකි JAR ලබා ගත නොහැක.</string>
+    <string name="library_action_select">තෝරන්න</string>
+    <string name="library_selection_select_all">සියල්ල තෝරන්න</string>
+    <string name="library_selection_unselect_all">සියල්ල තේරීම ඉවත් කරන්න</string>
+    <string name="library_selection_checkbox_description"><xliff:g id="name" example="Example">%1$s</xliff:g> තෝරන්න</string>
+    <string name="library_selection_checked">තෝරා ඇත</string>
+    <string name="library_selection_unchecked">තෝරා නැත</string>
+    <string name="library_action_settings_summary">ගෝලීය හැසිරීම සහ පෙනුම වින්‍යාස කරන්න.</string>
+    <string name="library_action_crash_reports_summary">සුරැකි දෝෂ විනිශ්චය වාර්තා සමාලෝචනය කරන්න.</string>
+    <string name="library_action_about_summary">ව්‍යාපෘති දළ විශ්ලේෂණය, ගොඩනැගීමේ තොරතුරු සහ සබැඳි.</string>
+    <string name="library_action_licenses_summary">යෙදුම සමඟ ඇතුළත් තෙවන පාර්ශ්ව දැනුම්දීම් සහ බලපත්‍ර කොන්දේසි.</string>
+    <string name="library_donation_action">සංවර්ධනයට සහාය වන්න</string>
+    <string name="library_donation_summary">JL-Mod Plus තවදුරටත් වර්ධනය කිරීමට උදවු කරන්න.</string>
+    <string name="library_donation_title">JL-Mod Plus සඳහා සහාය වන්න</string>
+    <string name="library_donation_message">JL-Mod Plus නොමිලේ සහ විවෘත මූලාශ්‍ර වේ. එය ඔබට ප්‍රයෝජනවත් යැයි හැඟේ නම්, ස්වේච්ඡා පරිත්‍යාගයකින් එහි සංවර්ධනයට සහාය විය හැකිය.</string>
+    <string name="library_donation_provider_note">පරිත්‍යාග බාහිරව Sociabuzz මඟින් හසුරුවනු ලැබේ.</string>
+    <string name="library_donation_continue">Sociabuzz වෙත ඉදිරියට යන්න</string>
+    <string name="library_donation_not_now">දැන් නොවේ</string>
+    <string name="library_donation_link_copied">බ්‍රව්සරයක් හමු නොවීය. Sociabuzz සබැඳිය පසුරු පුවරුවට පිටපත් කරන ලදී.</string>
+    <string name="library_donation_browser_unavailable">Sociabuzz විවෘත කිරීමට බ්‍රව්සරයක් හමු නොවීය.</string>
+    <string name="library_bulk_delete_apps">යෙදුම් මකන්න</string>
+    <string name="library_bulk_add_collection">එකතුවට එක් කරන්න</string>
+    <string name="library_bulk_share_apps">යෙදුම් බෙදා ගන්න</string>
+    <string name="library_bulk_reinstall_apps">නැවත ස්ථාපනය කරන්න</string>
+    <string name="library_bulk_export_apps">පොදිය නිර්යාත කරන්න</string>
+    <string name="library_enhanced_icons_title">වැඩිදියුණු කළ නිරූපක</string>
+    <string name="library_enhanced_icons_summary">ඔබේ පුස්තකාලයේ නිරූපක වඩාත් ඒකාකාරීව පෙනෙන පරිදි නිරූපක රාමු කිරීම, පරිමාණය සහ ටයිල් පසුබිම සීරුමාරු කරයි.</string>
+    <string name="library_collections_unavailable_title">එකතු ලබා ගත නොහැක</string>
+    <string name="library_load_failed_message">පුස්තකාලය පූරණය කිරීමට නොහැකි විය. නැවත උත්සාහ කරන්න.</string>
+    <string name="bulk_install_prepare_failed">තෝරාගත් යෙදුම් ස්ථාපනය සඳහා සූදානම් කිරීමට නොහැකි විය.</string>
+    <string name="installer_existing_data_preserved">පවතින සැකසීම් සහ සුරැකි දත්ත තබා ගනු ලැබේ.</string>
+    <string name="bulk_install_library_changed">සමාලෝචනයෙන් පසු ඔබේ පුස්තකාලය වෙනස් විය. මෙම කණ්ඩායම වසා ගොනු නැවත තෝරන්න.</string>
+    <string name="bulk_install_source_unavailable">අවශ්‍ය මූලාශ්‍ර ගොනුවක් තවදුරටත් ලබා ගත නොහැක. ගොනු නැවත තෝරන්න.</string>
+    <string name="bulk_install_source_changed">සමාලෝචනයෙන් පසු මූලාශ්‍ර ගොනුව වෙනස් විය. ගොනු නැවත තෝරන්න.</string>
+    <string name="bulk_install_target_unverified">නැවත ස්ථාපන ඉලක්කය සත්‍යාපනය කිරීමට නොහැකි විය. මෙම කණ්ඩායම වසා යෙදුම නැවත තෝරන්න.</string>
+    <string name="bulk_install_result_restored">ප්‍රතිස්ථාපනය විය</string>
+    <plurals name="bulk_install_restored_count">
+        <item quantity="one"><xliff:g id="count" example="3">%1$d</xliff:g> ප්‍රතිස්ථාපනය විය</item>
+        <item quantity="other"><xliff:g id="count" example="3">%1$d</xliff:g> ප්‍රතිස්ථාපනය විය</item>
+    </plurals>
+    <plurals name="bulk_install_reason_ambiguous_match">
+        <item quantity="one">ස්ථාපිත යෙදුම <xliff:g id="count" example="3">%1$d</xliff:g> මෙම මූලාශ්‍රයට ගැළපේ.</item>
+        <item quantity="other">ස්ථාපිත යෙදුම් <xliff:g id="count" example="3">%1$d</xliff:g> මෙම මූලාශ්‍රයට ගැළපේ.</item>
+    </plurals>
+    <string name="bulk_install_reason_jad_jar_mismatch">JAD සහ JAR වෙනස් යෙදුම් හඳුනා ගනී.</string>
+    <string name="bulk_install_reason_conflicting_jads">වෙනස් ගුණාංග සහිත JAD ගොනු එකම JAR වෙත යොමු කරයි.</string>
+    <string name="bulk_install_reason_remote_jar">සමූහ ස්ථාපනයට දුරස්ථ JAR ගොනු බාගත කළ නොහැක.</string>
+    <string name="bulk_install_reason_missing_jar_url">JAD හි MIDlet-Jar-URL නොමැත.</string>
+    <!-- %1$s is the exact URI scheme supplied by the JAD; do not translate it. -->
+    <string name="bulk_install_reason_unsupported_uri_scheme">JAD සහාය නොදක්වන URI ක්‍රමයක් භාවිතයෙන් JAR වෙත යොමු කරයි: <xliff:g id="scheme" example="http">%1$s</xliff:g>.</string>
+    <string name="bulk_install_reason_missing_parent">JAD සඳහා මව් ෆෝල්ඩරයක් නොමැත.</string>
+    <!-- %1$s is the exact MIDlet-Jar-URL reference, not a normalized filesystem path. -->
+    <string name="bulk_install_reason_jar_not_found">JAD මඟින් යොමු කළ JAR හමු නොවීය: <xliff:g id="file_path" example="game.jar">%1$s</xliff:g>.</string>
+    <string name="bulk_install_reason_duplicate_source">මෙම මූලාශ්‍රය මෙම කණ්ඩායමේ වෙනත් මූලාශ්‍රයක අනුපිටපතකි.</string>
+    <string name="bulk_install_reason_version_conflict">යෙදුම් ප්‍රභේද කිහිපයකට එකම අනුවාදය ඇත.</string>
+    <string name="bulk_install_reason_older_candidate">මෙම යෙදුමේ නව අනුවාදයක් එකම කණ්ඩායමේ ඇත.</string>
+    <string name="bulk_install_reason_source_error">මෙම මූලාශ්‍රය ස්ථාපනය සඳහා සූදානම් කිරීමට නොහැකි විය.</string>
+    <string name="updates_title">යාවත්කාලීන</string>
+    <string name="updates_more_summary">JL-Mod Plus හි නව අනුවාද සඳහා පරීක්ෂා කරන්න.</string>
+    <string name="updates_more_available">නව අනුවාදයක් තිබේ.</string>
+    <string name="updates_installed_version">ස්ථාපිත අනුවාදය: <xliff:g id="version" example="2.1.0">%1$s</xliff:g></string>
+    <string name="updates_build_code">ගොඩනැගීම <xliff:g id="build_code" example="247">%1$d</xliff:g></string>
+    <string name="updates_automatic">පුස්තකාලය සක්‍රිය විට ස්වයංක්‍රීයව පරීක්ෂා කරන්න</string>
+    <string name="updates_not_checked">තවම පරීක්ෂා කර නැත.</string>
+    <string name="updates_checking">යාවත්කාලීන පරීක්ෂා වෙමින්…</string>
+    <string name="updates_current">ඔබේ යෙදුම යාවත්කාලීනයි.</string>
+    <string name="updates_no_release">ගැළපෙන ප්‍රකාශිත නිකුතුවක් නොමැත.</string>
+    <string name="updates_not_installable">නව නිකුතුවක් තිබුණද එය මෙම උපාංගය හෝ ස්ථාපනය සමඟ නොගැළපේ.</string>
+    <string name="updates_failed">යාවත්කාලීන පරීක්ෂා කිරීමට නොහැකි විය. ඔබේ සම්බන්ධතාවය පරීක්ෂා කර නැවත උත්සාහ කරන්න.</string>
+    <string name="updates_available">යාවත්කාලීනයක් තිබේ</string>
+    <string name="updates_view_release">නිකුතුව බලන්න</string>
+    <string name="updates_last_checked">අවසන් වරට පරීක්ෂා කළේ: <xliff:g id="timestamp" example="Today, 09:45">%1$s</xliff:g></string>
+    <string name="updates_check">යාවත්කාලීන පරීක්ෂා කරන්න</string>
+    <string name="updates_notice">JL-Mod Plus <xliff:g id="version" example="2.1.0">%1$s</xliff:g> තිබේ. “සැකසීම්” තුළ “යාවත්කාලීන” බලන්න.</string>
+    <string name="updates_debug_build">මෙය නිදොස්කරණ ගොඩනැගීමකි. GitHub නිකුතු APK වෙනම ස්ථාපනය වේ.</string>
+    <string name="updates_link_copied">බ්‍රව්සරයක් හමු නොවීය. යාවත්කාලීන සබැඳිය පසුරු පුවරුවට පිටපත් කරන ලදී.</string>
+    <string name="updates_browser_unavailable">යාවත්කාලීන සබැඳිය විවෘත කිරීමට බ්‍රව්සරයක් හමු නොවීය.</string>
+    <string name="bulk_install_choose_files">ගොනු</string>
+    <string name="bulk_install_choose_folder">ෆෝල්ඩරය</string>
+    <string name="bulk_install_unreadable_archives">කියවිය නොහැකි සංරක්ෂිත: <xliff:g id="count" example="3">%1$d</xliff:g></string>
+    <string name="bulk_install_skipped_entries">මඟහැරි ගොනු හෝ සංරක්ෂිත ඇතුළත් කිරීම්: <xliff:g id="count" example="3">%1$d</xliff:g></string>
+    <string name="bulk_install_selection_options" tools:ignore="MissingTranslation">තේරීම් විකල්ප</string>
+    <string name="bulk_install_show_details" tools:ignore="MissingTranslation">විස්තර පෙන්වන්න</string>
+    <string name="bulk_install_hide_details" tools:ignore="MissingTranslation">විස්තර සඟවන්න</string>
+    <string name="bulk_install_filter_all">සියල්ල</string>
+    <string name="bulk_install_filter_selected">තෝරාගත්</string>
+    <string name="bulk_install_filter_review">සමාලෝචනය</string>
+    <string name="bulk_install_empty_filter">ගැළපෙන යෙදුම් නොමැත.</string>
+    <string name="platform_package_choice_title" tools:ignore="MissingTranslation">Java ME පැකේජය හඳුනාගැනිණි</string>
+    <string name="platform_package_choice_message" tools:ignore="MissingTranslation">මෙම සබැඳිය Java ME පැකේජයක් වෙත යොමු කරයි. ඔබ කිරීමට කැමති කුමක්ද?</string>
+    <string name="platform_package_install" tools:ignore="MissingTranslation">JL-Mod Plus හි ස්ථාපනය කරන්න</string>
+    <string name="platform_package_browser" tools:ignore="MissingTranslation">බ්‍රව්සරයේ විවෘත කරන්න</string>
+    <string name="platform_package_unavailable" tools:ignore="MissingTranslation">මෙම සබැඳිය විවෘත කිරීමට යෙදුමක් හමු නොවීය.</string>
+    <string name="installer_running_update_warning" tools:ignore="MissingTranslation">මෙම යෙදුම දැනට ධාවනය වේ. ස්ථාපනය කිරීමෙන් එහි ගොනු ප්‍රතිස්ථාපනය කිරීමට පෙර එය නතර වේ. සුරකිනු නොලැබූ ප්‍රගතිය අහිමි විය හැකිය.</string>
+    <string name="library_metadata_main_icon">ප්‍රධාන</string>
+    <string name="library_metadata_follows_main">ප්‍රධාන නිරූපකය භාවිතා කරයි</string>
+    <string name="library_metadata_change">වෙනස් කරන්න</string>
+    <string name="library_metadata_remove_portrait">3:4 නිරූපකය ඉවත් කරන්න</string>
+    <string name="library_metadata_discard_title">වෙනස්කම් ඉවතලන්නද?</string>
+    <string name="library_metadata_discard">ඉවතලන්න</string>
+    <string name="library_metadata_default_description">පෙරනිමි විස්තරය</string>
+    <string name="library_metadata_other_languages">වෙනත් භාෂා</string>
+    <string name="library_metadata_add_language">+ භාෂාවක් එක් කරන්න</string>
+    <string name="library_metadata_language_search">භාෂාව හෝ ප්‍රාදේශීය කේතය සොයන්න</string>
+    <string name="library_metadata_remove_language">විස්තරය ඉවත් කරන්න</string>
+    <string name="library_metadata_language_load_failed">භාෂා විස්තර පූරණය කිරීමට නොහැකි විය. නැවත උත්සාහ කිරීමට “නැවත උත්සාහ කරන්න” තට්ටු කරන්න.</string>
+    <string name="updates_download_apk" tools:ignore="MissingTranslation">APK බාගත කරන්න</string>
+    <string name="updates_skip_version" tools:ignore="MissingTranslation">මෙම අනුවාදය මඟහරින්න</string>
+    <string name="updates_dialog_message" tools:ignore="MissingTranslation">JL-Mod Plus <xliff:g id="version" example="2.1.0">%1$s</xliff:g> තිබේ. ඔබ භාවිතා කරන්නේ <xliff:g id="current_version" example="2.0.0">%2$s</xliff:g>. APK බාගත කරන්න හෝ GitHub හි නිකුතුව බලන්න.</string>
+    <string name="library_bundle_components_title" tools:ignore="MissingTranslation">පොදිය නිර්යාත කරන්න</string>
+    <string name="library_bundle_components_explanation" tools:ignore="MissingTranslation">තෝරාගත් යෙදුම් සැමවිටම ඇතුළත් වේ. නිර්යාත කිරීමට පෙර ධාවනය වන ඕනෑම MIDlet එකක් වසා, ඇතුළත් කිරීමට අමතර දත්ත තෝරන්න.</string>
+    <string name="library_bundle_config" tools:ignore="MissingTranslation">වින්‍යාසය</string>
+    <string name="library_bundle_save_data" tools:ignore="MissingTranslation">සුරැකි දත්ත</string>
+    <string name="library_bundle_saved_variables" tools:ignore="MissingTranslation">පිටුසන්</string>
+    <string name="library_bundle_export" tools:ignore="MissingTranslation">නිර්යාත කරන්න</string>
+    <string name="library_export_jar_only" tools:ignore="MissingTranslation">JAR පමණි</string>
+    <string name="library_export_jars_only" tools:ignore="MissingTranslation">JAR පමණි (ZIP)</string>
+    <string name="library_selection_action_delete" tools:ignore="MissingTranslation">මකන්න</string>
+    <string name="library_selection_action_collection" tools:ignore="MissingTranslation">එකතුව</string>
+    <string name="library_selection_action_export" tools:ignore="MissingTranslation">නිර්යාත කරන්න</string>
+    <string name="library_selection_action_reinstall" tools:ignore="MissingTranslation">නැවත ස්ථාපනය කරන්න</string>
+    <string name="installer_select_companion_jar" tools:ignore="MissingTranslation">මෙම JAD වෙනම JAR ගොනුවක් වෙත යොමු කරයි. ඉදිරියට යාමට ගැළපෙන JAR තෝරන්න. බාහිර ගොනු සපයන්නා ආසන්න ගොනු වෙත ප්‍රවේශයට ඉඩ නොදේ.</string>
+    <string name="installer_select_jar" tools:ignore="MissingTranslation">JAR තෝරන්න</string>
+    <string name="installer_wrong_companion_jar" tools:ignore="MissingTranslation">මෙම JAR තෝරාගත් JAD සමඟ නොගැළපේ. JAD සැකසීම් තබා ගැනීමට ගැළපෙන JAR තෝරන්න.</string>
+    <string name="installer_choose_another_jar" tools:ignore="MissingTranslation">වෙනත් JAR එකක් තෝරන්න</string>
+    <string name="library_app_more_actions" tools:ignore="MissingTranslation"><xliff:g id="name" example="Example">%1$s</xliff:g> සඳහා තවත් ක්‍රියා</string>
+    <string name="library_actions_group_customize" tools:ignore="MissingTranslation">අභිරුචිකරණය</string>
+    <string name="library_actions_group_organize" tools:ignore="MissingTranslation">සංවිධානය</string>
+    <string name="library_actions_group_transfer" tools:ignore="MissingTranslation">මාරු කිරීම සහ නඩත්තුව</string>
+    <string name="library_collection_more_actions" tools:ignore="MissingTranslation">“<xliff:g id="collection_name" example="Favorites">%1$s</xliff:g>” එකතුව සඳහා තවත් ක්‍රියා</string>
+    <string name="library_settings_preferences" tools:ignore="MissingTranslation">යෙදුම් මනාපයන්</string>
+    <string name="library_settings_section_maintenance" tools:ignore="MissingTranslation">යාවත්කාලීන සහ දෝෂ විනිශ්චය</string>
+    <string name="library_settings_section_support" tools:ignore="MissingTranslation">පිළිබඳව සහ සහාය</string>
+    <string name="library_details_title" tools:ignore="MissingTranslation">MIDlet විස්තර</string>
+    <string name="library_details_description" tools:ignore="MissingTranslation">විස්තරය</string>
+    <string name="library_details_play_stats" tools:ignore="MissingTranslation">ක්‍රීඩා සංඛ්‍යාලේඛන</string>
+    <string name="library_details_launches" tools:ignore="MissingTranslation">දියත් කිරීම්</string>
+    <string name="library_details_total_time" tools:ignore="MissingTranslation">මුළු කාලය</string>
+    <string name="library_details_last_played" tools:ignore="MissingTranslation">අවසන් වරට ක්‍රීඩා කළේ</string>
+    <string name="library_details_library_info" tools:ignore="MissingTranslation">පුස්තකාල තොරතුරු</string>
+    <string name="library_details_added" tools:ignore="MissingTranslation">පුස්තකාලයට එක් කළේ</string>
+    <string name="library_details_collections" tools:ignore="MissingTranslation">එකතු</string>
+    <string name="library_details_none" tools:ignore="MissingTranslation">කිසිවක් නැත</string>
+    <string name="library_details_technical" tools:ignore="MissingTranslation">තාක්ෂණික තොරතුරු</string>
+    <string name="library_details_profile" tools:ignore="MissingTranslation">පැතිකඩ</string>
+    <string name="library_details_configuration" tools:ignore="MissingTranslation">වින්‍යාසය</string>
+    <string name="library_details_jar_size" tools:ignore="MissingTranslation">තබාගත් JAR ප්‍රමාණය</string>
+    <string name="library_details_entry_points" tools:ignore="MissingTranslation">MIDlet ඇතුළත් කිරීම්</string>
+    <string name="library_details_original_metadata" tools:ignore="MissingTranslation">මුල් පාරදත්ත</string>
+    <string name="library_details_name" tools:ignore="MissingTranslation">නම</string>
+    <string name="library_details_vendor" tools:ignore="MissingTranslation">විකුණුම්කරු</string>
+    <string name="library_details_version" tools:ignore="MissingTranslation">අනුවාදය</string>
+    <string name="library_details_version_value" tools:ignore="MissingTranslation">අනුවාදය <xliff:g id="version" example="2.1.0">%1$s</xliff:g></string>
+    <string name="library_details_original_description" tools:ignore="MissingTranslation">මුල් විස්තරය</string>
+    <string name="library_details_permissions" tools:ignore="MissingTranslation">ප්‍රකාශිත අවසර</string>
+    <string name="library_details_required" tools:ignore="MissingTranslation">අවශ්‍ය</string>
+    <string name="library_details_optional" tools:ignore="MissingTranslation">විකල්ප</string>
+    <string name="library_details_no_permissions" tools:ignore="MissingTranslation">අවසර ප්‍රකාශ කර නැත</string>
+    <string name="library_details_descriptor_attributes" tools:ignore="MissingTranslation">විස්තරක ගුණාංග</string>
+    <string name="library_details_unavailable" tools:ignore="MissingTranslation">ලබා ගත නොහැක</string>
+    <string name="library_details_action" tools:ignore="MissingTranslation">විස්තර</string>
+    <string name="library_details_view_details" tools:ignore="MissingTranslation">විස්තර බලන්න</string>
+    <string name="library_actions_more" tools:ignore="MissingTranslation">තවත් ක්‍රියා</string>
+    <string name="library_actions_less" tools:ignore="MissingTranslation">අඩු ක්‍රියා</string>
+</resources>

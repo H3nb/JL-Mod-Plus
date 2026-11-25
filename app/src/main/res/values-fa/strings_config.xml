@@ -1,0 +1,356 @@
+<?xml version="1.0" encoding="utf-8"?>
+<!-- Per-MIDlet configuration, reusable profiles, camera, controller calibration, permissions, and system properties. -->
+<resources xmlns:tools="http://schemas.android.com/tools" xmlns:xliff="urn:oasis:names:tc:xliff:document:1.2">
+    <!-- %1$s is an optional quoted storage-volume name with a trailing space, or empty. -->
+    <!-- %1$s is a raw storage-volume description. -->
+    <string name="config_missing_app_storage_named">برنامه یافت نشد.\nبررسی کنید آیا دستگاه ذخیره‌سازی «<xliff:g id="storage_name" example="SD card">%1$s</xliff:g>» در دسترس است، یا میان‌بر را دوباره بسازید.</string>
+    <string name="config_missing_app_storage_generic">برنامه یافت نشد.\nبررسی کنید آیا دستگاه ذخیره‌سازی در دسترس است، یا میان‌بر را دوباره بسازید.</string>
+    <string name="midlet_name"><b>نام: </b></string>
+    <string name="midlet_size"><b>اندازه: </b></string>
+    <string name="midlet_vendor"><b>سازنده: </b></string>
+    <string name="midlet_version"><b>نسخه: </b></string>
+    <string name="config_destination_graphics">نمایشگر</string>
+    <string name="config_destination_rendering" tools:ignore="MissingTranslation">گرافیک</string>
+    <string name="config_destination_media">رسانه</string>
+    <string name="config_camera_title">دوربین</string>
+    <string name="config_camera_default_title">دوربین پیش‌فرض</string>
+    <string name="config_camera_rear">پشت</string>
+    <string name="config_camera_front">جلو</string>
+    <string name="config_camera_resolution_title">وضوح پیش‌فرض</string>
+    <string name="config_camera_resolution_auto">خودکار</string>
+    <string name="config_camera_resolution_portrait">480×640 — عمودی</string>
+    <string name="config_camera_resolution_landscape">640×480 — افقی</string>
+    <string name="config_destination_controls">کنترل‌ها</string>
+    <string name="config_gamepad_test">آزمایش دسته بازی</string>
+    <string name="config_gamepad_calibrate">کالیبره کردن دسته بازی</string>
+    <string name="config_gamepad_calibrate_summary">وضعیت خنثی دسته بازی متصل و بازه آنالوگ‌ها و ماشه‌های آن را اندازه‌گیری می‌کند.</string>
+    <string name="config_gamepad_stick_directions">جهت‌های دیجیتال</string>
+    <string name="config_gamepad_stick_unassigned">اختصاص‌نیافته</string>
+    <string name="config_gamepad_stick_pointer">منبع اشاره‌گر</string>
+    <string name="config_gamepad_opaque_summary">این پیکربندی شامل داده‌های دسته بازی با قالبی پشتیبانی‌نشده است. بدون تغییر حفظ شده و اینجا قابل ویرایش نیست.</string>
+    <string name="config_gamepad_unsupported_summary">این پیکربندی دسته بازی پشتیبانی نمی‌شود. بدون تغییر حفظ شده و اینجا قابل ویرایش نیست.</string>
+    <string name="config_gamepad_keypad_title">صفحه‌کلید مجازی</string>
+    <string name="config_gamepad_calibration_next">بعدی</string>
+    <string name="config_gamepad_mapping_help_title">راهنمای نگاشت دسته بازی</string>
+    <string name="config_gamepad_directions_four">4 جهته</string>
+    <string name="config_gamepad_directions_eight">8 جهته</string>
+    <string name="config_gamepad_pointer_off">خاموش</string>
+    <string name="config_gamepad_pointer_cursor">نشانگر متناسب</string>
+    <string name="config_gamepad_pointer_joystick">جوی‌استیک لمسی</string>
+    <!-- This is the same controller-identity fingerprint shown in diagnostics. -->
+    <string name="config_gamepad_calibration_profile">شناسه دسته بازی: <xliff:g id="profile_name" example="Action Games">%1$s</xliff:g></string>
+    <string name="config_gamepad_calibration_phase_neutral">در انتظار حالت خنثی</string>
+    <string name="config_gamepad_calibration_phase_stick_range">بازه آنالوگ</string>
+    <string name="config_gamepad_calibration_phase_trigger_range">بازه ماشه</string>
+    <string name="config_gamepad_calibration_phase_review">بازبینی</string>
+    <string name="config_gamepad_calibration_phase_committed">ذخیره شد</string>
+    <string name="config_gamepad_calibration_phase_cancelled">لغو شد</string>
+    <string name="config_gamepad_calibration_waiting_controller">دسته بازی‌ای با آنالوگ یا ماشه پشتیبانی‌شده متصل کنید. کالیبراسیون با اولین حرکت آنالوگ یا فشردن ماشه آغاز می‌شود؛ کالیبراسیون فعلی تا زمان ذخیره بدون تغییر می‌ماند.</string>
+    <string name="config_gamepad_calibration_no_analog_ranges">این دسته بازی بازه‌های پشتیبانی‌شده برای آنالوگ یا ماشه ارائه نمی‌دهد.</string>
+    <string name="config_gamepad_calibration_start">تا پایان تایمر حالت خنثی، همه آنالوگ‌ها را در مرکز و همه ماشه‌ها را رها نگه دارید.</string>
+    <string name="config_gamepad_calibration_save_failed">ذخیره کالیبراسیون ممکن نشد. کالیبراسیون فعلی بدون تغییر می‌ماند.</string>
+    <string name="config_gamepad_calibration_no_supported_ranges">بازه آنالوگ پشتیبانی‌شده‌ای یافت نشد.</string>
+    <string name="config_gamepad_calibration_rejected">کالیبراسیون رد شد: <xliff:g id="name" example="Example">%1$s</xliff:g></string>
+    <string name="config_gamepad_calibration_neutral_instructions">تا پایان تایمر حالت خنثی، همه آنالوگ‌های شناسایی‌شده را در مرکز و همه ماشه‌های شناسایی‌شده را رها نگه دارید.</string>
+    <string name="config_gamepad_calibration_stick_instructions">هر آنالوگ شناسایی‌شده را در تمام جهات تا انتهای بازه‌اش حرکت دهید، سپس روی «بعدی» بزنید.</string>
+    <string name="config_gamepad_calibration_trigger_instructions">هر ماشه شناسایی‌شده را رها کرده و تا انتها فشار دهید، سپس برای بازبینی روی «بعدی» بزنید.</string>
+    <string name="config_gamepad_calibration_review_instructions">آماده بازبینی. ذخیره کردن فقط کالیبراسیون همین دسته بازی را جایگزین می‌کند.</string>
+    <string name="config_gamepad_calibration_saved">کالیبراسیون ذخیره شد.</string>
+    <string name="config_gamepad_calibration_cancelled">کالیبراسیون لغو شد. کالیبراسیون قبلی بدون تغییر باقی ماند.</string>
+    <string name="config_gamepad_calibration_waiting_samples">کالیبراسیون منتظر نمونه‌های دسته بازی است.</string>
+    <string name="config_gamepad_diagnosis_header">عیب‌یابی دسته بازی</string>
+    <string name="config_gamepad_diagnosis_mode">وضعیت: <xliff:g id="status" example="enabled">%1$s</xliff:g> · منبع: <xliff:g id="source" example="controller">%2$s</xliff:g></string>
+    <string name="config_gamepad_diagnosis_notice">توجه: <xliff:g id="name" example="Example">%1$s</xliff:g></string>
+    <string name="config_gamepad_diagnosis_analog_settings">تنظیمات آنالوگ:</string>
+    <string name="config_gamepad_diagnosis_left_stick">آنالوگ چپ</string>
+    <string name="config_gamepad_diagnosis_right_stick">آنالوگ راست</string>
+    <string name="config_gamepad_diagnosis_triggers">ماشه‌ها</string>
+    <string name="config_gamepad_diagnosis_pointer">حالت اشاره‌گر</string>
+    <string name="config_gamepad_status_enabled">فعال</string>
+    <string name="config_gamepad_status_disabled">غیرفعال</string>
+    <string name="config_gamepad_diagnosis_source_default">پیش‌فرض</string>
+    <string name="config_gamepad_diagnosis_source_controller">دسته بازی</string>
+    <string name="config_gamepad_diagnosis_source_explicit">صریح</string>
+    <string name="config_gamepad_diagnosis_device"><xliff:g id="device_name" example="Xbox Controller">%1$s</xliff:g> (#<xliff:g id="device_id" example="1">%2$d</xliff:g>)</string>
+    <string name="config_gamepad_calibration_issue_no_channels">کانال پشتیبانی‌شده‌ای وجود ندارد</string>
+    <string name="config_gamepad_calibration_issue_invalid_constraints">محدودیت‌های کالیبراسیون نامعتبر است</string>
+    <string name="config_gamepad_calibration_issue_non_finite">نمونه نامتناهی</string>
+    <string name="config_gamepad_calibration_issue_insufficient_samples">نمونه‌های ناکافی</string>
+    <string name="config_gamepad_calibration_issue_invalid_range">بازه نامعتبر</string>
+    <string name="config_gamepad_calibration_issue_rest_outside_range">مقدار حالت سکون خارج از بازه است</string>
+    <string name="config_gamepad_calibration_issue_rest_too_noisy">وضعیت سکون به اندازه کافی پایدار نیست</string>
+    <string name="config_gamepad_calibration_phase_unknown">وضعیت در دسترس نیست</string>
+    <string name="config_gamepad_diagnosis_capabilities">قابلیت‌های دسته بازی متصل:</string>
+    <string name="config_gamepad_diagnosis_descriptor">توصیف‌گر: <xliff:g id="name" example="Example">%1$s</xliff:g></string>
+    <!-- %1$s is a controller-identity fingerprint derived from its descriptor and capabilities. -->
+    <!-- It is not a handwritten signature or a cryptographic signing operation. -->
+    <string name="config_gamepad_diagnosis_signature">شناسه: <xliff:g id="name" example="Example">%1$s</xliff:g></string>
+    <string name="config_gamepad_diagnosis_axis">محور <xliff:g id="axis_index" example="0">%1$d</xliff:g> [<xliff:g id="min_value" example="-1.0">%2$s</xliff:g>, <xliff:g id="max_value" example="1.0">%3$s</xliff:g>] flat=<xliff:g id="flat" example="0.05">%4$s</xliff:g> fuzz=<xliff:g id="fuzz" example="0.01">%5$s</xliff:g></string>
+    <string name="config_gamepad_diagnosis_no_controller">(دسته بازی متصلی وجود ندارد)</string>
+    <string name="config_gamepad_diagnosis_samples_not_sent">نمونه‌های ورودی به‌عمد به MIDlet ارسال نمی‌شوند.</string>
+    <string name="config_destination_system">سیستم</string>
+    <string name="config_screen_behavior" tools:ignore="MissingTranslation">رفتار صفحه</string>
+    <string name="config_screen_size">اندازه صفحه</string>
+    <string name="config_select_screen_size">انتخاب اندازه صفحه</string>
+    <string name="config_current_screen_size">اندازه فعلی: <xliff:g id="name" example="Example">%1$s</xliff:g></string>
+    <string name="config_custom_resolution">وضوح سفارشی</string>
+    <string name="profile_custom">سفارشی</string>
+    <string name="select_dialog_title">انتخاب MIDlet</string>
+    <string name="SIZE_PRESETS">پیش‌تنظیم‌های اندازه قلم</string>
+    <string name="config_color_picker_title">انتخاب رنگ</string>
+    <string name="config_color_picker_hex">رنگ هگز</string>
+    <string name="config_color_picker_hint">فیلدهای رنگ را بکشید یا یک مقدار RGB شش‌رقمی وارد کنید.</string>
+    <string name="config_color_picker_invalid">دقیقاً شش رقم شانزده‌شانزدهی وارد کنید.</string>
+    <string name="config_color_picker_saturation_value">اشباع و روشنایی</string>
+    <string name="config_color_picker_hue">فام رنگ</string>
+    <string name="config_decrease_value">کاهش مقدار</string>
+    <string name="config_increase_value">افزایش مقدار</string>
+    <string name="midlet_failure_recovery_title">MIDlet به‌طور غیرمنتظره متوقف شد</string>
+    <string name="midlet_failure_recovery_message">MIDlet به‌طور غیرمنتظره متوقف شد. اطلاعات عیب‌یابی به‌صورت محلی ذخیره شد. می‌توانید به استفاده از JL-Mod Plus ادامه دهید.</string>
+    <string name="midlet_failure_recovery_message_named">«<xliff:g id="name" example="Example">%1$s</xliff:g>» به‌طور غیرمنتظره متوقف شد. اطلاعات عیب‌یابی به‌صورت محلی ذخیره شد. می‌توانید به استفاده از JL-Mod Plus ادامه دهید.</string>
+    <plurals name="config_system_properties_value">
+        <item quantity="one"><xliff:g id="count" example="3">%1$d</xliff:g> ویژگی</item>
+        <item quantity="other"><xliff:g id="count" example="3">%1$d</xliff:g> ویژگی</item>
+    </plurals>
+    <string name="config_search_suggestions" tools:ignore="MissingTranslation">تنظیمات پیشنهادی</string>
+    <string name="config_search_clear" tools:ignore="MissingTranslation">پاک کردن جستجو</string>
+    <string name="config_search_title" tools:ignore="MissingTranslation">جستجو در تنظیمات</string>
+    <string name="config_search_hint" tools:ignore="MissingTranslation">یافتن یک تنظیم، مثلاً MMPX یا جهت صفحه</string>
+    <string name="config_search_no_results" tools:ignore="MissingTranslation">تنظیم مطابقی یافت نشد</string>
+    <string name="config_search_upscaling_requires_resolution" tools:ignore="MissingTranslation">برای پیکربندی افزایش وضوح بیت‌مپ، «خودکار» یا 2×–10× را در بخش «وضوح رندر» انتخاب کنید.</string>
+    <string name="config_search_requires_manual_scale" tools:ignore="MissingTranslation">برای تنظیم مقیاس، «دستی» را در بخش «حالت مقیاس‌بندی» انتخاب کنید.</string>
+    <string name="config_search_requires_custom_background" tools:ignore="MissingTranslation">برای ویرایش رنگ پس‌زمینه، «سفارشی» را در بخش «حالت پس‌زمینه» انتخاب کنید.</string>
+    <string name="config_search_requires_gles" tools:ignore="MissingTranslation">برای پیکربندی جلوه‌های شیدر، «شتاب‌دهی سخت‌افزاری (OpenGL ES)» را در بخش «حالت گرافیک» انتخاب کنید.</string>
+    <string name="config_search_requires_renderer_mode" tools:ignore="MissingTranslation">برای پیکربندی به‌روزرسانی ناهمگام صفحه، «نرم‌افزاری» یا «شتاب‌دهی سخت‌افزاری (Surface)» را در بخش «حالت گرافیک» انتخاب کنید.</string>
+    <string name="config_font_page_title" tools:ignore="MissingTranslation">تنظیمات قلم</string>
+    <string name="config_display_more" tools:ignore="MissingTranslation">متن و عملکرد</string>
+    <string name="config_destination_home" tools:ignore="MissingTranslation">خانه</string>
+    <string name="config_overview_profile_draft" tools:ignore="MissingTranslation">پیش‌نویس نمایه</string>
+    <string name="config_overview_profile_draft_summary" tools:ignore="MissingTranslation">این نمایه قابل استفاده مجدد را ویرایش کنید، سپس تغییرات خود را از نوار ابزار ذخیره کنید.</string>
+    <string name="config_overview_quick_access" tools:ignore="MissingTranslation">دسترسی سریع</string>
+    <string name="config_system_properties_editor_label">ویژگی‌ها</string>
+    <string name="config_overview_enabled" tools:ignore="MissingTranslation">روشن</string>
+    <string name="config_overview_disabled" tools:ignore="MissingTranslation">خاموش</string>
+    <string name="config_overview_media_summary" tools:ignore="MissingTranslation">بانک صدا و دوربین</string>
+    <string name="config_overview_hint" tools:ignore="MissingTranslation">برای سفارشی‌سازی بازی خود یک دسته انتخاب کنید. هر تنظیم یک جای مشخص دارد؛ این میان‌برها شما را مستقیماً به آنجا می‌برند.</string>
+    <string name="config_destination_general">عمومی</string>
+    <string name="config_basic_display">صفحه MIDlet</string>
+    <string name="config_display_appearance">ظاهر صفحه</string>
+    <string name="config_display_rendering">رندر</string>
+    <string name="config_image_quality_section" tools:ignore="MissingTranslation">کیفیت تصویر</string>
+    <string name="config_frame_rate_section" tools:ignore="MissingTranslation">نرخ فریم</string>
+    <string name="config_fps_position_title" tools:ignore="MissingTranslation">موقعیت FPS</string>
+    <string name="config_display_text">متن و قلم‌ها</string>
+    <string name="config_input_mapping_section" tools:ignore="MissingTranslation">ورودی و نگاشت</string>
+    <string name="config_controls_appearance_section" tools:ignore="MissingTranslation">ظاهر کنترل‌ها</string>
+    <string name="config_controls_virtual_keyboard">کنترل‌های مجازی</string>
+    <string name="config_controls_virtual_keyboard_colors">رنگ کنترل‌های مجازی</string>
+    <string name="config_virtual_controls_color_preview">پیش‌نمایش رنگ</string>
+    <string name="config_virtual_controls_preview_normal">رهاشده</string>
+    <string name="config_virtual_controls_preview_pressed">فشرده‌شده</string>
+    <string name="config_controls_maintenance">چیدمان</string>
+    <string name="config_controls_skin_help">ظاهر دکمه‌های صفحه‌کلید، D-pad و آنالوگ را با استفاده از تصاویر سفارشی تغییر می‌دهد.</string>
+    <string name="config_controls_color_button_normal">دکمه رهاشده</string>
+    <string name="config_controls_color_button_pressed">دکمه فشرده‌شده</string>
+    <string name="config_controls_color_label_normal">برچسب رهاشده</string>
+    <string name="config_controls_color_label_pressed">برچسب فشرده‌شده</string>
+    <string name="config_controls_color_outline_short">خط حاشیه</string>
+    <string name="config_controls_disabled_hint">کنترل‌های مجازی هم‌اکنون خاموش هستند. همچنان می‌توانید آن‌ها را اینجا سفارشی‌سازی کنید.</string>
+    <string name="config_controls_opacity_help" formatted="false">شفافیت کنترل‌های مجازی را تنظیم می‌کند: 0% کاملاً شفاف و 100% کاملاً نمایان است.</string>
+    <string name="config_controls_opaque_outside">نمایش کنترل‌ها بدون شفافیت بیرون از صفحه MIDlet</string>
+    <string name="config_controls_opaque_outside_help">کنترل‌های بیرون از صفحه MIDlet شفافیت را نادیده می‌گیرند. کنترل‌های روی صفحه همچنان از شفافیت انتخاب‌شده پیروی می‌کنند.</string>
+    <string name="config_controls_connect_controller">برای کالیبراسیون یک دسته بازی متصل کنید</string>
+    <string name="config_controls_color_skin_notice">پوسته کل دکمه ممکن است رنگ، شکل و خط حاشیه پیش‌فرض دکمه را جایگزین کند.</string>
+    <string name="config_current_value">مقدار فعلی</string>
+    <string name="config_maintenance">بازنشانی و داده‌ها</string>
+    <string name="config_midlet_actions" tools:ignore="MissingTranslation">اقدام‌های MIDlet</string>
+    <string name="config_profile_maintenance" tools:ignore="MissingTranslation">اقدام‌های نمایه</string>
+    <string name="config_reset_profile_settings" tools:ignore="MissingTranslation">بازنشانی پیش‌نویس نمایه</string>
+    <string name="config_reset_profile_settings_summary" tools:ignore="MissingTranslation">تنظیمات و کنترل‌های مجازی این پیش‌نویس را به پیش‌فرض برمی‌گرداند.</string>
+    <string name="config_system_compatibility" tools:ignore="MissingTranslation">سازگاری شبیه‌سازی</string>
+    <string name="config_reset_all_settings">بازنشانی پیکربندی MIDlet</string>
+    <string name="config_reset_all_settings_summary">تنظیمات و کنترل‌های مجازی این MIDlet را بدون حذف داده‌های آن به پیش‌فرض برمی‌گرداند.</string>
+    <string name="config_delete_app_data">حذف داده‌های MIDlet</string>
+    <string name="config_delete_app_data_summary">داده‌های این MIDlet از جمله فایل‌های ذخیره را برای همیشه حذف می‌کند. تنظیمات آن حفظ می‌شود.</string>
+    <string name="config_message_reset_settings">پیکربندی MIDlet و کنترل‌های مجازی به پیش‌فرض برگردانده شود؟ داده‌های ذخیره‌شده دست‌نخورده می‌مانند. پیروی از هر نمایه پیوندشده متوقف می‌شود.</string>
+    <string name="config_message_reset_profile_settings">تنظیمات و کنترل‌های مجازی این نمایه به پیش‌فرض بازنشانی شود؟ پیش از ذخیره همچنان می‌توانید ویرایش یا لغو کنید.</string>
+    <string name="config_message_delete_app_data">همه فایل‌های ذخیره و داده‌های ایجادشده توسط این MIDlet برای همیشه حذف شود؟ تنظیمات MIDlet حذف نخواهد شد.</string>
+    <string name="config_lock_custom_resolution_ratio">قفل نسبت تصویر</string>
+    <string name="config_swap_screen_size">جابه‌جایی عرض و ارتفاع</string>
+    <string name="profile_builtin_settings">پیش‌فرض‌های JL-Mod</string>
+    <string name="profile_default_badge_short">پیش‌فرض برای MIDletهای جدید</string>
+    <string name="profile_template_summary">تنظیمات ذخیره‌شده MIDlet.</string>
+    <string name="profile_name_exists">نمایه‌ای با این نام از قبل وجود دارد.</string>
+    <string name="profile_delete_template_message">نمایه «<xliff:g id="profile_name" example="Action Games">%1$s</xliff:g>» حذف شود؟ MIDletهایی که از آن استفاده می‌کنند تنظیمات فعلی خود را حفظ می‌کنند اما به‌روزرسانی‌های آینده را دریافت نخواهند کرد.</string>
+    <string name="profile_template_operation_failed">تکمیل عملیات نمایه ممکن نشد.</string>
+    <string name="config_help_screen_size">وضوح صفحه مجازی Java ME مورد استفاده MIDlet را تنظیم می‌کند.</string>
+    <string name="config_help_orientation">جهت صفحه را هنگام اجرای MIDlet انتخاب می‌کند.</string>
+    <string name="config_help_scale_type">نحوه تناسب بازی با نمایشگر را انتخاب کنید. برای تنظیم مقیاس سفارشی، «دستی» را انتخاب کنید.</string>
+    <string name="config_help_scale_ratio" formatted="false">اندازه نمایشی را از 1% تا 1000% تنظیم می‌کند. در 100% بازی از اندازه اصلی خود استفاده می‌کند؛ مقادیر بزرگ‌تر ممکن است از کادر صفحه بیرون بزنند.</string>
+    <string name="config_help_lock_custom_resolution_ratio">هنگام ویرایش وضوح سفارشی، نسبت تصویر را حفظ می‌کند.</string>
+    <string name="config_help_virtual_keyboard">کنترل‌های روی صفحه را برای این MIDlet نمایش می‌دهد.</string>
+    <string name="config_help_touch_input">به MIDlet اجازه می‌دهد ورودی اشاره‌گر را از صفحه لمسی دریافت کند.</string>
+    <string name="config_help_background">فضای خالی اطراف صفحه MIDlet را پر می‌کند.</string>
+    <string name="config_background_mode">حالت پس‌زمینه</string>
+    <string name="config_background_custom">سفارشی</string>
+    <string name="config_background_theme">تم</string>
+    <string name="config_background_immersive">فراگیر</string>
+    <string name="config_background_theme_help">از رنگ تم JL-Mod Plus در اطراف صفحه MIDlet استفاده می‌کند.</string>
+    <string name="config_background_immersive_help">فضای خالی را با رنگ‌های نمونه‌برداری‌شده از صفحه MIDlet پر می‌کند.</string>
+    <string name="config_background_dynamic">رنگ پویا</string>
+    <string name="config_background_dynamic_help">از یک رنگ یکدست استفاده می‌کند که به‌نرمی با صفحه MIDlet هماهنگ می‌شود.</string>
+    <string name="config_background_custom_color">رنگ پس‌زمینه</string>
+    <string name="config_help_background_custom_color">رنگ فضای خالی اطراف صفحه MIDlet را تنظیم می‌کند.</string>
+    <string name="config_help_skin">تصویر یا قاب اختیاری را در اطراف صفحه MIDlet نمایش می‌دهد.</string>
+    <string name="config_help_screen_gravity">هنگام وجود فضای خالی، موقعیت صفحه MIDlet را تعیین می‌کند.</string>
+    <string name="config_help_screen_padding">حاشیه داخلی بر حسب پیکسل بین صفحه MIDlet و لبه ناحیه نمایش اضافه می‌کند.</string>
+    <string name="config_help_filter">از فیلتر خطی برای هموار کردن صفحه MIDlet هنگام مقیاس‌بندی استفاده می‌کند.</string>
+    <string name="config_warning_filter_shader">فیلتر خطی ورودی را پیش از پردازش توسط شیدر صفحه هموار می‌کند و ممکن است وضوح خروجی را کاهش دهد.</string>
+    <string name="config_help_immediate">رویدادهای MIDlet را به‌جای صف‌بندی، فوراً پردازش می‌کند. ممکن است پاسخ‌دهی را بهتر کند اما برخی MIDletها را ناپایدار سازد.</string>
+    <string name="config_help_graphics_mode">مسیر رندر صفحه MIDlet را انتخاب می‌کند. شتاب‌دهی سخت‌افزاری ممکن است عملکرد را بهبود دهد، اما سازگاری بسته به دستگاه متفاوت است.</string>
+    <string name="config_help_shader">پیش از نمایش فریم MIDlet، یک شیدر روی آن اعمال می‌کند.</string>
+    <string name="config_help_shader_tuning">کنترل‌های در دسترس به شیدر انتخاب‌شده بستگی دارند.</string>
+    <string name="config_help_parallel_redraw">نمایش فریم‌ها را به‌صورت ناهمگام زمان‌بندی می‌کند. این کار ممکن است در برخی دستگاه‌ها عملکرد را بهبود دهد.</string>
+    <string name="config_help_force_fullscreen">نوار فرمان را هنگام شروع MIDlet پنهان می‌کند. MIDlet ممکن است حین بازی دوباره آن را نمایش دهد.</string>
+    <string name="config_help_fps_limit">محدودیت FPS را در سرعت شبیه‌سازی 1× تنظیم می‌کند. محدودیت مؤثر از سرعت شبیه‌سازی پیروی می‌کند؛ مقدار 0 (حداکثر) از بیشترین نرخ نوسازی نمایشگر استفاده می‌کند.</string>
+    <string name="config_timing_mode_full_guest">زمان شبیه‌سازی</string>
+    <string name="config_timing_mode_real_wall">زمان سیستم</string>
+    <string name="config_help_emulation_speed">سرعت ساعت MIDlet و تأخیرهای پشتیبانی‌شده را تغییر می‌دهد. صدا و رابط کاربری Android با سرعت عادی باقی می‌مانند.</string>
+    <string name="config_help_timing_mode">تعیین می‌کند MIDlet از زمان شبیه‌سازی استفاده کند یا زمان سیستم. تأخیرهای نسبی همچنان با سرعت شبیه‌سازی مقیاس‌بندی می‌شوند.</string>
+    <string name="config_help_timing_unavailable">تنظیمات زمان برای این نصب MIDlet در دسترس نیست. برای فعال‌سازی، MIDlet را دوباره نصب یا تبدیل کنید.</string>
+    <string name="config_help_generic_color">رنگ این عنصر بصری را تنظیم می‌کند.</string>
+    <string name="config_help_encoding">کدگذاری نویسه‌ای را که به‌عنوان microedition.encoding گزارش می‌شود انتخاب می‌کند.</string>
+    <string name="config_edit_system_properties">ویرایش ویژگی‌های سیستم</string>
+    <string name="config_help_system_properties">ویژگی‌های پیشرفته Java ME گزارش‌شده به MIDlet را تنظیم می‌کند.</string>
+    <string name="config_help_system_properties_long">در هر خط یک ویژگی را به قالب «name: value» ویرایش کنید. مقادیر نادرست ممکن است بر سازگاری تأثیر بگذارند.</string>
+    <string name="config_system_properties_info">بیشتر MIDletها نیازی به تغییر در اینجا ندارند.</string>
+    <string name="config_font_sizes">اندازه‌های قلم</string>
+    <string name="config_help_font_sizes">اندازه قلم‌های کوچک، متوسط و بزرگ Java ME را برای MIDlet تنظیم می‌کند.</string>
+    <string name="config_help_font_sizes_long">اندازه قلم‌های Java ME را بر حسب پیکسل یا در صورت فعال بودن مقیاس قلم Android بر حسب واحد مقیاس‌شده تنظیم می‌کند. برای حفظ تعادل متن، آن‌ها را با هم تغییر دهید.</string>
+    <string name="config_font_sizes_value">کوچک <xliff:g id="small_size" example="12">%1$s</xliff:g> · متوسط <xliff:g id="medium_size" example="16">%2$s</xliff:g> · بزرگ <xliff:g id="large_size" example="20">%3$s</xliff:g></string>
+    <string name="config_help_font_presets">اندازه‌های قلم متناسب با وضوح‌های رایج صفحه Java ME را اعمال می‌کند.</string>
+    <string name="config_help_font_dimensions">مقیاس قلم Android را روی اندازه‌های قلم Java ME اعمال می‌کند.</string>
+    <string name="config_help_font_aa">لبه‌های متن رندرشده را هموار می‌کند.</string>
+    <string name="config_help_key_layout">الگوی کد کلیدهای گزارش‌شده به MIDlet را انتخاب می‌کند.</string>
+    <string name="config_help_key_mapping">کلیدها و دکمه‌های فیزیکی Android را به عملکردهای صفحه‌کلید Java ME نگاشت می‌کند.</string>
+    <string name="config_help_vk_button_shape">شکل پیش‌فرض دکمه‌های صفحه‌کلید را تنظیم می‌کند. D-pad و آنالوگ شکل‌های خاص خود را دارند.</string>
+    <string name="config_help_vk_feedback">در صورت فعال بودن لرزش در تنظیمات، هنگام فشردن کنترل مجازی می‌لرزد.</string>
+    <string name="config_help_vk_hide_delay">کنترل‌ها را هنگام پوشاندن صفحه MIDlet پس از این تأخیر پنهان می‌کند. مقدار 0 پنهان شدن خودکار را غیرفعال می‌کند.</string>
+    <string name="config_help_reset_layout">چیدمان کنترل‌های مجازی را بدون تغییر سایر تنظیمات MIDlet بازنشانی می‌کند.</string>
+    <string name="config_help_skip_resume">پس از نخستین فراخوانی موفق startApp()، فراخوانی‌های بعدی هنگام ازسرگیری MIDlet را رد می‌کند. فقط برای MIDletهایی استفاده کنید که هنگام ازسرگیری دچار خطا می‌شوند.</string>
+    <string name="config_help_soundbank">بانک صدای مورد استفاده برای سنتز MIDI را انتخاب می‌کند.</string>
+    <string name="profile_create_title">ایجاد نمایه</string>
+    <string name="profile_rename_title">تغییر نام نمایه</string>
+    <string name="presets">نمایه‌ها</string>
+    <string name="preset_use">استفاده از نمایه</string>
+    <string name="preset_save_as">ذخیره به‌عنوان نمایه</string>
+    <string name="preset_custom_configuration">پیکربندی سفارشی</string>
+    <string name="preset_based_on_modified">پیکربندی فعلی این MIDlet با <xliff:g id="profile_name" example="Action Games">%1$s</xliff:g> تفاوت دارد.</string>
+    <string name="preset_builtin">پیش‌فرض‌های JL-Mod</string>
+    <string name="preset_builtin_summary">تنظیمات و کنترل‌های مجازی داخلی MIDlet.</string>
+    <string name="preset_picker_title">استفاده از نمایه</string>
+    <string name="preset_manage">مدیریت نمایه‌ها</string>
+    <string name="profile_more_actions">اقدام‌های بیشتر برای <xliff:g id="profile_name" example="Action Games">%1$s</xliff:g></string>
+    <string name="profile_create_summary">یک پیکربندی قابل استفاده مجدد برای سایر MIDletها ذخیره کنید.</string>
+    <string name="preset_application_settings">تنظیمات MIDlet</string>
+    <string name="preset_includes_keyboard_layout">شامل چیدمان کنترل‌های مجازی است.</string>
+    <string name="preset_virtual_keyboard_on">کنترل‌های مجازی فعال</string>
+    <string name="preset_virtual_keyboard_off">کنترل‌های مجازی غیرفعال</string>
+    <string name="preset_apply">اعمال</string>
+    <string name="preset_apply_failed_summary">اعمال این نمایه ممکن نشد. منبع را بررسی کنید و دوباره تلاش کنید.</string>
+    <string name="preset_choose_parts">انتخاب بخش‌ها برای اعمال</string>
+    <string name="preset_name">نام</string>
+    <string name="preset_save_help">تنظیمات این MIDlet و در صورت موجود بودن چیدمان کنترل‌های مجازی آن را به‌عنوان یک نمایه ذخیره کنید. این MIDlet از این نمایه استفاده می‌کند و به‌روزرسانی‌های آینده آن را دریافت خواهد کرد.</string>
+    <string name="preset_update">به‌روزرسانی <xliff:g id="profile_name" example="Action Games">%1$s</xliff:g></string>
+    <string name="preset_update_title"><xliff:g id="profile_name" example="Action Games">%1$s</xliff:g> به‌روزرسانی شود؟</string>
+    <string name="preset_update_summary"><xliff:g id="profile_name" example="Action Games">%1$s</xliff:g> با تنظیمات فعلی این MIDlet و در صورت موجود بودن چیدمان کنترل‌های مجازی آن جایگزین شود. سایر MIDletهایی که از این نمایه استفاده می‌کنند در اجرای بعدی تغییرات را دریافت می‌کنند.</string>
+    <string name="preset_update_confirm">به‌روزرسانی</string>
+    <string name="preset_saved_unlinked_warning">نمایه ذخیره شد، اما این MIDlet به‌روزرسانی‌های آینده آن را دریافت نخواهد کرد.</string>
+    <string name="profile_default_fallback_notice">استفاده از نمایه پیش‌فرض «<xliff:g id="profile_name" example="Action Games">%1$s</xliff:g>» ممکن نشد. ممکن است گم شده، ناقص یا غیرقابل خواندن باشد. اکنون «پیش‌فرض‌های JL-Mod» پیش‌فرض MIDletهای جدید است.</string>
+    <string name="preset_discard_changes_title">از تغییرات صرف‌نظر شود؟</string>
+    <string name="preset_discard_changes_summary">این پیش‌نویس نمایه ذخیره نشده است.</string>
+    <string name="preset_continue_editing">ادامه ویرایش</string>
+    <string name="preset_discard_changes">صرف‌نظر</string>
+    <string name="preset_name_exists">نمایه‌ای با این نام از قبل وجود دارد.</string>
+    <string name="preset_invalid_name">نام معتبری برای نمایه وارد کنید.</string>
+    <string name="preset_manager_default_section">پیش‌فرض برای MIDletهای جدید</string>
+    <string name="preset_manager_presets_section">نمایه‌های من</string>
+    <string name="preset_manager_keyboard_section">چیدمان‌های ذخیره‌شده کنترل‌های مجازی</string>
+    <string name="preset_default_policy_summary">هنگام نصب MIDlet جدید اعمال می‌شود.</string>
+    <string name="preset_keyboard_layout_unavailable">چیدمان کنترل‌های مجازی در دسترس نیست.</string>
+    <string name="edit_preset">ویرایش نمایه</string>
+    <string name="preset_edit_title">ویرایش نمایه: <xliff:g id="profile_name" example="Action Games">%1$s</xliff:g></string>
+    <string name="preset_unavailable_section">در دسترس نیست</string>
+    <string name="preset_unavailable_summary">بارگیری این نمایه ممکن نشد. نام آن را تغییر دهید یا حذفش کنید.</string>
+    <string name="preset_change_default">تغییر</string>
+    <string name="preset_default_picker_title">پیش‌فرض برای MIDletهای جدید</string>
+    <string name="profile_follows_updates">از به‌روزرسانی‌های آینده نمایه پیروی می‌کند.</string>
+    <string name="profile_apply_whole">کل نمایه</string>
+    <string name="profile_apply_whole_follows">جایگزینی تنظیمات و چیدمان و پیروی از به‌روزرسانی‌های آینده.</string>
+    <string name="profile_apply_whole_without_layout">جایگزینی تنظیمات، حذف چیدمان محلی و پیروی از به‌روزرسانی‌ها.</string>
+    <string name="profile_apply_settings_only">فقط تنظیمات MIDlet</string>
+    <string name="profile_apply_settings_keeps_layout">حفظ چیدمان این MIDlet و استفاده از پیکربندی سفارشی.</string>
+    <string name="profile_apply_layout_only">فقط چیدمان کنترل‌های مجازی</string>
+    <string name="profile_apply_layout_keeps_settings">حفظ تنظیمات این MIDlet و استفاده از پیکربندی سفارشی.</string>
+    <string name="config_analog_stick">آنالوگ</string>
+    <string name="config_analog_stick_summary">گزینه خاموش، 4 جهته، 8 جهته یا صفحه‌کلید عددی را برای آنالوگ اصلی انتخاب کنید. دکمه‌های دسته بازی از نگاشت کلیدها استفاده می‌کنند.</string>
+    <string name="config_analog_stick_off">خاموش</string>
+    <string name="config_controller_help_body_compact">دکمه‌های دسته بازی از همان نگاشت کلیدهای صفحه‌کلید و کلیدهای تلفن استفاده می‌کنند. آنالوگ فقط ورودی جهت را به MIDlet می‌فرستد. دکمه بازگشت Android رفتار عادی خود را حفظ می‌کند؛ هر دکمه فیزیکی نگاشت‌شده به M منوی اجرای MIDlet را باز می‌کند.</string>
+    <string name="config_show_fps_title" tools:ignore="MissingTranslation">نمایش FPS</string>
+    <string name="config_show_fps_help" tools:ignore="MissingTranslation">نرخ فریم را هنگام بازی نمایش می‌دهد.</string>
+    <string name="config_search_requires_fps" tools:ignore="MissingTranslation">برای تغییر موقعیت، «نمایش FPS» را روشن کنید.</string>
+    <string name="midlet_running_notification_title">MIDlet در حال اجرا است</string>
+    <string name="midlet_running_notification_text"><xliff:g id="name" example="Example">%1$s</xliff:g> در حال اجرا است.</string>
+    <string name="midlet_running_notification_channel">اجرای MIDlet</string>
+    <string name="config_gamepad_directions_numeric_v2">صفحه‌کلید عددی</string>
+    <string name="midlet_file_permission_title">دسترسی به حافظه</string>
+    <string name="midlet_file_permission_read">این MIDlet می‌خواهد فایل‌ها را بخواند.</string>
+    <string name="midlet_file_permission_write">این MIDlet می‌خواهد فایل‌ها را ایجاد، تغییر یا حذف کند.</string>
+    <string name="midlet_file_permission_allow_once">اجازه برای یک بار</string>
+    <string name="midlet_file_permission_allow_session">اجازه هنگام اجرای MIDlet</string>
+    <string name="midlet_file_permission_allow_always">اجازه همیشگی</string>
+    <string name="midlet_file_permission_deny">رد همیشگی</string>
+    <string name="midlet_permissions_settings_title">مجوزهای دسترسی به حافظه</string>
+    <string name="midlet_permissions_read">خواندن فایل‌ها</string>
+    <string name="midlet_permissions_write">تغییر فایل‌ها</string>
+    <string name="midlet_permissions_ask">پرسیدن هر بار</string>
+    <string name="midlet_permissions_allow">اجازه همیشگی</string>
+    <string name="midlet_permissions_deny">رد کردن</string>
+    <string name="midlet_permissions_save_failed">ذخیره تنظیمات حافظه ممکن نشد.</string>
+    <string name="config_avoid_camera_cutout_title">پرهیز از بریدگی دوربین</string>
+    <string name="config_avoid_camera_cutout_summary">صفحه MIDlet و کنترل‌های مجازی را دور از بریدگی دوربین یا صفحه نگه می‌دارد.</string>
+    <string name="midlet_permissions_write_summary">شامل ایجاد و حذف فایل‌ها می‌شود.</string>
+    <string name="midlet_legacy_import_title">فایل‌های ذخیره قدیمی Siemens</string>
+    <string name="midlet_legacy_import_action">انتخاب فایل ذخیره قدیمی</string>
+    <string name="midlet_legacy_import_summary">یک فایل ذخیره قدیمی را در حافظه خصوصی Siemens این MIDlet کپی کنید. ابتدا MIDlet را متوقف کنید.</string>
+    <string name="midlet_legacy_import_success">فایل در حافظه خصوصی این MIDlet کپی شد.</string>
+    <string name="midlet_legacy_import_failed">وارد کردن ناموفق بود. MIDlet را متوقف کنید و مطمئن شوید فایل مقصد از قبل وجود ندارد.</string>
+    <string name="midlet_storage_mode_title">حالت ذخیره‌سازی</string>
+    <string name="midlet_storage_mode_shared">مجازی</string>
+    <string name="midlet_storage_mode_android">Android</string>
+    <string name="midlet_storage_mode_shared_summary">استفاده از پوشه‌های اشتراکی در پوشه کاری.</string>
+    <string name="midlet_storage_mode_android_summary">استفاده از حافظه Android مانند نسخه‌های قبلی.</string>
+    <string name="config_system_properties_reset" tools:ignore="MissingTranslation">بازنشانی به پیش‌فرض</string>
+    <string name="config_system_properties_reset_title" tools:ignore="MissingTranslation">ویژگی‌های سیستم بازنشانی شود؟</string>
+    <string name="config_system_properties_reset_message" tools:ignore="MissingTranslation">محتوای ویرایشگر با پیش‌فرض‌های فعلی JL-Mod Plus جایگزین شود؟ سایر تنظیمات بدون تغییر می‌مانند. برای اعمال بازنشانی ذخیره کنید.</string>
+    <string name="config_asset_add">+ افزودن از فایل</string>
+    <string name="config_asset_copy_hint">در پوشه کاری کپی می‌شود؛ فایل اصلی در جای خود باقی می‌ماند.</string>
+    <string name="config_asset_name">نام فایل</string>
+    <string name="config_asset_delete_confirmation"><xliff:g id="name" example="Example">%1$s</xliff:g> از پوشه کاری حذف شود؟ سایر MIDletها نیز ممکن است از این فایل استفاده کنند. نسخه‌های موجود در جاهای دیگر تأثیری نمی‌پذیرند.</string>
+    <string name="config_asset_imported">کپی و انتخاب شد: <xliff:g id="name" example="Example">%1$s</xliff:g></string>
+    <string name="config_asset_reused">فایل موجود انتخاب شد: <xliff:g id="name" example="Example">%1$s</xliff:g></string>
+    <string name="config_asset_renamed">تغییر نام به <xliff:g id="name" example="Example">%1$s</xliff:g></string>
+    <string name="config_asset_deleted"><xliff:g id="name" example="Example">%1$s</xliff:g> حذف شد</string>
+    <string name="config_asset_invalid">فایل پشتیبانی‌نشده یا نامعتبر است.</string>
+    <string name="config_asset_operation_failed">تکمیل عملیات فایل ممکن نشد.</string>
+    <string name="config_save_failed" tools:ignore="MissingTranslation">ذخیره تنظیمات ممکن نشد. تغییرات شما همچنان باز هستند — دوباره تلاش کنید.</string>
+    <string name="config_asset_busy">ابتدا عملیات فعلی فایل را تمام کنید.</string>
+    <string name="config_quick_settings" tools:ignore="MissingTranslation">تنظیمات سریع</string>
+    <string name="config_all_settings" tools:ignore="MissingTranslation">همه تنظیمات</string>
+    <string name="profile_local_changes_pending" tools:ignore="MissingTranslation">تغییرات محلی در نمایه ذخیره نشده‌اند</string>
+    <string name="profile_local_configuration_summary" tools:ignore="MissingTranslation">تنظیمات فقط برای این MIDlet</string>
+    <string name="profile_not_following" tools:ignore="MissingTranslation">بر پایه <xliff:g id="profile_name" example="Action Games">%1$s</xliff:g> · بدون پیروی از به‌روزرسانی‌ها</string>
+    <string name="profile_stop_following" tools:ignore="MissingTranslation">توقف پیروی از نمایه</string>
+    <string name="profile_follow_again" tools:ignore="MissingTranslation">پیروی مجدد از نمایه</string>
+    <string name="profile_follow_again_summary" tools:ignore="MissingTranslation">تنظیمات محلی و کنترل‌های مجازی این MIDlet با آخرین نسخه نمایه <xliff:g id="profile_name" example="Action Games">%1$s</xliff:g> جایگزین شود و از به‌روزرسانی‌های آینده آن پیروی کند؟</string>
+</resources>

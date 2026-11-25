@@ -1,0 +1,47 @@
+<?xml version="1.0" encoding="utf-8"?>
+<!-- Shared UI actions, generic labels, dialogs, and About screen. -->
+<resources xmlns:xliff="urn:oasis:names:tc:xliff:document:1.2">
+    <string name="about">درباره برنامه</string>
+    <string name="about_message">برنامه‌ها و بازی‌های کلاسیک را اجرا کنید، MIDletها را در کتابخانه خود سازمان‌دهی کنید و کنترل‌ها، نمایشگر، صدا و عملکرد را سفارشی‌سازی کنید. JL-Mod Plus رایگان و متن‌باز است.</string>
+    <string name="about_subtitle">شبیه‌ساز Java ME برای Android</string>
+    <string name="about_compatibility">سازگاری به MIDlet، دستگاه و APIهای پشتیبانی‌شده Java ME بستگی دارد. برخی برنامه‌ها ممکن است متفاوت از عملکردشان روی گوشی‌های اصلی رفتار کنند.</string>
+    <string name="about_lineage_title">خاستگاه پروژه</string>
+    <string name="about_build_title">اطلاعات ساخت</string>
+    <string name="about_version_label">نسخه</string>
+    <string name="about_build_label">ساخت</string>
+    <string name="about_revision_label">بازبینی منبع</string>
+    <string name="about_links_title">پروژه و مجوزها</string>
+    <string name="about_github_link_copied">مرورگری یافت نشد. پیوند GitHub در کلیپ‌بورد کپی شد.</string>
+    <string name="about_github_browser_unavailable">مرورگری برای باز کردن GitHub یافت نشد.</string>
+    <string name="about_lineage">JL-Mod Plus یک انشعاب مستقل از JL-Mod ساخته woesss (Yury Kharchenko) است. JL-Mod بر پایه J2ME Loader ساخته Nikita Shakarun قرار دارد که ریشه آن به J2meLoader از NaikSoftware برمی‌گردد.</string>
+    <string name="about_evolution">JL-Mod Plus بر همین پایه با رابط کاربری مدرن، کتابخانه MIDlet توانمندتر، ویژگی‌های جدید و پشتیبانی از نسخه‌های جدیدتر Android توسعه یافته است.</string>
+    <string name="action_back">بازگشت</string>
+    <string name="action_settings">تنظیمات</string>
+    <string name="CANCEL_CMD">لغو</string>
+    <string name="change">تغییر</string>
+    <string name="choose">انتخاب</string>
+    <string name="close">بستن</string>
+    <string name="cmd_menu">منو</string>
+    <string name="CONFIRMATION_REQUIRED">تأیید لازم است</string>
+    <string name="create">ایجاد</string>
+    <string name="default_label"><xliff:g id="name" example="Example">%1$s</xliff:g> (پیش‌فرض)</string>
+    <string name="dismiss">رد کردن</string>
+    <string name="edit">ویرایش</string>
+    <string name="error">خطا</string>
+    <string name="error_name">نامی وارد کنید.</string>
+    <string name="exit">خروج</string>
+    <string name="help">راهنما</string>
+    <string name="install">نصب</string>
+    <string name="licenses">مجوزها</string>
+    <string name="licenses_unavailable">جزئیات مجوزها در دسترس نیست.</string>
+    <string name="loading_info">در حال بارگیری اطلاعات…</string>
+    <string name="more">بیشتر</string>
+    <string name="not_saved_exists">از قبل وجود دارد</string>
+    <string name="reset">بازنشانی</string>
+    <string name="retry">تلاش مجدد</string>
+    <string name="save">ذخیره</string>
+    <string name="saved"><xliff:g id="name" example="Example">%1$s</xliff:g> ذخیره شد</string>
+    <string name="START_CMD">شروع</string>
+    <string name="warning">هشدار</string>
+    <string name="removed"><xliff:g id="name" example="Example">%1$s</xliff:g> حذف شد</string>
+</resources>

@@ -1,0 +1,444 @@
+<?xml version="1.0" encoding="utf-8"?>
+<!-- MIDlet library, collections, metadata editor, bulk/single installer, file picker, and app updates. -->
+<resources xmlns:tools="http://schemas.android.com/tools" xmlns:xliff="urn:oasis:names:tc:xliff:document:1.2">
+    <string name="action_context_delete">Hapus</string>
+    <string name="action_context_rename">Ganti nama</string>
+    <string name="action_context_shortcut">Tambahkan pintasan</string>
+    <string name="action_reinstall">Instal ulang</string>
+    <string name="alert_msg_workdir_not_exists">Folder kerja tidak ditemukan:\n<xliff:g id="path" example="/storage/emulated/0/JL-Mod-Plus">%1$s</xliff:g>\nBuat folder ini atau pilih folder lain?</string>
+    <string name="converting_wait">Mengonversi JAR…</string>
+    <string name="create_apps_dir_failed">Tidak dapat menyiapkan folder kerja di:\n<xliff:g id="path" example="/storage/emulated/0/JL-Mod-Plus">%1$s</xliff:g>\nPilih folder lain.</string>
+    <string name="install_done">Aplikasi terinstal.</string>
+    <string name="install_done_with_warning">Aplikasi terinstal dengan peringatan.</string>
+    <string name="installer_title">Penginstal MIDlet</string>
+    <string name="installer_error_message">Tidak dapat menginstal aplikasi yang dipilih. Pilih file MIDlet yang valid lalu coba lagi.</string>
+    <string name="install_jar_non_matched_jad">Aplikasi ini berbeda dari yang dijelaskan dalam JAD.\nAbaikan JAD dan tetap instal?</string>
+    <string name="file_picker_select_file">Pilih file</string>
+    <string name="file_picker_select_folder">Pilih folder</string>
+    <string name="file_picker_select_app_bundle">Pilih paket aplikasi</string>
+    <string name="file_picker_select_icon">Pilih ikon</string>
+    <string name="file_picker_navigate_back">Kembali ke folder induk</string>
+    <string name="file_picker_cancel">Batal</string>
+    <string name="file_picker_search">Cari</string>
+    <string name="file_picker_sort">Urutkan</string>
+    <string name="file_picker_select_all">Pilih semua file di folder ini</string>
+    <string name="file_picker_unselect_all">Batalkan pilihan semua file di folder ini</string>
+    <string name="file_picker_sort_type">Folder terlebih dahulu</string>
+    <string name="file_picker_sort_name_ascending">Nama A–Z</string>
+    <string name="file_picker_sort_name_descending">Nama Z–A</string>
+    <string name="file_picker_sort_modified_newest">Tanggal diubah: terbaru</string>
+    <string name="file_picker_sort_modified_oldest">Tanggal diubah: terlama</string>
+    <string name="file_picker_choose">Pilih</string>
+    <string name="file_picker_current_folder">Folder saat ini</string>
+    <string name="file_picker_parent_folder">Folder induk</string>
+    <string name="file_picker_file">File</string>
+    <string name="file_picker_preview_named">Pratinjau <xliff:g id="name" example="Example">%1$s</xliff:g></string>
+    <string name="file_picker_preview_unavailable">Pratinjau tidak tersedia</string>
+    <string name="file_picker_storage_volume">Volume penyimpanan</string>
+    <string name="file_picker_empty">Tidak ada file yang cocok</string>
+    <string name="file_picker_empty_folder">Tidak ada folder ditemukan</string>
+    <string name="file_picker_no_matches">Tidak ada hasil cocok</string>
+    <string name="file_picker_permission_required">Izin penyimpanan diperlukan</string>
+    <string name="file_picker_permission_message">Izinkan akses penyimpanan untuk menelusuri file dan folder di perangkat ini.</string>
+    <string name="file_picker_permission_denied">Akses penyimpanan tidak diberikan.</string>
+    <string name="file_picker_grant_access">Berikan akses</string>
+    <string name="file_picker_retry">Coba lagi</string>
+    <string name="file_picker_load_failed">Tidak dapat membuka folder ini.</string>
+    <string name="file_picker_create_folder">Folder baru</string>
+    <string name="file_picker_create_folder_title">Buat folder</string>
+    <string name="file_picker_folder_name">Nama folder</string>
+    <string name="file_picker_invalid_folder_name">Masukkan nama folder yang valid.</string>
+    <string name="file_picker_folder_exists">Item dengan nama ini sudah ada.</string>
+    <string name="file_picker_create_folder_failed">Tidak dapat membuat folder.</string>
+    <string name="file_picker_selection_unavailable">Item yang dipilih tidak lagi tersedia.</string>
+    <string name="loading_apps">Memuat aplikasi</string>
+    <string name="message_delete">Hapus aplikasi ini beserta setelan dan data simpanannya? Aplikasi ini juga akan dihapus dari pustaka Anda.</string>
+    <string name="msg_no_matches">Tidak ada hasil untuk “<xliff:g id="query" example="Bounce">%1$s</xliff:g>”</string>
+    <string name="library_destination_apps">Semua aplikasi</string>
+    <string name="library_destination_collections">Koleksi</string>
+    <string name="library_scope_picker_title" tools:ignore="MissingTranslation">Telusuri aplikasi</string>
+    <string name="library_destination_more">Lainnya</string>
+    <string name="library_search_placeholder">Cari aplikasi…</string>
+    <string name="library_filter_all">Semua</string>
+    <string name="library_filter_recently_opened">Baru dibuka</string>
+    <string name="library_filter_recently_added">Baru ditambahkan</string>
+    <string name="library_filter_favorites">Favorit</string>
+    <string name="library_add_to_favorites_action">Tambahkan ke favorit</string>
+    <string name="library_remove_from_favorites_action">Hapus dari favorit</string>
+    <string name="library_favorite_coming_soon">Favorit tidak tersedia</string>
+    <string name="library_vendor_version"><xliff:g id="vendor" example="Nokia">%1$s</xliff:g> · <xliff:g id="version" example="1.0">%2$s</xliff:g></string>
+    <string name="library_view_list">Daftar</string>
+    <string name="library_view_grid">Kisi</string>
+    <string name="library_icon_ratio_title">Rasio aspek ikon</string>
+    <string name="library_icon_ratio_square">Persegi (1:1)</string>
+    <string name="library_icon_ratio_portrait">Potret (3:4)</string>
+    <string name="library_icon_shape_title">Bentuk ikon</string>
+    <string name="library_icon_shape_round">Sudut membulat</string>
+    <string name="library_icon_shape_square">Sudut tajam</string>
+    <string name="library_grid_icon_size_title" tools:ignore="MissingTranslation">Ukuran ikon kisi</string>
+    <string name="library_grid_icon_size_small" tools:ignore="MissingTranslation">Kecil</string>
+    <string name="library_grid_icon_size_standard" tools:ignore="MissingTranslation">Standar</string>
+    <string name="library_grid_icon_size_large" tools:ignore="MissingTranslation">Besar</string>
+    <string name="library_grid_icon_size_summary" tools:ignore="MissingTranslation">Mengubah ukuran ikon dan jumlah kolom pada tampilan Kisi.</string>
+    <string name="library_grid_spacing_title">Jarak kisi</string>
+    <string name="library_grid_spacing_summary" tools:ignore="MissingTranslation">Hanya berlaku untuk tampilan Kisi.</string>
+    <string name="library_grid_spacing_none">Tidak ada (0 dp)</string>
+    <string name="library_grid_spacing_compact">Rapat (4 dp)</string>
+    <string name="library_grid_spacing_standard">Standar (8 dp)</string>
+    <string name="library_grid_spacing_spacious">Lega (12 dp)</string>
+    <string name="library_hide_grid_titles">Sembunyikan judul MIDlet</string>
+    <string name="library_show_list_description">Tampilkan deskripsi MIDlet</string>
+    <string name="library_collections_empty_title">Belum ada koleksi</string>
+    <string name="library_collections_empty_message">Koleksi belum tersedia hingga pustaka selesai dimuat.</string>
+    <string name="library_expand_description">Luaskan deskripsi</string>
+    <string name="library_collapse_description">Ciutkan deskripsi</string>
+    <string name="no_data_for_display">Tidak ada aplikasi untuk ditampilkan</string>
+    <string name="permission_request_failed">Izin tulis penyimpanan diperlukan.</string>
+    <string name="reinstall">Aplikasi ini sudah terinstal. Instal ulang?</string>
+    <string name="reinstall_newest">Perbarui aplikasi ini ke versi <xliff:g id="version" example="2.1.0">%1$s</xliff:g>?\n\nSaat ini terinstal: <xliff:g id="current_version" example="2.0.0">%2$s</xliff:g></string>
+    <string name="reinstall_older">Ganti aplikasi ini dengan versi <xliff:g id="version" example="2.1.0">%1$s</xliff:g>?\n\nSaat ini terinstal: <xliff:g id="current_version" example="2.0.0">%2$s</xliff:g>\nVersi lebih lama mungkin tidak berfungsi dengan benar bersama data yang ada.</string>
+    <string name="warn_install_from_net">File ini akan diunduh dari internet.</string>
+    <string name="installer_ambiguous">Beberapa aplikasi terinstal cocok dengan paket ini. Instal sebagai salinan terpisah? Aplikasi yang ada beserta datanya akan tetap disimpan.</string>
+    <string name="installer_separate_copy">Instal salinan terpisah</string>
+    <string name="installer_stage_download">Mengunduh aplikasi…</string>
+    <string name="installer_stage_wait">Menunggu operasi lain…</string>
+    <string name="installer_stage_save">Menyimpan aplikasi…</string>
+    <string name="installer_failed_download">Tidak dapat mengunduh aplikasi. Periksa koneksi dan tautan unduhan Anda, lalu coba lagi.</string>
+    <string name="installer_failed_storage">Tidak dapat menyelesaikan instalasi. Coba lagi.</string>
+    <string name="installer_failed_conversion">Tidak dapat mengonversi aplikasi. Pastikan file lengkap dan didukung, lalu coba lagi.</string>
+    <string name="installer_needs_recovery">File aplikasi tersimpan, tetapi pustaka tidak dapat selesai diperbarui. Muat ulang pustaka sebelum mencoba lagi.</string>
+    <string name="installer_refresh_library">Muat ulang pustaka</string>
+    <string name="installer_cancel_pending">Menghentikan pada titik aman berikutnya…</string>
+    <string name="installer_retry_remaining">Tinjau item yang belum selesai</string>
+    <string name="installer_not_processed">Tidak diproses</string>
+    <string name="installer_partial_restore">Aplikasi terinstal, tetapi data atau setelan tidak dapat dipulihkan.</string>
+    <string name="installer_removed_leftovers">Aplikasi dihapus, tetapi beberapa setelan atau data simpanan tidak dapat dihapus.</string>
+    <string name="installer_copy_details">Salin detail</string>
+    <string name="installer_show_details">Tampilkan detail</string>
+    <string name="installer_hide_details">Sembunyikan detail</string>
+    <!-- %1$d is the number of source Java class files skipped during conversion. -->
+    <plurals name="installer_conversion_warning_summary">
+        <item quantity="other"><xliff:g id="skipped_count" example="2">%1$d</xliff:g> file kelas Java dilewati karena tidak dapat dibaca. Fitur yang menggunakannya mungkin tidak berfungsi.</item>
+    </plurals>
+    <!-- %1$s is the source JAR entry path for the skipped class file. -->
+    <string name="installer_conversion_skipped_entry"><xliff:g id="entry_path" example="com/example/Broken.class">%1$s</xliff:g>\nMasalah: File kelas Java tidak dapat dibaca.\nTindakan: Dilewati saat konversi.</string>
+    <!-- %1$d is the number of additional bounded conversion diagnostics not shown. -->
+    <plurals name="installer_conversion_omitted_details">
+        <item quantity="other"><xliff:g id="omitted_count" example="5">%1$d</xliff:g> masalah konversi lainnya tidak ditampilkan.</item>
+    </plurals>
+    <string name="library_collection_new">Koleksi baru</string>
+    <string name="library_collection_ready_empty_message">Buat koleksi untuk mengelompokkan aplikasi tanpa memindahkan filenya.</string>
+    <string name="library_collection_add_app">Tambahkan ke koleksi</string>
+    <string name="library_collection_add_apps">Tambahkan aplikasi</string>
+    <string name="library_collection_manage_apps">Pilih aplikasi</string>
+    <string name="library_collection_manage" tools:ignore="MissingTranslation">Kelola koleksi</string>
+    <string name="library_collection_delete_confirmation" tools:ignore="MissingTranslation">Hapus “<xliff:g id="collection_name" example="Favorites">%1$s</xliff:g>”? Aplikasi di dalam koleksi ini akan tetap terinstal.</string>
+    <string name="library_collection_rename_action" tools:ignore="MissingTranslation">Ganti nama koleksi <xliff:g id="collection_name" example="Favorites">%1$s</xliff:g></string>
+    <string name="library_collection_delete_action" tools:ignore="MissingTranslation">Hapus koleksi <xliff:g id="collection_name" example="Favorites">%1$s</xliff:g></string>
+    <string name="library_collection_select_action" tools:ignore="MissingTranslation">Pilih koleksi <xliff:g id="collection_name" example="Favorites">%1$s</xliff:g></string>
+    <string name="library_collection_open_action" tools:ignore="MissingTranslation">Buka koleksi <xliff:g id="collection_name" example="Favorites">%1$s</xliff:g></string>
+    <string name="library_collection_rename_selected" tools:ignore="MissingTranslation">Ganti nama koleksi yang dipilih</string>
+    <string name="library_collection_delete_selected" tools:ignore="MissingTranslation">Hapus koleksi yang dipilih</string>
+    <plurals name="library_collection_delete_many_confirmation">
+        <item quantity="other">Hapus <xliff:g id="count" example="3">%d</xliff:g> koleksi? Aplikasi akan tetap terinstal.</item>
+    </plurals>
+    <string name="library_notifications_title" tools:ignore="MissingTranslation">Notifikasi</string>
+    <string name="library_notifications_empty_title" tools:ignore="MissingTranslation">Belum ada notifikasi</string>
+    <string name="library_notifications_empty_summary" tools:ignore="MissingTranslation">Notifikasi pembaruan aplikasi akan muncul di sini jika tersedia.</string>
+    <string name="library_collection_manage_apps_summary">Pilih aplikasi yang akan dimasukkan ke koleksi ini.</string>
+    <string name="library_collection_name">Nama koleksi</string>
+    <string name="library_collection_members_empty">Tidak ada aplikasi dalam koleksi ini.</string>
+    <string name="library_collection_select_title">Pilih koleksi</string>
+    <string name="library_collection_select_message">Pilih koleksi untuk melihat aplikasinya.</string>
+    <string name="library_collection_remove_from_current">Hapus dari koleksi</string>
+    <string name="library_no_matches">Tidak ada hasil untuk “<xliff:g id="query" example="Bounce">%1$s</xliff:g>”</string>
+    <string name="library_action_share_app">Bagikan aplikasi</string>
+    <string name="library_action_export_bundle">Ekspor paket aplikasi</string>
+    <string name="library_action_import_bundle">Impor paket aplikasi</string>
+    <string name="library_action_import_bundle_summary">Pulihkan aplikasi yang diekspor beserta setelan, data simpanan, atau penanda yang disertakan.</string>
+    <string name="library_import_preparing">Membaca paket aplikasi…</string>
+    <string name="library_import_restoring">Memulihkan data aplikasi…</string>
+    <string name="library_import_done">Paket aplikasi diimpor.</string>
+    <string name="library_import_done_with_warning">Paket aplikasi diimpor dengan peringatan.</string>
+    <string name="library_import_invalid_bundle">Paket aplikasi yang dipilih tidak valid, rusak, atau tidak didukung. Pilih paket aplikasi JL-Mod Plus yang valid lalu coba lagi.</string>
+    <string name="library_import_restore_existing">Aplikasi ini sudah terinstal. Setelan dan data simpanan yang disertakan akan mengganti data yang ada; penanda akan digabungkan kecuali setelan juga disertakan.</string>
+    <string name="library_import_restore_failed">Aplikasi terinstal, tetapi data paketnya tidak dapat dipulihkan. Coba pulihkan lagi?</string>
+    <string name="library_play_stats_summary">Dibuka: <xliff:g id="launch_count" example="12">%1$d</xliff:g> · Total waktu: <xliff:g id="total_time" example="2h 15m">%2$s</xliff:g></string>
+    <string name="library_share_chooser_title">Bagikan aplikasi</string>
+    <string name="library_export_chooser_title">Ekspor</string>
+    <string name="library_export_progress">Mengekspor… <xliff:g id="completed" example="3">%1$d</xliff:g>/<xliff:g id="total" example="10">%2$d</xliff:g></string>
+    <string name="library_transfer_unavailable">Tidak dapat menyiapkan ekspor. Tutup MIDlet yang sedang berjalan lalu coba lagi.</string>
+    <string name="library_back">Kembali ke pustaka</string>
+    <string name="library_sort">Urutkan aplikasi</string>
+    <string name="library_search_clear">Hapus pencarian</string>
+    <string name="library_description_more">… Lainnya</string>
+    <string name="library_description_less">Ringkas</string>
+    <plurals name="file_picker_selected_count">
+        <item quantity="other"><xliff:g id="count" example="3">%1$d</xliff:g> dipilih</item>
+    </plurals>
+    <plurals name="library_selection_count">
+        <item quantity="other"><xliff:g id="count" example="3">%1$d</xliff:g> aplikasi</item>
+    </plurals>
+    <plurals name="library_collection_member_count">
+        <item quantity="other"><xliff:g id="count" example="3">%1$d</xliff:g> aplikasi</item>
+    </plurals>
+    <plurals name="bulk_install_found">
+        <item quantity="other"><xliff:g id="count" example="3">%1$d</xliff:g> aplikasi ditemukan</item>
+    </plurals>
+    <plurals name="bulk_install_selected">
+        <item quantity="other"><xliff:g id="count" example="3">%1$d</xliff:g> dipilih</item>
+    </plurals>
+    <plurals name="bulk_install_ready_count">
+        <item quantity="other"><xliff:g id="count" example="3">%1$d</xliff:g> siap</item>
+    </plurals>
+    <plurals name="bulk_install_skipped_count">
+        <item quantity="other">Sudah terinstal atau duplikat: <xliff:g id="count" example="3">%1$d</xliff:g></item>
+    </plurals>
+    <plurals name="bulk_install_attention_count">
+        <item quantity="other"><xliff:g id="count" example="3">%1$d</xliff:g> perlu ditinjau</item>
+    </plurals>
+    <plurals name="bulk_install_installed_count">
+        <item quantity="other"><xliff:g id="count" example="3">%1$d</xliff:g> terinstal</item>
+    </plurals>
+    <plurals name="bulk_install_updated_count">
+        <item quantity="other"><xliff:g id="count" example="3">%1$d</xliff:g> diperbarui</item>
+    </plurals>
+    <plurals name="bulk_install_reinstalled_count">
+        <item quantity="other"><xliff:g id="count" example="3">%1$d</xliff:g> diinstal ulang</item>
+    </plurals>
+    <plurals name="bulk_install_skipped_result_count">
+        <item quantity="other"><xliff:g id="count" example="3">%1$d</xliff:g> dilewati</item>
+    </plurals>
+    <plurals name="bulk_install_failed_count">
+        <item quantity="other"><xliff:g id="count" example="3">%1$d</xliff:g> gagal</item>
+    </plurals>
+    <plurals name="bulk_install_warning_count">
+        <item quantity="other"><xliff:g id="count" example="3">%1$d</xliff:g> peringatan</item>
+    </plurals>
+    <plurals name="bulk_install_omitted_sources">
+        <item quantity="other"><xliff:g id="count" example="3">%1$d</xliff:g> file tambahan tidak disertakan agar peninjauan tetap responsif.</item>
+    </plurals>
+    <plurals name="library_bulk_delete_confirmation">
+        <item quantity="other">Hapus <xliff:g id="count" example="3">%1$d</xliff:g> aplikasi? File, setelan, dan data simpanannya akan dihapus dari pustaka Anda.</item>
+    </plurals>
+    <plurals name="library_bulk_delete_result">
+        <item quantity="other"><xliff:g id="deleted_count" example="3">%1$d</xliff:g> aplikasi dihapus; <xliff:g id="failed_count" example="1">%2$d</xliff:g> gagal.</item>
+    </plurals>
+    <string name="bulk_install_title">Instal massal</string>
+    <string name="bulk_install_planning">Memeriksa aplikasi yang dipilih…</string>
+    <string name="bulk_install_empty">Tidak ada aplikasi yang didukung.</string>
+    <string name="bulk_install_recommended">Disarankan</string>
+    <string name="bulk_install_clear">Hapus pilihan</string>
+    <string name="bulk_install_install_count">Instal <xliff:g id="count" example="3">%1$d</xliff:g></string>
+    <string name="bulk_install_cancel">Batal</string>
+    <string name="bulk_install_close">Tutup</string>
+    <plurals name="bulk_install_running">
+        <item quantity="other">Memproses <xliff:g id="processed" example="3">%1$d</xliff:g> dari <xliff:g id="total" example="10">%2$d</xliff:g> aplikasi</item>
+    </plurals>
+    <string name="bulk_install_cancel_requested">Berhenti setelah aplikasi saat ini…</string>
+    <string name="bulk_install_complete">Instal massal selesai</string>
+    <string name="bulk_install_cancelled">Instal massal dihentikan</string>
+    <string name="bulk_install_fatal">Instal massal dihentikan. Tinjau item yang belum selesai sebelum mencoba lagi.</string>
+    <string name="bulk_install_result_installed">Terinstal</string>
+    <string name="bulk_install_result_updated">Diperbarui</string>
+    <string name="bulk_install_result_reinstalled">Diinstal ulang</string>
+    <string name="bulk_install_result_skipped">Dilewati</string>
+    <string name="bulk_install_result_failed">Gagal</string>
+    <string name="bulk_install_installed_version">Terinstal: <xliff:g id="version" example="2.1.0">%1$s</xliff:g></string>
+    <string name="bulk_install_source">Sumber: <xliff:g id="name" example="Example">%1$s</xliff:g></string>
+    <string name="bulk_install_action_separate_copy">Instal sebagai salinan terpisah</string>
+    <string name="bulk_install_action_jar_only">Instal JAR saja</string>
+    <string name="single_install_review_jar_only" tools:ignore="MissingTranslation">Tinjau JAR saja</string>
+    <string name="single_install_jar_only_notice" tools:ignore="MissingTranslation">Hanya JAR yang akan diinstal. Tinjau nama aplikasi, versi, dan status aplikasi terinstal sebelum melanjutkan.</string>
+    <string name="single_install_running_replacement_warning" tools:ignore="MissingTranslation">Jika aplikasi ini sedang berjalan, instalasi akan menghentikannya sebelum mengganti filenya. Progres yang belum disimpan mungkin hilang.</string>
+    <string name="bulk_install_status_new">Baru</string>
+    <string name="bulk_install_status_update">Pembaruan</string>
+    <string name="bulk_install_status_downgrade">Versi lebih lama</string>
+    <string name="bulk_install_status_same">Sudah terinstal</string>
+    <string name="bulk_install_status_reinstall">Versi sama, kemungkinan varian lain</string>
+    <string name="bulk_install_status_ambiguous">Cocok dengan beberapa aplikasi terinstal</string>
+    <string name="bulk_install_status_mismatch">JAD/JAR tidak cocok</string>
+    <string name="bulk_install_status_duplicate">Duplikat</string>
+    <string name="bulk_install_status_older_batch">Versi lebih lama dalam batch</string>
+    <string name="bulk_install_status_conflict">Konflik batch</string>
+    <string name="bulk_install_status_remote">Sumber jarak jauh tidak didukung</string>
+    <string name="bulk_install_status_error">Sumber tidak valid</string>
+    <string name="bulk_install_reinstall_source_missing">JAR tersimpan tidak tersedia untuk diinstal ulang.</string>
+    <plurals name="bulk_install_reinstall_missing_apps">
+        <item quantity="other"><xliff:g id="count" example="3">%1$d</xliff:g> aplikasi pustaka yang dipilih tidak lagi tersedia.</item>
+    </plurals>
+    <string name="library_metadata_edit_title">Edit metadata</string>
+    <string name="library_metadata_icon">Ikon</string>
+    <string name="library_metadata_name">Nama</string>
+    <string name="library_metadata_vendor">Vendor</string>
+    <string name="library_metadata_reset_to_original">Reset ke asli</string>
+    <string name="library_metadata_save">Simpan</string>
+    <string name="library_hide_grid_titles_summary">Sembunyikan nama MIDlet pada tampilan Kisi. Tampilan Daftar tetap menampilkannya.</string>
+    <string name="library_show_list_description_summary">Tampilkan deskripsi setiap MIDlet di bawah judul dan versinya.</string>
+    <string name="library_indexing_progress">Mengindeks pustaka… <xliff:g id="completed" example="3">%1$d</xliff:g>/<xliff:g id="total" example="10">%2$d</xliff:g></string>
+    <string name="library_indexing_current">Memindai <xliff:g id="name" example="Example">%1$s</xliff:g></string>
+    <string name="library_load_error_title">Pustaka tidak tersedia</string>
+    <string name="library_retry">Coba lagi</string>
+    <string name="library_reinstall_source_missing">JAR tersimpan tidak tersedia untuk diinstal ulang.</string>
+    <string name="library_action_select">Pilih</string>
+    <string name="library_selection_select_all">Pilih semua</string>
+    <string name="library_selection_unselect_all">Batalkan semua pilihan</string>
+    <string name="library_selection_checkbox_description">Pilih <xliff:g id="name" example="Example">%1$s</xliff:g></string>
+    <string name="library_selection_checked">Dipilih</string>
+    <string name="library_selection_unchecked">Tidak dipilih</string>
+    <string name="library_action_settings_summary">Konfigurasikan perilaku dan tampilan global.</string>
+    <string name="library_action_crash_reports_summary">Tinjau laporan diagnostik tersimpan.</string>
+    <string name="library_action_about_summary">Ringkasan proyek, informasi build, dan tautan.</string>
+    <string name="library_action_licenses_summary">Pemberitahuan pihak ketiga dan ketentuan lisensi yang disertakan dalam aplikasi.</string>
+    <string name="library_donation_action">Dukung pengembangan</string>
+    <string name="library_donation_summary">Bantu JL-Mod Plus terus berkembang.</string>
+    <string name="library_donation_title">Dukung JL-Mod Plus</string>
+    <string name="library_donation_message">JL-Mod Plus gratis dan bersumber terbuka. Jika merasa terbantu, Anda dapat mendukung pengembangannya melalui donasi sukarela.</string>
+    <string name="library_donation_provider_note">Donasi diproses secara eksternal melalui Sociabuzz.</string>
+    <string name="library_donation_continue">Lanjut ke Sociabuzz</string>
+    <string name="library_donation_not_now">Nanti saja</string>
+    <string name="library_donation_link_copied">Browser tidak ditemukan. Tautan Sociabuzz disalin ke papan klip.</string>
+    <string name="library_donation_browser_unavailable">Browser tidak ditemukan untuk membuka Sociabuzz.</string>
+    <string name="library_bulk_delete_apps">Hapus aplikasi</string>
+    <string name="library_bulk_add_collection">Tambahkan ke koleksi</string>
+    <string name="library_bulk_share_apps">Bagikan aplikasi</string>
+    <string name="library_bulk_reinstall_apps">Instal ulang</string>
+    <string name="library_bulk_export_apps">Ekspor paket</string>
+    <string name="library_enhanced_icons_title">Ikon ditingkatkan</string>
+    <string name="library_enhanced_icons_summary">Menyesuaikan bingkai, skala, dan latar belakang ubin ikon agar terlihat lebih konsisten di pustaka Anda.</string>
+    <string name="library_collections_unavailable_title">Koleksi tidak tersedia</string>
+    <string name="library_load_failed_message">Tidak dapat memuat pustaka. Coba lagi.</string>
+    <string name="bulk_install_prepare_failed">Tidak dapat menyiapkan aplikasi yang dipilih untuk instalasi.</string>
+    <string name="installer_existing_data_preserved">Setelan dan data simpanan yang ada akan tetap dipertahankan.</string>
+    <string name="bulk_install_library_changed">Pustaka Anda berubah setelah peninjauan. Tutup batch ini lalu pilih filenya lagi.</string>
+    <string name="bulk_install_source_unavailable">File sumber yang diperlukan tidak lagi tersedia. Pilih filenya lagi.</string>
+    <string name="bulk_install_source_changed">File sumber berubah setelah peninjauan. Pilih filenya lagi.</string>
+    <string name="bulk_install_target_unverified">Tidak dapat memverifikasi target instal ulang. Tutup batch ini lalu pilih aplikasinya lagi.</string>
+    <string name="bulk_install_result_restored">Dipulihkan</string>
+    <plurals name="bulk_install_restored_count">
+        <item quantity="other"><xliff:g id="count" example="3">%1$d</xliff:g> dipulihkan</item>
+    </plurals>
+    <plurals name="bulk_install_reason_ambiguous_match">
+        <item quantity="other"><xliff:g id="count" example="3">%1$d</xliff:g> aplikasi terinstal cocok dengan sumber ini.</item>
+    </plurals>
+    <string name="bulk_install_reason_jad_jar_mismatch">JAD dan JAR mengidentifikasi aplikasi yang berbeda.</string>
+    <string name="bulk_install_reason_conflicting_jads">File JAD dengan atribut berbeda merujuk ke JAR yang sama.</string>
+    <string name="bulk_install_reason_remote_jar">Instal massal tidak dapat mengunduh file JAR jarak jauh.</string>
+    <string name="bulk_install_reason_missing_jar_url">JAD tidak memiliki MIDlet-Jar-URL.</string>
+    <!-- %1$s is the exact URI scheme supplied by the JAD; do not translate it. -->
+    <string name="bulk_install_reason_unsupported_uri_scheme">JAD merujuk ke JAR dengan skema URI yang tidak didukung: <xliff:g id="scheme" example="http">%1$s</xliff:g>.</string>
+    <string name="bulk_install_reason_missing_parent">JAD tidak memiliki folder induk.</string>
+    <!-- %1$s is the exact MIDlet-Jar-URL reference, not a normalized filesystem path. -->
+    <string name="bulk_install_reason_jar_not_found">JAR yang dirujuk oleh JAD tidak ditemukan: <xliff:g id="file_path" example="game.jar">%1$s</xliff:g>.</string>
+    <string name="bulk_install_reason_duplicate_source">Sumber ini menduplikasi sumber lain dalam batch ini.</string>
+    <string name="bulk_install_reason_version_conflict">Beberapa varian aplikasi memiliki versi yang sama.</string>
+    <string name="bulk_install_reason_older_candidate">Versi lebih baru dari aplikasi ini ada dalam batch yang sama.</string>
+    <string name="bulk_install_reason_source_error">Tidak dapat menyiapkan sumber ini untuk instalasi.</string>
+    <string name="updates_title">Pembaruan</string>
+    <string name="updates_more_summary">Periksa versi baru JL-Mod Plus.</string>
+    <string name="updates_more_available">Versi baru tersedia.</string>
+    <string name="updates_installed_version">Versi terinstal: <xliff:g id="version" example="2.1.0">%1$s</xliff:g></string>
+    <string name="updates_build_code">Build <xliff:g id="build_code" example="247">%1$d</xliff:g></string>
+    <string name="updates_automatic">Periksa otomatis saat pustaka aktif</string>
+    <string name="updates_not_checked">Belum diperiksa.</string>
+    <string name="updates_checking">Memeriksa pembaruan…</string>
+    <string name="updates_current">Aplikasi sudah versi terbaru.</string>
+    <string name="updates_no_release">Tidak ada rilis resmi yang kompatibel.</string>
+    <string name="updates_not_installable">Rilis baru tersedia, tetapi tidak kompatibel dengan perangkat atau instalasi ini.</string>
+    <string name="updates_failed">Tidak dapat memeriksa pembaruan. Periksa koneksi Anda lalu coba lagi.</string>
+    <string name="updates_available">Pembaruan tersedia</string>
+    <string name="updates_view_release">Lihat rilis</string>
+    <string name="updates_last_checked">Terakhir diperiksa: <xliff:g id="timestamp" example="Today, 09:45">%1$s</xliff:g></string>
+    <string name="updates_check">Periksa pembaruan</string>
+    <string name="updates_notice">JL-Mod Plus <xliff:g id="version" example="2.1.0">%1$s</xliff:g> tersedia. Lihat Pembaruan di Setelan.</string>
+    <string name="updates_debug_build">Ini adalah build debug. APK rilis GitHub diinstal secara terpisah.</string>
+    <string name="updates_link_copied">Browser tidak ditemukan. Tautan pembaruan disalin ke papan klip.</string>
+    <string name="updates_browser_unavailable">Browser tidak ditemukan untuk membuka tautan pembaruan.</string>
+    <string name="bulk_install_choose_files">File</string>
+    <string name="bulk_install_choose_folder">Folder</string>
+    <string name="bulk_install_unreadable_archives">Arsip tidak dapat dibaca: <xliff:g id="count" example="3">%1$d</xliff:g></string>
+    <string name="bulk_install_skipped_entries">File atau entri arsip dilewati: <xliff:g id="count" example="3">%1$d</xliff:g></string>
+    <string name="bulk_install_selection_options" tools:ignore="MissingTranslation">Opsi pilihan</string>
+    <string name="bulk_install_show_details" tools:ignore="MissingTranslation">Tampilkan detail</string>
+    <string name="bulk_install_hide_details" tools:ignore="MissingTranslation">Sembunyikan detail</string>
+    <string name="bulk_install_filter_all">Semua</string>
+    <string name="bulk_install_filter_selected">Dipilih</string>
+    <string name="bulk_install_filter_review">Tinjau</string>
+    <string name="bulk_install_empty_filter">Tidak ada aplikasi yang cocok.</string>
+    <string name="platform_package_choice_title" tools:ignore="MissingTranslation">Paket Java ME terdeteksi</string>
+    <string name="platform_package_choice_message" tools:ignore="MissingTranslation">Tautan ini mengarah ke paket Java ME. Apa yang ingin Anda lakukan?</string>
+    <string name="platform_package_install" tools:ignore="MissingTranslation">Instal di JL-Mod Plus</string>
+    <string name="platform_package_browser" tools:ignore="MissingTranslation">Buka di browser</string>
+    <string name="platform_package_unavailable" tools:ignore="MissingTranslation">Tidak ada aplikasi yang ditemukan untuk membuka tautan ini.</string>
+    <string name="installer_running_update_warning" tools:ignore="MissingTranslation">Aplikasi ini sedang berjalan. Instalasi akan menghentikannya sebelum mengganti filenya. Progres yang belum disimpan mungkin hilang.</string>
+    <string name="library_metadata_main_icon">Utama</string>
+    <string name="library_metadata_follows_main">Menggunakan ikon utama</string>
+    <string name="library_metadata_change">Ubah</string>
+    <string name="library_metadata_remove_portrait">Hapus ikon 3:4</string>
+    <string name="library_metadata_discard_title">Buang perubahan?</string>
+    <string name="library_metadata_discard">Buang</string>
+    <string name="library_metadata_default_description">Deskripsi default</string>
+    <string name="library_metadata_other_languages">Bahasa lainnya</string>
+    <string name="library_metadata_add_language">+ Tambah bahasa</string>
+    <string name="library_metadata_language_search">Cari bahasa atau kode lokal</string>
+    <string name="library_metadata_remove_language">Hapus deskripsi</string>
+    <string name="library_metadata_language_load_failed">Tidak dapat memuat deskripsi bahasa. Ketuk Coba lagi untuk mengulang.</string>
+    <string name="updates_download_apk" tools:ignore="MissingTranslation">Unduh APK</string>
+    <string name="updates_skip_version" tools:ignore="MissingTranslation">Lewati versi ini</string>
+    <string name="updates_dialog_message" tools:ignore="MissingTranslation">JL-Mod Plus <xliff:g id="version" example="2.1.0">%1$s</xliff:g> tersedia. Anda menggunakan <xliff:g id="current_version" example="2.0.0">%2$s</xliff:g>. Unduh APK atau lihat rilis di GitHub.</string>
+    <string name="library_bundle_components_title" tools:ignore="MissingTranslation">Ekspor paket</string>
+    <string name="library_bundle_components_explanation" tools:ignore="MissingTranslation">Aplikasi yang dipilih selalu disertakan. Tutup MIDlet yang sedang berjalan sebelum mengekspor, lalu pilih data tambahan yang ingin disertakan.</string>
+    <string name="library_bundle_config" tools:ignore="MissingTranslation">Konfigurasi</string>
+    <string name="library_bundle_save_data" tools:ignore="MissingTranslation">Data simpanan</string>
+    <string name="library_bundle_saved_variables" tools:ignore="MissingTranslation">Penanda</string>
+    <string name="library_bundle_export" tools:ignore="MissingTranslation">Ekspor</string>
+    <string name="library_export_jar_only" tools:ignore="MissingTranslation">JAR saja</string>
+    <string name="library_export_jars_only" tools:ignore="MissingTranslation">JAR saja (ZIP)</string>
+    <string name="library_selection_action_delete" tools:ignore="MissingTranslation">Hapus</string>
+    <string name="library_selection_action_collection" tools:ignore="MissingTranslation">Koleksi</string>
+    <string name="library_selection_action_export" tools:ignore="MissingTranslation">Ekspor</string>
+    <string name="library_selection_action_reinstall" tools:ignore="MissingTranslation">Instal ulang</string>
+    <string name="installer_select_companion_jar" tools:ignore="MissingTranslation">JAD ini merujuk ke file JAR terpisah. Pilih JAR yang cocok untuk melanjutkan. Penyedia file eksternal tidak mengizinkan akses ke file di sebelahnya.</string>
+    <string name="installer_select_jar" tools:ignore="MissingTranslation">Pilih JAR</string>
+    <string name="installer_wrong_companion_jar" tools:ignore="MissingTranslation">JAR ini tidak cocok dengan JAD yang dipilih. Pilih JAR yang cocok agar setelan JAD tetap dipertahankan.</string>
+    <string name="installer_choose_another_jar" tools:ignore="MissingTranslation">Pilih JAR lain</string>
+    <string name="library_app_more_actions" tools:ignore="MissingTranslation">Tindakan lainnya untuk <xliff:g id="name" example="Example">%1$s</xliff:g></string>
+    <string name="library_actions_group_customize" tools:ignore="MissingTranslation">Sesuaikan</string>
+    <string name="library_actions_group_organize" tools:ignore="MissingTranslation">Kelola</string>
+    <string name="library_actions_group_transfer" tools:ignore="MissingTranslation">Transfer dan pemeliharaan</string>
+    <string name="library_collection_more_actions" tools:ignore="MissingTranslation">Tindakan lainnya untuk koleksi <xliff:g id="collection_name" example="Favorites">%1$s</xliff:g></string>
+    <string name="library_settings_preferences" tools:ignore="MissingTranslation">Preferensi aplikasi</string>
+    <string name="library_settings_section_maintenance" tools:ignore="MissingTranslation">Pembaruan dan diagnostik</string>
+    <string name="library_settings_section_support" tools:ignore="MissingTranslation">Tentang dan dukungan</string>
+    <string name="library_details_title" tools:ignore="MissingTranslation">Detail MIDlet</string>
+    <string name="library_details_description" tools:ignore="MissingTranslation">Deskripsi</string>
+    <string name="library_details_play_stats" tools:ignore="MissingTranslation">Statistik bermain</string>
+    <string name="library_details_launches" tools:ignore="MissingTranslation">Jumlah dibuka</string>
+    <string name="library_details_total_time" tools:ignore="MissingTranslation">Total waktu</string>
+    <string name="library_details_last_played" tools:ignore="MissingTranslation">Terakhir dimainkan</string>
+    <string name="library_details_library_info" tools:ignore="MissingTranslation">Informasi pustaka</string>
+    <string name="library_details_added" tools:ignore="MissingTranslation">Ditambahkan ke pustaka</string>
+    <string name="library_details_collections" tools:ignore="MissingTranslation">Koleksi</string>
+    <string name="library_details_none" tools:ignore="MissingTranslation">Tidak ada</string>
+    <string name="library_details_technical" tools:ignore="MissingTranslation">Informasi teknis</string>
+    <string name="library_details_profile" tools:ignore="MissingTranslation">Profil</string>
+    <string name="library_details_configuration" tools:ignore="MissingTranslation">Konfigurasi</string>
+    <string name="library_details_jar_size" tools:ignore="MissingTranslation">Ukuran JAR tersimpan</string>
+    <string name="library_details_entry_points" tools:ignore="MissingTranslation">Entri MIDlet</string>
+    <string name="library_details_original_metadata" tools:ignore="MissingTranslation">Metadata asli</string>
+    <string name="library_details_name" tools:ignore="MissingTranslation">Nama</string>
+    <string name="library_details_vendor" tools:ignore="MissingTranslation">Vendor</string>
+    <string name="library_details_version" tools:ignore="MissingTranslation">Versi</string>
+    <string name="library_details_version_value" tools:ignore="MissingTranslation">Versi <xliff:g id="version" example="2.1.0">%1$s</xliff:g></string>
+    <string name="library_details_original_description" tools:ignore="MissingTranslation">Deskripsi asli</string>
+    <string name="library_details_permissions" tools:ignore="MissingTranslation">Izin yang dideklarasikan</string>
+    <string name="library_details_required" tools:ignore="MissingTranslation">Wajib</string>
+    <string name="library_details_optional" tools:ignore="MissingTranslation">Opsional</string>
+    <string name="library_details_no_permissions" tools:ignore="MissingTranslation">Tidak ada izin yang dideklarasikan</string>
+    <string name="library_details_descriptor_attributes" tools:ignore="MissingTranslation">Atribut deskriptor</string>
+    <string name="library_details_unavailable" tools:ignore="MissingTranslation">Tidak tersedia</string>
+    <string name="library_details_action" tools:ignore="MissingTranslation">Detail</string>
+    <string name="library_details_view_details" tools:ignore="MissingTranslation">Lihat detail</string>
+    <string name="library_actions_more" tools:ignore="MissingTranslation">Tindakan lainnya</string>
+    <string name="library_actions_less" tools:ignore="MissingTranslation">Lebih sedikit</string>
+</resources>

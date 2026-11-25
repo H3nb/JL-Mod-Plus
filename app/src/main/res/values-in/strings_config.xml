@@ -1,0 +1,355 @@
+<?xml version="1.0" encoding="utf-8"?>
+<!-- Per-MIDlet configuration, reusable profiles, camera, controller calibration, permissions, and system properties. -->
+<resources xmlns:tools="http://schemas.android.com/tools" xmlns:xliff="urn:oasis:names:tc:xliff:document:1.2">
+    <!-- %1$s is an optional quoted storage-volume name with a trailing space, or empty. -->
+    <!-- %1$s is a raw storage-volume description. -->
+    <string name="config_missing_app_storage_named">Aplikasi tidak ditemukan.\nPeriksa apakah perangkat penyimpanan “<xliff:g id="storage_name" example="SD card">%1$s</xliff:g>” tersedia, atau buat ulang pintasan.</string>
+    <string name="config_missing_app_storage_generic">Aplikasi tidak ditemukan.\nPeriksa apakah perangkat penyimpanan tersedia, atau buat ulang pintasan.</string>
+    <string name="midlet_name"><b>Nama: </b></string>
+    <string name="midlet_size"><b>Ukuran: </b></string>
+    <string name="midlet_vendor"><b>Vendor: </b></string>
+    <string name="midlet_version"><b>Versi: </b></string>
+    <string name="config_destination_graphics">Tampilan</string>
+    <string name="config_destination_rendering" tools:ignore="MissingTranslation">Grafis</string>
+    <string name="config_destination_media">Media</string>
+    <string name="config_camera_title">Kamera</string>
+    <string name="config_camera_default_title">Kamera default</string>
+    <string name="config_camera_rear">Belakang</string>
+    <string name="config_camera_front">Depan</string>
+    <string name="config_camera_resolution_title">Resolusi default</string>
+    <string name="config_camera_resolution_auto">Otomatis</string>
+    <string name="config_camera_resolution_portrait">480×640 — Potret</string>
+    <string name="config_camera_resolution_landscape">640×480 — Lanskap</string>
+    <string name="config_destination_controls">Kontrol</string>
+    <string name="config_gamepad_test">Uji pengontrol</string>
+    <string name="config_gamepad_calibrate">Kalibrasi pengontrol</string>
+    <string name="config_gamepad_calibrate_summary">Mengukur posisi netral pengontrol yang terhubung serta rentang stik dan pemicunya.</string>
+    <string name="config_gamepad_stick_directions">Arah digital</string>
+    <string name="config_gamepad_stick_unassigned">Belum ditetapkan</string>
+    <string name="config_gamepad_stick_pointer">Sumber penunjuk</string>
+    <string name="config_gamepad_opaque_summary">Konfigurasi ini berisi data pengontrol dalam format yang tidak didukung. Data tetap dipertahankan apa adanya dan tidak dapat diedit di sini.</string>
+    <string name="config_gamepad_unsupported_summary">Konfigurasi pengontrol ini tidak didukung. Data tetap dipertahankan apa adanya dan tidak dapat diedit di sini.</string>
+    <string name="config_gamepad_keypad_title">Keypad virtual</string>
+    <string name="config_gamepad_calibration_next">Berikutnya</string>
+    <string name="config_gamepad_mapping_help_title">Bantuan pemetaan pengontrol</string>
+    <string name="config_gamepad_directions_four">4 arah</string>
+    <string name="config_gamepad_directions_eight">8 arah</string>
+    <string name="config_gamepad_pointer_off">Nonaktif</string>
+    <string name="config_gamepad_pointer_cursor">Kursor proporsional</string>
+    <string name="config_gamepad_pointer_joystick">Joystick sentuh</string>
+    <!-- This is the same controller-identity fingerprint shown in diagnostics. -->
+    <string name="config_gamepad_calibration_profile">Tanda pengenal pengontrol: <xliff:g id="profile_name" example="Action Games">%1$s</xliff:g></string>
+    <string name="config_gamepad_calibration_phase_neutral">Menunggu posisi netral</string>
+    <string name="config_gamepad_calibration_phase_stick_range">Rentang stik</string>
+    <string name="config_gamepad_calibration_phase_trigger_range">Rentang pemicu</string>
+    <string name="config_gamepad_calibration_phase_review">Tinjau</string>
+    <string name="config_gamepad_calibration_phase_committed">Tersimpan</string>
+    <string name="config_gamepad_calibration_phase_cancelled">Dibatalkan</string>
+    <string name="config_gamepad_calibration_waiting_controller">Hubungkan pengontrol dengan stik analog atau pemicu yang didukung. Kalibrasi dimulai saat Anda pertama kali menggerakkan stik atau menekan pemicu; kalibrasi sebelumnya tidak berubah sampai Anda menyimpan.</string>
+    <string name="config_gamepad_calibration_no_analog_ranges">Pengontrol ini tidak menyediakan rentang stik analog atau pemicu yang didukung.</string>
+    <string name="config_gamepad_calibration_start">Biarkan semua stik di tengah dan semua pemicu dilepas hingga penghitung posisi netral selesai.</string>
+    <string name="config_gamepad_calibration_save_failed">Tidak dapat menyimpan kalibrasi. Kalibrasi sebelumnya tidak berubah.</string>
+    <string name="config_gamepad_calibration_no_supported_ranges">Tidak ada rentang analog yang didukung.</string>
+    <string name="config_gamepad_calibration_rejected">Kalibrasi ditolak: <xliff:g id="name" example="Example">%1$s</xliff:g></string>
+    <string name="config_gamepad_calibration_neutral_instructions">Biarkan semua stik yang terdeteksi di tengah dan semua pemicu dilepas hingga penghitung posisi netral selesai.</string>
+    <string name="config_gamepad_calibration_stick_instructions">Gerakkan setiap stik yang terdeteksi ke seluruh rentang ke segala arah, lalu tekan Berikutnya.</string>
+    <string name="config_gamepad_calibration_trigger_instructions">Lepas lalu tekan penuh setiap pemicu yang terdeteksi, kemudian tekan Berikutnya untuk meninjau.</string>
+    <string name="config_gamepad_calibration_review_instructions">Siap ditinjau. Menyimpan hanya mengganti kalibrasi pengontrol ini.</string>
+    <string name="config_gamepad_calibration_saved">Kalibrasi tersimpan.</string>
+    <string name="config_gamepad_calibration_cancelled">Kalibrasi dibatalkan. Kalibrasi sebelumnya tidak berubah.</string>
+    <string name="config_gamepad_calibration_waiting_samples">Kalibrasi menunggu sampel pengontrol.</string>
+    <string name="config_gamepad_diagnosis_header">Diagnostik pengontrol</string>
+    <string name="config_gamepad_diagnosis_mode">Status: <xliff:g id="status" example="enabled">%1$s</xliff:g> · Sumber: <xliff:g id="source" example="controller">%2$s</xliff:g></string>
+    <string name="config_gamepad_diagnosis_notice">Catatan: <xliff:g id="name" example="Example">%1$s</xliff:g></string>
+    <string name="config_gamepad_diagnosis_analog_settings">Setelan analog:</string>
+    <string name="config_gamepad_diagnosis_left_stick">Stik kiri</string>
+    <string name="config_gamepad_diagnosis_right_stick">Stik kanan</string>
+    <string name="config_gamepad_diagnosis_triggers">Pemicu</string>
+    <string name="config_gamepad_diagnosis_pointer">Mode penunjuk</string>
+    <string name="config_gamepad_status_enabled">aktif</string>
+    <string name="config_gamepad_status_disabled">nonaktif</string>
+    <string name="config_gamepad_diagnosis_source_default">default</string>
+    <string name="config_gamepad_diagnosis_source_controller">pengontrol</string>
+    <string name="config_gamepad_diagnosis_source_explicit">eksplisit</string>
+    <string name="config_gamepad_diagnosis_device"><xliff:g id="device_name" example="Xbox Controller">%1$s</xliff:g> (#<xliff:g id="device_id" example="1">%2$d</xliff:g>)</string>
+    <string name="config_gamepad_calibration_issue_no_channels">tidak ada kanal yang didukung</string>
+    <string name="config_gamepad_calibration_issue_invalid_constraints">batasan kalibrasi tidak valid</string>
+    <string name="config_gamepad_calibration_issue_non_finite">sampel tidak hingga</string>
+    <string name="config_gamepad_calibration_issue_insufficient_samples">sampel tidak mencukupi</string>
+    <string name="config_gamepad_calibration_issue_invalid_range">rentang tidak valid</string>
+    <string name="config_gamepad_calibration_issue_rest_outside_range">nilai diam di luar rentang</string>
+    <string name="config_gamepad_calibration_issue_rest_too_noisy">posisi diam kurang stabil</string>
+    <string name="config_gamepad_calibration_phase_unknown">Status tidak tersedia</string>
+    <string name="config_gamepad_diagnosis_capabilities">Kemampuan pengontrol terhubung:</string>
+    <string name="config_gamepad_diagnosis_descriptor">Deskriptor: <xliff:g id="name" example="Example">%1$s</xliff:g></string>
+    <!-- %1$s is a controller-identity fingerprint derived from its descriptor and capabilities. -->
+    <!-- It is not a handwritten signature or a cryptographic signing operation. -->
+    <string name="config_gamepad_diagnosis_signature">Tanda pengenal: <xliff:g id="name" example="Example">%1$s</xliff:g></string>
+    <string name="config_gamepad_diagnosis_axis">Sumbu <xliff:g id="axis_index" example="0">%1$d</xliff:g> [<xliff:g id="min_value" example="-1.0">%2$s</xliff:g>, <xliff:g id="max_value" example="1.0">%3$s</xliff:g>] flat=<xliff:g id="flat" example="0.05">%4$s</xliff:g> fuzz=<xliff:g id="fuzz" example="0.01">%5$s</xliff:g></string>
+    <string name="config_gamepad_diagnosis_no_controller">(tidak ada pengontrol terhubung)</string>
+    <string name="config_gamepad_diagnosis_samples_not_sent">Sampel input sengaja tidak dikirim ke MIDlet.</string>
+    <string name="config_destination_system">Sistem</string>
+    <string name="config_screen_behavior" tools:ignore="MissingTranslation">Perilaku layar</string>
+    <string name="config_screen_size">Ukuran layar</string>
+    <string name="config_select_screen_size">Pilih ukuran layar</string>
+    <string name="config_current_screen_size">Ukuran saat ini: <xliff:g id="name" example="Example">%1$s</xliff:g></string>
+    <string name="config_custom_resolution">Resolusi kustom</string>
+    <string name="profile_custom">Kustom</string>
+    <string name="select_dialog_title">Pilih MIDlet</string>
+    <string name="SIZE_PRESETS">Preset ukuran font</string>
+    <string name="config_color_picker_title">Pilih warna</string>
+    <string name="config_color_picker_hex">Warna heksadesimal</string>
+    <string name="config_color_picker_hint">Seret bidang warna atau masukkan nilai RGB enam digit.</string>
+    <string name="config_color_picker_invalid">Masukkan tepat enam digit heksadesimal.</string>
+    <string name="config_color_picker_saturation_value">Saturasi dan kecerahan</string>
+    <string name="config_color_picker_hue">Rona</string>
+    <string name="config_decrease_value">Kurangi nilai</string>
+    <string name="config_increase_value">Tambah nilai</string>
+    <string name="midlet_failure_recovery_title">MIDlet berhenti tak terduga</string>
+    <string name="midlet_failure_recovery_message">MIDlet berhenti tak terduga. Informasi diagnostik disimpan secara lokal. Anda dapat terus menggunakan JL-Mod Plus.</string>
+    <string name="midlet_failure_recovery_message_named">“<xliff:g id="name" example="Example">%1$s</xliff:g>” berhenti tak terduga. Informasi diagnostik disimpan secara lokal. Anda dapat terus menggunakan JL-Mod Plus.</string>
+    <plurals name="config_system_properties_value">
+        <item quantity="other"><xliff:g id="count" example="3">%1$d</xliff:g> properti</item>
+    </plurals>
+    <string name="config_search_suggestions" tools:ignore="MissingTranslation">Setelan yang disarankan</string>
+    <string name="config_search_clear" tools:ignore="MissingTranslation">Hapus pencarian</string>
+    <string name="config_search_title" tools:ignore="MissingTranslation">Cari setelan</string>
+    <string name="config_search_hint" tools:ignore="MissingTranslation">Cari setelan, mis. MMPX atau orientasi</string>
+    <string name="config_search_no_results" tools:ignore="MissingTranslation">Tidak ada setelan yang cocok</string>
+    <string name="config_search_upscaling_requires_resolution" tools:ignore="MissingTranslation">Pilih Otomatis atau 2×–10× di Resolusi render untuk mengonfigurasi peningkatan skala bitmap.</string>
+    <string name="config_search_requires_manual_scale" tools:ignore="MissingTranslation">Pilih Manual di Mode penskalaan untuk menyesuaikan skala.</string>
+    <string name="config_search_requires_custom_background" tools:ignore="MissingTranslation">Pilih Kustom di Mode latar belakang untuk mengedit warna latar belakang.</string>
+    <string name="config_search_requires_gles" tools:ignore="MissingTranslation">Pilih Akselerasi perangkat keras (OpenGL ES) di Mode grafis untuk mengonfigurasi efek shader.</string>
+    <string name="config_search_requires_renderer_mode" tools:ignore="MissingTranslation">Pilih Perangkat lunak atau Akselerasi perangkat keras (Surface) di Mode grafis untuk mengonfigurasi pembaruan layar asinkron.</string>
+    <string name="config_font_page_title" tools:ignore="MissingTranslation">Setelan font</string>
+    <string name="config_display_more" tools:ignore="MissingTranslation">Teks dan performa</string>
+    <string name="config_destination_home" tools:ignore="MissingTranslation">Beranda</string>
+    <string name="config_overview_profile_draft" tools:ignore="MissingTranslation">Draf profil</string>
+    <string name="config_overview_profile_draft_summary" tools:ignore="MissingTranslation">Edit profil yang dapat digunakan ulang ini, lalu simpan perubahan Anda dari bilah alat.</string>
+    <string name="config_overview_quick_access" tools:ignore="MissingTranslation">Akses cepat</string>
+    <string name="config_system_properties_editor_label">Properti</string>
+    <string name="config_overview_enabled" tools:ignore="MissingTranslation">Aktif</string>
+    <string name="config_overview_disabled" tools:ignore="MissingTranslation">Nonaktif</string>
+    <string name="config_overview_media_summary" tools:ignore="MissingTranslation">Soundbank dan kamera</string>
+    <string name="config_overview_hint" tools:ignore="MissingTranslation">Pilih kategori untuk menyesuaikan game Anda. Setiap setelan memiliki satu tempat; pintasan ini langsung membawa Anda ke sana.</string>
+    <string name="config_destination_general">Umum</string>
+    <string name="config_basic_display">Layar MIDlet</string>
+    <string name="config_display_appearance">Tampilan layar</string>
+    <string name="config_display_rendering">Rendering</string>
+    <string name="config_image_quality_section" tools:ignore="MissingTranslation">Kualitas gambar</string>
+    <string name="config_frame_rate_section" tools:ignore="MissingTranslation">Kecepatan frame</string>
+    <string name="config_fps_position_title" tools:ignore="MissingTranslation">Posisi FPS</string>
+    <string name="config_display_text">Teks &amp; font</string>
+    <string name="config_input_mapping_section" tools:ignore="MissingTranslation">Input &amp; pemetaan</string>
+    <string name="config_controls_appearance_section" tools:ignore="MissingTranslation">Tampilan kontrol</string>
+    <string name="config_controls_virtual_keyboard">Kontrol virtual</string>
+    <string name="config_controls_virtual_keyboard_colors">Warna kontrol virtual</string>
+    <string name="config_virtual_controls_color_preview">Pratinjau warna</string>
+    <string name="config_virtual_controls_preview_normal">Normal</string>
+    <string name="config_virtual_controls_preview_pressed">Ditekan</string>
+    <string name="config_controls_maintenance">Tata letak</string>
+    <string name="config_controls_skin_help">Mengubah tampilan tombol keypad, D-pad, dan stik analog menggunakan gambar kustom.</string>
+    <string name="config_controls_color_button_normal">Tombol normal</string>
+    <string name="config_controls_color_button_pressed">Tombol ditekan</string>
+    <string name="config_controls_color_label_normal">Label normal</string>
+    <string name="config_controls_color_label_pressed">Label ditekan</string>
+    <string name="config_controls_color_outline_short">Garis tepi</string>
+    <string name="config_controls_disabled_hint">Kontrol virtual sedang nonaktif. Anda tetap dapat menyesuaikannya di sini.</string>
+    <string name="config_controls_opacity_help" formatted="false">Menyesuaikan transparansi kontrol virtual: 0% sepenuhnya transparan; 100% sepenuhnya terlihat.</string>
+    <string name="config_controls_opaque_outside">Tampilkan kontrol tanpa transparansi di luar layar MIDlet</string>
+    <string name="config_controls_opaque_outside_help">Kontrol di luar layar MIDlet mengabaikan opasitas. Kontrol di atas layar tetap mengikuti opasitas yang dipilih.</string>
+    <string name="config_controls_connect_controller">Hubungkan pengontrol untuk mengkalibrasi</string>
+    <string name="config_controls_color_skin_notice">Skin tombol penuh dapat menggantikan warna, bentuk, dan garis tepi tombol default.</string>
+    <string name="config_current_value">Nilai saat ini</string>
+    <string name="config_maintenance">Reset &amp; data</string>
+    <string name="config_midlet_actions" tools:ignore="MissingTranslation">Tindakan MIDlet</string>
+    <string name="config_profile_maintenance" tools:ignore="MissingTranslation">Tindakan profil</string>
+    <string name="config_reset_profile_settings" tools:ignore="MissingTranslation">Reset draf profil</string>
+    <string name="config_reset_profile_settings_summary" tools:ignore="MissingTranslation">Kembalikan setelan dan kontrol virtual draf ini ke default.</string>
+    <string name="config_system_compatibility" tools:ignore="MissingTranslation">Kompatibilitas emulasi</string>
+    <string name="config_reset_all_settings">Reset konfigurasi MIDlet</string>
+    <string name="config_reset_all_settings_summary">Kembalikan setelan dan kontrol virtual MIDlet ini ke default tanpa menghapus datanya.</string>
+    <string name="config_delete_app_data">Hapus data MIDlet</string>
+    <string name="config_delete_app_data_summary">Hapus permanen data MIDlet ini, termasuk data simpanan. Setelannya akan tetap disimpan.</string>
+    <string name="config_message_reset_settings">Kembalikan konfigurasi MIDlet dan kontrol virtual ke default? Data simpanan tetap utuh. Profil yang ditautkan tidak akan diikuti lagi.</string>
+    <string name="config_message_reset_profile_settings">Reset setelan dan kontrol virtual profil ini ke default? Anda masih dapat mengedit atau membatalkan sebelum menyimpan.</string>
+    <string name="config_message_delete_app_data">Hapus permanen semua data simpanan dan data yang dibuat oleh MIDlet ini? Setelan MIDlet tidak akan dihapus.</string>
+    <string name="config_lock_custom_resolution_ratio">Kunci rasio aspek</string>
+    <string name="config_swap_screen_size">Tukar lebar dan tinggi</string>
+    <string name="profile_builtin_settings">Default JL-Mod</string>
+    <string name="profile_default_badge_short">Default untuk MIDlet baru</string>
+    <string name="profile_template_summary">Setelan MIDlet tersimpan.</string>
+    <string name="profile_name_exists">Profil dengan nama ini sudah ada.</string>
+    <string name="profile_delete_template_message">Hapus profil “<xliff:g id="profile_name" example="Action Games">%1$s</xliff:g>”? MIDlet yang menggunakannya akan mempertahankan setelan saat ini, tetapi tidak akan menerima pembaruan berikutnya.</string>
+    <string name="profile_template_operation_failed">Tidak dapat menyelesaikan operasi profil.</string>
+    <string name="config_help_screen_size">Mengatur resolusi layar Java ME virtual yang digunakan oleh MIDlet.</string>
+    <string name="config_help_orientation">Memilih orientasi layar saat MIDlet berjalan.</string>
+    <string name="config_help_scale_type">Pilih cara game menyesuaikan tampilan layar. Pilih Manual untuk mengatur skala kustom.</string>
+    <string name="config_help_scale_ratio" formatted="false">Menyesuaikan ukuran tampilan dari 1% hingga 1000%. Pada 100%, game menggunakan ukuran aslinya; nilai lebih besar dapat melebihi batas layar.</string>
+    <string name="config_help_lock_custom_resolution_ratio">Menjaga rasio aspek saat mengedit resolusi kustom.</string>
+    <string name="config_help_virtual_keyboard">Menampilkan kontrol di layar untuk MIDlet ini.</string>
+    <string name="config_help_touch_input">Mengizinkan MIDlet menerima input penunjuk dari layar sentuh.</string>
+    <string name="config_help_background">Mengisi ruang kosong di sekitar layar MIDlet.</string>
+    <string name="config_background_mode">Mode latar belakang</string>
+    <string name="config_background_custom">Kustom</string>
+    <string name="config_background_theme">Tema</string>
+    <string name="config_background_immersive">Imersif</string>
+    <string name="config_background_theme_help">Menggunakan warna tema JL-Mod Plus di sekitar layar MIDlet.</string>
+    <string name="config_background_immersive_help">Mengisi ruang kosong dengan warna yang diambil dari layar MIDlet.</string>
+    <string name="config_background_dynamic">Warna dinamis</string>
+    <string name="config_background_dynamic_help">Menggunakan satu warna solid yang menyesuaikan secara halus dengan layar MIDlet.</string>
+    <string name="config_background_custom_color">Warna latar belakang</string>
+    <string name="config_help_background_custom_color">Mengatur warna ruang kosong di sekitar layar MIDlet.</string>
+    <string name="config_help_skin">Menampilkan gambar atau bingkai opsional di sekitar layar MIDlet.</string>
+    <string name="config_help_screen_gravity">Mengatur posisi layar MIDlet saat masih ada ruang kosong.</string>
+    <string name="config_help_screen_padding">Menambahkan jarak dalam piksel antara layar MIDlet dan tepi area tampilan.</string>
+    <string name="config_help_filter">Menggunakan filter linear untuk menghaluskan layar MIDlet saat diskalakan.</string>
+    <string name="config_warning_filter_shader">Filter linear menghaluskan input sebelum diproses oleh shader layar dan dapat mengurangi ketajaman hasil.</string>
+    <string name="config_help_immediate">Memproses event MIDlet secara langsung tanpa mengantrekannya. Dapat meningkatkan responsivitas, tetapi bisa membuat beberapa MIDlet tidak stabil.</string>
+    <string name="config_help_graphics_mode">Memilih jalur rendering untuk layar MIDlet. Akselerasi perangkat keras dapat meningkatkan performa, tetapi kompatibilitasnya berbeda di setiap perangkat.</string>
+    <string name="config_help_shader">Menerapkan shader pada frame MIDlet sebelum ditampilkan.</string>
+    <string name="config_help_shader_tuning">Kontrol yang tersedia bergantung pada shader yang dipilih.</string>
+    <string name="config_help_parallel_redraw">Menjadwalkan tampilan frame secara asinkron. Dapat meningkatkan performa di beberapa perangkat.</string>
+    <string name="config_help_force_fullscreen">Menyembunyikan bilah perintah saat MIDlet dimulai. MIDlet mungkin menampilkannya lagi saat bermain.</string>
+    <string name="config_help_fps_limit">Mengatur batas FPS pada kecepatan emulasi 1×. Batas efektif mengikuti kecepatan emulasi; 0 (Maksimum) menggunakan kecepatan refresh maksimum layar.</string>
+    <string name="config_timing_mode_full_guest">Waktu emulasi</string>
+    <string name="config_timing_mode_real_wall">Waktu sistem</string>
+    <string name="config_help_emulation_speed">Mengubah kecepatan jam MIDlet dan jeda yang didukung. Audio dan antarmuka Android tetap berjalan pada kecepatan normal.</string>
+    <string name="config_help_timing_mode">Memilih apakah MIDlet menggunakan waktu emulasi atau waktu sistem. Jeda relatif tetap mengikuti kecepatan emulasi.</string>
+    <string name="config_help_timing_unavailable">Setelan waktu tidak tersedia untuk instalasi MIDlet ini. Instal ulang atau konversi ulang MIDlet untuk mengaktifkannya.</string>
+    <string name="config_help_generic_color">Mengatur warna elemen visual ini.</string>
+    <string name="config_help_encoding">Memilih pengodean karakter yang dilaporkan sebagai microedition.encoding.</string>
+    <string name="config_edit_system_properties">Edit properti sistem</string>
+    <string name="config_help_system_properties">Mengatur properti Java ME lanjutan yang dilaporkan ke MIDlet.</string>
+    <string name="config_help_system_properties_long">Edit satu properti per baris dengan format “nama: nilai”. Nilai yang salah dapat memengaruhi kompatibilitas.</string>
+    <string name="config_system_properties_info">Sebagian besar MIDlet tidak memerlukan perubahan di sini.</string>
+    <string name="config_font_sizes">Ukuran font</string>
+    <string name="config_help_font_sizes">Mengatur ukuran font Java ME kecil, sedang, dan besar untuk MIDlet.</string>
+    <string name="config_help_font_sizes_long">Mengatur ukuran font Java ME dalam piksel, atau unit berskala saat skala font Android aktif. Ubah secara bersamaan agar teks tetap seimbang.</string>
+    <string name="config_font_sizes_value">Kecil <xliff:g id="small_size" example="12">%1$s</xliff:g> · sedang <xliff:g id="medium_size" example="16">%2$s</xliff:g> · besar <xliff:g id="large_size" example="20">%3$s</xliff:g></string>
+    <string name="config_help_font_presets">Menerapkan ukuran font yang sesuai dengan resolusi layar Java ME umum.</string>
+    <string name="config_help_font_dimensions">Menerapkan skala font Android pada ukuran font Java ME.</string>
+    <string name="config_help_font_aa">Menghaluskan tepi teks yang dirender.</string>
+    <string name="config_help_key_layout">Memilih skema kode tombol yang dilaporkan ke MIDlet.</string>
+    <string name="config_help_key_mapping">Memetakan tombol fisik Android ke tindakan keypad Java ME.</string>
+    <string name="config_help_vk_button_shape">Mengatur bentuk default tombol keypad. D-pad dan stik analog memiliki bentuknya sendiri.</string>
+    <string name="config_help_vk_feedback">Bergetar saat kontrol virtual ditekan jika getaran diaktifkan di Setelan.</string>
+    <string name="config_help_vk_hide_delay">Menyembunyikan kontrol setelah jeda ini saat menutupi layar MIDlet. Nilai 0 menonaktifkan sembunyi otomatis.</string>
+    <string name="config_help_reset_layout">Memulihkan tata letak kontrol virtual tanpa mengubah setelan MIDlet lainnya.</string>
+    <string name="config_help_skip_resume">Setelah startApp() pertama berhasil, lewati pemanggilan berikutnya saat MIDlet dilanjutkan. Gunakan hanya untuk MIDlet yang gagal saat dilanjutkan.</string>
+    <string name="config_help_soundbank">Memilih soundbank yang digunakan untuk sintesis MIDI.</string>
+    <string name="profile_create_title">Buat profil</string>
+    <string name="profile_rename_title">Ganti nama profil</string>
+    <string name="presets">Profil</string>
+    <string name="preset_use">Gunakan profil</string>
+    <string name="preset_save_as">Simpan sebagai profil</string>
+    <string name="preset_custom_configuration">Konfigurasi kustom</string>
+    <string name="preset_based_on_modified">Konfigurasi MIDlet ini saat ini berbeda dari <xliff:g id="profile_name" example="Action Games">%1$s</xliff:g>.</string>
+    <string name="preset_builtin">Default JL-Mod</string>
+    <string name="preset_builtin_summary">Setelan MIDlet dan kontrol virtual bawaan.</string>
+    <string name="preset_picker_title">Gunakan profil</string>
+    <string name="preset_manage">Kelola profil</string>
+    <string name="profile_more_actions">Tindakan lainnya untuk <xliff:g id="profile_name" example="Action Games">%1$s</xliff:g></string>
+    <string name="profile_create_summary">Simpan konfigurasi yang dapat digunakan ulang untuk MIDlet lain.</string>
+    <string name="preset_application_settings">Setelan MIDlet</string>
+    <string name="preset_includes_keyboard_layout">Tata letak kontrol virtual disertakan.</string>
+    <string name="preset_virtual_keyboard_on">Kontrol virtual aktif</string>
+    <string name="preset_virtual_keyboard_off">Kontrol virtual nonaktif</string>
+    <string name="preset_apply">Terapkan</string>
+    <string name="preset_apply_failed_summary">Tidak dapat menerapkan profil ini. Periksa sumbernya lalu coba lagi.</string>
+    <string name="preset_choose_parts">Pilih bagian yang akan diterapkan</string>
+    <string name="preset_name">Nama</string>
+    <string name="preset_save_help">Simpan setelan MIDlet ini dan tata letak kontrol virtualnya (jika tersedia) sebagai profil. MIDlet ini akan menggunakan profil tersebut dan menerima pembaruannya di masa mendatang.</string>
+    <string name="preset_update">Perbarui <xliff:g id="profile_name" example="Action Games">%1$s</xliff:g></string>
+    <string name="preset_update_title">Perbarui <xliff:g id="profile_name" example="Action Games">%1$s</xliff:g>?</string>
+    <string name="preset_update_summary">Ganti <xliff:g id="profile_name" example="Action Games">%1$s</xliff:g> dengan setelan MIDlet ini saat ini dan tata letak kontrol virtualnya (jika tersedia). MIDlet lain yang menggunakan profil ini akan menerima perubahan saat dijalankan berikutnya.</string>
+    <string name="preset_update_confirm">Perbarui</string>
+    <string name="preset_saved_unlinked_warning">Profil tersimpan, tetapi MIDlet ini tidak akan menerima pembaruan berikutnya darinya.</string>
+    <string name="profile_default_fallback_notice">Profil default “<xliff:g id="profile_name" example="Action Games">%1$s</xliff:g>” tidak dapat digunakan. Profil mungkin hilang, tidak lengkap, atau tidak dapat dibaca. Default JL-Mod kini menjadi default untuk MIDlet baru.</string>
+    <string name="preset_discard_changes_title">Buang perubahan?</string>
+    <string name="preset_discard_changes_summary">Draf profil ini belum disimpan.</string>
+    <string name="preset_continue_editing">Lanjutkan mengedit</string>
+    <string name="preset_discard_changes">Buang</string>
+    <string name="preset_name_exists">Profil dengan nama ini sudah ada.</string>
+    <string name="preset_invalid_name">Masukkan nama profil yang valid.</string>
+    <string name="preset_manager_default_section">Default untuk MIDlet baru</string>
+    <string name="preset_manager_presets_section">Profil saya</string>
+    <string name="preset_manager_keyboard_section">Tata letak kontrol virtual tersimpan</string>
+    <string name="preset_default_policy_summary">Diterapkan saat MIDlet baru diinstal.</string>
+    <string name="preset_keyboard_layout_unavailable">Tata letak kontrol virtual tidak tersedia.</string>
+    <string name="edit_preset">Edit profil</string>
+    <string name="preset_edit_title">Edit profil: <xliff:g id="profile_name" example="Action Games">%1$s</xliff:g></string>
+    <string name="preset_unavailable_section">Tidak tersedia</string>
+    <string name="preset_unavailable_summary">Tidak dapat memuat profil ini. Ganti nama atau hapus profil.</string>
+    <string name="preset_change_default">Ubah</string>
+    <string name="preset_default_picker_title">Default untuk MIDlet baru</string>
+    <string name="profile_follows_updates">Mengikuti pembaruan profil berikutnya.</string>
+    <string name="profile_apply_whole">Seluruh profil</string>
+    <string name="profile_apply_whole_follows">Ganti setelan dan tata letak; ikuti pembaruan berikutnya.</string>
+    <string name="profile_apply_whole_without_layout">Ganti setelan, hapus tata letak lokal, dan ikuti pembaruan.</string>
+    <string name="profile_apply_settings_only">Hanya setelan MIDlet</string>
+    <string name="profile_apply_settings_keeps_layout">Pertahankan tata letak MIDlet ini; gunakan konfigurasi kustom.</string>
+    <string name="profile_apply_layout_only">Hanya tata letak kontrol virtual</string>
+    <string name="profile_apply_layout_keeps_settings">Pertahankan setelan MIDlet ini; gunakan konfigurasi kustom.</string>
+    <string name="config_analog_stick">Stik analog</string>
+    <string name="config_analog_stick_summary">Pilih Nonaktif, 4 arah, 8 arah, atau keypad angka untuk stik analog utama. Tombol pengontrol menggunakan pemetaan tombol.</string>
+    <string name="config_analog_stick_off">Nonaktif</string>
+    <string name="config_controller_help_body_compact">Tombol pengontrol menggunakan pemetaan tombol yang sama dengan keyboard dan tombol ponsel. Stik analog hanya mengirim input arah ke MIDlet. Tombol Kembali Android tetap berfungsi normal; tombol fisik apa pun yang dipetakan ke M akan membuka menu MIDlet saat bermain.</string>
+    <string name="config_show_fps_title" tools:ignore="MissingTranslation">Tampilkan FPS</string>
+    <string name="config_show_fps_help" tools:ignore="MissingTranslation">Menampilkan kecepatan frame saat bermain.</string>
+    <string name="config_search_requires_fps" tools:ignore="MissingTranslation">Aktifkan Tampilkan FPS untuk mengubah posisinya.</string>
+    <string name="midlet_running_notification_title">MIDlet berjalan</string>
+    <string name="midlet_running_notification_text"><xliff:g id="name" example="Example">%1$s</xliff:g> sedang berjalan.</string>
+    <string name="midlet_running_notification_channel">Runtime MIDlet</string>
+    <string name="config_gamepad_directions_numeric_v2">Keypad angka</string>
+    <string name="midlet_file_permission_title">Akses penyimpanan</string>
+    <string name="midlet_file_permission_read">MIDlet ini ingin membaca file.</string>
+    <string name="midlet_file_permission_write">MIDlet ini ingin membuat, mengubah, atau menghapus file.</string>
+    <string name="midlet_file_permission_allow_once">Izinkan kali ini</string>
+    <string name="midlet_file_permission_allow_session">Izinkan selama MIDlet berjalan</string>
+    <string name="midlet_file_permission_allow_always">Selalu izinkan</string>
+    <string name="midlet_file_permission_deny">Selalu tolak</string>
+    <string name="midlet_permissions_settings_title">Izin akses penyimpanan</string>
+    <string name="midlet_permissions_read">Baca file</string>
+    <string name="midlet_permissions_write">Ubah file</string>
+    <string name="midlet_permissions_ask">Tanyakan</string>
+    <string name="midlet_permissions_allow">Selalu izinkan</string>
+    <string name="midlet_permissions_deny">Tolak</string>
+    <string name="midlet_permissions_save_failed">Tidak dapat menyimpan setelan penyimpanan.</string>
+    <string name="config_avoid_camera_cutout_title">Hindari lubang kamera</string>
+    <string name="config_avoid_camera_cutout_summary">Jaga layar MIDlet dan kontrol virtual agar tidak tertutup lubang atau poni kamera.</string>
+    <string name="midlet_permissions_write_summary">Termasuk membuat dan menghapus file.</string>
+    <string name="midlet_legacy_import_title">Data simpanan Siemens lawas</string>
+    <string name="midlet_legacy_import_action">Pilih file simpanan lama</string>
+    <string name="midlet_legacy_import_summary">Salin file simpanan lama ke penyimpanan pribadi Siemens milik MIDlet ini. Hentikan MIDlet terlebih dahulu.</string>
+    <string name="midlet_legacy_import_success">File disalin ke penyimpanan pribadi MIDlet ini.</string>
+    <string name="midlet_legacy_import_failed">Impor gagal. Hentikan MIDlet dan pastikan file tujuan belum ada.</string>
+    <string name="midlet_storage_mode_title">Mode penyimpanan</string>
+    <string name="midlet_storage_mode_shared">Virtual</string>
+    <string name="midlet_storage_mode_android">Android</string>
+    <string name="midlet_storage_mode_shared_summary">Gunakan folder bersama di dalam folder kerja.</string>
+    <string name="midlet_storage_mode_android_summary">Gunakan penyimpanan Android seperti pada versi sebelumnya.</string>
+    <string name="config_system_properties_reset" tools:ignore="MissingTranslation">Reset ke default</string>
+    <string name="config_system_properties_reset_title" tools:ignore="MissingTranslation">Reset properti sistem?</string>
+    <string name="config_system_properties_reset_message" tools:ignore="MissingTranslation">Ganti isi editor dengan default JL-Mod Plus saat ini? Setelan lain tidak akan berubah. Simpan untuk menerapkan reset.</string>
+    <string name="config_asset_add">+ Tambah dari file</string>
+    <string name="config_asset_copy_hint">Disalin ke folder kerja; file asli tetap berada di tempatnya.</string>
+    <string name="config_asset_name">Nama file</string>
+    <string name="config_asset_delete_confirmation">Hapus <xliff:g id="name" example="Example">%1$s</xliff:g> dari folder kerja? MIDlet lain mungkin juga menggunakan file ini. Salinan di tempat lain tidak terpengaruh.</string>
+    <string name="config_asset_imported">Disalin dan dipilih: <xliff:g id="name" example="Example">%1$s</xliff:g></string>
+    <string name="config_asset_reused">File yang ada dipilih: <xliff:g id="name" example="Example">%1$s</xliff:g></string>
+    <string name="config_asset_renamed">Diganti nama menjadi <xliff:g id="name" example="Example">%1$s</xliff:g></string>
+    <string name="config_asset_deleted"><xliff:g id="name" example="Example">%1$s</xliff:g> dihapus</string>
+    <string name="config_asset_invalid">File tidak didukung atau tidak valid.</string>
+    <string name="config_asset_operation_failed">Tidak dapat menyelesaikan operasi file.</string>
+    <string name="config_save_failed" tools:ignore="MissingTranslation">Tidak dapat menyimpan setelan. Perubahan Anda masih terbuka—coba lagi.</string>
+    <string name="config_asset_busy">Selesaikan operasi file saat ini terlebih dahulu.</string>
+    <string name="config_quick_settings" tools:ignore="MissingTranslation">Setelan cepat</string>
+    <string name="config_all_settings" tools:ignore="MissingTranslation">Semua setelan</string>
+    <string name="profile_local_changes_pending" tools:ignore="MissingTranslation">Perubahan lokal belum disimpan ke profil</string>
+    <string name="profile_local_configuration_summary" tools:ignore="MissingTranslation">Setelan hanya untuk MIDlet ini</string>
+    <string name="profile_not_following" tools:ignore="MissingTranslation">Berdasarkan <xliff:g id="profile_name" example="Action Games">%1$s</xliff:g> · Tidak mengikuti pembaruan</string>
+    <string name="profile_stop_following" tools:ignore="MissingTranslation">Berhenti mengikuti profil</string>
+    <string name="profile_follow_again" tools:ignore="MissingTranslation">Ikuti profil lagi</string>
+    <string name="profile_follow_again_summary" tools:ignore="MissingTranslation">Ganti setelan lokal dan kontrol virtual MIDlet ini dengan profil <xliff:g id="profile_name" example="Action Games">%1$s</xliff:g> terbaru, lalu ikuti pembaruannya di masa mendatang?</string>
+</resources>

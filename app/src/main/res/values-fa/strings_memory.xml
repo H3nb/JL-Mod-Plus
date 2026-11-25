@@ -1,0 +1,252 @@
+<?xml version="1.0" encoding="utf-8"?>
+<!-- Memory Editor search, inspector, bookmarks, saved variables, quick actions, and script builder. -->
+<resources xmlns:tools="http://schemas.android.com/tools" xmlns:xliff="urn:oasis:names:tc:xliff:document:1.2">
+    <string name="memory_editor_bubble">دکمه شناور ویرایشگر حافظه</string>
+    <string name="memory_editor_bubble_content_description">باز کردن ویرایشگر حافظه</string>
+    <string name="memory_editor_previous_results_page_action">صفحه قبلی نتایج</string>
+    <string name="memory_editor_next_results_page_action">صفحه بعدی نتایج</string>
+    <string name="memory_editor">ویرایشگر حافظه</string>
+    <string name="memory_editor_search_hint">مقدار</string>
+    <string name="memory_editor_next_scan">اسکن بعدی</string>
+    <string name="memory_editor_new_search">جستجوی جدید</string>
+    <plurals name="memory_editor_results">
+        <item quantity="one"><xliff:g id="count" example="3">%1$d</xliff:g> نتیجه</item>
+        <item quantity="other"><xliff:g id="count" example="3">%1$d</xliff:g> نتیجه</item>
+    </plurals>
+    <plurals name="memory_editor_candidates">
+        <item quantity="one"><xliff:g id="count" example="3">%1$d</xliff:g> گزینه</item>
+        <item quantity="other"><xliff:g id="count" example="3">%1$d</xliff:g> گزینه</item>
+    </plurals>
+    <plurals name="memory_editor_search_complete">
+        <item quantity="one">جستجو پایان یافت · <xliff:g id="count" example="3">%1$d</xliff:g> گزینه</item>
+        <item quantity="other">جستجو پایان یافت · <xliff:g id="count" example="3">%1$d</xliff:g> گزینه</item>
+    </plurals>
+    <string name="memory_editor_no_results">نتیجه‌ای یافت نشد</string>
+    <string name="memory_editor_no_watch">فهرست پایش خالی است</string>
+    <string name="memory_editor_unsupported">ویرایشگر حافظه برای این محیط اجرا در دسترس نیست.</string>
+    <string name="memory_editor_engine_unavailable">موتور ویرایشگر حافظه در دسترس نیست.</string>
+    <string name="memory_editor_engine_reconnecting">ویرایشگر حافظه در حال اتصال مجدد است…</string>
+    <string name="memory_editor_refresh">بازخوانی</string>
+    <string name="memory_editor_undo">واگرد اسکن</string>
+    <string name="memory_variables_tab">ذخیره‌شده</string>
+    <string name="memory_editor_back" tools:ignore="MissingTranslation">بازگشت</string>
+    <string name="memory_list_keep" tools:ignore="MissingTranslation">نگهداری برای اجرای بعدی</string>
+    <string name="memory_list_stop_keeping" tools:ignore="MissingTranslation">توقف نگهداری</string>
+    <string name="memory_list_kept" tools:ignore="MissingTranslation">برای اجرای بعدی نگه داشته شد</string>
+    <string name="memory_list_empty" tools:ignore="MissingTranslation">هنوز نشانک ذخیره‌شده‌ای وجود ندارد</string>
+    <string name="memory_list_empty_hint" tools:ignore="MissingTranslation">متغیری را از جستجو یا بازرس نشانک‌گذاری کنید تا اینجا دنبال شود.</string>
+    <string name="memory_list_remove_confirm" tools:ignore="MissingTranslation">از ذخیره‌شده حذف شود؟ هر ثابت کردن فعالی متوقف خواهد شد.</string>
+    <string name="memory_list_add" tools:ignore="MissingTranslation">نشانک</string>
+    <string name="memory_bookmark_relink" tools:ignore="MissingTranslation">پیوند مجدد</string>
+    <string name="memory_bookmark_relink_hint" tools:ignore="MissingTranslation">متغیر جایگزین را در جستجو انتخاب کنید، سپس «پیوند مجدد» را برگزینید.</string>
+    <string name="memory_bookmark_relink_confirm" tools:ignore="MissingTranslation">این نشانک به متغیر انتخاب‌شده پیوند داده شود؟ هر ثابت کردن فعالی روی این نشانک متوقف خواهد شد.</string>
+    <string name="memory_bookmark_unavailable" tools:ignore="MissingTranslation">در دسترس نیست — برای انتخاب هدف، «پیوند مجدد» را برگزینید</string>
+    <string name="memory_editor_watch">پایش</string>
+    <string name="memory_editor_search_tab">جستجو</string>
+    <string name="memory_editor_search_known_values">جستجوی مقادیر مشخص</string>
+    <string name="memory_editor_search_unknown_values">جستجوی مقادیر نامشخص</string>
+    <string name="memory_editor_add_to_watch">نشانک‌گذاری مقادیر انتخاب‌شده</string>
+    <string name="memory_editor_no_candidates">مقدار قابل جستجویی یافت نشد</string>
+    <string name="memory_editor_edit">ویرایش</string>
+    <plurals name="memory_editor_edit_batch">
+        <item quantity="one">ویرایش <xliff:g id="count" example="3">%1$d</xliff:g> مقدار</item>
+        <item quantity="other">ویرایش <xliff:g id="count" example="3">%1$d</xliff:g> مقدار</item>
+    </plurals>
+    <string name="memory_editor_edit_batch_no_common_type">موارد انتخاب‌شده از نوع داده برگزیده پشتیبانی نمی‌کنند. موارد سازگار را جداگانه ویرایش کنید.</string>
+    <string name="memory_editor_save">اعمال</string>
+    <string name="memory_editor_replacement">مقدار جایگزین</string>
+    <string name="memory_editor_freeze">ثابت کردن</string>
+    <string name="memory_editor_remove">حذف</string>
+    <string name="memory_editor_select_visible">انتخاب موارد قابل مشاهده</string>
+    <string name="memory_editor_clear_selection">پاک کردن انتخاب</string>
+    <plurals name="memory_editor_selected">
+        <item quantity="one"><xliff:g id="count" example="3">%1$d</xliff:g> مورد انتخاب شده</item>
+        <item quantity="other"><xliff:g id="count" example="3">%1$d</xliff:g> مورد انتخاب شده</item>
+    </plurals>
+    <string name="memory_editor_close">بستن ویرایشگر حافظه</string>
+    <string name="memory_editor_searching">در حال جستجو در حافظه…</string>
+    <string name="memory_editor_working">در حال اعمال عملیات…</string>
+    <string name="memory_editor_search_progress"><xliff:g id="scanned_mib" example="12">%1$d</xliff:g> از <xliff:g id="total_mib" example="64">%2$d</xliff:g> MiB اسکن شد</string>
+    <string name="memory_editor_candidate_moved">هدف به‌روزرسانی شد</string>
+    <string name="memory_editor_candidate_relocating">در حال اعتبارسنجی مجدد</string>
+    <string name="memory_editor_candidate_ambiguous">مبهم — نوشتن متوقف شد</string>
+    <string name="memory_editor_candidate_lost">گم‌شده — نوشتن متوقف شد</string>
+    <string name="memory_editor_apply">اعمال</string>
+    <string name="memory_editor_min_value">حداقل مقدار</string>
+    <string name="memory_editor_max_value">حداکثر مقدار</string>
+    <string name="memory_editor_change_amount">میزان تغییر</string>
+    <string name="memory_editor_min_change">حداقل تغییر</string>
+    <string name="memory_editor_max_change">حداکثر تغییر</string>
+    <string name="memory_editor_unfreeze">آزاد کردن</string>
+    <string name="memory_editor_cancelled">عملیات لغو شد.</string>
+    <string name="memory_editor_resource_limit">ویرایشگر حافظه به حد ایمنی رسید. جستجوی دقیق‌تری امتحان کنید یا نشانک‌ها و موارد ثابت‌شده بلااستفاده را حذف کنید.</string>
+    <string name="memory_editor_identity_unsafe">تأیید مقدار انتخاب‌شده یا وضعیت جستجو ممکن نشد. نتایج را بازخوانی کنید یا بازرس را دوباره باز کنید، سپس مجدداً تلاش کنید.</string>
+    <string name="memory_editor_safety_limit">مقادیر بیش از حدی برای این عملیات انتخاب شده‌اند. تعداد کمتری انتخاب کنید و دوباره تلاش کنید.</string>
+    <string name="memory_editor_invalid_request">مقدار یا عملیات نامعتبر است.</string>
+    <string name="memory_editor_freeze_paused">برای ایمنی متوقف شد</string>
+    <string name="memory_editor_predicate_between">بین</string>
+    <string name="memory_editor_predicate_changed">تغییر کرده</string>
+    <string name="memory_editor_predicate_unchanged">تغییر نکرده</string>
+    <string name="memory_editor_predicate_increased">افزایش یافته</string>
+    <string name="memory_editor_predicate_decreased">کاهش یافته</string>
+    <string name="memory_editor_predicate_increased_by">افزایش یافته به میزان</string>
+    <string name="memory_editor_predicate_decreased_by">کاهش یافته به میزان</string>
+    <string name="memory_editor_predicate_changed_by">تغییر کرده به میزان</string>
+    <string name="memory_editor_predicate_increased_range">میزان افزایش در بازه</string>
+    <string name="memory_editor_predicate_decreased_range">میزان کاهش در بازه</string>
+    <string name="memory_editor_inspector">بازرس</string>
+    <string name="memory_editor_inspect_memory">بررسی حافظه مجاور</string>
+    <string name="memory_editor_inspector_loading">در حال تأیید نتیجه و خواندن حافظه مجاور…</string>
+    <string name="memory_editor_inspector_empty">برای بررسی حافظه مجاور یک نتیجه انتخاب کنید.</string>
+    <string name="memory_editor_inspector_no_rows">حافظه مجاوری برای بررسی در دسترس نیست.</string>
+    <string name="memory_editor_refresh_snapshot">بازخوانی تصویر لحظه‌ای</string>
+    <string name="memory_editor_select_result_value">انتخاب این نشانک</string>
+    <string name="memory_editor_freeze_after_edit">ثابت کردن پس از اعمال</string>
+    <string name="memory_editor_freeze_after_edit_help">این مقدار را قفل نگه می‌دارد و آن را در ذخیره‌شده نشانک‌گذاری می‌کند.</string>
+    <string name="memory_editor_expression_single_hint">یک مقدار وارد کنید یا مقادیر گروهی را با نقطه‌ویرگول (;) جدا کنید.</string>
+    <string name="memory_editor_expression_group_needs_type">برای جستجوی گروهی یک نوع داده مشخص انتخاب کنید.</string>
+    <plurals name="memory_editor_expression_group_hint">
+        <item quantity="one">جستجوی گروهی · <xliff:g id="count" example="3">%1$d</xliff:g> مقدار · همان شیء Java</item>
+        <item quantity="other">جستجوی گروهی · <xliff:g id="count" example="3">%1$d</xliff:g> مقدار · همان شیء Java</item>
+    </plurals>
+    <string name="memory_editor_expression_query_help">نمونه‌ها: 500 یا 500;1000. جستجوی گروهی به دنبال 2–8 مقدار در همان شیء Java می‌گردد.</string>
+    <string name="memory_editor_keypad_clear">پاک کردن</string>
+    <string name="memory_editor_peek_underlay">برای دیدن MIDlet زیرین فشار دهید و نگه دارید</string>
+    <string name="memory_editor_peek_underlay_active">نمایش MIDlet زیرین</string>
+    <string name="memory_editor_no_runtime">هیچ محیط اجرای فعال MIDlet وجود ندارد.</string>
+    <string name="memory_editor_no_search_history">جستجوی قبلی برای بازیابی وجود ندارد.</string>
+    <string name="memory_editor_partial_write">عملیات نوشتن به‌طور کامل انجام نشد. پیش از تلاش مجدد، مقادیر فعلی را بررسی کنید.</string>
+    <!-- Independent write counts: confirmed, unconfirmed, skipped, not attempted, and incompatible data type. -->
+    <string name="memory_editor_write_outcome">نوشتن‌های تأییدشده: <xliff:g id="confirmed" example="3">%1$d</xliff:g>. تأییدنشده: <xliff:g id="unconfirmed" example="0">%2$d</xliff:g>. ردشده: <xliff:g id="skipped" example="0">%3$d</xliff:g>. انجام‌نشده: <xliff:g id="not_attempted" example="0">%4$d</xliff:g>. ردشده به‌دلیل نوع داده: <xliff:g id="skipped_by_type" example="0">%5$d</xliff:g>.</string>
+    <!-- %1$s is a localized outcome explanation; %2$d through %6$d are the same independent write counts. -->
+    <string name="memory_editor_write_failure_outcome"><xliff:g id="reason" example="Write interrupted.">%1$s</xliff:g>\nنوشتن‌های تأییدشده: <xliff:g id="confirmed" example="1">%2$d</xliff:g>. تأییدنشده: <xliff:g id="unconfirmed" example="1">%3$d</xliff:g>. ردشده: <xliff:g id="skipped" example="0">%4$d</xliff:g>. انجام‌نشده: <xliff:g id="not_attempted" example="0">%5$d</xliff:g>. ردشده به‌دلیل نوع داده: <xliff:g id="skipped_by_type" example="0">%6$d</xliff:g>.</string>
+    <!-- Result counts before (%1$d) and after (%2$d) the completed next scan. -->
+    <string name="memory_editor_next_scan_result">نتایج اسکن بعدی: <xliff:g id="before_count" example="120">%1$d</xliff:g> ← <xliff:g id="after_count" example="14">%2$d</xliff:g></string>
+    <string name="memory_editor_type_auto">خودکار</string>
+    <string name="memory_editor_remove_candidates_title">نتایج انتخاب‌شده حذف شوند؟</string>
+    <string name="memory_editor_remove_candidates_description">حذف: نتایج انتخاب‌شده را از فهرست جستجو برمی‌دارد. مقادیر در حافظه بازی بدون تغییر می‌مانند.\n\nبازگردانی و حذف: در صورت تطابق، مقادیر پیش از آخرین ویرایش تأییدشده را نیز بازیابی می‌کند. مقادیر ثابت‌شده و نتایج دارای تعارض در فهرست می‌مانند.</string>
+    <string name="memory_editor_revert_and_remove">بازگردانی و حذف</string>
+    <string name="memory_editor_revert_remove_commit_failed">ممکن است مقادیر بازیابی شده باشند، اما حذف نتایج ممکن نشد. بازخوانی کنید و دوباره تلاش کنید؛ مقادیری که بازی تغییر داده بازنویسی نمی‌شوند.</string>
+    <string name="memory_editor_revert_remove_outcome">بازیابی‌شده: <xliff:g id="restored" example="2">%1$d</xliff:g>. حذف‌شده: <xliff:g id="removed" example="2">%2$d</xliff:g>. تعارض‌ها: <xliff:g id="conflicts" example="0">%3$d</xliff:g>. تأییدنشده: <xliff:g id="unconfirmed" example="0">%4$d</xliff:g>. انجام‌نشده: <xliff:g id="not_attempted" example="0">%5$d</xliff:g>.</string>
+    <string name="memory_editor_set_all">تنظیم همه</string>
+    <string name="memory_editor_increment_start">مقدار شروع</string>
+    <string name="memory_editor_edit_batch_type_notice">فقط مقادیری با نوع داده مطابق تغییر خواهند کرد.</string>
+    <string name="memory_editor_write_confirmed">مقادیر تأییدشده با بازخوانی حافظه: <xliff:g id="count" example="3">%1$d</xliff:g>.</string>
+    <string name="memory_editor_candidate_untraced">آرایه #<xliff:g id="array_id" example="42">%1$d</xliff:g>[<xliff:g id="index" example="3">%2$d</xliff:g>] · منبع ردیابی نشده</string>
+    <string name="memory_editor_candidate_static"><xliff:g id="field_name" example="Player.coins">%1$s</xliff:g> · <xliff:g id="reference_kind" example="Static reference">%2$s</xliff:g></string>
+    <string name="memory_editor_candidate_instance"><xliff:g id="field_name" example="Player.hp">%1$s</xliff:g> · <xliff:g id="reference_kind" example="Instance reference">%2$s</xliff:g> · هدف #<xliff:g id="target_id" example="1">%3$d</xliff:g></string>
+    <string name="memory_editor_reference_static">ارجاع ایستا</string>
+    <string name="memory_editor_reference_instance">ارجاع نمونه</string>
+    <string name="memory_editor_path_changed">مسیر ارجاع از زمان اسکن تغییر کرده است.</string>
+    <string name="memory_editor_path_incomplete">مسیر ارجاع از حد بررسی فراتر رفته است.</string>
+    <string name="memory_editor_source_unknown">منبع ردیابی نشده</string>
+    <string name="memory_editor_incremental_edit">افزایش گام‌به‌گام</string>
+    <string name="memory_editor_increment_step">گام</string>
+    <string name="memory_editor_increment_invalid">از یک نوع عدد صحیح و مقادیر درون بازه آن استفاده کنید.</string>
+    <!-- The batch dialog title already shows the number of selected values. -->
+    <string name="memory_editor_increment_preview">پیش‌نمایش: <xliff:g id="name" example="Example">%1$s</xliff:g></string>
+    <string name="memory_editor_panel_opacity">شفافیت پنل</string>
+    <string name="memory_editor_panel_opacity_help">پس‌زمینه را تنظیم کنید تا هنگام جستجو مقادیر بازی را ببینید. متن و نمادها خوانا باقی می‌مانند.</string>
+    <string name="memory_editor_reconversion_required" tools:ignore="MissingTranslation">تبدیل نصب‌شده این MIDlet با ویرایشگر حافظه سازگار نیست. بازی را ببندید، سپس آن را در JL-Mod Plus دوباره تبدیل یا نصب کنید.</string>
+    <string name="memory_saved_tab" tools:ignore="MissingTranslation">ذخیره‌شده</string>
+    <string name="memory_saved_save" tools:ignore="MissingTranslation">ذخیره متغیر</string>
+    <string name="memory_saved_name" tools:ignore="MissingTranslation">نام</string>
+    <string name="memory_saved_explanation" tools:ignore="MissingTranslation">این مسیر حافظه تأییدشده را برای نشست‌های بعدی ذخیره کنید. مقادیر هرگز به‌صورت خودکار نوشته نمی‌شوند.</string>
+    <string name="memory_saved_empty" tools:ignore="MissingTranslation">هنوز متغیر ذخیره‌شده‌ای وجود ندارد. برای ذخیره، یک نتیجه جستجو انتخاب کنید.</string>
+    <string name="memory_saved_not_ready" tools:ignore="MissingTranslation">آماده نیست</string>
+    <string name="memory_saved_retry" tools:ignore="MissingTranslation">تلاش مجدد</string>
+    <string name="memory_saved_rename" tools:ignore="MissingTranslation">تغییر نام</string>
+    <string name="memory_saved_value" tools:ignore="MissingTranslation">مقدار</string>
+    <string name="memory_saved_delete_confirm" tools:ignore="MissingTranslation">این تعریف ذخیره‌شده حذف شود؟ مقدار درون بازی تغییر نخواهد کرد.</string>
+    <string name="memory_saved_changed" tools:ignore="MissingTranslation">تغییر کرده</string>
+    <string name="memory_saved_rebound" tools:ignore="MissingTranslation">هدف به‌روزرسانی شد</string>
+    <string name="memory_saved_import_summary" tools:ignore="MissingTranslation">ذخیره‌شده: <xliff:g id="added_count" example="4">%1$d</xliff:g> افزوده شد، <xliff:g id="existing_count" example="2">%2$d</xliff:g> از قبل موجود بود</string>
+    <string name="memory_saved_incompatible" tools:ignore="MissingTranslation">ناسازگار</string>
+    <string name="memory_saved_failed" tools:ignore="MissingTranslation">ناموفق</string>
+    <string name="memory_saved_delete_many_confirm" tools:ignore="MissingTranslation"><xliff:g id="count" example="3">%1$d</xliff:g> تعریف ذخیره‌شده حذف شود؟ مقادیر بازی تغییر نخواهند کرد.</string>
+    <string name="memory_recipes_title" tools:ignore="MissingTranslation">اقدام سریع</string>
+    <string name="memory_recipes_simple_from_saved" tools:ignore="MissingTranslation">هدف: <xliff:g id="bookmark_name" example="Coins">%1$s</xliff:g></string>
+    <string name="memory_recipes_preview" tools:ignore="MissingTranslation">پیش‌نمایش هدف‌ها</string>
+    <string name="memory_recipes_stop_freeze" tools:ignore="MissingTranslation">توقف ثابت کردن اسکریپت</string>
+    <string name="memory_recipes_freeze" tools:ignore="MissingTranslation">ثابت نگه داشتن هنگام اجرای این بازی</string>
+    <string name="memory_recipes_run" tools:ignore="MissingTranslation">اجرا</string>
+    <string name="memory_recipes_active_freezes" tools:ignore="MissingTranslation">موارد ثابت کردن فعال اسکریپت</string>
+    <string name="memory_recipes_target_unavailable" tools:ignore="MissingTranslation">هدف نشانک در دسترس نیست. پیش از اجرا آن را بازخوانی یا پیوند مجدد کنید.</string>
+    <string name="memory_recipes_preview_values" tools:ignore="MissingTranslation">مقادیر فعلی: <xliff:g id="name" example="Example">%1$s</xliff:g></string>
+    <string name="memory_scripts_title" tools:ignore="MissingTranslation">اسکریپت‌ها</string>
+    <string name="memory_scripts_active" tools:ignore="MissingTranslation">فعال</string>
+    <string name="memory_scripts_inputs" tools:ignore="MissingTranslation">ورودی‌ها</string>
+    <string name="memory_scripts_create_from_bookmarks" tools:ignore="MissingTranslation">ایجاد اسکریپت</string>
+    <string name="memory_scripts_create_failed" tools:ignore="MissingTranslation">شروع اسکریپت جدید ممکن نشد.</string>
+    <string name="memory_scripts_draft_in_progress" tools:ignore="MissingTranslation">ابتدا پیش‌نویس اسکریپت فعلی را تمام یا لغو کنید.</string>
+    <string name="memory_builder_open_saved" tools:ignore="MissingTranslation">باز کردن ذخیره‌شده</string>
+    <string name="memory_builder_add_description" tools:ignore="MissingTranslation">افزودن توضیحات</string>
+    <string name="memory_builder_find_values" tools:ignore="MissingTranslation">یافتن مقادیر</string>
+    <string name="memory_scripts_description" tools:ignore="MissingTranslation">توضیحات</string>
+    <string name="memory_scripts_new" tools:ignore="MissingTranslation">اسکریپت جدید</string>
+    <string name="memory_scripts_back" tools:ignore="MissingTranslation">بازگشت</string>
+    <string name="memory_scripts_edit" tools:ignore="MissingTranslation">ویرایش</string>
+    <string name="memory_scripts_save" tools:ignore="MissingTranslation">ذخیره</string>
+    <string name="memory_scripts_saved" tools:ignore="MissingTranslation">اسکریپت ذخیره شد</string>
+    <string name="memory_scripts_deleted" tools:ignore="MissingTranslation">اسکریپت حذف شد</string>
+    <string name="memory_scripts_save_failed" tools:ignore="MissingTranslation">ذخیره اسکریپت ممکن نشد.</string>
+    <string name="memory_scripts_editor_hint" tools:ignore="MissingTranslation">یک سند JSON اسکریپت وارد یا جای‌گذاری کنید. ذخیره کردن آن را اجرا نمی‌کند.</string>
+    <string name="memory_scripts_paste_hint" tools:ignore="MissingTranslation">جای‌گذاری JSON اسکریپت</string>
+    <string name="memory_scripts_paste" tools:ignore="MissingTranslation">جای‌گذاری</string>
+    <string name="memory_scripts_clipboard_invalid" tools:ignore="MissingTranslation">کلیپ‌بورد خالی است یا حجم سند از 64 KiB بیشتر است</string>
+    <string name="memory_scripts_invalid" tools:ignore="MissingTranslation">قالب اسکریپت نامعتبر است</string>
+    <string name="memory_scripts_freeze_active" tools:ignore="MissingTranslation">ثابت کردن برای این اسکریپت فعال است</string>
+    <string name="memory_scripts_delete" tools:ignore="MissingTranslation">حذف</string>
+    <string name="memory_scripts_delete_confirm" tools:ignore="MissingTranslation"><xliff:g id="name" example="Example">%1$s</xliff:g> حذف شود؟ هر ثابت کردن فعالی برای این اسکریپت متوقف خواهد شد.</string>
+    <string name="memory_scripts_empty" tools:ignore="MissingTranslation">اسکریپتی ذخیره نشده است</string>
+    <string name="memory_scripts_unsaved_title" tools:ignore="MissingTranslation">از اسکریپت ذخیره‌نشده صرف‌نظر شود؟</string>
+    <string name="memory_scripts_unsaved_message" tools:ignore="MissingTranslation">تغییرات اسکریپت شما ذخیره نشده‌اند.</string>
+    <string name="memory_scripts_discard" tools:ignore="MissingTranslation">صرف‌نظر</string>
+    <string name="memory_scripts_current_title" tools:ignore="MissingTranslation">آخرین خوانش</string>
+    <string name="memory_scripts_refresh" tools:ignore="MissingTranslation">بازخوانی</string>
+    <string name="memory_scripts_reading" tools:ignore="MissingTranslation">در حال خواندن مقادیر فعلی…</string>
+    <string name="memory_scripts_refresh_hint" tools:ignore="MissingTranslation">برای خواندن مقادیر فعلی از بازی در حال اجرا روی «بازخوانی» بزنید.</string>
+    <string name="memory_scripts_mode_toggle" tools:ignore="MissingTranslation">ثابت کردن مقادیر</string>
+    <string name="memory_scripts_mode_form" tools:ignore="MissingTranslation">ویرایشگر مقادیر</string>
+    <string name="memory_scripts_mode_once" tools:ignore="MissingTranslation">اقدام‌های سریع</string>
+    <string name="memory_scripts_mode_legacy" tools:ignore="MissingTranslation">اسکریپت پیشرفته</string>
+    <string name="memory_scripts_edit_values" tools:ignore="MissingTranslation">ویرایش مقادیر</string>
+    <string name="memory_scripts_apply" tools:ignore="MissingTranslation">اعمال تغییرات</string>
+    <string name="memory_scripts_refresh_required" tools:ignore="MissingTranslation">پیش از اعمال، برای تأیید مقادیر فعلی بازخوانی کنید.</string>
+    <string name="memory_scripts_inconsistent" tools:ignore="MissingTranslation">نسخه‌های ناسازگار: <xliff:g id="name" example="Example">%1$s</xliff:g></string>
+    <string name="memory_editor_minimize" tools:ignore="MissingTranslation">کوچک کردن ویرایشگر حافظه</string>
+    <string name="memory_scripts_choose_type" tools:ignore="MissingTranslation">اسکریپت جدید</string>
+    <string name="memory_scripts_choose_hint" tools:ignore="MissingTranslation">انتخاب کنید این اسکریپت چگونه عمل کند.</string>
+    <string name="memory_builder_json_editor" tools:ignore="MissingTranslation">ویرایشگر JSON</string>
+    <string name="memory_builder_freeze_hint" tools:ignore="MissingTranslation">مقادیر انتخاب‌شده را هنگام فعال بودن قفل نگه می‌دارد. خاموش کردن ثابت کردن، مقادیر قبلی آن‌ها را برنمی‌گرداند.</string>
+    <string name="memory_builder_form_hint" tools:ignore="MissingTranslation">فرمی بسازید که پیش از اعمال ویرایش‌ها مقادیر فعلی را می‌خواند.</string>
+    <string name="memory_builder_actions_hint" tools:ignore="MissingTranslation">هر زمان روی «اجرا» بزنید تغییرات اعمال می‌شوند. هر اجرا مستقل است.</string>
+    <string name="memory_builder_name" tools:ignore="MissingTranslation">نام اسکریپت</string>
+    <string name="memory_builder_frozen_values" tools:ignore="MissingTranslation">مقادیر ثابت‌شده</string>
+    <string name="memory_builder_fields" tools:ignore="MissingTranslation">فیلدها</string>
+    <string name="memory_builder_actions" tools:ignore="MissingTranslation">اقدام‌ها</string>
+    <string name="memory_builder_add_bookmarks" tools:ignore="MissingTranslation">افزودن از نشانک‌ها</string>
+    <string name="memory_builder_empty" tools:ignore="MissingTranslation">دست‌کم یک نشانک تأییدشده اضافه کنید.</string>
+    <string name="memory_builder_field_label" tools:ignore="MissingTranslation">برچسب فیلد</string>
+    <string name="memory_builder_keep_at" tools:ignore="MissingTranslation">نگه داشتن روی</string>
+    <string name="memory_builder_amount" tools:ignore="MissingTranslation">مقدار / میزان</string>
+    <string name="memory_builder_set" tools:ignore="MissingTranslation">تنظیم</string>
+    <string name="memory_builder_add" tools:ignore="MissingTranslation">افزودن</string>
+    <string name="memory_builder_subtract" tools:ignore="MissingTranslation">کسر کردن</string>
+    <string name="memory_builder_view_json" tools:ignore="MissingTranslation">مشاهده JSON</string>
+    <string name="memory_builder_edit_json" tools:ignore="MissingTranslation">ویرایش JSON</string>
+    <string name="memory_builder_search_bookmarks" tools:ignore="MissingTranslation">جستجو در نشانک‌ها</string>
+    <string name="memory_builder_no_bookmarks" tools:ignore="MissingTranslation">نشانک تأییدشده مطابقی یافت نشد. مقداری را در جستجو نشانک‌گذاری کنید یا یکی را در ذخیره‌شده پیوند مجدد دهید.</string>
+    <string name="memory_builder_needs_relink" tools:ignore="MissingTranslation">نیازمند پیوند مجدد</string>
+    <string name="memory_builder_add_selected" tools:ignore="MissingTranslation">افزودن موارد انتخاب‌شده</string>
+    <string name="memory_builder_min" tools:ignore="MissingTranslation">حداقل (اختیاری)</string>
+    <string name="memory_builder_max" tools:ignore="MissingTranslation">حداکثر (اختیاری)</string>
+    <string name="memory_builder_add_target" tools:ignore="MissingTranslation">افزودن هدف</string>
+    <string name="memory_builder_freeze_short" tools:ignore="MissingTranslation">ثابت نگه داشتن مقادیر انتخاب‌شده در میزان مشخص</string>
+    <string name="memory_builder_form_short" tools:ignore="MissingTranslation">تنظیم چند مقدار در یک جا</string>
+    <string name="memory_builder_actions_short" tools:ignore="MissingTranslation">اجرای یک‌باره اقدام‌های تنظیم، افزودن یا کسر کردن</string>
+    <string name="memory_editor_refine_scan" tools:ignore="MissingTranslation">پالایش</string>
+    <string name="memory_scripts_saved_count" tools:ignore="MissingTranslation"><xliff:g id="count" example="3">%1$d</xliff:g> ذخیره‌شده</string>
+    <string name="memory_scripts_empty_hint" tools:ignore="MissingTranslation">برای ویرایش یا ثابت کردن مقادیر هنگام بازی، اسکریپتی بسازید.</string>
+    <string name="memory_builder_limits" tools:ignore="MissingTranslation">محدودیت‌ها (اختیاری)</string>
+</resources>

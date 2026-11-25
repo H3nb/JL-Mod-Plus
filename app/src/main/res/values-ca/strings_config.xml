@@ -1,0 +1,354 @@
+<?xml version="1.0" encoding="utf-8"?>
+<!-- Configuració per MIDlet, perfils reutilitzables, càmera, calibratge de comandaments, permisos i propietats del sistema. -->
+<resources xmlns:tools="http://schemas.android.com/tools" xmlns:xliff="urn:oasis:names:tc:xliff:document:1.2">
+    <!-- %1$s és la descripció del volum d’emmagatzematge. -->
+    <string name="config_missing_app_storage_named">No s’ha trobat l’aplicació.\nComprova si el dispositiu d’emmagatzematge «<xliff:g id="storage_name" example="SD card">%1$s</xliff:g>» està disponible o torna a crear la drecera.</string>
+    <string name="config_missing_app_storage_generic">No s’ha trobat l’aplicació.\nComprova si el dispositiu d’emmagatzematge està disponible o torna a crear la drecera.</string>
+    <string name="midlet_name"><b>Nom: </b></string>
+    <string name="midlet_size"><b>Mida: </b></string>
+    <string name="midlet_vendor"><b>Proveïdor: </b></string>
+    <string name="midlet_version"><b>Versió: </b></string>
+    <string name="config_destination_graphics">Pantalla</string>
+    <string name="config_destination_rendering" tools:ignore="MissingTranslation">Gràfics</string>
+    <string name="config_destination_media">Multimèdia</string>
+    <string name="config_camera_title">Càmera</string>
+    <string name="config_camera_default_title">Càmera predeterminada</string>
+    <string name="config_camera_rear">Posterior</string>
+    <string name="config_camera_front">Frontal</string>
+    <string name="config_camera_resolution_title">Resolució predeterminada</string>
+    <string name="config_camera_resolution_auto">Automàtica</string>
+    <string name="config_camera_resolution_portrait">480×640 — Vertical</string>
+    <string name="config_camera_resolution_landscape">640×480 — Horitzontal</string>
+    <string name="config_destination_controls">Controls</string>
+    <string name="config_gamepad_test">Prova el comandament</string>
+    <string name="config_gamepad_calibrate">Calibra el comandament</string>
+    <string name="config_gamepad_calibrate_summary">Mesura la posició neutra del comandament connectat i els intervals de les palanques i els gallets.</string>
+    <string name="config_gamepad_stick_directions">Direccions digitals</string>
+    <string name="config_gamepad_stick_unassigned">Sense assignar</string>
+    <string name="config_gamepad_stick_pointer">Origen del punter</string>
+    <string name="config_gamepad_opaque_summary">Aquesta configuració conté dades de comandament en un format no compatible. Es conserva sense canvis i no es pot editar aquí.</string>
+    <string name="config_gamepad_unsupported_summary">Aquesta configuració de comandament no és compatible. Es conserva sense canvis i no es pot editar aquí.</string>
+    <string name="config_gamepad_keypad_title">Teclat virtual</string>
+    <string name="config_gamepad_calibration_next">Següent</string>
+    <string name="config_gamepad_mapping_help_title">Ajuda d’assignació del comandament</string>
+    <string name="config_gamepad_directions_four">4 direccions</string>
+    <string name="config_gamepad_directions_eight">8 direccions</string>
+    <string name="config_gamepad_pointer_off">Desactivat</string>
+    <string name="config_gamepad_pointer_cursor">Cursor proporcional</string>
+    <string name="config_gamepad_pointer_joystick">Palanca tàctil</string>
+    <!-- Empremta d’identitat del comandament mostrada al diagnòstic. -->
+    <string name="config_gamepad_calibration_profile">Signatura del comandament: <xliff:g id="profile_name" example="Action Games">%1$s</xliff:g></string>
+    <string name="config_gamepad_calibration_phase_neutral">S’està esperant la posició neutra</string>
+    <string name="config_gamepad_calibration_phase_stick_range">Interval de palanques</string>
+    <string name="config_gamepad_calibration_phase_trigger_range">Interval de gallets</string>
+    <string name="config_gamepad_calibration_phase_review">Revisió</string>
+    <string name="config_gamepad_calibration_phase_committed">Desat</string>
+    <string name="config_gamepad_calibration_phase_cancelled">Cancel·lat</string>
+    <string name="config_gamepad_calibration_waiting_controller">Connecta un comandament amb una palanca analògica o un gallet compatible. El calibratge comença quan mous una palanca o prems un gallet per primera vegada; el calibratge existent no canviarà fins que desis.</string>
+    <string name="config_gamepad_calibration_no_analog_ranges">Aquest comandament no proporciona intervals compatibles de palanca analògica ni de gallet.</string>
+    <string name="config_gamepad_calibration_start">Mantén totes les palanques centrades i tots els gallets deixats anar fins que acabi el temporitzador de posició neutra.</string>
+    <string name="config_gamepad_calibration_save_failed">No s’ha pogut desar el calibratge. El calibratge existent es manté sense canvis.</string>
+    <string name="config_gamepad_calibration_no_supported_ranges">No s’han trobat intervals analògics compatibles.</string>
+    <string name="config_gamepad_calibration_rejected">Calibratge rebutjat: <xliff:g id="name" example="Example">%1$s</xliff:g></string>
+    <string name="config_gamepad_calibration_neutral_instructions">Mantén centrades totes les palanques detectades i deixats anar tots els gallets detectats fins que acabi el temporitzador de posició neutra.</string>
+    <string name="config_gamepad_calibration_stick_instructions">Mou cada palanca detectada per tot el seu recorregut en totes les direccions i després prem Següent.</string>
+    <string name="config_gamepad_calibration_trigger_instructions">Deixa anar i prem a fons cada gallet detectat i després prem Següent per revisar-ho.</string>
+    <string name="config_gamepad_calibration_review_instructions">A punt per revisar. Desar només substitueix el calibratge d’aquest comandament.</string>
+    <string name="config_gamepad_calibration_saved">Calibratge desat.</string>
+    <string name="config_gamepad_calibration_cancelled">Calibratge cancel·lat. El calibratge anterior no ha canviat.</string>
+    <string name="config_gamepad_calibration_waiting_samples">El calibratge està esperant mostres del comandament.</string>
+    <string name="config_gamepad_diagnosis_header">Diagnòstic del comandament</string>
+    <string name="config_gamepad_diagnosis_mode">Estat: <xliff:g id="status" example="enabled">%1$s</xliff:g> · Origen: <xliff:g id="source" example="controller">%2$s</xliff:g></string>
+    <string name="config_gamepad_diagnosis_notice">Avís: <xliff:g id="name" example="Example">%1$s</xliff:g></string>
+    <string name="config_gamepad_diagnosis_analog_settings">Configuració analògica:</string>
+    <string name="config_gamepad_diagnosis_left_stick">Palanca esquerra</string>
+    <string name="config_gamepad_diagnosis_right_stick">Palanca dreta</string>
+    <string name="config_gamepad_diagnosis_triggers">Gallets</string>
+    <string name="config_gamepad_diagnosis_pointer">Mode de punter</string>
+    <string name="config_gamepad_status_enabled">activat</string>
+    <string name="config_gamepad_status_disabled">desactivat</string>
+    <string name="config_gamepad_diagnosis_source_default">predeterminat</string>
+    <string name="config_gamepad_diagnosis_source_controller">comandament</string>
+    <string name="config_gamepad_diagnosis_source_explicit">explícit</string>
+    <string name="config_gamepad_diagnosis_device"><xliff:g id="device_name" example="Xbox Controller">%1$s</xliff:g> (#<xliff:g id="device_id" example="1">%2$d</xliff:g>)</string>
+    <string name="config_gamepad_calibration_issue_no_channels">cap canal compatible</string>
+    <string name="config_gamepad_calibration_issue_invalid_constraints">restriccions de calibratge no vàlides</string>
+    <string name="config_gamepad_calibration_issue_non_finite">mostra no finita</string>
+    <string name="config_gamepad_calibration_issue_insufficient_samples">mostres insuficients</string>
+    <string name="config_gamepad_calibration_issue_invalid_range">interval no vàlid</string>
+    <string name="config_gamepad_calibration_issue_rest_outside_range">valor de repòs fora d’interval</string>
+    <string name="config_gamepad_calibration_issue_rest_too_noisy">la posició de repòs no és prou estable</string>
+    <string name="config_gamepad_calibration_phase_unknown">Estat no disponible</string>
+    <string name="config_gamepad_diagnosis_capabilities">Capacitats del comandament connectat:</string>
+    <string name="config_gamepad_diagnosis_descriptor">Descriptor: <xliff:g id="name" example="Example">%1$s</xliff:g></string>
+    <string name="config_gamepad_diagnosis_signature">Signatura: <xliff:g id="name" example="Example">%1$s</xliff:g></string>
+    <string name="config_gamepad_diagnosis_axis">Eix <xliff:g id="axis_index" example="0">%1$d</xliff:g> [<xliff:g id="min_value" example="-1.0">%2$s</xliff:g>, <xliff:g id="max_value" example="1.0">%3$s</xliff:g>] flat=<xliff:g id="flat" example="0.05">%4$s</xliff:g> fuzz=<xliff:g id="fuzz" example="0.01">%5$s</xliff:g></string>
+    <string name="config_gamepad_diagnosis_no_controller">(cap comandament connectat)</string>
+    <string name="config_gamepad_diagnosis_samples_not_sent">Les mostres d’entrada no s’envien intencionadament al MIDlet.</string>
+    <string name="config_destination_system">Sistema</string>
+    <string name="config_screen_behavior" tools:ignore="MissingTranslation">Comportament de la pantalla</string>
+    <string name="config_screen_size">Mida de la pantalla</string>
+    <string name="config_select_screen_size">Selecciona la mida de la pantalla</string>
+    <string name="config_current_screen_size">Mida actual: <xliff:g id="name" example="Example">%1$s</xliff:g></string>
+    <string name="config_custom_resolution">Resolució personalitzada</string>
+    <string name="profile_custom">Personalitzat</string>
+    <string name="select_dialog_title">Selecciona un MIDlet</string>
+    <string name="SIZE_PRESETS">Preajustos de mida de font</string>
+    <string name="config_color_picker_title">Tria un color</string>
+    <string name="config_color_picker_hex">Color hexadecimal</string>
+    <string name="config_color_picker_hint">Arrossega els camps de color o introdueix un valor RGB de sis dígits.</string>
+    <string name="config_color_picker_invalid">Introdueix exactament sis dígits hexadecimals.</string>
+    <string name="config_color_picker_saturation_value">Saturació i brillantor</string>
+    <string name="config_color_picker_hue">To</string>
+    <string name="config_decrease_value">Redueix el valor</string>
+    <string name="config_increase_value">Augmenta el valor</string>
+    <string name="midlet_failure_recovery_title">El MIDlet s’ha aturat inesperadament</string>
+    <string name="midlet_failure_recovery_message">El MIDlet s’ha aturat inesperadament. La informació de diagnòstic s’ha desat localment. Pots continuar utilitzant JL-Mod Plus.</string>
+    <string name="midlet_failure_recovery_message_named">«<xliff:g id="name" example="Example">%1$s</xliff:g>» s’ha aturat inesperadament. La informació de diagnòstic s’ha desat localment. Pots continuar utilitzant JL-Mod Plus.</string>
+    <plurals name="config_system_properties_value">
+        <item quantity="one"><xliff:g id="count" example="3">%1$d</xliff:g> propietat</item>
+        <item quantity="many"><xliff:g id="count" example="3">%1$d</xliff:g> propietats</item>
+        <item quantity="other"><xliff:g id="count" example="3">%1$d</xliff:g> propietats</item>
+    </plurals>
+    <string name="config_search_suggestions" tools:ignore="MissingTranslation">Configuració suggerida</string>
+    <string name="config_search_clear" tools:ignore="MissingTranslation">Esborra la cerca</string>
+    <string name="config_search_title" tools:ignore="MissingTranslation">Cerca a la configuració</string>
+    <string name="config_search_hint" tools:ignore="MissingTranslation">Cerca un paràmetre, p. ex. MMPX o orientació</string>
+    <string name="config_search_no_results" tools:ignore="MissingTranslation">No hi ha paràmetres coincidents</string>
+    <string name="config_search_upscaling_requires_resolution" tools:ignore="MissingTranslation">Tria Automàtica o 2×–10× a Resolució de renderització per configurar l’escalament de mapes de bits.</string>
+    <string name="config_search_requires_manual_scale" tools:ignore="MissingTranslation">Tria Manual a Mode d’escala per ajustar l’escala.</string>
+    <string name="config_search_requires_custom_background" tools:ignore="MissingTranslation">Tria Personalitzat a Mode de fons per editar el color de fons.</string>
+    <string name="config_search_requires_gles" tools:ignore="MissingTranslation">Tria Acceleració per maquinari (OpenGL ES) a Mode gràfic per configurar els efectes de shader.</string>
+    <string name="config_search_requires_renderer_mode" tools:ignore="MissingTranslation">Tria Programari o Acceleració per maquinari (Surface) a Mode gràfic per configurar les actualitzacions de pantalla asíncrones.</string>
+    <string name="config_font_page_title" tools:ignore="MissingTranslation">Configuració de la font</string>
+    <string name="config_display_more" tools:ignore="MissingTranslation">Text i rendiment</string>
+    <string name="config_destination_home" tools:ignore="MissingTranslation">Inici</string>
+    <string name="config_overview_profile_draft" tools:ignore="MissingTranslation">Esborrany de perfil</string>
+    <string name="config_overview_profile_draft_summary" tools:ignore="MissingTranslation">Edita aquest perfil reutilitzable i desa els canvis des de la barra d’eines.</string>
+    <string name="config_overview_quick_access" tools:ignore="MissingTranslation">Accés ràpid</string>
+    <string name="config_system_properties_editor_label">Propietats</string>
+    <string name="config_overview_enabled" tools:ignore="MissingTranslation">Activat</string>
+    <string name="config_overview_disabled" tools:ignore="MissingTranslation">Desactivat</string>
+    <string name="config_overview_media_summary" tools:ignore="MissingTranslation">Banc de sons i càmera</string>
+    <string name="config_overview_hint" tools:ignore="MissingTranslation">Tria una categoria per personalitzar el joc. Cada paràmetre té un únic lloc; aquestes dreceres t’hi porten.</string>
+    <string name="config_destination_general">General</string>
+    <string name="config_basic_display">Pantalla del MIDlet</string>
+    <string name="config_display_appearance">Aparença de la pantalla</string>
+    <string name="config_display_rendering">Renderització</string>
+    <string name="config_image_quality_section" tools:ignore="MissingTranslation">Qualitat d’imatge</string>
+    <string name="config_frame_rate_section" tools:ignore="MissingTranslation">Velocitat de fotogrames</string>
+    <string name="config_fps_position_title" tools:ignore="MissingTranslation">Posició dels FPS</string>
+    <string name="config_display_text">Text i fonts</string>
+    <string name="config_input_mapping_section" tools:ignore="MissingTranslation">Entrada i assignació</string>
+    <string name="config_controls_appearance_section" tools:ignore="MissingTranslation">Aparença dels controls</string>
+    <string name="config_controls_virtual_keyboard">Controls virtuals</string>
+    <string name="config_controls_virtual_keyboard_colors">Colors dels controls virtuals</string>
+    <string name="config_virtual_controls_color_preview">Previsualització de colors</string>
+    <string name="config_virtual_controls_preview_normal">Sense prémer</string>
+    <string name="config_virtual_controls_preview_pressed">Premut</string>
+    <string name="config_controls_maintenance">Disposició</string>
+    <string name="config_controls_skin_help">Canvia l’aparença dels botons del teclat, el D-pad i la palanca analògica mitjançant imatges personalitzades.</string>
+    <string name="config_controls_color_button_normal">Botó sense prémer</string>
+    <string name="config_controls_color_button_pressed">Botó premut</string>
+    <string name="config_controls_color_label_normal">Etiqueta sense prémer</string>
+    <string name="config_controls_color_label_pressed">Etiqueta premuda</string>
+    <string name="config_controls_color_outline_short">Contorn</string>
+    <string name="config_controls_disabled_hint">Els controls virtuals estan desactivats actualment. Tot i això, els pots personalitzar aquí.</string>
+    <string name="config_controls_opacity_help" formatted="false">Ajusta la transparència dels controls virtuals: 0% és totalment transparent i 100% és totalment visible.</string>
+    <string name="config_controls_opaque_outside">Mostra els controls sense transparència fora de la pantalla del MIDlet</string>
+    <string name="config_controls_opaque_outside_help">Els controls fora de la pantalla del MIDlet ignoren l’opacitat. Els controls sobre la pantalla continuen seguint l’opacitat seleccionada.</string>
+    <string name="config_controls_connect_controller">Connecta un comandament per calibrar</string>
+    <string name="config_controls_color_skin_notice">Un aspecte de botó complet pot substituir els colors, la forma i el contorn predeterminats del botó.</string>
+    <string name="config_current_value">Valor actual</string>
+    <string name="config_maintenance">Restabliment i dades</string>
+    <string name="config_midlet_actions" tools:ignore="MissingTranslation">Accions del MIDlet</string>
+    <string name="config_profile_maintenance" tools:ignore="MissingTranslation">Accions del perfil</string>
+    <string name="config_reset_profile_settings" tools:ignore="MissingTranslation">Restableix l’esborrany de perfil</string>
+    <string name="config_reset_profile_settings_summary" tools:ignore="MissingTranslation">Restaura la configuració i els controls virtuals d’aquest esborrany als valors predeterminats.</string>
+    <string name="config_system_compatibility" tools:ignore="MissingTranslation">Compatibilitat d’emulació</string>
+    <string name="config_reset_all_settings">Restableix la configuració del MIDlet</string>
+    <string name="config_reset_all_settings_summary">Restaura la configuració i els controls virtuals d’aquest MIDlet als valors predeterminats sense suprimir-ne les dades.</string>
+    <string name="config_delete_app_data">Suprimeix les dades del MIDlet</string>
+    <string name="config_delete_app_data_summary">Suprimeix permanentment les dades d’aquest MIDlet, incloses les partides desades. La configuració es conservarà.</string>
+    <string name="config_message_reset_settings">Vols restaurar la configuració i els controls virtuals del MIDlet als valors predeterminats? Les dades desades es mantindran intactes. Es deixarà de seguir qualsevol perfil vinculat.</string>
+    <string name="config_message_reset_profile_settings">Vols restablir la configuració i els controls virtuals d’aquest perfil als valors predeterminats? Encara podràs editar o cancel·lar abans de desar.</string>
+    <string name="config_message_delete_app_data">Vols suprimir permanentment totes les partides desades i les dades creades per aquest MIDlet? La configuració del MIDlet no se suprimirà.</string>
+    <string name="config_lock_custom_resolution_ratio">Bloqueja la relació d’aspecte</string>
+    <string name="config_swap_screen_size">Intercanvia amplada i alçada</string>
+    <string name="profile_builtin_settings">Valors predeterminats de JL-Mod</string>
+    <string name="profile_default_badge_short">Predeterminat per a nous MIDlets</string>
+    <string name="profile_template_summary">Configuració de MIDlet desada.</string>
+    <string name="profile_name_exists">Ja existeix un perfil amb aquest nom.</string>
+    <string name="profile_delete_template_message">Vols suprimir el perfil «<xliff:g id="profile_name" example="Action Games">%1$s</xliff:g>»? Els MIDlets que l’utilitzin mantindran la configuració actual, però no rebran futures actualitzacions.</string>
+    <string name="profile_template_operation_failed">No s’ha pogut completar l’operació del perfil.</string>
+    <string name="config_help_screen_size">Defineix la resolució virtual de pantalla Java ME utilitzada pel MIDlet.</string>
+    <string name="config_help_orientation">Tria l’orientació de la pantalla mentre s’executa el MIDlet.</string>
+    <string name="config_help_scale_type">Tria com s’ajusta el joc a la pantalla. Selecciona Manual per definir una escala personalitzada.</string>
+    <string name="config_help_scale_ratio" formatted="false">Ajusta la mida mostrada de l’1% al 1000%. Al 100%, el joc utilitza la mida original; valors més grans poden sobresortir de la pantalla.</string>
+    <string name="config_help_lock_custom_resolution_ratio">Manté la relació d’aspecte mentre edites la resolució personalitzada.</string>
+    <string name="config_help_virtual_keyboard">Mostra controls a la pantalla per a aquest MIDlet.</string>
+    <string name="config_help_touch_input">Permet que el MIDlet rebi entrades de punter des de la pantalla tàctil.</string>
+    <string name="config_help_background">Omple l’espai sense utilitzar al voltant de la pantalla del MIDlet.</string>
+    <string name="config_background_mode">Mode de fons</string>
+    <string name="config_background_custom">Personalitzat</string>
+    <string name="config_background_theme">Tema</string>
+    <string name="config_background_immersive">Immersiu</string>
+    <string name="config_background_theme_help">Utilitza el color del tema de JL-Mod Plus al voltant de la pantalla del MIDlet.</string>
+    <string name="config_background_immersive_help">Omple l’espai sense utilitzar amb colors extrets de la pantalla del MIDlet.</string>
+    <string name="config_background_dynamic">Color dinàmic</string>
+    <string name="config_background_dynamic_help">Utilitza un color sòlid que s’adapta suaument a la pantalla del MIDlet.</string>
+    <string name="config_background_custom_color">Color de fons</string>
+    <string name="config_help_background_custom_color">Defineix el color de l’espai sense utilitzar al voltant de la pantalla del MIDlet.</string>
+    <string name="config_help_skin">Mostra una imatge o un marc opcional al voltant de la pantalla del MIDlet.</string>
+    <string name="config_help_screen_gravity">Posiciona la pantalla del MIDlet quan queda espai sense utilitzar.</string>
+    <string name="config_help_screen_padding">Afegeix marge en píxels entre la pantalla del MIDlet i la vora de l’àrea de visualització.</string>
+    <string name="config_help_filter">Utilitza filtratge lineal per suavitzar la pantalla del MIDlet en escalar-la.</string>
+    <string name="config_warning_filter_shader">El filtratge lineal suavitza l’entrada abans que el shader de pantalla la processi i pot reduir la nitidesa final.</string>
+    <string name="config_help_immediate">Processa els esdeveniments del MIDlet immediatament en lloc de posar-los en cua. Pot millorar la resposta, però pot desestabilitzar alguns MIDlets.</string>
+    <string name="config_help_graphics_mode">Tria el camí de renderització de la pantalla del MIDlet. L’acceleració per maquinari pot millorar el rendiment, però la compatibilitat varia segons el dispositiu.</string>
+    <string name="config_help_shader">Aplica un shader al fotograma del MIDlet abans de mostrar-lo.</string>
+    <string name="config_help_shader_tuning">Els controls disponibles depenen del shader seleccionat.</string>
+    <string name="config_help_parallel_redraw">Programa la presentació de fotogrames de manera asíncrona. Això pot millorar el rendiment en alguns dispositius.</string>
+    <string name="config_help_force_fullscreen">Amaga la barra d’ordres quan s’inicia el MIDlet. El MIDlet pot tornar-la a mostrar durant el joc.</string>
+    <string name="config_help_fps_limit">Defineix el límit d’FPS a velocitat d’emulació 1×. El límit efectiu segueix la velocitat d’emulació; 0 (Màxim) utilitza la freqüència d’actualització màxima de la pantalla.</string>
+    <string name="config_timing_mode_full_guest">Temps d’emulació</string>
+    <string name="config_timing_mode_real_wall">Temps del sistema</string>
+    <string name="config_help_emulation_speed">Canvia la velocitat del rellotge del MIDlet i els retards compatibles. L’àudio i la interfície d’Android continuen a velocitat normal.</string>
+    <string name="config_help_timing_mode">Tria si el MIDlet utilitza el temps d’emulació o el temps del sistema. Els retards relatius continuen escalant amb la velocitat d’emulació.</string>
+    <string name="config_help_timing_unavailable">La configuració de temps no està disponible per a aquesta instal·lació del MIDlet. Reinstal·la o torna a convertir el MIDlet per activar-la.</string>
+    <string name="config_help_generic_color">Defineix el color d’aquest element visual.</string>
+    <string name="config_help_encoding">Tria la codificació de caràcters notificada com a microedition.encoding.</string>
+    <string name="config_edit_system_properties">Edita les propietats del sistema</string>
+    <string name="config_help_system_properties">Defineix propietats avançades de Java ME notificades al MIDlet.</string>
+    <string name="config_help_system_properties_long">Edita una propietat per línia amb el format «nom: valor». Els valors incorrectes poden afectar la compatibilitat.</string>
+    <string name="config_system_properties_info">La majoria dels MIDlets no necessiten canvis aquí.</string>
+    <string name="config_font_sizes">Mides de font</string>
+    <string name="config_help_font_sizes">Defineix les mides de font Java ME petita, mitjana i gran per al MIDlet.</string>
+    <string name="config_help_font_sizes_long">Defineix les mides de font Java ME en píxels, o en unitats escalades quan l’escala de font d’Android està activada. Canvia-les juntes per mantenir el text equilibrat.</string>
+    <string name="config_font_sizes_value">Petita <xliff:g id="small_size" example="12">%1$s</xliff:g> · mitjana <xliff:g id="medium_size" example="16">%2$s</xliff:g> · gran <xliff:g id="large_size" example="20">%3$s</xliff:g></string>
+    <string name="config_help_font_presets">Aplica mides de font adequades per a resolucions de pantalla Java ME habituals.</string>
+    <string name="config_help_font_dimensions">Aplica l’escala de font d’Android a les mides de font Java ME.</string>
+    <string name="config_help_font_aa">Suavitza les vores del text renderitzat.</string>
+    <string name="config_help_key_layout">Selecciona l’esquema de codis de tecla notificat al MIDlet.</string>
+    <string name="config_help_key_mapping">Assigna tecles i botons físics d’Android a accions del teclat Java ME.</string>
+    <string name="config_help_vk_button_shape">Defineix la forma predeterminada dels botons del teclat. El D-pad i la palanca analògica tenen les seves pròpies formes.</string>
+    <string name="config_help_vk_feedback">Vibra en prémer un control virtual si la vibració està activada a Configuració.</string>
+    <string name="config_help_vk_hide_delay">Amaga els controls després d’aquest retard quan cobreixen la pantalla del MIDlet. El valor 0 desactiva l’ocultació automàtica.</string>
+    <string name="config_help_reset_layout">Restaura la disposició dels controls virtuals sense canviar cap altra configuració del MIDlet.</string>
+    <string name="config_help_skip_resume">Després del primer startApp() correcte, omet les crides posteriors en reprendre el MIDlet. Utilitza-ho només per a MIDlets que fallen en reprendre’ls.</string>
+    <string name="config_help_soundbank">Tria el banc de sons utilitzat per a la síntesi MIDI.</string>
+    <string name="profile_create_title">Crea un perfil</string>
+    <string name="profile_rename_title">Canvia el nom del perfil</string>
+    <string name="presets">Perfils</string>
+    <string name="preset_use">Utilitza un perfil</string>
+    <string name="preset_save_as">Desa com a perfil</string>
+    <string name="preset_custom_configuration">Configuració personalitzada</string>
+    <string name="preset_based_on_modified">La configuració actual d’aquest MIDlet difereix de <xliff:g id="profile_name" example="Action Games">%1$s</xliff:g>.</string>
+    <string name="preset_builtin">Valors predeterminats de JL-Mod</string>
+    <string name="preset_builtin_summary">Configuració de MIDlet i controls virtuals integrats.</string>
+    <string name="preset_picker_title">Utilitza un perfil</string>
+    <string name="preset_manage">Gestiona els perfils</string>
+    <string name="profile_more_actions">Més accions per a <xliff:g id="profile_name" example="Action Games">%1$s</xliff:g></string>
+    <string name="profile_create_summary">Desa una configuració reutilitzable per a altres MIDlets.</string>
+    <string name="preset_application_settings">Configuració del MIDlet</string>
+    <string name="preset_includes_keyboard_layout">Disposició dels controls virtuals inclosa.</string>
+    <string name="preset_virtual_keyboard_on">Controls virtuals activats</string>
+    <string name="preset_virtual_keyboard_off">Controls virtuals desactivats</string>
+    <string name="preset_apply">Aplica</string>
+    <string name="preset_apply_failed_summary">No s’ha pogut aplicar aquest perfil. Comprova l’origen i torna-ho a provar.</string>
+    <string name="preset_choose_parts">Tria què vols aplicar</string>
+    <string name="preset_name">Nom</string>
+    <string name="preset_save_help">Desa la configuració d’aquest MIDlet i, si està disponible, la disposició dels controls virtuals com a perfil. Aquest MIDlet utilitzarà el perfil i en rebrà les futures actualitzacions.</string>
+    <string name="preset_update">Actualitza <xliff:g id="profile_name" example="Action Games">%1$s</xliff:g></string>
+    <string name="preset_update_title">Vols actualitzar <xliff:g id="profile_name" example="Action Games">%1$s</xliff:g>?</string>
+    <string name="preset_update_summary">Substitueix <xliff:g id="profile_name" example="Action Games">%1$s</xliff:g> per la configuració actual d’aquest MIDlet i, si està disponible, la disposició dels controls virtuals. Els altres MIDlets que utilitzin aquest perfil rebran els canvis la propera vegada que s’iniciïn.</string>
+    <string name="preset_update_confirm">Actualitza</string>
+    <string name="preset_saved_unlinked_warning">S’ha desat el perfil, però aquest MIDlet no en rebrà futures actualitzacions.</string>
+    <string name="profile_default_fallback_notice">No s’ha pogut utilitzar el perfil predeterminat «<xliff:g id="profile_name" example="Action Games">%1$s</xliff:g>». Pot ser que falti, sigui incomplet o no es pugui llegir. Valors predeterminats de JL-Mod és ara el perfil predeterminat per a nous MIDlets.</string>
+    <string name="preset_discard_changes_title">Vols descartar els canvis?</string>
+    <string name="preset_discard_changes_summary">Aquest esborrany de perfil no s’ha desat.</string>
+    <string name="preset_continue_editing">Continua editant</string>
+    <string name="preset_discard_changes">Descarta</string>
+    <string name="preset_name_exists">Ja existeix un perfil amb aquest nom.</string>
+    <string name="preset_invalid_name">Introdueix un nom de perfil vàlid.</string>
+    <string name="preset_manager_default_section">Predeterminat per a nous MIDlets</string>
+    <string name="preset_manager_presets_section">Els meus perfils</string>
+    <string name="preset_manager_keyboard_section">Disposicions de controls virtuals desades</string>
+    <string name="preset_default_policy_summary">S’aplica quan s’instal·la un MIDlet nou.</string>
+    <string name="preset_keyboard_layout_unavailable">La disposició dels controls virtuals no està disponible.</string>
+    <string name="edit_preset">Edita el perfil</string>
+    <string name="preset_edit_title">Edita el perfil: <xliff:g id="profile_name" example="Action Games">%1$s</xliff:g></string>
+    <string name="preset_unavailable_section">No disponible</string>
+    <string name="preset_unavailable_summary">No s’ha pogut carregar aquest perfil. Canvia-li el nom o suprimeix-lo.</string>
+    <string name="preset_change_default">Canvia</string>
+    <string name="preset_default_picker_title">Predeterminat per a nous MIDlets</string>
+    <string name="profile_follows_updates">Segueix les futures actualitzacions del perfil.</string>
+    <string name="profile_apply_whole">Perfil complet</string>
+    <string name="profile_apply_whole_follows">Substitueix la configuració i la disposició; segueix les futures actualitzacions.</string>
+    <string name="profile_apply_whole_without_layout">Substitueix la configuració, suprimeix la disposició local i segueix les actualitzacions.</string>
+    <string name="profile_apply_settings_only">Només configuració del MIDlet</string>
+    <string name="profile_apply_settings_keeps_layout">Conserva la disposició d’aquest MIDlet; utilitza una configuració personalitzada.</string>
+    <string name="profile_apply_layout_only">Només disposició dels controls virtuals</string>
+    <string name="profile_apply_layout_keeps_settings">Conserva la configuració d’aquest MIDlet; utilitza una configuració personalitzada.</string>
+    <string name="config_analog_stick">Palanca analògica</string>
+    <string name="config_analog_stick_summary">Tria Desactivat, 4 direccions, 8 direccions o teclat numèric per a la palanca analògica principal. Els botons del comandament utilitzen l’assignació de tecles.</string>
+    <string name="config_analog_stick_off">Desactivat</string>
+    <string name="config_controller_help_body_compact">Els botons del comandament utilitzen la mateixa assignació de tecles que el teclat i les tecles del telèfon. La palanca analògica només envia entrades direccionals al MIDlet. El botó Enrere d’Android manté el seu comportament habitual; qualsevol botó físic assignat a M obre el menú del MIDlet en execució.</string>
+    <string name="config_show_fps_title" tools:ignore="MissingTranslation">Mostra els FPS</string>
+    <string name="config_show_fps_help" tools:ignore="MissingTranslation">Mostra la velocitat de fotogrames mentre jugues.</string>
+    <string name="config_search_requires_fps" tools:ignore="MissingTranslation">Activa Mostra els FPS per canviar la posició.</string>
+    <string name="midlet_running_notification_title">MIDlet en execució</string>
+    <string name="midlet_running_notification_text"><xliff:g id="name" example="Example">%1$s</xliff:g> s’està executant.</string>
+    <string name="midlet_running_notification_channel">Execució de MIDlets</string>
+    <string name="config_gamepad_directions_numeric_v2">Teclat numèric</string>
+    <string name="midlet_file_permission_title">Accés a l’emmagatzematge</string>
+    <string name="midlet_file_permission_read">Aquest MIDlet vol llegir fitxers.</string>
+    <string name="midlet_file_permission_write">Aquest MIDlet vol crear, modificar o suprimir fitxers.</string>
+    <string name="midlet_file_permission_allow_once">Permet només aquesta vegada</string>
+    <string name="midlet_file_permission_allow_session">Permet mentre el MIDlet estigui en execució</string>
+    <string name="midlet_file_permission_allow_always">Permet sempre</string>
+    <string name="midlet_file_permission_deny">Denega sempre</string>
+    <string name="midlet_permissions_settings_title">Permisos d’accés a l’emmagatzematge</string>
+    <string name="midlet_permissions_read">Llegeix fitxers</string>
+    <string name="midlet_permissions_write">Modifica fitxers</string>
+    <string name="midlet_permissions_ask">Pregunta</string>
+    <string name="midlet_permissions_allow">Permet sempre</string>
+    <string name="midlet_permissions_deny">Denega</string>
+    <string name="midlet_permissions_save_failed">No s’ha pogut desar la configuració d’emmagatzematge.</string>
+    <string name="config_avoid_camera_cutout_title">Evita el retall de la càmera</string>
+    <string name="config_avoid_camera_cutout_summary">Manté la pantalla del MIDlet i els controls virtuals fora del retall de la càmera o de la pantalla.</string>
+    <string name="midlet_permissions_write_summary">Inclou crear i suprimir fitxers.</string>
+    <string name="midlet_legacy_import_title">Partides desades heretades de Siemens</string>
+    <string name="midlet_legacy_import_action">Tria un fitxer de partida antic</string>
+    <string name="midlet_legacy_import_summary">Copia un fitxer de partida antic a l’emmagatzematge privat de Siemens d’aquest MIDlet. Atura primer el MIDlet.</string>
+    <string name="midlet_legacy_import_success">Fitxer copiat a l’emmagatzematge privat d’aquest MIDlet.</string>
+    <string name="midlet_legacy_import_failed">Error en importar. Atura el MIDlet i assegura’t que el fitxer de destinació no existeixi ja.</string>
+    <string name="midlet_storage_mode_title">Mode d’emmagatzematge</string>
+    <string name="midlet_storage_mode_shared">Virtual</string>
+    <string name="midlet_storage_mode_android">Android</string>
+    <string name="midlet_storage_mode_shared_summary">Utilitza carpetes compartides a la carpeta de treball.</string>
+    <string name="midlet_storage_mode_android_summary">Utilitza l’emmagatzematge d’Android com en versions anteriors.</string>
+    <string name="config_system_properties_reset" tools:ignore="MissingTranslation">Restableix als valors predeterminats</string>
+    <string name="config_system_properties_reset_title" tools:ignore="MissingTranslation">Vols restablir les propietats del sistema?</string>
+    <string name="config_system_properties_reset_message" tools:ignore="MissingTranslation">Vols substituir el contingut de l’editor pels valors predeterminats actuals de JL-Mod Plus? La resta de la configuració no canviarà. Desa per aplicar el restabliment.</string>
+    <string name="config_asset_add">+ Afegeix des d’un fitxer</string>
+    <string name="config_asset_copy_hint">Es copia a la carpeta de treball; el fitxer original es manté al seu lloc.</string>
+    <string name="config_asset_name">Nom del fitxer</string>
+    <string name="config_asset_delete_confirmation">Vols suprimir <xliff:g id="name" example="Example">%1$s</xliff:g> de la carpeta de treball? Altres MIDlets també poden utilitzar aquest fitxer. Les còpies en altres ubicacions no es veuran afectades.</string>
+    <string name="config_asset_imported">Copiat i seleccionat: <xliff:g id="name" example="Example">%1$s</xliff:g></string>
+    <string name="config_asset_reused">Fitxer existent seleccionat: <xliff:g id="name" example="Example">%1$s</xliff:g></string>
+    <string name="config_asset_renamed">S’ha canviat el nom a <xliff:g id="name" example="Example">%1$s</xliff:g></string>
+    <string name="config_asset_deleted">S’ha suprimit <xliff:g id="name" example="Example">%1$s</xliff:g></string>
+    <string name="config_asset_invalid">Fitxer no compatible o no vàlid.</string>
+    <string name="config_asset_operation_failed">No s’ha pogut completar l’operació amb el fitxer.</string>
+    <string name="config_save_failed" tools:ignore="MissingTranslation">No s’ha pogut desar la configuració. Els canvis continuen oberts; torna-ho a provar.</string>
+    <string name="config_asset_busy">Acaba primer l’operació amb el fitxer actual.</string>
+    <string name="config_quick_settings" tools:ignore="MissingTranslation">Configuració ràpida</string>
+    <string name="config_all_settings" tools:ignore="MissingTranslation">Tota la configuració</string>
+    <string name="profile_local_changes_pending" tools:ignore="MissingTranslation">Canvis locals no desats al perfil</string>
+    <string name="profile_local_configuration_summary" tools:ignore="MissingTranslation">Configuració només per a aquest MIDlet</string>
+    <string name="profile_not_following" tools:ignore="MissingTranslation">Basat en <xliff:g id="profile_name" example="Action Games">%1$s</xliff:g> · Sense seguir actualitzacions</string>
+    <string name="profile_stop_following" tools:ignore="MissingTranslation">Deixa de seguir el perfil</string>
+    <string name="profile_follow_again" tools:ignore="MissingTranslation">Torna a seguir el perfil</string>
+    <string name="profile_follow_again_summary" tools:ignore="MissingTranslation">Vols substituir la configuració local i els controls virtuals d’aquest MIDlet per l’última versió del perfil <xliff:g id="profile_name" example="Action Games">%1$s</xliff:g> i seguir-ne les futures actualitzacions?</string>
+</resources>

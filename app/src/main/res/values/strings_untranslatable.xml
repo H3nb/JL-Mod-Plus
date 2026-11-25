@@ -1,0 +1,38 @@
+<?xml version="1.0" encoding="utf-8"?>
+<!-- Non-translatable constants, brand names, technical formats, and virtual key glyphs.
+         Keep this file only in res/values/ (never duplicate into values-xx/). -->
+<resources>
+    <string name="about_product_name" translatable="false">JL-Mod Plus</string>
+    <string name="app_debug_badge" translatable="false">DEBUG</string>
+    <string name="about_github_label" translatable="false">GitHub</string>
+    <string name="about_github_repository" translatable="false">H3nb/JL-Mod-Plus</string>
+    <string name="file_picker_parent_marker" translatable="false">..</string>
+    <string name="msg_mascot_capsule" translatable="false">Mascot Capsule 3D!</string>
+    <string name="pref_theme_default" translatable="false">light</string>
+    <string name="shader_setting" translatable="false">%1$s: %2$s</string>
+    <string name="virtual_key_0" translatable="false">0</string>
+    <string name="virtual_key_1" translatable="false">1</string>
+    <string name="virtual_key_2" translatable="false">2</string>
+    <string name="virtual_key_3" translatable="false">3</string>
+    <string name="virtual_key_4" translatable="false">4</string>
+    <string name="virtual_key_5" translatable="false">5</string>
+    <string name="virtual_key_6" translatable="false">6</string>
+    <string name="virtual_key_7" translatable="false">7</string>
+    <string name="virtual_key_8" translatable="false">8</string>
+    <string name="virtual_key_9" translatable="false">9</string>
+    <string name="virtual_key_a" translatable="false">A</string>
+    <string name="virtual_key_b" translatable="false">B</string>
+    <string name="virtual_key_c" translatable="false">C</string>
+    <string name="virtual_key_d" translatable="false">D</string>
+    <string name="virtual_key_down" translatable="false">↓</string>
+    <string name="virtual_key_f" translatable="false">F</string>
+    <string name="virtual_key_left" translatable="false">←</string>
+    <string name="virtual_key_left_soft" translatable="false">L</string>
+    <string name="virtual_key_menu" translatable="false">M</string>
+    <string name="virtual_key_pound" translatable="false">#</string>
+    <string name="virtual_key_right" translatable="false">→</string>
+    <string name="virtual_key_right_soft" translatable="false">R</string>
+    <string name="virtual_key_star" translatable="false">*</string>
+    <string name="virtual_key_up" translatable="false">↑</string>
+    <string name="library_metadata_portrait_icon" translatable="false">3:4</string>
+</resources>

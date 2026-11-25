@@ -1,0 +1,116 @@
+<?xml version="1.0" encoding="utf-8"?>
+<!-- Active MIDlet runtime session, screenshots, logs, crash recovery, and diagnostic reports. -->
+<resources xmlns:tools="http://schemas.android.com/tools" xmlns:xliff="urn:oasis:names:tc:xliff:document:1.2">
+    <string name="action_keyboard_ime">কীবোর্ড (IME)</string>
+    <string name="action_lock_orientation">স্ক্রিন রোটেশন লক করুন</string>
+    <string name="runtime_replacement_failed">চলমান MIDlet বন্ধ করা যায়নি। নতুনটি আবার খোলার চেষ্টা করুন।</string>
+    <string name="runtime_restart" tools:ignore="MissingTranslation">রিস্টার্ট করুন</string>
+    <string name="runtime_restart_confirmation" tools:ignore="MissingTranslation">এই MIDlet রিস্টার্ট করবেন? সেভ না করা অগ্রগতি হারিয়ে যেতে পারে।</string>
+    <string name="FORCE_CLOSE_CONFIRMATION">এই MIDlet বন্ধ করবেন? সেভ না করা অগ্রগতি হারিয়ে যেতে পারে।</string>
+    <string name="runtime_preset_save_destination">যেখানে সেভ হবে</string>
+    <string name="runtime_preset_apply_destination">যেখানে প্রয়োগ হবে</string>
+    <string name="runtime_preset_this_midlet_only">শুধু এই MIDlet</string>
+    <string name="runtime_preset_update_destination"><xliff:g id="profile_name" example="Action Games">%1$s</xliff:g> আপডেট করুন</string>
+    <string name="runtime_preset_local_explanation">শুধু এই MIDlet-এর ভার্চুয়াল কন্ট্রোল পরিবর্তিত হবে।</string>
+    <string name="runtime_preset_update_explanation"><xliff:g id="profile_name" example="Action Games">%1$s</xliff:g>-এ ভার্চুয়াল কন্ট্রোল লেআউট আপডেট করুন।\nএই প্রোফাইলের সাথে যুক্ত অন্যান্য MIDlet পরবর্তী বার চালু হওয়ার সময় নতুন লেআউট পাবে।</string>
+    <string name="runtime_layout_apply_title"><xliff:g id="name" example="Example">%1$s</xliff:g> প্রয়োগ করবেন?</string>
+    <string name="runtime_apply">প্রয়োগ করুন</string>
+    <string name="runtime_preset_update_failed">এই MIDlet-এর জন্য সেভ করা হয়েছে, তবে <xliff:g id="profile_name" example="Action Games">%1$s</xliff:g> আপডেট করা যায়নি।</string>
+    <string name="runtime_preset_update_unlinked"><xliff:g id="profile_name" example="Action Games">%1$s</xliff:g> আপডেট করা হয়েছে, তবে এই MIDlet এর ভবিষ্যতের আপডেট পাবে না।</string>
+    <string name="msg_immediate_mode_disabled">ইভেন্ট কলব্যাক অতিরিক্ত গভীরভাবে নেস্ট হওয়ায় তাৎক্ষণিক প্রসেসিং বন্ধ করা হয়েছে।</string>
+    <string name="msg_press_again_to_close">বন্ধ করতে আবার চাপুন</string>
+    <string name="save_log">লগ সেভ করুন</string>
+    <string name="take_screenshot">স্ক্রিনশট নিন</string>
+    <!-- Crash-report UI remains translatable; locales without coverage fall back to default English. -->
+    <string name="crash_reports">ডায়াগনস্টিক রিপোর্ট</string>
+    <string name="diagnostic_report">ডায়াগনস্টিক রিপোর্ট</string>
+    <string name="view_reports">ডায়াগনস্টিক রিপোর্ট দেখুন</string>
+    <string name="crash_reports_empty">কোনো স্থানীয় ডায়াগনস্টিক রিপোর্ট নেই</string>
+    <string name="crash_reports_loading">ডায়াগনস্টিক রিপোর্ট লোড হচ্ছে</string>
+    <string name="crash_report_midlet_failure">MIDlet সেশন ব্যর্থ হয়েছে</string>
+    <string name="crash_report_java_report">Java ডায়াগনস্টিক রিপোর্ট</string>
+    <string name="crash_report_process_exit">প্রসেস বন্ধ হওয়ার রিপোর্ট</string>
+    <string name="crash_report_list_subtitle"><xliff:g id="report_type" example="Java crash">%1$s</xliff:g> · <xliff:g id="timestamp" example="Nov 25, 09:40">%2$s</xliff:g></string>
+    <plurals name="crash_reports_selected_count">
+        <item quantity="one"><xliff:g id="count" example="3">%1$d</xliff:g>টি নির্বাচিত</item>
+        <item quantity="other"><xliff:g id="count" example="3">%1$d</xliff:g>টি নির্বাচিত</item>
+    </plurals>
+    <string name="copy_report">কপি করুন</string>
+    <string name="report_on_github">GitHub-এ রিপোর্ট করুন</string>
+    <string name="delete_report">মুছুন</string>
+    <string name="share_selected_reports" tools:ignore="MissingTranslation">নির্বাচিত রিপোর্ট শেয়ার করুন</string>
+    <string name="delete_selected_reports">নির্বাচিত রিপোর্ট মুছুন</string>
+    <string name="crash_report_copied">রিপোর্ট কপি করা হয়েছে</string>
+    <string name="crash_report_bundle_preparing">ডায়াগনস্টিক বান্ডেল তৈরি হচ্ছে…</string>
+    <string name="crash_report_bundle_ready_title">ডায়াগনস্টিক বান্ডেল প্রস্তুত</string>
+    <string name="crash_report_bundle_ready_message"><xliff:g id="name" example="Example">%1$s</xliff:g>\n\nডাউনলোড → JL-Mod Plus Diagnostics-এ সেভ করা হয়েছে।\n\nGitHub ইস্যু জমা দেওয়ার আগে এই ফাইলটি সংযুক্ত করুন। ইস্যুতে সংযুক্ত করলে ডায়াগনস্টিক বান্ডেলটি সবার জন্য উন্মুক্ত হবে।</string>
+    <string name="locate_bundle">বান্ডেল খুঁজুন</string>
+    <string name="open_github">GitHub খুলুন</string>
+    <string name="crash_report_bundle_failed">ডায়াগনস্টিক বান্ডেল তৈরি করা যায়নি।</string>
+    <string name="crash_report_locate_failed">ডায়াগনস্টিক বান্ডেল খুঁজতে কোনো ফাইল পিকার পাওয়া যায়নি।</string>
+    <string name="crash_report_bundle_cleanup_failed">ডায়াগনস্টিক রিপোর্ট মুছে ফেলা হয়েছে, তবে তৈরি করা বান্ডেলটি সরানো যায়নি।</string>
+    <string name="crash_report_github_unavailable">GitHub ইস্যু ফর্ম খোলার জন্য কোনো ব্রাউজার বা অ্যাপ পাওয়া যায়নি।</string>
+    <string name="crash_report_delete_title">ডায়াগনস্টিক রিপোর্ট মুছবেন?</string>
+    <string name="crash_report_delete_message">এতে এই ডিভাইস থেকে ডায়াগনস্টিক রিপোর্ট এবং তৈরি করা যেকোনো বান্ডেল স্থায়ীভাবে মুছে যাবে। অন্য কোথাও আপলোড করা ফাইল প্রভাবিত হবে না।</string>
+    <plurals name="crash_reports_batch_delete_title">
+        <item quantity="one"><xliff:g id="count" example="3">%1$d</xliff:g>টি ডায়াগনস্টিক রিপোর্ট মুছবেন?</item>
+        <item quantity="other"><xliff:g id="count" example="3">%1$d</xliff:g>টি ডায়াগনস্টিক রিপোর্ট মুছবেন?</item>
+    </plurals>
+    <string name="crash_reports_batch_delete_message">এতে এই ডিভাইস থেকে নির্বাচিত ডায়াগনস্টিক রিপোর্ট এবং তৈরি করা যেকোনো বান্ডেল স্থায়ীভাবে মুছে যাবে। অন্য কোথাও আপলোড করা ফাইল প্রভাবিত হবে না।</string>
+    <string name="crash_report_delete_failed">রিপোর্ট মুছে ফেলা যায়নি।</string>
+    <string name="crash_report_unavailable">এই রিপোর্টটি আর উপলব্ধ নেই।</string>
+    <string name="process_exit_recovery_title">প্রসেস অপ্রত্যাশিতভাবে বন্ধ হয়েছে</string>
+    <string name="process_exit_recovery_message">আগের সেশনে JL-Mod Plus অপ্রত্যাশিতভাবে বন্ধ হয়ে গিয়েছিল (<xliff:g id="reason" example="Java crash">%1$s</xliff:g>)। ডায়াগনস্টিক তথ্য স্থানীয়ভাবে সেভ করা হয়েছে।</string>
+    <string name="process_exit_recovery_message_midlet">আগের সেশনে একটি MIDlet প্রসেস অপ্রত্যাশিতভাবে বন্ধ হয়ে গিয়েছিল (<xliff:g id="reason" example="Java crash">%1$s</xliff:g>)। ডায়াগনস্টিক তথ্য স্থানীয়ভাবে সেভ করা হয়েছে।</string>
+    <string name="process_exit_recovery_message_named">আগের সেশনে <xliff:g id="app_name" example="Bounce Tales">%1$s</xliff:g> অপ্রত্যাশিতভাবে বন্ধ হয়ে গিয়েছিল (<xliff:g id="reason" example="Native crash">%2$s</xliff:g>)। ডায়াগনস্টিক তথ্য স্থানীয়ভাবে সেভ করা হয়েছে।</string>
+    <string name="select_all_reports">সব রিপোর্ট নির্বাচন করুন</string>
+    <string name="clear_report_selection">রিপোর্ট নির্বাচন মুছুন</string>
+    <string name="runtime_memory_button_short" tools:ignore="MissingTranslation">মেমোরি বাটন</string>
+    <string name="runtime_action_on" tools:ignore="MissingTranslation">চালু</string>
+    <string name="runtime_action_off" tools:ignore="MissingTranslation">বন্ধ</string>
+    <string name="reconverting_wait">চালু হওয়ার আগে এই MIDlet-টির একবার কম্প্যাটিবিলিটি কনভার্সন প্রয়োজন।</string>
+    <string name="reconversion_done_with_warning">সতর্কতাসহ কম্প্যাটিবিলিটি কনভার্সন সম্পন্ন হয়েছে।</string>
+    <string name="reconversion_error_summary">এই MIDlet স্বয়ংক্রিয়ভাবে কনভার্ট করা যায়নি।</string>
+    <string name="runtime_invalid_intent">অবৈধ লঞ্চ অনুরোধ: MIDlet পাথ অনুপস্থিত।</string>
+    <string name="runtime_storage_in_use">MIDlet স্টোরেজ ইতিমধ্যেই অন্য একটি রানটাইম ব্যবহার করছে।</string>
+    <string name="runtime_installation_changed">চালু করার জন্য এই MIDlet প্রস্তুত করা যায়নি।</string>
+    <string name="runtime_storage_unavailable">MIDlet স্টোরেজ প্রস্তুত করা যায়নি।</string>
+    <string name="runtime_no_midlets">এই অ্যাপে কোনো MIDlet পাওয়া যায়নি।</string>
+    <!-- Runtime grouped controls derive body, accent, outline, icon, and selected-icon colors from the existing virtual-control appearance settings. -->
+    <string name="runtime_virtual_controls_title">ভার্চুয়াল কন্ট্রোল</string>
+    <string name="runtime_virtual_controls_dpad">ডি-প্যাড</string>
+    <string name="runtime_virtual_controls_analog">অ্যানালগ স্টিক</string>
+    <string name="runtime_virtual_controls_edit">লেআউট সম্পাদনা</string>
+    <string name="runtime_virtual_controls_edit_guide_title">লেআউট সম্পাদনা নির্দেশিকা</string>
+    <string name="runtime_virtual_controls_edit_guide_message">কন্ট্রোল সরাতে টেনে নিন। বাটনের প্রস্থ বা উচ্চতা বদলাতে দুই আঙুল আনুভূমিক বা উল্লম্বভাবে সরান, অথবা উভয়ই বদলাতে কোণাকুণি সরান। ডি-প্যাড বা অ্যানালগ স্টিক আনুপাতিকভাবে রিসাইজ করতে পিঞ্চ করুন। শেষ হলে সম্পন্ন-তে ট্যাপ করুন।</string>
+    <string name="runtime_virtual_controls_edit_guide_dont_show_again">আবার দেখাবেন না</string>
+    <string name="runtime_virtual_controls_switch_layout">কন্ট্রোল লেআউট বেছে নিন</string>
+    <string name="runtime_virtual_controls_show_controls">দৃশ্যমান কন্ট্রোল বেছে নিন</string>
+    <string name="runtime_virtual_controls_template_dpad_standard">স্ট্যান্ডার্ড ডি-প্যাড</string>
+    <string name="runtime_virtual_controls_template_analog_standard">স্ট্যান্ডার্ড অ্যানালগ স্টিক</string>
+    <string name="screenshot_save_failed">স্ক্রিনশট সেভ করা যায়নি।</string>
+    <!-- %1$s is the saved screenshot's filesystem path. New key replaces the legacy prefix contract. -->
+    <string name="screenshot_saved_path">স্ক্রিনশট সেভ হয়েছে: <xliff:g id="path" example="Pictures/Bounce Tales/Screenshot_20261125-103000.png">%1$s</xliff:g></string>
+    <!-- Deliberate English fallback until reviewed translations are available. -->
+    <string name="log_save_success" tools:ignore="MissingTranslation"><xliff:g id="name" example="Example">%1$s</xliff:g> ডাউনলোড → JL-Mod Plus Diagnostics-এ সেভ করা হয়েছে।</string>
+    <string name="log_save_partial" tools:ignore="MissingTranslation">আংশিক লগ <xliff:g id="name" example="Example">%1$s</xliff:g> নামে ডাউনলোড → JL-Mod Plus Diagnostics-এ সেভ করা হয়েছে।</string>
+    <string name="log_save_empty" tools:ignore="MissingTranslation">Android বাফারে কোনো অ্যাপ লগ রেকর্ড পাওয়া যায়নি।</string>
+    <string name="log_save_timeout" tools:ignore="MissingTranslation">লগ সংগ্রহের সময় শেষ হয়েছে। কোনো ফাইল সেভ করা হয়নি।</string>
+    <string name="log_save_failed">লগ সেভ করা যায়নি।</string>
+    <string name="runtime_midlet_list_failed">এই অ্যাপের MIDlet তালিকা পড়া যায়নি।</string>
+    <string name="diagnostic_reason_java_crash">Java ক্র্যাশ</string>
+    <string name="diagnostic_reason_native_crash">নেটিভ ক্র্যাশ</string>
+    <string name="diagnostic_reason_anr">অ্যাপ সাড়া দিচ্ছে না</string>
+    <string name="diagnostic_reason_signal">সিগন্যালের মাধ্যমে বন্ধ</string>
+    <string name="diagnostic_reason_unknown">অজানা কারণ</string>
+    <string name="crash_reports_delete_failed">কিছু ডায়াগনস্টিক রিপোর্ট মুছে ফেলা যায়নি। অন্যগুলো সরানো হয়ে থাকতে পারে।</string>
+    <string name="crash_reports_bundle_cleanup_failed">ডায়াগনস্টিক রিপোর্ট মুছে ফেলা হয়েছে, তবে তৈরি করা কিছু বান্ডেল সরানো যায়নি।</string>
+    <string name="runtime_chrome_update_failed">ডিসপ্লে সেটিংস আপডেট করা যায়নি। আবার চেষ্টা করুন।</string>
+    <string name="runtime_fullscreen_update_failed">ফুলস্ক্রিন সেটিং অ্যাক্সেস করা যায়নি। আবার চেষ্টা করুন।</string>
+    <string name="runtime_camera_use_front">সামনের ক্যামেরা ব্যবহার করুন</string>
+    <string name="runtime_camera_use_rear">পিছনের ক্যামেরা ব্যবহার করুন</string>
+    <string name="runtime_camera_switch_failed">ক্যামেরা পরিবর্তন করা যায়নি।</string>
+    <string name="runtime_camera_switch_recording" tools:ignore="MissingTranslation">ক্যামেরা পরিবর্তনের আগে রেকর্ডিং বন্ধ করুন।</string>
+    <string name="date_field_not_set" tools:ignore="MissingTranslation">সেট করা নেই</string>
+    <string name="date_field_use_displayed_value" tools:ignore="MissingTranslation">এই মান ব্যবহার করুন</string>
+</resources>

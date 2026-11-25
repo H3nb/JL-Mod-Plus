@@ -1,0 +1,212 @@
+<?xml version="1.0" encoding="utf-8"?>
+<!-- Rendering pipeline, internal resolution, bitmap upscaling, shaders, and built-in visual effects. -->
+<resources xmlns:tools="http://schemas.android.com/tools" xmlns:xliff="urn:oasis:names:tc:xliff:document:1.2">
+    <string name="identity_filter">هیچ‌کدام (سریع‌ترین)</string>
+    <string name="invalid_resolution_not_saved">وضوح نامعتبر است. پیش‌تنظیم ذخیره نشد.</string>
+    <string name="msg_error_loading_shader">شیدر پشتیبانی نمی‌شود. از شیدر پیش‌فرض استفاده می‌شود.</string>
+    <string name="parallel_screen_redrawing">به‌روزرسانی ناهمگام صفحه</string>
+    <string name="shader_tuning">تنظیم دقیق شیدر</string>
+    <string name="SWAP_SIZES">جابه‌جایی عرض و ارتفاع</string>
+    <string name="fps_limit_maximum">حداکثر</string>
+    <string name="remove_screen_preset">حذف پیش‌تنظیم وضوح</string>
+    <string name="perf_overlay_position_help">یک گوشه انتخاب کنید.</string>
+    <string name="perf_overlay_top_left">بالا چپ</string>
+    <string name="perf_overlay_top_right">بالا راست</string>
+    <string name="perf_overlay_bottom_left">پایین چپ</string>
+    <string name="perf_overlay_bottom_right">پایین راست</string>
+    <string name="internal_resolution_title" tools:ignore="MissingTranslation">وضوح رندر</string>
+    <string name="internal_resolution_auto" tools:ignore="MissingTranslation">خودکار</string>
+    <string name="internal_resolution_description" tools:ignore="MissingTranslation">گرافیک دوبعدی و سه‌بعدی پشتیبانی‌شده را با جزئیات بیشتر رندر می‌کند. حالت خودکار متناسب با قاب نمایش بازی تنظیم می‌شود؛ برای اعمال دوباره راه‌اندازی کنید.</string>
+    <string name="bitmap_upscaling_title" tools:ignore="MissingTranslation">افزایش وضوح بیت‌مپ</string>
+    <string name="bitmap_upscaling_description" tools:ignore="MissingTranslation">وضوح اسپرایت‌های دوبعدی ثابت و بافت‌های مات مدل‌های Micro3D را با MMPX یا xBR Lv3 افزایش می‌دهد. بافت‌های M3G بدون تغییر می‌مانند؛ برای اعمال دوباره راه‌اندازی کنید.</string>
+    <string name="bitmap_upscaling_nearest" tools:ignore="MissingTranslation">نزدیک‌ترین همسایه</string>
+    <string name="bitmap_upscaling_bilinear" tools:ignore="MissingTranslation">دوخطی</string>
+    <string name="bitmap_upscaling_mmpx" tools:ignore="MissingTranslation">MMPX</string>
+    <string name="bitmap_upscaling_edge_aware" tools:ignore="MissingTranslation">xBR Lv3</string>
+    <!-- Prototyping only: localized UI copy is pending design review. -->
+    <string name="render_shader_effects">جلوه‌های شیدر</string>
+    <string name="render_pipeline_title">خط لوله رندر</string>
+    <string name="render_shader_preset">پیش‌تنظیم شیدر</string>
+    <string name="render_shader_picker_help">جلوه‌های داخلی و شیدرهای قدیمی خود را در یک پشته جلوه مرتب ترکیب کنید.</string>
+    <string name="render_shader_requires_gles">شیدرها ذخیره می‌شوند اما فقط هنگام انتخاب OpenGL ES اعمال می‌شوند.</string>
+    <string name="render_shader_missing">شیدر انتخاب‌شده در کتابخانه نیست. پیش‌تنظیم دیگری انتخاب کنید یا فایل‌های آن را بازیابی کنید.</string>
+    <string name="render_shader_parameters">پارامترهای شیدر</string>
+    <string name="render_shader_reset_parameters">بازنشانی پارامترها</string>
+    <string name="render_shader_passes">گذرهای شیدر</string>
+    <string name="render_shader_pass_count"><xliff:g id="count" example="2">%1$d</xliff:g> گذر</string>
+    <string name="render_shader_pass_hint">مراحل پیش‌تنظیم GLSLP انتخاب‌شده را مشاهده کنید.</string>
+    <string name="render_pass_filter">فیلتر ورودی</string>
+    <string name="render_pass_output">اندازه خروجی (عرض × ارتفاع)</string>
+    <string name="render_pipeline_unavailable">پیش‌تنظیم در دسترس نیست</string>
+    <string name="render_game_output">خروجی بازی</string>
+    <string name="render_logical_screen_help">اندازه منطقی گزارش‌شده به بازی.</string>
+    <string name="render_internal_resolution">وضوح داخلی</string>
+    <string name="render_internal_unavailable">فقط بومی (1×). وضوح رندر بالاتر برای این پیکربندی در دسترس نیست.</string>
+    <string name="render_display_renderer">رندرکننده نمایش</string>
+    <string name="render_shader_processing">پردازش شیدر</string>
+    <string name="render_display_scaling">مقیاس‌بندی نمایشگر</string>
+    <string name="render_display_viewport">قاب نمایش بازی</string>
+    <string name="render_texture_filtering">فیلتر مقیاس‌بندی صفحه</string>
+    <string name="render_texture_filtering_help">فیلتر «نزدیک‌ترین» یا «خطی» را برای تصویر نهایی بازی انتخاب می‌کند. جلوه‌ها ممکن است آن را لغو کنند.</string>
+    <string name="render_viewport_note">اندازه قاب نمایش پیش از برنامه‌ریزی گذرهای شیدر از چیدمان صفحه تعیین می‌شود. فلش‌ها جریان تصویر را نشان می‌دهند، نه ترتیب محاسبات چیدمان را.</string>
+    <string name="render_pipeline_help">ببینید فریم بازی چگونه به نمایشگر می‌رسد و هر مرحله را ویرایش کنید.</string>
+    <string name="render_no_shader">برای تغییر ظاهر بازی یک پیش‌تنظیم انتخاب کنید.</string>
+    <string name="render_shader_adjust">تنظیم پارامترها</string>
+    <string name="render_legacy_tuning_hint">این جلوه قدیمی را به‌دقت تنظیم کنید.</string>
+    <string name="render_shader_customization">سفارشی‌سازی</string>
+    <string name="render_adjustable_count">پارامترهای قابل تنظیم: <xliff:g id="count" example="3">%1$d</xliff:g></string>
+    <string name="render_pass_summary"><xliff:g id="count" example="3">%1$d</xliff:g> مرحله · تعریف‌شده توسط پیش‌تنظیم</string>
+    <string name="render_shader_preset_note">مراحل شیدر توسط پیش‌تنظیم تعریف می‌شوند. می‌توانید آن‌ها را بدون تغییر ترتیب بررسی کنید.</string>
+    <string name="render_parameters_hint">لغزنده را برای تنظیم مقدار حرکت دهید. تغییرات با رها کردن آن ذخیره می‌شوند.</string>
+    <string name="render_pass_readonly">مراحل به این ترتیب اجرا می‌شوند. فیلتر ورودی و مقیاس خروجی از پیش‌تنظیم انتخاب‌شده می‌آیند.</string>
+    <string name="render_pipeline_intro">مسیر از بافر فریم بازی تا نمایشگر شما.</string>
+    <string name="render_native_short">بومی (1×)</string>
+    <string name="render_expand_passes">نمایش مراحل</string>
+    <string name="render_collapse_passes">پنهان کردن مراحل</string>
+    <string name="render_view_all_passes">جزئیات مراحل</string>
+    <string name="render_pipeline_filter_summary">فیلتر بافت: <xliff:g id="shader_name" example="CRT Classic">%1$s</xliff:g></string>
+    <string name="render_pipeline_note">چیدمان نمایشگر قاب نمایش را پیش از برنامه‌ریزی گذرهای شیدر تعیین می‌کند. مراحل جریان تصویر را نشان می‌دهند.</string>
+    <string name="render_shader_change">انتخاب جلوه دیگر</string>
+    <string name="render_custom_pipeline">خط لوله سفارشی</string>
+    <string name="render_custom_pipeline_hint">شیدرهای مستقل GLSL را از پوشه شیدرهای خود ترکیب کنید.</string>
+    <string name="render_custom_order_help">جلوه‌ها از بالا به پایین اجرا می‌شوند. تنظیمات به ارث‌رسیده GLSLP تا زمانی که تغییر نکنند برقرار می‌مانند.</string>
+    <string name="render_custom_empty">برای شروع یک زنجیره سفارشی، شیدری اضافه کنید.</string>
+    <string name="render_custom_stage_count"><xliff:g id="count" example="3">%1$d</xliff:g> مرحله شیدر سفارشی</string>
+    <string name="render_custom_add">افزودن شیدر</string>
+    <string name="render_custom_add_hint">یک فایل منبع مستقل .glsl خارجی انتخاب کنید.</string>
+    <string name="render_custom_no_sources">شیدر قدیمی‌ای یافت نشد. فایل‌های شیدر .ini را به پوشه شیدرها اضافه کنید و تنظیمات را دوباره باز کنید.</string>
+    <string name="render_custom_scale">خروجی: <xliff:g id="scale" example="2">%1$d</xliff:g>× مرحله قبلی</string>
+    <string name="render_custom_output_scale">اندازه خروجی برای مرحله بعدی</string>
+    <string name="render_custom_final_viewport">خروجی نهایی: نمایش روی صفحه</string>
+    <string name="render_custom_filter">فیلتر ورودی: <xliff:g id="shader_name" example="CRT Classic">%1$s</xliff:g></string>
+    <string name="render_custom_up">بالا</string>
+    <string name="render_custom_down">پایین</string>
+    <string name="render_custom_remove">حذف</string>
+    <string name="render_custom_cancel">لغو</string>
+    <string name="render_custom_save">ذخیره</string>
+    <string name="render_custom_default">پیش‌فرض</string>
+    <string name="render_custom_nearest">نزدیک‌ترین</string>
+    <string name="render_custom_linear">خطی</string>
+    <string name="render_custom_checking">در حال بررسی فایل‌های شیدر…</string>
+    <string name="render_active_shader">جلوه فعال</string>
+    <string name="render_shader_off">خاموش</string>
+    <string name="render_edit_custom_pipeline">ویرایش زنجیره شیدر</string>
+    <string name="render_shader_unavailable">در دسترس نیست: <xliff:g id="shader_name" example="CRT Classic">%1$s</xliff:g></string>
+    <string name="render_no_shader_sources">شیدری یافت نشد. فایل‌های شیدر قدیمی .ini را به پوشه شیدرها اضافه کنید، سپس تنظیمات را دوباره باز کنید.</string>
+    <string name="render_shader_mode">حالت شیدر</string>
+    <string name="render_mode_selected">انتخاب‌شده</string>
+    <string name="render_gles_shader_default">هنگام خاموش بودن جلوه‌های شیدر، OpenGL ES از تصویر اصلی بازی استفاده می‌کند.</string>
+    <string name="render_shader_off_help">بدون جلوه‌های بصری اضافی.</string>
+    <string name="render_legacy_mode">شیدر قدیمی</string>
+    <string name="render_legacy_mode_help">یک فایل .ini از پوشه شیدرها انتخاب کنید.</string>
+    <string name="render_legacy_empty">تعریف شیدر قابل استفاده‌ای در این فایل .ini وجود ندارد.</string>
+    <string name="render_legacy_select_variant">انتخاب شیدر قدیمی</string>
+    <string name="render_legacy_variant_description">تعریف شیدر در فایل .ini انتخاب‌شده</string>
+    <string name="render_preset_mode">پیش‌تنظیم GLSLP</string>
+    <string name="render_preset_mode_help">بارگیری یک خط لوله کامل .glslp با گذرهای خود آن.</string>
+    <string name="render_custom_pass_count">تعداد گذرها</string>
+    <string name="render_custom_pass_number">گذر <xliff:g id="number" example="1">%1$d</xliff:g></string>
+    <string name="render_custom_pick_file">انتخاب فایل GLSL</string>
+    <string name="render_custom_add_pass">افزایش تعداد گذرهای شیدر</string>
+    <string name="render_custom_remove_pass">کاهش تعداد گذرهای شیدر</string>
+    <string name="render_shader_selected_name">فعال: <xliff:g id="shader_name" example="CRT Classic">%1$s</xliff:g></string>
+    <string name="render_shader_invalid_picker">نمی‌توان از فایل انتخاب‌شده استفاده کرد. یک فایل قدیمی .ini درون پوشه شیدرها انتخاب کنید.</string>
+    <string name="render_custom_mode">نوع شیدر</string>
+    <string name="render_custom_mode_legacy">قدیمی</string>
+    <string name="render_custom_mode_glsl">GLSL</string>
+    <string name="render_custom_pick_legacy">انتخاب شیدر قدیمی</string>
+    <string name="render_custom_preserve_size">خروجی: از پیش‌تنظیم</string>
+    <string name="render_custom_loading">در حال خواندن گذرهای پیش‌تنظیم…</string>
+    <string name="render_custom_start_fresh">شروع بدون پیش‌تنظیم (صرف‌نظر از تنظیمات به ارث‌رسیده)</string>
+    <string name="render_effect_default_settings">تنظیمات پیش‌فرض</string>
+    <string name="render_effect_summary_more">+<xliff:g id="count" example="2">%1$d</xliff:g> مورد بیشتر</string>
+    <string name="render_effect_legacy_author">ساخته <xliff:g id="shader_name" example="CRT Classic">%1$s</xliff:g></string>
+    <string name="render_effect_legacy_source">منبع: <xliff:g id="shader_name" example="CRT Classic">%1$s</xliff:g></string>
+    <string name="render_effect_removed">جلوه حذف شد</string>
+    <string name="render_effect_undo">واگرد</string>
+    <string name="render_effect_catalog_hint">برای افزودن یک جلوه به پشته، روی آن بزنید.</string>
+    <string name="render_effect_user_folder_hint">فایل‌های INI، VSH و FSH باید در پوشه شیدرها باشند.</string>
+    <string name="render_effect_legacy_scale_note">شیدرهای قدیمی با وضوح قاب نمایش صفحه رندر می‌شوند؛ پرچم‌های OutputResolution و Upscaling در فایل .ini نادیده گرفته می‌شوند.</string>
+    <string name="render_effect_legacy_metadata_missing">تنظیمات فایل .ini این شیدر یافت نشد. فایل‌های منبع آن ممکن است همچنان رندر شوند.</string>
+    <string name="render_effect_count"><xliff:g id="count" example="2">%1$d</xliff:g> فعال</string>
+    <string name="render_effect_add">افزودن جلوه</string>
+    <string name="render_effect_builtin">جلوه‌های داخلی</string>
+    <string name="render_effect_user">شیدرهای من</string>
+    <string name="render_effect_user_add">مرور فایل‌های .ini</string>
+    <string name="render_effect_user_empty">شیدر قدیمی‌ای در پوشه شیدرها یافت نشد.</string>
+    <string name="render_effect_user_file">انتخاب فایل قدیمی .ini</string>
+    <string name="render_effect_empty">برای سفارشی‌سازی ظاهر بازی، جلوه‌ای اضافه کنید.</string>
+    <string name="render_effect_hint">جلوه‌ها از بالا به پایین اجرا می‌شوند. برای تغییر ترتیب، نگه دارید و بکشید.</string>
+    <string name="render_effect_move_up">انتقال به بالا</string>
+    <string name="render_effect_move_down">انتقال به پایین</string>
+    <string name="render_effect_remove">حذف جلوه</string>
+    <string name="render_effect_no_parameters">این جلوه پارامتر قابل تنظیمی ندارد.</string>
+    <string name="render_effect_parameter_number">پارامتر <xliff:g id="count" example="2">%1$d</xliff:g></string>
+    <string name="render_effect_restore">بازنشانی پارامترها</string>
+    <string name="render_effect_missing">در دسترس نیست: <xliff:g id="shader_name" example="CRT Classic">%1$s</xliff:g>. این جلوه داخلی در این نسخه موجود نیست. آن را از پشته حذف کنید.</string>
+    <string name="render_effect_limit">پشته تا 16 گذر شیدر را پشتیبانی می‌کند (برخی جلوه‌ها از چند گذر استفاده می‌کنند).</string>
+    <string name="render_effect_unavailable">اجرای جلوه‌های شیدر ممکن نشد. تصویر اصلی بازی نمایش داده می‌شود. جلوه‌های کمتر یا وضوح رندر پایین‌تر را امتحان کنید.</string>
+    <string name="render_bitmap_memory_reduced">حافظه هنگام افزایش وضوح بیت‌مپ تمام شد. از تصاویر اصلی یا مقیاس کمتر استفاده خواهد شد. وضوح رندر پایین‌تر یا آزاد کردن حافظه را امتحان کنید و سپس دوباره راه‌اندازی کنید.</string>
+    <string name="render_texture_memory_reduced">افزایش وضوح بافت‌های Micro3D ناموفق بود. از بافت‌های اصلی استفاده خواهد شد. وضوح رندر پایین‌تر یا آزاد کردن حافظه را امتحان کنید و سپس دوباره راه‌اندازی کنید.</string>
+    <string name="render_resolution_reduced">وضوح رندر به‌دلیل محدودیت حافظه یا GPU از <xliff:g id="from_scale" example="4">%1$d</xliff:g>× به <xliff:g id="to_scale" example="2">%2$d</xliff:g>× کاهش یافت. تنظیم پایین‌تر یا آزاد کردن حافظه را امتحان کنید و سپس دوباره راه‌اندازی کنید.</string>
+    <string name="render_gpu_texture_limit">این تصویر حتی در مقیاس 1× برای GPU بیش از حد بزرگ است. وضوح بازی کوچک‌تر یا تغییر حالت گرافیک را امتحان کنید.</string>
+    <string name="render_gpu_upload_failed">بارگذاری تصویر بازی به GPU ممکن نشد. در حال تلاش مجدد. بستن برنامه‌های دیگر یا تغییر حالت گرافیک را امتحان کنید.</string>
+    <string name="render_effect_gles">جلوه‌ها ذخیره می‌شوند اما فقط با OpenGL ES رندر می‌شوند.</string>
+    <string name="render_effect_legacy_file_error">بارگیری شیدر قدیمی معتبر از فایل .ini انتخاب‌شده ممکن نشد.</string>
+    <string name="effect_color">تنظیم رنگ</string>
+    <string name="effect_color_desc">روشنایی، کنتراست، اشباع، گاما، تن رنگ و تک‌رنگ را تنظیم کنید.</string>
+    <string name="effect_vignette">تیرگی لبه‌ها</string>
+    <string name="effect_vignette_desc">لبه‌ها را تیره می‌کند تا توجه به مرکز جلب شود.</string>
+    <string name="effect_sharpen">افزایش وضوح لبه‌ها</string>
+    <string name="effect_sharpen_desc">جزئیات و لبه‌های تصویر را برجسته‌تر می‌کند.</string>
+    <string name="effect_cartoon">کارتونی نرم</string>
+    <string name="effect_cartoon_desc">طیف رنگ‌ها را ساده‌تر می‌کند و خطوط دور نرم اضافه می‌کند.</string>
+    <string name="effect_bloom">درخشش</string>
+    <string name="effect_bloom_desc">هاله نرمی اطراف بخش‌های روشن تصویر ایجاد می‌کند.</string>
+    <string name="effect_crt_classic">CRT کلاسیک</string>
+    <string name="effect_crt_classic_desc">تلویزیون CRT را با خطوط اسکن و الگوی RGB شبیه‌سازی می‌کند.</string>
+    <string name="effect_crt_beam">باریکی پرتو</string>
+    <string name="effect_brightness">روشنایی</string>
+    <string name="effect_contrast">کنتراست</string>
+    <string name="effect_saturation">اشباع رنگ</string>
+    <string name="effect_strength">شدت</string>
+    <string name="effect_color_levels">سطوح رنگ</string>
+    <string name="effect_edge">شدت لبه‌ها</string>
+    <string name="effect_threshold">آستانه روشنایی</string>
+    <string name="effect_radius">شعاع محوشدگی</string>
+    <string name="effect_mask_strength">شدت ماسک</string>
+    <string name="effect_scan_strength">شدت خطوط اسکن</string>
+    <string name="effect_bright_boost">تقویت روشنایی</string>
+    <string name="effect_lcd">LCD</string>
+    <string name="effect_lcd_desc">شبکه پیکسل و زیرپیکسل‌های یک نمایشگر LCD رنگی کلاسیک را شبیه‌سازی می‌کند.</string>
+    <string name="effect_lcd_grid">شدت شبکه</string>
+    <string name="effect_lcd_subpixel">زیرپیکسل‌های RGB</string>
+    <string name="effect_lcd_brightness">روشنایی LCD</string>
+    <string name="effect_scanlines">خطوط اسکن ملایم</string>
+    <string name="effect_scanlines_desc">خطوط افقی ظریفی شبیه نمایشگر CRT اضافه می‌کند.</string>
+    <string name="effect_line_width">باریکی خطوط</string>
+    <string name="effect_gamma">گاما</string>
+    <string name="effect_temperature">دمای رنگ</string>
+    <string name="effect_tint">ته‌رنگ</string>
+    <string name="effect_monochrome">تک‌رنگ</string>
+    <string name="effect_depth">عمق رنگ و نقطه‌چینی</string>
+    <string name="effect_depth_desc">پالت رنگ را محدود می‌کند و نقطه‌چینی اختیاری برای جلوه کلاسیک ارائه می‌دهد.</string>
+    <string name="effect_depth_format">قالب رنگ نمایشگر</string>
+    <string name="effect_depth_rgb444">RGB444 · 4,096 رنگ</string>
+    <string name="effect_depth_rgb565">RGB565 · 65,536 رنگ</string>
+    <string name="effect_depth_rgb666">RGB666 · 262,144 رنگ</string>
+    <string name="effect_dither_mode">الگوی نقطه‌چینی</string>
+    <string name="effect_dither_none">خاموش</string>
+    <string name="effect_dither_bayer4">Bayer 4×4</string>
+    <string name="effect_dither_bayer8">Bayer 8×8</string>
+    <string name="effect_dither_strength">شدت نقطه‌چینی</string>
+    <string name="effect_mono_display">نمایشگر تک‌رنگ</string>
+    <string name="effect_mono_display_desc">نمایشگرهای سیاه‌وسفید، سبز یا کهربایی را با 2 یا 4 طیف رنگ شبیه‌سازی می‌کند.</string>
+    <string name="effect_mono_palette">رنگ LCD</string>
+    <string name="effect_mono_bw">سیاه و سفید</string>
+    <string name="effect_mono_green">LCD سبز</string>
+    <string name="effect_mono_amber">LCD کهربایی</string>
+    <string name="effect_mono_tones">تعداد طیف‌ها</string>
+    <string name="effect_mono_two">2 طیف</string>
+    <string name="effect_mono_four">4 طیف</string>
+</resources>

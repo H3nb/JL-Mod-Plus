@@ -1,0 +1,105 @@
+<?xml version="1.0" encoding="utf-8"?>
+<!-- Virtual keypad controls, layout editor, physical key mappings, and control skins. -->
+<resources xmlns:tools="http://schemas.android.com/tools" xmlns:xliff="urn:oasis:names:tc:xliff:document:1.2">
+    <string name="alert_map_menu">De menutoets (M) is niet toegewezen.\nMogelijk kun je het MIDlet-menu niet openen tijdens het spelen.</string>
+    <string name="dismiss_mapping">Toewijzing sluiten</string>
+    <string name="layout_edit_finish">Bewerken voltooien</string>
+    <string name="layout_edit_done">Gereed</string>
+    <string name="layout_editor_grid_size">Rastergrootte</string>
+    <string name="layout_editor_grid_coarse">Grof (16)</string>
+    <string name="layout_editor_grid_normal">Normaal (24)</string>
+    <string name="layout_editor_grid_fine">Fijn (32)</string>
+    <string name="layout_editor_snap_on">Uitlijnen aan</string>
+    <string name="layout_editor_snap_off">Uitlijnen uit</string>
+    <string name="layout_edit_save_changes">Wijzigingen aan virtuele bediening opslaan?</string>
+    <string name="layout_edit_discard">Verwerpen</string>
+    <string name="layout_edit_continue">Doorgaan met bewerken</string>
+    <string name="layout_edit_finished">Bewerken van virtuele bediening voltooid.</string>
+    <string name="virtual_controls_save_failed">Kan virtuele bediening niet opslaan. Probeer het opnieuw.</string>
+    <string name="layout_switch">Bedieningsindeling kiezen</string>
+    <string name="mapping_dialog_key_not_specified">Geen invoer toegewezen.</string>
+    <string name="mapping_dialog_message">Druk op een fysieke toets of knop om deze aan dit bedieningselement toe te wijzen.</string>
+    <string name="mapping_dialog_assigned_inputs">Toegewezen invoer</string>
+    <string name="mapping_dialog_add_input">Je kunt meer dan één fysieke invoer toewijzen.</string>
+    <string name="mapping_dialog_remove">Verwijderen</string>
+    <string name="mapping_dialog_title">Druk op een toets of knop</string>
+    <string name="message_reset_layout">De indeling van de virtuele bediening herstellen naar standaard?</string>
+    <string name="RESET_LAYOUT_CMD">Indeling virtuele bediening herstellen</string>
+    <string name="saved_keyboard_layout_summary">Indeling van virtuele bediening opgeslagen.</string>
+    <string name="control_skin_title">Skin voor virtuele bediening</string>
+    <string name="control_skin_create" tools:ignore="MissingTranslation">Set maken</string>
+    <string name="control_skin_default" tools:ignore="MissingTranslation">Standaardknoppen</string>
+    <string name="control_skin_edit" tools:ignore="MissingTranslation">Bewerken</string>
+    <string name="control_skin_rename" tools:ignore="MissingTranslation">Naam wijzigen</string>
+    <string name="control_skin_duplicate" tools:ignore="MissingTranslation">Dupliceren</string>
+    <string name="control_skin_delete" tools:ignore="MissingTranslation">Verwijderen</string>
+    <string name="control_skin_import_zip" tools:ignore="MissingTranslation">ZIP importeren</string>
+    <string name="control_skin_export_zip" tools:ignore="MissingTranslation">ZIP exporteren</string>
+    <string name="control_skin_select_export_folder" tools:ignore="MissingTranslation">Exportmap kiezen</string>
+    <string name="control_skin_imported" tools:ignore="MissingTranslation"><xliff:g id="skin_name" example="Classic Nokia">%1$s</xliff:g> geïmporteerd</string>
+    <string name="control_skin_already_available" tools:ignore="MissingTranslation"><xliff:g id="skin_name" example="Classic Nokia">%1$s</xliff:g> is al beschikbaar</string>
+    <string name="control_skin_exported" tools:ignore="MissingTranslation"><xliff:g id="skin_name" example="Classic Nokia">%1$s</xliff:g> opgeslagen</string>
+    <string name="control_skin_archive_invalid_path" tools:ignore="MissingTranslation">De geselecteerde locatie is niet beschikbaar.</string>
+    <string name="control_skin_archive_import_failed" tools:ignore="MissingTranslation">Kan bedieningsskin niet importeren. Controleer of de ZIP één geldige set bevat.</string>
+    <string name="control_skin_archive_export_failed" tools:ignore="MissingTranslation">Kan bedieningsskin niet exporteren. Kies een beschrijfbare map buiten de skinbibliotheek.</string>
+    <string name="control_skin_name" tools:ignore="MissingTranslation">Setnaam</string>
+    <string name="control_skin_icon" tools:ignore="MissingTranslation">Alleen pictogram</string>
+    <string name="control_skin_full" tools:ignore="MissingTranslation">Volledige knop</string>
+    <string name="control_skin_normal_image" tools:ignore="MissingTranslation">Normale afbeelding</string>
+    <string name="control_skin_pressed_image" tools:ignore="MissingTranslation">Ingedrukte afbeelding</string>
+    <string name="control_skin_delete_warning" tools:ignore="MissingTranslation">Deze globale skinset en alle bijbehorende afbeeldingen verwijderen? MIDlets die deze set gebruiken, vallen terug op de standaardbediening.</string>
+    <string name="control_skin_invalid_image" tools:ignore="MissingTranslation">Kies een PNG-, WebP- of SVG-afbeelding.</string>
+    <string name="control_skin_operation_failed" tools:ignore="MissingTranslation">Kan bedieningsskinset niet bijwerken.</string>
+    <string name="control_skin_missing" tools:ignore="MissingTranslation">Niet-beschikbare set (standaardbediening)</string>
+    <string name="control_skin_remove_image" tools:ignore="MissingTranslation">Verwijderen</string>
+    <string name="control_skin_manage" tools:ignore="MissingTranslation">Set beheren</string>
+    <string name="control_skin_manage_named" tools:ignore="MissingTranslation"><xliff:g id="skin_name" example="Classic Nokia">%1$s</xliff:g> beheren</string>
+    <plurals name="control_skin_count">
+        <item quantity="one"><xliff:g id="count" example="4">%1$d</xliff:g> aangepast bedieningselement</item>
+        <item quantity="other"><xliff:g id="count" example="4">%1$d</xliff:g> aangepaste bedieningselementen</item>
+    </plurals>
+    <string name="control_skin_empty" tools:ignore="MissingTranslation">Maak een set om bedieningsafbeeldingen aan te passen.</string>
+    <string name="control_skin_numeric" tools:ignore="MissingTranslation">Toetsenblok</string>
+    <string name="control_skin_navigation" tools:ignore="MissingTranslation">Navigatie</string>
+    <string name="control_skin_other" tools:ignore="MissingTranslation">Overige knoppen</string>
+    <string name="control_skin_pressed_requires_normal" tools:ignore="MissingTranslation">Voeg eerst een normale afbeelding toe.</string>
+    <string name="control_skin_edit_named" tools:ignore="MissingTranslation">Knop <xliff:g id="button_label" example="5">%1$s</xliff:g></string>
+    <string name="control_skin_change_image" tools:ignore="MissingTranslation">Wijzigen</string>
+    <string name="control_skin_pick_image" tools:ignore="MissingTranslation">Afbeelding kiezen</string>
+    <string name="control_skin_soft_left" tools:ignore="MissingTranslation">Soft L</string>
+    <string name="control_skin_soft_right" tools:ignore="MissingTranslation">Soft R</string>
+    <string name="control_skin_fire" tools:ignore="MissingTranslation">Actie</string>
+    <string name="control_skin_menu" tools:ignore="MissingTranslation">Menu</string>
+    <string name="control_skin_movement" tools:ignore="MissingTranslation">Bewegingsbediening</string>
+    <string name="control_skin_dpad" tools:ignore="MissingTranslation">D-pad</string>
+    <string name="control_skin_analog" tools:ignore="MissingTranslation">Analoge stick</string>
+    <string name="control_skin_dpad_base" tools:ignore="MissingTranslation">D-pad-afbeelding</string>
+    <string name="control_skin_overlay_up" tools:ignore="MissingTranslation">Overlay Omhoog</string>
+    <string name="control_skin_overlay_down" tools:ignore="MissingTranslation">Overlay Omlaag</string>
+    <string name="control_skin_overlay_left" tools:ignore="MissingTranslation">Overlay Links</string>
+    <string name="control_skin_overlay_right" tools:ignore="MissingTranslation">Overlay Rechts</string>
+    <string name="control_skin_analog_base" tools:ignore="MissingTranslation">Basisafbeelding</string>
+    <string name="control_skin_analog_thumb" tools:ignore="MissingTranslation">Stickafbeelding</string>
+    <string name="control_skin_analog_thumb_pressed" tools:ignore="MissingTranslation">Actieve stickafbeelding</string>
+    <string name="control_skin_preview_directions" tools:ignore="MissingTranslation">Voorbeeld richtingen</string>
+    <string name="control_skin_preview_direction" tools:ignore="MissingTranslation">Voorbeeld <xliff:g id="direction" example="Up">%1$s</xliff:g></string>
+    <string name="control_skin_builtin_preview" tools:ignore="MissingTranslation">Standaard</string>
+    <string name="control_skin_custom_preview" tools:ignore="MissingTranslation">Aangepast</string>
+    <string name="layout_editor_group_on">Samen schalen</string>
+    <string name="layout_editor_group_off">Afzonderlijk schalen</string>
+    <string name="layout_editor_snap_grid">Uitlijnen op raster</string>
+    <string name="layout_editor_snap_controls">Uitlijnen op knoppen</string>
+    <string name="layout_editor_snap_resize">Uitlijnen bij schalen</string>
+    <string name="layout_editor_snap_resize_on">Uitlijnen bij schalen: aan</string>
+    <string name="layout_editor_snap_resize_off">Uitlijnen bij schalen: uit</string>
+    <string name="layout_editor_snap_grid_on">Rasteruitlijning: aan</string>
+    <string name="layout_editor_snap_grid_off">Rasteruitlijning: uit</string>
+    <string name="layout_editor_snap_controls_on">Knopuitlijning: aan</string>
+    <string name="layout_editor_snap_controls_off">Knopuitlijning: uit</string>
+    <string name="layout_editor_guide_gestures">Gebaren</string>
+    <string name="layout_editor_guide_move">Sleep een bedieningselement om het te verplaatsen.</string>
+    <string name="layout_editor_guide_resize">Gebruik twee vingers om het formaat te wijzigen. Beweeg horizontaal of verticaal om de breedte of hoogte aan te passen.</string>
+    <string name="layout_editor_guide_tools">Editorhulpmiddelen</string>
+    <string name="layout_editor_guide_done">Tik op Gereed om op te slaan, te verwerpen of verder te bewerken.</string>
+    <string name="layout_editor_guide_start">Beginnen met bewerken</string>
+</resources>

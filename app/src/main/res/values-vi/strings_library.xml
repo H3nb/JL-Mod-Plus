@@ -1,0 +1,444 @@
+<?xml version="1.0" encoding="utf-8"?>
+<!-- MIDlet library, collections, metadata editor, bulk/single installer, file picker, and app updates. -->
+<resources xmlns:tools="http://schemas.android.com/tools" xmlns:xliff="urn:oasis:names:tc:xliff:document:1.2">
+    <string name="action_context_delete">Xóa</string>
+    <string name="action_context_rename">Đổi tên</string>
+    <string name="action_context_shortcut">Thêm lối tắt</string>
+    <string name="action_reinstall">Cài đặt lại</string>
+    <string name="alert_msg_workdir_not_exists">Không tìm thấy thư mục làm việc:\n<xliff:g id="path" example="/storage/emulated/0/JL-Mod-Plus">%1$s</xliff:g>\nTạo mới hay chọn thư mục khác?</string>
+    <string name="converting_wait">Đang chuyển đổi JAR…</string>
+    <string name="create_apps_dir_failed">Không thể chuẩn bị thư mục làm việc tại:\n<xliff:g id="path" example="/storage/emulated/0/JL-Mod-Plus">%1$s</xliff:g>\nHãy chọn thư mục khác.</string>
+    <string name="install_done">Đã cài đặt ứng dụng.</string>
+    <string name="install_done_with_warning">Đã cài đặt ứng dụng kèm cảnh báo.</string>
+    <string name="installer_title">Trình cài đặt MIDlet</string>
+    <string name="installer_error_message">Không thể cài đặt ứng dụng đã chọn. Hãy chọn tệp MIDlet hợp lệ và thử lại.</string>
+    <string name="install_jar_non_matched_jad">Ứng dụng này khác với ứng dụng được mô tả trong JAD.\nBỏ qua JAD và vẫn cài đặt?</string>
+    <string name="file_picker_select_file">Chọn tệp</string>
+    <string name="file_picker_select_folder">Chọn thư mục</string>
+    <string name="file_picker_select_app_bundle">Chọn gói ứng dụng</string>
+    <string name="file_picker_select_icon">Chọn biểu tượng</string>
+    <string name="file_picker_navigate_back">Quay lại thư mục cha</string>
+    <string name="file_picker_cancel">Hủy</string>
+    <string name="file_picker_search">Tìm kiếm</string>
+    <string name="file_picker_sort">Sắp xếp</string>
+    <string name="file_picker_select_all">Chọn tất cả tệp trong thư mục này</string>
+    <string name="file_picker_unselect_all">Bỏ chọn tất cả tệp trong thư mục này</string>
+    <string name="file_picker_sort_type">Thư mục trước</string>
+    <string name="file_picker_sort_name_ascending">Tên A–Z</string>
+    <string name="file_picker_sort_name_descending">Tên Z–A</string>
+    <string name="file_picker_sort_modified_newest">Ngày sửa đổi: mới nhất</string>
+    <string name="file_picker_sort_modified_oldest">Ngày sửa đổi: cũ nhất</string>
+    <string name="file_picker_choose">Chọn</string>
+    <string name="file_picker_current_folder">Thư mục hiện tại</string>
+    <string name="file_picker_parent_folder">Thư mục cha</string>
+    <string name="file_picker_file">Tệp</string>
+    <string name="file_picker_preview_named">Xem trước <xliff:g id="name" example="Example">%1$s</xliff:g></string>
+    <string name="file_picker_preview_unavailable">Không có bản xem trước</string>
+    <string name="file_picker_storage_volume">Ổ lưu trữ</string>
+    <string name="file_picker_empty">Không có tệp nào phù hợp</string>
+    <string name="file_picker_empty_folder">Không tìm thấy thư mục nào</string>
+    <string name="file_picker_no_matches">Không có kết quả phù hợp</string>
+    <string name="file_picker_permission_required">Cần quyền truy cập bộ nhớ</string>
+    <string name="file_picker_permission_message">Cho phép truy cập bộ nhớ để duyệt tệp và thư mục trên thiết bị này.</string>
+    <string name="file_picker_permission_denied">Chưa cấp quyền truy cập bộ nhớ.</string>
+    <string name="file_picker_grant_access">Cấp quyền truy cập</string>
+    <string name="file_picker_retry">Thử lại</string>
+    <string name="file_picker_load_failed">Không thể mở thư mục này.</string>
+    <string name="file_picker_create_folder">Thư mục mới</string>
+    <string name="file_picker_create_folder_title">Tạo thư mục</string>
+    <string name="file_picker_folder_name">Tên thư mục</string>
+    <string name="file_picker_invalid_folder_name">Hãy nhập tên thư mục hợp lệ.</string>
+    <string name="file_picker_folder_exists">Đã có mục trùng tên này.</string>
+    <string name="file_picker_create_folder_failed">Không thể tạo thư mục.</string>
+    <string name="file_picker_selection_unavailable">Mục đã chọn không còn khả dụng.</string>
+    <string name="loading_apps">Đang tải ứng dụng</string>
+    <string name="message_delete">Xóa ứng dụng này cùng cài đặt và dữ liệu lưu của nó? Thao tác này cũng xóa ứng dụng khỏi thư viện của bạn.</string>
+    <string name="msg_no_matches">Không có kết quả phù hợp cho “<xliff:g id="query" example="Bounce">%1$s</xliff:g>”</string>
+    <string name="library_destination_apps">Tất cả ứng dụng</string>
+    <string name="library_destination_collections">Bộ sưu tập</string>
+    <string name="library_scope_picker_title" tools:ignore="MissingTranslation">Duyệt ứng dụng</string>
+    <string name="library_destination_more">Thêm</string>
+    <string name="library_search_placeholder">Tìm kiếm ứng dụng…</string>
+    <string name="library_filter_all">Tất cả</string>
+    <string name="library_filter_recently_opened">Mở gần đây</string>
+    <string name="library_filter_recently_added">Thêm gần đây</string>
+    <string name="library_filter_favorites">Yêu thích</string>
+    <string name="library_add_to_favorites_action">Thêm vào yêu thích</string>
+    <string name="library_remove_from_favorites_action">Xóa khỏi yêu thích</string>
+    <string name="library_favorite_coming_soon">Mục yêu thích không khả dụng</string>
+    <string name="library_vendor_version"><xliff:g id="vendor" example="Nokia">%1$s</xliff:g> · <xliff:g id="version" example="1.0">%2$s</xliff:g></string>
+    <string name="library_view_list">Danh sách</string>
+    <string name="library_view_grid">Lưới</string>
+    <string name="library_icon_ratio_title">Tỷ lệ khung hình biểu tượng</string>
+    <string name="library_icon_ratio_square">Vuông (1:1)</string>
+    <string name="library_icon_ratio_portrait">Dọc (3:4)</string>
+    <string name="library_icon_shape_title">Hình dạng biểu tượng</string>
+    <string name="library_icon_shape_round">Bo góc</string>
+    <string name="library_icon_shape_square">Góc vuông</string>
+    <string name="library_grid_icon_size_title" tools:ignore="MissingTranslation">Kích thước biểu tượng lưới</string>
+    <string name="library_grid_icon_size_small" tools:ignore="MissingTranslation">Nhỏ</string>
+    <string name="library_grid_icon_size_standard" tools:ignore="MissingTranslation">Tiêu chuẩn</string>
+    <string name="library_grid_icon_size_large" tools:ignore="MissingTranslation">Lớn</string>
+    <string name="library_grid_icon_size_summary" tools:ignore="MissingTranslation">Thay đổi kích thước biểu tượng và số cột trong chế độ xem Lưới.</string>
+    <string name="library_grid_spacing_title">Khoảng cách lưới</string>
+    <string name="library_grid_spacing_summary" tools:ignore="MissingTranslation">Chỉ áp dụng cho chế độ xem Lưới.</string>
+    <string name="library_grid_spacing_none">Không có (0 dp)</string>
+    <string name="library_grid_spacing_compact">Gọn (4 dp)</string>
+    <string name="library_grid_spacing_standard">Tiêu chuẩn (8 dp)</string>
+    <string name="library_grid_spacing_spacious">Rộng (12 dp)</string>
+    <string name="library_hide_grid_titles">Ẩn tên MIDlet</string>
+    <string name="library_show_list_description">Hiển thị mô tả MIDlet</string>
+    <string name="library_collections_empty_title">Chưa có bộ sưu tập nào</string>
+    <string name="library_collections_empty_message">Bộ sưu tập sẽ khả dụng sau khi thư viện tải xong.</string>
+    <string name="library_expand_description">Mở rộng mô tả</string>
+    <string name="library_collapse_description">Thu gọn mô tả</string>
+    <string name="no_data_for_display">Không có ứng dụng nào để hiển thị</string>
+    <string name="permission_request_failed">Cần quyền ghi vào bộ nhớ.</string>
+    <string name="reinstall">Ứng dụng này đã được cài đặt. Cài đặt lại?</string>
+    <string name="reinstall_newest">Cập nhật ứng dụng này lên phiên bản <xliff:g id="version" example="2.1.0">%1$s</xliff:g>?\n\nHiện đã cài: <xliff:g id="current_version" example="2.0.0">%2$s</xliff:g></string>
+    <string name="reinstall_older">Thay thế ứng dụng này bằng phiên bản <xliff:g id="version" example="2.1.0">%1$s</xliff:g>?\n\nHiện đã cài: <xliff:g id="current_version" example="2.0.0">%2$s</xliff:g>\nPhiên bản cũ hơn có thể không hoạt động đúng với dữ liệu hiện có.</string>
+    <string name="warn_install_from_net">Tệp này sẽ được tải xuống từ internet.</string>
+    <string name="installer_ambiguous">Có nhiều ứng dụng đã cài khớp với gói này. Cài đặt thành một bản sao riêng? Các ứng dụng hiện có và dữ liệu của chúng vẫn được giữ lại.</string>
+    <string name="installer_separate_copy">Cài đặt bản sao riêng</string>
+    <string name="installer_stage_download">Đang tải xuống ứng dụng…</string>
+    <string name="installer_stage_wait">Đang chờ thao tác khác…</string>
+    <string name="installer_stage_save">Đang lưu ứng dụng…</string>
+    <string name="installer_failed_download">Không thể tải xuống ứng dụng. Hãy kiểm tra kết nối và liên kết tải xuống rồi thử lại.</string>
+    <string name="installer_failed_storage">Không thể hoàn tất cài đặt. Hãy thử lại.</string>
+    <string name="installer_failed_conversion">Không thể chuyển đổi ứng dụng. Hãy đảm bảo tệp đầy đủ và được hỗ trợ rồi thử lại.</string>
+    <string name="installer_needs_recovery">Các tệp ứng dụng đã được lưu nhưng thư viện chưa thể hoàn tất cập nhật. Hãy làm mới thư viện trước khi thử lại.</string>
+    <string name="installer_refresh_library">Làm mới thư viện</string>
+    <string name="installer_cancel_pending">Đang dừng tại điểm an toàn tiếp theo…</string>
+    <string name="installer_retry_remaining">Xem các mục chưa hoàn tất</string>
+    <string name="installer_not_processed">Chưa xử lý</string>
+    <string name="installer_partial_restore">Đã cài đặt ứng dụng nhưng không thể khôi phục dữ liệu hoặc cài đặt.</string>
+    <string name="installer_removed_leftovers">Đã xóa ứng dụng nhưng không thể xóa một số cài đặt hoặc dữ liệu lưu.</string>
+    <string name="installer_copy_details">Sao chép chi tiết</string>
+    <string name="installer_show_details">Hiển thị chi tiết</string>
+    <string name="installer_hide_details">Ẩn chi tiết</string>
+    <!-- %1$d is the number of source Java class files skipped during conversion. -->
+    <plurals name="installer_conversion_warning_summary">
+        <item quantity="other">Đã bỏ qua <xliff:g id="skipped_count" example="2">%1$d</xliff:g> tệp lớp Java vì không thể đọc được. Các tính năng sử dụng chúng có thể không hoạt động.</item>
+    </plurals>
+    <!-- %1$s is the source JAR entry path for the skipped class file. -->
+    <string name="installer_conversion_skipped_entry"><xliff:g id="entry_path" example="com/example/Broken.class">%1$s</xliff:g>\nSự cố: Không thể đọc tệp lớp Java.\nHành động: Đã bỏ qua khi chuyển đổi.</string>
+    <!-- %1$d is the number of additional bounded conversion diagnostics not shown. -->
+    <plurals name="installer_conversion_omitted_details">
+        <item quantity="other">Còn <xliff:g id="omitted_count" example="5">%1$d</xliff:g> sự cố chuyển đổi khác không được hiển thị.</item>
+    </plurals>
+    <string name="library_collection_new">Bộ sưu tập mới</string>
+    <string name="library_collection_ready_empty_message">Tạo bộ sưu tập để sắp xếp ứng dụng mà không cần di chuyển tệp của chúng.</string>
+    <string name="library_collection_add_app">Thêm vào bộ sưu tập</string>
+    <string name="library_collection_add_apps">Thêm ứng dụng</string>
+    <string name="library_collection_manage_apps">Chọn ứng dụng</string>
+    <string name="library_collection_manage" tools:ignore="MissingTranslation">Quản lý bộ sưu tập</string>
+    <string name="library_collection_delete_confirmation" tools:ignore="MissingTranslation">Xóa “<xliff:g id="collection_name" example="Favorites">%1$s</xliff:g>”? Các ứng dụng trong bộ sưu tập này vẫn được giữ nguyên.</string>
+    <string name="library_collection_rename_action" tools:ignore="MissingTranslation">Đổi tên bộ sưu tập <xliff:g id="collection_name" example="Favorites">%1$s</xliff:g></string>
+    <string name="library_collection_delete_action" tools:ignore="MissingTranslation">Xóa bộ sưu tập <xliff:g id="collection_name" example="Favorites">%1$s</xliff:g></string>
+    <string name="library_collection_select_action" tools:ignore="MissingTranslation">Chọn bộ sưu tập <xliff:g id="collection_name" example="Favorites">%1$s</xliff:g></string>
+    <string name="library_collection_open_action" tools:ignore="MissingTranslation">Mở bộ sưu tập <xliff:g id="collection_name" example="Favorites">%1$s</xliff:g></string>
+    <string name="library_collection_rename_selected" tools:ignore="MissingTranslation">Đổi tên bộ sưu tập đã chọn</string>
+    <string name="library_collection_delete_selected" tools:ignore="MissingTranslation">Xóa các bộ sưu tập đã chọn</string>
+    <plurals name="library_collection_delete_many_confirmation">
+        <item quantity="other">Xóa <xliff:g id="count" example="3">%d</xliff:g> bộ sưu tập? Các ứng dụng vẫn được giữ nguyên.</item>
+    </plurals>
+    <string name="library_notifications_title" tools:ignore="MissingTranslation">Thông báo</string>
+    <string name="library_notifications_empty_title" tools:ignore="MissingTranslation">Chưa có thông báo nào</string>
+    <string name="library_notifications_empty_summary" tools:ignore="MissingTranslation">Thông báo cập nhật ứng dụng sẽ xuất hiện tại đây khi có sẵn.</string>
+    <string name="library_collection_manage_apps_summary">Chọn ứng dụng để đưa vào bộ sưu tập này.</string>
+    <string name="library_collection_name">Tên bộ sưu tập</string>
+    <string name="library_collection_members_empty">Chưa có ứng dụng nào trong bộ sưu tập này.</string>
+    <string name="library_collection_select_title">Chọn bộ sưu tập</string>
+    <string name="library_collection_select_message">Chọn một bộ sưu tập để xem các ứng dụng bên trong.</string>
+    <string name="library_collection_remove_from_current">Xóa khỏi bộ sưu tập</string>
+    <string name="library_no_matches">Không có kết quả phù hợp cho “<xliff:g id="query" example="Bounce">%1$s</xliff:g>”</string>
+    <string name="library_action_share_app">Chia sẻ ứng dụng</string>
+    <string name="library_action_export_bundle">Xuất gói ứng dụng</string>
+    <string name="library_action_import_bundle">Nhập gói ứng dụng</string>
+    <string name="library_action_import_bundle_summary">Khôi phục ứng dụng đã xuất cùng mọi cài đặt, dữ liệu lưu hoặc dấu trang đi kèm.</string>
+    <string name="library_import_preparing">Đang đọc gói ứng dụng…</string>
+    <string name="library_import_restoring">Đang khôi phục dữ liệu ứng dụng…</string>
+    <string name="library_import_done">Đã nhập gói ứng dụng.</string>
+    <string name="library_import_done_with_warning">Đã nhập gói ứng dụng kèm cảnh báo.</string>
+    <string name="library_import_invalid_bundle">Gói ứng dụng đã chọn không hợp lệ, bị hỏng hoặc không được hỗ trợ. Hãy chọn một gói ứng dụng JL-Mod Plus hợp lệ rồi thử lại.</string>
+    <string name="library_import_restore_existing">Ứng dụng này đã được cài đặt. Cài đặt và dữ liệu lưu đi kèm sẽ thay thế dữ liệu hiện có; dấu trang sẽ được gộp trừ khi gói cũng bao gồm cài đặt.</string>
+    <string name="library_import_restore_failed">Đã cài đặt ứng dụng nhưng không thể khôi phục dữ liệu trong gói. Thử khôi phục lại?</string>
+    <string name="library_play_stats_summary">Số lần mở: <xliff:g id="launch_count" example="12">%1$d</xliff:g> · Tổng thời gian: <xliff:g id="total_time" example="2h 15m">%2$s</xliff:g></string>
+    <string name="library_share_chooser_title">Chia sẻ ứng dụng</string>
+    <string name="library_export_chooser_title">Xuất</string>
+    <string name="library_export_progress">Đang xuất… <xliff:g id="completed" example="3">%1$d</xliff:g>/<xliff:g id="total" example="10">%2$d</xliff:g></string>
+    <string name="library_transfer_unavailable">Không thể chuẩn bị bản xuất. Hãy đóng mọi MIDlet đang chạy rồi thử lại.</string>
+    <string name="library_back">Quay lại thư viện</string>
+    <string name="library_sort">Sắp xếp ứng dụng</string>
+    <string name="library_search_clear">Xóa tìm kiếm</string>
+    <string name="library_description_more">… Xem thêm</string>
+    <string name="library_description_less">Thu gọn</string>
+    <plurals name="file_picker_selected_count">
+        <item quantity="other">Đã chọn <xliff:g id="count" example="3">%1$d</xliff:g></item>
+    </plurals>
+    <plurals name="library_selection_count">
+        <item quantity="other"><xliff:g id="count" example="3">%1$d</xliff:g> ứng dụng</item>
+    </plurals>
+    <plurals name="library_collection_member_count">
+        <item quantity="other"><xliff:g id="count" example="3">%1$d</xliff:g> ứng dụng</item>
+    </plurals>
+    <plurals name="bulk_install_found">
+        <item quantity="other">Tìm thấy <xliff:g id="count" example="3">%1$d</xliff:g> ứng dụng</item>
+    </plurals>
+    <plurals name="bulk_install_selected">
+        <item quantity="other">Đã chọn <xliff:g id="count" example="3">%1$d</xliff:g></item>
+    </plurals>
+    <plurals name="bulk_install_ready_count">
+        <item quantity="other"><xliff:g id="count" example="3">%1$d</xliff:g> sẵn sàng</item>
+    </plurals>
+    <plurals name="bulk_install_skipped_count">
+        <item quantity="other">Đã cài đặt hoặc trùng lặp: <xliff:g id="count" example="3">%1$d</xliff:g></item>
+    </plurals>
+    <plurals name="bulk_install_attention_count">
+        <item quantity="other"><xliff:g id="count" example="3">%1$d</xliff:g> cần xem lại</item>
+    </plurals>
+    <plurals name="bulk_install_installed_count">
+        <item quantity="other">Đã cài đặt <xliff:g id="count" example="3">%1$d</xliff:g></item>
+    </plurals>
+    <plurals name="bulk_install_updated_count">
+        <item quantity="other">Đã cập nhật <xliff:g id="count" example="3">%1$d</xliff:g></item>
+    </plurals>
+    <plurals name="bulk_install_reinstalled_count">
+        <item quantity="other">Đã cài đặt lại <xliff:g id="count" example="3">%1$d</xliff:g></item>
+    </plurals>
+    <plurals name="bulk_install_skipped_result_count">
+        <item quantity="other">Đã bỏ qua <xliff:g id="count" example="3">%1$d</xliff:g></item>
+    </plurals>
+    <plurals name="bulk_install_failed_count">
+        <item quantity="other">Thất bại <xliff:g id="count" example="3">%1$d</xliff:g></item>
+    </plurals>
+    <plurals name="bulk_install_warning_count">
+        <item quantity="other"><xliff:g id="count" example="3">%1$d</xliff:g> cảnh báo</item>
+    </plurals>
+    <plurals name="bulk_install_omitted_sources">
+        <item quantity="other">Đã ẩn <xliff:g id="count" example="3">%1$d</xliff:g> tệp khác để danh sách xem lại phản hồi mượt mà.</item>
+    </plurals>
+    <plurals name="library_bulk_delete_confirmation">
+        <item quantity="other">Xóa <xliff:g id="count" example="3">%1$d</xliff:g> ứng dụng? Tệp, cài đặt và dữ liệu lưu của chúng sẽ bị xóa khỏi thư viện của bạn.</item>
+    </plurals>
+    <plurals name="library_bulk_delete_result">
+        <item quantity="other">Đã xóa <xliff:g id="deleted_count" example="3">%1$d</xliff:g> ứng dụng; <xliff:g id="failed_count" example="1">%2$d</xliff:g> thất bại.</item>
+    </plurals>
+    <string name="bulk_install_title">Cài đặt hàng loạt</string>
+    <string name="bulk_install_planning">Đang kiểm tra các ứng dụng đã chọn…</string>
+    <string name="bulk_install_empty">Không tìm thấy ứng dụng nào được hỗ trợ.</string>
+    <string name="bulk_install_recommended">Đề xuất</string>
+    <string name="bulk_install_clear">Bỏ chọn</string>
+    <string name="bulk_install_install_count">Cài đặt <xliff:g id="count" example="3">%1$d</xliff:g></string>
+    <string name="bulk_install_cancel">Hủy</string>
+    <string name="bulk_install_close">Đóng</string>
+    <plurals name="bulk_install_running">
+        <item quantity="other">Đã xử lý <xliff:g id="processed" example="3">%1$d</xliff:g> / <xliff:g id="total" example="10">%2$d</xliff:g> ứng dụng</item>
+    </plurals>
+    <string name="bulk_install_cancel_requested">Đang dừng sau ứng dụng hiện tại…</string>
+    <string name="bulk_install_complete">Đã hoàn tất cài đặt hàng loạt</string>
+    <string name="bulk_install_cancelled">Đã dừng cài đặt hàng loạt</string>
+    <string name="bulk_install_fatal">Đã dừng cài đặt hàng loạt. Hãy xem lại các mục chưa hoàn tất trước khi thử lại.</string>
+    <string name="bulk_install_result_installed">Đã cài đặt</string>
+    <string name="bulk_install_result_updated">Đã cập nhật</string>
+    <string name="bulk_install_result_reinstalled">Đã cài đặt lại</string>
+    <string name="bulk_install_result_skipped">Đã bỏ qua</string>
+    <string name="bulk_install_result_failed">Thất bại</string>
+    <string name="bulk_install_installed_version">Đã cài: <xliff:g id="version" example="2.1.0">%1$s</xliff:g></string>
+    <string name="bulk_install_source">Nguồn: <xliff:g id="name" example="Example">%1$s</xliff:g></string>
+    <string name="bulk_install_action_separate_copy">Cài đặt thành bản sao riêng</string>
+    <string name="bulk_install_action_jar_only">Chỉ cài đặt JAR</string>
+    <string name="single_install_review_jar_only" tools:ignore="MissingTranslation">Chỉ xem lại JAR</string>
+    <string name="single_install_jar_only_notice" tools:ignore="MissingTranslation">Chỉ tệp JAR sẽ được cài đặt. Hãy kiểm tra tên ứng dụng, phiên bản và trạng thái cài đặt trước khi tiếp tục.</string>
+    <string name="single_install_running_replacement_warning" tools:ignore="MissingTranslation">Nếu ứng dụng này đang chạy, quá trình cài đặt sẽ dừng ứng dụng trước khi thay thế tệp. Tiến trình chưa lưu có thể bị mất.</string>
+    <string name="bulk_install_status_new">Mới</string>
+    <string name="bulk_install_status_update">Cập nhật</string>
+    <string name="bulk_install_status_downgrade">Phiên bản cũ hơn</string>
+    <string name="bulk_install_status_same">Đã cài đặt</string>
+    <string name="bulk_install_status_reinstall">Cùng phiên bản, có thể là biến thể khác</string>
+    <string name="bulk_install_status_ambiguous">Khớp nhiều ứng dụng đã cài</string>
+    <string name="bulk_install_status_mismatch">JAD/JAR không khớp</string>
+    <string name="bulk_install_status_duplicate">Trùng lặp</string>
+    <string name="bulk_install_status_older_batch">Phiên bản cũ hơn trong lô</string>
+    <string name="bulk_install_status_conflict">Xung đột trong lô</string>
+    <string name="bulk_install_status_remote">Không hỗ trợ nguồn từ xa</string>
+    <string name="bulk_install_status_error">Nguồn không hợp lệ</string>
+    <string name="bulk_install_reinstall_source_missing">Tệp JAR đã lưu không khả dụng để cài đặt lại.</string>
+    <plurals name="bulk_install_reinstall_missing_apps">
+        <item quantity="other"><xliff:g id="count" example="3">%1$d</xliff:g> ứng dụng thư viện đã chọn không còn khả dụng.</item>
+    </plurals>
+    <string name="library_metadata_edit_title">Chỉnh sửa siêu dữ liệu</string>
+    <string name="library_metadata_icon">Biểu tượng</string>
+    <string name="library_metadata_name">Tên</string>
+    <string name="library_metadata_vendor">Nhà cung cấp</string>
+    <string name="library_metadata_reset_to_original">Khôi phục về bản gốc</string>
+    <string name="library_metadata_save">Lưu</string>
+    <string name="library_hide_grid_titles_summary">Ẩn tên MIDlet trong chế độ xem Lưới. Chế độ xem Danh sách vẫn hiển thị.</string>
+    <string name="library_show_list_description_summary">Hiển thị mô tả của từng MIDlet bên dưới tên và phiên bản.</string>
+    <string name="library_indexing_progress">Đang lập chỉ mục thư viện… <xliff:g id="completed" example="3">%1$d</xliff:g>/<xliff:g id="total" example="10">%2$d</xliff:g></string>
+    <string name="library_indexing_current">Đang quét <xliff:g id="name" example="Example">%1$s</xliff:g></string>
+    <string name="library_load_error_title">Thư viện không khả dụng</string>
+    <string name="library_retry">Thử lại</string>
+    <string name="library_reinstall_source_missing">Tệp JAR đã lưu không khả dụng để cài đặt lại.</string>
+    <string name="library_action_select">Chọn</string>
+    <string name="library_selection_select_all">Chọn tất cả</string>
+    <string name="library_selection_unselect_all">Bỏ chọn tất cả</string>
+    <string name="library_selection_checkbox_description">Chọn <xliff:g id="name" example="Example">%1$s</xliff:g></string>
+    <string name="library_selection_checked">Đã chọn</string>
+    <string name="library_selection_unchecked">Chưa chọn</string>
+    <string name="library_action_settings_summary">Định cấu hình hành vi và giao diện chung.</string>
+    <string name="library_action_crash_reports_summary">Xem lại các báo cáo chẩn đoán đã lưu.</string>
+    <string name="library_action_about_summary">Tổng quan dự án, thông tin bản dựng và liên kết.</string>
+    <string name="library_action_licenses_summary">Thông báo bên thứ ba và điều khoản giấy phép đi kèm ứng dụng.</string>
+    <string name="library_donation_action">Ủng hộ phát triển</string>
+    <string name="library_donation_summary">Chung tay giúp JL-Mod Plus ngày càng hoàn thiện.</string>
+    <string name="library_donation_title">Ủng hộ JL-Mod Plus</string>
+    <string name="library_donation_message">JL-Mod Plus hoàn toàn miễn phí và mã nguồn mở. Nếu thấy hữu ích, bạn có thể ủng hộ quá trình phát triển bằng một khoản đóng góp tự nguyện.</string>
+    <string name="library_donation_provider_note">Khoản đóng góp được xử lý bên ngoài qua Sociabuzz.</string>
+    <string name="library_donation_continue">Tiếp tục đến Sociabuzz</string>
+    <string name="library_donation_not_now">Để sau</string>
+    <string name="library_donation_link_copied">Không tìm thấy trình duyệt. Đã sao chép liên kết Sociabuzz vào bộ nhớ tạm.</string>
+    <string name="library_donation_browser_unavailable">Không tìm thấy trình duyệt để mở Sociabuzz.</string>
+    <string name="library_bulk_delete_apps">Xóa ứng dụng</string>
+    <string name="library_bulk_add_collection">Thêm vào bộ sưu tập</string>
+    <string name="library_bulk_share_apps">Chia sẻ ứng dụng</string>
+    <string name="library_bulk_reinstall_apps">Cài đặt lại</string>
+    <string name="library_bulk_export_apps">Xuất gói</string>
+    <string name="library_enhanced_icons_title">Biểu tượng nâng cao</string>
+    <string name="library_enhanced_icons_summary">Điều chỉnh khung, tỷ lệ và nền ô biểu tượng để các biểu tượng trông đồng đều hơn trong thư viện của bạn.</string>
+    <string name="library_collections_unavailable_title">Bộ sưu tập không khả dụng</string>
+    <string name="library_load_failed_message">Không thể tải thư viện. Hãy thử lại.</string>
+    <string name="bulk_install_prepare_failed">Không thể chuẩn bị các ứng dụng đã chọn để cài đặt.</string>
+    <string name="installer_existing_data_preserved">Cài đặt và dữ liệu lưu hiện có sẽ được giữ nguyên.</string>
+    <string name="bulk_install_library_changed">Thư viện của bạn đã thay đổi sau khi xem lại. Hãy đóng lô này và chọn lại tệp.</string>
+    <string name="bulk_install_source_unavailable">Một tệp nguồn bắt buộc không còn khả dụng. Hãy chọn lại tệp.</string>
+    <string name="bulk_install_source_changed">Tệp nguồn đã thay đổi sau khi xem lại. Hãy chọn lại tệp.</string>
+    <string name="bulk_install_target_unverified">Không thể xác minh mục tiêu cài đặt lại. Hãy đóng lô này và chọn lại ứng dụng.</string>
+    <string name="bulk_install_result_restored">Đã khôi phục</string>
+    <plurals name="bulk_install_restored_count">
+        <item quantity="other">Đã khôi phục <xliff:g id="count" example="3">%1$d</xliff:g></item>
+    </plurals>
+    <plurals name="bulk_install_reason_ambiguous_match">
+        <item quantity="other">Có <xliff:g id="count" example="3">%1$d</xliff:g> ứng dụng đã cài khớp với nguồn này.</item>
+    </plurals>
+    <string name="bulk_install_reason_jad_jar_mismatch">Tệp JAD và JAR xác định hai ứng dụng khác nhau.</string>
+    <string name="bulk_install_reason_conflicting_jads">Các tệp JAD có thuộc tính khác nhau cùng tham chiếu đến một tệp JAR.</string>
+    <string name="bulk_install_reason_remote_jar">Cài đặt hàng loạt không thể tải xuống tệp JAR từ xa.</string>
+    <string name="bulk_install_reason_missing_jar_url">Tệp JAD bị thiếu MIDlet-Jar-URL.</string>
+    <!-- %1$s is the exact URI scheme supplied by the JAD; do not translate it. -->
+    <string name="bulk_install_reason_unsupported_uri_scheme">Tệp JAD tham chiếu đến JAR bằng giao thức URI không được hỗ trợ: <xliff:g id="scheme" example="http">%1$s</xliff:g>.</string>
+    <string name="bulk_install_reason_missing_parent">Tệp JAD không có thư mục cha.</string>
+    <!-- %1$s is the exact MIDlet-Jar-URL reference, not a normalized filesystem path. -->
+    <string name="bulk_install_reason_jar_not_found">Không tìm thấy tệp JAR được tham chiếu bởi JAD: <xliff:g id="file_path" example="game.jar">%1$s</xliff:g>.</string>
+    <string name="bulk_install_reason_duplicate_source">Nguồn này trùng lặp với một nguồn khác trong lô.</string>
+    <string name="bulk_install_reason_version_conflict">Nhiều biến thể ứng dụng có cùng phiên bản.</string>
+    <string name="bulk_install_reason_older_candidate">Đã có phiên bản mới hơn của ứng dụng này trong cùng lô.</string>
+    <string name="bulk_install_reason_source_error">Không thể chuẩn bị nguồn này để cài đặt.</string>
+    <string name="updates_title">Cập nhật</string>
+    <string name="updates_more_summary">Kiểm tra phiên bản mới của JL-Mod Plus.</string>
+    <string name="updates_more_available">Đã có phiên bản mới hơn.</string>
+    <string name="updates_installed_version">Phiên bản đã cài: <xliff:g id="version" example="2.1.0">%1$s</xliff:g></string>
+    <string name="updates_build_code">Bản dựng <xliff:g id="build_code" example="247">%1$d</xliff:g></string>
+    <string name="updates_automatic">Tự động kiểm tra khi thư viện đang mở</string>
+    <string name="updates_not_checked">Chưa kiểm tra.</string>
+    <string name="updates_checking">Đang kiểm tra bản cập nhật…</string>
+    <string name="updates_current">Bạn đang dùng phiên bản mới nhất.</string>
+    <string name="updates_no_release">Không có bản phát hành tương thích nào được công bố.</string>
+    <string name="updates_not_installable">Đã có bản phát hành mới hơn nhưng không tương thích với thiết bị hoặc bản cài đặt này.</string>
+    <string name="updates_failed">Không thể kiểm tra bản cập nhật. Hãy kiểm tra kết nối và thử lại.</string>
+    <string name="updates_available">Có bản cập nhật</string>
+    <string name="updates_view_release">Xem bản phát hành</string>
+    <string name="updates_last_checked">Kiểm tra lần cuối: <xliff:g id="timestamp" example="Today, 09:45">%1$s</xliff:g></string>
+    <string name="updates_check">Kiểm tra bản cập nhật</string>
+    <string name="updates_notice">Đã có JL-Mod Plus <xliff:g id="version" example="2.1.0">%1$s</xliff:g>. Xem mục Cập nhật trong Cài đặt.</string>
+    <string name="updates_debug_build">Đây là bản dựng gỡ lỗi. Các tệp APK phát hành trên GitHub sẽ được cài đặt riêng.</string>
+    <string name="updates_link_copied">Không tìm thấy trình duyệt. Đã sao chép liên kết cập nhật vào bộ nhớ tạm.</string>
+    <string name="updates_browser_unavailable">Không tìm thấy trình duyệt để mở liên kết cập nhật.</string>
+    <string name="bulk_install_choose_files">Tệp</string>
+    <string name="bulk_install_choose_folder">Thư mục</string>
+    <string name="bulk_install_unreadable_archives">Tệp lưu trữ không đọc được: <xliff:g id="count" example="3">%1$d</xliff:g></string>
+    <string name="bulk_install_skipped_entries">Tệp hoặc mục lưu trữ bị bỏ qua: <xliff:g id="count" example="3">%1$d</xliff:g></string>
+    <string name="bulk_install_selection_options" tools:ignore="MissingTranslation">Tùy chọn chọn</string>
+    <string name="bulk_install_show_details" tools:ignore="MissingTranslation">Hiển thị chi tiết</string>
+    <string name="bulk_install_hide_details" tools:ignore="MissingTranslation">Ẩn chi tiết</string>
+    <string name="bulk_install_filter_all">Tất cả</string>
+    <string name="bulk_install_filter_selected">Đã chọn</string>
+    <string name="bulk_install_filter_review">Cần xem lại</string>
+    <string name="bulk_install_empty_filter">Không có ứng dụng nào phù hợp.</string>
+    <string name="platform_package_choice_title" tools:ignore="MissingTranslation">Đã phát hiện gói Java ME</string>
+    <string name="platform_package_choice_message" tools:ignore="MissingTranslation">Liên kết này trỏ đến một gói Java ME. Bạn muốn làm gì?</string>
+    <string name="platform_package_install" tools:ignore="MissingTranslation">Cài đặt trong JL-Mod Plus</string>
+    <string name="platform_package_browser" tools:ignore="MissingTranslation">Mở trong trình duyệt</string>
+    <string name="platform_package_unavailable" tools:ignore="MissingTranslation">Không tìm thấy ứng dụng nào để mở liên kết này.</string>
+    <string name="installer_running_update_warning" tools:ignore="MissingTranslation">Ứng dụng này hiện đang chạy. Quá trình cài đặt sẽ dừng ứng dụng trước khi thay thế tệp. Tiến trình chưa lưu có thể bị mất.</string>
+    <string name="library_metadata_main_icon">Chính</string>
+    <string name="library_metadata_follows_main">Dùng biểu tượng chính</string>
+    <string name="library_metadata_change">Thay đổi</string>
+    <string name="library_metadata_remove_portrait">Xóa biểu tượng 3:4</string>
+    <string name="library_metadata_discard_title">Hủy bỏ thay đổi?</string>
+    <string name="library_metadata_discard">Hủy bỏ</string>
+    <string name="library_metadata_default_description">Mô tả mặc định</string>
+    <string name="library_metadata_other_languages">Ngôn ngữ khác</string>
+    <string name="library_metadata_add_language">+ Thêm ngôn ngữ</string>
+    <string name="library_metadata_language_search">Tìm ngôn ngữ hoặc mã vùng</string>
+    <string name="library_metadata_remove_language">Xóa mô tả</string>
+    <string name="library_metadata_language_load_failed">Không thể tải mô tả ngôn ngữ. Nhấn Thử lại để tải lại.</string>
+    <string name="updates_download_apk" tools:ignore="MissingTranslation">Tải xuống APK</string>
+    <string name="updates_skip_version" tools:ignore="MissingTranslation">Bỏ qua phiên bản này</string>
+    <string name="updates_dialog_message" tools:ignore="MissingTranslation">Đã có JL-Mod Plus <xliff:g id="version" example="2.1.0">%1$s</xliff:g>. Bạn đang dùng phiên bản <xliff:g id="current_version" example="2.0.0">%2$s</xliff:g>. Tải xuống APK hoặc xem bản phát hành trên GitHub.</string>
+    <string name="library_bundle_components_title" tools:ignore="MissingTranslation">Xuất gói</string>
+    <string name="library_bundle_components_explanation" tools:ignore="MissingTranslation">Các ứng dụng đã chọn luôn được đưa vào. Hãy đóng mọi MIDlet đang chạy trước khi xuất, sau đó chọn dữ liệu bổ sung muốn kèm theo.</string>
+    <string name="library_bundle_config" tools:ignore="MissingTranslation">Cấu hình</string>
+    <string name="library_bundle_save_data" tools:ignore="MissingTranslation">Dữ liệu lưu</string>
+    <string name="library_bundle_saved_variables" tools:ignore="MissingTranslation">Dấu trang</string>
+    <string name="library_bundle_export" tools:ignore="MissingTranslation">Xuất</string>
+    <string name="library_export_jar_only" tools:ignore="MissingTranslation">Chỉ JAR</string>
+    <string name="library_export_jars_only" tools:ignore="MissingTranslation">Chỉ JAR (ZIP)</string>
+    <string name="library_selection_action_delete" tools:ignore="MissingTranslation">Xóa</string>
+    <string name="library_selection_action_collection" tools:ignore="MissingTranslation">Bộ sưu tập</string>
+    <string name="library_selection_action_export" tools:ignore="MissingTranslation">Xuất</string>
+    <string name="library_selection_action_reinstall" tools:ignore="MissingTranslation">Cài đặt lại</string>
+    <string name="installer_select_companion_jar" tools:ignore="MissingTranslation">Tệp JAD này tham chiếu đến một tệp JAR riêng. Hãy chọn tệp JAR tương ứng để tiếp tục. Trình cung cấp tệp bên ngoài không cho phép truy cập các tệp lân cận.</string>
+    <string name="installer_select_jar" tools:ignore="MissingTranslation">Chọn JAR</string>
+    <string name="installer_wrong_companion_jar" tools:ignore="MissingTranslation">Tệp JAR này không khớp với tệp JAD đã chọn. Hãy chọn đúng tệp JAR tương ứng để giữ nguyên cài đặt JAD.</string>
+    <string name="installer_choose_another_jar" tools:ignore="MissingTranslation">Chọn JAR khác</string>
+    <string name="library_app_more_actions" tools:ignore="MissingTranslation">Thao tác khác cho <xliff:g id="name" example="Example">%1$s</xliff:g></string>
+    <string name="library_actions_group_customize" tools:ignore="MissingTranslation">Tùy chỉnh</string>
+    <string name="library_actions_group_organize" tools:ignore="MissingTranslation">Sắp xếp</string>
+    <string name="library_actions_group_transfer" tools:ignore="MissingTranslation">Truyền và bảo trì</string>
+    <string name="library_collection_more_actions" tools:ignore="MissingTranslation">Thao tác khác cho bộ sưu tập <xliff:g id="collection_name" example="Favorites">%1$s</xliff:g></string>
+    <string name="library_settings_preferences" tools:ignore="MissingTranslation">Tùy chọn ứng dụng</string>
+    <string name="library_settings_section_maintenance" tools:ignore="MissingTranslation">Cập nhật và chẩn đoán</string>
+    <string name="library_settings_section_support" tools:ignore="MissingTranslation">Giới thiệu và hỗ trợ</string>
+    <string name="library_details_title" tools:ignore="MissingTranslation">Chi tiết MIDlet</string>
+    <string name="library_details_description" tools:ignore="MissingTranslation">Mô tả</string>
+    <string name="library_details_play_stats" tools:ignore="MissingTranslation">Thống kê chơi</string>
+    <string name="library_details_launches" tools:ignore="MissingTranslation">Số lần mở</string>
+    <string name="library_details_total_time" tools:ignore="MissingTranslation">Tổng thời gian</string>
+    <string name="library_details_last_played" tools:ignore="MissingTranslation">Chơi lần cuối</string>
+    <string name="library_details_library_info" tools:ignore="MissingTranslation">Thông tin thư viện</string>
+    <string name="library_details_added" tools:ignore="MissingTranslation">Đã thêm vào thư viện</string>
+    <string name="library_details_collections" tools:ignore="MissingTranslation">Bộ sưu tập</string>
+    <string name="library_details_none" tools:ignore="MissingTranslation">Không có</string>
+    <string name="library_details_technical" tools:ignore="MissingTranslation">Thông tin kỹ thuật</string>
+    <string name="library_details_profile" tools:ignore="MissingTranslation">Hồ sơ</string>
+    <string name="library_details_configuration" tools:ignore="MissingTranslation">Cấu hình</string>
+    <string name="library_details_jar_size" tools:ignore="MissingTranslation">Kích thước JAR lưu trữ</string>
+    <string name="library_details_entry_points" tools:ignore="MissingTranslation">Điểm vào MIDlet</string>
+    <string name="library_details_original_metadata" tools:ignore="MissingTranslation">Siêu dữ liệu gốc</string>
+    <string name="library_details_name" tools:ignore="MissingTranslation">Tên</string>
+    <string name="library_details_vendor" tools:ignore="MissingTranslation">Nhà cung cấp</string>
+    <string name="library_details_version" tools:ignore="MissingTranslation">Phiên bản</string>
+    <string name="library_details_version_value" tools:ignore="MissingTranslation">Phiên bản <xliff:g id="version" example="2.1.0">%1$s</xliff:g></string>
+    <string name="library_details_original_description" tools:ignore="MissingTranslation">Mô tả gốc</string>
+    <string name="library_details_permissions" tools:ignore="MissingTranslation">Quyền đã khai báo</string>
+    <string name="library_details_required" tools:ignore="MissingTranslation">Bắt buộc</string>
+    <string name="library_details_optional" tools:ignore="MissingTranslation">Tùy chọn</string>
+    <string name="library_details_no_permissions" tools:ignore="MissingTranslation">Không có quyền nào được khai báo</string>
+    <string name="library_details_descriptor_attributes" tools:ignore="MissingTranslation">Thuộc tính bộ mô tả</string>
+    <string name="library_details_unavailable" tools:ignore="MissingTranslation">Không khả dụng</string>
+    <string name="library_details_action" tools:ignore="MissingTranslation">Chi tiết</string>
+    <string name="library_details_view_details" tools:ignore="MissingTranslation">Xem chi tiết</string>
+    <string name="library_actions_more" tools:ignore="MissingTranslation">Thêm thao tác</string>
+    <string name="library_actions_less" tools:ignore="MissingTranslation">Ít thao tác hơn</string>
+</resources>

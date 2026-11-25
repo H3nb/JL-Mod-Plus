@@ -1,0 +1,47 @@
+<?xml version="1.0" encoding="utf-8"?>
+<!-- Paylaşılan arayüz eylemleri, genel etiketler, iletişim kutuları ve Hakkında ekranı. -->
+<resources xmlns:xliff="urn:oasis:names:tc:xliff:document:1.2">
+    <string name="about">Hakkında</string>
+    <string name="about_message">Klasik uygulamaları ve oyunları çalıştırın, MIDlet’leri kitaplığınızda düzenleyin; kontrolleri, ekranı, sesi ve performansı özelleştirin. JL-Mod Plus ücretsiz ve açık kaynaklıdır.</string>
+    <string name="about_subtitle">Android için Java ME öykünücüsü</string>
+    <string name="about_compatibility">Uyumluluk MIDlet’e, cihaza ve desteklenen Java ME API’lerine bağlıdır. Bazı uygulamalar orijinal telefonlarındakinden farklı davranabilir.</string>
+    <string name="about_lineage_title">Proje kökeni</string>
+    <string name="about_build_title">Derleme bilgileri</string>
+    <string name="about_version_label">Sürüm</string>
+    <string name="about_build_label">Derleme</string>
+    <string name="about_revision_label">Kaynak revizyonu</string>
+    <string name="about_links_title">Proje ve lisanslar</string>
+    <string name="about_github_link_copied">Tarayıcı bulunamadı. GitHub bağlantısı panoya kopyalandı.</string>
+    <string name="about_github_browser_unavailable">GitHub’ı açacak tarayıcı bulunamadı.</string>
+    <string name="about_lineage">JL-Mod Plus, woesss (Yury Kharchenko) tarafından geliştirilen JL-Mod’un bağımsız bir çatalıdır. JL-Mod, Nikita Shakarun’un J2ME Loader projesine dayanır ve kökeni NaikSoftware’in J2meLoader uygulamasına uzanır.</string>
+    <string name="about_evolution">JL-Mod Plus bu temel üzerine modern bir arayüz, daha yetenekli bir MIDlet kitaplığı, yeni özellikler ve daha yeni Android sürümleri için destek ekler.</string>
+    <string name="action_back">Geri</string>
+    <string name="action_settings">Ayarlar</string>
+    <string name="CANCEL_CMD">İptal</string>
+    <string name="change">Değiştir</string>
+    <string name="choose">Seç</string>
+    <string name="close">Kapat</string>
+    <string name="cmd_menu">Menü</string>
+    <string name="CONFIRMATION_REQUIRED">Onay gerekli</string>
+    <string name="create">Oluştur</string>
+    <string name="default_label"><xliff:g id="name" example="Example">%1$s</xliff:g> (varsayılan)</string>
+    <string name="dismiss">Kapat</string>
+    <string name="edit">Düzenle</string>
+    <string name="error">Hata</string>
+    <string name="error_name">Bir ad girin.</string>
+    <string name="exit">Çıkış</string>
+    <string name="help">Yardım</string>
+    <string name="install">Yükle</string>
+    <string name="licenses">Lisanslar</string>
+    <string name="licenses_unavailable">Lisans ayrıntıları kullanılamıyor.</string>
+    <string name="loading_info">Bilgiler yükleniyor…</string>
+    <string name="more">Diğer</string>
+    <string name="not_saved_exists">Zaten var</string>
+    <string name="reset">Sıfırla</string>
+    <string name="retry">Yeniden dene</string>
+    <string name="save">Kaydet</string>
+    <string name="saved">Kaydedildi: <xliff:g id="name" example="Example">%1$s</xliff:g></string>
+    <string name="START_CMD">Başlat</string>
+    <string name="warning">Uyarı</string>
+    <string name="removed">Kaldırıldı: <xliff:g id="name" example="Example">%1$s</xliff:g></string>
+</resources>

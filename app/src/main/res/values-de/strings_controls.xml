@@ -1,0 +1,105 @@
+<?xml version="1.0" encoding="utf-8"?>
+<!-- Virtual keypad controls, layout editor, physical key mappings, and control skins. -->
+<resources xmlns:tools="http://schemas.android.com/tools" xmlns:xliff="urn:oasis:names:tc:xliff:document:1.2">
+    <string name="alert_map_menu">Die Menütaste (M) ist nicht zugewiesen.\nMöglicherweise können Sie das MIDlet-Menü während des Spielens nicht öffnen.</string>
+    <string name="dismiss_mapping">Zuweisung schließen</string>
+    <string name="layout_edit_finish">Bearbeitung beenden</string>
+    <string name="layout_edit_done">Fertig</string>
+    <string name="layout_editor_grid_size">Rastergröße</string>
+    <string name="layout_editor_grid_coarse">Grob (16)</string>
+    <string name="layout_editor_grid_normal">Normal (24)</string>
+    <string name="layout_editor_grid_fine">Fein (32)</string>
+    <string name="layout_editor_snap_on">Einrasten ein</string>
+    <string name="layout_editor_snap_off">Einrasten aus</string>
+    <string name="layout_edit_save_changes">Änderungen an der virtuellen Steuerung speichern?</string>
+    <string name="layout_edit_discard">Verwerfen</string>
+    <string name="layout_edit_continue">Weiterbearbeiten</string>
+    <string name="layout_edit_finished">Bearbeitung der virtuellen Steuerung abgeschlossen.</string>
+    <string name="virtual_controls_save_failed">Virtuelle Steuerung konnte nicht gespeichert werden. Versuchen Sie es erneut.</string>
+    <string name="layout_switch">Steuerungslayout wählen</string>
+    <string name="mapping_dialog_key_not_specified">Keine Eingaben zugewiesen.</string>
+    <string name="mapping_dialog_message">Drücken Sie eine physische Taste oder einen Button, um sie diesem Steuerelement zuzuweisen.</string>
+    <string name="mapping_dialog_assigned_inputs">Zugewiesene Eingaben</string>
+    <string name="mapping_dialog_add_input">Sie können mehrere physische Eingaben zuweisen.</string>
+    <string name="mapping_dialog_remove">Entfernen</string>
+    <string name="mapping_dialog_title">Taste oder Button drücken</string>
+    <string name="message_reset_layout">Layout der virtuellen Steuerung auf den Standard zurücksetzen?</string>
+    <string name="RESET_LAYOUT_CMD">Layout der virtuellen Steuerung zurücksetzen</string>
+    <string name="saved_keyboard_layout_summary">Layout der virtuellen Steuerung gespeichert.</string>
+    <string name="control_skin_title">Skin für virtuelle Steuerung</string>
+    <string name="control_skin_create" tools:ignore="MissingTranslation">Set erstellen</string>
+    <string name="control_skin_default" tools:ignore="MissingTranslation">Standardtasten</string>
+    <string name="control_skin_edit" tools:ignore="MissingTranslation">Bearbeiten</string>
+    <string name="control_skin_rename" tools:ignore="MissingTranslation">Umbenennen</string>
+    <string name="control_skin_duplicate" tools:ignore="MissingTranslation">Duplizieren</string>
+    <string name="control_skin_delete" tools:ignore="MissingTranslation">Löschen</string>
+    <string name="control_skin_import_zip" tools:ignore="MissingTranslation">ZIP importieren</string>
+    <string name="control_skin_export_zip" tools:ignore="MissingTranslation">ZIP exportieren</string>
+    <string name="control_skin_select_export_folder" tools:ignore="MissingTranslation">Exportordner wählen</string>
+    <string name="control_skin_imported" tools:ignore="MissingTranslation"><xliff:g id="skin_name" example="Classic Nokia">%1$s</xliff:g> importiert</string>
+    <string name="control_skin_already_available" tools:ignore="MissingTranslation"><xliff:g id="skin_name" example="Classic Nokia">%1$s</xliff:g> ist bereits vorhanden</string>
+    <string name="control_skin_exported" tools:ignore="MissingTranslation"><xliff:g id="skin_name" example="Classic Nokia">%1$s</xliff:g> gespeichert</string>
+    <string name="control_skin_archive_invalid_path" tools:ignore="MissingTranslation">Der ausgewählte Speicherort ist nicht verfügbar.</string>
+    <string name="control_skin_archive_import_failed" tools:ignore="MissingTranslation">Steuerungs-Skin konnte nicht importiert werden. Stellen Sie sicher, dass die ZIP-Datei ein gültiges Set enthält.</string>
+    <string name="control_skin_archive_export_failed" tools:ignore="MissingTranslation">Steuerungs-Skin konnte nicht exportiert werden. Wählen Sie einen beschreibbaren Ordner außerhalb der Skin-Bibliothek.</string>
+    <string name="control_skin_name" tools:ignore="MissingTranslation">Name des Sets</string>
+    <string name="control_skin_icon" tools:ignore="MissingTranslation">Nur Symbol</string>
+    <string name="control_skin_full" tools:ignore="MissingTranslation">Vollständige Taste</string>
+    <string name="control_skin_normal_image" tools:ignore="MissingTranslation">Normales Bild</string>
+    <string name="control_skin_pressed_image" tools:ignore="MissingTranslation">Bild (gedrückt)</string>
+    <string name="control_skin_delete_warning" tools:ignore="MissingTranslation">Dieses globale Skin-Set und alle zugehörigen Bilder löschen? MIDlets, die es verwenden, wechseln zurück zur Standardsteuerung.</string>
+    <string name="control_skin_invalid_image" tools:ignore="MissingTranslation">Wählen Sie ein PNG-, WebP- oder SVG-Bild aus.</string>
+    <string name="control_skin_operation_failed" tools:ignore="MissingTranslation">Steuerungs-Skin-Set konnte nicht aktualisiert werden.</string>
+    <string name="control_skin_missing" tools:ignore="MissingTranslation">Set nicht verfügbar (Standardsteuerung)</string>
+    <string name="control_skin_remove_image" tools:ignore="MissingTranslation">Entfernen</string>
+    <string name="control_skin_manage" tools:ignore="MissingTranslation">Set verwalten</string>
+    <string name="control_skin_manage_named" tools:ignore="MissingTranslation"><xliff:g id="skin_name" example="Classic Nokia">%1$s</xliff:g> verwalten</string>
+    <plurals name="control_skin_count">
+        <item quantity="one"><xliff:g id="count" example="4">%1$d</xliff:g> angepasstes Steuerelement</item>
+        <item quantity="other"><xliff:g id="count" example="4">%1$d</xliff:g> angepasste Steuerelemente</item>
+    </plurals>
+    <string name="control_skin_empty" tools:ignore="MissingTranslation">Erstellen Sie ein Set, um Bilder für die Steuerung anzupassen.</string>
+    <string name="control_skin_numeric" tools:ignore="MissingTranslation">Ziffernblock</string>
+    <string name="control_skin_navigation" tools:ignore="MissingTranslation">Navigation</string>
+    <string name="control_skin_other" tools:ignore="MissingTranslation">Weitere Tasten</string>
+    <string name="control_skin_pressed_requires_normal" tools:ignore="MissingTranslation">Fügen Sie zuerst ein normales Bild hinzu.</string>
+    <string name="control_skin_edit_named" tools:ignore="MissingTranslation">Taste <xliff:g id="button_label" example="5">%1$s</xliff:g></string>
+    <string name="control_skin_change_image" tools:ignore="MissingTranslation">Ändern</string>
+    <string name="control_skin_pick_image" tools:ignore="MissingTranslation">Bild wählen</string>
+    <string name="control_skin_soft_left" tools:ignore="MissingTranslation">Soft L</string>
+    <string name="control_skin_soft_right" tools:ignore="MissingTranslation">Soft R</string>
+    <string name="control_skin_fire" tools:ignore="MissingTranslation">Aktion</string>
+    <string name="control_skin_menu" tools:ignore="MissingTranslation">Menü</string>
+    <string name="control_skin_movement" tools:ignore="MissingTranslation">Bewegungssteuerung</string>
+    <string name="control_skin_dpad" tools:ignore="MissingTranslation">Steuerkreuz</string>
+    <string name="control_skin_analog" tools:ignore="MissingTranslation">Analog-Stick</string>
+    <string name="control_skin_dpad_base" tools:ignore="MissingTranslation">Steuerkreuz-Bild</string>
+    <string name="control_skin_overlay_up" tools:ignore="MissingTranslation">Overlay „Oben“</string>
+    <string name="control_skin_overlay_down" tools:ignore="MissingTranslation">Overlay „Unten“</string>
+    <string name="control_skin_overlay_left" tools:ignore="MissingTranslation">Overlay „Links“</string>
+    <string name="control_skin_overlay_right" tools:ignore="MissingTranslation">Overlay „Rechts“</string>
+    <string name="control_skin_analog_base" tools:ignore="MissingTranslation">Basisbild</string>
+    <string name="control_skin_analog_thumb" tools:ignore="MissingTranslation">Stick-Bild</string>
+    <string name="control_skin_analog_thumb_pressed" tools:ignore="MissingTranslation">Aktives Stick-Bild</string>
+    <string name="control_skin_preview_directions" tools:ignore="MissingTranslation">Richtungen in Vorschau</string>
+    <string name="control_skin_preview_direction" tools:ignore="MissingTranslation">Vorschau: <xliff:g id="direction" example="Up">%1$s</xliff:g></string>
+    <string name="control_skin_builtin_preview" tools:ignore="MissingTranslation">Standard</string>
+    <string name="control_skin_custom_preview" tools:ignore="MissingTranslation">Angepasst</string>
+    <string name="layout_editor_group_on">Gemeinsam skalieren</string>
+    <string name="layout_editor_group_off">Einzeln skalieren</string>
+    <string name="layout_editor_snap_grid">Am Raster ausrichten</string>
+    <string name="layout_editor_snap_controls">An Tasten ausrichten</string>
+    <string name="layout_editor_snap_resize">Beim Skalieren einrasten</string>
+    <string name="layout_editor_snap_resize_on">Skalierungs-Einrasten: Ein</string>
+    <string name="layout_editor_snap_resize_off">Skalierungs-Einrasten: Aus</string>
+    <string name="layout_editor_snap_grid_on">Raster-Einrasten: Ein</string>
+    <string name="layout_editor_snap_grid_off">Raster-Einrasten: Aus</string>
+    <string name="layout_editor_snap_controls_on">Tasten-Einrasten: Ein</string>
+    <string name="layout_editor_snap_controls_off">Tasten-Einrasten: Aus</string>
+    <string name="layout_editor_guide_gestures">Gesten</string>
+    <string name="layout_editor_guide_move">Ziehen Sie ein Steuerelement, um es zu verschieben.</string>
+    <string name="layout_editor_guide_resize">Verwenden Sie zwei Finger zum Ändern der Größe. Bewegen Sie sie horizontal oder vertikal für Breite oder Höhe.</string>
+    <string name="layout_editor_guide_tools">Editor-Werkzeuge</string>
+    <string name="layout_editor_guide_done">Tippen Sie auf „Fertig“, um zu speichern, zu verwerfen oder weiterzubearbeiten.</string>
+    <string name="layout_editor_guide_start">Bearbeitung starten</string>
+</resources>

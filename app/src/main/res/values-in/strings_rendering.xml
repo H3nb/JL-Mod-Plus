@@ -1,172 +1,196 @@
 <?xml version="1.0" encoding="utf-8"?>
-<resources>
+<!-- Rendering pipeline, internal resolution, bitmap upscaling, shaders, and built-in visual effects. -->
+<resources xmlns:tools="http://schemas.android.com/tools" xmlns:xliff="urn:oasis:names:tc:xliff:document:1.2">
+    <string name="identity_filter">Tidak ada (tercepat)</string>
+    <string name="invalid_resolution_not_saved">Resolusi tidak valid. Preset tidak disimpan.</string>
+    <string name="msg_error_loading_shader">Shader tidak didukung. Menggunakan shader default.</string>
+    <string name="parallel_screen_redrawing">Pembaruan layar asinkron</string>
+    <string name="shader_tuning">Penyetelan shader</string>
+    <string name="SWAP_SIZES">Tukar lebar dan tinggi</string>
+    <string name="fps_limit_maximum">Maksimum</string>
+    <string name="remove_screen_preset">Hapus preset resolusi</string>
+    <string name="perf_overlay_position_help">Pilih sudut layar.</string>
+    <string name="perf_overlay_top_left">Kiri atas</string>
+    <string name="perf_overlay_top_right">Kanan atas</string>
+    <string name="perf_overlay_bottom_left">Kiri bawah</string>
+    <string name="perf_overlay_bottom_right">Kanan bawah</string>
+    <string name="internal_resolution_title" tools:ignore="MissingTranslation">Resolusi render</string>
+    <string name="internal_resolution_auto" tools:ignore="MissingTranslation">Otomatis</string>
+    <string name="internal_resolution_description" tools:ignore="MissingTranslation">Merender grafis 2D dan 3D yang didukung dengan detail lebih tinggi. Otomatis menyesuaikan area tampilan game; mulai ulang untuk menerapkan.</string>
+    <string name="bitmap_upscaling_title" tools:ignore="MissingTranslation">Peningkatan skala bitmap</string>
+    <string name="bitmap_upscaling_description" tools:ignore="MissingTranslation">Meningkatkan skala sprite 2D statis serta tekstur model Micro3D non-transparan dengan MMPX atau xBR Lv3. Tekstur M3G tidak diubah; mulai ulang untuk menerapkan.</string>
+    <string name="bitmap_upscaling_nearest" tools:ignore="MissingTranslation">Nearest neighbor</string>
+    <string name="bitmap_upscaling_bilinear" tools:ignore="MissingTranslation">Bilinear</string>
+    <string name="bitmap_upscaling_mmpx" tools:ignore="MissingTranslation">MMPX</string>
+    <string name="bitmap_upscaling_edge_aware" tools:ignore="MissingTranslation">xBR Lv3</string>
+    <!-- Prototyping only: localized UI copy is pending design review. -->
     <string name="render_shader_effects">Efek shader</string>
     <string name="render_pipeline_title">Alur rendering</string>
     <string name="render_shader_preset">Preset shader</string>
-    <string name="render_shader_picker_help">Gabungkan efek bawaan dan shader legacy sendiri dalam rangkaian berurutan.</string>
-    <string name="render_shader_requires_gles">Shader tetap tersimpan, tetapi hanya diterapkan pada mode OpenGL ES.</string>
-    <string name="render_shader_missing">Shader yang dipilih tidak ada di library. Pilih preset lain atau pulihkan filenya.</string>
+    <string name="render_shader_picker_help">Gabungkan efek bawaan dan shader lawas Anda sendiri dalam tumpukan efek berurutan.</string>
+    <string name="render_shader_requires_gles">Shader disimpan, tetapi hanya diterapkan saat OpenGL ES dipilih.</string>
+    <string name="render_shader_missing">Shader yang dipilih tidak ada di pustaka. Pilih preset lain atau pulihkan filenya.</string>
     <string name="render_shader_parameters">Parameter shader</string>
-    <string name="render_shader_reset_parameters">Atur ulang parameter</string>
-    <string name="render_shader_passes">Tahapan shader</string>
-    <string name="render_shader_pass_count">%1$d tahap</string>
-    <string name="render_shader_pass_hint">Lihat tahap pemrosesan preset GLSLP yang dipilih.</string>
+    <string name="render_shader_reset_parameters">Reset parameter</string>
+    <string name="render_shader_passes">Pass shader</string>
+    <string name="render_shader_pass_count"><xliff:g id="count" example="2">%1$d</xliff:g> pass</string>
+    <string name="render_shader_pass_hint">Lihat tahapan dari preset GLSLP yang dipilih.</string>
     <string name="render_pass_filter">Filter input</string>
     <string name="render_pass_output">Ukuran output (lebar × tinggi)</string>
     <string name="render_pipeline_unavailable">Preset tidak tersedia</string>
     <string name="render_game_output">Output game</string>
-    <string name="render_logical_screen_help">Ukuran layar logis yang dilaporkan ke game.</string>
+    <string name="render_logical_screen_help">Ukuran logis yang dilaporkan ke game.</string>
     <string name="render_internal_resolution">Resolusi internal</string>
-    <string name="render_internal_unavailable">Hanya native. Rendering HD masih dalam tahap eksperimen.</string>
-    <string name="render_display_renderer">Renderer tampilan</string>
+    <string name="render_internal_unavailable">Hanya asli (1×). Resolusi render yang lebih tinggi tidak tersedia untuk konfigurasi ini.</string>
+    <string name="render_display_renderer">Perender tampilan</string>
     <string name="render_shader_processing">Pemrosesan shader</string>
     <string name="render_display_scaling">Penskalaan tampilan</string>
     <string name="render_display_viewport">Area tampilan game</string>
-    <string name="render_texture_filtering">Filter pembesaran layar</string>
-    <string name="render_texture_filtering_help">Menentukan Nearest atau Linear untuk gambar akhir game. Efek shader dapat menggantinya.</string>
-    <string name="render_viewport_note">Ukuran viewport ditentukan sebelum tahapan shader direncanakan. Panah menunjukkan aliran gambar, bukan urutan perhitungan layout.</string>
-    <string name="render_pipeline_help">Lihat perjalanan gambar game ke layar dan pengaturan tiap tahap.</string>
+    <string name="render_texture_filtering">Filter penskalaan layar</string>
+    <string name="render_texture_filtering_help">Memilih Nearest atau Linear untuk gambar game akhir. Efek dapat menimpanya.</string>
+    <string name="render_viewport_note">Ukuran area tampilan ditentukan dari tata letak layar sebelum pass shader direncanakan. Panah menunjukkan aliran gambar, bukan urutan penghitungan tata letak.</string>
+    <string name="render_pipeline_help">Lihat cara frame game sampai ke layar, lalu edit setiap tahapannya.</string>
     <string name="render_no_shader">Pilih preset untuk mengubah tampilan game.</string>
     <string name="render_shader_adjust">Sesuaikan parameter</string>
-    <string name="render_legacy_tuning_hint">Sesuaikan parameter efek legacy ini.</string>
-    <string name="render_shader_customization">Penyesuaian</string>
-    <string name="render_adjustable_count">%1$d parameter dapat diubah</string>
-    <string name="render_pass_summary">%1$d tahap · Mengikuti preset</string>
-    <string name="render_shader_preset_note">Susunan tahap ditentukan oleh preset. Kamu dapat memeriksanya tanpa mengubah urutan.</string>
-    <string name="render_parameters_hint">Geser untuk mengatur nilai. Perubahan diterapkan saat slider dilepas.</string>
-    <string name="render_pass_readonly">Tahap dijalankan berurutan. Filter input dan skala output mengikuti preset yang dipilih.</string>
-    <string name="render_pipeline_intro">Aliran gambar dari framebuffer game hingga tampil di layar.</string>
-    <string name="render_native_short">Native (1×) · Resolusi internal yang lebih tinggi belum tersedia</string>
+    <string name="render_legacy_tuning_hint">Setel detail efek lawas ini.</string>
+    <string name="render_shader_customization">Sesuaikan</string>
+    <string name="render_adjustable_count">Parameter dapat disesuaikan: <xliff:g id="count" example="3">%1$d</xliff:g></string>
+    <string name="render_pass_summary"><xliff:g id="count" example="3">%1$d</xliff:g> tahap · Ditentukan oleh preset</string>
+    <string name="render_shader_preset_note">Tahap shader ditentukan oleh preset. Anda dapat memeriksanya tanpa mengubah urutannya.</string>
+    <string name="render_parameters_hint">Geser penggeser untuk menyesuaikan nilainya. Perubahan disimpan saat Anda melepaskannya.</string>
+    <string name="render_pass_readonly">Tahapan dijalankan sesuai urutan ini. Filter input dan penskalaan output mengikuti preset yang dipilih.</string>
+    <string name="render_pipeline_intro">Jalur dari framebuffer game ke layar Anda.</string>
+    <string name="render_native_short">Asli (1×)</string>
     <string name="render_expand_passes">Tampilkan tahapan</string>
     <string name="render_collapse_passes">Sembunyikan tahapan</string>
     <string name="render_view_all_passes">Detail tahapan</string>
-    <string name="render_pipeline_filter_summary">Filter tekstur: %1$s</string>
-    <string name="render_pipeline_note">Layout tampilan menentukan viewport sebelum shader direncanakan. Urutan ini menunjukkan aliran gambar.</string>
+    <string name="render_pipeline_filter_summary">Filter tekstur: <xliff:g id="shader_name" example="CRT Classic">%1$s</xliff:g></string>
+    <string name="render_pipeline_note">Tata letak tampilan menentukan area tampilan sebelum pass shader direncanakan. Langkah-langkah ini menunjukkan aliran gambar.</string>
     <string name="render_shader_change">Pilih efek lain</string>
-    <string name="render_custom_pipeline">Pipeline kustom</string>
-    <string name="render_custom_pipeline_hint">Gabungkan shader GLSL mandiri dari folder shader.</string>
-    <string name="render_custom_order_help">Efek dijalankan dari atas ke bawah. Pengaturan GLSLP sebelumnya tetap digunakan kecuali diubah.</string>
-    <string name="render_custom_empty">Tambahkan shader untuk membuat rangkaian kustom.</string>
-    <string name="render_custom_stage_count">%1$d tahap shader kustom</string>
-    <string name="render_custom_add">Tambah shader</string>
-    <string name="render_custom_add_hint">Pilih sumber .glsl eksternal yang berdiri sendiri.</string>
-    <string name="render_custom_no_sources">Belum ada shader .glsl mandiri. Tambahkan berkas ke shaders/shaders_glsl/ lalu buka kembali pengaturan.</string>
-    <string name="render_custom_scale">Output: %1$d× tahap sebelumnya</string>
+    <string name="render_custom_pipeline">Alur kustom</string>
+    <string name="render_custom_pipeline_hint">Gabungkan shader GLSL mandiri dari folder shader Anda.</string>
+    <string name="render_custom_order_help">Efek dijalankan dari atas ke bawah. Setelan GLSLP bawaan tetap berlaku kecuali diubah.</string>
+    <string name="render_custom_empty">Tambahkan shader untuk memulai rantai kustom.</string>
+    <string name="render_custom_stage_count"><xliff:g id="count" example="3">%1$d</xliff:g> tahap shader kustom</string>
+    <string name="render_custom_add">Tambahkan shader</string>
+    <string name="render_custom_add_hint">Pilih file sumber .glsl mandiri eksternal.</string>
+    <string name="render_custom_no_sources">Tidak ada shader lawas yang ditemukan. Tambahkan file shader .ini ke folder shaders, lalu buka kembali setelan.</string>
+    <string name="render_custom_scale">Output: <xliff:g id="scale" example="2">%1$d</xliff:g>× tahap sebelumnya</string>
     <string name="render_custom_output_scale">Ukuran output untuk tahap berikutnya</string>
     <string name="render_custom_final_viewport">Output akhir: ditampilkan di layar</string>
-    <string name="render_custom_filter">Filter input: %1$s</string>
+    <string name="render_custom_filter">Filter input: <xliff:g id="shader_name" example="CRT Classic">%1$s</xliff:g></string>
     <string name="render_custom_up">Naik</string>
     <string name="render_custom_down">Turun</string>
     <string name="render_custom_remove">Hapus</string>
     <string name="render_custom_cancel">Batal</string>
     <string name="render_custom_save">Simpan</string>
     <string name="render_custom_default">Default</string>
-    <string name="render_custom_nearest">Terdekat</string>
+    <string name="render_custom_nearest">Nearest</string>
     <string name="render_custom_linear">Linear</string>
-    <string name="render_custom_checking">Memeriksa berkas shader…</string>
+    <string name="render_custom_checking">Memeriksa file shader…</string>
     <string name="render_active_shader">Efek aktif</string>
     <string name="render_shader_off">Nonaktif</string>
-    <string name="render_edit_custom_pipeline">Edit rangkaian shader</string>
-    <string name="render_shader_unavailable">Tidak tersedia: %1$s</string>
-    <string name="render_no_shader_sources">Belum ada shader GLSL. Tambahkan berkas .glsl atau .glslp ke folder shader, lalu buka kembali pengaturan.</string>
+    <string name="render_edit_custom_pipeline">Edit rantai shader</string>
+    <string name="render_shader_unavailable">Tidak tersedia: <xliff:g id="shader_name" example="CRT Classic">%1$s</xliff:g></string>
+    <string name="render_no_shader_sources">Tidak ada shader yang ditemukan. Tambahkan file shader .ini lawas ke folder shaders, lalu buka kembali setelan.</string>
     <string name="render_shader_mode">Mode shader</string>
-    <string name="render_mode_selected">Terpilih</string>
-    <string name="render_gles_shader_default">OpenGL ES menggunakan tampilan asli game saat efek shader dimatikan.</string>
+    <string name="render_mode_selected">Dipilih</string>
+    <string name="render_gles_shader_default">OpenGL ES menggunakan gambar game asli saat efek shader nonaktif.</string>
     <string name="render_shader_off_help">Tanpa efek visual tambahan.</string>
-    <string name="render_legacy_mode">Shader legacy</string>
+    <string name="render_legacy_mode">Shader lawas</string>
     <string name="render_legacy_mode_help">Pilih file .ini dari folder shaders.</string>
     <string name="render_legacy_empty">Tidak ada definisi shader yang dapat digunakan dalam file .ini ini.</string>
-    <string name="render_legacy_select_variant">Pilih shader legacy</string>
-    <string name="render_legacy_variant_description">Definisi shader dari file .ini yang dipilih</string>
+    <string name="render_legacy_select_variant">Pilih shader lawas</string>
+    <string name="render_legacy_variant_description">Definisi shader dalam file .ini yang dipilih</string>
     <string name="render_preset_mode">Preset GLSLP</string>
-    <string name="render_preset_mode_help">Muat pipeline .glslp lengkap dengan susunan pass-nya.</string>
+    <string name="render_preset_mode_help">Muat alur .glslp lengkap beserta pass-nya sendiri.</string>
     <string name="render_custom_pass_count">Jumlah pass</string>
-    <string name="render_custom_pass_number">Pass %1$d</string>
+    <string name="render_custom_pass_number">Pass <xliff:g id="number" example="1">%1$d</xliff:g></string>
     <string name="render_custom_pick_file">Pilih file GLSL</string>
     <string name="render_custom_add_pass">Tambah jumlah pass shader</string>
     <string name="render_custom_remove_pass">Kurangi jumlah pass shader</string>
-    <string name="render_shader_selected_name">Aktif: %1$s</string>
-    <string name="render_shader_invalid_picker">File tidak dapat digunakan. Pilih preset GLSLP di dalam folder shaders.</string>
+    <string name="render_shader_selected_name">Aktif: <xliff:g id="shader_name" example="CRT Classic">%1$s</xliff:g></string>
+    <string name="render_shader_invalid_picker">File yang dipilih tidak dapat digunakan. Pilih file .ini lawas di dalam folder shaders.</string>
     <string name="render_custom_mode">Jenis shader</string>
-    <string name="render_custom_mode_legacy">Legacy</string>
+    <string name="render_custom_mode_legacy">Lawas</string>
     <string name="render_custom_mode_glsl">GLSL</string>
-    <string name="render_custom_pick_legacy">Pilih shader legacy</string>
+    <string name="render_custom_pick_legacy">Pilih shader lawas</string>
     <string name="render_custom_preserve_size">Output: Dari preset</string>
-    <string name="render_custom_loading">Membaca pass dari preset…</string>
-    <string name="render_custom_start_fresh">Mulai tanpa preset (buang pengaturan warisan)</string>
-    <string name="render_effect_default_settings">Pengaturan default</string>
-    <string name="render_effect_summary_more">+%1$d lainnya</string>
-    <string name="render_effect_legacy_author">Oleh %1$s</string>
-    <string name="render_effect_legacy_source">Sumber: %1$s</string>
+    <string name="render_custom_loading">Membaca pass preset…</string>
+    <string name="render_custom_start_fresh">Mulai tanpa preset (buang setelan bawaan)</string>
+    <string name="render_effect_default_settings">Setelan default</string>
+    <string name="render_effect_summary_more">+<xliff:g id="count" example="2">%1$d</xliff:g> lainnya</string>
+    <string name="render_effect_legacy_author">Oleh <xliff:g id="shader_name" example="CRT Classic">%1$s</xliff:g></string>
+    <string name="render_effect_legacy_source">Sumber: <xliff:g id="shader_name" example="CRT Classic">%1$s</xliff:g></string>
     <string name="render_effect_removed">Efek dihapus</string>
     <string name="render_effect_undo">Urungkan</string>
-    <string name="render_effect_catalog_hint">Ketuk efek untuk menambahkannya ke rangkaian.</string>
+    <string name="render_effect_catalog_hint">Ketuk efek untuk menambahkannya ke tumpukan.</string>
     <string name="render_effect_user_folder_hint">File INI, VSH, dan FSH harus berada di folder shaders.</string>
-    <string name="render_effect_legacy_scale_note">Shader legacy diproses pada resolusi tampilan game; opsi pembesaran dalam .ini tidak mengubah skala.</string>
-    <string name="render_effect_legacy_metadata_missing">Pengaturan dari file .ini tidak ditemukan. Shader mungkin tetap berjalan jika file sumbernya tersedia.</string>
-    <string name="render_effect_count">%1$d efek</string>
+    <string name="render_effect_legacy_scale_note">Shader lawas dirender pada resolusi area tampilan layar; flag OutputResolution dan Upscaling di file .ini diabaikan.</string>
+    <string name="render_effect_legacy_metadata_missing">Setelan dari file .ini shader ini tidak ditemukan. File sumbernya mungkin masih dapat dirender.</string>
+    <string name="render_effect_count"><xliff:g id="count" example="2">%1$d</xliff:g> aktif</string>
     <string name="render_effect_add">Tambahkan efek</string>
     <string name="render_effect_builtin">Efek bawaan</string>
     <string name="render_effect_user">Shader saya</string>
-    <string name="render_effect_user_add">Telusuri file .ini</string>
-    <string name="render_effect_user_empty">Tidak ada shader legacy di folder shaders.</string>
-    <string name="render_effect_user_file">Pilih file .ini legacy</string>
-    <string name="render_effect_empty">Tambahkan efek untuk mengubah tampilan game.</string>
-    <string name="render_effect_hint">Efek diproses dari atas ke bawah. Tahan lalu geser untuk mengurutkan.</string>
+    <string name="render_effect_user_add">Jelajahi file .ini</string>
+    <string name="render_effect_user_empty">Tidak ada shader lawas di folder shaders.</string>
+    <string name="render_effect_user_file">Pilih file .ini lawas</string>
+    <string name="render_effect_empty">Tambahkan efek untuk menyesuaikan tampilan game.</string>
+    <string name="render_effect_hint">Efek dijalankan dari atas ke bawah. Tekan lama lalu seret untuk mengubah urutan.</string>
     <string name="render_effect_move_up">Pindahkan ke atas</string>
     <string name="render_effect_move_down">Pindahkan ke bawah</string>
     <string name="render_effect_remove">Hapus efek</string>
-    <string name="render_effect_no_parameters">Efek ini tidak memiliki parameter yang dapat diubah.</string>
-    <string name="render_effect_parameter_number">Parameter %1$d</string>
-    <string name="render_effect_restore">Atur ulang parameter</string>
-    <string name="render_effect_missing">Tidak tersedia: %1$s. Pulihkan file shader agar efek ini dapat digunakan.</string>
-    <string name="render_effect_limit">Rangkaian mendukung hingga 16 pass shader.</string>
-    <string name="render_effect_unavailable">Efek tampilan gagal dijalankan. Gambar game asli ditampilkan. Coba kurangi efek atau resolusi internal.</string>
-    <string name="render_bitmap_memory_reduced">Memori tidak cukup untuk peningkatan bitmap. Gambar asli atau skala lebih rendah digunakan. Coba turunkan resolusi internal atau kosongkan memori lalu mulai ulang.</string>
-    <string name="render_texture_memory_reduced">Peningkatan tekstur HD gagal. Tekstur asli digunakan. Coba turunkan resolusi internal atau kosongkan memori lalu mulai ulang.</string>
-    <string name="render_resolution_reduced">Resolusi internal diturunkan dari %1$d× ke %2$d×. Coba pilih resolusi lebih rendah atau tutup aplikasi lain, lalu mulai ulang.</string>
-    <string name="render_gpu_texture_limit">Gambar terlalu besar untuk GPU, bahkan pada 1×. Coba perkecil resolusi game atau ganti mode grafis.</string>
-    <string name="render_gpu_upload_failed">Gagal mengunggah gambar game ke GPU. Sedang mencoba lagi. Coba tutup aplikasi lain atau ganti mode grafis.</string>
-    <string name="render_effect_gles">Efek tetap tersimpan, tetapi hanya ditampilkan dengan OpenGL ES.</string>
-    <string name="render_effect_legacy_file_error">Tidak dapat membaca shader legacy yang dipilih.</string>
+    <string name="render_effect_no_parameters">Efek ini tidak memiliki parameter yang dapat disesuaikan.</string>
+    <string name="render_effect_parameter_number">Parameter <xliff:g id="count" example="2">%1$d</xliff:g></string>
+    <string name="render_effect_restore">Reset parameter</string>
+    <string name="render_effect_missing">Tidak tersedia: <xliff:g id="shader_name" example="CRT Classic">%1$s</xliff:g>. Efek bawaan ini tidak tersedia di versi ini. Hapus dari tumpukan.</string>
+    <string name="render_effect_limit">Tumpukan mendukung hingga 16 pass shader (beberapa efek menggunakan lebih dari satu pass).</string>
+    <string name="render_effect_unavailable">Efek shader tidak dapat dijalankan. Menampilkan gambar game asli. Coba kurangi efek atau turunkan resolusi render.</string>
+    <string name="render_bitmap_memory_reduced">Peningkatan skala bitmap kehabisan memori. Gambar asli atau skala lebih rendah akan digunakan. Coba turunkan resolusi render atau kosongkan memori, lalu mulai ulang.</string>
+    <string name="render_texture_memory_reduced">Peningkatan skala tekstur Micro3D gagal. Tekstur asli akan digunakan. Coba turunkan resolusi render atau kosongkan memori, lalu mulai ulang.</string>
+    <string name="render_resolution_reduced">Resolusi render diturunkan dari <xliff:g id="from_scale" example="4">%1$d</xliff:g>× ke <xliff:g id="to_scale" example="2">%2$d</xliff:g>× karena batas memori atau GPU. Coba setelan lebih rendah atau kosongkan memori, lalu mulai ulang.</string>
+    <string name="render_gpu_texture_limit">Gambar ini terlalu besar untuk GPU bahkan pada 1×. Coba resolusi game lebih kecil atau ganti mode grafis.</string>
+    <string name="render_gpu_upload_failed">Tidak dapat mengunggah gambar game ke GPU. Mencoba lagi. Coba tutup aplikasi lain atau ganti mode grafis.</string>
+    <string name="render_effect_gles">Efek disimpan, tetapi hanya dirender dengan OpenGL ES.</string>
+    <string name="render_effect_legacy_file_error">Tidak dapat memuat shader lawas yang valid dari file .ini yang dipilih.</string>
     <string name="effect_color">Penyesuaian warna</string>
-    <string name="effect_color_desc">Mengatur kecerahan, kontras, saturasi, gamma, dan rona warna.</string>
+    <string name="effect_color_desc">Sesuaikan kecerahan, kontras, saturasi, gamma, rona warna, dan monokrom.</string>
     <string name="effect_vignette">Vignette</string>
-    <string name="effect_vignette_desc">Menggelapkan tepi gambar agar bagian tengah lebih menonjol.</string>
+    <string name="effect_vignette_desc">Menggelapkan tepi gambar untuk memusatkan perhatian ke bagian tengah.</string>
     <string name="effect_sharpen">Pertajam</string>
-    <string name="effect_sharpen_desc">Mempertegas detail dan tepi gambar.</string>
-    <string name="effect_cartoon">Kartun Lembut</string>
+    <string name="effect_sharpen_desc">Memperjelas detail dan garis tepi pada gambar.</string>
+    <string name="effect_cartoon">Cartoon Soft</string>
     <string name="effect_cartoon_desc">Menyederhanakan gradasi warna dan menambahkan garis tepi halus.</string>
     <string name="effect_bloom">Bloom</string>
-    <string name="effect_bloom_desc">Memberi cahaya lembut pada bagian gambar yang terang.</string>
-    <string name="effect_crt_classic">CRT Klasik</string>
-    <string name="effect_crt_classic_desc">Meniru TV tabung dengan garis pindai dan pola RGB.</string>
-    <string name="effect_crt_beam">Kerampingan berkas</string>
+    <string name="effect_bloom_desc">Menambahkan pendar lembut di sekitar bagian terang gambar.</string>
+    <string name="effect_crt_classic">CRT Classic</string>
+    <string name="effect_crt_classic_desc">Meniru televisi CRT dengan garis pindai dan pola RGB.</string>
+    <string name="effect_crt_beam">Kerapatan sinar</string>
     <string name="effect_brightness">Kecerahan</string>
     <string name="effect_contrast">Kontras</string>
     <string name="effect_saturation">Saturasi</string>
-    <string name="effect_strength">Intensitas</string>
+    <string name="effect_strength">Kekuatan</string>
     <string name="effect_color_levels">Tingkat warna</string>
     <string name="effect_edge">Intensitas tepi</string>
     <string name="effect_threshold">Ambang kecerahan</string>
-    <string name="effect_radius">Radius blur</string>
-    <string name="effect_mask_strength">Intensitas mask</string>
-    <string name="effect_scan_strength">Intensitas scanline</string>
-    <string name="effect_bright_boost">Penguat kecerahan</string>
+    <string name="effect_radius">Radius buram</string>
+    <string name="effect_mask_strength">Kekuatan mask</string>
+    <string name="effect_scan_strength">Kekuatan garis pindai</string>
+    <string name="effect_bright_boost">Peningkatan kecerahan</string>
     <string name="effect_lcd">LCD</string>
-    <string name="effect_lcd_desc">Meniru kisi piksel dan subpiksel layar LCD klasik.</string>
-    <string name="effect_lcd_grid">Intensitas kisi</string>
+    <string name="effect_lcd_desc">Meniru kisi piksel dan subpiksel layar LCD warna klasik.</string>
+    <string name="effect_lcd_grid">Kekuatan kisi</string>
     <string name="effect_lcd_subpixel">Subpiksel RGB</string>
     <string name="effect_lcd_brightness">Kecerahan LCD</string>
     <string name="effect_scanlines">Scanlines Lite</string>
     <string name="effect_scanlines_desc">Menambahkan garis horizontal halus seperti layar CRT.</string>
-    <string name="effect_line_width">Kerampingan garis</string>
+    <string name="effect_line_width">Kerapatan garis</string>
     <string name="effect_gamma">Gamma</string>
-    <string name="effect_temperature">Temperatur warna</string>
-    <string name="effect_tint">Rona warna</string>
+    <string name="effect_temperature">Suhu warna</string>
+    <string name="effect_tint">Rona</string>
     <string name="effect_monochrome">Monokrom</string>
-    <string name="effect_depth">Kedalaman Warna &amp; Dithering</string>
-    <string name="effect_depth_desc">Membatasi jumlah warna, dengan dithering opsional untuk tampilan retro.</string>
+    <string name="effect_depth">Kedalaman warna &amp; dithering</string>
+    <string name="effect_depth_desc">Membatasi palet warna, dengan dithering opsional untuk tampilan retro.</string>
     <string name="effect_depth_format">Format warna layar</string>
     <string name="effect_depth_rgb444">RGB444 · 4.096 warna</string>
     <string name="effect_depth_rgb565">RGB565 · 65.536 warna</string>
@@ -175,14 +199,14 @@
     <string name="effect_dither_none">Nonaktif</string>
     <string name="effect_dither_bayer4">Bayer 4×4</string>
     <string name="effect_dither_bayer8">Bayer 8×8</string>
-    <string name="effect_dither_strength">Intensitas dithering</string>
-    <string name="effect_mono_display">Layar Monokrom</string>
-    <string name="effect_mono_display_desc">Meniru layar hitam-putih, hijau, atau amber dengan 2 atau 4 tingkat warna.</string>
+    <string name="effect_dither_strength">Kekuatan dither</string>
+    <string name="effect_mono_display">Layar monokrom</string>
+    <string name="effect_mono_display_desc">Meniru layar hitam putih, hijau, atau amber dengan 2 atau 4 gradasi.</string>
     <string name="effect_mono_palette">Warna LCD</string>
-    <string name="effect_mono_bw">Hitam-putih</string>
+    <string name="effect_mono_bw">Hitam putih</string>
     <string name="effect_mono_green">LCD hijau</string>
     <string name="effect_mono_amber">LCD amber</string>
-    <string name="effect_mono_tones">Jumlah tingkat warna</string>
-    <string name="effect_mono_two">2 tingkat</string>
-    <string name="effect_mono_four">4 tingkat</string>
+    <string name="effect_mono_tones">Jumlah gradasi</string>
+    <string name="effect_mono_two">2 gradasi</string>
+    <string name="effect_mono_four">4 gradasi</string>
 </resources>

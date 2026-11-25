@@ -1,16 +1,39 @@
 <?xml version="1.0" encoding="utf-8"?>
-<resources xmlns:tools="http://schemas.android.com/tools" tools:ignore="MissingTranslation">
+<!-- Rendering pipeline, internal resolution, bitmap upscaling, shaders, and built-in visual effects. -->
+<resources xmlns:tools="http://schemas.android.com/tools" xmlns:xliff="urn:oasis:names:tc:xliff:document:1.2">
+    <string name="identity_filter">None (fastest)</string>
+    <string name="invalid_resolution_not_saved">Invalid resolution. Preset wasn’t saved.</string>
+    <string name="msg_error_loading_shader">Unsupported shader. Using the default shader.</string>
+    <string name="parallel_screen_redrawing">Asynchronous screen updates</string>
+    <string name="shader_tuning">Shader tuning</string>
+    <string name="SWAP_SIZES">Swap width and height</string>
+    <string name="fps_limit_maximum">Maximum</string>
+    <string name="remove_screen_preset">Remove resolution preset</string>
+    <string name="perf_overlay_position_help">Choose a corner.</string>
+    <string name="perf_overlay_top_left">Top left</string>
+    <string name="perf_overlay_top_right">Top right</string>
+    <string name="perf_overlay_bottom_left">Bottom left</string>
+    <string name="perf_overlay_bottom_right">Bottom right</string>
+    <string name="internal_resolution_title" tools:ignore="MissingTranslation">Render resolution</string>
+    <string name="internal_resolution_auto" tools:ignore="MissingTranslation">Auto</string>
+    <string name="internal_resolution_description" tools:ignore="MissingTranslation">Renders supported 2D and 3D at higher detail. Auto fits the game viewport; restart to apply.</string>
+    <string name="bitmap_upscaling_title" tools:ignore="MissingTranslation">Bitmap upscaling</string>
+    <string name="bitmap_upscaling_description" tools:ignore="MissingTranslation">Upscales immutable 2D sprites, and opaque Micro3D model textures with MMPX or xBR Lv3. M3G textures are unchanged; restart to apply.</string>
+    <string name="bitmap_upscaling_nearest" tools:ignore="MissingTranslation">Nearest neighbor</string>
+    <string name="bitmap_upscaling_bilinear" tools:ignore="MissingTranslation">Bilinear</string>
+    <string name="bitmap_upscaling_mmpx" tools:ignore="MissingTranslation">MMPX</string>
+    <string name="bitmap_upscaling_edge_aware" tools:ignore="MissingTranslation">xBR Lv3</string>
     <!-- Prototyping only: localized UI copy is pending design review. -->
     <string name="render_shader_effects">Shader effects</string>
     <string name="render_pipeline_title">Rendering pipeline</string>
     <string name="render_shader_preset">Shader preset</string>
     <string name="render_shader_picker_help">Combine built-in and your own legacy shaders in an ordered effect stack.</string>
     <string name="render_shader_requires_gles">Shaders are saved but only applied when OpenGL ES is selected.</string>
-    <string name="render_shader_missing">The selected shader is not in the library. Choose another preset or restore its files.</string>
+    <string name="render_shader_missing">The selected shader isn’t in the library. Choose another preset or restore its files.</string>
     <string name="render_shader_parameters">Shader parameters</string>
     <string name="render_shader_reset_parameters">Reset parameters</string>
     <string name="render_shader_passes">Shader passes</string>
-    <string name="render_shader_pass_count">%1$d passes</string>
+    <string name="render_shader_pass_count"><xliff:g id="count" example="2">%1$d</xliff:g> passes</string>
     <string name="render_shader_pass_hint">View the stages from the selected GLSLP preset.</string>
     <string name="render_pass_filter">Input filtering</string>
     <string name="render_pass_output">Output size (width × height)</string>
@@ -18,7 +41,7 @@
     <string name="render_game_output">Game output</string>
     <string name="render_logical_screen_help">Logical size reported to the game.</string>
     <string name="render_internal_resolution">Internal resolution</string>
-    <string name="render_internal_unavailable">Native only. HD rendering is still experimental.</string>
+    <string name="render_internal_unavailable">Native (1×) only. Higher render resolutions aren’t available for this configuration.</string>
     <string name="render_display_renderer">Presentation renderer</string>
     <string name="render_shader_processing">Shader processing</string>
     <string name="render_display_scaling">Display scaling</string>
@@ -31,31 +54,31 @@
     <string name="render_shader_adjust">Adjust parameters</string>
     <string name="render_legacy_tuning_hint">Fine-tune this legacy effect.</string>
     <string name="render_shader_customization">Customize</string>
-    <string name="render_adjustable_count">%1$d adjustable values</string>
-    <string name="render_pass_summary">%1$d stages · Defined by the preset</string>
+    <string name="render_adjustable_count">Adjustable parameters: <xliff:g id="count" example="3">%1$d</xliff:g></string>
+    <string name="render_pass_summary"><xliff:g id="count" example="3">%1$d</xliff:g> stages · Defined by the preset</string>
     <string name="render_shader_preset_note">Shader stages are defined by the preset. You can inspect them without changing their order.</string>
     <string name="render_parameters_hint">Move a slider to adjust its value. Changes are saved when you release it.</string>
     <string name="render_pass_readonly">Stages run in this order. Input filtering and output scaling come from the selected preset.</string>
     <string name="render_pipeline_intro">The path from the game framebuffer to your screen.</string>
-    <string name="render_native_short">Native (1×) · Higher internal resolutions are not available yet</string>
+    <string name="render_native_short">Native (1×)</string>
     <string name="render_expand_passes">Show stages</string>
     <string name="render_collapse_passes">Hide stages</string>
     <string name="render_view_all_passes">Stage details</string>
-    <string name="render_pipeline_filter_summary">Texture filtering: %1$s</string>
+    <string name="render_pipeline_filter_summary">Texture filtering: <xliff:g id="shader_name" example="CRT Classic">%1$s</xliff:g></string>
     <string name="render_pipeline_note">Display layout determines the viewport before shader passes are planned. The steps show image flow.</string>
     <string name="render_shader_change">Choose another effect</string>
     <string name="render_custom_pipeline">Custom pipeline</string>
     <string name="render_custom_pipeline_hint">Combine standalone GLSL shaders from your shader folder.</string>
     <string name="render_custom_order_help">Effects run from top to bottom. Inherited GLSLP settings remain in effect unless changed.</string>
     <string name="render_custom_empty">Add a shader to start a custom chain.</string>
-    <string name="render_custom_stage_count">%1$d custom shader stages</string>
+    <string name="render_custom_stage_count"><xliff:g id="count" example="3">%1$d</xliff:g> custom shader stages</string>
     <string name="render_custom_add">Add shader</string>
     <string name="render_custom_add_hint">Choose an external standalone .glsl source.</string>
-    <string name="render_custom_no_sources">No standalone .glsl shaders found. Add files to shaders/shaders_glsl/ and reopen settings.</string>
-    <string name="render_custom_scale">Output: %1$d× previous stage</string>
+    <string name="render_custom_no_sources">No legacy shaders found. Add .ini shader files to the shaders folder and reopen settings.</string>
+    <string name="render_custom_scale">Output: <xliff:g id="scale" example="2">%1$d</xliff:g>× previous stage</string>
     <string name="render_custom_output_scale">Output size for next stage</string>
     <string name="render_custom_final_viewport">Final output: presented on screen</string>
-    <string name="render_custom_filter">Input filter: %1$s</string>
+    <string name="render_custom_filter">Input filter: <xliff:g id="shader_name" example="CRT Classic">%1$s</xliff:g></string>
     <string name="render_custom_up">Up</string>
     <string name="render_custom_down">Down</string>
     <string name="render_custom_remove">Remove</string>
@@ -68,8 +91,8 @@
     <string name="render_active_shader">Active effect</string>
     <string name="render_shader_off">Off</string>
     <string name="render_edit_custom_pipeline">Edit shader chain</string>
-    <string name="render_shader_unavailable">Unavailable: %1$s</string>
-    <string name="render_no_shader_sources">No GLSL shaders found. Add .glsl or .glslp files to the shader folder, then reopen settings.</string>
+    <string name="render_shader_unavailable">Unavailable: <xliff:g id="shader_name" example="CRT Classic">%1$s</xliff:g></string>
+    <string name="render_no_shader_sources">No shaders found. Add legacy .ini shader files to the shaders folder, then reopen settings.</string>
     <string name="render_shader_mode">Shader mode</string>
     <string name="render_mode_selected">Selected</string>
     <string name="render_gles_shader_default">OpenGL ES uses the original game image when shader effects are off.</string>
@@ -82,12 +105,12 @@
     <string name="render_preset_mode">GLSLP preset</string>
     <string name="render_preset_mode_help">Load a complete .glslp pipeline with its own passes.</string>
     <string name="render_custom_pass_count">Number of passes</string>
-    <string name="render_custom_pass_number">Pass %1$d</string>
+    <string name="render_custom_pass_number">Pass <xliff:g id="number" example="1">%1$d</xliff:g></string>
     <string name="render_custom_pick_file">Choose GLSL file</string>
     <string name="render_custom_add_pass">Increase number of shader passes</string>
     <string name="render_custom_remove_pass">Decrease number of shader passes</string>
-    <string name="render_shader_selected_name">Active: %1$s</string>
-    <string name="render_shader_invalid_picker">Cannot use the selected file. Select a GLSLP preset inside the shaders folder.</string>
+    <string name="render_shader_selected_name">Active: <xliff:g id="shader_name" example="CRT Classic">%1$s</xliff:g></string>
+    <string name="render_shader_invalid_picker">Can’t use the selected file. Choose a legacy .ini file inside the shaders folder.</string>
     <string name="render_custom_mode">Shader type</string>
     <string name="render_custom_mode_legacy">Legacy</string>
     <string name="render_custom_mode_glsl">GLSL</string>
@@ -96,42 +119,42 @@
     <string name="render_custom_loading">Reading preset passes…</string>
     <string name="render_custom_start_fresh">Start without preset (discard inherited settings)</string>
     <string name="render_effect_default_settings">Default settings</string>
-    <string name="render_effect_summary_more">+%1$d more</string>
-    <string name="render_effect_legacy_author">By %1$s</string>
-    <string name="render_effect_legacy_source">Source: %1$s</string>
+    <string name="render_effect_summary_more">+<xliff:g id="count" example="2">%1$d</xliff:g> more</string>
+    <string name="render_effect_legacy_author">By <xliff:g id="shader_name" example="CRT Classic">%1$s</xliff:g></string>
+    <string name="render_effect_legacy_source">Source: <xliff:g id="shader_name" example="CRT Classic">%1$s</xliff:g></string>
     <string name="render_effect_removed">Effect removed</string>
     <string name="render_effect_undo">Undo</string>
     <string name="render_effect_catalog_hint">Tap an effect to add it to the stack.</string>
-    <string name="render_effect_user_folder_hint">INI, VSH and FSH files must be in the shaders folder.</string>
-    <string name="render_effect_legacy_scale_note">Legacy shaders use the game display resolution; .ini upscale flags do not change it.</string>
-    <string name="render_effect_legacy_metadata_missing">Settings from this shader\'s .ini file were not found. Its source files may still render.</string>
-    <string name="render_effect_count">%1$d effects</string>
+    <string name="render_effect_user_folder_hint">INI, VSH, and FSH files must be in the shaders folder.</string>
+    <string name="render_effect_legacy_scale_note">Legacy shaders render at the screen viewport resolution; .ini OutputResolution and Upscaling flags are ignored.</string>
+    <string name="render_effect_legacy_metadata_missing">Settings from this shader’s .ini file weren’t found. Its source files may still render.</string>
+    <string name="render_effect_count"><xliff:g id="count" example="2">%1$d</xliff:g> active</string>
     <string name="render_effect_add">Add effect</string>
     <string name="render_effect_builtin">Built-in effects</string>
     <string name="render_effect_user">My shaders</string>
     <string name="render_effect_user_add">Browse .ini files</string>
     <string name="render_effect_user_empty">No legacy shader found in the shaders folder.</string>
     <string name="render_effect_user_file">Choose a legacy .ini file</string>
-    <string name="render_effect_empty">Add an effect to change the game\'s appearance.</string>
+    <string name="render_effect_empty">Add an effect to customize the game’s appearance.</string>
     <string name="render_effect_hint">Effects run top to bottom. Hold and drag to reorder.</string>
     <string name="render_effect_move_up">Move up</string>
     <string name="render_effect_move_down">Move down</string>
     <string name="render_effect_remove">Remove effect</string>
     <string name="render_effect_no_parameters">This effect has no adjustable parameters.</string>
-    <string name="render_effect_parameter_number">Parameter %1$d</string>
+    <string name="render_effect_parameter_number">Parameter <xliff:g id="count" example="2">%1$d</xliff:g></string>
     <string name="render_effect_restore">Reset parameters</string>
-    <string name="render_effect_missing">Unavailable: %1$s. Restore the shader files to use this effect.</string>
-    <string name="render_effect_limit">The stack supports up to 16 shader passes.</string>
-    <string name="render_effect_unavailable">Display effects could not run. Showing the original game image. Try fewer effects or a lower internal resolution.</string>
-    <string name="render_bitmap_memory_reduced">Bitmap enhancement ran out of memory. Original images or a lower scale will be used. Try a lower internal resolution or free memory and restart.</string>
-    <string name="render_texture_memory_reduced">HD texture enhancement failed. Original textures will be used. Try a lower internal resolution or free memory and restart.</string>
-    <string name="render_resolution_reduced">Internal resolution reduced from %1$d× to %2$d×. Try a lower setting or close other apps to free memory, then restart.</string>
+    <string name="render_effect_missing">Unavailable: <xliff:g id="shader_name" example="CRT Classic">%1$s</xliff:g>. This built-in effect isn’t available in this version. Remove it from the stack.</string>
+    <string name="render_effect_limit">The stack supports up to 16 shader passes (some effects use multiple passes).</string>
+    <string name="render_effect_unavailable">Shader effects couldn’t run. Showing the original game image. Try fewer effects or a lower render resolution.</string>
+    <string name="render_bitmap_memory_reduced">Bitmap upscaling ran out of memory. Original images or a lower scale will be used. Try a lower render resolution or free memory, then restart.</string>
+    <string name="render_texture_memory_reduced">Micro3D texture upscaling failed. Original textures will be used. Try a lower render resolution or free memory, then restart.</string>
+    <string name="render_resolution_reduced">Render resolution reduced from <xliff:g id="from_scale" example="4">%1$d</xliff:g>× to <xliff:g id="to_scale" example="2">%2$d</xliff:g>× due to memory or GPU limits. Try a lower setting or free memory, then restart.</string>
     <string name="render_gpu_texture_limit">This image is too large for the GPU even at 1×. Try a smaller game resolution or switch graphics mode.</string>
-    <string name="render_gpu_upload_failed">Could not upload the game image to the GPU. Retrying. Try closing other apps or switching graphics mode.</string>
+    <string name="render_gpu_upload_failed">Couldn’t upload the game image to the GPU. Retrying. Try closing other apps or switching graphics mode.</string>
     <string name="render_effect_gles">Effects are saved but only rendered with OpenGL ES.</string>
-    <string name="render_effect_legacy_file_error">Unable to read the selected legacy shader.</string>
+    <string name="render_effect_legacy_file_error">Couldn’t load a valid legacy shader from the selected .ini file.</string>
     <string name="effect_color">Color adjustment</string>
-    <string name="effect_color_desc">Adjust brightness, contrast, saturation, gamma and color tone.</string>
+    <string name="effect_color_desc">Adjust brightness, contrast, saturation, gamma, color tone, and monochrome.</string>
     <string name="effect_vignette">Vignette</string>
     <string name="effect_vignette_desc">Darkens the edges to draw attention toward the center.</string>
     <string name="effect_sharpen">Sharpen</string>
@@ -166,7 +189,7 @@
     <string name="effect_temperature">Temperature</string>
     <string name="effect_tint">Tint</string>
     <string name="effect_monochrome">Monochrome</string>
-    <string name="effect_depth">Color Depth &amp; Dithering</string>
+    <string name="effect_depth">Color depth &amp; dithering</string>
     <string name="effect_depth_desc">Limits the color palette, with optional dithering for a retro look.</string>
     <string name="effect_depth_format">Display color format</string>
     <string name="effect_depth_rgb444">RGB444 · 4,096 colors</string>
@@ -177,8 +200,8 @@
     <string name="effect_dither_bayer4">Bayer 4×4</string>
     <string name="effect_dither_bayer8">Bayer 8×8</string>
     <string name="effect_dither_strength">Dither strength</string>
-    <string name="effect_mono_display">Monochrome Display</string>
-    <string name="effect_mono_display_desc">Mimics black-and-white, green or amber screens with 2 or 4 tones.</string>
+    <string name="effect_mono_display">Monochrome display</string>
+    <string name="effect_mono_display_desc">Mimics black-and-white, green, or amber screens with 2 or 4 tones.</string>
     <string name="effect_mono_palette">LCD color</string>
     <string name="effect_mono_bw">Black and white</string>
     <string name="effect_mono_green">Green LCD</string>

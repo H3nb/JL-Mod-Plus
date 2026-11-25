@@ -1,0 +1,105 @@
+<?xml version="1.0" encoding="utf-8"?>
+<!-- Virtual keypad controls, layout editor, physical key mappings, and control skins. -->
+<resources xmlns:tools="http://schemas.android.com/tools" xmlns:xliff="urn:oasis:names:tc:xliff:document:1.2">
+    <string name="alert_map_menu">کلید منو (M) اختصاص داده نشده است.\nممکن است هنگام بازی نتوانید منوی MIDlet را باز کنید.</string>
+    <string name="dismiss_mapping">بستن نگاشت</string>
+    <string name="layout_edit_finish">پایان ویرایش</string>
+    <string name="layout_edit_done">انجام شد</string>
+    <string name="layout_editor_grid_size">اندازه شبکه</string>
+    <string name="layout_editor_grid_coarse">درشت (16)</string>
+    <string name="layout_editor_grid_normal">عادی (24)</string>
+    <string name="layout_editor_grid_fine">ریز (32)</string>
+    <string name="layout_editor_snap_on">چسبندگی روشن</string>
+    <string name="layout_editor_snap_off">چسبندگی خاموش</string>
+    <string name="layout_edit_save_changes">تغییرات کنترل‌های مجازی ذخیره شود؟</string>
+    <string name="layout_edit_discard">صرف‌نظر</string>
+    <string name="layout_edit_continue">ادامه ویرایش</string>
+    <string name="layout_edit_finished">ویرایش کنترل‌های مجازی کامل شد.</string>
+    <string name="virtual_controls_save_failed">ذخیره کنترل‌های مجازی ممکن نشد. دوباره تلاش کنید.</string>
+    <string name="layout_switch">انتخاب چیدمان کنترل‌ها</string>
+    <string name="mapping_dialog_key_not_specified">ورودی‌ای اختصاص داده نشده است.</string>
+    <string name="mapping_dialog_message">کلید یا دکمه فیزیکی را فشار دهید تا به این کنترل اختصاص یابد.</string>
+    <string name="mapping_dialog_assigned_inputs">ورودی‌های اختصاص‌یافته</string>
+    <string name="mapping_dialog_add_input">می‌توانید بیش از یک ورودی فیزیکی اختصاص دهید.</string>
+    <string name="mapping_dialog_remove">حذف</string>
+    <string name="mapping_dialog_title">کلید یا دکمه‌ای را فشار دهید</string>
+    <string name="message_reset_layout">چیدمان کنترل‌های مجازی به حالت پیش‌فرض بازنشانی شود؟</string>
+    <string name="RESET_LAYOUT_CMD">بازنشانی چیدمان کنترل‌های مجازی</string>
+    <string name="saved_keyboard_layout_summary">چیدمان کنترل‌های مجازی ذخیره شد.</string>
+    <string name="control_skin_title">پوسته کنترل‌های مجازی</string>
+    <string name="control_skin_create" tools:ignore="MissingTranslation">ایجاد مجموعه</string>
+    <string name="control_skin_default" tools:ignore="MissingTranslation">دکمه‌های پیش‌فرض</string>
+    <string name="control_skin_edit" tools:ignore="MissingTranslation">ویرایش</string>
+    <string name="control_skin_rename" tools:ignore="MissingTranslation">تغییر نام</string>
+    <string name="control_skin_duplicate" tools:ignore="MissingTranslation">تکثیر</string>
+    <string name="control_skin_delete" tools:ignore="MissingTranslation">حذف</string>
+    <string name="control_skin_import_zip" tools:ignore="MissingTranslation">وارد کردن ZIP</string>
+    <string name="control_skin_export_zip" tools:ignore="MissingTranslation">برون‌ریزی ZIP</string>
+    <string name="control_skin_select_export_folder" tools:ignore="MissingTranslation">انتخاب پوشه برون‌ریزی</string>
+    <string name="control_skin_imported" tools:ignore="MissingTranslation"><xliff:g id="skin_name" example="Classic Nokia">%1$s</xliff:g> وارد شد</string>
+    <string name="control_skin_already_available" tools:ignore="MissingTranslation"><xliff:g id="skin_name" example="Classic Nokia">%1$s</xliff:g> از قبل موجود است</string>
+    <string name="control_skin_exported" tools:ignore="MissingTranslation"><xliff:g id="skin_name" example="Classic Nokia">%1$s</xliff:g> ذخیره شد</string>
+    <string name="control_skin_archive_invalid_path" tools:ignore="MissingTranslation">مکان انتخاب‌شده در دسترس نیست.</string>
+    <string name="control_skin_archive_import_failed" tools:ignore="MissingTranslation">وارد کردن پوسته کنترل‌ها ممکن نشد. مطمئن شوید فایل ZIP شامل یک مجموعه معتبر است.</string>
+    <string name="control_skin_archive_export_failed" tools:ignore="MissingTranslation">برون‌ریزی پوسته کنترل‌ها ممکن نشد. پوشه‌ای قابل نوشتن بیرون از کتابخانه پوسته‌ها انتخاب کنید.</string>
+    <string name="control_skin_name" tools:ignore="MissingTranslation">نام مجموعه</string>
+    <string name="control_skin_icon" tools:ignore="MissingTranslation">فقط نماد</string>
+    <string name="control_skin_full" tools:ignore="MissingTranslation">کل دکمه</string>
+    <string name="control_skin_normal_image" tools:ignore="MissingTranslation">تصویر عادی</string>
+    <string name="control_skin_pressed_image" tools:ignore="MissingTranslation">تصویر فشرده‌شده</string>
+    <string name="control_skin_delete_warning" tools:ignore="MissingTranslation">این مجموعه پوسته سراسری و همه تصاویر آن حذف شود؟ MIDletهایی که از آن استفاده می‌کنند به کنترل‌های پیش‌فرض برمی‌گردند.</string>
+    <string name="control_skin_invalid_image" tools:ignore="MissingTranslation">تصویری با قالب PNG، WebP یا SVG انتخاب کنید.</string>
+    <string name="control_skin_operation_failed" tools:ignore="MissingTranslation">به‌روزرسانی مجموعه پوسته کنترل‌ها ممکن نشد.</string>
+    <string name="control_skin_missing" tools:ignore="MissingTranslation">مجموعه در دسترس نیست (کنترل‌های پیش‌فرض)</string>
+    <string name="control_skin_remove_image" tools:ignore="MissingTranslation">حذف</string>
+    <string name="control_skin_manage" tools:ignore="MissingTranslation">مدیریت مجموعه</string>
+    <string name="control_skin_manage_named" tools:ignore="MissingTranslation">مدیریت <xliff:g id="skin_name" example="Classic Nokia">%1$s</xliff:g></string>
+    <plurals name="control_skin_count">
+        <item quantity="one"><xliff:g id="count" example="4">%1$d</xliff:g> کنترل سفارشی‌سازی‌شده</item>
+        <item quantity="other"><xliff:g id="count" example="4">%1$d</xliff:g> کنترل سفارشی‌سازی‌شده</item>
+    </plurals>
+    <string name="control_skin_empty" tools:ignore="MissingTranslation">برای سفارشی‌سازی تصاویر کنترل‌ها یک مجموعه ایجاد کنید.</string>
+    <string name="control_skin_numeric" tools:ignore="MissingTranslation">صفحه‌کلید</string>
+    <string name="control_skin_navigation" tools:ignore="MissingTranslation">پیمایش</string>
+    <string name="control_skin_other" tools:ignore="MissingTranslation">سایر دکمه‌ها</string>
+    <string name="control_skin_pressed_requires_normal" tools:ignore="MissingTranslation">ابتدا یک تصویر عادی اضافه کنید.</string>
+    <string name="control_skin_edit_named" tools:ignore="MissingTranslation">دکمه <xliff:g id="button_label" example="5">%1$s</xliff:g></string>
+    <string name="control_skin_change_image" tools:ignore="MissingTranslation">تغییر</string>
+    <string name="control_skin_pick_image" tools:ignore="MissingTranslation">انتخاب تصویر</string>
+    <string name="control_skin_soft_left" tools:ignore="MissingTranslation">کلید چپ</string>
+    <string name="control_skin_soft_right" tools:ignore="MissingTranslation">کلید راست</string>
+    <string name="control_skin_fire" tools:ignore="MissingTranslation">تأیید</string>
+    <string name="control_skin_menu" tools:ignore="MissingTranslation">منو</string>
+    <string name="control_skin_movement" tools:ignore="MissingTranslation">کنترل‌های حرکتی</string>
+    <string name="control_skin_dpad" tools:ignore="MissingTranslation">D-pad</string>
+    <string name="control_skin_analog" tools:ignore="MissingTranslation">آنالوگ</string>
+    <string name="control_skin_dpad_base" tools:ignore="MissingTranslation">تصویر D-pad</string>
+    <string name="control_skin_overlay_up" tools:ignore="MissingTranslation">لایه بالا</string>
+    <string name="control_skin_overlay_down" tools:ignore="MissingTranslation">لایه پایین</string>
+    <string name="control_skin_overlay_left" tools:ignore="MissingTranslation">لایه چپ</string>
+    <string name="control_skin_overlay_right" tools:ignore="MissingTranslation">لایه راست</string>
+    <string name="control_skin_analog_base" tools:ignore="MissingTranslation">تصویر پایه</string>
+    <string name="control_skin_analog_thumb" tools:ignore="MissingTranslation">تصویر دسته</string>
+    <string name="control_skin_analog_thumb_pressed" tools:ignore="MissingTranslation">تصویر دسته فعال</string>
+    <string name="control_skin_preview_directions" tools:ignore="MissingTranslation">پیش‌نمایش جهت‌ها</string>
+    <string name="control_skin_preview_direction" tools:ignore="MissingTranslation">پیش‌نمایش <xliff:g id="direction" example="Up">%1$s</xliff:g></string>
+    <string name="control_skin_builtin_preview" tools:ignore="MissingTranslation">پیش‌فرض</string>
+    <string name="control_skin_custom_preview" tools:ignore="MissingTranslation">سفارشی</string>
+    <string name="layout_editor_group_on">تغییر اندازه گروهی</string>
+    <string name="layout_editor_group_off">تغییر اندازه تکی</string>
+    <string name="layout_editor_snap_grid">چسبندگی به شبکه</string>
+    <string name="layout_editor_snap_controls">چسبندگی به دکمه‌ها</string>
+    <string name="layout_editor_snap_resize">چسبندگی هنگام تغییر اندازه</string>
+    <string name="layout_editor_snap_resize_on">چسبندگی تغییر اندازه: روشن</string>
+    <string name="layout_editor_snap_resize_off">چسبندگی تغییر اندازه: خاموش</string>
+    <string name="layout_editor_snap_grid_on">چسبندگی شبکه: روشن</string>
+    <string name="layout_editor_snap_grid_off">چسبندگی شبکه: خاموش</string>
+    <string name="layout_editor_snap_controls_on">چسبندگی دکمه‌ها: روشن</string>
+    <string name="layout_editor_snap_controls_off">چسبندگی دکمه‌ها: خاموش</string>
+    <string name="layout_editor_guide_gestures">حرکات لمسی</string>
+    <string name="layout_editor_guide_move">برای جابه‌جایی یک کنترل، آن را بکشید.</string>
+    <string name="layout_editor_guide_resize">برای تغییر اندازه از دو انگشت استفاده کنید. برای تغییر عرض یا ارتفاع، آن‌ها را افقی یا عمودی حرکت دهید.</string>
+    <string name="layout_editor_guide_tools">ابزارهای ویرایشگر</string>
+    <string name="layout_editor_guide_done">برای ذخیره، صرف‌نظر یا ادامه ویرایش روی «انجام شد» بزنید.</string>
+    <string name="layout_editor_guide_start">شروع ویرایش</string>
+</resources>

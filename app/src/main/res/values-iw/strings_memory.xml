@@ -1,0 +1,258 @@
+<?xml version="1.0" encoding="utf-8"?>
+<!-- Memory Editor search, inspector, bookmarks, saved variables, quick actions, and script builder. -->
+<resources xmlns:tools="http://schemas.android.com/tools" xmlns:xliff="urn:oasis:names:tc:xliff:document:1.2">
+    <string name="memory_editor_bubble">לחצן צף של עורך זיכרון</string>
+    <string name="memory_editor_bubble_content_description">פתיחת עורך זיכרון</string>
+    <string name="memory_editor_previous_results_page_action">עמוד התוצאות הקודם</string>
+    <string name="memory_editor_next_results_page_action">עמוד התוצאות הבא</string>
+    <string name="memory_editor">עורך זיכרון</string>
+    <string name="memory_editor_search_hint">ערך</string>
+    <string name="memory_editor_next_scan">סריקה הבאה</string>
+    <string name="memory_editor_new_search">חיפוש חדש</string>
+    <plurals name="memory_editor_results">
+        <item quantity="one">תוצאה <xliff:g id="count" example="3">%1$d</xliff:g></item>
+        <item quantity="two"><xliff:g id="count" example="3">%1$d</xliff:g> תוצאות</item>
+        <item quantity="other"><xliff:g id="count" example="3">%1$d</xliff:g> תוצאות</item>
+    </plurals>
+    <plurals name="memory_editor_candidates">
+        <item quantity="one">מועמד <xliff:g id="count" example="3">%1$d</xliff:g></item>
+        <item quantity="two"><xliff:g id="count" example="3">%1$d</xliff:g> מועמדים</item>
+        <item quantity="other"><xliff:g id="count" example="3">%1$d</xliff:g> מועמדים</item>
+    </plurals>
+    <plurals name="memory_editor_search_complete">
+        <item quantity="one">החיפוש הסתיים · מועמד <xliff:g id="count" example="3">%1$d</xliff:g></item>
+        <item quantity="two">החיפוש הסתיים · <xliff:g id="count" example="3">%1$d</xliff:g> מועמדים</item>
+        <item quantity="other">החיפוש הסתיים · <xliff:g id="count" example="3">%1$d</xliff:g> מועמדים</item>
+    </plurals>
+    <string name="memory_editor_no_results">אין תוצאות</string>
+    <string name="memory_editor_no_watch">רשימת המעקב ריקה</string>
+    <string name="memory_editor_unsupported">עורך זיכרון אינו זמין עבור סביבת ריצה זו.</string>
+    <string name="memory_editor_engine_unavailable">מנוע עורך הזיכרון אינו זמין.</string>
+    <string name="memory_editor_engine_reconnecting">עורך זיכרון מתחבר מחדש…</string>
+    <string name="memory_editor_refresh">רענון</string>
+    <string name="memory_editor_undo">ביטול סריקה</string>
+    <string name="memory_variables_tab">שמורים</string>
+    <string name="memory_editor_back" tools:ignore="MissingTranslation">חזרה</string>
+    <string name="memory_list_keep" tools:ignore="MissingTranslation">שמירה להפעלה הבאה</string>
+    <string name="memory_list_stop_keeping" tools:ignore="MissingTranslation">הפסקת שמירה</string>
+    <string name="memory_list_kept" tools:ignore="MissingTranslation">נשמר להפעלה הבאה</string>
+    <string name="memory_list_empty" tools:ignore="MissingTranslation">אין עדיין סימניות שמורות</string>
+    <string name="memory_list_empty_hint" tools:ignore="MissingTranslation">יש להוסיף משתנה מ“חיפוש” או מ“מפקח” לסימניות כדי לעקוב אחריו כאן.</string>
+    <string name="memory_list_remove_confirm" tools:ignore="MissingTranslation">להסיר מ“שמורים”? כל הקפאה פעילה תיעצר.</string>
+    <string name="memory_list_add" tools:ignore="MissingTranslation">הוספה לסימניות</string>
+    <string name="memory_bookmark_relink" tools:ignore="MissingTranslation">קישור מחדש</string>
+    <string name="memory_bookmark_relink_hint" tools:ignore="MissingTranslation">יש לבחור את המשתנה החלופי ב“חיפוש” ולאחר מכן לבחור “קישור מחדש”.</string>
+    <string name="memory_bookmark_relink_confirm" tools:ignore="MissingTranslation">לקשר סימנייה זו למשתנה שנבחר? כל הקפאה פעילה בסימנייה זו תיעצר.</string>
+    <string name="memory_bookmark_unavailable" tools:ignore="MissingTranslation">לא זמין — יש לבחור “קישור מחדש” כדי לבחור יעד</string>
+    <string name="memory_editor_watch">מעקב</string>
+    <string name="memory_editor_search_tab">חיפוש</string>
+    <string name="memory_editor_search_known_values">חיפוש ערכים ידועים</string>
+    <string name="memory_editor_search_unknown_values">חיפוש ערכים לא ידועים</string>
+    <string name="memory_editor_add_to_watch">הוספת הערכים שנבחרו לסימניות</string>
+    <string name="memory_editor_no_candidates">לא נמצאו ערכים הניתנים לחיפוש</string>
+    <string name="memory_editor_edit">עריכה</string>
+    <plurals name="memory_editor_edit_batch">
+        <item quantity="one">עריכת ערך <xliff:g id="count" example="3">%1$d</xliff:g></item>
+        <item quantity="two">עריכת <xliff:g id="count" example="3">%1$d</xliff:g> ערכים</item>
+        <item quantity="other">עריכת <xliff:g id="count" example="3">%1$d</xliff:g> ערכים</item>
+    </plurals>
+    <string name="memory_editor_edit_batch_no_common_type">הפריטים שנבחרו אינם תומכים בסוג הנתונים שנבחר. יש לערוך פריטים תואמים בנפרד.</string>
+    <string name="memory_editor_save">החלה</string>
+    <string name="memory_editor_replacement">ערך חלופי</string>
+    <string name="memory_editor_freeze">הקפאה</string>
+    <string name="memory_editor_remove">הסרה</string>
+    <string name="memory_editor_select_visible">בחירת הפריטים הגלויים</string>
+    <string name="memory_editor_clear_selection">ניקוי הבחירה</string>
+    <plurals name="memory_editor_selected">
+        <item quantity="one">נבחר פריט <xliff:g id="count" example="3">%1$d</xliff:g></item>
+        <item quantity="two">נבחרו <xliff:g id="count" example="3">%1$d</xliff:g> פריטים</item>
+        <item quantity="other">נבחרו <xliff:g id="count" example="3">%1$d</xliff:g> פריטים</item>
+    </plurals>
+    <string name="memory_editor_close">סגירת עורך זיכרון</string>
+    <string name="memory_editor_searching">מחפש בזיכרון…</string>
+    <string name="memory_editor_working">מחיל פעולה…</string>
+    <string name="memory_editor_search_progress">נסרקו <xliff:g id="scanned_mib" example="12">%1$d</xliff:g> מתוך <xliff:g id="total_mib" example="64">%2$d</xliff:g> MiB</string>
+    <string name="memory_editor_candidate_moved">היעד עודכן</string>
+    <string name="memory_editor_candidate_relocating">מאמת מחדש</string>
+    <string name="memory_editor_candidate_ambiguous">לא חד-משמעי — הכתיבה הושהתה</string>
+    <string name="memory_editor_candidate_lost">אבד — הכתיבה הושהתה</string>
+    <string name="memory_editor_apply">החלה</string>
+    <string name="memory_editor_min_value">ערך מינימלי</string>
+    <string name="memory_editor_max_value">ערך מקסימלי</string>
+    <string name="memory_editor_change_amount">כמות השינוי</string>
+    <string name="memory_editor_min_change">שינוי מינימלי</string>
+    <string name="memory_editor_max_change">שינוי מקסימלי</string>
+    <string name="memory_editor_unfreeze">ביטול הקפאה</string>
+    <string name="memory_editor_cancelled">הפעולה בוטלה.</string>
+    <string name="memory_editor_resource_limit">עורך הזיכרון הגיע למגבלת בטיחות. יש לנסות חיפוש ממוקד יותר או להסיר סימניות והקפאות שאינן בשימוש.</string>
+    <string name="memory_editor_identity_unsafe">לא ניתן לאמת את הערך שנבחר או את מצב החיפוש. יש לרענן את התוצאות או לפתוח שוב את “מפקח” ולנסות שוב.</string>
+    <string name="memory_editor_safety_limit">נבחרו יותר מדי ערכים עבור פעולה זו. יש לבחור פחות ערכים ולנסות שוב.</string>
+    <string name="memory_editor_invalid_request">הערך או הפעולה אינם תקינים.</string>
+    <string name="memory_editor_freeze_paused">מושהה לבטיחות</string>
+    <string name="memory_editor_predicate_between">בטווח</string>
+    <string name="memory_editor_predicate_changed">השתנה</string>
+    <string name="memory_editor_predicate_unchanged">ללא שינוי</string>
+    <string name="memory_editor_predicate_increased">גדל</string>
+    <string name="memory_editor_predicate_decreased">קטן</string>
+    <string name="memory_editor_predicate_increased_by">גדל ב-</string>
+    <string name="memory_editor_predicate_decreased_by">קטן ב-</string>
+    <string name="memory_editor_predicate_changed_by">השתנה ב-</string>
+    <string name="memory_editor_predicate_increased_range">כמות הגדילה בטווח</string>
+    <string name="memory_editor_predicate_decreased_range">כמות הקיטון בטווח</string>
+    <string name="memory_editor_inspector">מפקח</string>
+    <string name="memory_editor_inspect_memory">בדיקת זיכרון סמוך</string>
+    <string name="memory_editor_inspector_loading">מאמת את התוצאה וקורא זיכרון סמוך…</string>
+    <string name="memory_editor_inspector_empty">יש לבחור תוצאה כדי לבדוק זיכרון סמוך.</string>
+    <string name="memory_editor_inspector_no_rows">אין זיכרון סמוך זמין לבדיקה.</string>
+    <string name="memory_editor_refresh_snapshot">רענון תמונת מצב</string>
+    <string name="memory_editor_select_result_value">בחירת סימנייה זו</string>
+    <string name="memory_editor_freeze_after_edit">הקפאה לאחר ההחלה</string>
+    <string name="memory_editor_freeze_after_edit_help">שומר על ערך זה נעול ומוסיף אותו כסימנייה ב“שמורים”.</string>
+    <string name="memory_editor_expression_single_hint">יש להזין ערך אחד, או להפריד ערכי קבוצה באמצעות נקודה-פסיק (;).</string>
+    <string name="memory_editor_expression_group_needs_type">יש לבחור סוג נתונים ספציפי לחיפוש קבוצתי.</string>
+    <plurals name="memory_editor_expression_group_hint">
+        <item quantity="one">חיפוש קבוצתי · ערך <xliff:g id="count" example="3">%1$d</xliff:g> · אותו אובייקט Java</item>
+        <item quantity="two">חיפוש קבוצתי · <xliff:g id="count" example="3">%1$d</xliff:g> ערכים · אותו אובייקט Java</item>
+        <item quantity="other">חיפוש קבוצתי · <xliff:g id="count" example="3">%1$d</xliff:g> ערכים · אותו אובייקט Java</item>
+    </plurals>
+    <string name="memory_editor_expression_query_help">דוגמאות: 500 או 500;1000. חיפוש קבוצתי מאתר 2–8 ערכים באותו אובייקט Java.</string>
+    <string name="memory_editor_keypad_clear">ניקוי</string>
+    <string name="memory_editor_peek_underlay">לחיצה ממושכת לצפייה ב-MIDlet שמתחת</string>
+    <string name="memory_editor_peek_underlay_active">מציג את ה-MIDlet שמתחת</string>
+    <string name="memory_editor_no_runtime">אין סביבת ריצה פעילה של MIDlet.</string>
+    <string name="memory_editor_no_search_history">אין חיפוש קודם לשחזור.</string>
+    <string name="memory_editor_partial_write">פעולת הכתיבה לא הושלמה במלואה. יש לבדוק את הערכים הנוכחיים לפני ניסיון חוזר.</string>
+    <!-- Independent write counts: confirmed, unconfirmed, skipped, not attempted, and incompatible data type. -->
+    <string name="memory_editor_write_outcome">כתיבות שאומתו: <xliff:g id="confirmed" example="3">%1$d</xliff:g>. לא אומתו: <xliff:g id="unconfirmed" example="0">%2$d</xliff:g>. דולגו: <xliff:g id="skipped" example="0">%3$d</xliff:g>. לא נוסו: <xliff:g id="not_attempted" example="0">%4$d</xliff:g>. דולגו עקב סוג: <xliff:g id="skipped_by_type" example="0">%5$d</xliff:g>.</string>
+    <!-- %1$s is a localized outcome explanation; %2$d through %6$d are the same independent write counts. -->
+    <string name="memory_editor_write_failure_outcome"><xliff:g id="reason" example="Write interrupted.">%1$s</xliff:g>\nכתיבות שאומתו: <xliff:g id="confirmed" example="1">%2$d</xliff:g>. לא אומתו: <xliff:g id="unconfirmed" example="1">%3$d</xliff:g>. דולגו: <xliff:g id="skipped" example="0">%4$d</xliff:g>. לא נוסו: <xliff:g id="not_attempted" example="0">%5$d</xliff:g>. דולגו עקב סוג: <xliff:g id="skipped_by_type" example="0">%6$d</xliff:g>.</string>
+    <!-- Result counts before (%1$d) and after (%2$d) the completed next scan. -->
+    <string name="memory_editor_next_scan_result">תוצאות הסריקה הבאה: <xliff:g id="before_count" example="120">%1$d</xliff:g> ← <xliff:g id="after_count" example="14">%2$d</xliff:g></string>
+    <string name="memory_editor_type_auto">אוטומטי</string>
+    <string name="memory_editor_remove_candidates_title">להסיר את התוצאות שנבחרו?</string>
+    <string name="memory_editor_remove_candidates_description">הסרה: מסירה את התוצאות שנבחרו מרשימת החיפוש. הערכים בזיכרון המשחק נשארים ללא שינוי.\n\nשחזור והסרה: משחזרת גם את הערכים שלפני העריכות המאומתות האחרונות, אם הם עדיין תואמים. ערכים מוקפאים ותוצאות עם התנגשויות נשארים ברשימה.</string>
+    <string name="memory_editor_revert_and_remove">שחזור והסרה</string>
+    <string name="memory_editor_revert_remove_commit_failed">ייתכן שהערכים שוחזרו, אך לא ניתן להסיר את התוצאות. יש לרענן ולנסות שוב; ערכים שהמשחק שינה לא יידרסו.</string>
+    <string name="memory_editor_revert_remove_outcome">שוחזרו: <xliff:g id="restored" example="2">%1$d</xliff:g>. הוסרו: <xliff:g id="removed" example="2">%2$d</xliff:g>. התנגשויות: <xliff:g id="conflicts" example="0">%3$d</xliff:g>. לא אומתו: <xliff:g id="unconfirmed" example="0">%4$d</xliff:g>. לא נוסו: <xliff:g id="not_attempted" example="0">%5$d</xliff:g>.</string>
+    <string name="memory_editor_set_all">הגדרת הכול</string>
+    <string name="memory_editor_increment_start">ערך התחלתי</string>
+    <string name="memory_editor_edit_batch_type_notice">רק ערכים בעלי סוג נתונים תואם ישתנו.</string>
+    <string name="memory_editor_write_confirmed">ערכים שאומתו בקריאה חוזרת מהזיכרון: <xliff:g id="count" example="3">%1$d</xliff:g>.</string>
+    <string name="memory_editor_candidate_untraced">מערך #<xliff:g id="array_id" example="42">%1$d</xliff:g>[<xliff:g id="index" example="3">%2$d</xliff:g>] · מקור לא מאותר</string>
+    <string name="memory_editor_candidate_static"><xliff:g id="field_name" example="Player.coins">%1$s</xliff:g> · <xliff:g id="reference_kind" example="Static reference">%2$s</xliff:g></string>
+    <string name="memory_editor_candidate_instance"><xliff:g id="field_name" example="Player.hp">%1$s</xliff:g> · <xliff:g id="reference_kind" example="Instance reference">%2$s</xliff:g> · יעד #<xliff:g id="target_id" example="1">%3$d</xliff:g></string>
+    <string name="memory_editor_reference_static">הפניה סטטית</string>
+    <string name="memory_editor_reference_instance">הפניית מופע</string>
+    <string name="memory_editor_path_changed">נתיב ההפניה השתנה מאז הסריקה.</string>
+    <string name="memory_editor_path_incomplete">נתיב ההפניה חורג ממגבלת הבדיקה.</string>
+    <string name="memory_editor_source_unknown">מקור לא מאותר</string>
+    <string name="memory_editor_incremental_edit">הגדלה הדרגתית</string>
+    <string name="memory_editor_increment_step">צעד</string>
+    <string name="memory_editor_increment_invalid">יש להשתמש בסוג מספר שלם אחד ובערכים שבתוך הטווח שלו.</string>
+    <!-- The batch dialog title already shows the number of selected values. -->
+    <string name="memory_editor_increment_preview">תצוגה מקדימה: <xliff:g id="name" example="Example">%1$s</xliff:g></string>
+    <string name="memory_editor_panel_opacity">אטימות החלונית</string>
+    <string name="memory_editor_panel_opacity_help">התאמת הרקע לצפייה בערכי המשחק בזמן החיפוש. הטקסט והסמלים נשארים גלויים.</string>
+    <string name="memory_editor_reconversion_required" tools:ignore="MissingTranslation">ההמרה המותקנת של MIDlet זה אינה תואמת לעורך הזיכרון. יש לסגור את המשחק ולאחר מכן להמיר או להתקין אותו מחדש ב-JL-Mod Plus.</string>
+    <string name="memory_saved_tab" tools:ignore="MissingTranslation">שמורים</string>
+    <string name="memory_saved_save" tools:ignore="MissingTranslation">שמירת משתנה</string>
+    <string name="memory_saved_name" tools:ignore="MissingTranslation">שם</string>
+    <string name="memory_saved_explanation" tools:ignore="MissingTranslation">שמירת נתיב זיכרון מאומת זה להפעלות עתידיות. ערכים לעולם אינם נכתבים באופן אוטומטי.</string>
+    <string name="memory_saved_empty" tools:ignore="MissingTranslation">אין עדיין משתנים שמורים. יש לבחור תוצאת חיפוש כדי לשמור אותה.</string>
+    <string name="memory_saved_not_ready" tools:ignore="MissingTranslation">לא מוכן</string>
+    <string name="memory_saved_retry" tools:ignore="MissingTranslation">ניסיון חוזר</string>
+    <string name="memory_saved_rename" tools:ignore="MissingTranslation">שינוי שם</string>
+    <string name="memory_saved_value" tools:ignore="MissingTranslation">ערך</string>
+    <string name="memory_saved_delete_confirm" tools:ignore="MissingTranslation">להסיר הגדרה שמורה זו? ערך המשחק לא ישתנה.</string>
+    <string name="memory_saved_changed" tools:ignore="MissingTranslation">השתנה</string>
+    <string name="memory_saved_rebound" tools:ignore="MissingTranslation">היעד עודכן</string>
+    <string name="memory_saved_import_summary" tools:ignore="MissingTranslation">שמורים: נוספו <xliff:g id="added_count" example="4">%1$d</xliff:g>, כבר קיימים <xliff:g id="existing_count" example="2">%2$d</xliff:g></string>
+    <string name="memory_saved_incompatible" tools:ignore="MissingTranslation">לא תואם</string>
+    <string name="memory_saved_failed" tools:ignore="MissingTranslation">נכשל</string>
+    <string name="memory_saved_delete_many_confirm" tools:ignore="MissingTranslation">להסיר <xliff:g id="count" example="3">%1$d</xliff:g> הגדרות שמורות? ערכי המשחק לא ישתנו.</string>
+    <string name="memory_recipes_title" tools:ignore="MissingTranslation">פעולה מהירה</string>
+    <string name="memory_recipes_simple_from_saved" tools:ignore="MissingTranslation">יעד: <xliff:g id="bookmark_name" example="Coins">%1$s</xliff:g></string>
+    <string name="memory_recipes_preview" tools:ignore="MissingTranslation">תצוגה מקדימה של יעדים</string>
+    <string name="memory_recipes_stop_freeze" tools:ignore="MissingTranslation">עצירת הקפאת סקריפט</string>
+    <string name="memory_recipes_freeze" tools:ignore="MissingTranslation">שמירה בהקפאה בזמן שהמשחק פועל</string>
+    <string name="memory_recipes_run" tools:ignore="MissingTranslation">הפעלה</string>
+    <string name="memory_recipes_active_freezes" tools:ignore="MissingTranslation">הקפאות סקריפט פעילות</string>
+    <string name="memory_recipes_target_unavailable" tools:ignore="MissingTranslation">יעד הסימנייה אינו זמין. יש לרענן או לקשר אותו מחדש לפני ההפעלה.</string>
+    <string name="memory_recipes_preview_values" tools:ignore="MissingTranslation">ערכים נוכחיים: <xliff:g id="name" example="Example">%1$s</xliff:g></string>
+    <string name="memory_scripts_title" tools:ignore="MissingTranslation">סקריפטים</string>
+    <string name="memory_scripts_active" tools:ignore="MissingTranslation">פעיל</string>
+    <string name="memory_scripts_inputs" tools:ignore="MissingTranslation">קלטים</string>
+    <string name="memory_scripts_create_from_bookmarks" tools:ignore="MissingTranslation">יצירת סקריפט</string>
+    <string name="memory_scripts_create_failed" tools:ignore="MissingTranslation">לא ניתן להתחיל סקריפט חדש.</string>
+    <string name="memory_scripts_draft_in_progress" tools:ignore="MissingTranslation">יש לסיים או לבטל תחילה את טיוטת הסקריפט הנוכחית.</string>
+    <string name="memory_builder_open_saved" tools:ignore="MissingTranslation">פתיחת “שמורים”</string>
+    <string name="memory_builder_add_description" tools:ignore="MissingTranslation">הוספת תיאור</string>
+    <string name="memory_builder_find_values" tools:ignore="MissingTranslation">איתור ערכים</string>
+    <string name="memory_scripts_description" tools:ignore="MissingTranslation">תיאור</string>
+    <string name="memory_scripts_new" tools:ignore="MissingTranslation">סקריפט חדש</string>
+    <string name="memory_scripts_back" tools:ignore="MissingTranslation">חזרה</string>
+    <string name="memory_scripts_edit" tools:ignore="MissingTranslation">עריכה</string>
+    <string name="memory_scripts_save" tools:ignore="MissingTranslation">שמירה</string>
+    <string name="memory_scripts_saved" tools:ignore="MissingTranslation">הסקריפט נשמר</string>
+    <string name="memory_scripts_deleted" tools:ignore="MissingTranslation">הסקריפט נמחק</string>
+    <string name="memory_scripts_save_failed" tools:ignore="MissingTranslation">לא ניתן לשמור את הסקריפט.</string>
+    <string name="memory_scripts_editor_hint" tools:ignore="MissingTranslation">יש להזין או להדביק מסמך JSON של סקריפט. השמירה אינה מפעילה אותו.</string>
+    <string name="memory_scripts_paste_hint" tools:ignore="MissingTranslation">הדבקת JSON של סקריפט</string>
+    <string name="memory_scripts_paste" tools:ignore="MissingTranslation">הדבקה</string>
+    <string name="memory_scripts_clipboard_invalid" tools:ignore="MissingTranslation">הלוח ריק או שהמסמך חורג מ-64 KiB</string>
+    <string name="memory_scripts_invalid" tools:ignore="MissingTranslation">פורמט סקריפט לא תקין</string>
+    <string name="memory_scripts_freeze_active" tools:ignore="MissingTranslation">הקפאה פעילה עבור סקריפט זה</string>
+    <string name="memory_scripts_delete" tools:ignore="MissingTranslation">מחיקה</string>
+    <string name="memory_scripts_delete_confirm" tools:ignore="MissingTranslation">למחוק את “<xliff:g id="name" example="Example">%1$s</xliff:g>”? כל הקפאה פעילה עבור סקריפט זה תיעצר.</string>
+    <string name="memory_scripts_empty" tools:ignore="MissingTranslation">לא נשמרו סקריפטים</string>
+    <string name="memory_scripts_unsaved_title" tools:ignore="MissingTranslation">לבטל סקריפט שלא נשמר?</string>
+    <string name="memory_scripts_unsaved_message" tools:ignore="MissingTranslation">השינויים בסקריפט לא נשמרו.</string>
+    <string name="memory_scripts_discard" tools:ignore="MissingTranslation">ביטול שינויים</string>
+    <string name="memory_scripts_current_title" tools:ignore="MissingTranslation">קריאה אחרונה</string>
+    <string name="memory_scripts_refresh" tools:ignore="MissingTranslation">רענון</string>
+    <string name="memory_scripts_reading" tools:ignore="MissingTranslation">קורא ערכים נוכחיים…</string>
+    <string name="memory_scripts_refresh_hint" tools:ignore="MissingTranslation">יש להקיש על “רענון” כדי לקרוא ערכים נוכחיים מהמשחק הפעיל.</string>
+    <string name="memory_scripts_mode_toggle" tools:ignore="MissingTranslation">הקפאת ערכים</string>
+    <string name="memory_scripts_mode_form" tools:ignore="MissingTranslation">עורך ערכים</string>
+    <string name="memory_scripts_mode_once" tools:ignore="MissingTranslation">פעולות מהירות</string>
+    <string name="memory_scripts_mode_legacy" tools:ignore="MissingTranslation">סקריפט מתקדם</string>
+    <string name="memory_scripts_edit_values" tools:ignore="MissingTranslation">עריכת ערכים</string>
+    <string name="memory_scripts_apply" tools:ignore="MissingTranslation">החלת שינויים</string>
+    <string name="memory_scripts_refresh_required" tools:ignore="MissingTranslation">יש לרענן כדי לאמת את הערכים הנוכחיים לפני ההחלה.</string>
+    <string name="memory_scripts_inconsistent" tools:ignore="MissingTranslation">עותקים לא עקביים: <xliff:g id="name" example="Example">%1$s</xliff:g></string>
+    <string name="memory_editor_minimize" tools:ignore="MissingTranslation">מזעור עורך זיכרון</string>
+    <string name="memory_scripts_choose_type" tools:ignore="MissingTranslation">סקריפט חדש</string>
+    <string name="memory_scripts_choose_hint" tools:ignore="MissingTranslation">יש לבחור כיצד סקריפט זה יפעל.</string>
+    <string name="memory_builder_json_editor" tools:ignore="MissingTranslation">עורך JSON</string>
+    <string name="memory_builder_freeze_hint" tools:ignore="MissingTranslation">שומר על הערכים שנבחרו נעולים בזמן שהאפשרות מופעלת. כיבוי ההקפאה אינו משחזר את הערכים הקודמים שלהם.</string>
+    <string name="memory_builder_form_hint" tools:ignore="MissingTranslation">בניית טופס שקורא את הערכים הנוכחיים לפני החלת העריכות.</string>
+    <string name="memory_builder_actions_hint" tools:ignore="MissingTranslation">החלת שינויים בכל לחיצה על “הפעלה”. כל הפעלה עומדת בפני עצמה.</string>
+    <string name="memory_builder_name" tools:ignore="MissingTranslation">שם הסקריפט</string>
+    <string name="memory_builder_frozen_values" tools:ignore="MissingTranslation">ערכים מוקפאים</string>
+    <string name="memory_builder_fields" tools:ignore="MissingTranslation">שדות</string>
+    <string name="memory_builder_actions" tools:ignore="MissingTranslation">פעולות</string>
+    <string name="memory_builder_add_bookmarks" tools:ignore="MissingTranslation">הוספה מסימניות</string>
+    <string name="memory_builder_empty" tools:ignore="MissingTranslation">יש להוסיף לפחות סימנייה מאומתת אחת.</string>
+    <string name="memory_builder_field_label" tools:ignore="MissingTranslation">תווית שדה</string>
+    <string name="memory_builder_keep_at" tools:ignore="MissingTranslation">שמירה על ערך</string>
+    <string name="memory_builder_amount" tools:ignore="MissingTranslation">ערך / כמות</string>
+    <string name="memory_builder_set" tools:ignore="MissingTranslation">הגדרה</string>
+    <string name="memory_builder_add" tools:ignore="MissingTranslation">הוספה</string>
+    <string name="memory_builder_subtract" tools:ignore="MissingTranslation">הפחתה</string>
+    <string name="memory_builder_view_json" tools:ignore="MissingTranslation">הצגת JSON</string>
+    <string name="memory_builder_edit_json" tools:ignore="MissingTranslation">עריכת JSON</string>
+    <string name="memory_builder_search_bookmarks" tools:ignore="MissingTranslation">חיפוש סימניות</string>
+    <string name="memory_builder_no_bookmarks" tools:ignore="MissingTranslation">אין סימניות מאומתות תואמות. יש להוסיף ערך לסימניות ב“חיפוש” או לקשר מחדש ב“שמורים”.</string>
+    <string name="memory_builder_needs_relink" tools:ignore="MissingTranslation">נדרש קישור מחדש</string>
+    <string name="memory_builder_add_selected" tools:ignore="MissingTranslation">הוספת הפריטים שנבחרו</string>
+    <string name="memory_builder_min" tools:ignore="MissingTranslation">מינימום (אופציונלי)</string>
+    <string name="memory_builder_max" tools:ignore="MissingTranslation">מקסימום (אופציונלי)</string>
+    <string name="memory_builder_add_target" tools:ignore="MissingTranslation">הוספת יעד</string>
+    <string name="memory_builder_freeze_short" tools:ignore="MissingTranslation">שמירה על ערכים נבחרים בכמויות קבועות</string>
+    <string name="memory_builder_form_short" tools:ignore="MissingTranslation">התאמת מספר ערכים במקום אחד</string>
+    <string name="memory_builder_actions_short" tools:ignore="MissingTranslation">הפעלת פעולות חד-פעמיות של הגדרה, הוספה או הפחתה</string>
+    <string name="memory_editor_refine_scan" tools:ignore="MissingTranslation">מיקוד</string>
+    <string name="memory_scripts_saved_count" tools:ignore="MissingTranslation"><xliff:g id="count" example="3">%1$d</xliff:g> שמורים</string>
+    <string name="memory_scripts_empty_hint" tools:ignore="MissingTranslation">יצירת סקריפט לעריכה או להקפאה של ערכים במהלך המשחק.</string>
+    <string name="memory_builder_limits" tools:ignore="MissingTranslation">מגבלות (אופציונלי)</string>
+</resources>

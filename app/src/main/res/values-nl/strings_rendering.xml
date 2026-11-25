@@ -1,0 +1,212 @@
+<?xml version="1.0" encoding="utf-8"?>
+<!-- Rendering pipeline, internal resolution, bitmap upscaling, shaders, and built-in visual effects. -->
+<resources xmlns:tools="http://schemas.android.com/tools" xmlns:xliff="urn:oasis:names:tc:xliff:document:1.2">
+    <string name="identity_filter">Geen (snelst)</string>
+    <string name="invalid_resolution_not_saved">Ongeldige resolutie. Voorinstelling is niet opgeslagen.</string>
+    <string name="msg_error_loading_shader">Niet-ondersteunde shader. De standaardshader wordt gebruikt.</string>
+    <string name="parallel_screen_redrawing">Asynchrone schermupdates</string>
+    <string name="shader_tuning">Shaderafstemming</string>
+    <string name="SWAP_SIZES">Breedte en hoogte omwisselen</string>
+    <string name="fps_limit_maximum">Maximum</string>
+    <string name="remove_screen_preset">Resolutievoorinstelling verwijderen</string>
+    <string name="perf_overlay_position_help">Kies een hoek.</string>
+    <string name="perf_overlay_top_left">Linksboven</string>
+    <string name="perf_overlay_top_right">Rechtsboven</string>
+    <string name="perf_overlay_bottom_left">Linksonder</string>
+    <string name="perf_overlay_bottom_right">Rechtsonder</string>
+    <string name="internal_resolution_title" tools:ignore="MissingTranslation">Renderresolutie</string>
+    <string name="internal_resolution_auto" tools:ignore="MissingTranslation">Automatisch</string>
+    <string name="internal_resolution_description" tools:ignore="MissingTranslation">Rendert ondersteunde 2D en 3D met meer detail. Automatisch past zich aan de game-viewport aan; start opnieuw om toe te passen.</string>
+    <string name="bitmap_upscaling_title" tools:ignore="MissingTranslation">Bitmap-opschaling</string>
+    <string name="bitmap_upscaling_description" tools:ignore="MissingTranslation">Schaalt onveranderlijke 2D-sprites en ondoorzichtige Micro3D-modeltexturen op met MMPX of xBR Lv3. M3G-texturen blijven ongewijzigd; start opnieuw om toe te passen.</string>
+    <string name="bitmap_upscaling_nearest" tools:ignore="MissingTranslation">Nearest neighbor</string>
+    <string name="bitmap_upscaling_bilinear" tools:ignore="MissingTranslation">Bilineair</string>
+    <string name="bitmap_upscaling_mmpx" tools:ignore="MissingTranslation">MMPX</string>
+    <string name="bitmap_upscaling_edge_aware" tools:ignore="MissingTranslation">xBR Lv3</string>
+    <!-- Prototyping only: localized UI copy is pending design review. -->
+    <string name="render_shader_effects">Shadereffecten</string>
+    <string name="render_pipeline_title">Renderpijplijn</string>
+    <string name="render_shader_preset">Shadervoorinstelling</string>
+    <string name="render_shader_picker_help">Combineer ingebouwde en je eigen legacy-shaders in een geordende effectstapel.</string>
+    <string name="render_shader_requires_gles">Shaders worden opgeslagen, maar alleen toegepast wanneer OpenGL ES is geselecteerd.</string>
+    <string name="render_shader_missing">De geselecteerde shader staat niet in de bibliotheek. Kies een andere voorinstelling of herstel de bestanden.</string>
+    <string name="render_shader_parameters">Shaderparameters</string>
+    <string name="render_shader_reset_parameters">Parameters herstellen</string>
+    <string name="render_shader_passes">Shaderstappen</string>
+    <string name="render_shader_pass_count"><xliff:g id="count" example="2">%1$d</xliff:g> stappen</string>
+    <string name="render_shader_pass_hint">Bekijk de fasen van de geselecteerde GLSLP-voorinstelling.</string>
+    <string name="render_pass_filter">Invoerfiltering</string>
+    <string name="render_pass_output">Uitvoergrootte (breedte × hoogte)</string>
+    <string name="render_pipeline_unavailable">Voorinstelling niet beschikbaar</string>
+    <string name="render_game_output">Game-uitvoer</string>
+    <string name="render_logical_screen_help">Logische grootte die aan de game wordt gemeld.</string>
+    <string name="render_internal_resolution">Interne resolutie</string>
+    <string name="render_internal_unavailable">Alleen oorspronkelijk (1×). Hogere renderresoluties zijn niet beschikbaar voor deze configuratie.</string>
+    <string name="render_display_renderer">Presentatierenderer</string>
+    <string name="render_shader_processing">Shaderverwerking</string>
+    <string name="render_display_scaling">Schermschaling</string>
+    <string name="render_display_viewport">Game-viewport</string>
+    <string name="render_texture_filtering">Schermschaalfilter</string>
+    <string name="render_texture_filtering_help">Kiest Nearest of Lineair voor het uiteindelijke gamebeeld. Effecten kunnen dit overschrijven.</string>
+    <string name="render_viewport_note">De viewportgrootte wordt bepaald uit de schermindeling voordat shaderstappen worden gepland. De pijlen tonen de beeldstroom, niet de volgorde van de indelingsberekeningen.</string>
+    <string name="render_pipeline_help">Bekijk hoe het gameframe het scherm bereikt en bewerk elke fase.</string>
+    <string name="render_no_shader">Kies een voorinstelling om het uiterlijk van de game te wijzigen.</string>
+    <string name="render_shader_adjust">Parameters aanpassen</string>
+    <string name="render_legacy_tuning_hint">Stem dit legacy-effect nauwkeurig af.</string>
+    <string name="render_shader_customization">Aanpassen</string>
+    <string name="render_adjustable_count">Aanpasbare parameters: <xliff:g id="count" example="3">%1$d</xliff:g></string>
+    <string name="render_pass_summary"><xliff:g id="count" example="3">%1$d</xliff:g> fasen · Bepaald door de voorinstelling</string>
+    <string name="render_shader_preset_note">Shaderfasen worden bepaald door de voorinstelling. Je kunt ze bekijken zonder de volgorde te wijzigen.</string>
+    <string name="render_parameters_hint">Verschuif een regelaar om de waarde aan te passen. Wijzigingen worden opgeslagen wanneer je loslaat.</string>
+    <string name="render_pass_readonly">Fasen worden in deze volgorde uitgevoerd. Invoerfiltering en uitvoerschaling komen uit de geselecteerde voorinstelling.</string>
+    <string name="render_pipeline_intro">Het pad van de game-framebuffer naar je scherm.</string>
+    <string name="render_native_short">Oorspronkelijk (1×)</string>
+    <string name="render_expand_passes">Fasen tonen</string>
+    <string name="render_collapse_passes">Fasen verbergen</string>
+    <string name="render_view_all_passes">Fasedetails</string>
+    <string name="render_pipeline_filter_summary">Textuurfiltering: <xliff:g id="shader_name" example="CRT Classic">%1$s</xliff:g></string>
+    <string name="render_pipeline_note">De schermindeling bepaalt de viewport voordat shaderstappen worden gepland. De stappen tonen de beeldstroom.</string>
+    <string name="render_shader_change">Ander effect kiezen</string>
+    <string name="render_custom_pipeline">Aangepaste pijplijn</string>
+    <string name="render_custom_pipeline_hint">Combineer losse GLSL-shaders uit je shadermap.</string>
+    <string name="render_custom_order_help">Effecten worden van boven naar beneden uitgevoerd. Overgenomen GLSLP-instellingen blijven actief tenzij ze worden gewijzigd.</string>
+    <string name="render_custom_empty">Voeg een shader toe om een aangepaste keten te starten.</string>
+    <string name="render_custom_stage_count"><xliff:g id="count" example="3">%1$d</xliff:g> aangepaste shaderfasen</string>
+    <string name="render_custom_add">Shader toevoegen</string>
+    <string name="render_custom_add_hint">Kies een externe losse .glsl-bron.</string>
+    <string name="render_custom_no_sources">Geen legacy-shaders gevonden. Voeg .ini-shaderbestanden toe aan de map shaders en open Instellingen opnieuw.</string>
+    <string name="render_custom_scale">Uitvoer: <xliff:g id="scale" example="2">%1$d</xliff:g>× vorige fase</string>
+    <string name="render_custom_output_scale">Uitvoergrootte voor volgende fase</string>
+    <string name="render_custom_final_viewport">Einduitvoer: weergegeven op scherm</string>
+    <string name="render_custom_filter">Invoerfilter: <xliff:g id="shader_name" example="CRT Classic">%1$s</xliff:g></string>
+    <string name="render_custom_up">Omhoog</string>
+    <string name="render_custom_down">Omlaag</string>
+    <string name="render_custom_remove">Verwijderen</string>
+    <string name="render_custom_cancel">Annuleren</string>
+    <string name="render_custom_save">Opslaan</string>
+    <string name="render_custom_default">Standaard</string>
+    <string name="render_custom_nearest">Nearest</string>
+    <string name="render_custom_linear">Lineair</string>
+    <string name="render_custom_checking">Shaderbestanden controleren…</string>
+    <string name="render_active_shader">Actief effect</string>
+    <string name="render_shader_off">Uit</string>
+    <string name="render_edit_custom_pipeline">Shaderketen bewerken</string>
+    <string name="render_shader_unavailable">Niet beschikbaar: <xliff:g id="shader_name" example="CRT Classic">%1$s</xliff:g></string>
+    <string name="render_no_shader_sources">Geen shaders gevonden. Voeg legacy .ini-shaderbestanden toe aan de map shaders en open Instellingen opnieuw.</string>
+    <string name="render_shader_mode">Shadermodus</string>
+    <string name="render_mode_selected">Geselecteerd</string>
+    <string name="render_gles_shader_default">OpenGL ES gebruikt het oorspronkelijke gamebeeld wanneer shadereffecten zijn uitgeschakeld.</string>
+    <string name="render_shader_off_help">Geen extra visuele effecten.</string>
+    <string name="render_legacy_mode">Legacy-shader</string>
+    <string name="render_legacy_mode_help">Kies een .ini-bestand uit de map shaders.</string>
+    <string name="render_legacy_empty">Geen bruikbare shaderdefinities in dit .ini-bestand.</string>
+    <string name="render_legacy_select_variant">Kies een legacy-shader</string>
+    <string name="render_legacy_variant_description">Shaderdefinitie in het geselecteerde .ini-bestand</string>
+    <string name="render_preset_mode">GLSLP-voorinstelling</string>
+    <string name="render_preset_mode_help">Laad een volledige .glslp-pijplijn met eigen stappen.</string>
+    <string name="render_custom_pass_count">Aantal stappen</string>
+    <string name="render_custom_pass_number">Stap <xliff:g id="number" example="1">%1$d</xliff:g></string>
+    <string name="render_custom_pick_file">GLSL-bestand kiezen</string>
+    <string name="render_custom_add_pass">Aantal shaderstappen verhogen</string>
+    <string name="render_custom_remove_pass">Aantal shaderstappen verlagen</string>
+    <string name="render_shader_selected_name">Actief: <xliff:g id="shader_name" example="CRT Classic">%1$s</xliff:g></string>
+    <string name="render_shader_invalid_picker">Kan het geselecteerde bestand niet gebruiken. Kies een legacy .ini-bestand in de map shaders.</string>
+    <string name="render_custom_mode">Shadertype</string>
+    <string name="render_custom_mode_legacy">Legacy</string>
+    <string name="render_custom_mode_glsl">GLSL</string>
+    <string name="render_custom_pick_legacy">Legacy-shader kiezen</string>
+    <string name="render_custom_preserve_size">Uitvoer: van voorinstelling</string>
+    <string name="render_custom_loading">Voorinstellingsstappen lezen…</string>
+    <string name="render_custom_start_fresh">Starten zonder voorinstelling (overgenomen instellingen verwerpen)</string>
+    <string name="render_effect_default_settings">Standaardinstellingen</string>
+    <string name="render_effect_summary_more">+<xliff:g id="count" example="2">%1$d</xliff:g> meer</string>
+    <string name="render_effect_legacy_author">Door <xliff:g id="shader_name" example="CRT Classic">%1$s</xliff:g></string>
+    <string name="render_effect_legacy_source">Bron: <xliff:g id="shader_name" example="CRT Classic">%1$s</xliff:g></string>
+    <string name="render_effect_removed">Effect verwijderd</string>
+    <string name="render_effect_undo">Ongedaan maken</string>
+    <string name="render_effect_catalog_hint">Tik op een effect om het aan de stapel toe te voegen.</string>
+    <string name="render_effect_user_folder_hint">INI-, VSH- en FSH-bestanden moeten in de map shaders staan.</string>
+    <string name="render_effect_legacy_scale_note">Legacy-shaders renderen op de resolutie van de scherm-viewport; de vlaggen OutputResolution en Upscaling in .ini worden genegeerd.</string>
+    <string name="render_effect_legacy_metadata_missing">Instellingen uit het .ini-bestand van deze shader zijn niet gevonden. De bronbestanden kunnen mogelijk nog steeds worden gerenderd.</string>
+    <string name="render_effect_count"><xliff:g id="count" example="2">%1$d</xliff:g> actief</string>
+    <string name="render_effect_add">Effect toevoegen</string>
+    <string name="render_effect_builtin">Ingebouwde effecten</string>
+    <string name="render_effect_user">Mijn shaders</string>
+    <string name="render_effect_user_add">.ini-bestanden verkennen</string>
+    <string name="render_effect_user_empty">Geen legacy-shader gevonden in de map shaders.</string>
+    <string name="render_effect_user_file">Kies een legacy .ini-bestand</string>
+    <string name="render_effect_empty">Voeg een effect toe om het uiterlijk van de game aan te passen.</string>
+    <string name="render_effect_hint">Effecten worden van boven naar beneden uitgevoerd. Houd ingedrukt en sleep om te herordenen.</string>
+    <string name="render_effect_move_up">Omhoog verplaatsen</string>
+    <string name="render_effect_move_down">Omlaag verplaatsen</string>
+    <string name="render_effect_remove">Effect verwijderen</string>
+    <string name="render_effect_no_parameters">Dit effect heeft geen aanpasbare parameters.</string>
+    <string name="render_effect_parameter_number">Parameter <xliff:g id="count" example="2">%1$d</xliff:g></string>
+    <string name="render_effect_restore">Parameters herstellen</string>
+    <string name="render_effect_missing">Niet beschikbaar: <xliff:g id="shader_name" example="CRT Classic">%1$s</xliff:g>. Dit ingebouwde effect is niet beschikbaar in deze versie. Verwijder het uit de stapel.</string>
+    <string name="render_effect_limit">De stapel ondersteunt maximaal 16 shaderstappen (sommige effecten gebruiken meerdere stappen).</string>
+    <string name="render_effect_unavailable">Shadereffecten konden niet worden uitgevoerd. Het oorspronkelijke gamebeeld wordt getoond. Probeer minder effecten of een lagere renderresolutie.</string>
+    <string name="render_bitmap_memory_reduced">Onvoldoende geheugen voor bitmap-opschaling. Oorspronkelijke afbeeldingen of een lagere schaal worden gebruikt. Probeer een lagere renderresolutie of maak geheugen vrij en start opnieuw.</string>
+    <string name="render_texture_memory_reduced">Opschaling van Micro3D-texturen is mislukt. Oorspronkelijke texturen worden gebruikt. Probeer een lagere renderresolutie of maak geheugen vrij en start opnieuw.</string>
+    <string name="render_resolution_reduced">Renderresolutie verlaagd van <xliff:g id="from_scale" example="4">%1$d</xliff:g>× naar <xliff:g id="to_scale" example="2">%2$d</xliff:g>× vanwege geheugen- of GPU-limieten. Probeer een lagere instelling of maak geheugen vrij en start opnieuw.</string>
+    <string name="render_gpu_texture_limit">Deze afbeelding is zelfs op 1× te groot voor de GPU. Probeer een kleinere gameresolutie of wissel van grafische modus.</string>
+    <string name="render_gpu_upload_failed">Kan het gamebeeld niet naar de GPU uploaden. Opnieuw proberen. Sluit andere apps of wissel van grafische modus.</string>
+    <string name="render_effect_gles">Effecten worden opgeslagen, maar alleen gerenderd met OpenGL ES.</string>
+    <string name="render_effect_legacy_file_error">Kan geen geldige legacy-shader laden uit het geselecteerde .ini-bestand.</string>
+    <string name="effect_color">Kleuraanpassing</string>
+    <string name="effect_color_desc">Pas helderheid, contrast, verzadiging, gamma, kleurtint en monochroom aan.</string>
+    <string name="effect_vignette">Vignettering</string>
+    <string name="effect_vignette_desc">Maakt de randen donkerder om de aandacht naar het midden te trekken.</string>
+    <string name="effect_sharpen">Verscherpen</string>
+    <string name="effect_sharpen_desc">Versterkt details en randen in het beeld.</string>
+    <string name="effect_cartoon">Zachte cartoon</string>
+    <string name="effect_cartoon_desc">Vereenvoudigt kleurverlopen en voegt zachte omtreklijnen toe.</string>
+    <string name="effect_bloom">Bloom</string>
+    <string name="effect_bloom_desc">Voegt een zachte gloed toe rond heldere delen van het beeld.</string>
+    <string name="effect_crt_classic">CRT Klassiek</string>
+    <string name="effect_crt_classic_desc">Bootst een CRT-televisie na met scanlines en een RGB-patroon.</string>
+    <string name="effect_crt_beam">Straalsmalheid</string>
+    <string name="effect_brightness">Helderheid</string>
+    <string name="effect_contrast">Contrast</string>
+    <string name="effect_saturation">Verzadiging</string>
+    <string name="effect_strength">Sterkte</string>
+    <string name="effect_color_levels">Kleurniveaus</string>
+    <string name="effect_edge">Randintensiteit</string>
+    <string name="effect_threshold">Helderheidsdrempel</string>
+    <string name="effect_radius">Vervagingsstraal</string>
+    <string name="effect_mask_strength">Maskersterkte</string>
+    <string name="effect_scan_strength">Scanlinesterkte</string>
+    <string name="effect_bright_boost">Helderheidsversterking</string>
+    <string name="effect_lcd">LCD</string>
+    <string name="effect_lcd_desc">Bootst het pixelraster en de subpixels van een klassiek kleuren-lcd-scherm na.</string>
+    <string name="effect_lcd_grid">Rastersterkte</string>
+    <string name="effect_lcd_subpixel">RGB-subpixels</string>
+    <string name="effect_lcd_brightness">LCD-helderheid</string>
+    <string name="effect_scanlines">Scanlines Lite</string>
+    <string name="effect_scanlines_desc">Voegt subtiele horizontale lijnen toe zoals bij een CRT-scherm.</string>
+    <string name="effect_line_width">Lijnsmalheid</string>
+    <string name="effect_gamma">Gamma</string>
+    <string name="effect_temperature">Temperatuur</string>
+    <string name="effect_tint">Tint</string>
+    <string name="effect_monochrome">Monochroom</string>
+    <string name="effect_depth">Kleurdiepte en dithering</string>
+    <string name="effect_depth_desc">Beperkt het kleurenpalet, met optionele dithering voor een retro-uitstraling.</string>
+    <string name="effect_depth_format">Schermkleurformaat</string>
+    <string name="effect_depth_rgb444">RGB444 · 4.096 kleuren</string>
+    <string name="effect_depth_rgb565">RGB565 · 65.536 kleuren</string>
+    <string name="effect_depth_rgb666">RGB666 · 262.144 kleuren</string>
+    <string name="effect_dither_mode">Ditheringpatroon</string>
+    <string name="effect_dither_none">Uit</string>
+    <string name="effect_dither_bayer4">Bayer 4×4</string>
+    <string name="effect_dither_bayer8">Bayer 8×8</string>
+    <string name="effect_dither_strength">Ditheringsterkte</string>
+    <string name="effect_mono_display">Monochroom scherm</string>
+    <string name="effect_mono_display_desc">Bootst zwart-wit-, groene of amberkleurige schermen na met 2 of 4 tinten.</string>
+    <string name="effect_mono_palette">LCD-kleur</string>
+    <string name="effect_mono_bw">Zwart-wit</string>
+    <string name="effect_mono_green">Groen LCD</string>
+    <string name="effect_mono_amber">Amber LCD</string>
+    <string name="effect_mono_tones">Aantal tinten</string>
+    <string name="effect_mono_two">2 tinten</string>
+    <string name="effect_mono_four">4 tinten</string>
+</resources>

@@ -1,0 +1,116 @@
+<?xml version="1.0" encoding="utf-8"?>
+<!-- Active MIDlet runtime session, screenshots, logs, crash recovery, and diagnostic reports. -->
+<resources xmlns:tools="http://schemas.android.com/tools" xmlns:xliff="urn:oasis:names:tc:xliff:document:1.2">
+    <string name="action_keyboard_ime">صفحه‌کلید (IME)</string>
+    <string name="action_lock_orientation">قفل چرخش صفحه</string>
+    <string name="runtime_replacement_failed">متوقف کردن MIDlet در حال اجرا ممکن نشد. دوباره برنامه جدید را باز کنید.</string>
+    <string name="runtime_restart" tools:ignore="MissingTranslation">راه‌اندازی مجدد</string>
+    <string name="runtime_restart_confirmation" tools:ignore="MissingTranslation">این MIDlet دوباره راه‌اندازی شود؟ پیشرفت ذخیره‌نشده ممکن است از دست برود.</string>
+    <string name="FORCE_CLOSE_CONFIRMATION">این MIDlet متوقف شود؟ پیشرفت ذخیره‌نشده ممکن است از دست برود.</string>
+    <string name="runtime_preset_save_destination">ذخیره در</string>
+    <string name="runtime_preset_apply_destination">اعمال روی</string>
+    <string name="runtime_preset_this_midlet_only">فقط این MIDlet</string>
+    <string name="runtime_preset_update_destination">به‌روزرسانی <xliff:g id="profile_name" example="Action Games">%1$s</xliff:g></string>
+    <string name="runtime_preset_local_explanation">فقط کنترل‌های مجازی این MIDlet تغییر می‌کند.</string>
+    <string name="runtime_preset_update_explanation">چیدمان کنترل‌های مجازی در <xliff:g id="profile_name" example="Action Games">%1$s</xliff:g> به‌روزرسانی می‌شود.\nسایر MIDletهای پیوندشده به این نمایه در اجرای بعدی چیدمان جدید را دریافت می‌کنند.</string>
+    <string name="runtime_layout_apply_title"><xliff:g id="name" example="Example">%1$s</xliff:g> اعمال شود؟</string>
+    <string name="runtime_apply">اعمال</string>
+    <string name="runtime_preset_update_failed">برای این MIDlet ذخیره شد، اما به‌روزرسانی <xliff:g id="profile_name" example="Action Games">%1$s</xliff:g> ممکن نشد.</string>
+    <string name="runtime_preset_update_unlinked"><xliff:g id="profile_name" example="Action Games">%1$s</xliff:g> به‌روزرسانی شد، اما این MIDlet به‌روزرسانی‌های آینده آن را دریافت نخواهد کرد.</string>
+    <string name="msg_immediate_mode_disabled">پردازش فوری به‌دلیل تودرتویی بیش از حد فراخوانی‌های رویداد غیرفعال شد.</string>
+    <string name="msg_press_again_to_close">برای بستن دوباره فشار دهید</string>
+    <string name="save_log">ذخیره گزارش وقایع</string>
+    <string name="take_screenshot">گرفتن اسکرین‌شات</string>
+    <!-- Crash-report UI remains translatable; locales without coverage fall back to default English. -->
+    <string name="crash_reports">گزارش‌های عیب‌یابی</string>
+    <string name="diagnostic_report">گزارش عیب‌یابی</string>
+    <string name="view_reports">مشاهده گزارش‌های عیب‌یابی</string>
+    <string name="crash_reports_empty">گزارش عیب‌یابی محلی وجود ندارد</string>
+    <string name="crash_reports_loading">در حال بارگیری گزارش‌های عیب‌یابی</string>
+    <string name="crash_report_midlet_failure">خطای نشست MIDlet</string>
+    <string name="crash_report_java_report">گزارش عیب‌یابی Java</string>
+    <string name="crash_report_process_exit">گزارش خروج فرایند</string>
+    <string name="crash_report_list_subtitle"><xliff:g id="report_type" example="Java crash">%1$s</xliff:g> · <xliff:g id="timestamp" example="Nov 25, 09:40">%2$s</xliff:g></string>
+    <plurals name="crash_reports_selected_count">
+        <item quantity="one"><xliff:g id="count" example="3">%1$d</xliff:g> مورد انتخاب شده</item>
+        <item quantity="other"><xliff:g id="count" example="3">%1$d</xliff:g> مورد انتخاب شده</item>
+    </plurals>
+    <string name="copy_report">کپی</string>
+    <string name="report_on_github">گزارش در GitHub</string>
+    <string name="delete_report">حذف</string>
+    <string name="share_selected_reports" tools:ignore="MissingTranslation">هم‌رسانی گزارش‌های انتخاب‌شده</string>
+    <string name="delete_selected_reports">حذف گزارش‌های انتخاب‌شده</string>
+    <string name="crash_report_copied">گزارش کپی شد</string>
+    <string name="crash_report_bundle_preparing">در حال آماده‌سازی بسته عیب‌یابی…</string>
+    <string name="crash_report_bundle_ready_title">بسته عیب‌یابی آماده است</string>
+    <string name="crash_report_bundle_ready_message"><xliff:g id="name" example="Example">%1$s</xliff:g>\n\nدر بارگیری‌ها ← JL-Mod Plus Diagnostics ذخیره شد.\n\nپیش از ثبت مسئله در GitHub این فایل را پیوست کنید. بسته عیب‌یابی پس از پیوست شدن به مسئله عمومی خواهد شد.</string>
+    <string name="locate_bundle">پیدا کردن بسته</string>
+    <string name="open_github">باز کردن GitHub</string>
+    <string name="crash_report_bundle_failed">آماده‌سازی بسته عیب‌یابی ممکن نشد.</string>
+    <string name="crash_report_locate_failed">انتخابگر فایلی برای پیدا کردن بسته عیب‌یابی در دسترس نیست.</string>
+    <string name="crash_report_bundle_cleanup_failed">گزارش عیب‌یابی حذف شد، اما حذف بسته تولیدشده آن ممکن نشد.</string>
+    <string name="crash_report_github_unavailable">مرورگر یا برنامه‌ای برای باز کردن فرم گزارش GitHub یافت نشد.</string>
+    <string name="crash_report_delete_title">گزارش عیب‌یابی حذف شود؟</string>
+    <string name="crash_report_delete_message">این کار گزارش عیب‌یابی و هر بسته تولیدشده را برای همیشه از این دستگاه حذف می‌کند. فایل‌هایی که قبلاً در جای دیگری بارگذاری شده‌اند تأثیری نمی‌پذیرند.</string>
+    <plurals name="crash_reports_batch_delete_title">
+        <item quantity="one"><xliff:g id="count" example="3">%1$d</xliff:g> گزارش عیب‌یابی حذف شود؟</item>
+        <item quantity="other"><xliff:g id="count" example="3">%1$d</xliff:g> گزارش عیب‌یابی حذف شود؟</item>
+    </plurals>
+    <string name="crash_reports_batch_delete_message">این کار گزارش‌های عیب‌یابی انتخاب‌شده و هر بسته تولیدشده را برای همیشه از این دستگاه حذف می‌کند. فایل‌هایی که قبلاً در جای دیگری بارگذاری شده‌اند تأثیری نمی‌پذیرند.</string>
+    <string name="crash_report_delete_failed">حذف گزارش ممکن نشد.</string>
+    <string name="crash_report_unavailable">این گزارش دیگر در دسترس نیست.</string>
+    <string name="process_exit_recovery_title">خروج غیرمنتظره فرایند</string>
+    <string name="process_exit_recovery_message">JL-Mod Plus در نشست قبلی به‌طور غیرمنتظره متوقف شد (<xliff:g id="reason" example="Java crash">%1$s</xliff:g>). جزئیات عیب‌یابی به‌صورت محلی ذخیره شد.</string>
+    <string name="process_exit_recovery_message_midlet">فرایند یک MIDlet در نشست قبلی به‌طور غیرمنتظره متوقف شد (<xliff:g id="reason" example="Java crash">%1$s</xliff:g>). جزئیات عیب‌یابی به‌صورت محلی ذخیره شد.</string>
+    <string name="process_exit_recovery_message_named"><xliff:g id="app_name" example="Bounce Tales">%1$s</xliff:g> در نشست قبلی به‌طور غیرمنتظره متوقف شد (<xliff:g id="reason" example="Native crash">%2$s</xliff:g>). جزئیات عیب‌یابی به‌صورت محلی ذخیره شد.</string>
+    <string name="select_all_reports">انتخاب همه گزارش‌ها</string>
+    <string name="clear_report_selection">پاک کردن انتخاب گزارش‌ها</string>
+    <string name="runtime_memory_button_short" tools:ignore="MissingTranslation">دکمه حافظه</string>
+    <string name="runtime_action_on" tools:ignore="MissingTranslation">روشن</string>
+    <string name="runtime_action_off" tools:ignore="MissingTranslation">خاموش</string>
+    <string name="reconverting_wait">این MIDlet پیش از شروع به یک تبدیل سازگاری یک‌باره نیاز دارد.</string>
+    <string name="reconversion_done_with_warning">تبدیل سازگاری با هشدار کامل شد.</string>
+    <string name="reconversion_error_summary">تبدیل خودکار این MIDlet ممکن نشد.</string>
+    <string name="runtime_invalid_intent">درخواست اجرا نامعتبر است: مسیر MIDlet وجود ندارد.</string>
+    <string name="runtime_storage_in_use">فضای ذخیره‌سازی MIDlet هم‌اکنون در حال استفاده توسط محیط اجرای دیگری است.</string>
+    <string name="runtime_installation_changed">آماده‌سازی این MIDlet برای اجرا ممکن نشد.</string>
+    <string name="runtime_storage_unavailable">آماده‌سازی فضای ذخیره‌سازی MIDlet ممکن نشد.</string>
+    <string name="runtime_no_midlets">هیچ MIDletای در این برنامه یافت نشد.</string>
+    <!-- Runtime grouped controls derive body, accent, outline, icon, and selected-icon colors from the existing virtual-control appearance settings. -->
+    <string name="runtime_virtual_controls_title">کنترل‌های مجازی</string>
+    <string name="runtime_virtual_controls_dpad">D-pad</string>
+    <string name="runtime_virtual_controls_analog">آنالوگ</string>
+    <string name="runtime_virtual_controls_edit">ویرایش چیدمان</string>
+    <string name="runtime_virtual_controls_edit_guide_title">راهنمای ویرایش چیدمان</string>
+    <string name="runtime_virtual_controls_edit_guide_message">برای جابه‌جایی کنترل‌ها آن‌ها را بکشید. برای دکمه‌ها، دو انگشت را افقی یا عمودی حرکت دهید تا عرض یا ارتفاع تغییر کند، یا به‌صورت مورب حرکت دهید تا هر دو تغییر کنند. برای تغییر اندازه متناسب D-pad یا آنالوگ، دو انگشت را به هم نزدیک یا از هم دور کنید. پس از پایان روی «انجام شد» بزنید.</string>
+    <string name="runtime_virtual_controls_edit_guide_dont_show_again">دوباره نشان داده نشود</string>
+    <string name="runtime_virtual_controls_switch_layout">انتخاب چیدمان کنترل‌ها</string>
+    <string name="runtime_virtual_controls_show_controls">انتخاب کنترل‌های قابل مشاهده</string>
+    <string name="runtime_virtual_controls_template_dpad_standard">D-pad استاندارد</string>
+    <string name="runtime_virtual_controls_template_analog_standard">آنالوگ استاندارد</string>
+    <string name="screenshot_save_failed">ذخیره اسکرین‌شات ممکن نشد.</string>
+    <!-- %1$s is the saved screenshot's filesystem path. New key replaces the legacy prefix contract. -->
+    <string name="screenshot_saved_path">اسکرین‌شات در <xliff:g id="path" example="Pictures/Bounce Tales/Screenshot_20261125-103000.png">%1$s</xliff:g> ذخیره شد</string>
+    <!-- Deliberate English fallback until reviewed translations are available. -->
+    <string name="log_save_success" tools:ignore="MissingTranslation"><xliff:g id="name" example="Example">%1$s</xliff:g> در بارگیری‌ها ← JL-Mod Plus Diagnostics ذخیره شد.</string>
+    <string name="log_save_partial" tools:ignore="MissingTranslation">گزارش وقایع ناقص با نام <xliff:g id="name" example="Example">%1$s</xliff:g> در بارگیری‌ها ← JL-Mod Plus Diagnostics ذخیره شد.</string>
+    <string name="log_save_empty" tools:ignore="MissingTranslation">هیچ رکورد گزارشی برای برنامه در بافر Android موجود نیست.</string>
+    <string name="log_save_timeout" tools:ignore="MissingTranslation">زمان جمع‌آوری گزارش وقایع به پایان رسید. فایلی ذخیره نشد.</string>
+    <string name="log_save_failed">ذخیره گزارش وقایع ممکن نشد.</string>
+    <string name="runtime_midlet_list_failed">خواندن فهرست MIDlet این برنامه ممکن نشد.</string>
+    <string name="diagnostic_reason_java_crash">خرابی Java</string>
+    <string name="diagnostic_reason_native_crash">خرابی بومی</string>
+    <string name="diagnostic_reason_anr">پاسخ ندادن برنامه</string>
+    <string name="diagnostic_reason_signal">خاتمه با سیگنال</string>
+    <string name="diagnostic_reason_unknown">علت نامشخص</string>
+    <string name="crash_reports_delete_failed">حذف برخی از گزارش‌های عیب‌یابی ممکن نشد. سایر موارد ممکن است حذف شده باشند.</string>
+    <string name="crash_reports_bundle_cleanup_failed">گزارش‌های عیب‌یابی حذف شدند، اما حذف برخی از بسته‌های تولیدشده ممکن نشد.</string>
+    <string name="runtime_chrome_update_failed">به‌روزرسانی تنظیمات نمایشگر ممکن نشد. دوباره تلاش کنید.</string>
+    <string name="runtime_fullscreen_update_failed">دسترسی به تنظیم تمام‌صفحه ممکن نشد. دوباره تلاش کنید.</string>
+    <string name="runtime_camera_use_front">استفاده از دوربین جلو</string>
+    <string name="runtime_camera_use_rear">استفاده از دوربین پشت</string>
+    <string name="runtime_camera_switch_failed">جابه‌جایی دوربین ممکن نشد.</string>
+    <string name="runtime_camera_switch_recording" tools:ignore="MissingTranslation">پیش از جابه‌جایی دوربین، ضبط را متوقف کنید.</string>
+    <string name="date_field_not_set" tools:ignore="MissingTranslation">تنظیم نشده</string>
+    <string name="date_field_use_displayed_value" tools:ignore="MissingTranslation">استفاده از این مقدار</string>
+</resources>

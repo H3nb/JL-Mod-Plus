@@ -1,0 +1,356 @@
+<?xml version="1.0" encoding="utf-8"?>
+<!-- Per-MIDlet configuration, reusable profiles, camera, controller calibration, permissions, and system properties. -->
+<resources xmlns:tools="http://schemas.android.com/tools" xmlns:xliff="urn:oasis:names:tc:xliff:document:1.2">
+    <!-- %1$s is an optional quoted storage-volume name with a trailing space, or empty. -->
+    <!-- %1$s is a raw storage-volume description. -->
+    <string name="config_missing_app_storage_named">Fant ikke appen.\nKontroller om lagringsenheten «<xliff:g id="storage_name" example="SD card">%1$s</xliff:g>» er tilgjengelig, eller opprett snarveien på nytt.</string>
+    <string name="config_missing_app_storage_generic">Fant ikke appen.\nKontroller om lagringsenheten er tilgjengelig, eller opprett snarveien på nytt.</string>
+    <string name="midlet_name"><b>Navn: </b></string>
+    <string name="midlet_size"><b>Størrelse: </b></string>
+    <string name="midlet_vendor"><b>Leverandør: </b></string>
+    <string name="midlet_version"><b>Versjon: </b></string>
+    <string name="config_destination_graphics">Skjerm</string>
+    <string name="config_destination_rendering" tools:ignore="MissingTranslation">Grafikk</string>
+    <string name="config_destination_media">Medier</string>
+    <string name="config_camera_title">Kamera</string>
+    <string name="config_camera_default_title">Standardkamera</string>
+    <string name="config_camera_rear">Bak</string>
+    <string name="config_camera_front">Foran</string>
+    <string name="config_camera_resolution_title">Standardoppløsning</string>
+    <string name="config_camera_resolution_auto">Automatisk</string>
+    <string name="config_camera_resolution_portrait">480×640 — Stående</string>
+    <string name="config_camera_resolution_landscape">640×480 — Liggende</string>
+    <string name="config_destination_controls">Kontroller</string>
+    <string name="config_gamepad_test">Test kontroller</string>
+    <string name="config_gamepad_calibrate">Kalibrer kontroller</string>
+    <string name="config_gamepad_calibrate_summary">Måler den tilkoblede kontrollerens nøytralstilling samt områdene for spaker og avtrekkere.</string>
+    <string name="config_gamepad_stick_directions">Digitale retninger</string>
+    <string name="config_gamepad_stick_unassigned">Ikke tilordnet</string>
+    <string name="config_gamepad_stick_pointer">Pekerkilde</string>
+    <string name="config_gamepad_opaque_summary">Denne konfigurasjonen inneholder kontrollerdata i et format som ikke støttes. De bevares uendret og kan ikke redigeres her.</string>
+    <string name="config_gamepad_unsupported_summary">Denne kontrollerkonfigurasjonen støttes ikke. Den bevares uendret og kan ikke redigeres her.</string>
+    <string name="config_gamepad_keypad_title">Virtuelt tastatur</string>
+    <string name="config_gamepad_calibration_next">Neste</string>
+    <string name="config_gamepad_mapping_help_title">Hjelp for kontrollertilordning</string>
+    <string name="config_gamepad_directions_four">4-veis</string>
+    <string name="config_gamepad_directions_eight">8-veis</string>
+    <string name="config_gamepad_pointer_off">Av</string>
+    <string name="config_gamepad_pointer_cursor">Proporsjonal markør</string>
+    <string name="config_gamepad_pointer_joystick">Berøringsspake</string>
+    <!-- This is the same controller-identity fingerprint shown in diagnostics. -->
+    <string name="config_gamepad_calibration_profile">Kontrollersignatur: <xliff:g id="profile_name" example="Action Games">%1$s</xliff:g></string>
+    <string name="config_gamepad_calibration_phase_neutral">Venter på nøytralstilling</string>
+    <string name="config_gamepad_calibration_phase_stick_range">Spakområde</string>
+    <string name="config_gamepad_calibration_phase_trigger_range">Avtrekkerområde</string>
+    <string name="config_gamepad_calibration_phase_review">Se gjennom</string>
+    <string name="config_gamepad_calibration_phase_committed">Lagret</string>
+    <string name="config_gamepad_calibration_phase_cancelled">Avbrutt</string>
+    <string name="config_gamepad_calibration_waiting_controller">Koble til en kontroller med en støttet analogspak eller avtrekker. Kalibreringen starter når du først beveger en spak eller trykker på en avtrekker; eksisterende kalibrering forblir uendret til du lagrer.</string>
+    <string name="config_gamepad_calibration_no_analog_ranges">Denne kontrolleren tilbyr ingen støttede områder for analogspak eller avtrekker.</string>
+    <string name="config_gamepad_calibration_start">Hold alle spaker i midtstilling og slipp alle avtrekkere til nøytraltidtakeren er ferdig.</string>
+    <string name="config_gamepad_calibration_save_failed">Kunne ikke lagre kalibreringen. Eksisterende kalibrering forblir uendret.</string>
+    <string name="config_gamepad_calibration_no_supported_ranges">Fant ingen støttede analoge områder.</string>
+    <string name="config_gamepad_calibration_rejected">Kalibrering avvist: <xliff:g id="name" example="Example">%1$s</xliff:g></string>
+    <string name="config_gamepad_calibration_neutral_instructions">Hold alle oppdagede spaker i midtstilling og slipp alle oppdagede avtrekkere til nøytraltidtakeren er ferdig.</string>
+    <string name="config_gamepad_calibration_stick_instructions">Beveg hver oppdagede spak helt ut i alle retninger, og trykk deretter på «Neste».</string>
+    <string name="config_gamepad_calibration_trigger_instructions">Slipp og trykk hver oppdagede avtrekker helt inn, og trykk deretter på «Neste» for å se gjennom.</string>
+    <string name="config_gamepad_calibration_review_instructions">Klar til gjennomgang. Lagring erstatter bare kalibreringen for denne kontrolleren.</string>
+    <string name="config_gamepad_calibration_saved">Kalibrering lagret.</string>
+    <string name="config_gamepad_calibration_cancelled">Kalibrering avbrutt. Forrige kalibrering er uendret.</string>
+    <string name="config_gamepad_calibration_waiting_samples">Kalibreringen venter på målinger fra kontrolleren.</string>
+    <string name="config_gamepad_diagnosis_header">Kontrollerdiagnostikk</string>
+    <string name="config_gamepad_diagnosis_mode">Status: <xliff:g id="status" example="enabled">%1$s</xliff:g> · Kilde: <xliff:g id="source" example="controller">%2$s</xliff:g></string>
+    <string name="config_gamepad_diagnosis_notice">Merknad: <xliff:g id="name" example="Example">%1$s</xliff:g></string>
+    <string name="config_gamepad_diagnosis_analog_settings">Analoge innstillinger:</string>
+    <string name="config_gamepad_diagnosis_left_stick">Venstre spak</string>
+    <string name="config_gamepad_diagnosis_right_stick">Høyre spak</string>
+    <string name="config_gamepad_diagnosis_triggers">Avtrekkere</string>
+    <string name="config_gamepad_diagnosis_pointer">Pekermodus</string>
+    <string name="config_gamepad_status_enabled">aktivert</string>
+    <string name="config_gamepad_status_disabled">deaktivert</string>
+    <string name="config_gamepad_diagnosis_source_default">standard</string>
+    <string name="config_gamepad_diagnosis_source_controller">kontroller</string>
+    <string name="config_gamepad_diagnosis_source_explicit">eksplisitt</string>
+    <string name="config_gamepad_diagnosis_device"><xliff:g id="device_name" example="Xbox Controller">%1$s</xliff:g> (#<xliff:g id="device_id" example="1">%2$d</xliff:g>)</string>
+    <string name="config_gamepad_calibration_issue_no_channels">ingen støttede kanaler</string>
+    <string name="config_gamepad_calibration_issue_invalid_constraints">ugyldige kalibreringsbetingelser</string>
+    <string name="config_gamepad_calibration_issue_non_finite">ikke-endelig måling</string>
+    <string name="config_gamepad_calibration_issue_insufficient_samples">for få målinger</string>
+    <string name="config_gamepad_calibration_issue_invalid_range">ugyldig område</string>
+    <string name="config_gamepad_calibration_issue_rest_outside_range">hvileverdi utenfor området</string>
+    <string name="config_gamepad_calibration_issue_rest_too_noisy">hvilestillingen er ikke stabil nok</string>
+    <string name="config_gamepad_calibration_phase_unknown">Status ikke tilgjengelig</string>
+    <string name="config_gamepad_diagnosis_capabilities">Egenskaper for tilkoblet kontroller:</string>
+    <string name="config_gamepad_diagnosis_descriptor">Deskriptor: <xliff:g id="name" example="Example">%1$s</xliff:g></string>
+    <!-- %1$s is a controller-identity fingerprint derived from its descriptor and capabilities. -->
+    <!-- It is not a handwritten signature or a cryptographic signing operation. -->
+    <string name="config_gamepad_diagnosis_signature">Signatur: <xliff:g id="name" example="Example">%1$s</xliff:g></string>
+    <string name="config_gamepad_diagnosis_axis">Akse <xliff:g id="axis_index" example="0">%1$d</xliff:g> [<xliff:g id="min_value" example="-1.0">%2$s</xliff:g>, <xliff:g id="max_value" example="1.0">%3$s</xliff:g>] flat=<xliff:g id="flat" example="0.05">%4$s</xliff:g> fuzz=<xliff:g id="fuzz" example="0.01">%5$s</xliff:g></string>
+    <string name="config_gamepad_diagnosis_no_controller">(ingen kontroller tilkoblet)</string>
+    <string name="config_gamepad_diagnosis_samples_not_sent">Inndatamålinger sendes med hensikt ikke til MIDlet-en.</string>
+    <string name="config_destination_system">System</string>
+    <string name="config_screen_behavior" tools:ignore="MissingTranslation">Skjermatferd</string>
+    <string name="config_screen_size">Skjermstørrelse</string>
+    <string name="config_select_screen_size">Velg skjermstørrelse</string>
+    <string name="config_current_screen_size">Gjeldende størrelse: <xliff:g id="name" example="Example">%1$s</xliff:g></string>
+    <string name="config_custom_resolution">Tilpasset oppløsning</string>
+    <string name="profile_custom">Tilpasset</string>
+    <string name="select_dialog_title">Velg MIDlet</string>
+    <string name="SIZE_PRESETS">Forhåndsinnstillinger for skriftstørrelse</string>
+    <string name="config_color_picker_title">Velg farge</string>
+    <string name="config_color_picker_hex">Heksadesimal farge</string>
+    <string name="config_color_picker_hint">Dra i fargefeltene eller skriv inn en sekssifret RGB-verdi.</string>
+    <string name="config_color_picker_invalid">Skriv inn nøyaktig seks heksadesimale sifre.</string>
+    <string name="config_color_picker_saturation_value">Metning og lysstyrke</string>
+    <string name="config_color_picker_hue">Fargetone</string>
+    <string name="config_decrease_value">Reduser verdi</string>
+    <string name="config_increase_value">Øk verdi</string>
+    <string name="midlet_failure_recovery_title">MIDlet stoppet uventet</string>
+    <string name="midlet_failure_recovery_message">MIDlet-en stoppet uventet. Diagnostikkinformasjon ble lagret lokalt. Du kan fortsette å bruke JL-Mod Plus.</string>
+    <string name="midlet_failure_recovery_message_named">«<xliff:g id="name" example="Example">%1$s</xliff:g>» stoppet uventet. Diagnostikkinformasjon ble lagret lokalt. Du kan fortsette å bruke JL-Mod Plus.</string>
+    <plurals name="config_system_properties_value">
+        <item quantity="one"><xliff:g id="count" example="3">%1$d</xliff:g> egenskap</item>
+        <item quantity="other"><xliff:g id="count" example="3">%1$d</xliff:g> egenskaper</item>
+    </plurals>
+    <string name="config_search_suggestions" tools:ignore="MissingTranslation">Foreslåtte innstillinger</string>
+    <string name="config_search_clear" tools:ignore="MissingTranslation">Tøm søk</string>
+    <string name="config_search_title" tools:ignore="MissingTranslation">Søk i innstillinger</string>
+    <string name="config_search_hint" tools:ignore="MissingTranslation">Finn en innstilling, f.eks. MMPX eller retning</string>
+    <string name="config_search_no_results" tools:ignore="MissingTranslation">Ingen samsvarende innstillinger</string>
+    <string name="config_search_upscaling_requires_resolution" tools:ignore="MissingTranslation">Velg «Automatisk» eller 2×–10× under «Gjengivelsesoppløsning» for å konfigurere bitkart-oppskalering.</string>
+    <string name="config_search_requires_manual_scale" tools:ignore="MissingTranslation">Velg «Manuell» under «Skaleringsmodus» for å justere skalaen.</string>
+    <string name="config_search_requires_custom_background" tools:ignore="MissingTranslation">Velg «Tilpasset» under «Bakgrunnsmodus» for å redigere bakgrunnsfargen.</string>
+    <string name="config_search_requires_gles" tools:ignore="MissingTranslation">Velg «Maskinvareakselerasjon (OpenGL ES)» under «Grafikkmodus» for å konfigurere shader-effekter.</string>
+    <string name="config_search_requires_renderer_mode" tools:ignore="MissingTranslation">Velg «Programvare» eller «Maskinvareakselerasjon (Surface)» under «Grafikkmodus» for å konfigurere asynkrone skjermoppdateringer.</string>
+    <string name="config_font_page_title" tools:ignore="MissingTranslation">Skriftinnstillinger</string>
+    <string name="config_display_more" tools:ignore="MissingTranslation">Tekst og ytelse</string>
+    <string name="config_destination_home" tools:ignore="MissingTranslation">Hjem</string>
+    <string name="config_overview_profile_draft" tools:ignore="MissingTranslation">Profilutkast</string>
+    <string name="config_overview_profile_draft_summary" tools:ignore="MissingTranslation">Rediger denne gjenbrukbare profilen, og lagre deretter endringene fra verktøylinjen.</string>
+    <string name="config_overview_quick_access" tools:ignore="MissingTranslation">Hurtigtilgang</string>
+    <string name="config_system_properties_editor_label">Egenskaper</string>
+    <string name="config_overview_enabled" tools:ignore="MissingTranslation">På</string>
+    <string name="config_overview_disabled" tools:ignore="MissingTranslation">Av</string>
+    <string name="config_overview_media_summary" tools:ignore="MissingTranslation">Lydbank og kamera</string>
+    <string name="config_overview_hint" tools:ignore="MissingTranslation">Velg en kategori for å tilpasse spillet. Hver innstilling har én fast plass; disse snarveiene tar deg rett dit.</string>
+    <string name="config_destination_general">Generelt</string>
+    <string name="config_basic_display">MIDlet-skjerm</string>
+    <string name="config_display_appearance">Skjermutseende</string>
+    <string name="config_display_rendering">Gjengivelse</string>
+    <string name="config_image_quality_section" tools:ignore="MissingTranslation">Bildekvalitet</string>
+    <string name="config_frame_rate_section" tools:ignore="MissingTranslation">Bildefrekvens</string>
+    <string name="config_fps_position_title" tools:ignore="MissingTranslation">FPS-plassering</string>
+    <string name="config_display_text">Tekst og skrifttyper</string>
+    <string name="config_input_mapping_section" tools:ignore="MissingTranslation">Inndata og tilordning</string>
+    <string name="config_controls_appearance_section" tools:ignore="MissingTranslation">Utseende for kontroller</string>
+    <string name="config_controls_virtual_keyboard">Virtuelle kontroller</string>
+    <string name="config_controls_virtual_keyboard_colors">Farger for virtuelle kontroller</string>
+    <string name="config_virtual_controls_color_preview">Fargeforhåndsvisning</string>
+    <string name="config_virtual_controls_preview_normal">Normal</string>
+    <string name="config_virtual_controls_preview_pressed">Trykket</string>
+    <string name="config_controls_maintenance">Oppsett</string>
+    <string name="config_controls_skin_help">Endrer utseendet på tastaturknapper, D-pad og analogspak ved hjelp av tilpassede bilder.</string>
+    <string name="config_controls_color_button_normal">Normal knapp</string>
+    <string name="config_controls_color_button_pressed">Trykket knapp</string>
+    <string name="config_controls_color_label_normal">Normal etikett</string>
+    <string name="config_controls_color_label_pressed">Trykket etikett</string>
+    <string name="config_controls_color_outline_short">Omriss</string>
+    <string name="config_controls_disabled_hint">Virtuelle kontroller er for øyeblikket av. Du kan likevel tilpasse dem her.</string>
+    <string name="config_controls_opacity_help" formatted="false">Justerer gjennomsiktigheten for virtuelle kontroller: 0 % er helt gjennomsiktig; 100 % er helt synlig.</string>
+    <string name="config_controls_opaque_outside">Vis kontroller uten gjennomsiktighet utenfor MIDlet-skjermen</string>
+    <string name="config_controls_opaque_outside_help">Kontroller utenfor MIDlet-skjermen ignorerer ugjennomsiktighet. Kontroller over skjermen følger fortsatt den valgte ugjennomsiktigheten.</string>
+    <string name="config_controls_connect_controller">Koble til en kontroller for å kalibrere</string>
+    <string name="config_controls_color_skin_notice">En drakt for hele knapper kan erstatte standard farger, form og omriss for knapper.</string>
+    <string name="config_current_value">Gjeldende verdi</string>
+    <string name="config_maintenance">Tilbakestilling og data</string>
+    <string name="config_midlet_actions" tools:ignore="MissingTranslation">MIDlet-handlinger</string>
+    <string name="config_profile_maintenance" tools:ignore="MissingTranslation">Profilhandlinger</string>
+    <string name="config_reset_profile_settings" tools:ignore="MissingTranslation">Tilbakestill profilutkast</string>
+    <string name="config_reset_profile_settings_summary" tools:ignore="MissingTranslation">Gjenopprett dette utkastets innstillinger og virtuelle kontroller til standard.</string>
+    <string name="config_system_compatibility" tools:ignore="MissingTranslation">Emuleringskompatibilitet</string>
+    <string name="config_reset_all_settings">Tilbakestill MIDlet-konfigurasjon</string>
+    <string name="config_reset_all_settings_summary">Gjenopprett denne MIDlet-ens innstillinger og virtuelle kontroller til standard uten å slette dataene.</string>
+    <string name="config_delete_app_data">Slett MIDlet-data</string>
+    <string name="config_delete_app_data_summary">Slett denne MIDlet-ens data permanent, inkludert lagringsfiler. Innstillingene beholdes.</string>
+    <string name="config_message_reset_settings">Vil du gjenopprette MIDlet-konfigurasjonen og virtuelle kontroller til standard? Lagrede data forblir intakte. Eventuell koblet profil vil ikke lenger følges.</string>
+    <string name="config_message_reset_profile_settings">Vil du tilbakestille denne profilens innstillinger og virtuelle kontroller til standard? Du kan fortsatt redigere eller avbryte før du lagrer.</string>
+    <string name="config_message_delete_app_data">Vil du slette alle lagringsfiler og data som er opprettet av denne MIDlet-en permanent? MIDlet-innstillingene slettes ikke.</string>
+    <string name="config_lock_custom_resolution_ratio">Lås sideforhold</string>
+    <string name="config_swap_screen_size">Bytt bredde og høyde</string>
+    <string name="profile_builtin_settings">JL-Mod-standard</string>
+    <string name="profile_default_badge_short">Standard for nye MIDlets</string>
+    <string name="profile_template_summary">Lagrede MIDlet-innstillinger.</string>
+    <string name="profile_name_exists">Det finnes allerede en profil med dette navnet.</string>
+    <string name="profile_delete_template_message">Vil du slette profilen «<xliff:g id="profile_name" example="Action Games">%1$s</xliff:g>»? MIDlets som bruker den, beholder gjeldende innstillinger, men vil ikke motta fremtidige oppdateringer.</string>
+    <string name="profile_template_operation_failed">Kunne ikke fullføre profiloperasjonen.</string>
+    <string name="config_help_screen_size">Angir den virtuelle Java ME-skjermoppløsningen som MIDlet-en bruker.</string>
+    <string name="config_help_orientation">Velger skjermretningen mens MIDlet-en kjører.</string>
+    <string name="config_help_scale_type">Velg hvordan spillet tilpasses skjermen. Velg «Manuell» for å angi en tilpasset skala.</string>
+    <string name="config_help_scale_ratio" formatted="false">Justerer vist størrelse fra 1 % til 1000 %. Ved 100 % bruker spillet sin opprinnelige størrelse; større verdier kan strekke seg utenfor skjermen.</string>
+    <string name="config_help_lock_custom_resolution_ratio">Beholder sideforholdet mens du redigerer den tilpassede oppløsningen.</string>
+    <string name="config_help_virtual_keyboard">Viser skjermkontroller for denne MIDlet-en.</string>
+    <string name="config_help_touch_input">Lar MIDlet-en motta pekerinndata fra berøringsskjermen.</string>
+    <string name="config_help_background">Fyller ubrukt plass rundt MIDlet-skjermen.</string>
+    <string name="config_background_mode">Bakgrunnsmodus</string>
+    <string name="config_background_custom">Tilpasset</string>
+    <string name="config_background_theme">Tema</string>
+    <string name="config_background_immersive">Oppslukende</string>
+    <string name="config_background_theme_help">Bruker temafargen fra JL-Mod Plus rundt MIDlet-skjermen.</string>
+    <string name="config_background_immersive_help">Fyller ubrukt plass med farger hentet fra MIDlet-skjermen.</string>
+    <string name="config_background_dynamic">Dynamisk farge</string>
+    <string name="config_background_dynamic_help">Bruker én hel farge som tilpasser seg jevnt til MIDlet-skjermen.</string>
+    <string name="config_background_custom_color">Bakgrunnsfarge</string>
+    <string name="config_help_background_custom_color">Angir fargen på ubrukt plass rundt MIDlet-skjermen.</string>
+    <string name="config_help_skin">Viser et valgfritt bilde eller en ramme rundt MIDlet-skjermen.</string>
+    <string name="config_help_screen_gravity">Plasserer MIDlet-skjermen når det er ubrukt plass igjen.</string>
+    <string name="config_help_screen_padding">Legger til marg i piksler mellom MIDlet-skjermen og kanten av visningsområdet.</string>
+    <string name="config_help_filter">Bruker lineær filtrering for å jevne ut MIDlet-skjermen ved skalering.</string>
+    <string name="config_warning_filter_shader">Lineær filtrering jevner ut inngangen før skjermshaderen behandler den, og kan redusere skarpheten i resultatet.</string>
+    <string name="config_help_immediate">Behandler MIDlet-hendelser umiddelbart i stedet for å sette dem i kø. Kan forbedre responsen, men gjøre enkelte MIDlets ustabile.</string>
+    <string name="config_help_graphics_mode">Velger gjengivelsesbanen for MIDlet-skjermen. Maskinvareakselerasjon kan gi bedre ytelse, men kompatibiliteten varierer etter enhet.</string>
+    <string name="config_help_shader">Legger til en shader på MIDlet-bildet før det vises.</string>
+    <string name="config_help_shader_tuning">Tilgjengelige kontroller avhenger av den valgte shaderen.</string>
+    <string name="config_help_parallel_redraw">Planlegger bildevisning asynkront. Dette kan forbedre ytelsen på enkelte enheter.</string>
+    <string name="config_help_force_fullscreen">Skjuler kommandolinjen når MIDlet-en starter. MIDlet-en kan vise den igjen under spilling.</string>
+    <string name="config_help_fps_limit">Angir FPS-grensen ved 1× emuleringshastighet. Den effektive grensen følger emuleringshastigheten; 0 (Maksimum) bruker skjermens maksimale oppdateringsfrekvens.</string>
+    <string name="config_timing_mode_full_guest">Emuleringstid</string>
+    <string name="config_timing_mode_real_wall">Systemtid</string>
+    <string name="config_help_emulation_speed">Endrer MIDlet-klokkehastigheten og støttede forsinkelser. Android-lyd og brukergrensesnitt forblir i normal hastighet.</string>
+    <string name="config_help_timing_mode">Velger om MIDlet-en bruker emuleringstid eller systemtid. Relative forsinkelser forblir skalert med emuleringshastigheten.</string>
+    <string name="config_help_timing_unavailable">Tidsinnstillinger er ikke tilgjengelige for denne MIDlet-installasjonen. Installer eller konverter MIDlet-en på nytt for å aktivere dem.</string>
+    <string name="config_help_generic_color">Angir fargen for dette visuelle elementet.</string>
+    <string name="config_help_encoding">Velger tegnkodingen som rapporteres som microedition.encoding.</string>
+    <string name="config_edit_system_properties">Rediger systemegenskaper</string>
+    <string name="config_help_system_properties">Angir avanserte Java ME-egenskaper som rapporteres til MIDlet-en.</string>
+    <string name="config_help_system_properties_long">Rediger én egenskap per linje som «navn: verdi». Feil verdier kan påvirke kompatibiliteten.</string>
+    <string name="config_system_properties_info">De fleste MIDlets trenger ingen endringer her.</string>
+    <string name="config_font_sizes">Skriftstørrelser</string>
+    <string name="config_help_font_sizes">Angir liten, middels og stor Java ME-skriftstørrelse for MIDlet-en.</string>
+    <string name="config_help_font_sizes_long">Angir Java ME-skriftstørrelser i piksler, eller skalerte enheter når Androids skriftstørrelse er aktivert. Endre dem sammen for å holde teksten balansert.</string>
+    <string name="config_font_sizes_value">Liten <xliff:g id="small_size" example="12">%1$s</xliff:g> · middels <xliff:g id="medium_size" example="16">%2$s</xliff:g> · stor <xliff:g id="large_size" example="20">%3$s</xliff:g></string>
+    <string name="config_help_font_presets">Bruker skriftstørrelser tilpasset vanlige Java ME-skjermoppløsninger.</string>
+    <string name="config_help_font_dimensions">Bruker Androids skriftstørrelse på Java ME-skriftstørrelser.</string>
+    <string name="config_help_font_aa">Jevner ut kantene på gjengitt tekst.</string>
+    <string name="config_help_key_layout">Velger tastekodeskjemaet som rapporteres til MIDlet-en.</string>
+    <string name="config_help_key_mapping">Tilordner fysiske Android-taster og -knapper til handlinger på Java ME-tastaturet.</string>
+    <string name="config_help_vk_button_shape">Angir standard knappeform for tastaturet. D-pad og analogspak har egne former.</string>
+    <string name="config_help_vk_feedback">Vibrerer når en virtuell kontroll trykkes, hvis vibrasjon er aktivert i Innstillinger.</string>
+    <string name="config_help_vk_hide_delay">Skjuler kontroller etter denne forsinkelsen når de dekker MIDlet-skjermen. Verdien 0 deaktiverer automatisk skjuling.</string>
+    <string name="config_help_reset_layout">Gjenoppretter oppsettet for virtuelle kontroller uten å endre andre MIDlet-innstillinger.</string>
+    <string name="config_help_skip_resume">Etter første vellykkede startApp() hoppes senere kall over når MIDlet-en gjenopptas. Brukes bare for MIDlets som feiler ved gjenopptakelse.</string>
+    <string name="config_help_soundbank">Velger lydbanken som brukes til MIDI-syntese.</string>
+    <string name="profile_create_title">Opprett profil</string>
+    <string name="profile_rename_title">Gi profilen nytt navn</string>
+    <string name="presets">Profiler</string>
+    <string name="preset_use">Bruk profil</string>
+    <string name="preset_save_as">Lagre som profil</string>
+    <string name="preset_custom_configuration">Tilpasset konfigurasjon</string>
+    <string name="preset_based_on_modified">Denne MIDlet-ens gjeldende konfigurasjon skiller seg fra «<xliff:g id="profile_name" example="Action Games">%1$s</xliff:g>».</string>
+    <string name="preset_builtin">JL-Mod-standard</string>
+    <string name="preset_builtin_summary">Innebygde MIDlet-innstillinger og virtuelle kontroller.</string>
+    <string name="preset_picker_title">Bruk profil</string>
+    <string name="preset_manage">Administrer profiler</string>
+    <string name="profile_more_actions">Flere handlinger for <xliff:g id="profile_name" example="Action Games">%1$s</xliff:g></string>
+    <string name="profile_create_summary">Lagre et gjenbrukbart oppsett for andre MIDlets.</string>
+    <string name="preset_application_settings">MIDlet-innstillinger</string>
+    <string name="preset_includes_keyboard_layout">Oppsett for virtuelle kontroller inkludert.</string>
+    <string name="preset_virtual_keyboard_on">Virtuelle kontroller aktivert</string>
+    <string name="preset_virtual_keyboard_off">Virtuelle kontroller deaktivert</string>
+    <string name="preset_apply">Bruk</string>
+    <string name="preset_apply_failed_summary">Kunne ikke bruke denne profilen. Kontroller kilden og prøv på nytt.</string>
+    <string name="preset_choose_parts">Velg hva som skal brukes</string>
+    <string name="preset_name">Navn</string>
+    <string name="preset_save_help">Lagre denne MIDlet-ens innstillinger og, når det er tilgjengelig, oppsettet for virtuelle kontroller som en profil. Denne MIDlet-en vil bruke profilen og motta fremtidige oppdateringer.</string>
+    <string name="preset_update">Oppdater «<xliff:g id="profile_name" example="Action Games">%1$s</xliff:g>»</string>
+    <string name="preset_update_title">Vil du oppdatere «<xliff:g id="profile_name" example="Action Games">%1$s</xliff:g>»?</string>
+    <string name="preset_update_summary">Erstatt «<xliff:g id="profile_name" example="Action Games">%1$s</xliff:g>» med denne MIDlet-ens gjeldende innstillinger og, hvis tilgjengelig, oppsettet for virtuelle kontroller. Andre MIDlets som bruker denne profilen, får endringene neste gang de starter.</string>
+    <string name="preset_update_confirm">Oppdater</string>
+    <string name="preset_saved_unlinked_warning">Profilen ble lagret, men denne MIDlet-en vil ikke motta fremtidige oppdateringer fra den.</string>
+    <string name="profile_default_fallback_notice">Standardprofilen «<xliff:g id="profile_name" example="Action Games">%1$s</xliff:g>» kunne ikke brukes. Den kan mangle, være ufullstendig eller uleselig. «JL-Mod-standard» er nå standard for nye MIDlets.</string>
+    <string name="preset_discard_changes_title">Vil du forkaste endringene?</string>
+    <string name="preset_discard_changes_summary">Dette profilutkastet er ikke lagret.</string>
+    <string name="preset_continue_editing">Fortsett redigering</string>
+    <string name="preset_discard_changes">Forkast</string>
+    <string name="preset_name_exists">Det finnes allerede en profil med dette navnet.</string>
+    <string name="preset_invalid_name">Skriv inn et gyldig profilnavn.</string>
+    <string name="preset_manager_default_section">Standard for nye MIDlets</string>
+    <string name="preset_manager_presets_section">Mine profiler</string>
+    <string name="preset_manager_keyboard_section">Lagrede oppsett for virtuelle kontroller</string>
+    <string name="preset_default_policy_summary">Brukes når en ny MIDlet installeres.</string>
+    <string name="preset_keyboard_layout_unavailable">Oppsett for virtuelle kontroller er ikke tilgjengelig.</string>
+    <string name="edit_preset">Rediger profil</string>
+    <string name="preset_edit_title">Rediger profil: <xliff:g id="profile_name" example="Action Games">%1$s</xliff:g></string>
+    <string name="preset_unavailable_section">Utilgjengelig</string>
+    <string name="preset_unavailable_summary">Kunne ikke laste inn denne profilen. Gi den nytt navn eller slett den.</string>
+    <string name="preset_change_default">Endre</string>
+    <string name="preset_default_picker_title">Standard for nye MIDlets</string>
+    <string name="profile_follows_updates">Følger fremtidige profiloppdateringer.</string>
+    <string name="profile_apply_whole">Hele profilen</string>
+    <string name="profile_apply_whole_follows">Erstatt innstillinger og oppsett; følg fremtidige oppdateringer.</string>
+    <string name="profile_apply_whole_without_layout">Erstatt innstillinger, fjern lokalt oppsett og følg oppdateringer.</string>
+    <string name="profile_apply_settings_only">Bare MIDlet-innstillinger</string>
+    <string name="profile_apply_settings_keeps_layout">Behold denne MIDlet-ens oppsett; bruk tilpasset konfigurasjon.</string>
+    <string name="profile_apply_layout_only">Bare oppsett for virtuelle kontroller</string>
+    <string name="profile_apply_layout_keeps_settings">Behold denne MIDlet-ens innstillinger; bruk tilpasset konfigurasjon.</string>
+    <string name="config_analog_stick">Analogspak</string>
+    <string name="config_analog_stick_summary">Velg Av, 4-veis, 8-veis eller talltastatur for hovedanalogspaken. Kontrollerknapper bruker tastetilordninger.</string>
+    <string name="config_analog_stick_off">Av</string>
+    <string name="config_controller_help_body_compact">Kontrollerknapper bruker samme tastetilordninger som tastatur- og telefontaster. Analogspaken sender bare retningsinndata til MIDlet-en. Androids tilbakeknapp beholder normal oppførsel; enhver fysisk knapp tilordnet M åpner MIDlet-kjøretidsmenyen.</string>
+    <string name="config_show_fps_title" tools:ignore="MissingTranslation">Vis FPS</string>
+    <string name="config_show_fps_help" tools:ignore="MissingTranslation">Viser bildefrekvensen mens du spiller.</string>
+    <string name="config_search_requires_fps" tools:ignore="MissingTranslation">Slå på «Vis FPS» for å endre plasseringen.</string>
+    <string name="midlet_running_notification_title">MIDlet kjører</string>
+    <string name="midlet_running_notification_text"><xliff:g id="name" example="Example">%1$s</xliff:g> kjører.</string>
+    <string name="midlet_running_notification_channel">MIDlet-kjøretid</string>
+    <string name="config_gamepad_directions_numeric_v2">Talltastatur</string>
+    <string name="midlet_file_permission_title">Lagringstilgang</string>
+    <string name="midlet_file_permission_read">Denne MIDlet-en ønsker å lese filer.</string>
+    <string name="midlet_file_permission_write">Denne MIDlet-en ønsker å opprette, endre eller slette filer.</string>
+    <string name="midlet_file_permission_allow_once">Tillat én gang</string>
+    <string name="midlet_file_permission_allow_session">Tillat mens MIDlet-en kjører</string>
+    <string name="midlet_file_permission_allow_always">Tillat alltid</string>
+    <string name="midlet_file_permission_deny">Avslå alltid</string>
+    <string name="midlet_permissions_settings_title">Tillatelser for lagringstilgang</string>
+    <string name="midlet_permissions_read">Les filer</string>
+    <string name="midlet_permissions_write">Endre filer</string>
+    <string name="midlet_permissions_ask">Spør</string>
+    <string name="midlet_permissions_allow">Tillat alltid</string>
+    <string name="midlet_permissions_deny">Avslå</string>
+    <string name="midlet_permissions_save_failed">Kunne ikke lagre lagringsinnstillingene.</string>
+    <string name="config_avoid_camera_cutout_title">Unngå kamerautskjæring</string>
+    <string name="config_avoid_camera_cutout_summary">Hold MIDlet-skjermen og virtuelle kontroller unna kamera- eller skjermutskjæringen.</string>
+    <string name="midlet_permissions_write_summary">Inkluderer oppretting og sletting av filer.</string>
+    <string name="midlet_legacy_import_title">Eldre Siemens-lagringsfiler</string>
+    <string name="midlet_legacy_import_action">Velg en gammel lagringsfil</string>
+    <string name="midlet_legacy_import_summary">Kopier en gammel lagringsfil til denne MIDlet-ens private Siemens-lagring. Stopp MIDlet-en først.</string>
+    <string name="midlet_legacy_import_success">Filen er kopiert til denne MIDlet-ens private lagring.</string>
+    <string name="midlet_legacy_import_failed">Importen mislyktes. Stopp MIDlet-en og kontroller at målfilen ikke allerede finnes.</string>
+    <string name="midlet_storage_mode_title">Lagringsmodus</string>
+    <string name="midlet_storage_mode_shared">Virtuell</string>
+    <string name="midlet_storage_mode_android">Android</string>
+    <string name="midlet_storage_mode_shared_summary">Bruk delte mapper i arbeidsmappen.</string>
+    <string name="midlet_storage_mode_android_summary">Bruk Android-lagring som i tidligere versjoner.</string>
+    <string name="config_system_properties_reset" tools:ignore="MissingTranslation">Tilbakestill til standard</string>
+    <string name="config_system_properties_reset_title" tools:ignore="MissingTranslation">Vil du tilbakestille systemegenskapene?</string>
+    <string name="config_system_properties_reset_message" tools:ignore="MissingTranslation">Vil du erstatte innholdet i redigeringsfeltet med gjeldende JL-Mod Plus-standarder? Andre innstillinger forblir uendret. Lagre for å ta i bruk tilbakestillingen.</string>
+    <string name="config_asset_add">+ Legg til fra fil</string>
+    <string name="config_asset_copy_hint">Kopieres til arbeidsmappen; originalfilen blir værende der den er.</string>
+    <string name="config_asset_name">Filnavn</string>
+    <string name="config_asset_delete_confirmation">Vil du slette «<xliff:g id="name" example="Example">%1$s</xliff:g>» fra arbeidsmappen? Andre MIDlets kan også bruke denne filen. Kopier andre steder påvirkes ikke.</string>
+    <string name="config_asset_imported">Kopiert og valgt: <xliff:g id="name" example="Example">%1$s</xliff:g></string>
+    <string name="config_asset_reused">Eksisterende fil valgt: <xliff:g id="name" example="Example">%1$s</xliff:g></string>
+    <string name="config_asset_renamed">Gitt nytt navn til <xliff:g id="name" example="Example">%1$s</xliff:g></string>
+    <string name="config_asset_deleted">Slettet <xliff:g id="name" example="Example">%1$s</xliff:g></string>
+    <string name="config_asset_invalid">Filen støttes ikke eller er ugyldig.</string>
+    <string name="config_asset_operation_failed">Kunne ikke fullføre filoperasjonen.</string>
+    <string name="config_save_failed" tools:ignore="MissingTranslation">Kunne ikke lagre innstillingene. Endringene dine er fortsatt åpne — prøv på nytt.</string>
+    <string name="config_asset_busy">Fullfør gjeldende filoperasjon først.</string>
+    <string name="config_quick_settings" tools:ignore="MissingTranslation">Hurtiginnstillinger</string>
+    <string name="config_all_settings" tools:ignore="MissingTranslation">Alle innstillinger</string>
+    <string name="profile_local_changes_pending" tools:ignore="MissingTranslation">Lokale endringer er ikke lagret i profilen</string>
+    <string name="profile_local_configuration_summary" tools:ignore="MissingTranslation">Innstillinger bare for denne MIDlet-en</string>
+    <string name="profile_not_following" tools:ignore="MissingTranslation">Basert på «<xliff:g id="profile_name" example="Action Games">%1$s</xliff:g>» · Følger ikke oppdateringer</string>
+    <string name="profile_stop_following" tools:ignore="MissingTranslation">Slutt å følge profil</string>
+    <string name="profile_follow_again" tools:ignore="MissingTranslation">Følg profil igjen</string>
+    <string name="profile_follow_again_summary" tools:ignore="MissingTranslation">Vil du erstatte denne MIDlet-ens lokale innstillinger og virtuelle kontroller med den nyeste «<xliff:g id="profile_name" example="Action Games">%1$s</xliff:g>»-profilen og følge fremtidige oppdateringer?</string>
+</resources>

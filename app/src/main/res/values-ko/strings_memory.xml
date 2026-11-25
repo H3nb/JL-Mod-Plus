@@ -1,0 +1,246 @@
+<?xml version="1.0" encoding="utf-8"?>
+<!-- Memory Editor search, inspector, bookmarks, saved variables, quick actions, and script builder. -->
+<resources xmlns:tools="http://schemas.android.com/tools" xmlns:xliff="urn:oasis:names:tc:xliff:document:1.2">
+    <string name="memory_editor_bubble">메모리 편집기 플로팅 버튼</string>
+    <string name="memory_editor_bubble_content_description">메모리 편집기 열기</string>
+    <string name="memory_editor_previous_results_page_action">이전 결과 페이지</string>
+    <string name="memory_editor_next_results_page_action">다음 결과 페이지</string>
+    <string name="memory_editor">메모리 편집기</string>
+    <string name="memory_editor_search_hint">값</string>
+    <string name="memory_editor_next_scan">다음 스캔</string>
+    <string name="memory_editor_new_search">새 검색</string>
+    <plurals name="memory_editor_results">
+        <item quantity="other">결과 <xliff:g id="count" example="3">%1$d</xliff:g>개</item>
+    </plurals>
+    <plurals name="memory_editor_candidates">
+        <item quantity="other">후보 <xliff:g id="count" example="3">%1$d</xliff:g>개</item>
+    </plurals>
+    <plurals name="memory_editor_search_complete">
+        <item quantity="other">검색 완료 · 후보 <xliff:g id="count" example="3">%1$d</xliff:g>개</item>
+    </plurals>
+    <string name="memory_editor_no_results">결과 없음</string>
+    <string name="memory_editor_no_watch">감시 목록이 비어 있습니다</string>
+    <string name="memory_editor_unsupported">이 런타임에서는 메모리 편집기를 사용할 수 없습니다.</string>
+    <string name="memory_editor_engine_unavailable">메모리 편집기 엔진을 사용할 수 없습니다.</string>
+    <string name="memory_editor_engine_reconnecting">메모리 편집기 다시 연결 중…</string>
+    <string name="memory_editor_refresh">새로고침</string>
+    <string name="memory_editor_undo">스캔 실행 취소</string>
+    <string name="memory_variables_tab">저장됨</string>
+    <string name="memory_editor_back" tools:ignore="MissingTranslation">뒤로</string>
+    <string name="memory_list_keep" tools:ignore="MissingTranslation">다음 실행 시에도 유지</string>
+    <string name="memory_list_stop_keeping" tools:ignore="MissingTranslation">유지 중지</string>
+    <string name="memory_list_kept" tools:ignore="MissingTranslation">다음 실행 시에도 유지됨</string>
+    <string name="memory_list_empty" tools:ignore="MissingTranslation">저장된 북마크가 없습니다</string>
+    <string name="memory_list_empty_hint" tools:ignore="MissingTranslation">검색 또는 인스펙터에서 변수를 북마크하면 여기에서 추적할 수 있습니다.</string>
+    <string name="memory_list_remove_confirm" tools:ignore="MissingTranslation">저장됨에서 제거할까요? 활성화된 모든 고정이 중지됩니다.</string>
+    <string name="memory_list_add" tools:ignore="MissingTranslation">북마크</string>
+    <string name="memory_bookmark_relink" tools:ignore="MissingTranslation">다시 연결</string>
+    <string name="memory_bookmark_relink_hint" tools:ignore="MissingTranslation">검색에서 대체할 변수를 선택한 다음 다시 연결을 선택하세요.</string>
+    <string name="memory_bookmark_relink_confirm" tools:ignore="MissingTranslation">이 북마크를 선택한 변수에 연결할까요? 이 북마크에 활성화된 고정이 중지됩니다.</string>
+    <string name="memory_bookmark_unavailable" tools:ignore="MissingTranslation">사용할 수 없음 — 다시 연결을 선택하여 대상을 지정하세요</string>
+    <string name="memory_editor_watch">감시</string>
+    <string name="memory_editor_search_tab">검색</string>
+    <string name="memory_editor_search_known_values">알고 있는 값 검색</string>
+    <string name="memory_editor_search_unknown_values">알 수 없는 값 검색</string>
+    <string name="memory_editor_add_to_watch">선택한 값 북마크</string>
+    <string name="memory_editor_no_candidates">검색 가능한 값을 찾을 수 없습니다</string>
+    <string name="memory_editor_edit">편집</string>
+    <plurals name="memory_editor_edit_batch">
+        <item quantity="other">값 <xliff:g id="count" example="3">%1$d</xliff:g>개 편집</item>
+    </plurals>
+    <string name="memory_editor_edit_batch_no_common_type">선택한 항목이 지정된 데이터 유형을 지원하지 않습니다. 호환되는 항목끼리 따로 편집하세요.</string>
+    <string name="memory_editor_save">적용</string>
+    <string name="memory_editor_replacement">바꿀 값</string>
+    <string name="memory_editor_freeze">고정</string>
+    <string name="memory_editor_remove">제거</string>
+    <string name="memory_editor_select_visible">표시된 항목 선택</string>
+    <string name="memory_editor_clear_selection">선택 해제</string>
+    <plurals name="memory_editor_selected">
+        <item quantity="other"><xliff:g id="count" example="3">%1$d</xliff:g>개 선택됨</item>
+    </plurals>
+    <string name="memory_editor_close">메모리 편집기 닫기</string>
+    <string name="memory_editor_searching">메모리 검색 중…</string>
+    <string name="memory_editor_working">작업 적용 중…</string>
+    <string name="memory_editor_search_progress"><xliff:g id="scanned_mib" example="12">%1$d</xliff:g> / <xliff:g id="total_mib" example="64">%2$d</xliff:g> MiB 스캔됨</string>
+    <string name="memory_editor_candidate_moved">대상 업데이트됨</string>
+    <string name="memory_editor_candidate_relocating">다시 확인 중</string>
+    <string name="memory_editor_candidate_ambiguous">모호함 — 쓰기 일시중지됨</string>
+    <string name="memory_editor_candidate_lost">대상 유실 — 쓰기 일시중지됨</string>
+    <string name="memory_editor_apply">적용</string>
+    <string name="memory_editor_min_value">최솟값</string>
+    <string name="memory_editor_max_value">최댓값</string>
+    <string name="memory_editor_change_amount">변화량</string>
+    <string name="memory_editor_min_change">최소 변화량</string>
+    <string name="memory_editor_max_change">최대 변화량</string>
+    <string name="memory_editor_unfreeze">고정 해제</string>
+    <string name="memory_editor_cancelled">작업이 취소되었습니다.</string>
+    <string name="memory_editor_resource_limit">메모리 편집기가 안전 한도에 도달했습니다. 더 구체적으로 검색하거나 사용하지 않는 북마크 또는 고정을 제거하세요.</string>
+    <string name="memory_editor_identity_unsafe">선택한 값이나 검색 상태를 확인할 수 없습니다. 결과를 새로고침하거나 인스펙터를 다시 연 후 다시 시도하세요.</string>
+    <string name="memory_editor_safety_limit">이 작업에 선택한 값이 너무 많습니다. 더 적게 선택한 후 다시 시도하세요.</string>
+    <string name="memory_editor_invalid_request">값 또는 작업이 잘못되었습니다.</string>
+    <string name="memory_editor_freeze_paused">안전상의 이유로 일시중지됨</string>
+    <string name="memory_editor_predicate_between">범위 내</string>
+    <string name="memory_editor_predicate_changed">변경됨</string>
+    <string name="memory_editor_predicate_unchanged">변경 없음</string>
+    <string name="memory_editor_predicate_increased">증가함</string>
+    <string name="memory_editor_predicate_decreased">감소함</string>
+    <string name="memory_editor_predicate_increased_by">지정값만큼 증가</string>
+    <string name="memory_editor_predicate_decreased_by">지정값만큼 감소</string>
+    <string name="memory_editor_predicate_changed_by">지정값만큼 변경</string>
+    <string name="memory_editor_predicate_increased_range">범위 내 증가량</string>
+    <string name="memory_editor_predicate_decreased_range">범위 내 감소량</string>
+    <string name="memory_editor_inspector">인스펙터</string>
+    <string name="memory_editor_inspect_memory">주변 메모리 검사</string>
+    <string name="memory_editor_inspector_loading">결과를 확인하고 주변 메모리를 읽는 중…</string>
+    <string name="memory_editor_inspector_empty">주변 메모리를 검사할 결과를 선택하세요.</string>
+    <string name="memory_editor_inspector_no_rows">검사할 수 있는 주변 메모리가 없습니다.</string>
+    <string name="memory_editor_refresh_snapshot">스냅샷 새로고침</string>
+    <string name="memory_editor_select_result_value">이 북마크 선택</string>
+    <string name="memory_editor_freeze_after_edit">적용 후 고정</string>
+    <string name="memory_editor_freeze_after_edit_help">이 값을 고정 상태로 유지하고 저장됨에 북마크합니다.</string>
+    <string name="memory_editor_expression_single_hint">값 하나를 입력하거나 세미콜론(;)으로 구분하여 그룹 값을 입력하세요.</string>
+    <string name="memory_editor_expression_group_needs_type">그룹 검색을 사용하려면 특정 데이터 유형을 선택하세요.</string>
+    <plurals name="memory_editor_expression_group_hint">
+        <item quantity="other">그룹 검색 · 값 <xliff:g id="count" example="3">%1$d</xliff:g>개 · 동일한 Java 객체</item>
+    </plurals>
+    <string name="memory_editor_expression_query_help">예: 500 또는 500;1000. 그룹 검색은 동일한 Java 객체에서 2~8개의 값을 찾습니다.</string>
+    <string name="memory_editor_keypad_clear">지우기</string>
+    <string name="memory_editor_peek_underlay">길게 눌러 아래의 MIDlet 화면 보기</string>
+    <string name="memory_editor_peek_underlay_active">아래의 MIDlet 화면 표시 중</string>
+    <string name="memory_editor_no_runtime">활성화된 MIDlet 런타임이 없습니다.</string>
+    <string name="memory_editor_no_search_history">복원할 이전 검색 기록이 없습니다.</string>
+    <string name="memory_editor_partial_write">쓰기 작업이 완전히 완료되지 않았습니다. 현재 값을 확인한 후 다시 시도하세요.</string>
+    <!-- Independent write counts: confirmed, unconfirmed, skipped, not attempted, and incompatible data type. -->
+    <string name="memory_editor_write_outcome">쓰기 확인됨: <xliff:g id="confirmed" example="3">%1$d</xliff:g>. 미확인: <xliff:g id="unconfirmed" example="0">%2$d</xliff:g>. 건너뜀: <xliff:g id="skipped" example="0">%3$d</xliff:g>. 시도 안 함: <xliff:g id="not_attempted" example="0">%4$d</xliff:g>. 유형 불일치로 건너뜀: <xliff:g id="skipped_by_type" example="0">%5$d</xliff:g>.</string>
+    <!-- %1$s is a localized outcome explanation; %2$d through %6$d are the same independent write counts. -->
+    <string name="memory_editor_write_failure_outcome"><xliff:g id="reason" example="Write interrupted.">%1$s</xliff:g>\n쓰기 확인됨: <xliff:g id="confirmed" example="1">%2$d</xliff:g>. 미확인: <xliff:g id="unconfirmed" example="1">%3$d</xliff:g>. 건너뜀: <xliff:g id="skipped" example="0">%4$d</xliff:g>. 시도 안 함: <xliff:g id="not_attempted" example="0">%5$d</xliff:g>. 유형 불일치로 건너뜀: <xliff:g id="skipped_by_type" example="0">%6$d</xliff:g>.</string>
+    <!-- Result counts before (%1$d) and after (%2$d) the completed next scan. -->
+    <string name="memory_editor_next_scan_result">다음 스캔 결과: <xliff:g id="before_count" example="120">%1$d</xliff:g> → <xliff:g id="after_count" example="14">%2$d</xliff:g></string>
+    <string name="memory_editor_type_auto">자동</string>
+    <string name="memory_editor_remove_candidates_title">선택한 결과를 제거할까요?</string>
+    <string name="memory_editor_remove_candidates_description">제거: 검색 목록에서 선택한 결과를 제거합니다. 게임 메모리의 값은 변경되지 않습니다.\n\n되돌리고 제거: 값이 여전히 일치하는 경우 마지막으로 확인된 편집 이전의 값으로 복원합니다. 고정된 값과 충돌이 있는 결과는 목록에 남습니다.</string>
+    <string name="memory_editor_revert_and_remove">되돌리고 제거</string>
+    <string name="memory_editor_revert_remove_commit_failed">값이 복원되었을 수 있지만 결과를 제거할 수 없습니다. 새로고침한 후 다시 시도하세요. 게임에서 변경한 값은 덮어쓰지 않습니다.</string>
+    <string name="memory_editor_revert_remove_outcome">복원됨: <xliff:g id="restored" example="2">%1$d</xliff:g>. 제거됨: <xliff:g id="removed" example="2">%2$d</xliff:g>. 충돌: <xliff:g id="conflicts" example="0">%3$d</xliff:g>. 미확인: <xliff:g id="unconfirmed" example="0">%4$d</xliff:g>. 시도 안 함: <xliff:g id="not_attempted" example="0">%5$d</xliff:g>.</string>
+    <string name="memory_editor_set_all">모두 설정</string>
+    <string name="memory_editor_increment_start">시작 값</string>
+    <string name="memory_editor_edit_batch_type_notice">데이터 유형이 일치하는 값만 변경됩니다.</string>
+    <string name="memory_editor_write_confirmed">메모리 다시 읽기로 확인된 값: <xliff:g id="count" example="3">%1$d</xliff:g>개.</string>
+    <string name="memory_editor_candidate_untraced">배열 #<xliff:g id="array_id" example="42">%1$d</xliff:g>[<xliff:g id="index" example="3">%2$d</xliff:g>] · 출처 추적 불가</string>
+    <string name="memory_editor_candidate_static"><xliff:g id="field_name" example="Player.coins">%1$s</xliff:g> · <xliff:g id="reference_kind" example="Static reference">%2$s</xliff:g></string>
+    <string name="memory_editor_candidate_instance"><xliff:g id="field_name" example="Player.hp">%1$s</xliff:g> · <xliff:g id="reference_kind" example="Instance reference">%2$s</xliff:g> · 대상 #<xliff:g id="target_id" example="1">%3$d</xliff:g></string>
+    <string name="memory_editor_reference_static">정적 참조</string>
+    <string name="memory_editor_reference_instance">인스턴스 참조</string>
+    <string name="memory_editor_path_changed">스캔 이후 참조 경로가 변경되었습니다.</string>
+    <string name="memory_editor_path_incomplete">참조 경로가 검사 한도를 초과했습니다.</string>
+    <string name="memory_editor_source_unknown">출처 추적 불가</string>
+    <string name="memory_editor_incremental_edit">증가 설정</string>
+    <string name="memory_editor_increment_step">증가 단위</string>
+    <string name="memory_editor_increment_invalid">하나의 정수 유형과 해당 범위 내의 값을 사용하세요.</string>
+    <!-- The batch dialog title already shows the number of selected values. -->
+    <string name="memory_editor_increment_preview">미리보기: <xliff:g id="name" example="Example">%1$s</xliff:g></string>
+    <string name="memory_editor_panel_opacity">패널 불투명도</string>
+    <string name="memory_editor_panel_opacity_help">검색하는 동안 게임 값을 확인할 수 있도록 배경을 조절합니다. 텍스트와 아이콘은 계속 표시됩니다.</string>
+    <string name="memory_editor_reconversion_required" tools:ignore="MissingTranslation">이 MIDlet의 설치된 변환 파일이 메모리 편집기와 호환되지 않습니다. 게임을 닫은 다음 JL-Mod Plus에서 다시 변환하거나 재설치하세요.</string>
+    <string name="memory_saved_tab" tools:ignore="MissingTranslation">저장됨</string>
+    <string name="memory_saved_save" tools:ignore="MissingTranslation">변수 저장</string>
+    <string name="memory_saved_name" tools:ignore="MissingTranslation">이름</string>
+    <string name="memory_saved_explanation" tools:ignore="MissingTranslation">나중 세션에서 사용할 수 있도록 확인된 메모리 경로를 저장합니다. 값은 자동으로 쓰여지지 않습니다.</string>
+    <string name="memory_saved_empty" tools:ignore="MissingTranslation">저장된 변수가 없습니다. 검색 결과를 선택하여 저장하세요.</string>
+    <string name="memory_saved_not_ready" tools:ignore="MissingTranslation">준비되지 않음</string>
+    <string name="memory_saved_retry" tools:ignore="MissingTranslation">다시 시도</string>
+    <string name="memory_saved_rename" tools:ignore="MissingTranslation">이름 변경</string>
+    <string name="memory_saved_value" tools:ignore="MissingTranslation">값</string>
+    <string name="memory_saved_delete_confirm" tools:ignore="MissingTranslation">저장된 이 정의를 제거할까요? 게임 값은 변경되지 않습니다.</string>
+    <string name="memory_saved_changed" tools:ignore="MissingTranslation">변경됨</string>
+    <string name="memory_saved_rebound" tools:ignore="MissingTranslation">대상 업데이트됨</string>
+    <string name="memory_saved_import_summary" tools:ignore="MissingTranslation">저장됨: <xliff:g id="added_count" example="4">%1$d</xliff:g>개 추가됨, <xliff:g id="existing_count" example="2">%2$d</xliff:g>개 이미 존재함</string>
+    <string name="memory_saved_incompatible" tools:ignore="MissingTranslation">호환되지 않음</string>
+    <string name="memory_saved_failed" tools:ignore="MissingTranslation">실패함</string>
+    <string name="memory_saved_delete_many_confirm" tools:ignore="MissingTranslation">저장된 정의 <xliff:g id="count" example="3">%1$d</xliff:g>개를 제거할까요? 게임 값은 변경되지 않습니다.</string>
+    <string name="memory_recipes_title" tools:ignore="MissingTranslation">빠른 작업</string>
+    <string name="memory_recipes_simple_from_saved" tools:ignore="MissingTranslation">대상: <xliff:g id="bookmark_name" example="Coins">%1$s</xliff:g></string>
+    <string name="memory_recipes_preview" tools:ignore="MissingTranslation">대상 미리보기</string>
+    <string name="memory_recipes_stop_freeze" tools:ignore="MissingTranslation">스크립트 고정 중지</string>
+    <string name="memory_recipes_freeze" tools:ignore="MissingTranslation">이 게임이 실행되는 동안 고정 유지</string>
+    <string name="memory_recipes_run" tools:ignore="MissingTranslation">실행</string>
+    <string name="memory_recipes_active_freezes" tools:ignore="MissingTranslation">활성 스크립트 고정</string>
+    <string name="memory_recipes_target_unavailable" tools:ignore="MissingTranslation">북마크 대상을 사용할 수 없습니다. 실행하기 전에 새로고침하거나 다시 연결하세요.</string>
+    <string name="memory_recipes_preview_values" tools:ignore="MissingTranslation">현재 값: <xliff:g id="name" example="Example">%1$s</xliff:g></string>
+    <string name="memory_scripts_title" tools:ignore="MissingTranslation">스크립트</string>
+    <string name="memory_scripts_active" tools:ignore="MissingTranslation">활성</string>
+    <string name="memory_scripts_inputs" tools:ignore="MissingTranslation">입력</string>
+    <string name="memory_scripts_create_from_bookmarks" tools:ignore="MissingTranslation">스크립트 만들기</string>
+    <string name="memory_scripts_create_failed" tools:ignore="MissingTranslation">새 스크립트를 시작할 수 없습니다.</string>
+    <string name="memory_scripts_draft_in_progress" tools:ignore="MissingTranslation">먼저 현재 스크립트 초안을 완료하거나 버리세요.</string>
+    <string name="memory_builder_open_saved" tools:ignore="MissingTranslation">저장됨 열기</string>
+    <string name="memory_builder_add_description" tools:ignore="MissingTranslation">설명 추가</string>
+    <string name="memory_builder_find_values" tools:ignore="MissingTranslation">값 찾기</string>
+    <string name="memory_scripts_description" tools:ignore="MissingTranslation">설명</string>
+    <string name="memory_scripts_new" tools:ignore="MissingTranslation">새 스크립트</string>
+    <string name="memory_scripts_back" tools:ignore="MissingTranslation">뒤로</string>
+    <string name="memory_scripts_edit" tools:ignore="MissingTranslation">편집</string>
+    <string name="memory_scripts_save" tools:ignore="MissingTranslation">저장</string>
+    <string name="memory_scripts_saved" tools:ignore="MissingTranslation">스크립트 저장됨</string>
+    <string name="memory_scripts_deleted" tools:ignore="MissingTranslation">스크립트 삭제됨</string>
+    <string name="memory_scripts_save_failed" tools:ignore="MissingTranslation">스크립트를 저장할 수 없습니다.</string>
+    <string name="memory_scripts_editor_hint" tools:ignore="MissingTranslation">스크립트 JSON 문서를 입력하거나 붙여넣으세요. 저장해도 바로 실행되지 않습니다.</string>
+    <string name="memory_scripts_paste_hint" tools:ignore="MissingTranslation">스크립트 JSON 붙여넣기</string>
+    <string name="memory_scripts_paste" tools:ignore="MissingTranslation">붙여넣기</string>
+    <string name="memory_scripts_clipboard_invalid" tools:ignore="MissingTranslation">클립보드가 비어 있거나 문서 크기가 64 KiB를 초과합니다</string>
+    <string name="memory_scripts_invalid" tools:ignore="MissingTranslation">잘못된 스크립트 형식</string>
+    <string name="memory_scripts_freeze_active" tools:ignore="MissingTranslation">이 스크립트의 고정 활성화됨</string>
+    <string name="memory_scripts_delete" tools:ignore="MissingTranslation">삭제</string>
+    <string name="memory_scripts_delete_confirm" tools:ignore="MissingTranslation"><xliff:g id="name" example="Example">%1$s</xliff:g> 스크립트를 삭제할까요? 이 스크립트에 활성화된 고정이 중지됩니다.</string>
+    <string name="memory_scripts_empty" tools:ignore="MissingTranslation">저장된 스크립트 없음</string>
+    <string name="memory_scripts_unsaved_title" tools:ignore="MissingTranslation">저장하지 않은 스크립트를 버릴까요?</string>
+    <string name="memory_scripts_unsaved_message" tools:ignore="MissingTranslation">스크립트 변경사항이 저장되지 않았습니다.</string>
+    <string name="memory_scripts_discard" tools:ignore="MissingTranslation">버리기</string>
+    <string name="memory_scripts_current_title" tools:ignore="MissingTranslation">마지막으로 읽은 값</string>
+    <string name="memory_scripts_refresh" tools:ignore="MissingTranslation">새로고침</string>
+    <string name="memory_scripts_reading" tools:ignore="MissingTranslation">현재 값 읽는 중…</string>
+    <string name="memory_scripts_refresh_hint" tools:ignore="MissingTranslation">실행 중인 게임에서 현재 값을 읽으려면 새로고침을 탭하세요.</string>
+    <string name="memory_scripts_mode_toggle" tools:ignore="MissingTranslation">값 고정</string>
+    <string name="memory_scripts_mode_form" tools:ignore="MissingTranslation">값 편집기</string>
+    <string name="memory_scripts_mode_once" tools:ignore="MissingTranslation">빠른 작업</string>
+    <string name="memory_scripts_mode_legacy" tools:ignore="MissingTranslation">고급 스크립트</string>
+    <string name="memory_scripts_edit_values" tools:ignore="MissingTranslation">값 편집</string>
+    <string name="memory_scripts_apply" tools:ignore="MissingTranslation">변경사항 적용</string>
+    <string name="memory_scripts_refresh_required" tools:ignore="MissingTranslation">적용하기 전에 새로고침하여 현재 값을 확인하세요.</string>
+    <string name="memory_scripts_inconsistent" tools:ignore="MissingTranslation">일치하지 않는 사본: <xliff:g id="name" example="Example">%1$s</xliff:g></string>
+    <string name="memory_editor_minimize" tools:ignore="MissingTranslation">메모리 편집기 최소화</string>
+    <string name="memory_scripts_choose_type" tools:ignore="MissingTranslation">새 스크립트</string>
+    <string name="memory_scripts_choose_hint" tools:ignore="MissingTranslation">이 스크립트의 작동 방식을 선택하세요.</string>
+    <string name="memory_builder_json_editor" tools:ignore="MissingTranslation">JSON 편집기</string>
+    <string name="memory_builder_freeze_hint" tools:ignore="MissingTranslation">활성화된 동안 선택한 값을 고정 상태로 유지합니다. 고정을 꺼도 이전 값으로 복원되지 않습니다.</string>
+    <string name="memory_builder_form_hint" tools:ignore="MissingTranslation">편집 내용을 적용하기 전에 현재 값을 읽어오는 양식을 만듭니다.</string>
+    <string name="memory_builder_actions_hint" tools:ignore="MissingTranslation">실행을 누를 때마다 변경사항을 적용합니다. 각 실행은 독립적으로 처리됩니다.</string>
+    <string name="memory_builder_name" tools:ignore="MissingTranslation">스크립트 이름</string>
+    <string name="memory_builder_frozen_values" tools:ignore="MissingTranslation">고정된 값</string>
+    <string name="memory_builder_fields" tools:ignore="MissingTranslation">필드</string>
+    <string name="memory_builder_actions" tools:ignore="MissingTranslation">작업</string>
+    <string name="memory_builder_add_bookmarks" tools:ignore="MissingTranslation">북마크에서 추가</string>
+    <string name="memory_builder_empty" tools:ignore="MissingTranslation">확인된 북마크를 하나 이상 추가하세요.</string>
+    <string name="memory_builder_field_label" tools:ignore="MissingTranslation">필드 라벨</string>
+    <string name="memory_builder_keep_at" tools:ignore="MissingTranslation">유지할 값</string>
+    <string name="memory_builder_amount" tools:ignore="MissingTranslation">값 / 수량</string>
+    <string name="memory_builder_set" tools:ignore="MissingTranslation">설정</string>
+    <string name="memory_builder_add" tools:ignore="MissingTranslation">더하기</string>
+    <string name="memory_builder_subtract" tools:ignore="MissingTranslation">빼기</string>
+    <string name="memory_builder_view_json" tools:ignore="MissingTranslation">JSON 보기</string>
+    <string name="memory_builder_edit_json" tools:ignore="MissingTranslation">JSON 편집</string>
+    <string name="memory_builder_search_bookmarks" tools:ignore="MissingTranslation">북마크 검색</string>
+    <string name="memory_builder_no_bookmarks" tools:ignore="MissingTranslation">일치하는 확인된 북마크가 없습니다. 검색에서 값을 북마크하거나 저장됨에서 다시 연결하세요.</string>
+    <string name="memory_builder_needs_relink" tools:ignore="MissingTranslation">다시 연결 필요</string>
+    <string name="memory_builder_add_selected" tools:ignore="MissingTranslation">선택 항목 추가</string>
+    <string name="memory_builder_min" tools:ignore="MissingTranslation">최솟값(선택사항)</string>
+    <string name="memory_builder_max" tools:ignore="MissingTranslation">최댓값(선택사항)</string>
+    <string name="memory_builder_add_target" tools:ignore="MissingTranslation">대상 추가</string>
+    <string name="memory_builder_freeze_short" tools:ignore="MissingTranslation">선택한 값을 지정한 수치로 유지</string>
+    <string name="memory_builder_form_short" tools:ignore="MissingTranslation">여러 값을 한곳에서 조절</string>
+    <string name="memory_builder_actions_short" tools:ignore="MissingTranslation">일회성 설정, 더하기 또는 빼기 작업 실행</string>
+    <string name="memory_editor_refine_scan" tools:ignore="MissingTranslation">결과 좁히기</string>
+    <string name="memory_scripts_saved_count" tools:ignore="MissingTranslation"><xliff:g id="count" example="3">%1$d</xliff:g>개 저장됨</string>
+    <string name="memory_scripts_empty_hint" tools:ignore="MissingTranslation">플레이 중에 값을 편집하거나 고정할 스크립트를 만들어 보세요.</string>
+    <string name="memory_builder_limits" tools:ignore="MissingTranslation">제한(선택사항)</string>
+</resources>

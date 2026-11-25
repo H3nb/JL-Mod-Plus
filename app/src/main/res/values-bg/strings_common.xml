@@ -1,0 +1,47 @@
+<?xml version="1.0" encoding="utf-8"?>
+<!-- Shared UI actions, generic labels, dialogs, and About screen. -->
+<resources xmlns:xliff="urn:oasis:names:tc:xliff:document:1.2">
+    <string name="about">За приложението</string>
+    <string name="about_message">Стартирайте класически приложения и игри, организирайте MIDlet-и в библиотеката си и персонализирайте контролите, дисплея, звука и производителността. JL-Mod Plus е безплатно приложение с отворен код.</string>
+    <string name="about_subtitle">Java ME емулатор за Android</string>
+    <string name="about_compatibility">Съвместимостта зависи от MIDlet-а, устройството и поддържаните Java ME API. Някои приложения може да работят различно от поведението си на оригиналните телефони.</string>
+    <string name="about_lineage_title">Произход на проекта</string>
+    <string name="about_build_title">Информация за компилацията</string>
+    <string name="about_version_label">Версия</string>
+    <string name="about_build_label">Компилация</string>
+    <string name="about_revision_label">Ревизия на кода</string>
+    <string name="about_links_title">Проект и лицензи</string>
+    <string name="about_github_link_copied">Не е намерен браузър. Връзката към GitHub е копирана в клипборда.</string>
+    <string name="about_github_browser_unavailable">Не е намерен браузър за отваряне на GitHub.</string>
+    <string name="about_lineage">JL-Mod Plus е независимо разклонение на JL-Mod от woesss (Yury Kharchenko). JL-Mod е базиран на J2ME Loader от Nikita Shakarun, чието начало води от J2meLoader на NaikSoftware.</string>
+    <string name="about_evolution">JL-Mod Plus надгражда тази основа с модерен интерфейс, по-способна библиотека за MIDlet-и, нови функции и поддръжка за по-нови версии на Android.</string>
+    <string name="action_back">Назад</string>
+    <string name="action_settings">Настройки</string>
+    <string name="CANCEL_CMD">Отказ</string>
+    <string name="change">Промяна</string>
+    <string name="choose">Избор</string>
+    <string name="close">Затваряне</string>
+    <string name="cmd_menu">Меню</string>
+    <string name="CONFIRMATION_REQUIRED">Изисква се потвърждение</string>
+    <string name="create">Създаване</string>
+    <string name="default_label"><xliff:g id="name" example="Example">%1$s</xliff:g> (по подразбиране)</string>
+    <string name="dismiss">Отхвърляне</string>
+    <string name="edit">Редактиране</string>
+    <string name="error">Грешка</string>
+    <string name="error_name">Въведете име.</string>
+    <string name="exit">Изход</string>
+    <string name="help">Помощ</string>
+    <string name="install">Инсталиране</string>
+    <string name="licenses">Лицензи</string>
+    <string name="licenses_unavailable">Информацията за лицензите не е налична.</string>
+    <string name="loading_info">Зареждане на информация…</string>
+    <string name="more">Още</string>
+    <string name="not_saved_exists">Вече съществува</string>
+    <string name="reset">Нулиране</string>
+    <string name="retry">Повторен опит</string>
+    <string name="save">Запазване</string>
+    <string name="saved">Запазено: <xliff:g id="name" example="Example">%1$s</xliff:g></string>
+    <string name="START_CMD">Старт</string>
+    <string name="warning">Предупреждение</string>
+    <string name="removed">Премахнато: <xliff:g id="name" example="Example">%1$s</xliff:g></string>
+</resources>

@@ -1,0 +1,105 @@
+<?xml version="1.0" encoding="utf-8"?>
+<!-- Virtual keypad controls, layout editor, physical key mappings, and control skins. -->
+<resources xmlns:tools="http://schemas.android.com/tools" xmlns:xliff="urn:oasis:names:tc:xliff:document:1.2">
+    <string name="alert_map_menu">මෙනු යතුර (M) පවරා නැත.\nක්‍රීඩා කරන අතරතුර ඔබට MIDlet මෙනුව විවෘත කිරීමට නොහැකි විය හැකිය.</string>
+    <string name="dismiss_mapping">සිතියම්ගත කිරීම වසන්න</string>
+    <string name="layout_edit_finish">සංස්කරණය අවසන් කරන්න</string>
+    <string name="layout_edit_done">අවසන්</string>
+    <string name="layout_editor_grid_size">ජාලක ප්‍රමාණය</string>
+    <string name="layout_editor_grid_coarse">රළු (16)</string>
+    <string name="layout_editor_grid_normal">සාමාන්‍ය (24)</string>
+    <string name="layout_editor_grid_fine">සියුම් (32)</string>
+    <string name="layout_editor_snap_on">ඇමිණීම ක්‍රියාත්මකයි</string>
+    <string name="layout_editor_snap_off">ඇමිණීම අක්‍රියයි</string>
+    <string name="layout_edit_save_changes">අතථ්‍ය පාලනවල වෙනස්කම් සුරකින්නද?</string>
+    <string name="layout_edit_discard">ඉවතලන්න</string>
+    <string name="layout_edit_continue">සංස්කරණය දිගටම කරන්න</string>
+    <string name="layout_edit_finished">අතථ්‍ය පාලන සංස්කරණය සම්පූර්ණයි.</string>
+    <string name="virtual_controls_save_failed">අතථ්‍ය පාලන සුරැකීමට නොහැකි විය. නැවත උත්සාහ කරන්න.</string>
+    <string name="layout_switch">පාලන පිරිසැලසුම තෝරන්න</string>
+    <string name="mapping_dialog_key_not_specified">ආදාන පවරා නැත.</string>
+    <string name="mapping_dialog_message">මෙම පාලනයට පැවරීම සඳහා භෞතික යතුරක් හෝ බොත්තමක් ඔබන්න.</string>
+    <string name="mapping_dialog_assigned_inputs">පවරා ඇති ආදාන</string>
+    <string name="mapping_dialog_add_input">ඔබට භෞතික ආදාන එකකට වඩා පැවරිය හැකිය.</string>
+    <string name="mapping_dialog_remove">ඉවත් කරන්න</string>
+    <string name="mapping_dialog_title">යතුරක් හෝ බොත්තමක් ඔබන්න</string>
+    <string name="message_reset_layout">අතථ්‍ය පාලන පිරිසැලසුම පෙරනිමියට යළි පිහිටුවන්නද?</string>
+    <string name="RESET_LAYOUT_CMD">අතථ්‍ය පාලන පිරිසැලසුම යළි පිහිටුවන්න</string>
+    <string name="saved_keyboard_layout_summary">අතථ්‍ය පාලන පිරිසැලසුම සුරකින ලදී.</string>
+    <string name="control_skin_title">අතථ්‍ය පාලන ආවරණය</string>
+    <string name="control_skin_create" tools:ignore="MissingTranslation">කට්ටලය සාදන්න</string>
+    <string name="control_skin_default" tools:ignore="MissingTranslation">පෙරනිමි බොත්තම්</string>
+    <string name="control_skin_edit" tools:ignore="MissingTranslation">සංස්කරණය කරන්න</string>
+    <string name="control_skin_rename" tools:ignore="MissingTranslation">නැවත නම් කරන්න</string>
+    <string name="control_skin_duplicate" tools:ignore="MissingTranslation">අනුපිටපත් කරන්න</string>
+    <string name="control_skin_delete" tools:ignore="MissingTranslation">මකන්න</string>
+    <string name="control_skin_import_zip" tools:ignore="MissingTranslation">ZIP ආයාත කරන්න</string>
+    <string name="control_skin_export_zip" tools:ignore="MissingTranslation">ZIP නිර්යාත කරන්න</string>
+    <string name="control_skin_select_export_folder" tools:ignore="MissingTranslation">නිර්යාත ෆෝල්ඩරය තෝරන්න</string>
+    <string name="control_skin_imported" tools:ignore="MissingTranslation"><xliff:g id="skin_name" example="Classic Nokia">%1$s</xliff:g> ආයාත කරන ලදී</string>
+    <string name="control_skin_already_available" tools:ignore="MissingTranslation"><xliff:g id="skin_name" example="Classic Nokia">%1$s</xliff:g> දැනටමත් තිබේ</string>
+    <string name="control_skin_exported" tools:ignore="MissingTranslation"><xliff:g id="skin_name" example="Classic Nokia">%1$s</xliff:g> සුරකින ලදී</string>
+    <string name="control_skin_archive_invalid_path" tools:ignore="MissingTranslation">තෝරාගත් ස්ථානය ලබා ගත නොහැක.</string>
+    <string name="control_skin_archive_import_failed" tools:ignore="MissingTranslation">පාලන ආවරණය ආයාත කිරීමට නොහැකි විය. ZIP ගොනුවේ වලංගු කට්ටලයක් ඇති බවට වග බලා ගන්න.</string>
+    <string name="control_skin_archive_export_failed" tools:ignore="MissingTranslation">පාලන ආවරණය නිර්යාත කිරීමට නොහැකි විය. ආවරණ පුස්තකාලයෙන් පිටත ලිවිය හැකි ෆෝල්ඩරයක් තෝරන්න.</string>
+    <string name="control_skin_name" tools:ignore="MissingTranslation">කට්ටලයේ නම</string>
+    <string name="control_skin_icon" tools:ignore="MissingTranslation">නිරූපකය පමණි</string>
+    <string name="control_skin_full" tools:ignore="MissingTranslation">සම්පූර්ණ බොත්තම</string>
+    <string name="control_skin_normal_image" tools:ignore="MissingTranslation">සාමාන්‍ය රූපය</string>
+    <string name="control_skin_pressed_image" tools:ignore="MissingTranslation">එබූ රූපය</string>
+    <string name="control_skin_delete_warning" tools:ignore="MissingTranslation">මෙම ගෝලීය ආවරණ කට්ටලය සහ එහි සියලුම රූප මකන්නද? එය භාවිතා කරන MIDlets පෙරනිමි පාලන වෙත ආපසු යනු ඇත.</string>
+    <string name="control_skin_invalid_image" tools:ignore="MissingTranslation">PNG, WebP හෝ SVG රූපයක් තෝරන්න.</string>
+    <string name="control_skin_operation_failed" tools:ignore="MissingTranslation">පාලන ආවරණ කට්ටලය යාවත්කාලීන කිරීමට නොහැකි විය.</string>
+    <string name="control_skin_missing" tools:ignore="MissingTranslation">නොමැති කට්ටලය (පෙරනිමි පාලන)</string>
+    <string name="control_skin_remove_image" tools:ignore="MissingTranslation">ඉවත් කරන්න</string>
+    <string name="control_skin_manage" tools:ignore="MissingTranslation">කට්ටලය කළමනාකරණය කරන්න</string>
+    <string name="control_skin_manage_named" tools:ignore="MissingTranslation"><xliff:g id="skin_name" example="Classic Nokia">%1$s</xliff:g> කළමනාකරණය කරන්න</string>
+    <plurals name="control_skin_count">
+        <item quantity="one">අභිරුචිකරණය කළ පාලනය <xliff:g id="count" example="4">%1$d</xliff:g></item>
+        <item quantity="other">අභිරුචිකරණය කළ පාලන <xliff:g id="count" example="4">%1$d</xliff:g></item>
+    </plurals>
+    <string name="control_skin_empty" tools:ignore="MissingTranslation">පාලන රූප අභිරුචිකරණය කිරීමට කට්ටලයක් සාදන්න.</string>
+    <string name="control_skin_numeric" tools:ignore="MissingTranslation">යතුරුපුවරුව</string>
+    <string name="control_skin_navigation" tools:ignore="MissingTranslation">සංචාලනය</string>
+    <string name="control_skin_other" tools:ignore="MissingTranslation">වෙනත් බොත්තම්</string>
+    <string name="control_skin_pressed_requires_normal" tools:ignore="MissingTranslation">පළමුව සාමාන්‍ය රූපයක් එක් කරන්න.</string>
+    <string name="control_skin_edit_named" tools:ignore="MissingTranslation">බොත්තම <xliff:g id="button_label" example="5">%1$s</xliff:g></string>
+    <string name="control_skin_change_image" tools:ignore="MissingTranslation">වෙනස් කරන්න</string>
+    <string name="control_skin_pick_image" tools:ignore="MissingTranslation">රූපය තෝරන්න</string>
+    <string name="control_skin_soft_left" tools:ignore="MissingTranslation">වම් මෘදු යතුර</string>
+    <string name="control_skin_soft_right" tools:ignore="MissingTranslation">දකුණු මෘදු යතුර</string>
+    <string name="control_skin_fire" tools:ignore="MissingTranslation">ක්‍රියාව</string>
+    <string name="control_skin_menu" tools:ignore="MissingTranslation">මෙනුව</string>
+    <string name="control_skin_movement" tools:ignore="MissingTranslation">චලන පාලන</string>
+    <string name="control_skin_dpad" tools:ignore="MissingTranslation">D-pad</string>
+    <string name="control_skin_analog" tools:ignore="MissingTranslation">ඇනලොග් ස්ටික්</string>
+    <string name="control_skin_dpad_base" tools:ignore="MissingTranslation">D-pad රූපය</string>
+    <string name="control_skin_overlay_up" tools:ignore="MissingTranslation">ඉහළ ආවරණය</string>
+    <string name="control_skin_overlay_down" tools:ignore="MissingTranslation">පහළ ආවරණය</string>
+    <string name="control_skin_overlay_left" tools:ignore="MissingTranslation">වම් ආවරණය</string>
+    <string name="control_skin_overlay_right" tools:ignore="MissingTranslation">දකුණු ආවරණය</string>
+    <string name="control_skin_analog_base" tools:ignore="MissingTranslation">පාදක රූපය</string>
+    <string name="control_skin_analog_thumb" tools:ignore="MissingTranslation">ස්ටික් රූපය</string>
+    <string name="control_skin_analog_thumb_pressed" tools:ignore="MissingTranslation">සක්‍රිය ස්ටික් රූපය</string>
+    <string name="control_skin_preview_directions" tools:ignore="MissingTranslation">දිශාවන් පෙරදසුන</string>
+    <string name="control_skin_preview_direction" tools:ignore="MissingTranslation"><xliff:g id="direction" example="Up">%1$s</xliff:g> පෙරදසුන</string>
+    <string name="control_skin_builtin_preview" tools:ignore="MissingTranslation">පෙරනිමි</string>
+    <string name="control_skin_custom_preview" tools:ignore="MissingTranslation">අභිරුචිකරණය කළ</string>
+    <string name="layout_editor_group_on">එකට ප්‍රමාණය වෙනස් කරන්න</string>
+    <string name="layout_editor_group_off">වෙන වෙනම ප්‍රමාණය වෙනස් කරන්න</string>
+    <string name="layout_editor_snap_grid">ජාලකයට අමුණන්න</string>
+    <string name="layout_editor_snap_controls">බොත්තම්වලට අමුණන්න</string>
+    <string name="layout_editor_snap_resize">ප්‍රමාණය වෙනස් කිරීමේදී අමුණන්න</string>
+    <string name="layout_editor_snap_resize_on">ප්‍රමාණ ඇමිණීම: ක්‍රියාත්මකයි</string>
+    <string name="layout_editor_snap_resize_off">ප්‍රමාණ ඇමිණීම: අක්‍රියයි</string>
+    <string name="layout_editor_snap_grid_on">ජාලක ඇමිණීම: ක්‍රියාත්මකයි</string>
+    <string name="layout_editor_snap_grid_off">ජාලක ඇමිණීම: අක්‍රියයි</string>
+    <string name="layout_editor_snap_controls_on">බොත්තම් ඇමිණීම: ක්‍රියාත්මකයි</string>
+    <string name="layout_editor_snap_controls_off">බොත්තම් ඇමිණීම: අක්‍රියයි</string>
+    <string name="layout_editor_guide_gestures">අභිනයන්</string>
+    <string name="layout_editor_guide_move">පාලනයක් ගෙන යාමට එය අදින්න.</string>
+    <string name="layout_editor_guide_resize">ප්‍රමාණය වෙනස් කිරීමට ඇඟිලි දෙකක් භාවිතා කරන්න. පළල හෝ උස වෙනස් කිරීමට තිරස්ව හෝ සිරස්ව ගෙන යන්න.</string>
+    <string name="layout_editor_guide_tools">සංස්කාරක මෙවලම්</string>
+    <string name="layout_editor_guide_done">සුරැකීමට, ඉවතලීමට හෝ සංස්කරණය දිගටම කිරීමට “අවසන්” තට්ටු කරන්න.</string>
+    <string name="layout_editor_guide_start">සංස්කරණය අරඹන්න</string>
+</resources>

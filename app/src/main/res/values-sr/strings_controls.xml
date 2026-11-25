@@ -1,0 +1,106 @@
+<?xml version="1.0" encoding="utf-8"?>
+<!-- Virtual keypad controls, layout editor, physical key mappings, and control skins. -->
+<resources xmlns:tools="http://schemas.android.com/tools" xmlns:xliff="urn:oasis:names:tc:xliff:document:1.2">
+    <string name="alert_map_menu">Тастер менија (M) није додељен.\nМожда нећете моћи да отворите мени MIDlet-а током играња.</string>
+    <string name="dismiss_mapping">Затвори мапирање</string>
+    <string name="layout_edit_finish">Заврши уређивање</string>
+    <string name="layout_edit_done">Готово</string>
+    <string name="layout_editor_grid_size">Величина мреже</string>
+    <string name="layout_editor_grid_coarse">Груба (16)</string>
+    <string name="layout_editor_grid_normal">Стандардна (24)</string>
+    <string name="layout_editor_grid_fine">Фина (32)</string>
+    <string name="layout_editor_snap_on">Привлачење укључено</string>
+    <string name="layout_editor_snap_off">Привлачење искључено</string>
+    <string name="layout_edit_save_changes">Сачувати промене виртуелних контрола?</string>
+    <string name="layout_edit_discard">Одбаци</string>
+    <string name="layout_edit_continue">Настави уређивање</string>
+    <string name="layout_edit_finished">Уређивање виртуелних контрола је завршено.</string>
+    <string name="virtual_controls_save_failed">Није могуће сачувати виртуелне контроле. Покушајте поново.</string>
+    <string name="layout_switch">Изабери распоред контрола</string>
+    <string name="mapping_dialog_key_not_specified">Ниједан унос није додељен.</string>
+    <string name="mapping_dialog_message">Притисните физички тастер или дугме да бисте га доделили овој контроли.</string>
+    <string name="mapping_dialog_assigned_inputs">Додељени уноси</string>
+    <string name="mapping_dialog_add_input">Можете доделити више физичких уноса.</string>
+    <string name="mapping_dialog_remove">Уклони</string>
+    <string name="mapping_dialog_title">Притисните тастер или дугме</string>
+    <string name="message_reset_layout">Вратити распоред виртуелних контрола на подразумевани?</string>
+    <string name="RESET_LAYOUT_CMD">Ресетуј распоред виртуелних контрола</string>
+    <string name="saved_keyboard_layout_summary">Распоред виртуелних контрола је сачуван.</string>
+    <string name="control_skin_title">Маска виртуелних контрола</string>
+    <string name="control_skin_create" tools:ignore="MissingTranslation">Направи сет</string>
+    <string name="control_skin_default" tools:ignore="MissingTranslation">Подразумевана дугмад</string>
+    <string name="control_skin_edit" tools:ignore="MissingTranslation">Уреди</string>
+    <string name="control_skin_rename" tools:ignore="MissingTranslation">Преименуј</string>
+    <string name="control_skin_duplicate" tools:ignore="MissingTranslation">Дуплирај</string>
+    <string name="control_skin_delete" tools:ignore="MissingTranslation">Обриши</string>
+    <string name="control_skin_import_zip" tools:ignore="MissingTranslation">Увези ZIP</string>
+    <string name="control_skin_export_zip" tools:ignore="MissingTranslation">Извези ZIP</string>
+    <string name="control_skin_select_export_folder" tools:ignore="MissingTranslation">Изабери фасциклу за извоз</string>
+    <string name="control_skin_imported" tools:ignore="MissingTranslation">Увезено: „<xliff:g id="skin_name" example="Classic Nokia">%1$s</xliff:g>”</string>
+    <string name="control_skin_already_available" tools:ignore="MissingTranslation">„<xliff:g id="skin_name" example="Classic Nokia">%1$s</xliff:g>” је већ доступно</string>
+    <string name="control_skin_exported" tools:ignore="MissingTranslation">Сачувано: „<xliff:g id="skin_name" example="Classic Nokia">%1$s</xliff:g>”</string>
+    <string name="control_skin_archive_invalid_path" tools:ignore="MissingTranslation">Изабрана локација није доступна.</string>
+    <string name="control_skin_archive_import_failed" tools:ignore="MissingTranslation">Није могуће увести маску контрола. Проверите да ли ZIP датотека садржи један исправан сет.</string>
+    <string name="control_skin_archive_export_failed" tools:ignore="MissingTranslation">Није могуће извести маску контрола. Изаберите фасциклу са дозволом уписа изван библиотеке маски.</string>
+    <string name="control_skin_name" tools:ignore="MissingTranslation">Назив сета</string>
+    <string name="control_skin_icon" tools:ignore="MissingTranslation">Само икона</string>
+    <string name="control_skin_full" tools:ignore="MissingTranslation">Цело дугме</string>
+    <string name="control_skin_normal_image" tools:ignore="MissingTranslation">Редовна слика</string>
+    <string name="control_skin_pressed_image" tools:ignore="MissingTranslation">Слика при притиску</string>
+    <string name="control_skin_delete_warning" tools:ignore="MissingTranslation">Обрисати овај глобални сет маски и све његове слике? MIDlet-и који га користе вратиће се на подразумеване контроле.</string>
+    <string name="control_skin_invalid_image" tools:ignore="MissingTranslation">Изаберите PNG, WebP или SVG слику.</string>
+    <string name="control_skin_operation_failed" tools:ignore="MissingTranslation">Није могуће ажурирати сет маски контрола.</string>
+    <string name="control_skin_missing" tools:ignore="MissingTranslation">Недоступан сет (подразумеване контроле)</string>
+    <string name="control_skin_remove_image" tools:ignore="MissingTranslation">Уклони</string>
+    <string name="control_skin_manage" tools:ignore="MissingTranslation">Управљај сетом</string>
+    <string name="control_skin_manage_named" tools:ignore="MissingTranslation">Управљај сетом „<xliff:g id="skin_name" example="Classic Nokia">%1$s</xliff:g>”</string>
+    <plurals name="control_skin_count">
+        <item quantity="one"><xliff:g id="count" example="4">%1$d</xliff:g> прилагођена контрола</item>
+        <item quantity="few"><xliff:g id="count" example="4">%1$d</xliff:g> прилагођене контроле</item>
+        <item quantity="other"><xliff:g id="count" example="4">%1$d</xliff:g> прилагођених контрола</item>
+    </plurals>
+    <string name="control_skin_empty" tools:ignore="MissingTranslation">Направите сет да бисте прилагодили слике контрола.</string>
+    <string name="control_skin_numeric" tools:ignore="MissingTranslation">Тастатура</string>
+    <string name="control_skin_navigation" tools:ignore="MissingTranslation">Навигација</string>
+    <string name="control_skin_other" tools:ignore="MissingTranslation">Остала дугмад</string>
+    <string name="control_skin_pressed_requires_normal" tools:ignore="MissingTranslation">Прво додајте редовну слику.</string>
+    <string name="control_skin_edit_named" tools:ignore="MissingTranslation">Дугме <xliff:g id="button_label" example="5">%1$s</xliff:g></string>
+    <string name="control_skin_change_image" tools:ignore="MissingTranslation">Промени</string>
+    <string name="control_skin_pick_image" tools:ignore="MissingTranslation">Изабери слику</string>
+    <string name="control_skin_soft_left" tools:ignore="MissingTranslation">Леви софт</string>
+    <string name="control_skin_soft_right" tools:ignore="MissingTranslation">Десни софт</string>
+    <string name="control_skin_fire" tools:ignore="MissingTranslation">Потврди</string>
+    <string name="control_skin_menu" tools:ignore="MissingTranslation">Мени</string>
+    <string name="control_skin_movement" tools:ignore="MissingTranslation">Контроле кретања</string>
+    <string name="control_skin_dpad" tools:ignore="MissingTranslation">D-pad</string>
+    <string name="control_skin_analog" tools:ignore="MissingTranslation">Аналогна палица</string>
+    <string name="control_skin_dpad_base" tools:ignore="MissingTranslation">Слика D-pad-а</string>
+    <string name="control_skin_overlay_up" tools:ignore="MissingTranslation">Преклапање за горе</string>
+    <string name="control_skin_overlay_down" tools:ignore="MissingTranslation">Преклапање за доле</string>
+    <string name="control_skin_overlay_left" tools:ignore="MissingTranslation">Преклапање за лево</string>
+    <string name="control_skin_overlay_right" tools:ignore="MissingTranslation">Преклапање за десно</string>
+    <string name="control_skin_analog_base" tools:ignore="MissingTranslation">Слика основе</string>
+    <string name="control_skin_analog_thumb" tools:ignore="MissingTranslation">Слика палице</string>
+    <string name="control_skin_analog_thumb_pressed" tools:ignore="MissingTranslation">Слика активне палице</string>
+    <string name="control_skin_preview_directions" tools:ignore="MissingTranslation">Преглед смерова</string>
+    <string name="control_skin_preview_direction" tools:ignore="MissingTranslation">Преглед: <xliff:g id="direction" example="Up">%1$s</xliff:g></string>
+    <string name="control_skin_builtin_preview" tools:ignore="MissingTranslation">Подразумевано</string>
+    <string name="control_skin_custom_preview" tools:ignore="MissingTranslation">Прилагођено</string>
+    <string name="layout_editor_group_on">Мењај величину заједно</string>
+    <string name="layout_editor_group_off">Мењај величину појединачно</string>
+    <string name="layout_editor_snap_grid">Привуци уз мрежу</string>
+    <string name="layout_editor_snap_controls">Привуци уз дугмад</string>
+    <string name="layout_editor_snap_resize">Привуци при промени величине</string>
+    <string name="layout_editor_snap_resize_on">Привлачење величине: укључено</string>
+    <string name="layout_editor_snap_resize_off">Привлачење величине: искључено</string>
+    <string name="layout_editor_snap_grid_on">Привлачење уз мрежу: укључено</string>
+    <string name="layout_editor_snap_grid_off">Привлачење уз мрежу: искључено</string>
+    <string name="layout_editor_snap_controls_on">Привлачење уз дугмад: укључено</string>
+    <string name="layout_editor_snap_controls_off">Привлачење уз дугмад: искључено</string>
+    <string name="layout_editor_guide_gestures">Покрети</string>
+    <string name="layout_editor_guide_move">Превуците контролу да бисте је померили.</string>
+    <string name="layout_editor_guide_resize">Користите два прста за промену величине. Померајте хоризонтално или вертикално да промените ширину или висину.</string>
+    <string name="layout_editor_guide_tools">Алатке уређивача</string>
+    <string name="layout_editor_guide_done">Додирните „Готово” да бисте сачували, одбацили или наставили уређивање.</string>
+    <string name="layout_editor_guide_start">Започни уређивање</string>
+</resources>

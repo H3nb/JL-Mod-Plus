@@ -1,0 +1,246 @@
+<?xml version="1.0" encoding="utf-8"?>
+<!-- Memory Editor search, inspector, bookmarks, saved variables, quick actions, and script builder. -->
+<resources xmlns:tools="http://schemas.android.com/tools" xmlns:xliff="urn:oasis:names:tc:xliff:document:1.2">
+    <string name="memory_editor_bubble">Nút nổi Trình chỉnh sửa bộ nhớ</string>
+    <string name="memory_editor_bubble_content_description">Mở Trình chỉnh sửa bộ nhớ</string>
+    <string name="memory_editor_previous_results_page_action">Trang kết quả trước</string>
+    <string name="memory_editor_next_results_page_action">Trang kết quả tiếp theo</string>
+    <string name="memory_editor">Trình chỉnh sửa bộ nhớ</string>
+    <string name="memory_editor_search_hint">Giá trị</string>
+    <string name="memory_editor_next_scan">Quét tiếp</string>
+    <string name="memory_editor_new_search">Tìm kiếm mới</string>
+    <plurals name="memory_editor_results">
+        <item quantity="other"><xliff:g id="count" example="3">%1$d</xliff:g> kết quả</item>
+    </plurals>
+    <plurals name="memory_editor_candidates">
+        <item quantity="other"><xliff:g id="count" example="3">%1$d</xliff:g> ứng viên</item>
+    </plurals>
+    <plurals name="memory_editor_search_complete">
+        <item quantity="other">Tìm kiếm xong · <xliff:g id="count" example="3">%1$d</xliff:g> ứng viên</item>
+    </plurals>
+    <string name="memory_editor_no_results">Không có kết quả</string>
+    <string name="memory_editor_no_watch">Danh sách theo dõi trống</string>
+    <string name="memory_editor_unsupported">Trình chỉnh sửa bộ nhớ không khả dụng cho môi trường chạy này.</string>
+    <string name="memory_editor_engine_unavailable">Công cụ Trình chỉnh sửa bộ nhớ không khả dụng.</string>
+    <string name="memory_editor_engine_reconnecting">Trình chỉnh sửa bộ nhớ đang kết nối lại…</string>
+    <string name="memory_editor_refresh">Làm mới</string>
+    <string name="memory_editor_undo">Hoàn tác lần quét</string>
+    <string name="memory_variables_tab">Đã lưu</string>
+    <string name="memory_editor_back" tools:ignore="MissingTranslation">Quay lại</string>
+    <string name="memory_list_keep" tools:ignore="MissingTranslation">Giữ cho lần chạy sau</string>
+    <string name="memory_list_stop_keeping" tools:ignore="MissingTranslation">Dừng giữ lại</string>
+    <string name="memory_list_kept" tools:ignore="MissingTranslation">Đã giữ cho lần chạy sau</string>
+    <string name="memory_list_empty" tools:ignore="MissingTranslation">Chưa có dấu trang nào được lưu</string>
+    <string name="memory_list_empty_hint" tools:ignore="MissingTranslation">Đánh dấu trang một biến trong Tìm kiếm hoặc Trình kiểm tra để theo dõi tại đây.</string>
+    <string name="memory_list_remove_confirm" tools:ignore="MissingTranslation">Xóa khỏi Đã lưu? Mọi thao tác đóng băng đang hoạt động sẽ dừng lại.</string>
+    <string name="memory_list_add" tools:ignore="MissingTranslation">Đánh dấu trang</string>
+    <string name="memory_bookmark_relink" tools:ignore="MissingTranslation">Liên kết lại</string>
+    <string name="memory_bookmark_relink_hint" tools:ignore="MissingTranslation">Chọn biến thay thế trong Tìm kiếm, sau đó chọn Liên kết lại.</string>
+    <string name="memory_bookmark_relink_confirm" tools:ignore="MissingTranslation">Liên kết dấu trang này với biến đã chọn? Mọi thao tác đóng băng đang hoạt động trên dấu trang này sẽ dừng lại.</string>
+    <string name="memory_bookmark_unavailable" tools:ignore="MissingTranslation">Không khả dụng — chọn Liên kết lại để chọn mục tiêu</string>
+    <string name="memory_editor_watch">Theo dõi</string>
+    <string name="memory_editor_search_tab">Tìm kiếm</string>
+    <string name="memory_editor_search_known_values">Tìm giá trị đã biết</string>
+    <string name="memory_editor_search_unknown_values">Tìm giá trị chưa biết</string>
+    <string name="memory_editor_add_to_watch">Đánh dấu trang các giá trị đã chọn</string>
+    <string name="memory_editor_no_candidates">Không tìm thấy giá trị nào có thể tìm kiếm</string>
+    <string name="memory_editor_edit">Chỉnh sửa</string>
+    <plurals name="memory_editor_edit_batch">
+        <item quantity="other">Chỉnh sửa <xliff:g id="count" example="3">%1$d</xliff:g> giá trị</item>
+    </plurals>
+    <string name="memory_editor_edit_batch_no_common_type">Các mục đã chọn không hỗ trợ kiểu dữ liệu đã chọn. Hãy chỉnh sửa riêng các mục tương thích.</string>
+    <string name="memory_editor_save">Áp dụng</string>
+    <string name="memory_editor_replacement">Giá trị thay thế</string>
+    <string name="memory_editor_freeze">Đóng băng</string>
+    <string name="memory_editor_remove">Xóa</string>
+    <string name="memory_editor_select_visible">Chọn mục đang hiển thị</string>
+    <string name="memory_editor_clear_selection">Bỏ chọn</string>
+    <plurals name="memory_editor_selected">
+        <item quantity="other">Đã chọn <xliff:g id="count" example="3">%1$d</xliff:g></item>
+    </plurals>
+    <string name="memory_editor_close">Đóng Trình chỉnh sửa bộ nhớ</string>
+    <string name="memory_editor_searching">Đang tìm kiếm bộ nhớ…</string>
+    <string name="memory_editor_working">Đang áp dụng thao tác…</string>
+    <string name="memory_editor_search_progress">Đã quét <xliff:g id="scanned_mib" example="12">%1$d</xliff:g> / <xliff:g id="total_mib" example="64">%2$d</xliff:g> MiB</string>
+    <string name="memory_editor_candidate_moved">Đã cập nhật mục tiêu</string>
+    <string name="memory_editor_candidate_relocating">Đang xác thực lại</string>
+    <string name="memory_editor_candidate_ambiguous">Không rõ ràng — đã tạm dừng ghi</string>
+    <string name="memory_editor_candidate_lost">Bị mất — đã tạm dừng ghi</string>
+    <string name="memory_editor_apply">Áp dụng</string>
+    <string name="memory_editor_min_value">Giá trị tối thiểu</string>
+    <string name="memory_editor_max_value">Giá trị tối đa</string>
+    <string name="memory_editor_change_amount">Mức thay đổi</string>
+    <string name="memory_editor_min_change">Thay đổi tối thiểu</string>
+    <string name="memory_editor_max_change">Thay đổi tối đa</string>
+    <string name="memory_editor_unfreeze">Bỏ đóng băng</string>
+    <string name="memory_editor_cancelled">Đã hủy thao tác.</string>
+    <string name="memory_editor_resource_limit">Trình chỉnh sửa bộ nhớ đã đạt giới hạn an toàn. Hãy thử tìm kiếm cụ thể hơn hoặc xóa bớt dấu trang hay mục đóng băng không dùng đến.</string>
+    <string name="memory_editor_identity_unsafe">Không thể xác minh giá trị đã chọn hoặc trạng thái tìm kiếm. Hãy làm mới kết quả hoặc mở lại Trình kiểm tra rồi thử lại.</string>
+    <string name="memory_editor_safety_limit">Đã chọn quá nhiều giá trị cho thao tác này. Hãy chọn ít hơn và thử lại.</string>
+    <string name="memory_editor_invalid_request">Giá trị hoặc thao tác không hợp lệ.</string>
+    <string name="memory_editor_freeze_paused">Đã tạm dừng để đảm bảo an toàn</string>
+    <string name="memory_editor_predicate_between">Trong khoảng</string>
+    <string name="memory_editor_predicate_changed">Đã thay đổi</string>
+    <string name="memory_editor_predicate_unchanged">Không thay đổi</string>
+    <string name="memory_editor_predicate_increased">Đã tăng</string>
+    <string name="memory_editor_predicate_decreased">Đã giảm</string>
+    <string name="memory_editor_predicate_increased_by">Tăng thêm</string>
+    <string name="memory_editor_predicate_decreased_by">Giảm đi</string>
+    <string name="memory_editor_predicate_changed_by">Thay đổi một lượng</string>
+    <string name="memory_editor_predicate_increased_range">Mức tăng trong khoảng</string>
+    <string name="memory_editor_predicate_decreased_range">Mức giảm trong khoảng</string>
+    <string name="memory_editor_inspector">Trình kiểm tra</string>
+    <string name="memory_editor_inspect_memory">Kiểm tra vùng nhớ lân cận</string>
+    <string name="memory_editor_inspector_loading">Đang xác minh kết quả và đọc vùng nhớ lân cận…</string>
+    <string name="memory_editor_inspector_empty">Chọn một kết quả để kiểm tra vùng nhớ lân cận.</string>
+    <string name="memory_editor_inspector_no_rows">Không có vùng nhớ lân cận nào để kiểm tra.</string>
+    <string name="memory_editor_refresh_snapshot">Làm mới bản chụp</string>
+    <string name="memory_editor_select_result_value">Chọn dấu trang này</string>
+    <string name="memory_editor_freeze_after_edit">Đóng băng sau khi áp dụng</string>
+    <string name="memory_editor_freeze_after_edit_help">Khóa giá trị này và lưu thành dấu trang trong Đã lưu.</string>
+    <string name="memory_editor_expression_single_hint">Nhập một giá trị hoặc phân tách các giá trị nhóm bằng dấu chấm phẩy (;).</string>
+    <string name="memory_editor_expression_group_needs_type">Chọn một kiểu dữ liệu cụ thể để tìm kiếm theo nhóm.</string>
+    <plurals name="memory_editor_expression_group_hint">
+        <item quantity="other">Tìm kiếm nhóm · <xliff:g id="count" example="3">%1$d</xliff:g> giá trị · cùng đối tượng Java</item>
+    </plurals>
+    <string name="memory_editor_expression_query_help">Ví dụ: 500 hoặc 500;1000. Tìm kiếm nhóm tìm 2–8 giá trị trong cùng một đối tượng Java.</string>
+    <string name="memory_editor_keypad_clear">Xóa</string>
+    <string name="memory_editor_peek_underlay">Nhấn giữ để xem MIDlet bên dưới</string>
+    <string name="memory_editor_peek_underlay_active">Đang hiển thị MIDlet bên dưới</string>
+    <string name="memory_editor_no_runtime">Không có phiên chạy MIDlet nào đang hoạt động.</string>
+    <string name="memory_editor_no_search_history">Không có lần tìm kiếm trước nào để khôi phục.</string>
+    <string name="memory_editor_partial_write">Thao tác ghi chưa hoàn tất hoàn toàn. Hãy kiểm tra các giá trị hiện tại trước khi thử lại.</string>
+    <!-- Independent write counts: confirmed, unconfirmed, skipped, not attempted, and incompatible data type. -->
+    <string name="memory_editor_write_outcome">Đã xác nhận ghi: <xliff:g id="confirmed" example="3">%1$d</xliff:g>. Chưa xác nhận: <xliff:g id="unconfirmed" example="0">%2$d</xliff:g>. Đã bỏ qua: <xliff:g id="skipped" example="0">%3$d</xliff:g>. Chưa thực hiện: <xliff:g id="not_attempted" example="0">%4$d</xliff:g>. Bỏ qua do kiểu dữ liệu: <xliff:g id="skipped_by_type" example="0">%5$d</xliff:g>.</string>
+    <!-- %1$s is a localized outcome explanation; %2$d through %6$d are the same independent write counts. -->
+    <string name="memory_editor_write_failure_outcome"><xliff:g id="reason" example="Write interrupted.">%1$s</xliff:g>\nĐã xác nhận ghi: <xliff:g id="confirmed" example="1">%2$d</xliff:g>. Chưa xác nhận: <xliff:g id="unconfirmed" example="1">%3$d</xliff:g>. Đã bỏ qua: <xliff:g id="skipped" example="0">%4$d</xliff:g>. Chưa thực hiện: <xliff:g id="not_attempted" example="0">%5$d</xliff:g>. Bỏ qua do kiểu dữ liệu: <xliff:g id="skipped_by_type" example="0">%6$d</xliff:g>.</string>
+    <!-- Result counts before (%1$d) and after (%2$d) the completed next scan. -->
+    <string name="memory_editor_next_scan_result">Kết quả quét tiếp: <xliff:g id="before_count" example="120">%1$d</xliff:g> → <xliff:g id="after_count" example="14">%2$d</xliff:g></string>
+    <string name="memory_editor_type_auto">Tự động</string>
+    <string name="memory_editor_remove_candidates_title">Xóa các kết quả đã chọn?</string>
+    <string name="memory_editor_remove_candidates_description">Xóa: Bỏ các kết quả đã chọn khỏi danh sách tìm kiếm. Giá trị trong bộ nhớ trò chơi giữ nguyên.\n\nHoàn nguyên &amp; xóa: Đồng thời khôi phục các giá trị về trước lần chỉnh sửa được xác nhận gần nhất, nếu vẫn khớp. Các giá trị đang đóng băng và kết quả có xung đột vẫn giữ trong danh sách.</string>
+    <string name="memory_editor_revert_and_remove">Hoàn nguyên &amp; xóa</string>
+    <string name="memory_editor_revert_remove_commit_failed">Các giá trị có thể đã được khôi phục nhưng không thể xóa kết quả khỏi danh sách. Hãy làm mới và thử lại; các giá trị do trò chơi thay đổi sẽ không bị ghi đè.</string>
+    <string name="memory_editor_revert_remove_outcome">Đã khôi phục: <xliff:g id="restored" example="2">%1$d</xliff:g>. Đã xóa: <xliff:g id="removed" example="2">%2$d</xliff:g>. Xung đột: <xliff:g id="conflicts" example="0">%3$d</xliff:g>. Chưa xác nhận: <xliff:g id="unconfirmed" example="0">%4$d</xliff:g>. Chưa thực hiện: <xliff:g id="not_attempted" example="0">%5$d</xliff:g>.</string>
+    <string name="memory_editor_set_all">Đặt tất cả</string>
+    <string name="memory_editor_increment_start">Giá trị bắt đầu</string>
+    <string name="memory_editor_edit_batch_type_notice">Chỉ những giá trị có kiểu dữ liệu khớp mới bị thay đổi.</string>
+    <string name="memory_editor_write_confirmed">Số giá trị đã xác nhận khi đọc lại bộ nhớ: <xliff:g id="count" example="3">%1$d</xliff:g>.</string>
+    <string name="memory_editor_candidate_untraced">Mảng #<xliff:g id="array_id" example="42">%1$d</xliff:g>[<xliff:g id="index" example="3">%2$d</xliff:g>] · Chưa truy vết được nguồn</string>
+    <string name="memory_editor_candidate_static"><xliff:g id="field_name" example="Player.coins">%1$s</xliff:g> · <xliff:g id="reference_kind" example="Static reference">%2$s</xliff:g></string>
+    <string name="memory_editor_candidate_instance"><xliff:g id="field_name" example="Player.hp">%1$s</xliff:g> · <xliff:g id="reference_kind" example="Instance reference">%2$s</xliff:g> · mục tiêu #<xliff:g id="target_id" example="1">%3$d</xliff:g></string>
+    <string name="memory_editor_reference_static">Tham chiếu tĩnh</string>
+    <string name="memory_editor_reference_instance">Tham chiếu thực thể</string>
+    <string name="memory_editor_path_changed">Đường dẫn tham chiếu đã thay đổi sau khi quét.</string>
+    <string name="memory_editor_path_incomplete">Đường dẫn tham chiếu vượt quá giới hạn kiểm tra.</string>
+    <string name="memory_editor_source_unknown">Chưa truy vết được nguồn</string>
+    <string name="memory_editor_incremental_edit">Tăng dần</string>
+    <string name="memory_editor_increment_step">Bước nhảy</string>
+    <string name="memory_editor_increment_invalid">Hãy dùng một kiểu số nguyên và các giá trị trong phạm vi của kiểu đó.</string>
+    <!-- The batch dialog title already shows the number of selected values. -->
+    <string name="memory_editor_increment_preview">Xem trước: <xliff:g id="name" example="Example">%1$s</xliff:g></string>
+    <string name="memory_editor_panel_opacity">Độ mờ bảng điều khiển</string>
+    <string name="memory_editor_panel_opacity_help">Điều chỉnh nền để nhìn thấy giá trị trò chơi khi tìm kiếm. Văn bản và biểu tượng vẫn hiển thị rõ.</string>
+    <string name="memory_editor_reconversion_required" tools:ignore="MissingTranslation">Bản chuyển đổi đã cài đặt của MIDlet này không tương thích với Trình chỉnh sửa bộ nhớ. Hãy đóng trò chơi, sau đó chuyển đổi lại hoặc cài đặt lại trong JL-Mod Plus.</string>
+    <string name="memory_saved_tab" tools:ignore="MissingTranslation">Đã lưu</string>
+    <string name="memory_saved_save" tools:ignore="MissingTranslation">Lưu biến</string>
+    <string name="memory_saved_name" tools:ignore="MissingTranslation">Tên</string>
+    <string name="memory_saved_explanation" tools:ignore="MissingTranslation">Lưu đường dẫn bộ nhớ đã xác minh này cho các phiên sau. Giá trị không bao giờ bị ghi tự động.</string>
+    <string name="memory_saved_empty" tools:ignore="MissingTranslation">Chưa có biến nào được lưu. Chọn một kết quả tìm kiếm để lưu lại.</string>
+    <string name="memory_saved_not_ready" tools:ignore="MissingTranslation">Chưa sẵn sàng</string>
+    <string name="memory_saved_retry" tools:ignore="MissingTranslation">Thử lại</string>
+    <string name="memory_saved_rename" tools:ignore="MissingTranslation">Đổi tên</string>
+    <string name="memory_saved_value" tools:ignore="MissingTranslation">Giá trị</string>
+    <string name="memory_saved_delete_confirm" tools:ignore="MissingTranslation">Xóa định nghĩa đã lưu này? Giá trị trong trò chơi sẽ không thay đổi.</string>
+    <string name="memory_saved_changed" tools:ignore="MissingTranslation">Đã thay đổi</string>
+    <string name="memory_saved_rebound" tools:ignore="MissingTranslation">Đã cập nhật mục tiêu</string>
+    <string name="memory_saved_import_summary" tools:ignore="MissingTranslation">Đã lưu: thêm mới <xliff:g id="added_count" example="4">%1$d</xliff:g>, đã có sẵn <xliff:g id="existing_count" example="2">%2$d</xliff:g></string>
+    <string name="memory_saved_incompatible" tools:ignore="MissingTranslation">Không tương thích</string>
+    <string name="memory_saved_failed" tools:ignore="MissingTranslation">Thất bại</string>
+    <string name="memory_saved_delete_many_confirm" tools:ignore="MissingTranslation">Xóa <xliff:g id="count" example="3">%1$d</xliff:g> định nghĩa đã lưu? Giá trị trong trò chơi sẽ không thay đổi.</string>
+    <string name="memory_recipes_title" tools:ignore="MissingTranslation">Thao tác nhanh</string>
+    <string name="memory_recipes_simple_from_saved" tools:ignore="MissingTranslation">Mục tiêu: <xliff:g id="bookmark_name" example="Coins">%1$s</xliff:g></string>
+    <string name="memory_recipes_preview" tools:ignore="MissingTranslation">Xem trước mục tiêu</string>
+    <string name="memory_recipes_stop_freeze" tools:ignore="MissingTranslation">Dừng đóng băng tập lệnh</string>
+    <string name="memory_recipes_freeze" tools:ignore="MissingTranslation">Giữ đóng băng khi trò chơi này đang chạy</string>
+    <string name="memory_recipes_run" tools:ignore="MissingTranslation">Chạy</string>
+    <string name="memory_recipes_active_freezes" tools:ignore="MissingTranslation">Các mục đóng băng tập lệnh đang bật</string>
+    <string name="memory_recipes_target_unavailable" tools:ignore="MissingTranslation">Mục tiêu dấu trang không khả dụng. Hãy làm mới hoặc liên kết lại trước khi chạy.</string>
+    <string name="memory_recipes_preview_values" tools:ignore="MissingTranslation">Giá trị hiện tại: <xliff:g id="name" example="Example">%1$s</xliff:g></string>
+    <string name="memory_scripts_title" tools:ignore="MissingTranslation">Tập lệnh</string>
+    <string name="memory_scripts_active" tools:ignore="MissingTranslation">Đang hoạt động</string>
+    <string name="memory_scripts_inputs" tools:ignore="MissingTranslation">Đầu vào</string>
+    <string name="memory_scripts_create_from_bookmarks" tools:ignore="MissingTranslation">Tạo tập lệnh</string>
+    <string name="memory_scripts_create_failed" tools:ignore="MissingTranslation">Không thể bắt đầu tập lệnh mới.</string>
+    <string name="memory_scripts_draft_in_progress" tools:ignore="MissingTranslation">Hãy hoàn tất hoặc hủy bản nháp tập lệnh hiện tại trước.</string>
+    <string name="memory_builder_open_saved" tools:ignore="MissingTranslation">Mở Đã lưu</string>
+    <string name="memory_builder_add_description" tools:ignore="MissingTranslation">Thêm mô tả</string>
+    <string name="memory_builder_find_values" tools:ignore="MissingTranslation">Tìm giá trị</string>
+    <string name="memory_scripts_description" tools:ignore="MissingTranslation">Mô tả</string>
+    <string name="memory_scripts_new" tools:ignore="MissingTranslation">Tập lệnh mới</string>
+    <string name="memory_scripts_back" tools:ignore="MissingTranslation">Quay lại</string>
+    <string name="memory_scripts_edit" tools:ignore="MissingTranslation">Chỉnh sửa</string>
+    <string name="memory_scripts_save" tools:ignore="MissingTranslation">Lưu</string>
+    <string name="memory_scripts_saved" tools:ignore="MissingTranslation">Đã lưu tập lệnh</string>
+    <string name="memory_scripts_deleted" tools:ignore="MissingTranslation">Đã xóa tập lệnh</string>
+    <string name="memory_scripts_save_failed" tools:ignore="MissingTranslation">Không thể lưu tập lệnh.</string>
+    <string name="memory_scripts_editor_hint" tools:ignore="MissingTranslation">Nhập hoặc dán tài liệu JSON tập lệnh. Lưu sẽ không chạy tập lệnh.</string>
+    <string name="memory_scripts_paste_hint" tools:ignore="MissingTranslation">Dán JSON tập lệnh</string>
+    <string name="memory_scripts_paste" tools:ignore="MissingTranslation">Dán</string>
+    <string name="memory_scripts_clipboard_invalid" tools:ignore="MissingTranslation">Bộ nhớ tạm trống hoặc tài liệu vượt quá 64 KiB</string>
+    <string name="memory_scripts_invalid" tools:ignore="MissingTranslation">Định dạng tập lệnh không hợp lệ</string>
+    <string name="memory_scripts_freeze_active" tools:ignore="MissingTranslation">Đang bật đóng băng cho tập lệnh này</string>
+    <string name="memory_scripts_delete" tools:ignore="MissingTranslation">Xóa</string>
+    <string name="memory_scripts_delete_confirm" tools:ignore="MissingTranslation">Xóa <xliff:g id="name" example="Example">%1$s</xliff:g>? Mọi thao tác đóng băng đang hoạt động cho tập lệnh này sẽ dừng lại.</string>
+    <string name="memory_scripts_empty" tools:ignore="MissingTranslation">Chưa lưu tập lệnh nào</string>
+    <string name="memory_scripts_unsaved_title" tools:ignore="MissingTranslation">Hủy bỏ tập lệnh chưa lưu?</string>
+    <string name="memory_scripts_unsaved_message" tools:ignore="MissingTranslation">Các thay đổi trong tập lệnh của bạn chưa được lưu.</string>
+    <string name="memory_scripts_discard" tools:ignore="MissingTranslation">Hủy bỏ</string>
+    <string name="memory_scripts_current_title" tools:ignore="MissingTranslation">Lần đọc gần nhất</string>
+    <string name="memory_scripts_refresh" tools:ignore="MissingTranslation">Làm mới</string>
+    <string name="memory_scripts_reading" tools:ignore="MissingTranslation">Đang đọc các giá trị hiện tại…</string>
+    <string name="memory_scripts_refresh_hint" tools:ignore="MissingTranslation">Nhấn Làm mới để đọc các giá trị hiện tại từ trò chơi đang chạy.</string>
+    <string name="memory_scripts_mode_toggle" tools:ignore="MissingTranslation">Đóng băng giá trị</string>
+    <string name="memory_scripts_mode_form" tools:ignore="MissingTranslation">Trình sửa giá trị</string>
+    <string name="memory_scripts_mode_once" tools:ignore="MissingTranslation">Thao tác nhanh</string>
+    <string name="memory_scripts_mode_legacy" tools:ignore="MissingTranslation">Tập lệnh nâng cao</string>
+    <string name="memory_scripts_edit_values" tools:ignore="MissingTranslation">Chỉnh sửa giá trị</string>
+    <string name="memory_scripts_apply" tools:ignore="MissingTranslation">Áp dụng thay đổi</string>
+    <string name="memory_scripts_refresh_required" tools:ignore="MissingTranslation">Hãy làm mới để xác minh các giá trị hiện tại trước khi áp dụng.</string>
+    <string name="memory_scripts_inconsistent" tools:ignore="MissingTranslation">Bản sao không nhất quán: <xliff:g id="name" example="Example">%1$s</xliff:g></string>
+    <string name="memory_editor_minimize" tools:ignore="MissingTranslation">Thu nhỏ Trình chỉnh sửa bộ nhớ</string>
+    <string name="memory_scripts_choose_type" tools:ignore="MissingTranslation">Tập lệnh mới</string>
+    <string name="memory_scripts_choose_hint" tools:ignore="MissingTranslation">Chọn cách thức hoạt động của tập lệnh này.</string>
+    <string name="memory_builder_json_editor" tools:ignore="MissingTranslation">Trình chỉnh sửa JSON</string>
+    <string name="memory_builder_freeze_hint" tools:ignore="MissingTranslation">Giữ các giá trị đã chọn bị khóa khi bật. Tắt đóng băng sẽ không khôi phục giá trị trước đó của chúng.</string>
+    <string name="memory_builder_form_hint" tools:ignore="MissingTranslation">Tạo biểu mẫu đọc các giá trị hiện tại trước khi áp dụng chỉnh sửa.</string>
+    <string name="memory_builder_actions_hint" tools:ignore="MissingTranslation">Áp dụng thay đổi mỗi khi bạn nhấn Chạy. Mỗi lần chạy đều độc lập.</string>
+    <string name="memory_builder_name" tools:ignore="MissingTranslation">Tên tập lệnh</string>
+    <string name="memory_builder_frozen_values" tools:ignore="MissingTranslation">Giá trị đóng băng</string>
+    <string name="memory_builder_fields" tools:ignore="MissingTranslation">Trường</string>
+    <string name="memory_builder_actions" tools:ignore="MissingTranslation">Thao tác</string>
+    <string name="memory_builder_add_bookmarks" tools:ignore="MissingTranslation">Thêm từ dấu trang</string>
+    <string name="memory_builder_empty" tools:ignore="MissingTranslation">Hãy thêm ít nhất một dấu trang đã xác minh.</string>
+    <string name="memory_builder_field_label" tools:ignore="MissingTranslation">Nhãn trường</string>
+    <string name="memory_builder_keep_at" tools:ignore="MissingTranslation">Giữ ở mức</string>
+    <string name="memory_builder_amount" tools:ignore="MissingTranslation">Giá trị / số lượng</string>
+    <string name="memory_builder_set" tools:ignore="MissingTranslation">Đặt</string>
+    <string name="memory_builder_add" tools:ignore="MissingTranslation">Cộng</string>
+    <string name="memory_builder_subtract" tools:ignore="MissingTranslation">Trừ</string>
+    <string name="memory_builder_view_json" tools:ignore="MissingTranslation">Xem JSON</string>
+    <string name="memory_builder_edit_json" tools:ignore="MissingTranslation">Chỉnh sửa JSON</string>
+    <string name="memory_builder_search_bookmarks" tools:ignore="MissingTranslation">Tìm dấu trang</string>
+    <string name="memory_builder_no_bookmarks" tools:ignore="MissingTranslation">Không có dấu trang đã xác minh nào phù hợp. Hãy đánh dấu trang một giá trị trong Tìm kiếm hoặc liên kết lại trong Đã lưu.</string>
+    <string name="memory_builder_needs_relink" tools:ignore="MissingTranslation">Cần liên kết lại</string>
+    <string name="memory_builder_add_selected" tools:ignore="MissingTranslation">Thêm mục đã chọn</string>
+    <string name="memory_builder_min" tools:ignore="MissingTranslation">Tối thiểu (tùy chọn)</string>
+    <string name="memory_builder_max" tools:ignore="MissingTranslation">Tối đa (tùy chọn)</string>
+    <string name="memory_builder_add_target" tools:ignore="MissingTranslation">Thêm mục tiêu</string>
+    <string name="memory_builder_freeze_short" tools:ignore="MissingTranslation">Giữ các giá trị đã chọn ở mức cố định</string>
+    <string name="memory_builder_form_short" tools:ignore="MissingTranslation">Điều chỉnh nhiều giá trị tại một nơi</string>
+    <string name="memory_builder_actions_short" tools:ignore="MissingTranslation">Chạy một lần các thao tác Đặt, Cộng hoặc Trừ</string>
+    <string name="memory_editor_refine_scan" tools:ignore="MissingTranslation">Lọc lại</string>
+    <string name="memory_scripts_saved_count" tools:ignore="MissingTranslation">Đã lưu <xliff:g id="count" example="3">%1$d</xliff:g></string>
+    <string name="memory_scripts_empty_hint" tools:ignore="MissingTranslation">Tạo tập lệnh để chỉnh sửa hoặc đóng băng giá trị khi đang chơi.</string>
+    <string name="memory_builder_limits" tools:ignore="MissingTranslation">Giới hạn (tùy chọn)</string>
+</resources>

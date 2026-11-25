@@ -1,0 +1,468 @@
+<?xml version="1.0" encoding="utf-8"?>
+<!-- MIDlet library, collections, metadata editor, bulk/single installer, file picker, and app updates. -->
+<resources xmlns:tools="http://schemas.android.com/tools" xmlns:xliff="urn:oasis:names:tc:xliff:document:1.2">
+    <string name="action_context_delete">Slett</string>
+    <string name="action_context_rename">Gi nytt navn</string>
+    <string name="action_context_shortcut">Legg til snarvei</string>
+    <string name="action_reinstall">Installer på nytt</string>
+    <string name="alert_msg_workdir_not_exists">Fant ikke arbeidsmappen:\n<xliff:g id="path" example="/storage/emulated/0/JL-Mod-Plus">%1$s</xliff:g>\nVil du opprette den eller velge en annen mappe?</string>
+    <string name="converting_wait">Konverterer JAR…</string>
+    <string name="create_apps_dir_failed">Kunne ikke klargjøre arbeidsmappen på:\n<xliff:g id="path" example="/storage/emulated/0/JL-Mod-Plus">%1$s</xliff:g>\nVelg en annen mappe.</string>
+    <string name="install_done">App installert.</string>
+    <string name="install_done_with_warning">App installert med advarsler.</string>
+    <string name="installer_title">MIDlet-installerer</string>
+    <string name="installer_error_message">Kunne ikke installere den valgte appen. Velg en gyldig MIDlet-fil og prøv på nytt.</string>
+    <string name="install_jar_non_matched_jad">Denne appen avviker fra den som er beskrevet i JAD-filen.\nVil du ignorere JAD-filen og installere likevel?</string>
+    <string name="file_picker_select_file">Velg fil</string>
+    <string name="file_picker_select_folder">Velg mappe</string>
+    <string name="file_picker_select_app_bundle">Velg app-pakke</string>
+    <string name="file_picker_select_icon">Velg ikon</string>
+    <string name="file_picker_navigate_back">Tilbake til overordnet mappe</string>
+    <string name="file_picker_cancel">Avbryt</string>
+    <string name="file_picker_search">Søk</string>
+    <string name="file_picker_sort">Sorter</string>
+    <string name="file_picker_select_all">Velg alle filer i denne mappen</string>
+    <string name="file_picker_unselect_all">Fjern valg for alle filer i denne mappen</string>
+    <string name="file_picker_sort_type">Mapper først</string>
+    <string name="file_picker_sort_name_ascending">Navn A–Å</string>
+    <string name="file_picker_sort_name_descending">Navn Å–A</string>
+    <string name="file_picker_sort_modified_newest">Endringsdato: nyeste</string>
+    <string name="file_picker_sort_modified_oldest">Endringsdato: eldste</string>
+    <string name="file_picker_choose">Velg</string>
+    <string name="file_picker_current_folder">Gjeldende mappe</string>
+    <string name="file_picker_parent_folder">Overordnet mappe</string>
+    <string name="file_picker_file">Fil</string>
+    <string name="file_picker_preview_named">Forhåndsvis <xliff:g id="name" example="Example">%1$s</xliff:g></string>
+    <string name="file_picker_preview_unavailable">Forhåndsvisning ikke tilgjengelig</string>
+    <string name="file_picker_storage_volume">Lagringsvolum</string>
+    <string name="file_picker_empty">Ingen samsvarende filer</string>
+    <string name="file_picker_empty_folder">Fant ingen mapper</string>
+    <string name="file_picker_no_matches">Ingen treff</string>
+    <string name="file_picker_permission_required">Lagringstillatelse kreves</string>
+    <string name="file_picker_permission_message">Tillat lagringstilgang for å bla gjennom filer og mapper på denne enheten.</string>
+    <string name="file_picker_permission_denied">Lagringstilgang ble ikke gitt.</string>
+    <string name="file_picker_grant_access">Gi tilgang</string>
+    <string name="file_picker_retry">Prøv på nytt</string>
+    <string name="file_picker_load_failed">Kunne ikke åpne denne mappen.</string>
+    <string name="file_picker_create_folder">Ny mappe</string>
+    <string name="file_picker_create_folder_title">Opprett mappe</string>
+    <string name="file_picker_folder_name">Mappenavn</string>
+    <string name="file_picker_invalid_folder_name">Skriv inn et gyldig mappenavn.</string>
+    <string name="file_picker_folder_exists">Det finnes allerede et element med dette navnet.</string>
+    <string name="file_picker_create_folder_failed">Kunne ikke opprette mappen.</string>
+    <string name="file_picker_selection_unavailable">Det valgte elementet er ikke lenger tilgjengelig.</string>
+    <string name="loading_apps">Laster inn apper</string>
+    <string name="message_delete">Vil du slette denne appen, innstillingene og lagringsdataene? Den fjernes også fra biblioteket ditt.</string>
+    <string name="msg_no_matches">Ingen treff for «<xliff:g id="query" example="Bounce">%1$s</xliff:g>»</string>
+    <string name="library_destination_apps">Alle apper</string>
+    <string name="library_destination_collections">Samlinger</string>
+    <string name="library_scope_picker_title" tools:ignore="MissingTranslation">Bla gjennom apper</string>
+    <string name="library_destination_more">Mer</string>
+    <string name="library_search_placeholder">Søk i apper…</string>
+    <string name="library_filter_all">Alle</string>
+    <string name="library_filter_recently_opened">Nylig åpnet</string>
+    <string name="library_filter_recently_added">Nylig lagt til</string>
+    <string name="library_filter_favorites">Favoritter</string>
+    <string name="library_add_to_favorites_action">Legg til i favoritter</string>
+    <string name="library_remove_from_favorites_action">Fjern fra favoritter</string>
+    <string name="library_favorite_coming_soon">Favoritter er ikke tilgjengelig</string>
+    <string name="library_vendor_version"><xliff:g id="vendor" example="Nokia">%1$s</xliff:g> · <xliff:g id="version" example="1.0">%2$s</xliff:g></string>
+    <string name="library_view_list">Liste</string>
+    <string name="library_view_grid">Rutenett</string>
+    <string name="library_icon_ratio_title">Sideforhold for ikoner</string>
+    <string name="library_icon_ratio_square">Kvadratisk (1:1)</string>
+    <string name="library_icon_ratio_portrait">Stående (3:4)</string>
+    <string name="library_icon_shape_title">Ikonform</string>
+    <string name="library_icon_shape_round">Avrundede hjørner</string>
+    <string name="library_icon_shape_square">Skarpe hjørner</string>
+    <string name="library_grid_icon_size_title" tools:ignore="MissingTranslation">Ikonstørrelse i rutenett</string>
+    <string name="library_grid_icon_size_small" tools:ignore="MissingTranslation">Liten</string>
+    <string name="library_grid_icon_size_standard" tools:ignore="MissingTranslation">Standard</string>
+    <string name="library_grid_icon_size_large" tools:ignore="MissingTranslation">Stor</string>
+    <string name="library_grid_icon_size_summary" tools:ignore="MissingTranslation">Endrer ikonstørrelse og antall kolonner i rutenettvisning.</string>
+    <string name="library_grid_spacing_title">Rutenettavstand</string>
+    <string name="library_grid_spacing_summary" tools:ignore="MissingTranslation">Gjelder bare rutenettvisning.</string>
+    <string name="library_grid_spacing_none">Ingen (0 dp)</string>
+    <string name="library_grid_spacing_compact">Kompakt (4 dp)</string>
+    <string name="library_grid_spacing_standard">Standard (8 dp)</string>
+    <string name="library_grid_spacing_spacious">Romslig (12 dp)</string>
+    <string name="library_hide_grid_titles">Skjul MIDlet-titler</string>
+    <string name="library_show_list_description">Vis MIDlet-beskrivelser</string>
+    <string name="library_collections_empty_title">Ingen samlinger ennå</string>
+    <string name="library_collections_empty_message">Samlinger er ikke tilgjengelige før biblioteket er ferdig lastet inn.</string>
+    <string name="library_expand_description">Utvid beskrivelse</string>
+    <string name="library_collapse_description">Skjul beskrivelse</string>
+    <string name="no_data_for_display">Ingen apper å vise</string>
+    <string name="permission_request_failed">Skrivetillatelse til lagring kreves.</string>
+    <string name="reinstall">Denne appen er allerede installert. Vil du installere den på nytt?</string>
+    <string name="reinstall_newest">Vil du oppdatere denne appen til versjon <xliff:g id="version" example="2.1.0">%1$s</xliff:g>?\n\nInstallert nå: <xliff:g id="current_version" example="2.0.0">%2$s</xliff:g></string>
+    <string name="reinstall_older">Vil du erstatte denne appen med versjon <xliff:g id="version" example="2.1.0">%1$s</xliff:g>?\n\nInstallert nå: <xliff:g id="current_version" example="2.0.0">%2$s</xliff:g>\nDen eldre versjonen fungerer kanskje ikke riktig med eksisterende data.</string>
+    <string name="warn_install_from_net">Denne filen blir lastet ned fra internett.</string>
+    <string name="installer_ambiguous">Flere installerte apper samsvarer med denne pakken. Vil du installere en egen kopi? Eksisterende apper og dataene deres beholdes.</string>
+    <string name="installer_separate_copy">Installer egen kopi</string>
+    <string name="installer_stage_download">Laster ned app…</string>
+    <string name="installer_stage_wait">Venter på en annen operasjon…</string>
+    <string name="installer_stage_save">Lagrer app…</string>
+    <string name="installer_failed_download">Kunne ikke laste ned appen. Kontroller tilkoblingen og nedlastingslenken, og prøv på nytt.</string>
+    <string name="installer_failed_storage">Kunne ikke fullføre installasjonen. Prøv på nytt.</string>
+    <string name="installer_failed_conversion">Kunne ikke konvertere appen. Kontroller at filen er fullstendig og støttet, og prøv på nytt.</string>
+    <string name="installer_needs_recovery">Appfilene ble lagret, men biblioteket kunne ikke fullføre oppdateringen. Oppdater biblioteket før du prøver på nytt.</string>
+    <string name="installer_refresh_library">Oppdater bibliotek</string>
+    <string name="installer_cancel_pending">Stopper ved neste trygge punkt…</string>
+    <string name="installer_retry_remaining">Se gjennom ufullførte elementer</string>
+    <string name="installer_not_processed">Ikke behandlet</string>
+    <string name="installer_partial_restore">App installert, men data eller innstillinger kunne ikke gjenopprettes.</string>
+    <string name="installer_removed_leftovers">App fjernet, men noen innstillinger eller lagringsdata kunne ikke slettes.</string>
+    <string name="installer_copy_details">Kopier detaljer</string>
+    <string name="installer_show_details">Vis detaljer</string>
+    <string name="installer_hide_details">Skjul detaljer</string>
+    <!-- %1$d is the number of source Java class files skipped during conversion. -->
+    <plurals name="installer_conversion_warning_summary">
+        <item quantity="one"><xliff:g id="skipped_count" example="2">%1$d</xliff:g> Java-klassefil ble hoppet over fordi den ikke kunne leses. Funksjoner som bruker den, virker kanskje ikke.</item>
+        <item quantity="other"><xliff:g id="skipped_count" example="2">%1$d</xliff:g> Java-klassefiler ble hoppet over fordi de ikke kunne leses. Funksjoner som bruker dem, virker kanskje ikke.</item>
+    </plurals>
+    <!-- %1$s is the source JAR entry path for the skipped class file. -->
+    <string name="installer_conversion_skipped_entry"><xliff:g id="entry_path" example="com/example/Broken.class">%1$s</xliff:g>\nProblem: Java-klassefilen kunne ikke leses.\nHandling: Hoppet over under konvertering.</string>
+    <!-- %1$d is the number of additional bounded conversion diagnostics not shown. -->
+    <plurals name="installer_conversion_omitted_details">
+        <item quantity="one"><xliff:g id="omitted_count" example="5">%1$d</xliff:g> ekstra konverteringsproblem vises ikke.</item>
+        <item quantity="other"><xliff:g id="omitted_count" example="5">%1$d</xliff:g> ekstra konverteringsproblemer vises ikke.</item>
+    </plurals>
+    <string name="library_collection_new">Ny samling</string>
+    <string name="library_collection_ready_empty_message">Opprett samlinger for å organisere apper uten å flytte filene deres.</string>
+    <string name="library_collection_add_app">Legg til i samling</string>
+    <string name="library_collection_add_apps">Legg til apper</string>
+    <string name="library_collection_manage_apps">Velg apper</string>
+    <string name="library_collection_manage" tools:ignore="MissingTranslation">Administrer samlinger</string>
+    <string name="library_collection_delete_confirmation" tools:ignore="MissingTranslation">Vil du slette «<xliff:g id="collection_name" example="Favorites">%1$s</xliff:g>»? Appene i denne samlingen forblir installert.</string>
+    <string name="library_collection_rename_action" tools:ignore="MissingTranslation">Gi samlingen «<xliff:g id="collection_name" example="Favorites">%1$s</xliff:g>» nytt navn</string>
+    <string name="library_collection_delete_action" tools:ignore="MissingTranslation">Slett samlingen «<xliff:g id="collection_name" example="Favorites">%1$s</xliff:g>»</string>
+    <string name="library_collection_select_action" tools:ignore="MissingTranslation">Velg samlingen «<xliff:g id="collection_name" example="Favorites">%1$s</xliff:g>»</string>
+    <string name="library_collection_open_action" tools:ignore="MissingTranslation">Åpne samlingen «<xliff:g id="collection_name" example="Favorites">%1$s</xliff:g>»</string>
+    <string name="library_collection_rename_selected" tools:ignore="MissingTranslation">Gi valgt samling nytt navn</string>
+    <string name="library_collection_delete_selected" tools:ignore="MissingTranslation">Slett valgte samlinger</string>
+    <plurals name="library_collection_delete_many_confirmation">
+        <item quantity="one">Vil du slette <xliff:g id="count" example="3">%d</xliff:g> samling? Appene forblir installert.</item>
+        <item quantity="other">Vil du slette <xliff:g id="count" example="3">%d</xliff:g> samlinger? Appene forblir installert.</item>
+    </plurals>
+    <string name="library_notifications_title" tools:ignore="MissingTranslation">Varsler</string>
+    <string name="library_notifications_empty_title" tools:ignore="MissingTranslation">Ingen varsler ennå</string>
+    <string name="library_notifications_empty_summary" tools:ignore="MissingTranslation">Varsler om appoppdateringer vises her når de er tilgjengelige.</string>
+    <string name="library_collection_manage_apps_summary">Velg apper som skal inkluderes i denne samlingen.</string>
+    <string name="library_collection_name">Samlingsnavn</string>
+    <string name="library_collection_members_empty">Ingen apper i denne samlingen.</string>
+    <string name="library_collection_select_title">Velg en samling</string>
+    <string name="library_collection_select_message">Velg en samling for å se appene i den.</string>
+    <string name="library_collection_remove_from_current">Fjern fra samling</string>
+    <string name="library_no_matches">Ingen treff for «<xliff:g id="query" example="Bounce">%1$s</xliff:g>»</string>
+    <string name="library_action_share_app">Del app</string>
+    <string name="library_action_export_bundle">Eksporter app-pakke</string>
+    <string name="library_action_import_bundle">Importer app-pakke</string>
+    <string name="library_action_import_bundle_summary">Gjenopprett eksporterte apper sammen med inkluderte innstillinger, lagringsdata eller bokmerker.</string>
+    <string name="library_import_preparing">Leser app-pakke…</string>
+    <string name="library_import_restoring">Gjenoppretter appdata…</string>
+    <string name="library_import_done">App-pakke importert.</string>
+    <string name="library_import_done_with_warning">App-pakke importert med advarsler.</string>
+    <string name="library_import_invalid_bundle">Den valgte app-pakken er ugyldig, skadet eller støttes ikke. Velg en gyldig JL-Mod Plus-app-pakke og prøv på nytt.</string>
+    <string name="library_import_restore_existing">Denne appen er allerede installert. Inkluderte innstillinger og lagringsdata erstatter eksisterende data; bokmerker slås sammen med mindre innstillinger også er inkludert.</string>
+    <string name="library_import_restore_failed">App installert, men pakkedataene kunne ikke gjenopprettes. Vil du prøve å gjenopprette på nytt?</string>
+    <string name="library_play_stats_summary">Oppstarter: <xliff:g id="launch_count" example="12">%1$d</xliff:g> · Total tid: <xliff:g id="total_time" example="2h 15m">%2$s</xliff:g></string>
+    <string name="library_share_chooser_title">Del app</string>
+    <string name="library_export_chooser_title">Eksporter</string>
+    <string name="library_export_progress">Eksporterer… <xliff:g id="completed" example="3">%1$d</xliff:g>/<xliff:g id="total" example="10">%2$d</xliff:g></string>
+    <string name="library_transfer_unavailable">Kunne ikke forberede eksporten. Lukk eventuelle kjørende MIDlets og prøv på nytt.</string>
+    <string name="library_back">Tilbake til biblioteket</string>
+    <string name="library_sort">Sorter apper</string>
+    <string name="library_search_clear">Tøm søk</string>
+    <string name="library_description_more">… Mer</string>
+    <string name="library_description_less">Mindre</string>
+    <plurals name="file_picker_selected_count">
+        <item quantity="one"><xliff:g id="count" example="3">%1$d</xliff:g> valgt</item>
+        <item quantity="other"><xliff:g id="count" example="3">%1$d</xliff:g> valgt</item>
+    </plurals>
+    <plurals name="library_selection_count">
+        <item quantity="one"><xliff:g id="count" example="3">%1$d</xliff:g> app</item>
+        <item quantity="other"><xliff:g id="count" example="3">%1$d</xliff:g> apper</item>
+    </plurals>
+    <plurals name="library_collection_member_count">
+        <item quantity="one"><xliff:g id="count" example="3">%1$d</xliff:g> app</item>
+        <item quantity="other"><xliff:g id="count" example="3">%1$d</xliff:g> apper</item>
+    </plurals>
+    <plurals name="bulk_install_found">
+        <item quantity="one"><xliff:g id="count" example="3">%1$d</xliff:g> app funnet</item>
+        <item quantity="other"><xliff:g id="count" example="3">%1$d</xliff:g> apper funnet</item>
+    </plurals>
+    <plurals name="bulk_install_selected">
+        <item quantity="one"><xliff:g id="count" example="3">%1$d</xliff:g> valgt</item>
+        <item quantity="other"><xliff:g id="count" example="3">%1$d</xliff:g> valgt</item>
+    </plurals>
+    <plurals name="bulk_install_ready_count">
+        <item quantity="one"><xliff:g id="count" example="3">%1$d</xliff:g> klar</item>
+        <item quantity="other"><xliff:g id="count" example="3">%1$d</xliff:g> klare</item>
+    </plurals>
+    <plurals name="bulk_install_skipped_count">
+        <item quantity="one">Allerede installert eller duplikat: <xliff:g id="count" example="3">%1$d</xliff:g></item>
+        <item quantity="other">Allerede installert eller duplikater: <xliff:g id="count" example="3">%1$d</xliff:g></item>
+    </plurals>
+    <plurals name="bulk_install_attention_count">
+        <item quantity="one"><xliff:g id="count" example="3">%1$d</xliff:g> krever gjennomgang</item>
+        <item quantity="other"><xliff:g id="count" example="3">%1$d</xliff:g> krever gjennomgang</item>
+    </plurals>
+    <plurals name="bulk_install_installed_count">
+        <item quantity="one"><xliff:g id="count" example="3">%1$d</xliff:g> installert</item>
+        <item quantity="other"><xliff:g id="count" example="3">%1$d</xliff:g> installert</item>
+    </plurals>
+    <plurals name="bulk_install_updated_count">
+        <item quantity="one"><xliff:g id="count" example="3">%1$d</xliff:g> oppdatert</item>
+        <item quantity="other"><xliff:g id="count" example="3">%1$d</xliff:g> oppdatert</item>
+    </plurals>
+    <plurals name="bulk_install_reinstalled_count">
+        <item quantity="one"><xliff:g id="count" example="3">%1$d</xliff:g> installert på nytt</item>
+        <item quantity="other"><xliff:g id="count" example="3">%1$d</xliff:g> installert på nytt</item>
+    </plurals>
+    <plurals name="bulk_install_skipped_result_count">
+        <item quantity="one"><xliff:g id="count" example="3">%1$d</xliff:g> hoppet over</item>
+        <item quantity="other"><xliff:g id="count" example="3">%1$d</xliff:g> hoppet over</item>
+    </plurals>
+    <plurals name="bulk_install_failed_count">
+        <item quantity="one"><xliff:g id="count" example="3">%1$d</xliff:g> mislyktes</item>
+        <item quantity="other"><xliff:g id="count" example="3">%1$d</xliff:g> mislyktes</item>
+    </plurals>
+    <plurals name="bulk_install_warning_count">
+        <item quantity="one"><xliff:g id="count" example="3">%1$d</xliff:g> advarsel</item>
+        <item quantity="other"><xliff:g id="count" example="3">%1$d</xliff:g> advarsler</item>
+    </plurals>
+    <plurals name="bulk_install_omitted_sources">
+        <item quantity="one"><xliff:g id="count" example="3">%1$d</xliff:g> ekstra fil ble utelatt for å holde gjennomgangen rask.</item>
+        <item quantity="other"><xliff:g id="count" example="3">%1$d</xliff:g> ekstra filer ble utelatt for å holde gjennomgangen rask.</item>
+    </plurals>
+    <plurals name="library_bulk_delete_confirmation">
+        <item quantity="one">Vil du slette <xliff:g id="count" example="3">%1$d</xliff:g> app? Filer, innstillinger og lagringsdata fjernes fra biblioteket ditt.</item>
+        <item quantity="other">Vil du slette <xliff:g id="count" example="3">%1$d</xliff:g> apper? Filer, innstillinger og lagringsdata fjernes fra biblioteket ditt.</item>
+    </plurals>
+    <plurals name="library_bulk_delete_result">
+        <item quantity="one">Slettet <xliff:g id="deleted_count" example="3">%1$d</xliff:g> app; <xliff:g id="failed_count" example="1">%2$d</xliff:g> mislyktes.</item>
+        <item quantity="other">Slettet <xliff:g id="deleted_count" example="3">%1$d</xliff:g> apper; <xliff:g id="failed_count" example="1">%2$d</xliff:g> mislyktes.</item>
+    </plurals>
+    <string name="bulk_install_title">Masseinstallasjon</string>
+    <string name="bulk_install_planning">Kontrollerer valgte apper…</string>
+    <string name="bulk_install_empty">Fant ingen støttede apper.</string>
+    <string name="bulk_install_recommended">Anbefalt</string>
+    <string name="bulk_install_clear">Fjern valg</string>
+    <string name="bulk_install_install_count">Installer <xliff:g id="count" example="3">%1$d</xliff:g></string>
+    <string name="bulk_install_cancel">Avbryt</string>
+    <string name="bulk_install_close">Lukk</string>
+    <plurals name="bulk_install_running">
+        <item quantity="one">Behandlet <xliff:g id="processed" example="3">%1$d</xliff:g> av <xliff:g id="total" example="10">%2$d</xliff:g> app</item>
+        <item quantity="other">Behandlet <xliff:g id="processed" example="3">%1$d</xliff:g> av <xliff:g id="total" example="10">%2$d</xliff:g> apper</item>
+    </plurals>
+    <string name="bulk_install_cancel_requested">Stopper etter gjeldende app…</string>
+    <string name="bulk_install_complete">Masseinstallasjon fullført</string>
+    <string name="bulk_install_cancelled">Masseinstallasjon stoppet</string>
+    <string name="bulk_install_fatal">Masseinstallasjonen stoppet. Se gjennom de ufullførte elementene før du prøver på nytt.</string>
+    <string name="bulk_install_result_installed">Installert</string>
+    <string name="bulk_install_result_updated">Oppdatert</string>
+    <string name="bulk_install_result_reinstalled">Installert på nytt</string>
+    <string name="bulk_install_result_skipped">Hoppet over</string>
+    <string name="bulk_install_result_failed">Mislyktes</string>
+    <string name="bulk_install_installed_version">Installert: <xliff:g id="version" example="2.1.0">%1$s</xliff:g></string>
+    <string name="bulk_install_source">Kilde: <xliff:g id="name" example="Example">%1$s</xliff:g></string>
+    <string name="bulk_install_action_separate_copy">Installer som egen kopi</string>
+    <string name="bulk_install_action_jar_only">Installer bare JAR</string>
+    <string name="single_install_review_jar_only" tools:ignore="MissingTranslation">Se gjennom bare JAR</string>
+    <string name="single_install_jar_only_notice" tools:ignore="MissingTranslation">Bare JAR-filen blir installert. Kontroller appnavn, versjon og status for installert app før du fortsetter.</string>
+    <string name="single_install_running_replacement_warning" tools:ignore="MissingTranslation">Hvis denne appen kjører, stopper installasjonen den før filene erstattes. Ulagret fremgang kan gå tapt.</string>
+    <string name="bulk_install_status_new">Ny</string>
+    <string name="bulk_install_status_update">Oppdatering</string>
+    <string name="bulk_install_status_downgrade">Eldre versjon</string>
+    <string name="bulk_install_status_same">Allerede installert</string>
+    <string name="bulk_install_status_reinstall">Samme versjon, mulig variant</string>
+    <string name="bulk_install_status_ambiguous">Samsvarer med flere installerte apper</string>
+    <string name="bulk_install_status_mismatch">JAD/JAR-avvik</string>
+    <string name="bulk_install_status_duplicate">Duplikat</string>
+    <string name="bulk_install_status_older_batch">Eldre versjon i bunken</string>
+    <string name="bulk_install_status_conflict">Bunkekonflikt</string>
+    <string name="bulk_install_status_remote">Ekstern kilde støttes ikke</string>
+    <string name="bulk_install_status_error">Ugyldig kilde</string>
+    <string name="bulk_install_reinstall_source_missing">Lagret JAR er ikke tilgjengelig for ny installasjon.</string>
+    <plurals name="bulk_install_reinstall_missing_apps">
+        <item quantity="one"><xliff:g id="count" example="3">%1$d</xliff:g> valgt biblioteksapp er ikke lenger tilgjengelig.</item>
+        <item quantity="other"><xliff:g id="count" example="3">%1$d</xliff:g> valgte biblioteksapper er ikke lenger tilgjengelige.</item>
+    </plurals>
+    <string name="library_metadata_edit_title">Rediger metadata</string>
+    <string name="library_metadata_icon">Ikon</string>
+    <string name="library_metadata_name">Navn</string>
+    <string name="library_metadata_vendor">Leverandør</string>
+    <string name="library_metadata_reset_to_original">Tilbakestill til original</string>
+    <string name="library_metadata_save">Lagre</string>
+    <string name="library_hide_grid_titles_summary">Skjul MIDlet-navn i rutenettvisning. Listevisning holder dem synlige.</string>
+    <string name="library_show_list_description_summary">Vis hver MIDlet-beskrivelse under tittel og versjon.</string>
+    <string name="library_indexing_progress">Indekserer bibliotek… <xliff:g id="completed" example="3">%1$d</xliff:g>/<xliff:g id="total" example="10">%2$d</xliff:g></string>
+    <string name="library_indexing_current">Skanner <xliff:g id="name" example="Example">%1$s</xliff:g></string>
+    <string name="library_load_error_title">Biblioteket er ikke tilgjengelig</string>
+    <string name="library_retry">Prøv på nytt</string>
+    <string name="library_reinstall_source_missing">Den lagrede JAR-filen er ikke tilgjengelig for ny installasjon.</string>
+    <string name="library_action_select">Velg</string>
+    <string name="library_selection_select_all">Velg alle</string>
+    <string name="library_selection_unselect_all">Fjern valg for alle</string>
+    <string name="library_selection_checkbox_description">Velg <xliff:g id="name" example="Example">%1$s</xliff:g></string>
+    <string name="library_selection_checked">Valgt</string>
+    <string name="library_selection_unchecked">Ikke valgt</string>
+    <string name="library_action_settings_summary">Konfigurer global oppførsel og utseende.</string>
+    <string name="library_action_crash_reports_summary">Se gjennom lagrede diagnostikkrapporter.</string>
+    <string name="library_action_about_summary">Prosjektoversikt, bygginformasjon og lenker.</string>
+    <string name="library_action_licenses_summary">Tredjepartsmeldinger og lisensvilkår inkludert i appen.</string>
+    <string name="library_donation_action">Støtt utviklingen</string>
+    <string name="library_donation_summary">Bidra til å videreutvikle JL-Mod Plus.</string>
+    <string name="library_donation_title">Støtt JL-Mod Plus</string>
+    <string name="library_donation_message">JL-Mod Plus er gratis og har åpen kildekode. Hvis du synes appen er nyttig, kan du støtte utviklingen med en frivillig donasjon.</string>
+    <string name="library_donation_provider_note">Donasjoner håndteres eksternt av Sociabuzz.</string>
+    <string name="library_donation_continue">Fortsett til Sociabuzz</string>
+    <string name="library_donation_not_now">Ikke nå</string>
+    <string name="library_donation_link_copied">Fant ingen nettleser. Sociabuzz-lenken er kopiert til utklippstavlen.</string>
+    <string name="library_donation_browser_unavailable">Fant ingen nettleser for å åpne Sociabuzz.</string>
+    <string name="library_bulk_delete_apps">Slett apper</string>
+    <string name="library_bulk_add_collection">Legg til i samling</string>
+    <string name="library_bulk_share_apps">Del apper</string>
+    <string name="library_bulk_reinstall_apps">Installer på nytt</string>
+    <string name="library_bulk_export_apps">Eksporter pakke</string>
+    <string name="library_enhanced_icons_title">Forbedrede ikoner</string>
+    <string name="library_enhanced_icons_summary">Justerer innramming, skalering og flisbakgrunn slik at ikoner ser mer enhetlige ut i biblioteket ditt.</string>
+    <string name="library_collections_unavailable_title">Samlinger ikke tilgjengelig</string>
+    <string name="library_load_failed_message">Kunne ikke laste inn biblioteket. Prøv på nytt.</string>
+    <string name="bulk_install_prepare_failed">Kunne ikke klargjøre de valgte appene for installasjon.</string>
+    <string name="installer_existing_data_preserved">Eksisterende innstillinger og lagringsdata beholdes.</string>
+    <string name="bulk_install_library_changed">Biblioteket ditt ble endret etter gjennomgangen. Lukk denne bunken og velg filene på nytt.</string>
+    <string name="bulk_install_source_unavailable">En nødvendig kildefil er ikke lenger tilgjengelig. Velg filene på nytt.</string>
+    <string name="bulk_install_source_changed">Kildefilen ble endret etter gjennomgangen. Velg filene på nytt.</string>
+    <string name="bulk_install_target_unverified">Kunne ikke verifisere målet for ny installasjon. Lukk denne bunken og velg appen på nytt.</string>
+    <string name="bulk_install_result_restored">Gjenopprettet</string>
+    <plurals name="bulk_install_restored_count">
+        <item quantity="one"><xliff:g id="count" example="3">%1$d</xliff:g> gjenopprettet</item>
+        <item quantity="other"><xliff:g id="count" example="3">%1$d</xliff:g> gjenopprettet</item>
+    </plurals>
+    <plurals name="bulk_install_reason_ambiguous_match">
+        <item quantity="one"><xliff:g id="count" example="3">%1$d</xliff:g> installert app samsvarer med denne kilden.</item>
+        <item quantity="other"><xliff:g id="count" example="3">%1$d</xliff:g> installerte apper samsvarer med denne kilden.</item>
+    </plurals>
+    <string name="bulk_install_reason_jad_jar_mismatch">JAD- og JAR-filen identifiserer ulike apper.</string>
+    <string name="bulk_install_reason_conflicting_jads">JAD-filer med ulike attributter refererer til samme JAR.</string>
+    <string name="bulk_install_reason_remote_jar">Masseinstallasjon kan ikke laste ned eksterne JAR-filer.</string>
+    <string name="bulk_install_reason_missing_jar_url">JAD-filen mangler MIDlet-Jar-URL.</string>
+    <!-- %1$s is the exact URI scheme supplied by the JAD; do not translate it. -->
+    <string name="bulk_install_reason_unsupported_uri_scheme">JAD-filen refererer til en JAR ved hjelp av et URI-skjema som ikke støttes: <xliff:g id="scheme" example="http">%1$s</xliff:g>.</string>
+    <string name="bulk_install_reason_missing_parent">JAD-filen har ingen overordnet mappe.</string>
+    <!-- %1$s is the exact MIDlet-Jar-URL reference, not a normalized filesystem path. -->
+    <string name="bulk_install_reason_jar_not_found">Fant ikke JAR-filen som JAD-filen refererer til: <xliff:g id="file_path" example="game.jar">%1$s</xliff:g>.</string>
+    <string name="bulk_install_reason_duplicate_source">Denne kilden er et duplikat av en annen kilde i denne bunken.</string>
+    <string name="bulk_install_reason_version_conflict">Flere appvarianter har samme versjon.</string>
+    <string name="bulk_install_reason_older_candidate">En nyere versjon av denne appen finnes i samme bunke.</string>
+    <string name="bulk_install_reason_source_error">Kunne ikke klargjøre denne kilden for installasjon.</string>
+    <string name="updates_title">Oppdateringer</string>
+    <string name="updates_more_summary">Se etter nye versjoner av JL-Mod Plus.</string>
+    <string name="updates_more_available">En nyere versjon er tilgjengelig.</string>
+    <string name="updates_installed_version">Installert versjon: <xliff:g id="version" example="2.1.0">%1$s</xliff:g></string>
+    <string name="updates_build_code">Bygg <xliff:g id="build_code" example="247">%1$d</xliff:g></string>
+    <string name="updates_automatic">Se etter automatisk mens biblioteket er aktivt</string>
+    <string name="updates_not_checked">Ikke kontrollert ennå.</string>
+    <string name="updates_checking">Ser etter oppdateringer…</string>
+    <string name="updates_current">Du er oppdatert.</string>
+    <string name="updates_no_release">Ingen kompatibel publisert utgivelse er tilgjengelig.</string>
+    <string name="updates_not_installable">En nyere utgivelse er tilgjengelig, men den er ikke kompatibel med denne enheten eller installasjonen.</string>
+    <string name="updates_failed">Kunne ikke se etter oppdateringer. Kontroller tilkoblingen og prøv på nytt.</string>
+    <string name="updates_available">Oppdatering tilgjengelig</string>
+    <string name="updates_view_release">Vis utgivelse</string>
+    <string name="updates_last_checked">Sist kontrollert: <xliff:g id="timestamp" example="Today, 09:45">%1$s</xliff:g></string>
+    <string name="updates_check">Se etter oppdateringer</string>
+    <string name="updates_notice">JL-Mod Plus <xliff:g id="version" example="2.1.0">%1$s</xliff:g> er tilgjengelig. Se «Oppdateringer» under «Innstillinger».</string>
+    <string name="updates_debug_build">Dette er et feilsøkingsbygg. GitHub-utgivelses-APK-er installeres separat.</string>
+    <string name="updates_link_copied">Fant ingen nettleser. Oppdateringslenken er kopiert til utklippstavlen.</string>
+    <string name="updates_browser_unavailable">Fant ingen nettleser for å åpne oppdateringslenken.</string>
+    <string name="bulk_install_choose_files">Filer</string>
+    <string name="bulk_install_choose_folder">Mappe</string>
+    <string name="bulk_install_unreadable_archives">Uleselige arkiver: <xliff:g id="count" example="3">%1$d</xliff:g></string>
+    <string name="bulk_install_skipped_entries">Overhoppede filer eller arkivoppføringer: <xliff:g id="count" example="3">%1$d</xliff:g></string>
+    <string name="bulk_install_selection_options" tools:ignore="MissingTranslation">Valgalternativer</string>
+    <string name="bulk_install_show_details" tools:ignore="MissingTranslation">Vis detaljer</string>
+    <string name="bulk_install_hide_details" tools:ignore="MissingTranslation">Skjul detaljer</string>
+    <string name="bulk_install_filter_all">Alle</string>
+    <string name="bulk_install_filter_selected">Valgt</string>
+    <string name="bulk_install_filter_review">Gjennomgang</string>
+    <string name="bulk_install_empty_filter">Ingen samsvarende apper.</string>
+    <string name="platform_package_choice_title" tools:ignore="MissingTranslation">Java ME-pakke oppdaget</string>
+    <string name="platform_package_choice_message" tools:ignore="MissingTranslation">Denne lenken peker til en Java ME-pakke. Hva vil du gjøre?</string>
+    <string name="platform_package_install" tools:ignore="MissingTranslation">Installer i JL-Mod Plus</string>
+    <string name="platform_package_browser" tools:ignore="MissingTranslation">Åpne i nettleser</string>
+    <string name="platform_package_unavailable" tools:ignore="MissingTranslation">Fant ingen app som kan åpne denne lenken.</string>
+    <string name="installer_running_update_warning" tools:ignore="MissingTranslation">Denne appen kjører for øyeblikket. Installasjonen stopper den før filene erstattes. Ulagret fremgang kan gå tapt.</string>
+    <string name="library_metadata_main_icon">Hoved</string>
+    <string name="library_metadata_follows_main">Bruker hovedikon</string>
+    <string name="library_metadata_change">Endre</string>
+    <string name="library_metadata_remove_portrait">Fjern 3:4-ikon</string>
+    <string name="library_metadata_discard_title">Vil du forkaste endringene?</string>
+    <string name="library_metadata_discard">Forkast</string>
+    <string name="library_metadata_default_description">Standardbeskrivelse</string>
+    <string name="library_metadata_other_languages">Andre språk</string>
+    <string name="library_metadata_add_language">+ Legg til språk</string>
+    <string name="library_metadata_language_search">Søk etter språk eller språkkode</string>
+    <string name="library_metadata_remove_language">Fjern beskrivelse</string>
+    <string name="library_metadata_language_load_failed">Kunne ikke laste inn språkbeskrivelser. Trykk på «Prøv på nytt» for å prøve igjen.</string>
+    <string name="updates_download_apk" tools:ignore="MissingTranslation">Last ned APK</string>
+    <string name="updates_skip_version" tools:ignore="MissingTranslation">Hopp over denne versjonen</string>
+    <string name="updates_dialog_message" tools:ignore="MissingTranslation">JL-Mod Plus <xliff:g id="version" example="2.1.0">%1$s</xliff:g> er tilgjengelig. Du bruker <xliff:g id="current_version" example="2.0.0">%2$s</xliff:g>. Last ned APK-en eller se utgivelsen på GitHub.</string>
+    <string name="library_bundle_components_title" tools:ignore="MissingTranslation">Eksporter pakke</string>
+    <string name="library_bundle_components_explanation" tools:ignore="MissingTranslation">Valgte apper er alltid inkludert. Lukk eventuelle kjørende MIDlets før eksport, og velg deretter tilleggsdata som skal inkluderes.</string>
+    <string name="library_bundle_config" tools:ignore="MissingTranslation">Konfigurasjon</string>
+    <string name="library_bundle_save_data" tools:ignore="MissingTranslation">Lagringsdata</string>
+    <string name="library_bundle_saved_variables" tools:ignore="MissingTranslation">Bokmerker</string>
+    <string name="library_bundle_export" tools:ignore="MissingTranslation">Eksporter</string>
+    <string name="library_export_jar_only" tools:ignore="MissingTranslation">Bare JAR</string>
+    <string name="library_export_jars_only" tools:ignore="MissingTranslation">Bare JAR-er (ZIP)</string>
+    <string name="library_selection_action_delete" tools:ignore="MissingTranslation">Slett</string>
+    <string name="library_selection_action_collection" tools:ignore="MissingTranslation">Samling</string>
+    <string name="library_selection_action_export" tools:ignore="MissingTranslation">Eksporter</string>
+    <string name="library_selection_action_reinstall" tools:ignore="MissingTranslation">Installer på nytt</string>
+    <string name="installer_select_companion_jar" tools:ignore="MissingTranslation">Denne JAD-filen refererer til en separat JAR-fil. Velg den samsvarende JAR-filen for å fortsette. Den eksterne filleverandøren tillater ikke tilgang til tilstøtende filer.</string>
+    <string name="installer_select_jar" tools:ignore="MissingTranslation">Velg JAR</string>
+    <string name="installer_wrong_companion_jar" tools:ignore="MissingTranslation">Denne JAR-filen samsvarer ikke med den valgte JAD-filen. Velg den samsvarende JAR-filen for å bevare JAD-innstillingene.</string>
+    <string name="installer_choose_another_jar" tools:ignore="MissingTranslation">Velg en annen JAR</string>
+    <string name="library_app_more_actions" tools:ignore="MissingTranslation">Flere handlinger for <xliff:g id="name" example="Example">%1$s</xliff:g></string>
+    <string name="library_actions_group_customize" tools:ignore="MissingTranslation">Tilpass</string>
+    <string name="library_actions_group_organize" tools:ignore="MissingTranslation">Organiser</string>
+    <string name="library_actions_group_transfer" tools:ignore="MissingTranslation">Overfør og vedlikehold</string>
+    <string name="library_collection_more_actions" tools:ignore="MissingTranslation">Flere handlinger for samlingen «<xliff:g id="collection_name" example="Favorites">%1$s</xliff:g>»</string>
+    <string name="library_settings_preferences" tools:ignore="MissingTranslation">Appinnstillinger</string>
+    <string name="library_settings_section_maintenance" tools:ignore="MissingTranslation">Oppdateringer og diagnostikk</string>
+    <string name="library_settings_section_support" tools:ignore="MissingTranslation">Om og støtte</string>
+    <string name="library_details_title" tools:ignore="MissingTranslation">MIDlet-detaljer</string>
+    <string name="library_details_description" tools:ignore="MissingTranslation">Beskrivelse</string>
+    <string name="library_details_play_stats" tools:ignore="MissingTranslation">Spillstatistikk</string>
+    <string name="library_details_launches" tools:ignore="MissingTranslation">Oppstarter</string>
+    <string name="library_details_total_time" tools:ignore="MissingTranslation">Total tid</string>
+    <string name="library_details_last_played" tools:ignore="MissingTranslation">Sist spilt</string>
+    <string name="library_details_library_info" tools:ignore="MissingTranslation">Bibliotekinformasjon</string>
+    <string name="library_details_added" tools:ignore="MissingTranslation">Lagt til i biblioteket</string>
+    <string name="library_details_collections" tools:ignore="MissingTranslation">Samlinger</string>
+    <string name="library_details_none" tools:ignore="MissingTranslation">Ingen</string>
+    <string name="library_details_technical" tools:ignore="MissingTranslation">Teknisk informasjon</string>
+    <string name="library_details_profile" tools:ignore="MissingTranslation">Profil</string>
+    <string name="library_details_configuration" tools:ignore="MissingTranslation">Konfigurasjon</string>
+    <string name="library_details_jar_size" tools:ignore="MissingTranslation">Lagret JAR-størrelse</string>
+    <string name="library_details_entry_points" tools:ignore="MissingTranslation">MIDlet-oppføringer</string>
+    <string name="library_details_original_metadata" tools:ignore="MissingTranslation">Opprinnelige metadata</string>
+    <string name="library_details_name" tools:ignore="MissingTranslation">Navn</string>
+    <string name="library_details_vendor" tools:ignore="MissingTranslation">Leverandør</string>
+    <string name="library_details_version" tools:ignore="MissingTranslation">Versjon</string>
+    <string name="library_details_version_value" tools:ignore="MissingTranslation">Versjon <xliff:g id="version" example="2.1.0">%1$s</xliff:g></string>
+    <string name="library_details_original_description" tools:ignore="MissingTranslation">Opprinnelig beskrivelse</string>
+    <string name="library_details_permissions" tools:ignore="MissingTranslation">Erklærte tillatelser</string>
+    <string name="library_details_required" tools:ignore="MissingTranslation">Påkrevd</string>
+    <string name="library_details_optional" tools:ignore="MissingTranslation">Valgfri</string>
+    <string name="library_details_no_permissions" tools:ignore="MissingTranslation">Ingen tillatelser erklært</string>
+    <string name="library_details_descriptor_attributes" tools:ignore="MissingTranslation">Deskriptorattributter</string>
+    <string name="library_details_unavailable" tools:ignore="MissingTranslation">Utilgjengelig</string>
+    <string name="library_details_action" tools:ignore="MissingTranslation">Detaljer</string>
+    <string name="library_details_view_details" tools:ignore="MissingTranslation">Vis detaljer</string>
+    <string name="library_actions_more" tools:ignore="MissingTranslation">Flere handlinger</string>
+    <string name="library_actions_less" tools:ignore="MissingTranslation">Færre handlinger</string>
+</resources>

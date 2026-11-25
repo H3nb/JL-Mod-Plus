@@ -1,0 +1,355 @@
+<?xml version="1.0" encoding="utf-8"?>
+<!-- Per-MIDlet configuration, reusable profiles, camera, controller calibration, permissions, and system properties. -->
+<resources xmlns:tools="http://schemas.android.com/tools" xmlns:xliff="urn:oasis:names:tc:xliff:document:1.2">
+    <!-- %1$s is an optional quoted storage-volume name with a trailing space, or empty. -->
+    <!-- %1$s is a raw storage-volume description. -->
+    <string name="config_missing_app_storage_named">ไม่พบแอป\nตรวจสอบว่าอุปกรณ์จัดเก็บข้อมูล “<xliff:g id="storage_name" example="SD card">%1$s</xliff:g>” พร้อมใช้งาน หรือสร้างทางลัดใหม่</string>
+    <string name="config_missing_app_storage_generic">ไม่พบแอป\nตรวจสอบว่าอุปกรณ์จัดเก็บข้อมูลพร้อมใช้งาน หรือสร้างทางลัดใหม่</string>
+    <string name="midlet_name"><b>ชื่อ: </b></string>
+    <string name="midlet_size"><b>ขนาด: </b></string>
+    <string name="midlet_vendor"><b>ผู้พัฒนา: </b></string>
+    <string name="midlet_version"><b>เวอร์ชัน: </b></string>
+    <string name="config_destination_graphics">การแสดงผล</string>
+    <string name="config_destination_rendering" tools:ignore="MissingTranslation">กราฟิก</string>
+    <string name="config_destination_media">สื่อ</string>
+    <string name="config_camera_title">กล้อง</string>
+    <string name="config_camera_default_title">กล้องเริ่มต้น</string>
+    <string name="config_camera_rear">กล้องหลัง</string>
+    <string name="config_camera_front">กล้องหน้า</string>
+    <string name="config_camera_resolution_title">ความละเอียดเริ่มต้น</string>
+    <string name="config_camera_resolution_auto">อัตโนมัติ</string>
+    <string name="config_camera_resolution_portrait">480×640 — แนวตั้ง</string>
+    <string name="config_camera_resolution_landscape">640×480 — แนวนอน</string>
+    <string name="config_destination_controls">การควบคุม</string>
+    <string name="config_gamepad_test">ทดสอบคอนโทรลเลอร์</string>
+    <string name="config_gamepad_calibrate">ปรับเทียบคอนโทรลเลอร์</string>
+    <string name="config_gamepad_calibrate_summary">วัดตำแหน่งกึ่งกลางของคอนโทรลเลอร์ที่เชื่อมต่อ รวมถึงระยะการขยับของสติ๊กและไกปุ่ม</string>
+    <string name="config_gamepad_stick_directions">ทิศทางดิจิทัล</string>
+    <string name="config_gamepad_stick_unassigned">ไม่ได้กำหนด</string>
+    <string name="config_gamepad_stick_pointer">แหล่งตัวชี้</string>
+    <string name="config_gamepad_opaque_summary">การกำหนดค่านี้มีข้อมูลคอนโทรลเลอร์ในรูปแบบที่ไม่รองรับ ระบบจะเก็บข้อมูลเดิมไว้และไม่สามารถแก้ไขที่นี่ได้</string>
+    <string name="config_gamepad_unsupported_summary">ไม่รองรับการกำหนดค่าคอนโทรลเลอร์นี้ ระบบจะเก็บข้อมูลเดิมไว้และไม่สามารถแก้ไขที่นี่ได้</string>
+    <string name="config_gamepad_keypad_title">แป้นพิมพ์เสมือน</string>
+    <string name="config_gamepad_calibration_next">ถัดไป</string>
+    <string name="config_gamepad_mapping_help_title">วิธีใช้การกำหนดปุ่มคอนโทรลเลอร์</string>
+    <string name="config_gamepad_directions_four">4 ทิศทาง</string>
+    <string name="config_gamepad_directions_eight">8 ทิศทาง</string>
+    <string name="config_gamepad_pointer_off">ปิด</string>
+    <string name="config_gamepad_pointer_cursor">เคอร์เซอร์ตามสัดส่วน</string>
+    <string name="config_gamepad_pointer_joystick">จอยสติ๊กสัมผัส</string>
+    <!-- This is the same controller-identity fingerprint shown in diagnostics. -->
+    <string name="config_gamepad_calibration_profile">ลายเซ็นคอนโทรลเลอร์: <xliff:g id="profile_name" example="Action Games">%1$s</xliff:g></string>
+    <string name="config_gamepad_calibration_phase_neutral">รอตำแหน่งกึ่งกลาง</string>
+    <string name="config_gamepad_calibration_phase_stick_range">ระยะของสติ๊ก</string>
+    <string name="config_gamepad_calibration_phase_trigger_range">ระยะของไกปุ่ม</string>
+    <string name="config_gamepad_calibration_phase_review">ตรวจสอบ</string>
+    <string name="config_gamepad_calibration_phase_committed">บันทึกแล้ว</string>
+    <string name="config_gamepad_calibration_phase_cancelled">ยกเลิกแล้ว</string>
+    <string name="config_gamepad_calibration_waiting_controller">เชื่อมต่อคอนโทรลเลอร์ที่มีอนาล็อกสติ๊กหรือไกปุ่มที่รองรับ การปรับเทียบจะเริ่มเมื่อคุณขยับสติ๊กหรือกดไกปุ่มครั้งแรก การปรับเทียบเดิมจะยังไม่เปลี่ยนแปลงจนกว่าคุณจะบันทึก</string>
+    <string name="config_gamepad_calibration_no_analog_ranges">คอนโทรลเลอร์นี้ไม่มีช่วงอนาล็อกสติ๊กหรือไกปุ่มที่รองรับ</string>
+    <string name="config_gamepad_calibration_start">ปล่อยสติ๊กทุกอันไว้ตรงกลางและปล่อยไกปุ่มทุกอันจนกว่าตัวนับเวลาตำแหน่งกึ่งกลางจะเสร็จสิ้น</string>
+    <string name="config_gamepad_calibration_save_failed">ไม่สามารถบันทึกการปรับเทียบได้ การปรับเทียบเดิมจะยังคงอยู่</string>
+    <string name="config_gamepad_calibration_no_supported_ranges">ไม่พบช่วงอนาล็อกที่รองรับ</string>
+    <string name="config_gamepad_calibration_rejected">ปฏิเสธการปรับเทียบ: <xliff:g id="name" example="Example">%1$s</xliff:g></string>
+    <string name="config_gamepad_calibration_neutral_instructions">ปล่อยสติ๊กทั้งหมดที่ตรวจพบไว้ตรงกลางและปล่อยไกปุ่มทั้งหมดจนกว่าตัวนับเวลาตำแหน่งกึ่งกลางจะเสร็จสิ้น</string>
+    <string name="config_gamepad_calibration_stick_instructions">ดันสติ๊กทุกอันที่ตรวจพบไปให้สุดระยะในทุกทิศทาง จากนั้นกด ถัดไป</string>
+    <string name="config_gamepad_calibration_trigger_instructions">ปล่อยแล้วกดไกปุ่มทุกอันที่ตรวจพบให้สุด จากนั้นกด ถัดไป เพื่อตรวจสอบ</string>
+    <string name="config_gamepad_calibration_review_instructions">พร้อมสำหรับการตรวจสอบ การบันทึกจะแทนที่เฉพาะการปรับเทียบของคอนโทรลเลอร์นี้เท่านั้น</string>
+    <string name="config_gamepad_calibration_saved">บันทึกการปรับเทียบแล้ว</string>
+    <string name="config_gamepad_calibration_cancelled">ยกเลิกการปรับเทียบแล้ว การปรับเทียบก่อนหน้ายังคงไม่เปลี่ยนแปลง</string>
+    <string name="config_gamepad_calibration_waiting_samples">การปรับเทียบกำลังรอข้อมูลตัวอย่างจากคอนโทรลเลอร์</string>
+    <string name="config_gamepad_diagnosis_header">การวินิจฉัยคอนโทรลเลอร์</string>
+    <string name="config_gamepad_diagnosis_mode">สถานะ: <xliff:g id="status" example="enabled">%1$s</xliff:g> · แหล่งที่มา: <xliff:g id="source" example="controller">%2$s</xliff:g></string>
+    <string name="config_gamepad_diagnosis_notice">หมายเหตุ: <xliff:g id="name" example="Example">%1$s</xliff:g></string>
+    <string name="config_gamepad_diagnosis_analog_settings">การตั้งค่าอนาล็อก:</string>
+    <string name="config_gamepad_diagnosis_left_stick">สติ๊กซ้าย</string>
+    <string name="config_gamepad_diagnosis_right_stick">สติ๊กขวา</string>
+    <string name="config_gamepad_diagnosis_triggers">ไกปุ่ม</string>
+    <string name="config_gamepad_diagnosis_pointer">โหมดตัวชี้</string>
+    <string name="config_gamepad_status_enabled">เปิดใช้งาน</string>
+    <string name="config_gamepad_status_disabled">ปิดใช้งาน</string>
+    <string name="config_gamepad_diagnosis_source_default">ค่าเริ่มต้น</string>
+    <string name="config_gamepad_diagnosis_source_controller">คอนโทรลเลอร์</string>
+    <string name="config_gamepad_diagnosis_source_explicit">กำหนดชัดเจน</string>
+    <string name="config_gamepad_diagnosis_device"><xliff:g id="device_name" example="Xbox Controller">%1$s</xliff:g> (#<xliff:g id="device_id" example="1">%2$d</xliff:g>)</string>
+    <string name="config_gamepad_calibration_issue_no_channels">ไม่มีช่องสัญญาณที่รองรับ</string>
+    <string name="config_gamepad_calibration_issue_invalid_constraints">เงื่อนไขการปรับเทียบไม่ถูกต้อง</string>
+    <string name="config_gamepad_calibration_issue_non_finite">ตัวอย่างค่าไม่จำกัด</string>
+    <string name="config_gamepad_calibration_issue_insufficient_samples">ข้อมูลตัวอย่างไม่เพียงพอ</string>
+    <string name="config_gamepad_calibration_issue_invalid_range">ช่วงค่าไม่ถูกต้อง</string>
+    <string name="config_gamepad_calibration_issue_rest_outside_range">ค่าพักอยู่นอกช่วง</string>
+    <string name="config_gamepad_calibration_issue_rest_too_noisy">ตำแหน่งพักไม่เสถียรเพียงพอ</string>
+    <string name="config_gamepad_calibration_phase_unknown">ไม่ทราบสถานะ</string>
+    <string name="config_gamepad_diagnosis_capabilities">ความสามารถของคอนโทรลเลอร์ที่เชื่อมต่อ:</string>
+    <string name="config_gamepad_diagnosis_descriptor">ตัวระบุ: <xliff:g id="name" example="Example">%1$s</xliff:g></string>
+    <!-- %1$s is a controller-identity fingerprint derived from its descriptor and capabilities. -->
+    <!-- It is not a handwritten signature or a cryptographic signing operation. -->
+    <string name="config_gamepad_diagnosis_signature">ลายเซ็น: <xliff:g id="name" example="Example">%1$s</xliff:g></string>
+    <string name="config_gamepad_diagnosis_axis">แกน <xliff:g id="axis_index" example="0">%1$d</xliff:g> [<xliff:g id="min_value" example="-1.0">%2$s</xliff:g>, <xliff:g id="max_value" example="1.0">%3$s</xliff:g>] flat=<xliff:g id="flat" example="0.05">%4$s</xliff:g> fuzz=<xliff:g id="fuzz" example="0.01">%5$s</xliff:g></string>
+    <string name="config_gamepad_diagnosis_no_controller">(ไม่มีคอนโทรลเลอร์ที่เชื่อมต่อ)</string>
+    <string name="config_gamepad_diagnosis_samples_not_sent">ระบบจะไม่ส่งข้อมูลตัวอย่างอินพุตไปยัง MIDlet โดยตั้งใจ</string>
+    <string name="config_destination_system">ระบบ</string>
+    <string name="config_screen_behavior" tools:ignore="MissingTranslation">พฤติกรรมหน้าจอ</string>
+    <string name="config_screen_size">ขนาดหน้าจอ</string>
+    <string name="config_select_screen_size">เลือกขนาดหน้าจอ</string>
+    <string name="config_current_screen_size">ขนาดปัจจุบัน: <xliff:g id="name" example="Example">%1$s</xliff:g></string>
+    <string name="config_custom_resolution">ความละเอียดกำหนดเอง</string>
+    <string name="profile_custom">กำหนดเอง</string>
+    <string name="select_dialog_title">เลือก MIDlet</string>
+    <string name="SIZE_PRESETS">ค่าขนาดตัวอักษรที่ตั้งไว้</string>
+    <string name="config_color_picker_title">เลือกสี</string>
+    <string name="config_color_picker_hex">รหัสสีฐานสิบหก</string>
+    <string name="config_color_picker_hint">ลากบนพื้นที่สีหรือป้อนค่า RGB หกหลัก</string>
+    <string name="config_color_picker_invalid">ป้อนเลขฐานสิบหกให้ครบหกหลัก</string>
+    <string name="config_color_picker_saturation_value">ความอิ่มตัวและความสว่าง</string>
+    <string name="config_color_picker_hue">เฉดสี</string>
+    <string name="config_decrease_value">ลดค่า</string>
+    <string name="config_increase_value">เพิ่มค่า</string>
+    <string name="midlet_failure_recovery_title">MIDlet หยุดทำงานโดยไม่คาดคิด</string>
+    <string name="midlet_failure_recovery_message">MIDlet หยุดทำงานโดยไม่คาดคิด บันทึกข้อมูลการวินิจฉัยไว้ในเครื่องแล้ว คุณสามารถใช้ JL-Mod Plus ต่อไปได้</string>
+    <string name="midlet_failure_recovery_message_named">“<xliff:g id="name" example="Example">%1$s</xliff:g>” หยุดทำงานโดยไม่คาดคิด บันทึกข้อมูลการวินิจฉัยไว้ในเครื่องแล้ว คุณสามารถใช้ JL-Mod Plus ต่อไปได้</string>
+    <plurals name="config_system_properties_value">
+        <item quantity="other"><xliff:g id="count" example="3">%1$d</xliff:g> คุณสมบัติ</item>
+    </plurals>
+    <string name="config_search_suggestions" tools:ignore="MissingTranslation">การตั้งค่าที่แนะนำ</string>
+    <string name="config_search_clear" tools:ignore="MissingTranslation">ล้างการค้นหา</string>
+    <string name="config_search_title" tools:ignore="MissingTranslation">ค้นหาการตั้งค่า</string>
+    <string name="config_search_hint" tools:ignore="MissingTranslation">ค้นหาการตั้งค่า เช่น MMPX หรือการวางแนว</string>
+    <string name="config_search_no_results" tools:ignore="MissingTranslation">ไม่พบการตั้งค่าที่ตรงกัน</string>
+    <string name="config_search_upscaling_requires_resolution" tools:ignore="MissingTranslation">เลือก อัตโนมัติ หรือ 2×–10× ใน ความละเอียดการเรนเดอร์ เพื่อตั้งค่าการเพิ่มความละเอียดบิตแมป</string>
+    <string name="config_search_requires_manual_scale" tools:ignore="MissingTranslation">เลือก กำหนดเอง ใน โหมดปรับขนาด เพื่อปรับอัตราส่วนขนาด</string>
+    <string name="config_search_requires_custom_background" tools:ignore="MissingTranslation">เลือก กำหนดเอง ใน โหมดพื้นหลัง เพื่อแก้ไขสีพื้นหลัง</string>
+    <string name="config_search_requires_gles" tools:ignore="MissingTranslation">เลือก การเร่งด้วยฮาร์ดแวร์ (OpenGL ES) ใน โหมดกราฟิก เพื่อตั้งค่าเอฟเฟกต์เชดเดอร์</string>
+    <string name="config_search_requires_renderer_mode" tools:ignore="MissingTranslation">เลือก ซอฟต์แวร์ หรือ การเร่งด้วยฮาร์ดแวร์ (Surface) ใน โหมดกราฟิก เพื่อตั้งค่าอัปเดตหน้าจอแบบอะซิงโครนัส</string>
+    <string name="config_font_page_title" tools:ignore="MissingTranslation">การตั้งค่าตัวอักษร</string>
+    <string name="config_display_more" tools:ignore="MissingTranslation">ข้อความและประสิทธิภาพ</string>
+    <string name="config_destination_home" tools:ignore="MissingTranslation">หน้าหลัก</string>
+    <string name="config_overview_profile_draft" tools:ignore="MissingTranslation">ร่างโปรไฟล์</string>
+    <string name="config_overview_profile_draft_summary" tools:ignore="MissingTranslation">แก้ไขโปรไฟล์ที่นำกลับมาใช้ซ้ำได้นี้ จากนั้นบันทึกการเปลี่ยนแปลงจากแถบเครื่องมือ</string>
+    <string name="config_overview_quick_access" tools:ignore="MissingTranslation">เข้าถึงด่วน</string>
+    <string name="config_system_properties_editor_label">คุณสมบัติ</string>
+    <string name="config_overview_enabled" tools:ignore="MissingTranslation">เปิด</string>
+    <string name="config_overview_disabled" tools:ignore="MissingTranslation">ปิด</string>
+    <string name="config_overview_media_summary" tools:ignore="MissingTranslation">ชุดเสียงและกล้อง</string>
+    <string name="config_overview_hint" tools:ignore="MissingTranslation">เลือกหมวดหมู่เพื่อปรับแต่งเกมของคุณ การตั้งค่าทุกอย่างมีหน้าเฉพาะของตัวเอง ทางลัดเหล่านี้จะพาคุณไปที่นั่น</string>
+    <string name="config_destination_general">ทั่วไป</string>
+    <string name="config_basic_display">หน้าจอ MIDlet</string>
+    <string name="config_display_appearance">รูปลักษณ์หน้าจอ</string>
+    <string name="config_display_rendering">การเรนเดอร์</string>
+    <string name="config_image_quality_section" tools:ignore="MissingTranslation">คุณภาพภาพ</string>
+    <string name="config_frame_rate_section" tools:ignore="MissingTranslation">เฟรมเรต</string>
+    <string name="config_fps_position_title" tools:ignore="MissingTranslation">ตำแหน่ง FPS</string>
+    <string name="config_display_text">ข้อความและแบบอักษร</string>
+    <string name="config_input_mapping_section" tools:ignore="MissingTranslation">อินพุตและการกำหนดปุ่ม</string>
+    <string name="config_controls_appearance_section" tools:ignore="MissingTranslation">รูปลักษณ์ปุ่มควบคุม</string>
+    <string name="config_controls_virtual_keyboard">ปุ่มควบคุมเสมือน</string>
+    <string name="config_controls_virtual_keyboard_colors">สีปุ่มควบคุมเสมือน</string>
+    <string name="config_virtual_controls_color_preview">ตัวอย่างสี</string>
+    <string name="config_virtual_controls_preview_normal">ปล่อย</string>
+    <string name="config_virtual_controls_preview_pressed">กด</string>
+    <string name="config_controls_maintenance">เลย์เอาต์</string>
+    <string name="config_controls_skin_help">เปลี่ยนรูปลักษณ์ของปุ่มบนแป้นพิมพ์ D-pad และอนาล็อกสติ๊กด้วยรูปภาพที่กำหนดเอง</string>
+    <string name="config_controls_color_button_normal">ปุ่มขณะปล่อย</string>
+    <string name="config_controls_color_button_pressed">ปุ่มขณะกด</string>
+    <string name="config_controls_color_label_normal">ป้ายชื่อขณะปล่อย</string>
+    <string name="config_controls_color_label_pressed">ป้ายชื่อขณะกด</string>
+    <string name="config_controls_color_outline_short">เส้นขอบ</string>
+    <string name="config_controls_disabled_hint">ปุ่มควบคุมเสมือนปิดอยู่ขณะนี้ คุณยังสามารถปรับแต่งที่นี่ได้</string>
+    <string name="config_controls_opacity_help" formatted="false">ปรับความโปร่งใสของปุ่มควบคุมเสมือน: 0% คือโปร่งใสทั้งหมด และ 100% คือทึบแสงทั้งหมด</string>
+    <string name="config_controls_opaque_outside">แสดงปุ่มควบคุมแบบไม่โปร่งใสนอกหน้าจอ MIDlet</string>
+    <string name="config_controls_opaque_outside_help">ปุ่มควบคุมที่อยู่นอกหน้าจอ MIDlet จะไม่ใช้ค่าความทึบ ส่วนปุ่มที่วางทับหน้าจอจะยังคงใช้ความทึบที่เลือกไว้</string>
+    <string name="config_controls_connect_controller">เชื่อมต่อคอนโทรลเลอร์เพื่อปรับเทียบ</string>
+    <string name="config_controls_color_skin_notice">สกินแบบปุ่มเต็มอาจแทนที่สี รูปร่าง และเส้นขอบเริ่มต้นของปุ่ม</string>
+    <string name="config_current_value">ค่าปัจจุบัน</string>
+    <string name="config_maintenance">รีเซ็ตและข้อมูล</string>
+    <string name="config_midlet_actions" tools:ignore="MissingTranslation">การทำงานของ MIDlet</string>
+    <string name="config_profile_maintenance" tools:ignore="MissingTranslation">การทำงานของโปรไฟล์</string>
+    <string name="config_reset_profile_settings" tools:ignore="MissingTranslation">รีเซ็ตร่างโปรไฟล์</string>
+    <string name="config_reset_profile_settings_summary" tools:ignore="MissingTranslation">คืนค่าการตั้งค่าและปุ่มควบคุมเสมือนของร่างนี้กลับเป็นค่าเริ่มต้น</string>
+    <string name="config_system_compatibility" tools:ignore="MissingTranslation">ความเข้ากันได้ของการจำลอง</string>
+    <string name="config_reset_all_settings">รีเซ็ตการกำหนดค่า MIDlet</string>
+    <string name="config_reset_all_settings_summary">คืนค่าการตั้งค่าและปุ่มควบคุมเสมือนของ MIDlet นี้กลับเป็นค่าเริ่มต้นโดยไม่ลบข้อมูลแอป</string>
+    <string name="config_delete_app_data">ลบข้อมูล MIDlet</string>
+    <string name="config_delete_app_data_summary">ลบข้อมูลของ MIDlet นี้อย่างถาวร รวมถึงไฟล์บันทึกความคืบหน้า การตั้งค่าจะยังคงอยู่</string>
+    <string name="config_message_reset_settings">คืนค่าการกำหนดค่า MIDlet และปุ่มควบคุมเสมือนกลับเป็นค่าเริ่มต้นหรือไม่? ข้อมูลที่บันทึกไว้จะยังคงอยู่ และจะหยุดติดตามโปรไฟล์ที่เชื่อมโยงไว้</string>
+    <string name="config_message_reset_profile_settings">รีเซ็ตการตั้งค่าและปุ่มควบคุมเสมือนของโปรไฟล์นี้กลับเป็นค่าเริ่มต้นหรือไม่? คุณยังสามารถแก้ไขหรือยกเลิกก่อนบันทึกได้</string>
+    <string name="config_message_delete_app_data">ลบไฟล์บันทึกและข้อมูลทั้งหมดที่ MIDlet นี้สร้างขึ้นอย่างถาวรหรือไม่? การตั้งค่า MIDlet จะไม่ถูกลบ</string>
+    <string name="config_lock_custom_resolution_ratio">ล็อกสัดส่วนภาพ</string>
+    <string name="config_swap_screen_size">สลับความกว้างและความสูง</string>
+    <string name="profile_builtin_settings">ค่าเริ่มต้น JL-Mod</string>
+    <string name="profile_default_badge_short">ค่าเริ่มต้นสำหรับ MIDlet ใหม่</string>
+    <string name="profile_template_summary">การตั้งค่า MIDlet ที่บันทึกไว้</string>
+    <string name="profile_name_exists">มีโปรไฟล์ชื่อนี้อยู่แล้ว</string>
+    <string name="profile_delete_template_message">ลบโปรไฟล์ “<xliff:g id="profile_name" example="Action Games">%1$s</xliff:g>” หรือไม่? MIDlet ที่ใช้อยู่จะยังคงใช้การตั้งค่าปัจจุบันแต่จะไม่ได้รับการอัปเดตในอนาคต</string>
+    <string name="profile_template_operation_failed">ไม่สามารถดำเนินการกับโปรไฟล์ได้</string>
+    <string name="config_help_screen_size">ตั้งค่าความละเอียดหน้าจอ Java ME เสมือนที่ MIDlet ใช้งาน</string>
+    <string name="config_help_orientation">เลือกการวางแนวหน้าจอขณะ MIDlet ทำงาน</string>
+    <string name="config_help_scale_type">เลือกรูปแบบการปรับขนาดเกมให้พอดีกับหน้าจอ เลือก กำหนดเอง เพื่อตั้งอัตราส่วนขนาดเอง</string>
+    <string name="config_help_scale_ratio" formatted="false">ปรับขนาดการแสดงผลได้ตั้งแต่ 1% ถึง 1000% ที่ 100% เกมจะใช้ขนาดดั้งเดิม ค่าที่สูงกว่านี้อาจเกินขอบหน้าจอ</string>
+    <string name="config_help_lock_custom_resolution_ratio">รักษาสัดส่วนภาพไว้ขณะแก้ไขความละเอียดกำหนดเอง</string>
+    <string name="config_help_virtual_keyboard">แสดงปุ่มควบคุมเสมือนบนหน้าจอสำหรับ MIDlet นี้</string>
+    <string name="config_help_touch_input">อนุญาตให้ MIDlet รับอินพุตตัวชี้จากหน้าจอสัมผัส</string>
+    <string name="config_help_background">เติมพื้นที่ว่างรอบหน้าจอ MIDlet</string>
+    <string name="config_background_mode">โหมดพื้นหลัง</string>
+    <string name="config_background_custom">กำหนดเอง</string>
+    <string name="config_background_theme">ธีม</string>
+    <string name="config_background_immersive">สมจริง</string>
+    <string name="config_background_theme_help">ใช้สีธีมของ JL-Mod Plus รอบหน้าจอ MIDlet</string>
+    <string name="config_background_immersive_help">เติมพื้นที่ว่างด้วยสีที่สุ่มตัวอย่างจากหน้าจอ MIDlet</string>
+    <string name="config_background_dynamic">สีแบบไดนามิก</string>
+    <string name="config_background_dynamic_help">ใช้สีทึบสีเดียวที่ปรับเปลี่ยนอย่างนุ่มนวลตามหน้าจอ MIDlet</string>
+    <string name="config_background_custom_color">สีพื้นหลัง</string>
+    <string name="config_help_background_custom_color">กำหนดสีของพื้นที่ว่างรอบหน้าจอ MIDlet</string>
+    <string name="config_help_skin">แสดงรูปภาพหรือกรอบเพิ่มเติมรอบหน้าจอ MIDlet</string>
+    <string name="config_help_screen_gravity">จัดตำแหน่งหน้าจอ MIDlet เมื่อมีพื้นที่ว่างเหลืออยู่</string>
+    <string name="config_help_screen_padding">เพิ่มระยะขอบเป็นพิกเซลระหว่างหน้าจอ MIDlet กับขอบพื้นที่แสดงผล</string>
+    <string name="config_help_filter">ใช้การกรองแบบเชิงเส้นเพื่อให้หน้าจอ MIDlet เรียบเนียนขึ้นเมื่อปรับขนาด</string>
+    <string name="config_warning_filter_shader">การกรองแบบเชิงเส้นจะทำให้ภาพอินพุตนุ่มนวลขึ้นก่อนเชดเดอร์หน้าจอประมวลผล ซึ่งอาจลดความคมชัดของภาพสุดท้าย</string>
+    <string name="config_help_immediate">ประมวลผลเหตุการณ์ของ MIDlet ทันทีแทนที่จะรอคิว อาจช่วยให้ตอบสนองเร็วขึ้นแต่อาจทำให้ MIDlet บางตัวไม่เสถียร</string>
+    <string name="config_help_graphics_mode">เลือกเส้นทางการเรนเดอร์สำหรับหน้าจอ MIDlet การเร่งด้วยฮาร์ดแวร์อาจช่วยเพิ่มประสิทธิภาพ แต่ความเข้ากันได้ขึ้นอยู่กับอุปกรณ์</string>
+    <string name="config_help_shader">ใช้เชดเดอร์กับเฟรมของ MIDlet ก่อนแสดงผล</string>
+    <string name="config_help_shader_tuning">ตัวเลือกที่ปรับได้ขึ้นอยู่กับเชดเดอร์ที่เลือก</string>
+    <string name="config_help_parallel_redraw">จัดตารางการแสดงผลเฟรมแบบอะซิงโครนัส อาจช่วยเพิ่มประสิทธิภาพในอุปกรณ์บางรุ่น</string>
+    <string name="config_help_force_fullscreen">ซ่อนแถบคำสั่งเมื่อ MIDlet เริ่มทำงาน MIDlet อาจแสดงแถบนี้ขึ้นมาอีกครั้งขณะเล่น</string>
+    <string name="config_help_fps_limit">ตั้งค่าจำกัด FPS ที่ความเร็วการจำลอง 1× ขีดจำกัดจริงจะปรับตามความเร็วการจำลอง ค่า 0 (สูงสุด) จะใช้อัตรารีเฟรชสูงสุดของหน้าจอ</string>
+    <string name="config_timing_mode_full_guest">เวลาจำลอง</string>
+    <string name="config_timing_mode_real_wall">เวลาระบบ</string>
+    <string name="config_help_emulation_speed">เปลี่ยนความเร็วนาฬิกาของ MIDlet และช่วงหน่วงเวลาที่รองรับ เสียงและอินเทอร์เฟซ Android จะยังคงทำงานด้วยความเร็วปกติ</string>
+    <string name="config_help_timing_mode">เลือกว่า MIDlet จะใช้เวลาจำลองหรือเวลาระบบ ช่วงหน่วงเวลาสัมพัทธ์จะยังคงปรับตามความเร็วการจำลอง</string>
+    <string name="config_help_timing_unavailable">การตั้งค่าเวลาไม่พร้อมใช้งานสำหรับการติดตั้ง MIDlet นี้ ติดตั้งใหม่หรือแปลง MIDlet ใหม่เพื่อเปิดใช้งาน</string>
+    <string name="config_help_generic_color">กำหนดสีขององค์ประกอบภาพนี้</string>
+    <string name="config_help_encoding">เลือกการเข้ารหัสอักขระที่รายงานเป็น microedition.encoding</string>
+    <string name="config_edit_system_properties">แก้ไขคุณสมบัติระบบ</string>
+    <string name="config_help_system_properties">กำหนดคุณสมบัติ Java ME ขั้นสูงที่รายงานให้ MIDlet ทราบ</string>
+    <string name="config_help_system_properties_long">แก้ไขหนึ่งคุณสมบัติต่อบรรทัดในรูปแบบ “ชื่อ: ค่า” ค่าที่ไม่ถูกต้องอาจส่งผลต่อความเข้ากันได้</string>
+    <string name="config_system_properties_info">MIDlet ส่วนใหญ่ไม่จำเป็นต้องแก้ไขส่วนนี้</string>
+    <string name="config_font_sizes">ขนาดตัวอักษร</string>
+    <string name="config_help_font_sizes">ตั้งค่าขนาดตัวอักษร Java ME แบบเล็ก กลาง และใหญ่สำหรับ MIDlet</string>
+    <string name="config_help_font_sizes_long">ตั้งค่าขนาดตัวอักษร Java ME เป็นพิกเซล หรือหน่วยที่ปรับสเกลเมื่อเปิดใช้ขนาดตัวอักษรของ Android ควรปรับร่วมกันเพื่อให้ข้อความสมดุล</string>
+    <string name="config_font_sizes_value">เล็ก <xliff:g id="small_size" example="12">%1$s</xliff:g> · กลาง <xliff:g id="medium_size" example="16">%2$s</xliff:g> · ใหญ่ <xliff:g id="large_size" example="20">%3$s</xliff:g></string>
+    <string name="config_help_font_presets">ใช้ขนาดตัวอักษรที่เหมาะกับความละเอียดหน้าจอ Java ME ทั่วไป</string>
+    <string name="config_help_font_dimensions">นำสเกลตัวอักษรของ Android มาใช้กับขนาดตัวอักษร Java ME</string>
+    <string name="config_help_font_aa">ทำให้ขอบตัวอักษรที่แสดงผลเรียบเนียนขึ้น</string>
+    <string name="config_help_key_layout">เลือกรูปแบบรหัสปุ่มที่รายงานให้ MIDlet ทราบ</string>
+    <string name="config_help_key_mapping">กำหนดปุ่มและแป้นจริงของ Android ให้ตรงกับปุ่มกด Java ME</string>
+    <string name="config_help_vk_button_shape">ตั้งค่ารูปร่างเริ่มต้นของปุ่มบนแป้นพิมพ์ D-pad และอนาล็อกสติ๊กมีรูปร่างเฉพาะของตัวเอง</string>
+    <string name="config_help_vk_feedback">สั่นเมื่อกดปุ่มควบคุมเสมือน หากเปิดใช้งานการสั่นใน การตั้งค่า</string>
+    <string name="config_help_vk_hide_delay">ซ่อนปุ่มควบคุมหลังจากช่วงเวลานี้เมื่อปุ่มทับหน้าจอ MIDlet ค่า 0 จะปิดการซ่อนอัตโนมัติ</string>
+    <string name="config_help_reset_layout">คืนค่าเลย์เอาต์ปุ่มควบคุมเสมือนโดยไม่เปลี่ยนแปลงการตั้งค่าอื่นของ MIDlet</string>
+    <string name="config_help_skip_resume">หลังจากเรียก startApp() สำเร็จครั้งแรก ให้ข้ามการเรียกครั้งถัดไปเมื่อ MIDlet กลับมาทำงานต่อ ใช้เฉพาะกับ MIDlet ที่มีปัญหาเมื่อกลับมาทำงานต่อเท่านั้น</string>
+    <string name="config_help_soundbank">เลือกชุดเสียงที่ใช้สำหรับการสังเคราะห์เสียง MIDI</string>
+    <string name="profile_create_title">สร้างโปรไฟล์</string>
+    <string name="profile_rename_title">เปลี่ยนชื่อโปรไฟล์</string>
+    <string name="presets">โปรไฟล์</string>
+    <string name="preset_use">ใช้โปรไฟล์</string>
+    <string name="preset_save_as">บันทึกเป็นโปรไฟล์</string>
+    <string name="preset_custom_configuration">การกำหนดค่ากำหนดเอง</string>
+    <string name="preset_based_on_modified">การกำหนดค่าปัจจุบันของ MIDlet นี้แตกต่างจาก <xliff:g id="profile_name" example="Action Games">%1$s</xliff:g></string>
+    <string name="preset_builtin">ค่าเริ่มต้น JL-Mod</string>
+    <string name="preset_builtin_summary">การตั้งค่า MIDlet และปุ่มควบคุมเสมือนในตัว</string>
+    <string name="preset_picker_title">ใช้โปรไฟล์</string>
+    <string name="preset_manage">จัดการโปรไฟล์</string>
+    <string name="profile_more_actions">การทำงานเพิ่มเติมสำหรับ <xliff:g id="profile_name" example="Action Games">%1$s</xliff:g></string>
+    <string name="profile_create_summary">บันทึกการตั้งค่าที่นำกลับมาใช้ซ้ำได้สำหรับ MIDlet อื่น</string>
+    <string name="preset_application_settings">การตั้งค่า MIDlet</string>
+    <string name="preset_includes_keyboard_layout">รวมเลย์เอาต์ปุ่มควบคุมเสมือน</string>
+    <string name="preset_virtual_keyboard_on">เปิดปุ่มควบคุมเสมือน</string>
+    <string name="preset_virtual_keyboard_off">ปิดปุ่มควบคุมเสมือน</string>
+    <string name="preset_apply">นำไปใช้</string>
+    <string name="preset_apply_failed_summary">ไม่สามารถใช้โปรไฟล์นี้ได้ ตรวจสอบแหล่งที่มาแล้วลองอีกครั้ง</string>
+    <string name="preset_choose_parts">เลือกส่วนที่จะนำไปใช้</string>
+    <string name="preset_name">ชื่อ</string>
+    <string name="preset_save_help">บันทึกการตั้งค่าของ MIDlet นี้และเลย์เอาต์ปุ่มควบคุมเสมือน (หากมี) เป็นโปรไฟล์ MIDlet นี้จะใช้โปรไฟล์ดังกล่าวและได้รับการอัปเดตในอนาคต</string>
+    <string name="preset_update">อัปเดต <xliff:g id="profile_name" example="Action Games">%1$s</xliff:g></string>
+    <string name="preset_update_title">อัปเดต <xliff:g id="profile_name" example="Action Games">%1$s</xliff:g> หรือไม่?</string>
+    <string name="preset_update_summary">แทนที่ <xliff:g id="profile_name" example="Action Games">%1$s</xliff:g> ด้วยการตั้งค่าปัจจุบันของ MIDlet นี้และเลย์เอาต์ปุ่มควบคุมเสมือน (หากมี) MIDlet อื่นที่ใช้โปรไฟล์นี้จะได้รับการเปลี่ยนแปลงเมื่อเริ่มทำงานครั้งถัดไป</string>
+    <string name="preset_update_confirm">อัปเดต</string>
+    <string name="preset_saved_unlinked_warning">บันทึกโปรไฟล์แล้ว แต่ MIDlet นี้จะไม่ได้รับการอัปเดตจากโปรไฟล์นี้ในอนาคต</string>
+    <string name="profile_default_fallback_notice">ไม่สามารถใช้โปรไฟล์เริ่มต้น “<xliff:g id="profile_name" example="Action Games">%1$s</xliff:g>” ได้ อาจสูญหาย ไม่สมบูรณ์ หรืออ่านไม่ได้ ระบบตั้งค่า ค่าเริ่มต้น JL-Mod เป็นค่าเริ่มต้นสำหรับ MIDlet ใหม่แล้ว</string>
+    <string name="preset_discard_changes_title">ละทิ้งการเปลี่ยนแปลงหรือไม่?</string>
+    <string name="preset_discard_changes_summary">ร่างโปรไฟล์นี้ยังไม่ได้รับการบันทึก</string>
+    <string name="preset_continue_editing">แก้ไขต่อ</string>
+    <string name="preset_discard_changes">ละทิ้ง</string>
+    <string name="preset_name_exists">มีโปรไฟล์ชื่อนี้อยู่แล้ว</string>
+    <string name="preset_invalid_name">ป้อนชื่อโปรไฟล์ที่ถูกต้อง</string>
+    <string name="preset_manager_default_section">ค่าเริ่มต้นสำหรับ MIDlet ใหม่</string>
+    <string name="preset_manager_presets_section">โปรไฟล์ของฉัน</string>
+    <string name="preset_manager_keyboard_section">เลย์เอาต์ปุ่มควบคุมเสมือนที่บันทึกไว้</string>
+    <string name="preset_default_policy_summary">นำไปใช้เมื่อติดตั้ง MIDlet ใหม่</string>
+    <string name="preset_keyboard_layout_unavailable">เลย์เอาต์ปุ่มควบคุมเสมือนไม่พร้อมใช้งาน</string>
+    <string name="edit_preset">แก้ไขโปรไฟล์</string>
+    <string name="preset_edit_title">แก้ไขโปรไฟล์: <xliff:g id="profile_name" example="Action Games">%1$s</xliff:g></string>
+    <string name="preset_unavailable_section">ไม่พร้อมใช้งาน</string>
+    <string name="preset_unavailable_summary">ไม่สามารถโหลดโปรไฟล์นี้ได้ โปรดเปลี่ยนชื่อหรือลบออก</string>
+    <string name="preset_change_default">เปลี่ยน</string>
+    <string name="preset_default_picker_title">ค่าเริ่มต้นสำหรับ MIDlet ใหม่</string>
+    <string name="profile_follows_updates">ติดตามการอัปเดตโปรไฟล์ในอนาคต</string>
+    <string name="profile_apply_whole">ทั้งโปรไฟล์</string>
+    <string name="profile_apply_whole_follows">แทนที่การตั้งค่าและเลย์เอาต์ และติดตามการอัปเดตในอนาคต</string>
+    <string name="profile_apply_whole_without_layout">แทนที่การตั้งค่า ลบเลย์เอาต์ในเครื่อง และติดตามการอัปเดต</string>
+    <string name="profile_apply_settings_only">เฉพาะการตั้งค่า MIDlet</string>
+    <string name="profile_apply_settings_keeps_layout">เก็บเลย์เอาต์ของ MIDlet นี้ไว้ และใช้การกำหนดค่ากำหนดเอง</string>
+    <string name="profile_apply_layout_only">เฉพาะเลย์เอาต์ปุ่มควบคุมเสมือน</string>
+    <string name="profile_apply_layout_keeps_settings">เก็บการตั้งค่าของ MIDlet นี้ไว้ และใช้การกำหนดค่ากำหนดเอง</string>
+    <string name="config_analog_stick">อนาล็อกสติ๊ก</string>
+    <string name="config_analog_stick_summary">เลือก ปิด, 4 ทิศทาง, 8 ทิศทาง หรือ แป้นตัวเลข สำหรับอนาล็อกสติ๊กหลัก ปุ่มคอนโทรลเลอร์จะใช้การกำหนดปุ่ม</string>
+    <string name="config_analog_stick_off">ปิด</string>
+    <string name="config_controller_help_body_compact">ปุ่มคอนโทรลเลอร์ใช้การกำหนดปุ่มเดียวกับแป้นพิมพ์และปุ่มโทรศัพท์ อนาล็อกสติ๊กจะส่งเฉพาะอินพุตทิศทางไปยัง MIDlet ปุ่มย้อนกลับของ Android ยังคงทำงานตามปกติ ส่วนปุ่มจริงใดๆ ที่กำหนดเป็น M จะเปิดเมนู MIDlet ขณะเล่น</string>
+    <string name="config_show_fps_title" tools:ignore="MissingTranslation">แสดง FPS</string>
+    <string name="config_show_fps_help" tools:ignore="MissingTranslation">แสดงเฟรมเรตขณะเล่น</string>
+    <string name="config_search_requires_fps" tools:ignore="MissingTranslation">เปิด แสดง FPS เพื่อเปลี่ยนตำแหน่ง</string>
+    <string name="midlet_running_notification_title">MIDlet กำลังทำงาน</string>
+    <string name="midlet_running_notification_text"><xliff:g id="name" example="Example">%1$s</xliff:g> กำลังทำงานอยู่</string>
+    <string name="midlet_running_notification_channel">รันไทม์ MIDlet</string>
+    <string name="config_gamepad_directions_numeric_v2">แป้นตัวเลข</string>
+    <string name="midlet_file_permission_title">การเข้าถึงพื้นที่จัดเก็บ</string>
+    <string name="midlet_file_permission_read">MIDlet นี้ต้องการอ่านไฟล์</string>
+    <string name="midlet_file_permission_write">MIDlet นี้ต้องการสร้าง แก้ไข หรือลบไฟล์</string>
+    <string name="midlet_file_permission_allow_once">อนุญาตครั้งเดียว</string>
+    <string name="midlet_file_permission_allow_session">อนุญาตขณะที่ MIDlet ทำงานอยู่</string>
+    <string name="midlet_file_permission_allow_always">อนุญาตเสมอ</string>
+    <string name="midlet_file_permission_deny">ปฏิเสธเสมอ</string>
+    <string name="midlet_permissions_settings_title">สิทธิ์การเข้าถึงพื้นที่จัดเก็บ</string>
+    <string name="midlet_permissions_read">อ่านไฟล์</string>
+    <string name="midlet_permissions_write">แก้ไขไฟล์</string>
+    <string name="midlet_permissions_ask">ถาม</string>
+    <string name="midlet_permissions_allow">อนุญาตเสมอ</string>
+    <string name="midlet_permissions_deny">ปฏิเสธ</string>
+    <string name="midlet_permissions_save_failed">ไม่สามารถบันทึกการตั้งค่าพื้นที่จัดเก็บได้</string>
+    <string name="config_avoid_camera_cutout_title">หลีกเลี่ยงรอยบากกล้อง</string>
+    <string name="config_avoid_camera_cutout_summary">จัดหน้าจอ MIDlet และปุ่มควบคุมเสมือนไม่ให้ทับกล้องหรือรอยบากหน้าจอ</string>
+    <string name="midlet_permissions_write_summary">รวมถึงการสร้างและลบไฟล์</string>
+    <string name="midlet_legacy_import_title">ไฟล์บันทึก Siemens รุ่นเก่า</string>
+    <string name="midlet_legacy_import_action">เลือกไฟล์บันทึกเก่า</string>
+    <string name="midlet_legacy_import_summary">คัดลอกไฟล์บันทึกเก่าไปยังพื้นที่จัดเก็บ Siemens ส่วนตัวของ MIDlet นี้ โปรดหยุด MIDlet ก่อน</string>
+    <string name="midlet_legacy_import_success">คัดลอกไฟล์ไปยังพื้นที่จัดเก็บส่วนตัวของ MIDlet นี้แล้ว</string>
+    <string name="midlet_legacy_import_failed">การนำเข้าล้มเหลว หยุด MIDlet และตรวจสอบว่ายังไม่มีไฟล์ปลายทางอยู่แล้ว</string>
+    <string name="midlet_storage_mode_title">โหมดพื้นที่จัดเก็บ</string>
+    <string name="midlet_storage_mode_shared">เสมือน</string>
+    <string name="midlet_storage_mode_android">Android</string>
+    <string name="midlet_storage_mode_shared_summary">ใช้โฟลเดอร์ที่ใช้ร่วมกันในโฟลเดอร์ทำงาน</string>
+    <string name="midlet_storage_mode_android_summary">ใช้พื้นที่จัดเก็บ Android เหมือนในเวอร์ชันก่อนหน้า</string>
+    <string name="config_system_properties_reset" tools:ignore="MissingTranslation">รีเซ็ตเป็นค่าเริ่มต้น</string>
+    <string name="config_system_properties_reset_title" tools:ignore="MissingTranslation">รีเซ็ตคุณสมบัติระบบหรือไม่?</string>
+    <string name="config_system_properties_reset_message" tools:ignore="MissingTranslation">แทนที่เนื้อหาในตัวแก้ไขด้วยค่าเริ่มต้นปัจจุบันของ JL-Mod Plus หรือไม่? การตั้งค่าอื่นจะไม่เปลี่ยนแปลง บันทึกเพื่อใช้การรีเซ็ต</string>
+    <string name="config_asset_add">+ เพิ่มจากไฟล์</string>
+    <string name="config_asset_copy_hint">คัดลอกไปยังโฟลเดอร์ทำงานแล้ว ไฟล์ต้นฉบับจะยังคงอยู่ที่เดิม</string>
+    <string name="config_asset_name">ชื่อไฟล์</string>
+    <string name="config_asset_delete_confirmation">ลบ <xliff:g id="name" example="Example">%1$s</xliff:g> ออกจากโฟลเดอร์ทำงานหรือไม่? MIDlet อื่นอาจใช้งานไฟล์นี้อยู่ด้วย สำเนาที่อื่นจะไม่ได้รับผลกระทบ</string>
+    <string name="config_asset_imported">คัดลอกและเลือกแล้ว: <xliff:g id="name" example="Example">%1$s</xliff:g></string>
+    <string name="config_asset_reused">เลือกไฟล์ที่มีอยู่แล้ว: <xliff:g id="name" example="Example">%1$s</xliff:g></string>
+    <string name="config_asset_renamed">เปลี่ยนชื่อเป็น <xliff:g id="name" example="Example">%1$s</xliff:g> แล้ว</string>
+    <string name="config_asset_deleted">ลบ <xliff:g id="name" example="Example">%1$s</xliff:g> แล้ว</string>
+    <string name="config_asset_invalid">ไฟล์ไม่รองรับหรือไม่ถูกต้อง</string>
+    <string name="config_asset_operation_failed">ไม่สามารถดำเนินการกับไฟล์ได้</string>
+    <string name="config_save_failed" tools:ignore="MissingTranslation">ไม่สามารถบันทึกการตั้งค่าได้ การเปลี่ยนแปลงของคุณยังเปิดอยู่ — โปรดลองอีกครั้ง</string>
+    <string name="config_asset_busy">ดำเนินการกับไฟล์ปัจจุบันให้เสร็จก่อน</string>
+    <string name="config_quick_settings" tools:ignore="MissingTranslation">การตั้งค่าด่วน</string>
+    <string name="config_all_settings" tools:ignore="MissingTranslation">การตั้งค่าทั้งหมด</string>
+    <string name="profile_local_changes_pending" tools:ignore="MissingTranslation">มีการเปลี่ยนแปลงในเครื่องที่ยังไม่ได้บันทึกลงในโปรไฟล์</string>
+    <string name="profile_local_configuration_summary" tools:ignore="MissingTranslation">การตั้งค่าสำหรับ MIDlet นี้เท่านั้น</string>
+    <string name="profile_not_following" tools:ignore="MissingTranslation">อิงจาก <xliff:g id="profile_name" example="Action Games">%1$s</xliff:g> · ไม่ได้ติดตามการอัปเดต</string>
+    <string name="profile_stop_following" tools:ignore="MissingTranslation">หยุดติดตามโปรไฟล์</string>
+    <string name="profile_follow_again" tools:ignore="MissingTranslation">กลับมาติดตามโปรไฟล์</string>
+    <string name="profile_follow_again_summary" tools:ignore="MissingTranslation">แทนที่การตั้งค่าในเครื่องและปุ่มควบคุมเสมือนของ MIDlet นี้ด้วยโปรไฟล์ <xliff:g id="profile_name" example="Action Games">%1$s</xliff:g> ล่าสุด และติดตามการอัปเดตในอนาคตหรือไม่?</string>
+</resources>

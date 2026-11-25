@@ -1,0 +1,105 @@
+<?xml version="1.0" encoding="utf-8"?>
+<!-- Εικονικά χειριστήρια, επεξεργαστής διάταξης, αντιστοιχίσεις φυσικών πλήκτρων και θέματα εμφάνισης χειριστηρίων. -->
+<resources xmlns:tools="http://schemas.android.com/tools" xmlns:xliff="urn:oasis:names:tc:xliff:document:1.2">
+    <string name="alert_map_menu">Το πλήκτρο Μενού (M) δεν έχει αντιστοιχιστεί.\nΕνδέχεται να μην μπορείτε να ανοίξετε το μενού του MIDlet κατά το παιχνίδι.</string>
+    <string name="dismiss_mapping">Κλείσιμο αντιστοίχισης</string>
+    <string name="layout_edit_finish">Τέλος επεξεργασίας</string>
+    <string name="layout_edit_done">Τέλος</string>
+    <string name="layout_editor_grid_size">Μέγεθος πλέγματος</string>
+    <string name="layout_editor_grid_coarse">Αραιό (16)</string>
+    <string name="layout_editor_grid_normal">Κανονικό (24)</string>
+    <string name="layout_editor_grid_fine">Πυκνό (32)</string>
+    <string name="layout_editor_snap_on">Προσκόλληση ενεργή</string>
+    <string name="layout_editor_snap_off">Προσκόλληση ανενεργή</string>
+    <string name="layout_edit_save_changes">Αποθήκευση αλλαγών στα εικονικά χειριστήρια;</string>
+    <string name="layout_edit_discard">Απόρριψη</string>
+    <string name="layout_edit_continue">Συνέχεια επεξεργασίας</string>
+    <string name="layout_edit_finished">Η επεξεργασία των εικονικών χειριστηρίων ολοκληρώθηκε.</string>
+    <string name="virtual_controls_save_failed">Δεν ήταν δυνατή η αποθήκευση των εικονικών χειριστηρίων. Δοκιμάστε ξανά.</string>
+    <string name="layout_switch">Επιλογή διάταξης χειριστηρίων</string>
+    <string name="mapping_dialog_key_not_specified">Δεν έχουν αντιστοιχιστεί είσοδοι.</string>
+    <string name="mapping_dialog_message">Πατήστε ένα φυσικό πλήκτρο ή κουμπί για να το αντιστοιχίσετε σε αυτό το χειριστήριο.</string>
+    <string name="mapping_dialog_assigned_inputs">Αντιστοιχισμένες είσοδοι</string>
+    <string name="mapping_dialog_add_input">Μπορείτε να αντιστοιχίσετε περισσότερες από μία φυσικές εισόδους.</string>
+    <string name="mapping_dialog_remove">Κατάργηση</string>
+    <string name="mapping_dialog_title">Πατήστε ένα πλήκτρο ή κουμπί</string>
+    <string name="message_reset_layout">Επαναφορά της διάταξης των εικονικών χειριστηρίων στις προεπιλογές;</string>
+    <string name="RESET_LAYOUT_CMD">Επαναφορά διάταξης εικονικών χειριστηρίων</string>
+    <string name="saved_keyboard_layout_summary">Η διάταξη εικονικών χειριστηρίων αποθηκεύτηκε.</string>
+    <string name="control_skin_title">Εμφάνιση εικονικών χειριστηρίων</string>
+    <string name="control_skin_create" tools:ignore="MissingTranslation">Δημιουργία σετ</string>
+    <string name="control_skin_default" tools:ignore="MissingTranslation">Προεπιλεγμένα κουμπιά</string>
+    <string name="control_skin_edit" tools:ignore="MissingTranslation">Επεξεργασία</string>
+    <string name="control_skin_rename" tools:ignore="MissingTranslation">Μετονομασία</string>
+    <string name="control_skin_duplicate" tools:ignore="MissingTranslation">Αντιγραφή</string>
+    <string name="control_skin_delete" tools:ignore="MissingTranslation">Διαγραφή</string>
+    <string name="control_skin_import_zip" tools:ignore="MissingTranslation">Εισαγωγή ZIP</string>
+    <string name="control_skin_export_zip" tools:ignore="MissingTranslation">Εξαγωγή ZIP</string>
+    <string name="control_skin_select_export_folder" tools:ignore="MissingTranslation">Επιλογή φακέλου εξαγωγής</string>
+    <string name="control_skin_imported" tools:ignore="MissingTranslation">Εισήχθη: <xliff:g id="skin_name" example="Classic Nokia">%1$s</xliff:g></string>
+    <string name="control_skin_already_available" tools:ignore="MissingTranslation">Το <xliff:g id="skin_name" example="Classic Nokia">%1$s</xliff:g> είναι ήδη διαθέσιμο</string>
+    <string name="control_skin_exported" tools:ignore="MissingTranslation">Αποθηκεύτηκε: <xliff:g id="skin_name" example="Classic Nokia">%1$s</xliff:g></string>
+    <string name="control_skin_archive_invalid_path" tools:ignore="MissingTranslation">Η επιλεγμένη τοποθεσία δεν είναι διαθέσιμη.</string>
+    <string name="control_skin_archive_import_failed" tools:ignore="MissingTranslation">Δεν ήταν δυνατή η εισαγωγή εμφάνισης χειριστηρίων. Βεβαιωθείτε ότι το ZIP περιέχει ένα έγκυρο σετ.</string>
+    <string name="control_skin_archive_export_failed" tools:ignore="MissingTranslation">Δεν ήταν δυνατή η εξαγωγή εμφάνισης χειριστηρίων. Επιλέξτε έναν εγγράψιμο φάκελο εκτός της βιβλιοθήκης εμφανίσεων.</string>
+    <string name="control_skin_name" tools:ignore="MissingTranslation">Όνομα σετ</string>
+    <string name="control_skin_icon" tools:ignore="MissingTranslation">Μόνο εικονίδιο</string>
+    <string name="control_skin_full" tools:ignore="MissingTranslation">Πλήρες κουμπί</string>
+    <string name="control_skin_normal_image" tools:ignore="MissingTranslation">Κανονική εικόνα</string>
+    <string name="control_skin_pressed_image" tools:ignore="MissingTranslation">Πατημένη εικόνα</string>
+    <string name="control_skin_delete_warning" tools:ignore="MissingTranslation">Διαγραφή αυτού του καθολικού σετ εμφάνισης και όλων των εικόνων του; Τα MIDlet που το χρησιμοποιούν θα επιστρέψουν στα προεπιλεγμένα χειριστήρια.</string>
+    <string name="control_skin_invalid_image" tools:ignore="MissingTranslation">Επιλέξτε μια εικόνα PNG, WebP ή SVG.</string>
+    <string name="control_skin_operation_failed" tools:ignore="MissingTranslation">Δεν ήταν δυνατή η ενημέρωση του σετ εμφάνισης χειριστηρίων.</string>
+    <string name="control_skin_missing" tools:ignore="MissingTranslation">Μη διαθέσιμο σετ (προεπιλεγμένα χειριστήρια)</string>
+    <string name="control_skin_remove_image" tools:ignore="MissingTranslation">Κατάργηση</string>
+    <string name="control_skin_manage" tools:ignore="MissingTranslation">Διαχείριση σετ</string>
+    <string name="control_skin_manage_named" tools:ignore="MissingTranslation">Διαχείριση <xliff:g id="skin_name" example="Classic Nokia">%1$s</xliff:g></string>
+    <plurals name="control_skin_count">
+        <item quantity="one"><xliff:g id="count" example="4">%1$d</xliff:g> προσαρμοσμένο χειριστήριο</item>
+        <item quantity="other"><xliff:g id="count" example="4">%1$d</xliff:g> προσαρμοσμένα χειριστήρια</item>
+    </plurals>
+    <string name="control_skin_empty" tools:ignore="MissingTranslation">Δημιουργήστε ένα σετ για να προσαρμόσετε τις εικόνες των χειριστηρίων.</string>
+    <string name="control_skin_numeric" tools:ignore="MissingTranslation">Πληκτρολόγιο</string>
+    <string name="control_skin_navigation" tools:ignore="MissingTranslation">Πλοήγηση</string>
+    <string name="control_skin_other" tools:ignore="MissingTranslation">Άλλα κουμπιά</string>
+    <string name="control_skin_pressed_requires_normal" tools:ignore="MissingTranslation">Προσθέστε πρώτα μια κανονική εικόνα.</string>
+    <string name="control_skin_edit_named" tools:ignore="MissingTranslation">Κουμπί <xliff:g id="button_label" example="5">%1$s</xliff:g></string>
+    <string name="control_skin_change_image" tools:ignore="MissingTranslation">Αλλαγή</string>
+    <string name="control_skin_pick_image" tools:ignore="MissingTranslation">Επιλογή εικόνας</string>
+    <string name="control_skin_soft_left" tools:ignore="MissingTranslation">Αριστερό πλήκτρο</string>
+    <string name="control_skin_soft_right" tools:ignore="MissingTranslation">Δεξί πλήκτρο</string>
+    <string name="control_skin_fire" tools:ignore="MissingTranslation">Βολή</string>
+    <string name="control_skin_menu" tools:ignore="MissingTranslation">Μενού</string>
+    <string name="control_skin_movement" tools:ignore="MissingTranslation">Χειριστήρια κίνησης</string>
+    <string name="control_skin_dpad" tools:ignore="MissingTranslation">D-pad</string>
+    <string name="control_skin_analog" tools:ignore="MissingTranslation">Αναλογικός μοχλός</string>
+    <string name="control_skin_dpad_base" tools:ignore="MissingTranslation">Εικόνα D-pad</string>
+    <string name="control_skin_overlay_up" tools:ignore="MissingTranslation">Επικάλυψη επάνω</string>
+    <string name="control_skin_overlay_down" tools:ignore="MissingTranslation">Επικάλυψη κάτω</string>
+    <string name="control_skin_overlay_left" tools:ignore="MissingTranslation">Επικάλυψη αριστερά</string>
+    <string name="control_skin_overlay_right" tools:ignore="MissingTranslation">Επικάλυψη δεξιά</string>
+    <string name="control_skin_analog_base" tools:ignore="MissingTranslation">Εικόνα βάσης</string>
+    <string name="control_skin_analog_thumb" tools:ignore="MissingTranslation">Εικόνα μοχλού</string>
+    <string name="control_skin_analog_thumb_pressed" tools:ignore="MissingTranslation">Εικόνα ενεργού μοχλού</string>
+    <string name="control_skin_preview_directions" tools:ignore="MissingTranslation">Προεπισκόπηση κατευθύνσεων</string>
+    <string name="control_skin_preview_direction" tools:ignore="MissingTranslation">Προεπισκόπηση: <xliff:g id="direction" example="Up">%1$s</xliff:g></string>
+    <string name="control_skin_builtin_preview" tools:ignore="MissingTranslation">Προεπιλογή</string>
+    <string name="control_skin_custom_preview" tools:ignore="MissingTranslation">Προσαρμοσμένο</string>
+    <string name="layout_editor_group_on">Αλλαγή μεγέθους μαζί</string>
+    <string name="layout_editor_group_off">Αλλαγή μεγέθους ξεχωριστά</string>
+    <string name="layout_editor_snap_grid">Προσκόλληση στο πλέγμα</string>
+    <string name="layout_editor_snap_controls">Προσκόλληση στα κουμπιά</string>
+    <string name="layout_editor_snap_resize">Προσκόλληση κατά την αλλαγή μεγέθους</string>
+    <string name="layout_editor_snap_resize_on">Προσκόλληση μεγέθους: Ενεργή</string>
+    <string name="layout_editor_snap_resize_off">Προσκόλληση μεγέθους: Ανενεργή</string>
+    <string name="layout_editor_snap_grid_on">Προσκόλληση πλέγματος: Ενεργή</string>
+    <string name="layout_editor_snap_grid_off">Προσκόλληση πλέγματος: Ανενεργή</string>
+    <string name="layout_editor_snap_controls_on">Προσκόλληση κουμπιών: Ενεργή</string>
+    <string name="layout_editor_snap_controls_off">Προσκόλληση κουμπιών: Ανενεργή</string>
+    <string name="layout_editor_guide_gestures">Χειρονομίες</string>
+    <string name="layout_editor_guide_move">Σύρετε ένα χειριστήριο για να το μετακινήσετε.</string>
+    <string name="layout_editor_guide_resize">Χρησιμοποιήστε δύο δάχτυλα για αλλαγή μεγέθους. Κινηθείτε οριζόντια ή κατακόρυφα για να αλλάξετε πλάτος ή ύψος.</string>
+    <string name="layout_editor_guide_tools">Εργαλεία επεξεργαστή</string>
+    <string name="layout_editor_guide_done">Πατήστε Τέλος για αποθήκευση, απόρριψη ή συνέχεια επεξεργασίας.</string>
+    <string name="layout_editor_guide_start">Έναρξη επεξεργασίας</string>
+</resources>

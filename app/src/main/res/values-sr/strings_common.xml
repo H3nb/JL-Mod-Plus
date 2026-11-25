@@ -1,0 +1,47 @@
+<?xml version="1.0" encoding="utf-8"?>
+<!-- Shared UI actions, generic labels, dialogs, and About screen. -->
+<resources xmlns:xliff="urn:oasis:names:tc:xliff:document:1.2">
+    <string name="about">О апликацији</string>
+    <string name="about_message">Покрећите класичне апликације и игре, организујте MIDlet-е у библиотеци и прилагодите контроле, приказ, звук и перформансе. JL-Mod Plus је бесплатан софтвер отвореног кода.</string>
+    <string name="about_subtitle">Java ME емулатор за Android</string>
+    <string name="about_compatibility">Компатибилност зависи од MIDlet-а, уређаја и подржаних Java ME API-ја. Неке апликације се могу понашати другачије него на оригиналним телефонима.</string>
+    <string name="about_lineage_title">Порекло пројекта</string>
+    <string name="about_build_title">Информације о верзији</string>
+    <string name="about_version_label">Верзија</string>
+    <string name="about_build_label">Издање</string>
+    <string name="about_revision_label">Ревизија изворног кода</string>
+    <string name="about_links_title">Пројекат и лиценце</string>
+    <string name="about_github_link_copied">Није пронађен прегледач. GitHub веза је копирана у привремену меморију.</string>
+    <string name="about_github_browser_unavailable">Није пронађен прегледач за отварање GitHub-а.</string>
+    <string name="about_lineage">JL-Mod Plus је независна грана пројекта JL-Mod аутора woesss (Јуриј Харченко). JL-Mod је заснован на апликацији J2ME Loader Никите Шакаруна, која потиче од NaikSoftware J2meLoader-а.</string>
+    <string name="about_evolution">JL-Mod Plus надограђује ту основу савременим интерфејсом, напреднијом библиотеком MIDlet-а, новим функцијама и подршком за новије верзије Android-а.</string>
+    <string name="action_back">Назад</string>
+    <string name="action_settings">Подешавања</string>
+    <string name="CANCEL_CMD">Откажи</string>
+    <string name="change">Промени</string>
+    <string name="choose">Изабери</string>
+    <string name="close">Затвори</string>
+    <string name="cmd_menu">Мени</string>
+    <string name="CONFIRMATION_REQUIRED">Потребна је потврда</string>
+    <string name="create">Направи</string>
+    <string name="default_label"><xliff:g id="name" example="Example">%1$s</xliff:g> (подразумевано)</string>
+    <string name="dismiss">Одбаци</string>
+    <string name="edit">Уреди</string>
+    <string name="error">Грешка</string>
+    <string name="error_name">Унесите назив.</string>
+    <string name="exit">Изађи</string>
+    <string name="help">Помоћ</string>
+    <string name="install">Инсталирај</string>
+    <string name="licenses">Лиценце</string>
+    <string name="licenses_unavailable">Детаљи о лиценцама нису доступни.</string>
+    <string name="loading_info">Учитавање информација…</string>
+    <string name="more">Више</string>
+    <string name="not_saved_exists">Већ постоји</string>
+    <string name="reset">Ресетуј</string>
+    <string name="retry">Покушај поново</string>
+    <string name="save">Сачувај</string>
+    <string name="saved">Сачувано: „<xliff:g id="name" example="Example">%1$s</xliff:g>”</string>
+    <string name="START_CMD">Покрени</string>
+    <string name="warning">Упозорење</string>
+    <string name="removed">Уклоњено: „<xliff:g id="name" example="Example">%1$s</xliff:g>”</string>
+</resources>

@@ -1,0 +1,246 @@
+<?xml version="1.0" encoding="utf-8"?>
+<!-- Memory Editor search, inspector, bookmarks, saved variables, quick actions, and script builder. -->
+<resources xmlns:tools="http://schemas.android.com/tools" xmlns:xliff="urn:oasis:names:tc:xliff:document:1.2">
+    <string name="memory_editor_bubble">記憶體編輯器懸浮按鈕</string>
+    <string name="memory_editor_bubble_content_description">開啟記憶體編輯器</string>
+    <string name="memory_editor_previous_results_page_action">上一頁結果</string>
+    <string name="memory_editor_next_results_page_action">下一頁結果</string>
+    <string name="memory_editor">記憶體編輯器</string>
+    <string name="memory_editor_search_hint">數值</string>
+    <string name="memory_editor_next_scan">再次掃描</string>
+    <string name="memory_editor_new_search">新增搜尋</string>
+    <plurals name="memory_editor_results">
+        <item quantity="other"><xliff:g id="count" example="3">%1$d</xliff:g> 筆結果</item>
+    </plurals>
+    <plurals name="memory_editor_candidates">
+        <item quantity="other"><xliff:g id="count" example="3">%1$d</xliff:g> 個候選項目</item>
+    </plurals>
+    <plurals name="memory_editor_search_complete">
+        <item quantity="other">搜尋完成 · <xliff:g id="count" example="3">%1$d</xliff:g> 個候選項目</item>
+    </plurals>
+    <string name="memory_editor_no_results">沒有結果</string>
+    <string name="memory_editor_no_watch">監看清單是空的</string>
+    <string name="memory_editor_unsupported">此執行環境不支援記憶體編輯器。</string>
+    <string name="memory_editor_engine_unavailable">記憶體編輯器引擎無法使用。</string>
+    <string name="memory_editor_engine_reconnecting">記憶體編輯器正在重新連線…</string>
+    <string name="memory_editor_refresh">重新整理</string>
+    <string name="memory_editor_undo">復原掃描</string>
+    <string name="memory_variables_tab">已儲存</string>
+    <string name="memory_editor_back" tools:ignore="MissingTranslation">返回</string>
+    <string name="memory_list_keep" tools:ignore="MissingTranslation">保留至下次啟動</string>
+    <string name="memory_list_stop_keeping" tools:ignore="MissingTranslation">停止保留</string>
+    <string name="memory_list_kept" tools:ignore="MissingTranslation">已設定保留至下次啟動</string>
+    <string name="memory_list_empty" tools:ignore="MissingTranslation">尚未儲存任何書籤</string>
+    <string name="memory_list_empty_hint" tools:ignore="MissingTranslation">在「搜尋」或「檢視器」中將變數加入書籤，即可在此追蹤。</string>
+    <string name="memory_list_remove_confirm" tools:ignore="MissingTranslation">要從「已儲存」中移除嗎？所有進行中的鎖定將會停止。</string>
+    <string name="memory_list_add" tools:ignore="MissingTranslation">加入書籤</string>
+    <string name="memory_bookmark_relink" tools:ignore="MissingTranslation">重新連結</string>
+    <string name="memory_bookmark_relink_hint" tools:ignore="MissingTranslation">先在「搜尋」中選取替代變數，再選擇「重新連結」。</string>
+    <string name="memory_bookmark_relink_confirm" tools:ignore="MissingTranslation">要將此書籤連結至所選變數嗎？此書籤目前啟用的鎖定將會停止。</string>
+    <string name="memory_bookmark_unavailable" tools:ignore="MissingTranslation">無法使用——請選擇「重新連結」以指定目標</string>
+    <string name="memory_editor_watch">監看</string>
+    <string name="memory_editor_search_tab">搜尋</string>
+    <string name="memory_editor_search_known_values">搜尋已知數值</string>
+    <string name="memory_editor_search_unknown_values">搜尋未知數值</string>
+    <string name="memory_editor_add_to_watch">將所選數值加入書籤</string>
+    <string name="memory_editor_no_candidates">找不到可搜尋的數值</string>
+    <string name="memory_editor_edit">編輯</string>
+    <plurals name="memory_editor_edit_batch">
+        <item quantity="other">編輯 <xliff:g id="count" example="3">%1$d</xliff:g> 個數值</item>
+    </plurals>
+    <string name="memory_editor_edit_batch_no_common_type">所選項目不支援指定的資料型別，請分別編輯相容的項目。</string>
+    <string name="memory_editor_save">套用</string>
+    <string name="memory_editor_replacement">取代數值</string>
+    <string name="memory_editor_freeze">鎖定</string>
+    <string name="memory_editor_remove">移除</string>
+    <string name="memory_editor_select_visible">選取可見項目</string>
+    <string name="memory_editor_clear_selection">清除選取項目</string>
+    <plurals name="memory_editor_selected">
+        <item quantity="other">已選取 <xliff:g id="count" example="3">%1$d</xliff:g> 項</item>
+    </plurals>
+    <string name="memory_editor_close">關閉記憶體編輯器</string>
+    <string name="memory_editor_searching">正在搜尋記憶體…</string>
+    <string name="memory_editor_working">正在套用操作…</string>
+    <string name="memory_editor_search_progress">已掃描 <xliff:g id="scanned_mib" example="12">%1$d</xliff:g> / <xliff:g id="total_mib" example="64">%2$d</xliff:g> MiB</string>
+    <string name="memory_editor_candidate_moved">已更新目標</string>
+    <string name="memory_editor_candidate_relocating">正在重新驗證</string>
+    <string name="memory_editor_candidate_ambiguous">目標不明確——已暫停寫入</string>
+    <string name="memory_editor_candidate_lost">目標遺失——已暫停寫入</string>
+    <string name="memory_editor_apply">套用</string>
+    <string name="memory_editor_min_value">最小值</string>
+    <string name="memory_editor_max_value">最大值</string>
+    <string name="memory_editor_change_amount">變動量</string>
+    <string name="memory_editor_min_change">最小變動量</string>
+    <string name="memory_editor_max_change">最大變動量</string>
+    <string name="memory_editor_unfreeze">解除鎖定</string>
+    <string name="memory_editor_cancelled">已取消操作。</string>
+    <string name="memory_editor_resource_limit">記憶體編輯器已達安全上限。請縮小搜尋範圍，或移除未使用的書籤與鎖定項目。</string>
+    <string name="memory_editor_identity_unsafe">無法驗證所選數值或搜尋狀態。請重新整理結果或重新開啟「檢視器」，再試一次。</string>
+    <string name="memory_editor_safety_limit">此操作選取的數值過多，請減少選取數量後再試一次。</string>
+    <string name="memory_editor_invalid_request">數值或操作無效。</string>
+    <string name="memory_editor_freeze_paused">基於安全考量已暫停</string>
+    <string name="memory_editor_predicate_between">介於範圍</string>
+    <string name="memory_editor_predicate_changed">已變動</string>
+    <string name="memory_editor_predicate_unchanged">未變動</string>
+    <string name="memory_editor_predicate_increased">增加</string>
+    <string name="memory_editor_predicate_decreased">減少</string>
+    <string name="memory_editor_predicate_increased_by">增加指定值</string>
+    <string name="memory_editor_predicate_decreased_by">減少指定值</string>
+    <string name="memory_editor_predicate_changed_by">變動指定值</string>
+    <string name="memory_editor_predicate_increased_range">增加量介於範圍</string>
+    <string name="memory_editor_predicate_decreased_range">減少量介於範圍</string>
+    <string name="memory_editor_inspector">檢視器</string>
+    <string name="memory_editor_inspect_memory">檢視相鄰記憶體</string>
+    <string name="memory_editor_inspector_loading">正在驗證結果並讀取相鄰記憶體…</string>
+    <string name="memory_editor_inspector_empty">選取一筆結果即可檢視相鄰記憶體。</string>
+    <string name="memory_editor_inspector_no_rows">沒有可供檢視的相鄰記憶體。</string>
+    <string name="memory_editor_refresh_snapshot">重新整理快照</string>
+    <string name="memory_editor_select_result_value">選取此書籤</string>
+    <string name="memory_editor_freeze_after_edit">套用後鎖定</string>
+    <string name="memory_editor_freeze_after_edit_help">保持此數值鎖定並將其加入「已儲存」書籤。</string>
+    <string name="memory_editor_expression_single_hint">輸入單一數值，或使用分號（;）分隔群組數值。</string>
+    <string name="memory_editor_expression_group_needs_type">進行群組搜尋時請選擇特定的資料型別。</string>
+    <plurals name="memory_editor_expression_group_hint">
+        <item quantity="other">群組搜尋 · <xliff:g id="count" example="3">%1$d</xliff:g> 個數值 · 同一 Java 物件</item>
+    </plurals>
+    <string name="memory_editor_expression_query_help">範例：500 或 500;1000。群組搜尋會在同一個 Java 物件中尋找 2–8 個數值。</string>
+    <string name="memory_editor_keypad_clear">清除</string>
+    <string name="memory_editor_peek_underlay">按住即可檢視下方的 MIDlet</string>
+    <string name="memory_editor_peek_underlay_active">正在顯示下方的 MIDlet</string>
+    <string name="memory_editor_no_runtime">沒有執行中的 MIDlet 環境。</string>
+    <string name="memory_editor_no_search_history">沒有可還原的先前搜尋紀錄。</string>
+    <string name="memory_editor_partial_write">寫入操作未完全完成，請先確認目前數值再重試。</string>
+    <!-- Independent write counts: confirmed, unconfirmed, skipped, not attempted, and incompatible data type. -->
+    <string name="memory_editor_write_outcome">已確認寫入：<xliff:g id="confirmed" example="3">%1$d</xliff:g>。未確認：<xliff:g id="unconfirmed" example="0">%2$d</xliff:g>。已略過：<xliff:g id="skipped" example="0">%3$d</xliff:g>。未嘗試：<xliff:g id="not_attempted" example="0">%4$d</xliff:g>。因型別略過：<xliff:g id="skipped_by_type" example="0">%5$d</xliff:g>。</string>
+    <!-- %1$s is a localized outcome explanation; %2$d through %6$d are the same independent write counts. -->
+    <string name="memory_editor_write_failure_outcome"><xliff:g id="reason" example="Write interrupted.">%1$s</xliff:g>\n已確認寫入：<xliff:g id="confirmed" example="1">%2$d</xliff:g>。未確認：<xliff:g id="unconfirmed" example="1">%3$d</xliff:g>。已略過：<xliff:g id="skipped" example="0">%4$d</xliff:g>。未嘗試：<xliff:g id="not_attempted" example="0">%5$d</xliff:g>。因型別略過：<xliff:g id="skipped_by_type" example="0">%6$d</xliff:g>。</string>
+    <!-- Result counts before (%1$d) and after (%2$d) the completed next scan. -->
+    <string name="memory_editor_next_scan_result">再次掃描結果：<xliff:g id="before_count" example="120">%1$d</xliff:g> → <xliff:g id="after_count" example="14">%2$d</xliff:g></string>
+    <string name="memory_editor_type_auto">自動</string>
+    <string name="memory_editor_remove_candidates_title">要移除所選結果嗎？</string>
+    <string name="memory_editor_remove_candidates_description">移除：僅將所選結果從搜尋清單中移除，遊戲記憶體中的數值維持不變。\n\n還原並移除：若數值仍與上次確認編輯時相符，將一併還原為編輯前的數值。已鎖定的數值與發生衝突的結果將保留在清單中。</string>
+    <string name="memory_editor_revert_and_remove">還原並移除</string>
+    <string name="memory_editor_revert_remove_commit_failed">數值可能已還原，但無法移除結果。請重新整理後再試一次；遊戲自行變更的數值不會被覆寫。</string>
+    <string name="memory_editor_revert_remove_outcome">已還原：<xliff:g id="restored" example="2">%1$d</xliff:g>。已移除：<xliff:g id="removed" example="2">%2$d</xliff:g>。衝突：<xliff:g id="conflicts" example="0">%3$d</xliff:g>。未確認：<xliff:g id="unconfirmed" example="0">%4$d</xliff:g>。未嘗試：<xliff:g id="not_attempted" example="0">%5$d</xliff:g>。</string>
+    <string name="memory_editor_set_all">全部設為</string>
+    <string name="memory_editor_increment_start">起始值</string>
+    <string name="memory_editor_edit_batch_type_notice">僅會變更資料型別相符的數值。</string>
+    <string name="memory_editor_write_confirmed">已透過記憶體回讀確認的數值：<xliff:g id="count" example="3">%1$d</xliff:g>。</string>
+    <string name="memory_editor_candidate_untraced">陣列 #<xliff:g id="array_id" example="42">%1$d</xliff:g>[<xliff:g id="index" example="3">%2$d</xliff:g>] · 未追蹤來源</string>
+    <string name="memory_editor_candidate_static"><xliff:g id="field_name" example="Player.coins">%1$s</xliff:g> · <xliff:g id="reference_kind" example="Static reference">%2$s</xliff:g></string>
+    <string name="memory_editor_candidate_instance"><xliff:g id="field_name" example="Player.hp">%1$s</xliff:g> · <xliff:g id="reference_kind" example="Instance reference">%2$s</xliff:g> · 目標 #<xliff:g id="target_id" example="1">%3$d</xliff:g></string>
+    <string name="memory_editor_reference_static">靜態參考</string>
+    <string name="memory_editor_reference_instance">執行個體參考</string>
+    <string name="memory_editor_path_changed">掃描後參考路徑已變更。</string>
+    <string name="memory_editor_path_incomplete">參考路徑超出檢視上限。</string>
+    <string name="memory_editor_source_unknown">未追蹤來源</string>
+    <string name="memory_editor_incremental_edit">遞增</string>
+    <string name="memory_editor_increment_step">間距</string>
+    <string name="memory_editor_increment_invalid">請使用單一整數型別，並確保數值在允許範圍內。</string>
+    <!-- The batch dialog title already shows the number of selected values. -->
+    <string name="memory_editor_increment_preview">預覽：<xliff:g id="name" example="Example">%1$s</xliff:g></string>
+    <string name="memory_editor_panel_opacity">面板不透明度</string>
+    <string name="memory_editor_panel_opacity_help">調整背景透明度，方便在搜尋時查看遊戲數值；文字與圖示仍會清楚顯示。</string>
+    <string name="memory_editor_reconversion_required" tools:ignore="MissingTranslation">此 MIDlet 目前的安裝轉換版本與記憶體編輯器不相容。請關閉遊戲，然後在 JL-Mod Plus 中重新轉換或重新安裝。</string>
+    <string name="memory_saved_tab" tools:ignore="MissingTranslation">已儲存</string>
+    <string name="memory_saved_save" tools:ignore="MissingTranslation">儲存變數</string>
+    <string name="memory_saved_name" tools:ignore="MissingTranslation">名稱</string>
+    <string name="memory_saved_explanation" tools:ignore="MissingTranslation">儲存此已驗證的記憶體路徑供日後使用，系統絕不會自動寫入數值。</string>
+    <string name="memory_saved_empty" tools:ignore="MissingTranslation">尚未儲存任何變數。選取一筆搜尋結果即可儲存。</string>
+    <string name="memory_saved_not_ready" tools:ignore="MissingTranslation">尚未就緒</string>
+    <string name="memory_saved_retry" tools:ignore="MissingTranslation">重試</string>
+    <string name="memory_saved_rename" tools:ignore="MissingTranslation">重新命名</string>
+    <string name="memory_saved_value" tools:ignore="MissingTranslation">數值</string>
+    <string name="memory_saved_delete_confirm" tools:ignore="MissingTranslation">要移除此已儲存的定義嗎？遊戲內的數值不會改變。</string>
+    <string name="memory_saved_changed" tools:ignore="MissingTranslation">已變動</string>
+    <string name="memory_saved_rebound" tools:ignore="MissingTranslation">已更新目標</string>
+    <string name="memory_saved_import_summary" tools:ignore="MissingTranslation">已儲存：新增 <xliff:g id="added_count" example="4">%1$d</xliff:g> 項，原有 <xliff:g id="existing_count" example="2">%2$d</xliff:g> 項</string>
+    <string name="memory_saved_incompatible" tools:ignore="MissingTranslation">不相容</string>
+    <string name="memory_saved_failed" tools:ignore="MissingTranslation">失敗</string>
+    <string name="memory_saved_delete_many_confirm" tools:ignore="MissingTranslation">要移除 <xliff:g id="count" example="3">%1$d</xliff:g> 項已儲存的定義嗎？遊戲內的數值不會改變。</string>
+    <string name="memory_recipes_title" tools:ignore="MissingTranslation">快速動作</string>
+    <string name="memory_recipes_simple_from_saved" tools:ignore="MissingTranslation">目標：<xliff:g id="bookmark_name" example="Coins">%1$s</xliff:g></string>
+    <string name="memory_recipes_preview" tools:ignore="MissingTranslation">預覽目標</string>
+    <string name="memory_recipes_stop_freeze" tools:ignore="MissingTranslation">停止指令碼鎖定</string>
+    <string name="memory_recipes_freeze" tools:ignore="MissingTranslation">在此遊戲執行期間保持鎖定</string>
+    <string name="memory_recipes_run" tools:ignore="MissingTranslation">執行</string>
+    <string name="memory_recipes_active_freezes" tools:ignore="MissingTranslation">作用中的指令碼鎖定</string>
+    <string name="memory_recipes_target_unavailable" tools:ignore="MissingTranslation">書籤目標無法使用，請先重新整理或重新連結再執行。</string>
+    <string name="memory_recipes_preview_values" tools:ignore="MissingTranslation">目前數值：<xliff:g id="name" example="Example">%1$s</xliff:g></string>
+    <string name="memory_scripts_title" tools:ignore="MissingTranslation">指令碼</string>
+    <string name="memory_scripts_active" tools:ignore="MissingTranslation">作用中</string>
+    <string name="memory_scripts_inputs" tools:ignore="MissingTranslation">輸入項目</string>
+    <string name="memory_scripts_create_from_bookmarks" tools:ignore="MissingTranslation">建立指令碼</string>
+    <string name="memory_scripts_create_failed" tools:ignore="MissingTranslation">無法開始建立新指令碼。</string>
+    <string name="memory_scripts_draft_in_progress" tools:ignore="MissingTranslation">請先完成或捨棄目前的指令碼草稿。</string>
+    <string name="memory_builder_open_saved" tools:ignore="MissingTranslation">開啟「已儲存」</string>
+    <string name="memory_builder_add_description" tools:ignore="MissingTranslation">新增說明</string>
+    <string name="memory_builder_find_values" tools:ignore="MissingTranslation">尋找數值</string>
+    <string name="memory_scripts_description" tools:ignore="MissingTranslation">說明</string>
+    <string name="memory_scripts_new" tools:ignore="MissingTranslation">新增指令碼</string>
+    <string name="memory_scripts_back" tools:ignore="MissingTranslation">返回</string>
+    <string name="memory_scripts_edit" tools:ignore="MissingTranslation">編輯</string>
+    <string name="memory_scripts_save" tools:ignore="MissingTranslation">儲存</string>
+    <string name="memory_scripts_saved" tools:ignore="MissingTranslation">已儲存指令碼</string>
+    <string name="memory_scripts_deleted" tools:ignore="MissingTranslation">已刪除指令碼</string>
+    <string name="memory_scripts_save_failed" tools:ignore="MissingTranslation">無法儲存指令碼。</string>
+    <string name="memory_scripts_editor_hint" tools:ignore="MissingTranslation">請輸入或貼上指令碼 JSON 文件。儲存後不會自動執行。</string>
+    <string name="memory_scripts_paste_hint" tools:ignore="MissingTranslation">貼上指令碼 JSON</string>
+    <string name="memory_scripts_paste" tools:ignore="MissingTranslation">貼上</string>
+    <string name="memory_scripts_clipboard_invalid" tools:ignore="MissingTranslation">剪貼簿為空或文件大小超過 64 KiB</string>
+    <string name="memory_scripts_invalid" tools:ignore="MissingTranslation">指令碼格式無效</string>
+    <string name="memory_scripts_freeze_active" tools:ignore="MissingTranslation">此指令碼的鎖定功能作用中</string>
+    <string name="memory_scripts_delete" tools:ignore="MissingTranslation">刪除</string>
+    <string name="memory_scripts_delete_confirm" tools:ignore="MissingTranslation">要刪除「<xliff:g id="name" example="Example">%1$s</xliff:g>」嗎？此指令碼任何進行中的鎖定將會停止。</string>
+    <string name="memory_scripts_empty" tools:ignore="MissingTranslation">尚未儲存任何指令碼</string>
+    <string name="memory_scripts_unsaved_title" tools:ignore="MissingTranslation">要捨棄未儲存的指令碼嗎？</string>
+    <string name="memory_scripts_unsaved_message" tools:ignore="MissingTranslation">您的指令碼變更尚未儲存。</string>
+    <string name="memory_scripts_discard" tools:ignore="MissingTranslation">捨棄</string>
+    <string name="memory_scripts_current_title" tools:ignore="MissingTranslation">上次讀取</string>
+    <string name="memory_scripts_refresh" tools:ignore="MissingTranslation">重新整理</string>
+    <string name="memory_scripts_reading" tools:ignore="MissingTranslation">正在讀取目前數值…</string>
+    <string name="memory_scripts_refresh_hint" tools:ignore="MissingTranslation">輕觸「重新整理」以從執行中的遊戲讀取目前數值。</string>
+    <string name="memory_scripts_mode_toggle" tools:ignore="MissingTranslation">鎖定數值</string>
+    <string name="memory_scripts_mode_form" tools:ignore="MissingTranslation">數值編輯器</string>
+    <string name="memory_scripts_mode_once" tools:ignore="MissingTranslation">快速動作</string>
+    <string name="memory_scripts_mode_legacy" tools:ignore="MissingTranslation">進階指令碼</string>
+    <string name="memory_scripts_edit_values" tools:ignore="MissingTranslation">編輯數值</string>
+    <string name="memory_scripts_apply" tools:ignore="MissingTranslation">套用變更</string>
+    <string name="memory_scripts_refresh_required" tools:ignore="MissingTranslation">套用前請先重新整理以驗證目前數值。</string>
+    <string name="memory_scripts_inconsistent" tools:ignore="MissingTranslation">副本數值不一致：<xliff:g id="name" example="Example">%1$s</xliff:g></string>
+    <string name="memory_editor_minimize" tools:ignore="MissingTranslation">最小化記憶體編輯器</string>
+    <string name="memory_scripts_choose_type" tools:ignore="MissingTranslation">新增指令碼</string>
+    <string name="memory_scripts_choose_hint" tools:ignore="MissingTranslation">選擇此指令碼的運作方式。</string>
+    <string name="memory_builder_json_editor" tools:ignore="MissingTranslation">JSON 編輯器</string>
+    <string name="memory_builder_freeze_hint" tools:ignore="MissingTranslation">啟用期間保持鎖定所選數值；關閉鎖定後不會還原為先前的數值。</string>
+    <string name="memory_builder_form_hint" tools:ignore="MissingTranslation">建立表單，在套用編輯前先讀取目前數值。</string>
+    <string name="memory_builder_actions_hint" tools:ignore="MissingTranslation">每次按下「執行」時套用變更，每次執行皆互相獨立。</string>
+    <string name="memory_builder_name" tools:ignore="MissingTranslation">指令碼名稱</string>
+    <string name="memory_builder_frozen_values" tools:ignore="MissingTranslation">已鎖定數值</string>
+    <string name="memory_builder_fields" tools:ignore="MissingTranslation">欄位</string>
+    <string name="memory_builder_actions" tools:ignore="MissingTranslation">動作</string>
+    <string name="memory_builder_add_bookmarks" tools:ignore="MissingTranslation">從書籤新增</string>
+    <string name="memory_builder_empty" tools:ignore="MissingTranslation">請至少新增一個已驗證的書籤。</string>
+    <string name="memory_builder_field_label" tools:ignore="MissingTranslation">欄位標籤</string>
+    <string name="memory_builder_keep_at" tools:ignore="MissingTranslation">保持為</string>
+    <string name="memory_builder_amount" tools:ignore="MissingTranslation">數值／數量</string>
+    <string name="memory_builder_set" tools:ignore="MissingTranslation">設為</string>
+    <string name="memory_builder_add" tools:ignore="MissingTranslation">加上</string>
+    <string name="memory_builder_subtract" tools:ignore="MissingTranslation">減去</string>
+    <string name="memory_builder_view_json" tools:ignore="MissingTranslation">檢視 JSON</string>
+    <string name="memory_builder_edit_json" tools:ignore="MissingTranslation">編輯 JSON</string>
+    <string name="memory_builder_search_bookmarks" tools:ignore="MissingTranslation">搜尋書籤</string>
+    <string name="memory_builder_no_bookmarks" tools:ignore="MissingTranslation">找不到相符的已驗證書籤。請在「搜尋」中將數值加入書籤，或在「已儲存」中重新連結。</string>
+    <string name="memory_builder_needs_relink" tools:ignore="MissingTranslation">需要重新連結</string>
+    <string name="memory_builder_add_selected" tools:ignore="MissingTranslation">新增所選項目</string>
+    <string name="memory_builder_min" tools:ignore="MissingTranslation">最小值（選填）</string>
+    <string name="memory_builder_max" tools:ignore="MissingTranslation">最大值（選填）</string>
+    <string name="memory_builder_add_target" tools:ignore="MissingTranslation">新增目標</string>
+    <string name="memory_builder_freeze_short" tools:ignore="MissingTranslation">將所選數值維持在固定值</string>
+    <string name="memory_builder_form_short" tools:ignore="MissingTranslation">在單一畫面調整多個數值</string>
+    <string name="memory_builder_actions_short" tools:ignore="MissingTranslation">執行一次性的設為、加上或減去動作</string>
+    <string name="memory_editor_refine_scan" tools:ignore="MissingTranslation">篩選</string>
+    <string name="memory_scripts_saved_count" tools:ignore="MissingTranslation">已儲存 <xliff:g id="count" example="3">%1$d</xliff:g> 個</string>
+    <string name="memory_scripts_empty_hint" tools:ignore="MissingTranslation">建立指令碼以在遊玩時編輯或鎖定數值。</string>
+    <string name="memory_builder_limits" tools:ignore="MissingTranslation">數值限制（選填）</string>
+</resources>

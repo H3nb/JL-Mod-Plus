@@ -1,0 +1,211 @@
+<?xml version="1.0" encoding="utf-8"?>
+<!-- İşleme hattı, dahili çözünürlük, bitmap ölçeklendirme, shader’lar ve yerleşik görsel efektler. -->
+<resources xmlns:tools="http://schemas.android.com/tools" xmlns:xliff="urn:oasis:names:tc:xliff:document:1.2">
+    <string name="identity_filter">Yok (en hızlı)</string>
+    <string name="invalid_resolution_not_saved">Geçersiz çözünürlük. Ön ayar kaydedilmedi.</string>
+    <string name="msg_error_loading_shader">Desteklenmeyen shader. Varsayılan shader kullanılıyor.</string>
+    <string name="parallel_screen_redrawing">Eşzamansız ekran güncellemeleri</string>
+    <string name="shader_tuning">Shader ayarı</string>
+    <string name="SWAP_SIZES">Genişlik ve yüksekliği değiştir</string>
+    <string name="fps_limit_maximum">Maksimum</string>
+    <string name="remove_screen_preset">Çözünürlük ön ayarını kaldır</string>
+    <string name="perf_overlay_position_help">Bir köşe seçin.</string>
+    <string name="perf_overlay_top_left">Sol üst</string>
+    <string name="perf_overlay_top_right">Sağ üst</string>
+    <string name="perf_overlay_bottom_left">Sol alt</string>
+    <string name="perf_overlay_bottom_right">Sağ alt</string>
+    <string name="internal_resolution_title" tools:ignore="MissingTranslation">İşleme çözünürlüğü</string>
+    <string name="internal_resolution_auto" tools:ignore="MissingTranslation">Otomatik</string>
+    <string name="internal_resolution_description" tools:ignore="MissingTranslation">Desteklenen 2B ve 3B grafikleri daha yüksek ayrıntıyla işler. Otomatik, oyun görüntü alanına uyar; uygulamak için yeniden başlatın.</string>
+    <string name="bitmap_upscaling_title" tools:ignore="MissingTranslation">Bitmap ölçeklendirme</string>
+    <string name="bitmap_upscaling_description" tools:ignore="MissingTranslation">Değişmez 2B hareketli grafikleri ve opak Micro3D model dokularını MMPX veya xBR Lv3 ile ölçeklendirir. M3G dokuları değişmez; uygulamak için yeniden başlatın.</string>
+    <string name="bitmap_upscaling_nearest" tools:ignore="MissingTranslation">En yakın komşu</string>
+    <string name="bitmap_upscaling_bilinear" tools:ignore="MissingTranslation">Çift doğrusal</string>
+    <string name="bitmap_upscaling_mmpx" tools:ignore="MissingTranslation">MMPX</string>
+    <string name="bitmap_upscaling_edge_aware" tools:ignore="MissingTranslation">xBR Lv3</string>
+    <string name="render_shader_effects">Shader efektleri</string>
+    <string name="render_pipeline_title">İşleme hattı</string>
+    <string name="render_shader_preset">Shader ön ayarı</string>
+    <string name="render_shader_picker_help">Yerleşik efektleri ve kendi eski shader’larınızı sıralı bir efekt yığınında birleştirin.</string>
+    <string name="render_shader_requires_gles">Shader’lar kaydedilir ancak yalnızca OpenGL ES seçiliyken uygulanır.</string>
+    <string name="render_shader_missing">Seçilen shader kitaplıkta yok. Başka bir ön ayar seçin veya dosyalarını geri yükleyin.</string>
+    <string name="render_shader_parameters">Shader parametreleri</string>
+    <string name="render_shader_reset_parameters">Parametreleri sıfırla</string>
+    <string name="render_shader_passes">Shader geçişleri</string>
+    <string name="render_shader_pass_count"><xliff:g id="count" example="2">%1$d</xliff:g> geçiş</string>
+    <string name="render_shader_pass_hint">Seçilen GLSLP ön ayarındaki aşamaları görüntüleyin.</string>
+    <string name="render_pass_filter">Giriş filtreleme</string>
+    <string name="render_pass_output">Çıkış boyutu (genişlik × yükseklik)</string>
+    <string name="render_pipeline_unavailable">Ön ayar kullanılamıyor</string>
+    <string name="render_game_output">Oyun çıkışı</string>
+    <string name="render_logical_screen_help">Oyuna bildirilen mantıksal boyut.</string>
+    <string name="render_internal_resolution">Dahili çözünürlük</string>
+    <string name="render_internal_unavailable">Yalnızca yerel (1×). Bu yapılandırmada daha yüksek işleme çözünürlükleri kullanılamıyor.</string>
+    <string name="render_display_renderer">Sunum işleyicisi</string>
+    <string name="render_shader_processing">Shader işleme</string>
+    <string name="render_display_scaling">Ekran ölçekleme</string>
+    <string name="render_display_viewport">Oyun görüntü alanı</string>
+    <string name="render_texture_filtering">Ekran ölçekleme filtresi</string>
+    <string name="render_texture_filtering_help">Son oyun görüntüsü için En yakın veya Doğrusal seçeneğini belirler. Efektler bunu geçersiz kılabilir.</string>
+    <string name="render_viewport_note">Görüntü alanı boyutu, shader geçişleri planlanmadan önce ekran düzeninden hesaplanır. Oklar, düzen hesaplama sırasını değil görüntü akışını gösterir.</string>
+    <string name="render_pipeline_help">Oyun karesinin ekrana nasıl ulaştığını görün ve her aşamayı düzenleyin.</string>
+    <string name="render_no_shader">Oyunun görünümünü değiştirmek için bir ön ayar seçin.</string>
+    <string name="render_shader_adjust">Parametreleri ayarla</string>
+    <string name="render_legacy_tuning_hint">Bu eski efekti ince ayarlayın.</string>
+    <string name="render_shader_customization">Özelleştir</string>
+    <string name="render_adjustable_count">Ayarlanabilir parametreler: <xliff:g id="count" example="3">%1$d</xliff:g></string>
+    <string name="render_pass_summary"><xliff:g id="count" example="3">%1$d</xliff:g> aşama · Ön ayar tarafından tanımlanır</string>
+    <string name="render_shader_preset_note">Shader aşamaları ön ayar tarafından tanımlanır. Sıralarını değiştirmeden inceleyebilirsiniz.</string>
+    <string name="render_parameters_hint">Değerini ayarlamak için bir kaydırıcıyı hareket ettirin. Bıraktığınızda değişiklikler kaydedilir.</string>
+    <string name="render_pass_readonly">Aşamalar bu sırayla çalışır. Giriş filtreleme ve çıkış ölçekleme seçilen ön ayardan gelir.</string>
+    <string name="render_pipeline_intro">Oyun kare arabelleğinden ekranınıza uzanan yol.</string>
+    <string name="render_native_short">Yerel (1×)</string>
+    <string name="render_expand_passes">Aşamaları göster</string>
+    <string name="render_collapse_passes">Aşamaları gizle</string>
+    <string name="render_view_all_passes">Aşama ayrıntıları</string>
+    <string name="render_pipeline_filter_summary">Doku filtreleme: <xliff:g id="shader_name" example="CRT Classic">%1$s</xliff:g></string>
+    <string name="render_pipeline_note">Ekran düzeni, shader geçişleri planlanmadan önce görüntü alanını belirler. Adımlar görüntü akışını gösterir.</string>
+    <string name="render_shader_change">Başka bir efekt seç</string>
+    <string name="render_custom_pipeline">Özel işleme hattı</string>
+    <string name="render_custom_pipeline_hint">Shader klasörünüzdeki bağımsız GLSL shader’larını birleştirin.</string>
+    <string name="render_custom_order_help">Efektler yukarıdan aşağıya çalışır. Devralınan GLSLP ayarları değiştirilmedikçe etkin kalır.</string>
+    <string name="render_custom_empty">Özel bir zincir başlatmak için bir shader ekleyin.</string>
+    <string name="render_custom_stage_count"><xliff:g id="count" example="3">%1$d</xliff:g> özel shader aşaması</string>
+    <string name="render_custom_add">Shader ekle</string>
+    <string name="render_custom_add_hint">Harici ve bağımsız bir .glsl kaynağı seçin.</string>
+    <string name="render_custom_no_sources">Eski shader bulunamadı. Shaders klasörüne .ini shader dosyaları ekleyip Ayarlar’ı yeniden açın.</string>
+    <string name="render_custom_scale">Çıkış: Önceki aşamanın <xliff:g id="scale" example="2">%1$d</xliff:g>× katı</string>
+    <string name="render_custom_output_scale">Sonraki aşama için çıkış boyutu</string>
+    <string name="render_custom_final_viewport">Son çıkış: ekranda gösterilir</string>
+    <string name="render_custom_filter">Giriş filtresi: <xliff:g id="shader_name" example="CRT Classic">%1$s</xliff:g></string>
+    <string name="render_custom_up">Yukarı</string>
+    <string name="render_custom_down">Aşağı</string>
+    <string name="render_custom_remove">Kaldır</string>
+    <string name="render_custom_cancel">İptal</string>
+    <string name="render_custom_save">Kaydet</string>
+    <string name="render_custom_default">Varsayılan</string>
+    <string name="render_custom_nearest">En yakın</string>
+    <string name="render_custom_linear">Doğrusal</string>
+    <string name="render_custom_checking">Shader dosyaları denetleniyor…</string>
+    <string name="render_active_shader">Etkin efekt</string>
+    <string name="render_shader_off">Kapalı</string>
+    <string name="render_edit_custom_pipeline">Shader zincirini düzenle</string>
+    <string name="render_shader_unavailable">Kullanılamıyor: <xliff:g id="shader_name" example="CRT Classic">%1$s</xliff:g></string>
+    <string name="render_no_shader_sources">Shader bulunamadı. Shaders klasörüne eski .ini shader dosyaları ekleyip Ayarlar’ı yeniden açın.</string>
+    <string name="render_shader_mode">Shader modu</string>
+    <string name="render_mode_selected">Seçili</string>
+    <string name="render_gles_shader_default">Shader efektleri kapalıyken OpenGL ES orijinal oyun görüntüsünü kullanır.</string>
+    <string name="render_shader_off_help">Ek görsel efekt yok.</string>
+    <string name="render_legacy_mode">Eski shader</string>
+    <string name="render_legacy_mode_help">Shaders klasöründen bir .ini dosyası seçin.</string>
+    <string name="render_legacy_empty">Bu .ini dosyasında kullanılabilir shader tanımı yok.</string>
+    <string name="render_legacy_select_variant">Eski bir shader seçin</string>
+    <string name="render_legacy_variant_description">Seçilen .ini dosyasındaki shader tanımı</string>
+    <string name="render_preset_mode">GLSLP ön ayarı</string>
+    <string name="render_preset_mode_help">Kendi geçişlerine sahip eksiksiz bir .glslp işleme hattı yükleyin.</string>
+    <string name="render_custom_pass_count">Geçiş sayısı</string>
+    <string name="render_custom_pass_number">Geçiş <xliff:g id="number" example="1">%1$d</xliff:g></string>
+    <string name="render_custom_pick_file">GLSL dosyası seç</string>
+    <string name="render_custom_add_pass">Shader geçiş sayısını artır</string>
+    <string name="render_custom_remove_pass">Shader geçiş sayısını azalt</string>
+    <string name="render_shader_selected_name">Etkin: <xliff:g id="shader_name" example="CRT Classic">%1$s</xliff:g></string>
+    <string name="render_shader_invalid_picker">Seçilen dosya kullanılamıyor. Shaders klasörü içinde eski bir .ini dosyası seçin.</string>
+    <string name="render_custom_mode">Shader türü</string>
+    <string name="render_custom_mode_legacy">Eski</string>
+    <string name="render_custom_mode_glsl">GLSL</string>
+    <string name="render_custom_pick_legacy">Eski shader seç</string>
+    <string name="render_custom_preserve_size">Çıkış: Ön ayardan</string>
+    <string name="render_custom_loading">Ön ayar geçişleri okunuyor…</string>
+    <string name="render_custom_start_fresh">Ön ayar olmadan başla (devralınan ayarları yoksay)</string>
+    <string name="render_effect_default_settings">Varsayılan ayarlar</string>
+    <string name="render_effect_summary_more">+<xliff:g id="count" example="2">%1$d</xliff:g> tane daha</string>
+    <string name="render_effect_legacy_author">Geliştirici: <xliff:g id="shader_name" example="CRT Classic">%1$s</xliff:g></string>
+    <string name="render_effect_legacy_source">Kaynak: <xliff:g id="shader_name" example="CRT Classic">%1$s</xliff:g></string>
+    <string name="render_effect_removed">Efekt kaldırıldı</string>
+    <string name="render_effect_undo">Geri al</string>
+    <string name="render_effect_catalog_hint">Yığına eklemek için bir efekte dokunun.</string>
+    <string name="render_effect_user_folder_hint">INI, VSH ve FSH dosyaları shaders klasöründe olmalıdır.</string>
+    <string name="render_effect_legacy_scale_note">Eski shader’lar ekran görüntü alanı çözünürlüğünde işlenir; .ini dosyasındaki OutputResolution ve Upscaling bayrakları yoksayılır.</string>
+    <string name="render_effect_legacy_metadata_missing">Bu shader’ın .ini dosyasındaki ayarlar bulunamadı. Kaynak dosyaları yine de işlenebilir.</string>
+    <string name="render_effect_count"><xliff:g id="count" example="2">%1$d</xliff:g> etkin</string>
+    <string name="render_effect_add">Efekt ekle</string>
+    <string name="render_effect_builtin">Yerleşik efektler</string>
+    <string name="render_effect_user">Shader’larım</string>
+    <string name="render_effect_user_add">.ini dosyalarına göz at</string>
+    <string name="render_effect_user_empty">Shaders klasöründe eski shader bulunamadı.</string>
+    <string name="render_effect_user_file">Eski bir .ini dosyası seçin</string>
+    <string name="render_effect_empty">Oyunun görünümünü özelleştirmek için bir efekt ekleyin.</string>
+    <string name="render_effect_hint">Efektler yukarıdan aşağıya çalışır. Yeniden sıralamak için basılı tutup sürükleyin.</string>
+    <string name="render_effect_move_up">Yukarı taşı</string>
+    <string name="render_effect_move_down">Aşağı taşı</string>
+    <string name="render_effect_remove">Efekti kaldır</string>
+    <string name="render_effect_no_parameters">Bu efektin ayarlanabilir parametresi yok.</string>
+    <string name="render_effect_parameter_number">Parametre <xliff:g id="count" example="2">%1$d</xliff:g></string>
+    <string name="render_effect_restore">Parametreleri sıfırla</string>
+    <string name="render_effect_missing">Kullanılamıyor: <xliff:g id="shader_name" example="CRT Classic">%1$s</xliff:g>. Bu yerleşik efekt bu sürümde mevcut değil. Yığından kaldırın.</string>
+    <string name="render_effect_limit">Yığın en fazla 16 shader geçişini destekler (bazı efektler birden fazla geçiş kullanır).</string>
+    <string name="render_effect_unavailable">Shader efektleri çalıştırılamadı. Orijinal oyun görüntüsü gösteriliyor. Daha az efekt veya daha düşük bir işleme çözünürlüğü deneyin.</string>
+    <string name="render_bitmap_memory_reduced">Bitmap ölçeklendirme için bellek yetersiz. Orijinal görseller veya daha düşük bir ölçek kullanılacak. Daha düşük bir işleme çözünürlüğü deneyin veya bellek boşaltıp yeniden başlatın.</string>
+    <string name="render_texture_memory_reduced">Micro3D doku ölçeklendirme başarısız oldu. Orijinal dokular kullanılacak. Daha düşük bir işleme çözünürlüğü deneyin veya bellek boşaltıp yeniden başlatın.</string>
+    <string name="render_resolution_reduced">Bellek veya GPU sınırları nedeniyle işleme çözünürlüğü <xliff:g id="from_scale" example="4">%1$d</xliff:g>× değerinden <xliff:g id="to_scale" example="2">%2$d</xliff:g>× değerine düşürüldü. Daha düşük bir ayar deneyin veya bellek boşaltıp yeniden başlatın.</string>
+    <string name="render_gpu_texture_limit">Bu görüntü 1× ölçeğinde bile GPU için çok büyük. Daha küçük bir oyun çözünürlüğü deneyin veya grafik modunu değiştirin.</string>
+    <string name="render_gpu_upload_failed">Oyun görüntüsü GPU’ya yüklenemedi. Yeniden deneniyor. Diğer uygulamaları kapatmayı veya grafik modunu değiştirmeyi deneyin.</string>
+    <string name="render_effect_gles">Efektler kaydedilir ancak yalnızca OpenGL ES ile işlenir.</string>
+    <string name="render_effect_legacy_file_error">Seçilen .ini dosyasından geçerli bir eski shader yüklenemedi.</string>
+    <string name="effect_color">Renk ayarı</string>
+    <string name="effect_color_desc">Parlaklık, kontrast, doygunluk, gama, renk tonu ve tek renk ayarlarını yapın.</string>
+    <string name="effect_vignette">Vinyet</string>
+    <string name="effect_vignette_desc">Dikkati merkeze çekmek için kenarları koyulaştırır.</string>
+    <string name="effect_sharpen">Keskinleştirme</string>
+    <string name="effect_sharpen_desc">Görüntüdeki ayrıntıları ve kenarları belirginleştirir.</string>
+    <string name="effect_cartoon">Yumuşak çizgi film</string>
+    <string name="effect_cartoon_desc">Renk geçişlerini sadeleştirir ve yumuşak dış çizgiler ekler.</string>
+    <string name="effect_bloom">Parıltı</string>
+    <string name="effect_bloom_desc">Görüntünün parlak kısımlarının etrafına yumuşak bir parıltı ekler.</string>
+    <string name="effect_crt_classic">Klasik CRT</string>
+    <string name="effect_crt_classic_desc">Tarama çizgileri ve RGB deseniyle bir CRT televizyonu taklit eder.</string>
+    <string name="effect_crt_beam">Işın darlığı</string>
+    <string name="effect_brightness">Parlaklık</string>
+    <string name="effect_contrast">Kontrast</string>
+    <string name="effect_saturation">Doygunluk</string>
+    <string name="effect_strength">Yoğunluk</string>
+    <string name="effect_color_levels">Renk düzeyleri</string>
+    <string name="effect_edge">Kenar yoğunluğu</string>
+    <string name="effect_threshold">Parlaklık eşiği</string>
+    <string name="effect_radius">Bulanıklık yarıçapı</string>
+    <string name="effect_mask_strength">Maske yoğunluğu</string>
+    <string name="effect_scan_strength">Tarama çizgisi yoğunluğu</string>
+    <string name="effect_bright_boost">Parlaklık artırma</string>
+    <string name="effect_lcd">LCD</string>
+    <string name="effect_lcd_desc">Klasik renkli LCD ekranın piksel ızgarasını ve alt piksellerini taklit eder.</string>
+    <string name="effect_lcd_grid">Izgara yoğunluğu</string>
+    <string name="effect_lcd_subpixel">RGB alt pikseller</string>
+    <string name="effect_lcd_brightness">LCD parlaklığı</string>
+    <string name="effect_scanlines">Hafif tarama çizgileri</string>
+    <string name="effect_scanlines_desc">CRT ekrandaki gibi ince yatay çizgiler ekler.</string>
+    <string name="effect_line_width">Çizgi darlığı</string>
+    <string name="effect_gamma">Gama</string>
+    <string name="effect_temperature">Sıcaklık</string>
+    <string name="effect_tint">Ton</string>
+    <string name="effect_monochrome">Tek renk</string>
+    <string name="effect_depth">Renk derinliği ve titreme</string>
+    <string name="effect_depth_desc">Retro bir görünüm için isteğe bağlı titreme ile renk paletini sınırlar.</string>
+    <string name="effect_depth_format">Ekran renk biçimi</string>
+    <string name="effect_depth_rgb444">RGB444 · 4.096 renk</string>
+    <string name="effect_depth_rgb565">RGB565 · 65.536 renk</string>
+    <string name="effect_depth_rgb666">RGB666 · 262.144 renk</string>
+    <string name="effect_dither_mode">Titreme deseni</string>
+    <string name="effect_dither_none">Kapalı</string>
+    <string name="effect_dither_bayer4">Bayer 4×4</string>
+    <string name="effect_dither_bayer8">Bayer 8×8</string>
+    <string name="effect_dither_strength">Titreme yoğunluğu</string>
+    <string name="effect_mono_display">Tek renkli ekran</string>
+    <string name="effect_mono_display_desc">2 veya 4 tonlu siyah beyaz, yeşil ya da kehribar ekranları taklit eder.</string>
+    <string name="effect_mono_palette">LCD rengi</string>
+    <string name="effect_mono_bw">Siyah beyaz</string>
+    <string name="effect_mono_green">Yeşil LCD</string>
+    <string name="effect_mono_amber">Kehribar LCD</string>
+    <string name="effect_mono_tones">Ton sayısı</string>
+    <string name="effect_mono_two">2 ton</string>
+    <string name="effect_mono_four">4 ton</string>
+</resources>

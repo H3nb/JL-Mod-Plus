@@ -1,0 +1,113 @@
+<?xml version="1.0" encoding="utf-8"?>
+<!-- 実行中の MIDlet セッション、スクリーンショット、ログ、クラッシュ復旧、診断レポート -->
+<resources xmlns:tools="http://schemas.android.com/tools" xmlns:xliff="urn:oasis:names:tc:xliff:document:1.2">
+    <string name="action_keyboard_ime">キーボード（IME）</string>
+    <string name="action_lock_orientation">画面の回転をロック</string>
+    <string name="runtime_replacement_failed">実行中の MIDlet を停止できませんでした。新しい MIDlet をもう一度開いてみてください。</string>
+    <string name="runtime_restart" tools:ignore="MissingTranslation">再起動</string>
+    <string name="runtime_restart_confirmation" tools:ignore="MissingTranslation">この MIDlet を再起動しますか？未保存の進行状況は失われる場合があります。</string>
+    <string name="FORCE_CLOSE_CONFIRMATION">この MIDlet を停止しますか？未保存の進行状況は失われる場合があります。</string>
+    <string name="runtime_preset_save_destination">保存先</string>
+    <string name="runtime_preset_apply_destination">適用先</string>
+    <string name="runtime_preset_this_midlet_only">この MIDlet のみ</string>
+    <string name="runtime_preset_update_destination"><xliff:g id="profile_name" example="Action Games">%1$s</xliff:g> を更新</string>
+    <string name="runtime_preset_local_explanation">この MIDlet の仮想コントロールのみが変更されます。</string>
+    <string name="runtime_preset_update_explanation"><xliff:g id="profile_name" example="Action Games">%1$s</xliff:g> の仮想コントロールレイアウトを更新します。\nこのプロファイルにリンクされている他の MIDlet には、次回起動時に新しいレイアウトが反映されます。</string>
+    <string name="runtime_layout_apply_title"><xliff:g id="name" example="Example">%1$s</xliff:g> を適用しますか？</string>
+    <string name="runtime_apply">適用</string>
+    <string name="runtime_preset_update_failed">この MIDlet には保存されましたが、<xliff:g id="profile_name" example="Action Games">%1$s</xliff:g> を更新できませんでした。</string>
+    <string name="runtime_preset_update_unlinked"><xliff:g id="profile_name" example="Action Games">%1$s</xliff:g> は更新されましたが、この MIDlet は今後このプロファイルからの更新を受け取りません。</string>
+    <string name="msg_immediate_mode_disabled">イベントコールバックのネストが深くなりすぎたため、即時処理が無効になりました。</string>
+    <string name="msg_press_again_to_close">もう一度押すと終了します</string>
+    <string name="save_log">ログを保存</string>
+    <string name="take_screenshot">スクリーンショットを撮る</string>
+    <!-- 診断レポート関連 UI -->
+    <string name="crash_reports">診断レポート</string>
+    <string name="diagnostic_report">診断レポート</string>
+    <string name="view_reports">診断レポートを表示</string>
+    <string name="crash_reports_empty">ローカルに診断レポートはありません</string>
+    <string name="crash_reports_loading">診断レポートを読み込み中</string>
+    <string name="crash_report_midlet_failure">MIDlet セッションの異常終了</string>
+    <string name="crash_report_java_report">Java 診断レポート</string>
+    <string name="crash_report_process_exit">プロセス終了レポート</string>
+    <string name="crash_report_list_subtitle"><xliff:g id="report_type" example="Java crash">%1$s</xliff:g> · <xliff:g id="timestamp" example="Nov 25, 09:40">%2$s</xliff:g></string>
+    <plurals name="crash_reports_selected_count">
+        <item quantity="other"><xliff:g id="count" example="3">%1$d</xliff:g> 件を選択中</item>
+    </plurals>
+    <string name="copy_report">コピー</string>
+    <string name="report_on_github">GitHub で報告</string>
+    <string name="delete_report">削除</string>
+    <string name="share_selected_reports" tools:ignore="MissingTranslation">選択したレポートを共有</string>
+    <string name="delete_selected_reports">選択したレポートを削除</string>
+    <string name="crash_report_copied">レポートをコピーしました</string>
+    <string name="crash_report_bundle_preparing">診断バンドルを準備中…</string>
+    <string name="crash_report_bundle_ready_title">診断バンドルの準備ができました</string>
+    <string name="crash_report_bundle_ready_message"><xliff:g id="name" example="Example">%1$s</xliff:g>\n\n保存先: ダウンロード → JL-Mod Plus Diagnostics\n\nGitHub の Issue を送信する前に、このファイルを添付してください。Issue に添付すると、診断バンドルは公開されます。</string>
+    <string name="locate_bundle">バンドルの場所を開く</string>
+    <string name="open_github">GitHub を開く</string>
+    <string name="crash_report_bundle_failed">診断バンドルを準備できませんでした。</string>
+    <string name="crash_report_locate_failed">診断バンドルの場所を開けるファイル選択アプリが見つかりませんでした。</string>
+    <string name="crash_report_bundle_cleanup_failed">診断レポートは削除されましたが、生成されたバンドルを削除できませんでした。</string>
+    <string name="crash_report_github_unavailable">GitHub の Issue フォームを開けるブラウザーまたはアプリが見つかりませんでした。</string>
+    <string name="crash_report_delete_title">診断レポートを削除しますか？</string>
+    <string name="crash_report_delete_message">この診断レポートと生成されたバンドルが端末から完全に削除されます。すでに外部へアップロード済みのファイルには影響しません。</string>
+    <plurals name="crash_reports_batch_delete_title">
+        <item quantity="other"><xliff:g id="count" example="3">%1$d</xliff:g> 件の診断レポートを削除しますか？</item>
+    </plurals>
+    <string name="crash_reports_batch_delete_message">選択した診断レポートと生成されたバンドルが端末から完全に削除されます。すでに外部へアップロード済みのファイルには影響しません。</string>
+    <string name="crash_report_delete_failed">レポートを削除できませんでした。</string>
+    <string name="crash_report_unavailable">このレポートはすでに利用できません。</string>
+    <string name="process_exit_recovery_title">プロセスの予期しない終了</string>
+    <string name="process_exit_recovery_message">前回のセッションで JL-Mod Plus が予期せず停止しました（<xliff:g id="reason" example="Java crash">%1$s</xliff:g>）。診断情報をローカルに保存しました。</string>
+    <string name="process_exit_recovery_message_midlet">前回のセッションで MIDlet プロセスが予期せず停止しました（<xliff:g id="reason" example="Java crash">%1$s</xliff:g>）。診断情報をローカルに保存しました。</string>
+    <string name="process_exit_recovery_message_named">前回のセッションで <xliff:g id="app_name" example="Bounce Tales">%1$s</xliff:g> が予期せず停止しました（<xliff:g id="reason" example="Native crash">%2$s</xliff:g>）。診断情報をローカルに保存しました。</string>
+    <string name="select_all_reports">すべてのレポートを選択</string>
+    <string name="clear_report_selection">レポートの選択を解除</string>
+    <string name="runtime_memory_button_short" tools:ignore="MissingTranslation">メモリボタン</string>
+    <string name="runtime_action_on" tools:ignore="MissingTranslation">オン</string>
+    <string name="runtime_action_off" tools:ignore="MissingTranslation">オフ</string>
+    <string name="reconverting_wait">この MIDlet を起動するには、初回のみ互換性変換が必要です。</string>
+    <string name="reconversion_done_with_warning">互換性変換は完了しましたが、警告が発生しました。</string>
+    <string name="reconversion_error_summary">この MIDlet を自動変換できませんでした。</string>
+    <string name="runtime_invalid_intent">起動リクエストが無効です。MIDlet のパスが見つかりません。</string>
+    <string name="runtime_storage_in_use">MIDlet ストレージは別のランタイムで使用中です。</string>
+    <string name="runtime_installation_changed">この MIDlet の起動準備ができませんでした。</string>
+    <string name="runtime_storage_unavailable">MIDlet ストレージを準備できませんでした。</string>
+    <string name="runtime_no_midlets">このアプリ内に MIDlet が見つかりませんでした。</string>
+    <!-- ランタイムのグループ化されたコントロール -->
+    <string name="runtime_virtual_controls_title">仮想コントロール</string>
+    <string name="runtime_virtual_controls_dpad">方向キー</string>
+    <string name="runtime_virtual_controls_analog">アナログスティック</string>
+    <string name="runtime_virtual_controls_edit">レイアウトを編集</string>
+    <string name="runtime_virtual_controls_edit_guide_title">レイアウト編集ガイド</string>
+    <string name="runtime_virtual_controls_edit_guide_message">コントロールをドラッグして移動できます。ボタンは 2 本指で横または縦に動かすと幅や高さを変更でき、斜めに動かすと両方を同時に変更できます。方向キーやアナログスティックはピンチ操作で縦横比を保ったまま拡大・縮小できます。終わったら「完了」をタップしてください。</string>
+    <string name="runtime_virtual_controls_edit_guide_dont_show_again">今後は表示しない</string>
+    <string name="runtime_virtual_controls_switch_layout">コントロールレイアウトを選択</string>
+    <string name="runtime_virtual_controls_show_controls">表示するコントロールを選択</string>
+    <string name="runtime_virtual_controls_template_dpad_standard">標準の方向キー</string>
+    <string name="runtime_virtual_controls_template_analog_standard">標準のアナログスティック</string>
+    <string name="screenshot_save_failed">スクリーンショットを保存できませんでした。</string>
+    <!-- %1$s は保存されたスクリーンショットのファイルシステムパス -->
+    <string name="screenshot_saved_path">スクリーンショットを <xliff:g id="path" example="Pictures/Bounce Tales/Screenshot_20261125-103000.png">%1$s</xliff:g> に保存しました</string>
+    <string name="log_save_success" tools:ignore="MissingTranslation"><xliff:g id="name" example="Example">%1$s</xliff:g> を「ダウンロード → JL-Mod Plus Diagnostics」に保存しました。</string>
+    <string name="log_save_partial" tools:ignore="MissingTranslation">一部のログを <xliff:g id="name" example="Example">%1$s</xliff:g> として「ダウンロード → JL-Mod Plus Diagnostics」に保存しました。</string>
+    <string name="log_save_empty" tools:ignore="MissingTranslation">Android バッファー内にアプリのログ記録がありません。</string>
+    <string name="log_save_timeout" tools:ignore="MissingTranslation">ログの収集がタイムアウトしました。ファイルは保存されませんでした。</string>
+    <string name="log_save_failed">ログを保存できませんでした。</string>
+    <string name="runtime_midlet_list_failed">このアプリの MIDlet 一覧を読み取れませんでした。</string>
+    <string name="diagnostic_reason_java_crash">Java クラッシュ</string>
+    <string name="diagnostic_reason_native_crash">ネイティブクラッシュ</string>
+    <string name="diagnostic_reason_anr">アプリが応答していません</string>
+    <string name="diagnostic_reason_signal">シグナルによる終了</string>
+    <string name="diagnostic_reason_unknown">原因不明</string>
+    <string name="crash_reports_delete_failed">一部の診断レポートを削除できませんでした。その他のレポートは削除されている場合があります。</string>
+    <string name="crash_reports_bundle_cleanup_failed">診断レポートは削除されましたが、生成されたバンドルの一部を削除できませんでした。</string>
+    <string name="runtime_chrome_update_failed">表示設定を更新できませんでした。もう一度お試しください。</string>
+    <string name="runtime_fullscreen_update_failed">全画面表示の設定にアクセスできませんでした。もう一度お試しください。</string>
+    <string name="runtime_camera_use_front">前面カメラを使用</string>
+    <string name="runtime_camera_use_rear">背面カメラを使用</string>
+    <string name="runtime_camera_switch_failed">カメラを切り替えられませんでした。</string>
+    <string name="runtime_camera_switch_recording" tools:ignore="MissingTranslation">カメラを切り替える前に録画を停止してください。</string>
+    <string name="date_field_not_set" tools:ignore="MissingTranslation">未設定</string>
+    <string name="date_field_use_displayed_value" tools:ignore="MissingTranslation">この値を使用</string>
+</resources>

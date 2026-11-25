@@ -1,0 +1,47 @@
+<?xml version="1.0" encoding="utf-8"?>
+<!-- 共通の UI アクション、汎用ラベル、ダイアログ、アプリ情報画面 -->
+<resources xmlns:xliff="urn:oasis:names:tc:xliff:document:1.2">
+    <string name="about">このアプリについて</string>
+    <string name="about_message">往年のアプリやゲームを実行し、ライブラリで MIDlet を整理しながら、操作方法、表示、オーディオ、パフォーマンスをカスタマイズできます。JL-Mod Plus は無料のオープンソースアプリです。</string>
+    <string name="about_subtitle">Android 向け Java ME エミュレーター</string>
+    <string name="about_compatibility">互換性は MIDlet、端末、対応する Java ME API によって異なります。一部のアプリは、当時の携帯電話とは動作が異なる場合があります。</string>
+    <string name="about_lineage_title">プロジェクトの由来</string>
+    <string name="about_build_title">ビルド情報</string>
+    <string name="about_version_label">バージョン</string>
+    <string name="about_build_label">ビルド</string>
+    <string name="about_revision_label">ソースリビジョン</string>
+    <string name="about_links_title">プロジェクトとライセンス</string>
+    <string name="about_github_link_copied">ブラウザーが見つかりませんでした。GitHub のリンクをクリップボードにコピーしました。</string>
+    <string name="about_github_browser_unavailable">GitHub を開けるブラウザーが見つかりませんでした。</string>
+    <string name="about_lineage">JL-Mod Plus は、woesss（Yury Kharchenko）氏による JL-Mod の独立したフォークです。JL-Mod は Nikita Shakarun 氏の J2ME Loader を基にしており、そのルーツは NaikSoftware の J2meLoader にさかのぼります。</string>
+    <string name="about_evolution">JL-Mod Plus はその基盤を受け継ぎ、モダンなインターフェース、より高機能な MIDlet ライブラリ、各種新機能、最新の Android バージョンへの対応を実現しています。</string>
+    <string name="action_back">戻る</string>
+    <string name="action_settings">設定</string>
+    <string name="CANCEL_CMD">キャンセル</string>
+    <string name="change">変更</string>
+    <string name="choose">選択</string>
+    <string name="close">閉じる</string>
+    <string name="cmd_menu">メニュー</string>
+    <string name="CONFIRMATION_REQUIRED">確認が必要です</string>
+    <string name="create">作成</string>
+    <string name="default_label"><xliff:g id="name" example="Example">%1$s</xliff:g>（デフォルト）</string>
+    <string name="dismiss">閉じる</string>
+    <string name="edit">編集</string>
+    <string name="error">エラー</string>
+    <string name="error_name">名前を入力してください。</string>
+    <string name="exit">終了</string>
+    <string name="help">ヘルプ</string>
+    <string name="install">インストール</string>
+    <string name="licenses">ライセンス</string>
+    <string name="licenses_unavailable">ライセンス情報を利用できません。</string>
+    <string name="loading_info">情報を読み込み中…</string>
+    <string name="more">その他</string>
+    <string name="not_saved_exists">すでに存在します</string>
+    <string name="reset">リセット</string>
+    <string name="retry">再試行</string>
+    <string name="save">保存</string>
+    <string name="saved"><xliff:g id="name" example="Example">%1$s</xliff:g> を保存しました</string>
+    <string name="START_CMD">開始</string>
+    <string name="warning">警告</string>
+    <string name="removed"><xliff:g id="name" example="Example">%1$s</xliff:g> を削除しました</string>
+</resources>

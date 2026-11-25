@@ -1,0 +1,444 @@
+<?xml version="1.0" encoding="utf-8"?>
+<!-- MIDlet ライブラリ、コレクション、メタデータ編集、一括/単体インストーラー、ファイル選択、アプリアップデート -->
+<resources xmlns:tools="http://schemas.android.com/tools" xmlns:xliff="urn:oasis:names:tc:xliff:document:1.2">
+    <string name="action_context_delete">削除</string>
+    <string name="action_context_rename">名前を変更</string>
+    <string name="action_context_shortcut">ショートカットを追加</string>
+    <string name="action_reinstall">再インストール</string>
+    <string name="alert_msg_workdir_not_exists">作業フォルダーが見つかりません:\n<xliff:g id="path" example="/storage/emulated/0/JL-Mod-Plus">%1$s</xliff:g>\n新しく作成しますか、それとも別のフォルダーを選択しますか？</string>
+    <string name="converting_wait">JAR を変換中…</string>
+    <string name="create_apps_dir_failed">次の場所に作業フォルダーを準備できませんでした:\n<xliff:g id="path" example="/storage/emulated/0/JL-Mod-Plus">%1$s</xliff:g>\n別のフォルダーを選択してください。</string>
+    <string name="install_done">アプリをインストールしました。</string>
+    <string name="install_done_with_warning">アプリをインストールしましたが、警告が発生しました。</string>
+    <string name="installer_title">MIDlet インストーラー</string>
+    <string name="installer_error_message">選択したアプリをインストールできませんでした。有効な MIDlet ファイルを選択してもう一度お試しください。</string>
+    <string name="install_jar_non_matched_jad">このアプリは JAD に記載された内容と一致しません。\nJAD を無視してインストールを続行しますか？</string>
+    <string name="file_picker_select_file">ファイルを選択</string>
+    <string name="file_picker_select_folder">フォルダーを選択</string>
+    <string name="file_picker_select_app_bundle">アプリバンドルを選択</string>
+    <string name="file_picker_select_icon">アイコンを選択</string>
+    <string name="file_picker_navigate_back">親フォルダーへ戻る</string>
+    <string name="file_picker_cancel">キャンセル</string>
+    <string name="file_picker_search">検索</string>
+    <string name="file_picker_sort">並べ替え</string>
+    <string name="file_picker_select_all">このフォルダー内のすべてのファイルを選択</string>
+    <string name="file_picker_unselect_all">このフォルダー内のすべてのファイルの選択を解除</string>
+    <string name="file_picker_sort_type">フォルダーを先頭に表示</string>
+    <string name="file_picker_sort_name_ascending">名前（昇順）</string>
+    <string name="file_picker_sort_name_descending">名前（降順）</string>
+    <string name="file_picker_sort_modified_newest">更新日時: 新しい順</string>
+    <string name="file_picker_sort_modified_oldest">更新日時: 古い順</string>
+    <string name="file_picker_choose">選択</string>
+    <string name="file_picker_current_folder">現在のフォルダー</string>
+    <string name="file_picker_parent_folder">親フォルダー</string>
+    <string name="file_picker_file">ファイル</string>
+    <string name="file_picker_preview_named"><xliff:g id="name" example="Example">%1$s</xliff:g> をプレビュー</string>
+    <string name="file_picker_preview_unavailable">プレビューを利用できません</string>
+    <string name="file_picker_storage_volume">ストレージボリューム</string>
+    <string name="file_picker_empty">一致するファイルがありません</string>
+    <string name="file_picker_empty_folder">フォルダーが見つかりません</string>
+    <string name="file_picker_no_matches">一致する項目がありません</string>
+    <string name="file_picker_permission_required">ストレージ権限が必要です</string>
+    <string name="file_picker_permission_message">この端末のファイルやフォルダーを参照するには、ストレージへのアクセスを許可してください。</string>
+    <string name="file_picker_permission_denied">ストレージへのアクセスが許可されませんでした。</string>
+    <string name="file_picker_grant_access">アクセスを許可</string>
+    <string name="file_picker_retry">再試行</string>
+    <string name="file_picker_load_failed">このフォルダーを開けませんでした。</string>
+    <string name="file_picker_create_folder">新しいフォルダー</string>
+    <string name="file_picker_create_folder_title">フォルダーを作成</string>
+    <string name="file_picker_folder_name">フォルダー名</string>
+    <string name="file_picker_invalid_folder_name">有効なフォルダー名を入力してください。</string>
+    <string name="file_picker_folder_exists">この名前の項目はすでに存在します。</string>
+    <string name="file_picker_create_folder_failed">フォルダーを作成できませんでした。</string>
+    <string name="file_picker_selection_unavailable">選択した項目はすでに利用できません。</string>
+    <string name="loading_apps">アプリを読み込み中</string>
+    <string name="message_delete">このアプリ、設定、セーブデータを削除しますか？ライブラリからも削除されます。</string>
+    <string name="msg_no_matches">「<xliff:g id="query" example="Bounce">%1$s</xliff:g>」に一致する項目がありません</string>
+    <string name="library_destination_apps">すべてのアプリ</string>
+    <string name="library_destination_collections">コレクション</string>
+    <string name="library_scope_picker_title" tools:ignore="MissingTranslation">アプリを参照</string>
+    <string name="library_destination_more">その他</string>
+    <string name="library_search_placeholder">アプリを検索…</string>
+    <string name="library_filter_all">すべて</string>
+    <string name="library_filter_recently_opened">最近開いたアプリ</string>
+    <string name="library_filter_recently_added">最近追加したアプリ</string>
+    <string name="library_filter_favorites">お気に入り</string>
+    <string name="library_add_to_favorites_action">お気に入りに追加</string>
+    <string name="library_remove_from_favorites_action">お気に入りから削除</string>
+    <string name="library_favorite_coming_soon">お気に入りは利用できません</string>
+    <string name="library_vendor_version"><xliff:g id="vendor" example="Nokia">%1$s</xliff:g> · <xliff:g id="version" example="1.0">%2$s</xliff:g></string>
+    <string name="library_view_list">リスト</string>
+    <string name="library_view_grid">グリッド</string>
+    <string name="library_icon_ratio_title">アイコンの縦横比</string>
+    <string name="library_icon_ratio_square">正方形（1:1）</string>
+    <string name="library_icon_ratio_portrait">縦長（3:4）</string>
+    <string name="library_icon_shape_title">アイコンの形状</string>
+    <string name="library_icon_shape_round">角丸</string>
+    <string name="library_icon_shape_square">角あり</string>
+    <string name="library_grid_icon_size_title" tools:ignore="MissingTranslation">グリッドアイコンのサイズ</string>
+    <string name="library_grid_icon_size_small" tools:ignore="MissingTranslation">小</string>
+    <string name="library_grid_icon_size_standard" tools:ignore="MissingTranslation">標準</string>
+    <string name="library_grid_icon_size_large" tools:ignore="MissingTranslation">大</string>
+    <string name="library_grid_icon_size_summary" tools:ignore="MissingTranslation">グリッド表示でのアイコンサイズと列数を変更します。</string>
+    <string name="library_grid_spacing_title">グリッドの間隔</string>
+    <string name="library_grid_spacing_summary" tools:ignore="MissingTranslation">グリッド表示にのみ適用されます。</string>
+    <string name="library_grid_spacing_none">なし（0 dp）</string>
+    <string name="library_grid_spacing_compact">狭め（4 dp）</string>
+    <string name="library_grid_spacing_standard">標準（8 dp）</string>
+    <string name="library_grid_spacing_spacious">広め（12 dp）</string>
+    <string name="library_hide_grid_titles">MIDlet タイトルを非表示</string>
+    <string name="library_show_list_description">MIDlet の説明を表示</string>
+    <string name="library_collections_empty_title">コレクションはまだありません</string>
+    <string name="library_collections_empty_message">ライブラリの読み込みが完了するまでコレクションは利用できません。</string>
+    <string name="library_expand_description">説明を展開</string>
+    <string name="library_collapse_description">説明を折りたたむ</string>
+    <string name="no_data_for_display">表示するアプリがありません</string>
+    <string name="permission_request_failed">ストレージへの書き込み権限が必要です。</string>
+    <string name="reinstall">このアプリはすでにインストールされています。再インストールしますか？</string>
+    <string name="reinstall_newest">このアプリをバージョン <xliff:g id="version" example="2.1.0">%1$s</xliff:g> にアップデートしますか？\n\n現在インストール済み: <xliff:g id="current_version" example="2.0.0">%2$s</xliff:g></string>
+    <string name="reinstall_older">このアプリをバージョン <xliff:g id="version" example="2.1.0">%1$s</xliff:g> に置き換えますか？\n\n現在インストール済み: <xliff:g id="current_version" example="2.0.0">%2$s</xliff:g>\n古いバージョンでは既存のデータが正常に動作しない場合があります。</string>
+    <string name="warn_install_from_net">このファイルはインターネットからダウンロードされます。</string>
+    <string name="installer_ambiguous">このパッケージに一致するインストール済みアプリが複数あります。別コピーとしてインストールしますか？既存のアプリとデータは保持されます。</string>
+    <string name="installer_separate_copy">別コピーとしてインストール</string>
+    <string name="installer_stage_download">アプリをダウンロード中…</string>
+    <string name="installer_stage_wait">他の操作の完了を待機中…</string>
+    <string name="installer_stage_save">アプリを保存中…</string>
+    <string name="installer_failed_download">アプリをダウンロードできませんでした。通信環境とダウンロードリンクを確認してもう一度お試しください。</string>
+    <string name="installer_failed_storage">インストールを完了できませんでした。もう一度お試しください。</string>
+    <string name="installer_failed_conversion">アプリを変換できませんでした。ファイルが破損しておらず対応形式であることを確認して、もう一度お試しください。</string>
+    <string name="installer_needs_recovery">アプリファイルは保存されましたが、ライブラリの更新を完了できませんでした。ライブラリを更新してからもう一度お試しください。</string>
+    <string name="installer_refresh_library">ライブラリを更新</string>
+    <string name="installer_cancel_pending">次の安全なタイミングで停止します…</string>
+    <string name="installer_retry_remaining">未完了の項目を確認</string>
+    <string name="installer_not_processed">未処理</string>
+    <string name="installer_partial_restore">アプリはインストールされましたが、データまたは設定を復元できませんでした。</string>
+    <string name="installer_removed_leftovers">アプリは削除されましたが、一部の設定またはセーブデータを削除できませんでした。</string>
+    <string name="installer_copy_details">詳細をコピー</string>
+    <string name="installer_show_details">詳細を表示</string>
+    <string name="installer_hide_details">詳細を非表示</string>
+    <!-- %1$d は変換時にスキップされたソース Java クラスファイルの数 -->
+    <plurals name="installer_conversion_warning_summary">
+        <item quantity="other"><xliff:g id="skipped_count" example="2">%1$d</xliff:g> 個の Java クラスファイルを読み取れなかったためスキップしました。これらを使用する機能は動作しない場合があります。</item>
+    </plurals>
+    <!-- %1$s はスキップされたクラスファイルのソース JAR エントリーパス -->
+    <string name="installer_conversion_skipped_entry"><xliff:g id="entry_path" example="com/example/Broken.class">%1$s</xliff:g>\n問題: Java クラスファイルを読み取れませんでした。\n対処: 変換時にスキップしました。</string>
+    <!-- %1$d は表示を省略した追加の変換診断件数 -->
+    <plurals name="installer_conversion_omitted_details">
+        <item quantity="other">ほかに <xliff:g id="omitted_count" example="5">%1$d</xliff:g> 件の変換上の問題が省略されています。</item>
+    </plurals>
+    <string name="library_collection_new">新しいコレクション</string>
+    <string name="library_collection_ready_empty_message">コレクションを作成すると、ファイルを移動せずにアプリを整理できます。</string>
+    <string name="library_collection_add_app">コレクションに追加</string>
+    <string name="library_collection_add_apps">アプリを追加</string>
+    <string name="library_collection_manage_apps">アプリを選択</string>
+    <string name="library_collection_manage" tools:ignore="MissingTranslation">コレクションを管理</string>
+    <string name="library_collection_delete_confirmation" tools:ignore="MissingTranslation">「<xliff:g id="collection_name" example="Favorites">%1$s</xliff:g>」を削除しますか？このコレクション内のアプリはインストールされたまま残ります。</string>
+    <string name="library_collection_rename_action" tools:ignore="MissingTranslation">コレクション「<xliff:g id="collection_name" example="Favorites">%1$s</xliff:g>」の名前を変更</string>
+    <string name="library_collection_delete_action" tools:ignore="MissingTranslation">コレクション「<xliff:g id="collection_name" example="Favorites">%1$s</xliff:g>」を削除</string>
+    <string name="library_collection_select_action" tools:ignore="MissingTranslation">コレクション「<xliff:g id="collection_name" example="Favorites">%1$s</xliff:g>」を選択</string>
+    <string name="library_collection_open_action" tools:ignore="MissingTranslation">コレクション「<xliff:g id="collection_name" example="Favorites">%1$s</xliff:g>」を開く</string>
+    <string name="library_collection_rename_selected" tools:ignore="MissingTranslation">選択したコレクションの名前を変更</string>
+    <string name="library_collection_delete_selected" tools:ignore="MissingTranslation">選択したコレクションを削除</string>
+    <plurals name="library_collection_delete_many_confirmation">
+        <item quantity="other"><xliff:g id="count" example="3">%d</xliff:g> 件のコレクションを削除しますか？アプリはインストールされたまま残ります。</item>
+    </plurals>
+    <string name="library_notifications_title" tools:ignore="MissingTranslation">通知</string>
+    <string name="library_notifications_empty_title" tools:ignore="MissingTranslation">通知はまだありません</string>
+    <string name="library_notifications_empty_summary" tools:ignore="MissingTranslation">アプリのアップデート通知がある場合はここに表示されます。</string>
+    <string name="library_collection_manage_apps_summary">このコレクションに含めるアプリを選択してください。</string>
+    <string name="library_collection_name">コレクション名</string>
+    <string name="library_collection_members_empty">このコレクションにアプリはありません。</string>
+    <string name="library_collection_select_title">コレクションを選択</string>
+    <string name="library_collection_select_message">アプリを表示するコレクションを選択してください。</string>
+    <string name="library_collection_remove_from_current">コレクションから削除</string>
+    <string name="library_no_matches">「<xliff:g id="query" example="Bounce">%1$s</xliff:g>」に一致する項目がありません</string>
+    <string name="library_action_share_app">アプリを共有</string>
+    <string name="library_action_export_bundle">アプリバンドルをエクスポート</string>
+    <string name="library_action_import_bundle">アプリバンドルをインポート</string>
+    <string name="library_action_import_bundle_summary">エクスポートしたアプリを、含まれている設定、セーブデータ、ブックマークとともに復元します。</string>
+    <string name="library_import_preparing">アプリバンドルを読み込み中…</string>
+    <string name="library_import_restoring">アプリデータを復元中…</string>
+    <string name="library_import_done">アプリバンドルをインポートしました。</string>
+    <string name="library_import_done_with_warning">アプリバンドルをインポートしましたが、警告が発生しました。</string>
+    <string name="library_import_invalid_bundle">選択したアプリバンドルは無効、破損、または非対応です。有効な JL-Mod Plus アプリバンドルを選択してもう一度お試しください。</string>
+    <string name="library_import_restore_existing">このアプリはすでにインストールされています。バンドルに含まれる設定とセーブデータは既存データを置き換えます。設定が含まれていない場合、ブックマークは統合されます。</string>
+    <string name="library_import_restore_failed">アプリはインストールされましたが、バンドルデータを復元できませんでした。復元を再試行しますか？</string>
+    <string name="library_play_stats_summary">起動回数: <xliff:g id="launch_count" example="12">%1$d</xliff:g> · 合計時間: <xliff:g id="total_time" example="2h 15m">%2$s</xliff:g></string>
+    <string name="library_share_chooser_title">アプリを共有</string>
+    <string name="library_export_chooser_title">エクスポート</string>
+    <string name="library_export_progress">エクスポート中… <xliff:g id="completed" example="3">%1$d</xliff:g>/<xliff:g id="total" example="10">%2$d</xliff:g></string>
+    <string name="library_transfer_unavailable">エクスポートを準備できませんでした。実行中の MIDlet をすべて閉じてからもう一度お試しください。</string>
+    <string name="library_back">ライブラリに戻る</string>
+    <string name="library_sort">アプリを並べ替え</string>
+    <string name="library_search_clear">検索をクリア</string>
+    <string name="library_description_more">… もっと見る</string>
+    <string name="library_description_less">閉じる</string>
+    <plurals name="file_picker_selected_count">
+        <item quantity="other"><xliff:g id="count" example="3">%1$d</xliff:g> 件を選択中</item>
+    </plurals>
+    <plurals name="library_selection_count">
+        <item quantity="other"><xliff:g id="count" example="3">%1$d</xliff:g> 個のアプリ</item>
+    </plurals>
+    <plurals name="library_collection_member_count">
+        <item quantity="other"><xliff:g id="count" example="3">%1$d</xliff:g> 個のアプリ</item>
+    </plurals>
+    <plurals name="bulk_install_found">
+        <item quantity="other"><xliff:g id="count" example="3">%1$d</xliff:g> 個のアプリが見つかりました</item>
+    </plurals>
+    <plurals name="bulk_install_selected">
+        <item quantity="other"><xliff:g id="count" example="3">%1$d</xliff:g> 件を選択中</item>
+    </plurals>
+    <plurals name="bulk_install_ready_count">
+        <item quantity="other"><xliff:g id="count" example="3">%1$d</xliff:g> 件が準備完了</item>
+    </plurals>
+    <plurals name="bulk_install_skipped_count">
+        <item quantity="other">インストール済みまたは重複: <xliff:g id="count" example="3">%1$d</xliff:g> 件</item>
+    </plurals>
+    <plurals name="bulk_install_attention_count">
+        <item quantity="other"><xliff:g id="count" example="3">%1$d</xliff:g> 件の確認が必要</item>
+    </plurals>
+    <plurals name="bulk_install_installed_count">
+        <item quantity="other"><xliff:g id="count" example="3">%1$d</xliff:g> 件をインストール済み</item>
+    </plurals>
+    <plurals name="bulk_install_updated_count">
+        <item quantity="other"><xliff:g id="count" example="3">%1$d</xliff:g> 件を更新済み</item>
+    </plurals>
+    <plurals name="bulk_install_reinstalled_count">
+        <item quantity="other"><xliff:g id="count" example="3">%1$d</xliff:g> 件を再インストール済み</item>
+    </plurals>
+    <plurals name="bulk_install_skipped_result_count">
+        <item quantity="other"><xliff:g id="count" example="3">%1$d</xliff:g> 件をスキップ</item>
+    </plurals>
+    <plurals name="bulk_install_failed_count">
+        <item quantity="other"><xliff:g id="count" example="3">%1$d</xliff:g> 件が失敗</item>
+    </plurals>
+    <plurals name="bulk_install_warning_count">
+        <item quantity="other"><xliff:g id="count" example="3">%1$d</xliff:g> 件の警告</item>
+    </plurals>
+    <plurals name="bulk_install_omitted_sources">
+        <item quantity="other">確認画面の応答性を保つため、ほかに <xliff:g id="count" example="3">%1$d</xliff:g> 個のファイルを省略しました。</item>
+    </plurals>
+    <plurals name="library_bulk_delete_confirmation">
+        <item quantity="other"><xliff:g id="count" example="3">%1$d</xliff:g> 個のアプリを削除しますか？ファイル、設定、セーブデータがライブラリから削除されます。</item>
+    </plurals>
+    <plurals name="library_bulk_delete_result">
+        <item quantity="other"><xliff:g id="deleted_count" example="3">%1$d</xliff:g> 個のアプリを削除しました（失敗: <xliff:g id="failed_count" example="1">%2$d</xliff:g> 件）。</item>
+    </plurals>
+    <string name="bulk_install_title">一括インストール</string>
+    <string name="bulk_install_planning">選択したアプリを確認中…</string>
+    <string name="bulk_install_empty">対応するアプリが見つかりませんでした。</string>
+    <string name="bulk_install_recommended">推奨</string>
+    <string name="bulk_install_clear">選択を解除</string>
+    <string name="bulk_install_install_count"><xliff:g id="count" example="3">%1$d</xliff:g> 件をインストール</string>
+    <string name="bulk_install_cancel">キャンセル</string>
+    <string name="bulk_install_close">閉じる</string>
+    <plurals name="bulk_install_running">
+        <item quantity="other"><xliff:g id="processed" example="3">%1$d</xliff:g> / <xliff:g id="total" example="10">%2$d</xliff:g> 個のアプリを処理済み</item>
+    </plurals>
+    <string name="bulk_install_cancel_requested">現在のアプリの完了後に停止します…</string>
+    <string name="bulk_install_complete">一括インストールが完了しました</string>
+    <string name="bulk_install_cancelled">一括インストールを停止しました</string>
+    <string name="bulk_install_fatal">一括インストールが停止しました。未完了の項目を確認してからもう一度お試しください。</string>
+    <string name="bulk_install_result_installed">インストール済み</string>
+    <string name="bulk_install_result_updated">更新済み</string>
+    <string name="bulk_install_result_reinstalled">再インストール済み</string>
+    <string name="bulk_install_result_skipped">スキップ</string>
+    <string name="bulk_install_result_failed">失敗</string>
+    <string name="bulk_install_installed_version">インストール済み: <xliff:g id="version" example="2.1.0">%1$s</xliff:g></string>
+    <string name="bulk_install_source">ソース: <xliff:g id="name" example="Example">%1$s</xliff:g></string>
+    <string name="bulk_install_action_separate_copy">別コピーとしてインストール</string>
+    <string name="bulk_install_action_jar_only">JAR のみインストール</string>
+    <string name="single_install_review_jar_only" tools:ignore="MissingTranslation">JAR のみ確認</string>
+    <string name="single_install_jar_only_notice" tools:ignore="MissingTranslation">JAR のみがインストールされます。続行する前にアプリ名、バージョン、インストール状況を確認してください。</string>
+    <string name="single_install_running_replacement_warning" tools:ignore="MissingTranslation">このアプリが実行中の場合、インストール時に停止してからファイルを置き換えます。未保存の進行状況は失われる場合があります。</string>
+    <string name="bulk_install_status_new">新規</string>
+    <string name="bulk_install_status_update">更新</string>
+    <string name="bulk_install_status_downgrade">古いバージョン</string>
+    <string name="bulk_install_status_same">インストール済み</string>
+    <string name="bulk_install_status_reinstall">同一バージョン（別バリエーションの可能性）</string>
+    <string name="bulk_install_status_ambiguous">複数のインストール済みアプリに一致</string>
+    <string name="bulk_install_status_mismatch">JAD/JAR 不一致</string>
+    <string name="bulk_install_status_duplicate">重複</string>
+    <string name="bulk_install_status_older_batch">バッチ内の古いバージョン</string>
+    <string name="bulk_install_status_conflict">バッチ内の競合</string>
+    <string name="bulk_install_status_remote">リモートソースは非対応</string>
+    <string name="bulk_install_status_error">無効なソース</string>
+    <string name="bulk_install_reinstall_source_missing">再インストール用の保存済み JAR が利用できません。</string>
+    <plurals name="bulk_install_reinstall_missing_apps">
+        <item quantity="other">選択した <xliff:g id="count" example="3">%1$d</xliff:g> 個のライブラリアプリはすでに利用できません。</item>
+    </plurals>
+    <string name="library_metadata_edit_title">メタデータを編集</string>
+    <string name="library_metadata_icon">アイコン</string>
+    <string name="library_metadata_name">名前</string>
+    <string name="library_metadata_vendor">ベンダー</string>
+    <string name="library_metadata_reset_to_original">元に戻す</string>
+    <string name="library_metadata_save">保存</string>
+    <string name="library_hide_grid_titles_summary">グリッド表示で MIDlet 名を非表示にします。リスト表示では引き続き表示されます。</string>
+    <string name="library_show_list_description_summary">各 MIDlet のタイトルとバージョンの下に説明を表示します。</string>
+    <string name="library_indexing_progress">ライブラリをインデックス作成中… <xliff:g id="completed" example="3">%1$d</xliff:g>/<xliff:g id="total" example="10">%2$d</xliff:g></string>
+    <string name="library_indexing_current"><xliff:g id="name" example="Example">%1$s</xliff:g> をスキャン中</string>
+    <string name="library_load_error_title">ライブラリを利用できません</string>
+    <string name="library_retry">再試行</string>
+    <string name="library_reinstall_source_missing">再インストール用の保存済み JAR が利用できません。</string>
+    <string name="library_action_select">選択</string>
+    <string name="library_selection_select_all">すべて選択</string>
+    <string name="library_selection_unselect_all">すべて選択解除</string>
+    <string name="library_selection_checkbox_description"><xliff:g id="name" example="Example">%1$s</xliff:g> を選択</string>
+    <string name="library_selection_checked">選択中</string>
+    <string name="library_selection_unchecked">未選択</string>
+    <string name="library_action_settings_summary">全体的な動作と外観を設定します。</string>
+    <string name="library_action_crash_reports_summary">保存済みの診断レポートを確認します。</string>
+    <string name="library_action_about_summary">プロジェクト概要、ビルド情報、各種リンク。</string>
+    <string name="library_action_licenses_summary">アプリに含まれるサードパーティの権利表記とライセンス条件。</string>
+    <string name="library_donation_action">開発を支援</string>
+    <string name="library_donation_summary">JL-Mod Plus の今後の開発を応援できます。</string>
+    <string name="library_donation_title">JL-Mod Plus を支援</string>
+    <string name="library_donation_message">JL-Mod Plus は無料のオープンソースアプリです。お役に立ちましたら、任意の寄付で開発をご支援いただけます。</string>
+    <string name="library_donation_provider_note">寄付は外部サービスの Sociabuzz を通じて処理されます。</string>
+    <string name="library_donation_continue">Sociabuzz へ進む</string>
+    <string name="library_donation_not_now">今はしない</string>
+    <string name="library_donation_link_copied">ブラウザーが見つかりませんでした。Sociabuzz のリンクをクリップボードにコピーしました。</string>
+    <string name="library_donation_browser_unavailable">Sociabuzz を開けるブラウザーが見つかりませんでした。</string>
+    <string name="library_bulk_delete_apps">アプリを削除</string>
+    <string name="library_bulk_add_collection">コレクションに追加</string>
+    <string name="library_bulk_share_apps">アプリを共有</string>
+    <string name="library_bulk_reinstall_apps">再インストール</string>
+    <string name="library_bulk_export_apps">バンドルをエクスポート</string>
+    <string name="library_enhanced_icons_title">アイコンの最適化</string>
+    <string name="library_enhanced_icons_summary">アイコンの枠配置、スケール、タイル背景を調整し、ライブラリ全体の見た目を統一します。</string>
+    <string name="library_collections_unavailable_title">コレクションを利用できません</string>
+    <string name="library_load_failed_message">ライブラリを読み込めませんでした。もう一度お試しください。</string>
+    <string name="bulk_install_prepare_failed">選択したアプリのインストールを準備できませんでした。</string>
+    <string name="installer_existing_data_preserved">既存の設定とセーブデータは保持されます。</string>
+    <string name="bulk_install_library_changed">確認後にライブラリが変更されました。このバッチを閉じて、もう一度ファイルを選択してください。</string>
+    <string name="bulk_install_source_unavailable">必要なソースファイルが利用できなくなりました。もう一度ファイルを選択してください。</string>
+    <string name="bulk_install_source_changed">確認後にソースファイルが変更されました。もう一度ファイルを選択してください。</string>
+    <string name="bulk_install_target_unverified">再インストール対象を検証できませんでした。このバッチを閉じて、もう一度アプリを選択してください。</string>
+    <string name="bulk_install_result_restored">復元済み</string>
+    <plurals name="bulk_install_restored_count">
+        <item quantity="other"><xliff:g id="count" example="3">%1$d</xliff:g> 件を復元済み</item>
+    </plurals>
+    <plurals name="bulk_install_reason_ambiguous_match">
+        <item quantity="other"><xliff:g id="count" example="3">%1$d</xliff:g> 個のインストール済みアプリがこのソースに一致します。</item>
+    </plurals>
+    <string name="bulk_install_reason_jad_jar_mismatch">JAD と JAR で異なるアプリが指定されています。</string>
+    <string name="bulk_install_reason_conflicting_jads">属性が異なる複数の JAD ファイルが同じ JAR を参照しています。</string>
+    <string name="bulk_install_reason_remote_jar">一括インストールではリモートの JAR ファイルをダウンロードできません。</string>
+    <string name="bulk_install_reason_missing_jar_url">JAD に MIDlet-Jar-URL が含まれていません。</string>
+    <!-- %1$s は JAD が指定した URI スキームそのもの（翻訳不可） -->
+    <string name="bulk_install_reason_unsupported_uri_scheme">JAD が非対応の URI スキームで JAR を参照しています: <xliff:g id="scheme" example="http">%1$s</xliff:g>。</string>
+    <string name="bulk_install_reason_missing_parent">JAD に親フォルダーがありません。</string>
+    <!-- %1$s は正規化されたパスではなく MIDlet-Jar-URL の参照文字列そのもの -->
+    <string name="bulk_install_reason_jar_not_found">JAD が参照する JAR が見つかりません: <xliff:g id="file_path" example="game.jar">%1$s</xliff:g>。</string>
+    <string name="bulk_install_reason_duplicate_source">このソースは同じバッチ内の別のソースと重複しています。</string>
+    <string name="bulk_install_reason_version_conflict">同じバージョンを持つ複数のアプリバリエーションがあります。</string>
+    <string name="bulk_install_reason_older_candidate">このアプリの新しいバージョンが同じバッチ内に含まれています。</string>
+    <string name="bulk_install_reason_source_error">このソースのインストールを準備できませんでした。</string>
+    <string name="updates_title">アップデート</string>
+    <string name="updates_more_summary">JL-Mod Plus の新しいバージョンを確認します。</string>
+    <string name="updates_more_available">新しいバージョンが利用可能です。</string>
+    <string name="updates_installed_version">インストール済みバージョン: <xliff:g id="version" example="2.1.0">%1$s</xliff:g></string>
+    <string name="updates_build_code">ビルド <xliff:g id="build_code" example="247">%1$d</xliff:g></string>
+    <string name="updates_automatic">ライブラリ表示中に自動で確認</string>
+    <string name="updates_not_checked">まだ確認していません。</string>
+    <string name="updates_checking">アップデートを確認中…</string>
+    <string name="updates_current">最新の状態です。</string>
+    <string name="updates_no_release">対応する公開リリースはありません。</string>
+    <string name="updates_not_installable">新しいリリースがありますが、この端末またはインストール形態には対応していません。</string>
+    <string name="updates_failed">アップデートを確認できませんでした。通信環境を確認してもう一度お試しください。</string>
+    <string name="updates_available">アップデートがあります</string>
+    <string name="updates_view_release">リリースを表示</string>
+    <string name="updates_last_checked">最終確認: <xliff:g id="timestamp" example="Today, 09:45">%1$s</xliff:g></string>
+    <string name="updates_check">アップデートを確認</string>
+    <string name="updates_notice">JL-Mod Plus <xliff:g id="version" example="2.1.0">%1$s</xliff:g> が利用可能です。「設定」の「アップデート」を確認してください。</string>
+    <string name="updates_debug_build">これはデバッグビルドです。GitHub リリースの APK は別個にインストールされます。</string>
+    <string name="updates_link_copied">ブラウザーが見つかりませんでした。アップデートリンクをクリップボードにコピーしました。</string>
+    <string name="updates_browser_unavailable">アップデートリンクを開けるブラウザーが見つかりませんでした。</string>
+    <string name="bulk_install_choose_files">ファイル</string>
+    <string name="bulk_install_choose_folder">フォルダー</string>
+    <string name="bulk_install_unreadable_archives">読み取れないアーカイブ: <xliff:g id="count" example="3">%1$d</xliff:g></string>
+    <string name="bulk_install_skipped_entries">スキップされたファイルまたはアーカイブ項目: <xliff:g id="count" example="3">%1$d</xliff:g></string>
+    <string name="bulk_install_selection_options" tools:ignore="MissingTranslation">選択オプション</string>
+    <string name="bulk_install_show_details" tools:ignore="MissingTranslation">詳細を表示</string>
+    <string name="bulk_install_hide_details" tools:ignore="MissingTranslation">詳細を非表示</string>
+    <string name="bulk_install_filter_all">すべて</string>
+    <string name="bulk_install_filter_selected">選択中</string>
+    <string name="bulk_install_filter_review">要確認</string>
+    <string name="bulk_install_empty_filter">一致するアプリがありません。</string>
+    <string name="platform_package_choice_title" tools:ignore="MissingTranslation">Java ME パッケージを検出</string>
+    <string name="platform_package_choice_message" tools:ignore="MissingTranslation">このリンクは Java ME パッケージを指しています。どのように開きますか？</string>
+    <string name="platform_package_install" tools:ignore="MissingTranslation">JL-Mod Plus でインストール</string>
+    <string name="platform_package_browser" tools:ignore="MissingTranslation">ブラウザーで開く</string>
+    <string name="platform_package_unavailable" tools:ignore="MissingTranslation">このリンクを開けるアプリが見つかりませんでした。</string>
+    <string name="installer_running_update_warning" tools:ignore="MissingTranslation">このアプリは現在実行中です。インストールすると、ファイルを置き換える前にアプリを停止します。未保存の進行状況は失われる場合があります。</string>
+    <string name="library_metadata_main_icon">メイン</string>
+    <string name="library_metadata_follows_main">メインアイコンを使用</string>
+    <string name="library_metadata_change">変更</string>
+    <string name="library_metadata_remove_portrait">3:4 アイコンを削除</string>
+    <string name="library_metadata_discard_title">変更を破棄しますか？</string>
+    <string name="library_metadata_discard">破棄</string>
+    <string name="library_metadata_default_description">デフォルトの説明</string>
+    <string name="library_metadata_other_languages">その他の言語</string>
+    <string name="library_metadata_add_language">+ 言語を追加</string>
+    <string name="library_metadata_language_search">言語またはロケールコードを検索</string>
+    <string name="library_metadata_remove_language">説明を削除</string>
+    <string name="library_metadata_language_load_failed">言語別の説明を読み込めませんでした。「再試行」をタップしてもう一度お試しください。</string>
+    <string name="updates_download_apk" tools:ignore="MissingTranslation">APK をダウンロード</string>
+    <string name="updates_skip_version" tools:ignore="MissingTranslation">このバージョンをスキップ</string>
+    <string name="updates_dialog_message" tools:ignore="MissingTranslation">JL-Mod Plus <xliff:g id="version" example="2.1.0">%1$s</xliff:g> が利用可能です（現在使用中: <xliff:g id="current_version" example="2.0.0">%2$s</xliff:g>）。APK をダウンロードするか、GitHub でリリースを確認してください。</string>
+    <string name="library_bundle_components_title" tools:ignore="MissingTranslation">バンドルをエクスポート</string>
+    <string name="library_bundle_components_explanation" tools:ignore="MissingTranslation">選択したアプリは常に含まれます。エクスポート前に実行中の MIDlet をすべて閉じ、追加で含めるデータを選択してください。</string>
+    <string name="library_bundle_config" tools:ignore="MissingTranslation">設定</string>
+    <string name="library_bundle_save_data" tools:ignore="MissingTranslation">セーブデータ</string>
+    <string name="library_bundle_saved_variables" tools:ignore="MissingTranslation">ブックマーク</string>
+    <string name="library_bundle_export" tools:ignore="MissingTranslation">エクスポート</string>
+    <string name="library_export_jar_only" tools:ignore="MissingTranslation">JAR のみ</string>
+    <string name="library_export_jars_only" tools:ignore="MissingTranslation">JAR のみ（ZIP）</string>
+    <string name="library_selection_action_delete" tools:ignore="MissingTranslation">削除</string>
+    <string name="library_selection_action_collection" tools:ignore="MissingTranslation">コレクション</string>
+    <string name="library_selection_action_export" tools:ignore="MissingTranslation">エクスポート</string>
+    <string name="library_selection_action_reinstall" tools:ignore="MissingTranslation">再インストール</string>
+    <string name="installer_select_companion_jar" tools:ignore="MissingTranslation">この JAD は別の JAR ファイルを参照しています。続行するには一致する JAR を選択してください。外部ファイルプロバイダーでは同じフォルダー内のファイルへアクセスできません。</string>
+    <string name="installer_select_jar" tools:ignore="MissingTranslation">JAR を選択</string>
+    <string name="installer_wrong_companion_jar" tools:ignore="MissingTranslation">この JAR は選択した JAD と一致しません。JAD の設定を保持するには、一致する JAR を選択してください。</string>
+    <string name="installer_choose_another_jar" tools:ignore="MissingTranslation">別の JAR を選択</string>
+    <string name="library_app_more_actions" tools:ignore="MissingTranslation"><xliff:g id="name" example="Example">%1$s</xliff:g> のその他の操作</string>
+    <string name="library_actions_group_customize" tools:ignore="MissingTranslation">カスタマイズ</string>
+    <string name="library_actions_group_organize" tools:ignore="MissingTranslation">整理</string>
+    <string name="library_actions_group_transfer" tools:ignore="MissingTranslation">転送とメンテナンス</string>
+    <string name="library_collection_more_actions" tools:ignore="MissingTranslation">コレクション「<xliff:g id="collection_name" example="Favorites">%1$s</xliff:g>」のその他の操作</string>
+    <string name="library_settings_preferences" tools:ignore="MissingTranslation">アプリの設定</string>
+    <string name="library_settings_section_maintenance" tools:ignore="MissingTranslation">アップデートと診断</string>
+    <string name="library_settings_section_support" tools:ignore="MissingTranslation">このアプリについて・支援</string>
+    <string name="library_details_title" tools:ignore="MissingTranslation">MIDlet の詳細</string>
+    <string name="library_details_description" tools:ignore="MissingTranslation">説明</string>
+    <string name="library_details_play_stats" tools:ignore="MissingTranslation">プレイ統計</string>
+    <string name="library_details_launches" tools:ignore="MissingTranslation">起動回数</string>
+    <string name="library_details_total_time" tools:ignore="MissingTranslation">合計時間</string>
+    <string name="library_details_last_played" tools:ignore="MissingTranslation">最終プレイ</string>
+    <string name="library_details_library_info" tools:ignore="MissingTranslation">ライブラリ情報</string>
+    <string name="library_details_added" tools:ignore="MissingTranslation">ライブラリへの追加日</string>
+    <string name="library_details_collections" tools:ignore="MissingTranslation">コレクション</string>
+    <string name="library_details_none" tools:ignore="MissingTranslation">なし</string>
+    <string name="library_details_technical" tools:ignore="MissingTranslation">技術情報</string>
+    <string name="library_details_profile" tools:ignore="MissingTranslation">プロファイル</string>
+    <string name="library_details_configuration" tools:ignore="MissingTranslation">設定</string>
+    <string name="library_details_jar_size" tools:ignore="MissingTranslation">保持中の JAR サイズ</string>
+    <string name="library_details_entry_points" tools:ignore="MissingTranslation">MIDlet エントリー</string>
+    <string name="library_details_original_metadata" tools:ignore="MissingTranslation">元のメタデータ</string>
+    <string name="library_details_name" tools:ignore="MissingTranslation">名前</string>
+    <string name="library_details_vendor" tools:ignore="MissingTranslation">ベンダー</string>
+    <string name="library_details_version" tools:ignore="MissingTranslation">バージョン</string>
+    <string name="library_details_version_value" tools:ignore="MissingTranslation">バージョン <xliff:g id="version" example="2.1.0">%1$s</xliff:g></string>
+    <string name="library_details_original_description" tools:ignore="MissingTranslation">元の説明</string>
+    <string name="library_details_permissions" tools:ignore="MissingTranslation">宣言された権限</string>
+    <string name="library_details_required" tools:ignore="MissingTranslation">必須</string>
+    <string name="library_details_optional" tools:ignore="MissingTranslation">任意</string>
+    <string name="library_details_no_permissions" tools:ignore="MissingTranslation">宣言された権限はありません</string>
+    <string name="library_details_descriptor_attributes" tools:ignore="MissingTranslation">ディスクリプター属性</string>
+    <string name="library_details_unavailable" tools:ignore="MissingTranslation">利用不可</string>
+    <string name="library_details_action" tools:ignore="MissingTranslation">詳細</string>
+    <string name="library_details_view_details" tools:ignore="MissingTranslation">詳細を表示</string>
+    <string name="library_actions_more" tools:ignore="MissingTranslation">その他の操作</string>
+    <string name="library_actions_less" tools:ignore="MissingTranslation">表示を減らす</string>
+</resources>

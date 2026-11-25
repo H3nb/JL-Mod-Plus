@@ -1,0 +1,212 @@
+<?xml version="1.0" encoding="utf-8"?>
+<!-- Rendering pipeline, internal resolution, bitmap upscaling, shaders, and built-in visual effects. -->
+<resources xmlns:tools="http://schemas.android.com/tools" xmlns:xliff="urn:oasis:names:tc:xliff:document:1.2">
+    <string name="identity_filter">Ingen (hurtigst)</string>
+    <string name="invalid_resolution_not_saved">Ugyldig opløsning. Forudindstillingen blev ikke gemt.</string>
+    <string name="msg_error_loading_shader">Ikke-understøttet shader. Bruger standardshaderen.</string>
+    <string name="parallel_screen_redrawing">Asynkrone skærmopdateringer</string>
+    <string name="shader_tuning">Shaderjustering</string>
+    <string name="SWAP_SIZES">Ombyt bredde og højde</string>
+    <string name="fps_limit_maximum">Maksimum</string>
+    <string name="remove_screen_preset">Fjern opløsningsforudindstilling</string>
+    <string name="perf_overlay_position_help">Vælg et hjørne.</string>
+    <string name="perf_overlay_top_left">Øverst til venstre</string>
+    <string name="perf_overlay_top_right">Øverst til højre</string>
+    <string name="perf_overlay_bottom_left">Nederst til venstre</string>
+    <string name="perf_overlay_bottom_right">Nederst til højre</string>
+    <string name="internal_resolution_title" tools:ignore="MissingTranslation">Gengivelsesopløsning</string>
+    <string name="internal_resolution_auto" tools:ignore="MissingTranslation">Automatisk</string>
+    <string name="internal_resolution_description" tools:ignore="MissingTranslation">Gengiver understøttet 2D og 3D med højere detaljerigdom. Automatisk tilpasser sig spillets visningsområde; genstart for at anvende.</string>
+    <string name="bitmap_upscaling_title" tools:ignore="MissingTranslation">Bitmap-opskalering</string>
+    <string name="bitmap_upscaling_description" tools:ignore="MissingTranslation">Opskalerer uforanderlige 2D-sprites og uigennemsigtige Micro3D-modelteksturer med MMPX eller xBR Lv3. M3G-teksturer forbliver uændrede; genstart for at anvende.</string>
+    <string name="bitmap_upscaling_nearest" tools:ignore="MissingTranslation">Nærmeste nabo</string>
+    <string name="bitmap_upscaling_bilinear" tools:ignore="MissingTranslation">Bilineær</string>
+    <string name="bitmap_upscaling_mmpx" tools:ignore="MissingTranslation">MMPX</string>
+    <string name="bitmap_upscaling_edge_aware" tools:ignore="MissingTranslation">xBR Lv3</string>
+    <!-- Prototyping only: localized UI copy is pending design review. -->
+    <string name="render_shader_effects">Shadereffekter</string>
+    <string name="render_pipeline_title">Gengivelsespipeline</string>
+    <string name="render_shader_preset">Shaderforudindstilling</string>
+    <string name="render_shader_picker_help">Kombiner indbyggede og dine egne ældre shaders i en ordnet effektstak.</string>
+    <string name="render_shader_requires_gles">Shaders gemmes, men anvendes kun, når OpenGL ES er valgt.</string>
+    <string name="render_shader_missing">Den valgte shader findes ikke i biblioteket. Vælg en anden forudindstilling, eller gendan dens filer.</string>
+    <string name="render_shader_parameters">Shaderparametre</string>
+    <string name="render_shader_reset_parameters">Nulstil parametre</string>
+    <string name="render_shader_passes">Shadertrin</string>
+    <string name="render_shader_pass_count"><xliff:g id="count" example="2">%1$d</xliff:g> trin</string>
+    <string name="render_shader_pass_hint">Se trinnene fra den valgte GLSLP-forudindstilling.</string>
+    <string name="render_pass_filter">Inputfiltrering</string>
+    <string name="render_pass_output">Outputstørrelse (bredde × højde)</string>
+    <string name="render_pipeline_unavailable">Forudindstilling ikke tilgængelig</string>
+    <string name="render_game_output">Spiloutput</string>
+    <string name="render_logical_screen_help">Logisk størrelse, der rapporteres til spillet.</string>
+    <string name="render_internal_resolution">Intern opløsning</string>
+    <string name="render_internal_unavailable">Kun oprindelig (1×). Højere gengivelsesopløsninger er ikke tilgængelige for denne konfiguration.</string>
+    <string name="render_display_renderer">Præsentationsgengiver</string>
+    <string name="render_shader_processing">Shaderbehandling</string>
+    <string name="render_display_scaling">Skærmskalering</string>
+    <string name="render_display_viewport">Spillets visningsområde</string>
+    <string name="render_texture_filtering">Skærmskaleringsfilter</string>
+    <string name="render_texture_filtering_help">Vælger Nærmeste eller Lineær for det færdige spilbillede. Effekter kan tilsidesætte dette.</string>
+    <string name="render_viewport_note">Visningsområdets størrelse bestemmes ud fra skærmlayoutet, før shadertrin planlægges. Pilene viser billedflowet, ikke rækkefølgen af layoutberegninger.</string>
+    <string name="render_pipeline_help">Se, hvordan spilbilledet når skærmen, og rediger hvert trin.</string>
+    <string name="render_no_shader">Vælg en forudindstilling for at ændre spillets udseende.</string>
+    <string name="render_shader_adjust">Juster parametre</string>
+    <string name="render_legacy_tuning_hint">Finjuster denne ældre effekt.</string>
+    <string name="render_shader_customization">Tilpas</string>
+    <string name="render_adjustable_count">Justerbare parametre: <xliff:g id="count" example="3">%1$d</xliff:g></string>
+    <string name="render_pass_summary"><xliff:g id="count" example="3">%1$d</xliff:g> trin · Defineret af forudindstillingen</string>
+    <string name="render_shader_preset_note">Shadertrin defineres af forudindstillingen. Du kan inspicere dem uden at ændre deres rækkefølge.</string>
+    <string name="render_parameters_hint">Flyt en skyder for at justere værdien. Ændringer gemmes, når du slipper den.</string>
+    <string name="render_pass_readonly">Trinnene kører i denne rækkefølge. Inputfiltrering og outputskalering kommer fra den valgte forudindstilling.</string>
+    <string name="render_pipeline_intro">Vejen fra spillets billedbuffer til din skærm.</string>
+    <string name="render_native_short">Oprindelig (1×)</string>
+    <string name="render_expand_passes">Vis trin</string>
+    <string name="render_collapse_passes">Skjul trin</string>
+    <string name="render_view_all_passes">Trindetaljer</string>
+    <string name="render_pipeline_filter_summary">Teksturfiltrering: <xliff:g id="shader_name" example="CRT Classic">%1$s</xliff:g></string>
+    <string name="render_pipeline_note">Skærmlayoutet bestemmer visningsområdet, før shadertrin planlægges. Trinnene viser billedflowet.</string>
+    <string name="render_shader_change">Vælg en anden effekt</string>
+    <string name="render_custom_pipeline">Tilpasset pipeline</string>
+    <string name="render_custom_pipeline_hint">Kombiner enkeltstående GLSL-shaders fra din shadermappe.</string>
+    <string name="render_custom_order_help">Effekter kører fra top til bund. Nedarvede GLSLP-indstillinger forbliver aktive, medmindre de ændres.</string>
+    <string name="render_custom_empty">Tilføj en shader for at starte en tilpasset kæde.</string>
+    <string name="render_custom_stage_count"><xliff:g id="count" example="3">%1$d</xliff:g> tilpassede shadertrin</string>
+    <string name="render_custom_add">Tilføj shader</string>
+    <string name="render_custom_add_hint">Vælg en ekstern enkeltstående .glsl-kilde.</string>
+    <string name="render_custom_no_sources">Ingen ældre shaders fundet. Tilføj .ini-shaderfiler til mappen shaders, og åbn indstillingerne igen.</string>
+    <string name="render_custom_scale">Output: <xliff:g id="scale" example="2">%1$d</xliff:g>× forrige trin</string>
+    <string name="render_custom_output_scale">Outputstørrelse til næste trin</string>
+    <string name="render_custom_final_viewport">Endeligt output: vist på skærmen</string>
+    <string name="render_custom_filter">Inputfilter: <xliff:g id="shader_name" example="CRT Classic">%1$s</xliff:g></string>
+    <string name="render_custom_up">Op</string>
+    <string name="render_custom_down">Ned</string>
+    <string name="render_custom_remove">Fjern</string>
+    <string name="render_custom_cancel">Annuller</string>
+    <string name="render_custom_save">Gem</string>
+    <string name="render_custom_default">Standard</string>
+    <string name="render_custom_nearest">Nærmeste</string>
+    <string name="render_custom_linear">Lineær</string>
+    <string name="render_custom_checking">Kontrollerer shaderfiler…</string>
+    <string name="render_active_shader">Aktiv effekt</string>
+    <string name="render_shader_off">Fra</string>
+    <string name="render_edit_custom_pipeline">Rediger shaderkæde</string>
+    <string name="render_shader_unavailable">Ikke tilgængelig: <xliff:g id="shader_name" example="CRT Classic">%1$s</xliff:g></string>
+    <string name="render_no_shader_sources">Ingen shaders fundet. Tilføj ældre .ini-shaderfiler til mappen shaders, og åbn indstillingerne igen.</string>
+    <string name="render_shader_mode">Shadertilstand</string>
+    <string name="render_mode_selected">Valgt</string>
+    <string name="render_gles_shader_default">OpenGL ES bruger det oprindelige spilbillede, når shadereffekter er slået fra.</string>
+    <string name="render_shader_off_help">Ingen ekstra visuelle effekter.</string>
+    <string name="render_legacy_mode">Ældre shader</string>
+    <string name="render_legacy_mode_help">Vælg en .ini-fil fra mappen shaders.</string>
+    <string name="render_legacy_empty">Ingen brugbare shaderdefinitioner i denne .ini-fil.</string>
+    <string name="render_legacy_select_variant">Vælg en ældre shader</string>
+    <string name="render_legacy_variant_description">Shaderdefinition i den valgte .ini-fil</string>
+    <string name="render_preset_mode">GLSLP-forudindstilling</string>
+    <string name="render_preset_mode_help">Indlæs en komplet .glslp-pipeline med egne trin.</string>
+    <string name="render_custom_pass_count">Antal trin</string>
+    <string name="render_custom_pass_number">Trin <xliff:g id="number" example="1">%1$d</xliff:g></string>
+    <string name="render_custom_pick_file">Vælg GLSL-fil</string>
+    <string name="render_custom_add_pass">Forøg antal shadertrin</string>
+    <string name="render_custom_remove_pass">Reducer antal shadertrin</string>
+    <string name="render_shader_selected_name">Aktiv: <xliff:g id="shader_name" example="CRT Classic">%1$s</xliff:g></string>
+    <string name="render_shader_invalid_picker">Den valgte fil kan ikke bruges. Vælg en ældre .ini-fil i mappen shaders.</string>
+    <string name="render_custom_mode">Shadertype</string>
+    <string name="render_custom_mode_legacy">Ældre</string>
+    <string name="render_custom_mode_glsl">GLSL</string>
+    <string name="render_custom_pick_legacy">Vælg ældre shader</string>
+    <string name="render_custom_preserve_size">Output: Fra forudindstilling</string>
+    <string name="render_custom_loading">Indlæser forudindstillingstrin…</string>
+    <string name="render_custom_start_fresh">Start uden forudindstilling (kasser nedarvede indstillinger)</string>
+    <string name="render_effect_default_settings">Standardindstillinger</string>
+    <string name="render_effect_summary_more">+<xliff:g id="count" example="2">%1$d</xliff:g> mere</string>
+    <string name="render_effect_legacy_author">Af <xliff:g id="shader_name" example="CRT Classic">%1$s</xliff:g></string>
+    <string name="render_effect_legacy_source">Kilde: <xliff:g id="shader_name" example="CRT Classic">%1$s</xliff:g></string>
+    <string name="render_effect_removed">Effekt fjernet</string>
+    <string name="render_effect_undo">Fortryd</string>
+    <string name="render_effect_catalog_hint">Tryk på en effekt for at føje den til stakken.</string>
+    <string name="render_effect_user_folder_hint">INI-, VSH- og FSH-filer skal ligge i mappen shaders.</string>
+    <string name="render_effect_legacy_scale_note">Ældre shaders gengives i skærmens visningsområde; OutputResolution- og Upscaling-flag i .ini-filen ignoreres.</string>
+    <string name="render_effect_legacy_metadata_missing">Indstillinger fra denne shaders .ini-fil blev ikke fundet. Dens kildefiler kan muligvis stadig gengives.</string>
+    <string name="render_effect_count"><xliff:g id="count" example="2">%1$d</xliff:g> aktive</string>
+    <string name="render_effect_add">Tilføj effekt</string>
+    <string name="render_effect_builtin">Indbyggede effekter</string>
+    <string name="render_effect_user">Mine shaders</string>
+    <string name="render_effect_user_add">Gennemse .ini-filer</string>
+    <string name="render_effect_user_empty">Ingen ældre shaders fundet i mappen shaders.</string>
+    <string name="render_effect_user_file">Vælg en ældre .ini-fil</string>
+    <string name="render_effect_empty">Tilføj en effekt for at tilpasse spillets udseende.</string>
+    <string name="render_effect_hint">Effekter kører fra top til bund. Hold og træk for at ændre rækkefølgen.</string>
+    <string name="render_effect_move_up">Flyt op</string>
+    <string name="render_effect_move_down">Flyt ned</string>
+    <string name="render_effect_remove">Fjern effekt</string>
+    <string name="render_effect_no_parameters">Denne effekt har ingen justerbare parametre.</string>
+    <string name="render_effect_parameter_number">Parameter <xliff:g id="count" example="2">%1$d</xliff:g></string>
+    <string name="render_effect_restore">Nulstil parametre</string>
+    <string name="render_effect_missing">Ikke tilgængelig: <xliff:g id="shader_name" example="CRT Classic">%1$s</xliff:g>. Denne indbyggede effekt findes ikke i denne version. Fjern den fra stakken.</string>
+    <string name="render_effect_limit">Stakken understøtter op til 16 shadertrin (nogle effekter bruger flere trin).</string>
+    <string name="render_effect_unavailable">Shadereffekter kunne ikke køre. Viser det oprindelige spilbillede. Prøv færre effekter eller en lavere gengivelsesopløsning.</string>
+    <string name="render_bitmap_memory_reduced">Bitmap-opskalering løb tør for hukommelse. Oprindelige billeder eller en lavere skala bruges. Prøv en lavere gengivelsesopløsning eller frigør hukommelse, og genstart derefter.</string>
+    <string name="render_texture_memory_reduced">Opskalering af Micro3D-teksturer mislykkedes. Oprindelige teksturer bruges. Prøv en lavere gengivelsesopløsning eller frigør hukommelse, og genstart derefter.</string>
+    <string name="render_resolution_reduced">Gengivelsesopløsning reduceret fra <xliff:g id="from_scale" example="4">%1$d</xliff:g>× til <xliff:g id="to_scale" example="2">%2$d</xliff:g>× på grund af hukommelses- eller GPU-grænser. Prøv en lavere indstilling eller frigør hukommelse, og genstart derefter.</string>
+    <string name="render_gpu_texture_limit">Dette billede er for stort til GPU’en selv ved 1×. Prøv en mindre spilopløsning, eller skift grafiktilstand.</string>
+    <string name="render_gpu_upload_failed">Spilbilledet kunne ikke uploades til GPU’en. Prøver igen. Prøv at lukke andre apps eller skifte grafiktilstand.</string>
+    <string name="render_effect_gles">Effekter gemmes, men gengives kun med OpenGL ES.</string>
+    <string name="render_effect_legacy_file_error">Der kunne ikke indlæses en gyldig ældre shader fra den valgte .ini-fil.</string>
+    <string name="effect_color">Farvejustering</string>
+    <string name="effect_color_desc">Juster lysstyrke, kontrast, mætning, gamma, farvetone og monokrom.</string>
+    <string name="effect_vignette">Vignet</string>
+    <string name="effect_vignette_desc">Gør kanterne mørkere for at lede fokus mod midten.</string>
+    <string name="effect_sharpen">Skarphed</string>
+    <string name="effect_sharpen_desc">Fremhæver detaljer og kanter i billedet.</string>
+    <string name="effect_cartoon">Blød tegneserie</string>
+    <string name="effect_cartoon_desc">Forenkler farveovergange og tilføjer bløde konturer.</string>
+    <string name="effect_bloom">Bloom</string>
+    <string name="effect_bloom_desc">Tilføjer en blød glød omkring lyse områder i billedet.</string>
+    <string name="effect_crt_classic">CRT Classic</string>
+    <string name="effect_crt_classic_desc">Efterligner et CRT-tv med scanningslinjer og et RGB-mønster.</string>
+    <string name="effect_crt_beam">Strålesmalhed</string>
+    <string name="effect_brightness">Lysstyrke</string>
+    <string name="effect_contrast">Kontrast</string>
+    <string name="effect_saturation">Mætning</string>
+    <string name="effect_strength">Styrke</string>
+    <string name="effect_color_levels">Farveniveauer</string>
+    <string name="effect_edge">Kantintensitet</string>
+    <string name="effect_threshold">Lysstyrketærskel</string>
+    <string name="effect_radius">Sløringsradius</string>
+    <string name="effect_mask_strength">Maskestyrke</string>
+    <string name="effect_scan_strength">Scanningslinjestyrke</string>
+    <string name="effect_bright_boost">Lysstyrkeforstærkning</string>
+    <string name="effect_lcd">LCD</string>
+    <string name="effect_lcd_desc">Efterligner pixelgitteret og subpixels på en klassisk farve-LCD.</string>
+    <string name="effect_lcd_grid">Gitterstyrke</string>
+    <string name="effect_lcd_subpixel">RGB-subpixels</string>
+    <string name="effect_lcd_brightness">LCD-lysstyrke</string>
+    <string name="effect_scanlines">Scanningslinjer (let)</string>
+    <string name="effect_scanlines_desc">Tilføjer diskrete vandrette linjer som på en CRT-skærm.</string>
+    <string name="effect_line_width">Linjesmalhed</string>
+    <string name="effect_gamma">Gamma</string>
+    <string name="effect_temperature">Temperatur</string>
+    <string name="effect_tint">Farvetone</string>
+    <string name="effect_monochrome">Monokrom</string>
+    <string name="effect_depth">Farvedybde og dithering</string>
+    <string name="effect_depth_desc">Begrænser farvepaletten med valgfri dithering for et retrolook.</string>
+    <string name="effect_depth_format">Skærmfarveformat</string>
+    <string name="effect_depth_rgb444">RGB444 · 4.096 farver</string>
+    <string name="effect_depth_rgb565">RGB565 · 65.536 farver</string>
+    <string name="effect_depth_rgb666">RGB666 · 262.144 farver</string>
+    <string name="effect_dither_mode">Dithering-mønster</string>
+    <string name="effect_dither_none">Fra</string>
+    <string name="effect_dither_bayer4">Bayer 4×4</string>
+    <string name="effect_dither_bayer8">Bayer 8×8</string>
+    <string name="effect_dither_strength">Dithering-styrke</string>
+    <string name="effect_mono_display">Monokrom skærm</string>
+    <string name="effect_mono_display_desc">Efterligner sort-hvide, grønne eller ravgule skærme med 2 eller 4 nuancer.</string>
+    <string name="effect_mono_palette">LCD-farve</string>
+    <string name="effect_mono_bw">Sort-hvid</string>
+    <string name="effect_mono_green">Grøn LCD</string>
+    <string name="effect_mono_amber">Ravgul LCD</string>
+    <string name="effect_mono_tones">Antal nuancer</string>
+    <string name="effect_mono_two">2 nuancer</string>
+    <string name="effect_mono_four">4 nuancer</string>
+</resources>

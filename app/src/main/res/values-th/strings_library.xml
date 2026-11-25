@@ -1,0 +1,444 @@
+<?xml version="1.0" encoding="utf-8"?>
+<!-- MIDlet library, collections, metadata editor, bulk/single installer, file picker, and app updates. -->
+<resources xmlns:tools="http://schemas.android.com/tools" xmlns:xliff="urn:oasis:names:tc:xliff:document:1.2">
+    <string name="action_context_delete">ลบ</string>
+    <string name="action_context_rename">เปลี่ยนชื่อ</string>
+    <string name="action_context_shortcut">เพิ่มทางลัด</string>
+    <string name="action_reinstall">ติดตั้งใหม่</string>
+    <string name="alert_msg_workdir_not_exists">ไม่พบโฟลเดอร์ทำงาน:\n<xliff:g id="path" example="/storage/emulated/0/JL-Mod-Plus">%1$s</xliff:g>\nต้องการสร้างโฟลเดอร์นี้หรือเลือกโฟลเดอร์อื่น?</string>
+    <string name="converting_wait">กำลังแปลงไฟล์ JAR…</string>
+    <string name="create_apps_dir_failed">ไม่สามารถเตรียมโฟลเดอร์ทำงานที่:\n<xliff:g id="path" example="/storage/emulated/0/JL-Mod-Plus">%1$s</xliff:g>\nโปรดเลือกโฟลเดอร์อื่น</string>
+    <string name="install_done">ติดตั้งแอปแล้ว</string>
+    <string name="install_done_with_warning">ติดตั้งแอปแล้วพร้อมคำเตือน</string>
+    <string name="installer_title">ตัวติดตั้ง MIDlet</string>
+    <string name="installer_error_message">ไม่สามารถติดตั้งแอปที่เลือกได้ เลือกไฟล์ MIDlet ที่ถูกต้องแล้วลองอีกครั้ง</string>
+    <string name="install_jar_non_matched_jad">แอปนี้แตกต่างจากที่ระบุไว้ในไฟล์ JAD\nละเว้นไฟล์ JAD แล้วติดตั้งต่อไปหรือไม่?</string>
+    <string name="file_picker_select_file">เลือกไฟล์</string>
+    <string name="file_picker_select_folder">เลือกโฟลเดอร์</string>
+    <string name="file_picker_select_app_bundle">เลือกชุดไฟล์แอป</string>
+    <string name="file_picker_select_icon">เลือกไอคอน</string>
+    <string name="file_picker_navigate_back">กลับไปยังโฟลเดอร์หลัก</string>
+    <string name="file_picker_cancel">ยกเลิก</string>
+    <string name="file_picker_search">ค้นหา</string>
+    <string name="file_picker_sort">เรียงลำดับ</string>
+    <string name="file_picker_select_all">เลือกไฟล์ทั้งหมดในโฟลเดอร์นี้</string>
+    <string name="file_picker_unselect_all">ยกเลิกการเลือกไฟล์ทั้งหมดในโฟลเดอร์นี้</string>
+    <string name="file_picker_sort_type">โฟลเดอร์ก่อน</string>
+    <string name="file_picker_sort_name_ascending">ชื่อ ก–ฮ / A–Z</string>
+    <string name="file_picker_sort_name_descending">ชื่อ ฮ–ก / Z–A</string>
+    <string name="file_picker_sort_modified_newest">วันที่แก้ไข: ใหม่สุด</string>
+    <string name="file_picker_sort_modified_oldest">วันที่แก้ไข: เก่าสุด</string>
+    <string name="file_picker_choose">เลือก</string>
+    <string name="file_picker_current_folder">โฟลเดอร์ปัจจุบัน</string>
+    <string name="file_picker_parent_folder">โฟลเดอร์หลัก</string>
+    <string name="file_picker_file">ไฟล์</string>
+    <string name="file_picker_preview_named">ดูตัวอย่าง <xliff:g id="name" example="Example">%1$s</xliff:g></string>
+    <string name="file_picker_preview_unavailable">ไม่มีตัวอย่าง</string>
+    <string name="file_picker_storage_volume">วอลุ่มจัดเก็บข้อมูล</string>
+    <string name="file_picker_empty">ไม่พบไฟล์ที่ตรงกัน</string>
+    <string name="file_picker_empty_folder">ไม่พบโฟลเดอร์</string>
+    <string name="file_picker_no_matches">ไม่พบรายการที่ตรงกัน</string>
+    <string name="file_picker_permission_required">ต้องได้รับสิทธิ์เข้าถึงพื้นที่จัดเก็บ</string>
+    <string name="file_picker_permission_message">อนุญาตการเข้าถึงพื้นที่จัดเก็บเพื่อเรียกดูไฟล์และโฟลเดอร์ในอุปกรณ์นี้</string>
+    <string name="file_picker_permission_denied">ไม่ได้รับสิทธิ์เข้าถึงพื้นที่จัดเก็บ</string>
+    <string name="file_picker_grant_access">อนุญาตการเข้าถึง</string>
+    <string name="file_picker_retry">ลองใหม่</string>
+    <string name="file_picker_load_failed">ไม่สามารถเปิดโฟลเดอร์นี้ได้</string>
+    <string name="file_picker_create_folder">โฟลเดอร์ใหม่</string>
+    <string name="file_picker_create_folder_title">สร้างโฟลเดอร์</string>
+    <string name="file_picker_folder_name">ชื่อโฟลเดอร์</string>
+    <string name="file_picker_invalid_folder_name">ป้อนชื่อโฟลเดอร์ที่ถูกต้อง</string>
+    <string name="file_picker_folder_exists">มีรายการชื่อนี้อยู่แล้ว</string>
+    <string name="file_picker_create_folder_failed">ไม่สามารถสร้างโฟลเดอร์ได้</string>
+    <string name="file_picker_selection_unavailable">รายการที่เลือกไม่พร้อมใช้งานแล้ว</string>
+    <string name="loading_apps">กำลังโหลดแอป</string>
+    <string name="message_delete">ลบแอปนี้ การตั้งค่า และข้อมูลบันทึกหรือไม่? ระบบจะนำแอปออกจากคลังแอปของคุณด้วย</string>
+    <string name="msg_no_matches">ไม่พบผลลัพธ์สำหรับ “<xliff:g id="query" example="Bounce">%1$s</xliff:g>”</string>
+    <string name="library_destination_apps">แอปทั้งหมด</string>
+    <string name="library_destination_collections">คอลเลกชัน</string>
+    <string name="library_scope_picker_title" tools:ignore="MissingTranslation">เรียกดูแอป</string>
+    <string name="library_destination_more">เพิ่มเติม</string>
+    <string name="library_search_placeholder">ค้นหาแอป…</string>
+    <string name="library_filter_all">ทั้งหมด</string>
+    <string name="library_filter_recently_opened">เปิดล่าสุด</string>
+    <string name="library_filter_recently_added">เพิ่มล่าสุด</string>
+    <string name="library_filter_favorites">รายการโปรด</string>
+    <string name="library_add_to_favorites_action">เพิ่มในรายการโปรด</string>
+    <string name="library_remove_from_favorites_action">นำออกจากรายการโปรด</string>
+    <string name="library_favorite_coming_soon">รายการโปรดไม่พร้อมใช้งาน</string>
+    <string name="library_vendor_version"><xliff:g id="vendor" example="Nokia">%1$s</xliff:g> · <xliff:g id="version" example="1.0">%2$s</xliff:g></string>
+    <string name="library_view_list">รายการ</string>
+    <string name="library_view_grid">ตาราง</string>
+    <string name="library_icon_ratio_title">สัดส่วนไอคอน</string>
+    <string name="library_icon_ratio_square">สี่เหลี่ยมจัตุรัส (1:1)</string>
+    <string name="library_icon_ratio_portrait">แนวตั้ง (3:4)</string>
+    <string name="library_icon_shape_title">รูปร่างไอคอน</string>
+    <string name="library_icon_shape_round">มุมโค้งมน</string>
+    <string name="library_icon_shape_square">มุมเหลี่ยม</string>
+    <string name="library_grid_icon_size_title" tools:ignore="MissingTranslation">ขนาดไอคอนในตาราง</string>
+    <string name="library_grid_icon_size_small" tools:ignore="MissingTranslation">เล็ก</string>
+    <string name="library_grid_icon_size_standard" tools:ignore="MissingTranslation">มาตรฐาน</string>
+    <string name="library_grid_icon_size_large" tools:ignore="MissingTranslation">ใหญ่</string>
+    <string name="library_grid_icon_size_summary" tools:ignore="MissingTranslation">เปลี่ยนขนาดไอคอนและจำนวนคอลัมน์ในมุมมอง ตาราง</string>
+    <string name="library_grid_spacing_title">ระยะห่างตาราง</string>
+    <string name="library_grid_spacing_summary" tools:ignore="MissingTranslation">ใช้ได้เฉพาะมุมมอง ตาราง เท่านั้น</string>
+    <string name="library_grid_spacing_none">ไม่มี (0 dp)</string>
+    <string name="library_grid_spacing_compact">กระชับ (4 dp)</string>
+    <string name="library_grid_spacing_standard">มาตรฐาน (8 dp)</string>
+    <string name="library_grid_spacing_spacious">กว้าง (12 dp)</string>
+    <string name="library_hide_grid_titles">ซ่อนชื่อ MIDlet</string>
+    <string name="library_show_list_description">แสดงคำอธิบาย MIDlet</string>
+    <string name="library_collections_empty_title">ยังไม่มีคอลเลกชัน</string>
+    <string name="library_collections_empty_message">คอลเลกชันจะใช้งานได้เมื่อโหลดคลังแอปเสร็จสิ้น</string>
+    <string name="library_expand_description">ขยายคำอธิบาย</string>
+    <string name="library_collapse_description">ย่อคำอธิบาย</string>
+    <string name="no_data_for_display">ไม่มีแอปที่จะแสดง</string>
+    <string name="permission_request_failed">ต้องได้รับสิทธิ์เขียนพื้นที่จัดเก็บ</string>
+    <string name="reinstall">ติดตั้งแอปนี้ไว้แล้ว ต้องการติดตั้งใหม่หรือไม่?</string>
+    <string name="reinstall_newest">อัปเดตแอปนี้เป็นเวอร์ชัน <xliff:g id="version" example="2.1.0">%1$s</xliff:g> หรือไม่?\n\nเวอร์ชันที่ติดตั้งอยู่: <xliff:g id="current_version" example="2.0.0">%2$s</xliff:g></string>
+    <string name="reinstall_older">แทนที่แอปนี้ด้วยเวอร์ชัน <xliff:g id="version" example="2.1.0">%1$s</xliff:g> หรือไม่?\n\nเวอร์ชันที่ติดตั้งอยู่: <xliff:g id="current_version" example="2.0.0">%2$s</xliff:g>\nเวอร์ชันเก่ากว่าอาจทำงานไม่ถูกต้องกับข้อมูลที่มีอยู่</string>
+    <string name="warn_install_from_net">ไฟล์นี้จะถูกดาวน์โหลดจากอินเทอร์เน็ต</string>
+    <string name="installer_ambiguous">มีแอปที่ติดตั้งอยู่หลายรายการตรงกับแพ็กเกจนี้ ต้องการติดตั้งเป็นสำเนาแยกหรือไม่? แอปที่มีอยู่และข้อมูลจะยังคงอยู่</string>
+    <string name="installer_separate_copy">ติดตั้งเป็นสำเนาแยก</string>
+    <string name="installer_stage_download">กำลังดาวน์โหลดแอป…</string>
+    <string name="installer_stage_wait">กำลังรอการดำเนินการอื่น…</string>
+    <string name="installer_stage_save">กำลังบันทึกแอป…</string>
+    <string name="installer_failed_download">ไม่สามารถดาวน์โหลดแอปได้ ตรวจสอบการเชื่อมต่อและลิงก์ดาวน์โหลดแล้วลองอีกครั้ง</string>
+    <string name="installer_failed_storage">ไม่สามารถติดตั้งให้เสร็จสมบูรณ์ได้ โปรดลองอีกครั้ง</string>
+    <string name="installer_failed_conversion">ไม่สามารถแปลงแอปได้ ตรวจสอบว่าไฟล์สมบูรณ์และรองรับแล้วลองอีกครั้ง</string>
+    <string name="installer_needs_recovery">บันทึกไฟล์แอปแล้ว แต่ไม่สามารถอัปเดตคลังแอปให้เสร็จสมบูรณ์ได้ รีเฟรชคลังแอปก่อนลองอีกครั้ง</string>
+    <string name="installer_refresh_library">รีเฟรชคลังแอป</string>
+    <string name="installer_cancel_pending">กำลังหยุดเมื่อถึงจุดที่ปลอดภัยถัดไป…</string>
+    <string name="installer_retry_remaining">ตรวจสอบรายการที่ยังไม่เสร็จ</string>
+    <string name="installer_not_processed">ไม่ได้ประมวลผล</string>
+    <string name="installer_partial_restore">ติดตั้งแอปแล้ว แต่ไม่สามารถกู้คืนข้อมูลหรือการตั้งค่าได้</string>
+    <string name="installer_removed_leftovers">ลบแอปออกแล้ว แต่ไม่สามารถลบการตั้งค่าหรือข้อมูลบันทึกบางส่วนได้</string>
+    <string name="installer_copy_details">คัดลอกรายละเอียด</string>
+    <string name="installer_show_details">แสดงรายละเอียด</string>
+    <string name="installer_hide_details">ซ่อนรายละเอียด</string>
+    <!-- %1$d is the number of source Java class files skipped during conversion. -->
+    <plurals name="installer_conversion_warning_summary">
+        <item quantity="other">ข้ามไฟล์คลาส Java <xliff:g id="skipped_count" example="2">%1$d</xliff:g> ไฟล์เนื่องจากไม่สามารถอ่านได้ ฟีเจอร์ที่ใช้ไฟล์เหล่านี้อาจไม่ทำงาน</item>
+    </plurals>
+    <!-- %1$s is the source JAR entry path for the skipped class file. -->
+    <string name="installer_conversion_skipped_entry"><xliff:g id="entry_path" example="com/example/Broken.class">%1$s</xliff:g>\nปัญหา: ไม่สามารถอ่านไฟล์คลาส Java ได้\nการดำเนินการ: ข้ามระหว่างการแปลง</string>
+    <!-- %1$d is the number of additional bounded conversion diagnostics not shown. -->
+    <plurals name="installer_conversion_omitted_details">
+        <item quantity="other">ไม่ได้แสดงปัญหาการแปลงเพิ่มเติมอีก <xliff:g id="omitted_count" example="5">%1$d</xliff:g> รายการ</item>
+    </plurals>
+    <string name="library_collection_new">คอลเลกชันใหม่</string>
+    <string name="library_collection_ready_empty_message">สร้างคอลเลกชันเพื่อจัดระเบียบแอปโดยไม่ต้องย้ายไฟล์</string>
+    <string name="library_collection_add_app">เพิ่มในคอลเลกชัน</string>
+    <string name="library_collection_add_apps">เพิ่มแอป</string>
+    <string name="library_collection_manage_apps">เลือกแอป</string>
+    <string name="library_collection_manage" tools:ignore="MissingTranslation">จัดการคอลเลกชัน</string>
+    <string name="library_collection_delete_confirmation" tools:ignore="MissingTranslation">ลบ “<xliff:g id="collection_name" example="Favorites">%1$s</xliff:g>” หรือไม่? แอปในคอลเลกชันนี้จะยังคงติดตั้งอยู่</string>
+    <string name="library_collection_rename_action" tools:ignore="MissingTranslation">เปลี่ยนชื่อคอลเลกชัน <xliff:g id="collection_name" example="Favorites">%1$s</xliff:g></string>
+    <string name="library_collection_delete_action" tools:ignore="MissingTranslation">ลบคอลเลกชัน <xliff:g id="collection_name" example="Favorites">%1$s</xliff:g></string>
+    <string name="library_collection_select_action" tools:ignore="MissingTranslation">เลือกคอลเลกชัน <xliff:g id="collection_name" example="Favorites">%1$s</xliff:g></string>
+    <string name="library_collection_open_action" tools:ignore="MissingTranslation">เปิดคอลเลกชัน <xliff:g id="collection_name" example="Favorites">%1$s</xliff:g></string>
+    <string name="library_collection_rename_selected" tools:ignore="MissingTranslation">เปลี่ยนชื่อคอลเลกชันที่เลือก</string>
+    <string name="library_collection_delete_selected" tools:ignore="MissingTranslation">ลบคอลเลกชันที่เลือก</string>
+    <plurals name="library_collection_delete_many_confirmation">
+        <item quantity="other">ลบคอลเลกชัน <xliff:g id="count" example="3">%d</xliff:g> รายการหรือไม่? แอปจะยังคงติดตั้งอยู่</item>
+    </plurals>
+    <string name="library_notifications_title" tools:ignore="MissingTranslation">การแจ้งเตือน</string>
+    <string name="library_notifications_empty_title" tools:ignore="MissingTranslation">ยังไม่มีการแจ้งเตือน</string>
+    <string name="library_notifications_empty_summary" tools:ignore="MissingTranslation">การแจ้งเตือนอัปเดตแอปจะปรากฏที่นี่เมื่อมีพร้อมใช้งาน</string>
+    <string name="library_collection_manage_apps_summary">เลือกแอปที่ต้องการเพิ่มในคอลเลกชันนี้</string>
+    <string name="library_collection_name">ชื่อคอลเลกชัน</string>
+    <string name="library_collection_members_empty">ไม่มีแอปในคอลเลกชันนี้</string>
+    <string name="library_collection_select_title">เลือกคอลเลกชัน</string>
+    <string name="library_collection_select_message">เลือกคอลเลกชันเพื่อดูแอปภายใน</string>
+    <string name="library_collection_remove_from_current">นำออกจากคอลเลกชัน</string>
+    <string name="library_no_matches">ไม่พบผลลัพธ์สำหรับ “<xliff:g id="query" example="Bounce">%1$s</xliff:g>”</string>
+    <string name="library_action_share_app">แชร์แอป</string>
+    <string name="library_action_export_bundle">ส่งออกชุดไฟล์แอป</string>
+    <string name="library_action_import_bundle">นำเข้าชุดไฟล์แอป</string>
+    <string name="library_action_import_bundle_summary">กู้คืนแอปที่ส่งออกพร้อมการตั้งค่า ข้อมูลบันทึก หรือบุ๊กมาร์กที่แนบมา</string>
+    <string name="library_import_preparing">กำลังอ่านชุดไฟล์แอป…</string>
+    <string name="library_import_restoring">กำลังกู้คืนข้อมูลแอป…</string>
+    <string name="library_import_done">นำเข้าชุดไฟล์แอปแล้ว</string>
+    <string name="library_import_done_with_warning">นำเข้าชุดไฟล์แอปแล้วพร้อมคำเตือน</string>
+    <string name="library_import_invalid_bundle">ชุดไฟล์แอปที่เลือกไม่ถูกต้อง เสียหาย หรือไม่รองรับ เลือกชุดไฟล์แอป JL-Mod Plus ที่ถูกต้องแล้วลองอีกครั้ง</string>
+    <string name="library_import_restore_existing">ติดตั้งแอปนี้ไว้แล้ว การตั้งค่าและข้อมูลบันทึกที่แนบมาจะแทนที่ข้อมูลเดิม ส่วนบุ๊กมาร์กจะถูกรวมเข้าด้วยกันเว้นแต่จะมีการแนบการตั้งค่ามาด้วย</string>
+    <string name="library_import_restore_failed">ติดตั้งแอปแล้ว แต่ไม่สามารถกู้คืนข้อมูลชุดไฟล์ได้ ลองกู้คืนอีกครั้งหรือไม่?</string>
+    <string name="library_play_stats_summary">จำนวนครั้งที่เปิด: <xliff:g id="launch_count" example="12">%1$d</xliff:g> · เวลารวม: <xliff:g id="total_time" example="2h 15m">%2$s</xliff:g></string>
+    <string name="library_share_chooser_title">แชร์แอป</string>
+    <string name="library_export_chooser_title">ส่งออก</string>
+    <string name="library_export_progress">กำลังส่งออก… <xliff:g id="completed" example="3">%1$d</xliff:g>/<xliff:g id="total" example="10">%2$d</xliff:g></string>
+    <string name="library_transfer_unavailable">ไม่สามารถเตรียมการส่งออกได้ ปิด MIDlet ที่กำลังทำงานอยู่ทั้งหมดแล้วลองอีกครั้ง</string>
+    <string name="library_back">กลับไปยังคลังแอป</string>
+    <string name="library_sort">เรียงลำดับแอป</string>
+    <string name="library_search_clear">ล้างการค้นหา</string>
+    <string name="library_description_more">… เพิ่มเติม</string>
+    <string name="library_description_less">น้อยลง</string>
+    <plurals name="file_picker_selected_count">
+        <item quantity="other">เลือกไว้ <xliff:g id="count" example="3">%1$d</xliff:g> รายการ</item>
+    </plurals>
+    <plurals name="library_selection_count">
+        <item quantity="other"><xliff:g id="count" example="3">%1$d</xliff:g> แอป</item>
+    </plurals>
+    <plurals name="library_collection_member_count">
+        <item quantity="other"><xliff:g id="count" example="3">%1$d</xliff:g> แอป</item>
+    </plurals>
+    <plurals name="bulk_install_found">
+        <item quantity="other">พบ <xliff:g id="count" example="3">%1$d</xliff:g> แอป</item>
+    </plurals>
+    <plurals name="bulk_install_selected">
+        <item quantity="other">เลือกไว้ <xliff:g id="count" example="3">%1$d</xliff:g></item>
+    </plurals>
+    <plurals name="bulk_install_ready_count">
+        <item quantity="other">พร้อมติดตั้ง <xliff:g id="count" example="3">%1$d</xliff:g></item>
+    </plurals>
+    <plurals name="bulk_install_skipped_count">
+        <item quantity="other">ติดตั้งแล้วหรือซ้ำกัน: <xliff:g id="count" example="3">%1$d</xliff:g></item>
+    </plurals>
+    <plurals name="bulk_install_attention_count">
+        <item quantity="other">ต้องตรวจสอบ <xliff:g id="count" example="3">%1$d</xliff:g></item>
+    </plurals>
+    <plurals name="bulk_install_installed_count">
+        <item quantity="other">ติดตั้งแล้ว <xliff:g id="count" example="3">%1$d</xliff:g></item>
+    </plurals>
+    <plurals name="bulk_install_updated_count">
+        <item quantity="other">อัปเดตแล้ว <xliff:g id="count" example="3">%1$d</xliff:g></item>
+    </plurals>
+    <plurals name="bulk_install_reinstalled_count">
+        <item quantity="other">ติดตั้งใหม่แล้ว <xliff:g id="count" example="3">%1$d</xliff:g></item>
+    </plurals>
+    <plurals name="bulk_install_skipped_result_count">
+        <item quantity="other">ข้าม <xliff:g id="count" example="3">%1$d</xliff:g></item>
+    </plurals>
+    <plurals name="bulk_install_failed_count">
+        <item quantity="other">ล้มเหลว <xliff:g id="count" example="3">%1$d</xliff:g></item>
+    </plurals>
+    <plurals name="bulk_install_warning_count">
+        <item quantity="other">คำเตือน <xliff:g id="count" example="3">%1$d</xliff:g></item>
+    </plurals>
+    <plurals name="bulk_install_omitted_sources">
+        <item quantity="other">ละเว้นไฟล์เพิ่มเติม <xliff:g id="count" example="3">%1$d</xliff:g> ไฟล์เพื่อให้หน้าตรวจสอบทำงานได้รวดเร็ว</item>
+    </plurals>
+    <plurals name="library_bulk_delete_confirmation">
+        <item quantity="other">ลบ <xliff:g id="count" example="3">%1$d</xliff:g> แอปหรือไม่? ไฟล์ การตั้งค่า และข้อมูลบันทึกจะถูกลบออกจากคลังแอปของคุณ</item>
+    </plurals>
+    <plurals name="library_bulk_delete_result">
+        <item quantity="other">ลบแล้ว <xliff:g id="deleted_count" example="3">%1$d</xliff:g> แอป · ล้มเหลว <xliff:g id="failed_count" example="1">%2$d</xliff:g></item>
+    </plurals>
+    <string name="bulk_install_title">ติดตั้งแบบกลุ่ม</string>
+    <string name="bulk_install_planning">กำลังตรวจสอบแอปที่เลือก…</string>
+    <string name="bulk_install_empty">ไม่พบแอปที่รองรับ</string>
+    <string name="bulk_install_recommended">แนะนำ</string>
+    <string name="bulk_install_clear">ล้างการเลือก</string>
+    <string name="bulk_install_install_count">ติดตั้ง (<xliff:g id="count" example="3">%1$d</xliff:g>)</string>
+    <string name="bulk_install_cancel">ยกเลิก</string>
+    <string name="bulk_install_close">ปิด</string>
+    <plurals name="bulk_install_running">
+        <item quantity="other">ดำเนินการแล้ว <xliff:g id="processed" example="3">%1$d</xliff:g> จาก <xliff:g id="total" example="10">%2$d</xliff:g> แอป</item>
+    </plurals>
+    <string name="bulk_install_cancel_requested">กำลังหยุดหลังจากแอปปัจจุบัน…</string>
+    <string name="bulk_install_complete">ติดตั้งแบบกลุ่มเสร็จสิ้น</string>
+    <string name="bulk_install_cancelled">หยุดการติดตั้งแบบกลุ่มแล้ว</string>
+    <string name="bulk_install_fatal">หยุดการติดตั้งแบบกลุ่มแล้ว ตรวจสอบรายการที่ยังไม่เสร็จก่อนลองอีกครั้ง</string>
+    <string name="bulk_install_result_installed">ติดตั้งแล้ว</string>
+    <string name="bulk_install_result_updated">อัปเดตแล้ว</string>
+    <string name="bulk_install_result_reinstalled">ติดตั้งใหม่แล้ว</string>
+    <string name="bulk_install_result_skipped">ข้าม</string>
+    <string name="bulk_install_result_failed">ล้มเหลว</string>
+    <string name="bulk_install_installed_version">ติดตั้งแล้ว: <xliff:g id="version" example="2.1.0">%1$s</xliff:g></string>
+    <string name="bulk_install_source">แหล่งที่มา: <xliff:g id="name" example="Example">%1$s</xliff:g></string>
+    <string name="bulk_install_action_separate_copy">ติดตั้งเป็นสำเนาแยก</string>
+    <string name="bulk_install_action_jar_only">ติดตั้งเฉพาะ JAR</string>
+    <string name="single_install_review_jar_only" tools:ignore="MissingTranslation">ตรวจสอบเฉพาะ JAR</string>
+    <string name="single_install_jar_only_notice" tools:ignore="MissingTranslation">จะติดตั้งเฉพาะไฟล์ JAR เท่านั้น ตรวจสอบชื่อแอป เวอร์ชัน และสถานะการติดตั้งก่อนดำเนินการต่อ</string>
+    <string name="single_install_running_replacement_warning" tools:ignore="MissingTranslation">หากแอปนี้กำลังทำงานอยู่ การติดตั้งจะหยุดแอปก่อนแทนที่ไฟล์ ความคืบหน้าที่ยังไม่ได้บันทึกอาจสูญหาย</string>
+    <string name="bulk_install_status_new">ใหม่</string>
+    <string name="bulk_install_status_update">อัปเดต</string>
+    <string name="bulk_install_status_downgrade">เวอร์ชันเก่ากว่า</string>
+    <string name="bulk_install_status_same">ติดตั้งแล้ว</string>
+    <string name="bulk_install_status_reinstall">เวอร์ชันเดียวกัน (อาจเป็นรุ่นย่อยต่างกัน)</string>
+    <string name="bulk_install_status_ambiguous">ตรงกับแอปที่ติดตั้งแล้วหลายรายการ</string>
+    <string name="bulk_install_status_mismatch">JAD และ JAR ไม่ตรงกัน</string>
+    <string name="bulk_install_status_duplicate">ซ้ำกัน</string>
+    <string name="bulk_install_status_older_batch">เวอร์ชันเก่ากว่าในชุดนี้</string>
+    <string name="bulk_install_status_conflict">ขัดแย้งกันในชุดนี้</string>
+    <string name="bulk_install_status_remote">ไม่รองรับแหล่งที่มาระยะไกล</string>
+    <string name="bulk_install_status_error">แหล่งที่มาไม่ถูกต้อง</string>
+    <string name="bulk_install_reinstall_source_missing">ไม่พบไฟล์ JAR ที่บันทึกไว้สำหรับการติดตั้งใหม่</string>
+    <plurals name="bulk_install_reinstall_missing_apps">
+        <item quantity="other">แอปในคลังแอปที่เลือก <xliff:g id="count" example="3">%1$d</xliff:g> รายการไม่พร้อมใช้งานแล้ว</item>
+    </plurals>
+    <string name="library_metadata_edit_title">แก้ไขเมตาดาต้า</string>
+    <string name="library_metadata_icon">ไอคอน</string>
+    <string name="library_metadata_name">ชื่อ</string>
+    <string name="library_metadata_vendor">ผู้พัฒนา</string>
+    <string name="library_metadata_reset_to_original">รีเซ็ตเป็นค่าดั้งเดิม</string>
+    <string name="library_metadata_save">บันทึก</string>
+    <string name="library_hide_grid_titles_summary">ซ่อนชื่อ MIDlet ในมุมมอง ตาราง มุมมอง รายการ จะยังคงแสดงชื่อไว้</string>
+    <string name="library_show_list_description_summary">แสดงคำอธิบายของ MIDlet แต่ละรายการใต้ชื่อและเวอร์ชัน</string>
+    <string name="library_indexing_progress">กำลังจัดทำดัชนีคลังแอป… <xliff:g id="completed" example="3">%1$d</xliff:g>/<xliff:g id="total" example="10">%2$d</xliff:g></string>
+    <string name="library_indexing_current">กำลังสแกน <xliff:g id="name" example="Example">%1$s</xliff:g></string>
+    <string name="library_load_error_title">คลังแอปไม่พร้อมใช้งาน</string>
+    <string name="library_retry">ลองใหม่</string>
+    <string name="library_reinstall_source_missing">ไม่พบไฟล์ JAR ที่บันทึกไว้สำหรับการติดตั้งใหม่</string>
+    <string name="library_action_select">เลือก</string>
+    <string name="library_selection_select_all">เลือกทั้งหมด</string>
+    <string name="library_selection_unselect_all">ยกเลิกการเลือกทั้งหมด</string>
+    <string name="library_selection_checkbox_description">เลือก <xliff:g id="name" example="Example">%1$s</xliff:g></string>
+    <string name="library_selection_checked">เลือกแล้ว</string>
+    <string name="library_selection_unchecked">ไม่ได้เลือก</string>
+    <string name="library_action_settings_summary">กำหนดค่าการทำงานทั่วไปและรูปลักษณ์ของแอป</string>
+    <string name="library_action_crash_reports_summary">ตรวจสอบรายงานการวินิจฉัยที่บันทึกไว้</string>
+    <string name="library_action_about_summary">ภาพรวมโปรเจกต์ ข้อมูลบิลด์ และลิงก์ต่างๆ</string>
+    <string name="library_action_licenses_summary">ประกาศจากบุคคลที่สามและเงื่อนไขสัญญาอนุญาตที่รวมอยู่ในแอป</string>
+    <string name="library_donation_action">สนับสนุนการพัฒนา</string>
+    <string name="library_donation_summary">ช่วยสนับสนุนให้ JL-Mod Plus พัฒนาต่อไป</string>
+    <string name="library_donation_title">สนับสนุน JL-Mod Plus</string>
+    <string name="library_donation_message">JL-Mod Plus เป็นซอฟต์แวร์ฟรีและโอเพนซอร์ส หากคุณเห็นว่ามีประโยชน์ สามารถสนับสนุนการพัฒนาได้ด้วยการบริจาคตามความสมัครใจ</string>
+    <string name="library_donation_provider_note">การบริจาคดำเนินการผ่านภายนอกโดย Sociabuzz</string>
+    <string name="library_donation_continue">ไปยัง Sociabuzz</string>
+    <string name="library_donation_not_now">ไว้ทีหลัง</string>
+    <string name="library_donation_link_copied">ไม่พบเบราว์เซอร์ คัดลอกลิงก์ Sociabuzz ไปยังคลิปบอร์ดแล้ว</string>
+    <string name="library_donation_browser_unavailable">ไม่พบเบราว์เซอร์สำหรับเปิด Sociabuzz</string>
+    <string name="library_bulk_delete_apps">ลบแอป</string>
+    <string name="library_bulk_add_collection">เพิ่มในคอลเลกชัน</string>
+    <string name="library_bulk_share_apps">แชร์แอป</string>
+    <string name="library_bulk_reinstall_apps">ติดตั้งใหม่</string>
+    <string name="library_bulk_export_apps">ส่งออกชุดไฟล์</string>
+    <string name="library_enhanced_icons_title">ไอคอนที่ปรับปรุงแล้ว</string>
+    <string name="library_enhanced_icons_summary">ปรับกรอบ ขนาด และพื้นหลังไอคอนให้ดูสม่ำเสมอกันมากขึ้นในคลังแอปของคุณ</string>
+    <string name="library_collections_unavailable_title">คอลเลกชันไม่พร้อมใช้งาน</string>
+    <string name="library_load_failed_message">ไม่สามารถโหลดคลังแอปได้ โปรดลองอีกครั้ง</string>
+    <string name="bulk_install_prepare_failed">ไม่สามารถเตรียมแอปที่เลือกสำหรับการติดตั้งได้</string>
+    <string name="installer_existing_data_preserved">การตั้งค่าและข้อมูลบันทึกที่มีอยู่จะยังคงอยู่</string>
+    <string name="bulk_install_library_changed">คลังแอปของคุณมีการเปลี่ยนแปลงหลังการตรวจสอบ ปิดชุดนี้แล้วเลือกไฟล์ใหม่อีกครั้ง</string>
+    <string name="bulk_install_source_unavailable">ไฟล์ต้นฉบับที่จำเป็นไม่พร้อมใช้งานแล้ว โปรดเลือกไฟล์ใหม่อีกครั้ง</string>
+    <string name="bulk_install_source_changed">ไฟล์ต้นฉบับเปลี่ยนแปลงหลังการตรวจสอบ โปรดเลือกไฟล์ใหม่อีกครั้ง</string>
+    <string name="bulk_install_target_unverified">ไม่สามารถยืนยันเป้าหมายการติดตั้งใหม่ได้ ปิดชุดนี้แล้วเลือกแอปใหม่อีกครั้ง</string>
+    <string name="bulk_install_result_restored">กู้คืนแล้ว</string>
+    <plurals name="bulk_install_restored_count">
+        <item quantity="other">กู้คืนแล้ว <xliff:g id="count" example="3">%1$d</xliff:g></item>
+    </plurals>
+    <plurals name="bulk_install_reason_ambiguous_match">
+        <item quantity="other">มีแอปที่ติดตั้งแล้ว <xliff:g id="count" example="3">%1$d</xliff:g> รายการตรงกับแหล่งที่มานี้</item>
+    </plurals>
+    <string name="bulk_install_reason_jad_jar_mismatch">ไฟล์ JAD และ JAR ระบุถึงแอปที่แตกต่างกัน</string>
+    <string name="bulk_install_reason_conflicting_jads">มีไฟล์ JAD ที่มีแอตทริบิวต์ต่างกันอ้างอิงถึง JAR เดียวกัน</string>
+    <string name="bulk_install_reason_remote_jar">การติดตั้งแบบกลุ่มไม่สามารถดาวน์โหลดไฟล์ JAR ระยะไกลได้</string>
+    <string name="bulk_install_reason_missing_jar_url">ไฟล์ JAD ไม่มี MIDlet-Jar-URL</string>
+    <!-- %1$s is the exact URI scheme supplied by the JAD; do not translate it. -->
+    <string name="bulk_install_reason_unsupported_uri_scheme">ไฟล์ JAD อ้างอิงถึง JAR ด้วยรูปแบบ URI ที่ไม่รองรับ: <xliff:g id="scheme" example="http">%1$s</xliff:g></string>
+    <string name="bulk_install_reason_missing_parent">ไฟล์ JAD ไม่มีโฟลเดอร์หลัก</string>
+    <!-- %1$s is the exact MIDlet-Jar-URL reference, not a normalized filesystem path. -->
+    <string name="bulk_install_reason_jar_not_found">ไม่พบไฟล์ JAR ที่ JAD อ้างอิง: <xliff:g id="file_path" example="game.jar">%1$s</xliff:g></string>
+    <string name="bulk_install_reason_duplicate_source">แหล่งที่มานี้ซ้ำกับแหล่งที่มาอื่นในชุดนี้</string>
+    <string name="bulk_install_reason_version_conflict">แอปหลายรุ่นย่อยมีหมายเลขเวอร์ชันเดียวกัน</string>
+    <string name="bulk_install_reason_older_candidate">มีเวอร์ชันที่ใหม่กว่าของแอปนี้อยู่ในชุดเดียวกัน</string>
+    <string name="bulk_install_reason_source_error">ไม่สามารถเตรียมแหล่งที่มานี้สำหรับการติดตั้งได้</string>
+    <string name="updates_title">อัปเดต</string>
+    <string name="updates_more_summary">ตรวจสอบเวอร์ชันใหม่ของ JL-Mod Plus</string>
+    <string name="updates_more_available">มีเวอร์ชันใหม่พร้อมใช้งาน</string>
+    <string name="updates_installed_version">เวอร์ชันที่ติดตั้ง: <xliff:g id="version" example="2.1.0">%1$s</xliff:g></string>
+    <string name="updates_build_code">บิลด์ <xliff:g id="build_code" example="247">%1$d</xliff:g></string>
+    <string name="updates_automatic">ตรวจสอบอัตโนมัติขณะใช้งานคลังแอป</string>
+    <string name="updates_not_checked">ยังไม่ได้ตรวจสอบ</string>
+    <string name="updates_checking">กำลังตรวจสอบการอัปเดต…</string>
+    <string name="updates_current">คุณใช้เวอร์ชันล่าสุดแล้ว</string>
+    <string name="updates_no_release">ไม่มีเวอร์ชันที่เผยแพร่ซึ่งเข้ากันได้</string>
+    <string name="updates_not_installable">มีเวอร์ชันใหม่พร้อมใช้งาน แต่ไม่เข้ากันกับอุปกรณ์หรือการติดตั้งนี้</string>
+    <string name="updates_failed">ไม่สามารถตรวจสอบการอัปเดตได้ ตรวจสอบการเชื่อมต่อแล้วลองอีกครั้ง</string>
+    <string name="updates_available">มีอัปเดตพร้อมใช้งาน</string>
+    <string name="updates_view_release">ดูเวอร์ชันนี้</string>
+    <string name="updates_last_checked">ตรวจสอบล่าสุด: <xliff:g id="timestamp" example="Today, 09:45">%1$s</xliff:g></string>
+    <string name="updates_check">ตรวจสอบการอัปเดต</string>
+    <string name="updates_notice">JL-Mod Plus <xliff:g id="version" example="2.1.0">%1$s</xliff:g> พร้อมใช้งานแล้ว ดูที่ อัปเดต ใน การตั้งค่า</string>
+    <string name="updates_debug_build">นี่คือบิลด์ดีบัก ไฟล์ APK จาก GitHub Release จะติดตั้งแยกต่างหาก</string>
+    <string name="updates_link_copied">ไม่พบเบราว์เซอร์ คัดลอกลิงก์อัปเดตไปยังคลิปบอร์ดแล้ว</string>
+    <string name="updates_browser_unavailable">ไม่พบเบราว์เซอร์สำหรับเปิดลิงก์อัปเดต</string>
+    <string name="bulk_install_choose_files">ไฟล์</string>
+    <string name="bulk_install_choose_folder">โฟลเดอร์</string>
+    <string name="bulk_install_unreadable_archives">ไฟล์บีบอัดที่อ่านไม่ได้: <xliff:g id="count" example="3">%1$d</xliff:g></string>
+    <string name="bulk_install_skipped_entries">ไฟล์หรือรายการในไฟล์บีบอัดที่ข้าม: <xliff:g id="count" example="3">%1$d</xliff:g></string>
+    <string name="bulk_install_selection_options" tools:ignore="MissingTranslation">ตัวเลือกการเลือก</string>
+    <string name="bulk_install_show_details" tools:ignore="MissingTranslation">แสดงรายละเอียด</string>
+    <string name="bulk_install_hide_details" tools:ignore="MissingTranslation">ซ่อนรายละเอียด</string>
+    <string name="bulk_install_filter_all">ทั้งหมด</string>
+    <string name="bulk_install_filter_selected">ที่เลือก</string>
+    <string name="bulk_install_filter_review">ต้องตรวจสอบ</string>
+    <string name="bulk_install_empty_filter">ไม่มีแอปที่ตรงกัน</string>
+    <string name="platform_package_choice_title" tools:ignore="MissingTranslation">ตรวจพบแพ็กเกจ Java ME</string>
+    <string name="platform_package_choice_message" tools:ignore="MissingTranslation">ลิงก์นี้ชี้ไปยังแพ็กเกจ Java ME คุณต้องการดำเนินการอย่างไร?</string>
+    <string name="platform_package_install" tools:ignore="MissingTranslation">ติดตั้งใน JL-Mod Plus</string>
+    <string name="platform_package_browser" tools:ignore="MissingTranslation">เปิดในเบราว์เซอร์</string>
+    <string name="platform_package_unavailable" tools:ignore="MissingTranslation">ไม่พบแอปสำหรับเปิดลิงก์นี้</string>
+    <string name="installer_running_update_warning" tools:ignore="MissingTranslation">แอปนี้กำลังทำงานอยู่ การติดตั้งจะหยุดแอปก่อนแทนที่ไฟล์ ความคืบหน้าที่ยังไม่ได้บันทึกอาจสูญหาย</string>
+    <string name="library_metadata_main_icon">หลัก</string>
+    <string name="library_metadata_follows_main">ใช้ไอคอนหลัก</string>
+    <string name="library_metadata_change">เปลี่ยน</string>
+    <string name="library_metadata_remove_portrait">ลบไอคอน 3:4</string>
+    <string name="library_metadata_discard_title">ละทิ้งการเปลี่ยนแปลงหรือไม่?</string>
+    <string name="library_metadata_discard">ละทิ้ง</string>
+    <string name="library_metadata_default_description">คำอธิบายเริ่มต้น</string>
+    <string name="library_metadata_other_languages">ภาษาอื่น</string>
+    <string name="library_metadata_add_language">+ เพิ่มภาษา</string>
+    <string name="library_metadata_language_search">ค้นหาภาษาหรือรหัสภาษา</string>
+    <string name="library_metadata_remove_language">ลบคำอธิบาย</string>
+    <string name="library_metadata_language_load_failed">ไม่สามารถโหลดคำอธิบายตามภาษาได้ แตะ ลองใหม่ เพื่อลองอีกครั้ง</string>
+    <string name="updates_download_apk" tools:ignore="MissingTranslation">ดาวน์โหลด APK</string>
+    <string name="updates_skip_version" tools:ignore="MissingTranslation">ข้ามเวอร์ชันนี้</string>
+    <string name="updates_dialog_message" tools:ignore="MissingTranslation">JL-Mod Plus <xliff:g id="version" example="2.1.0">%1$s</xliff:g> พร้อมใช้งานแล้ว คุณกำลังใช้ <xliff:g id="current_version" example="2.0.0">%2$s</xliff:g> ดาวน์โหลด APK หรือดูเวอร์ชันนี้บน GitHub</string>
+    <string name="library_bundle_components_title" tools:ignore="MissingTranslation">ส่งออกชุดไฟล์</string>
+    <string name="library_bundle_components_explanation" tools:ignore="MissingTranslation">แอปที่เลือกจะถูกรวมไว้เสมอ ปิด MIDlet ที่กำลังทำงานอยู่ก่อนส่งออก จากนั้นเลือกข้อมูลเพิ่มเติมที่ต้องการรวม</string>
+    <string name="library_bundle_config" tools:ignore="MissingTranslation">การกำหนดค่า</string>
+    <string name="library_bundle_save_data" tools:ignore="MissingTranslation">ข้อมูลบันทึก</string>
+    <string name="library_bundle_saved_variables" tools:ignore="MissingTranslation">บุ๊กมาร์ก</string>
+    <string name="library_bundle_export" tools:ignore="MissingTranslation">ส่งออก</string>
+    <string name="library_export_jar_only" tools:ignore="MissingTranslation">เฉพาะ JAR</string>
+    <string name="library_export_jars_only" tools:ignore="MissingTranslation">เฉพาะ JAR (ZIP)</string>
+    <string name="library_selection_action_delete" tools:ignore="MissingTranslation">ลบ</string>
+    <string name="library_selection_action_collection" tools:ignore="MissingTranslation">คอลเลกชัน</string>
+    <string name="library_selection_action_export" tools:ignore="MissingTranslation">ส่งออก</string>
+    <string name="library_selection_action_reinstall" tools:ignore="MissingTranslation">ติดตั้งใหม่</string>
+    <string name="installer_select_companion_jar" tools:ignore="MissingTranslation">ไฟล์ JAD นี้อ้างอิงถึงไฟล์ JAR แยกต่างหาก เลือกไฟล์ JAR ที่ตรงกันเพื่อดำเนินการต่อ ผู้ให้บริการไฟล์ภายนอกไม่อนุญาตให้เข้าถึงไฟล์ข้างเคียง</string>
+    <string name="installer_select_jar" tools:ignore="MissingTranslation">เลือก JAR</string>
+    <string name="installer_wrong_companion_jar" tools:ignore="MissingTranslation">ไฟล์ JAR นี้ไม่ตรงกับ JAD ที่เลือก เลือกไฟล์ JAR ที่ตรงกันเพื่อรักษาการตั้งค่าจาก JAD</string>
+    <string name="installer_choose_another_jar" tools:ignore="MissingTranslation">เลือก JAR อื่น</string>
+    <string name="library_app_more_actions" tools:ignore="MissingTranslation">การทำงานเพิ่มเติมสำหรับ <xliff:g id="name" example="Example">%1$s</xliff:g></string>
+    <string name="library_actions_group_customize" tools:ignore="MissingTranslation">ปรับแต่ง</string>
+    <string name="library_actions_group_organize" tools:ignore="MissingTranslation">จัดระเบียบ</string>
+    <string name="library_actions_group_transfer" tools:ignore="MissingTranslation">ถ่ายโอนและดูแล</string>
+    <string name="library_collection_more_actions" tools:ignore="MissingTranslation">การทำงานเพิ่มเติมสำหรับคอลเลกชัน <xliff:g id="collection_name" example="Favorites">%1$s</xliff:g></string>
+    <string name="library_settings_preferences" tools:ignore="MissingTranslation">ค่ากำหนดแอป</string>
+    <string name="library_settings_section_maintenance" tools:ignore="MissingTranslation">อัปเดตและการวินิจฉัย</string>
+    <string name="library_settings_section_support" tools:ignore="MissingTranslation">เกี่ยวกับและการสนับสนุน</string>
+    <string name="library_details_title" tools:ignore="MissingTranslation">รายละเอียด MIDlet</string>
+    <string name="library_details_description" tools:ignore="MissingTranslation">คำอธิบาย</string>
+    <string name="library_details_play_stats" tools:ignore="MissingTranslation">สถิติการเล่น</string>
+    <string name="library_details_launches" tools:ignore="MissingTranslation">จำนวนครั้งที่เปิด</string>
+    <string name="library_details_total_time" tools:ignore="MissingTranslation">เวลารวม</string>
+    <string name="library_details_last_played" tools:ignore="MissingTranslation">เล่นล่าสุด</string>
+    <string name="library_details_library_info" tools:ignore="MissingTranslation">ข้อมูลคลังแอป</string>
+    <string name="library_details_added" tools:ignore="MissingTranslation">เพิ่มลงในคลังแอป</string>
+    <string name="library_details_collections" tools:ignore="MissingTranslation">คอลเลกชัน</string>
+    <string name="library_details_none" tools:ignore="MissingTranslation">ไม่มี</string>
+    <string name="library_details_technical" tools:ignore="MissingTranslation">ข้อมูลทางเทคนิค</string>
+    <string name="library_details_profile" tools:ignore="MissingTranslation">โปรไฟล์</string>
+    <string name="library_details_configuration" tools:ignore="MissingTranslation">การกำหนดค่า</string>
+    <string name="library_details_jar_size" tools:ignore="MissingTranslation">ขนาด JAR ที่เก็บไว้</string>
+    <string name="library_details_entry_points" tools:ignore="MissingTranslation">รายการเข้าใช้งาน MIDlet</string>
+    <string name="library_details_original_metadata" tools:ignore="MissingTranslation">เมตาดาต้าดั้งเดิม</string>
+    <string name="library_details_name" tools:ignore="MissingTranslation">ชื่อ</string>
+    <string name="library_details_vendor" tools:ignore="MissingTranslation">ผู้พัฒนา</string>
+    <string name="library_details_version" tools:ignore="MissingTranslation">เวอร์ชัน</string>
+    <string name="library_details_version_value" tools:ignore="MissingTranslation">เวอร์ชัน <xliff:g id="version" example="2.1.0">%1$s</xliff:g></string>
+    <string name="library_details_original_description" tools:ignore="MissingTranslation">คำอธิบายดั้งเดิม</string>
+    <string name="library_details_permissions" tools:ignore="MissingTranslation">สิทธิ์ที่ประกาศไว้</string>
+    <string name="library_details_required" tools:ignore="MissingTranslation">จำเป็น</string>
+    <string name="library_details_optional" tools:ignore="MissingTranslation">ไม่บังคับ</string>
+    <string name="library_details_no_permissions" tools:ignore="MissingTranslation">ไม่มีสิทธิ์ที่ประกาศไว้</string>
+    <string name="library_details_descriptor_attributes" tools:ignore="MissingTranslation">แอตทริบิวต์ของตัวอธิบาย</string>
+    <string name="library_details_unavailable" tools:ignore="MissingTranslation">ไม่พร้อมใช้งาน</string>
+    <string name="library_details_action" tools:ignore="MissingTranslation">รายละเอียด</string>
+    <string name="library_details_view_details" tools:ignore="MissingTranslation">ดูรายละเอียด</string>
+    <string name="library_actions_more" tools:ignore="MissingTranslation">การทำงานเพิ่มเติม</string>
+    <string name="library_actions_less" tools:ignore="MissingTranslation">การทำงานน้อยลง</string>
+</resources>

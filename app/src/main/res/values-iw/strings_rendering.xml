@@ -1,0 +1,212 @@
+<?xml version="1.0" encoding="utf-8"?>
+<!-- Rendering pipeline, internal resolution, bitmap upscaling, shaders, and built-in visual effects. -->
+<resources xmlns:tools="http://schemas.android.com/tools" xmlns:xliff="urn:oasis:names:tc:xliff:document:1.2">
+    <string name="identity_filter">ללא (המהיר ביותר)</string>
+    <string name="invalid_resolution_not_saved">רזולוציה לא תקינה. התבנית לא נשמרה.</string>
+    <string name="msg_error_loading_shader">שיידר לא נתמך. נעשה שימוש בשיידר ברירת המחדל.</string>
+    <string name="parallel_screen_redrawing">עדכוני מסך א-סינכרוניים</string>
+    <string name="shader_tuning">כוונון שיידר</string>
+    <string name="SWAP_SIZES">החלפת רוחב וגובה</string>
+    <string name="fps_limit_maximum">מקסימום</string>
+    <string name="remove_screen_preset">הסרת תבנית רזולוציה</string>
+    <string name="perf_overlay_position_help">בחירת פינה.</string>
+    <string name="perf_overlay_top_left">פינה שמאלית עליונה</string>
+    <string name="perf_overlay_top_right">פינה ימנית עליונה</string>
+    <string name="perf_overlay_bottom_left">פינה שמאלית תחתונה</string>
+    <string name="perf_overlay_bottom_right">פינה ימנית תחתונה</string>
+    <string name="internal_resolution_title" tools:ignore="MissingTranslation">רזולוציית עיבוד</string>
+    <string name="internal_resolution_auto" tools:ignore="MissingTranslation">אוטומטי</string>
+    <string name="internal_resolution_description" tools:ignore="MissingTranslation">עיבוד תכני 2D ו-3D נתמכים ברמת פירוט גבוהה יותר. “אוטומטי” מתאים את עצמו לאזור תצוגת המשחק; יש להפעיל מחדש כדי להחיל.</string>
+    <string name="bitmap_upscaling_title" tools:ignore="MissingTranslation">שיפור רזולוציית מפת סיביות</string>
+    <string name="bitmap_upscaling_description" tools:ignore="MissingTranslation">משפר רזולוציה של ספרייטים דו-ממדיים קבועים ושל מרקמי מודלים אטומים ב-Micro3D באמצעות MMPX או xBR Lv3. מרקמי M3G אינם משתנים; יש להפעיל מחדש כדי להחיל.</string>
+    <string name="bitmap_upscaling_nearest" tools:ignore="MissingTranslation">שכן קרוב ביותר</string>
+    <string name="bitmap_upscaling_bilinear" tools:ignore="MissingTranslation">דו-ליניארי</string>
+    <string name="bitmap_upscaling_mmpx" tools:ignore="MissingTranslation">MMPX</string>
+    <string name="bitmap_upscaling_edge_aware" tools:ignore="MissingTranslation">xBR Lv3</string>
+    <!-- Prototyping only: localized UI copy is pending design review. -->
+    <string name="render_shader_effects">אפקטי שיידר</string>
+    <string name="render_pipeline_title">צינור עיבוד</string>
+    <string name="render_shader_preset">תבנית שיידר</string>
+    <string name="render_shader_picker_help">שילוב אפקטים מובנים ושיידרים ישנים משלך בערימת אפקטים מסודרת.</string>
+    <string name="render_shader_requires_gles">השיידרים נשמרים אך מוחלים רק כאשר OpenGL ES נבחר.</string>
+    <string name="render_shader_missing">השיידר שנבחר אינו נמצא בספרייה. יש לבחור תבנית אחרת או לשחזר את הקבצים שלה.</string>
+    <string name="render_shader_parameters">פרמטרים של שיידר</string>
+    <string name="render_shader_reset_parameters">איפוס פרמטרים</string>
+    <string name="render_shader_passes">שלבי שיידר</string>
+    <string name="render_shader_pass_count"><xliff:g id="count" example="2">%1$d</xliff:g> שלבים</string>
+    <string name="render_shader_pass_hint">הצגת השלבים מתבנית ה-GLSLP שנבחרה.</string>
+    <string name="render_pass_filter">סינון קלט</string>
+    <string name="render_pass_output">גודל פלט (רוחב × גובה)</string>
+    <string name="render_pipeline_unavailable">התבנית אינה זמינה</string>
+    <string name="render_game_output">פלט המשחק</string>
+    <string name="render_logical_screen_help">הגודל הלוגי המדווח למשחק.</string>
+    <string name="render_internal_resolution">רזולוציה פנימית</string>
+    <string name="render_internal_unavailable">מקורית (1×) בלבד. רזולוציות עיבוד גבוהות יותר אינן זמינות עבור תצורה זו.</string>
+    <string name="render_display_renderer">מעבד התצוגה</string>
+    <string name="render_shader_processing">עיבוד שיידר</string>
+    <string name="render_display_scaling">קנה מידה לתצוגה</string>
+    <string name="render_display_viewport">אזור תצוגת המשחק</string>
+    <string name="render_texture_filtering">מסנן קנה מידה למסך</string>
+    <string name="render_texture_filtering_help">בוחר “קרוב ביותר” או “ליניארי” עבור תמונת המשחק הסופית. אפקטים עשויים לעקוף הגדרה זו.</string>
+    <string name="render_viewport_note">גודל אזור התצוגה נקבע מתוך פריסת המסך לפני תכנון שלבי השיידר. החצים מציגים את זרימת התמונה, לא את סדר חישובי הפריסה.</string>
+    <string name="render_pipeline_help">צפייה באופן שבו פריים המשחק מגיע למסך ועריכת כל שלב.</string>
+    <string name="render_no_shader">יש לבחור תבנית כדי לשנות את מראה המשחק.</string>
+    <string name="render_shader_adjust">התאמת פרמטרים</string>
+    <string name="render_legacy_tuning_hint">כוונון עדין של אפקט ישן זה.</string>
+    <string name="render_shader_customization">התאמה אישית</string>
+    <string name="render_adjustable_count">פרמטרים הניתנים להתאמה: <xliff:g id="count" example="3">%1$d</xliff:g></string>
+    <string name="render_pass_summary"><xliff:g id="count" example="3">%1$d</xliff:g> שלבים · מוגדר על ידי התבנית</string>
+    <string name="render_shader_preset_note">שלבי השיידר מוגדרים על ידי התבנית. ניתן לבחון אותם אך לא לשנות את סדרם.</string>
+    <string name="render_parameters_hint">יש להזיז את המחוון כדי לשנות את הערך. השינויים נשמרים עם השחרור.</string>
+    <string name="render_pass_readonly">השלבים פועלים בסדר זה. סינון הקלט וקנה המידה של הפלט נקבעים מתוך התבנית שנבחרה.</string>
+    <string name="render_pipeline_intro">המסלול ממאגר הפריימים של המשחק אל המסך.</string>
+    <string name="render_native_short">מקורית (1×)</string>
+    <string name="render_expand_passes">הצגת שלבים</string>
+    <string name="render_collapse_passes">הסתרת שלבים</string>
+    <string name="render_view_all_passes">פרטי שלבים</string>
+    <string name="render_pipeline_filter_summary">סינון מרקמים: <xliff:g id="shader_name" example="CRT Classic">%1$s</xliff:g></string>
+    <string name="render_pipeline_note">פריסת התצוגה קובעת את אזור התצוגה לפני תכנון שלבי השיידר. השלבים מציגים את זרימת התמונה.</string>
+    <string name="render_shader_change">בחירת אפקט אחר</string>
+    <string name="render_custom_pipeline">צינור עיבוד מותאם אישית</string>
+    <string name="render_custom_pipeline_hint">שילוב שיידרי GLSL עצמאיים מתיקיית השיידרים שלך.</string>
+    <string name="render_custom_order_help">האפקטים פועלים מלמעלה למטה. הגדרות GLSLP שעברו בירושה נשארות בתוקף אלא אם כן שונו.</string>
+    <string name="render_custom_empty">יש להוסיף שיידר כדי ליצור שרשרת מותאמת אישית.</string>
+    <string name="render_custom_stage_count"><xliff:g id="count" example="3">%1$d</xliff:g> שלבי שיידר מותאמים אישית</string>
+    <string name="render_custom_add">הוספת שיידר</string>
+    <string name="render_custom_add_hint">בחירת קובץ מקור .glsl חיצוני ועצמאי.</string>
+    <string name="render_custom_no_sources">לא נמצאו שיידרים ישנים. יש להוסיף קובצי שיידר מסוג .ini לתיקיית shaders ולפתוח שוב את ההגדרות.</string>
+    <string name="render_custom_scale">פלט: <xliff:g id="scale" example="2">%1$d</xliff:g>× מהשלב הקודם</string>
+    <string name="render_custom_output_scale">גודל פלט לשלב הבא</string>
+    <string name="render_custom_final_viewport">פלט סופי: מוצג על המסך</string>
+    <string name="render_custom_filter">מסנן קלט: <xliff:g id="shader_name" example="CRT Classic">%1$s</xliff:g></string>
+    <string name="render_custom_up">למעלה</string>
+    <string name="render_custom_down">למטה</string>
+    <string name="render_custom_remove">הסרה</string>
+    <string name="render_custom_cancel">ביטול</string>
+    <string name="render_custom_save">שמירה</string>
+    <string name="render_custom_default">ברירת מחדל</string>
+    <string name="render_custom_nearest">קרוב ביותר</string>
+    <string name="render_custom_linear">ליניארי</string>
+    <string name="render_custom_checking">בודק קובצי שיידר…</string>
+    <string name="render_active_shader">אפקט פעיל</string>
+    <string name="render_shader_off">כבוי</string>
+    <string name="render_edit_custom_pipeline">עריכת שרשרת שיידרים</string>
+    <string name="render_shader_unavailable">לא זמין: <xliff:g id="shader_name" example="CRT Classic">%1$s</xliff:g></string>
+    <string name="render_no_shader_sources">לא נמצאו שיידרים. יש להוסיף קובצי שיידר ישנים מסוג .ini לתיקיית shaders ולאחר מכן לפתוח שוב את ההגדרות.</string>
+    <string name="render_shader_mode">מצב שיידר</string>
+    <string name="render_mode_selected">נבחר</string>
+    <string name="render_gles_shader_default">OpenGL ES משתמש בתמונת המשחק המקורית כאשר אפקטי שיידר כבויים.</string>
+    <string name="render_shader_off_help">ללא אפקטים חזותיים נוספים.</string>
+    <string name="render_legacy_mode">שיידר ישן</string>
+    <string name="render_legacy_mode_help">בחירת קובץ .ini מתיקיית shaders.</string>
+    <string name="render_legacy_empty">אין הגדרות שיידר שמישות בקובץ .ini זה.</string>
+    <string name="render_legacy_select_variant">בחירת שיידר ישן</string>
+    <string name="render_legacy_variant_description">הגדרת שיידר בקובץ ה-.ini שנבחר</string>
+    <string name="render_preset_mode">תבנית GLSLP</string>
+    <string name="render_preset_mode_help">טעינת צינור .glslp מלא עם השלבים שלו.</string>
+    <string name="render_custom_pass_count">מספר שלבים</string>
+    <string name="render_custom_pass_number">שלב <xliff:g id="number" example="1">%1$d</xliff:g></string>
+    <string name="render_custom_pick_file">בחירת קובץ GLSL</string>
+    <string name="render_custom_add_pass">הוספת שלב שיידר</string>
+    <string name="render_custom_remove_pass">הפחתת שלב שיידר</string>
+    <string name="render_shader_selected_name">פעיל: <xliff:g id="shader_name" example="CRT Classic">%1$s</xliff:g></string>
+    <string name="render_shader_invalid_picker">לא ניתן להשתמש בקובץ שנבחר. יש לבחור קובץ .ini ישן מתוך תיקיית shaders.</string>
+    <string name="render_custom_mode">סוג שיידר</string>
+    <string name="render_custom_mode_legacy">ישן</string>
+    <string name="render_custom_mode_glsl">GLSL</string>
+    <string name="render_custom_pick_legacy">בחירת שיידר ישן</string>
+    <string name="render_custom_preserve_size">פלט: מתוך התבנית</string>
+    <string name="render_custom_loading">קורא את שלבי התבנית…</string>
+    <string name="render_custom_start_fresh">התחלה ללא תבנית (ביטול הגדרות שעברו בירושה)</string>
+    <string name="render_effect_default_settings">הגדרות ברירת מחדל</string>
+    <string name="render_effect_summary_more">+<xliff:g id="count" example="2">%1$d</xliff:g> נוספים</string>
+    <string name="render_effect_legacy_author">מאת <xliff:g id="shader_name" example="CRT Classic">%1$s</xliff:g></string>
+    <string name="render_effect_legacy_source">מקור: <xliff:g id="shader_name" example="CRT Classic">%1$s</xliff:g></string>
+    <string name="render_effect_removed">האפקט הוסר</string>
+    <string name="render_effect_undo">ביטול פעולה</string>
+    <string name="render_effect_catalog_hint">יש להקיש על אפקט כדי להוסיף אותו לערימה.</string>
+    <string name="render_effect_user_folder_hint">קובצי INI, VSH ו-FSH חייבים להימצא בתיקיית shaders.</string>
+    <string name="render_effect_legacy_scale_note">שיידרים ישנים מעובדים ברזולוציית אזור התצוגה של המסך; דגלי OutputResolution ו-Upscaling בקובץ .ini מתעלמים מהם.</string>
+    <string name="render_effect_legacy_metadata_missing">ההגדרות מקובץ ה-.ini של שיידר זה לא נמצאו. ייתכן שקובצי המקור שלו עדיין יעבדו.</string>
+    <string name="render_effect_count"><xliff:g id="count" example="2">%1$d</xliff:g> פעילים</string>
+    <string name="render_effect_add">הוספת אפקט</string>
+    <string name="render_effect_builtin">אפקטים מובנים</string>
+    <string name="render_effect_user">השיידרים שלי</string>
+    <string name="render_effect_user_add">עיון בקובצי .ini</string>
+    <string name="render_effect_user_empty">לא נמצא שיידר ישן בתיקיית shaders.</string>
+    <string name="render_effect_user_file">בחירת קובץ .ini ישן</string>
+    <string name="render_effect_empty">יש להוסיף אפקט כדי להתאים אישית את מראה המשחק.</string>
+    <string name="render_effect_hint">האפקטים פועלים מלמעלה למטה. יש ללחוץ ממושכות ולגרור כדי לשנות סדר.</string>
+    <string name="render_effect_move_up">הזזה למעלה</string>
+    <string name="render_effect_move_down">הזזה למטה</string>
+    <string name="render_effect_remove">הסרת אפקט</string>
+    <string name="render_effect_no_parameters">לאפקט זה אין פרמטרים הניתנים להתאמה.</string>
+    <string name="render_effect_parameter_number">פרמטר <xliff:g id="count" example="2">%1$d</xliff:g></string>
+    <string name="render_effect_restore">איפוס פרמטרים</string>
+    <string name="render_effect_missing">לא זמין: <xliff:g id="shader_name" example="CRT Classic">%1$s</xliff:g>. אפקט מובנה זה אינו זמין בגרסה זו. יש להסיר אותו מהערימה.</string>
+    <string name="render_effect_limit">הערימה תומכת בעד 16 שלבי שיידר (חלק מהאפקטים משתמשים במספר שלבים).</string>
+    <string name="render_effect_unavailable">לא ניתן להפעיל אפקטי שיידר. מוצגת תמונת המשחק המקורית. יש לנסות פחות אפקטים או רזולוציית עיבוד נמוכה יותר.</string>
+    <string name="render_bitmap_memory_reduced">שיפור רזולוציית מפת סיביות נתקל במחסור בזיכרון. ייעשה שימוש בתמונות המקוריות או בקנה מידה נמוך יותר. יש לנסות רזולוציית עיבוד נמוכה יותר או לפנות זיכרון ולהפעיל מחדש.</string>
+    <string name="render_texture_memory_reduced">שיפור רזולוציית מרקמי Micro3D נכשל. ייעשה שימוש במרקמים המקוריים. יש לנסות רזולוציית עיבוד נמוכה יותר או לפנות זיכרון ולהפעיל מחדש.</string>
+    <string name="render_resolution_reduced">רזולוציית העיבוד הופחתה מ-<xliff:g id="from_scale" example="4">%1$d</xliff:g>× ל-<xliff:g id="to_scale" example="2">%2$d</xliff:g>× עקב מגבלות זיכרון או GPU. יש לנסות הגדרה נמוכה יותר או לפנות זיכרון ולהפעיל מחדש.</string>
+    <string name="render_gpu_texture_limit">תמונה זו גדולה מדי עבור ה-GPU גם ב-1×. יש לנסות רזולוציית משחק קטנה יותר או להחליף מצב גרפיקה.</string>
+    <string name="render_gpu_upload_failed">לא ניתן להעלות את תמונת המשחק ל-GPU. מנסה שוב. יש לנסות לסגור אפליקציות אחרות או להחליף מצב גרפיקה.</string>
+    <string name="render_effect_gles">האפקטים נשמרים אך מעובדים רק באמצעות OpenGL ES.</string>
+    <string name="render_effect_legacy_file_error">לא ניתן לטעון שיידר ישן תקין מקובץ ה-.ini שנבחר.</string>
+    <string name="effect_color">התאמת צבע</string>
+    <string name="effect_color_desc">התאמת בהירות, ניגודיות, רוויה, גאמא, גוון ומונוכרום.</string>
+    <string name="effect_vignette">האפלת פינות</string>
+    <string name="effect_vignette_desc">מחשיך את השוליים כדי למקד את תשומת הלב במרכז.</string>
+    <string name="effect_sharpen">חידוד</string>
+    <string name="effect_sharpen_desc">מדגיש פרטים וקצוות בתמונה.</string>
+    <string name="effect_cartoon">קריקטורה רכה</string>
+    <string name="effect_cartoon_desc">מפחית מעברי צבע ומוסיף קווי מתאר רכים.</string>
+    <string name="effect_bloom">זוהר</string>
+    <string name="effect_bloom_desc">מוסיף הילה רכה סביב אזורים בהירים בתמונה.</string>
+    <string name="effect_crt_classic">CRT קלאסי</string>
+    <string name="effect_crt_classic_desc">מדמה טלוויזיית CRT עם קווי סריקה ותבנית RGB.</string>
+    <string name="effect_crt_beam">צרות הקרן</string>
+    <string name="effect_brightness">בהירות</string>
+    <string name="effect_contrast">ניגודיות</string>
+    <string name="effect_saturation">רוויה</string>
+    <string name="effect_strength">עוצמה</string>
+    <string name="effect_color_levels">רמות צבע</string>
+    <string name="effect_edge">עוצמת קצוות</string>
+    <string name="effect_threshold">סף בהירות</string>
+    <string name="effect_radius">רדיוס טשטוש</string>
+    <string name="effect_mask_strength">עוצמת מסכה</string>
+    <string name="effect_scan_strength">עוצמת קווי סריקה</string>
+    <string name="effect_bright_boost">הגברת בהירות</string>
+    <string name="effect_lcd">LCD</string>
+    <string name="effect_lcd_desc">מדמה רשת פיקסלים ותת-פיקסלים של מסך LCD צבעוני קלאסי.</string>
+    <string name="effect_lcd_grid">עוצמת רשת</string>
+    <string name="effect_lcd_subpixel">תת-פיקסלים של RGB</string>
+    <string name="effect_lcd_brightness">בהירות LCD</string>
+    <string name="effect_scanlines">קווי סריקה עדינים</string>
+    <string name="effect_scanlines_desc">מוסיף קווים אופקיים עדינים בדומה לתצוגת CRT.</string>
+    <string name="effect_line_width">צרות הקווים</string>
+    <string name="effect_gamma">גאמא</string>
+    <string name="effect_temperature">טמפרטורת צבע</string>
+    <string name="effect_tint">גוון</string>
+    <string name="effect_monochrome">מונוכרום</string>
+    <string name="effect_depth">עומק צבע ודיטרינג</string>
+    <string name="effect_depth_desc">מגביל את פלטת הצבעים, עם אפשרות לדיטרינג למראה רטרו.</string>
+    <string name="effect_depth_format">פורמט צבע לתצוגה</string>
+    <string name="effect_depth_rgb444">RGB444 · 4,096 צבעים</string>
+    <string name="effect_depth_rgb565">RGB565 · 65,536 צבעים</string>
+    <string name="effect_depth_rgb666">RGB666 · 262,144 צבעים</string>
+    <string name="effect_dither_mode">תבנית דיטרינג</string>
+    <string name="effect_dither_none">כבוי</string>
+    <string name="effect_dither_bayer4">Bayer 4×4</string>
+    <string name="effect_dither_bayer8">Bayer 8×8</string>
+    <string name="effect_dither_strength">עוצמת דיטרינג</string>
+    <string name="effect_mono_display">תצוגה מונוכרומית</string>
+    <string name="effect_mono_display_desc">מדמה מסכים בשחור-לבן, ירוק או ענבר עם 2 או 4 גוונים.</string>
+    <string name="effect_mono_palette">צבע LCD</string>
+    <string name="effect_mono_bw">שחור-לבן</string>
+    <string name="effect_mono_green">LCD ירוק</string>
+    <string name="effect_mono_amber">LCD ענבר</string>
+    <string name="effect_mono_tones">מספר גוונים</string>
+    <string name="effect_mono_two">2 גוונים</string>
+    <string name="effect_mono_four">4 גוונים</string>
+</resources>

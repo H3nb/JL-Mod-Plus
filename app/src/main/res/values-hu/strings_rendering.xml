@@ -1,0 +1,212 @@
+<?xml version="1.0" encoding="utf-8"?>
+<!-- Rendering pipeline, internal resolution, bitmap upscaling, shaders, and built-in visual effects. -->
+<resources xmlns:tools="http://schemas.android.com/tools" xmlns:xliff="urn:oasis:names:tc:xliff:document:1.2">
+    <string name="identity_filter">Nincs (leggyorsabb)</string>
+    <string name="invalid_resolution_not_saved">Érvénytelen felbontás. Az előbeállítás nem lett mentve.</string>
+    <string name="msg_error_loading_shader">Nem támogatott shader. Az alapértelmezett shader használata.</string>
+    <string name="parallel_screen_redrawing">Aszinkron képernyőfrissítés</string>
+    <string name="shader_tuning">Shader finomhangolása</string>
+    <string name="SWAP_SIZES">Szélesség és magasság felcserélése</string>
+    <string name="fps_limit_maximum">Maximum</string>
+    <string name="remove_screen_preset">Felbontási előbeállítás eltávolítása</string>
+    <string name="perf_overlay_position_help">Válasszon egy sarkot.</string>
+    <string name="perf_overlay_top_left">Bal felső</string>
+    <string name="perf_overlay_top_right">Jobb felső</string>
+    <string name="perf_overlay_bottom_left">Bal alsó</string>
+    <string name="perf_overlay_bottom_right">Jobb alsó</string>
+    <string name="internal_resolution_title" tools:ignore="MissingTranslation">Renderelési felbontás</string>
+    <string name="internal_resolution_auto" tools:ignore="MissingTranslation">Automatikus</string>
+    <string name="internal_resolution_description" tools:ignore="MissingTranslation">Nagyobb részletességgel rendereli a támogatott 2D és 3D grafikát. Az Automatikus mód a játéknézet méretéhez igazodik; az alkalmazáshoz indítsa újra.</string>
+    <string name="bitmap_upscaling_title" tools:ignore="MissingTranslation">Bittérképes felskálázás</string>
+    <string name="bitmap_upscaling_description" tools:ignore="MissingTranslation">Felskálázza a módosíthatatlan 2D sprite-okat és az átlátszatlan Micro3D modelltextúrákat MMPX vagy xBR Lv3 használatával. Az M3G textúrák változatlanok maradnak; az alkalmazáshoz indítsa újra.</string>
+    <string name="bitmap_upscaling_nearest" tools:ignore="MissingTranslation">Legközelebbi szomszéd</string>
+    <string name="bitmap_upscaling_bilinear" tools:ignore="MissingTranslation">Bilineáris</string>
+    <string name="bitmap_upscaling_mmpx" tools:ignore="MissingTranslation">MMPX</string>
+    <string name="bitmap_upscaling_edge_aware" tools:ignore="MissingTranslation">xBR Lv3</string>
+    <!-- Prototyping only: localized UI copy is pending design review. -->
+    <string name="render_shader_effects">Shadereffektek</string>
+    <string name="render_pipeline_title">Renderelési folyamat</string>
+    <string name="render_shader_preset">Shader-előbeállítás</string>
+    <string name="render_shader_picker_help">Kombinálja a beépített és saját örökölt shadereit rendezett effektlistában.</string>
+    <string name="render_shader_requires_gles">A shaderek mentésre kerülnek, de csak OpenGL ES használatakor lépnek életbe.</string>
+    <string name="render_shader_missing">A kiválasztott shader nincs a könyvtárban. Válasszon másik előbeállítást, vagy állítsa vissza a fájljait.</string>
+    <string name="render_shader_parameters">Shaderparaméterek</string>
+    <string name="render_shader_reset_parameters">Paraméterek visszaállítása</string>
+    <string name="render_shader_passes">Shader-lépések</string>
+    <string name="render_shader_pass_count"><xliff:g id="count" example="2">%1$d</xliff:g> lépés</string>
+    <string name="render_shader_pass_hint">Tekintse meg a kiválasztott GLSLP előbeállítás szakaszait.</string>
+    <string name="render_pass_filter">Bemeneti szűrés</string>
+    <string name="render_pass_output">Kimeneti méret (szélesség × magasság)</string>
+    <string name="render_pipeline_unavailable">Az előbeállítás nem érhető el</string>
+    <string name="render_game_output">Játékkimenet</string>
+    <string name="render_logical_screen_help">A játéknak jelentett logikai méret.</string>
+    <string name="render_internal_resolution">Belső felbontás</string>
+    <string name="render_internal_unavailable">Csak natív (1×). Magasabb renderelési felbontás nem érhető el ehhez a konfigurációhoz.</string>
+    <string name="render_display_renderer">Megjelenítő renderelő</string>
+    <string name="render_shader_processing">Shader-feldolgozás</string>
+    <string name="render_display_scaling">Kijelzőméretezés</string>
+    <string name="render_display_viewport">Játéknézet</string>
+    <string name="render_texture_filtering">Képernyőméretezési szűrő</string>
+    <string name="render_texture_filtering_help">Legközelebbi vagy Lineáris szűrést választ a kész játékképhez. Az effektek felülírhatják.</string>
+    <string name="render_viewport_note">A játéknézet mérete a képernyőelrendezés alapján dől el a shader-lépések megtervezése előtt. A nyilak a kép útját mutatják, nem az elrendezési számítások sorrendjét.</string>
+    <string name="render_pipeline_help">Tekintse meg, hogyan jut el a játékképkocka a kijelzőre, és szerkessze az egyes szakaszokat.</string>
+    <string name="render_no_shader">Válasszon egy előbeállítást a játék megjelenésének módosításához.</string>
+    <string name="render_shader_adjust">Paraméterek módosítása</string>
+    <string name="render_legacy_tuning_hint">Finomhangolja ezt az örökölt effektet.</string>
+    <string name="render_shader_customization">Testreszabás</string>
+    <string name="render_adjustable_count">Állítható paraméterek: <xliff:g id="count" example="3">%1$d</xliff:g></string>
+    <string name="render_pass_summary"><xliff:g id="count" example="3">%1$d</xliff:g> szakasz · Az előbeállítás határozza meg</string>
+    <string name="render_shader_preset_note">A shader-szakaszokat az előbeállítás határozza meg. A sorrendjük módosítása nélkül megtekintheti őket.</string>
+    <string name="render_parameters_hint">Húzza el a csúszkát az érték módosításához. A változtatások felengedéskor mentődnek.</string>
+    <string name="render_pass_readonly">A szakaszok ebben a sorrendben futnak. A bemeneti szűrés és a kimeneti méretezés a kiválasztott előbeállításból származik.</string>
+    <string name="render_pipeline_intro">A játékképkocka útja a képkockapuffertől a képernyőig.</string>
+    <string name="render_native_short">Natív (1×)</string>
+    <string name="render_expand_passes">Szakaszok megjelenítése</string>
+    <string name="render_collapse_passes">Szakaszok elrejtése</string>
+    <string name="render_view_all_passes">Szakaszok részletei</string>
+    <string name="render_pipeline_filter_summary">Textúraszűrés: <xliff:g id="shader_name" example="CRT Classic">%1$s</xliff:g></string>
+    <string name="render_pipeline_note">A képernyőelrendezés a shader-lépések megtervezése előtt határozza meg a játéknézetet. A lépések a kép útját mutatják.</string>
+    <string name="render_shader_change">Másik effekt kiválasztása</string>
+    <string name="render_custom_pipeline">Egyéni folyamat</string>
+    <string name="render_custom_pipeline_hint">Kombináljon önálló GLSL shadereket a shaders mappából.</string>
+    <string name="render_custom_order_help">Az effektek fentről lefelé futnak. Az örökölt GLSLP beállítások érvényben maradnak, amíg nem módosítja őket.</string>
+    <string name="render_custom_empty">Adjon hozzá egy shadert az egyéni lánc elindításához.</string>
+    <string name="render_custom_stage_count"><xliff:g id="count" example="3">%1$d</xliff:g> egyéni shader-szakasz</string>
+    <string name="render_custom_add">Shader hozzáadása</string>
+    <string name="render_custom_add_hint">Válasszon egy külső, önálló .glsl forrást.</string>
+    <string name="render_custom_no_sources">Nem találhatók örökölt shaderek. Helyezzen .ini shaderfájlokat a shaders mappába, majd nyissa meg újra a beállításokat.</string>
+    <string name="render_custom_scale">Kimenet: <xliff:g id="scale" example="2">%1$d</xliff:g>× az előző szakaszhoz képest</string>
+    <string name="render_custom_output_scale">Kimeneti méret a következő szakaszhoz</string>
+    <string name="render_custom_final_viewport">Végső kimenet: képernyőn megjelenítve</string>
+    <string name="render_custom_filter">Bemeneti szűrő: <xliff:g id="shader_name" example="CRT Classic">%1$s</xliff:g></string>
+    <string name="render_custom_up">Fel</string>
+    <string name="render_custom_down">Le</string>
+    <string name="render_custom_remove">Eltávolítás</string>
+    <string name="render_custom_cancel">Mégse</string>
+    <string name="render_custom_save">Mentés</string>
+    <string name="render_custom_default">Alapértelmezett</string>
+    <string name="render_custom_nearest">Legközelebbi</string>
+    <string name="render_custom_linear">Lineáris</string>
+    <string name="render_custom_checking">Shaderfájlok ellenőrzése…</string>
+    <string name="render_active_shader">Aktív effekt</string>
+    <string name="render_shader_off">Ki</string>
+    <string name="render_edit_custom_pipeline">Shaderlánc szerkesztése</string>
+    <string name="render_shader_unavailable">Nem érhető el: <xliff:g id="shader_name" example="CRT Classic">%1$s</xliff:g></string>
+    <string name="render_no_shader_sources">Nem találhatók shaderek. Helyezzen örökölt .ini shaderfájlokat a shaders mappába, majd nyissa meg újra a beállításokat.</string>
+    <string name="render_shader_mode">Shader mód</string>
+    <string name="render_mode_selected">Kiválasztva</string>
+    <string name="render_gles_shader_default">Az OpenGL ES az eredeti játékképet használja, ha a shadereffektek ki vannak kapcsolva.</string>
+    <string name="render_shader_off_help">Nincsenek további vizuális effektek.</string>
+    <string name="render_legacy_mode">Örökölt shader</string>
+    <string name="render_legacy_mode_help">Válasszon egy .ini fájlt a shaders mappából.</string>
+    <string name="render_legacy_empty">Nincs használható shader-definíció ebben az .ini fájlban.</string>
+    <string name="render_legacy_select_variant">Válasszon örökölt shadert</string>
+    <string name="render_legacy_variant_description">Shader-definíció a kiválasztott .ini fájlban</string>
+    <string name="render_preset_mode">GLSLP előbeállítás</string>
+    <string name="render_preset_mode_help">Teljes .glslp folyamat betöltése saját lépésekkel.</string>
+    <string name="render_custom_pass_count">Lépések száma</string>
+    <string name="render_custom_pass_number"><xliff:g id="number" example="1">%1$d</xliff:g>. lépés</string>
+    <string name="render_custom_pick_file">GLSL fájl kiválasztása</string>
+    <string name="render_custom_add_pass">Shader-lépések számának növelése</string>
+    <string name="render_custom_remove_pass">Shader-lépések számának csökkentése</string>
+    <string name="render_shader_selected_name">Aktív: <xliff:g id="shader_name" example="CRT Classic">%1$s</xliff:g></string>
+    <string name="render_shader_invalid_picker">A kiválasztott fájl nem használható. Válasszon egy örökölt .ini fájlt a shaders mappán belül.</string>
+    <string name="render_custom_mode">Shader típusa</string>
+    <string name="render_custom_mode_legacy">Örökölt</string>
+    <string name="render_custom_mode_glsl">GLSL</string>
+    <string name="render_custom_pick_legacy">Örökölt shader kiválasztása</string>
+    <string name="render_custom_preserve_size">Kimenet: előbeállításból</string>
+    <string name="render_custom_loading">Előbeállítás lépéseinek olvasása…</string>
+    <string name="render_custom_start_fresh">Indítás előbeállítás nélkül (örökölt beállítások elvetése)</string>
+    <string name="render_effect_default_settings">Alapértelmezett beállítások</string>
+    <string name="render_effect_summary_more">+<xliff:g id="count" example="2">%1$d</xliff:g> további</string>
+    <string name="render_effect_legacy_author">Készítő: <xliff:g id="shader_name" example="CRT Classic">%1$s</xliff:g></string>
+    <string name="render_effect_legacy_source">Forrás: <xliff:g id="shader_name" example="CRT Classic">%1$s</xliff:g></string>
+    <string name="render_effect_removed">Effekt eltávolítva</string>
+    <string name="render_effect_undo">Visszavonás</string>
+    <string name="render_effect_catalog_hint">Koppintson egy effektre a listához való hozzáadásához.</string>
+    <string name="render_effect_user_folder_hint">Az INI, VSH és FSH fájloknak a shaders mappában kell lenniük.</string>
+    <string name="render_effect_legacy_scale_note">Az örökölt shaderek a képernyő játéknézetének felbontásában renderelnek; az .ini OutputResolution és Upscaling jelzői figyelmen kívül maradnak.</string>
+    <string name="render_effect_legacy_metadata_missing">A shader .ini fájljának beállításai nem találhatók. A forrásfájlok ennek ellenére renderelhetők lehetnek.</string>
+    <string name="render_effect_count"><xliff:g id="count" example="2">%1$d</xliff:g> aktív</string>
+    <string name="render_effect_add">Effekt hozzáadása</string>
+    <string name="render_effect_builtin">Beépített effektek</string>
+    <string name="render_effect_user">Saját shaderek</string>
+    <string name="render_effect_user_add">.ini fájlok tallózása</string>
+    <string name="render_effect_user_empty">Nem található örökölt shader a shaders mappában.</string>
+    <string name="render_effect_user_file">Örökölt .ini fájl kiválasztása</string>
+    <string name="render_effect_empty">Adjon hozzá egy effektet a játék megjelenésének testreszabásához.</string>
+    <string name="render_effect_hint">Az effektek fentről lefelé futnak. Tartsa lenyomva és húzza az átrendezéshez.</string>
+    <string name="render_effect_move_up">Mozgatás felfelé</string>
+    <string name="render_effect_move_down">Mozgatás lefelé</string>
+    <string name="render_effect_remove">Effekt eltávolítása</string>
+    <string name="render_effect_no_parameters">Ennek az effektnek nincsenek állítható paraméterei.</string>
+    <string name="render_effect_parameter_number"><xliff:g id="count" example="2">%1$d</xliff:g>. paraméter</string>
+    <string name="render_effect_restore">Paraméterek visszaállítása</string>
+    <string name="render_effect_missing">Nem érhető el: <xliff:g id="shader_name" example="CRT Classic">%1$s</xliff:g>. Ez a beépített effekt nem érhető el ebben a verzióban. Távolítsa el a listából.</string>
+    <string name="render_effect_limit">A lista legfeljebb 16 shader-lépést támogat (egyes effektek több lépést használnak).</string>
+    <string name="render_effect_unavailable">A shadereffektek nem futtathatók. Az eredeti játékkép jelenik meg. Próbáljon kevesebb effektet vagy alacsonyabb renderelési felbontást.</string>
+    <string name="render_bitmap_memory_reduced">A bittérképes felskálázás kifogyott a memóriából. Az eredeti képek vagy kisebb lépték lesz használva. Próbáljon alacsonyabb renderelési felbontást vagy szabadítson fel memóriát, majd indítsa újra.</string>
+    <string name="render_texture_memory_reduced">A Micro3D textúrák felskálázása sikertelen volt. Az eredeti textúrák lesznek használva. Próbáljon alacsonyabb renderelési felbontást vagy szabadítson fel memóriát, majd indítsa újra.</string>
+    <string name="render_resolution_reduced">A renderelési felbontás <xliff:g id="from_scale" example="4">%1$d</xliff:g>×-ről <xliff:g id="to_scale" example="2">%2$d</xliff:g>×-re csökkent memória- vagy GPU-korlátok miatt. Próbáljon alacsonyabb beállítást vagy szabadítson fel memóriát, majd indítsa újra.</string>
+    <string name="render_gpu_texture_limit">Ez a kép még 1×-es méretben is túl nagy a GPU számára. Próbáljon kisebb játékfelbontást, vagy váltson grafikai módot.</string>
+    <string name="render_gpu_upload_failed">Nem sikerült feltölteni a játékképet a GPU-ra. Újrapróbálkozás. Próbálja bezárni a többi alkalmazást, vagy váltson grafikai módot.</string>
+    <string name="render_effect_gles">Az effektek mentésre kerülnek, de csak OpenGL ES használatával renderelődnek.</string>
+    <string name="render_effect_legacy_file_error">Nem sikerült érvényes örökölt shadert betölteni a kiválasztott .ini fájlból.</string>
+    <string name="effect_color">Színbeállítás</string>
+    <string name="effect_color_desc">Állítsa be a fényerőt, kontrasztot, telítettséget, gammát, színtónust és monokróm hatást.</string>
+    <string name="effect_vignette">Vignetta</string>
+    <string name="effect_vignette_desc">Sötétíti a széleket, hogy a középponthoz vonzza a figyelmet.</string>
+    <string name="effect_sharpen">Élesítés</string>
+    <string name="effect_sharpen_desc">Kiemeli a kép részleteit és éleit.</string>
+    <string name="effect_cartoon">Lágy rajzfilm</string>
+    <string name="effect_cartoon_desc">Egyszerűsíti a színátmeneteket és lágy körvonalakat ad hozzá.</string>
+    <string name="effect_bloom">Derengés</string>
+    <string name="effect_bloom_desc">Lágy fényudvart ad a kép világos részei köré.</string>
+    <string name="effect_crt_classic">Klasszikus CRT</string>
+    <string name="effect_crt_classic_desc">CRT televíziót utánoz pásztázó vonalakkal és RGB mintázattal.</string>
+    <string name="effect_crt_beam">Sugár keskenysége</string>
+    <string name="effect_brightness">Fényerő</string>
+    <string name="effect_contrast">Kontraszt</string>
+    <string name="effect_saturation">Telítettség</string>
+    <string name="effect_strength">Erősség</string>
+    <string name="effect_color_levels">Színszintek</string>
+    <string name="effect_edge">Élek intenzitása</string>
+    <string name="effect_threshold">Fényerő-küszöb</string>
+    <string name="effect_radius">Elmosási sugár</string>
+    <string name="effect_mask_strength">Maszk erőssége</string>
+    <string name="effect_scan_strength">Pásztázó vonalak erőssége</string>
+    <string name="effect_bright_boost">Fényerő-kiemelés</string>
+    <string name="effect_lcd">LCD</string>
+    <string name="effect_lcd_desc">Klasszikus színes LCD kijelző pixelrácsát és alpixeleit utánozza.</string>
+    <string name="effect_lcd_grid">Rács erőssége</string>
+    <string name="effect_lcd_subpixel">RGB alpixelek</string>
+    <string name="effect_lcd_brightness">LCD fényerő</string>
+    <string name="effect_scanlines">Enyhe pásztázó vonalak</string>
+    <string name="effect_scanlines_desc">Finom vízszintes vonalakat ad hozzá, akárcsak egy CRT kijelzőn.</string>
+    <string name="effect_line_width">Vonal keskenysége</string>
+    <string name="effect_gamma">Gamma</string>
+    <string name="effect_temperature">Színhőmérséklet</string>
+    <string name="effect_tint">Árnyalat</string>
+    <string name="effect_monochrome">Monokróm</string>
+    <string name="effect_depth">Színmélység és raszterezés</string>
+    <string name="effect_depth_desc">Korlátozza a színpalettát opcionális raszterezéssel a retró hatásért.</string>
+    <string name="effect_depth_format">Kijelző színformátuma</string>
+    <string name="effect_depth_rgb444">RGB444 · 4 096 szín</string>
+    <string name="effect_depth_rgb565">RGB565 · 65 536 szín</string>
+    <string name="effect_depth_rgb666">RGB666 · 262 144 szín</string>
+    <string name="effect_dither_mode">Raszterezési minta</string>
+    <string name="effect_dither_none">Ki</string>
+    <string name="effect_dither_bayer4">Bayer 4×4</string>
+    <string name="effect_dither_bayer8">Bayer 8×8</string>
+    <string name="effect_dither_strength">Raszterezés erőssége</string>
+    <string name="effect_mono_display">Monokróm kijelző</string>
+    <string name="effect_mono_display_desc">Fekete-fehér, zöld vagy borostyán képernyőket utánoz 2 vagy 4 tónussal.</string>
+    <string name="effect_mono_palette">LCD színe</string>
+    <string name="effect_mono_bw">Fekete-fehér</string>
+    <string name="effect_mono_green">Zöld LCD</string>
+    <string name="effect_mono_amber">Borostyán LCD</string>
+    <string name="effect_mono_tones">Tónusok száma</string>
+    <string name="effect_mono_two">2 tónus</string>
+    <string name="effect_mono_four">4 tónus</string>
+</resources>

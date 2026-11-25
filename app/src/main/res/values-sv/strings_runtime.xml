@@ -1,0 +1,116 @@
+<?xml version="1.0" encoding="utf-8"?>
+<!-- Active MIDlet runtime session, screenshots, logs, crash recovery, and diagnostic reports. -->
+<resources xmlns:tools="http://schemas.android.com/tools" xmlns:xliff="urn:oasis:names:tc:xliff:document:1.2">
+    <string name="action_keyboard_ime">Tangentbord (IME)</string>
+    <string name="action_lock_orientation">Lås skärmrotation</string>
+    <string name="runtime_replacement_failed">Det gick inte att stoppa den aktiva MIDlet-appen. Försök öppna den nya igen.</string>
+    <string name="runtime_restart" tools:ignore="MissingTranslation">Starta om</string>
+    <string name="runtime_restart_confirmation" tools:ignore="MissingTranslation">Starta om den här MIDlet-appen? Osparade framsteg kan gå förlorade.</string>
+    <string name="FORCE_CLOSE_CONFIRMATION">Stoppa den här MIDlet-appen? Osparade framsteg kan gå förlorade.</string>
+    <string name="runtime_preset_save_destination">Spara i</string>
+    <string name="runtime_preset_apply_destination">Använd på</string>
+    <string name="runtime_preset_this_midlet_only">Endast den här MIDlet-appen</string>
+    <string name="runtime_preset_update_destination">Uppdatera <xliff:g id="profile_name" example="Action Games">%1$s</xliff:g></string>
+    <string name="runtime_preset_local_explanation">Endast den här MIDlet-appens virtuella kontroller ändras.</string>
+    <string name="runtime_preset_update_explanation">Uppdatera layouten för virtuella kontroller i <xliff:g id="profile_name" example="Action Games">%1$s</xliff:g>.\nAndra MIDlets som är länkade till den här profilen får den nya layouten nästa gång de startar.</string>
+    <string name="runtime_layout_apply_title">Använd <xliff:g id="name" example="Example">%1$s</xliff:g>?</string>
+    <string name="runtime_apply">Använd</string>
+    <string name="runtime_preset_update_failed">Sparad för den här MIDlet-appen, men <xliff:g id="profile_name" example="Action Games">%1$s</xliff:g> kunde inte uppdateras.</string>
+    <string name="runtime_preset_update_unlinked"><xliff:g id="profile_name" example="Action Games">%1$s</xliff:g> har uppdaterats, men den här MIDlet-appen kommer inte att få framtida uppdateringar från den.</string>
+    <string name="msg_immediate_mode_disabled">Omedelbar bearbetning inaktiverades eftersom händelseåteranrop nästlades för djupt.</string>
+    <string name="msg_press_again_to_close">Tryck igen för att stänga</string>
+    <string name="save_log">Spara logg</string>
+    <string name="take_screenshot">Ta skärmbild</string>
+    <!-- Crash-report UI remains translatable; locales without coverage fall back to default English. -->
+    <string name="crash_reports">Diagnostikrapporter</string>
+    <string name="diagnostic_report">Diagnostikrapport</string>
+    <string name="view_reports">Visa diagnostikrapporter</string>
+    <string name="crash_reports_empty">Inga lokala diagnostikrapporter</string>
+    <string name="crash_reports_loading">Läser in diagnostikrapporter</string>
+    <string name="crash_report_midlet_failure">Fel i MIDlet-session</string>
+    <string name="crash_report_java_report">Java-diagnostikrapport</string>
+    <string name="crash_report_process_exit">Rapport om processavslut</string>
+    <string name="crash_report_list_subtitle"><xliff:g id="report_type" example="Java crash">%1$s</xliff:g> · <xliff:g id="timestamp" example="Nov 25, 09:40">%2$s</xliff:g></string>
+    <plurals name="crash_reports_selected_count">
+        <item quantity="one"><xliff:g id="count" example="3">%1$d</xliff:g> markerad</item>
+        <item quantity="other"><xliff:g id="count" example="3">%1$d</xliff:g> markerade</item>
+    </plurals>
+    <string name="copy_report">Kopiera</string>
+    <string name="report_on_github">Rapportera på GitHub</string>
+    <string name="delete_report">Radera</string>
+    <string name="share_selected_reports" tools:ignore="MissingTranslation">Dela markerade rapporter</string>
+    <string name="delete_selected_reports">Radera markerade rapporter</string>
+    <string name="crash_report_copied">Rapport kopierad</string>
+    <string name="crash_report_bundle_preparing">Förbereder diagnostikpaket…</string>
+    <string name="crash_report_bundle_ready_title">Diagnostikpaket klart</string>
+    <string name="crash_report_bundle_ready_message"><xliff:g id="name" example="Example">%1$s</xliff:g>\n\nSparat i Nedladdningar → JL-Mod Plus Diagnostics.\n\nBifoga den här filen innan du skickar in GitHub-ärendet. Diagnostikpaketet blir offentligt när det bifogas i ärendet.</string>
+    <string name="locate_bundle">Visa paket</string>
+    <string name="open_github">Öppna GitHub</string>
+    <string name="crash_report_bundle_failed">Det gick inte att förbereda diagnostikpaketet.</string>
+    <string name="crash_report_locate_failed">Ingen filväljare är tillgänglig för att visa diagnostikpaketet.</string>
+    <string name="crash_report_bundle_cleanup_failed">Diagnostikrapporten raderades, men det skapade paketet kunde inte tas bort.</string>
+    <string name="crash_report_github_unavailable">Ingen webbläsare eller app hittades för att öppna GitHubs ärendeformulär.</string>
+    <string name="crash_report_delete_title">Radera diagnostikrapport?</string>
+    <string name="crash_report_delete_message">Detta tar permanent bort diagnostikrapporten och eventuellt skapat paket från den här enheten. Filer som redan laddats upp någon annanstans påverkas inte.</string>
+    <plurals name="crash_reports_batch_delete_title">
+        <item quantity="one">Radera <xliff:g id="count" example="3">%1$d</xliff:g> diagnostikrapport?</item>
+        <item quantity="other">Radera <xliff:g id="count" example="3">%1$d</xliff:g> diagnostikrapporter?</item>
+    </plurals>
+    <string name="crash_reports_batch_delete_message">Detta tar permanent bort de markerade diagnostikrapporterna och eventuella skapade paket från den här enheten. Filer som redan laddats upp någon annanstans påverkas inte.</string>
+    <string name="crash_report_delete_failed">Det gick inte att radera rapporten.</string>
+    <string name="crash_report_unavailable">Den här rapporten är inte längre tillgänglig.</string>
+    <string name="process_exit_recovery_title">Oväntat processavslut</string>
+    <string name="process_exit_recovery_message">JL-Mod Plus stoppades oväntat under föregående session (<xliff:g id="reason" example="Java crash">%1$s</xliff:g>). Diagnostikinformation sparades lokalt.</string>
+    <string name="process_exit_recovery_message_midlet">En MIDlet-process stoppades oväntat under föregående session (<xliff:g id="reason" example="Java crash">%1$s</xliff:g>). Diagnostikinformation sparades lokalt.</string>
+    <string name="process_exit_recovery_message_named"><xliff:g id="app_name" example="Bounce Tales">%1$s</xliff:g> stoppades oväntat under föregående session (<xliff:g id="reason" example="Native crash">%2$s</xliff:g>). Diagnostikinformation sparades lokalt.</string>
+    <string name="select_all_reports">Markera alla rapporter</string>
+    <string name="clear_report_selection">Rensa rapportmarkering</string>
+    <string name="runtime_memory_button_short" tools:ignore="MissingTranslation">Minnesknapp</string>
+    <string name="runtime_action_on" tools:ignore="MissingTranslation">På</string>
+    <string name="runtime_action_off" tools:ignore="MissingTranslation">Av</string>
+    <string name="reconverting_wait">Den här MIDlet-appen kräver en engångskonvertering för kompatibilitet innan den kan starta.</string>
+    <string name="reconversion_done_with_warning">Kompatibilitetskonverteringen slutfördes med varningar.</string>
+    <string name="reconversion_error_summary">Det gick inte att konvertera den här MIDlet-appen automatiskt.</string>
+    <string name="runtime_invalid_intent">Ogiltig startbegäran: sökvägen till MIDlet-appen saknas.</string>
+    <string name="runtime_storage_in_use">MIDlet-lagringen används redan av en annan körtid.</string>
+    <string name="runtime_installation_changed">Det gick inte att förbereda den här MIDlet-appen för start.</string>
+    <string name="runtime_storage_unavailable">Det gick inte att förbereda MIDlet-lagringen.</string>
+    <string name="runtime_no_midlets">Inga MIDlets hittades i den här appen.</string>
+    <!-- Runtime grouped controls derive body, accent, outline, icon, and selected-icon colors from the existing virtual-control appearance settings. -->
+    <string name="runtime_virtual_controls_title">Virtuella kontroller</string>
+    <string name="runtime_virtual_controls_dpad">D-pad</string>
+    <string name="runtime_virtual_controls_analog">Analog styrspak</string>
+    <string name="runtime_virtual_controls_edit">Redigera layout</string>
+    <string name="runtime_virtual_controls_edit_guide_title">Guide för layoutredigering</string>
+    <string name="runtime_virtual_controls_edit_guide_message">Dra kontroller för att flytta dem. För knappar rör du två fingrar horisontellt eller vertikalt för att ändra bredd eller höjd, eller diagonalt för att ändra båda. Nyp för att ändra storleken på D-pad eller analog styrspak proportionerligt. Tryck på Klar när du är färdig.</string>
+    <string name="runtime_virtual_controls_edit_guide_dont_show_again">Visa inte igen</string>
+    <string name="runtime_virtual_controls_switch_layout">Välj kontrollayout</string>
+    <string name="runtime_virtual_controls_show_controls">Välj synliga kontroller</string>
+    <string name="runtime_virtual_controls_template_dpad_standard">Standard-D-pad</string>
+    <string name="runtime_virtual_controls_template_analog_standard">Standard analog styrspak</string>
+    <string name="screenshot_save_failed">Det gick inte att spara skärmbilden.</string>
+    <!-- %1$s is the saved screenshot's filesystem path. New key replaces the legacy prefix contract. -->
+    <string name="screenshot_saved_path">Skärmbild sparad i <xliff:g id="path" example="Pictures/Bounce Tales/Screenshot_20261125-103000.png">%1$s</xliff:g></string>
+    <!-- Deliberate English fallback until reviewed translations are available. -->
+    <string name="log_save_success" tools:ignore="MissingTranslation">Sparade <xliff:g id="name" example="Example">%1$s</xliff:g> i Nedladdningar → JL-Mod Plus Diagnostics.</string>
+    <string name="log_save_partial" tools:ignore="MissingTranslation">Sparade en partiell logg som <xliff:g id="name" example="Example">%1$s</xliff:g> i Nedladdningar → JL-Mod Plus Diagnostics.</string>
+    <string name="log_save_empty" tools:ignore="MissingTranslation">Inga apploggposter är tillgängliga i Android-bufferten.</string>
+    <string name="log_save_timeout" tools:ignore="MissingTranslation">Tidsgränsen för logginsamling överskreds. Ingen fil sparades.</string>
+    <string name="log_save_failed">Det gick inte att spara loggen.</string>
+    <string name="runtime_midlet_list_failed">Det gick inte att läsa den här appens MIDlet-lista.</string>
+    <string name="diagnostic_reason_java_crash">Java-krasch</string>
+    <string name="diagnostic_reason_native_crash">Intern krasch</string>
+    <string name="diagnostic_reason_anr">Appen svarar inte</string>
+    <string name="diagnostic_reason_signal">Signalavslut</string>
+    <string name="diagnostic_reason_unknown">Okänd orsak</string>
+    <string name="crash_reports_delete_failed">Vissa diagnostikrapporter kunde inte raderas. Andra kan ha tagits bort.</string>
+    <string name="crash_reports_bundle_cleanup_failed">Diagnostikrapporter raderades, men vissa skapade paket kunde inte tas bort.</string>
+    <string name="runtime_chrome_update_failed">Det gick inte att uppdatera visningsinställningarna. Försök igen.</string>
+    <string name="runtime_fullscreen_update_failed">Det gick inte att komma åt helskärmsinställningen. Försök igen.</string>
+    <string name="runtime_camera_use_front">Använd främre kamera</string>
+    <string name="runtime_camera_use_rear">Använd bakre kamera</string>
+    <string name="runtime_camera_switch_failed">Det gick inte att byta kamera.</string>
+    <string name="runtime_camera_switch_recording" tools:ignore="MissingTranslation">Stoppa inspelningen innan du byter kamera.</string>
+    <string name="date_field_not_set" tools:ignore="MissingTranslation">Inte angett</string>
+    <string name="date_field_use_displayed_value" tools:ignore="MissingTranslation">Använd det här värdet</string>
+</resources>

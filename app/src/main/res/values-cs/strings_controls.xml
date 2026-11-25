@@ -1,0 +1,107 @@
+<?xml version="1.0" encoding="utf-8"?>
+<!-- Virtuální ovládání, editor rozvržení, mapování fyzických kláves a vzhledy ovládání. -->
+<resources xmlns:tools="http://schemas.android.com/tools" xmlns:xliff="urn:oasis:names:tc:xliff:document:1.2">
+    <string name="alert_map_menu">Klávesa nabídky (M) není přiřazena.\nBěhem hraní možná nebudete moci otevřít nabídku MIDletu.</string>
+    <string name="dismiss_mapping">Zavřít mapování</string>
+    <string name="layout_edit_finish">Dokončit úpravy</string>
+    <string name="layout_edit_done">Hotovo</string>
+    <string name="layout_editor_grid_size">Velikost mřížky</string>
+    <string name="layout_editor_grid_coarse">Hrubá (16)</string>
+    <string name="layout_editor_grid_normal">Standardní (24)</string>
+    <string name="layout_editor_grid_fine">Jemná (32)</string>
+    <string name="layout_editor_snap_on">Přichytávání zapnuto</string>
+    <string name="layout_editor_snap_off">Přichytávání vypnuto</string>
+    <string name="layout_edit_save_changes">Uložit změny virtuálního ovládání?</string>
+    <string name="layout_edit_discard">Zahodit</string>
+    <string name="layout_edit_continue">Pokračovat v úpravách</string>
+    <string name="layout_edit_finished">Úpravy virtuálního ovládání jsou dokončeny.</string>
+    <string name="virtual_controls_save_failed">Virtuální ovládání se nepodařilo uložit. Zkuste to znovu.</string>
+    <string name="layout_switch">Vybrat rozvržení ovládání</string>
+    <string name="mapping_dialog_key_not_specified">Nejsou přiřazeny žádné vstupy.</string>
+    <string name="mapping_dialog_message">Stiskněte fyzickou klávesu nebo tlačítko, které chcete k tomuto prvku přiřadit.</string>
+    <string name="mapping_dialog_assigned_inputs">Přiřazené vstupy</string>
+    <string name="mapping_dialog_add_input">Můžete přiřadit více než jeden fyzický vstup.</string>
+    <string name="mapping_dialog_remove">Odebrat</string>
+    <string name="mapping_dialog_title">Stiskněte klávesu nebo tlačítko</string>
+    <string name="message_reset_layout">Obnovit rozvržení virtuálního ovládání na výchozí?</string>
+    <string name="RESET_LAYOUT_CMD">Obnovit rozvržení virtuálního ovládání</string>
+    <string name="saved_keyboard_layout_summary">Rozvržení virtuálního ovládání bylo uloženo.</string>
+    <string name="control_skin_title">Vzhled virtuálního ovládání</string>
+    <string name="control_skin_create" tools:ignore="MissingTranslation">Vytvořit sadu</string>
+    <string name="control_skin_default" tools:ignore="MissingTranslation">Výchozí tlačítka</string>
+    <string name="control_skin_edit" tools:ignore="MissingTranslation">Upravit</string>
+    <string name="control_skin_rename" tools:ignore="MissingTranslation">Přejmenovat</string>
+    <string name="control_skin_duplicate" tools:ignore="MissingTranslation">Duplikovat</string>
+    <string name="control_skin_delete" tools:ignore="MissingTranslation">Smazat</string>
+    <string name="control_skin_import_zip" tools:ignore="MissingTranslation">Importovat ZIP</string>
+    <string name="control_skin_export_zip" tools:ignore="MissingTranslation">Exportovat ZIP</string>
+    <string name="control_skin_select_export_folder" tools:ignore="MissingTranslation">Vybrat složku pro export</string>
+    <string name="control_skin_imported" tools:ignore="MissingTranslation">Importováno: <xliff:g id="skin_name" example="Classic Nokia">%1$s</xliff:g></string>
+    <string name="control_skin_already_available" tools:ignore="MissingTranslation">Sada <xliff:g id="skin_name" example="Classic Nokia">%1$s</xliff:g> je již k dispozici</string>
+    <string name="control_skin_exported" tools:ignore="MissingTranslation">Uloženo: <xliff:g id="skin_name" example="Classic Nokia">%1$s</xliff:g></string>
+    <string name="control_skin_archive_invalid_path" tools:ignore="MissingTranslation">Vybrané umístění není dostupné.</string>
+    <string name="control_skin_archive_import_failed" tools:ignore="MissingTranslation">Vzhled ovládání se nepodařilo importovat. Ověřte, že archiv ZIP obsahuje jednu platnou sadu.</string>
+    <string name="control_skin_archive_export_failed" tools:ignore="MissingTranslation">Vzhled ovládání se nepodařilo exportovat. Vyberte zapisovatelnou složku mimo knihovnu vzhledů.</string>
+    <string name="control_skin_name" tools:ignore="MissingTranslation">Název sady</string>
+    <string name="control_skin_icon" tools:ignore="MissingTranslation">Pouze ikona</string>
+    <string name="control_skin_full" tools:ignore="MissingTranslation">Celé tlačítko</string>
+    <string name="control_skin_normal_image" tools:ignore="MissingTranslation">Výchozí obrázek</string>
+    <string name="control_skin_pressed_image" tools:ignore="MissingTranslation">Obrázek při stisknutí</string>
+    <string name="control_skin_delete_warning" tools:ignore="MissingTranslation">Smazat tuto globální sadu vzhledu a všechny její obrázky? MIDlety, které ji používají, se vrátí k výchozímu ovládání.</string>
+    <string name="control_skin_invalid_image" tools:ignore="MissingTranslation">Vyberte obrázek ve formátu PNG, WebP nebo SVG.</string>
+    <string name="control_skin_operation_failed" tools:ignore="MissingTranslation">Sadu vzhledu ovládání se nepodařilo aktualizovat.</string>
+    <string name="control_skin_missing" tools:ignore="MissingTranslation">Nedostupná sada (výchozí ovládání)</string>
+    <string name="control_skin_remove_image" tools:ignore="MissingTranslation">Odebrat</string>
+    <string name="control_skin_manage" tools:ignore="MissingTranslation">Spravovat sadu</string>
+    <string name="control_skin_manage_named" tools:ignore="MissingTranslation">Spravovat sadu <xliff:g id="skin_name" example="Classic Nokia">%1$s</xliff:g></string>
+    <plurals name="control_skin_count">
+        <item quantity="one"><xliff:g id="count" example="4">%1$d</xliff:g> upravený prvek ovládání</item>
+        <item quantity="few"><xliff:g id="count" example="4">%1$d</xliff:g> upravené prvky ovládání</item>
+        <item quantity="many"><xliff:g id="count" example="4">%1$d</xliff:g> upraveného prvku ovládání</item>
+        <item quantity="other"><xliff:g id="count" example="4">%1$d</xliff:g> upravených prvků ovládání</item>
+    </plurals>
+    <string name="control_skin_empty" tools:ignore="MissingTranslation">Chcete-li přizpůsobit obrázky ovládání, vytvořte sadu.</string>
+    <string name="control_skin_numeric" tools:ignore="MissingTranslation">Klávesnice</string>
+    <string name="control_skin_navigation" tools:ignore="MissingTranslation">Navigace</string>
+    <string name="control_skin_other" tools:ignore="MissingTranslation">Ostatní tlačítka</string>
+    <string name="control_skin_pressed_requires_normal" tools:ignore="MissingTranslation">Nejprve přidejte výchozí obrázek.</string>
+    <string name="control_skin_edit_named" tools:ignore="MissingTranslation">Tlačítko <xliff:g id="button_label" example="5">%1$s</xliff:g></string>
+    <string name="control_skin_change_image" tools:ignore="MissingTranslation">Změnit</string>
+    <string name="control_skin_pick_image" tools:ignore="MissingTranslation">Vybrat obrázek</string>
+    <string name="control_skin_soft_left" tools:ignore="MissingTranslation">Levé funkční</string>
+    <string name="control_skin_soft_right" tools:ignore="MissingTranslation">Pravé funkční</string>
+    <string name="control_skin_fire" tools:ignore="MissingTranslation">Potvrdit</string>
+    <string name="control_skin_menu" tools:ignore="MissingTranslation">Nabídka</string>
+    <string name="control_skin_movement" tools:ignore="MissingTranslation">Ovládání pohybu</string>
+    <string name="control_skin_dpad" tools:ignore="MissingTranslation">Směrový ovladač</string>
+    <string name="control_skin_analog" tools:ignore="MissingTranslation">Analogová páčka</string>
+    <string name="control_skin_dpad_base" tools:ignore="MissingTranslation">Obrázek směrového ovladače</string>
+    <string name="control_skin_overlay_up" tools:ignore="MissingTranslation">Překryv nahoru</string>
+    <string name="control_skin_overlay_down" tools:ignore="MissingTranslation">Překryv dolů</string>
+    <string name="control_skin_overlay_left" tools:ignore="MissingTranslation">Překryv doleva</string>
+    <string name="control_skin_overlay_right" tools:ignore="MissingTranslation">Překryv doprava</string>
+    <string name="control_skin_analog_base" tools:ignore="MissingTranslation">Obrázek základny</string>
+    <string name="control_skin_analog_thumb" tools:ignore="MissingTranslation">Obrázek páčky</string>
+    <string name="control_skin_analog_thumb_pressed" tools:ignore="MissingTranslation">Obrázek aktivní páčky</string>
+    <string name="control_skin_preview_directions" tools:ignore="MissingTranslation">Náhled směrů</string>
+    <string name="control_skin_preview_direction" tools:ignore="MissingTranslation">Náhled: <xliff:g id="direction" example="Up">%1$s</xliff:g></string>
+    <string name="control_skin_builtin_preview" tools:ignore="MissingTranslation">Výchozí</string>
+    <string name="control_skin_custom_preview" tools:ignore="MissingTranslation">Vlastní</string>
+    <string name="layout_editor_group_on">Změnit velikost společně</string>
+    <string name="layout_editor_group_off">Změnit velikost jednotlivě</string>
+    <string name="layout_editor_snap_grid">Přichytit k mřížce</string>
+    <string name="layout_editor_snap_controls">Přichytit k tlačítkům</string>
+    <string name="layout_editor_snap_resize">Přichytit při změně velikosti</string>
+    <string name="layout_editor_snap_resize_on">Přichytávání velikosti: Zapnuto</string>
+    <string name="layout_editor_snap_resize_off">Přichytávání velikosti: Vypnuto</string>
+    <string name="layout_editor_snap_grid_on">Přichytávání k mřížce: Zapnuto</string>
+    <string name="layout_editor_snap_grid_off">Přichytávání k mřížce: Vypnuto</string>
+    <string name="layout_editor_snap_controls_on">Přichytávání k tlačítkům: Zapnuto</string>
+    <string name="layout_editor_snap_controls_off">Přichytávání k tlačítkům: Vypnuto</string>
+    <string name="layout_editor_guide_gestures">Gesta</string>
+    <string name="layout_editor_guide_move">Přetažením prvek ovládání přesunete.</string>
+    <string name="layout_editor_guide_resize">Velikost změníte dvěma prsty. Vodorovným nebo svislým pohybem upravíte šířku nebo výšku.</string>
+    <string name="layout_editor_guide_tools">Nástroje editoru</string>
+    <string name="layout_editor_guide_done">Klepnutím na Hotovo můžete změny uložit, zahodit nebo pokračovat v úpravách.</string>
+    <string name="layout_editor_guide_start">Začít upravovat</string>
+</resources>

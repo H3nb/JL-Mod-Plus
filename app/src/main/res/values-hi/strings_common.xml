@@ -1,0 +1,47 @@
+<?xml version="1.0" encoding="utf-8"?>
+<!-- Shared UI actions, generic labels, dialogs, and About screen. -->
+<resources xmlns:xliff="urn:oasis:names:tc:xliff:document:1.2">
+    <string name="about">जानकारी</string>
+    <string name="about_message">क्लासिक ऐप्स और गेम चलाएं, अपनी लाइब्रेरी में MIDlets व्यवस्थित करें और कंट्रोल, डिस्प्ले, ऑडियो व परफ़ॉर्मेंस कस्टमाइज़ करें। JL-Mod Plus निःशुल्क और ओपन सोर्स है।</string>
+    <string name="about_subtitle">Android के लिए Java ME एमुलेटर</string>
+    <string name="about_compatibility">कम्पैटिबिलिटी MIDlet, डिवाइस और समर्थित Java ME APIs पर निर्भर करती है। कुछ ऐप्स अपने मूल फ़ोन की तुलना में अलग व्यवहार कर सकते हैं।</string>
+    <string name="about_lineage_title">प्रोजेक्ट की उत्पत्ति</string>
+    <string name="about_build_title">बिल्ड जानकारी</string>
+    <string name="about_version_label">संस्करण</string>
+    <string name="about_build_label">बिल्ड</string>
+    <string name="about_revision_label">सोर्स रिवीज़न</string>
+    <string name="about_links_title">प्रोजेक्ट और लाइसेंस</string>
+    <string name="about_github_link_copied">कोई ब्राउज़र नहीं मिला। GitHub लिंक क्लिपबोर्ड पर कॉपी हो गया।</string>
+    <string name="about_github_browser_unavailable">GitHub खोलने के लिए कोई ब्राउज़र नहीं मिला।</string>
+    <string name="about_lineage">JL-Mod Plus, woesss (Yury Kharchenko) के JL-Mod का एक स्वतंत्र फ़ॉर्क है। JL-Mod, Nikita Shakarun के J2ME Loader पर आधारित है, जिसकी शुरुआत NaikSoftware के J2meLoader से हुई थी।</string>
+    <string name="about_evolution">JL-Mod Plus उसी आधार पर एक आधुनिक इंटरफ़ेस, अधिक सक्षम MIDlet लाइब्रेरी, नई सुविधाओं और नए Android संस्करणों के समर्थन के साथ आगे बढ़ता है।</string>
+    <string name="action_back">वापस</string>
+    <string name="action_settings">सेटिंग्स</string>
+    <string name="CANCEL_CMD">रद्द करें</string>
+    <string name="change">बदलें</string>
+    <string name="choose">चुनें</string>
+    <string name="close">बंद करें</string>
+    <string name="cmd_menu">मेनू</string>
+    <string name="CONFIRMATION_REQUIRED">पुष्टि आवश्यक है</string>
+    <string name="create">बनाएं</string>
+    <string name="default_label"><xliff:g id="name" example="Example">%1$s</xliff:g> (डिफ़ॉल्ट)</string>
+    <string name="dismiss">हटाएं</string>
+    <string name="edit">संपादित करें</string>
+    <string name="error">त्रुटि</string>
+    <string name="error_name">एक नाम दर्ज करें।</string>
+    <string name="exit">बाहर निकलें</string>
+    <string name="help">सहायता</string>
+    <string name="install">इंस्टॉल करें</string>
+    <string name="licenses">लाइसेंस</string>
+    <string name="licenses_unavailable">लाइसेंस विवरण उपलब्ध नहीं हैं।</string>
+    <string name="loading_info">जानकारी लोड हो रही है…</string>
+    <string name="more">अधिक</string>
+    <string name="not_saved_exists">पहले से मौजूद है</string>
+    <string name="reset">रीसेट करें</string>
+    <string name="retry">पुनः प्रयास करें</string>
+    <string name="save">सहेजें</string>
+    <string name="saved"><xliff:g id="name" example="Example">%1$s</xliff:g> सहेजा गया</string>
+    <string name="START_CMD">शुरू करें</string>
+    <string name="warning">चेतावनी</string>
+    <string name="removed"><xliff:g id="name" example="Example">%1$s</xliff:g> हटाया गया</string>
+</resources>

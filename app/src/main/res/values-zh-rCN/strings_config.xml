@@ -1,0 +1,350 @@
+<?xml version="1.0" encoding="utf-8"?>
+<!-- 单个 MIDlet 配置、可复用配置文件、摄像头、手柄校准、权限及系统属性。 -->
+<resources xmlns:tools="http://schemas.android.com/tools" xmlns:xliff="urn:oasis:names:tc:xliff:document:1.2">
+    <string name="config_missing_app_storage_named">未找到应用。\n请检查存储设备“<xliff:g id="storage_name" example="SD card">%1$s</xliff:g>”是否可用，或重新创建快捷方式。</string>
+    <string name="config_missing_app_storage_generic">未找到应用。\n请检查存储设备是否可用，或重新创建快捷方式。</string>
+    <string name="midlet_name"><b>名称：</b></string>
+    <string name="midlet_size"><b>大小：</b></string>
+    <string name="midlet_vendor"><b>开发商：</b></string>
+    <string name="midlet_version"><b>版本：</b></string>
+    <string name="config_destination_graphics">显示</string>
+    <string name="config_destination_rendering" tools:ignore="MissingTranslation">图形</string>
+    <string name="config_destination_media">媒体</string>
+    <string name="config_camera_title">摄像头</string>
+    <string name="config_camera_default_title">默认摄像头</string>
+    <string name="config_camera_rear">后置</string>
+    <string name="config_camera_front">前置</string>
+    <string name="config_camera_resolution_title">默认分辨率</string>
+    <string name="config_camera_resolution_auto">自动</string>
+    <string name="config_camera_resolution_portrait">480×640 — 竖屏</string>
+    <string name="config_camera_resolution_landscape">640×480 — 横屏</string>
+    <string name="config_destination_controls">控制</string>
+    <string name="config_gamepad_test">测试手柄</string>
+    <string name="config_gamepad_calibrate">校准手柄</string>
+    <string name="config_gamepad_calibrate_summary">测量已连接手柄的居中位置以及摇杆与扳机的行程范围。</string>
+    <string name="config_gamepad_stick_directions">数字方向</string>
+    <string name="config_gamepad_stick_unassigned">未分配</string>
+    <string name="config_gamepad_stick_pointer">指针来源</string>
+    <string name="config_gamepad_opaque_summary">此配置包含不受支持格式的手柄数据，将原样保留且无法在此编辑。</string>
+    <string name="config_gamepad_unsupported_summary">不支持此手柄配置，将原样保留且无法在此编辑。</string>
+    <string name="config_gamepad_keypad_title">虚拟键盘</string>
+    <string name="config_gamepad_calibration_next">下一步</string>
+    <string name="config_gamepad_mapping_help_title">手柄映射帮助</string>
+    <string name="config_gamepad_directions_four">四向</string>
+    <string name="config_gamepad_directions_eight">八向</string>
+    <string name="config_gamepad_pointer_off">关</string>
+    <string name="config_gamepad_pointer_cursor">比例光标</string>
+    <string name="config_gamepad_pointer_joystick">触控摇杆</string>
+    <string name="config_gamepad_calibration_profile">手柄特征标识：<xliff:g id="profile_name" example="Action Games">%1$s</xliff:g></string>
+    <string name="config_gamepad_calibration_phase_neutral">等待居中</string>
+    <string name="config_gamepad_calibration_phase_stick_range">摇杆行程</string>
+    <string name="config_gamepad_calibration_phase_trigger_range">扳机行程</string>
+    <string name="config_gamepad_calibration_phase_review">确认结果</string>
+    <string name="config_gamepad_calibration_phase_committed">已保存</string>
+    <string name="config_gamepad_calibration_phase_cancelled">已取消</string>
+    <string name="config_gamepad_calibration_waiting_controller">请连接支持模拟摇杆或扳机的手柄。首次推动摇杆或按下扳机后将开始校准；在保存之前，现有校准保持不变。</string>
+    <string name="config_gamepad_calibration_no_analog_ranges">此手柄不提供受支持的模拟摇杆或扳机行程范围。</string>
+    <string name="config_gamepad_calibration_start">请让所有摇杆保持居中并松开所有扳机，直至居中计时完成。</string>
+    <string name="config_gamepad_calibration_save_failed">无法保存校准，现有校准保持不变。</string>
+    <string name="config_gamepad_calibration_no_supported_ranges">未找到受支持的模拟行程范围。</string>
+    <string name="config_gamepad_calibration_rejected">校准被拒绝：<xliff:g id="name" example="Example">%1$s</xliff:g></string>
+    <string name="config_gamepad_calibration_neutral_instructions">请让所有已检测到的摇杆保持居中并松开所有已检测到的扳机，直至居中计时完成。</string>
+    <string name="config_gamepad_calibration_stick_instructions">请将每个已检测到的摇杆朝各个方向推至最大行程，然后按“下一步”。</string>
+    <string name="config_gamepad_calibration_trigger_instructions">请完全松开再按到底每个已检测到的扳机，然后按“下一步”确认结果。</string>
+    <string name="config_gamepad_calibration_review_instructions">已准备就绪，可供确认。保存后仅会替换此手柄的校准数据。</string>
+    <string name="config_gamepad_calibration_saved">校准已保存。</string>
+    <string name="config_gamepad_calibration_cancelled">校准已取消，原有校准保持不变。</string>
+    <string name="config_gamepad_calibration_waiting_samples">校准正在等待手柄采样数据。</string>
+    <string name="config_gamepad_diagnosis_header">手柄诊断</string>
+    <string name="config_gamepad_diagnosis_mode">状态：<xliff:g id="status" example="enabled">%1$s</xliff:g> · 来源：<xliff:g id="source" example="controller">%2$s</xliff:g></string>
+    <string name="config_gamepad_diagnosis_notice">提示：<xliff:g id="name" example="Example">%1$s</xliff:g></string>
+    <string name="config_gamepad_diagnosis_analog_settings">模拟输入设置：</string>
+    <string name="config_gamepad_diagnosis_left_stick">左摇杆</string>
+    <string name="config_gamepad_diagnosis_right_stick">右摇杆</string>
+    <string name="config_gamepad_diagnosis_triggers">扳机</string>
+    <string name="config_gamepad_diagnosis_pointer">指针模式</string>
+    <string name="config_gamepad_status_enabled">已启用</string>
+    <string name="config_gamepad_status_disabled">已禁用</string>
+    <string name="config_gamepad_diagnosis_source_default">默认</string>
+    <string name="config_gamepad_diagnosis_source_controller">手柄</string>
+    <string name="config_gamepad_diagnosis_source_explicit">手动指定</string>
+    <string name="config_gamepad_diagnosis_device"><xliff:g id="device_name" example="Xbox Controller">%1$s</xliff:g>（#<xliff:g id="device_id" example="1">%2$d</xliff:g>）</string>
+    <string name="config_gamepad_calibration_issue_no_channels">无受支持通道</string>
+    <string name="config_gamepad_calibration_issue_invalid_constraints">校准约束无效</string>
+    <string name="config_gamepad_calibration_issue_non_finite">存在非有限采样值</string>
+    <string name="config_gamepad_calibration_issue_insufficient_samples">采样数量不足</string>
+    <string name="config_gamepad_calibration_issue_invalid_range">范围无效</string>
+    <string name="config_gamepad_calibration_issue_rest_outside_range">静止值超出范围</string>
+    <string name="config_gamepad_calibration_issue_rest_too_noisy">静止位置不够稳定</string>
+    <string name="config_gamepad_calibration_phase_unknown">状态不可用</string>
+    <string name="config_gamepad_diagnosis_capabilities">已连接手柄的功能：</string>
+    <string name="config_gamepad_diagnosis_descriptor">描述符：<xliff:g id="name" example="Example">%1$s</xliff:g></string>
+    <string name="config_gamepad_diagnosis_signature">特征标识：<xliff:g id="name" example="Example">%1$s</xliff:g></string>
+    <string name="config_gamepad_diagnosis_axis">轴 <xliff:g id="axis_index" example="0">%1$d</xliff:g> [<xliff:g id="min_value" example="-1.0">%2$s</xliff:g>, <xliff:g id="max_value" example="1.0">%3$s</xliff:g>] flat=<xliff:g id="flat" example="0.05">%4$s</xliff:g> fuzz=<xliff:g id="fuzz" example="0.01">%5$s</xliff:g></string>
+    <string name="config_gamepad_diagnosis_no_controller">（未连接手柄）</string>
+    <string name="config_gamepad_diagnosis_samples_not_sent">输入采样数据不会发送给 MIDlet。</string>
+    <string name="config_destination_system">系统</string>
+    <string name="config_screen_behavior" tools:ignore="MissingTranslation">屏幕行为</string>
+    <string name="config_screen_size">屏幕尺寸</string>
+    <string name="config_select_screen_size">选择屏幕尺寸</string>
+    <string name="config_current_screen_size">当前尺寸：<xliff:g id="name" example="Example">%1$s</xliff:g></string>
+    <string name="config_custom_resolution">自定义分辨率</string>
+    <string name="profile_custom">自定义</string>
+    <string name="select_dialog_title">选择 MIDlet</string>
+    <string name="SIZE_PRESETS">字体大小预设</string>
+    <string name="config_color_picker_title">选择颜色</string>
+    <string name="config_color_picker_hex">十六进制颜色</string>
+    <string name="config_color_picker_hint">拖动色板区域或输入六位 RGB 十六进制值。</string>
+    <string name="config_color_picker_invalid">请输入准确的六位十六进制数字。</string>
+    <string name="config_color_picker_saturation_value">饱和度与明度</string>
+    <string name="config_color_picker_hue">色相</string>
+    <string name="config_decrease_value">减小数值</string>
+    <string name="config_increase_value">增大数值</string>
+    <string name="midlet_failure_recovery_title">MIDlet 意外停止</string>
+    <string name="midlet_failure_recovery_message">该 MIDlet 已意外停止。诊断信息已保存至本地，你可以继续使用 JL-Mod Plus。</string>
+    <string name="midlet_failure_recovery_message_named">“<xliff:g id="name" example="Example">%1$s</xliff:g>”已意外停止。诊断信息已保存至本地，你可以继续使用 JL-Mod Plus。</string>
+    <plurals name="config_system_properties_value">
+        <item quantity="other"><xliff:g id="count" example="3">%1$d</xliff:g> 项属性</item>
+    </plurals>
+    <string name="config_search_suggestions" tools:ignore="MissingTranslation">推荐设置</string>
+    <string name="config_search_clear" tools:ignore="MissingTranslation">清除搜索</string>
+    <string name="config_search_title" tools:ignore="MissingTranslation">搜索设置</string>
+    <string name="config_search_hint" tools:ignore="MissingTranslation">查找设置，例如 MMPX 或屏幕方向</string>
+    <string name="config_search_no_results" tools:ignore="MissingTranslation">没有匹配的设置</string>
+    <string name="config_search_upscaling_requires_resolution" tools:ignore="MissingTranslation">请在“渲染分辨率”中选择“自动”或 2×–10×，以配置位图放大。</string>
+    <string name="config_search_requires_manual_scale" tools:ignore="MissingTranslation">请在“缩放模式”中选择“手动”以调整缩放比例。</string>
+    <string name="config_search_requires_custom_background" tools:ignore="MissingTranslation">请在“背景模式”中选择“自定义”以编辑背景颜色。</string>
+    <string name="config_search_requires_gles" tools:ignore="MissingTranslation">请在“图形模式”中选择“硬件加速（OpenGL ES）”以配置着色器效果。</string>
+    <string name="config_search_requires_renderer_mode" tools:ignore="MissingTranslation">请在“图形模式”中选择“软件渲染”或“硬件加速（Surface）”以配置异步画面更新。</string>
+    <string name="config_font_page_title" tools:ignore="MissingTranslation">字体设置</string>
+    <string name="config_display_more" tools:ignore="MissingTranslation">文本与性能</string>
+    <string name="config_destination_home" tools:ignore="MissingTranslation">主页</string>
+    <string name="config_overview_profile_draft" tools:ignore="MissingTranslation">配置文件草稿</string>
+    <string name="config_overview_profile_draft_summary" tools:ignore="MissingTranslation">编辑此可复用配置文件，然后通过工具栏保存更改。</string>
+    <string name="config_overview_quick_access" tools:ignore="MissingTranslation">快捷入口</string>
+    <string name="config_system_properties_editor_label">属性</string>
+    <string name="config_overview_enabled" tools:ignore="MissingTranslation">开</string>
+    <string name="config_overview_disabled" tools:ignore="MissingTranslation">关</string>
+    <string name="config_overview_media_summary" tools:ignore="MissingTranslation">音色库与摄像头</string>
+    <string name="config_overview_hint" tools:ignore="MissingTranslation">选择分类以自定义游戏配置。每项设置都有固定位置，这些快捷入口可带你直达。</string>
+    <string name="config_destination_general">常规</string>
+    <string name="config_basic_display">MIDlet 屏幕</string>
+    <string name="config_display_appearance">画面外观</string>
+    <string name="config_display_rendering">渲染</string>
+    <string name="config_image_quality_section" tools:ignore="MissingTranslation">画质</string>
+    <string name="config_frame_rate_section" tools:ignore="MissingTranslation">帧率</string>
+    <string name="config_fps_position_title" tools:ignore="MissingTranslation">FPS 显示位置</string>
+    <string name="config_display_text">文本与字体</string>
+    <string name="config_input_mapping_section" tools:ignore="MissingTranslation">输入与映射</string>
+    <string name="config_controls_appearance_section" tools:ignore="MissingTranslation">按键外观</string>
+    <string name="config_controls_virtual_keyboard">虚拟按键</string>
+    <string name="config_controls_virtual_keyboard_colors">虚拟按键颜色</string>
+    <string name="config_virtual_controls_color_preview">颜色预览</string>
+    <string name="config_virtual_controls_preview_normal">未按下</string>
+    <string name="config_virtual_controls_preview_pressed">按下</string>
+    <string name="config_controls_maintenance">布局</string>
+    <string name="config_controls_skin_help">使用自定义图像更改数字键盘按键、方向键和摇杆的外观。</string>
+    <string name="config_controls_color_button_normal">未按下按键</string>
+    <string name="config_controls_color_button_pressed">按下按键</string>
+    <string name="config_controls_color_label_normal">未按下标签</string>
+    <string name="config_controls_color_label_pressed">按下标签</string>
+    <string name="config_controls_color_outline_short">描边</string>
+    <string name="config_controls_disabled_hint">虚拟按键当前已关闭，但你仍可在此自定义其设置。</string>
+    <string name="config_controls_opacity_help" formatted="false">调整虚拟按键的透明度：0% 为完全透明，100% 为完全不透明。</string>
+    <string name="config_controls_opaque_outside">MIDlet 画面外的按键不应用透明</string>
+    <string name="config_controls_opaque_outside_help">位于 MIDlet 画面之外的按键将忽略不透明度设置；覆盖在画面上的按键仍遵循所选不透明度。</string>
+    <string name="config_controls_connect_controller">连接手柄以进行校准</string>
+    <string name="config_controls_color_skin_notice">“完整按键”皮肤可能会替代默认的按键颜色、形状和描边。</string>
+    <string name="config_current_value">当前值</string>
+    <string name="config_maintenance">重置与数据</string>
+    <string name="config_midlet_actions" tools:ignore="MissingTranslation">MIDlet 操作</string>
+    <string name="config_profile_maintenance" tools:ignore="MissingTranslation">配置文件操作</string>
+    <string name="config_reset_profile_settings" tools:ignore="MissingTranslation">重置配置文件草稿</string>
+    <string name="config_reset_profile_settings_summary" tools:ignore="MissingTranslation">将此草稿的设置和虚拟按键恢复为默认配置。</string>
+    <string name="config_system_compatibility" tools:ignore="MissingTranslation">模拟兼容性</string>
+    <string name="config_reset_all_settings">重置 MIDlet 配置</string>
+    <string name="config_reset_all_settings_summary">将此 MIDlet 的设置和虚拟按键恢复为默认配置，不会删除其数据。</string>
+    <string name="config_delete_app_data">删除 MIDlet 数据</string>
+    <string name="config_delete_app_data_summary">永久删除此 MIDlet 的数据（包括存档），其设置将予以保留。</string>
+    <string name="config_message_reset_settings">确定将此 MIDlet 的配置和虚拟按键恢复为默认设置吗？已保存的数据不受影响，且将不再跟随任何已关联的配置文件。</string>
+    <string name="config_message_reset_profile_settings">确定将此配置文件的设置和虚拟按键重置为默认设置吗？保存前你仍可继续编辑或取消。</string>
+    <string name="config_message_delete_app_data">确定永久删除此 MIDlet 创建的所有存档和数据吗？MIDlet 设置不会被删除。</string>
+    <string name="config_lock_custom_resolution_ratio">锁定宽高比</string>
+    <string name="config_swap_screen_size">交换宽高</string>
+    <string name="profile_builtin_settings">JL-Mod 默认配置</string>
+    <string name="profile_default_badge_short">新 MIDlet 默认配置</string>
+    <string name="profile_template_summary">已保存的 MIDlet 设置。</string>
+    <string name="profile_name_exists">已存在同名配置文件。</string>
+    <string name="profile_delete_template_message">确定删除配置文件“<xliff:g id="profile_name" example="Action Games">%1$s</xliff:g>”吗？正在使用它的 MIDlet 将保留当前设置，但不再接收后续更新。</string>
+    <string name="profile_template_operation_failed">无法完成配置文件操作。</string>
+    <string name="config_help_screen_size">设置 MIDlet 使用的虚拟 Java ME 屏幕分辨率。</string>
+    <string name="config_help_orientation">选择 MIDlet 运行时的屏幕方向。</string>
+    <string name="config_help_scale_type">选择游戏画面适配屏幕的方式。选择“手动”可自定义缩放比例。</string>
+    <string name="config_help_scale_ratio" formatted="false">在 1% 至 1000% 之间调整显示尺寸。设为 100% 时按原始尺寸显示；更大的数值可能会超出屏幕边界。</string>
+    <string name="config_help_lock_custom_resolution_ratio">编辑自定义分辨率时保持宽高比不变。</string>
+    <string name="config_help_virtual_keyboard">为此 MIDlet 显示屏幕虚拟按键。</string>
+    <string name="config_help_touch_input">允许 MIDlet 接收来自触摸屏的指针输入。</string>
+    <string name="config_help_background">填充 MIDlet 画面周围的空白区域。</string>
+    <string name="config_background_mode">背景模式</string>
+    <string name="config_background_custom">自定义</string>
+    <string name="config_background_theme">主题</string>
+    <string name="config_background_immersive">沉浸式</string>
+    <string name="config_background_theme_help">在 MIDlet 画面周围使用 JL-Mod Plus 主题颜色。</string>
+    <string name="config_background_immersive_help">使用从 MIDlet 画面采样的色彩填充周围空白区域。</string>
+    <string name="config_background_dynamic">动态取色</string>
+    <string name="config_background_dynamic_help">使用随 MIDlet 画面平滑过渡的单一纯色背景。</string>
+    <string name="config_background_custom_color">背景颜色</string>
+    <string name="config_help_background_custom_color">设置 MIDlet 画面周围空白区域的颜色。</string>
+    <string name="config_help_skin">在 MIDlet 画面周围显示可选图像或边框。</string>
+    <string name="config_help_screen_gravity">当显示区域留有空白时，调整 MIDlet 画面的对齐位置。</string>
+    <string name="config_help_screen_padding">在 MIDlet 画面与显示区域边缘之间添加像素边距。</string>
+    <string name="config_help_filter">画面缩放时使用线性过滤平滑显示。</string>
+    <string name="config_warning_filter_shader">线性过滤会在屏幕着色器处理前平滑输入图像，可能会降低输出锐度。</string>
+    <string name="config_help_immediate">立即处理 MIDlet 事件而非排队处理。可能提升响应速度，但会导致部分 MIDlet 运行不稳定。</string>
+    <string name="config_help_graphics_mode">选择 MIDlet 画面的渲染路径。硬件加速可能提升性能，但具体兼容性因设备而异。</string>
+    <string name="config_help_shader">在 MIDlet 画面显示前应用着色器。</string>
+    <string name="config_help_shader_tuning">可用调节项取决于所选着色器。</string>
+    <string name="config_help_parallel_redraw">异步调度画面呈现，可能在部分设备上提升性能。</string>
+    <string name="config_help_force_fullscreen">在 MIDlet 启动时隐藏命令栏。运行期间 MIDlet 仍可能再次显示。</string>
+    <string name="config_help_fps_limit">设置 1× 模拟速度下的 FPS 上限。实际帧率上限会随模拟速度同步缩放；设为 0（最高）时使用屏幕最高刷新率。</string>
+    <string name="config_timing_mode_full_guest">模拟时间</string>
+    <string name="config_timing_mode_real_wall">系统时间</string>
+    <string name="config_help_emulation_speed">调整 MIDlet 的时钟速度及受支持的延迟。Android 音频和界面仍保持正常速度。</string>
+    <string name="config_help_timing_mode">选择 MIDlet 使用模拟时间还是系统时间。相对延迟仍会随模拟速度缩放。</string>
+    <string name="config_help_timing_unavailable">此已安装的 MIDlet 不支持时间设置。请重新安装或重新转换该 MIDlet 以启用。</string>
+    <string name="config_help_generic_color">设置此视觉元素的颜色。</string>
+    <string name="config_help_encoding">选择作为 microedition.encoding 报告的字符编码。</string>
+    <string name="config_edit_system_properties">编辑系统属性</string>
+    <string name="config_help_system_properties">设置向 MIDlet 报告的高级 Java ME 属性。</string>
+    <string name="config_help_system_properties_long">按“名称: 值”格式每行编辑一项属性。错误的值可能会影响兼容性。</string>
+    <string name="config_system_properties_info">大多数 MIDlet 无需修改此项。</string>
+    <string name="config_font_sizes">字体大小</string>
+    <string name="config_help_font_sizes">设置 MIDlet 的小、中、大三档 Java ME 字体大小。</string>
+    <string name="config_help_font_sizes_long">以像素为单位设置 Java ME 字体大小；启用 Android 字体缩放时则使用缩放单位。建议一并调整以保持排版均衡。</string>
+    <string name="config_font_sizes_value">小 <xliff:g id="small_size" example="12">%1$s</xliff:g> · 中 <xliff:g id="medium_size" example="16">%2$s</xliff:g> · 大 <xliff:g id="large_size" example="20">%3$s</xliff:g></string>
+    <string name="config_help_font_presets">应用适配常见 Java ME 屏幕分辨率的字体大小。</string>
+    <string name="config_help_font_dimensions">将 Android 系统字体缩放应用于 Java ME 字体大小。</string>
+    <string name="config_help_font_aa">平滑渲染文字的边缘。</string>
+    <string name="config_help_key_layout">选择向 MIDlet 报告的键码方案。</string>
+    <string name="config_help_key_mapping">将 Android 实体按键和手柄按钮映射到 Java ME 键盘操作。</string>
+    <string name="config_help_vk_button_shape">设置默认的键盘按键形状。方向键和摇杆有各自独立的形状。</string>
+    <string name="config_help_vk_feedback">当“设置”中开启振动时，按下虚拟按键将触发振动反馈。</string>
+    <string name="config_help_vk_hide_delay">当虚拟按键覆盖在 MIDlet 画面上时，在指定延迟后自动隐藏。设为 0 可禁用自动隐藏。</string>
+    <string name="config_help_reset_layout">恢复默认虚拟按键布局，不更改其他 MIDlet 设置。</string>
+    <string name="config_help_skip_resume">首次成功调用 startApp() 后，在 MIDlet 恢复时跳过后续调用。仅适用于恢复时会出错的 MIDlet。</string>
+    <string name="config_help_soundbank">选择用于 MIDI 合成的音色库。</string>
+    <string name="profile_create_title">创建配置文件</string>
+    <string name="profile_rename_title">重命名配置文件</string>
+    <string name="presets">配置文件</string>
+    <string name="preset_use">使用配置文件</string>
+    <string name="preset_save_as">另存为配置文件</string>
+    <string name="preset_custom_configuration">自定义配置</string>
+    <string name="preset_based_on_modified">此 MIDlet 的当前配置与 <xliff:g id="profile_name" example="Action Games">%1$s</xliff:g> 不同。</string>
+    <string name="preset_builtin">JL-Mod 默认配置</string>
+    <string name="preset_builtin_summary">内置的 MIDlet 设置与虚拟按键。</string>
+    <string name="preset_picker_title">使用配置文件</string>
+    <string name="preset_manage">管理配置文件</string>
+    <string name="profile_more_actions"><xliff:g id="profile_name" example="Action Games">%1$s</xliff:g> 的更多操作</string>
+    <string name="profile_create_summary">保存一套可复用于其他 MIDlet 的配置。</string>
+    <string name="preset_application_settings">MIDlet 设置</string>
+    <string name="preset_includes_keyboard_layout">包含虚拟按键布局。</string>
+    <string name="preset_virtual_keyboard_on">虚拟按键已开启</string>
+    <string name="preset_virtual_keyboard_off">虚拟按键已关闭</string>
+    <string name="preset_apply">应用</string>
+    <string name="preset_apply_failed_summary">无法应用此配置文件，请检查来源后重试。</string>
+    <string name="preset_choose_parts">选择要应用的内容</string>
+    <string name="preset_name">名称</string>
+    <string name="preset_save_help">将此 MIDlet 的设置及虚拟按键布局（如有）保存为配置文件。此 MIDlet 将使用该配置文件并接收其后续更新。</string>
+    <string name="preset_update">更新 <xliff:g id="profile_name" example="Action Games">%1$s</xliff:g></string>
+    <string name="preset_update_title">确定更新 <xliff:g id="profile_name" example="Action Games">%1$s</xliff:g> 吗？</string>
+    <string name="preset_update_summary">使用此 MIDlet 当前的设置及虚拟按键布局（如有）替换 <xliff:g id="profile_name" example="Action Games">%1$s</xliff:g>。使用该配置文件的其他 MIDlet 将在下次启动时获取更新。</string>
+    <string name="preset_update_confirm">更新</string>
+    <string name="preset_saved_unlinked_warning">配置文件已保存，但此 MIDlet 将不再接收其后续更新。</string>
+    <string name="profile_default_fallback_notice">默认配置文件“<xliff:g id="profile_name" example="Action Games">%1$s</xliff:g>”无法使用，可能已丢失、不完整或无法读取。已将“JL-Mod 默认配置”设为新 MIDlet 的默认配置。</string>
+    <string name="preset_discard_changes_title">放弃更改？</string>
+    <string name="preset_discard_changes_summary">此配置文件草稿尚未保存。</string>
+    <string name="preset_continue_editing">继续编辑</string>
+    <string name="preset_discard_changes">放弃</string>
+    <string name="preset_name_exists">已存在同名配置文件。</string>
+    <string name="preset_invalid_name">请输入有效的配置文件名称。</string>
+    <string name="preset_manager_default_section">新 MIDlet 默认配置</string>
+    <string name="preset_manager_presets_section">我的配置文件</string>
+    <string name="preset_manager_keyboard_section">已保存的虚拟按键布局</string>
+    <string name="preset_default_policy_summary">安装新 MIDlet 时自动应用。</string>
+    <string name="preset_keyboard_layout_unavailable">虚拟按键布局不可用。</string>
+    <string name="edit_preset">编辑配置文件</string>
+    <string name="preset_edit_title">编辑配置文件：<xliff:g id="profile_name" example="Action Games">%1$s</xliff:g></string>
+    <string name="preset_unavailable_section">不可用</string>
+    <string name="preset_unavailable_summary">无法加载此配置文件，请重命名或删除。</string>
+    <string name="preset_change_default">更改</string>
+    <string name="preset_default_picker_title">新 MIDlet 默认配置</string>
+    <string name="profile_follows_updates">跟随配置文件的后续更新。</string>
+    <string name="profile_apply_whole">完整配置文件</string>
+    <string name="profile_apply_whole_follows">替换设置和布局，并跟随后续更新。</string>
+    <string name="profile_apply_whole_without_layout">替换设置、移除本地布局，并跟随后续更新。</string>
+    <string name="profile_apply_settings_only">仅 MIDlet 设置</string>
+    <string name="profile_apply_settings_keeps_layout">保留此 MIDlet 的布局，改为自定义配置。</string>
+    <string name="profile_apply_layout_only">仅虚拟按键布局</string>
+    <string name="profile_apply_layout_keeps_settings">保留此 MIDlet 的设置，改为自定义配置。</string>
+    <string name="config_analog_stick">摇杆</string>
+    <string name="config_analog_stick_summary">为主摇杆选择关闭、四向、八向或数字键盘模式。手柄按钮使用按键映射。</string>
+    <string name="config_analog_stick_off">关</string>
+    <string name="config_controller_help_body_compact">手柄按钮与键盘、手机按键共用同一套按键映射。摇杆仅向 MIDlet 发送方向输入。Android 返回键保持原有行为；任意映射为 M 的实体按钮均可打开运行时的 MIDlet 菜单。</string>
+    <string name="config_show_fps_title" tools:ignore="MissingTranslation">显示 FPS</string>
+    <string name="config_show_fps_help" tools:ignore="MissingTranslation">运行时在屏幕上显示帧率。</string>
+    <string name="config_search_requires_fps" tools:ignore="MissingTranslation">开启“显示 FPS”后即可更改显示位置。</string>
+    <string name="midlet_running_notification_title">MIDlet 正在运行</string>
+    <string name="midlet_running_notification_text"><xliff:g id="name" example="Example">%1$s</xliff:g> 正在运行。</string>
+    <string name="midlet_running_notification_channel">MIDlet 运行时</string>
+    <string name="config_gamepad_directions_numeric_v2">数字键盘</string>
+    <string name="midlet_file_permission_title">存储访问权限</string>
+    <string name="midlet_file_permission_read">此 MIDlet 请求读取文件。</string>
+    <string name="midlet_file_permission_write">此 MIDlet 请求创建、修改或删除文件。</string>
+    <string name="midlet_file_permission_allow_once">仅允许本次</string>
+    <string name="midlet_file_permission_allow_session">在 MIDlet 运行期间允许</string>
+    <string name="midlet_file_permission_allow_always">始终允许</string>
+    <string name="midlet_file_permission_deny">始终拒绝</string>
+    <string name="midlet_permissions_settings_title">存储访问权限</string>
+    <string name="midlet_permissions_read">读取文件</string>
+    <string name="midlet_permissions_write">修改文件</string>
+    <string name="midlet_permissions_ask">每次询问</string>
+    <string name="midlet_permissions_allow">始终允许</string>
+    <string name="midlet_permissions_deny">拒绝</string>
+    <string name="midlet_permissions_save_failed">无法保存存储设置。</string>
+    <string name="config_avoid_camera_cutout_title">避开摄像头开孔</string>
+    <string name="config_avoid_camera_cutout_summary">使 MIDlet 画面和虚拟按键避开摄像头开孔或刘海区域。</string>
+    <string name="midlet_permissions_write_summary">包括创建和删除文件。</string>
+    <string name="midlet_legacy_import_title">旧版西门子存档</string>
+    <string name="midlet_legacy_import_action">选择旧存档文件</string>
+    <string name="midlet_legacy_import_summary">将旧存档文件复制到此 MIDlet 的西门子私有存储目录。请先停止该 MIDlet。</string>
+    <string name="midlet_legacy_import_success">文件已复制到此 MIDlet 的私有存储目录。</string>
+    <string name="midlet_legacy_import_failed">导入失败。请停止该 MIDlet，并确认目标文件尚不存在。</string>
+    <string name="midlet_storage_mode_title">存储模式</string>
+    <string name="midlet_storage_mode_shared">虚拟存储</string>
+    <string name="midlet_storage_mode_android">Android 存储</string>
+    <string name="midlet_storage_mode_shared_summary">使用工作文件夹中的共享文件夹。</string>
+    <string name="midlet_storage_mode_android_summary">像旧版本一样使用 Android 存储。</string>
+    <string name="config_system_properties_reset" tools:ignore="MissingTranslation">恢复默认</string>
+    <string name="config_system_properties_reset_title" tools:ignore="MissingTranslation">重置系统属性？</string>
+    <string name="config_system_properties_reset_message" tools:ignore="MissingTranslation">确定用 JL-Mod Plus 当前默认属性替换编辑器中的内容吗？其他设置保持不变。保存后生效。</string>
+    <string name="config_asset_add">+ 从文件添加</string>
+    <string name="config_asset_copy_hint">文件将复制到工作文件夹，原文件位置不变。</string>
+    <string name="config_asset_name">文件名</string>
+    <string name="config_asset_delete_confirmation">确定从工作文件夹中删除 <xliff:g id="name" example="Example">%1$s</xliff:g> 吗？其他 MIDlet 也可能正在使用此文件。其他位置的副本不受影响。</string>
+    <string name="config_asset_imported">已复制并选择：<xliff:g id="name" example="Example">%1$s</xliff:g></string>
+    <string name="config_asset_reused">已选择现有文件：<xliff:g id="name" example="Example">%1$s</xliff:g></string>
+    <string name="config_asset_renamed">已重命名为 <xliff:g id="name" example="Example">%1$s</xliff:g></string>
+    <string name="config_asset_deleted">已删除 <xliff:g id="name" example="Example">%1$s</xliff:g></string>
+    <string name="config_asset_invalid">不支持或无效的文件。</string>
+    <string name="config_asset_operation_failed">无法完成文件操作。</string>
+    <string name="config_save_failed" tools:ignore="MissingTranslation">无法保存设置。你的更改仍保留在当前页面，请重试。</string>
+    <string name="config_asset_busy">请先等待当前文件操作完成。</string>
+    <string name="config_quick_settings" tools:ignore="MissingTranslation">快捷设置</string>
+    <string name="config_all_settings" tools:ignore="MissingTranslation">全部设置</string>
+    <string name="profile_local_changes_pending" tools:ignore="MissingTranslation">本地更改尚未保存至配置文件</string>
+    <string name="profile_local_configuration_summary" tools:ignore="MissingTranslation">仅用于此 MIDlet 的设置</string>
+    <string name="profile_not_following" tools:ignore="MissingTranslation">基于 <xliff:g id="profile_name" example="Action Games">%1$s</xliff:g> · 未跟随更新</string>
+    <string name="profile_stop_following" tools:ignore="MissingTranslation">停止跟随配置文件</string>
+    <string name="profile_follow_again" tools:ignore="MissingTranslation">重新跟随配置文件</string>
+    <string name="profile_follow_again_summary" tools:ignore="MissingTranslation">确定用最新的“<xliff:g id="profile_name" example="Action Games">%1$s</xliff:g>”配置文件替换此 MIDlet 的本地设置和虚拟按键，并跟随其后续更新吗？</string>
+</resources>

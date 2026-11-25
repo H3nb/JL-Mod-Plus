@@ -1,0 +1,264 @@
+<?xml version="1.0" encoding="utf-8"?>
+<!-- Memory Editor search, inspector, bookmarks, saved variables, quick actions, and script builder. -->
+<resources xmlns:tools="http://schemas.android.com/tools" xmlns:xliff="urn:oasis:names:tc:xliff:document:1.2">
+    <string name="memory_editor_bubble">Плавальна кнопка Редактора пам’яті</string>
+    <string name="memory_editor_bubble_content_description">Відкрити Редактор пам’яті</string>
+    <string name="memory_editor_previous_results_page_action">Попередня сторінка результатів</string>
+    <string name="memory_editor_next_results_page_action">Наступна сторінка результатів</string>
+    <string name="memory_editor">Редактор пам’яті</string>
+    <string name="memory_editor_search_hint">Значення</string>
+    <string name="memory_editor_next_scan">Наступний пошук</string>
+    <string name="memory_editor_new_search">Новий пошук</string>
+    <plurals name="memory_editor_results">
+        <item quantity="one"><xliff:g id="count" example="3">%1$d</xliff:g> результат</item>
+        <item quantity="few"><xliff:g id="count" example="3">%1$d</xliff:g> результати</item>
+        <item quantity="many"><xliff:g id="count" example="3">%1$d</xliff:g> результатів</item>
+        <item quantity="other"><xliff:g id="count" example="3">%1$d</xliff:g> результатів</item>
+    </plurals>
+    <plurals name="memory_editor_candidates">
+        <item quantity="one"><xliff:g id="count" example="3">%1$d</xliff:g> кандидат</item>
+        <item quantity="few"><xliff:g id="count" example="3">%1$d</xliff:g> кандидати</item>
+        <item quantity="many"><xliff:g id="count" example="3">%1$d</xliff:g> кандидатів</item>
+        <item quantity="other"><xliff:g id="count" example="3">%1$d</xliff:g> кандидатів</item>
+    </plurals>
+    <plurals name="memory_editor_search_complete">
+        <item quantity="one">Пошук завершено · <xliff:g id="count" example="3">%1$d</xliff:g> кандидат</item>
+        <item quantity="few">Пошук завершено · <xliff:g id="count" example="3">%1$d</xliff:g> кандидати</item>
+        <item quantity="many">Пошук завершено · <xliff:g id="count" example="3">%1$d</xliff:g> кандидатів</item>
+        <item quantity="other">Пошук завершено · <xliff:g id="count" example="3">%1$d</xliff:g> кандидатів</item>
+    </plurals>
+    <string name="memory_editor_no_results">Немає результатів</string>
+    <string name="memory_editor_no_watch">Список спостереження порожній</string>
+    <string name="memory_editor_unsupported">Редактор пам’яті недоступний для цього середовища виконання.</string>
+    <string name="memory_editor_engine_unavailable">Рушій Редактора пам’яті недоступний.</string>
+    <string name="memory_editor_engine_reconnecting">Редактор пам’яті відновлює з’єднання…</string>
+    <string name="memory_editor_refresh">Оновити</string>
+    <string name="memory_editor_undo">Скасувати пошук</string>
+    <string name="memory_variables_tab">Збережені</string>
+    <string name="memory_editor_back" tools:ignore="MissingTranslation">Назад</string>
+    <string name="memory_list_keep" tools:ignore="MissingTranslation">Зберігати для наступного запуску</string>
+    <string name="memory_list_stop_keeping" tools:ignore="MissingTranslation">Більше не зберігати</string>
+    <string name="memory_list_kept" tools:ignore="MissingTranslation">Збережено для наступного запуску</string>
+    <string name="memory_list_empty" tools:ignore="MissingTranslation">Ще немає збережених закладок</string>
+    <string name="memory_list_empty_hint" tools:ignore="MissingTranslation">Додайте в закладки змінну з Пошуку або Інспектора, щоб відстежувати її тут.</string>
+    <string name="memory_list_remove_confirm" tools:ignore="MissingTranslation">Вилучити зі Збережених? Усі активні заморожування буде зупинено.</string>
+    <string name="memory_list_add" tools:ignore="MissingTranslation">У закладки</string>
+    <string name="memory_bookmark_relink" tools:ignore="MissingTranslation">Переприв’язати</string>
+    <string name="memory_bookmark_relink_hint" tools:ignore="MissingTranslation">Виберіть змінну для заміни в Пошуку, а потім натисніть «Переприв’язати».</string>
+    <string name="memory_bookmark_relink_confirm" tools:ignore="MissingTranslation">Прив’язати цю закладку до вибраної змінної? Активне заморожування цієї закладки буде зупинено.</string>
+    <string name="memory_bookmark_unavailable" tools:ignore="MissingTranslation">Недоступно — виберіть «Переприв’язати», щоб указати ціль</string>
+    <string name="memory_editor_watch">Спостереження</string>
+    <string name="memory_editor_search_tab">Пошук</string>
+    <string name="memory_editor_search_known_values">Пошук відомих значень</string>
+    <string name="memory_editor_search_unknown_values">Пошук невідомих значень</string>
+    <string name="memory_editor_add_to_watch">Додати вибрані значення в закладки</string>
+    <string name="memory_editor_no_candidates">Значень для пошуку не знайдено</string>
+    <string name="memory_editor_edit">Редагувати</string>
+    <plurals name="memory_editor_edit_batch">
+        <item quantity="one">Редагувати <xliff:g id="count" example="3">%1$d</xliff:g> значення</item>
+        <item quantity="few">Редагувати <xliff:g id="count" example="3">%1$d</xliff:g> значення</item>
+        <item quantity="many">Редагувати <xliff:g id="count" example="3">%1$d</xliff:g> значень</item>
+        <item quantity="other">Редагувати <xliff:g id="count" example="3">%1$d</xliff:g> значень</item>
+    </plurals>
+    <string name="memory_editor_edit_batch_no_common_type">Вибрані елементи не підтримують обраний тип даних. Редагуйте сумісні елементи окремо.</string>
+    <string name="memory_editor_save">Застосувати</string>
+    <string name="memory_editor_replacement">Нове значення</string>
+    <string name="memory_editor_freeze">Заморозити</string>
+    <string name="memory_editor_remove">Вилучити</string>
+    <string name="memory_editor_select_visible">Вибрати видимі</string>
+    <string name="memory_editor_clear_selection">Скасувати вибір</string>
+    <plurals name="memory_editor_selected">
+        <item quantity="one">Вибрано <xliff:g id="count" example="3">%1$d</xliff:g></item>
+        <item quantity="few">Вибрано <xliff:g id="count" example="3">%1$d</xliff:g></item>
+        <item quantity="many">Вибрано <xliff:g id="count" example="3">%1$d</xliff:g></item>
+        <item quantity="other">Вибрано <xliff:g id="count" example="3">%1$d</xliff:g></item>
+    </plurals>
+    <string name="memory_editor_close">Закрити Редактор пам’яті</string>
+    <string name="memory_editor_searching">Пошук у пам’яті…</string>
+    <string name="memory_editor_working">Виконання операції…</string>
+    <string name="memory_editor_search_progress">Проскановано <xliff:g id="scanned_mib" example="12">%1$d</xliff:g> з <xliff:g id="total_mib" example="64">%2$d</xliff:g> MiB</string>
+    <string name="memory_editor_candidate_moved">Ціль оновлено</string>
+    <string name="memory_editor_candidate_relocating">Повторна перевірка</string>
+    <string name="memory_editor_candidate_ambiguous">Неоднозначно — запис призупинено</string>
+    <string name="memory_editor_candidate_lost">Втрачено — запис призупинено</string>
+    <string name="memory_editor_apply">Застосувати</string>
+    <string name="memory_editor_min_value">Мінімальне значення</string>
+    <string name="memory_editor_max_value">Максимальне значення</string>
+    <string name="memory_editor_change_amount">Величина зміни</string>
+    <string name="memory_editor_min_change">Мінімальна зміна</string>
+    <string name="memory_editor_max_change">Максимальна зміна</string>
+    <string name="memory_editor_unfreeze">Розморозити</string>
+    <string name="memory_editor_cancelled">Операцію скасовано.</string>
+    <string name="memory_editor_resource_limit">Редактор пам’яті досяг ліміту безпеки. Спробуйте точніший пошук або вилучіть непотрібні закладки чи заморожування.</string>
+    <string name="memory_editor_identity_unsafe">Не вдалося перевірити вибране значення або стан пошуку. Оновіть результати або знову відкрийте Інспектор і спробуйте ще раз.</string>
+    <string name="memory_editor_safety_limit">Для цієї операції вибрано забагато значень. Виберіть менше та спробуйте ще раз.</string>
+    <string name="memory_editor_invalid_request">Некоректне значення або операція.</string>
+    <string name="memory_editor_freeze_paused">Призупинено з міркувань безпеки</string>
+    <string name="memory_editor_predicate_between">Між</string>
+    <string name="memory_editor_predicate_changed">Змінилося</string>
+    <string name="memory_editor_predicate_unchanged">Не змінилося</string>
+    <string name="memory_editor_predicate_increased">Збільшилося</string>
+    <string name="memory_editor_predicate_decreased">Зменшилося</string>
+    <string name="memory_editor_predicate_increased_by">Збільшилося на</string>
+    <string name="memory_editor_predicate_decreased_by">Зменшилося на</string>
+    <string name="memory_editor_predicate_changed_by">Змінилося на</string>
+    <string name="memory_editor_predicate_increased_range">Збільшення в діапазоні</string>
+    <string name="memory_editor_predicate_decreased_range">Зменшення в діапазоні</string>
+    <string name="memory_editor_inspector">Інспектор</string>
+    <string name="memory_editor_inspect_memory">Перевірити сусідню пам’ять</string>
+    <string name="memory_editor_inspector_loading">Перевірка результату та читання сусідньої пам’яті…</string>
+    <string name="memory_editor_inspector_empty">Виберіть результат, щоб перевірити сусідню пам’ять.</string>
+    <string name="memory_editor_inspector_no_rows">Немає доступної сусідньої пам’яті для перевірки.</string>
+    <string name="memory_editor_refresh_snapshot">Оновити знімок</string>
+    <string name="memory_editor_select_result_value">Вибрати цю закладку</string>
+    <string name="memory_editor_freeze_after_edit">Заморозити після застосування</string>
+    <string name="memory_editor_freeze_after_edit_help">Утримує це значення зафіксованим і додає його в закладки в розділі «Збережені».</string>
+    <string name="memory_editor_expression_single_hint">Введіть одне значення або розділіть групові значення крапкою з комою (;).</string>
+    <string name="memory_editor_expression_group_needs_type">Виберіть конкретний тип даних для групового пошуку.</string>
+    <plurals name="memory_editor_expression_group_hint">
+        <item quantity="one">Груповий пошук · <xliff:g id="count" example="3">%1$d</xliff:g> значення · один об’єкт Java</item>
+        <item quantity="few">Груповий пошук · <xliff:g id="count" example="3">%1$d</xliff:g> значення · один об’єкт Java</item>
+        <item quantity="many">Груповий пошук · <xliff:g id="count" example="3">%1$d</xliff:g> значень · один об’єкт Java</item>
+        <item quantity="other">Груповий пошук · <xliff:g id="count" example="3">%1$d</xliff:g> значень · один об’єкт Java</item>
+    </plurals>
+    <string name="memory_editor_expression_query_help">Приклади: 500 або 500;1000. Груповий пошук шукає 2–8 значень в одному об’єкті Java.</string>
+    <string name="memory_editor_keypad_clear">Очистити</string>
+    <string name="memory_editor_peek_underlay">Утримуйте, щоб побачити MIDlet під панеллю</string>
+    <string name="memory_editor_peek_underlay_active">Показується MIDlet під панеллю</string>
+    <string name="memory_editor_no_runtime">Немає активного середовища виконання MIDlet.</string>
+    <string name="memory_editor_no_search_history">Немає попереднього пошуку для відновлення.</string>
+    <string name="memory_editor_partial_write">Операцію запису завершено не повністю. Перевірте поточні значення, перш ніж повторити спробу.</string>
+    <!-- Independent write counts: confirmed, unconfirmed, skipped, not attempted, and incompatible data type. -->
+    <string name="memory_editor_write_outcome">Підтверджено записів: <xliff:g id="confirmed" example="3">%1$d</xliff:g>. Непідтверджено: <xliff:g id="unconfirmed" example="0">%2$d</xliff:g>. Пропущено: <xliff:g id="skipped" example="0">%3$d</xliff:g>. Не виконано: <xliff:g id="not_attempted" example="0">%4$d</xliff:g>. Пропущено за типом: <xliff:g id="skipped_by_type" example="0">%5$d</xliff:g>.</string>
+    <!-- %1$s is a localized outcome explanation; %2$d through %6$d are the same independent write counts. -->
+    <string name="memory_editor_write_failure_outcome"><xliff:g id="reason" example="Write interrupted.">%1$s</xliff:g>\nПідтверджено записів: <xliff:g id="confirmed" example="1">%2$d</xliff:g>. Непідтверджено: <xliff:g id="unconfirmed" example="1">%3$d</xliff:g>. Пропущено: <xliff:g id="skipped" example="0">%4$d</xliff:g>. Не виконано: <xliff:g id="not_attempted" example="0">%5$d</xliff:g>. Пропущено за типом: <xliff:g id="skipped_by_type" example="0">%6$d</xliff:g>.</string>
+    <!-- Result counts before (%1$d) and after (%2$d) the completed next scan. -->
+    <string name="memory_editor_next_scan_result">Результати наступного пошуку: <xliff:g id="before_count" example="120">%1$d</xliff:g> → <xliff:g id="after_count" example="14">%2$d</xliff:g></string>
+    <string name="memory_editor_type_auto">Авто</string>
+    <string name="memory_editor_remove_candidates_title">Вилучити вибрані результати?</string>
+    <string name="memory_editor_remove_candidates_description">Вилучити: прибирає вибрані результати зі списку пошуку. Значення в пам’яті гри залишаються без змін.\n\nПовернути й вилучити: також відновлює значення до їхніх останніх підтверджених змін, якщо вони досі збігаються. Заморожені значення та результати з конфліктами залишаються в списку.</string>
+    <string name="memory_editor_revert_and_remove">Повернути й вилучити</string>
+    <string name="memory_editor_revert_remove_commit_failed">Значення могли бути відновлені, але результати не вдалося вилучити. Оновіть і спробуйте ще раз; значення, змінені грою, не буде перезаписано.</string>
+    <string name="memory_editor_revert_remove_outcome">Відновлено: <xliff:g id="restored" example="2">%1$d</xliff:g>. Вилучено: <xliff:g id="removed" example="2">%2$d</xliff:g>. Конфліктів: <xliff:g id="conflicts" example="0">%3$d</xliff:g>. Непідтверджено: <xliff:g id="unconfirmed" example="0">%4$d</xliff:g>. Не виконано: <xliff:g id="not_attempted" example="0">%5$d</xliff:g>.</string>
+    <string name="memory_editor_set_all">Задати всім</string>
+    <string name="memory_editor_increment_start">Початкове значення</string>
+    <string name="memory_editor_edit_batch_type_notice">Буде змінено лише значення з відповідними типами даних.</string>
+    <string name="memory_editor_write_confirmed">Значень, підтверджених повторним читанням пам’яті: <xliff:g id="count" example="3">%1$d</xliff:g>.</string>
+    <string name="memory_editor_candidate_untraced">Масив #<xliff:g id="array_id" example="42">%1$d</xliff:g>[<xliff:g id="index" example="3">%2$d</xliff:g>] · Джерело не відстежено</string>
+    <string name="memory_editor_candidate_static"><xliff:g id="field_name" example="Player.coins">%1$s</xliff:g> · <xliff:g id="reference_kind" example="Static reference">%2$s</xliff:g></string>
+    <string name="memory_editor_candidate_instance"><xliff:g id="field_name" example="Player.hp">%1$s</xliff:g> · <xliff:g id="reference_kind" example="Instance reference">%2$s</xliff:g> · ціль #<xliff:g id="target_id" example="1">%3$d</xliff:g></string>
+    <string name="memory_editor_reference_static">Статичне посилання</string>
+    <string name="memory_editor_reference_instance">Посилання екземпляра</string>
+    <string name="memory_editor_path_changed">Шлях посилання змінився після пошуку.</string>
+    <string name="memory_editor_path_incomplete">Шлях посилання перевищує ліміт перевірки.</string>
+    <string name="memory_editor_source_unknown">Джерело не відстежено</string>
+    <string name="memory_editor_incremental_edit">Збільшити з кроком</string>
+    <string name="memory_editor_increment_step">Крок</string>
+    <string name="memory_editor_increment_invalid">Використовуйте один цілочисельний тип і значення в його межах.</string>
+    <!-- The batch dialog title already shows the number of selected values. -->
+    <string name="memory_editor_increment_preview">Попередній перегляд: <xliff:g id="name" example="Example">%1$s</xliff:g></string>
+    <string name="memory_editor_panel_opacity">Непрозорість панелі</string>
+    <string name="memory_editor_panel_opacity_help">Налаштуйте фон, щоб бачити ігрові значення під час пошуку. Текст і значки залишаються видимими.</string>
+    <string name="memory_editor_reconversion_required" tools:ignore="MissingTranslation">Встановлене перетворення цього MIDlet несумісне з Редактором пам’яті. Закрийте гру, а потім повторно перетворіть або перевстановіть її в JL-Mod Plus.</string>
+    <string name="memory_saved_tab" tools:ignore="MissingTranslation">Збережені</string>
+    <string name="memory_saved_save" tools:ignore="MissingTranslation">Зберегти змінну</string>
+    <string name="memory_saved_name" tools:ignore="MissingTranslation">Назва</string>
+    <string name="memory_saved_explanation" tools:ignore="MissingTranslation">Збережіть цей перевірений шлях пам’яті для наступних сеансів. Значення ніколи не записуються автоматично.</string>
+    <string name="memory_saved_empty" tools:ignore="MissingTranslation">Ще немає збережених змінних. Виберіть результат пошуку, щоб зберегти його.</string>
+    <string name="memory_saved_not_ready" tools:ignore="MissingTranslation">Не готово</string>
+    <string name="memory_saved_retry" tools:ignore="MissingTranslation">Повторити</string>
+    <string name="memory_saved_rename" tools:ignore="MissingTranslation">Перейменувати</string>
+    <string name="memory_saved_value" tools:ignore="MissingTranslation">Значення</string>
+    <string name="memory_saved_delete_confirm" tools:ignore="MissingTranslation">Вилучити це збережене визначення? Значення в грі не зміниться.</string>
+    <string name="memory_saved_changed" tools:ignore="MissingTranslation">Змінено</string>
+    <string name="memory_saved_rebound" tools:ignore="MissingTranslation">Ціль оновлено</string>
+    <string name="memory_saved_import_summary" tools:ignore="MissingTranslation">Збережені: додано <xliff:g id="added_count" example="4">%1$d</xliff:g>, уже наявні <xliff:g id="existing_count" example="2">%2$d</xliff:g></string>
+    <string name="memory_saved_incompatible" tools:ignore="MissingTranslation">Несумісно</string>
+    <string name="memory_saved_failed" tools:ignore="MissingTranslation">Помилка</string>
+    <string name="memory_saved_delete_many_confirm" tools:ignore="MissingTranslation">Вилучити збережені визначення (<xliff:g id="count" example="3">%1$d</xliff:g>)? Значення в грі не зміняться.</string>
+    <string name="memory_recipes_title" tools:ignore="MissingTranslation">Швидка дія</string>
+    <string name="memory_recipes_simple_from_saved" tools:ignore="MissingTranslation">Ціль: <xliff:g id="bookmark_name" example="Coins">%1$s</xliff:g></string>
+    <string name="memory_recipes_preview" tools:ignore="MissingTranslation">Переглянути цілі</string>
+    <string name="memory_recipes_stop_freeze" tools:ignore="MissingTranslation">Зупинити заморожування скрипта</string>
+    <string name="memory_recipes_freeze" tools:ignore="MissingTranslation">Тримати замороженим під час роботи цієї гри</string>
+    <string name="memory_recipes_run" tools:ignore="MissingTranslation">Запустити</string>
+    <string name="memory_recipes_active_freezes" tools:ignore="MissingTranslation">Активні заморожування скриптів</string>
+    <string name="memory_recipes_target_unavailable" tools:ignore="MissingTranslation">Ціль закладки недоступна. Оновіть або переприв’яжіть її перед запуском.</string>
+    <string name="memory_recipes_preview_values" tools:ignore="MissingTranslation">Поточні значення: <xliff:g id="name" example="Example">%1$s</xliff:g></string>
+    <string name="memory_scripts_title" tools:ignore="MissingTranslation">Скрипти</string>
+    <string name="memory_scripts_active" tools:ignore="MissingTranslation">Активні</string>
+    <string name="memory_scripts_inputs" tools:ignore="MissingTranslation">Вхідні дані</string>
+    <string name="memory_scripts_create_from_bookmarks" tools:ignore="MissingTranslation">Створити скрипт</string>
+    <string name="memory_scripts_create_failed" tools:ignore="MissingTranslation">Не вдалося створити новий скрипт.</string>
+    <string name="memory_scripts_draft_in_progress" tools:ignore="MissingTranslation">Спочатку завершіть або відхиліть поточну чернетку скрипта.</string>
+    <string name="memory_builder_open_saved" tools:ignore="MissingTranslation">Відкрити Збережені</string>
+    <string name="memory_builder_add_description" tools:ignore="MissingTranslation">Додати опис</string>
+    <string name="memory_builder_find_values" tools:ignore="MissingTranslation">Знайти значення</string>
+    <string name="memory_scripts_description" tools:ignore="MissingTranslation">Опис</string>
+    <string name="memory_scripts_new" tools:ignore="MissingTranslation">Новий скрипт</string>
+    <string name="memory_scripts_back" tools:ignore="MissingTranslation">Назад</string>
+    <string name="memory_scripts_edit" tools:ignore="MissingTranslation">Редагувати</string>
+    <string name="memory_scripts_save" tools:ignore="MissingTranslation">Зберегти</string>
+    <string name="memory_scripts_saved" tools:ignore="MissingTranslation">Скрипт збережено</string>
+    <string name="memory_scripts_deleted" tools:ignore="MissingTranslation">Скрипт видалено</string>
+    <string name="memory_scripts_save_failed" tools:ignore="MissingTranslation">Не вдалося зберегти скрипт.</string>
+    <string name="memory_scripts_editor_hint" tools:ignore="MissingTranslation">Введіть або вставте JSON-документ скрипта. Збереження не запускає його.</string>
+    <string name="memory_scripts_paste_hint" tools:ignore="MissingTranslation">Вставити JSON скрипта</string>
+    <string name="memory_scripts_paste" tools:ignore="MissingTranslation">Вставити</string>
+    <string name="memory_scripts_clipboard_invalid" tools:ignore="MissingTranslation">Буфер обміну порожній або документ перевищує 64 KiB</string>
+    <string name="memory_scripts_invalid" tools:ignore="MissingTranslation">Некоректний формат скрипта</string>
+    <string name="memory_scripts_freeze_active" tools:ignore="MissingTranslation">Для цього скрипта активне заморожування</string>
+    <string name="memory_scripts_delete" tools:ignore="MissingTranslation">Видалити</string>
+    <string name="memory_scripts_delete_confirm" tools:ignore="MissingTranslation">Видалити «<xliff:g id="name" example="Example">%1$s</xliff:g>»? Активне заморожування для цього скрипта буде зупинено.</string>
+    <string name="memory_scripts_empty" tools:ignore="MissingTranslation">Немає збережених скриптів</string>
+    <string name="memory_scripts_unsaved_title" tools:ignore="MissingTranslation">Відхилити незбережений скрипт?</string>
+    <string name="memory_scripts_unsaved_message" tools:ignore="MissingTranslation">Зміни в скрипті не збережено.</string>
+    <string name="memory_scripts_discard" tools:ignore="MissingTranslation">Відхилити</string>
+    <string name="memory_scripts_current_title" tools:ignore="MissingTranslation">Останнє зчитування</string>
+    <string name="memory_scripts_refresh" tools:ignore="MissingTranslation">Оновити</string>
+    <string name="memory_scripts_reading" tools:ignore="MissingTranslation">Зчитування поточних значень…</string>
+    <string name="memory_scripts_refresh_hint" tools:ignore="MissingTranslation">Натисніть «Оновити», щоб зчитати поточні значення із запущеної гри.</string>
+    <string name="memory_scripts_mode_toggle" tools:ignore="MissingTranslation">Заморозити значення</string>
+    <string name="memory_scripts_mode_form" tools:ignore="MissingTranslation">Редактор значень</string>
+    <string name="memory_scripts_mode_once" tools:ignore="MissingTranslation">Швидкі дії</string>
+    <string name="memory_scripts_mode_legacy" tools:ignore="MissingTranslation">Розширений скрипт</string>
+    <string name="memory_scripts_edit_values" tools:ignore="MissingTranslation">Редагувати значення</string>
+    <string name="memory_scripts_apply" tools:ignore="MissingTranslation">Застосувати зміни</string>
+    <string name="memory_scripts_refresh_required" tools:ignore="MissingTranslation">Оновіть, щоб перевірити поточні значення перед застосуванням.</string>
+    <string name="memory_scripts_inconsistent" tools:ignore="MissingTranslation">Неузгоджені копії: <xliff:g id="name" example="Example">%1$s</xliff:g></string>
+    <string name="memory_editor_minimize" tools:ignore="MissingTranslation">Згорнути Редактор пам’яті</string>
+    <string name="memory_scripts_choose_type" tools:ignore="MissingTranslation">Новий скрипт</string>
+    <string name="memory_scripts_choose_hint" tools:ignore="MissingTranslation">Виберіть принцип роботи цього скрипта.</string>
+    <string name="memory_builder_json_editor" tools:ignore="MissingTranslation">Редактор JSON</string>
+    <string name="memory_builder_freeze_hint" tools:ignore="MissingTranslation">Утримує вибрані значення зафіксованими, доки функцію увімкнено. Вимкнення заморожування не відновлює попередні значення.</string>
+    <string name="memory_builder_form_hint" tools:ignore="MissingTranslation">Створіть форму, яка зчитує поточні значення перед застосуванням змін.</string>
+    <string name="memory_builder_actions_hint" tools:ignore="MissingTranslation">Застосовує зміни щоразу після натискання «Запустити». Кожен запуск незалежний.</string>
+    <string name="memory_builder_name" tools:ignore="MissingTranslation">Назва скрипта</string>
+    <string name="memory_builder_frozen_values" tools:ignore="MissingTranslation">Заморожені значення</string>
+    <string name="memory_builder_fields" tools:ignore="MissingTranslation">Поля</string>
+    <string name="memory_builder_actions" tools:ignore="MissingTranslation">Дії</string>
+    <string name="memory_builder_add_bookmarks" tools:ignore="MissingTranslation">Додати із закладок</string>
+    <string name="memory_builder_empty" tools:ignore="MissingTranslation">Додайте принаймні одну перевірену закладку.</string>
+    <string name="memory_builder_field_label" tools:ignore="MissingTranslation">Підпис поля</string>
+    <string name="memory_builder_keep_at" tools:ignore="MissingTranslation">Тримати на рівні</string>
+    <string name="memory_builder_amount" tools:ignore="MissingTranslation">Значення / кількість</string>
+    <string name="memory_builder_set" tools:ignore="MissingTranslation">Задати</string>
+    <string name="memory_builder_add" tools:ignore="MissingTranslation">Додати</string>
+    <string name="memory_builder_subtract" tools:ignore="MissingTranslation">Відняти</string>
+    <string name="memory_builder_view_json" tools:ignore="MissingTranslation">Переглянути JSON</string>
+    <string name="memory_builder_edit_json" tools:ignore="MissingTranslation">Редагувати JSON</string>
+    <string name="memory_builder_search_bookmarks" tools:ignore="MissingTranslation">Пошук закладок</string>
+    <string name="memory_builder_no_bookmarks" tools:ignore="MissingTranslation">Немає відповідних перевірених закладок. Додайте значення в закладки в Пошуку або переприв’яжіть його в Збережених.</string>
+    <string name="memory_builder_needs_relink" tools:ignore="MissingTranslation">Потрібна переприв’язка</string>
+    <string name="memory_builder_add_selected" tools:ignore="MissingTranslation">Додати вибрані</string>
+    <string name="memory_builder_min" tools:ignore="MissingTranslation">Мінімум (необов’язково)</string>
+    <string name="memory_builder_max" tools:ignore="MissingTranslation">Максимум (необов’язково)</string>
+    <string name="memory_builder_add_target" tools:ignore="MissingTranslation">Додати ціль</string>
+    <string name="memory_builder_freeze_short" tools:ignore="MissingTranslation">Утримувати вибрані значення на фіксованому рівні</string>
+    <string name="memory_builder_form_short" tools:ignore="MissingTranslation">Змінювати кілька значень в одному місці</string>
+    <string name="memory_builder_actions_short" tools:ignore="MissingTranslation">Виконувати разові дії «Задати», «Додати» або «Відняти»</string>
+    <string name="memory_editor_refine_scan" tools:ignore="MissingTranslation">Уточнити</string>
+    <string name="memory_scripts_saved_count" tools:ignore="MissingTranslation">Збережено: <xliff:g id="count" example="3">%1$d</xliff:g></string>
+    <string name="memory_scripts_empty_hint" tools:ignore="MissingTranslation">Створіть скрипт, щоб редагувати або заморожувати значення під час гри.</string>
+    <string name="memory_builder_limits" tools:ignore="MissingTranslation">Обмеження (необов’язково)</string>
+</resources>

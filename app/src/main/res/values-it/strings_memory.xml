@@ -1,0 +1,258 @@
+<?xml version="1.0" encoding="utf-8"?>
+<!-- Memory Editor search, inspector, bookmarks, saved variables, quick actions, and script builder. -->
+<resources xmlns:tools="http://schemas.android.com/tools" xmlns:xliff="urn:oasis:names:tc:xliff:document:1.2">
+    <string name="memory_editor_bubble">Pulsante mobile dell’Editor di memoria</string>
+    <string name="memory_editor_bubble_content_description">Apri Editor di memoria</string>
+    <string name="memory_editor_previous_results_page_action">Pagina risultati precedente</string>
+    <string name="memory_editor_next_results_page_action">Pagina risultati successiva</string>
+    <string name="memory_editor">Editor di memoria</string>
+    <string name="memory_editor_search_hint">Valore</string>
+    <string name="memory_editor_next_scan">Scansione successiva</string>
+    <string name="memory_editor_new_search">Nuova ricerca</string>
+    <plurals name="memory_editor_results">
+        <item quantity="one"><xliff:g id="count" example="3">%1$d</xliff:g> risultato</item>
+        <item quantity="many"><xliff:g id="count" example="3">%1$d</xliff:g> risultati</item>
+        <item quantity="other"><xliff:g id="count" example="3">%1$d</xliff:g> risultati</item>
+    </plurals>
+    <plurals name="memory_editor_candidates">
+        <item quantity="one"><xliff:g id="count" example="3">%1$d</xliff:g> candidato</item>
+        <item quantity="many"><xliff:g id="count" example="3">%1$d</xliff:g> candidati</item>
+        <item quantity="other"><xliff:g id="count" example="3">%1$d</xliff:g> candidati</item>
+    </plurals>
+    <plurals name="memory_editor_search_complete">
+        <item quantity="one">Ricerca completata · <xliff:g id="count" example="3">%1$d</xliff:g> candidato</item>
+        <item quantity="many">Ricerca completata · <xliff:g id="count" example="3">%1$d</xliff:g> candidati</item>
+        <item quantity="other">Ricerca completata · <xliff:g id="count" example="3">%1$d</xliff:g> candidati</item>
+    </plurals>
+    <string name="memory_editor_no_results">Nessun risultato</string>
+    <string name="memory_editor_no_watch">Elenco di osservazione vuoto</string>
+    <string name="memory_editor_unsupported">L’Editor di memoria non è disponibile per questo runtime.</string>
+    <string name="memory_editor_engine_unavailable">Il motore dell’Editor di memoria non è disponibile.</string>
+    <string name="memory_editor_engine_reconnecting">Riconnessione dell’Editor di memoria…</string>
+    <string name="memory_editor_refresh">Aggiorna</string>
+    <string name="memory_editor_undo">Annulla scansione</string>
+    <string name="memory_variables_tab">Salvati</string>
+    <string name="memory_editor_back" tools:ignore="MissingTranslation">Indietro</string>
+    <string name="memory_list_keep" tools:ignore="MissingTranslation">Mantieni al prossimo avvio</string>
+    <string name="memory_list_stop_keeping" tools:ignore="MissingTranslation">Non mantenere più</string>
+    <string name="memory_list_kept" tools:ignore="MissingTranslation">Mantenuto al prossimo avvio</string>
+    <string name="memory_list_empty" tools:ignore="MissingTranslation">Nessun segnalibro salvato</string>
+    <string name="memory_list_empty_hint" tools:ignore="MissingTranslation">Aggiungi ai segnalibri una variabile da Cerca o Ispettore per tenerla sotto controllo qui.</string>
+    <string name="memory_list_remove_confirm" tools:ignore="MissingTranslation">Rimuovere da Salvati? Eventuali blocchi attivi verranno interrotti.</string>
+    <string name="memory_list_add" tools:ignore="MissingTranslation">Aggiungi ai segnalibri</string>
+    <string name="memory_bookmark_relink" tools:ignore="MissingTranslation">Ricollega</string>
+    <string name="memory_bookmark_relink_hint" tools:ignore="MissingTranslation">Seleziona la variabile sostitutiva in Cerca, poi scegli Ricollega.</string>
+    <string name="memory_bookmark_relink_confirm" tools:ignore="MissingTranslation">Collegare questo segnalibro alla variabile selezionata? Eventuali blocchi attivi su questo segnalibro verranno interrotti.</string>
+    <string name="memory_bookmark_unavailable" tools:ignore="MissingTranslation">Non disponibile — seleziona Ricollega per scegliere una destinazione</string>
+    <string name="memory_editor_watch">Osserva</string>
+    <string name="memory_editor_search_tab">Cerca</string>
+    <string name="memory_editor_search_known_values">Cerca valori noti</string>
+    <string name="memory_editor_search_unknown_values">Cerca valori sconosciuti</string>
+    <string name="memory_editor_add_to_watch">Aggiungi valori selezionati ai segnalibri</string>
+    <string name="memory_editor_no_candidates">Nessun valore ricercabile trovato</string>
+    <string name="memory_editor_edit">Modifica</string>
+    <plurals name="memory_editor_edit_batch">
+        <item quantity="one">Modifica <xliff:g id="count" example="3">%1$d</xliff:g> valore</item>
+        <item quantity="many">Modifica <xliff:g id="count" example="3">%1$d</xliff:g> valori</item>
+        <item quantity="other">Modifica <xliff:g id="count" example="3">%1$d</xliff:g> valori</item>
+    </plurals>
+    <string name="memory_editor_edit_batch_no_common_type">Gli elementi selezionati non supportano il tipo di dati scelto. Modifica separatamente gli elementi compatibili.</string>
+    <string name="memory_editor_save">Applica</string>
+    <string name="memory_editor_replacement">Valore sostitutivo</string>
+    <string name="memory_editor_freeze">Blocca</string>
+    <string name="memory_editor_remove">Rimuovi</string>
+    <string name="memory_editor_select_visible">Seleziona visibili</string>
+    <string name="memory_editor_clear_selection">Cancella selezione</string>
+    <plurals name="memory_editor_selected">
+        <item quantity="one"><xliff:g id="count" example="3">%1$d</xliff:g> selezionato</item>
+        <item quantity="many"><xliff:g id="count" example="3">%1$d</xliff:g> selezionati</item>
+        <item quantity="other"><xliff:g id="count" example="3">%1$d</xliff:g> selezionati</item>
+    </plurals>
+    <string name="memory_editor_close">Chiudi Editor di memoria</string>
+    <string name="memory_editor_searching">Ricerca in memoria…</string>
+    <string name="memory_editor_working">Applicazione operazione…</string>
+    <string name="memory_editor_search_progress">Scansionati <xliff:g id="scanned_mib" example="12">%1$d</xliff:g> di <xliff:g id="total_mib" example="64">%2$d</xliff:g> MiB</string>
+    <string name="memory_editor_candidate_moved">Destinazione aggiornata</string>
+    <string name="memory_editor_candidate_relocating">Rivalidazione in corso</string>
+    <string name="memory_editor_candidate_ambiguous">Ambiguo — scritture in pausa</string>
+    <string name="memory_editor_candidate_lost">Perso — scritture in pausa</string>
+    <string name="memory_editor_apply">Applica</string>
+    <string name="memory_editor_min_value">Valore minimo</string>
+    <string name="memory_editor_max_value">Valore massimo</string>
+    <string name="memory_editor_change_amount">Entità della variazione</string>
+    <string name="memory_editor_min_change">Variazione minima</string>
+    <string name="memory_editor_max_change">Variazione massima</string>
+    <string name="memory_editor_unfreeze">Sblocca</string>
+    <string name="memory_editor_cancelled">Operazione annullata.</string>
+    <string name="memory_editor_resource_limit">L’Editor di memoria ha raggiunto un limite di sicurezza. Prova una ricerca più specifica oppure rimuovi segnalibri o blocchi inutilizzati.</string>
+    <string name="memory_editor_identity_unsafe">Impossibile verificare il valore selezionato o lo stato della ricerca. Aggiorna i risultati o riapri Ispettore, poi riprova.</string>
+    <string name="memory_editor_safety_limit">Troppi valori selezionati per questa operazione. Selezionane di meno e riprova.</string>
+    <string name="memory_editor_invalid_request">Il valore o l’operazione non è valido.</string>
+    <string name="memory_editor_freeze_paused">In pausa per sicurezza</string>
+    <string name="memory_editor_predicate_between">Tra</string>
+    <string name="memory_editor_predicate_changed">Modificato</string>
+    <string name="memory_editor_predicate_unchanged">Invariato</string>
+    <string name="memory_editor_predicate_increased">Aumentato</string>
+    <string name="memory_editor_predicate_decreased">Diminuito</string>
+    <string name="memory_editor_predicate_increased_by">Aumentato di</string>
+    <string name="memory_editor_predicate_decreased_by">Diminuito di</string>
+    <string name="memory_editor_predicate_changed_by">Modificato di</string>
+    <string name="memory_editor_predicate_increased_range">Aumento nell’intervallo</string>
+    <string name="memory_editor_predicate_decreased_range">Diminuzione nell’intervallo</string>
+    <string name="memory_editor_inspector">Ispettore</string>
+    <string name="memory_editor_inspect_memory">Esamina memoria vicina</string>
+    <string name="memory_editor_inspector_loading">Verifica del risultato e lettura della memoria vicina…</string>
+    <string name="memory_editor_inspector_empty">Seleziona un risultato per esaminare la memoria vicina.</string>
+    <string name="memory_editor_inspector_no_rows">Nessuna memoria vicina disponibile da esaminare.</string>
+    <string name="memory_editor_refresh_snapshot">Aggiorna istantanea</string>
+    <string name="memory_editor_select_result_value">Seleziona questo segnalibro</string>
+    <string name="memory_editor_freeze_after_edit">Blocca dopo l’applicazione</string>
+    <string name="memory_editor_freeze_after_edit_help">Mantiene bloccato questo valore e lo aggiunge ai segnalibri in Salvati.</string>
+    <string name="memory_editor_expression_single_hint">Inserisci un valore oppure separa i valori di gruppo con punto e virgola (;).</string>
+    <string name="memory_editor_expression_group_needs_type">Scegli un tipo di dati specifico per la ricerca di gruppo.</string>
+    <plurals name="memory_editor_expression_group_hint">
+        <item quantity="one">Ricerca di gruppo · <xliff:g id="count" example="3">%1$d</xliff:g> valore · stesso oggetto Java</item>
+        <item quantity="many">Ricerca di gruppo · <xliff:g id="count" example="3">%1$d</xliff:g> valori · stesso oggetto Java</item>
+        <item quantity="other">Ricerca di gruppo · <xliff:g id="count" example="3">%1$d</xliff:g> valori · stesso oggetto Java</item>
+    </plurals>
+    <string name="memory_editor_expression_query_help">Esempi: 500 o 500;1000. La ricerca di gruppo cerca da 2 a 8 valori nello stesso oggetto Java.</string>
+    <string name="memory_editor_keypad_clear">Cancella</string>
+    <string name="memory_editor_peek_underlay">Tieni premuto per vedere il MIDlet sottostante</string>
+    <string name="memory_editor_peek_underlay_active">Visualizzazione del MIDlet sottostante</string>
+    <string name="memory_editor_no_runtime">Nessun runtime MIDlet attivo.</string>
+    <string name="memory_editor_no_search_history">Nessuna ricerca precedente da ripristinare.</string>
+    <string name="memory_editor_partial_write">L’operazione di scrittura non è stata completata del tutto. Controlla i valori attuali prima di riprovare.</string>
+    <!-- Independent write counts: confirmed, unconfirmed, skipped, not attempted, and incompatible data type. -->
+    <string name="memory_editor_write_outcome">Scritture confermate: <xliff:g id="confirmed" example="3">%1$d</xliff:g>. Non confermate: <xliff:g id="unconfirmed" example="0">%2$d</xliff:g>. Saltate: <xliff:g id="skipped" example="0">%3$d</xliff:g>. Non tentate: <xliff:g id="not_attempted" example="0">%4$d</xliff:g>. Saltate per tipo: <xliff:g id="skipped_by_type" example="0">%5$d</xliff:g>.</string>
+    <!-- %1$s is a localized outcome explanation; %2$d through %6$d are the same independent write counts. -->
+    <string name="memory_editor_write_failure_outcome"><xliff:g id="reason" example="Write interrupted.">%1$s</xliff:g>\nScritture confermate: <xliff:g id="confirmed" example="1">%2$d</xliff:g>. Non confermate: <xliff:g id="unconfirmed" example="1">%3$d</xliff:g>. Saltate: <xliff:g id="skipped" example="0">%4$d</xliff:g>. Non tentate: <xliff:g id="not_attempted" example="0">%5$d</xliff:g>. Saltate per tipo: <xliff:g id="skipped_by_type" example="0">%6$d</xliff:g>.</string>
+    <!-- Result counts before (%1$d) and after (%2$d) the completed next scan. -->
+    <string name="memory_editor_next_scan_result">Risultati scansione successiva: <xliff:g id="before_count" example="120">%1$d</xliff:g> → <xliff:g id="after_count" example="14">%2$d</xliff:g></string>
+    <string name="memory_editor_type_auto">Auto</string>
+    <string name="memory_editor_remove_candidates_title">Rimuovere i risultati selezionati?</string>
+    <string name="memory_editor_remove_candidates_description">Rimuovi: toglie i risultati selezionati dall’elenco di ricerca. I valori nella memoria di gioco restano invariati.\n\nRipristina e rimuovi: ripristina anche i valori precedenti all’ultima modifica confermata, se corrispondono ancora. I valori bloccati e i risultati con conflitti restano nell’elenco.</string>
+    <string name="memory_editor_revert_and_remove">Ripristina e rimuovi</string>
+    <string name="memory_editor_revert_remove_commit_failed">I valori potrebbero essere stati ripristinati, ma non è stato possibile rimuovere i risultati. Aggiorna e riprova; i valori modificati dal gioco non verranno sovrascritti.</string>
+    <string name="memory_editor_revert_remove_outcome">Ripristinati: <xliff:g id="restored" example="2">%1$d</xliff:g>. Rimossi: <xliff:g id="removed" example="2">%2$d</xliff:g>. Conflitti: <xliff:g id="conflicts" example="0">%3$d</xliff:g>. Non confermati: <xliff:g id="unconfirmed" example="0">%4$d</xliff:g>. Non tentati: <xliff:g id="not_attempted" example="0">%5$d</xliff:g>.</string>
+    <string name="memory_editor_set_all">Imposta tutto</string>
+    <string name="memory_editor_increment_start">Valore iniziale</string>
+    <string name="memory_editor_edit_batch_type_notice">Verranno modificati solo i valori con tipi di dati corrispondenti.</string>
+    <string name="memory_editor_write_confirmed">Valori confermati dalla rilettura in memoria: <xliff:g id="count" example="3">%1$d</xliff:g>.</string>
+    <string name="memory_editor_candidate_untraced">Array #<xliff:g id="array_id" example="42">%1$d</xliff:g>[<xliff:g id="index" example="3">%2$d</xliff:g>] · Origine non tracciata</string>
+    <string name="memory_editor_candidate_static"><xliff:g id="field_name" example="Player.coins">%1$s</xliff:g> · <xliff:g id="reference_kind" example="Static reference">%2$s</xliff:g></string>
+    <string name="memory_editor_candidate_instance"><xliff:g id="field_name" example="Player.hp">%1$s</xliff:g> · <xliff:g id="reference_kind" example="Instance reference">%2$s</xliff:g> · destinazione #<xliff:g id="target_id" example="1">%3$d</xliff:g></string>
+    <string name="memory_editor_reference_static">Riferimento statico</string>
+    <string name="memory_editor_reference_instance">Riferimento d’istanza</string>
+    <string name="memory_editor_path_changed">Il percorso di riferimento è cambiato dopo la scansione.</string>
+    <string name="memory_editor_path_incomplete">Il percorso di riferimento supera il limite di ispezione.</string>
+    <string name="memory_editor_source_unknown">Origine non tracciata</string>
+    <string name="memory_editor_incremental_edit">Incrementa</string>
+    <string name="memory_editor_increment_step">Passo</string>
+    <string name="memory_editor_increment_invalid">Usa un solo tipo intero e valori compresi nel suo intervallo.</string>
+    <!-- The batch dialog title already shows the number of selected values. -->
+    <string name="memory_editor_increment_preview">Anteprima: <xliff:g id="name" example="Example">%1$s</xliff:g></string>
+    <string name="memory_editor_panel_opacity">Opacità pannello</string>
+    <string name="memory_editor_panel_opacity_help">Regola lo sfondo per vedere i valori del gioco durante la ricerca. Testo e icone restano visibili.</string>
+    <string name="memory_editor_reconversion_required" tools:ignore="MissingTranslation">La conversione installata di questo MIDlet non è compatibile con l’Editor di memoria. Chiudi il gioco, poi riconvertilo o reinstallalo in JL-Mod Plus.</string>
+    <string name="memory_saved_tab" tools:ignore="MissingTranslation">Salvati</string>
+    <string name="memory_saved_save" tools:ignore="MissingTranslation">Salva variabile</string>
+    <string name="memory_saved_name" tools:ignore="MissingTranslation">Nome</string>
+    <string name="memory_saved_explanation" tools:ignore="MissingTranslation">Salva questo percorso di memoria verificato per le sessioni future. I valori non vengono mai scritti automaticamente.</string>
+    <string name="memory_saved_empty" tools:ignore="MissingTranslation">Nessuna variabile salvata. Seleziona un risultato di ricerca per salvarlo.</string>
+    <string name="memory_saved_not_ready" tools:ignore="MissingTranslation">Non pronto</string>
+    <string name="memory_saved_retry" tools:ignore="MissingTranslation">Riprova</string>
+    <string name="memory_saved_rename" tools:ignore="MissingTranslation">Rinomina</string>
+    <string name="memory_saved_value" tools:ignore="MissingTranslation">Valore</string>
+    <string name="memory_saved_delete_confirm" tools:ignore="MissingTranslation">Rimuovere questa definizione salvata? Il valore nel gioco non cambierà.</string>
+    <string name="memory_saved_changed" tools:ignore="MissingTranslation">Modificato</string>
+    <string name="memory_saved_rebound" tools:ignore="MissingTranslation">Destinazione aggiornata</string>
+    <string name="memory_saved_import_summary" tools:ignore="MissingTranslation">Salvati: <xliff:g id="added_count" example="4">%1$d</xliff:g> aggiunti, <xliff:g id="existing_count" example="2">%2$d</xliff:g> già presenti</string>
+    <string name="memory_saved_incompatible" tools:ignore="MissingTranslation">Incompatibile</string>
+    <string name="memory_saved_failed" tools:ignore="MissingTranslation">Non riuscito</string>
+    <string name="memory_saved_delete_many_confirm" tools:ignore="MissingTranslation">Rimuovere <xliff:g id="count" example="3">%1$d</xliff:g> definizioni salvate? I valori nel gioco non cambieranno.</string>
+    <string name="memory_recipes_title" tools:ignore="MissingTranslation">Azione rapida</string>
+    <string name="memory_recipes_simple_from_saved" tools:ignore="MissingTranslation">Destinazione: <xliff:g id="bookmark_name" example="Coins">%1$s</xliff:g></string>
+    <string name="memory_recipes_preview" tools:ignore="MissingTranslation">Anteprima destinazioni</string>
+    <string name="memory_recipes_stop_freeze" tools:ignore="MissingTranslation">Interrompi blocco script</string>
+    <string name="memory_recipes_freeze" tools:ignore="MissingTranslation">Mantieni bloccato durante l’esecuzione di questo gioco</string>
+    <string name="memory_recipes_run" tools:ignore="MissingTranslation">Esegui</string>
+    <string name="memory_recipes_active_freezes" tools:ignore="MissingTranslation">Blocchi script attivi</string>
+    <string name="memory_recipes_target_unavailable" tools:ignore="MissingTranslation">La destinazione del segnalibro non è disponibile. Aggiornala o ricollegala prima dell’esecuzione.</string>
+    <string name="memory_recipes_preview_values" tools:ignore="MissingTranslation">Valori attuali: <xliff:g id="name" example="Example">%1$s</xliff:g></string>
+    <string name="memory_scripts_title" tools:ignore="MissingTranslation">Script</string>
+    <string name="memory_scripts_active" tools:ignore="MissingTranslation">Attivo</string>
+    <string name="memory_scripts_inputs" tools:ignore="MissingTranslation">Input</string>
+    <string name="memory_scripts_create_from_bookmarks" tools:ignore="MissingTranslation">Crea script</string>
+    <string name="memory_scripts_create_failed" tools:ignore="MissingTranslation">Impossibile avviare un nuovo script.</string>
+    <string name="memory_scripts_draft_in_progress" tools:ignore="MissingTranslation">Completa o scarta prima la bozza di script attuale.</string>
+    <string name="memory_builder_open_saved" tools:ignore="MissingTranslation">Apri Salvati</string>
+    <string name="memory_builder_add_description" tools:ignore="MissingTranslation">Aggiungi descrizione</string>
+    <string name="memory_builder_find_values" tools:ignore="MissingTranslation">Trova valori</string>
+    <string name="memory_scripts_description" tools:ignore="MissingTranslation">Descrizione</string>
+    <string name="memory_scripts_new" tools:ignore="MissingTranslation">Nuovo script</string>
+    <string name="memory_scripts_back" tools:ignore="MissingTranslation">Indietro</string>
+    <string name="memory_scripts_edit" tools:ignore="MissingTranslation">Modifica</string>
+    <string name="memory_scripts_save" tools:ignore="MissingTranslation">Salva</string>
+    <string name="memory_scripts_saved" tools:ignore="MissingTranslation">Script salvato</string>
+    <string name="memory_scripts_deleted" tools:ignore="MissingTranslation">Script eliminato</string>
+    <string name="memory_scripts_save_failed" tools:ignore="MissingTranslation">Impossibile salvare lo script.</string>
+    <string name="memory_scripts_editor_hint" tools:ignore="MissingTranslation">Inserisci o incolla un documento JSON dello script. Il salvataggio non lo esegue.</string>
+    <string name="memory_scripts_paste_hint" tools:ignore="MissingTranslation">Incolla JSON dello script</string>
+    <string name="memory_scripts_paste" tools:ignore="MissingTranslation">Incolla</string>
+    <string name="memory_scripts_clipboard_invalid" tools:ignore="MissingTranslation">Gli appunti sono vuoti o il documento supera i 64 KiB</string>
+    <string name="memory_scripts_invalid" tools:ignore="MissingTranslation">Formato script non valido</string>
+    <string name="memory_scripts_freeze_active" tools:ignore="MissingTranslation">Blocco attivo per questo script</string>
+    <string name="memory_scripts_delete" tools:ignore="MissingTranslation">Elimina</string>
+    <string name="memory_scripts_delete_confirm" tools:ignore="MissingTranslation">Eliminare <xliff:g id="name" example="Example">%1$s</xliff:g>? Eventuali blocchi attivi per questo script verranno interrotti.</string>
+    <string name="memory_scripts_empty" tools:ignore="MissingTranslation">Nessuno script salvato</string>
+    <string name="memory_scripts_unsaved_title" tools:ignore="MissingTranslation">Scartare lo script non salvato?</string>
+    <string name="memory_scripts_unsaved_message" tools:ignore="MissingTranslation">Le modifiche allo script non sono state salvate.</string>
+    <string name="memory_scripts_discard" tools:ignore="MissingTranslation">Scarta</string>
+    <string name="memory_scripts_current_title" tools:ignore="MissingTranslation">Ultima lettura</string>
+    <string name="memory_scripts_refresh" tools:ignore="MissingTranslation">Aggiorna</string>
+    <string name="memory_scripts_reading" tools:ignore="MissingTranslation">Lettura valori attuali…</string>
+    <string name="memory_scripts_refresh_hint" tools:ignore="MissingTranslation">Tocca Aggiorna per leggere i valori attuali dal gioco in esecuzione.</string>
+    <string name="memory_scripts_mode_toggle" tools:ignore="MissingTranslation">Blocca valori</string>
+    <string name="memory_scripts_mode_form" tools:ignore="MissingTranslation">Editor valori</string>
+    <string name="memory_scripts_mode_once" tools:ignore="MissingTranslation">Azioni rapide</string>
+    <string name="memory_scripts_mode_legacy" tools:ignore="MissingTranslation">Script avanzato</string>
+    <string name="memory_scripts_edit_values" tools:ignore="MissingTranslation">Modifica valori</string>
+    <string name="memory_scripts_apply" tools:ignore="MissingTranslation">Applica modifiche</string>
+    <string name="memory_scripts_refresh_required" tools:ignore="MissingTranslation">Aggiorna per verificare i valori attuali prima di applicare.</string>
+    <string name="memory_scripts_inconsistent" tools:ignore="MissingTranslation">Copie incoerenti: <xliff:g id="name" example="Example">%1$s</xliff:g></string>
+    <string name="memory_editor_minimize" tools:ignore="MissingTranslation">Riduci a icona Editor di memoria</string>
+    <string name="memory_scripts_choose_type" tools:ignore="MissingTranslation">Nuovo script</string>
+    <string name="memory_scripts_choose_hint" tools:ignore="MissingTranslation">Scegli come deve funzionare questo script.</string>
+    <string name="memory_builder_json_editor" tools:ignore="MissingTranslation">Editor JSON</string>
+    <string name="memory_builder_freeze_hint" tools:ignore="MissingTranslation">Mantiene bloccati i valori selezionati mentre è attivo. Disattivare il blocco non ripristina i valori precedenti.</string>
+    <string name="memory_builder_form_hint" tools:ignore="MissingTranslation">Crea un modulo che legge i valori attuali prima di applicare le modifiche.</string>
+    <string name="memory_builder_actions_hint" tools:ignore="MissingTranslation">Applica le modifiche ogni volta che premi Esegui. Ogni esecuzione è indipendente.</string>
+    <string name="memory_builder_name" tools:ignore="MissingTranslation">Nome script</string>
+    <string name="memory_builder_frozen_values" tools:ignore="MissingTranslation">Valori bloccati</string>
+    <string name="memory_builder_fields" tools:ignore="MissingTranslation">Campi</string>
+    <string name="memory_builder_actions" tools:ignore="MissingTranslation">Azioni</string>
+    <string name="memory_builder_add_bookmarks" tools:ignore="MissingTranslation">Aggiungi dai segnalibri</string>
+    <string name="memory_builder_empty" tools:ignore="MissingTranslation">Aggiungi almeno un segnalibro verificato.</string>
+    <string name="memory_builder_field_label" tools:ignore="MissingTranslation">Etichetta campo</string>
+    <string name="memory_builder_keep_at" tools:ignore="MissingTranslation">Mantieni a</string>
+    <string name="memory_builder_amount" tools:ignore="MissingTranslation">Valore / quantità</string>
+    <string name="memory_builder_set" tools:ignore="MissingTranslation">Imposta</string>
+    <string name="memory_builder_add" tools:ignore="MissingTranslation">Aggiungi</string>
+    <string name="memory_builder_subtract" tools:ignore="MissingTranslation">Sottrai</string>
+    <string name="memory_builder_view_json" tools:ignore="MissingTranslation">Visualizza JSON</string>
+    <string name="memory_builder_edit_json" tools:ignore="MissingTranslation">Modifica JSON</string>
+    <string name="memory_builder_search_bookmarks" tools:ignore="MissingTranslation">Cerca segnalibri</string>
+    <string name="memory_builder_no_bookmarks" tools:ignore="MissingTranslation">Nessun segnalibro verificato corrispondente. Aggiungi un valore ai segnalibri in Cerca o ricollegane uno in Salvati.</string>
+    <string name="memory_builder_needs_relink" tools:ignore="MissingTranslation">Richiede ricollegamento</string>
+    <string name="memory_builder_add_selected" tools:ignore="MissingTranslation">Aggiungi selezionati</string>
+    <string name="memory_builder_min" tools:ignore="MissingTranslation">Minimo (facoltativo)</string>
+    <string name="memory_builder_max" tools:ignore="MissingTranslation">Massimo (facoltativo)</string>
+    <string name="memory_builder_add_target" tools:ignore="MissingTranslation">Aggiungi destinazione</string>
+    <string name="memory_builder_freeze_short" tools:ignore="MissingTranslation">Mantieni i valori selezionati a importi fissi</string>
+    <string name="memory_builder_form_short" tools:ignore="MissingTranslation">Regola più valori in un unico posto</string>
+    <string name="memory_builder_actions_short" tools:ignore="MissingTranslation">Esegui azioni una tantum Imposta, Aggiungi o Sottrai</string>
+    <string name="memory_editor_refine_scan" tools:ignore="MissingTranslation">Affina</string>
+    <string name="memory_scripts_saved_count" tools:ignore="MissingTranslation"><xliff:g id="count" example="3">%1$d</xliff:g> salvati</string>
+    <string name="memory_scripts_empty_hint" tools:ignore="MissingTranslation">Crea uno script per modificare o bloccare valori durante il gioco.</string>
+    <string name="memory_builder_limits" tools:ignore="MissingTranslation">Limiti (facoltativi)</string>
+</resources>

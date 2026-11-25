@@ -1,0 +1,47 @@
+<?xml version="1.0" encoding="utf-8"?>
+<!-- Shared UI actions, generic labels, dialogs, and About screen. -->
+<resources xmlns:xliff="urn:oasis:names:tc:xliff:document:1.2">
+    <string name="about">Қолданба туралы</string>
+    <string name="about_message">Классикалық қолданбалар мен ойындарды іске қосыңыз, кітапханаңыздағы MIDlet-терді реттеңіз және басқару, экран, дыбыс пен өнімділікті теңшеңіз. JL-Mod Plus — тегін әрі ашық бастапқы коды бар жоба.</string>
+    <string name="about_subtitle">Android жүйесіне арналған Java ME эмуляторы</string>
+    <string name="about_compatibility">Үйлесімділік MIDlet-ке, құрылғыға және қолдау көрсетілетін Java ME API-ларына байланысты. Кейбір қолданбалар түпнұсқа телефондардағыдан өзгеше жұмыс істеуі мүмкін.</string>
+    <string name="about_lineage_title">Жобаның шығу тегі</string>
+    <string name="about_build_title">Құрастыру ақпараты</string>
+    <string name="about_version_label">Нұсқа</string>
+    <string name="about_build_label">Құрастыру</string>
+    <string name="about_revision_label">Бастапқы код нұсқасы</string>
+    <string name="about_links_title">Жоба және лицензиялар</string>
+    <string name="about_github_link_copied">Браузер табылмады. GitHub сілтемесі алмасу буферіне көшірілді.</string>
+    <string name="about_github_browser_unavailable">GitHub ашу үшін браузер табылмады.</string>
+    <string name="about_lineage">JL-Mod Plus — woesss (Юрий Харченко) жасаған JL-Mod жобасының тәуелсіз тармағы. JL-Mod негізін Никита Шакарунның J2ME Loader жобасы құрайды, ол NaikSoftware жасаған J2meLoader-ден бастау алады.</string>
+    <string name="about_evolution">JL-Mod Plus осы негізді заманауи интерфейс, мүмкіндігі мол MIDlet кітапханасы, жаңа функциялар және Android-тің жаңа нұсқаларын қолдау арқылы дамытады.</string>
+    <string name="action_back">Артқа</string>
+    <string name="action_settings">Параметрлер</string>
+    <string name="CANCEL_CMD">Бас тарту</string>
+    <string name="change">Өзгерту</string>
+    <string name="choose">Таңдау</string>
+    <string name="close">Жабу</string>
+    <string name="cmd_menu">Мәзір</string>
+    <string name="CONFIRMATION_REQUIRED">Растау қажет</string>
+    <string name="create">Жасау</string>
+    <string name="default_label"><xliff:g id="name" example="Example">%1$s</xliff:g> (әдепкі)</string>
+    <string name="dismiss">Жабу</string>
+    <string name="edit">Өңдеу</string>
+    <string name="error">Қате</string>
+    <string name="error_name">Атауды енгізіңіз.</string>
+    <string name="exit">Шығу</string>
+    <string name="help">Анықтама</string>
+    <string name="install">Орнату</string>
+    <string name="licenses">Лицензиялар</string>
+    <string name="licenses_unavailable">Лицензия мәліметтері қолжетімсіз.</string>
+    <string name="loading_info">Ақпарат жүктелуде…</string>
+    <string name="more">Тағы</string>
+    <string name="not_saved_exists">Бұрыннан бар</string>
+    <string name="reset">Қалпына келтіру</string>
+    <string name="retry">Қайталау</string>
+    <string name="save">Сақтау</string>
+    <string name="saved">Сақталды: <xliff:g id="name" example="Example">%1$s</xliff:g></string>
+    <string name="START_CMD">Іске қосу</string>
+    <string name="warning">Ескерту</string>
+    <string name="removed">Алып тасталды: <xliff:g id="name" example="Example">%1$s</xliff:g></string>
+</resources>

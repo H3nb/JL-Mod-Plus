@@ -1,0 +1,47 @@
+<?xml version="1.0" encoding="utf-8"?>
+<!-- Shared UI actions, generic labels, dialogs, and About screen. -->
+<resources xmlns:xliff="urn:oasis:names:tc:xliff:document:1.2">
+    <string name="about">אודות</string>
+    <string name="about_message">הפעלת אפליקציות ומשחקים קלאסיים, ארגון קובצי MIDlet בספרייה והתאמה אישית של פקדים, תצוגה, שמע וביצועים. JL-Mod Plus היא תוכנה חינמית בקוד פתוח.</string>
+    <string name="about_subtitle">אמולטור Java ME עבור Android</string>
+    <string name="about_compatibility">התאימות תלויה ב-MIDlet, במכשיר ובממשקי Java ME API הנתמכים. חלק מהאפליקציות עשויות לפעול באופן שונה מאשר בטלפונים המקוריים שלהן.</string>
+    <string name="about_lineage_title">מקורות הפרויקט</string>
+    <string name="about_build_title">פרטי גרסת הבנייה</string>
+    <string name="about_version_label">גרסה</string>
+    <string name="about_build_label">בנייה</string>
+    <string name="about_revision_label">גרסת קוד מקור</string>
+    <string name="about_links_title">פרויקט ורישיונות</string>
+    <string name="about_github_link_copied">לא נמצא דפדפן. הקישור ל-GitHub הועתק ללוח.</string>
+    <string name="about_github_browser_unavailable">לא נמצא דפדפן לפתיחת GitHub.</string>
+    <string name="about_lineage">JL-Mod Plus הוא פיצול עצמאי של JL-Mod מאת woesss (Yury Kharchenko). JL-Mod מבוסס על J2ME Loader מאת Nikita Shakarun, שראשיתו ב-J2meLoader של NaikSoftware.</string>
+    <string name="about_evolution">JL-Mod Plus מרחיב תשתית זו עם ממשק מודרני, ספריית MIDlet מתקדמת יותר, תכונות חדשות ותמיכה בגרסאות Android חדשות יותר.</string>
+    <string name="action_back">חזרה</string>
+    <string name="action_settings">הגדרות</string>
+    <string name="CANCEL_CMD">ביטול</string>
+    <string name="change">שינוי</string>
+    <string name="choose">בחירה</string>
+    <string name="close">סגירה</string>
+    <string name="cmd_menu">תפריט</string>
+    <string name="CONFIRMATION_REQUIRED">נדרש אישור</string>
+    <string name="create">יצירה</string>
+    <string name="default_label"><xliff:g id="name" example="Example">%1$s</xliff:g> (ברירת מחדל)</string>
+    <string name="dismiss">סגירה</string>
+    <string name="edit">עריכה</string>
+    <string name="error">שגיאה</string>
+    <string name="error_name">יש להזין שם.</string>
+    <string name="exit">יציאה</string>
+    <string name="help">עזרה</string>
+    <string name="install">התקנה</string>
+    <string name="licenses">רישיונות</string>
+    <string name="licenses_unavailable">פרטי הרישיונות אינם זמינים.</string>
+    <string name="loading_info">טוען מידע…</string>
+    <string name="more">עוד</string>
+    <string name="not_saved_exists">כבר קיים</string>
+    <string name="reset">איפוס</string>
+    <string name="retry">ניסיון חוזר</string>
+    <string name="save">שמירה</string>
+    <string name="saved">“<xliff:g id="name" example="Example">%1$s</xliff:g>” נשמר</string>
+    <string name="START_CMD">התחלה</string>
+    <string name="warning">אזהרה</string>
+    <string name="removed">“<xliff:g id="name" example="Example">%1$s</xliff:g>” הוסר</string>
+</resources>

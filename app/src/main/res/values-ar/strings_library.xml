@@ -1,0 +1,564 @@
+<?xml version="1.0" encoding="utf-8"?>
+<!-- MIDlet library, collections, metadata editor, bulk/single installer, file picker, and app updates. -->
+<resources xmlns:tools="http://schemas.android.com/tools" xmlns:xliff="urn:oasis:names:tc:xliff:document:1.2">
+    <string name="action_context_delete">حذف</string>
+    <string name="action_context_rename">إعادة التسمية</string>
+    <string name="action_context_shortcut">إضافة اختصار</string>
+    <string name="action_reinstall">إعادة التثبيت</string>
+    <string name="alert_msg_workdir_not_exists">لم يُعثر على مجلد العمل:\n<xliff:g id="path" example="/storage/emulated/0/JL-Mod-Plus">%1$s</xliff:g>\nهل تريد إنشاءه أم اختيار مجلد آخر؟</string>
+    <string name="converting_wait">جارٍ تحويل JAR…</string>
+    <string name="create_apps_dir_failed">تعذّر تحضير مجلد العمل في:\n<xliff:g id="path" example="/storage/emulated/0/JL-Mod-Plus">%1$s</xliff:g>\nاختر مجلدًا آخر.</string>
+    <string name="install_done">تم تثبيت التطبيق.</string>
+    <string name="install_done_with_warning">تم تثبيت التطبيق مع وجود تحذيرات.</string>
+    <string name="installer_title">مثبّت MIDlet</string>
+    <string name="installer_error_message">تعذّر تثبيت التطبيق المحدد. اختر ملف MIDlet صالحًا وحاول مرة أخرى.</string>
+    <string name="install_jar_non_matched_jad">يختلف هذا التطبيق عن التطبيق الموصوف في ملف JAD.\nهل تريد تجاهل ملف JAD والتثبيت على أي حال؟</string>
+    <string name="file_picker_select_file">تحديد ملف</string>
+    <string name="file_picker_select_folder">تحديد مجلد</string>
+    <string name="file_picker_select_app_bundle">تحديد حزمة تطبيقات</string>
+    <string name="file_picker_select_icon">تحديد أيقونة</string>
+    <string name="file_picker_navigate_back">العودة إلى المجلد الأصل</string>
+    <string name="file_picker_cancel">إلغاء</string>
+    <string name="file_picker_search">بحث</string>
+    <string name="file_picker_sort">فرز</string>
+    <string name="file_picker_select_all">تحديد جميع الملفات في هذا المجلد</string>
+    <string name="file_picker_unselect_all">إلغاء تحديد جميع الملفات في هذا المجلد</string>
+    <string name="file_picker_sort_type">المجلدات أولًا</string>
+    <string name="file_picker_sort_name_ascending">الاسم أ–ي</string>
+    <string name="file_picker_sort_name_descending">الاسم ي–أ</string>
+    <string name="file_picker_sort_modified_newest">تاريخ التعديل: الأحدث</string>
+    <string name="file_picker_sort_modified_oldest">تاريخ التعديل: الأقدم</string>
+    <string name="file_picker_choose">اختيار</string>
+    <string name="file_picker_current_folder">المجلد الحالي</string>
+    <string name="file_picker_parent_folder">المجلد الأصل</string>
+    <string name="file_picker_file">ملف</string>
+    <string name="file_picker_preview_named">معاينة <xliff:g id="name" example="Example">%1$s</xliff:g></string>
+    <string name="file_picker_preview_unavailable">المعاينة غير متوفرة</string>
+    <string name="file_picker_storage_volume">وحدة التخزين</string>
+    <string name="file_picker_empty">لا توجد ملفات مطابقة</string>
+    <string name="file_picker_empty_folder">لم يُعثر على مجلدات</string>
+    <string name="file_picker_no_matches">لا توجد نتائج مطابقة</string>
+    <string name="file_picker_permission_required">يلزم إذن التخزين</string>
+    <string name="file_picker_permission_message">اسمح بالوصول إلى التخزين لاستعراض الملفات والمجلدات على هذا الجهاز.</string>
+    <string name="file_picker_permission_denied">لم يُمنح إذن الوصول إلى التخزين.</string>
+    <string name="file_picker_grant_access">منح الإذن</string>
+    <string name="file_picker_retry">إعادة المحاولة</string>
+    <string name="file_picker_load_failed">تعذّر فتح هذا المجلد.</string>
+    <string name="file_picker_create_folder">مجلد جديد</string>
+    <string name="file_picker_create_folder_title">إنشاء مجلد</string>
+    <string name="file_picker_folder_name">اسم المجلد</string>
+    <string name="file_picker_invalid_folder_name">أدخل اسم مجلد صالحًا.</string>
+    <string name="file_picker_folder_exists">يوجد عنصر بهذا الاسم بالفعل.</string>
+    <string name="file_picker_create_folder_failed">تعذّر إنشاء المجلد.</string>
+    <string name="file_picker_selection_unavailable">لم يعد العنصر المحدد متوفرًا.</string>
+    <string name="loading_apps">جارٍ تحميل التطبيقات</string>
+    <string name="message_delete">هل تريد حذف هذا التطبيق وإعداداته وبيانات حفظه؟ سيؤدي هذا أيضًا إلى إزالته من المكتبة.</string>
+    <string name="msg_no_matches">لا توجد نتائج مطابقة لـ «<xliff:g id="query" example="Bounce">%1$s</xliff:g>»</string>
+    <string name="library_destination_apps">جميع التطبيقات</string>
+    <string name="library_destination_collections">المجموعات</string>
+    <string name="library_scope_picker_title" tools:ignore="MissingTranslation">تصفح التطبيقات</string>
+    <string name="library_destination_more">المزيد</string>
+    <string name="library_search_placeholder">البحث في التطبيقات…</string>
+    <string name="library_filter_all">الكل</string>
+    <string name="library_filter_recently_opened">المفتوحة مؤخرًا</string>
+    <string name="library_filter_recently_added">المضافة مؤخرًا</string>
+    <string name="library_filter_favorites">المفضلة</string>
+    <string name="library_add_to_favorites_action">إضافة إلى المفضلة</string>
+    <string name="library_remove_from_favorites_action">إزالة من المفضلة</string>
+    <string name="library_favorite_coming_soon">المفضلة غير متوفرة</string>
+    <string name="library_vendor_version"><xliff:g id="vendor" example="Nokia">%1$s</xliff:g> · <xliff:g id="version" example="1.0">%2$s</xliff:g></string>
+    <string name="library_view_list">القائمة</string>
+    <string name="library_view_grid">الشبكة</string>
+    <string name="library_icon_ratio_title">نسبة عرض الأيقونة إلى ارتفاعها</string>
+    <string name="library_icon_ratio_square">مربّع (1:1)</string>
+    <string name="library_icon_ratio_portrait">عمودي (3:4)</string>
+    <string name="library_icon_shape_title">شكل الأيقونة</string>
+    <string name="library_icon_shape_round">زوايا مستديرة</string>
+    <string name="library_icon_shape_square">زوايا حادة</string>
+    <string name="library_grid_icon_size_title" tools:ignore="MissingTranslation">حجم أيقونات الشبكة</string>
+    <string name="library_grid_icon_size_small" tools:ignore="MissingTranslation">صغير</string>
+    <string name="library_grid_icon_size_standard" tools:ignore="MissingTranslation">قياسي</string>
+    <string name="library_grid_icon_size_large" tools:ignore="MissingTranslation">كبير</string>
+    <string name="library_grid_icon_size_summary" tools:ignore="MissingTranslation">يغيّر حجم الأيقونات وعدد الأعمدة في عرض الشبكة.</string>
+    <string name="library_grid_spacing_title">تباعد الشبكة</string>
+    <string name="library_grid_spacing_summary" tools:ignore="MissingTranslation">ينطبق على عرض الشبكة فقط.</string>
+    <string name="library_grid_spacing_none">بلا (0 dp)</string>
+    <string name="library_grid_spacing_compact">متقارب (4 dp)</string>
+    <string name="library_grid_spacing_standard">قياسي (8 dp)</string>
+    <string name="library_grid_spacing_spacious">واسع (12 dp)</string>
+    <string name="library_hide_grid_titles">إخفاء عناوين MIDlet</string>
+    <string name="library_show_list_description">إظهار أوصاف MIDlet</string>
+    <string name="library_collections_empty_title">لا توجد مجموعات بعد</string>
+    <string name="library_collections_empty_message">المجموعات غير متوفرة حتى ينتهي تحميل المكتبة.</string>
+    <string name="library_expand_description">توسيع الوصف</string>
+    <string name="library_collapse_description">طي الوصف</string>
+    <string name="no_data_for_display">لا توجد تطبيقات لعرضها</string>
+    <string name="permission_request_failed">يلزم إذن الكتابة في التخزين.</string>
+    <string name="reinstall">هذا التطبيق مثبّت بالفعل. هل تريد إعادة تثبيته؟</string>
+    <string name="reinstall_newest">هل تريد تحديث هذا التطبيق إلى الإصدار <xliff:g id="version" example="2.1.0">%1$s</xliff:g>؟\n\nالمثبّت حاليًا: <xliff:g id="current_version" example="2.0.0">%2$s</xliff:g></string>
+    <string name="reinstall_older">هل تريد استبدال هذا التطبيق بالإصدار <xliff:g id="version" example="2.1.0">%1$s</xliff:g>؟\n\nالمثبّت حاليًا: <xliff:g id="current_version" example="2.0.0">%2$s</xliff:g>\nقد لا يعمل الإصدار الأقدم بشكل صحيح مع البيانات الحالية.</string>
+    <string name="warn_install_from_net">سيتم تنزيل هذا الملف من الإنترنت.</string>
+    <string name="installer_ambiguous">تطابق عدة تطبيقات مثبّتة هذه الحزمة. هل تريد تثبيت نسخة منفصلة؟ سيتم الاحتفاظ بالتطبيقات الحالية وبياناتها.</string>
+    <string name="installer_separate_copy">تثبيت نسخة منفصلة</string>
+    <string name="installer_stage_download">جارٍ تنزيل التطبيق…</string>
+    <string name="installer_stage_wait">بانتظار عملية أخرى…</string>
+    <string name="installer_stage_save">جارٍ حفظ التطبيق…</string>
+    <string name="installer_failed_download">تعذّر تنزيل التطبيق. تحقّق من اتصالك ورابط التنزيل، ثم حاول مرة أخرى.</string>
+    <string name="installer_failed_storage">تعذّر إكمال التثبيت. حاول مرة أخرى.</string>
+    <string name="installer_failed_conversion">تعذّر تحويل التطبيق. تأكد من أن الملف مكتمل ومدعوم، ثم حاول مرة أخرى.</string>
+    <string name="installer_needs_recovery">تم حفظ ملفات التطبيق، لكن تعذّر إنهاء تحديث المكتبة. حدّث المكتبة قبل المحاولة مرة أخرى.</string>
+    <string name="installer_refresh_library">تحديث المكتبة</string>
+    <string name="installer_cancel_pending">جارٍ الإيقاف عند أقرب نقطة آمنة…</string>
+    <string name="installer_retry_remaining">مراجعة العناصر غير المكتملة</string>
+    <string name="installer_not_processed">لم تُعالَج</string>
+    <string name="installer_partial_restore">تم تثبيت التطبيق، لكن تعذّرت استعادة البيانات أو الإعدادات.</string>
+    <string name="installer_removed_leftovers">تمت إزالة التطبيق، لكن تعذّر حذف بعض الإعدادات أو بيانات الحفظ.</string>
+    <string name="installer_copy_details">نسخ التفاصيل</string>
+    <string name="installer_show_details">إظهار التفاصيل</string>
+    <string name="installer_hide_details">إخفاء التفاصيل</string>
+    <!-- %1$d is the number of source Java class files skipped during conversion. -->
+    <plurals name="installer_conversion_warning_summary">
+        <item quantity="zero">تم تخطي <xliff:g id="skipped_count" example="2">%1$d</xliff:g> ملف فئة Java لتعذّر قراءته. قد لا تعمل الميزات التي تعتمد عليه.</item>
+        <item quantity="one">تم تخطي ملف فئة Java واحد (<xliff:g id="skipped_count" example="2">%1$d</xliff:g>) لتعذّر قراءته. قد لا تعمل الميزات التي تعتمد عليه.</item>
+        <item quantity="two">تم تخطي ملفي فئة Java (<xliff:g id="skipped_count" example="2">%1$d</xliff:g>) لتعذّر قراءتهما. قد لا تعمل الميزات التي تعتمد عليهما.</item>
+        <item quantity="few">تم تخطي <xliff:g id="skipped_count" example="2">%1$d</xliff:g> ملفات فئة Java لتعذّر قراءتها. قد لا تعمل الميزات التي تعتمد عليها.</item>
+        <item quantity="many">تم تخطي <xliff:g id="skipped_count" example="2">%1$d</xliff:g> ملف فئة Java لتعذّر قراءتها. قد لا تعمل الميزات التي تعتمد عليها.</item>
+        <item quantity="other">تم تخطي <xliff:g id="skipped_count" example="2">%1$d</xliff:g> ملف فئة Java لتعذّر قراءتها. قد لا تعمل الميزات التي تعتمد عليها.</item>
+    </plurals>
+    <!-- %1$s is the source JAR entry path for the skipped class file. -->
+    <string name="installer_conversion_skipped_entry"><xliff:g id="entry_path" example="com/example/Broken.class">%1$s</xliff:g>\nالمشكلة: تعذّرت قراءة ملف فئة Java.\nالإجراء: تم التخطي أثناء التحويل.</string>
+    <!-- %1$d is the number of additional bounded conversion diagnostics not shown. -->
+    <plurals name="installer_conversion_omitted_details">
+        <item quantity="zero">لا توجد <xliff:g id="omitted_count" example="5">%1$d</xliff:g> مشكلة تحويل إضافية مخفية.</item>
+        <item quantity="one">مشكلة تحويل إضافية واحدة (<xliff:g id="omitted_count" example="5">%1$d</xliff:g>) غير معروضة.</item>
+        <item quantity="two">مشكلتا تحويل إضافيتان (<xliff:g id="omitted_count" example="5">%1$d</xliff:g>) غير معروضتين.</item>
+        <item quantity="few"><xliff:g id="omitted_count" example="5">%1$d</xliff:g> مشكلات تحويل إضافية غير معروضة.</item>
+        <item quantity="many"><xliff:g id="omitted_count" example="5">%1$d</xliff:g> مشكلة تحويل إضافية غير معروضة.</item>
+        <item quantity="other"><xliff:g id="omitted_count" example="5">%1$d</xliff:g> مشكلة تحويل إضافية غير معروضة.</item>
+    </plurals>
+    <string name="library_collection_new">مجموعة جديدة</string>
+    <string name="library_collection_ready_empty_message">أنشئ مجموعات لتنظيم التطبيقات دون نقل ملفاتها.</string>
+    <string name="library_collection_add_app">إضافة إلى مجموعة</string>
+    <string name="library_collection_add_apps">إضافة تطبيقات</string>
+    <string name="library_collection_manage_apps">اختيار التطبيقات</string>
+    <string name="library_collection_manage" tools:ignore="MissingTranslation">إدارة المجموعات</string>
+    <string name="library_collection_delete_confirmation" tools:ignore="MissingTranslation">هل تريد حذف «<xliff:g id="collection_name" example="Favorites">%1$s</xliff:g>»؟ ستبقى التطبيقات في هذه المجموعة مثبّتة.</string>
+    <string name="library_collection_rename_action" tools:ignore="MissingTranslation">إعادة تسمية المجموعة <xliff:g id="collection_name" example="Favorites">%1$s</xliff:g></string>
+    <string name="library_collection_delete_action" tools:ignore="MissingTranslation">حذف المجموعة <xliff:g id="collection_name" example="Favorites">%1$s</xliff:g></string>
+    <string name="library_collection_select_action" tools:ignore="MissingTranslation">تحديد المجموعة <xliff:g id="collection_name" example="Favorites">%1$s</xliff:g></string>
+    <string name="library_collection_open_action" tools:ignore="MissingTranslation">فتح المجموعة <xliff:g id="collection_name" example="Favorites">%1$s</xliff:g></string>
+    <string name="library_collection_rename_selected" tools:ignore="MissingTranslation">إعادة تسمية المجموعة المحددة</string>
+    <string name="library_collection_delete_selected" tools:ignore="MissingTranslation">حذف المجموعات المحددة</string>
+    <plurals name="library_collection_delete_many_confirmation">
+        <item quantity="zero">هل تريد حذف <xliff:g id="count" example="3">%d</xliff:g> مجموعة؟ ستبقى التطبيقات مثبّتة.</item>
+        <item quantity="one">هل تريد حذف مجموعة واحدة (<xliff:g id="count" example="3">%d</xliff:g>)؟ ستبقى التطبيقات مثبّتة.</item>
+        <item quantity="two">هل تريد حذف مجموعتين (<xliff:g id="count" example="3">%d</xliff:g>)؟ ستبقى التطبيقات مثبّتة.</item>
+        <item quantity="few">هل تريد حذف <xliff:g id="count" example="3">%d</xliff:g> مجموعات؟ ستبقى التطبيقات مثبّتة.</item>
+        <item quantity="many">هل تريد حذف <xliff:g id="count" example="3">%d</xliff:g> مجموعة؟ ستبقى التطبيقات مثبّتة.</item>
+        <item quantity="other">هل تريد حذف <xliff:g id="count" example="3">%d</xliff:g> مجموعة؟ ستبقى التطبيقات مثبّتة.</item>
+    </plurals>
+    <string name="library_notifications_title" tools:ignore="MissingTranslation">الإشعارات</string>
+    <string name="library_notifications_empty_title" tools:ignore="MissingTranslation">لا توجد إشعارات بعد</string>
+    <string name="library_notifications_empty_summary" tools:ignore="MissingTranslation">ستظهر إشعارات تحديثات التطبيق هنا عند توفرها.</string>
+    <string name="library_collection_manage_apps_summary">حدد التطبيقات لإدراجها في هذه المجموعة.</string>
+    <string name="library_collection_name">اسم المجموعة</string>
+    <string name="library_collection_members_empty">لا توجد تطبيقات في هذه المجموعة.</string>
+    <string name="library_collection_select_title">تحديد مجموعة</string>
+    <string name="library_collection_select_message">اختر مجموعة لعرض تطبيقاتها.</string>
+    <string name="library_collection_remove_from_current">إزالة من المجموعة</string>
+    <string name="library_no_matches">لا توجد نتائج مطابقة لـ «<xliff:g id="query" example="Bounce">%1$s</xliff:g>»</string>
+    <string name="library_action_share_app">مشاركة التطبيق</string>
+    <string name="library_action_export_bundle">تصدير حزمة التطبيق</string>
+    <string name="library_action_import_bundle">استيراد حزمة تطبيق</string>
+    <string name="library_action_import_bundle_summary">استعد التطبيقات المصدّرة مع أي إعدادات أو بيانات حفظ أو إشارات مرجعية مضمّنة.</string>
+    <string name="library_import_preparing">جارٍ قراءة حزمة التطبيق…</string>
+    <string name="library_import_restoring">جارٍ استعادة بيانات التطبيق…</string>
+    <string name="library_import_done">تم استيراد حزمة التطبيق.</string>
+    <string name="library_import_done_with_warning">تم استيراد حزمة التطبيق مع وجود تحذيرات.</string>
+    <string name="library_import_invalid_bundle">حزمة التطبيق المحددة غير صالحة أو تالفة أو غير مدعومة. اختر حزمة تطبيق JL-Mod Plus صالحة وحاول مرة أخرى.</string>
+    <string name="library_import_restore_existing">هذا التطبيق مثبّت بالفعل. ستستبدل الإعدادات وبيانات الحفظ المضمّنة البيانات الحالية؛ وتُدمج الإشارات المرجعية ما لم تكن الإعدادات مضمّنة أيضًا.</string>
+    <string name="library_import_restore_failed">تم تثبيت التطبيق، لكن تعذّرت استعادة بيانات حزمته. هل تريد إعادة محاولة الاستعادة؟</string>
+    <string name="library_play_stats_summary">مرات التشغيل: <xliff:g id="launch_count" example="12">%1$d</xliff:g> · إجمالي الوقت: <xliff:g id="total_time" example="2h 15m">%2$s</xliff:g></string>
+    <string name="library_share_chooser_title">مشاركة التطبيق</string>
+    <string name="library_export_chooser_title">تصدير</string>
+    <string name="library_export_progress">جارٍ التصدير… <xliff:g id="completed" example="3">%1$d</xliff:g>/<xliff:g id="total" example="10">%2$d</xliff:g></string>
+    <string name="library_transfer_unavailable">تعذّر تحضير التصدير. أغلق أي تطبيق MIDlet قيد التشغيل وحاول مرة أخرى.</string>
+    <string name="library_back">العودة إلى المكتبة</string>
+    <string name="library_sort">فرز التطبيقات</string>
+    <string name="library_search_clear">مسح البحث</string>
+    <string name="library_description_more">… المزيد</string>
+    <string name="library_description_less">أقل</string>
+    <plurals name="file_picker_selected_count">
+        <item quantity="zero">تم تحديد <xliff:g id="count" example="3">%1$d</xliff:g></item>
+        <item quantity="one">تم تحديد عنصر واحد (<xliff:g id="count" example="3">%1$d</xliff:g>)</item>
+        <item quantity="two">تم تحديد عنصرين (<xliff:g id="count" example="3">%1$d</xliff:g>)</item>
+        <item quantity="few">تم تحديد <xliff:g id="count" example="3">%1$d</xliff:g></item>
+        <item quantity="many">تم تحديد <xliff:g id="count" example="3">%1$d</xliff:g></item>
+        <item quantity="other">تم تحديد <xliff:g id="count" example="3">%1$d</xliff:g></item>
+    </plurals>
+    <plurals name="library_selection_count">
+        <item quantity="zero"><xliff:g id="count" example="3">%1$d</xliff:g> تطبيق</item>
+        <item quantity="one">تطبيق واحد (<xliff:g id="count" example="3">%1$d</xliff:g>)</item>
+        <item quantity="two">تطبيقان (<xliff:g id="count" example="3">%1$d</xliff:g>)</item>
+        <item quantity="few"><xliff:g id="count" example="3">%1$d</xliff:g> تطبيقات</item>
+        <item quantity="many"><xliff:g id="count" example="3">%1$d</xliff:g> تطبيقًا</item>
+        <item quantity="other"><xliff:g id="count" example="3">%1$d</xliff:g> تطبيق</item>
+    </plurals>
+    <plurals name="library_collection_member_count">
+        <item quantity="zero"><xliff:g id="count" example="3">%1$d</xliff:g> تطبيق</item>
+        <item quantity="one">تطبيق واحد (<xliff:g id="count" example="3">%1$d</xliff:g>)</item>
+        <item quantity="two">تطبيقان (<xliff:g id="count" example="3">%1$d</xliff:g>)</item>
+        <item quantity="few"><xliff:g id="count" example="3">%1$d</xliff:g> تطبيقات</item>
+        <item quantity="many"><xliff:g id="count" example="3">%1$d</xliff:g> تطبيقًا</item>
+        <item quantity="other"><xliff:g id="count" example="3">%1$d</xliff:g> تطبيق</item>
+    </plurals>
+    <plurals name="bulk_install_found">
+        <item quantity="zero">تم العثور على <xliff:g id="count" example="3">%1$d</xliff:g> تطبيق</item>
+        <item quantity="one">تم العثور على تطبيق واحد (<xliff:g id="count" example="3">%1$d</xliff:g>)</item>
+        <item quantity="two">تم العثور على تطبيقين (<xliff:g id="count" example="3">%1$d</xliff:g>)</item>
+        <item quantity="few">تم العثور على <xliff:g id="count" example="3">%1$d</xliff:g> تطبيقات</item>
+        <item quantity="many">تم العثور على <xliff:g id="count" example="3">%1$d</xliff:g> تطبيقًا</item>
+        <item quantity="other">تم العثور على <xliff:g id="count" example="3">%1$d</xliff:g> تطبيق</item>
+    </plurals>
+    <plurals name="bulk_install_selected">
+        <item quantity="zero">تم تحديد <xliff:g id="count" example="3">%1$d</xliff:g></item>
+        <item quantity="one">تم تحديد عنصر واحد (<xliff:g id="count" example="3">%1$d</xliff:g>)</item>
+        <item quantity="two">تم تحديد عنصرين (<xliff:g id="count" example="3">%1$d</xliff:g>)</item>
+        <item quantity="few">تم تحديد <xliff:g id="count" example="3">%1$d</xliff:g></item>
+        <item quantity="many">تم تحديد <xliff:g id="count" example="3">%1$d</xliff:g></item>
+        <item quantity="other">تم تحديد <xliff:g id="count" example="3">%1$d</xliff:g></item>
+    </plurals>
+    <plurals name="bulk_install_ready_count">
+        <item quantity="zero">جاهز: <xliff:g id="count" example="3">%1$d</xliff:g></item>
+        <item quantity="one">جاهز: <xliff:g id="count" example="3">%1$d</xliff:g></item>
+        <item quantity="two">جاهز: <xliff:g id="count" example="3">%1$d</xliff:g></item>
+        <item quantity="few">جاهز: <xliff:g id="count" example="3">%1$d</xliff:g></item>
+        <item quantity="many">جاهز: <xliff:g id="count" example="3">%1$d</xliff:g></item>
+        <item quantity="other">جاهز: <xliff:g id="count" example="3">%1$d</xliff:g></item>
+    </plurals>
+    <plurals name="bulk_install_skipped_count">
+        <item quantity="zero">مثبّت بالفعل أو مكرّر: <xliff:g id="count" example="3">%1$d</xliff:g></item>
+        <item quantity="one">مثبّت بالفعل أو مكرّر: <xliff:g id="count" example="3">%1$d</xliff:g></item>
+        <item quantity="two">مثبّت بالفعل أو مكرّر: <xliff:g id="count" example="3">%1$d</xliff:g></item>
+        <item quantity="few">مثبّت بالفعل أو مكرّر: <xliff:g id="count" example="3">%1$d</xliff:g></item>
+        <item quantity="many">مثبّت بالفعل أو مكرّر: <xliff:g id="count" example="3">%1$d</xliff:g></item>
+        <item quantity="other">مثبّت بالفعل أو مكرّر: <xliff:g id="count" example="3">%1$d</xliff:g></item>
+    </plurals>
+    <plurals name="bulk_install_attention_count">
+        <item quantity="zero">يحتاج إلى مراجعة: <xliff:g id="count" example="3">%1$d</xliff:g></item>
+        <item quantity="one">عنصر واحد (<xliff:g id="count" example="3">%1$d</xliff:g>) يحتاج إلى مراجعة</item>
+        <item quantity="two">عنصران (<xliff:g id="count" example="3">%1$d</xliff:g>) يحتاجان إلى مراجعة</item>
+        <item quantity="few"><xliff:g id="count" example="3">%1$d</xliff:g> عناصر تحتاج إلى مراجعة</item>
+        <item quantity="many"><xliff:g id="count" example="3">%1$d</xliff:g> عنصرًا تحتاج إلى مراجعة</item>
+        <item quantity="other"><xliff:g id="count" example="3">%1$d</xliff:g> عنصر تحتاج إلى مراجعة</item>
+    </plurals>
+    <plurals name="bulk_install_installed_count">
+        <item quantity="zero">تم التثبيت: <xliff:g id="count" example="3">%1$d</xliff:g></item>
+        <item quantity="one">تم التثبيت: <xliff:g id="count" example="3">%1$d</xliff:g></item>
+        <item quantity="two">تم التثبيت: <xliff:g id="count" example="3">%1$d</xliff:g></item>
+        <item quantity="few">تم التثبيت: <xliff:g id="count" example="3">%1$d</xliff:g></item>
+        <item quantity="many">تم التثبيت: <xliff:g id="count" example="3">%1$d</xliff:g></item>
+        <item quantity="other">تم التثبيت: <xliff:g id="count" example="3">%1$d</xliff:g></item>
+    </plurals>
+    <plurals name="bulk_install_updated_count">
+        <item quantity="zero">تم التحديث: <xliff:g id="count" example="3">%1$d</xliff:g></item>
+        <item quantity="one">تم التحديث: <xliff:g id="count" example="3">%1$d</xliff:g></item>
+        <item quantity="two">تم التحديث: <xliff:g id="count" example="3">%1$d</xliff:g></item>
+        <item quantity="few">تم التحديث: <xliff:g id="count" example="3">%1$d</xliff:g></item>
+        <item quantity="many">تم التحديث: <xliff:g id="count" example="3">%1$d</xliff:g></item>
+        <item quantity="other">تم التحديث: <xliff:g id="count" example="3">%1$d</xliff:g></item>
+    </plurals>
+    <plurals name="bulk_install_reinstalled_count">
+        <item quantity="zero">أُعيد التثبيت: <xliff:g id="count" example="3">%1$d</xliff:g></item>
+        <item quantity="one">أُعيد التثبيت: <xliff:g id="count" example="3">%1$d</xliff:g></item>
+        <item quantity="two">أُعيد التثبيت: <xliff:g id="count" example="3">%1$d</xliff:g></item>
+        <item quantity="few">أُعيد التثبيت: <xliff:g id="count" example="3">%1$d</xliff:g></item>
+        <item quantity="many">أُعيد التثبيت: <xliff:g id="count" example="3">%1$d</xliff:g></item>
+        <item quantity="other">أُعيد التثبيت: <xliff:g id="count" example="3">%1$d</xliff:g></item>
+    </plurals>
+    <plurals name="bulk_install_skipped_result_count">
+        <item quantity="zero">تم التخطي: <xliff:g id="count" example="3">%1$d</xliff:g></item>
+        <item quantity="one">تم التخطي: <xliff:g id="count" example="3">%1$d</xliff:g></item>
+        <item quantity="two">تم التخطي: <xliff:g id="count" example="3">%1$d</xliff:g></item>
+        <item quantity="few">تم التخطي: <xliff:g id="count" example="3">%1$d</xliff:g></item>
+        <item quantity="many">تم التخطي: <xliff:g id="count" example="3">%1$d</xliff:g></item>
+        <item quantity="other">تم التخطي: <xliff:g id="count" example="3">%1$d</xliff:g></item>
+    </plurals>
+    <plurals name="bulk_install_failed_count">
+        <item quantity="zero">فشل: <xliff:g id="count" example="3">%1$d</xliff:g></item>
+        <item quantity="one">فشل: <xliff:g id="count" example="3">%1$d</xliff:g></item>
+        <item quantity="two">فشل: <xliff:g id="count" example="3">%1$d</xliff:g></item>
+        <item quantity="few">فشل: <xliff:g id="count" example="3">%1$d</xliff:g></item>
+        <item quantity="many">فشل: <xliff:g id="count" example="3">%1$d</xliff:g></item>
+        <item quantity="other">فشل: <xliff:g id="count" example="3">%1$d</xliff:g></item>
+    </plurals>
+    <plurals name="bulk_install_warning_count">
+        <item quantity="zero"><xliff:g id="count" example="3">%1$d</xliff:g> تحذير</item>
+        <item quantity="one">تحذير واحد (<xliff:g id="count" example="3">%1$d</xliff:g>)</item>
+        <item quantity="two">تحذيران (<xliff:g id="count" example="3">%1$d</xliff:g>)</item>
+        <item quantity="few"><xliff:g id="count" example="3">%1$d</xliff:g> تحذيرات</item>
+        <item quantity="many"><xliff:g id="count" example="3">%1$d</xliff:g> تحذيرًا</item>
+        <item quantity="other"><xliff:g id="count" example="3">%1$d</xliff:g> تحذير</item>
+    </plurals>
+    <plurals name="bulk_install_omitted_sources">
+        <item quantity="zero">تم استبعاد <xliff:g id="count" example="3">%1$d</xliff:g> ملف إضافي للحفاظ على سلاسة المراجعة.</item>
+        <item quantity="one">تم استبعاد ملف إضافي واحد (<xliff:g id="count" example="3">%1$d</xliff:g>) للحفاظ على سلاسة المراجعة.</item>
+        <item quantity="two">تم استبعاد ملفين إضافيين (<xliff:g id="count" example="3">%1$d</xliff:g>) للحفاظ على سلاسة المراجعة.</item>
+        <item quantity="few">تم استبعاد <xliff:g id="count" example="3">%1$d</xliff:g> ملفات إضافية للحفاظ على سلاسة المراجعة.</item>
+        <item quantity="many">تم استبعاد <xliff:g id="count" example="3">%1$d</xliff:g> ملفًا إضافيًا للحفاظ على سلاسة المراجعة.</item>
+        <item quantity="other">تم استبعاد <xliff:g id="count" example="3">%1$d</xliff:g> ملف إضافي للحفاظ على سلاسة المراجعة.</item>
+    </plurals>
+    <plurals name="library_bulk_delete_confirmation">
+        <item quantity="zero">هل تريد حذف <xliff:g id="count" example="3">%1$d</xliff:g> تطبيق؟ ستُزال ملفاتها وإعداداتها وبيانات حفظها من المكتبة.</item>
+        <item quantity="one">هل تريد حذف تطبيق واحد (<xliff:g id="count" example="3">%1$d</xliff:g>)؟ ستُزال ملفاته وإعداداته وبيانات حفظه من المكتبة.</item>
+        <item quantity="two">هل تريد حذف تطبيقين (<xliff:g id="count" example="3">%1$d</xliff:g>)؟ ستُزال ملفاتهما وإعداداتهما وبيانات حفظهما من المكتبة.</item>
+        <item quantity="few">هل تريد حذف <xliff:g id="count" example="3">%1$d</xliff:g> تطبيقات؟ ستُزال ملفاتها وإعداداتها وبيانات حفظها من المكتبة.</item>
+        <item quantity="many">هل تريد حذف <xliff:g id="count" example="3">%1$d</xliff:g> تطبيقًا؟ ستُزال ملفاتها وإعداداتها وبيانات حفظها من المكتبة.</item>
+        <item quantity="other">هل تريد حذف <xliff:g id="count" example="3">%1$d</xliff:g> تطبيق؟ ستُزال ملفاتها وإعداداتها وبيانات حفظها من المكتبة.</item>
+    </plurals>
+    <plurals name="library_bulk_delete_result">
+        <item quantity="zero">تم حذف <xliff:g id="deleted_count" example="3">%1$d</xliff:g> تطبيق؛ فشل <xliff:g id="failed_count" example="1">%2$d</xliff:g>.</item>
+        <item quantity="one">تم حذف تطبيق واحد (<xliff:g id="deleted_count" example="3">%1$d</xliff:g>)؛ فشل <xliff:g id="failed_count" example="1">%2$d</xliff:g>.</item>
+        <item quantity="two">تم حذف تطبيقين (<xliff:g id="deleted_count" example="3">%1$d</xliff:g>)؛ فشل <xliff:g id="failed_count" example="1">%2$d</xliff:g>.</item>
+        <item quantity="few">تم حذف <xliff:g id="deleted_count" example="3">%1$d</xliff:g> تطبيقات؛ فشل <xliff:g id="failed_count" example="1">%2$d</xliff:g>.</item>
+        <item quantity="many">تم حذف <xliff:g id="deleted_count" example="3">%1$d</xliff:g> تطبيقًا؛ فشل <xliff:g id="failed_count" example="1">%2$d</xliff:g>.</item>
+        <item quantity="other">تم حذف <xliff:g id="deleted_count" example="3">%1$d</xliff:g> تطبيق؛ فشل <xliff:g id="failed_count" example="1">%2$d</xliff:g>.</item>
+    </plurals>
+    <string name="bulk_install_title">تثبيت دفعي</string>
+    <string name="bulk_install_planning">جارٍ فحص التطبيقات المحددة…</string>
+    <string name="bulk_install_empty">لم يُعثر على تطبيقات مدعومة.</string>
+    <string name="bulk_install_recommended">مُوصى به</string>
+    <string name="bulk_install_clear">مسح التحديد</string>
+    <string name="bulk_install_install_count">تثبيت <xliff:g id="count" example="3">%1$d</xliff:g></string>
+    <string name="bulk_install_cancel">إلغاء</string>
+    <string name="bulk_install_close">إغلاق</string>
+    <plurals name="bulk_install_running">
+        <item quantity="zero">تمت معالجة <xliff:g id="processed" example="3">%1$d</xliff:g> تطبيق من <xliff:g id="total" example="10">%2$d</xliff:g></item>
+        <item quantity="one">تمت معالجة تطبيق واحد (<xliff:g id="processed" example="3">%1$d</xliff:g>) من <xliff:g id="total" example="10">%2$d</xliff:g></item>
+        <item quantity="two">تمت معالجة تطبيقين (<xliff:g id="processed" example="3">%1$d</xliff:g>) من <xliff:g id="total" example="10">%2$d</xliff:g></item>
+        <item quantity="few">تمت معالجة <xliff:g id="processed" example="3">%1$d</xliff:g> تطبيقات من <xliff:g id="total" example="10">%2$d</xliff:g></item>
+        <item quantity="many">تمت معالجة <xliff:g id="processed" example="3">%1$d</xliff:g> تطبيقًا من <xliff:g id="total" example="10">%2$d</xliff:g></item>
+        <item quantity="other">تمت معالجة <xliff:g id="processed" example="3">%1$d</xliff:g> تطبيق من <xliff:g id="total" example="10">%2$d</xliff:g></item>
+    </plurals>
+    <string name="bulk_install_cancel_requested">جارٍ الإيقاف بعد التطبيق الحالي…</string>
+    <string name="bulk_install_complete">اكتمل التثبيت الدفعي</string>
+    <string name="bulk_install_cancelled">توقف التثبيت الدفعي</string>
+    <string name="bulk_install_fatal">توقف التثبيت الدفعي. راجع العناصر غير المكتملة قبل المحاولة مرة أخرى.</string>
+    <string name="bulk_install_result_installed">تم التثبيت</string>
+    <string name="bulk_install_result_updated">تم التحديث</string>
+    <string name="bulk_install_result_reinstalled">أُعيد التثبيت</string>
+    <string name="bulk_install_result_skipped">تم التخطي</string>
+    <string name="bulk_install_result_failed">فشل</string>
+    <string name="bulk_install_installed_version">المثبّت: <xliff:g id="version" example="2.1.0">%1$s</xliff:g></string>
+    <string name="bulk_install_source">المصدر: <xliff:g id="name" example="Example">%1$s</xliff:g></string>
+    <string name="bulk_install_action_separate_copy">التثبيت كنسخة منفصلة</string>
+    <string name="bulk_install_action_jar_only">تثبيت JAR فقط</string>
+    <string name="single_install_review_jar_only" tools:ignore="MissingTranslation">مراجعة JAR فقط</string>
+    <string name="single_install_jar_only_notice" tools:ignore="MissingTranslation">سيُثبّت ملف JAR فقط. راجع اسم التطبيق وإصداره وحالة تثبيته قبل المتابعة.</string>
+    <string name="single_install_running_replacement_warning" tools:ignore="MissingTranslation">إذا كان هذا التطبيق قيد التشغيل، فسيؤدي التثبيت إلى إيقافه قبل استبدال ملفاته. قد يُفقد التقدم غير المحفوظ.</string>
+    <string name="bulk_install_status_new">جديد</string>
+    <string name="bulk_install_status_update">تحديث</string>
+    <string name="bulk_install_status_downgrade">إصدار أقدم</string>
+    <string name="bulk_install_status_same">مثبّت بالفعل</string>
+    <string name="bulk_install_status_reinstall">الإصدار نفسه، احتمال وجود نسخة بديلة</string>
+    <string name="bulk_install_status_ambiguous">يطابق عدة تطبيقات مثبّتة</string>
+    <string name="bulk_install_status_mismatch">عدم تطابق JAD/JAR</string>
+    <string name="bulk_install_status_duplicate">مكرّر</string>
+    <string name="bulk_install_status_older_batch">إصدار أقدم في الدفعة</string>
+    <string name="bulk_install_status_conflict">تعارض في الدفعة</string>
+    <string name="bulk_install_status_remote">المصدر البعيد غير مدعوم</string>
+    <string name="bulk_install_status_error">مصدر غير صالح</string>
+    <string name="bulk_install_reinstall_source_missing">ملف JAR المحفوظ غير متوفر لإعادة التثبيت.</string>
+    <plurals name="bulk_install_reinstall_missing_apps">
+        <item quantity="zero"><xliff:g id="count" example="3">%1$d</xliff:g> تطبيق محدد من المكتبة لم يعد متوفرًا.</item>
+        <item quantity="one">تطبيق محدد واحد (<xliff:g id="count" example="3">%1$d</xliff:g>) من المكتبة لم يعد متوفرًا.</item>
+        <item quantity="two">تطبيقان محددان (<xliff:g id="count" example="3">%1$d</xliff:g>) من المكتبة لم يعودا متوفرين.</item>
+        <item quantity="few"><xliff:g id="count" example="3">%1$d</xliff:g> تطبيقات محددة من المكتبة لم تعد متوفرة.</item>
+        <item quantity="many"><xliff:g id="count" example="3">%1$d</xliff:g> تطبيقًا محددًا من المكتبة لم تعد متوفرة.</item>
+        <item quantity="other"><xliff:g id="count" example="3">%1$d</xliff:g> تطبيق محدد من المكتبة لم تعد متوفرة.</item>
+    </plurals>
+    <string name="library_metadata_edit_title">تعديل البيانات الوصفية</string>
+    <string name="library_metadata_icon">الأيقونة</string>
+    <string name="library_metadata_name">الاسم</string>
+    <string name="library_metadata_vendor">الناشر</string>
+    <string name="library_metadata_reset_to_original">إعادة التعيين إلى الأصلي</string>
+    <string name="library_metadata_save">حفظ</string>
+    <string name="library_hide_grid_titles_summary">إخفاء أسماء MIDlet في عرض الشبكة. يبقيها عرض القائمة مرئية.</string>
+    <string name="library_show_list_description_summary">إظهار وصف كل MIDlet أسفل عنوانه وإصداره.</string>
+    <string name="library_indexing_progress">جارٍ فهرسة المكتبة… <xliff:g id="completed" example="3">%1$d</xliff:g>/<xliff:g id="total" example="10">%2$d</xliff:g></string>
+    <string name="library_indexing_current">جارٍ فحص <xliff:g id="name" example="Example">%1$s</xliff:g></string>
+    <string name="library_load_error_title">المكتبة غير متوفرة</string>
+    <string name="library_retry">إعادة المحاولة</string>
+    <string name="library_reinstall_source_missing">ملف JAR المحفوظ غير متوفر لإعادة التثبيت.</string>
+    <string name="library_action_select">تحديد</string>
+    <string name="library_selection_select_all">تحديد الكل</string>
+    <string name="library_selection_unselect_all">إلغاء تحديد الكل</string>
+    <string name="library_selection_checkbox_description">تحديد <xliff:g id="name" example="Example">%1$s</xliff:g></string>
+    <string name="library_selection_checked">محدد</string>
+    <string name="library_selection_unchecked">غير محدد</string>
+    <string name="library_action_settings_summary">تكوين السلوك والمظهر العامين.</string>
+    <string name="library_action_crash_reports_summary">مراجعة تقارير التشخيص المحفوظة.</string>
+    <string name="library_action_about_summary">نظرة عامة على المشروع ومعلومات الإصدار والروابط.</string>
+    <string name="library_action_licenses_summary">إشعارات الطرف الثالث وشروط التراخيص المضمّنة مع التطبيق.</string>
+    <string name="library_donation_action">دعم التطوير</string>
+    <string name="library_donation_summary">ساعِد في استمرار نمو JL-Mod Plus.</string>
+    <string name="library_donation_title">دعم JL-Mod Plus</string>
+    <string name="library_donation_message">تطبيق JL-Mod Plus مجاني ومفتوح المصدر. إذا وجدته مفيدًا، يمكنك دعم تطويره بتبرّع طوعي.</string>
+    <string name="library_donation_provider_note">تُعالَج التبرعات خارجيًا عبر Sociabuzz.</string>
+    <string name="library_donation_continue">المتابعة إلى Sociabuzz</string>
+    <string name="library_donation_not_now">ليس الآن</string>
+    <string name="library_donation_link_copied">لم يُعثر على متصفح. نُسخ رابط Sociabuzz إلى الحافظة.</string>
+    <string name="library_donation_browser_unavailable">لم يُعثر على متصفح لفتح Sociabuzz.</string>
+    <string name="library_bulk_delete_apps">حذف التطبيقات</string>
+    <string name="library_bulk_add_collection">إضافة إلى مجموعة</string>
+    <string name="library_bulk_share_apps">مشاركة التطبيقات</string>
+    <string name="library_bulk_reinstall_apps">إعادة التثبيت</string>
+    <string name="library_bulk_export_apps">تصدير الحزمة</string>
+    <string name="library_enhanced_icons_title">الأيقونات المحسّنة</string>
+    <string name="library_enhanced_icons_summary">يضبط تأطير الأيقونة ومقياسها وخلفية البلاطة لتبدو الأيقونات أكثر تناسقًا في المكتبة.</string>
+    <string name="library_collections_unavailable_title">المجموعات غير متوفرة</string>
+    <string name="library_load_failed_message">تعذّر تحميل المكتبة. حاول مرة أخرى.</string>
+    <string name="bulk_install_prepare_failed">تعذّر تحضير التطبيقات المحددة للتثبيت.</string>
+    <string name="installer_existing_data_preserved">سيتم الاحتفاظ بالإعدادات وبيانات الحفظ الحالية.</string>
+    <string name="bulk_install_library_changed">تغيّرت المكتبة بعد المراجعة. أغلق هذه الدفعة وحدد الملفات مجددًا.</string>
+    <string name="bulk_install_source_unavailable">لم يعد أحد الملفات المصدرية المطلوبة متوفرًا. حدد الملفات مجددًا.</string>
+    <string name="bulk_install_source_changed">تغيّر الملف المصدري بعد المراجعة. حدد الملفات مجددًا.</string>
+    <string name="bulk_install_target_unverified">تعذّر التحقق من هدف إعادة التثبيت. أغلق هذه الدفعة وحدد التطبيق مجددًا.</string>
+    <string name="bulk_install_result_restored">تمت الاستعادة</string>
+    <plurals name="bulk_install_restored_count">
+        <item quantity="zero">تمت الاستعادة: <xliff:g id="count" example="3">%1$d</xliff:g></item>
+        <item quantity="one">تمت الاستعادة: <xliff:g id="count" example="3">%1$d</xliff:g></item>
+        <item quantity="two">تمت الاستعادة: <xliff:g id="count" example="3">%1$d</xliff:g></item>
+        <item quantity="few">تمت الاستعادة: <xliff:g id="count" example="3">%1$d</xliff:g></item>
+        <item quantity="many">تمت الاستعادة: <xliff:g id="count" example="3">%1$d</xliff:g></item>
+        <item quantity="other">تمت الاستعادة: <xliff:g id="count" example="3">%1$d</xliff:g></item>
+    </plurals>
+    <plurals name="bulk_install_reason_ambiguous_match">
+        <item quantity="zero">يطابق <xliff:g id="count" example="3">%1$d</xliff:g> تطبيق مثبّت هذا المصدر.</item>
+        <item quantity="one">يطابق تطبيق مثبّت واحد (<xliff:g id="count" example="3">%1$d</xliff:g>) هذا المصدر.</item>
+        <item quantity="two">يطابق تطبيقان مثبّتان (<xliff:g id="count" example="3">%1$d</xliff:g>) هذا المصدر.</item>
+        <item quantity="few">تطابق <xliff:g id="count" example="3">%1$d</xliff:g> تطبيقات مثبّتة هذا المصدر.</item>
+        <item quantity="many">يطابق <xliff:g id="count" example="3">%1$d</xliff:g> تطبيقًا مثبّتًا هذا المصدر.</item>
+        <item quantity="other">يطابق <xliff:g id="count" example="3">%1$d</xliff:g> تطبيق مثبّت هذا المصدر.</item>
+    </plurals>
+    <string name="bulk_install_reason_jad_jar_mismatch">يشير ملفا JAD وJAR إلى تطبيقين مختلفين.</string>
+    <string name="bulk_install_reason_conflicting_jads">تشير ملفات JAD بسمات مختلفة إلى ملف JAR نفسه.</string>
+    <string name="bulk_install_reason_remote_jar">لا يمكن للتثبيت الدفعي تنزيل ملفات JAR البعيدة.</string>
+    <string name="bulk_install_reason_missing_jar_url">ملف JAD يفتقد السمة MIDlet-Jar-URL.</string>
+    <!-- %1$s is the exact URI scheme supplied by the JAD; do not translate it. -->
+    <string name="bulk_install_reason_unsupported_uri_scheme">يشير ملف JAD إلى ملف JAR باستخدام مخطط URI غير مدعوم: <xliff:g id="scheme" example="http">%1$s</xliff:g>.</string>
+    <string name="bulk_install_reason_missing_parent">لا يحتوي ملف JAD على مجلد أصل.</string>
+    <!-- %1$s is the exact MIDlet-Jar-URL reference, not a normalized filesystem path. -->
+    <string name="bulk_install_reason_jar_not_found">لم يُعثر على ملف JAR المشار إليه في ملف JAD: <xliff:g id="file_path" example="game.jar">%1$s</xliff:g>.</string>
+    <string name="bulk_install_reason_duplicate_source">يكرّر هذا المصدر مصدرًا آخر في هذه الدفعة.</string>
+    <string name="bulk_install_reason_version_conflict">تتشارك عدة نسخ بديلة من التطبيق في الإصدار نفسه.</string>
+    <string name="bulk_install_reason_older_candidate">يوجد إصدار أحدث من هذا التطبيق في الدفعة نفسها.</string>
+    <string name="bulk_install_reason_source_error">تعذّر تحضير هذا المصدر للتثبيت.</string>
+    <string name="updates_title">التحديثات</string>
+    <string name="updates_more_summary">التحقق من توفر إصدارات جديدة من JL-Mod Plus.</string>
+    <string name="updates_more_available">يتوفر إصدار أحدث.</string>
+    <string name="updates_installed_version">الإصدار المثبّت: <xliff:g id="version" example="2.1.0">%1$s</xliff:g></string>
+    <string name="updates_build_code">البناء <xliff:g id="build_code" example="247">%1$d</xliff:g></string>
+    <string name="updates_automatic">التحقق تلقائيًا أثناء نشاط المكتبة</string>
+    <string name="updates_not_checked">لم يُتحقق بعد.</string>
+    <string name="updates_checking">جارٍ التحقق من التحديثات…</string>
+    <string name="updates_current">لديك أحدث إصدار.</string>
+    <string name="updates_no_release">لا يتوفر إصدار منشور متوافق.</string>
+    <string name="updates_not_installable">يتوفر إصدار أحدث، لكنه غير متوافق مع هذا الجهاز أو هذا التثبيت.</string>
+    <string name="updates_failed">تعذّر التحقق من التحديثات. تحقّق من اتصالك وحاول مرة أخرى.</string>
+    <string name="updates_available">يتوفر تحديث</string>
+    <string name="updates_view_release">عرض الإصدار</string>
+    <string name="updates_last_checked">آخر تحقق: <xliff:g id="timestamp" example="Today, 09:45">%1$s</xliff:g></string>
+    <string name="updates_check">التحقق من التحديثات</string>
+    <string name="updates_notice">يتوفر JL-Mod Plus <xliff:g id="version" example="2.1.0">%1$s</xliff:g>. راجع «التحديثات» في الإعدادات.</string>
+    <string name="updates_debug_build">هذا بناء تصحيح أخطاء. تُثبّت ملفات APK لإصدارات GitHub بشكل منفصل.</string>
+    <string name="updates_link_copied">لم يُعثر على متصفح. نُسخ رابط التحديث إلى الحافظة.</string>
+    <string name="updates_browser_unavailable">لم يُعثر على متصفح لفتح رابط التحديث.</string>
+    <string name="bulk_install_choose_files">ملفات</string>
+    <string name="bulk_install_choose_folder">مجلد</string>
+    <string name="bulk_install_unreadable_archives">أرشيفات غير قابلة للقراءة: <xliff:g id="count" example="3">%1$d</xliff:g></string>
+    <string name="bulk_install_skipped_entries">ملفات أو إدخالات أرشيف متخطاة: <xliff:g id="count" example="3">%1$d</xliff:g></string>
+    <string name="bulk_install_selection_options" tools:ignore="MissingTranslation">خيارات التحديد</string>
+    <string name="bulk_install_show_details" tools:ignore="MissingTranslation">إظهار التفاصيل</string>
+    <string name="bulk_install_hide_details" tools:ignore="MissingTranslation">إخفاء التفاصيل</string>
+    <string name="bulk_install_filter_all">الكل</string>
+    <string name="bulk_install_filter_selected">المحدد</string>
+    <string name="bulk_install_filter_review">المراجعة</string>
+    <string name="bulk_install_empty_filter">لا توجد تطبيقات مطابقة.</string>
+    <string name="platform_package_choice_title" tools:ignore="MissingTranslation">تم اكتشاف حزمة Java ME</string>
+    <string name="platform_package_choice_message" tools:ignore="MissingTranslation">يشير هذا الرابط إلى حزمة Java ME. ماذا تريد أن تفعل؟</string>
+    <string name="platform_package_install" tools:ignore="MissingTranslation">التثبيت في JL-Mod Plus</string>
+    <string name="platform_package_browser" tools:ignore="MissingTranslation">الفتح في المتصفح</string>
+    <string name="platform_package_unavailable" tools:ignore="MissingTranslation">لم يُعثر على تطبيق لفتح هذا الرابط.</string>
+    <string name="installer_running_update_warning" tools:ignore="MissingTranslation">هذا التطبيق قيد التشغيل حاليًا. سيؤدي التثبيت إلى إيقافه قبل استبدال ملفاته. قد يُفقد التقدم غير المحفوظ.</string>
+    <string name="library_metadata_main_icon">الرئيسية</string>
+    <string name="library_metadata_follows_main">تستخدم الأيقونة الرئيسية</string>
+    <string name="library_metadata_change">تغيير</string>
+    <string name="library_metadata_remove_portrait">إزالة أيقونة 3:4</string>
+    <string name="library_metadata_discard_title">هل تريد تجاهل التغييرات؟</string>
+    <string name="library_metadata_discard">تجاهل</string>
+    <string name="library_metadata_default_description">الوصف الافتراضي</string>
+    <string name="library_metadata_other_languages">لغات أخرى</string>
+    <string name="library_metadata_add_language">+ إضافة لغة</string>
+    <string name="library_metadata_language_search">ابحث عن لغة أو رمز محلي</string>
+    <string name="library_metadata_remove_language">إزالة الوصف</string>
+    <string name="library_metadata_language_load_failed">تعذّر تحميل أوصاف اللغات. انقر على «إعادة المحاولة» للمحاولة مجددًا.</string>
+    <string name="updates_download_apk" tools:ignore="MissingTranslation">تنزيل APK</string>
+    <string name="updates_skip_version" tools:ignore="MissingTranslation">تخطي هذا الإصدار</string>
+    <string name="updates_dialog_message" tools:ignore="MissingTranslation">يتوفر JL-Mod Plus <xliff:g id="version" example="2.1.0">%1$s</xliff:g>. أنت تستخدم الإصدار <xliff:g id="current_version" example="2.0.0">%2$s</xliff:g>. نزّل ملف APK أو اعرض الإصدار على GitHub.</string>
+    <string name="library_bundle_components_title" tools:ignore="MissingTranslation">تصدير الحزمة</string>
+    <string name="library_bundle_components_explanation" tools:ignore="MissingTranslation">تُضمَّن التطبيقات المحددة دائمًا. أغلق أي تطبيق MIDlet قيد التشغيل قبل التصدير، ثم اختر أي بيانات إضافية لتضمينها.</string>
+    <string name="library_bundle_config" tools:ignore="MissingTranslation">التكوين</string>
+    <string name="library_bundle_save_data" tools:ignore="MissingTranslation">بيانات الحفظ</string>
+    <string name="library_bundle_saved_variables" tools:ignore="MissingTranslation">الإشارات المرجعية</string>
+    <string name="library_bundle_export" tools:ignore="MissingTranslation">تصدير</string>
+    <string name="library_export_jar_only" tools:ignore="MissingTranslation">ملف JAR فقط</string>
+    <string name="library_export_jars_only" tools:ignore="MissingTranslation">ملفات JAR فقط (ZIP)</string>
+    <string name="library_selection_action_delete" tools:ignore="MissingTranslation">حذف</string>
+    <string name="library_selection_action_collection" tools:ignore="MissingTranslation">المجموعة</string>
+    <string name="library_selection_action_export" tools:ignore="MissingTranslation">تصدير</string>
+    <string name="library_selection_action_reinstall" tools:ignore="MissingTranslation">إعادة التثبيت</string>
+    <string name="installer_select_companion_jar" tools:ignore="MissingTranslation">يشير ملف JAD هذا إلى ملف JAR منفصل. حدد ملف JAR المطابق للمتابعة. لا يسمح موفر الملفات الخارجي بالوصول إلى الملفات المجاورة.</string>
+    <string name="installer_select_jar" tools:ignore="MissingTranslation">تحديد JAR</string>
+    <string name="installer_wrong_companion_jar" tools:ignore="MissingTranslation">لا يطابق ملف JAR هذا ملف JAD المحدد. اختر ملف JAR المطابق للحفاظ على إعدادات JAD.</string>
+    <string name="installer_choose_another_jar" tools:ignore="MissingTranslation">اختيار ملف JAR آخر</string>
+    <string name="library_app_more_actions" tools:ignore="MissingTranslation">مزيد من الإجراءات لـ <xliff:g id="name" example="Example">%1$s</xliff:g></string>
+    <string name="library_actions_group_customize" tools:ignore="MissingTranslation">تخصيص</string>
+    <string name="library_actions_group_organize" tools:ignore="MissingTranslation">تنظيم</string>
+    <string name="library_actions_group_transfer" tools:ignore="MissingTranslation">النقل والصيانة</string>
+    <string name="library_collection_more_actions" tools:ignore="MissingTranslation">مزيد من الإجراءات للمجموعة <xliff:g id="collection_name" example="Favorites">%1$s</xliff:g></string>
+    <string name="library_settings_preferences" tools:ignore="MissingTranslation">تفضيلات التطبيق</string>
+    <string name="library_settings_section_maintenance" tools:ignore="MissingTranslation">التحديثات والتشخيص</string>
+    <string name="library_settings_section_support" tools:ignore="MissingTranslation">حول التطبيق والدعم</string>
+    <string name="library_details_title" tools:ignore="MissingTranslation">تفاصيل MIDlet</string>
+    <string name="library_details_description" tools:ignore="MissingTranslation">الوصف</string>
+    <string name="library_details_play_stats" tools:ignore="MissingTranslation">إحصاءات اللعب</string>
+    <string name="library_details_launches" tools:ignore="MissingTranslation">مرات التشغيل</string>
+    <string name="library_details_total_time" tools:ignore="MissingTranslation">إجمالي الوقت</string>
+    <string name="library_details_last_played" tools:ignore="MissingTranslation">آخر تشغيل</string>
+    <string name="library_details_library_info" tools:ignore="MissingTranslation">معلومات المكتبة</string>
+    <string name="library_details_added" tools:ignore="MissingTranslation">تاريخ الإضافة إلى المكتبة</string>
+    <string name="library_details_collections" tools:ignore="MissingTranslation">المجموعات</string>
+    <string name="library_details_none" tools:ignore="MissingTranslation">بلا</string>
+    <string name="library_details_technical" tools:ignore="MissingTranslation">معلومات تقنية</string>
+    <string name="library_details_profile" tools:ignore="MissingTranslation">ملف الإعدادات</string>
+    <string name="library_details_configuration" tools:ignore="MissingTranslation">التكوين</string>
+    <string name="library_details_jar_size" tools:ignore="MissingTranslation">حجم ملف JAR المحفوظ</string>
+    <string name="library_details_entry_points" tools:ignore="MissingTranslation">نقاط دخول MIDlet</string>
+    <string name="library_details_original_metadata" tools:ignore="MissingTranslation">البيانات الوصفية الأصلية</string>
+    <string name="library_details_name" tools:ignore="MissingTranslation">الاسم</string>
+    <string name="library_details_vendor" tools:ignore="MissingTranslation">الناشر</string>
+    <string name="library_details_version" tools:ignore="MissingTranslation">الإصدار</string>
+    <string name="library_details_version_value" tools:ignore="MissingTranslation">الإصدار <xliff:g id="version" example="2.1.0">%1$s</xliff:g></string>
+    <string name="library_details_original_description" tools:ignore="MissingTranslation">الوصف الأصلي</string>
+    <string name="library_details_permissions" tools:ignore="MissingTranslation">الأذونات المصرّح بها</string>
+    <string name="library_details_required" tools:ignore="MissingTranslation">مطلوب</string>
+    <string name="library_details_optional" tools:ignore="MissingTranslation">اختياري</string>
+    <string name="library_details_no_permissions" tools:ignore="MissingTranslation">لا توجد أذونات مصرّح بها</string>
+    <string name="library_details_descriptor_attributes" tools:ignore="MissingTranslation">سمات ملف الوصف</string>
+    <string name="library_details_unavailable" tools:ignore="MissingTranslation">غير متوفر</string>
+    <string name="library_details_action" tools:ignore="MissingTranslation">التفاصيل</string>
+    <string name="library_details_view_details" tools:ignore="MissingTranslation">عرض التفاصيل</string>
+    <string name="library_actions_more" tools:ignore="MissingTranslation">مزيد من الإجراءات</string>
+    <string name="library_actions_less" tools:ignore="MissingTranslation">إجراءات أقل</string>
+</resources>

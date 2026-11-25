@@ -1,0 +1,106 @@
+<?xml version="1.0" encoding="utf-8"?>
+<!-- Controles virtuales, editor de diseño, asignación de teclas físicas y aspectos de control. -->
+<resources xmlns:tools="http://schemas.android.com/tools" xmlns:xliff="urn:oasis:names:tc:xliff:document:1.2">
+    <string name="alert_map_menu">La tecla Menú (M) no está asignada.\nEs posible que no puedas abrir el menú del MIDlet mientras juegas.</string>
+    <string name="dismiss_mapping">Cerrar asignación</string>
+    <string name="layout_edit_finish">Finalizar edición</string>
+    <string name="layout_edit_done">Listo</string>
+    <string name="layout_editor_grid_size">Tamaño de cuadrícula</string>
+    <string name="layout_editor_grid_coarse">Gruesa (16)</string>
+    <string name="layout_editor_grid_normal">Normal (24)</string>
+    <string name="layout_editor_grid_fine">Fina (32)</string>
+    <string name="layout_editor_snap_on">Ajuste activado</string>
+    <string name="layout_editor_snap_off">Ajuste desactivado</string>
+    <string name="layout_edit_save_changes">¿Guardar los cambios en los controles virtuales?</string>
+    <string name="layout_edit_discard">Descartar</string>
+    <string name="layout_edit_continue">Seguir editando</string>
+    <string name="layout_edit_finished">Edición de controles virtuales completada.</string>
+    <string name="virtual_controls_save_failed">No se pudieron guardar los controles virtuales. Inténtalo de nuevo.</string>
+    <string name="layout_switch">Elegir diseño de controles</string>
+    <string name="mapping_dialog_key_not_specified">No hay entradas asignadas.</string>
+    <string name="mapping_dialog_message">Pulsa una tecla física o un botón para asignarlo a este control.</string>
+    <string name="mapping_dialog_assigned_inputs">Entradas asignadas</string>
+    <string name="mapping_dialog_add_input">Puedes asignar más de una entrada física.</string>
+    <string name="mapping_dialog_remove">Quitar</string>
+    <string name="mapping_dialog_title">Pulsa una tecla o un botón</string>
+    <string name="message_reset_layout">¿Restablecer el diseño de controles virtuales a sus valores predeterminados?</string>
+    <string name="RESET_LAYOUT_CMD">Restablecer diseño de controles virtuales</string>
+    <string name="saved_keyboard_layout_summary">Diseño de controles virtuales guardado.</string>
+    <string name="control_skin_title">Aspecto de controles virtuales</string>
+    <string name="control_skin_create" tools:ignore="MissingTranslation">Crear conjunto</string>
+    <string name="control_skin_default" tools:ignore="MissingTranslation">Botones predeterminados</string>
+    <string name="control_skin_edit" tools:ignore="MissingTranslation">Editar</string>
+    <string name="control_skin_rename" tools:ignore="MissingTranslation">Cambiar nombre</string>
+    <string name="control_skin_duplicate" tools:ignore="MissingTranslation">Duplicar</string>
+    <string name="control_skin_delete" tools:ignore="MissingTranslation">Eliminar</string>
+    <string name="control_skin_import_zip" tools:ignore="MissingTranslation">Importar ZIP</string>
+    <string name="control_skin_export_zip" tools:ignore="MissingTranslation">Exportar ZIP</string>
+    <string name="control_skin_select_export_folder" tools:ignore="MissingTranslation">Elegir carpeta de exportación</string>
+    <string name="control_skin_imported" tools:ignore="MissingTranslation">Importado: <xliff:g id="skin_name" example="Classic Nokia">%1$s</xliff:g></string>
+    <string name="control_skin_already_available" tools:ignore="MissingTranslation"><xliff:g id="skin_name" example="Classic Nokia">%1$s</xliff:g> ya está disponible</string>
+    <string name="control_skin_exported" tools:ignore="MissingTranslation">Guardado: <xliff:g id="skin_name" example="Classic Nokia">%1$s</xliff:g></string>
+    <string name="control_skin_archive_invalid_path" tools:ignore="MissingTranslation">La ubicación seleccionada no está disponible.</string>
+    <string name="control_skin_archive_import_failed" tools:ignore="MissingTranslation">No se pudo importar el aspecto de controles. Asegúrate de que el ZIP contenga un conjunto válido.</string>
+    <string name="control_skin_archive_export_failed" tools:ignore="MissingTranslation">No se pudo exportar el aspecto de controles. Elige una carpeta con permisos de escritura fuera de la biblioteca de aspectos.</string>
+    <string name="control_skin_name" tools:ignore="MissingTranslation">Nombre del conjunto</string>
+    <string name="control_skin_icon" tools:ignore="MissingTranslation">Solo icono</string>
+    <string name="control_skin_full" tools:ignore="MissingTranslation">Botón completo</string>
+    <string name="control_skin_normal_image" tools:ignore="MissingTranslation">Imagen normal</string>
+    <string name="control_skin_pressed_image" tools:ignore="MissingTranslation">Imagen pulsada</string>
+    <string name="control_skin_delete_warning" tools:ignore="MissingTranslation">¿Eliminar este conjunto global de aspectos y todas sus imágenes? Los MIDlets que lo usen volverán a los controles predeterminados.</string>
+    <string name="control_skin_invalid_image" tools:ignore="MissingTranslation">Elige una imagen PNG, WebP o SVG.</string>
+    <string name="control_skin_operation_failed" tools:ignore="MissingTranslation">No se pudo actualizar el conjunto de aspectos de controles.</string>
+    <string name="control_skin_missing" tools:ignore="MissingTranslation">Conjunto no disponible (controles predeterminados)</string>
+    <string name="control_skin_remove_image" tools:ignore="MissingTranslation">Quitar</string>
+    <string name="control_skin_manage" tools:ignore="MissingTranslation">Gestionar conjunto</string>
+    <string name="control_skin_manage_named" tools:ignore="MissingTranslation">Gestionar <xliff:g id="skin_name" example="Classic Nokia">%1$s</xliff:g></string>
+    <plurals name="control_skin_count">
+        <item quantity="one"><xliff:g id="count" example="4">%1$d</xliff:g> control personalizado</item>
+        <item quantity="many"><xliff:g id="count" example="4">%1$d</xliff:g> controles personalizados</item>
+        <item quantity="other"><xliff:g id="count" example="4">%1$d</xliff:g> controles personalizados</item>
+    </plurals>
+    <string name="control_skin_empty" tools:ignore="MissingTranslation">Crea un conjunto para personalizar las imágenes de los controles.</string>
+    <string name="control_skin_numeric" tools:ignore="MissingTranslation">Teclado numérico</string>
+    <string name="control_skin_navigation" tools:ignore="MissingTranslation">Navegación</string>
+    <string name="control_skin_other" tools:ignore="MissingTranslation">Otros botones</string>
+    <string name="control_skin_pressed_requires_normal" tools:ignore="MissingTranslation">Añade primero una imagen normal.</string>
+    <string name="control_skin_edit_named" tools:ignore="MissingTranslation">Botón <xliff:g id="button_label" example="5">%1$s</xliff:g></string>
+    <string name="control_skin_change_image" tools:ignore="MissingTranslation">Cambiar</string>
+    <string name="control_skin_pick_image" tools:ignore="MissingTranslation">Elegir imagen</string>
+    <string name="control_skin_soft_left" tools:ignore="MissingTranslation">Tecla izq.</string>
+    <string name="control_skin_soft_right" tools:ignore="MissingTranslation">Tecla der.</string>
+    <string name="control_skin_fire" tools:ignore="MissingTranslation">Disparo</string>
+    <string name="control_skin_menu" tools:ignore="MissingTranslation">Menú</string>
+    <string name="control_skin_movement" tools:ignore="MissingTranslation">Controles de movimiento</string>
+    <string name="control_skin_dpad" tools:ignore="MissingTranslation">D-pad</string>
+    <string name="control_skin_analog" tools:ignore="MissingTranslation">Stick analógico</string>
+    <string name="control_skin_dpad_base" tools:ignore="MissingTranslation">Imagen del D-pad</string>
+    <string name="control_skin_overlay_up" tools:ignore="MissingTranslation">Superposición arriba</string>
+    <string name="control_skin_overlay_down" tools:ignore="MissingTranslation">Superposición abajo</string>
+    <string name="control_skin_overlay_left" tools:ignore="MissingTranslation">Superposición izquierda</string>
+    <string name="control_skin_overlay_right" tools:ignore="MissingTranslation">Superposición derecha</string>
+    <string name="control_skin_analog_base" tools:ignore="MissingTranslation">Imagen de base</string>
+    <string name="control_skin_analog_thumb" tools:ignore="MissingTranslation">Imagen del stick</string>
+    <string name="control_skin_analog_thumb_pressed" tools:ignore="MissingTranslation">Imagen del stick activo</string>
+    <string name="control_skin_preview_directions" tools:ignore="MissingTranslation">Vista previa de direcciones</string>
+    <string name="control_skin_preview_direction" tools:ignore="MissingTranslation">Vista previa: <xliff:g id="direction" example="Up">%1$s</xliff:g></string>
+    <string name="control_skin_builtin_preview" tools:ignore="MissingTranslation">Predeterminado</string>
+    <string name="control_skin_custom_preview" tools:ignore="MissingTranslation">Personalizado</string>
+    <string name="layout_editor_group_on">Redimensionar juntos</string>
+    <string name="layout_editor_group_off">Redimensionar por separado</string>
+    <string name="layout_editor_snap_grid">Ajustar a la cuadrícula</string>
+    <string name="layout_editor_snap_controls">Ajustar a los botones</string>
+    <string name="layout_editor_snap_resize">Ajustar al redimensionar</string>
+    <string name="layout_editor_snap_resize_on">Ajuste al redimensionar: Sí</string>
+    <string name="layout_editor_snap_resize_off">Ajuste al redimensionar: No</string>
+    <string name="layout_editor_snap_grid_on">Ajuste a cuadrícula: Sí</string>
+    <string name="layout_editor_snap_grid_off">Ajuste a cuadrícula: No</string>
+    <string name="layout_editor_snap_controls_on">Ajuste a botones: Sí</string>
+    <string name="layout_editor_snap_controls_off">Ajuste a botones: No</string>
+    <string name="layout_editor_guide_gestures">Gestos</string>
+    <string name="layout_editor_guide_move">Arrastra un control para moverlo.</string>
+    <string name="layout_editor_guide_resize">Usa dos dedos para redimensionar. Muévelos en horizontal o vertical para cambiar el ancho o el alto.</string>
+    <string name="layout_editor_guide_tools">Herramientas del editor</string>
+    <string name="layout_editor_guide_done">Toca Listo para guardar, descartar o seguir editando.</string>
+    <string name="layout_editor_guide_start">Empezar a editar</string>
+</resources>

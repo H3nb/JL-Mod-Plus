@@ -1,0 +1,212 @@
+<?xml version="1.0" encoding="utf-8"?>
+<!-- Rendering pipeline, internal resolution, bitmap upscaling, shaders, and built-in visual effects. -->
+<resources xmlns:tools="http://schemas.android.com/tools" xmlns:xliff="urn:oasis:names:tc:xliff:document:1.2">
+    <string name="identity_filter">කිසිවක් නැත (වේගවත්ම)</string>
+    <string name="invalid_resolution_not_saved">වලංගු නොවන විභේදනය. පෙරසැකසුම සුරකිනු නොලැබීය.</string>
+    <string name="msg_error_loading_shader">සහාය නොදක්වන ශේඩරය. පෙරනිමි ශේඩරය භාවිතා කරයි.</string>
+    <string name="parallel_screen_redrawing">අසමමුහුර්ත තිර යාවත්කාලීන</string>
+    <string name="shader_tuning">ශේඩර් සුසර කිරීම</string>
+    <string name="SWAP_SIZES">පළල සහ උස මාරු කරන්න</string>
+    <string name="fps_limit_maximum">උපරිම</string>
+    <string name="remove_screen_preset">විභේදන පෙරසැකසුම ඉවත් කරන්න</string>
+    <string name="perf_overlay_position_help">කොණක් තෝරන්න.</string>
+    <string name="perf_overlay_top_left">ඉහළ වම</string>
+    <string name="perf_overlay_top_right">ඉහළ දකුණ</string>
+    <string name="perf_overlay_bottom_left">පහළ වම</string>
+    <string name="perf_overlay_bottom_right">පහළ දකුණ</string>
+    <string name="internal_resolution_title" tools:ignore="MissingTranslation">විදැහුම් විභේදනය</string>
+    <string name="internal_resolution_auto" tools:ignore="MissingTranslation">ස්වයංක්‍රීය</string>
+    <string name="internal_resolution_description" tools:ignore="MissingTranslation">සහාය දක්වන 2D සහ 3D වැඩි විස්තර සහිතව විදහා දක්වයි. “ස්වයංක්‍රීය” ක්‍රීඩා දර්ශන කවුළුවට ගැළපේ; යෙදීමට නැවත අරඹන්න.</string>
+    <string name="bitmap_upscaling_title" tools:ignore="MissingTranslation">බිට්මැප් ඉහළ පරිමාණය</string>
+    <string name="bitmap_upscaling_description" tools:ignore="MissingTranslation">MMPX හෝ xBR Lv3 සමඟින් වෙනස් නොවන 2D ස්ප්‍රයිට් සහ පාරාන්ධ Micro3D ආකෘති වයනය ඉහළ පරිමාණය කරයි. M3G වයනය නොවෙනස්ව පවතී; යෙදීමට නැවත අරඹන්න.</string>
+    <string name="bitmap_upscaling_nearest" tools:ignore="MissingTranslation">ආසන්නතම අසල්වැසියා</string>
+    <string name="bitmap_upscaling_bilinear" tools:ignore="MissingTranslation">ද්වි-රේඛීය</string>
+    <string name="bitmap_upscaling_mmpx" tools:ignore="MissingTranslation">MMPX</string>
+    <string name="bitmap_upscaling_edge_aware" tools:ignore="MissingTranslation">xBR Lv3</string>
+    <!-- Prototyping only: localized UI copy is pending design review. -->
+    <string name="render_shader_effects">ශේඩර් ප්‍රයෝග</string>
+    <string name="render_pipeline_title">විදැහුම් නල මාර්ගය</string>
+    <string name="render_shader_preset">ශේඩර් පෙරසැකසුම</string>
+    <string name="render_shader_picker_help">අන්තර්ගත සහ ඔබේම පැරණි ශේඩර් පිළිවෙළට සකස් කළ ප්‍රයෝග ගොඩකට ඒකාබද්ධ කරන්න.</string>
+    <string name="render_shader_requires_gles">ශේඩර් සුරකින නමුත් යොදනු ලබන්නේ OpenGL ES තෝරා ඇති විට පමණි.</string>
+    <string name="render_shader_missing">තෝරාගත් ශේඩරය පුස්තකාලයේ නැත. වෙනත් පෙරසැකසුමක් තෝරන්න හෝ එහි ගොනු ප්‍රතිස්ථාපනය කරන්න.</string>
+    <string name="render_shader_parameters">ශේඩර් පරාමිතීන්</string>
+    <string name="render_shader_reset_parameters">පරාමිතීන් යළි පිහිටුවන්න</string>
+    <string name="render_shader_passes">ශේඩර් පියවර</string>
+    <string name="render_shader_pass_count">පියවර <xliff:g id="count" example="2">%1$d</xliff:g></string>
+    <string name="render_shader_pass_hint">තෝරාගත් GLSLP පෙරසැකසුමේ අදියර බලන්න.</string>
+    <string name="render_pass_filter">ආදාන පෙරහන</string>
+    <string name="render_pass_output">ප්‍රතිදාන ප්‍රමාණය (පළල × උස)</string>
+    <string name="render_pipeline_unavailable">පෙරසැකසුම ලබා ගත නොහැක</string>
+    <string name="render_game_output">ක්‍රීඩා ප්‍රතිදානය</string>
+    <string name="render_logical_screen_help">ක්‍රීඩාවට වාර්තා කරන තාර්කික ප්‍රමාණය.</string>
+    <string name="render_internal_resolution">අභ්‍යන්තර විභේදනය</string>
+    <string name="render_internal_unavailable">මුල් (1×) පමණි. මෙම වින්‍යාසය සඳහා ඉහළ විදැහුම් විභේදන ලබා ගත නොහැක.</string>
+    <string name="render_display_renderer">සංදර්ශන විදැහුම්කරු</string>
+    <string name="render_shader_processing">ශේඩර් සැකසුම</string>
+    <string name="render_display_scaling">සංදර්ශක පරිමාණය</string>
+    <string name="render_display_viewport">ක්‍රීඩා දර්ශන කවුළුව</string>
+    <string name="render_texture_filtering">තිර පරිමාණ පෙරහන</string>
+    <string name="render_texture_filtering_help">අවසන් ක්‍රීඩා රූපය සඳහා ආසන්නතම හෝ රේඛීය තෝරයි. ප්‍රයෝගවලට මෙය අභිබවා යා හැකිය.</string>
+    <string name="render_viewport_note">ශේඩර් පියවර සැලසුම් කිරීමට පෙර තිර පිරිසැලසුමෙන් දර්ශන කවුළු ප්‍රමාණය තීරණය වේ. ඊතල රූප ප්‍රවාහය පෙන්වයි, පිරිසැලසුම් ගණනය කිරීමේ අනුපිළිවෙළ නොවේ.</string>
+    <string name="render_pipeline_help">ක්‍රීඩා රාමුව සංදර්ශකය වෙත ළඟා වන ආකාරය බලන්න සහ එක් එක් අදියර සංස්කරණය කරන්න.</string>
+    <string name="render_no_shader">ක්‍රීඩාවේ පෙනුම වෙනස් කිරීමට පෙරසැකසුමක් තෝරන්න.</string>
+    <string name="render_shader_adjust">පරාමිතීන් සීරුමාරු කරන්න</string>
+    <string name="render_legacy_tuning_hint">මෙම පැරණි ප්‍රයෝගය සියුම්ව සුසර කරන්න.</string>
+    <string name="render_shader_customization">අභිරුචිකරණය</string>
+    <string name="render_adjustable_count">සීරුමාරු කළ හැකි පරාමිතීන්: <xliff:g id="count" example="3">%1$d</xliff:g></string>
+    <string name="render_pass_summary">අදියර <xliff:g id="count" example="3">%1$d</xliff:g> · පෙරසැකසුම මඟින් අර්ථ දක්වා ඇත</string>
+    <string name="render_shader_preset_note">ශේඩර් අදියර පෙරසැකසුම මඟින් අර්ථ දක්වා ඇත. ඒවායේ අනුපිළිවෙළ වෙනස් නොකර ඔබට ඒවා පරීක්ෂා කළ හැකිය.</string>
+    <string name="render_parameters_hint">අගය සීරුමාරු කිරීමට ස්ලයිඩරය ගෙන යන්න. අතහැරිය විට වෙනස්කම් සුරකිනු ලැබේ.</string>
+    <string name="render_pass_readonly">අදියර මෙම අනුපිළිවෙළට ධාවනය වේ. ආදාන පෙරහන සහ ප්‍රතිදාන පරිමාණය තෝරාගත් පෙරසැකසුමෙන් පැමිණේ.</string>
+    <string name="render_pipeline_intro">ක්‍රීඩා රාමු බෆරයේ සිට ඔබේ තිරය දක්වා මාර්ගය.</string>
+    <string name="render_native_short">මුල් (1×)</string>
+    <string name="render_expand_passes">අදියර පෙන්වන්න</string>
+    <string name="render_collapse_passes">අදියර සඟවන්න</string>
+    <string name="render_view_all_passes">අදියර විස්තර</string>
+    <string name="render_pipeline_filter_summary">වයනය පෙරහන: <xliff:g id="shader_name" example="CRT Classic">%1$s</xliff:g></string>
+    <string name="render_pipeline_note">ශේඩර් පියවර සැලසුම් කිරීමට පෙර සංදර්ශක පිරිසැලසුම දර්ශන කවුළුව තීරණය කරයි. පියවර රූප ප්‍රවාහය පෙන්වයි.</string>
+    <string name="render_shader_change">වෙනත් ප්‍රයෝගයක් තෝරන්න</string>
+    <string name="render_custom_pipeline">අභිරුචි නල මාර්ගය</string>
+    <string name="render_custom_pipeline_hint">ඔබේ ශේඩර් ෆෝල්ඩරයෙන් ස්වාධීන GLSL ශේඩර් ඒකාබද්ධ කරන්න.</string>
+    <string name="render_custom_order_help">ප්‍රයෝග ඉහළ සිට පහළට ධාවනය වේ. වෙනස් නොකළහොත් උරුම වූ GLSLP සැකසීම් බලාත්මකව පවතී.</string>
+    <string name="render_custom_empty">අභිරුචි දාමයක් ඇරඹීමට ශේඩරයක් එක් කරන්න.</string>
+    <string name="render_custom_stage_count">අභිරුචි ශේඩර් අදියර <xliff:g id="count" example="3">%1$d</xliff:g></string>
+    <string name="render_custom_add">ශේඩරය එක් කරන්න</string>
+    <string name="render_custom_add_hint">බාහිර ස්වාධීන .glsl මූලාශ්‍රයක් තෝරන්න.</string>
+    <string name="render_custom_no_sources">පැරණි ශේඩර් හමු නොවීය. shaders ෆෝල්ඩරයට .ini ශේඩර් ගොනු එක් කර සැකසීම් නැවත විවෘත කරන්න.</string>
+    <string name="render_custom_scale">ප්‍රතිදානය: පෙර අදියරෙන් <xliff:g id="scale" example="2">%1$d</xliff:g>×</string>
+    <string name="render_custom_output_scale">ඊළඟ අදියර සඳහා ප්‍රතිදාන ප්‍රමාණය</string>
+    <string name="render_custom_final_viewport">අවසන් ප්‍රතිදානය: තිරයේ පෙන්වයි</string>
+    <string name="render_custom_filter">ආදාන පෙරහන: <xliff:g id="shader_name" example="CRT Classic">%1$s</xliff:g></string>
+    <string name="render_custom_up">ඉහළට</string>
+    <string name="render_custom_down">පහළට</string>
+    <string name="render_custom_remove">ඉවත් කරන්න</string>
+    <string name="render_custom_cancel">අවලංගු කරන්න</string>
+    <string name="render_custom_save">සුරකින්න</string>
+    <string name="render_custom_default">පෙරනිමි</string>
+    <string name="render_custom_nearest">ආසන්නතම</string>
+    <string name="render_custom_linear">රේඛීය</string>
+    <string name="render_custom_checking">ශේඩර් ගොනු පරීක්ෂා වෙමින්…</string>
+    <string name="render_active_shader">සක්‍රිය ප්‍රයෝගය</string>
+    <string name="render_shader_off">අක්‍රියයි</string>
+    <string name="render_edit_custom_pipeline">ශේඩර් දාමය සංස්කරණය කරන්න</string>
+    <string name="render_shader_unavailable">ලබා ගත නොහැක: <xliff:g id="shader_name" example="CRT Classic">%1$s</xliff:g></string>
+    <string name="render_no_shader_sources">ශේඩර් හමු නොවීය. shaders ෆෝල්ඩරයට පැරණි .ini ශේඩර් ගොනු එක් කර සැකසීම් නැවත විවෘත කරන්න.</string>
+    <string name="render_shader_mode">ශේඩර් ප්‍රකාරය</string>
+    <string name="render_mode_selected">තෝරා ඇත</string>
+    <string name="render_gles_shader_default">ශේඩර් ප්‍රයෝග අක්‍රිය විට OpenGL ES මුල් ක්‍රීඩා රූපය භාවිතා කරයි.</string>
+    <string name="render_shader_off_help">අමතර දෘශ්‍ය ප්‍රයෝග නොමැත.</string>
+    <string name="render_legacy_mode">පැරණි ශේඩරය</string>
+    <string name="render_legacy_mode_help">shaders ෆෝල්ඩරයෙන් .ini ගොනුවක් තෝරන්න.</string>
+    <string name="render_legacy_empty">මෙම .ini ගොනුවේ භාවිතා කළ හැකි ශේඩර් අර්ථ දැක්වීම් නොමැත.</string>
+    <string name="render_legacy_select_variant">පැරණි ශේඩරයක් තෝරන්න</string>
+    <string name="render_legacy_variant_description">තෝරාගත් .ini ගොනුවේ ශේඩර් අර්ථ දැක්වීම</string>
+    <string name="render_preset_mode">GLSLP පෙරසැකසුම</string>
+    <string name="render_preset_mode_help">එහිම පියවර සහිත සම්පූර්ණ .glslp නල මාර්ගයක් පූරණය කරන්න.</string>
+    <string name="render_custom_pass_count">පියවර ගණන</string>
+    <string name="render_custom_pass_number">පියවර <xliff:g id="number" example="1">%1$d</xliff:g></string>
+    <string name="render_custom_pick_file">GLSL ගොනුව තෝරන්න</string>
+    <string name="render_custom_add_pass">ශේඩර් පියවර ගණන වැඩි කරන්න</string>
+    <string name="render_custom_remove_pass">ශේඩර් පියවර ගණන අඩු කරන්න</string>
+    <string name="render_shader_selected_name">සක්‍රිය: <xliff:g id="shader_name" example="CRT Classic">%1$s</xliff:g></string>
+    <string name="render_shader_invalid_picker">තෝරාගත් ගොනුව භාවිතා කළ නොහැක. shaders ෆෝල්ඩරය තුළ ඇති පැරණි .ini ගොනුවක් තෝරන්න.</string>
+    <string name="render_custom_mode">ශේඩර් වර්ගය</string>
+    <string name="render_custom_mode_legacy">පැරණි</string>
+    <string name="render_custom_mode_glsl">GLSL</string>
+    <string name="render_custom_pick_legacy">පැරණි ශේඩරය තෝරන්න</string>
+    <string name="render_custom_preserve_size">ප්‍රතිදානය: පෙරසැකසුමෙන්</string>
+    <string name="render_custom_loading">පෙරසැකසුම් පියවර කියවමින්…</string>
+    <string name="render_custom_start_fresh">පෙරසැකසුම නොමැතිව අරඹන්න (උරුම වූ සැකසීම් ඉවතලන්න)</string>
+    <string name="render_effect_default_settings">පෙරනිමි සැකසීම්</string>
+    <string name="render_effect_summary_more">+<xliff:g id="count" example="2">%1$d</xliff:g> තවත්</string>
+    <string name="render_effect_legacy_author">කර්තෘ: <xliff:g id="shader_name" example="CRT Classic">%1$s</xliff:g></string>
+    <string name="render_effect_legacy_source">මූලාශ්‍රය: <xliff:g id="shader_name" example="CRT Classic">%1$s</xliff:g></string>
+    <string name="render_effect_removed">ප්‍රයෝගය ඉවත් කරන ලදී</string>
+    <string name="render_effect_undo">අහෝසි කරන්න</string>
+    <string name="render_effect_catalog_hint">ගොඩට එක් කිරීමට ප්‍රයෝගයක් තට්ටු කරන්න.</string>
+    <string name="render_effect_user_folder_hint">INI, VSH සහ FSH ගොනු shaders ෆෝල්ඩරයේ තිබිය යුතුය.</string>
+    <string name="render_effect_legacy_scale_note">පැරණි ශේඩර් තිර දර්ශන කවුළු විභේදනයේදී විදහා දක්වයි; .ini OutputResolution සහ Upscaling ධජ නොසලකා හරිනු ලැබේ.</string>
+    <string name="render_effect_legacy_metadata_missing">මෙම ශේඩරයේ .ini ගොනුවේ සැකසීම් හමු නොවීය. එහි මූලාශ්‍ර ගොනු තවමත් විදහා දැක්විය හැකිය.</string>
+    <string name="render_effect_count"><xliff:g id="count" example="2">%1$d</xliff:g> සක්‍රියයි</string>
+    <string name="render_effect_add">ප්‍රයෝගය එක් කරන්න</string>
+    <string name="render_effect_builtin">අන්තර්ගත ප්‍රයෝග</string>
+    <string name="render_effect_user">මගේ ශේඩර්</string>
+    <string name="render_effect_user_add">.ini ගොනු පිරික්සන්න</string>
+    <string name="render_effect_user_empty">shaders ෆෝල්ඩරයේ පැරණි ශේඩරයක් හමු නොවීය.</string>
+    <string name="render_effect_user_file">පැරණි .ini ගොනුවක් තෝරන්න</string>
+    <string name="render_effect_empty">ක්‍රීඩාවේ පෙනුම අභිරුචිකරණය කිරීමට ප්‍රයෝගයක් එක් කරන්න.</string>
+    <string name="render_effect_hint">ප්‍රයෝග ඉහළ සිට පහළට ධාවනය වේ. පිළිවෙළ වෙනස් කිරීමට ඔබාගෙන අදින්න.</string>
+    <string name="render_effect_move_up">ඉහළට ගෙන යන්න</string>
+    <string name="render_effect_move_down">පහළට ගෙන යන්න</string>
+    <string name="render_effect_remove">ප්‍රයෝගය ඉවත් කරන්න</string>
+    <string name="render_effect_no_parameters">මෙම ප්‍රයෝගයට සීරුමාරු කළ හැකි පරාමිතීන් නොමැත.</string>
+    <string name="render_effect_parameter_number">පරාමිතිය <xliff:g id="count" example="2">%1$d</xliff:g></string>
+    <string name="render_effect_restore">පරාමිතීන් යළි පිහිටුවන්න</string>
+    <string name="render_effect_missing">ලබා ගත නොහැක: <xliff:g id="shader_name" example="CRT Classic">%1$s</xliff:g>. මෙම අන්තර්ගත ප්‍රයෝගය මෙම අනුවාදයේ නොමැත. එය ගොඩෙන් ඉවත් කරන්න.</string>
+    <string name="render_effect_limit">ගොඩ උපරිම ශේඩර් පියවර 16 ක් දක්වා සහාය දක්වයි (සමහර ප්‍රයෝග පියවර කිහිපයක් භාවිතා කරයි).</string>
+    <string name="render_effect_unavailable">ශේඩර් ප්‍රයෝග ධාවනය කිරීමට නොහැකි විය. මුල් ක්‍රීඩා රූපය පෙන්වයි. අඩු ප්‍රයෝග හෝ අඩු විදැහුම් විභේදනයක් උත්සාහ කරන්න.</string>
+    <string name="render_bitmap_memory_reduced">බිට්මැප් ඉහළ පරිමාණය සඳහා මතකය අවසන් විය. මුල් රූප හෝ අඩු පරිමාණයක් භාවිතා කෙරේ. අඩු විදැහුම් විභේදනයක් උත්සාහ කරන්න හෝ මතකය නිදහස් කර නැවත අරඹන්න.</string>
+    <string name="render_texture_memory_reduced">Micro3D වයනය ඉහළ පරිමාණය අසාර්ථක විය. මුල් වයනය භාවිතා කෙරේ. අඩු විදැහුම් විභේදනයක් උත්සාහ කරන්න හෝ මතකය නිදහස් කර නැවත අරඹන්න.</string>
+    <string name="render_resolution_reduced">මතක හෝ GPU සීමාවන් නිසා විදැහුම් විභේදනය <xliff:g id="from_scale" example="4">%1$d</xliff:g>× සිට <xliff:g id="to_scale" example="2">%2$d</xliff:g>× දක්වා අඩු කරන ලදී. අඩු සැකසීමක් උත්සාහ කරන්න හෝ මතකය නිදහස් කර නැවත අරඹන්න.</string>
+    <string name="render_gpu_texture_limit">මෙම රූපය 1× දී පවා GPU සඳහා ඉතා විශාලයි. කුඩා ක්‍රීඩා විභේදනයක් උත්සාහ කරන්න හෝ ග්‍රැෆික් ප්‍රකාරය මාරු කරන්න.</string>
+    <string name="render_gpu_upload_failed">ක්‍රීඩා රූපය GPU වෙත උඩුගත කිරීමට නොහැකි විය. නැවත උත්සාහ කරමින්. වෙනත් යෙදුම් වසා දැමීමට හෝ ග්‍රැෆික් ප්‍රකාරය මාරු කිරීමට උත්සාහ කරන්න.</string>
+    <string name="render_effect_gles">ප්‍රයෝග සුරකින නමුත් විදහා දක්වන්නේ OpenGL ES සමඟ පමණි.</string>
+    <string name="render_effect_legacy_file_error">තෝරාගත් .ini ගොනුවෙන් වලංගු පැරණි ශේඩරයක් පූරණය කිරීමට නොහැකි විය.</string>
+    <string name="effect_color">වර්ණ සීරුමාරුව</string>
+    <string name="effect_color_desc">දීප්තිය, වෙනස, සන්තෘප්තිය, ගැමා, වර්ණ ස්වරය සහ ඒකවර්ණ සීරුමාරු කරන්න.</string>
+    <string name="effect_vignette">විග්නෙට්</string>
+    <string name="effect_vignette_desc">මැදට අවධානය යොමු කිරීමට දාර අඳුරු කරයි.</string>
+    <string name="effect_sharpen">තියුණු කරන්න</string>
+    <string name="effect_sharpen_desc">රූපයේ විස්තර සහ දාර වැඩි දියුණු කරයි.</string>
+    <string name="effect_cartoon">මෘදු කාටූන්</string>
+    <string name="effect_cartoon_desc">වර්ණ අනුක්‍රමණ සරල කර මෘදු පිටත රේඛා එක් කරයි.</string>
+    <string name="effect_bloom">බ්ලූම්</string>
+    <string name="effect_bloom_desc">රූපයේ දීප්තිමත් කොටස් වටා මෘදු දිලිසීමක් එක් කරයි.</string>
+    <string name="effect_crt_classic">CRT සම්භාව්‍ය</string>
+    <string name="effect_crt_classic_desc">ස්කෑන් රේඛා සහ RGB රටාවක් සමඟ CRT රූපවාහිනියක් අනුකරණය කරයි.</string>
+    <string name="effect_crt_beam">කදම්භ පටුබව</string>
+    <string name="effect_brightness">දීප්තිය</string>
+    <string name="effect_contrast">වෙනස</string>
+    <string name="effect_saturation">සන්තෘප්තිය</string>
+    <string name="effect_strength">ශක්තිය</string>
+    <string name="effect_color_levels">වර්ණ මට්ටම්</string>
+    <string name="effect_edge">දාර තීව්‍රතාව</string>
+    <string name="effect_threshold">දීප්ති සීමාව</string>
+    <string name="effect_radius">බොඳ වීමේ අරය</string>
+    <string name="effect_mask_strength">ආවරණ ශක්තිය</string>
+    <string name="effect_scan_strength">ස්කෑන් රේඛා ශක්තිය</string>
+    <string name="effect_bright_boost">දීප්ති වැඩි කිරීම</string>
+    <string name="effect_lcd">LCD</string>
+    <string name="effect_lcd_desc">සම්භාව්‍ය වර්ණ LCD තිරයක පික්සල් ජාලකය සහ උප-පික්සල් අනුකරණය කරයි.</string>
+    <string name="effect_lcd_grid">ජාලක ශක්තිය</string>
+    <string name="effect_lcd_subpixel">RGB උප-පික්සල්</string>
+    <string name="effect_lcd_brightness">LCD දීප්තිය</string>
+    <string name="effect_scanlines">සැහැල්ලු ස්කෑන් රේඛා</string>
+    <string name="effect_scanlines_desc">CRT සංදර්ශකයක් මෙන් සියුම් තිරස් රේඛා එක් කරයි.</string>
+    <string name="effect_line_width">රේඛා පටුබව</string>
+    <string name="effect_gamma">ගැමා</string>
+    <string name="effect_temperature">වර්ණ උෂ්ණත්වය</string>
+    <string name="effect_tint">වර්ණ ඡායාව</string>
+    <string name="effect_monochrome">ඒකවර්ණ</string>
+    <string name="effect_depth">වර්ණ ගැඹුර සහ ඩිතරින්</string>
+    <string name="effect_depth_desc">පැරණි පෙනුමක් සඳහා විකල්ප ඩිතරින් සමඟ වර්ණ මාලාව සීමා කරයි.</string>
+    <string name="effect_depth_format">සංදර්ශක වර්ණ ආකෘතිය</string>
+    <string name="effect_depth_rgb444">RGB444 · වර්ණ 4,096</string>
+    <string name="effect_depth_rgb565">RGB565 · වර්ණ 65,536</string>
+    <string name="effect_depth_rgb666">RGB666 · වර්ණ 262,144</string>
+    <string name="effect_dither_mode">ඩිතරින් රටාව</string>
+    <string name="effect_dither_none">අක්‍රියයි</string>
+    <string name="effect_dither_bayer4">Bayer 4×4</string>
+    <string name="effect_dither_bayer8">Bayer 8×8</string>
+    <string name="effect_dither_strength">ඩිතර් ශක්තිය</string>
+    <string name="effect_mono_display">ඒකවර්ණ සංදර්ශකය</string>
+    <string name="effect_mono_display_desc">ස්වර 2ක් හෝ 4ක් සහිත කළු-සුදු, කොළ හෝ ඇම්බර් තිර අනුකරණය කරයි.</string>
+    <string name="effect_mono_palette">LCD වර්ණය</string>
+    <string name="effect_mono_bw">කළු සහ සුදු</string>
+    <string name="effect_mono_green">කොළ LCD</string>
+    <string name="effect_mono_amber">ඇම්බර් LCD</string>
+    <string name="effect_mono_tones">ස්වර ගණන</string>
+    <string name="effect_mono_two">ස්වර 2</string>
+    <string name="effect_mono_four">ස්වර 4</string>
+</resources>

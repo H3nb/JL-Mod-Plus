@@ -1,0 +1,47 @@
+<?xml version="1.0" encoding="utf-8"?>
+<!-- Shared UI actions, generic labels, dialogs, and About screen. -->
+<resources xmlns:xliff="urn:oasis:names:tc:xliff:document:1.2">
+    <string name="about">Acerca</string>
+    <string name="about_message">Execute aplicações e jogos clássicos, organize MIDlets na sua biblioteca e personalize controlos, ecrã, áudio e desempenho. O JL-Mod Plus é gratuito e de código aberto.</string>
+    <string name="about_subtitle">Emulador Java ME para Android</string>
+    <string name="about_compatibility">A compatibilidade depende do MIDlet, do dispositivo e das APIs Java ME suportadas. Algumas aplicações podem comportar-se de forma diferente da dos telemóveis originais.</string>
+    <string name="about_lineage_title">Origens do projeto</string>
+    <string name="about_build_title">Informações de compilação</string>
+    <string name="about_version_label">Versão</string>
+    <string name="about_build_label">Compilação</string>
+    <string name="about_revision_label">Revisão do código-fonte</string>
+    <string name="about_links_title">Projeto e licenças</string>
+    <string name="about_github_link_copied">Nenhum navegador encontrado. Ligação do GitHub copiada para a área de transferência.</string>
+    <string name="about_github_browser_unavailable">Nenhum navegador encontrado para abrir o GitHub.</string>
+    <string name="about_lineage">O JL-Mod Plus é uma bifurcação independente do JL-Mod de woesss (Yury Kharchenko). O JL-Mod baseia-se no J2ME Loader de Nikita Shakarun, que tem origem no J2meLoader da NaikSoftware.</string>
+    <string name="about_evolution">O JL-Mod Plus parte dessa base com uma interface moderna, uma biblioteca de MIDlets mais completa, novas funcionalidades e suporte para versões mais recentes do Android.</string>
+    <string name="action_back">Voltar</string>
+    <string name="action_settings">Definições</string>
+    <string name="CANCEL_CMD">Cancelar</string>
+    <string name="change">Alterar</string>
+    <string name="choose">Escolher</string>
+    <string name="close">Fechar</string>
+    <string name="cmd_menu">Menu</string>
+    <string name="CONFIRMATION_REQUIRED">Confirmação necessária</string>
+    <string name="create">Criar</string>
+    <string name="default_label"><xliff:g id="name" example="Example">%1$s</xliff:g> (predefinição)</string>
+    <string name="dismiss">Dispensar</string>
+    <string name="edit">Editar</string>
+    <string name="error">Erro</string>
+    <string name="error_name">Introduza um nome.</string>
+    <string name="exit">Sair</string>
+    <string name="help">Ajuda</string>
+    <string name="install">Instalar</string>
+    <string name="licenses">Licenças</string>
+    <string name="licenses_unavailable">Os detalhes das licenças não estão disponíveis.</string>
+    <string name="loading_info">A carregar informações…</string>
+    <string name="more">Mais</string>
+    <string name="not_saved_exists">Já existe</string>
+    <string name="reset">Repor</string>
+    <string name="retry">Tentar novamente</string>
+    <string name="save">Guardar</string>
+    <string name="saved">Guardado: <xliff:g id="name" example="Example">%1$s</xliff:g></string>
+    <string name="START_CMD">Iniciar</string>
+    <string name="warning">Aviso</string>
+    <string name="removed">Removido: <xliff:g id="name" example="Example">%1$s</xliff:g></string>
+</resources>

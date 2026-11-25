@@ -1,0 +1,114 @@
+<?xml version="1.0" encoding="utf-8"?>
+<!-- Active MIDlet runtime session, screenshots, logs, crash recovery, and diagnostic reports. -->
+<resources xmlns:tools="http://schemas.android.com/tools" xmlns:xliff="urn:oasis:names:tc:xliff:document:1.2">
+    <string name="action_keyboard_ime">Bàn phím (IME)</string>
+    <string name="action_lock_orientation">Khóa xoay màn hình</string>
+    <string name="runtime_replacement_failed">Không thể dừng MIDlet đang chạy. Hãy thử mở lại MIDlet mới.</string>
+    <string name="runtime_restart" tools:ignore="MissingTranslation">Khởi động lại</string>
+    <string name="runtime_restart_confirmation" tools:ignore="MissingTranslation">Khởi động lại MIDlet này? Tiến trình chưa lưu có thể bị mất.</string>
+    <string name="FORCE_CLOSE_CONFIRMATION">Dừng MIDlet này? Tiến trình chưa lưu có thể bị mất.</string>
+    <string name="runtime_preset_save_destination">Lưu vào</string>
+    <string name="runtime_preset_apply_destination">Áp dụng cho</string>
+    <string name="runtime_preset_this_midlet_only">Chỉ MIDlet này</string>
+    <string name="runtime_preset_update_destination">Cập nhật <xliff:g id="profile_name" example="Action Games">%1$s</xliff:g></string>
+    <string name="runtime_preset_local_explanation">Chỉ thay đổi điều khiển ảo của MIDlet này.</string>
+    <string name="runtime_preset_update_explanation">Cập nhật bố cục điều khiển ảo trong <xliff:g id="profile_name" example="Action Games">%1$s</xliff:g>.\nCác MIDlet khác liên kết với hồ sơ này sẽ nhận bố cục mới vào lần khởi chạy tiếp theo.</string>
+    <string name="runtime_layout_apply_title">Áp dụng <xliff:g id="name" example="Example">%1$s</xliff:g>?</string>
+    <string name="runtime_apply">Áp dụng</string>
+    <string name="runtime_preset_update_failed">Đã lưu cho MIDlet này nhưng không thể cập nhật <xliff:g id="profile_name" example="Action Games">%1$s</xliff:g>.</string>
+    <string name="runtime_preset_update_unlinked">Đã cập nhật <xliff:g id="profile_name" example="Action Games">%1$s</xliff:g>, nhưng MIDlet này sẽ không nhận các bản cập nhật sau này từ hồ sơ đó.</string>
+    <string name="msg_immediate_mode_disabled">Đã tắt xử lý tức thì do các lệnh gọi lại sự kiện lồng nhau quá sâu.</string>
+    <string name="msg_press_again_to_close">Nhấn lần nữa để đóng</string>
+    <string name="save_log">Lưu nhật ký</string>
+    <string name="take_screenshot">Chụp ảnh màn hình</string>
+    <!-- Crash-report UI remains translatable; locales without coverage fall back to default English. -->
+    <string name="crash_reports">Báo cáo chẩn đoán</string>
+    <string name="diagnostic_report">Báo cáo chẩn đoán</string>
+    <string name="view_reports">Xem báo cáo chẩn đoán</string>
+    <string name="crash_reports_empty">Không có báo cáo chẩn đoán cục bộ</string>
+    <string name="crash_reports_loading">Đang tải báo cáo chẩn đoán</string>
+    <string name="crash_report_midlet_failure">Lỗi phiên MIDlet</string>
+    <string name="crash_report_java_report">Báo cáo chẩn đoán Java</string>
+    <string name="crash_report_process_exit">Báo cáo thoát tiến trình</string>
+    <string name="crash_report_list_subtitle"><xliff:g id="report_type" example="Java crash">%1$s</xliff:g> · <xliff:g id="timestamp" example="Nov 25, 09:40">%2$s</xliff:g></string>
+    <plurals name="crash_reports_selected_count">
+        <item quantity="other">Đã chọn <xliff:g id="count" example="3">%1$d</xliff:g></item>
+    </plurals>
+    <string name="copy_report">Sao chép</string>
+    <string name="report_on_github">Báo cáo trên GitHub</string>
+    <string name="delete_report">Xóa</string>
+    <string name="share_selected_reports" tools:ignore="MissingTranslation">Chia sẻ báo cáo đã chọn</string>
+    <string name="delete_selected_reports">Xóa báo cáo đã chọn</string>
+    <string name="crash_report_copied">Đã sao chép báo cáo</string>
+    <string name="crash_report_bundle_preparing">Đang chuẩn bị gói chẩn đoán…</string>
+    <string name="crash_report_bundle_ready_title">Gói chẩn đoán đã sẵn sàng</string>
+    <string name="crash_report_bundle_ready_message"><xliff:g id="name" example="Example">%1$s</xliff:g>\n\nĐã lưu trong Tải xuống → JL-Mod Plus Diagnostics.\n\nHãy đính kèm tệp này trước khi gửi vấn đề lên GitHub. Gói chẩn đoán sẽ hiển thị công khai sau khi đính kèm.</string>
+    <string name="locate_bundle">Mở vị trí gói</string>
+    <string name="open_github">Mở GitHub</string>
+    <string name="crash_report_bundle_failed">Không thể chuẩn bị gói chẩn đoán.</string>
+    <string name="crash_report_locate_failed">Không có trình chọn tệp nào để mở vị trí gói chẩn đoán.</string>
+    <string name="crash_report_bundle_cleanup_failed">Đã xóa báo cáo chẩn đoán nhưng không thể xóa gói đã tạo.</string>
+    <string name="crash_report_github_unavailable">Không tìm thấy trình duyệt hoặc ứng dụng nào để mở biểu mẫu sự cố GitHub.</string>
+    <string name="crash_report_delete_title">Xóa báo cáo chẩn đoán?</string>
+    <string name="crash_report_delete_message">Thao tác này sẽ xóa vĩnh viễn báo cáo chẩn đoán và mọi gói đã tạo khỏi thiết bị này. Các tệp đã tải lên nơi khác sẽ không bị ảnh hưởng.</string>
+    <plurals name="crash_reports_batch_delete_title">
+        <item quantity="other">Xóa <xliff:g id="count" example="3">%1$d</xliff:g> báo cáo chẩn đoán?</item>
+    </plurals>
+    <string name="crash_reports_batch_delete_message">Thao tác này sẽ xóa vĩnh viễn các báo cáo chẩn đoán đã chọn và mọi gói đã tạo khỏi thiết bị này. Các tệp đã tải lên nơi khác sẽ không bị ảnh hưởng.</string>
+    <string name="crash_report_delete_failed">Không thể xóa báo cáo.</string>
+    <string name="crash_report_unavailable">Báo cáo này không còn khả dụng.</string>
+    <string name="process_exit_recovery_title">Tiến trình thoát đột ngột</string>
+    <string name="process_exit_recovery_message">JL-Mod Plus đã dừng đột ngột trong phiên trước (<xliff:g id="reason" example="Java crash">%1$s</xliff:g>). Thông tin chẩn đoán đã được lưu cục bộ.</string>
+    <string name="process_exit_recovery_message_midlet">Một tiến trình MIDlet đã dừng đột ngột trong phiên trước (<xliff:g id="reason" example="Java crash">%1$s</xliff:g>). Thông tin chẩn đoán đã được lưu cục bộ.</string>
+    <string name="process_exit_recovery_message_named"><xliff:g id="app_name" example="Bounce Tales">%1$s</xliff:g> đã dừng đột ngột trong phiên trước (<xliff:g id="reason" example="Native crash">%2$s</xliff:g>). Thông tin chẩn đoán đã được lưu cục bộ.</string>
+    <string name="select_all_reports">Chọn tất cả báo cáo</string>
+    <string name="clear_report_selection">Bỏ chọn báo cáo</string>
+    <string name="runtime_memory_button_short" tools:ignore="MissingTranslation">Nút bộ nhớ</string>
+    <string name="runtime_action_on" tools:ignore="MissingTranslation">Bật</string>
+    <string name="runtime_action_off" tools:ignore="MissingTranslation">Tắt</string>
+    <string name="reconverting_wait">MIDlet này cần chuyển đổi tương thích một lần trước khi có thể khởi chạy.</string>
+    <string name="reconversion_done_with_warning">Đã chuyển đổi tương thích kèm cảnh báo.</string>
+    <string name="reconversion_error_summary">Không thể tự động chuyển đổi MIDlet này.</string>
+    <string name="runtime_invalid_intent">Yêu cầu khởi chạy không hợp lệ: thiếu đường dẫn MIDlet.</string>
+    <string name="runtime_storage_in_use">Bộ nhớ MIDlet đang được dùng bởi một phiên chạy khác.</string>
+    <string name="runtime_installation_changed">Không thể chuẩn bị MIDlet này để khởi chạy.</string>
+    <string name="runtime_storage_unavailable">Không thể chuẩn bị bộ nhớ MIDlet.</string>
+    <string name="runtime_no_midlets">Không tìm thấy MIDlet nào trong ứng dụng này.</string>
+    <!-- Runtime grouped controls derive body, accent, outline, icon, and selected-icon colors from the existing virtual-control appearance settings. -->
+    <string name="runtime_virtual_controls_title">Điều khiển ảo</string>
+    <string name="runtime_virtual_controls_dpad">D-pad</string>
+    <string name="runtime_virtual_controls_analog">Cần analog</string>
+    <string name="runtime_virtual_controls_edit">Chỉnh sửa bố cục</string>
+    <string name="runtime_virtual_controls_edit_guide_title">Hướng dẫn chỉnh sửa bố cục</string>
+    <string name="runtime_virtual_controls_edit_guide_message">Kéo các nút điều khiển để di chuyển. Với các nút bấm, di chuyển hai ngón tay theo chiều ngang hoặc dọc để đổi chiều rộng hoặc chiều cao, hoặc chéo để đổi cả hai. Chụm hoặc mở hai ngón tay để đổi kích thước D-pad hay cần analog theo tỷ lệ. Nhấn Xong khi hoàn tất.</string>
+    <string name="runtime_virtual_controls_edit_guide_dont_show_again">Không hiển thị lại</string>
+    <string name="runtime_virtual_controls_switch_layout">Chọn bố cục điều khiển</string>
+    <string name="runtime_virtual_controls_show_controls">Chọn điều khiển hiển thị</string>
+    <string name="runtime_virtual_controls_template_dpad_standard">D-pad tiêu chuẩn</string>
+    <string name="runtime_virtual_controls_template_analog_standard">Cần analog tiêu chuẩn</string>
+    <string name="screenshot_save_failed">Không thể lưu ảnh chụp màn hình.</string>
+    <!-- %1$s is the saved screenshot's filesystem path. New key replaces the legacy prefix contract. -->
+    <string name="screenshot_saved_path">Đã lưu ảnh chụp màn hình tại <xliff:g id="path" example="Pictures/Bounce Tales/Screenshot_20261125-103000.png">%1$s</xliff:g></string>
+    <!-- Deliberate English fallback until reviewed translations are available. -->
+    <string name="log_save_success" tools:ignore="MissingTranslation">Đã lưu <xliff:g id="name" example="Example">%1$s</xliff:g> vào Tải xuống → JL-Mod Plus Diagnostics.</string>
+    <string name="log_save_partial" tools:ignore="MissingTranslation">Đã lưu nhật ký một phần thành <xliff:g id="name" example="Example">%1$s</xliff:g> vào Tải xuống → JL-Mod Plus Diagnostics.</string>
+    <string name="log_save_empty" tools:ignore="MissingTranslation">Không có bản ghi nhật ký ứng dụng nào trong bộ đệm Android.</string>
+    <string name="log_save_timeout" tools:ignore="MissingTranslation">Hết thời gian thu thập nhật ký. Chưa lưu tệp nào.</string>
+    <string name="log_save_failed">Không thể lưu nhật ký.</string>
+    <string name="runtime_midlet_list_failed">Không thể đọc danh sách MIDlet của ứng dụng này.</string>
+    <string name="diagnostic_reason_java_crash">Sự cố Java</string>
+    <string name="diagnostic_reason_native_crash">Sự cố mã gốc</string>
+    <string name="diagnostic_reason_anr">Ứng dụng không phản hồi</string>
+    <string name="diagnostic_reason_signal">Kết thúc bằng tín hiệu</string>
+    <string name="diagnostic_reason_unknown">Nguyên nhân không xác định</string>
+    <string name="crash_reports_delete_failed">Không thể xóa một số báo cáo chẩn đoán. Các báo cáo khác có thể đã bị xóa.</string>
+    <string name="crash_reports_bundle_cleanup_failed">Đã xóa báo cáo chẩn đoán nhưng không thể xóa một số gói đã tạo.</string>
+    <string name="runtime_chrome_update_failed">Không thể cập nhật cài đặt hiển thị. Hãy thử lại.</string>
+    <string name="runtime_fullscreen_update_failed">Không thể truy cập cài đặt toàn màn hình. Hãy thử lại.</string>
+    <string name="runtime_camera_use_front">Dùng camera trước</string>
+    <string name="runtime_camera_use_rear">Dùng camera sau</string>
+    <string name="runtime_camera_switch_failed">Không thể chuyển camera.</string>
+    <string name="runtime_camera_switch_recording" tools:ignore="MissingTranslation">Hãy dừng quay trước khi chuyển camera.</string>
+    <string name="date_field_not_set" tools:ignore="MissingTranslation">Chưa đặt</string>
+    <string name="date_field_use_displayed_value" tools:ignore="MissingTranslation">Dùng giá trị này</string>
+</resources>

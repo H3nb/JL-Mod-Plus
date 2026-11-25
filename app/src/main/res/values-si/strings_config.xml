@@ -1,0 +1,356 @@
+<?xml version="1.0" encoding="utf-8"?>
+<!-- Per-MIDlet configuration, reusable profiles, camera, controller calibration, permissions, and system properties. -->
+<resources xmlns:tools="http://schemas.android.com/tools" xmlns:xliff="urn:oasis:names:tc:xliff:document:1.2">
+    <!-- %1$s is an optional quoted storage-volume name with a trailing space, or empty. -->
+    <!-- %1$s is a raw storage-volume description. -->
+    <string name="config_missing_app_storage_named">යෙදුම හමු නොවීය.\n“<xliff:g id="storage_name" example="SD card">%1$s</xliff:g>” ගබඩා උපාංගය තිබේදැයි පරීක්ෂා කරන්න, නැතහොත් කෙටිමඟ නැවත සාදන්න.</string>
+    <string name="config_missing_app_storage_generic">යෙදුම හමු නොවීය.\nගබඩා උපාංගය තිබේදැයි පරීක්ෂා කරන්න, නැතහොත් කෙටිමඟ නැවත සාදන්න.</string>
+    <string name="midlet_name"><b>නම: </b></string>
+    <string name="midlet_size"><b>ප්‍රමාණය: </b></string>
+    <string name="midlet_vendor"><b>විකුණුම්කරු: </b></string>
+    <string name="midlet_version"><b>අනුවාදය: </b></string>
+    <string name="config_destination_graphics">සංදර්ශකය</string>
+    <string name="config_destination_rendering" tools:ignore="MissingTranslation">ග්‍රැෆික්</string>
+    <string name="config_destination_media">මාධ්‍ය</string>
+    <string name="config_camera_title">කැමරාව</string>
+    <string name="config_camera_default_title">පෙරනිමි කැමරාව</string>
+    <string name="config_camera_rear">පසුපස</string>
+    <string name="config_camera_front">ඉදිරිපස</string>
+    <string name="config_camera_resolution_title">පෙරනිමි විභේදනය</string>
+    <string name="config_camera_resolution_auto">ස්වයංක්‍රීය</string>
+    <string name="config_camera_resolution_portrait">480×640 — සිරස්</string>
+    <string name="config_camera_resolution_landscape">640×480 — තිරස්</string>
+    <string name="config_destination_controls">පාලන</string>
+    <string name="config_gamepad_test">පාලකය පරීක්ෂා කරන්න</string>
+    <string name="config_gamepad_calibrate">පාලකය ක්‍රමාංකනය කරන්න</string>
+    <string name="config_gamepad_calibrate_summary">සම්බන්ධිත පාලකයේ මධ්‍යස්ථ පිහිටීම සහ එහි ස්ටික් හා ට්‍රිගර් පරාසයන් මැන බලයි.</string>
+    <string name="config_gamepad_stick_directions">ඩිජිටල් දිශාවන්</string>
+    <string name="config_gamepad_stick_unassigned">පවරා නැත</string>
+    <string name="config_gamepad_stick_pointer">දර්ශක මූලාශ්‍රය</string>
+    <string name="config_gamepad_opaque_summary">මෙම වින්‍යාසයේ සහාය නොදක්වන ආකෘතියකින් පාලක දත්ත අඩංගු වේ. එය නොවෙනස්ව සුරැකී ඇති අතර මෙහි සංස්කරණය කළ නොහැක.</string>
+    <string name="config_gamepad_unsupported_summary">මෙම පාලක වින්‍යාසයට සහාය නොදක්වයි. එය නොවෙනස්ව සුරැකී ඇති අතර මෙහි සංස්කරණය කළ නොහැක.</string>
+    <string name="config_gamepad_keypad_title">අතථ්‍ය යතුරුපුවරුව</string>
+    <string name="config_gamepad_calibration_next">ඊළඟ</string>
+    <string name="config_gamepad_mapping_help_title">පාලක සිතියම්ගත කිරීමේ උදවු</string>
+    <string name="config_gamepad_directions_four">4-දිශා</string>
+    <string name="config_gamepad_directions_eight">8-දිශා</string>
+    <string name="config_gamepad_pointer_off">අක්‍රියයි</string>
+    <string name="config_gamepad_pointer_cursor">සමානුපාතික කර්සරය</string>
+    <string name="config_gamepad_pointer_joystick">ස්පර්ශ ජොයිස්ටික්</string>
+    <!-- This is the same controller-identity fingerprint shown in diagnostics. -->
+    <string name="config_gamepad_calibration_profile">පාලක අත්සන: <xliff:g id="profile_name" example="Action Games">%1$s</xliff:g></string>
+    <string name="config_gamepad_calibration_phase_neutral">මධ්‍යස්ථ පිහිටීම බලාපොරොත්තුවෙන්</string>
+    <string name="config_gamepad_calibration_phase_stick_range">ස්ටික් පරාසය</string>
+    <string name="config_gamepad_calibration_phase_trigger_range">ට්‍රිගර් පරාසය</string>
+    <string name="config_gamepad_calibration_phase_review">සමාලෝචනය</string>
+    <string name="config_gamepad_calibration_phase_committed">සුරකින ලදී</string>
+    <string name="config_gamepad_calibration_phase_cancelled">අවලංගු කරන ලදී</string>
+    <string name="config_gamepad_calibration_waiting_controller">සහාය දක්වන ඇනලොග් ස්ටික් හෝ ට්‍රිගර් සහිත පාලකයක් සම්බන්ධ කරන්න. ඔබ පළමුව ස්ටික් එකක් ගෙන යන විට හෝ ට්‍රිගරයක් ඔබන විට ක්‍රමාංකනය ඇරඹේ; ඔබ සුරකින තෙක් පවතින ක්‍රමාංකනය නොවෙනස්ව පවතී.</string>
+    <string name="config_gamepad_calibration_no_analog_ranges">මෙම පාලකය සහාය දක්වන ඇනලොග් ස්ටික් හෝ ට්‍රිගර් පරාසයන් ලබා නොදේ.</string>
+    <string name="config_gamepad_calibration_start">මධ්‍යස්ථ ටයිමරය අවසන් වන තෙක් සෑම ස්ටික් එකක්ම මැද තබා සෑම ට්‍රිගරයක්ම අතහැර තබන්න.</string>
+    <string name="config_gamepad_calibration_save_failed">ක්‍රමාංකනය සුරැකීමට නොහැකි විය. පවතින ක්‍රමාංකනය නොවෙනස්ව පවතී.</string>
+    <string name="config_gamepad_calibration_no_supported_ranges">සහාය දක්වන ඇනලොග් පරාසයන් හමු නොවීය.</string>
+    <string name="config_gamepad_calibration_rejected">ක්‍රමාංකනය ප්‍රතික්ෂේප විය: <xliff:g id="name" example="Example">%1$s</xliff:g></string>
+    <string name="config_gamepad_calibration_neutral_instructions">මධ්‍යස්ථ ටයිමරය අවසන් වන තෙක් හඳුනාගත් සියලුම ස්ටික් මැද තබා හඳුනාගත් සියලුම ට්‍රිගර් අතහැර තබන්න.</string>
+    <string name="config_gamepad_calibration_stick_instructions">හඳුනාගත් සෑම ස්ටික් එකක්ම සියලු දිශාවලට සම්පූර්ණ පරාසය දක්වා ගෙන ගොස්, ඉන්පසු “ඊළඟ” ඔබන්න.</string>
+    <string name="config_gamepad_calibration_trigger_instructions">හඳුනාගත් සෑම ට්‍රිගරයක්ම අතහැර සම්පූර්ණයෙන්ම ඔබා, ඉන්පසු සමාලෝචනය කිරීමට “ඊළඟ” ඔබන්න.</string>
+    <string name="config_gamepad_calibration_review_instructions">සමාලෝචනයට සූදානම්. සුරැකීමෙන් ප්‍රතිස්ථාපනය වන්නේ මෙම පාලකයේ ක්‍රමාංකනය පමණි.</string>
+    <string name="config_gamepad_calibration_saved">ක්‍රමාංකනය සුරකින ලදී.</string>
+    <string name="config_gamepad_calibration_cancelled">ක්‍රමාංකනය අවලංගු කරන ලදී. පෙර ක්‍රමාංකනය නොවෙනස්ව පවතී.</string>
+    <string name="config_gamepad_calibration_waiting_samples">ක්‍රමාංකනය පාලක නියැදි බලාපොරොත්තුවෙන් සිටී.</string>
+    <string name="config_gamepad_diagnosis_header">පාලක දෝෂ විනිශ්චය</string>
+    <string name="config_gamepad_diagnosis_mode">තත්ත්වය: <xliff:g id="status" example="enabled">%1$s</xliff:g> · මූලාශ්‍රය: <xliff:g id="source" example="controller">%2$s</xliff:g></string>
+    <string name="config_gamepad_diagnosis_notice">දැනුම්දීම: <xliff:g id="name" example="Example">%1$s</xliff:g></string>
+    <string name="config_gamepad_diagnosis_analog_settings">ඇනලොග් සැකසීම්:</string>
+    <string name="config_gamepad_diagnosis_left_stick">වම් ස්ටික්</string>
+    <string name="config_gamepad_diagnosis_right_stick">දකුණු ස්ටික්</string>
+    <string name="config_gamepad_diagnosis_triggers">ට්‍රිගර්</string>
+    <string name="config_gamepad_diagnosis_pointer">දර්ශක ප්‍රකාරය</string>
+    <string name="config_gamepad_status_enabled">සබලයි</string>
+    <string name="config_gamepad_status_disabled">අබලයි</string>
+    <string name="config_gamepad_diagnosis_source_default">පෙරනිමි</string>
+    <string name="config_gamepad_diagnosis_source_controller">පාලකය</string>
+    <string name="config_gamepad_diagnosis_source_explicit">නිශ්චිත</string>
+    <string name="config_gamepad_diagnosis_device"><xliff:g id="device_name" example="Xbox Controller">%1$s</xliff:g> (#<xliff:g id="device_id" example="1">%2$d</xliff:g>)</string>
+    <string name="config_gamepad_calibration_issue_no_channels">සහාය දක්වන නාලිකා නොමැත</string>
+    <string name="config_gamepad_calibration_issue_invalid_constraints">වලංගු නොවන ක්‍රමාංකන සීමාවන්</string>
+    <string name="config_gamepad_calibration_issue_non_finite">අසීමිත නියැදිය</string>
+    <string name="config_gamepad_calibration_issue_insufficient_samples">ප්‍රමාණවත් නොවන නියැදි</string>
+    <string name="config_gamepad_calibration_issue_invalid_range">වලංගු නොවන පරාසය</string>
+    <string name="config_gamepad_calibration_issue_rest_outside_range">විවේක අගය පරාසයෙන් පිටතයි</string>
+    <string name="config_gamepad_calibration_issue_rest_too_noisy">විවේක පිහිටීම ප්‍රමාණවත් තරම් ස්ථාවර නැත</string>
+    <string name="config_gamepad_calibration_phase_unknown">තත්ත්වය ලබා ගත නොහැක</string>
+    <string name="config_gamepad_diagnosis_capabilities">සම්බන්ධිත පාලකයේ හැකියාවන්:</string>
+    <string name="config_gamepad_diagnosis_descriptor">විස්තරකය: <xliff:g id="name" example="Example">%1$s</xliff:g></string>
+    <!-- %1$s is a controller-identity fingerprint derived from its descriptor and capabilities. -->
+    <!-- It is not a handwritten signature or a cryptographic signing operation. -->
+    <string name="config_gamepad_diagnosis_signature">අත්සන: <xliff:g id="name" example="Example">%1$s</xliff:g></string>
+    <string name="config_gamepad_diagnosis_axis">අක්ෂය <xliff:g id="axis_index" example="0">%1$d</xliff:g> [<xliff:g id="min_value" example="-1.0">%2$s</xliff:g>, <xliff:g id="max_value" example="1.0">%3$s</xliff:g>] flat=<xliff:g id="flat" example="0.05">%4$s</xliff:g> fuzz=<xliff:g id="fuzz" example="0.01">%5$s</xliff:g></string>
+    <string name="config_gamepad_diagnosis_no_controller">(පාලකයක් සම්බන්ධ කර නැත)</string>
+    <string name="config_gamepad_diagnosis_samples_not_sent">ආදාන නියැදි හිතාමතාම MIDlet වෙත නොයවනු ලැබේ.</string>
+    <string name="config_destination_system">පද්ධතිය</string>
+    <string name="config_screen_behavior" tools:ignore="MissingTranslation">තිර හැසිරීම</string>
+    <string name="config_screen_size">තිර ප්‍රමාණය</string>
+    <string name="config_select_screen_size">තිර ප්‍රමාණය තෝරන්න</string>
+    <string name="config_current_screen_size">වත්මන් ප්‍රමාණය: <xliff:g id="name" example="Example">%1$s</xliff:g></string>
+    <string name="config_custom_resolution">අභිරුචි විභේදනය</string>
+    <string name="profile_custom">අභිරුචි</string>
+    <string name="select_dialog_title">MIDlet තෝරන්න</string>
+    <string name="SIZE_PRESETS">අකුරු ප්‍රමාණ පෙරසැකසුම්</string>
+    <string name="config_color_picker_title">වර්ණය තෝරන්න</string>
+    <string name="config_color_picker_hex">හෙක්ස් වර්ණය</string>
+    <string name="config_color_picker_hint">වර්ණ ක්ෂේත්‍ර අදින්න හෝ අංක හයක RGB අගයක් ඇතුළත් කරන්න.</string>
+    <string name="config_color_picker_invalid">හරියටම හෙක්සාඩෙසිමල් අංක හයක් ඇතුළත් කරන්න.</string>
+    <string name="config_color_picker_saturation_value">සන්තෘප්තිය සහ දීප්තිය</string>
+    <string name="config_color_picker_hue">වර්ණ ඡායාව</string>
+    <string name="config_decrease_value">අගය අඩු කරන්න</string>
+    <string name="config_increase_value">අගය වැඩි කරන්න</string>
+    <string name="midlet_failure_recovery_title">MIDlet අනපේක්ෂිත ලෙස නතර විය</string>
+    <string name="midlet_failure_recovery_message">MIDlet අනපේක්ෂිත ලෙස නතර විය. දෝෂ විනිශ්චය තොරතුරු දේශීයව සුරකින ලදී. ඔබට JL-Mod Plus දිගටම භාවිතා කළ හැකිය.</string>
+    <string name="midlet_failure_recovery_message_named">“<xliff:g id="name" example="Example">%1$s</xliff:g>” අනපේක්ෂිත ලෙස නතර විය. දෝෂ විනිශ්චය තොරතුරු දේශීයව සුරකින ලදී. ඔබට JL-Mod Plus දිගටම භාවිතා කළ හැකිය.</string>
+    <plurals name="config_system_properties_value">
+        <item quantity="one">ගුණාංගය <xliff:g id="count" example="3">%1$d</xliff:g></item>
+        <item quantity="other">ගුණාංග <xliff:g id="count" example="3">%1$d</xliff:g></item>
+    </plurals>
+    <string name="config_search_suggestions" tools:ignore="MissingTranslation">යෝජිත සැකසීම්</string>
+    <string name="config_search_clear" tools:ignore="MissingTranslation">සෙවීම හිස් කරන්න</string>
+    <string name="config_search_title" tools:ignore="MissingTranslation">සැකසීම් සොයන්න</string>
+    <string name="config_search_hint" tools:ignore="MissingTranslation">සැකසීමක් සොයන්න, උදා: MMPX හෝ දිශානතිය</string>
+    <string name="config_search_no_results" tools:ignore="MissingTranslation">ගැළපෙන සැකසීම් නොමැත</string>
+    <string name="config_search_upscaling_requires_resolution" tools:ignore="MissingTranslation">බිට්මැප් ඉහළ පරිමාණය වින්‍යාස කිරීමට “විදැහුම් විභේදනය” යටතේ “ස්වයංක්‍රීය” හෝ 2×–10× තෝරන්න.</string>
+    <string name="config_search_requires_manual_scale" tools:ignore="MissingTranslation">පරිමාණය සීරුමාරු කිරීමට “පරිමාණ ප්‍රකාරය” යටතේ “අතින්” තෝරන්න.</string>
+    <string name="config_search_requires_custom_background" tools:ignore="MissingTranslation">පසුබිම් වර්ණය සංස්කරණය කිරීමට “පසුබිම් ප්‍රකාරය” යටතේ “අභිරුචි” තෝරන්න.</string>
+    <string name="config_search_requires_gles" tools:ignore="MissingTranslation">ශේඩර් ප්‍රයෝග වින්‍යාස කිරීමට “ග්‍රැෆික් ප්‍රකාරය” යටතේ “දෘඪාංග ත්වරණය (OpenGL ES)” තෝරන්න.</string>
+    <string name="config_search_requires_renderer_mode" tools:ignore="MissingTranslation">අසමමුහුර්ත තිර යාවත්කාලීන වින්‍යාස කිරීමට “ග්‍රැෆික් ප්‍රකාරය” යටතේ “මෘදුකාංග” හෝ “දෘඪාංග ත්වරණය (Surface)” තෝරන්න.</string>
+    <string name="config_font_page_title" tools:ignore="MissingTranslation">අකුරු සැකසීම්</string>
+    <string name="config_display_more" tools:ignore="MissingTranslation">පෙළ සහ කාර්ය සාධනය</string>
+    <string name="config_destination_home" tools:ignore="MissingTranslation">මුල් පිටුව</string>
+    <string name="config_overview_profile_draft" tools:ignore="MissingTranslation">පැතිකඩ කෙටුම්පත</string>
+    <string name="config_overview_profile_draft_summary" tools:ignore="MissingTranslation">මෙම නැවත භාවිතා කළ හැකි පැතිකඩ සංස්කරණය කර, ඉන්පසු මෙවලම් තීරුවෙන් ඔබේ වෙනස්කම් සුරකින්න.</string>
+    <string name="config_overview_quick_access" tools:ignore="MissingTranslation">ඉක්මන් ප්‍රවේශය</string>
+    <string name="config_system_properties_editor_label">ගුණාංග</string>
+    <string name="config_overview_enabled" tools:ignore="MissingTranslation">ක්‍රියාත්මකයි</string>
+    <string name="config_overview_disabled" tools:ignore="MissingTranslation">අක්‍රියයි</string>
+    <string name="config_overview_media_summary" tools:ignore="MissingTranslation">ශබ්ද බැංකුව සහ කැමරාව</string>
+    <string name="config_overview_hint" tools:ignore="MissingTranslation">ඔබේ ක්‍රීඩාව අභිරුචිකරණය කිරීමට ප්‍රවර්ගයක් තෝරන්න. සෑම සැකසීමකටම එක් ස්ථානයක් ඇත; මෙම කෙටිමං ඔබව එතැනට ගෙන යයි.</string>
+    <string name="config_destination_general">සාමාන්‍ය</string>
+    <string name="config_basic_display">MIDlet තිරය</string>
+    <string name="config_display_appearance">තිර පෙනුම</string>
+    <string name="config_display_rendering">විදැහුම</string>
+    <string name="config_image_quality_section" tools:ignore="MissingTranslation">රූප ගුණත්වය</string>
+    <string name="config_frame_rate_section" tools:ignore="MissingTranslation">රාමු අනුපාතය</string>
+    <string name="config_fps_position_title" tools:ignore="MissingTranslation">FPS ස්ථානය</string>
+    <string name="config_display_text">පෙළ සහ අකුරු</string>
+    <string name="config_input_mapping_section" tools:ignore="MissingTranslation">ආදාන සහ සිතියම්ගත කිරීම</string>
+    <string name="config_controls_appearance_section" tools:ignore="MissingTranslation">පාලන පෙනුම</string>
+    <string name="config_controls_virtual_keyboard">අතථ්‍ය පාලන</string>
+    <string name="config_controls_virtual_keyboard_colors">අතථ්‍ය පාලන වර්ණ</string>
+    <string name="config_virtual_controls_color_preview">වර්ණ පෙරදසුන</string>
+    <string name="config_virtual_controls_preview_normal">සාමාන්‍ය</string>
+    <string name="config_virtual_controls_preview_pressed">එබූ</string>
+    <string name="config_controls_maintenance">පිරිසැලසුම</string>
+    <string name="config_controls_skin_help">අභිරුචි රූප භාවිතා කර යතුරුපුවරු බොත්තම්, D-pad සහ ඇනලොග් ස්ටික් වල පෙනුම වෙනස් කරයි.</string>
+    <string name="config_controls_color_button_normal">සාමාන්‍ය බොත්තම</string>
+    <string name="config_controls_color_button_pressed">එබූ බොත්තම</string>
+    <string name="config_controls_color_label_normal">සාමාන්‍ය ලේබලය</string>
+    <string name="config_controls_color_label_pressed">එබූ ලේබලය</string>
+    <string name="config_controls_color_outline_short">පිටත රේඛාව</string>
+    <string name="config_controls_disabled_hint">අතථ්‍ය පාලන දැනට අක්‍රියයි. ඔබට තවමත් මෙහිදී ඒවා අභිරුචිකරණය කළ හැකිය.</string>
+    <string name="config_controls_opacity_help" formatted="false">අතථ්‍ය පාලන විනිවිදභාවය සීරුමාරු කරයි: 0% සම්පූර්ණයෙන්ම විනිවිද පෙනෙන අතර 100% සම්පූර්ණයෙන්ම දෘශ්‍යමාන වේ.</string>
+    <string name="config_controls_opaque_outside">MIDlet තිරයෙන් පිටත පාලන විනිවිදභාවයකින් තොරව පෙන්වන්න</string>
+    <string name="config_controls_opaque_outside_help">MIDlet තිරයෙන් පිටත ඇති පාලන පාරාන්ධතාව නොසලකා හරියි. තිරය මත ඇති පාලන තවමත් තෝරාගත් පාරාන්ධතාව අනුගමනය කරයි.</string>
+    <string name="config_controls_connect_controller">ක්‍රමාංකනය කිරීමට පාලකයක් සම්බන්ධ කරන්න</string>
+    <string name="config_controls_color_skin_notice">සම්පූර්ණ බොත්තම් ආවරණයකට පෙරනිමි බොත්තම් වර්ණ, හැඩය සහ පිටත රේඛාව ප්‍රතිස්ථාපනය කළ හැකිය.</string>
+    <string name="config_current_value">වත්මන් අගය</string>
+    <string name="config_maintenance">යළි පිහිටුවීම සහ දත්ත</string>
+    <string name="config_midlet_actions" tools:ignore="MissingTranslation">MIDlet ක්‍රියා</string>
+    <string name="config_profile_maintenance" tools:ignore="MissingTranslation">පැතිකඩ ක්‍රියා</string>
+    <string name="config_reset_profile_settings" tools:ignore="MissingTranslation">පැතිකඩ කෙටුම්පත යළි පිහිටුවන්න</string>
+    <string name="config_reset_profile_settings_summary" tools:ignore="MissingTranslation">මෙම කෙටුම්පතේ සැකසීම් සහ අතථ්‍ය පාලන පෙරනිමියට ප්‍රතිස්ථාපනය කරන්න.</string>
+    <string name="config_system_compatibility" tools:ignore="MissingTranslation">අනුකරණ ගැළපුම</string>
+    <string name="config_reset_all_settings">MIDlet වින්‍යාසය යළි පිහිටුවන්න</string>
+    <string name="config_reset_all_settings_summary">මෙම MIDlet හි දත්ත මකා නොදමා එහි සැකසීම් සහ අතථ්‍ය පාලන පෙරනිමියට ප්‍රතිස්ථාපනය කරන්න.</string>
+    <string name="config_delete_app_data">MIDlet දත්ත මකන්න</string>
+    <string name="config_delete_app_data_summary">සුරැකි දත්ත ඇතුළුව මෙම MIDlet හි දත්ත ස්ථිරවම මකන්න. එහි සැකසීම් තබා ගනු ලැබේ.</string>
+    <string name="config_message_reset_settings">MIDlet වින්‍යාසය සහ අතථ්‍ය පාලන පෙරනිමියට ප්‍රතිස්ථාපනය කරන්නද? සුරැකි දත්ත නොවෙනස්ව පවතී. සම්බන්ධිත ඕනෑම පැතිකඩක් අනුගමනය කිරීම නතර වේ.</string>
+    <string name="config_message_reset_profile_settings">මෙම පැතිකඩේ සැකසීම් සහ අතථ්‍ය පාලන පෙරනිමියට යළි පිහිටුවන්නද? සුරැකීමට පෙර ඔබට තවමත් සංස්කරණය කිරීමට හෝ අවලංගු කිරීමට හැකිය.</string>
+    <string name="config_message_delete_app_data">මෙම MIDlet මඟින් සෑදූ සියලුම සුරැකුම් සහ දත්ත ස්ථිරවම මකන්නද? MIDlet සැකසීම් මකනු නොලැබේ.</string>
+    <string name="config_lock_custom_resolution_ratio">දර්ශන අනුපාතය අගුළු දමන්න</string>
+    <string name="config_swap_screen_size">පළල සහ උස මාරු කරන්න</string>
+    <string name="profile_builtin_settings">JL-Mod පෙරනිමි</string>
+    <string name="profile_default_badge_short">නව MIDlets සඳහා පෙරනිමිය</string>
+    <string name="profile_template_summary">සුරැකි MIDlet සැකසීම්.</string>
+    <string name="profile_name_exists">මෙම නමින් පැතිකඩක් දැනටමත් පවතී.</string>
+    <string name="profile_delete_template_message">“<xliff:g id="profile_name" example="Action Games">%1$s</xliff:g>” පැතිකඩ මකන්නද? එය භාවිතා කරන MIDlets ඒවායේ වත්මන් සැකසීම් තබා ගන්නා නමුත් අනාගත යාවත්කාලීන නොලැබේ.</string>
+    <string name="profile_template_operation_failed">පැතිකඩ මෙහෙයුම සම්පූර්ණ කිරීමට නොහැකි විය.</string>
+    <string name="config_help_screen_size">MIDlet මඟින් භාවිතා කරන අතථ්‍ය Java ME තිර විභේදනය සකසයි.</string>
+    <string name="config_help_orientation">MIDlet ධාවනය වන අතරතුර තිර දිශානතිය තෝරයි.</string>
+    <string name="config_help_scale_type">ක්‍රීඩාව සංදර්ශකයට ගැළපෙන ආකාරය තෝරන්න. අභිරුචි පරිමාණයක් සැකසීමට “අතින්” තෝරන්න.</string>
+    <string name="config_help_scale_ratio" formatted="false">පෙන්වන ප්‍රමාණය 1% සිට 1000% දක්වා සීරුමාරු කරයි. 100% දී ක්‍රීඩාව එහි මුල් ප්‍රමාණය භාවිතා කරයි; විශාල අගයන් තිරයෙන් පිටතට විහිදිය හැකිය.</string>
+    <string name="config_help_lock_custom_resolution_ratio">අභිරුචි විභේදනය සංස්කරණය කරන අතරතුර දර්ශන අනුපාතය තබා ගනී.</string>
+    <string name="config_help_virtual_keyboard">මෙම MIDlet සඳහා තිරය මත පාලන පෙන්වයි.</string>
+    <string name="config_help_touch_input">ස්පර්ශ තිරයෙන් දර්ශක ආදානය ලබා ගැනීමට MIDlet හට ඉඩ දෙයි.</string>
+    <string name="config_help_background">MIDlet තිරය වටා ඇති භාවිතා නොකළ ඉඩ පුරවයි.</string>
+    <string name="config_background_mode">පසුබිම් ප්‍රකාරය</string>
+    <string name="config_background_custom">අභිරුචි</string>
+    <string name="config_background_theme">තේමාව</string>
+    <string name="config_background_immersive">ගිල්වනසුලු</string>
+    <string name="config_background_theme_help">MIDlet තිරය වටා JL-Mod Plus තේමා වර්ණය භාවිතා කරයි.</string>
+    <string name="config_background_immersive_help">MIDlet තිරයෙන් ලබාගත් වර්ණවලින් භාවිතා නොකළ ඉඩ පුරවයි.</string>
+    <string name="config_background_dynamic">ගතික වර්ණය</string>
+    <string name="config_background_dynamic_help">MIDlet තිරයට සුමටව ගැළපෙන එක් ඝන වර්ණයක් භාවිතා කරයි.</string>
+    <string name="config_background_custom_color">පසුබිම් වර්ණය</string>
+    <string name="config_help_background_custom_color">MIDlet තිරය වටා ඇති භාවිතා නොකළ ඉඩෙහි වර්ණය සකසයි.</string>
+    <string name="config_help_skin">MIDlet තිරය වටා විකල්ප රූපයක් හෝ රාමුවක් පෙන්වයි.</string>
+    <string name="config_help_screen_gravity">භාවිතා නොකළ ඉඩ ඉතිරි වූ විට MIDlet තිරය ස්ථානගත කරයි.</string>
+    <string name="config_help_screen_padding">MIDlet තිරය සහ සංදර්ශක ප්‍රදේශයේ දාරය අතර පික්සල් වලින් පිරවුමක් එක් කරයි.</string>
+    <string name="config_help_filter">පරිමාණය කරන විට MIDlet තිරය සුමට කිරීමට රේඛීය පෙරහන භාවිතා කරයි.</string>
+    <string name="config_warning_filter_shader">තිර ශේඩරය සැකසීමට පෙර රේඛීය පෙරහන ආදානය සුමට කරන අතර ප්‍රතිදාන තියුණුබව අඩු කළ හැකිය.</string>
+    <string name="config_help_immediate">MIDlet සිදුවීම් පෝලිම්ගත නොකර ක්ෂණිකව සකසයි. ප්‍රතිචාර දැක්වීම වැඩි දියුණු කළ හැකි නමුත් සමහර MIDlets අස්ථාවර කළ හැකිය.</string>
+    <string name="config_help_graphics_mode">MIDlet තිරය සඳහා විදැහුම් මාර්ගය තෝරයි. දෘඪාංග ත්වරණය කාර්ය සාධනය වැඩි දියුණු කළ හැකි නමුත් ගැළපුම උපාංගය අනුව වෙනස් වේ.</string>
+    <string name="config_help_shader">පෙන්වීමට පෙර MIDlet රාමුවට ශේඩරයක් යොදයි.</string>
+    <string name="config_help_shader_tuning">ලබා ගත හැකි පාලන තෝරාගත් ශේඩරය මත රඳා පවතී.</string>
+    <string name="config_help_parallel_redraw">රාමු ඉදිරිපත් කිරීම අසමමුහුර්තව සැලසුම් කරයි. මෙය සමහර උපාංගවල කාර්ය සාධනය වැඩි දියුණු කළ හැකිය.</string>
+    <string name="config_help_force_fullscreen">MIDlet ආරම්භ වන විට විධාන තීරුව සඟවයි. ක්‍රීඩා කරන අතරතුර MIDlet එය නැවත පෙන්විය හැකිය.</string>
+    <string name="config_help_fps_limit">1× අනුකරණ වේගයේදී FPS සීමාව සකසයි. සඵල සීමාව අනුකරණ වේගය අනුගමනය කරයි; 0 (උපරිම) සංදර්ශකයේ උපරිම නැවුම් අනුපාතය භාවිතා කරයි.</string>
+    <string name="config_timing_mode_full_guest">අනුකරණ වේලාව</string>
+    <string name="config_timing_mode_real_wall">පද්ධති වේලාව</string>
+    <string name="config_help_emulation_speed">MIDlet ඔරලෝසු වේගය සහ සහාය දක්වන ප්‍රමාදයන් වෙනස් කරයි. Android ශ්‍රව්‍ය සහ අතුරුමුහුණත සාමාන්‍ය වේගයෙන් පවතී.</string>
+    <string name="config_help_timing_mode">MIDlet අනුකරණ වේලාව හෝ පද්ධති වේලාව භාවිතා කරන්නේද යන්න තෝරයි. සාපේක්ෂ ප්‍රමාදයන් අනුකරණ වේගය සමඟ පරිමාණය වී පවතී.</string>
+    <string name="config_help_timing_unavailable">මෙම MIDlet ස්ථාපනය සඳහා වේලා සැකසීම් ලබා ගත නොහැක. ඒවා සබල කිරීමට MIDlet නැවත ස්ථාපනය හෝ නැවත පරිවර්තනය කරන්න.</string>
+    <string name="config_help_generic_color">මෙම දෘශ්‍ය අංගයේ වර්ණය සකසයි.</string>
+    <string name="config_help_encoding">microedition.encoding ලෙස වාර්තා කරන අක්ෂර කේතීකරණය තෝරයි.</string>
+    <string name="config_edit_system_properties">පද්ධති ගුණාංග සංස්කරණය කරන්න</string>
+    <string name="config_help_system_properties">MIDlet වෙත වාර්තා කරන උසස් Java ME ගුණාංග සකසයි.</string>
+    <string name="config_help_system_properties_long">පේළියකට එක් ගුණාංගයක් “නම: අගය” ලෙස සංස්කරණය කරන්න. වැරදි අගයන් ගැළපුමට බලපෑ හැකිය.</string>
+    <string name="config_system_properties_info">බොහෝ MIDlets සඳහා මෙහි වෙනස්කම් අවශ්‍ය නොවේ.</string>
+    <string name="config_font_sizes">අකුරු ප්‍රමාණ</string>
+    <string name="config_help_font_sizes">MIDlet සඳහා කුඩා, මධ්‍යම සහ විශාල Java ME අකුරු ප්‍රමාණ සකසයි.</string>
+    <string name="config_help_font_sizes_long">Java ME අකුරු ප්‍රමාණ පික්සල් වලින් හෝ Android අකුරු පරිමාණය සබල විට පරිමාණ ඒකක වලින් සකසයි. පෙළ සමබරව තබා ගැනීමට ඒවා එකට වෙනස් කරන්න.</string>
+    <string name="config_font_sizes_value">කුඩා <xliff:g id="small_size" example="12">%1$s</xliff:g> · මධ්‍යම <xliff:g id="medium_size" example="16">%2$s</xliff:g> · විශාල <xliff:g id="large_size" example="20">%3$s</xliff:g></string>
+    <string name="config_help_font_presets">සාමාන්‍ය Java ME තිර විභේදනවලට ගැළපෙන අකුරු ප්‍රමාණ යොදයි.</string>
+    <string name="config_help_font_dimensions">Java ME අකුරු ප්‍රමාණවලට Android හි අකුරු පරිමාණය යොදයි.</string>
+    <string name="config_help_font_aa">විදහා දැක්වූ පෙළෙහි දාර සුමට කරයි.</string>
+    <string name="config_help_key_layout">MIDlet වෙත වාර්තා කරන යතුරු කේත ක්‍රමය තෝරයි.</string>
+    <string name="config_help_key_mapping">භෞතික Android යතුරු සහ බොත්තම් Java ME යතුරුපුවරු ක්‍රියාවලට සිතියම්ගත කරයි.</string>
+    <string name="config_help_vk_button_shape">පෙරනිමි යතුරුපුවරු බොත්තම් හැඩය සකසයි. D-pad සහ ඇනලොග් ස්ටික් සඳහා ඒවාටම ආවේණික හැඩයන් ඇත.</string>
+    <string name="config_help_vk_feedback">සැකසීම් තුළ කම්පනය සබල කර ඇත්නම් අතථ්‍ය පාලනයක් එබූ විට කම්පනය වේ.</string>
+    <string name="config_help_vk_hide_delay">පාලන MIDlet තිරය ආවරණය කරන විට මෙම ප්‍රමාදයෙන් පසු ඒවා සඟවයි. 0 අගය ස්වයංක්‍රීයව සැඟවීම අබල කරයි.</string>
+    <string name="config_help_reset_layout">වෙනත් MIDlet සැකසීම් වෙනස් නොකර අතථ්‍ය පාලන පිරිසැලසුම ප්‍රතිස්ථාපනය කරයි.</string>
+    <string name="config_help_skip_resume">පළමු සාර්ථක startApp() වලින් පසු MIDlet නැවත ඇරඹෙන විට පසු ඇමතුම් මඟහරියි. නැවත ඇරඹීමේදී අසාර්ථක වන MIDlets සඳහා පමණක් භාවිතා කරන්න.</string>
+    <string name="config_help_soundbank">MIDI සංස්ලේෂණය සඳහා භාවිතා කරන ශබ්ද බැංකුව තෝරයි.</string>
+    <string name="profile_create_title">පැතිකඩ සාදන්න</string>
+    <string name="profile_rename_title">පැතිකඩ නැවත නම් කරන්න</string>
+    <string name="presets">පැතිකඩ</string>
+    <string name="preset_use">පැතිකඩ භාවිතා කරන්න</string>
+    <string name="preset_save_as">පැතිකඩක් ලෙස සුරකින්න</string>
+    <string name="preset_custom_configuration">අභිරුචි වින්‍යාසය</string>
+    <string name="preset_based_on_modified">මෙම MIDlet හි වත්මන් වින්‍යාසය “<xliff:g id="profile_name" example="Action Games">%1$s</xliff:g>” වෙතින් වෙනස් වේ.</string>
+    <string name="preset_builtin">JL-Mod පෙරනිමි</string>
+    <string name="preset_builtin_summary">අන්තර්ගත MIDlet සැකසීම් සහ අතථ්‍ය පාලන.</string>
+    <string name="preset_picker_title">පැතිකඩ භාවිතා කරන්න</string>
+    <string name="preset_manage">පැතිකඩ කළමනාකරණය කරන්න</string>
+    <string name="profile_more_actions"><xliff:g id="profile_name" example="Action Games">%1$s</xliff:g> සඳහා තවත් ක්‍රියා</string>
+    <string name="profile_create_summary">වෙනත් MIDlets සඳහා නැවත භාවිතා කළ හැකි සැකසුමක් සුරකින්න.</string>
+    <string name="preset_application_settings">MIDlet සැකසීම්</string>
+    <string name="preset_includes_keyboard_layout">අතථ්‍ය පාලන පිරිසැලසුම ඇතුළත් වේ.</string>
+    <string name="preset_virtual_keyboard_on">අතථ්‍ය පාලන සබලයි</string>
+    <string name="preset_virtual_keyboard_off">අතථ්‍ය පාලන අබලයි</string>
+    <string name="preset_apply">යොදන්න</string>
+    <string name="preset_apply_failed_summary">මෙම පැතිකඩ යෙදීමට නොහැකි විය. මූලාශ්‍රය පරීක්ෂා කර නැවත උත්සාහ කරන්න.</string>
+    <string name="preset_choose_parts">යෙදිය යුතු දේ තෝරන්න</string>
+    <string name="preset_name">නම</string>
+    <string name="preset_save_help">මෙම MIDlet හි සැකසීම් සහ තිබේ නම් එහි අතථ්‍ය පාලන පිරිසැලසුම පැතිකඩක් ලෙස සුරකින්න. මෙම MIDlet එම පැතිකඩ භාවිතා කරන අතර එහි අනාගත යාවත්කාලීන ලබා ගනී.</string>
+    <string name="preset_update">“<xliff:g id="profile_name" example="Action Games">%1$s</xliff:g>” යාවත්කාලීන කරන්න</string>
+    <string name="preset_update_title">“<xliff:g id="profile_name" example="Action Games">%1$s</xliff:g>” යාවත්කාලීන කරන්නද?</string>
+    <string name="preset_update_summary">“<xliff:g id="profile_name" example="Action Games">%1$s</xliff:g>” මෙම MIDlet හි වත්මන් සැකසීම් සහ තිබේ නම් එහි අතථ්‍ය පාලන පිරිසැලසුමෙන් ප්‍රතිස්ථාපනය කරන්න. මෙම පැතිකඩ භාවිතා කරන වෙනත් MIDlets ඊළඟ වර ආරම්භ වන විට වෙනස්කම් ලබා ගනී.</string>
+    <string name="preset_update_confirm">යාවත්කාලීන කරන්න</string>
+    <string name="preset_saved_unlinked_warning">පැතිකඩ සුරකින ලදී, නමුත් මෙම MIDlet හට එයින් අනාගත යාවත්කාලීන නොලැබේ.</string>
+    <string name="profile_default_fallback_notice">පෙරනිමි පැතිකඩ “<xliff:g id="profile_name" example="Action Games">%1$s</xliff:g>” භාවිතා කිරීමට නොහැකි විය. එය නොමැති, අසම්පූර්ණ හෝ කියවිය නොහැකි විය හැකිය. නව MIDlets සඳහා දැන් පෙරනිමිය “JL-Mod පෙරනිමි” වේ.</string>
+    <string name="preset_discard_changes_title">වෙනස්කම් ඉවතලන්නද?</string>
+    <string name="preset_discard_changes_summary">මෙම පැතිකඩ කෙටුම්පත සුරැකී නැත.</string>
+    <string name="preset_continue_editing">සංස්කරණය දිගටම කරන්න</string>
+    <string name="preset_discard_changes">ඉවතලන්න</string>
+    <string name="preset_name_exists">මෙම නමින් පැතිකඩක් දැනටමත් පවතී.</string>
+    <string name="preset_invalid_name">වලංගු පැතිකඩ නමක් ඇතුළත් කරන්න.</string>
+    <string name="preset_manager_default_section">නව MIDlets සඳහා පෙරනිමිය</string>
+    <string name="preset_manager_presets_section">මගේ පැතිකඩ</string>
+    <string name="preset_manager_keyboard_section">සුරැකි අතථ්‍ය පාලන පිරිසැලසුම්</string>
+    <string name="preset_default_policy_summary">නව MIDlet එකක් ස්ථාපනය කරන විට යෙදේ.</string>
+    <string name="preset_keyboard_layout_unavailable">අතථ්‍ය පාලන පිරිසැලසුම ලබා ගත නොහැක.</string>
+    <string name="edit_preset">පැතිකඩ සංස්කරණය කරන්න</string>
+    <string name="preset_edit_title">පැතිකඩ සංස්කරණය: <xliff:g id="profile_name" example="Action Games">%1$s</xliff:g></string>
+    <string name="preset_unavailable_section">ලබා ගත නොහැක</string>
+    <string name="preset_unavailable_summary">මෙම පැතිකඩ පූරණය කිරීමට නොහැකි විය. එය නැවත නම් කරන්න හෝ මකන්න.</string>
+    <string name="preset_change_default">වෙනස් කරන්න</string>
+    <string name="preset_default_picker_title">නව MIDlets සඳහා පෙරනිමිය</string>
+    <string name="profile_follows_updates">අනාගත පැතිකඩ යාවත්කාලීන අනුගමනය කරයි.</string>
+    <string name="profile_apply_whole">සම්පූර්ණ පැතිකඩ</string>
+    <string name="profile_apply_whole_follows">සැකසීම් සහ පිරිසැලසුම ප්‍රතිස්ථාපනය කරන්න; අනාගත යාවත්කාලීන අනුගමනය කරන්න.</string>
+    <string name="profile_apply_whole_without_layout">සැකසීම් ප්‍රතිස්ථාපනය කරන්න, දේශීය පිරිසැලසුම ඉවත් කරන්න සහ යාවත්කාලීන අනුගමනය කරන්න.</string>
+    <string name="profile_apply_settings_only">MIDlet සැකසීම් පමණි</string>
+    <string name="profile_apply_settings_keeps_layout">මෙම MIDlet හි පිරිසැලසුම තබා ගන්න; අභිරුචි වින්‍යාසයක් භාවිතා කරන්න.</string>
+    <string name="profile_apply_layout_only">අතථ්‍ය පාලන පිරිසැලසුම පමණි</string>
+    <string name="profile_apply_layout_keeps_settings">මෙම MIDlet හි සැකසීම් තබා ගන්න; අභිරුචි වින්‍යාසයක් භාවිතා කරන්න.</string>
+    <string name="config_analog_stick">ඇනලොග් ස්ටික්</string>
+    <string name="config_analog_stick_summary">ප්‍රාථමික ඇනලොග් ස්ටික් සඳහා අක්‍රිය, 4-දිශා, 8-දිශා හෝ සංඛ්‍යාත්මක යතුරුපුවරුව තෝරන්න. පාලක බොත්තම් යතුරු සිතියම්ගත කිරීම් භාවිතා කරයි.</string>
+    <string name="config_analog_stick_off">අක්‍රියයි</string>
+    <string name="config_controller_help_body_compact">පාලක බොත්තම් යතුරුපුවරු සහ දුරකථන යතුරු මෙන් එකම යතුරු සිතියම්ගත කිරීම් භාවිතා කරයි. ඇනලොග් ස්ටික් MIDlet වෙත යවන්නේ දිශා ආදාන පමණි. Android ආපසු යතුර එහි සාමාන්‍ය හැසිරීම තබා ගනී; M වෙත සිතියම්ගත කළ ඕනෑම භෞතික බොත්තමක් ධාවන කාල MIDlet මෙනුව විවෘත කරයි.</string>
+    <string name="config_show_fps_title" tools:ignore="MissingTranslation">FPS පෙන්වන්න</string>
+    <string name="config_show_fps_help" tools:ignore="MissingTranslation">ක්‍රීඩා කරන අතරතුර රාමු අනුපාතය පෙන්වයි.</string>
+    <string name="config_search_requires_fps" tools:ignore="MissingTranslation">ස්ථානය වෙනස් කිරීමට “FPS පෙන්වන්න” ක්‍රියාත්මක කරන්න.</string>
+    <string name="midlet_running_notification_title">MIDlet ධාවනය වේ</string>
+    <string name="midlet_running_notification_text"><xliff:g id="name" example="Example">%1$s</xliff:g> ධාවනය වෙමින් පවතී.</string>
+    <string name="midlet_running_notification_channel">MIDlet ධාවන කාලය</string>
+    <string name="config_gamepad_directions_numeric_v2">සංඛ්‍යාත්මක යතුරුපුවරුව</string>
+    <string name="midlet_file_permission_title">ගබඩා ප්‍රවේශය</string>
+    <string name="midlet_file_permission_read">මෙම MIDlet හට ගොනු කියවීමට අවශ්‍යයි.</string>
+    <string name="midlet_file_permission_write">මෙම MIDlet හට ගොනු සෑදීමට, වෙනස් කිරීමට හෝ මැකීමට අවශ්‍යයි.</string>
+    <string name="midlet_file_permission_allow_once">එක් වරක් ඉඩ දෙන්න</string>
+    <string name="midlet_file_permission_allow_session">MIDlet ධාවනය වන අතරතුර ඉඩ දෙන්න</string>
+    <string name="midlet_file_permission_allow_always">සැමවිටම ඉඩ දෙන්න</string>
+    <string name="midlet_file_permission_deny">සැමවිටම ප්‍රතික්ෂේප කරන්න</string>
+    <string name="midlet_permissions_settings_title">ගබඩා ප්‍රවේශ අවසර</string>
+    <string name="midlet_permissions_read">ගොනු කියවන්න</string>
+    <string name="midlet_permissions_write">ගොනු වෙනස් කරන්න</string>
+    <string name="midlet_permissions_ask">අසන්න</string>
+    <string name="midlet_permissions_allow">සැමවිටම ඉඩ දෙන්න</string>
+    <string name="midlet_permissions_deny">ප්‍රතික්ෂේප කරන්න</string>
+    <string name="midlet_permissions_save_failed">ගබඩා සැකසීම් සුරැකීමට නොහැකි විය.</string>
+    <string name="config_avoid_camera_cutout_title">කැමරා කටවුට් මඟහරින්න</string>
+    <string name="config_avoid_camera_cutout_summary">MIDlet තිරය සහ අතථ්‍ය පාලන කැමරා හෝ තිර කටවුට් වලින් ඈත්ව තබන්න.</string>
+    <string name="midlet_permissions_write_summary">ගොනු සෑදීම සහ මැකීම ඇතුළත් වේ.</string>
+    <string name="midlet_legacy_import_title">පැරණි Siemens සුරැකුම්</string>
+    <string name="midlet_legacy_import_action">පැරණි සුරැකුම් ගොනුවක් තෝරන්න</string>
+    <string name="midlet_legacy_import_summary">පැරණි සුරැකුම් ගොනුවක් මෙම MIDlet හි පුද්ගලික Siemens ගබඩාවට පිටපත් කරන්න. පළමුව MIDlet නවත්වන්න.</string>
+    <string name="midlet_legacy_import_success">ගොනුව මෙම MIDlet හි පුද්ගලික ගබඩාවට පිටපත් කරන ලදී.</string>
+    <string name="midlet_legacy_import_failed">ආයාත කිරීම අසාර්ථක විය. MIDlet නවත්වා ගමනාන්ත ගොනුව දැනටමත් නොපවතින බවට වග බලා ගන්න.</string>
+    <string name="midlet_storage_mode_title">ගබඩා ප්‍රකාරය</string>
+    <string name="midlet_storage_mode_shared">අතථ්‍ය</string>
+    <string name="midlet_storage_mode_android">Android</string>
+    <string name="midlet_storage_mode_shared_summary">වැඩ කරන ෆෝල්ඩරය තුළ බෙදාගත් ෆෝල්ඩර භාවිතා කරන්න.</string>
+    <string name="midlet_storage_mode_android_summary">පෙර අනුවාදවල මෙන් Android ගබඩාව භාවිතා කරන්න.</string>
+    <string name="config_system_properties_reset" tools:ignore="MissingTranslation">පෙරනිමියට යළි පිහිටුවන්න</string>
+    <string name="config_system_properties_reset_title" tools:ignore="MissingTranslation">පද්ධති ගුණාංග යළි පිහිටුවන්නද?</string>
+    <string name="config_system_properties_reset_message" tools:ignore="MissingTranslation">සංස්කාරක අන්තර්ගතය වත්මන් JL-Mod Plus පෙරනිමි වලින් ප්‍රතිස්ථාපනය කරන්නද? වෙනත් සැකසීම් නොවෙනස්ව පවතී. යළි පිහිටුවීම යෙදීමට සුරකින්න.</string>
+    <string name="config_asset_add">+ ගොනුවකින් එක් කරන්න</string>
+    <string name="config_asset_copy_hint">වැඩ කරන ෆෝල්ඩරයට පිටපත් කෙරේ; මුල් ගොනුව එහිම පවතී.</string>
+    <string name="config_asset_name">ගොනු නාමය</string>
+    <string name="config_asset_delete_confirmation">වැඩ කරන ෆෝල්ඩරයෙන් “<xliff:g id="name" example="Example">%1$s</xliff:g>” මකන්නද? වෙනත් MIDlets ද මෙම ගොනුව භාවිතා කළ හැකිය. වෙනත් ස්ථානවල පිටපත්වලට බලපෑමක් නැත.</string>
+    <string name="config_asset_imported">පිටපත් කර තෝරාගත්තා: <xliff:g id="name" example="Example">%1$s</xliff:g></string>
+    <string name="config_asset_reused">පවතින ගොනුව තෝරාගත්තා: <xliff:g id="name" example="Example">%1$s</xliff:g></string>
+    <string name="config_asset_renamed"><xliff:g id="name" example="Example">%1$s</xliff:g> ලෙස නැවත නම් කරන ලදී</string>
+    <string name="config_asset_deleted"><xliff:g id="name" example="Example">%1$s</xliff:g> මකා දමන ලදී</string>
+    <string name="config_asset_invalid">සහාය නොදක්වන හෝ වලංගු නොවන ගොනුවකි.</string>
+    <string name="config_asset_operation_failed">ගොනු මෙහෙයුම සම්පූර්ණ කිරීමට නොහැකි විය.</string>
+    <string name="config_save_failed" tools:ignore="MissingTranslation">සැකසීම් සුරැකීමට නොහැකි විය. ඔබේ වෙනස්කම් තවමත් විවෘතව ඇත — නැවත උත්සාහ කරන්න.</string>
+    <string name="config_asset_busy">පළමුව වත්මන් ගොනු මෙහෙයුම අවසන් කරන්න.</string>
+    <string name="config_quick_settings" tools:ignore="MissingTranslation">ඉක්මන් සැකසීම්</string>
+    <string name="config_all_settings" tools:ignore="MissingTranslation">සියලුම සැකසීම්</string>
+    <string name="profile_local_changes_pending" tools:ignore="MissingTranslation">දේශීය වෙනස්කම් පැතිකඩට සුරැකී නැත</string>
+    <string name="profile_local_configuration_summary" tools:ignore="MissingTranslation">මෙම MIDlet සඳහා පමණක් සැකසීම්</string>
+    <string name="profile_not_following" tools:ignore="MissingTranslation">“<xliff:g id="profile_name" example="Action Games">%1$s</xliff:g>” මත පදනම්ව · යාවත්කාලීන අනුගමනය නොකරයි</string>
+    <string name="profile_stop_following" tools:ignore="MissingTranslation">පැතිකඩ අනුගමනය කිරීම නවත්වන්න</string>
+    <string name="profile_follow_again" tools:ignore="MissingTranslation">පැතිකඩ නැවත අනුගමනය කරන්න</string>
+    <string name="profile_follow_again_summary" tools:ignore="MissingTranslation">මෙම MIDlet හි දේශීය සැකසීම් සහ අතථ්‍ය පාලන නවතම “<xliff:g id="profile_name" example="Action Games">%1$s</xliff:g>” පැතිකඩෙන් ප්‍රතිස්ථාපනය කර එහි අනාගත යාවත්කාලීන අනුගමනය කරන්නද?</string>
+</resources>

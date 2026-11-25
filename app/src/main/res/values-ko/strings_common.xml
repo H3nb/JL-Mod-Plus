@@ -1,0 +1,47 @@
+<?xml version="1.0" encoding="utf-8"?>
+<!-- Shared UI actions, generic labels, dialogs, and About screen. -->
+<resources xmlns:xliff="urn:oasis:names:tc:xliff:document:1.2">
+    <string name="about">정보</string>
+    <string name="about_message">클래식 앱과 게임을 실행하고 라이브러리에서 MIDlet을 정리하며 컨트롤, 디스플레이, 오디오 및 성능을 원하는 대로 설정할 수 있습니다. JL-Mod Plus는 무료 오픈 소스 앱입니다.</string>
+    <string name="about_subtitle">Android용 Java ME 에뮬레이터</string>
+    <string name="about_compatibility">호환성은 MIDlet, 기기 및 지원되는 Java ME API에 따라 달라집니다. 일부 앱은 원래 휴대전화에서 작동하던 방식과 다르게 동작할 수 있습니다.</string>
+    <string name="about_lineage_title">프로젝트 기원</string>
+    <string name="about_build_title">빌드 정보</string>
+    <string name="about_version_label">버전</string>
+    <string name="about_build_label">빌드</string>
+    <string name="about_revision_label">소스 리비전</string>
+    <string name="about_links_title">프로젝트 및 라이선스</string>
+    <string name="about_github_link_copied">브라우저를 찾을 수 없어 GitHub 링크를 클립보드에 복사했습니다.</string>
+    <string name="about_github_browser_unavailable">GitHub을 열 수 있는 브라우저를 찾을 수 없습니다.</string>
+    <string name="about_lineage">JL-Mod Plus는 woesss(Yury Kharchenko)의 JL-Mod에서 독립적으로 분기된 프로젝트입니다. JL-Mod는 Nikita Shakarun의 J2ME Loader를 기반으로 하며, 이는 NaikSoftware의 J2meLoader에서 유래했습니다.</string>
+    <string name="about_evolution">JL-Mod Plus는 이러한 기반 위에 현대적인 인터페이스, 더욱 강력한 MIDlet 라이브러리, 새로운 기능 및 최신 Android 버전 지원을 더했습니다.</string>
+    <string name="action_back">뒤로</string>
+    <string name="action_settings">설정</string>
+    <string name="CANCEL_CMD">취소</string>
+    <string name="change">변경</string>
+    <string name="choose">선택</string>
+    <string name="close">닫기</string>
+    <string name="cmd_menu">메뉴</string>
+    <string name="CONFIRMATION_REQUIRED">확인 필요</string>
+    <string name="create">만들기</string>
+    <string name="default_label"><xliff:g id="name" example="Example">%1$s</xliff:g>(기본값)</string>
+    <string name="dismiss">닫기</string>
+    <string name="edit">편집</string>
+    <string name="error">오류</string>
+    <string name="error_name">이름을 입력하세요.</string>
+    <string name="exit">종료</string>
+    <string name="help">도움말</string>
+    <string name="install">설치</string>
+    <string name="licenses">라이선스</string>
+    <string name="licenses_unavailable">라이선스 세부정보를 사용할 수 없습니다.</string>
+    <string name="loading_info">정보 불러오는 중…</string>
+    <string name="more">더보기</string>
+    <string name="not_saved_exists">이미 존재함</string>
+    <string name="reset">초기화</string>
+    <string name="retry">다시 시도</string>
+    <string name="save">저장</string>
+    <string name="saved"><xliff:g id="name" example="Example">%1$s</xliff:g> 저장됨</string>
+    <string name="START_CMD">시작</string>
+    <string name="warning">경고</string>
+    <string name="removed"><xliff:g id="name" example="Example">%1$s</xliff:g> 제거됨</string>
+</resources>

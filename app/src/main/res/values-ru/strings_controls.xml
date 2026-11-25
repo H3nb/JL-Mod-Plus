@@ -1,0 +1,107 @@
+<?xml version="1.0" encoding="utf-8"?>
+<!-- Virtual keypad controls, layout editor, physical key mappings, and control skins. -->
+<resources xmlns:tools="http://schemas.android.com/tools" xmlns:xliff="urn:oasis:names:tc:xliff:document:1.2">
+    <string name="alert_map_menu">Клавиша меню (M) не назначена.\nВозможно, вы не сможете открыть меню MIDlet во время игры.</string>
+    <string name="dismiss_mapping">Закрыть назначение</string>
+    <string name="layout_edit_finish">Завершить редактирование</string>
+    <string name="layout_edit_done">Готово</string>
+    <string name="layout_editor_grid_size">Размер сетки</string>
+    <string name="layout_editor_grid_coarse">Крупная (16)</string>
+    <string name="layout_editor_grid_normal">Обычная (24)</string>
+    <string name="layout_editor_grid_fine">Мелкая (32)</string>
+    <string name="layout_editor_snap_on">Привязка вкл.</string>
+    <string name="layout_editor_snap_off">Привязка выкл.</string>
+    <string name="layout_edit_save_changes">Сохранить изменения виртуального управления?</string>
+    <string name="layout_edit_discard">Не сохранять</string>
+    <string name="layout_edit_continue">Продолжить редактирование</string>
+    <string name="layout_edit_finished">Редактирование виртуального управления завершено.</string>
+    <string name="virtual_controls_save_failed">Не удалось сохранить виртуальное управление. Повторите попытку.</string>
+    <string name="layout_switch">Выбрать раскладку управления</string>
+    <string name="mapping_dialog_key_not_specified">Клавиши не назначены.</string>
+    <string name="mapping_dialog_message">Нажмите физическую клавишу или кнопку, чтобы назначить её для этого элемента.</string>
+    <string name="mapping_dialog_assigned_inputs">Назначенные клавиши</string>
+    <string name="mapping_dialog_add_input">Можно назначить несколько физических клавиш.</string>
+    <string name="mapping_dialog_remove">Удалить</string>
+    <string name="mapping_dialog_title">Нажмите клавишу или кнопку</string>
+    <string name="message_reset_layout">Сбросить раскладку виртуального управления по умолчанию?</string>
+    <string name="RESET_LAYOUT_CMD">Сбросить раскладку виртуального управления</string>
+    <string name="saved_keyboard_layout_summary">Раскладка виртуального управления сохранена.</string>
+    <string name="control_skin_title">Скин виртуального управления</string>
+    <string name="control_skin_create" tools:ignore="MissingTranslation">Создать набор</string>
+    <string name="control_skin_default" tools:ignore="MissingTranslation">Кнопки по умолчанию</string>
+    <string name="control_skin_edit" tools:ignore="MissingTranslation">Изменить</string>
+    <string name="control_skin_rename" tools:ignore="MissingTranslation">Переименовать</string>
+    <string name="control_skin_duplicate" tools:ignore="MissingTranslation">Дублировать</string>
+    <string name="control_skin_delete" tools:ignore="MissingTranslation">Удалить</string>
+    <string name="control_skin_import_zip" tools:ignore="MissingTranslation">Импорт ZIP</string>
+    <string name="control_skin_export_zip" tools:ignore="MissingTranslation">Экспорт ZIP</string>
+    <string name="control_skin_select_export_folder" tools:ignore="MissingTranslation">Выберите папку для экспорта</string>
+    <string name="control_skin_imported" tools:ignore="MissingTranslation">Импортировано: <xliff:g id="skin_name" example="Classic Nokia">%1$s</xliff:g></string>
+    <string name="control_skin_already_available" tools:ignore="MissingTranslation">Набор «<xliff:g id="skin_name" example="Classic Nokia">%1$s</xliff:g>» уже добавлен</string>
+    <string name="control_skin_exported" tools:ignore="MissingTranslation">Сохранено: <xliff:g id="skin_name" example="Classic Nokia">%1$s</xliff:g></string>
+    <string name="control_skin_archive_invalid_path" tools:ignore="MissingTranslation">Выбранное расположение недоступно.</string>
+    <string name="control_skin_archive_import_failed" tools:ignore="MissingTranslation">Не удалось импортировать скин управления. Убедитесь, что ZIP-архив содержит один корректный набор.</string>
+    <string name="control_skin_archive_export_failed" tools:ignore="MissingTranslation">Не удалось экспортировать скин управления. Выберите доступную для записи папку вне библиотеки скинов.</string>
+    <string name="control_skin_name" tools:ignore="MissingTranslation">Название набора</string>
+    <string name="control_skin_icon" tools:ignore="MissingTranslation">Только значок</string>
+    <string name="control_skin_full" tools:ignore="MissingTranslation">Полная кнопка</string>
+    <string name="control_skin_normal_image" tools:ignore="MissingTranslation">Обычное изображение</string>
+    <string name="control_skin_pressed_image" tools:ignore="MissingTranslation">Изображение при нажатии</string>
+    <string name="control_skin_delete_warning" tools:ignore="MissingTranslation">Удалить этот глобальный набор скинов и все его изображения? MIDlet, использующие его, перейдут на кнопки по умолчанию.</string>
+    <string name="control_skin_invalid_image" tools:ignore="MissingTranslation">Выберите изображение в формате PNG, WebP или SVG.</string>
+    <string name="control_skin_operation_failed" tools:ignore="MissingTranslation">Не удалось обновить набор скинов управления.</string>
+    <string name="control_skin_missing" tools:ignore="MissingTranslation">Набор недоступен (кнопки по умолчанию)</string>
+    <string name="control_skin_remove_image" tools:ignore="MissingTranslation">Удалить</string>
+    <string name="control_skin_manage" tools:ignore="MissingTranslation">Управление набором</string>
+    <string name="control_skin_manage_named" tools:ignore="MissingTranslation">Управление набором «<xliff:g id="skin_name" example="Classic Nokia">%1$s</xliff:g>»</string>
+    <plurals name="control_skin_count">
+        <item quantity="one"><xliff:g id="count" example="4">%1$d</xliff:g> настроенный элемент</item>
+        <item quantity="few"><xliff:g id="count" example="4">%1$d</xliff:g> настроенных элемента</item>
+        <item quantity="many"><xliff:g id="count" example="4">%1$d</xliff:g> настроенных элементов</item>
+        <item quantity="other"><xliff:g id="count" example="4">%1$d</xliff:g> настроенного элемента</item>
+    </plurals>
+    <string name="control_skin_empty" tools:ignore="MissingTranslation">Создайте набор, чтобы настроить изображения кнопок.</string>
+    <string name="control_skin_numeric" tools:ignore="MissingTranslation">Клавиатура</string>
+    <string name="control_skin_navigation" tools:ignore="MissingTranslation">Навигация</string>
+    <string name="control_skin_other" tools:ignore="MissingTranslation">Другие кнопки</string>
+    <string name="control_skin_pressed_requires_normal" tools:ignore="MissingTranslation">Сначала добавьте обычное изображение.</string>
+    <string name="control_skin_edit_named" tools:ignore="MissingTranslation">Кнопка <xliff:g id="button_label" example="5">%1$s</xliff:g></string>
+    <string name="control_skin_change_image" tools:ignore="MissingTranslation">Изменить</string>
+    <string name="control_skin_pick_image" tools:ignore="MissingTranslation">Выбрать изображение</string>
+    <string name="control_skin_soft_left" tools:ignore="MissingTranslation">Левая софт</string>
+    <string name="control_skin_soft_right" tools:ignore="MissingTranslation">Правая софт</string>
+    <string name="control_skin_fire" tools:ignore="MissingTranslation">Огонь</string>
+    <string name="control_skin_menu" tools:ignore="MissingTranslation">Меню</string>
+    <string name="control_skin_movement" tools:ignore="MissingTranslation">Управление движением</string>
+    <string name="control_skin_dpad" tools:ignore="MissingTranslation">D-pad</string>
+    <string name="control_skin_analog" tools:ignore="MissingTranslation">Аналоговый стик</string>
+    <string name="control_skin_dpad_base" tools:ignore="MissingTranslation">Изображение D-pad</string>
+    <string name="control_skin_overlay_up" tools:ignore="MissingTranslation">Наложение: вверх</string>
+    <string name="control_skin_overlay_down" tools:ignore="MissingTranslation">Наложение: вниз</string>
+    <string name="control_skin_overlay_left" tools:ignore="MissingTranslation">Наложение: влево</string>
+    <string name="control_skin_overlay_right" tools:ignore="MissingTranslation">Наложение: вправо</string>
+    <string name="control_skin_analog_base" tools:ignore="MissingTranslation">Изображение основания</string>
+    <string name="control_skin_analog_thumb" tools:ignore="MissingTranslation">Изображение стика</string>
+    <string name="control_skin_analog_thumb_pressed" tools:ignore="MissingTranslation">Изображение активного стика</string>
+    <string name="control_skin_preview_directions" tools:ignore="MissingTranslation">Предпросмотр направлений</string>
+    <string name="control_skin_preview_direction" tools:ignore="MissingTranslation">Предпросмотр: <xliff:g id="direction" example="Up">%1$s</xliff:g></string>
+    <string name="control_skin_builtin_preview" tools:ignore="MissingTranslation">По умолчанию</string>
+    <string name="control_skin_custom_preview" tools:ignore="MissingTranslation">Настроено</string>
+    <string name="layout_editor_group_on">Изменять размер вместе</string>
+    <string name="layout_editor_group_off">Изменять размер отдельно</string>
+    <string name="layout_editor_snap_grid">Привязка к сетке</string>
+    <string name="layout_editor_snap_controls">Привязка к кнопкам</string>
+    <string name="layout_editor_snap_resize">Привязка при изменении размера</string>
+    <string name="layout_editor_snap_resize_on">Привязка размера: вкл.</string>
+    <string name="layout_editor_snap_resize_off">Привязка размера: выкл.</string>
+    <string name="layout_editor_snap_grid_on">Привязка к сетке: вкл.</string>
+    <string name="layout_editor_snap_grid_off">Привязка к сетке: выкл.</string>
+    <string name="layout_editor_snap_controls_on">Привязка к кнопкам: вкл.</string>
+    <string name="layout_editor_snap_controls_off">Привязка к кнопкам: выкл.</string>
+    <string name="layout_editor_guide_gestures">Жесты</string>
+    <string name="layout_editor_guide_move">Перетащите элемент, чтобы переместить его.</string>
+    <string name="layout_editor_guide_resize">Изменяйте размер двумя пальцами. Двигайте их по горизонтали или вертикали, чтобы изменить ширину или высоту.</string>
+    <string name="layout_editor_guide_tools">Инструменты редактора</string>
+    <string name="layout_editor_guide_done">Нажмите «Готово», чтобы сохранить, отменить изменения или продолжить редактирование.</string>
+    <string name="layout_editor_guide_start">Начать редактирование</string>
+</resources>
