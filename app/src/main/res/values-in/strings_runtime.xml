@@ -3,7 +3,7 @@
 <resources xmlns:tools="http://schemas.android.com/tools" xmlns:xliff="urn:oasis:names:tc:xliff:document:1.2">
     <string name="action_keyboard_ime">Keyboard (IME)</string>
     <string name="action_lock_orientation">Kunci rotasi layar</string>
-    <string name="runtime_replacement_failed">Tidak dapat menghentikan MIDlet yang sedang berjalan. Coba buka lagi yang baru.</string>
+    <string name="runtime_replacement_failed">Tidak dapat menghentikan MIDlet yang sedang berjalan. Coba buka kembali MIDlet yang ingin dijalankan.</string>
     <string name="runtime_restart" tools:ignore="MissingTranslation">Mulai ulang</string>
     <string name="runtime_restart_confirmation" tools:ignore="MissingTranslation">Mulai ulang MIDlet ini? Progres yang belum disimpan mungkin hilang.</string>
     <string name="FORCE_CLOSE_CONFIRMATION">Hentikan MIDlet ini? Progres yang belum disimpan mungkin hilang.</string>
@@ -12,12 +12,12 @@
     <string name="runtime_preset_this_midlet_only">Hanya MIDlet ini</string>
     <string name="runtime_preset_update_destination">Perbarui <xliff:g id="profile_name" example="Action Games">%1$s</xliff:g></string>
     <string name="runtime_preset_local_explanation">Hanya kontrol virtual MIDlet ini yang akan berubah.</string>
-    <string name="runtime_preset_update_explanation">Perbarui tata letak kontrol virtual di <xliff:g id="profile_name" example="Action Games">%1$s</xliff:g>.\nMIDlet lain yang ditautkan ke profil ini akan menerima tata letak baru saat dijalankan berikutnya.</string>
+    <string name="runtime_preset_update_explanation">Perbarui tata letak kontrol virtual di <xliff:g id="profile_name" example="Action Games">%1$s</xliff:g>.\nMIDlet lain yang tertaut ke profil ini akan menggunakan tata letak baru saat dijalankan kembali.</string>
     <string name="runtime_layout_apply_title">Terapkan <xliff:g id="name" example="Example">%1$s</xliff:g>?</string>
     <string name="runtime_apply">Terapkan</string>
     <string name="runtime_preset_update_failed">Tersimpan untuk MIDlet ini, tetapi <xliff:g id="profile_name" example="Action Games">%1$s</xliff:g> tidak dapat diperbarui.</string>
-    <string name="runtime_preset_update_unlinked"><xliff:g id="profile_name" example="Action Games">%1$s</xliff:g> telah diperbarui, tetapi MIDlet ini tidak akan menerima pembaruan berikutnya darinya.</string>
-    <string name="msg_immediate_mode_disabled">Pemrosesan langsung dinonaktifkan karena panggilan balik event terlalu dalam.</string>
+    <string name="runtime_preset_update_unlinked"><xliff:g id="profile_name" example="Action Games">%1$s</xliff:g> telah diperbarui, tetapi MIDlet ini tidak akan mengikuti pembaruan profil tersebut.</string>
+    <string name="msg_immediate_mode_disabled">Pemrosesan langsung dinonaktifkan karena panggilan balik event bertingkat terlalu dalam.</string>
     <string name="msg_press_again_to_close">Tekan lagi untuk menutup</string>
     <string name="save_log">Simpan log</string>
     <string name="take_screenshot">Ambil screenshot</string>
@@ -48,7 +48,7 @@
     <string name="crash_report_bundle_failed">Tidak dapat menyiapkan paket diagnostik.</string>
     <string name="crash_report_locate_failed">Tidak ada pemilih file untuk menemukan paket diagnostik.</string>
     <string name="crash_report_bundle_cleanup_failed">Laporan diagnostik dihapus, tetapi paket yang dibuat tidak dapat dihapus.</string>
-    <string name="crash_report_github_unavailable">Browser atau aplikasi tidak ditemukan untuk membuka formulir isu GitHub.</string>
+    <string name="crash_report_github_unavailable">Tidak ada browser atau aplikasi untuk membuka formulir isu GitHub.</string>
     <string name="crash_report_delete_title">Hapus laporan diagnostik?</string>
     <string name="crash_report_delete_message">Tindakan ini menghapus permanen laporan diagnostik dan paket yang dibuat dari perangkat ini. File yang sudah diunggah di tempat lain tidak terpengaruh.</string>
     <plurals name="crash_reports_batch_delete_title">
@@ -80,7 +80,7 @@
     <string name="runtime_virtual_controls_analog">Stik analog</string>
     <string name="runtime_virtual_controls_edit">Edit tata letak</string>
     <string name="runtime_virtual_controls_edit_guide_title">Panduan edit tata letak</string>
-    <string name="runtime_virtual_controls_edit_guide_message">Seret kontrol untuk memindahkannya. Untuk tombol, geser dua jari secara horizontal atau vertikal untuk mengubah lebar atau tinggi, atau secara diagonal untuk mengubah keduanya. Cubit untuk mengubah ukuran D-pad atau stik analog secara proporsional. Ketuk Selesai jika sudah selesai.</string>
+    <string name="runtime_virtual_controls_edit_guide_message">Seret kontrol untuk memindahkannya. Untuk tombol, geser dua jari secara horizontal atau vertikal untuk mengubah lebar atau tinggi, atau secara diagonal untuk mengubah keduanya. Cubit untuk mengubah ukuran D-pad atau stik analog secara proporsional. Ketuk Selesai setelah mengatur tata letak.</string>
     <string name="runtime_virtual_controls_edit_guide_dont_show_again">Jangan tampilkan lagi</string>
     <string name="runtime_virtual_controls_switch_layout">Pilih tata letak kontrol</string>
     <string name="runtime_virtual_controls_show_controls">Pilih kontrol yang ditampilkan</string>
@@ -91,7 +91,7 @@
     <string name="screenshot_saved_path">Screenshot tersimpan di <xliff:g id="path" example="Pictures/Bounce Tales/Screenshot_20261125-103000.png">%1$s</xliff:g></string>
     <!-- Deliberate English fallback until reviewed translations are available. -->
     <string name="log_save_success" tools:ignore="MissingTranslation"><xliff:g id="name" example="Example">%1$s</xliff:g> tersimpan di Downloads → JL-Mod Plus Diagnostics.</string>
-    <string name="log_save_partial" tools:ignore="MissingTranslation">Log sebagian tersimpan sebagai <xliff:g id="name" example="Example">%1$s</xliff:g> di Downloads → JL-Mod Plus Diagnostics.</string>
+    <string name="log_save_partial" tools:ignore="MissingTranslation">Sebagian log tersimpan sebagai <xliff:g id="name" example="Example">%1$s</xliff:g> di Downloads → JL-Mod Plus Diagnostics.</string>
     <string name="log_save_empty" tools:ignore="MissingTranslation">Tidak ada catatan log aplikasi yang tersedia di buffer Android.</string>
     <string name="log_save_timeout" tools:ignore="MissingTranslation">Waktu pengumpulan log habis. Tidak ada file yang disimpan.</string>
     <string name="log_save_failed">Tidak dapat menyimpan log.</string>
@@ -99,7 +99,7 @@
     <string name="diagnostic_reason_java_crash">Crash Java</string>
     <string name="diagnostic_reason_native_crash">Crash native</string>
     <string name="diagnostic_reason_anr">Aplikasi tidak merespons</string>
-    <string name="diagnostic_reason_signal">Penghentian sinyal</string>
+    <string name="diagnostic_reason_signal">Proses dihentikan oleh sinyal</string>
     <string name="diagnostic_reason_unknown">Penyebab tidak diketahui</string>
     <string name="crash_reports_delete_failed">Beberapa laporan diagnostik tidak dapat dihapus. Laporan lainnya mungkin telah dihapus.</string>
     <string name="crash_reports_bundle_cleanup_failed">Laporan diagnostik dihapus, tetapi beberapa paket yang dibuat tidak dapat dihapus.</string>

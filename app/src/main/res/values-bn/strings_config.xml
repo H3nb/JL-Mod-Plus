@@ -265,7 +265,7 @@
     <string name="preset_update_title"><xliff:g id="profile_name" example="Action Games">%1$s</xliff:g> আপডেট করবেন?</string>
     <string name="preset_update_summary"><xliff:g id="profile_name" example="Action Games">%1$s</xliff:g>-কে এই MIDlet-এর বর্তমান সেটিংস এবং উপলব্ধ থাকলে এর ভার্চুয়াল কন্ট্রোল লেআউট দিয়ে প্রতিস্থাপন করুন। এই প্রোফাইল ব্যবহারকারী অন্যান্য MIDlet পরবর্তী বার চালু হওয়ার সময় পরিবর্তনগুলো পাবে।</string>
     <string name="preset_update_confirm">আপডেট করুন</string>
-    <string name="preset_saved_unlinked_warning">প্রোফাইল সেভ করা হয়েছে, তবে এই MIDlet এর ভবিষ্যতের আপডেট পাবে না।</string>
+    <string name="preset_saved_unlinked_warning">প্রোফাইল সেভ করা হয়েছে, তবে এই MIDlet ওই প্রোফাইলের ভবিষ্যৎ আপডেট পাবে না।</string>
     <string name="profile_default_fallback_notice">ডিফল্ট প্রোফাইল “<xliff:g id="profile_name" example="Action Games">%1$s</xliff:g>” ব্যবহার করা যায়নি। এটি অনুপস্থিত, অসম্পূর্ণ বা অপাঠ্য হতে পারে। নতুন MIDlet-এর জন্য এখন JL-Mod ডিফল্ট নির্ধারিত হয়েছে।</string>
     <string name="preset_discard_changes_title">পরিবর্তনগুলো বাতিল করবেন?</string>
     <string name="preset_discard_changes_summary">এই প্রোফাইল খসড়াটি সেভ করা হয়নি।</string>

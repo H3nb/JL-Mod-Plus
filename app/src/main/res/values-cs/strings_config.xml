@@ -171,7 +171,7 @@
     <string name="config_reset_all_settings_summary">Obnoví nastavení a virtuální ovládání tohoto MIDletu na výchozí hodnoty bez smazání jeho dat.</string>
     <string name="config_delete_app_data">Smazat data MIDletu</string>
     <string name="config_delete_app_data_summary">Trvale smaže data tohoto MIDletu včetně uložených pozic. Jeho nastavení zůstane zachováno.</string>
-    <string name="config_message_reset_settings">Obnovit konfiguraci MIDletu a virtuální ovládání na výchozí hodnoty? Uložená data zůstanou zachována. Propojený profil přestane být sledován.</string>
+    <string name="config_message_reset_settings">Obnovit konfiguraci MIDletu a virtuální ovládání na výchozí hodnoty? Uložená data zůstanou zachována. MIDlet už nebude přebírat změny z propojeného profilu.</string>
     <string name="config_message_reset_profile_settings">Obnovit nastavení a virtuální ovládání tohoto profilu na výchozí hodnoty? Před uložením můžete úpravy dokončit nebo zrušit.</string>
     <string name="config_message_delete_app_data">Trvale smazat všechny uložené pozice a data vytvořená tímto MIDletem? Nastavení MIDletu nebude smazáno.</string>
     <string name="config_lock_custom_resolution_ratio">Uzamknout poměr stran</string>

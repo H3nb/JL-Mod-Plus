@@ -174,7 +174,7 @@
     <string name="config_reset_all_settings_summary">Przywróć domyślne ustawienia i wirtualne sterowanie tego MIDletu bez usuwania jego danych.</string>
     <string name="config_delete_app_data">Usuń dane MIDletu</string>
     <string name="config_delete_app_data_summary">Trwale usuń dane tego MIDletu, w tym zapisy gry. Jego ustawienia zostaną zachowane.</string>
-    <string name="config_message_reset_settings">Przywrócić domyślną konfigurację i wirtualne sterowanie MIDletu? Zapisane dane pozostaną nienaruszone. Powiązany profil przestanie być obserwowany.</string>
+    <string name="config_message_reset_settings">Przywrócić domyślną konfigurację i wirtualne sterowanie MIDletu? Zapisane dane pozostaną nienaruszone. MIDlet nie będzie już otrzymywać zmian z powiązanego profilu.</string>
     <string name="config_message_reset_profile_settings">Przywrócić domyślne ustawienia i wirtualne sterowanie tego profilu? Przed zapisaniem nadal możesz je edytować lub anulować.</string>
     <string name="config_message_delete_app_data">Trwale usunąć wszystkie zapisy i dane utworzone przez ten MIDlet? Ustawienia MIDletu nie zostaną usunięte.</string>
     <string name="config_lock_custom_resolution_ratio">Zablokuj proporcje</string>

@@ -171,7 +171,7 @@
     <string name="config_reset_all_settings_summary">Khôi phục cài đặt và điều khiển ảo của MIDlet này về mặc định mà không xóa dữ liệu.</string>
     <string name="config_delete_app_data">Xóa dữ liệu MIDlet</string>
     <string name="config_delete_app_data_summary">Xóa vĩnh viễn dữ liệu của MIDlet này, bao gồm cả dữ liệu lưu. Cài đặt của MIDlet vẫn được giữ lại.</string>
-    <string name="config_message_reset_settings">Khôi phục cấu hình MIDlet và điều khiển ảo về mặc định? Dữ liệu lưu vẫn nguyên vẹn. Mọi hồ sơ đang liên kết sẽ ngừng được theo dõi.</string>
+    <string name="config_message_reset_settings">Khôi phục cấu hình MIDlet và điều khiển ảo về mặc định? Dữ liệu đã lưu vẫn nguyên vẹn. MIDlet sẽ không còn nhận các thay đổi từ hồ sơ đã liên kết.</string>
     <string name="config_message_reset_profile_settings">Đặt lại cài đặt và điều khiển ảo của hồ sơ này về mặc định? Bạn vẫn có thể chỉnh sửa hoặc hủy trước khi lưu.</string>
     <string name="config_message_delete_app_data">Xóa vĩnh viễn mọi dữ liệu lưu và dữ liệu do MIDlet này tạo? Cài đặt MIDlet sẽ không bị xóa.</string>
     <string name="config_lock_custom_resolution_ratio">Khóa tỷ lệ khung hình</string>

@@ -172,7 +172,7 @@
     <string name="config_reset_all_settings_summary">Setzt die Einstellungen und die virtuelle Steuerung dieses MIDlets auf den Standard zurück, ohne seine Daten zu löschen.</string>
     <string name="config_delete_app_data">MIDlet-Daten löschen</string>
     <string name="config_delete_app_data_summary">Löscht dauerhaft alle Daten dieses MIDlets einschließlich Spielständen. Die Einstellungen bleiben erhalten.</string>
-    <string name="config_message_reset_settings">MIDlet-Konfiguration und virtuelle Steuerung auf den Standard zurücksetzen? Gespeicherte Daten bleiben erhalten. Ein verknüpftes Profil wird nicht mehr weiterverfolgt.</string>
+    <string name="config_message_reset_settings">MIDlet-Konfiguration und virtuelle Steuerung auf die Standardwerte zurücksetzen? Gespeicherte Daten bleiben erhalten. Das MIDlet übernimmt keine weiteren Änderungen eines verknüpften Profils.</string>
     <string name="config_message_reset_profile_settings">Einstellungen und virtuelle Steuerung dieses Profils auf den Standard zurücksetzen? Sie können vor dem Speichern weiterbearbeiten oder abbrechen.</string>
     <string name="config_message_delete_app_data">Alle von diesem MIDlet erstellten Spielstände und Daten dauerhaft löschen? Die MIDlet-Einstellungen werden nicht gelöscht.</string>
     <string name="config_lock_custom_resolution_ratio">Seitenverhältnis sperren</string>

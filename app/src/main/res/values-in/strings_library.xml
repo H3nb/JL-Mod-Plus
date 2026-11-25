@@ -75,13 +75,13 @@
     <string name="library_icon_shape_title">Bentuk ikon</string>
     <string name="library_icon_shape_round">Sudut membulat</string>
     <string name="library_icon_shape_square">Sudut tajam</string>
-    <string name="library_grid_icon_size_title" tools:ignore="MissingTranslation">Ukuran ikon kisi</string>
+    <string name="library_grid_icon_size_title" tools:ignore="MissingTranslation">Ukuran ikon pada kisi</string>
     <string name="library_grid_icon_size_small" tools:ignore="MissingTranslation">Kecil</string>
     <string name="library_grid_icon_size_standard" tools:ignore="MissingTranslation">Standar</string>
     <string name="library_grid_icon_size_large" tools:ignore="MissingTranslation">Besar</string>
-    <string name="library_grid_icon_size_summary" tools:ignore="MissingTranslation">Mengubah ukuran ikon dan jumlah kolom pada tampilan Kisi.</string>
-    <string name="library_grid_spacing_title">Jarak kisi</string>
-    <string name="library_grid_spacing_summary" tools:ignore="MissingTranslation">Hanya berlaku untuk tampilan Kisi.</string>
+    <string name="library_grid_icon_size_summary" tools:ignore="MissingTranslation">Mengubah ukuran ikon dan jumlah kolom pada tampilan kisi.</string>
+    <string name="library_grid_spacing_title">Jarak antarelemen kisi</string>
+    <string name="library_grid_spacing_summary" tools:ignore="MissingTranslation">Hanya berlaku untuk tampilan kisi.</string>
     <string name="library_grid_spacing_none">Tidak ada (0 dp)</string>
     <string name="library_grid_spacing_compact">Rapat (4 dp)</string>
     <string name="library_grid_spacing_standard">Standar (8 dp)</string>
@@ -90,8 +90,8 @@
     <string name="library_show_list_description">Tampilkan deskripsi MIDlet</string>
     <string name="library_collections_empty_title">Belum ada koleksi</string>
     <string name="library_collections_empty_message">Koleksi belum tersedia hingga pustaka selesai dimuat.</string>
-    <string name="library_expand_description">Luaskan deskripsi</string>
-    <string name="library_collapse_description">Ciutkan deskripsi</string>
+    <string name="library_expand_description">Tampilkan deskripsi lengkap</string>
+    <string name="library_collapse_description">Ringkas deskripsi</string>
     <string name="no_data_for_display">Tidak ada aplikasi untuk ditampilkan</string>
     <string name="permission_request_failed">Izin tulis penyimpanan diperlukan.</string>
     <string name="reinstall">Aplikasi ini sudah terinstal. Instal ulang?</string>
@@ -162,7 +162,7 @@
     <string name="library_import_done_with_warning">Paket aplikasi diimpor dengan peringatan.</string>
     <string name="library_import_invalid_bundle">Paket aplikasi yang dipilih tidak valid, rusak, atau tidak didukung. Pilih paket aplikasi JL-Mod Plus yang valid lalu coba lagi.</string>
     <string name="library_import_restore_existing">Aplikasi ini sudah terinstal. Setelan dan data simpanan yang disertakan akan mengganti data yang ada; penanda akan digabungkan kecuali setelan juga disertakan.</string>
-    <string name="library_import_restore_failed">Aplikasi terinstal, tetapi data paketnya tidak dapat dipulihkan. Coba pulihkan lagi?</string>
+    <string name="library_import_restore_failed">Aplikasi terinstal, tetapi data paket tidak dapat dipulihkan. Coba pulihkan lagi?</string>
     <string name="library_play_stats_summary">Dibuka: <xliff:g id="launch_count" example="12">%1$d</xliff:g> · Total waktu: <xliff:g id="total_time" example="2h 15m">%2$s</xliff:g></string>
     <string name="library_share_chooser_title">Bagikan aplikasi</string>
     <string name="library_export_chooser_title">Ekspor</string>
@@ -171,7 +171,7 @@
     <string name="library_back">Kembali ke pustaka</string>
     <string name="library_sort">Urutkan aplikasi</string>
     <string name="library_search_clear">Hapus pencarian</string>
-    <string name="library_description_more">… Lainnya</string>
+    <string name="library_description_more">… Selengkapnya</string>
     <string name="library_description_less">Ringkas</string>
     <plurals name="file_picker_selected_count">
         <item quantity="other"><xliff:g id="count" example="3">%1$d</xliff:g> dipilih</item>
@@ -273,7 +273,7 @@
     <string name="library_metadata_vendor">Vendor</string>
     <string name="library_metadata_reset_to_original">Kembalikan ke semula</string>
     <string name="library_metadata_save">Simpan</string>
-    <string name="library_hide_grid_titles_summary">Sembunyikan nama MIDlet pada tampilan Kisi. Tampilan Daftar tetap menampilkannya.</string>
+    <string name="library_hide_grid_titles_summary">Sembunyikan nama MIDlet pada tampilan kisi. Nama tetap terlihat pada tampilan daftar.</string>
     <string name="library_show_list_description_summary">Tampilkan deskripsi setiap MIDlet di bawah judul dan versinya.</string>
     <string name="library_indexing_progress">Mengindeks pustaka… <xliff:g id="completed" example="3">%1$d</xliff:g>/<xliff:g id="total" example="10">%2$d</xliff:g></string>
     <string name="library_indexing_current">Memindai <xliff:g id="name" example="Example">%1$s</xliff:g></string>
@@ -298,7 +298,7 @@
     <string name="library_donation_continue">Lanjut ke Sociabuzz</string>
     <string name="library_donation_not_now">Nanti saja</string>
     <string name="library_donation_link_copied">Tidak ada browser. Tautan Sociabuzz telah disalin.</string>
-    <string name="library_donation_browser_unavailable">Browser tidak ditemukan untuk membuka Sociabuzz.</string>
+    <string name="library_donation_browser_unavailable">Tidak ada browser untuk membuka Sociabuzz.</string>
     <string name="library_bulk_delete_apps">Hapus aplikasi</string>
     <string name="library_bulk_add_collection">Tambahkan ke koleksi</string>
     <string name="library_bulk_share_apps">Bagikan aplikasi</string>
@@ -311,7 +311,7 @@
     <string name="bulk_install_prepare_failed">Tidak dapat menyiapkan aplikasi yang dipilih untuk instalasi.</string>
     <string name="installer_existing_data_preserved">Setelan dan data simpanan yang ada akan tetap dipertahankan.</string>
     <string name="bulk_install_library_changed">Pustaka berubah setelah peninjauan. Tutup penginstal, lalu pilih kembali file yang ingin diinstal.</string>
-    <string name="bulk_install_source_unavailable">File sumber yang diperlukan tidak lagi tersedia. Pilih filenya lagi.</string>
+    <string name="bulk_install_source_unavailable">File sumber yang diperlukan tidak lagi tersedia. Pilih kembali file yang diperlukan.</string>
     <string name="bulk_install_source_changed">File sumber berubah setelah peninjauan. Pilih filenya lagi.</string>
     <string name="bulk_install_target_unverified">Tidak dapat memverifikasi aplikasi yang akan diinstal ulang. Tutup penginstal, lalu pilih kembali aplikasi.</string>
     <string name="bulk_install_result_restored">Dipulihkan</string>
@@ -330,7 +330,7 @@
     <string name="bulk_install_reason_missing_parent">JAD tidak memiliki folder induk.</string>
     <!-- %1$s is the exact MIDlet-Jar-URL reference, not a normalized filesystem path. -->
     <string name="bulk_install_reason_jar_not_found">JAR yang dirujuk oleh JAD tidak ditemukan: <xliff:g id="file_path" example="game.jar">%1$s</xliff:g>.</string>
-    <string name="bulk_install_reason_duplicate_source">Sumber ini menduplikasi sumber lain dalam batch ini.</string>
+    <string name="bulk_install_reason_duplicate_source">Sumber ini terdeteksi sebagai duplikat dalam kelompok instalasi ini.</string>
     <string name="bulk_install_reason_version_conflict">Beberapa varian aplikasi memiliki versi yang sama.</string>
     <string name="bulk_install_reason_older_candidate">Versi lebih baru dari aplikasi ini ada dalam batch yang sama.</string>
     <string name="bulk_install_reason_source_error">Tidak dapat menyiapkan sumber ini untuk instalasi.</string>
@@ -353,7 +353,7 @@
     <string name="updates_notice">JL-Mod Plus <xliff:g id="version" example="2.1.0">%1$s</xliff:g> tersedia. Lihat Pembaruan di Setelan.</string>
     <string name="updates_debug_build">Ini adalah build debug. APK rilis GitHub diinstal secara terpisah.</string>
     <string name="updates_link_copied">Tidak ada browser. Tautan pembaruan telah disalin.</string>
-    <string name="updates_browser_unavailable">Browser tidak ditemukan untuk membuka tautan pembaruan.</string>
+    <string name="updates_browser_unavailable">Tidak ada browser untuk membuka tautan pembaruan.</string>
     <string name="bulk_install_choose_files">File</string>
     <string name="bulk_install_choose_folder">Folder</string>
     <string name="bulk_install_unreadable_archives">Arsip tidak dapat dibaca: <xliff:g id="count" example="3">%1$d</xliff:g></string>
@@ -377,12 +377,12 @@
     <string name="library_metadata_remove_portrait">Hapus ikon 3:4</string>
     <string name="library_metadata_discard_title">Buang perubahan?</string>
     <string name="library_metadata_discard">Buang</string>
-    <string name="library_metadata_default_description">Deskripsi bawaan</string>
+    <string name="library_metadata_default_description">Deskripsi default</string>
     <string name="library_metadata_other_languages">Bahasa lainnya</string>
     <string name="library_metadata_add_language">+ Tambah bahasa</string>
-    <string name="library_metadata_language_search">Cari bahasa atau kode lokal</string>
+    <string name="library_metadata_language_search">Cari bahasa atau kode locale</string>
     <string name="library_metadata_remove_language">Hapus deskripsi</string>
-    <string name="library_metadata_language_load_failed">Tidak dapat memuat deskripsi bahasa. Ketuk Coba lagi untuk mengulang.</string>
+    <string name="library_metadata_language_load_failed">Tidak dapat memuat deskripsi dalam bahasa lain. Ketuk Coba lagi.</string>
     <string name="updates_download_apk" tools:ignore="MissingTranslation">Unduh APK</string>
     <string name="updates_skip_version" tools:ignore="MissingTranslation">Lewati versi ini</string>
     <string name="updates_dialog_message" tools:ignore="MissingTranslation">JL-Mod Plus <xliff:g id="version" example="2.1.0">%1$s</xliff:g> tersedia. Anda menggunakan <xliff:g id="current_version" example="2.0.0">%2$s</xliff:g>. Unduh APK atau lihat rilis di GitHub.</string>

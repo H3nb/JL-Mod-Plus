@@ -13,17 +13,17 @@
     <string name="config_destination_rendering" tools:ignore="MissingTranslation">Grafis</string>
     <string name="config_destination_media">Media</string>
     <string name="config_camera_title">Kamera</string>
-    <string name="config_camera_default_title">Kamera bawaan</string>
+    <string name="config_camera_default_title">Kamera default</string>
     <string name="config_camera_rear">Belakang</string>
     <string name="config_camera_front">Depan</string>
-    <string name="config_camera_resolution_title">Resolusi bawaan</string>
+    <string name="config_camera_resolution_title">Resolusi default</string>
     <string name="config_camera_resolution_auto">Otomatis</string>
     <string name="config_camera_resolution_portrait">480×640 — Potret</string>
     <string name="config_camera_resolution_landscape">640×480 — Lanskap</string>
     <string name="config_destination_controls">Kontrol</string>
     <string name="config_gamepad_test">Uji pengontrol</string>
     <string name="config_gamepad_calibrate">Kalibrasi pengontrol</string>
-    <string name="config_gamepad_calibrate_summary">Mengukur posisi netral pengontrol yang terhubung serta rentang stik dan pemicunya.</string>
+    <string name="config_gamepad_calibrate_summary">Mengukur posisi netral pengontrol yang terhubung serta rentang gerak stik dan tombol trigger.</string>
     <string name="config_gamepad_stick_directions">Arah digital</string>
     <string name="config_gamepad_stick_unassigned">Belum ditetapkan</string>
     <string name="config_gamepad_stick_pointer">Sumber penunjuk</string>
@@ -125,7 +125,7 @@
     <string name="config_display_more" tools:ignore="MissingTranslation">Teks dan performa</string>
     <string name="config_destination_home" tools:ignore="MissingTranslation">Beranda</string>
     <string name="config_overview_profile_draft" tools:ignore="MissingTranslation">Draf profil</string>
-    <string name="config_overview_profile_draft_summary" tools:ignore="MissingTranslation">Edit profil yang dapat digunakan ulang ini, lalu simpan perubahan Anda dari bilah alat.</string>
+    <string name="config_overview_profile_draft_summary" tools:ignore="MissingTranslation">Edit profil ini untuk digunakan kembali pada MIDlet lain. Simpan perubahan melalui bilah alat.</string>
     <string name="config_overview_quick_access" tools:ignore="MissingTranslation">Akses cepat</string>
     <string name="config_system_properties_editor_label">Properti</string>
     <string name="config_overview_enabled" tools:ignore="MissingTranslation">Aktif</string>
@@ -244,7 +244,7 @@
     <string name="preset_use">Gunakan profil</string>
     <string name="preset_save_as">Simpan sebagai profil</string>
     <string name="preset_custom_configuration">Konfigurasi kustom</string>
-    <string name="preset_based_on_modified">Konfigurasi MIDlet ini saat ini berbeda dari <xliff:g id="profile_name" example="Action Games">%1$s</xliff:g>.</string>
+    <string name="preset_based_on_modified">Konfigurasi MIDlet ini berbeda dari <xliff:g id="profile_name" example="Action Games">%1$s</xliff:g>.</string>
     <string name="preset_builtin">Setelan bawaan JL-Mod</string>
     <string name="preset_builtin_summary">Setelan MIDlet dan kontrol virtual bawaan.</string>
     <string name="preset_picker_title">Gunakan profil</string>
@@ -256,7 +256,7 @@
     <string name="preset_virtual_keyboard_on">Kontrol virtual aktif</string>
     <string name="preset_virtual_keyboard_off">Kontrol virtual nonaktif</string>
     <string name="preset_apply">Terapkan</string>
-    <string name="preset_apply_failed_summary">Tidak dapat menerapkan profil ini. Periksa sumbernya lalu coba lagi.</string>
+    <string name="preset_apply_failed_summary">Tidak dapat menerapkan profil ini. Periksa sumbernya, lalu coba lagi.</string>
     <string name="preset_choose_parts">Pilih bagian yang akan diterapkan</string>
     <string name="preset_name">Nama</string>
     <string name="preset_save_help">Simpan setelan MIDlet ini beserta tata letak kontrol virtualnya (jika tersedia) sebagai profil. MIDlet ini akan menggunakan profil tersebut dan mengikuti pembaruannya.</string>

@@ -173,7 +173,7 @@
     <string name="config_reset_all_settings_summary">Restaurer par défaut les paramètres et les commandes virtuelles de ce MIDlet sans supprimer ses données.</string>
     <string name="config_delete_app_data">Supprimer les données du MIDlet</string>
     <string name="config_delete_app_data_summary">Supprimer définitivement les données de ce MIDlet, y compris les sauvegardes. Ses paramètres seront conservés.</string>
-    <string name="config_message_reset_settings">Restaurer par défaut la configuration du MIDlet et les commandes virtuelles ? Les données enregistrées restent intactes. Tout profil associé ne sera plus suivi.</string>
+    <string name="config_message_reset_settings">Rétablir les paramètres par défaut du MIDlet et de ses commandes virtuelles ? Les données enregistrées seront conservées. Le MIDlet ne suivra plus les mises à jour du profil associé.</string>
     <string name="config_message_reset_profile_settings">Réinitialiser par défaut les paramètres et les commandes virtuelles de ce profil ? Vous pourrez toujours modifier ou annuler avant d’enregistrer.</string>
     <string name="config_message_delete_app_data">Supprimer définitivement toutes les sauvegardes et données créées par ce MIDlet ? Les paramètres du MIDlet ne seront pas supprimés.</string>
     <string name="config_lock_custom_resolution_ratio">Verrouiller le format</string>
@@ -266,7 +266,7 @@
     <string name="preset_update_title">Mettre à jour <xliff:g id="profile_name" example="Action Games">%1$s</xliff:g> ?</string>
     <string name="preset_update_summary">Remplacer <xliff:g id="profile_name" example="Action Games">%1$s</xliff:g> par les paramètres actuels de ce MIDlet et, si disponible, sa disposition des commandes virtuelles. Les autres MIDlets utilisant ce profil recevront les modifications au prochain démarrage.</string>
     <string name="preset_update_confirm">Mettre à jour</string>
-    <string name="preset_saved_unlinked_warning">Profil enregistré, mais ce MIDlet ne recevra pas ses futures mises à jour.</string>
+    <string name="preset_saved_unlinked_warning">Profil enregistré, mais ce MIDlet ne recevra plus les mises à jour de ce profil.</string>
     <string name="profile_default_fallback_notice">Impossible d’utiliser le profil par défaut « <xliff:g id="profile_name" example="Action Games">%1$s</xliff:g> ». Il est peut-être manquant, incomplet ou illisible. Paramètres par défaut de JL-Mod est désormais le profil par défaut pour les nouveaux MIDlets.</string>
     <string name="preset_discard_changes_title">Ignorer les modifications ?</string>
     <string name="preset_discard_changes_summary">Ce brouillon de profil n’a pas été enregistré.</string>

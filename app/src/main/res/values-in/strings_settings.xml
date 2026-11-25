@@ -52,7 +52,7 @@
     <string name="pref_screen_scale_type_fill">Isi jendela (abaikan rasio aspek)</string>
     <string name="pref_screen_scale_type_fit">Sesuaikan dengan jendela</string>
     <string name="pref_screen_scale_type_none">Manual</string>
-    <string name="pref_screenshot_summary">Menyimpan frame MIDlet pada resolusi rendernya sebelum penskalaan tampilan, filter, dan efek shader.</string>
+    <string name="pref_screenshot_summary">Menyimpan frame MIDlet pada resolusi render sebelum penskalaan tampilan, filter, dan efek shader.</string>
     <string name="pref_screenshot_title">Screenshot mentah</string>
     <string name="PREF_SHADER_FILTER">Shader layar</string>
     <string name="pref_skin_not_set">Tidak ada</string>
@@ -60,7 +60,7 @@
     <string name="pref_skip_resume_call">Lewati startApp() saat dilanjutkan</string>
     <string name="pref_soundbank_title">Soundbank MIDI</string>
     <string name="PREF_SYS_PROPS">Properti sistem</string>
-    <string name="pref_theme_auto_battery">Otomatis (Penghemat Baterai)</string>
+    <string name="pref_theme_auto_battery">Otomatis (penghemat baterai)</string>
     <string name="pref_theme_auto_time">Otomatis (berdasarkan waktu)</string>
     <string name="pref_theme_light">Terang</string>
     <string name="pref_theme_night">Gelap</string>
@@ -73,7 +73,7 @@
     <string name="PREF_VIRTUAL_KEYBOARD_OPTIONS">Tampilkan kontrol virtual</string>
     <string name="PREF_VK_ALPHA">Opasitas</string>
     <string name="PREF_VK_FEEDBACK">Umpan balik haptik</string>
-    <string name="PREF_VK_HIDE_DELAY">Jeda sembunyi otomatis</string>
+    <string name="PREF_VK_HIDE_DELAY">Jeda sebelum kontrol disembunyikan</string>
     <string name="pref_vk_hide_hint">Nonaktif</string>
     <string name="PREF_VK_OUTLINE">Warna garis tepi</string>
     <string name="pref_vk_save_alert">Ganti tata letak kontrol virtual kustom dengan tata letak saat ini?</string>
