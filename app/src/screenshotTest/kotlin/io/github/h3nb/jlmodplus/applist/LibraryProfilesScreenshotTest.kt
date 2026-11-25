@@ -14,6 +14,7 @@
 
 package io.github.h3nb.jlmodplus.applist
 
+import android.content.res.Configuration
 import androidx.compose.foundation.layout.PaddingValues
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.fillMaxSize
