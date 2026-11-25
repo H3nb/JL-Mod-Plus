@@ -32,6 +32,8 @@ import androidx.compose.ui.platform.ViewCompositionStrategy
 import io.github.h3nb.jlmodplus.R
 import io.github.h3nb.jlmodplus.crashes.MidletSessionStore
 import io.github.h3nb.jlmodplus.ui.JLModPlusTheme
+import kotlinx.coroutines.Dispatchers
+import kotlinx.coroutines.withContext
 import java.util.concurrent.ExecutorService
 import java.util.concurrent.Executors
 import java.util.concurrent.RejectedExecutionException
@@ -716,16 +718,22 @@ internal class MemoryEditorComposeController(
                         (pageRevision != null && pageRevision != revision)
                     ) return@post
                     if (watchTab) {
-                        val validIds = watches.mapTo(mutableSetOf(), MemoryWatchRow::id)
+                        val selected = state.selected
                         state = state.copy(
                             watches = watches,
-                            selected = state.selected.filterTo(mutableSetOf()) { it in validIds },
+                            selected = if (selected.isEmpty()) selected else {
+                                val validIds = watches.mapTo(HashSet(), MemoryWatchRow::id)
+                                selected.intersect(validIds)
+                            },
                         )
                     } else {
-                        val validIds = results.mapTo(mutableSetOf(), MemoryResultRow::id)
+                        val selected = state.selected
                         state = state.copy(
                             results = results,
-                            selected = state.selected.filterTo(mutableSetOf()) { it in validIds },
+                            selected = if (selected.isEmpty()) selected else {
+                                val validIds = results.mapTo(HashSet(), MemoryResultRow::id)
+                                selected.intersect(validIds)
+                            },
                         )
                     }
                 }
@@ -966,7 +974,9 @@ internal class MemoryEditorComposeController(
                                 current, state.savedValues[id], now, SAVED_REBOUND_NOTICE_MS,
                             )
                         }
-                        state = state.copy(savedValues = state.savedValues + merged)
+                        if (merged.any { (id, value) -> state.savedValues[id] != value }) {
+                            state = state.copy(savedValues = state.savedValues + merged)
+                        }
                     }
                 }
             } finally {
@@ -1851,9 +1861,12 @@ internal class MemoryEditorComposeController(
                 if (reply != null) {
                     val ids = reply.getStringArray("recipeFreezeIds").orEmpty()
                     val names = reply.getStringArray("recipeFreezeNames").orEmpty()
-                    state = state.copy(scriptActiveFreezes = ids.mapIndexed { index, id ->
+                    val active = ids.mapIndexed { index, id ->
                         id to names.getOrNull(index).orEmpty().ifBlank { id }
-                    })
+                    }
+                    if (active != state.scriptActiveFreezes) {
+                        state = state.copy(scriptActiveFreezes = active)
+                    }
                 }
             }
         }
@@ -1936,21 +1949,29 @@ internal class MemoryEditorComposeController(
         }
     }
 
-    override fun generateMemoryScript(
-        draft: MemoryScriptBuilderDraft, onReady: (String?, String?) -> Unit,
-    ) {
-        val generated = runCatching {
-            MemoryRecipeGenerator.fromBuilder(draft, savedTarget().third, savedLocators)
+    override suspend fun generateMemoryScript(draft: MemoryScriptBuilderDraft): String {
+        val entry = savedTarget().third
+        val locators = savedLocators
+        val token = state.runtimeToken
+        val generated = withContext(Dispatchers.Default) {
+            MemoryRecipeGenerator.fromBuilder(draft, entry, locators)
         }
-        onReady(generated.getOrNull(), generated.exceptionOrNull()?.message)
+        check(token == state.runtimeToken && savedLocators === locators) {
+            "Bookmarks changed. Try again."
+        }
+        return generated
     }
 
-    override fun restoreMemoryScriptBuilder(document: String): MemoryScriptBuilderDraft? =
-        runCatching {
-            MemoryRecipeGenerator.forEditing(
-                document, savedTarget().third, savedLocators, state.savedVariables,
-            )
-        }.getOrNull()
+    override suspend fun restoreMemoryScriptBuilder(document: String): MemoryScriptBuilderDraft? {
+        val entry = runCatching { savedTarget().third }.getOrNull() ?: return null
+        val locators = savedLocators
+        val bookmarks = state.savedVariables
+        val token = state.runtimeToken
+        val restored = withContext(Dispatchers.Default) {
+            MemoryRecipeGenerator.forEditing(document, entry, locators, bookmarks)
+        }
+        return restored?.takeIf { token == state.runtimeToken && savedLocators === locators }
+    }
 
     override fun generateSimpleMemoryRecipe(savedId: String, value: String, freeze: Boolean): String? {
         if (state.busy || !state.writeSupported) return "MIDlet memory is not available"
@@ -2685,7 +2706,7 @@ internal class MemoryEditorComposeController(
         private const val ENGINE_RECONNECT_DELAY_MS = 250L
         private const val LIVE_REFRESH_INITIAL_DELAY_MS = 100L
         private const val LIVE_REFRESH_INTERVAL_MS = 250L
-        private const val SCRIPT_FREEZE_REFRESH_INTERVAL_MS = 1_000L
+        private const val SCRIPT_FREEZE_REFRESH_INTERVAL_MS = LIVE_REFRESH_INTERVAL_MS
         private const val SAVED_RESOLVE_INTERVAL_MS = 1_000L
         private const val SAVED_REBOUND_NOTICE_MS = 4_000L
         private const val CAPABILITY_RETRY_IDLE_MS = 1_000L

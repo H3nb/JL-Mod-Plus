@@ -307,8 +307,9 @@ legacy unknown duration, multi-audio video rejection, and
 synthesis/sampled/video playback and seek on one output. Media checks use a
 private temporary workdir and restore the prior preference; they require no
 commercial assets or custom soundbanks. It uses the
-emulator's default English locale, disables animations, and captures logcat before
-the emulator shuts down. Tests share one fresh installation and run without sharding.
+emulator's default English locale, disables animations, acknowledges Android's
+first-use immersive-mode prompt, and captures logcat before the emulator shuts down.
+Tests share one fresh installation and run without sharding.
 
 `runtime-smoke-results.py` pairs each class/method start with its terminal success.
 Ignored/assumption-failed tests, unmatched completions, duplicate results, incomplete

@@ -445,8 +445,7 @@ public class MemoryRecipeInstrumentedTest {
         String json = recipe(encoded + "," + setCoin);
         assertEquals(MemoryEngineContract.RESULT_OK,status(runner.run(TOKEN,json,inputs(0,1,700),true,false)));
         assertEquals(1,runner.activeCount(TOKEN));
-        assertArrayEquals(new String[]{"test.memory"}, runner.activeIds(TOKEN));
-        assertArrayEquals(new String[]{"test.memory"}, runner.activeNames(TOKEN));
+        assertActiveScripts(runner, new String[]{"test.memory"}, new String[]{"test.memory"});
         root.coins = 1;
         root.encoded[0] = 0;
         assertEquals(MemoryEngineContract.RESULT_OK,status(runner.tick(TOKEN)));
@@ -455,7 +454,7 @@ public class MemoryRecipeInstrumentedTest {
         root.encoded = new byte[4];
         assertEquals(MemoryEngineContract.RESULT_PARTIAL_WRITE, status(runner.tick(TOKEN)));
         assertEquals(0,runner.activeCount(TOKEN));
-        assertArrayEquals(new String[0], runner.activeIds(TOKEN));
+        assertActiveScripts(runner, new String[0], new String[0]);
         assertEquals(0,root.encoded[0]);
     }
 
@@ -691,15 +690,21 @@ public class MemoryRecipeInstrumentedTest {
             "\"id\":\"test.money\",\"name\":\"Coins\"");
         assertEquals(MemoryEngineContract.RESULT_OK,
             status(runner.run(TOKEN, json, inputs(0, 1, 500), true, false)));
-        assertArrayEquals(new String[]{"test.money"}, runner.activeIds(TOKEN));
-        assertArrayEquals(new String[]{"Coins"}, runner.activeNames(TOKEN));
+        assertActiveScripts(runner, new String[]{"test.money"}, new String[]{"Coins"});
         assertEquals(MemoryEngineContract.RESULT_OK, status(runner.clear(TOKEN, "test.money")));
         root.coins = 1;
         assertEquals(MemoryEngineContract.RESULT_OK, status(runner.tick(TOKEN)));
         assertEquals(1, root.coins);
-        assertArrayEquals(new String[0], runner.activeIds(TOKEN));
+        assertActiveScripts(runner, new String[0], new String[0]);
     }
 
+
+    private void assertActiveScripts(MemoryRecipeRuntime runner, String[] ids, String[] names) {
+        Bundle status = new Bundle();
+        assertEquals(ids.length, runner.appendActiveStatus(TOKEN, status));
+        assertArrayEquals(ids, status.getStringArray("recipeFreezeIds"));
+        assertArrayEquals(names, status.getStringArray("recipeFreezeNames"));
+    }
 
     @Test public void oneShotAddsLogicalValuesAndRejectsInconsistentMirrors() {
         storeEncodedCoins(root, 10);

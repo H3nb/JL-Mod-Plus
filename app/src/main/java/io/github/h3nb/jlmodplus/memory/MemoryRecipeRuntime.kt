@@ -78,29 +78,12 @@ class MemoryRecipeRuntime {
         fun write(value: Long) {
             validate(value)
             val boxed: Any = when (type) {
-                java.lang.Byte.TYPE -> {
-                    checkRange(value, Byte.MIN_VALUE.toLong(), Byte.MAX_VALUE.toLong())
-                    value.toByte()
-                }
-                java.lang.Short.TYPE -> {
-                    checkRange(value, Short.MIN_VALUE.toLong(), Short.MAX_VALUE.toLong())
-                    value.toShort()
-                }
-                java.lang.Integer.TYPE -> {
-                    checkRange(value, Int.MIN_VALUE.toLong(), Int.MAX_VALUE.toLong())
-                    value.toInt()
-                }
+                java.lang.Byte.TYPE -> value.toByte()
+                java.lang.Short.TYPE -> value.toShort()
+                java.lang.Integer.TYPE -> value.toInt()
                 java.lang.Long.TYPE -> value
-                java.lang.Character.TYPE -> {
-                    checkRange(value, 0L, 65535L)
-                    value.toInt().toChar()
-                }
-                java.lang.Boolean.TYPE -> {
-                    if (value != 0L && value != 1L) throw Problem(
-                        MemoryEngineContract.RESULT_INVALID_REQUEST, "Boolean requires 0 or 1"
-                    )
-                    value != 0L
-                }
+                java.lang.Character.TYPE -> value.toInt().toChar()
+                java.lang.Boolean.TYPE -> value != 0L
                 else -> throw Problem(MemoryEngineContract.RESULT_UNSUPPORTED, "Unsupported write type")
             }
             if (field == null) ReflectArray.set(owner, index, boxed)
@@ -129,14 +112,22 @@ class MemoryRecipeRuntime {
     @Synchronized
     fun activeCount(token: Long): Int = if (token == frozenToken) frozen.size else 0
 
+    /** Publish matching IDs and names from one held-state snapshot. */
     @Synchronized
-    fun activeIds(token: Long): Array<String> =
-        if (token == frozenToken) frozen.keys.toTypedArray() else emptyArray()
-
-    @Synchronized
-    fun activeNames(token: Long): Array<String> =
-        if (token == frozenToken) frozen.values.map { it.recipe.name }.toTypedArray()
-        else emptyArray()
+    fun appendActiveStatus(token: Long, result: Bundle): Int {
+        val count = if (token == frozenToken) frozen.size else 0
+        val ids = Array(count) { "" }
+        val names = Array(count) { "" }
+        if (count > 0) {
+            frozen.entries.forEachIndexed { index, (id, hold) ->
+                ids[index] = id
+                names[index] = hold.recipe.name
+            }
+        }
+        result.putStringArray("recipeFreezeIds", ids)
+        result.putStringArray("recipeFreezeNames", names)
+        return count
+    }
 
     @Synchronized
     fun runtimeClosed(token: Long) {
@@ -165,7 +156,7 @@ class MemoryRecipeRuntime {
     ): Bundle {
         try {
             if (json == null || json.toByteArray(Charsets.UTF_8).size > MemoryEngineContract.MAX_RECIPE_BYTES) bad("Recipe is missing or too large")
-            val recipe = parse(json)
+            val recipe = parse(parseObject(json))
             if (!preview && recipe.mode == "toggle" && !hold)
                 bad("Toggle scripts must be enabled with Freeze")
             if (!preview && hold && recipe.mode != "toggle" && recipe.mode != "legacy")
@@ -333,7 +324,7 @@ class MemoryRecipeRuntime {
         val owners = ArrayList<Any>()
         val readValues = ArrayList<String>()
         val identities = ArrayList<Long?>()
-        val logicalValues = HashMap<String, String>()
+        val logicalValues = HashMap<String, Long>()
         val desiredValues = HashMap<String, Long>()
         val requestedStatics = recipe.actions.asSequence()
             .filter { it.root.kind == "initializedStatic" }
@@ -354,7 +345,7 @@ class MemoryRecipeRuntime {
                 (!array.javaClass.isArray || ReflectArray.getLength(array) != action.arrayLength)
             ) throw Problem(MemoryEngineContract.RESULT_IDENTITY_UNSAFE, "Array length changed")
             val currentLogical = when (action.kind) {
-                "set" -> actual.singleOrNull()?.toString() ?: bad("Expected scalar")
+                "set" -> actual.singleOrNull() ?: bad("Expected scalar")
                 "bitfield" -> {
                     val bits = when (cells.singleOrNull()?.type) {
                         java.lang.Byte.TYPE -> 8
@@ -364,7 +355,7 @@ class MemoryRecipeRuntime {
                     }
                     if (action.width !in 1..31 || action.shift !in 0..31 ||
                         action.width + action.shift > bits) bad("Invalid bitfield")
-                    ((actual[0] ushr action.shift) and ((1L shl action.width) - 1L)).toString()
+                    (actual[0] ushr action.shift) and ((1L shl action.width) - 1L)
                 }
                 "encoded32le" -> {
                     if (cells.size != 4 || cells.any { it.type != java.lang.Byte.TYPE })
@@ -372,14 +363,14 @@ class MemoryRecipeRuntime {
                     var bits = 0L
                     for (i in 0..3) bits = bits or ((actual[i] and 0xFFL) shl (i * 8))
                     try {
-                        Math.subtractExact(action.constant, bits.toInt().toLong()).toString()
+                        Math.subtractExact(action.constant, bits.toInt().toLong())
                     } catch (error: ArithmeticException) {
                         bad("Decoded value exceeds the supported integer range")
                     }
                 }
                 else -> bad("Unsupported action")
             }
-            readValues.add(currentLogical)
+            if (readOnly || recipe.mode == "form") readValues.add(currentLogical.toString())
             if (!readOnly && (recipe.mode == "form" || action.operation == "add")) {
                 val key = action.field ?: action.input
                 if (key != null) {
@@ -398,7 +389,7 @@ class MemoryRecipeRuntime {
             val operand = number(action, inputs)
             val logicalWrite = if (action.operation == "add") {
                 try {
-                    Math.addExact(currentLogical.toLong(), operand)
+                    Math.addExact(currentLogical, operand)
                 } catch (error: ArithmeticException) {
                     bad("Addition exceeds the supported integer range")
                 }
@@ -566,8 +557,7 @@ class MemoryRecipeRuntime {
         return snapshot
     }
 
-    private fun parse(json: String): Recipe {
-        val obj = Json.parseToJsonElement(json) as? JsonObject ?: bad("Expected JSON object")
+    private fun parse(obj: JsonObject): Recipe {
         obj.expectOnly("formatVersion", "id", "name", "description", "game", "inputs", "root", "actions", "mode")
         val version = obj.int("formatVersion")
         if (version !in 1..2) bad("Unsupported recipe version")
@@ -789,10 +779,17 @@ class MemoryRecipeRuntime {
         /** Validate a recipe without resolving or touching guest memory. */
         @JvmStatic
         fun validateDocument(json: String) {
+            validatedDocument(json)
+        }
+
+        internal fun validatedDocument(json: String): JsonObject {
             if (json.toByteArray(Charsets.UTF_8).size > MemoryEngineContract.MAX_RECIPE_BYTES)
                 bad("Recipe exceeds 64 KiB")
-            MemoryRecipeRuntime().parse(json)
+            return parseObject(json).also { MemoryRecipeRuntime().parse(it) }
         }
+
+        private fun parseObject(json: String): JsonObject =
+            Json.parseToJsonElement(json) as? JsonObject ?: bad("Expected JSON object")
 
         private fun bad(detail: String): Nothing = throw Problem(
             MemoryEngineContract.RESULT_INVALID_REQUEST, detail

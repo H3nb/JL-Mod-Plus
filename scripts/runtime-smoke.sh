@@ -4,10 +4,12 @@ set -euo pipefail
 
 trap 'adb logcat -d -v threadtime > runtime-logcat.txt 2>&1 || true' EXIT
 
+# Prevent Android's first-use immersive-mode prompt from taking focus during UI tests.
+adb shell settings put secure immersive_mode_confirmations confirmed
+
 selectors=(
   'javax.microedition.lcdui.graphics.AmbientColorSamplerTest'
-  'javax.microedition.lcdui.overlay.PerformanceOverlayRenderingTest'
-  'io.github.h3nb.jlmodplus.config.PerformanceOverlayOptionsComposeTest'
+  'javax.microedition.lcdui.overlay.DiagnosticTextRenderingTest'
   'javax.microedition.media.MediaBoundaryRuntimeTest'
   'io.github.h3nb.jlmodplus.mmapi.camera.CameraCallTest'
   'io.github.h3nb.jlmodplus.mmapi.camera.CameraCapturePlayerTest'
@@ -57,6 +59,9 @@ selectors=(
   'io.github.h3nb.jlmodplus.memory.MemoryEditorAdaptiveComposeTest'
   'io.github.h3nb.jlmodplus.memory.MemoryEditorPeekComposeTest'
   'io.github.h3nb.jlmodplus.memory.MemoryEditorOverlayComposeTest'
+  'io.github.h3nb.jlmodplus.memory.MemoryScriptsComposeTest'
+  'io.github.h3nb.jlmodplus.memory.MemoryScriptBuilderTest'
+  'io.github.h3nb.jlmodplus.memory.MemoryRecipeInstrumentedTest'
   'io.github.h3nb.jlmodplus.ui.AdaptiveDialogComposeTest#shortLargeTextDialogKeepsActionsVisibleAndBodyScrollable'
   'io.github.h3nb.jlmodplus.ui.AdaptiveDialogComposeTest#largeTextFontFormCanReachItsLastFieldAndConfirm'
   'io.github.h3nb.jlmodplus.settings.SettingsComposeTest#compactHeightLanguageDialogUsesAdaptiveScrollableBounds'
