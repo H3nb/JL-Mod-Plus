@@ -273,4 +273,8 @@
     <string name="memory_list_session_only_failed">Nie udało się zachować tego elementu tylko na bieżącą sesję.</string>
     <string name="memory_list_kept_unlinked">Zapisano na następne uruchomienie, ale nie udało się powiązać z bieżącą sesją.</string>
     <string name="memory_list_removal_unavailable">Nie można usuwać elementów po utracie połączenia. Spróbuj ponownie.</string>
+    <string name="memory_list_watch_removed">Usunięto śledzenie w sesji</string>
+    <string name="memory_list_bookmark_removal_failed">Nie udało się usunąć zakładek: %1$s</string>
+    <string name="memory_list_watch_removal_failed">Nie udało się usunąć śledzenia w sesji: %1$s</string>
+    <string name="memory_list_removal_unknown_error">Nieznany błąd</string>
 </resources>

@@ -255,4 +255,8 @@
     <string name="memory_list_session_only_failed">이 항목을 현재 세션에만 유지할 수 없습니다.</string>
     <string name="memory_list_kept_unlinked">다음 실행을 위해 저장했지만 현재 세션에 연결하지 못했습니다.</string>
     <string name="memory_list_removal_unavailable">연결이 끊긴 상태에서는 항목을 삭제할 수 없습니다. 다시 시도하세요.</string>
+    <string name="memory_list_watch_removed">세션 추적을 제거했습니다</string>
+    <string name="memory_list_bookmark_removal_failed">북마크를 제거하지 못했습니다: %1$s</string>
+    <string name="memory_list_watch_removal_failed">세션 추적을 제거하지 못했습니다: %1$s</string>
+    <string name="memory_list_removal_unknown_error">알 수 없는 오류</string>
 </resources>

@@ -261,4 +261,8 @@
     <string name="memory_list_session_only_failed">Элементті тек ағымдағы сеанс үшін сақтау мүмкін болмады.</string>
     <string name="memory_list_kept_unlinked">Келесі іске қосуға сақталды, бірақ ағымдағы сеанспен байланыстыру мүмкін болмады.</string>
     <string name="memory_list_removal_unavailable">Байланыс үзілгенде элементтерді жою мүмкін емес. Қайталап көріңіз.</string>
+    <string name="memory_list_watch_removed">Сеанстағы бақылау тоқтатылды</string>
+    <string name="memory_list_bookmark_removal_failed">Бетбелгілерді жою мүмкін болмады: %1$s</string>
+    <string name="memory_list_watch_removal_failed">Сеанстағы бақылауды тоқтату мүмкін болмады: %1$s</string>
+    <string name="memory_list_removal_unknown_error">Белгісіз қате</string>
 </resources>

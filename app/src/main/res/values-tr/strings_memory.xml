@@ -261,4 +261,8 @@
     <string name="memory_list_session_only_failed">Bu öğe yalnızca mevcut oturum için tutulamadı.</string>
     <string name="memory_list_kept_unlinked">Sonraki başlatma için kaydedildi ancak mevcut oturumla ilişkilendirilemedi.</string>
     <string name="memory_list_removal_unavailable">Bağlantı kesikken öğeler kaldırılamaz. Tekrar deneyin.</string>
+    <string name="memory_list_watch_removed">Oturum takibi kaldırıldı</string>
+    <string name="memory_list_bookmark_removal_failed">Yer işaretleri kaldırılamadı: %1$s</string>
+    <string name="memory_list_watch_removal_failed">Oturum takibi kaldırılamadı: %1$s</string>
+    <string name="memory_list_removal_unknown_error">Bilinmeyen hata</string>
 </resources>

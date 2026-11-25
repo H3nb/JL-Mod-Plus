@@ -261,4 +261,8 @@
     <string name="memory_list_session_only_failed">Az elemet nem sikerült csak a jelenlegi munkamenetre megtartani.</string>
     <string name="memory_list_kept_unlinked">Mentve a következő indításhoz, de nem sikerült csatolni a jelenlegi munkamenethez.</string>
     <string name="memory_list_removal_unavailable">Kapcsolat nélkül nem távolíthatók el az elemek. Próbáld újra.</string>
+    <string name="memory_list_watch_removed">Munkamenet-követés eltávolítva</string>
+    <string name="memory_list_bookmark_removal_failed">Nem sikerült eltávolítani a könyvjelzőket: %1$s</string>
+    <string name="memory_list_watch_removal_failed">Nem sikerült eltávolítani a munkamenet-követést: %1$s</string>
+    <string name="memory_list_removal_unknown_error">Ismeretlen hiba</string>
 </resources>

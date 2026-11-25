@@ -261,4 +261,8 @@
     <string name="memory_list_session_only_failed">ଏହି ଆଇଟମ୍‌କୁ କେବଳ ବର୍ତ୍ତମାନର ସେସନ୍ ପାଇଁ ରଖିହେଲା ନାହିଁ।</string>
     <string name="memory_list_kept_unlinked">ପରବର୍ତ୍ତୀ ଲଞ୍ଚ ପାଇଁ ସେଭ୍ ହେଲା, କିନ୍ତୁ ବର୍ତ୍ତମାନର ସେସନ୍ ସହ ଲିଙ୍କ୍ କରିହେଲା ନାହିଁ।</string>
     <string name="memory_list_removal_unavailable">ସଂଯୋଗ ବିଚ୍ଛିନ୍ନ ଥିବାବେଳେ ଆଇଟମ୍ ଅପସାରଣ କରିହେବ ନାହିଁ। ପୁଣି ଚେଷ୍ଟା କରନ୍ତୁ।</string>
+    <string name="memory_list_watch_removed">ସେସନ୍ ଟ୍ରାକିଂ ଅପସାରିତ ହେଲା</string>
+    <string name="memory_list_bookmark_removal_failed">ବୁକମାର୍କ ଅପସାରଣ କରିହେଲା ନାହିଁ: %1$s</string>
+    <string name="memory_list_watch_removal_failed">ସେସନ୍ ଟ୍ରାକିଂ ଅପସାରଣ କରିହେଲା ନାହିଁ: %1$s</string>
+    <string name="memory_list_removal_unknown_error">ଅଜଣା ତ୍ରୁଟି</string>
 </resources>

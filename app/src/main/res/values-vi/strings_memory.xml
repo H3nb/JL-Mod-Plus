@@ -255,4 +255,8 @@
     <string name="memory_list_session_only_failed">Không thể giữ mục này chỉ trong phiên hiện tại.</string>
     <string name="memory_list_kept_unlinked">Đã lưu cho lần khởi chạy tiếp theo nhưng không thể liên kết với phiên hiện tại.</string>
     <string name="memory_list_removal_unavailable">Không thể xóa mục khi mất kết nối. Hãy thử lại.</string>
+    <string name="memory_list_watch_removed">Đã xóa theo dõi trong phiên</string>
+    <string name="memory_list_bookmark_removal_failed">Không thể xóa dấu trang: %1$s</string>
+    <string name="memory_list_watch_removal_failed">Không thể xóa theo dõi trong phiên: %1$s</string>
+    <string name="memory_list_removal_unknown_error">Lỗi không xác định</string>
 </resources>

@@ -285,4 +285,8 @@
     <string name="memory_list_session_only_failed">تعذّر الاحتفاظ بهذا العنصر للجلسة الحالية فقط.</string>
     <string name="memory_list_kept_unlinked">تم الحفظ للتشغيل التالي، لكن تعذّر الربط بالجلسة الحالية.</string>
     <string name="memory_list_removal_unavailable">لا يمكن إزالة العناصر أثناء انقطاع الاتصال. حاول مجددًا.</string>
+    <string name="memory_list_watch_removed">تمت إزالة تتبع الجلسة</string>
+    <string name="memory_list_bookmark_removal_failed">تعذّرت إزالة الإشارات المرجعية: %1$s</string>
+    <string name="memory_list_watch_removal_failed">تعذّرت إزالة تتبع الجلسة: %1$s</string>
+    <string name="memory_list_removal_unknown_error">خطأ غير معروف</string>
 </resources>

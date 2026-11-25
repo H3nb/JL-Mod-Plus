@@ -204,8 +204,9 @@ internal class MemoryEditorComposeController(
                 activeOperationId = 0L
                 val operationFeedbackMessage = operationMessage(resultCode, details)
                 val listRemoval = if (feedback?.kind == OperationFeedbackKind.LIST_REMOVE) {
-                    memoryListRemovalOutcome(feedback.savedRemovalError,
-                        if (succeeded) null else operationFeedbackMessage ?: "Unknown Watch removal error")
+                    localizedListRemovalOutcome(feedback.savedRemovalError,
+                        if (succeeded) null else operationFeedbackMessage
+                            ?: context.getString(R.string.memory_list_removal_unknown_error))
                 } else null
                 val uiSuccessMessage = when {
                     succeeded && feedback?.kind == OperationFeedbackKind.NEXT_SCAN ->
@@ -1326,7 +1327,7 @@ internal class MemoryEditorComposeController(
                     }
                 }
                 onComplete?.invoke(result.exceptionOrNull()?.message
-                    ?: if (result.isFailure) "Unknown Saved removal error" else null)
+                    ?: if (result.isFailure) context.getString(R.string.memory_list_removal_unknown_error) else null)
             }
         }
     }
@@ -1772,7 +1773,8 @@ internal class MemoryEditorComposeController(
                 activeOperationId = 0L
                 state = state.copy(busy = false)
                 if (state.runtimeToken != token || !canLaunchOperation()) {
-                    val outcome = memoryListRemovalOutcome(savedError, "Session unavailable")
+                    val outcome = localizedListRemovalOutcome(savedError,
+                        context.getString(R.string.memory_editor_memory_unavailable))
                     state = state.copy(message = outcome.message, messageIsError = true)
                 } else {
                     launchOperation(
@@ -2666,6 +2668,11 @@ internal class MemoryEditorComposeController(
             Toast.LENGTH_SHORT,
         ).show()
     }
+
+    private fun localizedListRemovalOutcome(savedError: String?, watchError: String?): MemoryListRemovalOutcome =
+        memoryListRemovalOutcome(savedError, watchError) { resource, detail ->
+            if (detail == null) context.getString(resource) else context.getString(resource, detail)
+        }
 
     private fun operationMessage(result: Int, details: Bundle?): String? {
         val message = memoryOperationMessage(

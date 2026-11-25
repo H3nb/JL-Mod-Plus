@@ -261,4 +261,8 @@
     <string name="memory_list_session_only_failed">Δεν ήταν δυνατή η διατήρηση του στοιχείου μόνο για την τρέχουσα συνεδρία.</string>
     <string name="memory_list_kept_unlinked">Αποθηκεύτηκε για την επόμενη εκκίνηση, αλλά δεν συνδέθηκε με την τρέχουσα συνεδρία.</string>
     <string name="memory_list_removal_unavailable">Δεν είναι δυνατή η κατάργηση στοιχείων χωρίς σύνδεση. Δοκιμάστε ξανά.</string>
+    <string name="memory_list_watch_removed">Η παρακολούθηση συνεδρίας καταργήθηκε</string>
+    <string name="memory_list_bookmark_removal_failed">Δεν ήταν δυνατή η κατάργηση των σελιδοδεικτών: %1$s</string>
+    <string name="memory_list_watch_removal_failed">Δεν ήταν δυνατή η κατάργηση της παρακολούθησης συνεδρίας: %1$s</string>
+    <string name="memory_list_removal_unknown_error">Άγνωστο σφάλμα</string>
 </resources>

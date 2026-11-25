@@ -267,4 +267,8 @@
     <string name="memory_list_session_only_failed">Impossible de conserver cet élément uniquement pour la session actuelle.</string>
     <string name="memory_list_kept_unlinked">Enregistré pour le prochain lancement, mais impossible de le lier à la session actuelle.</string>
     <string name="memory_list_removal_unavailable">Impossible de retirer les éléments sans connexion. Réessayez.</string>
+    <string name="memory_list_watch_removed">Suivi de la session supprimé</string>
+    <string name="memory_list_bookmark_removal_failed">Impossible de retirer les signets : %1$s</string>
+    <string name="memory_list_watch_removal_failed">Impossible de supprimer le suivi de la session : %1$s</string>
+    <string name="memory_list_removal_unknown_error">Erreur inconnue</string>
 </resources>

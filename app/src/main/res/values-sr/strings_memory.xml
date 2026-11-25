@@ -267,4 +267,8 @@
     <string name="memory_list_session_only_failed">Није могуће задржати ову ставку само за тренутну сесију.</string>
     <string name="memory_list_kept_unlinked">Сачувано за следеће покретање, али није могуће повезати са тренутном сесијом.</string>
     <string name="memory_list_removal_unavailable">Није могуће уклонити ставке док је веза прекинута. Покушајте поново.</string>
+    <string name="memory_list_watch_removed">Праћење у сесији је уклоњено</string>
+    <string name="memory_list_bookmark_removal_failed">Није могуће уклонити обележиваче: %1$s</string>
+    <string name="memory_list_watch_removal_failed">Није могуће уклонити праћење у сесији: %1$s</string>
+    <string name="memory_list_removal_unknown_error">Непозната грешка</string>
 </resources>

@@ -261,4 +261,8 @@
     <string name="memory_list_session_only_failed">আইটেমটি শুধু বর্তমান সেশনের জন্য রাখা যায়নি।</string>
     <string name="memory_list_kept_unlinked">পরেরবার চালুর জন্য সংরক্ষণ করা হয়েছে, তবে বর্তমান সেশনের সঙ্গে লিঙ্ক করা যায়নি।</string>
     <string name="memory_list_removal_unavailable">সংযোগ বিচ্ছিন্ন থাকলে আইটেম সরানো যায় না। আবার চেষ্টা করুন।</string>
+    <string name="memory_list_watch_removed">সেশনের ট্র্যাকিং সরানো হয়েছে</string>
+    <string name="memory_list_bookmark_removal_failed">বুকমার্ক সরানো যায়নি: %1$s</string>
+    <string name="memory_list_watch_removal_failed">সেশনের ট্র্যাকিং সরানো যায়নি: %1$s</string>
+    <string name="memory_list_removal_unknown_error">অজানা ত্রুটি</string>
 </resources>

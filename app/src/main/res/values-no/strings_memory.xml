@@ -261,4 +261,8 @@
     <string name="memory_list_session_only_failed">Kunne ikke beholde elementet bare for gjeldende økt.</string>
     <string name="memory_list_kept_unlinked">Lagret for neste oppstart, men kunne ikke kobles til gjeldende økt.</string>
     <string name="memory_list_removal_unavailable">Kan ikke fjerne elementer når forbindelsen er brutt. Prøv igjen.</string>
+    <string name="memory_list_watch_removed">Sporing i økten fjernet</string>
+    <string name="memory_list_bookmark_removal_failed">Kunne ikke fjerne bokmerker: %1$s</string>
+    <string name="memory_list_watch_removal_failed">Kunne ikke fjerne sporing i økten: %1$s</string>
+    <string name="memory_list_removal_unknown_error">Ukjent feil</string>
 </resources>

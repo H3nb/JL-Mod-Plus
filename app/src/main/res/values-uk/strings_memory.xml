@@ -273,4 +273,8 @@
     <string name="memory_list_session_only_failed">Не вдалося залишити цей елемент лише на поточний сеанс.</string>
     <string name="memory_list_kept_unlinked">Збережено для наступного запуску, але не вдалося прив’язати до поточного сеансу.</string>
     <string name="memory_list_removal_unavailable">Неможливо вилучити елементи, коли з’єднання розірвано. Спробуйте ще раз.</string>
+    <string name="memory_list_watch_removed">Відстеження в сеансі вилучено</string>
+    <string name="memory_list_bookmark_removal_failed">Не вдалося вилучити закладки: %1$s</string>
+    <string name="memory_list_watch_removal_failed">Не вдалося вилучити відстеження в сеансі: %1$s</string>
+    <string name="memory_list_removal_unknown_error">Невідома помилка</string>
 </resources>

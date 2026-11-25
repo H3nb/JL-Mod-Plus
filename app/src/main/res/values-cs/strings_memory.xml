@@ -273,4 +273,8 @@
     <string name="memory_list_session_only_failed">Položku se nepodařilo ponechat jen pro aktuální relaci.</string>
     <string name="memory_list_kept_unlinked">Uloženo pro příští spuštění, ale nepodařilo se propojit s aktuální relací.</string>
     <string name="memory_list_removal_unavailable">Bez připojení nelze položky odebrat. Zkuste to znovu.</string>
+    <string name="memory_list_watch_removed">Sledování relace odebráno</string>
+    <string name="memory_list_bookmark_removal_failed">Záložky se nepodařilo odebrat: %1$s</string>
+    <string name="memory_list_watch_removal_failed">Sledování relace se nepodařilo odebrat: %1$s</string>
+    <string name="memory_list_removal_unknown_error">Neznámá chyba</string>
 </resources>

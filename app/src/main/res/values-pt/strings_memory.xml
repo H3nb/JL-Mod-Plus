@@ -267,4 +267,8 @@
     <string name="memory_list_session_only_failed">Não foi possível manter este item apenas na sessão atual.</string>
     <string name="memory_list_kept_unlinked">Guardado para a próxima execução, mas não foi possível associá-lo à sessão atual.</string>
     <string name="memory_list_removal_unavailable">Não é possível remover itens sem ligação. Tente novamente.</string>
+    <string name="memory_list_watch_removed">Monitorização da sessão removida</string>
+    <string name="memory_list_bookmark_removal_failed">Não foi possível remover os marcadores: %1$s</string>
+    <string name="memory_list_watch_removal_failed">Não foi possível remover a monitorização da sessão: %1$s</string>
+    <string name="memory_list_removal_unknown_error">Erro desconhecido</string>
 </resources>

@@ -261,4 +261,8 @@
     <string name="memory_list_session_only_failed">Couldn’t keep this item for the current session only.</string>
     <string name="memory_list_kept_unlinked">Saved for the next launch, but couldn’t link it to the current session.</string>
     <string name="memory_list_removal_unavailable">Can’t remove items while disconnected. Try again.</string>
+    <string name="memory_list_watch_removed">Session tracking removed</string>
+    <string name="memory_list_bookmark_removal_failed">Couldn’t remove bookmarks: %1$s</string>
+    <string name="memory_list_watch_removal_failed">Couldn’t remove session tracking: %1$s</string>
+    <string name="memory_list_removal_unknown_error">Unknown error</string>
 </resources>

@@ -261,4 +261,8 @@
     <string name="memory_list_session_only_failed">මෙම අයිතමය වත්මන් සැසිය සඳහා පමණක් තබාගත නොහැකි විය.</string>
     <string name="memory_list_kept_unlinked">ඊළඟ ආරම්භය සඳහා සුරකින ලදී, නමුත් වත්මන් සැසියට සම්බන්ධ කළ නොහැකි විය.</string>
     <string name="memory_list_removal_unavailable">සම්බන්ධතාව විසන්ධි වී ඇති විට අයිතම ඉවත් කළ නොහැක. නැවත උත්සාහ කරන්න.</string>
+    <string name="memory_list_watch_removed">සැසියේ ලුහුබැඳීම ඉවත් කරන ලදී</string>
+    <string name="memory_list_bookmark_removal_failed">පිටු සලකුණු ඉවත් කළ නොහැකි විය: %1$s</string>
+    <string name="memory_list_watch_removal_failed">සැසියේ ලුහුබැඳීම ඉවත් කළ නොහැකි විය: %1$s</string>
+    <string name="memory_list_removal_unknown_error">නොදන්නා දෝෂයකි</string>
 </resources>

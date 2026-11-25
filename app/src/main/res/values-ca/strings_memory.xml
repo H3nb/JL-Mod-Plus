@@ -267,4 +267,8 @@
     <string name="memory_list_session_only_failed">No s’ha pogut conservar l’element només per a la sessió actual.</string>
     <string name="memory_list_kept_unlinked">Desat per al proper inici, però no s’ha pogut enllaçar amb la sessió actual.</string>
     <string name="memory_list_removal_unavailable">No es poden suprimir elements sense connexió. Torna-ho a provar.</string>
+    <string name="memory_list_watch_removed">Seguiment de la sessió suprimit</string>
+    <string name="memory_list_bookmark_removal_failed">No s’han pogut suprimir els marcadors: %1$s</string>
+    <string name="memory_list_watch_removal_failed">No s’ha pogut suprimir el seguiment de la sessió: %1$s</string>
+    <string name="memory_list_removal_unknown_error">Error desconegut</string>
 </resources>

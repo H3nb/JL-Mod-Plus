@@ -251,4 +251,8 @@
     <string name="memory_list_session_only_failed">无法仅在当前会话中保留此项目。</string>
     <string name="memory_list_kept_unlinked">已保存供下次启动使用，但无法关联到当前会话。</string>
     <string name="memory_list_removal_unavailable">连接断开时无法移除项目。请重试。</string>
+    <string name="memory_list_watch_removed">已移除会话跟踪</string>
+    <string name="memory_list_bookmark_removal_failed">无法移除书签：%1$s</string>
+    <string name="memory_list_watch_removal_failed">无法移除会话跟踪：%1$s</string>
+    <string name="memory_list_removal_unknown_error">未知错误</string>
 </resources>

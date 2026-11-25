@@ -261,4 +261,8 @@
     <string name="memory_list_session_only_failed">Das Element konnte nicht nur für die aktuelle Sitzung beibehalten werden.</string>
     <string name="memory_list_kept_unlinked">Für den nächsten Start gespeichert, aber nicht mit der aktuellen Sitzung verknüpft.</string>
     <string name="memory_list_removal_unavailable">Ohne Verbindung können keine Elemente entfernt werden. Versuche es erneut.</string>
+    <string name="memory_list_watch_removed">Sitzungsüberwachung entfernt</string>
+    <string name="memory_list_bookmark_removal_failed">Lesezeichen konnten nicht entfernt werden: %1$s</string>
+    <string name="memory_list_watch_removal_failed">Sitzungsüberwachung konnte nicht entfernt werden: %1$s</string>
+    <string name="memory_list_removal_unknown_error">Unbekannter Fehler</string>
 </resources>

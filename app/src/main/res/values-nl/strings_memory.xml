@@ -261,4 +261,8 @@
     <string name="memory_list_session_only_failed">Dit item kon niet alleen voor de huidige sessie worden behouden.</string>
     <string name="memory_list_kept_unlinked">Opgeslagen voor de volgende start, maar koppelen aan de huidige sessie is niet gelukt.</string>
     <string name="memory_list_removal_unavailable">Items kunnen niet worden verwijderd als de verbinding is verbroken. Probeer het opnieuw.</string>
+    <string name="memory_list_watch_removed">Sessietracking verwijderd</string>
+    <string name="memory_list_bookmark_removal_failed">Bladwijzers konden niet worden verwijderd: %1$s</string>
+    <string name="memory_list_watch_removal_failed">Sessietracking kon niet worden verwijderd: %1$s</string>
+    <string name="memory_list_removal_unknown_error">Onbekende fout</string>
 </resources>

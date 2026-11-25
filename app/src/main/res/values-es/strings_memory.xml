@@ -267,4 +267,8 @@
     <string name="memory_list_session_only_failed">No se pudo conservar este elemento solo para la sesión actual.</string>
     <string name="memory_list_kept_unlinked">Guardado para el próximo inicio, pero no se pudo vincular a la sesión actual.</string>
     <string name="memory_list_removal_unavailable">No se pueden quitar elementos sin conexión. Inténtalo de nuevo.</string>
+    <string name="memory_list_watch_removed">Seguimiento de la sesión eliminado</string>
+    <string name="memory_list_bookmark_removal_failed">No se pudieron quitar los marcadores: %1$s</string>
+    <string name="memory_list_watch_removal_failed">No se pudo quitar el seguimiento de la sesión: %1$s</string>
+    <string name="memory_list_removal_unknown_error">Error desconocido</string>
 </resources>

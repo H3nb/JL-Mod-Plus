@@ -177,7 +177,7 @@
     <string name="config_lock_custom_resolution_ratio">Kunci rasio aspek</string>
     <string name="config_swap_screen_size">Tukar lebar dan tinggi</string>
     <string name="profile_builtin_settings">Setelan bawaan JL-Mod</string>
-    <string name="profile_default_badge_short">Bawaan untuk MIDlet baru</string>
+    <string name="profile_default_badge_short">Default untuk MIDlet baru</string>
     <string name="profile_template_summary">Setelan MIDlet tersimpan.</string>
     <string name="profile_name_exists">Profil dengan nama ini sudah ada.</string>
     <string name="profile_delete_template_message">Hapus profil “<xliff:g id="profile_name" example="Action Games">%1$s</xliff:g>”? MIDlet yang menggunakannya akan mempertahankan setelan saat ini, tetapi tidak akan menerima pembaruan berikutnya.</string>
@@ -265,14 +265,14 @@
     <string name="preset_update_summary">Ganti isi profil <xliff:g id="profile_name" example="Action Games">%1$s</xliff:g> dengan setelan MIDlet ini beserta tata letak kontrol virtualnya (jika tersedia). MIDlet lain yang menggunakan profil ini akan menerima perubahan saat dijalankan kembali.</string>
     <string name="preset_update_confirm">Perbarui</string>
     <string name="preset_saved_unlinked_warning">Profil tersimpan, tetapi MIDlet ini tidak akan mengikuti pembaruan profil tersebut.</string>
-    <string name="profile_default_fallback_notice">Profil bawaan “<xliff:g id="profile_name" example="Action Games">%1$s</xliff:g>” tidak dapat digunakan. Profil mungkin hilang, tidak lengkap, atau tidak dapat dibaca. Setelan bawaan JL-Mod kini digunakan untuk MIDlet baru.</string>
+    <string name="profile_default_fallback_notice">Profil default “<xliff:g id="profile_name" example="Action Games">%1$s</xliff:g>” tidak dapat digunakan. Profil mungkin hilang, tidak lengkap, atau tidak dapat dibaca. Setelan bawaan JL-Mod kini digunakan untuk MIDlet baru.</string>
     <string name="preset_discard_changes_title">Abaikan perubahan?</string>
     <string name="preset_discard_changes_summary">Draf profil ini belum disimpan.</string>
     <string name="preset_continue_editing">Lanjutkan mengedit</string>
     <string name="preset_discard_changes">Abaikan perubahan</string>
     <string name="preset_name_exists">Profil dengan nama ini sudah ada.</string>
     <string name="preset_invalid_name">Masukkan nama profil yang valid.</string>
-    <string name="preset_manager_default_section">Bawaan untuk MIDlet baru</string>
+    <string name="preset_manager_default_section">Default untuk MIDlet baru</string>
     <string name="preset_manager_presets_section">Profil saya</string>
     <string name="preset_manager_keyboard_section">Tata letak kontrol virtual tersimpan</string>
     <string name="preset_default_policy_summary">Digunakan saat MIDlet baru diinstal.</string>
@@ -282,7 +282,7 @@
     <string name="preset_unavailable_section">Tidak tersedia</string>
     <string name="preset_unavailable_summary">Tidak dapat memuat profil ini. Ganti nama atau hapus profil.</string>
     <string name="preset_change_default">Ubah</string>
-    <string name="preset_default_picker_title">Bawaan untuk MIDlet baru</string>
+    <string name="preset_default_picker_title">Default untuk MIDlet baru</string>
     <string name="profile_follows_updates">Mengikuti pembaruan profil berikutnya.</string>
     <string name="profile_apply_whole">Seluruh profil</string>
     <string name="profile_apply_whole_follows">Ganti setelan dan tata letak, lalu ikuti pembaruan profil.</string>

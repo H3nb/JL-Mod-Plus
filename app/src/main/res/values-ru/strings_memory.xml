@@ -273,4 +273,8 @@
     <string name="memory_list_session_only_failed">Не удалось сохранить элемент только для текущего сеанса.</string>
     <string name="memory_list_kept_unlinked">Сохранено для следующего запуска, но не удалось привязать к текущему сеансу.</string>
     <string name="memory_list_removal_unavailable">Невозможно удалить элементы при разрыве соединения. Повторите попытку.</string>
+    <string name="memory_list_watch_removed">Отслеживание в сеансе удалено</string>
+    <string name="memory_list_bookmark_removal_failed">Не удалось удалить закладки: %1$s</string>
+    <string name="memory_list_watch_removal_failed">Не удалось удалить отслеживание в сеансе: %1$s</string>
+    <string name="memory_list_removal_unknown_error">Неизвестная ошибка</string>
 </resources>

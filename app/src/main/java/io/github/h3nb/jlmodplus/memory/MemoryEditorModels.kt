@@ -14,6 +14,8 @@
 
 package io.github.h3nb.jlmodplus.memory
 
+import io.github.h3nb.jlmodplus.R
+
 internal enum class MemorySearchMode {
     KNOWN,
     UNKNOWN,
@@ -488,12 +490,16 @@ internal fun memoryListEntries(
 internal data class MemoryListRemovalOutcome(val message: String, val isError: Boolean)
 
 /** Saved and Watch commit independently, but a mixed Remove has one reported outcome. */
-internal fun memoryListRemovalOutcome(savedError: String?, watchError: String?): MemoryListRemovalOutcome {
-    val saved = if (savedError == null) "Bookmark removed"
-        else "Bookmark removal failed: $savedError"
-    val watch = if (watchError == null) "Session tracking removed"
-        else "Session tracking removal failed: $watchError"
-    return MemoryListRemovalOutcome("$saved; $watch", savedError != null || watchError != null)
+internal fun memoryListRemovalOutcome(
+    savedError: String?,
+    watchError: String?,
+    format: (Int, String?) -> String,
+): MemoryListRemovalOutcome {
+    val saved = if (savedError == null) format(R.string.memory_bookmarks_removed, null)
+        else format(R.string.memory_list_bookmark_removal_failed, savedError)
+    val watch = if (watchError == null) format(R.string.memory_list_watch_removed, null)
+        else format(R.string.memory_list_watch_removal_failed, watchError)
+    return MemoryListRemovalOutcome("$saved\n$watch", savedError != null || watchError != null)
 }
 
 internal enum class SavedVariableStatus { RESOLVED, REBOUND, NOT_READY, CHANGED, INCOMPATIBLE, FAILED }

@@ -261,4 +261,8 @@
     <string name="memory_list_session_only_failed">Kon nie dié item net vir die huidige sessie behou nie.</string>
     <string name="memory_list_kept_unlinked">Vir die volgende bekendstelling gestoor, maar kon nie aan die huidige sessie gekoppel word nie.</string>
     <string name="memory_list_removal_unavailable">Kan nie items verwyder terwyl die verbinding verbreek is nie. Probeer weer.</string>
+    <string name="memory_list_watch_removed">Sessienasporing verwyder</string>
+    <string name="memory_list_bookmark_removal_failed">Kon nie boekmerke verwyder nie: %1$s</string>
+    <string name="memory_list_watch_removal_failed">Kon nie sessienasporing verwyder nie: %1$s</string>
+    <string name="memory_list_removal_unknown_error">Onbekende fout</string>
 </resources>

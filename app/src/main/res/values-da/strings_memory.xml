@@ -261,4 +261,8 @@
     <string name="memory_list_session_only_failed">Kunne ikke beholde elementet kun for den aktuelle session.</string>
     <string name="memory_list_kept_unlinked">Gemt til næste start, men kunne ikke knyttes til den aktuelle session.</string>
     <string name="memory_list_removal_unavailable">Kan ikke fjerne elementer, når forbindelsen er afbrudt. Prøv igen.</string>
+    <string name="memory_list_watch_removed">Sporing i sessionen fjernet</string>
+    <string name="memory_list_bookmark_removal_failed">Kunne ikke fjerne bogmærker: %1$s</string>
+    <string name="memory_list_watch_removal_failed">Kunne ikke fjerne sporing i sessionen: %1$s</string>
+    <string name="memory_list_removal_unknown_error">Ukendt fejl</string>
 </resources>

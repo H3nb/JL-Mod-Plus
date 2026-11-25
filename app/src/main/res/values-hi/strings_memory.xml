@@ -261,4 +261,8 @@
     <string name="memory_list_session_only_failed">यह आइटम केवल मौजूदा सत्र के लिए नहीं रखा जा सका।</string>
     <string name="memory_list_kept_unlinked">अगली बार शुरू करने के लिए सहेजा गया, लेकिन मौजूदा सत्र से लिंक नहीं हो सका।</string>
     <string name="memory_list_removal_unavailable">कनेक्शन टूटने पर आइटम नहीं हटाए जा सकते। फिर से कोशिश करें।</string>
+    <string name="memory_list_watch_removed">सत्र की ट्रैकिंग हटा दी गई</string>
+    <string name="memory_list_bookmark_removal_failed">बुकमार्क नहीं हटाए जा सके: %1$s</string>
+    <string name="memory_list_watch_removal_failed">सत्र की ट्रैकिंग नहीं हटाई जा सकी: %1$s</string>
+    <string name="memory_list_removal_unknown_error">अज्ञात गड़बड़ी</string>
 </resources>

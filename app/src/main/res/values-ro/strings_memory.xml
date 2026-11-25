@@ -267,4 +267,8 @@
     <string name="memory_list_session_only_failed">Elementul nu a putut fi păstrat doar pentru sesiunea curentă.</string>
     <string name="memory_list_kept_unlinked">Salvat pentru următoarea pornire, dar nu a putut fi asociat cu sesiunea curentă.</string>
     <string name="memory_list_removal_unavailable">Elementele nu pot fi eliminate fără conexiune. Încercați din nou.</string>
+    <string name="memory_list_watch_removed">Monitorizarea sesiunii a fost eliminată</string>
+    <string name="memory_list_bookmark_removal_failed">Marcajele nu au putut fi eliminate: %1$s</string>
+    <string name="memory_list_watch_removal_failed">Monitorizarea sesiunii nu a putut fi eliminată: %1$s</string>
+    <string name="memory_list_removal_unknown_error">Eroare necunoscută</string>
 </resources>

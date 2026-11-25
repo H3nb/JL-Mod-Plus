@@ -267,4 +267,8 @@
     <string name="memory_list_session_only_failed">לא ניתן לשמור את הפריט להפעלה הנוכחית בלבד.</string>
     <string name="memory_list_kept_unlinked">נשמר להפעלה הבאה, אך לא ניתן היה לקשר אותו להפעלה הנוכחית.</string>
     <string name="memory_list_removal_unavailable">לא ניתן להסיר פריטים כשהחיבור מנותק. נסו שוב.</string>
+    <string name="memory_list_watch_removed">המעקב בהפעלה הוסר</string>
+    <string name="memory_list_bookmark_removal_failed">לא ניתן להסיר את הסימניות: %1$s</string>
+    <string name="memory_list_watch_removal_failed">לא ניתן להסיר את המעקב בהפעלה: %1$s</string>
+    <string name="memory_list_removal_unknown_error">שגיאה לא ידועה</string>
 </resources>

@@ -261,4 +261,8 @@
     <string name="memory_list_session_only_failed">نگه‌داشتن این مورد فقط برای نشست فعلی ممکن نبود.</string>
     <string name="memory_list_kept_unlinked">برای اجرای بعدی ذخیره شد، اما به نشست فعلی پیوند داده نشد.</string>
     <string name="memory_list_removal_unavailable">هنگام قطع اتصال نمی‌توان موارد را حذف کرد. دوباره تلاش کنید.</string>
+    <string name="memory_list_watch_removed">ردیابی نشست حذف شد</string>
+    <string name="memory_list_bookmark_removal_failed">حذف نشانک‌ها ممکن نبود: %1$s</string>
+    <string name="memory_list_watch_removal_failed">حذف ردیابی نشست ممکن نبود: %1$s</string>
+    <string name="memory_list_removal_unknown_error">خطای ناشناخته</string>
 </resources>

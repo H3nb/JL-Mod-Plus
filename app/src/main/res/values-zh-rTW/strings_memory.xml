@@ -255,4 +255,8 @@
     <string name="memory_list_session_only_failed">無法僅在目前工作階段保留此項目。</string>
     <string name="memory_list_kept_unlinked">已儲存供下次啟動使用，但無法連結至目前工作階段。</string>
     <string name="memory_list_removal_unavailable">連線中斷時無法移除項目。請再試一次。</string>
+    <string name="memory_list_watch_removed">已移除工作階段追蹤</string>
+    <string name="memory_list_bookmark_removal_failed">無法移除書籤：%1$s</string>
+    <string name="memory_list_watch_removal_failed">無法移除工作階段追蹤：%1$s</string>
+    <string name="memory_list_removal_unknown_error">未知錯誤</string>
 </resources>

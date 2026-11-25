@@ -261,4 +261,8 @@
     <string name="memory_list_session_only_failed">Елементът не можа да бъде запазен само за текущата сесия.</string>
     <string name="memory_list_kept_unlinked">Запазено за следващото стартиране, но не можа да бъде свързано с текущата сесия.</string>
     <string name="memory_list_removal_unavailable">Елементи не могат да се премахват при прекъсната връзка. Опитайте отново.</string>
+    <string name="memory_list_watch_removed">Проследяването за сесията е премахнато</string>
+    <string name="memory_list_bookmark_removal_failed">Отметките не можаха да бъдат премахнати: %1$s</string>
+    <string name="memory_list_watch_removal_failed">Проследяването за сесията не можа да бъде премахнато: %1$s</string>
+    <string name="memory_list_removal_unknown_error">Неизвестна грешка</string>
 </resources>
