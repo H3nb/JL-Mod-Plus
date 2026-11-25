@@ -271,7 +271,7 @@
     <string name="library_metadata_icon">Ikon</string>
     <string name="library_metadata_name">Nama</string>
     <string name="library_metadata_vendor">Vendor</string>
-    <string name="library_metadata_reset_to_original">Reset ke asli</string>
+    <string name="library_metadata_reset_to_original">Kembalikan ke semula</string>
     <string name="library_metadata_save">Simpan</string>
     <string name="library_hide_grid_titles_summary">Sembunyikan nama MIDlet pada tampilan Kisi. Tampilan Daftar tetap menampilkannya.</string>
     <string name="library_show_list_description_summary">Tampilkan deskripsi setiap MIDlet di bawah judul dan versinya.</string>
@@ -293,11 +293,11 @@
     <string name="library_donation_action">Dukung pengembangan</string>
     <string name="library_donation_summary">Bantu JL-Mod Plus terus berkembang.</string>
     <string name="library_donation_title">Dukung JL-Mod Plus</string>
-    <string name="library_donation_message">JL-Mod Plus gratis dan bersumber terbuka. Jika merasa terbantu, Anda dapat mendukung pengembangannya melalui donasi sukarela.</string>
+    <string name="library_donation_message">JL-Mod Plus gratis dan bersifat sumber terbuka. Jika bermanfaat, Anda dapat mendukung pengembangannya melalui donasi sukarela.</string>
     <string name="library_donation_provider_note">Donasi diproses secara eksternal melalui Sociabuzz.</string>
     <string name="library_donation_continue">Lanjut ke Sociabuzz</string>
     <string name="library_donation_not_now">Nanti saja</string>
-    <string name="library_donation_link_copied">Browser tidak ditemukan. Tautan Sociabuzz disalin ke papan klip.</string>
+    <string name="library_donation_link_copied">Tidak ada browser. Tautan Sociabuzz telah disalin.</string>
     <string name="library_donation_browser_unavailable">Browser tidak ditemukan untuk membuka Sociabuzz.</string>
     <string name="library_bulk_delete_apps">Hapus aplikasi</string>
     <string name="library_bulk_add_collection">Tambahkan ke koleksi</string>
@@ -305,15 +305,15 @@
     <string name="library_bulk_reinstall_apps">Instal ulang</string>
     <string name="library_bulk_export_apps">Ekspor paket</string>
     <string name="library_enhanced_icons_title">Ikon ditingkatkan</string>
-    <string name="library_enhanced_icons_summary">Menyesuaikan bingkai, skala, dan latar belakang ubin ikon agar terlihat lebih konsisten di pustaka Anda.</string>
+    <string name="library_enhanced_icons_summary">Menyesuaikan bingkai, skala, dan latar belakang ikon agar tampil lebih seragam di pustaka.</string>
     <string name="library_collections_unavailable_title">Koleksi tidak tersedia</string>
     <string name="library_load_failed_message">Tidak dapat memuat pustaka. Coba lagi.</string>
     <string name="bulk_install_prepare_failed">Tidak dapat menyiapkan aplikasi yang dipilih untuk instalasi.</string>
     <string name="installer_existing_data_preserved">Setelan dan data simpanan yang ada akan tetap dipertahankan.</string>
-    <string name="bulk_install_library_changed">Pustaka Anda berubah setelah peninjauan. Tutup batch ini lalu pilih filenya lagi.</string>
+    <string name="bulk_install_library_changed">Pustaka berubah setelah peninjauan. Tutup penginstal, lalu pilih kembali file yang ingin diinstal.</string>
     <string name="bulk_install_source_unavailable">File sumber yang diperlukan tidak lagi tersedia. Pilih filenya lagi.</string>
     <string name="bulk_install_source_changed">File sumber berubah setelah peninjauan. Pilih filenya lagi.</string>
-    <string name="bulk_install_target_unverified">Tidak dapat memverifikasi target instal ulang. Tutup batch ini lalu pilih aplikasinya lagi.</string>
+    <string name="bulk_install_target_unverified">Tidak dapat memverifikasi aplikasi yang akan diinstal ulang. Tutup penginstal, lalu pilih kembali aplikasi.</string>
     <string name="bulk_install_result_restored">Dipulihkan</string>
     <plurals name="bulk_install_restored_count">
         <item quantity="other"><xliff:g id="count" example="3">%1$d</xliff:g> dipulihkan</item>
@@ -352,7 +352,7 @@
     <string name="updates_check">Periksa pembaruan</string>
     <string name="updates_notice">JL-Mod Plus <xliff:g id="version" example="2.1.0">%1$s</xliff:g> tersedia. Lihat Pembaruan di Setelan.</string>
     <string name="updates_debug_build">Ini adalah build debug. APK rilis GitHub diinstal secara terpisah.</string>
-    <string name="updates_link_copied">Browser tidak ditemukan. Tautan pembaruan disalin ke papan klip.</string>
+    <string name="updates_link_copied">Tidak ada browser. Tautan pembaruan telah disalin.</string>
     <string name="updates_browser_unavailable">Browser tidak ditemukan untuk membuka tautan pembaruan.</string>
     <string name="bulk_install_choose_files">File</string>
     <string name="bulk_install_choose_folder">Folder</string>
@@ -377,7 +377,7 @@
     <string name="library_metadata_remove_portrait">Hapus ikon 3:4</string>
     <string name="library_metadata_discard_title">Buang perubahan?</string>
     <string name="library_metadata_discard">Buang</string>
-    <string name="library_metadata_default_description">Deskripsi default</string>
+    <string name="library_metadata_default_description">Deskripsi bawaan</string>
     <string name="library_metadata_other_languages">Bahasa lainnya</string>
     <string name="library_metadata_add_language">+ Tambah bahasa</string>
     <string name="library_metadata_language_search">Cari bahasa atau kode lokal</string>

@@ -3,7 +3,7 @@
 <resources xmlns:tools="http://schemas.android.com/tools" xmlns:xliff="urn:oasis:names:tc:xliff:document:1.2">
     <string name="identity_filter">Tidak ada (tercepat)</string>
     <string name="invalid_resolution_not_saved">Resolusi tidak valid. Preset tidak disimpan.</string>
-    <string name="msg_error_loading_shader">Shader tidak didukung. Menggunakan shader default.</string>
+    <string name="msg_error_loading_shader">Shader tidak didukung. Menggunakan shader bawaan.</string>
     <string name="parallel_screen_redrawing">Pembaruan layar asinkron</string>
     <string name="shader_tuning">Penyetelan shader</string>
     <string name="SWAP_SIZES">Tukar lebar dan tinggi</string>
@@ -57,7 +57,7 @@
     <string name="render_adjustable_count">Parameter dapat disesuaikan: <xliff:g id="count" example="3">%1$d</xliff:g></string>
     <string name="render_pass_summary"><xliff:g id="count" example="3">%1$d</xliff:g> tahap · Ditentukan oleh preset</string>
     <string name="render_shader_preset_note">Tahap shader ditentukan oleh preset. Anda dapat memeriksanya tanpa mengubah urutannya.</string>
-    <string name="render_parameters_hint">Geser penggeser untuk menyesuaikan nilainya. Perubahan disimpan saat Anda melepaskannya.</string>
+    <string name="render_parameters_hint">Geser untuk menyesuaikan nilai. Perubahan disimpan saat Anda melepas penggeser.</string>
     <string name="render_pass_readonly">Tahapan dijalankan sesuai urutan ini. Filter input dan penskalaan output mengikuti preset yang dipilih.</string>
     <string name="render_pipeline_intro">Jalur dari framebuffer game ke layar Anda.</string>
     <string name="render_native_short">Asli (1×)</string>
@@ -84,7 +84,7 @@
     <string name="render_custom_remove">Hapus</string>
     <string name="render_custom_cancel">Batal</string>
     <string name="render_custom_save">Simpan</string>
-    <string name="render_custom_default">Default</string>
+    <string name="render_custom_default">Bawaan</string>
     <string name="render_custom_nearest">Nearest</string>
     <string name="render_custom_linear">Linear</string>
     <string name="render_custom_checking">Memeriksa file shader…</string>
@@ -118,7 +118,7 @@
     <string name="render_custom_preserve_size">Output: Dari preset</string>
     <string name="render_custom_loading">Membaca pass preset…</string>
     <string name="render_custom_start_fresh">Mulai tanpa preset (buang setelan bawaan)</string>
-    <string name="render_effect_default_settings">Setelan default</string>
+    <string name="render_effect_default_settings">Setelan bawaan</string>
     <string name="render_effect_summary_more">+<xliff:g id="count" example="2">%1$d</xliff:g> lainnya</string>
     <string name="render_effect_legacy_author">Oleh <xliff:g id="shader_name" example="CRT Classic">%1$s</xliff:g></string>
     <string name="render_effect_legacy_source">Sumber: <xliff:g id="shader_name" example="CRT Classic">%1$s</xliff:g></string>

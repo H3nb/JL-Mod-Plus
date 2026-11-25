@@ -1,5 +1,7 @@
 files:
-  - source: /app/src/main/res/values/strings.xml
+  - source: /app/src/main/res/values/strings_*.xml
+    ignore:
+      - /app/src/main/res/values/strings_untranslatable.xml
     translation: /app/src/main/res/values-%android_code%/%original_file_name%
     languages_mapping:
       android_code:
@@ -17,16 +19,21 @@ files:
         el: el
         fa: fa
         he: iw
+        hi: hi
         hu: hu
         id: in
         it: it
         ja: ja
+        kk: kk
         ko: ko
         no: no
+        or: or
         pl: pl
         pt-PT: pt
+        pt-BR: pt-rBR
         ro: ro
         ru: ru
+        si: si
         sr: sr
         es-ES: es
         sv-SE: sv
@@ -34,3 +41,5 @@ files:
         tr: tr
         uk: uk
         vi: vi
+        zh-CN: zh-rCN
+        zh-TW: zh-rTW

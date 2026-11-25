@@ -1,6 +1,6 @@
 <?xml version="1.0" encoding="utf-8"?>
 <!-- Per-MIDlet configuration, reusable profiles, camera, controller calibration, permissions, and system properties. -->
-<resources xmlns:tools="http://schemas.android.com/tools" xmlns:xliff="urn:oasis:names:tc:xliff:document:1.2">
+<resources xmlns:xliff="urn:oasis:names:tc:xliff:document:1.2">
     <!-- %1$s is an optional quoted storage-volume name with a trailing space, or empty. -->
     <!-- %1$s is a raw storage-volume description. -->
     <string name="config_missing_app_storage_named">App not found.\nCheck whether the storage device “<xliff:g id="storage_name" example="SD card">%1$s</xliff:g>” is available, or recreate the shortcut.</string>
@@ -10,7 +10,7 @@
     <string name="midlet_vendor"><b>Vendor: </b></string>
     <string name="midlet_version"><b>Version: </b></string>
     <string name="config_destination_graphics">Display</string>
-    <string name="config_destination_rendering" tools:ignore="MissingTranslation">Graphics</string>
+    <string name="config_destination_rendering">Graphics</string>
     <string name="config_destination_media">Media</string>
     <string name="config_camera_title">Camera</string>
     <string name="config_camera_default_title">Default camera</string>
@@ -89,7 +89,7 @@
     <string name="config_gamepad_diagnosis_no_controller">(no connected controller)</string>
     <string name="config_gamepad_diagnosis_samples_not_sent">Input samples are intentionally not sent to the MIDlet.</string>
     <string name="config_destination_system">System</string>
-    <string name="config_screen_behavior" tools:ignore="MissingTranslation">Screen behavior</string>
+    <string name="config_screen_behavior">Screen behavior</string>
     <string name="config_screen_size">Screen size</string>
     <string name="config_select_screen_size">Select screen size</string>
     <string name="config_current_screen_size">Current size: <xliff:g id="name" example="Example">%1$s</xliff:g></string>
@@ -112,37 +112,37 @@
         <item quantity="one"><xliff:g id="count" example="3">%1$d</xliff:g> property</item>
         <item quantity="other"><xliff:g id="count" example="3">%1$d</xliff:g> properties</item>
     </plurals>
-    <string name="config_search_suggestions" tools:ignore="MissingTranslation">Suggested settings</string>
-    <string name="config_search_clear" tools:ignore="MissingTranslation">Clear search</string>
-    <string name="config_search_title" tools:ignore="MissingTranslation">Search settings</string>
-    <string name="config_search_hint" tools:ignore="MissingTranslation">Find a setting, e.g. MMPX or orientation</string>
-    <string name="config_search_no_results" tools:ignore="MissingTranslation">No matching settings</string>
-    <string name="config_search_upscaling_requires_resolution" tools:ignore="MissingTranslation">Choose Auto or 2×–10× under Render resolution to configure bitmap upscaling.</string>
-    <string name="config_search_requires_manual_scale" tools:ignore="MissingTranslation">Choose Manual under Scaling mode to adjust the scale.</string>
-    <string name="config_search_requires_custom_background" tools:ignore="MissingTranslation">Choose Custom under Background mode to edit the background color.</string>
-    <string name="config_search_requires_gles" tools:ignore="MissingTranslation">Choose Hardware acceleration (OpenGL ES) under Graphics mode to configure shader effects.</string>
-    <string name="config_search_requires_renderer_mode" tools:ignore="MissingTranslation">Choose Software or Hardware acceleration (Surface) under Graphics mode to configure asynchronous screen updates.</string>
-    <string name="config_font_page_title" tools:ignore="MissingTranslation">Font settings</string>
-    <string name="config_display_more" tools:ignore="MissingTranslation">Text and performance</string>
-    <string name="config_destination_home" tools:ignore="MissingTranslation">Home</string>
-    <string name="config_overview_profile_draft" tools:ignore="MissingTranslation">Profile draft</string>
-    <string name="config_overview_profile_draft_summary" tools:ignore="MissingTranslation">Edit this reusable profile, then save your changes from the toolbar.</string>
-    <string name="config_overview_quick_access" tools:ignore="MissingTranslation">Quick access</string>
+    <string name="config_search_suggestions">Suggested settings</string>
+    <string name="config_search_clear">Clear search</string>
+    <string name="config_search_title">Search settings</string>
+    <string name="config_search_hint">Find a setting, e.g. MMPX or orientation</string>
+    <string name="config_search_no_results">No matching settings</string>
+    <string name="config_search_upscaling_requires_resolution">Choose Auto or 2×–10× under Render resolution to configure bitmap upscaling.</string>
+    <string name="config_search_requires_manual_scale">Choose Manual under Scaling mode to adjust the scale.</string>
+    <string name="config_search_requires_custom_background">Choose Custom under Background mode to edit the background color.</string>
+    <string name="config_search_requires_gles">Choose Hardware acceleration (OpenGL ES) under Graphics mode to configure shader effects.</string>
+    <string name="config_search_requires_renderer_mode">Choose Software or Hardware acceleration (Surface) under Graphics mode to configure asynchronous screen updates.</string>
+    <string name="config_font_page_title">Font settings</string>
+    <string name="config_display_more">Text and performance</string>
+    <string name="config_destination_home">Home</string>
+    <string name="config_overview_profile_draft">Profile draft</string>
+    <string name="config_overview_profile_draft_summary">Edit this reusable profile, then save your changes from the toolbar.</string>
+    <string name="config_overview_quick_access">Quick access</string>
     <string name="config_system_properties_editor_label">Properties</string>
-    <string name="config_overview_enabled" tools:ignore="MissingTranslation">On</string>
-    <string name="config_overview_disabled" tools:ignore="MissingTranslation">Off</string>
-    <string name="config_overview_media_summary" tools:ignore="MissingTranslation">Soundbank and camera</string>
-    <string name="config_overview_hint" tools:ignore="MissingTranslation">Choose a category to customize your game. Every setting has one home; these shortcuts take you there.</string>
+    <string name="config_overview_enabled">On</string>
+    <string name="config_overview_disabled">Off</string>
+    <string name="config_overview_media_summary">Soundbank and camera</string>
+    <string name="config_overview_hint">Choose a category to customize your game. Every setting has one home; these shortcuts take you there.</string>
     <string name="config_destination_general">General</string>
     <string name="config_basic_display">MIDlet screen</string>
     <string name="config_display_appearance">Screen appearance</string>
     <string name="config_display_rendering">Rendering</string>
-    <string name="config_image_quality_section" tools:ignore="MissingTranslation">Image quality</string>
-    <string name="config_frame_rate_section" tools:ignore="MissingTranslation">Frame rate</string>
-    <string name="config_fps_position_title" tools:ignore="MissingTranslation">FPS position</string>
+    <string name="config_image_quality_section">Image quality</string>
+    <string name="config_frame_rate_section">Frame rate</string>
+    <string name="config_fps_position_title">FPS position</string>
     <string name="config_display_text">Text &amp; fonts</string>
-    <string name="config_input_mapping_section" tools:ignore="MissingTranslation">Input &amp; mapping</string>
-    <string name="config_controls_appearance_section" tools:ignore="MissingTranslation">Control appearance</string>
+    <string name="config_input_mapping_section">Input &amp; mapping</string>
+    <string name="config_controls_appearance_section">Control appearance</string>
     <string name="config_controls_virtual_keyboard">Virtual controls</string>
     <string name="config_controls_virtual_keyboard_colors">Virtual control colors</string>
     <string name="config_virtual_controls_color_preview">Color preview</string>
@@ -163,11 +163,11 @@
     <string name="config_controls_color_skin_notice">A full-button skin can replace the default button colors, shape, and outline.</string>
     <string name="config_current_value">Current value</string>
     <string name="config_maintenance">Reset &amp; data</string>
-    <string name="config_midlet_actions" tools:ignore="MissingTranslation">MIDlet actions</string>
-    <string name="config_profile_maintenance" tools:ignore="MissingTranslation">Profile actions</string>
-    <string name="config_reset_profile_settings" tools:ignore="MissingTranslation">Reset profile draft</string>
-    <string name="config_reset_profile_settings_summary" tools:ignore="MissingTranslation">Restore this draft’s settings and virtual controls to defaults.</string>
-    <string name="config_system_compatibility" tools:ignore="MissingTranslation">Emulation compatibility</string>
+    <string name="config_midlet_actions">MIDlet actions</string>
+    <string name="config_profile_maintenance">Profile actions</string>
+    <string name="config_reset_profile_settings">Reset profile draft</string>
+    <string name="config_reset_profile_settings_summary">Restore this draft’s settings and virtual controls to defaults.</string>
+    <string name="config_system_compatibility">Emulation compatibility</string>
     <string name="config_reset_all_settings">Reset MIDlet configuration</string>
     <string name="config_reset_all_settings_summary">Restore this MIDlet’s settings and virtual controls to their defaults without deleting its data.</string>
     <string name="config_delete_app_data">Delete MIDlet data</string>
@@ -296,9 +296,9 @@
     <string name="config_analog_stick_summary">Choose Off, 4-way, 8-way, or numeric keypad for the primary analog stick. Controller buttons use key mappings.</string>
     <string name="config_analog_stick_off">Off</string>
     <string name="config_controller_help_body_compact">Controller buttons use the same key mappings as keyboard and phone keys. The analog stick sends only directional input to the MIDlet. Android Back keeps its normal behavior; any physical button mapped to M opens the runtime MIDlet menu.</string>
-    <string name="config_show_fps_title" tools:ignore="MissingTranslation">Show FPS</string>
-    <string name="config_show_fps_help" tools:ignore="MissingTranslation">Displays the frame rate while playing.</string>
-    <string name="config_search_requires_fps" tools:ignore="MissingTranslation">Turn on Show FPS to change the position.</string>
+    <string name="config_show_fps_title">Show FPS</string>
+    <string name="config_show_fps_help">Displays the frame rate while playing.</string>
+    <string name="config_search_requires_fps">Turn on Show FPS to change the position.</string>
     <string name="midlet_running_notification_title">MIDlet running</string>
     <string name="midlet_running_notification_text"><xliff:g id="name" example="Example">%1$s</xliff:g> is running.</string>
     <string name="midlet_running_notification_channel">MIDlet runtime</string>
@@ -330,9 +330,9 @@
     <string name="midlet_storage_mode_android">Android</string>
     <string name="midlet_storage_mode_shared_summary">Use shared folders in the working folder.</string>
     <string name="midlet_storage_mode_android_summary">Use Android storage as in previous versions.</string>
-    <string name="config_system_properties_reset" tools:ignore="MissingTranslation">Reset to default</string>
-    <string name="config_system_properties_reset_title" tools:ignore="MissingTranslation">Reset system properties?</string>
-    <string name="config_system_properties_reset_message" tools:ignore="MissingTranslation">Replace the editor contents with the current JL-Mod Plus defaults? Other settings will remain unchanged. Save to apply the reset.</string>
+    <string name="config_system_properties_reset">Reset to default</string>
+    <string name="config_system_properties_reset_title">Reset system properties?</string>
+    <string name="config_system_properties_reset_message">Replace the editor contents with the current JL-Mod Plus defaults? Other settings will remain unchanged. Save to apply the reset.</string>
     <string name="config_asset_add">+ Add from file</string>
     <string name="config_asset_copy_hint">Copied into the working folder; the original file stays where it is.</string>
     <string name="config_asset_name">File name</string>
@@ -343,14 +343,14 @@
     <string name="config_asset_deleted">Deleted <xliff:g id="name" example="Example">%1$s</xliff:g></string>
     <string name="config_asset_invalid">Unsupported or invalid file.</string>
     <string name="config_asset_operation_failed">Couldn’t complete the file operation.</string>
-    <string name="config_save_failed" tools:ignore="MissingTranslation">Couldn’t save settings. Your changes are still open—try again.</string>
+    <string name="config_save_failed">Couldn’t save settings. Your changes are still open—try again.</string>
     <string name="config_asset_busy">Finish the current file operation first.</string>
-    <string name="config_quick_settings" tools:ignore="MissingTranslation">Quick settings</string>
-    <string name="config_all_settings" tools:ignore="MissingTranslation">All settings</string>
-    <string name="profile_local_changes_pending" tools:ignore="MissingTranslation">Local changes not saved to the profile</string>
-    <string name="profile_local_configuration_summary" tools:ignore="MissingTranslation">Settings for this MIDlet only</string>
-    <string name="profile_not_following" tools:ignore="MissingTranslation">Based on <xliff:g id="profile_name" example="Action Games">%1$s</xliff:g> · Not following updates</string>
-    <string name="profile_stop_following" tools:ignore="MissingTranslation">Stop following profile</string>
-    <string name="profile_follow_again" tools:ignore="MissingTranslation">Follow profile again</string>
-    <string name="profile_follow_again_summary" tools:ignore="MissingTranslation">Replace this MIDlet’s local settings and virtual controls with the latest <xliff:g id="profile_name" example="Action Games">%1$s</xliff:g> profile, and follow its future updates?</string>
+    <string name="config_quick_settings">Quick settings</string>
+    <string name="config_all_settings">All settings</string>
+    <string name="profile_local_changes_pending">Local changes not saved to the profile</string>
+    <string name="profile_local_configuration_summary">Settings for this MIDlet only</string>
+    <string name="profile_not_following">Based on <xliff:g id="profile_name" example="Action Games">%1$s</xliff:g> · Not following updates</string>
+    <string name="profile_stop_following">Stop following profile</string>
+    <string name="profile_follow_again">Follow profile again</string>
+    <string name="profile_follow_again_summary">Replace this MIDlet’s local settings and virtual controls with the latest <xliff:g id="profile_name" example="Action Games">%1$s</xliff:g> profile, and follow its future updates?</string>
 </resources>

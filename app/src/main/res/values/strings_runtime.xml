@@ -1,11 +1,11 @@
 <?xml version="1.0" encoding="utf-8"?>
 <!-- Active MIDlet runtime session, screenshots, logs, crash recovery, and diagnostic reports. -->
-<resources xmlns:tools="http://schemas.android.com/tools" xmlns:xliff="urn:oasis:names:tc:xliff:document:1.2">
+<resources xmlns:xliff="urn:oasis:names:tc:xliff:document:1.2">
     <string name="action_keyboard_ime">Keyboard (IME)</string>
     <string name="action_lock_orientation">Lock screen rotation</string>
     <string name="runtime_replacement_failed">Couldn’t stop the running MIDlet. Try opening the new one again.</string>
-    <string name="runtime_restart" tools:ignore="MissingTranslation">Restart</string>
-    <string name="runtime_restart_confirmation" tools:ignore="MissingTranslation">Restart this MIDlet? Unsaved progress may be lost.</string>
+    <string name="runtime_restart">Restart</string>
+    <string name="runtime_restart_confirmation">Restart this MIDlet? Unsaved progress may be lost.</string>
     <string name="FORCE_CLOSE_CONFIRMATION">Stop this MIDlet? Unsaved progress may be lost.</string>
     <string name="runtime_preset_save_destination">Save to</string>
     <string name="runtime_preset_apply_destination">Apply to</string>
@@ -38,7 +38,7 @@
     <string name="copy_report">Copy</string>
     <string name="report_on_github">Report on GitHub</string>
     <string name="delete_report">Delete</string>
-    <string name="share_selected_reports" tools:ignore="MissingTranslation">Share selected reports</string>
+    <string name="share_selected_reports">Share selected reports</string>
     <string name="delete_selected_reports">Delete selected reports</string>
     <string name="crash_report_copied">Report copied</string>
     <string name="crash_report_bundle_preparing">Preparing diagnostic bundle…</string>
@@ -65,9 +65,9 @@
     <string name="process_exit_recovery_message_named"><xliff:g id="app_name" example="Bounce Tales">%1$s</xliff:g> stopped unexpectedly in the previous session (<xliff:g id="reason" example="Native crash">%2$s</xliff:g>). Diagnostic details were saved locally.</string>
     <string name="select_all_reports">Select all reports</string>
     <string name="clear_report_selection">Clear report selection</string>
-    <string name="runtime_memory_button_short" tools:ignore="MissingTranslation">Memory button</string>
-    <string name="runtime_action_on" tools:ignore="MissingTranslation">On</string>
-    <string name="runtime_action_off" tools:ignore="MissingTranslation">Off</string>
+    <string name="runtime_memory_button_short">Memory button</string>
+    <string name="runtime_action_on">On</string>
+    <string name="runtime_action_off">Off</string>
     <string name="reconverting_wait">This MIDlet needs a one-time compatibility conversion before it can start.</string>
     <string name="reconversion_done_with_warning">Compatibility conversion completed with warnings.</string>
     <string name="reconversion_error_summary">Couldn’t convert this MIDlet automatically.</string>
@@ -92,10 +92,10 @@
     <!-- %1$s is the saved screenshot's filesystem path. New key replaces the legacy prefix contract. -->
     <string name="screenshot_saved_path">Screenshot saved to <xliff:g id="path" example="Pictures/Bounce Tales/Screenshot_20261125-103000.png">%1$s</xliff:g></string>
     <!-- Deliberate English fallback until reviewed translations are available. -->
-    <string name="log_save_success" tools:ignore="MissingTranslation">Saved <xliff:g id="name" example="Example">%1$s</xliff:g> in Downloads → JL-Mod Plus Diagnostics.</string>
-    <string name="log_save_partial" tools:ignore="MissingTranslation">Saved a partial log as <xliff:g id="name" example="Example">%1$s</xliff:g> in Downloads → JL-Mod Plus Diagnostics.</string>
-    <string name="log_save_empty" tools:ignore="MissingTranslation">No app log records are available in the Android buffer.</string>
-    <string name="log_save_timeout" tools:ignore="MissingTranslation">Log collection timed out. No file was saved.</string>
+    <string name="log_save_success">Saved <xliff:g id="name" example="Example">%1$s</xliff:g> in Downloads → JL-Mod Plus Diagnostics.</string>
+    <string name="log_save_partial">Saved a partial log as <xliff:g id="name" example="Example">%1$s</xliff:g> in Downloads → JL-Mod Plus Diagnostics.</string>
+    <string name="log_save_empty">No app log records are available in the Android buffer.</string>
+    <string name="log_save_timeout">Log collection timed out. No file was saved.</string>
     <string name="log_save_failed">Couldn’t save log.</string>
     <string name="runtime_midlet_list_failed">Couldn’t read this app’s MIDlet list.</string>
     <string name="diagnostic_reason_java_crash">Java crash</string>
@@ -110,7 +110,7 @@
     <string name="runtime_camera_use_front">Use front camera</string>
     <string name="runtime_camera_use_rear">Use rear camera</string>
     <string name="runtime_camera_switch_failed">Couldn’t switch cameras.</string>
-    <string name="runtime_camera_switch_recording" tools:ignore="MissingTranslation">Stop recording before switching cameras.</string>
-    <string name="date_field_not_set" tools:ignore="MissingTranslation">Not set</string>
-    <string name="date_field_use_displayed_value" tools:ignore="MissingTranslation">Use this value</string>
+    <string name="runtime_camera_switch_recording">Stop recording before switching cameras.</string>
+    <string name="date_field_not_set">Not set</string>
+    <string name="date_field_use_displayed_value">Use this value</string>
 </resources>

@@ -1,6 +1,6 @@
 <?xml version="1.0" encoding="utf-8"?>
 <!-- Global app settings, appearance, themes, accent colors, and legacy preference keys. -->
-<resources xmlns:tools="http://schemas.android.com/tools">
+<resources>
     <string name="pref_app_sort_date">Date added</string>
     <string name="pref_app_sort_name">Name</string>
     <string name="pref_app_sort_vendor">Vendor</string>
@@ -91,13 +91,13 @@
     <string name="PREF_EMULATION_SPEED">Emulation speed</string>
     <string name="PREF_TIMING_MODE">Time source</string>
     <string name="settings_section_appearance">App appearance</string>
-    <string name="settings_section_appearance_language" tools:ignore="MissingTranslation">Appearance and language</string>
-    <string name="settings_section_storage_profiles" tools:ignore="MissingTranslation">Storage and profiles</string>
+    <string name="settings_section_appearance_language">Appearance and language</string>
+    <string name="settings_section_storage_profiles">Storage and profiles</string>
     <string name="settings_section_language">Language</string>
-    <string name="settings_section_library_icons" tools:ignore="MissingTranslation">Library icons</string>
-    <string name="settings_section_library_grid" tools:ignore="MissingTranslation">Grid layout</string>
-    <string name="settings_section_runtime_screen" tools:ignore="MissingTranslation">Screen while playing</string>
-    <string name="settings_section_runtime_features" tools:ignore="MissingTranslation">In-game features</string>
+    <string name="settings_section_library_icons">Library icons</string>
+    <string name="settings_section_library_grid">Grid layout</string>
+    <string name="settings_section_runtime_screen">Screen while playing</string>
+    <string name="settings_section_runtime_features">In-game features</string>
     <string name="settings_section_library_appearance">Library appearance</string>
     <string name="settings_section_midlet_runtime">MIDlet runtime</string>
     <string name="settings_section_storage">Storage</string>
@@ -113,7 +113,7 @@
     <string name="pref_accent_amber">Golden amber</string>
     <string name="pref_accent_blue">Default blue</string>
     <string name="pref_accent_classic_blue">Classic blue</string>
-    <string name="pref_accent_wallpaper" tools:ignore="MissingTranslation">Wallpaper colors</string>
+    <string name="pref_accent_wallpaper">Wallpaper colors</string>
     <string name="pref_runtime_fullscreen_title">Fullscreen</string>
     <string name="pref_runtime_fullscreen_summary">Hide the toolbar while playing. Applies to all MIDlets.</string>
     <string name="pref_show_status_bar_title">Show status bar</string>

@@ -1,6 +1,6 @@
 <?xml version="1.0" encoding="utf-8"?>
 <!-- MIDlet library, collections, metadata editor, bulk/single installer, file picker, and app updates. -->
-<resources xmlns:tools="http://schemas.android.com/tools" xmlns:xliff="urn:oasis:names:tc:xliff:document:1.2">
+<resources xmlns:xliff="urn:oasis:names:tc:xliff:document:1.2">
     <string name="action_context_delete">Delete</string>
     <string name="action_context_rename">Rename</string>
     <string name="action_context_shortcut">Add shortcut</string>
@@ -56,7 +56,7 @@
     <string name="msg_no_matches">No matches for “<xliff:g id="query" example="Bounce">%1$s</xliff:g>”</string>
     <string name="library_destination_apps">All apps</string>
     <string name="library_destination_collections">Collections</string>
-    <string name="library_scope_picker_title" tools:ignore="MissingTranslation">Browse apps</string>
+    <string name="library_scope_picker_title">Browse apps</string>
     <string name="library_destination_more">More</string>
     <string name="library_search_placeholder">Search apps…</string>
     <string name="library_filter_all">All</string>
@@ -75,13 +75,13 @@
     <string name="library_icon_shape_title">Icon shape</string>
     <string name="library_icon_shape_round">Rounded corners</string>
     <string name="library_icon_shape_square">Sharp corners</string>
-    <string name="library_grid_icon_size_title" tools:ignore="MissingTranslation">Grid icon size</string>
-    <string name="library_grid_icon_size_small" tools:ignore="MissingTranslation">Small</string>
-    <string name="library_grid_icon_size_standard" tools:ignore="MissingTranslation">Standard</string>
-    <string name="library_grid_icon_size_large" tools:ignore="MissingTranslation">Large</string>
-    <string name="library_grid_icon_size_summary" tools:ignore="MissingTranslation">Changes icon size and column count in Grid view.</string>
+    <string name="library_grid_icon_size_title">Grid icon size</string>
+    <string name="library_grid_icon_size_small">Small</string>
+    <string name="library_grid_icon_size_standard">Standard</string>
+    <string name="library_grid_icon_size_large">Large</string>
+    <string name="library_grid_icon_size_summary">Changes icon size and column count in Grid view.</string>
     <string name="library_grid_spacing_title">Grid spacing</string>
-    <string name="library_grid_spacing_summary" tools:ignore="MissingTranslation">Only applies to Grid view.</string>
+    <string name="library_grid_spacing_summary">Only applies to Grid view.</string>
     <string name="library_grid_spacing_none">None (0 dp)</string>
     <string name="library_grid_spacing_compact">Compact (4 dp)</string>
     <string name="library_grid_spacing_standard">Standard (8 dp)</string>
@@ -133,21 +133,21 @@
     <string name="library_collection_add_app">Add to collection</string>
     <string name="library_collection_add_apps">Add apps</string>
     <string name="library_collection_manage_apps">Choose apps</string>
-    <string name="library_collection_manage" tools:ignore="MissingTranslation">Manage collections</string>
-    <string name="library_collection_delete_confirmation" tools:ignore="MissingTranslation">Delete “<xliff:g id="collection_name" example="Favorites">%1$s</xliff:g>”? The apps in this collection will remain installed.</string>
-    <string name="library_collection_rename_action" tools:ignore="MissingTranslation">Rename collection <xliff:g id="collection_name" example="Favorites">%1$s</xliff:g></string>
-    <string name="library_collection_delete_action" tools:ignore="MissingTranslation">Delete collection <xliff:g id="collection_name" example="Favorites">%1$s</xliff:g></string>
-    <string name="library_collection_select_action" tools:ignore="MissingTranslation">Select collection <xliff:g id="collection_name" example="Favorites">%1$s</xliff:g></string>
-    <string name="library_collection_open_action" tools:ignore="MissingTranslation">Open collection <xliff:g id="collection_name" example="Favorites">%1$s</xliff:g></string>
-    <string name="library_collection_rename_selected" tools:ignore="MissingTranslation">Rename selected collection</string>
-    <string name="library_collection_delete_selected" tools:ignore="MissingTranslation">Delete selected collections</string>
+    <string name="library_collection_manage">Manage collections</string>
+    <string name="library_collection_delete_confirmation">Delete “<xliff:g id="collection_name" example="Favorites">%1$s</xliff:g>”? The apps in this collection will remain installed.</string>
+    <string name="library_collection_rename_action">Rename collection <xliff:g id="collection_name" example="Favorites">%1$s</xliff:g></string>
+    <string name="library_collection_delete_action">Delete collection <xliff:g id="collection_name" example="Favorites">%1$s</xliff:g></string>
+    <string name="library_collection_select_action">Select collection <xliff:g id="collection_name" example="Favorites">%1$s</xliff:g></string>
+    <string name="library_collection_open_action">Open collection <xliff:g id="collection_name" example="Favorites">%1$s</xliff:g></string>
+    <string name="library_collection_rename_selected">Rename selected collection</string>
+    <string name="library_collection_delete_selected">Delete selected collections</string>
     <plurals name="library_collection_delete_many_confirmation">
         <item quantity="one">Delete <xliff:g id="count" example="3">%d</xliff:g> collection? Apps will remain installed.</item>
         <item quantity="other">Delete <xliff:g id="count" example="3">%d</xliff:g> collections? Apps will remain installed.</item>
     </plurals>
-    <string name="library_notifications_title" tools:ignore="MissingTranslation">Notifications</string>
-    <string name="library_notifications_empty_title" tools:ignore="MissingTranslation">No notifications yet</string>
-    <string name="library_notifications_empty_summary" tools:ignore="MissingTranslation">App update notifications will appear here when available.</string>
+    <string name="library_notifications_title">Notifications</string>
+    <string name="library_notifications_empty_title">No notifications yet</string>
+    <string name="library_notifications_empty_summary">App update notifications will appear here when available.</string>
     <string name="library_collection_manage_apps_summary">Select apps to include in this collection.</string>
     <string name="library_collection_name">Collection name</string>
     <string name="library_collection_members_empty">No apps in this collection.</string>
@@ -269,9 +269,9 @@
     <string name="bulk_install_source">Source: <xliff:g id="name" example="Example">%1$s</xliff:g></string>
     <string name="bulk_install_action_separate_copy">Install as separate copy</string>
     <string name="bulk_install_action_jar_only">Install JAR only</string>
-    <string name="single_install_review_jar_only" tools:ignore="MissingTranslation">Review JAR only</string>
-    <string name="single_install_jar_only_notice" tools:ignore="MissingTranslation">Only the JAR will be installed. Review its app name, version, and installed-app status before continuing.</string>
-    <string name="single_install_running_replacement_warning" tools:ignore="MissingTranslation">If this app is running, installing will stop it before replacing its files. Unsaved progress may be lost.</string>
+    <string name="single_install_review_jar_only">Review JAR only</string>
+    <string name="single_install_jar_only_notice">Only the JAR will be installed. Review its app name, version, and installed-app status before continuing.</string>
+    <string name="single_install_running_replacement_warning">If this app is running, installing will stop it before replacing its files. Unsaved progress may be lost.</string>
     <string name="bulk_install_status_new">New</string>
     <string name="bulk_install_status_update">Update</string>
     <string name="bulk_install_status_downgrade">Older version</string>
@@ -293,7 +293,7 @@
     <string name="library_metadata_icon">Icon</string>
     <string name="library_metadata_name">Name</string>
     <string name="library_metadata_vendor">Vendor</string>
-    <string name="library_metadata_reset_to_original">Reset to original</string>
+    <string name="library_metadata_reset_to_original">Restore original</string>
     <string name="library_metadata_save">Save</string>
     <string name="library_hide_grid_titles_summary">Hide MIDlet names in Grid view. List view keeps them visible.</string>
     <string name="library_show_list_description_summary">Show each MIDlet description below its title and version.</string>
@@ -332,10 +332,10 @@
     <string name="library_load_failed_message">Couldn’t load the library. Try again.</string>
     <string name="bulk_install_prepare_failed">Couldn’t prepare the selected apps for installation.</string>
     <string name="installer_existing_data_preserved">Existing settings and save data will be kept.</string>
-    <string name="bulk_install_library_changed">Your library changed after review. Close this batch and select the files again.</string>
+    <string name="bulk_install_library_changed">Your library changed after review. Close the installer, then select the files again.</string>
     <string name="bulk_install_source_unavailable">A required source file is no longer available. Select the files again.</string>
     <string name="bulk_install_source_changed">The source file changed after review. Select the files again.</string>
-    <string name="bulk_install_target_unverified">Couldn’t verify the reinstall target. Close this batch and select the app again.</string>
+    <string name="bulk_install_target_unverified">Couldn’t verify the app to reinstall. Close the installer, then select the app again.</string>
     <string name="bulk_install_result_restored">Restored</string>
     <plurals name="bulk_install_restored_count">
         <item quantity="one"><xliff:g id="count" example="3">%1$d</xliff:g> restored</item>
@@ -382,19 +382,19 @@
     <string name="bulk_install_choose_folder">Folder</string>
     <string name="bulk_install_unreadable_archives">Unreadable archives: <xliff:g id="count" example="3">%1$d</xliff:g></string>
     <string name="bulk_install_skipped_entries">Skipped files or archive entries: <xliff:g id="count" example="3">%1$d</xliff:g></string>
-    <string name="bulk_install_selection_options" tools:ignore="MissingTranslation">Selection options</string>
-    <string name="bulk_install_show_details" tools:ignore="MissingTranslation">Show details</string>
-    <string name="bulk_install_hide_details" tools:ignore="MissingTranslation">Hide details</string>
+    <string name="bulk_install_selection_options">Selection options</string>
+    <string name="bulk_install_show_details">Show details</string>
+    <string name="bulk_install_hide_details">Hide details</string>
     <string name="bulk_install_filter_all">All</string>
     <string name="bulk_install_filter_selected">Selected</string>
     <string name="bulk_install_filter_review">Review</string>
     <string name="bulk_install_empty_filter">No matching apps.</string>
-    <string name="platform_package_choice_title" tools:ignore="MissingTranslation">Java ME package detected</string>
-    <string name="platform_package_choice_message" tools:ignore="MissingTranslation">This link points to a Java ME package. What would you like to do?</string>
-    <string name="platform_package_install" tools:ignore="MissingTranslation">Install in JL-Mod Plus</string>
-    <string name="platform_package_browser" tools:ignore="MissingTranslation">Open in browser</string>
-    <string name="platform_package_unavailable" tools:ignore="MissingTranslation">No app found to open this link.</string>
-    <string name="installer_running_update_warning" tools:ignore="MissingTranslation">This app is currently running. Installing will stop it before replacing its files. Unsaved progress may be lost.</string>
+    <string name="platform_package_choice_title">Java ME package detected</string>
+    <string name="platform_package_choice_message">This link points to a Java ME package. What would you like to do?</string>
+    <string name="platform_package_install">Install in JL-Mod Plus</string>
+    <string name="platform_package_browser">Open in browser</string>
+    <string name="platform_package_unavailable">No app found to open this link.</string>
+    <string name="installer_running_update_warning">This app is currently running. Installing will stop it before replacing its files. Unsaved progress may be lost.</string>
     <string name="library_metadata_main_icon">Main</string>
     <string name="library_metadata_follows_main">Uses main icon</string>
     <string name="library_metadata_change">Change</string>
@@ -407,62 +407,62 @@
     <string name="library_metadata_language_search">Search language or locale code</string>
     <string name="library_metadata_remove_language">Remove description</string>
     <string name="library_metadata_language_load_failed">Couldn’t load language descriptions. Tap Retry to try again.</string>
-    <string name="updates_download_apk" tools:ignore="MissingTranslation">Download APK</string>
-    <string name="updates_skip_version" tools:ignore="MissingTranslation">Skip this version</string>
-    <string name="updates_dialog_message" tools:ignore="MissingTranslation">JL-Mod Plus <xliff:g id="version" example="2.1.0">%1$s</xliff:g> is available. You’re using <xliff:g id="current_version" example="2.0.0">%2$s</xliff:g>. Download the APK or view the release on GitHub.</string>
-    <string name="library_bundle_components_title" tools:ignore="MissingTranslation">Export bundle</string>
-    <string name="library_bundle_components_explanation" tools:ignore="MissingTranslation">Selected apps are always included. Close any running MIDlet before exporting, then choose any additional data to include.</string>
-    <string name="library_bundle_config" tools:ignore="MissingTranslation">Configuration</string>
-    <string name="library_bundle_save_data" tools:ignore="MissingTranslation">Save data</string>
-    <string name="library_bundle_saved_variables" tools:ignore="MissingTranslation">Bookmarks</string>
-    <string name="library_bundle_export" tools:ignore="MissingTranslation">Export</string>
-    <string name="library_export_jar_only" tools:ignore="MissingTranslation">JAR only</string>
-    <string name="library_export_jars_only" tools:ignore="MissingTranslation">JARs only (ZIP)</string>
-    <string name="library_selection_action_delete" tools:ignore="MissingTranslation">Delete</string>
-    <string name="library_selection_action_collection" tools:ignore="MissingTranslation">Collection</string>
-    <string name="library_selection_action_export" tools:ignore="MissingTranslation">Export</string>
-    <string name="library_selection_action_reinstall" tools:ignore="MissingTranslation">Reinstall</string>
-    <string name="installer_select_companion_jar" tools:ignore="MissingTranslation">This JAD refers to a separate JAR file. Select the matching JAR to continue. The external file provider doesn’t allow access to neighboring files.</string>
-    <string name="installer_select_jar" tools:ignore="MissingTranslation">Select JAR</string>
-    <string name="installer_wrong_companion_jar" tools:ignore="MissingTranslation">This JAR doesn’t match the selected JAD. Choose the matching JAR to preserve the JAD settings.</string>
-    <string name="installer_choose_another_jar" tools:ignore="MissingTranslation">Choose another JAR</string>
-    <string name="library_app_more_actions" tools:ignore="MissingTranslation">More actions for <xliff:g id="name" example="Example">%1$s</xliff:g></string>
-    <string name="library_actions_group_customize" tools:ignore="MissingTranslation">Customize</string>
-    <string name="library_actions_group_organize" tools:ignore="MissingTranslation">Organize</string>
-    <string name="library_actions_group_transfer" tools:ignore="MissingTranslation">Transfer and maintain</string>
-    <string name="library_collection_more_actions" tools:ignore="MissingTranslation">More actions for collection <xliff:g id="collection_name" example="Favorites">%1$s</xliff:g></string>
-    <string name="library_settings_preferences" tools:ignore="MissingTranslation">App preferences</string>
-    <string name="library_settings_section_maintenance" tools:ignore="MissingTranslation">Updates and diagnostics</string>
-    <string name="library_settings_section_support" tools:ignore="MissingTranslation">About and support</string>
-    <string name="library_details_title" tools:ignore="MissingTranslation">MIDlet details</string>
-    <string name="library_details_description" tools:ignore="MissingTranslation">Description</string>
-    <string name="library_details_play_stats" tools:ignore="MissingTranslation">Play statistics</string>
-    <string name="library_details_launches" tools:ignore="MissingTranslation">Launches</string>
-    <string name="library_details_total_time" tools:ignore="MissingTranslation">Total time</string>
-    <string name="library_details_last_played" tools:ignore="MissingTranslation">Last played</string>
-    <string name="library_details_library_info" tools:ignore="MissingTranslation">Library information</string>
-    <string name="library_details_added" tools:ignore="MissingTranslation">Added to library</string>
-    <string name="library_details_collections" tools:ignore="MissingTranslation">Collections</string>
-    <string name="library_details_none" tools:ignore="MissingTranslation">None</string>
-    <string name="library_details_technical" tools:ignore="MissingTranslation">Technical information</string>
-    <string name="library_details_profile" tools:ignore="MissingTranslation">Profile</string>
-    <string name="library_details_configuration" tools:ignore="MissingTranslation">Configuration</string>
-    <string name="library_details_jar_size" tools:ignore="MissingTranslation">Retained JAR size</string>
-    <string name="library_details_entry_points" tools:ignore="MissingTranslation">MIDlet entries</string>
-    <string name="library_details_original_metadata" tools:ignore="MissingTranslation">Original metadata</string>
-    <string name="library_details_name" tools:ignore="MissingTranslation">Name</string>
-    <string name="library_details_vendor" tools:ignore="MissingTranslation">Vendor</string>
-    <string name="library_details_version" tools:ignore="MissingTranslation">Version</string>
-    <string name="library_details_version_value" tools:ignore="MissingTranslation">Version <xliff:g id="version" example="2.1.0">%1$s</xliff:g></string>
-    <string name="library_details_original_description" tools:ignore="MissingTranslation">Original description</string>
-    <string name="library_details_permissions" tools:ignore="MissingTranslation">Declared permissions</string>
-    <string name="library_details_required" tools:ignore="MissingTranslation">Required</string>
-    <string name="library_details_optional" tools:ignore="MissingTranslation">Optional</string>
-    <string name="library_details_no_permissions" tools:ignore="MissingTranslation">No permissions declared</string>
-    <string name="library_details_descriptor_attributes" tools:ignore="MissingTranslation">Descriptor attributes</string>
-    <string name="library_details_unavailable" tools:ignore="MissingTranslation">Unavailable</string>
-    <string name="library_details_action" tools:ignore="MissingTranslation">Details</string>
-    <string name="library_details_view_details" tools:ignore="MissingTranslation">View details</string>
-    <string name="library_actions_more" tools:ignore="MissingTranslation">More actions</string>
-    <string name="library_actions_less" tools:ignore="MissingTranslation">Fewer actions</string>
+    <string name="updates_download_apk">Download APK</string>
+    <string name="updates_skip_version">Skip this version</string>
+    <string name="updates_dialog_message">JL-Mod Plus <xliff:g id="version" example="2.1.0">%1$s</xliff:g> is available. You’re using <xliff:g id="current_version" example="2.0.0">%2$s</xliff:g>. Download the APK or view the release on GitHub.</string>
+    <string name="library_bundle_components_title">Export bundle</string>
+    <string name="library_bundle_components_explanation">Selected apps are always included. Close any running MIDlet before exporting, then choose any additional data to include.</string>
+    <string name="library_bundle_config">Configuration</string>
+    <string name="library_bundle_save_data">Save data</string>
+    <string name="library_bundle_saved_variables">Bookmarks</string>
+    <string name="library_bundle_export">Export</string>
+    <string name="library_export_jar_only">JAR only</string>
+    <string name="library_export_jars_only">JARs only (ZIP)</string>
+    <string name="library_selection_action_delete">Delete</string>
+    <string name="library_selection_action_collection">Collection</string>
+    <string name="library_selection_action_export">Export</string>
+    <string name="library_selection_action_reinstall">Reinstall</string>
+    <string name="installer_select_companion_jar">This JAD refers to a separate JAR file. Select the matching JAR to continue. The external file provider doesn’t allow access to neighboring files.</string>
+    <string name="installer_select_jar">Select JAR</string>
+    <string name="installer_wrong_companion_jar">This JAR doesn’t match the selected JAD. Choose the matching JAR to preserve the JAD settings.</string>
+    <string name="installer_choose_another_jar">Choose another JAR</string>
+    <string name="library_app_more_actions">More actions for <xliff:g id="name" example="Example">%1$s</xliff:g></string>
+    <string name="library_actions_group_customize">Customize</string>
+    <string name="library_actions_group_organize">Organize</string>
+    <string name="library_actions_group_transfer">Transfer and maintain</string>
+    <string name="library_collection_more_actions">More actions for collection <xliff:g id="collection_name" example="Favorites">%1$s</xliff:g></string>
+    <string name="library_settings_preferences">App preferences</string>
+    <string name="library_settings_section_maintenance">Updates and diagnostics</string>
+    <string name="library_settings_section_support">About and support</string>
+    <string name="library_details_title">MIDlet details</string>
+    <string name="library_details_description">Description</string>
+    <string name="library_details_play_stats">Play statistics</string>
+    <string name="library_details_launches">Launches</string>
+    <string name="library_details_total_time">Total time</string>
+    <string name="library_details_last_played">Last played</string>
+    <string name="library_details_library_info">Library information</string>
+    <string name="library_details_added">Added to library</string>
+    <string name="library_details_collections">Collections</string>
+    <string name="library_details_none">None</string>
+    <string name="library_details_technical">Technical information</string>
+    <string name="library_details_profile">Profile</string>
+    <string name="library_details_configuration">Configuration</string>
+    <string name="library_details_jar_size">Retained JAR size</string>
+    <string name="library_details_entry_points">MIDlet entries</string>
+    <string name="library_details_original_metadata">Original metadata</string>
+    <string name="library_details_name">Name</string>
+    <string name="library_details_vendor">Vendor</string>
+    <string name="library_details_version">Version</string>
+    <string name="library_details_version_value">Version <xliff:g id="version" example="2.1.0">%1$s</xliff:g></string>
+    <string name="library_details_original_description">Original description</string>
+    <string name="library_details_permissions">Declared permissions</string>
+    <string name="library_details_required">Required</string>
+    <string name="library_details_optional">Optional</string>
+    <string name="library_details_no_permissions">No permissions declared</string>
+    <string name="library_details_descriptor_attributes">Descriptor attributes</string>
+    <string name="library_details_unavailable">Unavailable</string>
+    <string name="library_details_action">Details</string>
+    <string name="library_details_view_details">View details</string>
+    <string name="library_actions_more">More actions</string>
+    <string name="library_actions_less">Fewer actions</string>
 </resources>

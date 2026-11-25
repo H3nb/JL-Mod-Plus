@@ -1,6 +1,6 @@
 <?xml version="1.0" encoding="utf-8"?>
 <!-- Rendering pipeline, internal resolution, bitmap upscaling, shaders, and built-in visual effects. -->
-<resources xmlns:tools="http://schemas.android.com/tools" xmlns:xliff="urn:oasis:names:tc:xliff:document:1.2">
+<resources xmlns:xliff="urn:oasis:names:tc:xliff:document:1.2">
     <string name="identity_filter">None (fastest)</string>
     <string name="invalid_resolution_not_saved">Invalid resolution. Preset wasn’t saved.</string>
     <string name="msg_error_loading_shader">Unsupported shader. Using the default shader.</string>
@@ -14,15 +14,15 @@
     <string name="perf_overlay_top_right">Top right</string>
     <string name="perf_overlay_bottom_left">Bottom left</string>
     <string name="perf_overlay_bottom_right">Bottom right</string>
-    <string name="internal_resolution_title" tools:ignore="MissingTranslation">Render resolution</string>
-    <string name="internal_resolution_auto" tools:ignore="MissingTranslation">Auto</string>
-    <string name="internal_resolution_description" tools:ignore="MissingTranslation">Renders supported 2D and 3D at higher detail. Auto fits the game viewport; restart to apply.</string>
-    <string name="bitmap_upscaling_title" tools:ignore="MissingTranslation">Bitmap upscaling</string>
-    <string name="bitmap_upscaling_description" tools:ignore="MissingTranslation">Upscales immutable 2D sprites, and opaque Micro3D model textures with MMPX or xBR Lv3. M3G textures are unchanged; restart to apply.</string>
-    <string name="bitmap_upscaling_nearest" tools:ignore="MissingTranslation">Nearest neighbor</string>
-    <string name="bitmap_upscaling_bilinear" tools:ignore="MissingTranslation">Bilinear</string>
-    <string name="bitmap_upscaling_mmpx" tools:ignore="MissingTranslation">MMPX</string>
-    <string name="bitmap_upscaling_edge_aware" tools:ignore="MissingTranslation">xBR Lv3</string>
+    <string name="internal_resolution_title">Render resolution</string>
+    <string name="internal_resolution_auto">Auto</string>
+    <string name="internal_resolution_description">Renders supported 2D and 3D at higher detail. Auto fits the game viewport; restart to apply.</string>
+    <string name="bitmap_upscaling_title">Bitmap upscaling</string>
+    <string name="bitmap_upscaling_description">Upscales immutable 2D sprites, and opaque Micro3D model textures with MMPX or xBR Lv3. M3G textures are unchanged; restart to apply.</string>
+    <string name="bitmap_upscaling_nearest">Nearest neighbor</string>
+    <string name="bitmap_upscaling_bilinear">Bilinear</string>
+    <string name="bitmap_upscaling_mmpx">MMPX</string>
+    <string name="bitmap_upscaling_edge_aware">xBR Lv3</string>
     <!-- Prototyping only: localized UI copy is pending design review. -->
     <string name="render_shader_effects">Shader effects</string>
     <string name="render_pipeline_title">Rendering pipeline</string>

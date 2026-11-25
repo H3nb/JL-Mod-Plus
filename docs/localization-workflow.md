@@ -7,8 +7,9 @@ describes execution, not a replacement semantic contract.
 
 ## Sources and responsibilities
 
-- Android `app/src/main/res/values/strings.xml` is canonical English; shipped
-  `values-*/strings.xml` files provide the other locale catalogs. Their presence
+- Android `app/src/main/res/values/strings_*.xml` catalogs are canonical English;
+  matching `values-*/strings_*.xml` files provide localized resources. The
+  unqualified `strings_untranslatable.xml` is excluded from translation. Their presence
   alone does not establish translation quality. English fallback is a safety net,
   not evidence of completed language review.
 - The XML files remain the only source of resource text consumed by Android.

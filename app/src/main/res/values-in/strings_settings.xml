@@ -4,13 +4,13 @@
     <string name="pref_app_sort_date">Tanggal ditambahkan</string>
     <string name="pref_app_sort_name">Nama</string>
     <string name="pref_app_sort_vendor">Vendor</string>
-    <string name="pref_app_sort_ascending">Urut naik</string>
-    <string name="pref_app_sort_descending">Urut turun</string>
+    <string name="pref_app_sort_ascending">Menaik</string>
+    <string name="pref_app_sort_descending">Menurun</string>
     <string name="pref_apps_view">Tata letak</string>
     <string name="pref_audio_title">MIDI</string>
     <string name="pref_button_shape_oval">Oval</string>
     <string name="pref_button_shape_rect">Persegi panjang</string>
-    <string name="pref_button_shape_round">Persegi panjang membulat</string>
+    <string name="pref_button_shape_round">Persegi panjang bersudut bulat</string>
     <string name="pref_button_shape_title">Bentuk tombol keypad</string>
     <string name="pref_category_experimental">Eksperimental</string>
     <string name="pref_emulator_dir">Folder kerja</string>
@@ -37,7 +37,7 @@
     <string name="pref_mascot_title">Notifikasi Mascot Capsule 3D</string>
     <string name="PREF_ORIENTATION">Orientasi layar</string>
     <string name="pref_orientation_auto">Otomatis</string>
-    <string name="pref_orientation_default">Default sistem</string>
+    <string name="pref_orientation_default">Bawaan sistem</string>
     <string name="pref_orientation_land">Lanskap</string>
     <string name="pref_orientation_port">Potret</string>
     <string name="PREF_SCALE_RATIO">Skala</string>
@@ -50,7 +50,7 @@
     <string name="pref_screen_padding_title">Jarak tepi layar</string>
     <string name="pref_screen_scale_type">Mode penskalaan</string>
     <string name="pref_screen_scale_type_fill">Isi jendela (abaikan rasio aspek)</string>
-    <string name="pref_screen_scale_type_fit">Paskan ke jendela</string>
+    <string name="pref_screen_scale_type_fit">Sesuaikan dengan jendela</string>
     <string name="pref_screen_scale_type_none">Manual</string>
     <string name="pref_screenshot_summary">Menyimpan frame MIDlet pada resolusi rendernya sebelum penskalaan tampilan, filter, dan efek shader.</string>
     <string name="pref_screenshot_title">Screenshot mentah</string>
@@ -61,14 +61,14 @@
     <string name="pref_soundbank_title">Soundbank MIDI</string>
     <string name="PREF_SYS_PROPS">Properti sistem</string>
     <string name="pref_theme_auto_battery">Otomatis (Penghemat Baterai)</string>
-    <string name="pref_theme_auto_time">Otomatis (waktu hari)</string>
+    <string name="pref_theme_auto_time">Otomatis (berdasarkan waktu)</string>
     <string name="pref_theme_light">Terang</string>
     <string name="pref_theme_night">Gelap</string>
-    <string name="pref_theme_system">Default sistem</string>
+    <string name="pref_theme_system">Bawaan sistem</string>
     <string name="pref_theme_title">Tema</string>
     <string name="pref_title_emulation">Siklus hidup MIDlet</string>
     <string name="PREF_TOUCH_INPUT">Input sentuh</string>
-    <string name="PREF_UNIT_MS">md</string>
+    <string name="PREF_UNIT_MS">ms</string>
     <string name="pref_vibration_title">Getaran</string>
     <string name="PREF_VIRTUAL_KEYBOARD_OPTIONS">Tampilkan kontrol virtual</string>
     <string name="PREF_VK_ALPHA">Opasitas</string>
@@ -76,7 +76,7 @@
     <string name="PREF_VK_HIDE_DELAY">Jeda sembunyi otomatis</string>
     <string name="pref_vk_hide_hint">Nonaktif</string>
     <string name="PREF_VK_OUTLINE">Warna garis tepi</string>
-    <string name="pref_vk_save_alert">Ganti tata letak kontrol virtual kustom yang ada dengan yang sekarang?</string>
+    <string name="pref_vk_save_alert">Ganti tata letak kontrol virtual kustom dengan tata letak saat ini?</string>
     <string name="PREF_VK_SEL_BACK">Warna tombol saat ditekan</string>
     <string name="PREF_VK_SEL_FORE">Warna label dan simbol saat ditekan</string>
     <string name="pref_vk_type_arrows">Panah</string>
@@ -111,11 +111,11 @@
     <string name="pref_accent_rose">Mawar beri</string>
     <string name="pref_accent_green">Hijau zamrud</string>
     <string name="pref_accent_amber">Amber keemasan</string>
-    <string name="pref_accent_blue">Biru default</string>
+    <string name="pref_accent_blue">Biru bawaan</string>
     <string name="pref_accent_classic_blue">Biru klasik</string>
     <string name="pref_accent_wallpaper" tools:ignore="MissingTranslation">Warna wallpaper</string>
     <string name="pref_runtime_fullscreen_title">Layar penuh</string>
     <string name="pref_runtime_fullscreen_summary">Sembunyikan bilah alat saat bermain. Berlaku untuk semua MIDlet.</string>
     <string name="pref_show_status_bar_title">Tampilkan bilah status</string>
-    <string name="pref_show_status_bar_summary">Biarkan bilah status Android tetap terlihat saat bermain untuk melihat jam dan ikon notifikasi.</string>
+    <string name="pref_show_status_bar_summary">Tampilkan bilah status Android saat bermain agar jam dan ikon notifikasi tetap terlihat.</string>
 </resources>
