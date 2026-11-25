@@ -218,8 +218,18 @@ internal fun AdaptiveAlertDialog(
         }
         val controllerHostCommandHandler: ControllerHostCommandHandler? =
             if (effectiveHostCommandHandlerChanged != null) {
-                remember(focusManager, dialogView, onDismissRequest) {
+                remember(focusManager, dialogView, controllerFocusRequester, onDismissRequest) {
                     { command: HostCommand, pressed: Boolean ->
+                        // Axis/HAT commands can reach the dialog without an Android key event
+                        // leaving touch mode. Establish initial Compose focus before routing them.
+                        if (pressed && dialogView.isInTouchMode &&
+                            command != HostCommand.Back && command != HostCommand.OpenMenu &&
+                            command != HostCommand.OpenKeypad
+                        ) {
+                            dialogView.requestFocusFromTouch()
+                            controllerFocusRequester?.requestFocus()
+                            focusManager.moveFocus(FocusDirection.Next)
+                        }
                         when (command) {
                             HostCommand.NavigateUp -> {
                                 if (pressed) focusManager.moveFocus(FocusDirection.Up)
