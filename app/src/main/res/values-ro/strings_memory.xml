@@ -272,4 +272,5 @@
     <string name="memory_list_watch_removal_failed">Monitorizarea sesiunii nu a putut fi eliminată: %1$s</string>
     <string name="memory_list_removal_unknown_error">Eroare necunoscută</string>
     <string name="memory_editor_edit_freeze_failed">Valoarea a fost actualizată, dar înghețarea nu a putut fi pornită. Verificați valoarea actuală înainte de a încerca din nou.</string>
+    <string name="memory_scripts_freeze_inactive">Înghețarea prin script este dezactivată.</string>
 </resources>

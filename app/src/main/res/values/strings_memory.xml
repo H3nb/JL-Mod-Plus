@@ -266,4 +266,5 @@
     <string name="memory_list_watch_removal_failed">Couldn’t remove session tracking: %1$s</string>
     <string name="memory_list_removal_unknown_error">Unknown error</string>
     <string name="memory_editor_edit_freeze_failed">Value updated, but freeze couldn’t start. Check the current value before trying again.</string>
+    <string name="memory_scripts_freeze_inactive">Script freeze is off.</string>
 </resources>

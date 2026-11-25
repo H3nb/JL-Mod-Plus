@@ -266,4 +266,5 @@
     <string name="memory_list_watch_removal_failed">Oturum takibi kaldırılamadı: %1$s</string>
     <string name="memory_list_removal_unknown_error">Bilinmeyen hata</string>
     <string name="memory_editor_edit_freeze_failed">Değer güncellendi ancak dondurma başlatılamadı. Tekrar denemeden önce mevcut değeri kontrol edin.</string>
+    <string name="memory_scripts_freeze_inactive">Komut dosyasının dondurma özelliği kapalı.</string>
 </resources>

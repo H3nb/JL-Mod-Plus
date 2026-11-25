@@ -2141,10 +2141,19 @@ internal class MemoryEditorComposeController(
                 val code = response?.getInt(MemoryEngineContract.KEY_MANAGED_OPERATION_RESULT,
                     MemoryEngineContract.RESULT_TARGET_LOST)
                     ?: MemoryEngineContract.RESULT_TARGET_LOST
+                val success = code == MemoryEngineContract.RESULT_OK
+                if (!success) {
+                    android.util.Log.w("MemoryEditor",
+                        response?.getString(MemoryEngineContract.KEY_DIAGNOSTIC_DETAIL).orEmpty(),
+                        result.exceptionOrNull())
+                }
                 state = state.copy(
-                    message = response?.getString(MemoryEngineContract.KEY_DIAGNOSTIC_DETAIL)
-                        ?: result.exceptionOrNull()?.message ?: "Recipe Freeze stopped",
-                    messageIsError = code != MemoryEngineContract.RESULT_OK,
+                    message = if (success) context.getString(R.string.memory_scripts_freeze_inactive)
+                        else if (code == MemoryEngineContract.RESULT_TARGET_LOST)
+                            context.getString(R.string.memory_editor_memory_unavailable)
+                        else operationMessage(code, response)
+                            ?: context.getString(R.string.memory_editor_invalid_request),
+                    messageIsError = !success,
                 )
                 refreshRecipeFreezeState(force = true)
             }

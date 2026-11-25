@@ -278,4 +278,5 @@
     <string name="memory_list_watch_removal_failed">Nie udało się usunąć śledzenia w sesji: %1$s</string>
     <string name="memory_list_removal_unknown_error">Nieznany błąd</string>
     <string name="memory_editor_edit_freeze_failed">Wartość zaktualizowano, ale nie udało się rozpocząć zamrażania. Sprawdź bieżącą wartość przed ponowną próbą.</string>
+    <string name="memory_scripts_freeze_inactive">Zamrażanie przez skrypt jest wyłączone.</string>
 </resources>

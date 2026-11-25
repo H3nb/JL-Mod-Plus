@@ -272,4 +272,5 @@
     <string name="memory_list_watch_removal_failed">No se pudo quitar el seguimiento de la sesión: %1$s</string>
     <string name="memory_list_removal_unknown_error">Error desconocido</string>
     <string name="memory_editor_edit_freeze_failed">Valor actualizado, pero no se pudo iniciar la congelación. Comprueba el valor actual antes de volver a intentarlo.</string>
+    <string name="memory_scripts_freeze_inactive">La congelación del script está desactivada.</string>
 </resources>

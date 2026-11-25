@@ -266,4 +266,5 @@
     <string name="memory_list_watch_removal_failed">Kunne ikke fjerne sporing i økten: %1$s</string>
     <string name="memory_list_removal_unknown_error">Ukjent feil</string>
     <string name="memory_editor_edit_freeze_failed">Verdien er oppdatert, men frysing kunne ikke startes. Kontroller gjeldende verdi før du prøver igjen.</string>
+    <string name="memory_scripts_freeze_inactive">Frysing med skriptet er slått av.</string>
 </resources>

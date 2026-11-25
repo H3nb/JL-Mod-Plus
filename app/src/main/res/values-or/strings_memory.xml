@@ -266,4 +266,5 @@
     <string name="memory_list_watch_removal_failed">ସେସନ୍ ଟ୍ରାକିଂ ଅପସାରଣ କରିହେଲା ନାହିଁ: %1$s</string>
     <string name="memory_list_removal_unknown_error">ଅଜଣା ତ୍ରୁଟି</string>
     <string name="memory_editor_edit_freeze_failed">ମୂଲ୍ୟ ଅପଡେଟ୍ ହେଲା, କିନ୍ତୁ ଫ୍ରିଜ୍ ଆରମ୍ଭ କରିହେଲା ନାହିଁ। ପୁଣି ଚେଷ୍ଟା କରିବା ପୂର୍ବରୁ ବର୍ତ୍ତମାନର ମୂଲ୍ୟ ଯାଞ୍ଚ କରନ୍ତୁ।</string>
+    <string name="memory_scripts_freeze_inactive">ସ୍କ୍ରିପ୍ଟର ଫ୍ରିଜ୍ ବନ୍ଦ ଅଛି।</string>
 </resources>

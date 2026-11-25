@@ -266,4 +266,5 @@
     <string name="memory_list_watch_removal_failed">Δεν ήταν δυνατή η κατάργηση της παρακολούθησης συνεδρίας: %1$s</string>
     <string name="memory_list_removal_unknown_error">Άγνωστο σφάλμα</string>
     <string name="memory_editor_edit_freeze_failed">Η τιμή ενημερώθηκε, αλλά δεν ήταν δυνατή η έναρξη του παγώματος. Ελέγξτε την τρέχουσα τιμή πριν δοκιμάσετε ξανά.</string>
+    <string name="memory_scripts_freeze_inactive">Το πάγωμα από το σενάριο είναι ανενεργό.</string>
 </resources>

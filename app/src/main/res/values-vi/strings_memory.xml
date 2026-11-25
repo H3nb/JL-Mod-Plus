@@ -260,4 +260,5 @@
     <string name="memory_list_watch_removal_failed">Không thể xóa theo dõi trong phiên: %1$s</string>
     <string name="memory_list_removal_unknown_error">Lỗi không xác định</string>
     <string name="memory_editor_edit_freeze_failed">Đã cập nhật giá trị nhưng không thể bắt đầu đóng băng. Kiểm tra giá trị hiện tại trước khi thử lại.</string>
+    <string name="memory_scripts_freeze_inactive">Tính năng đóng băng của tập lệnh đã tắt.</string>
 </resources>

@@ -272,4 +272,5 @@
     <string name="memory_list_watch_removal_failed">Impossible de supprimer le suivi de la session : %1$s</string>
     <string name="memory_list_removal_unknown_error">Erreur inconnue</string>
     <string name="memory_editor_edit_freeze_failed">Valeur mise à jour, mais impossible de la figer. Vérifiez la valeur actuelle avant de réessayer.</string>
+    <string name="memory_scripts_freeze_inactive">Le figeage par le script est désactivé.</string>
 </resources>

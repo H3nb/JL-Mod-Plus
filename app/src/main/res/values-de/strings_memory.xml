@@ -266,4 +266,5 @@
     <string name="memory_list_watch_removal_failed">Sitzungsüberwachung konnte nicht entfernt werden: %1$s</string>
     <string name="memory_list_removal_unknown_error">Unbekannter Fehler</string>
     <string name="memory_editor_edit_freeze_failed">Wert aktualisiert, aber die Fixierung konnte nicht gestartet werden. Prüfe den aktuellen Wert, bevor du es erneut versuchst.</string>
+    <string name="memory_scripts_freeze_inactive">Die Fixierung durch das Skript ist deaktiviert.</string>
 </resources>

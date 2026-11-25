@@ -266,4 +266,5 @@
     <string name="memory_list_watch_removal_failed">Kon nie sessienasporing verwyder nie: %1$s</string>
     <string name="memory_list_removal_unknown_error">Onbekende fout</string>
     <string name="memory_editor_edit_freeze_failed">Waarde opgedateer, maar bevriesing kon nie begin nie. Kontroleer die huidige waarde voordat jy weer probeer.</string>
+    <string name="memory_scripts_freeze_inactive">Skripbevriesing is af.</string>
 </resources>

@@ -256,4 +256,5 @@
     <string name="memory_list_watch_removal_failed">无法移除会话跟踪：%1$s</string>
     <string name="memory_list_removal_unknown_error">未知错误</string>
     <string name="memory_editor_edit_freeze_failed">数值已更新，但无法启动数值锁定。请先检查当前数值，再重试。</string>
+    <string name="memory_scripts_freeze_inactive">脚本数值锁定已关闭。</string>
 </resources>

@@ -260,4 +260,5 @@
     <string name="memory_list_watch_removal_failed">セッション内の追跡を解除できませんでした：%1$s</string>
     <string name="memory_list_removal_unknown_error">不明なエラー</string>
     <string name="memory_editor_edit_freeze_failed">値を更新しましたが、固定を開始できませんでした。再試行する前に現在の値を確認してください。</string>
+    <string name="memory_scripts_freeze_inactive">スクリプトによる固定は無効です。</string>
 </resources>

@@ -266,4 +266,5 @@
     <string name="memory_list_watch_removal_failed">සැසියේ ලුහුබැඳීම ඉවත් කළ නොහැකි විය: %1$s</string>
     <string name="memory_list_removal_unknown_error">නොදන්නා දෝෂයකි</string>
     <string name="memory_editor_edit_freeze_failed">අගය යාවත්කාලීන කරන ලදී, නමුත් අගය ස්ථිර කිරීම ආරම්භ කළ නොහැකි විය. නැවත උත්සාහ කිරීමට පෙර වත්මන් අගය පරීක්ෂා කරන්න.</string>
+    <string name="memory_scripts_freeze_inactive">ස්ක්‍රිප්ට් මඟින් අගයන් ස්ථිර කිරීම අක්‍රියයි.</string>
 </resources>

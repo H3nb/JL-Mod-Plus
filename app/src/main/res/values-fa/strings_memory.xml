@@ -266,4 +266,5 @@
     <string name="memory_list_watch_removal_failed">حذف ردیابی نشست ممکن نبود: %1$s</string>
     <string name="memory_list_removal_unknown_error">خطای ناشناخته</string>
     <string name="memory_editor_edit_freeze_failed">مقدار به‌روزرسانی شد، اما ثابت‌سازی آغاز نشد. پیش از تلاش مجدد، مقدار فعلی را بررسی کنید.</string>
+    <string name="memory_scripts_freeze_inactive">ثابت‌سازی اسکریپت غیرفعال است.</string>
 </resources>
