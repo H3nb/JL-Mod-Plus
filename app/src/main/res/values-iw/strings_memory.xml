@@ -271,4 +271,5 @@
     <string name="memory_list_bookmark_removal_failed">לא ניתן להסיר את הסימניות: %1$s</string>
     <string name="memory_list_watch_removal_failed">לא ניתן להסיר את המעקב בהפעלה: %1$s</string>
     <string name="memory_list_removal_unknown_error">שגיאה לא ידועה</string>
+    <string name="memory_editor_edit_freeze_failed">הערך עודכן, אך לא ניתן היה להתחיל את ההקפאה. יש לבדוק את הערך הנוכחי לפני ניסיון נוסף.</string>
 </resources>

@@ -289,4 +289,5 @@
     <string name="memory_list_bookmark_removal_failed">تعذّرت إزالة الإشارات المرجعية: %1$s</string>
     <string name="memory_list_watch_removal_failed">تعذّرت إزالة تتبع الجلسة: %1$s</string>
     <string name="memory_list_removal_unknown_error">خطأ غير معروف</string>
+    <string name="memory_editor_edit_freeze_failed">تم تحديث القيمة، لكن تعذّر بدء التجميد. تحقّق من القيمة الحالية قبل المحاولة مجددًا.</string>
 </resources>

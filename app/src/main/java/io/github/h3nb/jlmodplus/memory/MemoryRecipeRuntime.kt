@@ -23,8 +23,11 @@ import kotlinx.serialization.json.JsonPrimitive
  * rather than silently retargeted when any target owner is replaced.
  */
 class MemoryRecipeRuntime {
-    private data class Problem(val resultCode: Int, override val message: String) :
-        RuntimeException(message)
+    private data class Problem(
+        val resultCode: Int,
+        override val message: String,
+        val reason: Int = MemoryEngineContract.REASON_NONE,
+    ) : RuntimeException(message)
 
     private data class Root(val kind: String, val className: String)
     private data class Step(
@@ -166,22 +169,28 @@ class MemoryRecipeRuntime {
             val prepared = prepare(snapshot, recipe, values, readOnly = preview)
             if (!preview && recipe.mode == "form") {
                 val expected = parameters?.getStringArray(EXPECTED_VALUES)
-                    ?: bad("Refresh the form before applying changes")
+                    ?: throw Problem(MemoryEngineContract.RESULT_INVALID_REQUEST,
+                        "Refresh the form before applying changes",
+                        MemoryEngineContract.REASON_RECIPE_REFRESH_REQUIRED)
                 val ticket = parameters.getString(READ_TICKET)
-                    ?: bad("Refresh the form before applying changes")
+                    ?: throw Problem(MemoryEngineContract.RESULT_INVALID_REQUEST,
+                        "Refresh the form before applying changes",
+                        MemoryEngineContract.REASON_RECIPE_REFRESH_REQUIRED)
                 val read = formSnapshot
                 if (read == null || read.ticket != ticket || read.token != token ||
                     read.recipe != recipe || read.selectors.any { (key, value) -> values[key] != value } ||
                     read.owners.size != prepared.owners.size ||
                     read.owners.indices.any { read.owners[it].get() !== prepared.owners[it] }) {
                     throw Problem(MemoryEngineContract.RESULT_IDENTITY_UNSAFE,
-                        "Form target changed since Refresh; refresh before applying")
+                        "Form target changed since Refresh; refresh before applying",
+                        MemoryEngineContract.REASON_RECIPE_REFRESH_REQUIRED)
                 }
                 if (expected.size != read.readValues.size ||
                     !expected.contentEquals(read.readValues.toTypedArray()) ||
                     prepared.readValues != read.readValues) {
                     throw Problem(MemoryEngineContract.RESULT_IDENTITY_UNSAFE,
-                        "Values changed since Refresh; refresh before applying")
+                        "Values changed since Refresh; refresh before applying",
+                        MemoryEngineContract.REASON_RECIPE_REFRESH_REQUIRED)
                 }
                 formSnapshot = null
             }
@@ -220,9 +229,14 @@ class MemoryRecipeRuntime {
                     recipe, values, prepared.owners.map { WeakReference(it) }, prepared.identities,
                 )
             }
-            return reply(token, MemoryEngineContract.RESULT_OK, "Wrote ${prepared.writes.size} values")
+            return reply(token, MemoryEngineContract.RESULT_OK, "Wrote ${prepared.writes.size} values").apply {
+                putInt(MemoryEngineContract.KEY_MANAGED_WRITTEN, prepared.writes.size)
+            }
         } catch (problem: Problem) {
-            return reply(token, problem.resultCode, problem.message)
+            return reply(token, problem.resultCode, problem.message).apply {
+                if (problem.reason != MemoryEngineContract.REASON_NONE)
+                    putInt(MemoryEngineContract.KEY_OPERATION_REASON, problem.reason)
+            }
         } catch (error: ReflectiveOperationException) {
             return reply(token, MemoryEngineContract.RESULT_IDENTITY_UNSAFE, "Guest field could not be accessed")
         } catch (error: RuntimeException) {

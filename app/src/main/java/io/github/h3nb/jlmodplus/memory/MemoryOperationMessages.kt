@@ -29,6 +29,17 @@ internal fun memoryOperationMessage(
     ) {
         return MemoryOperationMessage(R.string.memory_editor_revert_remove_commit_failed)
     }
+    if (result == MemoryEngineContract.RESULT_PARTIAL_WRITE &&
+        reason == MemoryEngineContract.REASON_INSPECTOR_FREEZE_START_FAILED
+    ) {
+        return MemoryOperationMessage(R.string.memory_editor_edit_freeze_failed)
+    }
+    if ((result == MemoryEngineContract.RESULT_INVALID_REQUEST ||
+            result == MemoryEngineContract.RESULT_IDENTITY_UNSAFE) &&
+        reason == MemoryEngineContract.REASON_RECIPE_REFRESH_REQUIRED
+    ) {
+        return MemoryOperationMessage(R.string.memory_scripts_refresh_required)
+    }
     val resource = when (result) {
         MemoryEngineContract.RESULT_OK -> null
         MemoryEngineContract.RESULT_CANCELLED -> R.string.memory_editor_cancelled

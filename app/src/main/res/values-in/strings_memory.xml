@@ -259,4 +259,5 @@
     <string name="memory_list_bookmark_removal_failed">Tidak dapat menghapus penanda: %1$s</string>
     <string name="memory_list_watch_removal_failed">Tidak dapat menghentikan pelacakan sesi: %1$s</string>
     <string name="memory_list_removal_unknown_error">Kesalahan tidak diketahui</string>
+    <string name="memory_editor_edit_freeze_failed">Nilai telah diubah, tetapi pembekuan tidak dapat dimulai. Periksa nilai saat ini sebelum mencoba lagi.</string>
 </resources>

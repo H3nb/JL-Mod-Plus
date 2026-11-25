@@ -265,4 +265,5 @@
     <string name="memory_list_bookmark_removal_failed">বুকমার্ক সরানো যায়নি: %1$s</string>
     <string name="memory_list_watch_removal_failed">সেশনের ট্র্যাকিং সরানো যায়নি: %1$s</string>
     <string name="memory_list_removal_unknown_error">অজানা ত্রুটি</string>
+    <string name="memory_editor_edit_freeze_failed">মান আপডেট হয়েছে, কিন্তু ফ্রিজ চালু করা যায়নি। আবার চেষ্টা করার আগে বর্তমান মান পরীক্ষা করুন।</string>
 </resources>

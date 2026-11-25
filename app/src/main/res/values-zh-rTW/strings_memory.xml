@@ -259,4 +259,5 @@
     <string name="memory_list_bookmark_removal_failed">無法移除書籤：%1$s</string>
     <string name="memory_list_watch_removal_failed">無法移除工作階段追蹤：%1$s</string>
     <string name="memory_list_removal_unknown_error">未知錯誤</string>
+    <string name="memory_editor_edit_freeze_failed">數值已更新，但無法啟動數值鎖定。請先檢查目前的數值，再試一次。</string>
 </resources>

@@ -265,4 +265,5 @@
     <string name="memory_list_bookmark_removal_failed">Kon nie boekmerke verwyder nie: %1$s</string>
     <string name="memory_list_watch_removal_failed">Kon nie sessienasporing verwyder nie: %1$s</string>
     <string name="memory_list_removal_unknown_error">Onbekende fout</string>
+    <string name="memory_editor_edit_freeze_failed">Waarde opgedateer, maar bevriesing kon nie begin nie. Kontroleer die huidige waarde voordat jy weer probeer.</string>
 </resources>

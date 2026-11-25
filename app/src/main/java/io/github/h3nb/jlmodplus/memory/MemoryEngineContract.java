@@ -75,6 +75,10 @@ public final class MemoryEngineContract {
 	public static final int REASON_NO_SEARCH_HISTORY = 2;
 	/** Revert restored values, but the new Results revision could not be published. */
 	public static final int REASON_REVERT_REMOVE_COMMIT_FAILED = 3;
+	/** A confirmed Inspector edit was followed by a failed Freeze start. */
+	public static final int REASON_INSPECTOR_FREEZE_START_FAILED = 4;
+	/** A form script needs a fresh verified read before writing. */
+	public static final int REASON_RECIPE_REFRESH_REQUIRED = 5;
 
 	public static final int CANDIDATE_STABLE = 0;
 	public static final int CANDIDATE_RELOCATING = 1;

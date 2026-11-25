@@ -271,4 +271,5 @@
     <string name="memory_list_bookmark_removal_failed">No s’han pogut suprimir els marcadors: %1$s</string>
     <string name="memory_list_watch_removal_failed">No s’ha pogut suprimir el seguiment de la sessió: %1$s</string>
     <string name="memory_list_removal_unknown_error">Error desconegut</string>
+    <string name="memory_editor_edit_freeze_failed">Valor actualitzat, però no s’ha pogut iniciar la congelació. Comprova el valor actual abans de tornar-ho a provar.</string>
 </resources>

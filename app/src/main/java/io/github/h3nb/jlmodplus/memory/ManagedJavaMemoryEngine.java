@@ -2162,9 +2162,10 @@ final class ManagedJavaMemoryEngine {
                 anchorId, watchAnchor, relativeOffset, type, parsed[0], true, epoch,
                 bookmarkId, recipeFreezes);
         return watched.code == MemoryEngineContract.RESULT_OK ? watched :
-                result(token, MemoryEngineContract.RESULT_PARTIAL_WRITE,
+                resultDetailed(token, MemoryEngineContract.RESULT_PARTIAL_WRITE,
                         "Value edited, but Freeze could not start: " + watched.message,
-                        1, 1, 0, 0);
+                        1, 1, 0, 0, 0, 0, 0,
+                        MemoryEngineContract.REASON_INSPECTOR_FREEZE_START_FAILED);
     }
 
     private boolean isInspectorFreezeActive(@Nullable String savedId, long anchorId,

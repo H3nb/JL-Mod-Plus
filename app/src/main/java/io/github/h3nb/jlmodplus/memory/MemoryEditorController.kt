@@ -2082,9 +2082,22 @@ internal class MemoryEditorComposeController(
                     MemoryEngineContract.RESULT_TARGET_LOST)
                     ?: MemoryEngineContract.RESULT_TARGET_LOST
                 val success = code == MemoryEngineContract.RESULT_OK
+                if (response?.getInt(MemoryEngineContract.KEY_OPERATION_REASON) ==
+                    MemoryEngineContract.REASON_RECIPE_REFRESH_REQUIRED) {
+                    android.util.Log.w("MemoryEditor",
+                        response?.getString(MemoryEngineContract.KEY_DIAGNOSTIC_DETAIL).orEmpty())
+                }
                 state = state.copy(
-                    message = response?.getString(MemoryEngineContract.KEY_DIAGNOSTIC_DETAIL)
-                        ?: result.exceptionOrNull()?.message ?: "Recipe operation finished",
+                    message = when {
+                        success && !preview && response?.containsKey(MemoryEngineContract.KEY_MANAGED_WRITTEN) == true ->
+                            operationMessage(code, response)
+                        response?.getInt(MemoryEngineContract.KEY_OPERATION_REASON) ==
+                            MemoryEngineContract.REASON_RECIPE_REFRESH_REQUIRED ->
+                            operationMessage(code, response)
+                        else -> response?.getString(MemoryEngineContract.KEY_DIAGNOSTIC_DETAIL)
+                            ?: result.exceptionOrNull()?.message
+                            ?: context.getString(R.string.memory_editor_memory_unavailable)
+                    },
                     messageIsError = !success,
                 )
                 if (success && !preview) {
@@ -2443,21 +2456,24 @@ internal class MemoryEditorComposeController(
                 val result = outcome.getOrNull()
                 val code = result?.getInt(MemoryEngineContract.KEY_MANAGED_OPERATION_RESULT)
                     ?: MemoryEngineContract.RESULT_TARGET_LOST
+                if (code != MemoryEngineContract.RESULT_OK && result != null) {
+                    android.util.Log.w("MemoryEditor",
+                        result.getString(MemoryEngineContract.KEY_DIAGNOSTIC_DETAIL).orEmpty())
+                }
                 if (code == MemoryEngineContract.RESULT_OK ||
                     code == MemoryEngineContract.RESULT_PARTIAL_WRITE) {
                     openInspector(
                         snapshot.candidateId, id, MemoryEngineContract.DEFAULT_INSPECT_RADIUS,
                         snapshot.watchAnchor,
                         if (code == MemoryEngineContract.RESULT_PARTIAL_WRITE)
-                            result?.getString(MemoryEngineContract.KEY_DIAGNOSTIC_DETAIL)
-                                ?: "Value edited, but Freeze could not start"
+                            operationMessage(code, result)
                         else null,
                     )
                 } else {
                     state = state.copy(
-                        message = result?.getString(MemoryEngineContract.KEY_DIAGNOSTIC_DETAIL)
-                            ?: outcome.exceptionOrNull()?.message
-                            ?: "Saved Inspector edit was rejected",
+                        message = if (result != null) operationMessage(code, result)
+                            else outcome.exceptionOrNull()?.message
+                                ?: context.getString(R.string.memory_editor_memory_unavailable),
                         messageIsError = true,
                     )
                 }
@@ -2511,6 +2527,10 @@ internal class MemoryEditorComposeController(
                     val result = outcome.getOrNull()
                     val code = result?.getInt(MemoryEngineContract.KEY_MANAGED_OPERATION_RESULT)
                         ?: MemoryEngineContract.RESULT_TARGET_LOST
+                    if (code != MemoryEngineContract.RESULT_OK && result != null) {
+                        android.util.Log.w("MemoryEditor",
+                            result.getString(MemoryEngineContract.KEY_DIAGNOSTIC_DETAIL).orEmpty())
+                    }
                     if (code == MemoryEngineContract.RESULT_OK ||
                         code == MemoryEngineContract.RESULT_PARTIAL_WRITE) {
                         reloadState()
@@ -2518,15 +2538,14 @@ internal class MemoryEditorComposeController(
                             anchorCandidateId, null, MemoryEngineContract.DEFAULT_INSPECT_RADIUS,
                             watchAnchor,
                             if (code == MemoryEngineContract.RESULT_PARTIAL_WRITE)
-                                result?.getString(MemoryEngineContract.KEY_DIAGNOSTIC_DETAIL)
-                                    ?: "Value edited, but Freeze could not start"
+                                operationMessage(code, result)
                             else null,
                         )
                     } else {
                         state = state.copy(
-                            message = result?.getString(MemoryEngineContract.KEY_DIAGNOSTIC_DETAIL)
-                                ?: outcome.exceptionOrNull()?.message
-                                ?: "Inspector edit/Freeze was rejected",
+                            message = if (result != null) operationMessage(code, result)
+                                else outcome.exceptionOrNull()?.message
+                                    ?: context.getString(R.string.memory_editor_memory_unavailable),
                             messageIsError = true,
                         )
                     }

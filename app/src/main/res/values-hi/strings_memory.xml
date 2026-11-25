@@ -265,4 +265,5 @@
     <string name="memory_list_bookmark_removal_failed">बुकमार्क नहीं हटाए जा सके: %1$s</string>
     <string name="memory_list_watch_removal_failed">सत्र की ट्रैकिंग नहीं हटाई जा सकी: %1$s</string>
     <string name="memory_list_removal_unknown_error">अज्ञात गड़बड़ी</string>
+    <string name="memory_editor_edit_freeze_failed">मान अपडेट किया गया, लेकिन फ़्रीज़ शुरू नहीं हो सका। दोबारा कोशिश करने से पहले मौजूदा मान जांचें।</string>
 </resources>

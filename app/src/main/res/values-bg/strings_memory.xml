@@ -265,4 +265,5 @@
     <string name="memory_list_bookmark_removal_failed">Отметките не можаха да бъдат премахнати: %1$s</string>
     <string name="memory_list_watch_removal_failed">Проследяването за сесията не можа да бъде премахнато: %1$s</string>
     <string name="memory_list_removal_unknown_error">Неизвестна грешка</string>
+    <string name="memory_editor_edit_freeze_failed">Стойността е обновена, но замразяването не можа да започне. Проверете текущата стойност, преди да опитате отново.</string>
 </resources>

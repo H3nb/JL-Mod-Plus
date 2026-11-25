@@ -760,18 +760,27 @@ public class MemoryRecipeInstrumentedTest {
         assertEquals(11, root.coins);
         storeEncodedCoins(root, 11);
         edit.putStringArray("recipeExpectedValues", new String[]{"11", "11"});
-        assertEquals(MemoryEngineContract.RESULT_IDENTITY_UNSAFE,
-            status(runner.run(TOKEN, recipe, edit, false, false)));
+        Bundle staleRead = runner.run(TOKEN, recipe, edit, false, false);
+        assertEquals(MemoryEngineContract.RESULT_IDENTITY_UNSAFE, status(staleRead));
+        assertEquals(MemoryEngineContract.REASON_RECIPE_REFRESH_REQUIRED,
+            staleRead.getInt(MemoryEngineContract.KEY_OPERATION_REASON));
         assertEquals(11, root.coins);
         edit.putStringArray("recipeExpectedValues", snapshot.getStringArray("recipeReadValues"));
         root.coins = 10;
         storeEncodedCoins(root, 10);
-        assertEquals(MemoryEngineContract.RESULT_OK,
-            status(runner.run(TOKEN, recipe, edit, false, false)));
+        Bundle applied = runner.run(TOKEN, recipe, edit, false, false);
+        assertEquals(MemoryEngineContract.RESULT_OK, status(applied));
+        assertTrue(applied.getInt(MemoryEngineContract.KEY_MANAGED_WRITTEN) > 0);
         assertEquals(500, root.coins);
         assertEquals(MemoryEngineContract.RESULT_IDENTITY_UNSAFE,
             status(runner.run(TOKEN, recipe, edit, false, false)));
         assertEquals(500, root.coins);
+        Bundle missingRead = new Bundle();
+        missingRead.putString("coins", "500");
+        Bundle rejected = runner.run(TOKEN, recipe, missingRead, false, false);
+        assertEquals(MemoryEngineContract.RESULT_INVALID_REQUEST, status(rejected));
+        assertEquals(MemoryEngineContract.REASON_RECIPE_REFRESH_REQUIRED,
+            rejected.getInt(MemoryEngineContract.KEY_OPERATION_REASON));
         assertEquals(MemoryEngineContract.RESULT_INVALID_REQUEST,
             status(runner.run(TOKEN, recipe, new Bundle(), false, false)));
     }

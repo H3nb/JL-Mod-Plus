@@ -265,4 +265,5 @@
     <string name="memory_list_bookmark_removal_failed">Nem sikerült eltávolítani a könyvjelzőket: %1$s</string>
     <string name="memory_list_watch_removal_failed">Nem sikerült eltávolítani a munkamenet-követést: %1$s</string>
     <string name="memory_list_removal_unknown_error">Ismeretlen hiba</string>
+    <string name="memory_editor_edit_freeze_failed">Az érték frissült, de a befagyasztás nem indult el. Újabb próbálkozás előtt ellenőrizd az aktuális értéket.</string>
 </resources>

@@ -259,4 +259,5 @@
     <string name="memory_list_bookmark_removal_failed">ไม่สามารถนำบุ๊กมาร์กออกได้: %1$s</string>
     <string name="memory_list_watch_removal_failed">ไม่สามารถนำการติดตามในเซสชันออกได้: %1$s</string>
     <string name="memory_list_removal_unknown_error">ข้อผิดพลาดที่ไม่ทราบสาเหตุ</string>
+    <string name="memory_editor_edit_freeze_failed">อัปเดตค่าแล้ว แต่ไม่สามารถเริ่มล็อกค่าได้ ตรวจสอบค่าปัจจุบันก่อนลองอีกครั้ง</string>
 </resources>

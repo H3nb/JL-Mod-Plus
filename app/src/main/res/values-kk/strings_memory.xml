@@ -265,4 +265,5 @@
     <string name="memory_list_bookmark_removal_failed">Бетбелгілерді жою мүмкін болмады: %1$s</string>
     <string name="memory_list_watch_removal_failed">Сеанстағы бақылауды тоқтату мүмкін болмады: %1$s</string>
     <string name="memory_list_removal_unknown_error">Белгісіз қате</string>
+    <string name="memory_editor_edit_freeze_failed">Мән жаңартылды, бірақ оны бекіту басталмады. Қайталап көрмес бұрын ағымдағы мәнді тексеріңіз.</string>
 </resources>

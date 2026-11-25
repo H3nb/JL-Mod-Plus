@@ -38,6 +38,27 @@ class MemoryOperationMessagesTest {
     }
 
     @Test
+    fun confirmedInspectorEditWithFailedFreezeHasSpecificRecoveryMessage() {
+        val message = memoryOperationMessage(
+            MemoryEngineContract.RESULT_PARTIAL_WRITE,
+            MemoryEngineContract.REASON_INSPECTOR_FREEZE_START_FAILED,
+            written = 1,
+        )!!
+        assertEquals(R.string.memory_editor_edit_freeze_failed, message.resource)
+    }
+
+    @Test
+    fun staleOrMissingRecipeSnapshotRequiresRefresh() {
+        for (result in listOf(MemoryEngineContract.RESULT_INVALID_REQUEST,
+            MemoryEngineContract.RESULT_IDENTITY_UNSAFE)) {
+            assertEquals(
+                R.string.memory_scripts_refresh_required,
+                memoryOperationMessage(result, MemoryEngineContract.REASON_RECIPE_REFRESH_REQUIRED)?.resource,
+            )
+        }
+    }
+
+    @Test
     fun inspectorUnconfirmedWriteNeverClaimsThatAnyWriteSucceeded() {
         val message = memoryOperationMessage(MemoryEngineContract.RESULT_PARTIAL_WRITE, unconfirmed = 1)!!
         assertEquals(R.string.memory_editor_write_failure_outcome, message.resource)
