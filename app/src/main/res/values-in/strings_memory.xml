@@ -35,9 +35,9 @@
     <string name="memory_list_remove_confirm" tools:ignore="MissingTranslation">Hapus dari Tersimpan? Semua pembekuan aktif akan dihentikan.</string>
     <string name="memory_list_add" tools:ignore="MissingTranslation">Tandai</string>
     <string name="memory_bookmark_relink" tools:ignore="MissingTranslation">Tautkan ulang</string>
-    <string name="memory_bookmark_relink_hint" tools:ignore="MissingTranslation">Pilih variabel pengganti di Cari, lalu pilih Tautkan ulang.</string>
+    <string name="memory_bookmark_relink_hint" tools:ignore="MissingTranslation">Pilih variabel pengganti di tab Cari, lalu pilih Tautkan ulang.</string>
     <string name="memory_bookmark_relink_confirm" tools:ignore="MissingTranslation">Tautkan penanda ini ke variabel yang dipilih? Pembekuan aktif pada penanda ini akan dihentikan.</string>
-    <string name="memory_bookmark_unavailable" tools:ignore="MissingTranslation">Tidak tersedia — pilih Tautkan ulang untuk memilih target</string>
+    <string name="memory_bookmark_unavailable" tools:ignore="MissingTranslation">Tidak tersedia. Pilih Tautkan ulang untuk menentukan target.</string>
     <string name="memory_editor_watch">Pantau</string>
     <string name="memory_editor_search_tab">Cari</string>
     <string name="memory_editor_search_known_values">Cari nilai diketahui</string>
@@ -74,9 +74,9 @@
     <string name="memory_editor_max_change">Perubahan maksimum</string>
     <string name="memory_editor_unfreeze">Hentikan pembekuan</string>
     <string name="memory_editor_cancelled">Operasi dibatalkan.</string>
-    <string name="memory_editor_resource_limit">Editor Memori mencapai batas keamanan. Coba pencarian yang lebih spesifik, atau hapus penanda maupun pembekuan yang tidak digunakan.</string>
+    <string name="memory_editor_resource_limit">Editor Memori mencapai batas keamanan. Coba persempit pencarian, hapus penanda yang tidak diperlukan, atau hentikan pembekuan yang tidak digunakan.</string>
     <string name="memory_editor_identity_unsafe">Tidak dapat memverifikasi nilai yang dipilih atau status pencarian. Muat ulang hasil atau buka kembali Inspektor, lalu coba lagi.</string>
-    <string name="memory_editor_safety_limit">Terlalu banyak nilai yang dipilih untuk operasi ini. Pilih lebih sedikit lalu coba lagi.</string>
+    <string name="memory_editor_safety_limit">Terlalu banyak nilai yang dipilih. Kurangi jumlah pilihan, lalu coba lagi.</string>
     <string name="memory_editor_invalid_request">Nilai atau operasi tidak valid.</string>
     <string name="memory_editor_freeze_paused">Dijeda demi keamanan</string>
     <string name="memory_editor_predicate_between">Di antara</string>
@@ -96,8 +96,8 @@
     <string name="memory_editor_inspector_no_rows">Tidak ada memori sekitar yang tersedia untuk diperiksa.</string>
     <string name="memory_editor_refresh_snapshot">Muat ulang cuplikan</string>
     <string name="memory_editor_select_result_value">Pilih penanda ini</string>
-    <string name="memory_editor_freeze_after_edit">Bekukan setelah menerapkan</string>
-    <string name="memory_editor_freeze_after_edit_help">Menjaga nilai ini tetap terkunci dan menandainya di Tersimpan.</string>
+    <string name="memory_editor_freeze_after_edit">Bekukan setelah menerapkan perubahan</string>
+    <string name="memory_editor_freeze_after_edit_help">Menjaga nilai ini tetap terkunci dan menambahkan penanda ke Tersimpan.</string>
     <string name="memory_editor_expression_single_hint">Masukkan satu nilai, atau pisahkan nilai grup dengan titik koma (;).</string>
     <string name="memory_editor_expression_group_needs_type">Pilih jenis data tertentu untuk pencarian grup.</string>
     <plurals name="memory_editor_expression_group_hint">
@@ -118,9 +118,9 @@
     <string name="memory_editor_next_scan_result">Hasil pindai berikutnya: <xliff:g id="before_count" example="120">%1$d</xliff:g> → <xliff:g id="after_count" example="14">%2$d</xliff:g></string>
     <string name="memory_editor_type_auto">Otomatis</string>
     <string name="memory_editor_remove_candidates_title">Hapus hasil yang dipilih?</string>
-    <string name="memory_editor_remove_candidates_description">Hapus: Menghapus hasil yang dipilih dari daftar pencarian. Nilai di memori game tidak berubah.\n\nKembalikan &amp; hapus: Juga memulihkan nilai sebelum pengeditan terkonfirmasi terakhir, jika masih cocok. Nilai yang dibekukan dan hasil dengan konflik tetap ada di daftar.</string>
-    <string name="memory_editor_revert_and_remove">Kembalikan &amp; hapus</string>
-    <string name="memory_editor_revert_remove_commit_failed">Nilai mungkin telah dipulihkan, tetapi hasil tidak dapat dihapus. Muat ulang dan coba lagi; nilai yang diubah oleh game tidak akan ditimpa.</string>
+    <string name="memory_editor_remove_candidates_description">Hapus: Menghapus hasil yang dipilih dari daftar pencarian tanpa mengubah nilai di memori game.\n\nPulihkan dan hapus: Juga memulihkan nilai sebelum perubahan terakhir yang terkonfirmasi, tetapi hanya jika nilai saat ini masih sama dengan hasil perubahan tersebut. Nilai yang dibekukan dan hasil yang tidak dapat dipulihkan dengan aman tetap ada dalam daftar.</string>
+    <string name="memory_editor_revert_and_remove">Pulihkan dan hapus</string>
+    <string name="memory_editor_revert_remove_commit_failed">Nilai mungkin telah dipulihkan, tetapi hasil pencarian tidak dapat dihapus. Muat ulang, lalu coba lagi. Nilai yang diubah oleh game tidak akan ditimpa.</string>
     <string name="memory_editor_revert_remove_outcome">Dipulihkan: <xliff:g id="restored" example="2">%1$d</xliff:g>. Dihapus: <xliff:g id="removed" example="2">%2$d</xliff:g>. Konflik: <xliff:g id="conflicts" example="0">%3$d</xliff:g>. Belum terkonfirmasi: <xliff:g id="unconfirmed" example="0">%4$d</xliff:g>. Tidak dicoba: <xliff:g id="not_attempted" example="0">%5$d</xliff:g>.</string>
     <string name="memory_editor_set_all">Atur semua</string>
     <string name="memory_editor_increment_start">Nilai awal</string>
@@ -165,14 +165,14 @@
     <string name="memory_recipes_freeze" tools:ignore="MissingTranslation">Tetap dibekukan selama game ini berjalan</string>
     <string name="memory_recipes_run" tools:ignore="MissingTranslation">Jalankan</string>
     <string name="memory_recipes_active_freezes" tools:ignore="MissingTranslation">Skrip dengan pembekuan aktif</string>
-    <string name="memory_recipes_target_unavailable" tools:ignore="MissingTranslation">Target penanda tidak tersedia. Muat ulang atau tautkan ulang sebelum menjalankan.</string>
+    <string name="memory_recipes_target_unavailable" tools:ignore="MissingTranslation">Target penanda tidak tersedia. Muat ulang atau tautkan ulang penanda sebelum menjalankan skrip.</string>
     <string name="memory_recipes_preview_values" tools:ignore="MissingTranslation">Nilai saat ini: <xliff:g id="name" example="Example">%1$s</xliff:g></string>
     <string name="memory_scripts_title" tools:ignore="MissingTranslation">Skrip</string>
     <string name="memory_scripts_active" tools:ignore="MissingTranslation">Aktif</string>
     <string name="memory_scripts_inputs" tools:ignore="MissingTranslation">Input</string>
     <string name="memory_scripts_create_from_bookmarks" tools:ignore="MissingTranslation">Buat skrip</string>
     <string name="memory_scripts_create_failed" tools:ignore="MissingTranslation">Tidak dapat memulai skrip baru.</string>
-    <string name="memory_scripts_draft_in_progress" tools:ignore="MissingTranslation">Selesaikan atau buang draf skrip saat ini terlebih dahulu.</string>
+    <string name="memory_scripts_draft_in_progress" tools:ignore="MissingTranslation">Selesaikan atau abaikan draf skrip saat ini terlebih dahulu.</string>
     <string name="memory_builder_open_saved" tools:ignore="MissingTranslation">Buka Tersimpan</string>
     <string name="memory_builder_add_description" tools:ignore="MissingTranslation">Tambahkan deskripsi</string>
     <string name="memory_builder_find_values" tools:ignore="MissingTranslation">Cari nilai</string>
@@ -184,7 +184,7 @@
     <string name="memory_scripts_saved" tools:ignore="MissingTranslation">Skrip tersimpan</string>
     <string name="memory_scripts_deleted" tools:ignore="MissingTranslation">Skrip dihapus</string>
     <string name="memory_scripts_save_failed" tools:ignore="MissingTranslation">Tidak dapat menyimpan skrip.</string>
-    <string name="memory_scripts_editor_hint" tools:ignore="MissingTranslation">Masukkan atau tempel dokumen JSON skrip. Menyimpan tidak langsung menjalankannya.</string>
+    <string name="memory_scripts_editor_hint" tools:ignore="MissingTranslation">Masukkan atau tempel skrip dalam format JSON. Menyimpan skrip tidak akan menjalankannya.</string>
     <string name="memory_scripts_paste_hint" tools:ignore="MissingTranslation">Tempel JSON skrip</string>
     <string name="memory_scripts_paste" tools:ignore="MissingTranslation">Tempel</string>
     <string name="memory_scripts_clipboard_invalid" tools:ignore="MissingTranslation">Papan klip kosong atau dokumen melebihi 64 KiB</string>
@@ -193,20 +193,20 @@
     <string name="memory_scripts_delete" tools:ignore="MissingTranslation">Hapus</string>
     <string name="memory_scripts_delete_confirm" tools:ignore="MissingTranslation">Hapus <xliff:g id="name" example="Example">%1$s</xliff:g>? Semua pembekuan aktif untuk skrip ini akan dihentikan.</string>
     <string name="memory_scripts_empty" tools:ignore="MissingTranslation">Belum ada skrip tersimpan</string>
-    <string name="memory_scripts_unsaved_title" tools:ignore="MissingTranslation">Buang skrip yang belum disimpan?</string>
-    <string name="memory_scripts_unsaved_message" tools:ignore="MissingTranslation">Perubahan skrip Anda belum disimpan.</string>
-    <string name="memory_scripts_discard" tools:ignore="MissingTranslation">Buang</string>
+    <string name="memory_scripts_unsaved_title" tools:ignore="MissingTranslation">Abaikan perubahan skrip?</string>
+    <string name="memory_scripts_unsaved_message" tools:ignore="MissingTranslation">Perubahan pada skrip belum disimpan.</string>
+    <string name="memory_scripts_discard" tools:ignore="MissingTranslation">Abaikan perubahan</string>
     <string name="memory_scripts_current_title" tools:ignore="MissingTranslation">Terakhir dibaca</string>
     <string name="memory_scripts_refresh" tools:ignore="MissingTranslation">Muat ulang</string>
     <string name="memory_scripts_reading" tools:ignore="MissingTranslation">Membaca nilai saat ini…</string>
-    <string name="memory_scripts_refresh_hint" tools:ignore="MissingTranslation">Ketuk Muat ulang untuk membaca nilai saat ini dari game yang sedang berjalan.</string>
+    <string name="memory_scripts_refresh_hint" tools:ignore="MissingTranslation">Ketuk Muat ulang untuk membaca nilai dari game yang sedang berjalan.</string>
     <string name="memory_scripts_mode_toggle" tools:ignore="MissingTranslation">Bekukan nilai</string>
     <string name="memory_scripts_mode_form" tools:ignore="MissingTranslation">Editor nilai</string>
     <string name="memory_scripts_mode_once" tools:ignore="MissingTranslation">Tindakan cepat</string>
     <string name="memory_scripts_mode_legacy" tools:ignore="MissingTranslation">Skrip lanjutan</string>
     <string name="memory_scripts_edit_values" tools:ignore="MissingTranslation">Edit nilai</string>
     <string name="memory_scripts_apply" tools:ignore="MissingTranslation">Terapkan perubahan</string>
-    <string name="memory_scripts_refresh_required" tools:ignore="MissingTranslation">Muat ulang untuk memverifikasi nilai saat ini sebelum menerapkan.</string>
+    <string name="memory_scripts_refresh_required" tools:ignore="MissingTranslation">Muat ulang untuk memeriksa nilai saat ini sebelum menerapkan perubahan.</string>
     <string name="memory_scripts_inconsistent" tools:ignore="MissingTranslation">Salinan tidak konsisten: <xliff:g id="name" example="Example">%1$s</xliff:g></string>
     <string name="memory_editor_minimize" tools:ignore="MissingTranslation">Minimalkan Editor Memori</string>
     <string name="memory_scripts_choose_type" tools:ignore="MissingTranslation">Skrip baru</string>
@@ -230,13 +230,13 @@
     <string name="memory_builder_view_json" tools:ignore="MissingTranslation">Lihat JSON</string>
     <string name="memory_builder_edit_json" tools:ignore="MissingTranslation">Edit JSON</string>
     <string name="memory_builder_search_bookmarks" tools:ignore="MissingTranslation">Cari penanda</string>
-    <string name="memory_builder_no_bookmarks" tools:ignore="MissingTranslation">Tidak ada penanda terverifikasi yang cocok. Tandai nilai di Cari atau tautkan ulang di Tersimpan.</string>
+    <string name="memory_builder_no_bookmarks" tools:ignore="MissingTranslation">Tidak ada penanda terverifikasi yang cocok. Buat penanda di tab Cari atau tautkan ulang penanda di tab Tersimpan.</string>
     <string name="memory_builder_needs_relink" tools:ignore="MissingTranslation">Perlu ditautkan ulang</string>
     <string name="memory_builder_add_selected" tools:ignore="MissingTranslation">Tambahkan yang dipilih</string>
     <string name="memory_builder_min" tools:ignore="MissingTranslation">Minimum (opsional)</string>
     <string name="memory_builder_max" tools:ignore="MissingTranslation">Maksimum (opsional)</string>
     <string name="memory_builder_add_target" tools:ignore="MissingTranslation">Tambahkan target</string>
-    <string name="memory_builder_freeze_short" tools:ignore="MissingTranslation">Jaga nilai yang dipilih pada angka tetap</string>
+    <string name="memory_builder_freeze_short" tools:ignore="MissingTranslation">Pertahankan nilai yang dipilih agar tetap konstan</string>
     <string name="memory_builder_form_short" tools:ignore="MissingTranslation">Sesuaikan beberapa nilai di satu tempat</string>
     <string name="memory_builder_actions_short" tools:ignore="MissingTranslation">Jalankan tindakan Atur, Tambah, atau Kurangi satu kali</string>
     <string name="memory_editor_refine_scan" tools:ignore="MissingTranslation">Saring</string>

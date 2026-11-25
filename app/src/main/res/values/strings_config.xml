@@ -172,7 +172,7 @@
     <string name="config_reset_all_settings_summary">Restore this MIDlet’s settings and virtual controls to their defaults without deleting its data.</string>
     <string name="config_delete_app_data">Delete MIDlet data</string>
     <string name="config_delete_app_data_summary">Permanently delete this MIDlet’s data, including saves. Its settings will be kept.</string>
-    <string name="config_message_reset_settings">Restore the MIDlet configuration and virtual controls to defaults? Saved data stays intact. Any linked profile will stop being followed.</string>
+    <string name="config_message_reset_settings">Restore the MIDlet’s settings and virtual controls to their defaults? Saved data stays intact. The MIDlet will no longer follow its linked profile.</string>
     <string name="config_message_reset_profile_settings">Reset this profile’s settings and virtual controls to their defaults? You can still edit or cancel before saving.</string>
     <string name="config_message_delete_app_data">Permanently delete all saves and data created by this MIDlet? MIDlet settings won’t be deleted.</string>
     <string name="config_lock_custom_resolution_ratio">Lock aspect ratio</string>

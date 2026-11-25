@@ -101,8 +101,8 @@
     <string name="memory_editor_inspector_no_rows">No nearby memory is available to inspect.</string>
     <string name="memory_editor_refresh_snapshot">Refresh snapshot</string>
     <string name="memory_editor_select_result_value">Select this bookmark</string>
-    <string name="memory_editor_freeze_after_edit">Freeze after applying</string>
-    <string name="memory_editor_freeze_after_edit_help">Keeps this value locked and bookmarks it in Saved.</string>
+    <string name="memory_editor_freeze_after_edit">Freeze after applying changes</string>
+    <string name="memory_editor_freeze_after_edit_help">Keeps this value locked and adds a bookmark to Saved.</string>
     <string name="memory_editor_expression_single_hint">Enter one value, or separate group values with semicolons (;).</string>
     <string name="memory_editor_expression_group_needs_type">Choose a specific data type for group search.</string>
     <plurals name="memory_editor_expression_group_hint">
@@ -124,7 +124,7 @@
     <string name="memory_editor_next_scan_result">Next scan results: <xliff:g id="before_count" example="120">%1$d</xliff:g> → <xliff:g id="after_count" example="14">%2$d</xliff:g></string>
     <string name="memory_editor_type_auto">Auto</string>
     <string name="memory_editor_remove_candidates_title">Remove selected results?</string>
-    <string name="memory_editor_remove_candidates_description">Remove: Takes the selected results off the search list. Values in game memory stay unchanged.\n\nRevert &amp; remove: Also restores values from before their last confirmed edits, if they still match. Frozen values and results with conflicts stay in the list.</string>
+    <string name="memory_editor_remove_candidates_description">Remove: Removes the selected results from the search list without changing game memory.\n\nRevert &amp; remove: Also restores the value from before the last confirmed edit, but only if the current value still matches that edit. Frozen values and results that can’t be safely restored stay in the list.</string>
     <string name="memory_editor_revert_and_remove">Revert &amp; remove</string>
     <string name="memory_editor_revert_remove_commit_failed">Values may have been restored, but results couldn’t be removed. Refresh and try again; values changed by the game won’t be overwritten.</string>
     <string name="memory_editor_revert_remove_outcome">Restored: <xliff:g id="restored" example="2">%1$d</xliff:g>. Removed: <xliff:g id="removed" example="2">%2$d</xliff:g>. Conflicts: <xliff:g id="conflicts" example="0">%3$d</xliff:g>. Unconfirmed: <xliff:g id="unconfirmed" example="0">%4$d</xliff:g>. Not attempted: <xliff:g id="not_attempted" example="0">%5$d</xliff:g>.</string>
@@ -171,7 +171,7 @@
     <string name="memory_recipes_freeze">Keep frozen while this game runs</string>
     <string name="memory_recipes_run">Run</string>
     <string name="memory_recipes_active_freezes">Active script freezes</string>
-    <string name="memory_recipes_target_unavailable">Bookmark target is unavailable. Refresh or relink it before running.</string>
+    <string name="memory_recipes_target_unavailable">The bookmark’s target is unavailable. Refresh or relink the bookmark before running the script.</string>
     <string name="memory_recipes_preview_values">Current values: <xliff:g id="name" example="Example">%1$s</xliff:g></string>
     <string name="memory_scripts_title">Scripts</string>
     <string name="memory_scripts_active">Active</string>
@@ -190,7 +190,7 @@
     <string name="memory_scripts_saved">Script saved</string>
     <string name="memory_scripts_deleted">Script deleted</string>
     <string name="memory_scripts_save_failed">Couldn’t save script.</string>
-    <string name="memory_scripts_editor_hint">Enter or paste a script JSON document. Saving doesn’t run it.</string>
+    <string name="memory_scripts_editor_hint">Enter or paste a script in JSON format. Saving the script doesn’t run it.</string>
     <string name="memory_scripts_paste_hint">Paste script JSON</string>
     <string name="memory_scripts_paste">Paste</string>
     <string name="memory_scripts_clipboard_invalid">Clipboard is empty or the document exceeds 64 KiB</string>
@@ -242,7 +242,7 @@
     <string name="memory_builder_min">Minimum (optional)</string>
     <string name="memory_builder_max">Maximum (optional)</string>
     <string name="memory_builder_add_target">Add target</string>
-    <string name="memory_builder_freeze_short">Keep selected values at fixed amounts</string>
+    <string name="memory_builder_freeze_short">Keep selected values fixed</string>
     <string name="memory_builder_form_short">Adjust several values in one place</string>
     <string name="memory_builder_actions_short">Run one-time Set, Add, or Subtract actions</string>
     <string name="memory_editor_refine_scan">Refine</string>

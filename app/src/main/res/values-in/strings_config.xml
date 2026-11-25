@@ -170,10 +170,10 @@
     <string name="config_reset_all_settings">Reset konfigurasi MIDlet</string>
     <string name="config_reset_all_settings_summary">Kembalikan setelan dan kontrol virtual MIDlet ke setelan bawaan tanpa menghapus datanya.</string>
     <string name="config_delete_app_data">Hapus data MIDlet</string>
-    <string name="config_delete_app_data_summary">Hapus permanen data MIDlet ini, termasuk data simpanan. Setelannya akan tetap disimpan.</string>
-    <string name="config_message_reset_settings">Kembalikan konfigurasi MIDlet dan kontrol virtual ke setelan bawaan? Data simpanan tetap utuh. MIDlet tidak akan lagi mengikuti profil yang tertaut.</string>
+    <string name="config_delete_app_data_summary">Hapus secara permanen data MIDlet, termasuk data simpanan. Setelan tetap dipertahankan.</string>
+    <string name="config_message_reset_settings">Kembalikan setelan MIDlet dan kontrol virtual ke setelan bawaan? Data simpanan tetap utuh. MIDlet tidak akan lagi mengikuti profil yang tertaut.</string>
     <string name="config_message_reset_profile_settings">Kembalikan setelan dan kontrol virtual profil ini ke setelan bawaan? Anda masih dapat mengedit atau membatalkan perubahan sebelum menyimpan.</string>
-    <string name="config_message_delete_app_data">Hapus permanen semua data simpanan dan data yang dibuat oleh MIDlet ini? Setelan MIDlet tidak akan dihapus.</string>
+    <string name="config_message_delete_app_data">Hapus secara permanen semua data simpanan dan data yang dibuat oleh MIDlet ini? Setelan MIDlet tetap dipertahankan.</string>
     <string name="config_lock_custom_resolution_ratio">Kunci rasio aspek</string>
     <string name="config_swap_screen_size">Tukar lebar dan tinggi</string>
     <string name="profile_builtin_settings">Setelan bawaan JL-Mod</string>
@@ -259,23 +259,23 @@
     <string name="preset_apply_failed_summary">Tidak dapat menerapkan profil ini. Periksa sumbernya lalu coba lagi.</string>
     <string name="preset_choose_parts">Pilih bagian yang akan diterapkan</string>
     <string name="preset_name">Nama</string>
-    <string name="preset_save_help">Simpan setelan MIDlet ini dan tata letak kontrol virtualnya (jika tersedia) sebagai profil. MIDlet ini akan menggunakan profil tersebut dan menerima pembaruannya di masa mendatang.</string>
+    <string name="preset_save_help">Simpan setelan MIDlet ini beserta tata letak kontrol virtualnya (jika tersedia) sebagai profil. MIDlet ini akan menggunakan profil tersebut dan mengikuti pembaruannya.</string>
     <string name="preset_update">Perbarui <xliff:g id="profile_name" example="Action Games">%1$s</xliff:g></string>
     <string name="preset_update_title">Perbarui <xliff:g id="profile_name" example="Action Games">%1$s</xliff:g>?</string>
-    <string name="preset_update_summary">Ganti <xliff:g id="profile_name" example="Action Games">%1$s</xliff:g> dengan setelan MIDlet ini saat ini dan tata letak kontrol virtualnya (jika tersedia). MIDlet lain yang menggunakan profil ini akan menerima perubahan saat dijalankan berikutnya.</string>
+    <string name="preset_update_summary">Ganti isi profil <xliff:g id="profile_name" example="Action Games">%1$s</xliff:g> dengan setelan MIDlet ini beserta tata letak kontrol virtualnya (jika tersedia). MIDlet lain yang menggunakan profil ini akan menerima perubahan saat dijalankan kembali.</string>
     <string name="preset_update_confirm">Perbarui</string>
-    <string name="preset_saved_unlinked_warning">Profil tersimpan, tetapi MIDlet ini tidak akan menerima pembaruan berikutnya darinya.</string>
+    <string name="preset_saved_unlinked_warning">Profil tersimpan, tetapi MIDlet ini tidak akan mengikuti pembaruan profil tersebut.</string>
     <string name="profile_default_fallback_notice">Profil bawaan “<xliff:g id="profile_name" example="Action Games">%1$s</xliff:g>” tidak dapat digunakan. Profil mungkin hilang, tidak lengkap, atau tidak dapat dibaca. Setelan bawaan JL-Mod kini digunakan untuk MIDlet baru.</string>
-    <string name="preset_discard_changes_title">Buang perubahan?</string>
+    <string name="preset_discard_changes_title">Abaikan perubahan?</string>
     <string name="preset_discard_changes_summary">Draf profil ini belum disimpan.</string>
     <string name="preset_continue_editing">Lanjutkan mengedit</string>
-    <string name="preset_discard_changes">Buang</string>
+    <string name="preset_discard_changes">Abaikan perubahan</string>
     <string name="preset_name_exists">Profil dengan nama ini sudah ada.</string>
     <string name="preset_invalid_name">Masukkan nama profil yang valid.</string>
     <string name="preset_manager_default_section">Bawaan untuk MIDlet baru</string>
     <string name="preset_manager_presets_section">Profil saya</string>
     <string name="preset_manager_keyboard_section">Tata letak kontrol virtual tersimpan</string>
-    <string name="preset_default_policy_summary">Diterapkan saat MIDlet baru diinstal.</string>
+    <string name="preset_default_policy_summary">Digunakan saat MIDlet baru diinstal.</string>
     <string name="preset_keyboard_layout_unavailable">Tata letak kontrol virtual tidak tersedia.</string>
     <string name="edit_preset">Edit profil</string>
     <string name="preset_edit_title">Edit profil: <xliff:g id="profile_name" example="Action Games">%1$s</xliff:g></string>
@@ -285,12 +285,12 @@
     <string name="preset_default_picker_title">Bawaan untuk MIDlet baru</string>
     <string name="profile_follows_updates">Mengikuti pembaruan profil berikutnya.</string>
     <string name="profile_apply_whole">Seluruh profil</string>
-    <string name="profile_apply_whole_follows">Ganti setelan dan tata letak; ikuti pembaruan berikutnya.</string>
-    <string name="profile_apply_whole_without_layout">Ganti setelan, hapus tata letak lokal, dan ikuti pembaruan.</string>
+    <string name="profile_apply_whole_follows">Ganti setelan dan tata letak, lalu ikuti pembaruan profil.</string>
+    <string name="profile_apply_whole_without_layout">Ganti setelan, hapus tata letak lokal, lalu ikuti pembaruan profil.</string>
     <string name="profile_apply_settings_only">Hanya setelan MIDlet</string>
-    <string name="profile_apply_settings_keeps_layout">Pertahankan tata letak MIDlet ini; gunakan konfigurasi kustom.</string>
+    <string name="profile_apply_settings_keeps_layout">Pertahankan tata letak MIDlet dan gunakan konfigurasi kustom.</string>
     <string name="profile_apply_layout_only">Hanya tata letak kontrol virtual</string>
-    <string name="profile_apply_layout_keeps_settings">Pertahankan setelan MIDlet ini; gunakan konfigurasi kustom.</string>
+    <string name="profile_apply_layout_keeps_settings">Pertahankan setelan MIDlet dan gunakan konfigurasi kustom.</string>
     <string name="config_analog_stick">Stik analog</string>
     <string name="config_analog_stick_summary">Pilih Nonaktif, 4 arah, 8 arah, atau keypad angka untuk stik analog utama. Tombol pengontrol menggunakan pemetaan tombol.</string>
     <string name="config_analog_stick_off">Nonaktif</string>
@@ -342,7 +342,7 @@
     <string name="config_asset_deleted"><xliff:g id="name" example="Example">%1$s</xliff:g> dihapus</string>
     <string name="config_asset_invalid">File tidak didukung atau tidak valid.</string>
     <string name="config_asset_operation_failed">Tidak dapat menyelesaikan operasi file.</string>
-    <string name="config_save_failed" tools:ignore="MissingTranslation">Tidak dapat menyimpan setelan. Perubahan Anda belum hilang. Coba lagi.</string>
+    <string name="config_save_failed" tools:ignore="MissingTranslation">Tidak dapat menyimpan setelan. Perubahan masih tersedia untuk diedit. Coba lagi.</string>
     <string name="config_asset_busy">Selesaikan operasi file saat ini terlebih dahulu.</string>
     <string name="config_quick_settings" tools:ignore="MissingTranslation">Setelan cepat</string>
     <string name="config_all_settings" tools:ignore="MissingTranslation">Semua setelan</string>
