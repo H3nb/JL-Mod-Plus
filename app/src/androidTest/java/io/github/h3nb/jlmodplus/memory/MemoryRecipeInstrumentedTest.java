@@ -764,13 +764,17 @@ public class MemoryRecipeInstrumentedTest {
         assertEquals(MemoryEngineContract.RESULT_IDENTITY_UNSAFE, status(staleRead));
         assertEquals(MemoryEngineContract.REASON_RECIPE_REFRESH_REQUIRED,
             staleRead.getInt(MemoryEngineContract.KEY_OPERATION_REASON));
+        assertEquals(0, staleRead.getInt(MemoryEngineContract.KEY_MANAGED_WRITTEN));
+        assertEquals(0, staleRead.getInt(MemoryEngineContract.KEY_MANAGED_UNCONFIRMED));
         assertEquals(11, root.coins);
         edit.putStringArray("recipeExpectedValues", snapshot.getStringArray("recipeReadValues"));
         root.coins = 10;
         storeEncodedCoins(root, 10);
         Bundle applied = runner.run(TOKEN, recipe, edit, false, false);
         assertEquals(MemoryEngineContract.RESULT_OK, status(applied));
-        assertTrue(applied.getInt(MemoryEngineContract.KEY_MANAGED_WRITTEN) > 0);
+        assertEquals(5, applied.getInt(MemoryEngineContract.KEY_MANAGED_WRITTEN));
+        assertEquals(0, applied.getInt(MemoryEngineContract.KEY_MANAGED_UNCONFIRMED));
+        assertEquals(0, applied.getInt(MemoryEngineContract.KEY_MANAGED_NOT_ATTEMPTED));
         assertEquals(500, root.coins);
         assertEquals(MemoryEngineContract.RESULT_IDENTITY_UNSAFE,
             status(runner.run(TOKEN, recipe, edit, false, false)));

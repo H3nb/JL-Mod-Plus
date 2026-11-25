@@ -27,6 +27,9 @@ class MemoryRecipeRuntime {
         val resultCode: Int,
         override val message: String,
         val reason: Int = MemoryEngineContract.REASON_NONE,
+        val confirmed: Int = 0,
+        val unconfirmed: Int = 0,
+        val notAttempted: Int = 0,
     ) : RuntimeException(message)
 
     private data class Root(val kind: String, val className: String)
@@ -236,6 +239,12 @@ class MemoryRecipeRuntime {
             return reply(token, problem.resultCode, problem.message).apply {
                 if (problem.reason != MemoryEngineContract.REASON_NONE)
                     putInt(MemoryEngineContract.KEY_OPERATION_REASON, problem.reason)
+                if (problem.confirmed + problem.unconfirmed > 0) {
+                    putInt(MemoryEngineContract.KEY_MANAGED_ATTEMPTED, problem.confirmed + problem.unconfirmed)
+                    putInt(MemoryEngineContract.KEY_MANAGED_WRITTEN, problem.confirmed)
+                    putInt(MemoryEngineContract.KEY_MANAGED_UNCONFIRMED, problem.unconfirmed)
+                    putInt(MemoryEngineContract.KEY_MANAGED_NOT_ATTEMPTED, problem.notAttempted)
+                }
             }
         } catch (error: ReflectiveOperationException) {
             return reply(token, MemoryEngineContract.RESULT_IDENTITY_UNSAFE, "Guest field could not be accessed")
@@ -288,8 +297,20 @@ class MemoryRecipeRuntime {
     private fun write(
         token: Long, prepared: Prepared, strictReadback: Boolean = true,
     ): Boolean {
-        var written = 0
+        var attempted = 0
+        var confirmed = 0
         var contested = false
+
+        fun failure(error: Throwable): Throwable =
+            if (attempted == 0) error
+            else Problem(
+                MemoryEngineContract.RESULT_PARTIAL_WRITE,
+                "Recipe write interrupted: $confirmed confirmed, ${attempted - confirmed} unconfirmed: ${error.message}",
+                confirmed = confirmed,
+                unconfirmed = attempted - confirmed,
+                notAttempted = prepared.writes.size - attempted,
+            )
+
         try {
             // A one-shot write rejects a changed source. Freeze is different: the game's
             // modifications are the very changes it must counter, not a lost target.
@@ -305,9 +326,11 @@ class MemoryRecipeRuntime {
                 if (!MemoryDiscoveryBridge.isActive(token)) throw Problem(
                     MemoryEngineContract.RESULT_TARGET_LOST, "MIDlet session ended during recipe write"
                 )
+                attempted++
                 item.cell.write(item.value)
-                written++
-                if (item.cell.read() != item.value) {
+                if (item.cell.read() == item.value) {
+                    confirmed++
+                } else {
                     if (strictReadback) throw Problem(
                         MemoryEngineContract.RESULT_PARTIAL_WRITE, "Recipe readback disagrees"
                     )
@@ -315,18 +338,12 @@ class MemoryRecipeRuntime {
                 }
             }
             return !contested
-        } catch (error: Problem) {
-            if (written > 0) throw Problem(MemoryEngineContract.RESULT_PARTIAL_WRITE,
-                "Recipe changed $written values before failure: ${error.message}")
-            throw error
         } catch (error: RuntimeException) {
-            if (written > 0) throw Problem(MemoryEngineContract.RESULT_PARTIAL_WRITE,
-                "Recipe changed $written values before runtime failure")
-            throw error
+            throw failure(error)
         } catch (error: ReflectiveOperationException) {
-            if (written > 0) throw Problem(MemoryEngineContract.RESULT_PARTIAL_WRITE,
-                "Recipe changed $written values before access failure")
-            throw error
+            throw failure(error)
+        } catch (error: LinkageError) {
+            throw failure(error)
         }
     }
 

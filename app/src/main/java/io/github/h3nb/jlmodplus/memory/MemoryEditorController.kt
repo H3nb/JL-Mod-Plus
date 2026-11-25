@@ -2082,17 +2082,17 @@ internal class MemoryEditorComposeController(
                     MemoryEngineContract.RESULT_TARGET_LOST)
                     ?: MemoryEngineContract.RESULT_TARGET_LOST
                 val success = code == MemoryEngineContract.RESULT_OK
-                if (response?.getInt(MemoryEngineContract.KEY_OPERATION_REASON) ==
-                    MemoryEngineContract.REASON_RECIPE_REFRESH_REQUIRED) {
+                val localizedResult = code == MemoryEngineContract.RESULT_PARTIAL_WRITE ||
+                    response?.getInt(MemoryEngineContract.KEY_OPERATION_REASON) ==
+                        MemoryEngineContract.REASON_RECIPE_REFRESH_REQUIRED
+                if (localizedResult) {
                     android.util.Log.w("MemoryEditor",
                         response?.getString(MemoryEngineContract.KEY_DIAGNOSTIC_DETAIL).orEmpty())
                 }
                 state = state.copy(
                     message = when {
-                        success && !preview && response?.containsKey(MemoryEngineContract.KEY_MANAGED_WRITTEN) == true ->
-                            operationMessage(code, response)
-                        response?.getInt(MemoryEngineContract.KEY_OPERATION_REASON) ==
-                            MemoryEngineContract.REASON_RECIPE_REFRESH_REQUIRED ->
+                        localizedResult ||
+                            (success && !preview && response?.containsKey(MemoryEngineContract.KEY_MANAGED_WRITTEN) == true) ->
                             operationMessage(code, response)
                         else -> response?.getString(MemoryEngineContract.KEY_DIAGNOSTIC_DETAIL)
                             ?: result.exceptionOrNull()?.message

@@ -77,6 +77,17 @@ class MemoryOperationMessagesTest {
     }
 
     @Test
+    fun partialRecipeWriteSeparatesConfirmedUnconfirmedAndUntouchedValues() {
+        val message = memoryOperationMessage(
+            MemoryEngineContract.RESULT_PARTIAL_WRITE,
+            written = 2, unconfirmed = 1, notAttempted = 4,
+        )!!
+        assertEquals(R.string.memory_editor_write_failure_outcome, message.resource)
+        assertEquals(R.string.memory_editor_partial_write, message.explanation)
+        assertEquals(listOf(2, 1, 0, 4, 0), message.arguments)
+    }
+
+    @Test
     fun confirmedWriteHasACompactReadbackMessage() {
         val message = memoryOperationMessage(MemoryEngineContract.RESULT_OK, written = 5)!!
         assertEquals(R.string.memory_editor_write_confirmed, message.resource)
