@@ -280,8 +280,8 @@
     <string name="library_grid_spacing_title">Проміжки в сітці</string>
     <string name="library_hide_grid_titles">Приховати назви MIDlet</string>
     <string name="library_hide_grid_titles_summary">Показувати лише значки MIDlet у вигляді сітки.</string>
-    <string name="library_icon_ratio_portrait">3:4</string>
-    <string name="library_icon_ratio_square">1:1</string>
+    <string name="library_icon_ratio_portrait">Вертикальний (3:4)</string>
+    <string name="library_icon_ratio_square">Квадратний (1:1)</string>
     <string name="library_icon_ratio_title">Співвідношення сторін значка</string>
     <string name="library_icon_shape_round">Заокруглені кути</string>
     <string name="library_icon_shape_square">Гострі кути</string>
@@ -529,6 +529,7 @@
     <string name="config_help_soundbank">Вибирає банк звуків для синтезу MIDI.</string>
     <string name="config_help_system_properties">Задає розширені властивості Java ME, які повідомляються MIDlet.</string>
     <string name="config_help_system_properties_long">Редагуйте по одній властивості на рядок у форматі «назва: значення». Некоректні значення можуть вплинути на сумісність.</string>
+    <string name="config_system_properties_editor_label">Властивості</string>
     <string name="config_help_timing_mode">Вибирає, чи MIDlet використовує час емуляції, чи системний час. Відносні затримки й далі масштабуються зі швидкістю емуляції.</string>
     <string name="config_help_timing_unavailable">Налаштування часу недоступні для цієї інсталяції MIDlet. Перевстановіть або повторно конвертуйте MIDlet, щоб увімкнути їх.</string>
     <string name="config_help_touch_input">Дозволяє MIDlet отримувати введення вказівника із сенсорного екрана.</string>

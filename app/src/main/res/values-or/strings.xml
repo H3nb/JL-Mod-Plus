@@ -224,8 +224,8 @@
     <string name="library_grid_spacing_title">ଗ୍ରିଡ୍ ବ୍ୟବଧାନ</string>
     <string name="library_hide_grid_titles">MIDlet ଶୀର୍ଷକ ଲୁଚାନ୍ତୁ</string>
     <string name="library_hide_grid_titles_summary">ଗ୍ରିଡ୍ ଦୃଶ୍ୟରେ କେବଳ MIDlet ଆଇକନ୍ ଦେଖାନ୍ତୁ।</string>
-    <string name="library_icon_ratio_portrait">3:4</string>
-    <string name="library_icon_ratio_square">1:1</string>
+    <string name="library_icon_ratio_portrait">ଲମ୍ବାକାର (3:4)</string>
+    <string name="library_icon_ratio_square">ବର୍ଗାକାର (1:1)</string>
     <string name="library_icon_ratio_title">ଆଇକନ୍‌ର ପ୍ରସ୍ଥ-ଉଚ୍ଚତା ଅନୁପାତ</string>
     <string name="library_icon_shape_round">ଗୋଲାକାର କୋଣ</string>
     <string name="library_icon_shape_square">ତୀକ୍ଷ୍ଣ କୋଣ</string>
@@ -802,6 +802,7 @@
     <string name="config_help_soundbank">MIDI ସିନ୍ଥେସିସ୍ ପାଇଁ ବ୍ୟବହୃତ ସାଉଣ୍ଡବ୍ୟାଙ୍କ୍ ବାଛେ।</string>
     <string name="config_help_system_properties">MIDlet କୁ ଜଣାଯାଉଥିବା ଉନ୍ନତ Java ME ପ୍ରୋପର୍ଟି ନିର୍ଦ୍ଧାରଣ କରେ।</string>
     <string name="config_help_system_properties_long">ପ୍ରତ୍ୟେକ ଧାଡ଼ିରେ ଗୋଟିଏ ପ୍ରୋପର୍ଟି “ନାମ: ମୂଲ୍ୟ” ଭାବେ ସମ୍ପାଦନ କରନ୍ତୁ। ଭୁଲ୍ ମୂଲ୍ୟ ସୁସଙ୍ଗତତାକୁ ପ୍ରଭାବିତ କରିପାରେ।</string>
+    <string name="config_system_properties_editor_label">ଗୁଣଧର୍ମ</string>
     <string name="config_help_timing_mode">MIDlet ଏମୁଲେସନ୍ ସମୟ କିମ୍ବା ସିଷ୍ଟମ୍ ସମୟ ବ୍ୟବହାର କରିବ ତାହା ବାଛେ। ସାପେକ୍ଷ ବିଳମ୍ବ ଏମୁଲେସନ୍ ଗତି ଅନୁସାରେ ସ୍କେଲ୍ ହେବା ଜାରି ରହେ।</string>
     <string name="config_help_timing_unavailable">ଏହି MIDlet ସଂସ୍ଥାପନ ପାଇଁ ସମୟ ସେଟିଂସ୍ ଉପଲବ୍ଧ ନାହିଁ। ସେଗୁଡ଼ିକ ସକ୍ରିୟ କରିବା ପାଇଁ MIDlet କୁ ପୁଣି ସଂସ୍ଥାପନ କିମ୍ବା ରୂପାନ୍ତର କରନ୍ତୁ।</string>
     <string name="config_help_touch_input">MIDlet କୁ ଟଚ୍‌ସ୍କ୍ରିନ୍‌ରୁ ପଏଣ୍ଟର୍ ଇନପୁଟ୍ ପାଇବାକୁ ଦିଏ।</string>

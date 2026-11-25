@@ -37,6 +37,7 @@ public final class FpsCounter extends TimerTask implements Layer {
 	private final FrameMetrics metrics;
 	private final int position;
 	private final int contentColor;
+	private final int badgeColor;
 	private final Timer timer = new Timer("FpsCounter", true);
 	private final RectF drawingBounds = new RectF();
 	private final RectF badgeBounds = new RectF();
@@ -55,6 +56,7 @@ public final class FpsCounter extends TimerTask implements Layer {
 		this.owner = owner;
 		this.position = sanitizePosition(position);
 		contentColor = ContextCompat.getColor(view.getContext(), R.color.fps_overlay_content);
+		badgeColor = ContextCompat.getColor(view.getContext(), R.color.fps_overlay_badge);
 		timer.schedule(this, 0, 500);
 	}
 
@@ -104,7 +106,7 @@ public final class FpsCounter extends TimerTask implements Layer {
 		badgeBounds.set(x, y, x + width, y + height);
 		int save = graphics.clipDiagnostics(drawingBounds);
 		try {
-			graphics.fillControlRoundRect(badgeBounds, 5f * density, 0xB8000000);
+			graphics.fillControlRoundRect(badgeBounds, 5f * density, badgeColor);
 			graphics.drawDiagnosticText(text, contentColor, x + horizontalPadding, y + verticalPadding);
 		} finally {
 			graphics.restoreDiagnostics(save);

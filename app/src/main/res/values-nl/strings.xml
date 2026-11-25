@@ -214,8 +214,8 @@
     <string name="library_view_list">Lijst</string>
     <string name="library_view_grid">Raster</string>
     <string name="library_icon_ratio_title">Pictogramverhouding</string>
-    <string name="library_icon_ratio_square">1:1</string>
-    <string name="library_icon_ratio_portrait">3:4</string>
+    <string name="library_icon_ratio_square">Vierkant (1:1)</string>
+    <string name="library_icon_ratio_portrait">Staand (3:4)</string>
     <string name="library_icon_shape_title">Pictogramvorm</string>
     <string name="library_icon_shape_round">Afgerond</string>
     <string name="library_icon_shape_square">Scherpe hoeken</string>
@@ -747,6 +747,7 @@
     <string name="config_edit_system_properties">Systeemeigenschappen bewerken</string>
     <string name="config_help_system_properties">Stelt geavanceerde Java ME-eigenschappen in die aan de MIDlet worden gemeld.</string>
     <string name="config_help_system_properties_long">Bewerk één eigenschap per regel als “naam: waarde”. Onjuiste waarden kunnen de compatibiliteit beïnvloeden.</string>
+    <string name="config_system_properties_editor_label">Eigenschappen</string>
     <string name="config_system_properties_info">De meeste MIDlet-apps hebben hier geen wijzigingen nodig.</string>
     <string name="config_font_sizes">Lettergroottes</string>
     <string name="config_help_font_sizes">Stelt kleine, middelgrote en grote Java ME-lettergroottes in voor de MIDlet.</string>

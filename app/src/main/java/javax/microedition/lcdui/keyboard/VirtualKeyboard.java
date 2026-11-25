@@ -21,6 +21,7 @@ package javax.microedition.lcdui.keyboard;
 import static javax.microedition.lcdui.keyboard.KeyMapper.SE_KEY_SPECIAL_GAMING_A;
 import static javax.microedition.lcdui.keyboard.KeyMapper.SE_KEY_SPECIAL_GAMING_B;
 
+import android.content.Context;
 import android.graphics.PointF;
 import android.graphics.RectF;
 import android.os.Handler;
@@ -53,6 +54,8 @@ import io.github.h3nb.jlmodplus.config.ControlSkinRuntime;
 import io.github.h3nb.jlmodplus.config.ProfileModel;
 import io.github.h3nb.jlmodplus.R;
 import io.github.h3nb.jlmodplus.input.HostCommand;
+import io.github.h3nb.jlmodplus.ui.LegacyThemeColors;
+import io.github.h3nb.jlmodplus.ui.LegacyUiColors;
 
 public class VirtualKeyboard implements Overlay, Runnable {
 	public interface LayoutEditObserver {
@@ -255,6 +258,7 @@ public class VirtualKeyboard implements Overlay, Runnable {
 	private boolean legacyCustomPayloadSeen;
 	private VirtualKeyboardLayoutState storedCustomLayoutState;
 	private boolean controllerKeypadVisible;
+	private volatile LegacyUiColors controllerKeypadColors;
 	private int controllerKeypadSelection;
 	private VirtualKey controllerKeypadPressed;
 	private long pointerSourceSequence;
@@ -1596,11 +1600,19 @@ public class VirtualKeyboard implements Overlay, Runnable {
 	/** Opens the controller-owned numeric keypad without changing the touch keyboard layout. */
 	public void openControllerKeypad() {
 		cancel();
+		Context context = ContextHolder.getActivity();
+		controllerKeypadColors = LegacyThemeColors.snapshot(
+				context != null ? context : ContextHolder.getAppContext());
 		controllerKeypadVisible = true;
 		controllerKeypadSelection = 0;
 		visible = true;
 		selectControllerKeypadKey();
 		if (overlayView != null) overlayView.postInvalidate();
+	}
+
+	public void updateHostColors(LegacyUiColors colors) {
+		controllerKeypadColors = colors;
+		if (controllerKeypadVisible && overlayView != null) overlayView.postInvalidate();
 	}
 
 	public boolean isControllerKeypadVisible() {
@@ -2088,11 +2100,12 @@ public class VirtualKeyboard implements Overlay, Runnable {
 		float height = rows * cellHeight;
 		float left = screen.centerX() - width / 2.0f;
 		float top = screen.centerY() - height / 2.0f;
-		g.setFillColor(0xD9000000);
+		LegacyUiColors colors = controllerKeypadColors;
+		g.setFillColor(colors.getSurfaceContainer());
 		g.fillRoundRect(new RectF(left - cellWidth * 0.12f, top - cellHeight * 0.55f,
 				left + width + cellWidth * 0.12f, top + height + cellHeight * 0.12f),
 				Math.max(8, (int) (cellWidth * 0.10f)), Math.max(8, (int) (cellWidth * 0.10f)));
-		g.setTextColor(0xFFFFFFFF);
+		g.setTextColor(colors.getOnSurface());
 		g.drawString(ContextHolder.getActivity().getString(R.string.config_gamepad_keypad_title),
 				screen.centerX(), top - cellHeight * 0.28f);
 		for (int i = 0; i < CONTROLLER_KEYPAD_ORDER.length; i++) {
@@ -2104,9 +2117,9 @@ public class VirtualKeyboard implements Overlay, Runnable {
 					left + (column + 1) * cellWidth - 3.0f,
 					top + (row + 1) * cellHeight - 3.0f);
 			boolean selected = i == controllerKeypadSelection;
-			g.setFillColor((selected ? 0xFF000080 : 0xE0D0D0D0));
-			g.setDrawColor(0xFFFFFFFF);
-			g.setTextColor(selected ? 0xFFFFFFFF : 0xFF000080);
+			g.setFillColor(selected ? colors.getPrimaryContainer() : colors.getSurfaceContainerLow());
+			g.setDrawColor(selected ? colors.getPrimary() : colors.getOutline());
+			g.setTextColor(selected ? colors.getOnPrimaryContainer() : colors.getOnSurface());
 			g.fillRoundRect(rect, Math.max(6, (int) (cellWidth * 0.08f)),
 					Math.max(6, (int) (cellWidth * 0.08f)));
 			g.drawRoundRect(rect, Math.max(6, (int) (cellWidth * 0.08f)),

@@ -225,8 +225,8 @@
     <string name="library_grid_spacing_title">Odstępy w siatce</string>
     <string name="library_hide_grid_titles">Ukryj tytuły MIDletów</string>
     <string name="library_hide_grid_titles_summary">Pokazuj tylko ikony MIDletów w widoku siatki.</string>
-    <string name="library_icon_ratio_portrait">3:4</string>
-    <string name="library_icon_ratio_square">1:1</string>
+    <string name="library_icon_ratio_portrait">Pionowy (3:4)</string>
+    <string name="library_icon_ratio_square">Kwadratowy (1:1)</string>
     <string name="library_icon_ratio_title">Proporcje ikony</string>
     <string name="library_icon_shape_round">Zaokrąglone rogi</string>
     <string name="library_icon_shape_square">Ostre rogi</string>
@@ -474,6 +474,7 @@
     <string name="config_help_soundbank">Wybiera bank dźwięków używany do syntezy MIDI.</string>
     <string name="config_help_system_properties">Ustawia zaawansowane właściwości Java ME zgłaszane MIDletowi.</string>
     <string name="config_help_system_properties_long">Edytuj po jednej właściwości w wierszu w formacie „nazwa: wartość”. Nieprawidłowe wartości mogą wpływać na zgodność.</string>
+    <string name="config_system_properties_editor_label">Właściwości</string>
     <string name="config_help_timing_mode">Wybiera, czy MIDlet używa czasu emulacji, czy czasu systemowego. Opóźnienia względne nadal są skalowane wraz z szybkością emulacji.</string>
     <string name="config_help_timing_unavailable">Ustawienia czasu są niedostępne dla tej instalacji MIDletu. Zainstaluj ponownie lub ponownie skonwertuj MIDlet, aby je włączyć.</string>
     <string name="config_help_touch_input">Pozwala MIDletowi odbierać dane wskaźnika z ekranu dotykowego.</string>

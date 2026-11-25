@@ -282,8 +282,8 @@
     <string name="library_grid_spacing_title">Mezery v mřížce</string>
     <string name="library_hide_grid_titles">Skrýt názvy MIDletů</string>
     <string name="library_hide_grid_titles_summary">V zobrazení mřížky zobrazovat pouze ikony MIDletů.</string>
-    <string name="library_icon_ratio_portrait">3:4</string>
-    <string name="library_icon_ratio_square">1:1</string>
+    <string name="library_icon_ratio_portrait">Na výšku (3:4)</string>
+    <string name="library_icon_ratio_square">Čtverec (1:1)</string>
     <string name="library_icon_ratio_title">Poměr stran ikon</string>
     <string name="library_icon_shape_round">Zaoblené rohy</string>
     <string name="library_icon_shape_square">Ostré rohy</string>
@@ -531,6 +531,7 @@
     <string name="config_help_soundbank">Vybere zvukovou banku pro syntézu MIDI.</string>
     <string name="config_help_system_properties">Nastaví pokročilé vlastnosti Java ME hlášené MIDletu.</string>
     <string name="config_help_system_properties_long">Upravujte jednu vlastnost na řádek ve formátu „název: hodnota“. Nesprávné hodnoty mohou ovlivnit kompatibilitu.</string>
+    <string name="config_system_properties_editor_label">Vlastnosti</string>
     <string name="config_help_timing_mode">Vybere, zda MIDlet používá čas emulace, nebo systémový čas. Relativní prodlevy se nadále mění s rychlostí emulace.</string>
     <string name="config_help_timing_unavailable">Nastavení času nejsou pro tuto instalaci MIDletu dostupná. Povolíte je přeinstalováním nebo opětovným převodem MIDletu.</string>
     <string name="config_help_touch_input">Umožní MIDletu přijímat vstup ukazatele z dotykové obrazovky.</string>

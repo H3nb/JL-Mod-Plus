@@ -178,8 +178,8 @@
     <string name="library_grid_spacing_title">רווחים ברשת</string>
     <string name="library_hide_grid_titles">הסתרת כותרות MIDlet</string>
     <string name="library_hide_grid_titles_summary">הצגת סמלי MIDlet בלבד בתצוגת רשת.</string>
-    <string name="library_icon_ratio_portrait">3:4</string>
-    <string name="library_icon_ratio_square">1:1</string>
+    <string name="library_icon_ratio_portrait">לאורך (3:4)</string>
+    <string name="library_icon_ratio_square">ריבוע (1:1)</string>
     <string name="library_icon_ratio_title">יחס ממדי הסמל</string>
     <string name="library_icon_shape_round">פינות מעוגלות</string>
     <string name="library_icon_shape_square">פינות חדות</string>
@@ -422,6 +422,7 @@
     <string name="config_help_soundbank">בוחר את בנק הצלילים המשמש לסינתזת MIDI.</string>
     <string name="config_help_system_properties">מגדיר מאפייני Java ME מתקדמים המדווחים ל־MIDlet.</string>
     <string name="config_help_system_properties_long">ערכו מאפיין אחד בכל שורה בתבנית “name: value”. ערכים שגויים עלולים להשפיע על התאימות.</string>
+    <string name="config_system_properties_editor_label">מאפיינים</string>
     <string name="config_help_timing_mode">בוחר אם ה־MIDlet ישתמש בזמן אמולציה או בזמן מערכת. השהיות יחסיות ממשיכות להשתנות לפי מהירות האמולציה.</string>
     <string name="config_help_timing_unavailable">הגדרות הזמן אינן זמינות עבור התקנת ה־MIDlet הזאת. התקינו או המירו מחדש את ה־MIDlet כדי להפעיל אותן.</string>
     <string name="config_help_touch_input">מאפשר ל־MIDlet לקבל קלט מצביע ממסך המגע.</string>

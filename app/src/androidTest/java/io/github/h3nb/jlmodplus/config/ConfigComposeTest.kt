@@ -728,18 +728,18 @@ class ConfigComposeTest {
     }
 
     @Test
-    fun quickFpsShortcutEditsValueWithoutOpeningAnotherPage() {
+    fun quickRenderResolutionEditsValueWithoutOpeningAnotherPage() {
         val events = RecordingConfigEvents()
         composeRule.setContent {
             JLModPlusTheme { ConfigScreen(sampleState(), events) }
         }
-        composeRule.onNodeWithTag("config_quick_fps").performScrollTo().performClick()
+        composeRule.onNodeWithTag("config_quick_fps").assertDoesNotExist()
+        composeRule.onNodeWithTag("config_quick_renderresolution").performScrollTo().performClick()
         composeRule.onNode(isDialog()).assertExists()
-        composeRule.onNode(hasSetTextAction()).performTextReplacement("45")
         composeRule.onNode(
-            hasText(uiString(android.R.string.ok)) and hasClickAction() and hasAnyAncestor(isDialog()),
+            hasText("3×") and hasAnyAncestor(isDialog()),
         ).performClick()
-        assertEquals("45", events.lastForm?.fpsLimit)
+        assertEquals(3, events.lastForm?.internalResolutionScale)
         composeRule.onNodeWithText(uiString(R.string.config_quick_settings)).assertExists()
     }
 

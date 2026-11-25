@@ -213,8 +213,8 @@
     <string name="library_grid_spacing_title">ระยะห่างของตาราง</string>
     <string name="library_hide_grid_titles">ซ่อนชื่อ MIDlet</string>
     <string name="library_hide_grid_titles_summary">แสดงเฉพาะไอคอน MIDlet ในมุมมองตาราง</string>
-    <string name="library_icon_ratio_portrait">3:4</string>
-    <string name="library_icon_ratio_square">1:1</string>
+    <string name="library_icon_ratio_portrait">แนวตั้ง (3:4)</string>
+    <string name="library_icon_ratio_square">สี่เหลี่ยมจัตุรัส (1:1)</string>
     <string name="library_icon_ratio_title">อัตราส่วนไอคอน</string>
     <string name="library_icon_shape_round">มุมโค้งมน</string>
     <string name="library_icon_shape_square">มุมเหลี่ยม</string>
@@ -447,6 +447,7 @@
     <string name="config_help_soundbank">เลือกคลังเสียงที่ใช้สังเคราะห์ MIDI</string>
     <string name="config_help_system_properties">ตั้งคุณสมบัติ Java ME ขั้นสูงที่รายงานไปยัง MIDlet</string>
     <string name="config_help_system_properties_long">แก้ไขคุณสมบัติหนึ่งรายการต่อบรรทัดในรูปแบบ “name: value” ค่าที่ไม่ถูกต้องอาจกระทบความเข้ากันได้</string>
+    <string name="config_system_properties_editor_label">คุณสมบัติ</string>
     <string name="config_help_timing_mode">เลือกว่า MIDlet ใช้เวลาจำลองหรือเวลาระบบ เวลาหน่วงแบบสัมพัทธ์ยังคงปรับตามความเร็วการจำลอง</string>
     <string name="config_help_timing_unavailable">การตั้งค่าเวลาใช้ไม่ได้กับการติดตั้ง MIDlet นี้ ให้ติดตั้งหรือแปลง MIDlet ใหม่เพื่อเปิดใช้</string>
     <string name="config_help_touch_input">ให้ MIDlet รับอินพุตตัวชี้จากหน้าจอสัมผัส</string>

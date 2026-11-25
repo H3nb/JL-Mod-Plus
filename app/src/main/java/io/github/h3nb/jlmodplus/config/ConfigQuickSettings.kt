@@ -32,13 +32,12 @@ import androidx.compose.ui.semantics.Role
 import androidx.compose.ui.semantics.heading
 import androidx.compose.ui.semantics.semantics
 import androidx.compose.ui.text.style.TextOverflow
-import androidx.compose.ui.text.input.KeyboardType
 import androidx.compose.ui.unit.dp
 import io.github.h3nb.jlmodplus.R
 import io.github.h3nb.jlmodplus.config.model.Size
 
 internal enum class QuickSetting {
-    Resolution, Orientation, Scale, Renderer, VirtualKeys, Fps
+    Resolution, Orientation, RenderResolution, Scale, Renderer, VirtualKeys
 }
 
 @OptIn(ExperimentalLayoutApi::class)
@@ -77,18 +76,18 @@ internal fun ConfigQuickSettings(
         .getOrNull(form.screenScaleType).orEmpty()
     val renderer = stringArrayResource(R.array.pref_graphics_mode_entries)
         .getOrNull(form.graphicsMode).orEmpty()
+    val renderResolutions = renderResolutionOptions()
     val tiles = listOf(
         Triple(QuickSetting.Resolution, R.string.config_screen_size,
             form.screenWidth + " × " + form.screenHeight),
         Triple(QuickSetting.Orientation, R.string.PREF_ORIENTATION, orientation),
+        Triple(QuickSetting.RenderResolution, R.string.internal_resolution_title,
+            renderResolutions.getOrElse(form.internalResolutionScale) { renderResolutions[1] }),
         Triple(QuickSetting.Scale, R.string.pref_screen_scale_type, scale),
         Triple(QuickSetting.Renderer, R.string.pref_graphics_mode_title, renderer),
-        Triple(QuickSetting.VirtualKeys, R.string.PREF_VIRTUAL_KEYBOARD_OPTIONS,
+        Triple(QuickSetting.VirtualKeys, R.string.config_controls_virtual_keyboard,
             stringResource(if (form.showKeyboard) R.string.config_overview_enabled
                 else R.string.config_overview_disabled)),
-        Triple(QuickSetting.Fps, R.string.PREF_LIMIT_FPS,
-            if (form.fpsLimit == "0" || form.fpsLimit.isBlank())
-                stringResource(R.string.fps_limit_maximum) else form.fpsLimit + " FPS"),
     )
     BoxWithConstraints(modifier = Modifier.fillMaxWidth()) {
         val fontScale = LocalDensity.current.fontScale.coerceAtLeast(1f)
@@ -101,7 +100,7 @@ internal fun ConfigQuickSettings(
         ) {
             tiles.forEach { (setting, title, value) ->
                 Surface(
-                    modifier = Modifier.weight(1f).heightIn(min = 72.dp)
+                    modifier = Modifier.weight(1f).fillMaxRowHeight().heightIn(min = 72.dp)
                         .testTag("config_quick_" + setting.name.lowercase())
                         .clickable(role = Role.Button) {
                             onOpenQuickSetting(setting)
@@ -122,7 +121,7 @@ internal fun ConfigQuickSettings(
                                     QuickSetting.Scale -> R.drawable.ic_auto_mode
                                     QuickSetting.Renderer -> R.drawable.ic_settings
                                     QuickSetting.VirtualKeys -> R.drawable.ic_virtual_controls
-                                    QuickSetting.Fps -> R.drawable.ic_runtime_fps
+                                    QuickSetting.RenderResolution -> R.drawable.ic_editor_group_resize
                                 },
                             ),
                             contentDescription = null,
@@ -220,23 +219,9 @@ internal fun ConfigQuickSettingDialog(
         )
         return
     }
-    if (setting == QuickSetting.Fps) {
-        ConfigNumberDialog(
-            title = stringResource(R.string.PREF_LIMIT_FPS),
-            description = stringResource(R.string.config_help_fps_limit),
-            initialValue = form.fpsLimit,
-            label = null,
-            keyboardType = KeyboardType.Number,
-            onDismissRequest = onDismiss,
-            onConfirm = { value ->
-                onDismiss()
-                onFormChanged(form.toBuilder().fpsLimit(value).build())
-            },
-        )
-        return
-    }
     val options = when (setting) {
         QuickSetting.Orientation -> stringArrayResource(R.array.PREF_ORIENTATION_ENTRIES).toList()
+        QuickSetting.RenderResolution -> renderResolutionOptions()
         QuickSetting.Scale -> stringArrayResource(R.array.pref_scale_type_entries).toList()
         QuickSetting.Renderer -> stringArrayResource(R.array.pref_graphics_mode_entries).toList()
         QuickSetting.VirtualKeys -> listOf(
@@ -247,6 +232,7 @@ internal fun ConfigQuickSettingDialog(
     }
     val index = when (setting) {
         QuickSetting.Orientation -> form.orientation
+        QuickSetting.RenderResolution -> form.internalResolutionScale
         QuickSetting.Scale -> form.screenScaleType
         QuickSetting.Renderer -> form.graphicsMode
         QuickSetting.VirtualKeys -> if (form.showKeyboard) 0 else 1
@@ -254,14 +240,19 @@ internal fun ConfigQuickSettingDialog(
     }
     val title = when (setting) {
         QuickSetting.Orientation -> R.string.PREF_ORIENTATION
+        QuickSetting.RenderResolution -> R.string.internal_resolution_title
         QuickSetting.Scale -> R.string.pref_screen_scale_type
         QuickSetting.Renderer -> R.string.pref_graphics_mode_title
-        QuickSetting.VirtualKeys -> R.string.PREF_VIRTUAL_KEYBOARD_OPTIONS
+        QuickSetting.VirtualKeys -> R.string.config_controls_virtual_keyboard
         else -> return
     }
     ConfigChoiceDialog(
         title = stringResource(title),
-        selected = options.getOrElse(index) { options.firstOrNull().orEmpty() },
+        description = if (setting == QuickSetting.RenderResolution)
+            stringResource(R.string.internal_resolution_description) else null,
+        selected = options.getOrElse(index) {
+            if (setting == QuickSetting.RenderResolution) options[1] else options.firstOrNull().orEmpty()
+        },
         options = options,
         onDismissRequest = onDismiss,
         onSelected = { choice ->
@@ -269,6 +260,7 @@ internal fun ConfigQuickSettingDialog(
             val builder = form.toBuilder()
             when (setting) {
                 QuickSetting.Orientation -> builder.orientation(choice)
+                QuickSetting.RenderResolution -> builder.internalResolutionScale(choice)
                 QuickSetting.Scale -> builder.screenScaleType(choice)
                 QuickSetting.Renderer -> builder.graphicsMode(choice)
                 QuickSetting.VirtualKeys -> builder.showKeyboard(choice == 0)
@@ -278,3 +270,7 @@ internal fun ConfigQuickSettingDialog(
         },
     )
 }
+
+@Composable
+internal fun renderResolutionOptions(): List<String> =
+    listOf(stringResource(R.string.internal_resolution_auto)) + (1..10).map { "${it}×" }

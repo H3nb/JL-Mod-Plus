@@ -236,8 +236,8 @@
     <string name="library_grid_spacing_title">فاصلهٔ شبکه</string>
     <string name="library_hide_grid_titles">پنهان کردن عنوان‌های MIDlet</string>
     <string name="library_hide_grid_titles_summary">در نمای شبکه‌ای، فقط آیکون‌های MIDlet را نشان می‌دهد.</string>
-    <string name="library_icon_ratio_portrait">3:4</string>
-    <string name="library_icon_ratio_square">1:1</string>
+    <string name="library_icon_ratio_portrait">عمودی (3:4)</string>
+    <string name="library_icon_ratio_square">مربع (1:1)</string>
     <string name="library_icon_ratio_title">نسبت ابعاد آیکون</string>
     <string name="library_icon_shape_round">گوشه‌های گرد</string>
     <string name="library_icon_shape_square">گوشه‌های تیز</string>
@@ -475,6 +475,7 @@
     <string name="config_help_soundbank">بانک صدای مورد استفاده برای سنتز MIDI را انتخاب می‌کند.</string>
     <string name="config_help_system_properties">ویژگی‌های پیشرفتهٔ Java ME اعلام‌شده به MIDlet را تنظیم می‌کند.</string>
     <string name="config_help_system_properties_long">در هر خط یک ویژگی با قالب «name: value» ویرایش کنید. مقادیر نادرست می‌توانند بر سازگاری اثر بگذارند.</string>
+    <string name="config_system_properties_editor_label">خصوصیات</string>
     <string name="config_help_timing_mode">انتخاب می‌کند که MIDlet از زمان شبیه‌سازی یا زمان سیستم استفاده کند. تأخیرهای نسبی همچنان بر اساس سرعت شبیه‌سازی مقیاس می‌شوند.</string>
     <string name="config_help_timing_unavailable">تنظیمات زمان برای این نصب MIDlet در دسترس نیست. برای فعال کردن آن‌ها، MIDlet را دوباره نصب یا تبدیل کنید.</string>
     <string name="config_help_touch_input">به MIDlet اجازه می‌دهد ورودی اشاره‌گر را از صفحهٔ لمسی دریافت کند.</string>

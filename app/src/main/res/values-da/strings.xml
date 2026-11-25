@@ -178,8 +178,8 @@
     <string name="library_view_list">Liste</string>
     <string name="library_view_grid">Gitter</string>
     <string name="library_icon_ratio_title">Ikonforhold</string>
-    <string name="library_icon_ratio_square">1:1</string>
-    <string name="library_icon_ratio_portrait">3:4</string>
+    <string name="library_icon_ratio_square">Kvadratisk (1:1)</string>
+    <string name="library_icon_ratio_portrait">Portræt (3:4)</string>
     <string name="library_icon_shape_title">Ikonform</string>
     <string name="library_icon_shape_round">Afrundet</string>
     <string name="library_icon_shape_square">Skarpe hjørner</string>
@@ -747,6 +747,7 @@
     <string name="config_edit_system_properties">Rediger systemegenskaber</string>
     <string name="config_help_system_properties">Indstiller avancerede Java ME-egenskaber, der rapporteres til MIDlet.</string>
     <string name="config_help_system_properties_long">Rediger én egenskab pr. linje som “navn: værdi”. Forkerte værdier kan påvirke kompatibiliteten.</string>
+    <string name="config_system_properties_editor_label">Egenskaber</string>
     <string name="config_system_properties_info">De fleste MIDlet-programmer behøver ingen ændringer her.</string>
     <string name="config_font_sizes">Skriftstørrelser</string>
     <string name="config_help_font_sizes">Indstiller små, mellemstore og store Java ME-skriftstørrelser for MIDlet.</string>

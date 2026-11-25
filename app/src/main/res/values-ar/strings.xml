@@ -282,8 +282,8 @@
     <string name="library_grid_spacing_title">تباعد الشبكة</string>
     <string name="library_hide_grid_titles">إخفاء عناوين MIDlet</string>
     <string name="library_hide_grid_titles_summary">عرض أيقونات MIDlet فقط في عرض الشبكة.</string>
-    <string name="library_icon_ratio_portrait">3:4</string>
-    <string name="library_icon_ratio_square">1:1</string>
+    <string name="library_icon_ratio_portrait">عمودي (3:4)</string>
+    <string name="library_icon_ratio_square">مربع (1:1)</string>
     <string name="library_icon_ratio_title">نسبة أبعاد الأيقونة</string>
     <string name="library_icon_shape_round">زوايا مستديرة</string>
     <string name="library_icon_shape_square">زوايا حادة</string>
@@ -541,6 +541,7 @@
     <string name="config_help_soundbank">يختار بنك الأصوات المستخدم لتوليف MIDI.</string>
     <string name="config_help_system_properties">يضبط خصائص Java ME المتقدمة المبلّغ عنها إلى MIDlet.</string>
     <string name="config_help_system_properties_long">حرّر خاصية واحدة في كل سطر بالصيغة “name: value”. قد تؤثر القيم غير الصحيحة في التوافق.</string>
+    <string name="config_system_properties_editor_label">الخصائص</string>
     <string name="config_help_timing_mode">يختار استخدام MIDlet لوقت المحاكاة أو وقت النظام. يستمر ضبط التأخيرات النسبية وفق سرعة المحاكاة.</string>
     <string name="config_help_timing_unavailable">إعدادات الوقت غير متاحة لتثبيت MIDlet هذا. أعد تثبيت MIDlet أو تحويله لتفعيلها.</string>
     <string name="config_help_touch_input">يسمح لـ MIDlet بتلقي إدخال المؤشر من شاشة اللمس.</string>

@@ -243,8 +243,8 @@
     <string name="library_view_list">Liste</string>
     <string name="library_view_grid">Grille</string>
     <string name="library_icon_ratio_title">Proportions des icônes</string>
-    <string name="library_icon_ratio_square">1:1</string>
-    <string name="library_icon_ratio_portrait">3:4</string>
+    <string name="library_icon_ratio_square">Carré (1:1)</string>
+    <string name="library_icon_ratio_portrait">Portrait (3:4)</string>
     <string name="library_icon_shape_title">Forme des icônes</string>
     <string name="library_icon_shape_round">Arrondi</string>
     <string name="library_icon_shape_square">Angles vifs</string>
@@ -782,6 +782,7 @@
     <string name="config_edit_system_properties">Modifier les propriétés système</string>
     <string name="config_help_system_properties">Définit les propriétés Java ME avancées signalées au MIDlet.</string>
     <string name="config_help_system_properties_long">Modifiez une propriété par ligne sous la forme « nom : valeur ». Des valeurs incorrectes peuvent affecter la compatibilité.</string>
+    <string name="config_system_properties_editor_label">Propriétés</string>
     <string name="config_system_properties_info">La plupart des MIDlets n’ont pas besoin de modifications ici.</string>
     <string name="config_font_sizes">Tailles de police</string>
     <string name="config_help_font_sizes">Définit les tailles de police Java ME petite, moyenne et grande pour le MIDlet.</string>

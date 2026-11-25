@@ -178,8 +178,8 @@
     <string name="library_grid_spacing_title">ජාලකයේ පරතරය</string>
     <string name="library_hide_grid_titles">MIDlet මාතෘකා සඟවන්න</string>
     <string name="library_hide_grid_titles_summary">ජාලක දසුනේ MIDlet අයිකන පමණක් පෙන්වන්න.</string>
-    <string name="library_icon_ratio_portrait">3:4</string>
-    <string name="library_icon_ratio_square">1:1</string>
+    <string name="library_icon_ratio_portrait">සිරස් (3:4)</string>
+    <string name="library_icon_ratio_square">හතරැස් (1:1)</string>
     <string name="library_icon_ratio_title">අයිකනයේ දර්ශන අනුපාතය</string>
     <string name="library_icon_shape_round">වටකුරු කොන්</string>
     <string name="library_icon_shape_square">තියුණු කොන්</string>
@@ -950,6 +950,7 @@
     <string name="config_help_encoding">microedition.encoding ලෙස දන්වන අක්ෂර කේතනය තෝරයි.</string>
     <string name="config_help_system_properties">MIDlet වෙත දන්වන උසස් Java ME ගුණාංග සකසයි.</string>
     <string name="config_help_system_properties_long">එක් පේළියකට එක් ගුණාංගයක් “name: value” ලෙස සංස්කරණය කරන්න. වැරදි අගයන් ගැළපීමට බලපෑ හැක.</string>
+    <string name="config_system_properties_editor_label">ගුණාංග</string>
     <string name="config_help_font_sizes_long">Java ME අකුරු ප්‍රමාණ පික්සලවලින් හෝ Android අකුරු පරිමාණකරණය සබල නම් පරිමාණිත ඒකකවලින් සකසයි. පෙළ සමබරව තබා ගැනීමට ඒවා එකට වෙනස් කරන්න.</string>
     <string name="config_help_font_presets">පොදු J2ME තිර විභේදනවලට ගැළපෙන අකුරු ප්‍රමාණ යොදයි.</string>
     <string name="config_help_key_layout">MIDlet වෙත දන්වන යතුරු කේත පිරිසැලසුම තෝරයි.</string>

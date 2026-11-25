@@ -177,8 +177,8 @@
     <string name="library_grid_spacing_title">Espaiat de la quadrícula</string>
     <string name="library_hide_grid_titles">Amaga els títols dels MIDlets</string>
     <string name="library_hide_grid_titles_summary">Mostra només les icones dels MIDlets a la vista de quadrícula.</string>
-    <string name="library_icon_ratio_portrait">3:4</string>
-    <string name="library_icon_ratio_square">1:1</string>
+    <string name="library_icon_ratio_portrait">Vertical (3:4)</string>
+    <string name="library_icon_ratio_square">Quadrat (1:1)</string>
     <string name="library_icon_ratio_title">Relació d’aspecte de les icones</string>
     <string name="library_icon_shape_round">Cantonades arrodonides</string>
     <string name="library_icon_shape_square">Cantonades rectes</string>
@@ -421,6 +421,7 @@
     <string name="config_help_soundbank">Tria el banc de sons que es fa servir per a la síntesi MIDI.</string>
     <string name="config_help_system_properties">Defineix les propietats avançades de Java ME que s\'indiquen al MIDlet.</string>
     <string name="config_help_system_properties_long">Editeu una propietat per línia amb el format «nom: valor». Els valors incorrectes poden afectar la compatibilitat.</string>
+    <string name="config_system_properties_editor_label">Propietats</string>
     <string name="config_help_timing_mode">Tria si el MIDlet fa servir el temps d\'emulació o el temps del sistema. Els retards relatius continuen escalant-se amb la velocitat d\'emulació.</string>
     <string name="config_help_timing_unavailable">La configuració de temps no està disponible per a aquesta instal·lació del MIDlet. Torneu a instal·lar o convertir el MIDlet per activar-la.</string>
     <string name="config_help_touch_input">Permet que el MIDlet rebi entrades de punter de la pantalla tàctil.</string>

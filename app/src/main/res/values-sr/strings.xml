@@ -177,8 +177,8 @@
     <string name="library_grid_spacing_title">Размак у мрежи</string>
     <string name="library_hide_grid_titles">Сакриј наслове MIDlet-а</string>
     <string name="library_hide_grid_titles_summary">Приказуј само иконе MIDlet-а у приказу мреже.</string>
-    <string name="library_icon_ratio_portrait">3:4</string>
-    <string name="library_icon_ratio_square">1:1</string>
+    <string name="library_icon_ratio_portrait">Усправни (3:4)</string>
+    <string name="library_icon_ratio_square">Квадратни (1:1)</string>
     <string name="library_icon_ratio_title">Однос ширине и висине икона</string>
     <string name="library_icon_shape_round">Заобљени углови</string>
     <string name="library_icon_shape_square">Оштри углови</string>
@@ -421,6 +421,7 @@
     <string name="config_help_soundbank">Бира банку звукова за MIDI синтезу.</string>
     <string name="config_help_system_properties">Поставља напредна Java ME својства која се пријављују MIDlet-у.</string>
     <string name="config_help_system_properties_long">Уредите једно својство по реду као „назив: вредност“. Нетачне вредности могу да утичу на компатибилност.</string>
+    <string name="config_system_properties_editor_label">Својства</string>
     <string name="config_help_timing_mode">Бира да ли MIDlet користи време емулације или системско време. Релативна одлагања се и даље скалирају са брзином емулације.</string>
     <string name="config_help_timing_unavailable">Подешавања времена нису доступна за ову инсталацију MIDlet-а. Поново инсталирајте или конвертујте MIDlet да их омогућите.</string>
     <string name="config_help_touch_input">Омогућава MIDlet-у да прима унос показивача са екрана осетљивог на додир.</string>

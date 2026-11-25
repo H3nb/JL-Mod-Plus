@@ -280,8 +280,8 @@
     <string name="library_grid_spacing_title">Izgara aralığı</string>
     <string name="library_hide_grid_titles">MIDlet başlıklarını gizle</string>
     <string name="library_hide_grid_titles_summary">Izgara görünümünde yalnızca MIDlet simgelerini gösterir.</string>
-    <string name="library_icon_ratio_portrait">3:4</string>
-    <string name="library_icon_ratio_square">1:1</string>
+    <string name="library_icon_ratio_portrait">Dikey (3:4)</string>
+    <string name="library_icon_ratio_square">Kare (1:1)</string>
     <string name="library_icon_ratio_title">Simge en boy oranı</string>
     <string name="library_icon_shape_round">Yuvarlatılmış köşeler</string>
     <string name="library_icon_shape_square">Keskin köşeler</string>
@@ -519,6 +519,7 @@
     <string name="config_help_soundbank">MIDI sentezi için kullanılan ses bankasını seçer.</string>
     <string name="config_help_system_properties">MIDlet\'e bildirilen gelişmiş Java ME özelliklerini ayarlar.</string>
     <string name="config_help_system_properties_long">Her satırda bir özelliği “name: value” biçiminde düzenleyin. Yanlış değerler uyumluluğu etkileyebilir.</string>
+    <string name="config_system_properties_editor_label">Özellikler</string>
     <string name="config_help_timing_mode">MIDlet\'in emülasyon zamanını mı sistem zamanını mı kullanacağını seçer. Göreli gecikmeler emülasyon hızına göre ölçeklenmeye devam eder.</string>
     <string name="config_help_timing_unavailable">Bu MIDlet kurulumu için zaman ayarları kullanılamıyor. Etkinleştirmek için MIDlet\'i yeniden kurun veya yeniden dönüştürün.</string>
     <string name="config_help_touch_input">MIDlet\'in dokunmatik ekrandan işaretçi girdisi almasını sağlar.</string>

@@ -112,6 +112,8 @@ import io.github.h3nb.jlmodplus.util.EdgeToEdgeCompat;
 import io.github.h3nb.jlmodplus.crashes.ManualLogCapture;
 import io.github.h3nb.jlmodplus.ui.TransientNoticeComposeController;
 import io.github.h3nb.jlmodplus.ui.AppBackgroundColors;
+import io.github.h3nb.jlmodplus.ui.LegacyThemeColors;
+import io.github.h3nb.jlmodplus.ui.LegacyUiColors;
 
 public class MicroActivity extends AppCompatActivity {
 	private static final int ORIENTATION_DEFAULT = 0;
@@ -192,8 +194,11 @@ public class MicroActivity extends AppCompatActivity {
 			this::refreshVirtualKeyboardEditorChrome;
 	private final SharedPreferences.OnSharedPreferenceChangeListener canvasThemeListener =
 			(sharedPreferences, key) -> {
-				if (PREF_THEME.equals(key) && binding != null) {
-					binding.getRoot().post(this::refreshRuntimeBackground);
+				if (binding != null && (PREF_THEME.equals(key) || PREF_ACCENT.equals(key))) {
+					binding.getRoot().post(() -> {
+						if (PREF_THEME.equals(key)) refreshRuntimeBackground();
+						refreshRuntimeThemeColors();
+					});
 				}
 			};
 	private final View.OnLayoutChangeListener overlayAnchorLayoutListener =
@@ -864,6 +869,7 @@ public class MicroActivity extends AppCompatActivity {
 		}
 		externalAndroidHandoff = false;
 		refreshRuntimeBackground();
+		refreshRuntimeThemeColors();
 		// Returning to the runtime must apply the current cutout policy even when
 		// fullscreen did not change and no system-bar callback is dispatched.
 		refreshRuntimeChrome();
@@ -897,6 +903,7 @@ public class MicroActivity extends AppCompatActivity {
 		super.onConfigurationChanged(newConfig);
 		CameraRuntime.onHostConfigurationChanged(this);
 		refreshRuntimeBackground();
+		refreshRuntimeThemeColors();
 		if (binding != null) {
 			ViewCompat.requestApplyInsets(binding.getRoot());
 			binding.getRoot().post(() -> applyGuestInsets(current));
@@ -1027,6 +1034,18 @@ public class MicroActivity extends AppCompatActivity {
 		if (binding != null) {
 			binding.displayableContainer.removeAllViews();
 		}
+	}
+
+	private void refreshRuntimeThemeColors() {
+		if (binding == null) return;
+		VirtualKeyboard keyboard = ContextHolder.getVk();
+		boolean snapEnabled = keyboard == null || keyboard.isEditorSnapGridEnabled()
+				|| keyboard.isEditorSnapControlsEnabled();
+		boolean groupEnabled = keyboard == null || keyboard.isEditorGroupResizeEnabled();
+		LegacyUiColors colors = LegacyThemeColors.snapshot(this);
+		binding.refreshTheme(colors, snapEnabled, groupEnabled);
+		if (keyboard != null) keyboard.updateHostColors(colors);
+		if (current instanceof Canvas canvas) canvas.updateHostColors(colors);
 	}
 
 	private void refreshRuntimeBackground() {
@@ -2181,6 +2200,9 @@ public class MicroActivity extends AppCompatActivity {
 				Display display = Display.getDisplay(null);
 				if (display != null) display.onHostPresented(next, requestGeneration);
 				refreshRuntimeBackground();
+				if (next instanceof Canvas canvas) {
+					canvas.updateHostColors(LegacyThemeColors.snapshot(MicroActivity.this));
+				}
 				// onResume may precede the first mounted guest; resolve its insets when attached.
 				ViewCompat.requestApplyInsets(binding.getRoot());
 				binding.displayableContainer.post(MicroActivity.this::updateOverlayLocation);

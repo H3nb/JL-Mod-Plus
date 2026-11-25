@@ -275,8 +275,8 @@
     <string name="library_grid_spacing_title">Khoảng cách lưới</string>
     <string name="library_hide_grid_titles">Ẩn tiêu đề MIDlet</string>
     <string name="library_hide_grid_titles_summary">Chỉ hiển thị biểu tượng MIDlet trong chế độ xem lưới.</string>
-    <string name="library_icon_ratio_portrait">3:4</string>
-    <string name="library_icon_ratio_square">1:1</string>
+    <string name="library_icon_ratio_portrait">Dọc (3:4)</string>
+    <string name="library_icon_ratio_square">Vuông (1:1)</string>
     <string name="library_icon_ratio_title">Tỷ lệ khung hình biểu tượng</string>
     <string name="library_icon_shape_round">Góc bo tròn</string>
     <string name="library_icon_shape_square">Góc vuông</string>
@@ -509,6 +509,7 @@
     <string name="config_help_soundbank">Chọn ngân hàng âm thanh dùng để tổng hợp MIDI.</string>
     <string name="config_help_system_properties">Đặt các thuộc tính Java ME nâng cao được báo cáo cho MIDlet.</string>
     <string name="config_help_system_properties_long">Chỉnh sửa mỗi dòng một thuộc tính theo dạng “name: value”. Giá trị sai có thể ảnh hưởng đến khả năng tương thích.</string>
+    <string name="config_system_properties_editor_label">Thuộc tính</string>
     <string name="config_help_timing_mode">Chọn MIDlet dùng thời gian giả lập hay thời gian hệ thống. Các độ trễ tương đối vẫn được điều chỉnh theo tốc độ giả lập.</string>
     <string name="config_help_timing_unavailable">Không có cài đặt thời gian cho bản cài đặt MIDlet này. Cài đặt lại hoặc chuyển đổi lại MIDlet để bật chúng.</string>
     <string name="config_help_touch_input">Cho phép MIDlet nhận đầu vào con trỏ từ màn hình cảm ứng.</string>

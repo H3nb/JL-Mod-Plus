@@ -32,6 +32,7 @@ import androidx.compose.ui.test.assertCountEquals
 import androidx.compose.ui.test.assertHeightIsAtLeast
 import androidx.compose.ui.test.assertIsDisplayed
 import androidx.compose.ui.test.assertIsEnabled
+import androidx.compose.ui.test.assertIsFocused
 import androidx.compose.ui.test.assertIsNotEnabled
 import androidx.compose.ui.test.assertIsOff
 import androidx.compose.ui.test.assertIsOn
@@ -890,6 +891,8 @@ class RuntimeMenuComposeTest {
 
     @Test
     fun controllerNavigatesMidletDialogAndActivatesFocusedEntry() {
+        // A controller HAT/axis command does not itself deliver an Android key event.
+        InstrumentationRegistry.getInstrumentation().setInTouchMode(true)
         val events = mutableListOf<String>()
         var handler: ControllerHostCommandHandler? = null
         composeRule.setContent {
@@ -906,14 +909,21 @@ class RuntimeMenuComposeTest {
                 }
             }
         }
-        composeRule.waitForIdle()
+        composeRule.onNodeWithText("First").assertIsDisplayed()
+        composeRule.onNodeWithText("Second").assertIsDisplayed()
 
         composeRule.runOnIdle {
             val current = checkNotNull(handler)
-            current(HostCommand.NavigateDown, true)
-            current(HostCommand.Activate, true)
-            current(HostCommand.Activate, false)
+            assertTrue(current(HostCommand.NavigateDown, true))
+            assertTrue(current(HostCommand.NavigateDown, false))
         }
+        composeRule.onNodeWithText("Second").assertIsFocused()
+        composeRule.runOnIdle {
+            val current = checkNotNull(handler)
+            assertTrue(current(HostCommand.Activate, true))
+            assertTrue(current(HostCommand.Activate, false))
+        }
+        composeRule.waitForIdle()
 
         assertEquals(listOf("dismiss", "midlet:1"), events)
     }

@@ -114,8 +114,8 @@
     <string name="library_view_list">Daftar</string>
     <string name="library_view_grid">Grid</string>
     <string name="library_icon_ratio_title">Rasio ikon</string>
-    <string name="library_icon_ratio_square">1:1</string>
-    <string name="library_icon_ratio_portrait">3:4</string>
+    <string name="library_icon_ratio_square">Persegi (1:1)</string>
+    <string name="library_icon_ratio_portrait">Potret (3:4)</string>
     <string name="library_icon_shape_title">Bentuk ikon</string>
     <string name="library_icon_shape_round">Sudut membulat</string>
     <string name="library_icon_shape_square">Sudut tajam</string>
@@ -713,13 +713,14 @@
     <string name="config_overview_profile_draft">Draf profil</string>
     <string name="config_overview_profile_draft_summary">Sesuaikan profil yang dapat digunakan kembali, lalu simpan perubahan melalui bilah atas.</string>
     <string name="config_overview_quick_access">Akses cepat</string>
+    <string name="config_system_properties_editor_label">Properti</string>
     <string name="config_overview_enabled">Kontrol virtual aktif</string>
     <string name="config_overview_disabled">Kontrol virtual nonaktif</string>
     <string name="config_overview_media_summary">Soundbank dan kamera</string>
     <string name="config_overview_hint">Pilih kategori untuk menyesuaikan game. Pintasan ini membuka pengaturan di lokasi asalnya.</string>
     <string name="config_destination_general">Umum</string>
     <string name="config_destination_graphics">Layar</string>
-    <string name="config_destination_rendering">Grafis &amp; performa</string>
+    <string name="config_destination_rendering">Grafis</string>
     <string name="config_destination_media">Media</string>
     <string name="config_camera_title">Kamera</string>
     <string name="config_camera_default_title">Kamera bawaan</string>
@@ -1273,7 +1274,7 @@
     <string name="installer_wrong_companion_jar">JAR ini tidak cocok dengan JAD yang dipilih. Pilih JAR yang sesuai untuk mempertahankan pengaturan JAD.</string>
     <string name="installer_choose_another_jar">Pilih JAR lain</string>
     <string name="date_field_use_displayed_value">Gunakan nilai ini</string>
-    <string name="internal_resolution_title">Resolusi internal</string>
+    <string name="internal_resolution_title">Resolusi render</string>
     <string name="internal_resolution_auto">Otomatis</string>
     <string name="internal_resolution_description">Merender 2D dan 3D yang didukung dengan detail lebih tinggi. Otomatis menyesuaikan area game; mulai ulang untuk menerapkan.</string>
     <string name="bitmap_upscaling_title">Penskalaan bitmap</string>

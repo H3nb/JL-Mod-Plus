@@ -225,8 +225,8 @@
     <string name="library_grid_spacing_title">格狀檢視間距</string>
     <string name="library_hide_grid_titles">隱藏 MIDlet 標題</string>
     <string name="library_hide_grid_titles_summary">在格狀檢視中僅顯示 MIDlet 圖示。</string>
-    <string name="library_icon_ratio_portrait">3:4</string>
-    <string name="library_icon_ratio_square">1:1</string>
+    <string name="library_icon_ratio_portrait">直式 (3:4)</string>
+    <string name="library_icon_ratio_square">正方形 (1:1)</string>
     <string name="library_icon_ratio_title">圖示長寬比</string>
     <string name="library_icon_shape_round">圓角</string>
     <string name="library_icon_shape_square">直角</string>
@@ -459,6 +459,7 @@
     <string name="config_help_soundbank">選擇用於 MIDI 合成的音色庫。</string>
     <string name="config_help_system_properties">設定向 MIDlet 回報的進階 Java ME 屬性。</string>
     <string name="config_help_system_properties_long">每行編輯一項屬性，格式為「name: value」。錯誤的值可能影響相容性。</string>
+    <string name="config_system_properties_editor_label">屬性</string>
     <string name="config_help_timing_mode">選擇 MIDlet 使用模擬時間還是系統時間。相對延遲仍隨模擬速度縮放。</string>
     <string name="config_help_timing_unavailable">此 MIDlet 安裝的時間設定無法使用。重新安裝或重新轉換 MIDlet 可啟用這些設定。</string>
     <string name="config_help_touch_input">允許 MIDlet 接收觸控螢幕的指標輸入。</string>
