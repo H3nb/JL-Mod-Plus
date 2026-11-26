@@ -435,7 +435,7 @@
     <string name="updates_skip_version" tools:ignore="MissingTranslation">Omite această versiune</string>
     <string name="updates_dialog_message" tools:ignore="MissingTranslation">JL-Mod Plus <xliff:g id="version" example="2.1.0">%1$s</xliff:g> este disponibil. Folosiți versiunea <xliff:g id="current_version" example="2.0.0">%2$s</xliff:g>. Descărcați APK-ul sau vizualizați versiunea pe GitHub.</string>
     <string name="library_bundle_components_title" tools:ignore="MissingTranslation">Exportă pachet</string>
-    <string name="library_bundle_components_explanation" tools:ignore="MissingTranslation">Aplicațiile selectate sunt incluse întotdeauna. Închideți orice MIDlet activ înainte de export, apoi alegeți datele suplimentare de inclus.</string>
+    <string name="library_bundle_components_explanation" tools:ignore="MissingTranslation">Aplicațiile selectate sunt incluse întotdeauna. Închideți MIDlet-urile selectate care rulează, apoi alegeți datele suplimentare. Skinurile, băncile de sunete și shaderele partajate nu sunt incluse.</string>
     <string name="library_bundle_config" tools:ignore="MissingTranslation">Configurație</string>
     <string name="library_bundle_save_data" tools:ignore="MissingTranslation">Date salvate</string>
     <string name="library_bundle_saved_variables" tools:ignore="MissingTranslation">Marcaje</string>

@@ -411,7 +411,7 @@
     <string name="updates_skip_version" tools:ignore="MissingTranslation">Slaan hierdie weergawe oor</string>
     <string name="updates_dialog_message" tools:ignore="MissingTranslation">JL-Mod Plus <xliff:g id="version" example="2.1.0">%1$s</xliff:g> is beskikbaar. Jy gebruik <xliff:g id="current_version" example="2.0.0">%2$s</xliff:g>. Laai die APK af of bekyk die vrystelling op GitHub.</string>
     <string name="library_bundle_components_title" tools:ignore="MissingTranslation">Voer bundel uit</string>
-    <string name="library_bundle_components_explanation" tools:ignore="MissingTranslation">Gekose programme word altyd ingesluit. Maak enige lopende MIDlet toe voor uitvoer, en kies dan enige bykomende data om in te sluit.</string>
+    <string name="library_bundle_components_explanation" tools:ignore="MissingTranslation">Gekose programme word altyd ingesluit. Maak enige gekose MIDlet wat nog loop toe en kies dan die bykomende data. Gedeelde omslae, klankbanke en shaders word nie ingesluit nie.</string>
     <string name="library_bundle_config" tools:ignore="MissingTranslation">Opstelling</string>
     <string name="library_bundle_save_data" tools:ignore="MissingTranslation">Stoordata</string>
     <string name="library_bundle_saved_variables" tools:ignore="MissingTranslation">Boekmerke</string>

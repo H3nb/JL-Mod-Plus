@@ -459,7 +459,7 @@
     <string name="updates_skip_version" tools:ignore="MissingTranslation">Přeskočit tuto verzi</string>
     <string name="updates_dialog_message" tools:ignore="MissingTranslation">Je k dispozici JL-Mod Plus <xliff:g id="version" example="2.1.0">%1$s</xliff:g>. Používáte verzi <xliff:g id="current_version" example="2.0.0">%2$s</xliff:g>. Stáhněte si soubor APK nebo si zobrazte vydání na GitHubu.</string>
     <string name="library_bundle_components_title" tools:ignore="MissingTranslation">Exportovat balíček</string>
-    <string name="library_bundle_components_explanation" tools:ignore="MissingTranslation">Vybrané aplikace jsou vždy zahrnuty. Před exportem zavřete všechny běžící MIDlety a poté vyberte další data, která chcete zahrnout.</string>
+    <string name="library_bundle_components_explanation" tools:ignore="MissingTranslation">Vybrané aplikace jsou vždy zahrnuty. Ukončete vybrané MIDlety, které právě běží, a zvolte další data k exportu. Sdílené vzhledy, zvukové banky ani shadery se nezahrnují.</string>
     <string name="library_bundle_config" tools:ignore="MissingTranslation">Konfigurace</string>
     <string name="library_bundle_save_data" tools:ignore="MissingTranslation">Uložená data</string>
     <string name="library_bundle_saved_variables" tools:ignore="MissingTranslation">Záložky</string>

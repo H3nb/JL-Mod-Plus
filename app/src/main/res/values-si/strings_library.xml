@@ -411,7 +411,7 @@
     <string name="updates_skip_version" tools:ignore="MissingTranslation">මෙම අනුවාදය මඟහරින්න</string>
     <string name="updates_dialog_message" tools:ignore="MissingTranslation">JL-Mod Plus <xliff:g id="version" example="2.1.0">%1$s</xliff:g> තිබේ. ඔබ භාවිතා කරන්නේ <xliff:g id="current_version" example="2.0.0">%2$s</xliff:g>. APK බාගත කරන්න හෝ GitHub හි නිකුතුව බලන්න.</string>
     <string name="library_bundle_components_title" tools:ignore="MissingTranslation">පොදිය නිර්යාත කරන්න</string>
-    <string name="library_bundle_components_explanation" tools:ignore="MissingTranslation">තෝරාගත් යෙදුම් සැමවිටම ඇතුළත් වේ. නිර්යාත කිරීමට පෙර ධාවනය වන ඕනෑම MIDlet එකක් වසා, ඇතුළත් කිරීමට අමතර දත්ත තෝරන්න.</string>
+    <string name="library_bundle_components_explanation" tools:ignore="MissingTranslation">තෝරාගත් යෙදුම් සැමවිටම ඇතුළත් වේ. ධාවනය වන තෝරාගත් MIDlet වසා, ඇතුළත් කිරීමට අමතර දත්ත තෝරන්න. හවුල් ආවරණ, ශබ්ද බැංකු සහ ෂේඩර් ඇතුළත් නොවේ.</string>
     <string name="library_bundle_config" tools:ignore="MissingTranslation">වින්‍යාසය</string>
     <string name="library_bundle_save_data" tools:ignore="MissingTranslation">සුරැකි දත්ත</string>
     <string name="library_bundle_saved_variables" tools:ignore="MissingTranslation">පිටුසන්</string>

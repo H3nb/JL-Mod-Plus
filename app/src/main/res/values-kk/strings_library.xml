@@ -411,7 +411,7 @@
     <string name="updates_skip_version" tools:ignore="MissingTranslation">Бұл нұсқаны өткізіп жіберу</string>
     <string name="updates_dialog_message" tools:ignore="MissingTranslation">JL-Mod Plus <xliff:g id="version" example="2.1.0">%1$s</xliff:g> қолжетімді. Сіз <xliff:g id="current_version" example="2.0.0">%2$s</xliff:g> нұсқасын пайдаланып жатырсыз. APK файлын жүктеп алыңыз немесе GitHub-та шығарылымды қараңыз.</string>
     <string name="library_bundle_components_title" tools:ignore="MissingTranslation">Жинақты экспорттау</string>
-    <string name="library_bundle_components_explanation" tools:ignore="MissingTranslation">Таңдалған қолданбалар әрқашан қамтылады. Экспорттамас бұрын іске қосулы MIDlet-терді жауып, қосылатын қосымша деректерді таңдаңыз.</string>
+    <string name="library_bundle_components_explanation" tools:ignore="MissingTranslation">Таңдалған қолданбалар әрқашан қамтылады. Таңдалған MIDlet-тердің іске қосылып тұрғандарын жауып, қосымша деректерді таңдаңыз. Ортақ безендірулер, дыбыс банктері және шейдерлер қамтылмайды.</string>
     <string name="library_bundle_config" tools:ignore="MissingTranslation">Конфигурация</string>
     <string name="library_bundle_save_data" tools:ignore="MissingTranslation">Сақталған деректер</string>
     <string name="library_bundle_saved_variables" tools:ignore="MissingTranslation">Бетбелгілер</string>

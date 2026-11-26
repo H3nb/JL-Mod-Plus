@@ -411,7 +411,7 @@
     <string name="updates_skip_version" tools:ignore="MissingTranslation">Bu sürümü atla</string>
     <string name="updates_dialog_message" tools:ignore="MissingTranslation">JL-Mod Plus <xliff:g id="version" example="2.1.0">%1$s</xliff:g> kullanılabilir durumda. Şu anda <xliff:g id="current_version" example="2.0.0">%2$s</xliff:g> sürümünü kullanıyorsunuz. APK’yı indirin veya sürümü GitHub’da görüntüleyin.</string>
     <string name="library_bundle_components_title" tools:ignore="MissingTranslation">Paketi dışa aktar</string>
-    <string name="library_bundle_components_explanation" tools:ignore="MissingTranslation">Seçili uygulamalar her zaman dahil edilir. Dışa aktarmadan önce çalışan MIDlet’leri kapatın, ardından dahil edilecek ek verileri seçin.</string>
+    <string name="library_bundle_components_explanation" tools:ignore="MissingTranslation">Seçili uygulamalar her zaman dahil edilir. Seçili MIDlet’lerden çalışanları kapatın ve dahil edilecek ek verileri seçin. Paylaşılan kaplamalar, ses bankaları ve gölgelendiriciler dahil edilmez.</string>
     <string name="library_bundle_config" tools:ignore="MissingTranslation">Yapılandırma</string>
     <string name="library_bundle_save_data" tools:ignore="MissingTranslation">Kayıtlı veriler</string>
     <string name="library_bundle_saved_variables" tools:ignore="MissingTranslation">Yer imleri</string>

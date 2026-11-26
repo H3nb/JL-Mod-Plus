@@ -459,7 +459,7 @@
     <string name="updates_skip_version" tools:ignore="MissingTranslation">Пропустити цю версію</string>
     <string name="updates_dialog_message" tools:ignore="MissingTranslation">Доступний JL-Mod Plus <xliff:g id="version" example="2.1.0">%1$s</xliff:g>. Ви використовуєте <xliff:g id="current_version" example="2.0.0">%2$s</xliff:g>. Завантажте APK або перегляньте випуск на GitHub.</string>
     <string name="library_bundle_components_title" tools:ignore="MissingTranslation">Експорт пакета</string>
-    <string name="library_bundle_components_explanation" tools:ignore="MissingTranslation">Вибрані додатки завжди включаються. Закрийте всі запущені MIDlet перед експортом, а потім виберіть додаткові дані для включення.</string>
+    <string name="library_bundle_components_explanation" tools:ignore="MissingTranslation">Вибрані додатки завжди включаються. Закрийте вибрані MIDlet, які зараз запущені, а потім виберіть додаткові дані. Спільні оформлення, банки звуків і шейдери не включаються.</string>
     <string name="library_bundle_config" tools:ignore="MissingTranslation">Конфігурація</string>
     <string name="library_bundle_save_data" tools:ignore="MissingTranslation">Збережені дані</string>
     <string name="library_bundle_saved_variables" tools:ignore="MissingTranslation">Закладки</string>

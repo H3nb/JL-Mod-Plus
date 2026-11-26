@@ -507,7 +507,7 @@
     <string name="updates_skip_version" tools:ignore="MissingTranslation">تخطي هذا الإصدار</string>
     <string name="updates_dialog_message" tools:ignore="MissingTranslation">يتوفر JL-Mod Plus <xliff:g id="version" example="2.1.0">%1$s</xliff:g>. أنت تستخدم الإصدار <xliff:g id="current_version" example="2.0.0">%2$s</xliff:g>. نزّل ملف APK أو اعرض الإصدار على GitHub.</string>
     <string name="library_bundle_components_title" tools:ignore="MissingTranslation">تصدير الحزمة</string>
-    <string name="library_bundle_components_explanation" tools:ignore="MissingTranslation">تُضمَّن التطبيقات المحددة دائمًا. أغلق أي تطبيق MIDlet قيد التشغيل قبل التصدير، ثم اختر أي بيانات إضافية لتضمينها.</string>
+    <string name="library_bundle_components_explanation" tools:ignore="MissingTranslation">تُضمَّن التطبيقات المحددة دائمًا. أغلق أي MIDlet محدد قيد التشغيل، ثم اختر البيانات الإضافية التي تريد تضمينها. لا تُضمَّن المظاهر وبنوك الأصوات ومظللات الرسومات المشتركة.</string>
     <string name="library_bundle_config" tools:ignore="MissingTranslation">التكوين</string>
     <string name="library_bundle_save_data" tools:ignore="MissingTranslation">بيانات الحفظ</string>
     <string name="library_bundle_saved_variables" tools:ignore="MissingTranslation">الإشارات المرجعية</string>

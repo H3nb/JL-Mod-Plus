@@ -411,7 +411,7 @@
     <string name="updates_skip_version" tools:ignore="MissingTranslation">Ohita tämä versio</string>
     <string name="updates_dialog_message" tools:ignore="MissingTranslation">JL-Mod Plus <xliff:g id="version" example="2.1.0">%1$s</xliff:g> on saatavilla. Käytössäsi on <xliff:g id="current_version" example="2.0.0">%2$s</xliff:g>. Lataa APK tai katso julkaisu GitHubissa.</string>
     <string name="library_bundle_components_title" tools:ignore="MissingTranslation">Vie paketti</string>
-    <string name="library_bundle_components_explanation" tools:ignore="MissingTranslation">Valitut sovellukset sisällytetään aina. Sulje käynnissä olevat MIDletit ennen vientiä ja valitse mahdolliset lisätiedot.</string>
+    <string name="library_bundle_components_explanation" tools:ignore="MissingTranslation">Valitut sovellukset sisällytetään aina. Sulje käynnissä olevat valitut MIDletit ja valitse sitten mukaan otettavat lisätiedot. Jaettuja ulkoasuja, äänipankkeja ja varjostimia ei sisällytetä.</string>
     <string name="library_bundle_config" tools:ignore="MissingTranslation">Määritys</string>
     <string name="library_bundle_save_data" tools:ignore="MissingTranslation">Tallennustiedot</string>
     <string name="library_bundle_saved_variables" tools:ignore="MissingTranslation">Kirjanmerkit</string>

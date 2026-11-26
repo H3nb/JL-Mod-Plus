@@ -387,7 +387,7 @@
     <string name="updates_skip_version" tools:ignore="MissingTranslation">このバージョンをスキップ</string>
     <string name="updates_dialog_message" tools:ignore="MissingTranslation">JL-Mod Plus <xliff:g id="version" example="2.1.0">%1$s</xliff:g> が利用可能です（現在使用中: <xliff:g id="current_version" example="2.0.0">%2$s</xliff:g>）。APK をダウンロードするか、GitHub でリリースを確認してください。</string>
     <string name="library_bundle_components_title" tools:ignore="MissingTranslation">バンドルをエクスポート</string>
-    <string name="library_bundle_components_explanation" tools:ignore="MissingTranslation">選択したアプリは常に含まれます。エクスポート前に実行中の MIDlet をすべて閉じ、追加で含めるデータを選択してください。</string>
+    <string name="library_bundle_components_explanation" tools:ignore="MissingTranslation">選択したアプリは常に含まれます。選択した MIDlet のうち実行中のものを終了し、追加で含めるデータを選択してください。共有のスキン、サウンドバンク、シェーダーは含まれません。</string>
     <string name="library_bundle_config" tools:ignore="MissingTranslation">設定</string>
     <string name="library_bundle_save_data" tools:ignore="MissingTranslation">セーブデータ</string>
     <string name="library_bundle_saved_variables" tools:ignore="MissingTranslation">ブックマーク</string>

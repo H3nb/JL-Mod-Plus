@@ -435,7 +435,7 @@
     <string name="updates_skip_version" tools:ignore="MissingTranslation">Прескочи ову верзију</string>
     <string name="updates_dialog_message" tools:ignore="MissingTranslation">JL-Mod Plus <xliff:g id="version" example="2.1.0">%1$s</xliff:g> је доступан. Користите <xliff:g id="current_version" example="2.0.0">%2$s</xliff:g>. Преузмите APK или погледајте издање на GitHub-у.</string>
     <string name="library_bundle_components_title" tools:ignore="MissingTranslation">Извези пакет</string>
-    <string name="library_bundle_components_explanation" tools:ignore="MissingTranslation">Изабране апликације су увек укључене. Затворите све покренуте MIDlet-е пре извоза, а затим изаберите додатне податке које желите да укључите.</string>
+    <string name="library_bundle_components_explanation" tools:ignore="MissingTranslation">Изабране апликације су увек укључене. Затворите изабране MIDlet-е који су покренути, а затим изаберите додатне податке. Дељене маске, банке звукова и шејдери нису укључени.</string>
     <string name="library_bundle_config" tools:ignore="MissingTranslation">Конфигурација</string>
     <string name="library_bundle_save_data" tools:ignore="MissingTranslation">Сачувани подаци</string>
     <string name="library_bundle_saved_variables" tools:ignore="MissingTranslation">Обележивачи</string>

@@ -382,7 +382,7 @@
     <string name="updates_skip_version" tools:ignore="MissingTranslation">跳过此版本</string>
     <string name="updates_dialog_message" tools:ignore="MissingTranslation">JL-Mod Plus <xliff:g id="version" example="2.1.0">%1$s</xliff:g> 已发布，你当前使用的是 <xliff:g id="current_version" example="2.0.0">%2$s</xliff:g>。你可以下载 APK 或在 GitHub 上查看发布详情。</string>
     <string name="library_bundle_components_title" tools:ignore="MissingTranslation">导出应用包</string>
-    <string name="library_bundle_components_explanation" tools:ignore="MissingTranslation">所选应用始终会包含在内。导出前请关闭正在运行的 MIDlet，然后选择要一并包含的附加数据。</string>
+    <string name="library_bundle_components_explanation" tools:ignore="MissingTranslation">所选应用始终会包含在内。请关闭所选应用中正在运行的 MIDlet，然后选择要包含的附加数据。共享皮肤、音色库和着色器不包含在内。</string>
     <string name="library_bundle_config" tools:ignore="MissingTranslation">配置</string>
     <string name="library_bundle_save_data" tools:ignore="MissingTranslation">存档数据</string>
     <string name="library_bundle_saved_variables" tools:ignore="MissingTranslation">书签</string>

@@ -411,7 +411,7 @@
     <string name="updates_skip_version">Skip this version</string>
     <string name="updates_dialog_message">JL-Mod Plus <xliff:g id="version" example="2.1.0">%1$s</xliff:g> is available. You’re using <xliff:g id="current_version" example="2.0.0">%2$s</xliff:g>. Download the APK or view the release on GitHub.</string>
     <string name="library_bundle_components_title">Export bundle</string>
-    <string name="library_bundle_components_explanation">Selected apps are always included. Close any running MIDlet before exporting, then choose any additional data to include.</string>
+    <string name="library_bundle_components_explanation">Selected apps are always included. Close any selected MIDlet that is running, then choose the additional data to include. Shared skins, soundbanks, and shaders aren’t included.</string>
     <string name="library_bundle_config">Configuration</string>
     <string name="library_bundle_save_data">Save data</string>
     <string name="library_bundle_saved_variables">Bookmarks</string>

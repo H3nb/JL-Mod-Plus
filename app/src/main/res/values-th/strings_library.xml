@@ -387,7 +387,7 @@
     <string name="updates_skip_version" tools:ignore="MissingTranslation">ข้ามเวอร์ชันนี้</string>
     <string name="updates_dialog_message" tools:ignore="MissingTranslation">JL-Mod Plus <xliff:g id="version" example="2.1.0">%1$s</xliff:g> พร้อมใช้งานแล้ว คุณกำลังใช้ <xliff:g id="current_version" example="2.0.0">%2$s</xliff:g> ดาวน์โหลด APK หรือดูเวอร์ชันนี้บน GitHub</string>
     <string name="library_bundle_components_title" tools:ignore="MissingTranslation">ส่งออกชุดไฟล์</string>
-    <string name="library_bundle_components_explanation" tools:ignore="MissingTranslation">แอปที่เลือกจะถูกรวมไว้เสมอ ปิด MIDlet ที่กำลังทำงานอยู่ก่อนส่งออก จากนั้นเลือกข้อมูลเพิ่มเติมที่ต้องการรวม</string>
+    <string name="library_bundle_components_explanation" tools:ignore="MissingTranslation">แอปที่เลือกจะถูกรวมไว้เสมอ ปิด MIDlet ที่เลือกซึ่งกำลังทำงานอยู่ จากนั้นเลือกข้อมูลเพิ่มเติมที่ต้องการรวม ไม่รวมสกิน ซาวด์แบงก์ และเชเดอร์ที่ใช้ร่วมกัน</string>
     <string name="library_bundle_config" tools:ignore="MissingTranslation">การกำหนดค่า</string>
     <string name="library_bundle_save_data" tools:ignore="MissingTranslation">ข้อมูลบันทึก</string>
     <string name="library_bundle_saved_variables" tools:ignore="MissingTranslation">บุ๊กมาร์ก</string>

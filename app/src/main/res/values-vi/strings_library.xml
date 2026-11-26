@@ -387,7 +387,7 @@
     <string name="updates_skip_version" tools:ignore="MissingTranslation">Bỏ qua phiên bản này</string>
     <string name="updates_dialog_message" tools:ignore="MissingTranslation">Đã có JL-Mod Plus <xliff:g id="version" example="2.1.0">%1$s</xliff:g>. Bạn đang dùng phiên bản <xliff:g id="current_version" example="2.0.0">%2$s</xliff:g>. Tải xuống APK hoặc xem bản phát hành trên GitHub.</string>
     <string name="library_bundle_components_title" tools:ignore="MissingTranslation">Xuất gói</string>
-    <string name="library_bundle_components_explanation" tools:ignore="MissingTranslation">Các ứng dụng đã chọn luôn được đưa vào. Hãy đóng mọi MIDlet đang chạy trước khi xuất, sau đó chọn dữ liệu bổ sung muốn kèm theo.</string>
+    <string name="library_bundle_components_explanation" tools:ignore="MissingTranslation">Các ứng dụng đã chọn luôn được đưa vào. Đóng các MIDlet đã chọn đang chạy, sau đó chọn dữ liệu bổ sung muốn kèm theo. Giao diện, ngân hàng âm thanh và shader dùng chung không được đưa vào.</string>
     <string name="library_bundle_config" tools:ignore="MissingTranslation">Cấu hình</string>
     <string name="library_bundle_save_data" tools:ignore="MissingTranslation">Dữ liệu lưu</string>
     <string name="library_bundle_saved_variables" tools:ignore="MissingTranslation">Dấu trang</string>

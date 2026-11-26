@@ -435,7 +435,7 @@
     <string name="updates_skip_version" tools:ignore="MissingTranslation">Omet aquesta versió</string>
     <string name="updates_dialog_message" tools:ignore="MissingTranslation">JL-Mod Plus <xliff:g id="version" example="2.1.0">%1$s</xliff:g> està disponible. Estàs utilitzant <xliff:g id="current_version" example="2.0.0">%2$s</xliff:g>. Baixa l’APK o consulta la versió a GitHub.</string>
     <string name="library_bundle_components_title" tools:ignore="MissingTranslation">Exporta el paquet</string>
-    <string name="library_bundle_components_explanation" tools:ignore="MissingTranslation">Les aplicacions seleccionades s’hi inclouen sempre. Tanca qualsevol MIDlet en execució abans d’exportar i tria les dades addicionals que vols incloure.</string>
+    <string name="library_bundle_components_explanation" tools:ignore="MissingTranslation">Les aplicacions seleccionades s’hi inclouen sempre. Tanca els MIDlets seleccionats que estiguin en execució i tria les dades addicionals. No s’hi inclouen els aspectes, els bancs de sons ni els shaders compartits.</string>
     <string name="library_bundle_config" tools:ignore="MissingTranslation">Configuració</string>
     <string name="library_bundle_save_data" tools:ignore="MissingTranslation">Dades desades</string>
     <string name="library_bundle_saved_variables" tools:ignore="MissingTranslation">Marcadors</string>

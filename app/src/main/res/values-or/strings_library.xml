@@ -411,7 +411,7 @@
     <string name="updates_skip_version" tools:ignore="MissingTranslation">ଏହି ଭର୍ସନ୍ ଛାଡ଼ନ୍ତୁ</string>
     <string name="updates_dialog_message" tools:ignore="MissingTranslation">JL-Mod Plus <xliff:g id="version" example="2.1.0">%1$s</xliff:g> ଉପଲବ୍ଧ ଅଛି। ଆପଣ <xliff:g id="current_version" example="2.0.0">%2$s</xliff:g> ବ୍ୟବହାର କରୁଛନ୍ତି। APK ଡାଉନଲୋଡ୍ କରନ୍ତୁ କିମ୍ବା GitHub ରେ ରିଲିଜ୍ ଦେଖନ୍ତୁ।</string>
     <string name="library_bundle_components_title" tools:ignore="MissingTranslation">ବଣ୍ଡଲ୍ ଏକ୍ସପୋର୍ଟ କରନ୍ତୁ</string>
-    <string name="library_bundle_components_explanation" tools:ignore="MissingTranslation">ଚୟନିତ ଆପ୍ ସର୍ବଦା ଅନ୍ତର୍ଭୁକ୍ତ ରହେ। ଏକ୍ସପୋର୍ଟ ପୂର୍ବରୁ ଚାଲୁଥିବା MIDlet ବନ୍ଦ କରନ୍ତୁ, ତାପରେ ଅନ୍ତର୍ଭୁକ୍ତ କରିବାକୁ ଅତିରିକ୍ତ ଡାଟା ବାଛନ୍ତୁ।</string>
+    <string name="library_bundle_components_explanation" tools:ignore="MissingTranslation">ଚୟନିତ ଆପ୍ ସବୁବେଳେ ଅନ୍ତର୍ଭୁକ୍ତ ରହେ। ଚାଲୁଥିବା ଚୟନିତ MIDlet ବନ୍ଦ କରନ୍ତୁ, ତାପରେ ଅତିରିକ୍ତ ଡାଟା ବାଛନ୍ତୁ। ଶେୟାର୍ କରାଯାଇଥିବା ସ୍କିନ୍, ସାଉଣ୍ଡବ୍ୟାଙ୍କ ଏବଂ ଶେଡର୍ ଅନ୍ତର୍ଭୁକ୍ତ ହୁଏ ନାହିଁ।</string>
     <string name="library_bundle_config" tools:ignore="MissingTranslation">କନଫିଗରେସନ୍</string>
     <string name="library_bundle_save_data" tools:ignore="MissingTranslation">ସେଭ୍ ଡାଟା</string>
     <string name="library_bundle_saved_variables" tools:ignore="MissingTranslation">ବୁକମାର୍କ୍</string>

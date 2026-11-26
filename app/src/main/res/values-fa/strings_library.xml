@@ -411,7 +411,7 @@
     <string name="updates_skip_version" tools:ignore="MissingTranslation">رد کردن این نسخه</string>
     <string name="updates_dialog_message" tools:ignore="MissingTranslation">نسخه <xliff:g id="version" example="2.1.0">%1$s</xliff:g> از JL-Mod Plus در دسترس است. شما از نسخه <xliff:g id="current_version" example="2.0.0">%2$s</xliff:g> استفاده می‌کنید. فایل APK را بارگیری کنید یا انتشار را در GitHub ببینید.</string>
     <string name="library_bundle_components_title" tools:ignore="MissingTranslation">برون‌ریزی بسته</string>
-    <string name="library_bundle_components_explanation" tools:ignore="MissingTranslation">برنامه‌های انتخاب‌شده همیشه شامل می‌شوند. پیش از برون‌ریزی هر MIDlet در حال اجرا را ببندید، سپس داده‌های اضافی مورد نظر را برای گنجاندن انتخاب کنید.</string>
+    <string name="library_bundle_components_explanation" tools:ignore="MissingTranslation">برنامه‌های انتخاب‌شده همیشه گنجانده می‌شوند. MIDletهای انتخاب‌شده‌ای را که در حال اجرا هستند ببندید، سپس داده‌های اضافی را انتخاب کنید. پوسته‌ها، بانک‌های صدا و شیدرهای مشترک گنجانده نمی‌شوند.</string>
     <string name="library_bundle_config" tools:ignore="MissingTranslation">پیکربندی</string>
     <string name="library_bundle_save_data" tools:ignore="MissingTranslation">داده‌های ذخیره</string>
     <string name="library_bundle_saved_variables" tools:ignore="MissingTranslation">نشانک‌ها</string>
