@@ -184,7 +184,7 @@
     <string name="memory_scripts_saved" tools:ignore="MissingTranslation">Đã lưu tập lệnh</string>
     <string name="memory_scripts_deleted" tools:ignore="MissingTranslation">Đã xóa tập lệnh</string>
     <string name="memory_scripts_save_failed" tools:ignore="MissingTranslation">Không thể lưu tập lệnh.</string>
-    <string name="memory_scripts_editor_hint" tools:ignore="MissingTranslation">Nhập hoặc dán tài liệu JSON tập lệnh. Lưu sẽ không chạy tập lệnh.</string>
+    <string name="memory_scripts_editor_hint" tools:ignore="MissingTranslation">Nhập hoặc dán tập lệnh JSON sử dụng các thao tác bộ nhớ được hỗ trợ. Việc lưu không chạy tập lệnh.</string>
     <string name="memory_scripts_paste_hint" tools:ignore="MissingTranslation">Dán JSON tập lệnh</string>
     <string name="memory_scripts_paste" tools:ignore="MissingTranslation">Dán</string>
     <string name="memory_scripts_clipboard_invalid" tools:ignore="MissingTranslation">Bộ nhớ tạm trống hoặc tài liệu vượt quá 64 KiB</string>
@@ -214,7 +214,7 @@
     <string name="memory_builder_json_editor" tools:ignore="MissingTranslation">Trình chỉnh sửa JSON</string>
     <string name="memory_builder_freeze_hint" tools:ignore="MissingTranslation">Giữ các giá trị đã chọn bị khóa khi bật. Tắt đóng băng sẽ không khôi phục giá trị trước đó của chúng.</string>
     <string name="memory_builder_form_hint" tools:ignore="MissingTranslation">Tạo biểu mẫu đọc các giá trị hiện tại trước khi áp dụng chỉnh sửa.</string>
-    <string name="memory_builder_actions_hint" tools:ignore="MissingTranslation">Áp dụng thay đổi mỗi khi bạn nhấn Chạy. Mỗi lần chạy đều độc lập.</string>
+    <string name="memory_builder_actions_hint" tools:ignore="MissingTranslation">Áp dụng thay đổi một lần mỗi khi bạn nhấn Chạy. Phép Cộng và Trừ sử dụng các giá trị hiện tại, bao gồm cả thay đổi từ những lần chạy trước.</string>
     <string name="memory_builder_name" tools:ignore="MissingTranslation">Tên tập lệnh</string>
     <string name="memory_builder_frozen_values" tools:ignore="MissingTranslation">Giá trị đóng băng</string>
     <string name="memory_builder_fields" tools:ignore="MissingTranslation">Trường</string>

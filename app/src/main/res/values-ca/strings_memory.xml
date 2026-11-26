@@ -196,7 +196,7 @@
     <string name="memory_scripts_saved" tools:ignore="MissingTranslation">S’ha desat l’script</string>
     <string name="memory_scripts_deleted" tools:ignore="MissingTranslation">S’ha suprimit l’script</string>
     <string name="memory_scripts_save_failed" tools:ignore="MissingTranslation">No s’ha pogut desar l’script.</string>
-    <string name="memory_scripts_editor_hint" tools:ignore="MissingTranslation">Introdueix o enganxa un document JSON d’script. Desar-lo no l’executa.</string>
+    <string name="memory_scripts_editor_hint" tools:ignore="MissingTranslation">Introdueix o enganxa un script JSON que utilitzi operacions de memòria compatibles. Desar l’script no l’executa.</string>
     <string name="memory_scripts_paste_hint" tools:ignore="MissingTranslation">Enganxa el JSON de l’script</string>
     <string name="memory_scripts_paste" tools:ignore="MissingTranslation">Enganxa</string>
     <string name="memory_scripts_clipboard_invalid" tools:ignore="MissingTranslation">El porta-retalls és buit o el document supera els 64 KiB</string>
@@ -226,7 +226,7 @@
     <string name="memory_builder_json_editor" tools:ignore="MissingTranslation">Editor JSON</string>
     <string name="memory_builder_freeze_hint" tools:ignore="MissingTranslation">Manté bloquejats els valors seleccionats mentre estigui activat. Desactivar la congelació no restaura els valors anteriors.</string>
     <string name="memory_builder_form_hint" tools:ignore="MissingTranslation">Crea un formulari que llegeix els valors actuals abans d’aplicar edicions.</string>
-    <string name="memory_builder_actions_hint" tools:ignore="MissingTranslation">Aplica canvis cada vegada que premis Executa. Cada execució és independent.</string>
+    <string name="memory_builder_actions_hint" tools:ignore="MissingTranslation">Aplica els canvis una vegada cada cop que premis Executa. Sumar i restar utilitzen els valors actuals, inclosos els canvis de les execucions anteriors.</string>
     <string name="memory_builder_name" tools:ignore="MissingTranslation">Nom de l’script</string>
     <string name="memory_builder_frozen_values" tools:ignore="MissingTranslation">Valors congelats</string>
     <string name="memory_builder_fields" tools:ignore="MissingTranslation">Camps</string>

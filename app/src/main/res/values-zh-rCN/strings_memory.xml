@@ -180,7 +180,7 @@
     <string name="memory_scripts_saved" tools:ignore="MissingTranslation">脚本已保存</string>
     <string name="memory_scripts_deleted" tools:ignore="MissingTranslation">脚本已删除</string>
     <string name="memory_scripts_save_failed" tools:ignore="MissingTranslation">无法保存脚本。</string>
-    <string name="memory_scripts_editor_hint" tools:ignore="MissingTranslation">输入或粘贴脚本 JSON 文档。保存不会运行脚本。</string>
+    <string name="memory_scripts_editor_hint" tools:ignore="MissingTranslation">输入或粘贴使用受支持的内存操作的 JSON 脚本。保存脚本不会运行它。</string>
     <string name="memory_scripts_paste_hint" tools:ignore="MissingTranslation">粘贴脚本 JSON</string>
     <string name="memory_scripts_paste" tools:ignore="MissingTranslation">粘贴</string>
     <string name="memory_scripts_clipboard_invalid" tools:ignore="MissingTranslation">剪贴板为空，或文档大小超过 64 KiB</string>
@@ -210,7 +210,7 @@
     <string name="memory_builder_json_editor" tools:ignore="MissingTranslation">JSON 编辑器</string>
     <string name="memory_builder_freeze_hint" tools:ignore="MissingTranslation">开启后将所选数值保持锁定。关闭锁定不会将其恢复为先前的数值。</string>
     <string name="memory_builder_form_hint" tools:ignore="MissingTranslation">创建表单，在应用修改前先读取当前数值。</string>
-    <string name="memory_builder_actions_hint" tools:ignore="MissingTranslation">每次按下“运行”时应用更改，每次运行彼此独立。</string>
+    <string name="memory_builder_actions_hint" tools:ignore="MissingTranslation">每次按下“运行”时应用一次更改。增加和减少操作基于当前值，包括之前运行产生的更改。</string>
     <string name="memory_builder_name" tools:ignore="MissingTranslation">脚本名称</string>
     <string name="memory_builder_frozen_values" tools:ignore="MissingTranslation">已锁定数值</string>
     <string name="memory_builder_fields" tools:ignore="MissingTranslation">字段</string>

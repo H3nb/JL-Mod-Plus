@@ -196,7 +196,7 @@
     <string name="memory_scripts_saved" tools:ignore="MissingTranslation">Script guardado</string>
     <string name="memory_scripts_deleted" tools:ignore="MissingTranslation">Script eliminado</string>
     <string name="memory_scripts_save_failed" tools:ignore="MissingTranslation">Não foi possível guardar o script.</string>
-    <string name="memory_scripts_editor_hint" tools:ignore="MissingTranslation">Introduza ou cole um documento JSON de script. Guardar não o executa.</string>
+    <string name="memory_scripts_editor_hint" tools:ignore="MissingTranslation">Introduza ou cole um script JSON que utilize operações de memória suportadas. Guardar o script não o executa.</string>
     <string name="memory_scripts_paste_hint" tools:ignore="MissingTranslation">Colar JSON do script</string>
     <string name="memory_scripts_paste" tools:ignore="MissingTranslation">Colar</string>
     <string name="memory_scripts_clipboard_invalid" tools:ignore="MissingTranslation">A área de transferência está vazia ou o documento excede 64 KiB</string>
@@ -226,7 +226,7 @@
     <string name="memory_builder_json_editor" tools:ignore="MissingTranslation">Editor JSON</string>
     <string name="memory_builder_freeze_hint" tools:ignore="MissingTranslation">Mantém os valores selecionados bloqueados enquanto estiver ativo. Desativar o congelamento não restaura os valores anteriores.</string>
     <string name="memory_builder_form_hint" tools:ignore="MissingTranslation">Crie um formulário que lê os valores atuais antes de aplicar edições.</string>
-    <string name="memory_builder_actions_hint" tools:ignore="MissingTranslation">Aplica alterações sempre que premir Executar. Cada execução é independente.</string>
+    <string name="memory_builder_actions_hint" tools:ignore="MissingTranslation">Aplica as alterações uma vez de cada vez que premir Executar. Adicionar e Subtrair utilizam os valores atuais, incluindo as alterações das execuções anteriores.</string>
     <string name="memory_builder_name" tools:ignore="MissingTranslation">Nome do script</string>
     <string name="memory_builder_frozen_values" tools:ignore="MissingTranslation">Valores congelados</string>
     <string name="memory_builder_fields" tools:ignore="MissingTranslation">Campos</string>

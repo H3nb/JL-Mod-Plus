@@ -190,7 +190,7 @@
     <string name="memory_scripts_saved" tools:ignore="MissingTranslation">اسکریپت ذخیره شد</string>
     <string name="memory_scripts_deleted" tools:ignore="MissingTranslation">اسکریپت حذف شد</string>
     <string name="memory_scripts_save_failed" tools:ignore="MissingTranslation">ذخیره اسکریپت ممکن نشد.</string>
-    <string name="memory_scripts_editor_hint" tools:ignore="MissingTranslation">یک سند JSON اسکریپت وارد یا جای‌گذاری کنید. ذخیره کردن آن را اجرا نمی‌کند.</string>
+    <string name="memory_scripts_editor_hint" tools:ignore="MissingTranslation">اسکریپتی با قالب JSON و عملیات حافظه پشتیبانی‌شده وارد یا جای‌گذاری کنید. ذخیره کردن اسکریپت آن را اجرا نمی‌کند.</string>
     <string name="memory_scripts_paste_hint" tools:ignore="MissingTranslation">جای‌گذاری JSON اسکریپت</string>
     <string name="memory_scripts_paste" tools:ignore="MissingTranslation">جای‌گذاری</string>
     <string name="memory_scripts_clipboard_invalid" tools:ignore="MissingTranslation">کلیپ‌بورد خالی است یا حجم سند از 64 KiB بیشتر است</string>
@@ -220,7 +220,7 @@
     <string name="memory_builder_json_editor" tools:ignore="MissingTranslation">ویرایشگر JSON</string>
     <string name="memory_builder_freeze_hint" tools:ignore="MissingTranslation">مقادیر انتخاب‌شده را هنگام فعال بودن قفل نگه می‌دارد. خاموش کردن ثابت کردن، مقادیر قبلی آن‌ها را برنمی‌گرداند.</string>
     <string name="memory_builder_form_hint" tools:ignore="MissingTranslation">فرمی بسازید که پیش از اعمال ویرایش‌ها مقادیر فعلی را می‌خواند.</string>
-    <string name="memory_builder_actions_hint" tools:ignore="MissingTranslation">هر زمان روی «اجرا» بزنید تغییرات اعمال می‌شوند. هر اجرا مستقل است.</string>
+    <string name="memory_builder_actions_hint" tools:ignore="MissingTranslation">با هر بار زدن «اجرا»، تغییرات یک بار اعمال می‌شوند. افزودن و کسر کردن از مقادیر فعلی، از جمله تغییرات اجراهای قبلی، استفاده می‌کنند.</string>
     <string name="memory_builder_name" tools:ignore="MissingTranslation">نام اسکریپت</string>
     <string name="memory_builder_frozen_values" tools:ignore="MissingTranslation">مقادیر ثابت‌شده</string>
     <string name="memory_builder_fields" tools:ignore="MissingTranslation">فیلدها</string>

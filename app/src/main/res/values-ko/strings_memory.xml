@@ -184,7 +184,7 @@
     <string name="memory_scripts_saved" tools:ignore="MissingTranslation">스크립트 저장됨</string>
     <string name="memory_scripts_deleted" tools:ignore="MissingTranslation">스크립트 삭제됨</string>
     <string name="memory_scripts_save_failed" tools:ignore="MissingTranslation">스크립트를 저장할 수 없습니다.</string>
-    <string name="memory_scripts_editor_hint" tools:ignore="MissingTranslation">스크립트 JSON 문서를 입력하거나 붙여넣으세요. 저장해도 바로 실행되지 않습니다.</string>
+    <string name="memory_scripts_editor_hint" tools:ignore="MissingTranslation">지원되는 메모리 작업을 사용하는 JSON 스크립트를 입력하거나 붙여넣으세요. 스크립트를 저장해도 실행되지 않습니다.</string>
     <string name="memory_scripts_paste_hint" tools:ignore="MissingTranslation">스크립트 JSON 붙여넣기</string>
     <string name="memory_scripts_paste" tools:ignore="MissingTranslation">붙여넣기</string>
     <string name="memory_scripts_clipboard_invalid" tools:ignore="MissingTranslation">클립보드가 비어 있거나 문서 크기가 64 KiB를 초과합니다</string>
@@ -214,7 +214,7 @@
     <string name="memory_builder_json_editor" tools:ignore="MissingTranslation">JSON 편집기</string>
     <string name="memory_builder_freeze_hint" tools:ignore="MissingTranslation">활성화된 동안 선택한 값을 고정 상태로 유지합니다. 고정을 꺼도 이전 값으로 복원되지 않습니다.</string>
     <string name="memory_builder_form_hint" tools:ignore="MissingTranslation">편집 내용을 적용하기 전에 현재 값을 읽어오는 양식을 만듭니다.</string>
-    <string name="memory_builder_actions_hint" tools:ignore="MissingTranslation">실행을 누를 때마다 변경사항을 적용합니다. 각 실행은 독립적으로 처리됩니다.</string>
+    <string name="memory_builder_actions_hint" tools:ignore="MissingTranslation">실행을 누를 때마다 변경사항을 한 번 적용합니다. 더하기와 빼기는 이전 실행의 변경사항이 반영된 현재 값을 사용합니다.</string>
     <string name="memory_builder_name" tools:ignore="MissingTranslation">스크립트 이름</string>
     <string name="memory_builder_frozen_values" tools:ignore="MissingTranslation">고정된 값</string>
     <string name="memory_builder_fields" tools:ignore="MissingTranslation">필드</string>

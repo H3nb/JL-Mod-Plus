@@ -190,7 +190,7 @@
     <string name="memory_scripts_saved" tools:ignore="MissingTranslation">স্ক্রিপ্ট সেভ করা হয়েছে</string>
     <string name="memory_scripts_deleted" tools:ignore="MissingTranslation">স্ক্রিপ্ট মুছে ফেলা হয়েছে</string>
     <string name="memory_scripts_save_failed" tools:ignore="MissingTranslation">স্ক্রিপ্ট সেভ করা যায়নি।</string>
-    <string name="memory_scripts_editor_hint" tools:ignore="MissingTranslation">একটি স্ক্রিপ্ট JSON ডকুমেন্ট লিখুন বা পেস্ট করুন। সেভ করলে এটি চালু হয় না।</string>
+    <string name="memory_scripts_editor_hint" tools:ignore="MissingTranslation">সমর্থিত মেমরি অপারেশন ব্যবহার করে JSON স্ক্রিপ্ট লিখুন বা পেস্ট করুন। স্ক্রিপ্ট সেভ করলে সেটি চালু হয় না।</string>
     <string name="memory_scripts_paste_hint" tools:ignore="MissingTranslation">স্ক্রিপ্ট JSON পেস্ট করুন</string>
     <string name="memory_scripts_paste" tools:ignore="MissingTranslation">পেস্ট করুন</string>
     <string name="memory_scripts_clipboard_invalid" tools:ignore="MissingTranslation">ক্লিপবোর্ড খালি অথবা ডকুমেন্টের আকার 64 KiB-এর বেশি</string>
@@ -220,7 +220,7 @@
     <string name="memory_builder_json_editor" tools:ignore="MissingTranslation">JSON এডিটর</string>
     <string name="memory_builder_freeze_hint" tools:ignore="MissingTranslation">চালু থাকা অবস্থায় নির্বাচিত মান লক করে রাখে। ফ্রিজ বন্ধ করলে আগের মান ফিরে আসে না।</string>
     <string name="memory_builder_form_hint" tools:ignore="MissingTranslation">এমন একটি ফর্ম তৈরি করুন যা সম্পাদনা প্রয়োগের আগে বর্তমান মান পড়ে নেয়।</string>
-    <string name="memory_builder_actions_hint" tools:ignore="MissingTranslation">যতবার চালান চাপবেন ততবার পরিবর্তন প্রয়োগ হবে। প্রতিটি রান স্বাধীন।</string>
+    <string name="memory_builder_actions_hint" tools:ignore="MissingTranslation">প্রতিবার চালান চাপলে একবার পরিবর্তন প্রয়োগ হয়। যোগ ও বিয়োগ বর্তমান মান ব্যবহার করে, যার মধ্যে আগের রানগুলোর পরিবর্তনও থাকে।</string>
     <string name="memory_builder_name" tools:ignore="MissingTranslation">স্ক্রিপ্টের নাম</string>
     <string name="memory_builder_frozen_values" tools:ignore="MissingTranslation">ফ্রিজ করা মান</string>
     <string name="memory_builder_fields" tools:ignore="MissingTranslation">ফিল্ড</string>

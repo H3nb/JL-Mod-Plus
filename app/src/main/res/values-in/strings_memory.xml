@@ -184,7 +184,7 @@
     <string name="memory_scripts_saved" tools:ignore="MissingTranslation">Skrip tersimpan</string>
     <string name="memory_scripts_deleted" tools:ignore="MissingTranslation">Skrip dihapus</string>
     <string name="memory_scripts_save_failed" tools:ignore="MissingTranslation">Tidak dapat menyimpan skrip.</string>
-    <string name="memory_scripts_editor_hint" tools:ignore="MissingTranslation">Masukkan atau tempel skrip dalam format JSON. Menyimpan skrip tidak akan menjalankannya.</string>
+    <string name="memory_scripts_editor_hint" tools:ignore="MissingTranslation">Masukkan atau tempel skrip JSON yang menggunakan operasi memori yang didukung. Menyimpan skrip tidak akan menjalankannya.</string>
     <string name="memory_scripts_paste_hint" tools:ignore="MissingTranslation">Tempel JSON skrip</string>
     <string name="memory_scripts_paste" tools:ignore="MissingTranslation">Tempel</string>
     <string name="memory_scripts_clipboard_invalid" tools:ignore="MissingTranslation">Papan klip kosong atau dokumen melebihi 64 KiB</string>
@@ -214,7 +214,7 @@
     <string name="memory_builder_json_editor" tools:ignore="MissingTranslation">Editor JSON</string>
     <string name="memory_builder_freeze_hint" tools:ignore="MissingTranslation">Menjaga nilai yang dipilih tetap terkunci saat aktif. Menghentikan pembekuan tidak mengembalikan nilai sebelumnya.</string>
     <string name="memory_builder_form_hint" tools:ignore="MissingTranslation">Buat formulir yang membaca nilai saat ini sebelum menerapkan perubahan.</string>
-    <string name="memory_builder_actions_hint" tools:ignore="MissingTranslation">Terapkan perubahan setiap kali Anda menekan Jalankan. Setiap eksekusi berdiri sendiri.</string>
+    <string name="memory_builder_actions_hint" tools:ignore="MissingTranslation">Terapkan perubahan sekali setiap kali menekan Jalankan. Tambah dan Kurangi menggunakan nilai terkini, termasuk perubahan dari eksekusi sebelumnya.</string>
     <string name="memory_builder_name" tools:ignore="MissingTranslation">Nama skrip</string>
     <string name="memory_builder_frozen_values" tools:ignore="MissingTranslation">Nilai dibekukan</string>
     <string name="memory_builder_fields" tools:ignore="MissingTranslation">Kolom</string>

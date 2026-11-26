@@ -190,7 +190,7 @@
     <string name="memory_scripts_saved" tools:ignore="MissingTranslation">Skrip gestoor</string>
     <string name="memory_scripts_deleted" tools:ignore="MissingTranslation">Skrip uitgevee</string>
     <string name="memory_scripts_save_failed" tools:ignore="MissingTranslation">Kon nie skrip stoor nie.</string>
-    <string name="memory_scripts_editor_hint" tools:ignore="MissingTranslation">Voer ’n skrip-JSON-dokument in of plak dit. Stoor laat dit nie loop nie.</string>
+    <string name="memory_scripts_editor_hint" tools:ignore="MissingTranslation">Voer ’n JSON-skrip in of plak dit met ondersteunde geheuebewerkings. As jy die skrip stoor, word dit nie uitgevoer nie.</string>
     <string name="memory_scripts_paste_hint" tools:ignore="MissingTranslation">Plak skrip-JSON</string>
     <string name="memory_scripts_paste" tools:ignore="MissingTranslation">Plak</string>
     <string name="memory_scripts_clipboard_invalid" tools:ignore="MissingTranslation">Knipbord is leeg of die dokument oorskry 64 KiB</string>
@@ -220,7 +220,7 @@
     <string name="memory_builder_json_editor" tools:ignore="MissingTranslation">JSON-redigeerder</string>
     <string name="memory_builder_freeze_hint" tools:ignore="MissingTranslation">Hou gekose waardes gesluit terwyl dit geaktiveer is. Om vriesing af te skakel herstel nie hul vorige waardes nie.</string>
     <string name="memory_builder_form_hint" tools:ignore="MissingTranslation">Bou ’n vorm wat huidige waardes lees voordat wysigings toegepas word.</string>
-    <string name="memory_builder_actions_hint" tools:ignore="MissingTranslation">Pas veranderinge toe telkens wanneer jy Laat loop druk. Elke uitvoering is onafhanklik.</string>
+    <string name="memory_builder_actions_hint" tools:ignore="MissingTranslation">Pas veranderinge een keer toe elke keer as jy Laat loop druk. Optel en aftrek gebruik die huidige waardes, insluitend veranderinge van vorige uitvoerings.</string>
     <string name="memory_builder_name" tools:ignore="MissingTranslation">Skripnaam</string>
     <string name="memory_builder_frozen_values" tools:ignore="MissingTranslation">Gevriesde waardes</string>
     <string name="memory_builder_fields" tools:ignore="MissingTranslation">Velde</string>

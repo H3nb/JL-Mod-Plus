@@ -190,7 +190,7 @@
     <string name="memory_scripts_saved" tools:ignore="MissingTranslation">Szkript mentve</string>
     <string name="memory_scripts_deleted" tools:ignore="MissingTranslation">Szkript törölve</string>
     <string name="memory_scripts_save_failed" tools:ignore="MissingTranslation">Nem sikerült menteni a szkriptet.</string>
-    <string name="memory_scripts_editor_hint" tools:ignore="MissingTranslation">Írjon be vagy illesszen be egy szkript JSON-dokumentumot. A mentés nem futtatja.</string>
+    <string name="memory_scripts_editor_hint" tools:ignore="MissingTranslation">Írjon be vagy illesszen be egy támogatott memóriaműveleteket használó JSON-szkriptet. A mentés nem futtatja a szkriptet.</string>
     <string name="memory_scripts_paste_hint" tools:ignore="MissingTranslation">Szkript JSON beillesztése</string>
     <string name="memory_scripts_paste" tools:ignore="MissingTranslation">Beillesztés</string>
     <string name="memory_scripts_clipboard_invalid" tools:ignore="MissingTranslation">A vágólap üres, vagy a dokumentum meghaladja a 64 KiB méretet</string>
@@ -220,7 +220,7 @@
     <string name="memory_builder_json_editor" tools:ignore="MissingTranslation">JSON-szerkesztő</string>
     <string name="memory_builder_freeze_hint" tools:ignore="MissingTranslation">Bekapcsolva zárolva tartja a kijelölt értékeket. A befagyasztás kikapcsolása nem állítja vissza a korábbi értékeket.</string>
     <string name="memory_builder_form_hint" tools:ignore="MissingTranslation">Készítsen űrlapot, amely a módosítások alkalmazása előtt beolvassa a jelenlegi értékeket.</string>
-    <string name="memory_builder_actions_hint" tools:ignore="MissingTranslation">Minden Futtatás megnyomásakor alkalmazza a módosításokat. Minden futtatás független.</string>
+    <string name="memory_builder_actions_hint" tools:ignore="MissingTranslation">A Futtatás minden megnyomásakor egyszer alkalmazza a módosításokat. A Hozzáadás és a Kivonás az aktuális értékeket használja, beleértve a korábbi futtatások módosításait is.</string>
     <string name="memory_builder_name" tools:ignore="MissingTranslation">Szkript neve</string>
     <string name="memory_builder_frozen_values" tools:ignore="MissingTranslation">Befagyasztott értékek</string>
     <string name="memory_builder_fields" tools:ignore="MissingTranslation">Mezők</string>

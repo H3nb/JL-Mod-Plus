@@ -190,7 +190,7 @@
     <string name="memory_scripts_saved">Script saved</string>
     <string name="memory_scripts_deleted">Script deleted</string>
     <string name="memory_scripts_save_failed">Couldn’t save script.</string>
-    <string name="memory_scripts_editor_hint">Enter or paste a script in JSON format. Saving the script doesn’t run it.</string>
+    <string name="memory_scripts_editor_hint">Enter or paste a JSON script using supported memory operations. Saving the script doesn’t run it.</string>
     <string name="memory_scripts_paste_hint">Paste script JSON</string>
     <string name="memory_scripts_paste">Paste</string>
     <string name="memory_scripts_clipboard_invalid">Clipboard is empty or the document exceeds 64 KiB</string>
@@ -220,7 +220,7 @@
     <string name="memory_builder_json_editor">JSON editor</string>
     <string name="memory_builder_freeze_hint">Keep selected values locked while enabled. Turning off freeze doesn’t restore their previous values.</string>
     <string name="memory_builder_form_hint">Build a form that reads current values before applying edits.</string>
-    <string name="memory_builder_actions_hint">Apply changes whenever you press Run. Each run is independent.</string>
+    <string name="memory_builder_actions_hint">Apply changes once each time you press Run. Add and Subtract use the current values, including changes from previous runs.</string>
     <string name="memory_builder_name">Script name</string>
     <string name="memory_builder_frozen_values">Frozen values</string>
     <string name="memory_builder_fields">Fields</string>

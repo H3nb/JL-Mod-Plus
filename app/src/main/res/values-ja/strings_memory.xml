@@ -184,7 +184,7 @@
     <string name="memory_scripts_saved" tools:ignore="MissingTranslation">スクリプトを保存しました</string>
     <string name="memory_scripts_deleted" tools:ignore="MissingTranslation">スクリプトを削除しました</string>
     <string name="memory_scripts_save_failed" tools:ignore="MissingTranslation">スクリプトを保存できませんでした。</string>
-    <string name="memory_scripts_editor_hint" tools:ignore="MissingTranslation">スクリプトの JSON ドキュメントを入力または貼り付けてください。保存しても自動実行はされません。</string>
+    <string name="memory_scripts_editor_hint" tools:ignore="MissingTranslation">対応するメモリ操作を使った JSON スクリプトを入力または貼り付けてください。保存してもスクリプトは実行されません。</string>
     <string name="memory_scripts_paste_hint" tools:ignore="MissingTranslation">スクリプト JSON を貼り付け</string>
     <string name="memory_scripts_paste" tools:ignore="MissingTranslation">貼り付け</string>
     <string name="memory_scripts_clipboard_invalid" tools:ignore="MissingTranslation">クリップボードが空か、ドキュメントが 64 KiB を超えています</string>
@@ -214,7 +214,7 @@
     <string name="memory_builder_json_editor" tools:ignore="MissingTranslation">JSON エディター</string>
     <string name="memory_builder_freeze_hint" tools:ignore="MissingTranslation">有効な間、選択した値を固定し続けます。固定をオフにしても元の値には戻りません。</string>
     <string name="memory_builder_form_hint" tools:ignore="MissingTranslation">編集を適用する前に現在の値を読み取るフォームを作成します。</string>
-    <string name="memory_builder_actions_hint" tools:ignore="MissingTranslation">「実行」を押すたびに変更を適用します。各実行は独立しています。</string>
+    <string name="memory_builder_actions_hint" tools:ignore="MissingTranslation">「実行」を押すたびに変更を一度適用します。加算と減算には、前回までの変更が反映された現在の値が使われます。</string>
     <string name="memory_builder_name" tools:ignore="MissingTranslation">スクリプト名</string>
     <string name="memory_builder_frozen_values" tools:ignore="MissingTranslation">固定する値</string>
     <string name="memory_builder_fields" tools:ignore="MissingTranslation">フィールド</string>

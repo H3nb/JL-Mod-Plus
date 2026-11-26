@@ -202,7 +202,7 @@
     <string name="memory_scripts_saved" tools:ignore="MissingTranslation">Zapisano skrypt</string>
     <string name="memory_scripts_deleted" tools:ignore="MissingTranslation">Usunięto skrypt</string>
     <string name="memory_scripts_save_failed" tools:ignore="MissingTranslation">Nie udało się zapisać skryptu.</string>
-    <string name="memory_scripts_editor_hint" tools:ignore="MissingTranslation">Wpisz lub wklej dokument JSON skryptu. Zapisanie nie uruchamia go.</string>
+    <string name="memory_scripts_editor_hint" tools:ignore="MissingTranslation">Wpisz lub wklej skrypt JSON wykorzystujący obsługiwane operacje na pamięci. Zapisanie skryptu nie uruchamia go.</string>
     <string name="memory_scripts_paste_hint" tools:ignore="MissingTranslation">Wklej JSON skryptu</string>
     <string name="memory_scripts_paste" tools:ignore="MissingTranslation">Wklej</string>
     <string name="memory_scripts_clipboard_invalid" tools:ignore="MissingTranslation">Schowek jest pusty lub dokument przekracza 64 KiB</string>
@@ -232,7 +232,7 @@
     <string name="memory_builder_json_editor" tools:ignore="MissingTranslation">Edytor JSON</string>
     <string name="memory_builder_freeze_hint" tools:ignore="MissingTranslation">Utrzymuje wybrane wartości zablokowane, gdy opcja jest włączona. Wyłączenie zamrożenia nie przywraca poprzednich wartości.</string>
     <string name="memory_builder_form_hint" tools:ignore="MissingTranslation">Utwórz formularz odczytujący bieżące wartości przed zastosowaniem zmian.</string>
-    <string name="memory_builder_actions_hint" tools:ignore="MissingTranslation">Stosuje zmiany za każdym razem, gdy naciśniesz Uruchom. Każde uruchomienie jest niezależne.</string>
+    <string name="memory_builder_actions_hint" tools:ignore="MissingTranslation">Stosuje zmiany jeden raz przy każdym naciśnięciu Uruchom. Dodaj i Odejmij korzystają z bieżących wartości, uwzględniających zmiany z poprzednich uruchomień.</string>
     <string name="memory_builder_name" tools:ignore="MissingTranslation">Nazwa skryptu</string>
     <string name="memory_builder_frozen_values" tools:ignore="MissingTranslation">Zamrożone wartości</string>
     <string name="memory_builder_fields" tools:ignore="MissingTranslation">Pola</string>

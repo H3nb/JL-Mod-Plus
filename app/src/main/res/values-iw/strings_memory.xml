@@ -196,7 +196,7 @@
     <string name="memory_scripts_saved" tools:ignore="MissingTranslation">הסקריפט נשמר</string>
     <string name="memory_scripts_deleted" tools:ignore="MissingTranslation">הסקריפט נמחק</string>
     <string name="memory_scripts_save_failed" tools:ignore="MissingTranslation">לא ניתן לשמור את הסקריפט.</string>
-    <string name="memory_scripts_editor_hint" tools:ignore="MissingTranslation">יש להזין או להדביק מסמך JSON של סקריפט. השמירה אינה מפעילה אותו.</string>
+    <string name="memory_scripts_editor_hint" tools:ignore="MissingTranslation">יש להזין או להדביק סקריפט JSON המשתמש בפעולות זיכרון נתמכות. שמירת הסקריפט אינה מפעילה אותו.</string>
     <string name="memory_scripts_paste_hint" tools:ignore="MissingTranslation">הדבקת JSON של סקריפט</string>
     <string name="memory_scripts_paste" tools:ignore="MissingTranslation">הדבקה</string>
     <string name="memory_scripts_clipboard_invalid" tools:ignore="MissingTranslation">הלוח ריק או שהמסמך חורג מ-64 KiB</string>
@@ -226,7 +226,7 @@
     <string name="memory_builder_json_editor" tools:ignore="MissingTranslation">עורך JSON</string>
     <string name="memory_builder_freeze_hint" tools:ignore="MissingTranslation">שומר על הערכים שנבחרו נעולים בזמן שהאפשרות מופעלת. כיבוי ההקפאה אינו משחזר את הערכים הקודמים שלהם.</string>
     <string name="memory_builder_form_hint" tools:ignore="MissingTranslation">בניית טופס שקורא את הערכים הנוכחיים לפני החלת העריכות.</string>
-    <string name="memory_builder_actions_hint" tools:ignore="MissingTranslation">החלת שינויים בכל לחיצה על “הפעלה”. כל הפעלה עומדת בפני עצמה.</string>
+    <string name="memory_builder_actions_hint" tools:ignore="MissingTranslation">השינויים מוחלים פעם אחת בכל לחיצה על „הפעלה”. הוספה והפחתה משתמשות בערכים הנוכחיים, כולל שינויים מהפעלות קודמות.</string>
     <string name="memory_builder_name" tools:ignore="MissingTranslation">שם הסקריפט</string>
     <string name="memory_builder_frozen_values" tools:ignore="MissingTranslation">ערכים מוקפאים</string>
     <string name="memory_builder_fields" tools:ignore="MissingTranslation">שדות</string>

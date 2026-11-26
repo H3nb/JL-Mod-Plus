@@ -190,7 +190,7 @@
     <string name="memory_scripts_saved" tools:ignore="MissingTranslation">Το σενάριο αποθηκεύτηκε</string>
     <string name="memory_scripts_deleted" tools:ignore="MissingTranslation">Το σενάριο διαγράφηκε</string>
     <string name="memory_scripts_save_failed" tools:ignore="MissingTranslation">Δεν ήταν δυνατή η αποθήκευση του σεναρίου.</string>
-    <string name="memory_scripts_editor_hint" tools:ignore="MissingTranslation">Εισαγάγετε ή επικολλήστε ένα έγγραφο JSON σεναρίου. Η αποθήκευση δεν το εκτελεί.</string>
+    <string name="memory_scripts_editor_hint" tools:ignore="MissingTranslation">Εισαγάγετε ή επικολλήστε ένα σενάριο JSON με υποστηριζόμενες λειτουργίες μνήμης. Η αποθήκευση δεν το εκτελεί.</string>
     <string name="memory_scripts_paste_hint" tools:ignore="MissingTranslation">Επικόλληση JSON σεναρίου</string>
     <string name="memory_scripts_paste" tools:ignore="MissingTranslation">Επικόλληση</string>
     <string name="memory_scripts_clipboard_invalid" tools:ignore="MissingTranslation">Το πρόχειρο είναι κενό ή το έγγραφο υπερβαίνει τα 64 KiB</string>
@@ -220,7 +220,7 @@
     <string name="memory_builder_json_editor" tools:ignore="MissingTranslation">Επεξεργαστής JSON</string>
     <string name="memory_builder_freeze_hint" tools:ignore="MissingTranslation">Διατηρεί τις επιλεγμένες τιμές κλειδωμένες όσο είναι ενεργό. Η απενεργοποίηση του παγώματος δεν επαναφέρει τις προηγούμενες τιμές τους.</string>
     <string name="memory_builder_form_hint" tools:ignore="MissingTranslation">Δημιουργήστε μια φόρμα που διαβάζει τις τρέχουσες τιμές πριν εφαρμόσει επεξεργασίες.</string>
-    <string name="memory_builder_actions_hint" tools:ignore="MissingTranslation">Εφαρμόζει αλλαγές κάθε φορά που πατάτε Εκτέλεση. Κάθε εκτέλεση είναι ανεξάρτητη.</string>
+    <string name="memory_builder_actions_hint" tools:ignore="MissingTranslation">Εφαρμόζει αλλαγές μία φορά με κάθε πάτημα της επιλογής Εκτέλεση. Η πρόσθεση και η αφαίρεση χρησιμοποιούν τις τρέχουσες τιμές, μαζί με τις αλλαγές από προηγούμενες εκτελέσεις.</string>
     <string name="memory_builder_name" tools:ignore="MissingTranslation">Όνομα σεναρίου</string>
     <string name="memory_builder_frozen_values" tools:ignore="MissingTranslation">Παγωμένες τιμές</string>
     <string name="memory_builder_fields" tools:ignore="MissingTranslation">Πεδία</string>

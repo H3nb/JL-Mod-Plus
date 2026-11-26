@@ -202,7 +202,7 @@
     <string name="memory_scripts_saved" tools:ignore="MissingTranslation">Скрипт збережено</string>
     <string name="memory_scripts_deleted" tools:ignore="MissingTranslation">Скрипт видалено</string>
     <string name="memory_scripts_save_failed" tools:ignore="MissingTranslation">Не вдалося зберегти скрипт.</string>
-    <string name="memory_scripts_editor_hint" tools:ignore="MissingTranslation">Введіть або вставте JSON-документ скрипта. Збереження не запускає його.</string>
+    <string name="memory_scripts_editor_hint" tools:ignore="MissingTranslation">Введіть або вставте JSON-скрипт, який використовує підтримувані операції з пам’яттю. Збереження скрипта не запускає його.</string>
     <string name="memory_scripts_paste_hint" tools:ignore="MissingTranslation">Вставити JSON скрипта</string>
     <string name="memory_scripts_paste" tools:ignore="MissingTranslation">Вставити</string>
     <string name="memory_scripts_clipboard_invalid" tools:ignore="MissingTranslation">Буфер обміну порожній або документ перевищує 64 KiB</string>
@@ -232,7 +232,7 @@
     <string name="memory_builder_json_editor" tools:ignore="MissingTranslation">Редактор JSON</string>
     <string name="memory_builder_freeze_hint" tools:ignore="MissingTranslation">Утримує вибрані значення зафіксованими, доки функцію увімкнено. Вимкнення заморожування не відновлює попередні значення.</string>
     <string name="memory_builder_form_hint" tools:ignore="MissingTranslation">Створіть форму, яка зчитує поточні значення перед застосуванням змін.</string>
-    <string name="memory_builder_actions_hint" tools:ignore="MissingTranslation">Застосовує зміни щоразу після натискання «Запустити». Кожен запуск незалежний.</string>
+    <string name="memory_builder_actions_hint" tools:ignore="MissingTranslation">Застосовує зміни один раз при кожному натисканні «Запустити». Додавання та віднімання використовують поточні значення, зокрема зміни після попередніх запусків.</string>
     <string name="memory_builder_name" tools:ignore="MissingTranslation">Назва скрипта</string>
     <string name="memory_builder_frozen_values" tools:ignore="MissingTranslation">Заморожені значення</string>
     <string name="memory_builder_fields" tools:ignore="MissingTranslation">Поля</string>

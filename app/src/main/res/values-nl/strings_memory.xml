@@ -190,7 +190,7 @@
     <string name="memory_scripts_saved" tools:ignore="MissingTranslation">Script opgeslagen</string>
     <string name="memory_scripts_deleted" tools:ignore="MissingTranslation">Script verwijderd</string>
     <string name="memory_scripts_save_failed" tools:ignore="MissingTranslation">Kan script niet opslaan.</string>
-    <string name="memory_scripts_editor_hint" tools:ignore="MissingTranslation">Voer een script-JSON-document in of plak het. Opslaan voert het script niet uit.</string>
+    <string name="memory_scripts_editor_hint" tools:ignore="MissingTranslation">Voer een JSON-script met ondersteunde geheugenbewerkingen in of plak het. Opslaan voert het script niet uit.</string>
     <string name="memory_scripts_paste_hint" tools:ignore="MissingTranslation">Script-JSON plakken</string>
     <string name="memory_scripts_paste" tools:ignore="MissingTranslation">Plakken</string>
     <string name="memory_scripts_clipboard_invalid" tools:ignore="MissingTranslation">Klembord is leeg of het document is groter dan 64 KiB</string>
@@ -220,7 +220,7 @@
     <string name="memory_builder_json_editor" tools:ignore="MissingTranslation">JSON-editor</string>
     <string name="memory_builder_freeze_hint" tools:ignore="MissingTranslation">Houd geselecteerde waarden vergrendeld wanneer ingeschakeld. Het uitschakelen van bevriezing herstelt de vorige waarden niet.</string>
     <string name="memory_builder_form_hint" tools:ignore="MissingTranslation">Bouw een formulier dat huidige waarden leest voordat bewerkingen worden toegepast.</string>
-    <string name="memory_builder_actions_hint" tools:ignore="MissingTranslation">Pas wijzigingen toe telkens wanneer je op Uitvoeren drukt. Elke uitvoering staat op zichzelf.</string>
+    <string name="memory_builder_actions_hint" tools:ignore="MissingTranslation">Past wijzigingen één keer toe telkens wanneer je op Uitvoeren drukt. Optellen en Aftrekken gebruiken de huidige waarden, inclusief wijzigingen van eerdere uitvoeringen.</string>
     <string name="memory_builder_name" tools:ignore="MissingTranslation">Scriptnaam</string>
     <string name="memory_builder_frozen_values" tools:ignore="MissingTranslation">Bevroren waarden</string>
     <string name="memory_builder_fields" tools:ignore="MissingTranslation">Velden</string>

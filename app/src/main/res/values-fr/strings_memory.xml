@@ -196,7 +196,7 @@
     <string name="memory_scripts_saved" tools:ignore="MissingTranslation">Script enregistré</string>
     <string name="memory_scripts_deleted" tools:ignore="MissingTranslation">Script supprimé</string>
     <string name="memory_scripts_save_failed" tools:ignore="MissingTranslation">Impossible d’enregistrer le script.</string>
-    <string name="memory_scripts_editor_hint" tools:ignore="MissingTranslation">Saisissez ou collez un document JSON de script. L’enregistrement ne l’exécute pas.</string>
+    <string name="memory_scripts_editor_hint" tools:ignore="MissingTranslation">Saisissez ou collez un script JSON utilisant les opérations de mémoire prises en charge. L’enregistrement ne l’exécute pas.</string>
     <string name="memory_scripts_paste_hint" tools:ignore="MissingTranslation">Coller le JSON du script</string>
     <string name="memory_scripts_paste" tools:ignore="MissingTranslation">Coller</string>
     <string name="memory_scripts_clipboard_invalid" tools:ignore="MissingTranslation">Le presse-papiers est vide ou le document dépasse 64 Kio</string>
@@ -226,7 +226,7 @@
     <string name="memory_builder_json_editor" tools:ignore="MissingTranslation">Éditeur JSON</string>
     <string name="memory_builder_freeze_hint" tools:ignore="MissingTranslation">Maintient les valeurs sélectionnées figées tant que le script est activé. Désactiver Figer ne restaure pas leurs valeurs précédentes.</string>
     <string name="memory_builder_form_hint" tools:ignore="MissingTranslation">Crée un formulaire qui lit les valeurs actuelles avant d’appliquer les modifications.</string>
-    <string name="memory_builder_actions_hint" tools:ignore="MissingTranslation">Applique les modifications chaque fois que vous appuyez sur Exécuter. Chaque exécution est indépendante.</string>
+    <string name="memory_builder_actions_hint" tools:ignore="MissingTranslation">Applique les modifications une fois à chaque appui sur Exécuter. Ajouter et Soustraire utilisent les valeurs actuelles, y compris les modifications des exécutions précédentes.</string>
     <string name="memory_builder_name" tools:ignore="MissingTranslation">Nom du script</string>
     <string name="memory_builder_frozen_values" tools:ignore="MissingTranslation">Valeurs figées</string>
     <string name="memory_builder_fields" tools:ignore="MissingTranslation">Champs</string>

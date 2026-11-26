@@ -196,7 +196,7 @@
     <string name="memory_scripts_saved" tools:ignore="MissingTranslation">Script salvat</string>
     <string name="memory_scripts_deleted" tools:ignore="MissingTranslation">Script șters</string>
     <string name="memory_scripts_save_failed" tools:ignore="MissingTranslation">Scriptul nu a putut fi salvat.</string>
-    <string name="memory_scripts_editor_hint" tools:ignore="MissingTranslation">Introduceți sau lipiți un document JSON de script. Salvarea nu îl rulează.</string>
+    <string name="memory_scripts_editor_hint" tools:ignore="MissingTranslation">Introduceți sau lipiți un script JSON care utilizează operații de memorie acceptate. Salvarea scriptului nu îl rulează.</string>
     <string name="memory_scripts_paste_hint" tools:ignore="MissingTranslation">Lipiți JSON-ul scriptului</string>
     <string name="memory_scripts_paste" tools:ignore="MissingTranslation">Lipește</string>
     <string name="memory_scripts_clipboard_invalid" tools:ignore="MissingTranslation">Clipboardul este gol sau documentul depășește 64 KiB</string>
@@ -226,7 +226,7 @@
     <string name="memory_builder_json_editor" tools:ignore="MissingTranslation">Editor JSON</string>
     <string name="memory_builder_freeze_hint" tools:ignore="MissingTranslation">Menține valorile selectate blocate cât timp este activat. Dezactivarea înghețării nu restaurează valorile anterioare.</string>
     <string name="memory_builder_form_hint" tools:ignore="MissingTranslation">Creează un formular care citește valorile curente înainte de a aplica editările.</string>
-    <string name="memory_builder_actions_hint" tools:ignore="MissingTranslation">Aplică modificările ori de câte ori apăsați Rulează. Fiecare rulare este independentă.</string>
+    <string name="memory_builder_actions_hint" tools:ignore="MissingTranslation">Aplică modificările o singură dată la fiecare apăsare pe Rulează. Adună și Scade folosesc valorile curente, inclusiv modificările din rulările anterioare.</string>
     <string name="memory_builder_name" tools:ignore="MissingTranslation">Nume script</string>
     <string name="memory_builder_frozen_values" tools:ignore="MissingTranslation">Valori înghețate</string>
     <string name="memory_builder_fields" tools:ignore="MissingTranslation">Câmpuri</string>

@@ -190,7 +190,7 @@
     <string name="memory_scripts_saved" tools:ignore="MissingTranslation">ස්ක්‍රිප්ට් සුරකින ලදී</string>
     <string name="memory_scripts_deleted" tools:ignore="MissingTranslation">ස්ක්‍රිප්ට් මකන ලදී</string>
     <string name="memory_scripts_save_failed" tools:ignore="MissingTranslation">ස්ක්‍රිප්ට් සුරැකීමට නොහැකි විය.</string>
-    <string name="memory_scripts_editor_hint" tools:ignore="MissingTranslation">ස්ක්‍රිප්ට් JSON ලේඛනයක් ඇතුළත් කරන්න හෝ අලවන්න. සුරැකීමෙන් එය ධාවනය නොවේ.</string>
+    <string name="memory_scripts_editor_hint" tools:ignore="MissingTranslation">සහාය දක්වන මතක මෙහෙයුම් භාවිතා කරන JSON ස්ක්‍රිප්ට් එකක් ඇතුළත් කරන්න හෝ අලවන්න. සුරැකීමෙන් ස්ක්‍රිප්ට් එක ධාවනය නොවේ.</string>
     <string name="memory_scripts_paste_hint" tools:ignore="MissingTranslation">ස්ක්‍රිප්ට් JSON අලවන්න</string>
     <string name="memory_scripts_paste" tools:ignore="MissingTranslation">අලවන්න</string>
     <string name="memory_scripts_clipboard_invalid" tools:ignore="MissingTranslation">පසුරු පුවරුව හිස්ය නැතහොත් ලේඛනය 64 KiB ඉක්මවයි</string>
@@ -220,7 +220,7 @@
     <string name="memory_builder_json_editor" tools:ignore="MissingTranslation">JSON සංස්කාරකය</string>
     <string name="memory_builder_freeze_hint" tools:ignore="MissingTranslation">සබල කර ඇති විට තෝරාගත් අගයන් අගුළු දමා තබයි. ස්ථිර කිරීම අක්‍රිය කිරීමෙන් ඒවායේ පෙර අගයන් ප්‍රතිස්ථාපනය නොවේ.</string>
     <string name="memory_builder_form_hint" tools:ignore="MissingTranslation">සංස්කරණ යෙදීමට පෙර වත්මන් අගයන් කියවන පෝරමයක් සාදන්න.</string>
-    <string name="memory_builder_actions_hint" tools:ignore="MissingTranslation">ඔබ “ධාවනය කරන්න” එබූ සෑම විටම වෙනස්කම් යොදයි. එක් එක් ධාවනය ස්වාධීන වේ.</string>
+    <string name="memory_builder_actions_hint" tools:ignore="MissingTranslation">“ධාවනය කරන්න” එබූ සෑම වරකම වෙනස්කම් එක් වරක් යොදයි. එකතු කිරීම සහ අඩු කිරීම පෙර ධාවනවල වෙනස්කම් ඇතුළුව වත්මන් අගයන් භාවිතා කරයි.</string>
     <string name="memory_builder_name" tools:ignore="MissingTranslation">ස්ක්‍රිප්ට් නම</string>
     <string name="memory_builder_frozen_values" tools:ignore="MissingTranslation">ස්ථිර කළ අගයන්</string>
     <string name="memory_builder_fields" tools:ignore="MissingTranslation">ක්ෂේත්‍ර</string>

@@ -190,7 +190,7 @@
     <string name="memory_scripts_saved" tools:ignore="MissingTranslation">ସ୍କ୍ରିପ୍ଟ୍ ସେଭ୍ ହେଲା</string>
     <string name="memory_scripts_deleted" tools:ignore="MissingTranslation">ସ୍କ୍ରିପ୍ଟ୍ ଡିଲିଟ୍ ହେଲା</string>
     <string name="memory_scripts_save_failed" tools:ignore="MissingTranslation">ସ୍କ୍ରିପ୍ଟ୍ ସେଭ୍ ହୋଇପାରିଲା ନାହିଁ।</string>
-    <string name="memory_scripts_editor_hint" tools:ignore="MissingTranslation">ଏକ ସ୍କ୍ରିପ୍ଟ୍ JSON ଡକ୍ୟୁମେଣ୍ଟ ପ୍ରବେଶ କିମ୍ବା ପେଷ୍ଟ କରନ୍ତୁ। ସେଭ୍ କଲେ ଏହା ଚାଲେ ନାହିଁ।</string>
+    <string name="memory_scripts_editor_hint" tools:ignore="MissingTranslation">ସମର୍ଥିତ ମେମୋରି ଅପରେସନ୍ ବ୍ୟବହାର କରୁଥିବା JSON ସ୍କ୍ରିପ୍ଟ୍ ଲେଖନ୍ତୁ କିମ୍ବା ପେଷ୍ଟ କରନ୍ତୁ। ସ୍କ୍ରିପ୍ଟ୍ ସେଭ୍ କଲେ ଏହା ଚାଲେ ନାହିଁ।</string>
     <string name="memory_scripts_paste_hint" tools:ignore="MissingTranslation">ସ୍କ୍ରିପ୍ଟ୍ JSON ପେଷ୍ଟ କରନ୍ତୁ</string>
     <string name="memory_scripts_paste" tools:ignore="MissingTranslation">ପେଷ୍ଟ କରନ୍ତୁ</string>
     <string name="memory_scripts_clipboard_invalid" tools:ignore="MissingTranslation">କ୍ଲିପବୋର୍ଡ ଖାଲି ଅଛି କିମ୍ବା ଡକ୍ୟୁମେଣ୍ଟ 64 KiB ରୁ ଅଧିକ</string>
@@ -220,7 +220,7 @@
     <string name="memory_builder_json_editor" tools:ignore="MissingTranslation">JSON ଏଡିଟର୍</string>
     <string name="memory_builder_freeze_hint" tools:ignore="MissingTranslation">ସକ୍ଷମ ଥିବାବେଳେ ଚୟନିତ ମୂଲ୍ୟକୁ ଲକ୍ ରଖେ। ଫ୍ରିଜ୍ ଅଫ୍ କଲେ ପୂର୍ବ ମୂଲ୍ୟ ପୁନରୁଦ୍ଧାର ହୁଏ ନାହିଁ।</string>
     <string name="memory_builder_form_hint" tools:ignore="MissingTranslation">ଏକ ଫର୍ମ ତିଆରି କରନ୍ତୁ ଯାହା ଏଡିଟ୍ ପ୍ରୟୋଗ ପୂର୍ବରୁ ବର୍ତ୍ତମାନର ମୂଲ୍ୟ ପଢ଼େ।</string>
-    <string name="memory_builder_actions_hint" tools:ignore="MissingTranslation">ଆପଣ ଚଲାନ୍ତୁ ଦବାଇବା ମାତ୍ରେ ପରିବର୍ତ୍ତନ ପ୍ରୟୋଗ ହୁଏ। ପ୍ରତି ରନ୍ ସ୍ୱତନ୍ତ୍ର ଅଟେ।</string>
+    <string name="memory_builder_actions_hint" tools:ignore="MissingTranslation">ପ୍ରତିଥର ଚଲାନ୍ତୁ ଦବାଇଲେ ପରିବର୍ତ୍ତନ ଥରେ ପ୍ରୟୋଗ ହୁଏ। ଯୋଗ ଓ ବିୟୋଗ ବର୍ତ୍ତମାନର ମୂଲ୍ୟ ବ୍ୟବହାର କରେ, ଯେଉଁଥିରେ ପୂର୍ବ ରନ୍‌ର ପରିବର୍ତ୍ତନ ମଧ୍ୟ ରହିଥାଏ।</string>
     <string name="memory_builder_name" tools:ignore="MissingTranslation">ସ୍କ୍ରିପ୍ଟ୍ ନାମ</string>
     <string name="memory_builder_frozen_values" tools:ignore="MissingTranslation">ଫ୍ରିଜ୍ ହୋଇଥିବା ମୂଲ୍ୟ</string>
     <string name="memory_builder_fields" tools:ignore="MissingTranslation">ଫିଲ୍ଡ</string>

@@ -184,7 +184,7 @@
     <string name="memory_scripts_saved" tools:ignore="MissingTranslation">已儲存指令碼</string>
     <string name="memory_scripts_deleted" tools:ignore="MissingTranslation">已刪除指令碼</string>
     <string name="memory_scripts_save_failed" tools:ignore="MissingTranslation">無法儲存指令碼。</string>
-    <string name="memory_scripts_editor_hint" tools:ignore="MissingTranslation">請輸入或貼上指令碼 JSON 文件。儲存後不會自動執行。</string>
+    <string name="memory_scripts_editor_hint" tools:ignore="MissingTranslation">請輸入或貼上使用受支援記憶體操作的 JSON 指令碼。儲存指令碼不會執行它。</string>
     <string name="memory_scripts_paste_hint" tools:ignore="MissingTranslation">貼上指令碼 JSON</string>
     <string name="memory_scripts_paste" tools:ignore="MissingTranslation">貼上</string>
     <string name="memory_scripts_clipboard_invalid" tools:ignore="MissingTranslation">剪貼簿為空或文件大小超過 64 KiB</string>
@@ -214,7 +214,7 @@
     <string name="memory_builder_json_editor" tools:ignore="MissingTranslation">JSON 編輯器</string>
     <string name="memory_builder_freeze_hint" tools:ignore="MissingTranslation">啟用期間保持鎖定所選數值；關閉鎖定後不會還原為先前的數值。</string>
     <string name="memory_builder_form_hint" tools:ignore="MissingTranslation">建立表單，在套用編輯前先讀取目前數值。</string>
-    <string name="memory_builder_actions_hint" tools:ignore="MissingTranslation">每次按下「執行」時套用變更，每次執行皆互相獨立。</string>
+    <string name="memory_builder_actions_hint" tools:ignore="MissingTranslation">每次按下「執行」時套用一次變更。加上和減去會使用目前的值，包括先前執行所產生的變更。</string>
     <string name="memory_builder_name" tools:ignore="MissingTranslation">指令碼名稱</string>
     <string name="memory_builder_frozen_values" tools:ignore="MissingTranslation">已鎖定數值</string>
     <string name="memory_builder_fields" tools:ignore="MissingTranslation">欄位</string>

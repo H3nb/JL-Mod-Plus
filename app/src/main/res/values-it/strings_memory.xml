@@ -196,7 +196,7 @@
     <string name="memory_scripts_saved" tools:ignore="MissingTranslation">Script salvato</string>
     <string name="memory_scripts_deleted" tools:ignore="MissingTranslation">Script eliminato</string>
     <string name="memory_scripts_save_failed" tools:ignore="MissingTranslation">Impossibile salvare lo script.</string>
-    <string name="memory_scripts_editor_hint" tools:ignore="MissingTranslation">Inserisci o incolla un documento JSON dello script. Il salvataggio non lo esegue.</string>
+    <string name="memory_scripts_editor_hint" tools:ignore="MissingTranslation">Inserisci o incolla uno script JSON che utilizza operazioni di memoria supportate. Salvarlo non lo esegue.</string>
     <string name="memory_scripts_paste_hint" tools:ignore="MissingTranslation">Incolla JSON dello script</string>
     <string name="memory_scripts_paste" tools:ignore="MissingTranslation">Incolla</string>
     <string name="memory_scripts_clipboard_invalid" tools:ignore="MissingTranslation">Gli appunti sono vuoti o il documento supera i 64 KiB</string>
@@ -226,7 +226,7 @@
     <string name="memory_builder_json_editor" tools:ignore="MissingTranslation">Editor JSON</string>
     <string name="memory_builder_freeze_hint" tools:ignore="MissingTranslation">Mantiene bloccati i valori selezionati mentre è attivo. Disattivare il blocco non ripristina i valori precedenti.</string>
     <string name="memory_builder_form_hint" tools:ignore="MissingTranslation">Crea un modulo che legge i valori attuali prima di applicare le modifiche.</string>
-    <string name="memory_builder_actions_hint" tools:ignore="MissingTranslation">Applica le modifiche ogni volta che premi Esegui. Ogni esecuzione è indipendente.</string>
+    <string name="memory_builder_actions_hint" tools:ignore="MissingTranslation">Applica le modifiche una volta ogni volta che premi Esegui. Aggiungi e Sottrai usano i valori attuali, incluse le modifiche delle esecuzioni precedenti.</string>
     <string name="memory_builder_name" tools:ignore="MissingTranslation">Nome script</string>
     <string name="memory_builder_frozen_values" tools:ignore="MissingTranslation">Valori bloccati</string>
     <string name="memory_builder_fields" tools:ignore="MissingTranslation">Campi</string>

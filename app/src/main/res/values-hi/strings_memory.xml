@@ -190,7 +190,7 @@
     <string name="memory_scripts_saved" tools:ignore="MissingTranslation">स्क्रिप्ट सहेजी गई</string>
     <string name="memory_scripts_deleted" tools:ignore="MissingTranslation">स्क्रिप्ट हटाई गई</string>
     <string name="memory_scripts_save_failed" tools:ignore="MissingTranslation">स्क्रिप्ट सहेजी नहीं जा सकी।</string>
-    <string name="memory_scripts_editor_hint" tools:ignore="MissingTranslation">स्क्रिप्ट JSON दस्तावेज़ दर्ज करें या पेस्ट करें। सहेजने से यह चलती नहीं है।</string>
+    <string name="memory_scripts_editor_hint" tools:ignore="MissingTranslation">समर्थित मेमोरी ऑपरेशन वाली JSON स्क्रिप्ट दर्ज करें या पेस्ट करें। सहेजने से स्क्रिप्ट नहीं चलती।</string>
     <string name="memory_scripts_paste_hint" tools:ignore="MissingTranslation">स्क्रिप्ट JSON पेस्ट करें</string>
     <string name="memory_scripts_paste" tools:ignore="MissingTranslation">पेस्ट करें</string>
     <string name="memory_scripts_clipboard_invalid" tools:ignore="MissingTranslation">क्लिपबोर्ड खाली है या दस्तावेज़ 64 KiB से बड़ा है</string>
@@ -220,7 +220,7 @@
     <string name="memory_builder_json_editor" tools:ignore="MissingTranslation">JSON एडिटर</string>
     <string name="memory_builder_freeze_hint" tools:ignore="MissingTranslation">सक्षम रहने पर चयनित मान लॉक रहते हैं। फ़्रीज़ बंद करने से उनके पिछले मान पुनर्स्थापित नहीं होते।</string>
     <string name="memory_builder_form_hint" tools:ignore="MissingTranslation">ऐसा फ़ॉर्म बनाएं जो बदलाव लागू करने से पहले वर्तमान मान पढ़ता है।</string>
-    <string name="memory_builder_actions_hint" tools:ignore="MissingTranslation">जब भी आप “चलाएं” दबाएं, बदलाव लागू करें। प्रत्येक संचालन स्वतंत्र होता है।</string>
+    <string name="memory_builder_actions_hint" tools:ignore="MissingTranslation">हर बार चलाएं दबाने पर बदलाव एक बार लागू होते हैं। जोड़ें और घटाएं मौजूदा मानों का उपयोग करते हैं, जिनमें पिछली बार चलाने से हुए बदलाव भी शामिल हैं।</string>
     <string name="memory_builder_name" tools:ignore="MissingTranslation">स्क्रिप्ट का नाम</string>
     <string name="memory_builder_frozen_values" tools:ignore="MissingTranslation">फ़्रीज़ किए गए मान</string>
     <string name="memory_builder_fields" tools:ignore="MissingTranslation">फ़ील्ड</string>

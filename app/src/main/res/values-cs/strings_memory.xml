@@ -202,7 +202,7 @@
     <string name="memory_scripts_saved" tools:ignore="MissingTranslation">Skript byl uložen</string>
     <string name="memory_scripts_deleted" tools:ignore="MissingTranslation">Skript byl smazán</string>
     <string name="memory_scripts_save_failed" tools:ignore="MissingTranslation">Skript se nepodařilo uložit.</string>
-    <string name="memory_scripts_editor_hint" tools:ignore="MissingTranslation">Zadejte nebo vložte dokument JSON skriptu. Uložením se skript nespustí.</string>
+    <string name="memory_scripts_editor_hint" tools:ignore="MissingTranslation">Zadejte nebo vložte skript JSON s podporovanými operacemi s pamětí. Uložením se skript nespustí.</string>
     <string name="memory_scripts_paste_hint" tools:ignore="MissingTranslation">Vložit JSON skriptu</string>
     <string name="memory_scripts_paste" tools:ignore="MissingTranslation">Vložit</string>
     <string name="memory_scripts_clipboard_invalid" tools:ignore="MissingTranslation">Schránka je prázdná nebo dokument přesahuje 64 KiB</string>
@@ -232,7 +232,7 @@
     <string name="memory_builder_json_editor" tools:ignore="MissingTranslation">Editor JSON</string>
     <string name="memory_builder_freeze_hint" tools:ignore="MissingTranslation">Po dobu zapnutí udržuje vybrané hodnoty uzamčené. Vypnutím zmrazení se původní hodnoty neobnoví.</string>
     <string name="memory_builder_form_hint" tools:ignore="MissingTranslation">Vytvořte formulář, který před použitím úprav načte aktuální hodnoty.</string>
-    <string name="memory_builder_actions_hint" tools:ignore="MissingTranslation">Použije změny při každém stisknutí Spustit. Každé spuštění je nezávislé.</string>
+    <string name="memory_builder_actions_hint" tools:ignore="MissingTranslation">Použije změny jednou při každém stisknutí Spustit. Přičtení a odečtení vychází z aktuálních hodnot, včetně změn z předchozích spuštění.</string>
     <string name="memory_builder_name" tools:ignore="MissingTranslation">Název skriptu</string>
     <string name="memory_builder_frozen_values" tools:ignore="MissingTranslation">Zmrazené hodnoty</string>
     <string name="memory_builder_fields" tools:ignore="MissingTranslation">Pole</string>
