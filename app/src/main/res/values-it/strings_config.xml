@@ -45,7 +45,7 @@
     <string name="config_gamepad_calibration_phase_review">Pronto per il salvataggio</string>
     <string name="config_gamepad_calibration_phase_committed">Salvata</string>
     <string name="config_gamepad_calibration_phase_cancelled">Annullata</string>
-    <string name="config_gamepad_calibration_waiting_controller">Collega un controller con uno stick analogico o un grilletto supportato. La calibrazione inizia al primo movimento dello stick o pressione del grilletto; la calibrazione esistente resta invariata finché non salvi.</string>
+    <string name="config_gamepad_calibration_waiting_controller">Collega un controller con uno stick analogico o un grilletto supportato. Muovi uno stick o premi un grilletto per iniziare. La calibrazione attuale non cambia, a meno che non ne salvi una nuova o la reimposti.</string>
     <string name="config_gamepad_calibration_no_analog_ranges">Questo controller non fornisce intervalli analogici supportati per stick o grilletti.</string>
     <string name="config_gamepad_calibration_start">Mantieni tutti gli stick al centro e tutti i grilletti rilasciati fino al termine del timer della posizione neutra.</string>
     <string name="config_gamepad_calibration_save_failed">Impossibile salvare la calibrazione. La calibrazione esistente resta invariata.</string>
@@ -56,7 +56,7 @@
     <string name="config_gamepad_calibration_trigger_instructions">Rilascia e premi fino in fondo ogni grilletto rilevato, poi tocca Avanti.</string>
     <string name="config_gamepad_calibration_review_instructions">Salva per sostituire la calibrazione di questo controller.</string>
     <string name="config_gamepad_calibration_saved">Calibrazione salvata.</string>
-    <string name="config_gamepad_calibration_cancelled">Calibrazione annullata. La calibrazione precedente resta invariata.</string>
+    <string name="config_gamepad_calibration_cancelled">Calibrazione annullata.</string>
     <string name="config_gamepad_calibration_waiting_samples">La calibrazione è in attesa dei campioni del controller.</string>
     <string name="config_gamepad_diagnosis_header">Diagnostica controller</string>
     <string name="config_gamepad_diagnosis_mode">Stato: <xliff:g id="status" example="enabled">%1$s</xliff:g> · Sorgente: <xliff:g id="source" example="controller">%2$s</xliff:g></string>

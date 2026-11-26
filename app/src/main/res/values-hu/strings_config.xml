@@ -45,7 +45,7 @@
     <string name="config_gamepad_calibration_phase_review">Mentésre kész</string>
     <string name="config_gamepad_calibration_phase_committed">Mentve</string>
     <string name="config_gamepad_calibration_phase_cancelled">Megszakítva</string>
-    <string name="config_gamepad_calibration_waiting_controller">Csatlakoztasson támogatott analóg karral vagy ravasszal rendelkező kontrollert. A kalibrálás az első karmozdulatnál vagy ravaszlenyomásnál indul; a meglévő kalibrálás a mentésig változatlan marad.</string>
+    <string name="config_gamepad_calibration_waiting_controller">Csatlakoztasson támogatott analóg karral vagy ravasszal rendelkező kontrollert. A kezdéshez mozgasson meg egy kart vagy nyomjon meg egy ravaszt. A meglévő kalibrálás csak új kalibrálás mentésekor vagy visszaállításkor változik.</string>
     <string name="config_gamepad_calibration_no_analog_ranges">Ez a kontroller nem biztosít támogatott analóg kar- vagy ravasztartományokat.</string>
     <string name="config_gamepad_calibration_start">Tartsa az összes kart középen, az összes ravaszt pedig elengedve, amíg a nyugalmi időzítő le nem jár.</string>
     <string name="config_gamepad_calibration_save_failed">Nem sikerült menteni a kalibrálást. A meglévő kalibrálás változatlan marad.</string>
@@ -56,7 +56,7 @@
     <string name="config_gamepad_calibration_trigger_instructions">Engedje el, majd nyomja le teljesen az összes észlelt ravaszt, végül koppintson a Tovább gombra.</string>
     <string name="config_gamepad_calibration_review_instructions">Mentéssel lecserélheti ennek a kontrollernek a kalibrálását.</string>
     <string name="config_gamepad_calibration_saved">Kalibrálás mentve.</string>
-    <string name="config_gamepad_calibration_cancelled">Kalibrálás megszakítva. Az előző kalibrálás változatlan maradt.</string>
+    <string name="config_gamepad_calibration_cancelled">Kalibrálás megszakítva.</string>
     <string name="config_gamepad_calibration_waiting_samples">A kalibrálás a kontroller mintáira vár.</string>
     <string name="config_gamepad_diagnosis_header">Kontroller-diagnosztika</string>
     <string name="config_gamepad_diagnosis_mode">Állapot: <xliff:g id="status" example="enabled">%1$s</xliff:g> · Forrás: <xliff:g id="source" example="controller">%2$s</xliff:g></string>

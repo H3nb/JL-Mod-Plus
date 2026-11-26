@@ -45,7 +45,7 @@
     <string name="config_gamepad_calibration_phase_review">Klaar om op te slaan</string>
     <string name="config_gamepad_calibration_phase_committed">Opgeslagen</string>
     <string name="config_gamepad_calibration_phase_cancelled">Geannuleerd</string>
-    <string name="config_gamepad_calibration_waiting_controller">Verbind een controller met een ondersteunde analoge stick of trigger. De kalibratie begint zodra je een stick beweegt of een trigger indrukt; de bestaande kalibratie blijft ongewijzigd totdat je opslaat.</string>
+    <string name="config_gamepad_calibration_waiting_controller">Verbind een controller met een ondersteunde analoge stick of trigger. Beweeg een stick of druk een trigger in om te beginnen. De bestaande kalibratie blijft ongewijzigd, tenzij je een nieuwe opslaat of deze reset.</string>
     <string name="config_gamepad_calibration_no_analog_ranges">Deze controller biedt geen ondersteunde analoge stick- of triggerbereiken.</string>
     <string name="config_gamepad_calibration_start">Houd elke stick gecentreerd en elke trigger losgelaten totdat de neutrale timer is afgelopen.</string>
     <string name="config_gamepad_calibration_save_failed">Kan kalibratie niet opslaan. De bestaande kalibratie blijft ongewijzigd.</string>
@@ -56,7 +56,7 @@
     <string name="config_gamepad_calibration_trigger_instructions">Laat elke gedetecteerde trigger los, druk deze volledig in en tik vervolgens op Volgende.</string>
     <string name="config_gamepad_calibration_review_instructions">Sla op om de kalibratie van deze controller te vervangen.</string>
     <string name="config_gamepad_calibration_saved">Kalibratie opgeslagen.</string>
-    <string name="config_gamepad_calibration_cancelled">Kalibratie geannuleerd. De vorige kalibratie blijft ongewijzigd.</string>
+    <string name="config_gamepad_calibration_cancelled">Kalibratie geannuleerd.</string>
     <string name="config_gamepad_calibration_waiting_samples">Kalibratie wacht op controllermetingen.</string>
     <string name="config_gamepad_diagnosis_header">Controllerdiagnostiek</string>
     <string name="config_gamepad_diagnosis_mode">Status: <xliff:g id="status" example="enabled">%1$s</xliff:g> · Bron: <xliff:g id="source" example="controller">%2$s</xliff:g></string>

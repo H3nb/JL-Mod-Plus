@@ -45,7 +45,7 @@
     <string name="config_gamepad_calibration_phase_review">Gotowe do zapisania</string>
     <string name="config_gamepad_calibration_phase_committed">Zapisano</string>
     <string name="config_gamepad_calibration_phase_cancelled">Anulowano</string>
-    <string name="config_gamepad_calibration_waiting_controller">Podłącz kontroler z obsługiwanym drążkiem analogowym lub spustem. Kalibracja rozpocznie się po pierwszym ruchu drążka lub naciśnięciu spustu; obecna kalibracja pozostanie bez zmian do momentu zapisania.</string>
+    <string name="config_gamepad_calibration_waiting_controller">Podłącz kontroler z obsługiwanym drążkiem analogowym lub spustem. Porusz drążkiem lub naciśnij spust, aby rozpocząć. Obecna kalibracja zmieni się tylko po zapisaniu nowej lub jej zresetowaniu.</string>
     <string name="config_gamepad_calibration_no_analog_ranges">Ten kontroler nie udostępnia obsługiwanych zakresów drążków analogowych ani spustów.</string>
     <string name="config_gamepad_calibration_start">Utrzymuj wszystkie drążki na środku, a wszystkie spusty zwolnione, dopóki licznik położenia neutralnego nie zakończy odliczania.</string>
     <string name="config_gamepad_calibration_save_failed">Nie udało się zapisać kalibracji. Obecna kalibracja pozostała bez zmian.</string>
@@ -56,7 +56,7 @@
     <string name="config_gamepad_calibration_trigger_instructions">Zwolnij i wciśnij do końca każdy wykryty spust, a następnie dotknij Dalej.</string>
     <string name="config_gamepad_calibration_review_instructions">Zapisz, aby zastąpić kalibrację tego kontrolera.</string>
     <string name="config_gamepad_calibration_saved">Zapisano kalibrację.</string>
-    <string name="config_gamepad_calibration_cancelled">Kalibracja anulowana. Poprzednia kalibracja pozostała bez zmian.</string>
+    <string name="config_gamepad_calibration_cancelled">Kalibracja anulowana.</string>
     <string name="config_gamepad_calibration_waiting_samples">Kalibracja oczekuje na próbki z kontrolera.</string>
     <string name="config_gamepad_diagnosis_header">Diagnostyka kontrolera</string>
     <string name="config_gamepad_diagnosis_mode">Stan: <xliff:g id="status" example="enabled">%1$s</xliff:g> · Źródło: <xliff:g id="source" example="controller">%2$s</xliff:g></string>

@@ -45,7 +45,7 @@
     <string name="config_gamepad_calibration_phase_review">सहेजने के लिए तैयार</string>
     <string name="config_gamepad_calibration_phase_committed">सहेजा गया</string>
     <string name="config_gamepad_calibration_phase_cancelled">रद्द किया गया</string>
-    <string name="config_gamepad_calibration_waiting_controller">समर्थित एनालॉग स्टिक या ट्रिगर वाला कंट्रोलर कनेक्ट करें। पहली बार स्टिक हिलाने या ट्रिगर दबाने पर कैलिब्रेशन शुरू होता है; आपके सहेजने तक मौजूदा कैलिब्रेशन अपरिवर्तित रहता है।</string>
+    <string name="config_gamepad_calibration_waiting_controller">समर्थित एनालॉग स्टिक या ट्रिगर वाला कंट्रोलर कनेक्ट करें। शुरू करने के लिए स्टिक हिलाएं या ट्रिगर दबाएं। मौजूदा कैलिब्रेशन तभी बदलेगा जब आप नया कैलिब्रेशन सहेजेंगे या उसे रीसेट करेंगे।</string>
     <string name="config_gamepad_calibration_no_analog_ranges">यह कंट्रोलर समर्थित एनालॉग स्टिक या ट्रिगर सीमाएं प्रदान नहीं करता।</string>
     <string name="config_gamepad_calibration_start">न्यूट्रल टाइमर पूरा होने तक सभी स्टिक को केंद्र में रखें और सभी ट्रिगर छोड़े रखें।</string>
     <string name="config_gamepad_calibration_save_failed">कैलिब्रेशन सहेजा नहीं जा सका। मौजूदा कैलिब्रेशन अपरिवर्तित रहता है।</string>
@@ -56,7 +56,7 @@
     <string name="config_gamepad_calibration_trigger_instructions">पहचाने गए हर ट्रिगर को छोड़कर पूरा दबाएं, फिर “अगला” पर टैप करें।</string>
     <string name="config_gamepad_calibration_review_instructions">इस कंट्रोलर का कैलिब्रेशन बदलने के लिए सहेजें।</string>
     <string name="config_gamepad_calibration_saved">कैलिब्रेशन सहेजा गया।</string>
-    <string name="config_gamepad_calibration_cancelled">कैलिब्रेशन रद्द किया गया। पिछला कैलिब्रेशन अपरिवर्तित है।</string>
+    <string name="config_gamepad_calibration_cancelled">कैलिब्रेशन रद्द किया गया।</string>
     <string name="config_gamepad_calibration_waiting_samples">कैलिब्रेशन कंट्रोलर नमूनों की प्रतीक्षा कर रहा है।</string>
     <string name="config_gamepad_diagnosis_header">कंट्रोलर डायग्नोस्टिक्स</string>
     <string name="config_gamepad_diagnosis_mode">स्थिति: <xliff:g id="status" example="enabled">%1$s</xliff:g> · स्रोत: <xliff:g id="source" example="controller">%2$s</xliff:g></string>

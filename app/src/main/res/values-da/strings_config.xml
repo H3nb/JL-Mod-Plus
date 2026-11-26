@@ -45,7 +45,7 @@
     <string name="config_gamepad_calibration_phase_review">Klar til at gemme</string>
     <string name="config_gamepad_calibration_phase_committed">Gemt</string>
     <string name="config_gamepad_calibration_phase_cancelled">Annulleret</string>
-    <string name="config_gamepad_calibration_waiting_controller">Tilslut en controller med en understøttet analog styrepind eller aftrækker. Kalibreringen starter, første gang du bevæger en styrepind eller trykker på en aftrækker; den eksisterende kalibrering forbliver uændret, indtil du gemmer.</string>
+    <string name="config_gamepad_calibration_waiting_controller">Tilslut en controller med en understøttet analog styrepind eller aftrækker. Bevæg en styrepind, eller tryk på en aftrækker for at begynde. Den eksisterende kalibrering ændres kun, hvis du gemmer en ny eller nulstiller den.</string>
     <string name="config_gamepad_calibration_no_analog_ranges">Denne controller leverer ingen understøttede analoge styrepind- eller aftrækkerområder.</string>
     <string name="config_gamepad_calibration_start">Hold alle styrepinde centreret og alle aftrækkere sluppet, indtil neutraltimeren er færdig.</string>
     <string name="config_gamepad_calibration_save_failed">Kalibreringen kunne ikke gemmes. Den eksisterende kalibrering forbliver uændret.</string>
@@ -56,7 +56,7 @@
     <string name="config_gamepad_calibration_trigger_instructions">Slip hver registreret aftrækker, tryk den helt i bund, og tryk derefter på Næste.</string>
     <string name="config_gamepad_calibration_review_instructions">Gem for at erstatte kalibreringen for denne controller.</string>
     <string name="config_gamepad_calibration_saved">Kalibrering gemt.</string>
-    <string name="config_gamepad_calibration_cancelled">Kalibrering annulleret. Den forrige kalibrering er uændret.</string>
+    <string name="config_gamepad_calibration_cancelled">Kalibrering annulleret.</string>
     <string name="config_gamepad_calibration_waiting_samples">Kalibreringen venter på inputprøver fra controlleren.</string>
     <string name="config_gamepad_diagnosis_header">Controllerdiagnostik</string>
     <string name="config_gamepad_diagnosis_mode">Status: <xliff:g id="status" example="enabled">%1$s</xliff:g> · Kilde: <xliff:g id="source" example="controller">%2$s</xliff:g></string>

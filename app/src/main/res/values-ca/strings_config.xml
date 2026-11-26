@@ -44,7 +44,7 @@
     <string name="config_gamepad_calibration_phase_review">A punt per desar</string>
     <string name="config_gamepad_calibration_phase_committed">Desat</string>
     <string name="config_gamepad_calibration_phase_cancelled">Cancel·lat</string>
-    <string name="config_gamepad_calibration_waiting_controller">Connecta un comandament amb una palanca analògica o un gallet compatible. El calibratge comença quan mous una palanca o prems un gallet per primera vegada; el calibratge existent no canviarà fins que desis.</string>
+    <string name="config_gamepad_calibration_waiting_controller">Connecta un comandament amb una palanca analògica o un gallet compatible. Mou una palanca o prem un gallet per començar. El calibratge actual no canviarà tret que en desis un de nou o el restableixis.</string>
     <string name="config_gamepad_calibration_no_analog_ranges">Aquest comandament no proporciona intervals compatibles de palanca analògica ni de gallet.</string>
     <string name="config_gamepad_calibration_start">Mantén totes les palanques centrades i tots els gallets deixats anar fins que acabi el temporitzador de posició neutra.</string>
     <string name="config_gamepad_calibration_save_failed">No s’ha pogut desar el calibratge. El calibratge existent es manté sense canvis.</string>
@@ -55,7 +55,7 @@
     <string name="config_gamepad_calibration_trigger_instructions">Deixa anar i prem a fons cada gallet detectat i després toca Següent.</string>
     <string name="config_gamepad_calibration_review_instructions">Desa per substituir el calibratge d’aquest comandament.</string>
     <string name="config_gamepad_calibration_saved">Calibratge desat.</string>
-    <string name="config_gamepad_calibration_cancelled">Calibratge cancel·lat. El calibratge anterior no ha canviat.</string>
+    <string name="config_gamepad_calibration_cancelled">Calibratge cancel·lat.</string>
     <string name="config_gamepad_calibration_waiting_samples">El calibratge està esperant mostres del comandament.</string>
     <string name="config_gamepad_diagnosis_header">Diagnòstic del comandament</string>
     <string name="config_gamepad_diagnosis_mode">Estat: <xliff:g id="status" example="enabled">%1$s</xliff:g> · Origen: <xliff:g id="source" example="controller">%2$s</xliff:g></string>

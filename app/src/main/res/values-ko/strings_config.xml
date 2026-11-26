@@ -45,7 +45,7 @@
     <string name="config_gamepad_calibration_phase_review">저장할 준비 완료</string>
     <string name="config_gamepad_calibration_phase_committed">저장됨</string>
     <string name="config_gamepad_calibration_phase_cancelled">취소됨</string>
-    <string name="config_gamepad_calibration_waiting_controller">지원되는 아날로그 스틱 또는 트리거가 있는 컨트롤러를 연결하세요. 스틱을 처음 움직이거나 트리거를 누르면 보정이 시작되며, 저장하기 전까지 기존 보정은 변경되지 않습니다.</string>
+    <string name="config_gamepad_calibration_waiting_controller">지원되는 아날로그 스틱 또는 트리거가 있는 컨트롤러를 연결하세요. 스틱을 움직이거나 트리거를 눌러 시작하세요. 새 보정 값을 저장하거나 초기화하지 않으면 기존 보정 값은 변경되지 않습니다.</string>
     <string name="config_gamepad_calibration_no_analog_ranges">이 컨트롤러는 지원되는 아날로그 스틱 또는 트리거 범위를 제공하지 않습니다.</string>
     <string name="config_gamepad_calibration_start">중립 타이머가 완료될 때까지 모든 스틱을 중앙에 두고 모든 트리거에서 손을 떼세요.</string>
     <string name="config_gamepad_calibration_save_failed">보정을 저장할 수 없습니다. 기존 보정이 그대로 유지됩니다.</string>
@@ -56,7 +56,7 @@
     <string name="config_gamepad_calibration_trigger_instructions">감지된 모든 트리거를 놓았다가 끝까지 누른 다음 ‘다음’을 탭하세요.</string>
     <string name="config_gamepad_calibration_review_instructions">저장하면 이 컨트롤러의 보정 정보가 교체됩니다.</string>
     <string name="config_gamepad_calibration_saved">보정이 저장되었습니다.</string>
-    <string name="config_gamepad_calibration_cancelled">보정이 취소되었습니다. 이전 보정은 변경되지 않았습니다.</string>
+    <string name="config_gamepad_calibration_cancelled">보정이 취소되었습니다.</string>
     <string name="config_gamepad_calibration_waiting_samples">컨트롤러 샘플을 기다리는 중입니다.</string>
     <string name="config_gamepad_diagnosis_header">컨트롤러 진단</string>
     <string name="config_gamepad_diagnosis_mode">상태: <xliff:g id="status" example="enabled">%1$s</xliff:g> · 소스: <xliff:g id="source" example="controller">%2$s</xliff:g></string>

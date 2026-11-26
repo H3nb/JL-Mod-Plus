@@ -44,7 +44,7 @@
     <string name="config_gamepad_calibration_phase_review">Έτοιμο για αποθήκευση</string>
     <string name="config_gamepad_calibration_phase_committed">Αποθηκεύτηκε</string>
     <string name="config_gamepad_calibration_phase_cancelled">Ακυρώθηκε</string>
-    <string name="config_gamepad_calibration_waiting_controller">Συνδέστε ένα χειριστήριο με υποστηριζόμενο αναλογικό μοχλό ή σκανδάλη. Η βαθμονόμηση ξεκινά όταν μετακινήσετε έναν μοχλό ή πατήσετε μια σκανδάλη για πρώτη φορά· η υπάρχουσα βαθμονόμηση παραμένει αμετάβλητη μέχρι να αποθηκεύσετε.</string>
+    <string name="config_gamepad_calibration_waiting_controller">Συνδέστε ένα χειριστήριο με υποστηριζόμενο αναλογικό μοχλό ή σκανδάλη. Μετακινήστε έναν μοχλό ή πατήστε μια σκανδάλη για να ξεκινήσετε. Η υπάρχουσα βαθμονόμηση παραμένει αμετάβλητη, εκτός αν αποθηκεύσετε μια νέα ή την επαναφέρετε.</string>
     <string name="config_gamepad_calibration_no_analog_ranges">Αυτό το χειριστήριο δεν παρέχει υποστηριζόμενα εύρη αναλογικού μοχλού ή σκανδάλης.</string>
     <string name="config_gamepad_calibration_start">Διατηρήστε κάθε μοχλό στο κέντρο και κάθε σκανδάλη ελεύθερη μέχρι να ολοκληρωθεί το χρονόμετρο ουδέτερης θέσης.</string>
     <string name="config_gamepad_calibration_save_failed">Δεν ήταν δυνατή η αποθήκευση της βαθμονόμησης. Η υπάρχουσα βαθμονόμηση παραμένει αμετάβλητη.</string>
@@ -55,7 +55,7 @@
     <string name="config_gamepad_calibration_trigger_instructions">Αφήστε και πατήστε πλήρως κάθε εντοπισμένη σκανδάλη και έπειτα πατήστε Επόμενο.</string>
     <string name="config_gamepad_calibration_review_instructions">Αποθηκεύστε για να αντικαταστήσετε τη βαθμονόμηση αυτού του χειριστηρίου.</string>
     <string name="config_gamepad_calibration_saved">Η βαθμονόμηση αποθηκεύτηκε.</string>
-    <string name="config_gamepad_calibration_cancelled">Η βαθμονόμηση ακυρώθηκε. Η προηγούμενη βαθμονόμηση παραμένει αμετάβλητη.</string>
+    <string name="config_gamepad_calibration_cancelled">Η βαθμονόμηση ακυρώθηκε.</string>
     <string name="config_gamepad_calibration_waiting_samples">Η βαθμονόμηση αναμένει δείγματα από το χειριστήριο.</string>
     <string name="config_gamepad_diagnosis_header">Διάγνωση χειριστηρίου</string>
     <string name="config_gamepad_diagnosis_mode">Κατάσταση: <xliff:g id="status" example="enabled">%1$s</xliff:g> · Πηγή: <xliff:g id="source" example="controller">%2$s</xliff:g></string>

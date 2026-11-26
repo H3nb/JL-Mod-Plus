@@ -45,7 +45,7 @@
     <string name="config_gamepad_calibration_phase_review">Ready to save</string>
     <string name="config_gamepad_calibration_phase_committed">Saved</string>
     <string name="config_gamepad_calibration_phase_cancelled">Canceled</string>
-    <string name="config_gamepad_calibration_waiting_controller">Connect a controller with a supported analog stick or trigger. Calibration begins when you first move a stick or press a trigger; the existing calibration remains unchanged until you save.</string>
+    <string name="config_gamepad_calibration_waiting_controller">Connect a controller with a supported analog stick or trigger. Move a stick or press a trigger to begin. The existing calibration stays unchanged unless you save a new one or reset it.</string>
     <string name="config_gamepad_calibration_no_analog_ranges">This controller doesn’t provide supported analog stick or trigger ranges.</string>
     <string name="config_gamepad_calibration_start">Keep every stick centered and every trigger released until the neutral timer completes.</string>
     <string name="config_gamepad_calibration_save_failed">Couldn’t save calibration. The existing calibration remains unchanged.</string>
@@ -56,7 +56,7 @@
     <string name="config_gamepad_calibration_trigger_instructions">Release and fully press every detected trigger, then tap Next.</string>
     <string name="config_gamepad_calibration_review_instructions">Save to replace the calibration for this controller.</string>
     <string name="config_gamepad_calibration_saved">Calibration saved.</string>
-    <string name="config_gamepad_calibration_cancelled">Calibration canceled. The previous calibration is unchanged.</string>
+    <string name="config_gamepad_calibration_cancelled">Calibration canceled.</string>
     <string name="config_gamepad_calibration_waiting_samples">Calibration is waiting for controller samples.</string>
     <string name="config_gamepad_diagnosis_header">Controller diagnostics</string>
     <string name="config_gamepad_diagnosis_mode">Status: <xliff:g id="status" example="enabled">%1$s</xliff:g> · Source: <xliff:g id="source" example="controller">%2$s</xliff:g></string>

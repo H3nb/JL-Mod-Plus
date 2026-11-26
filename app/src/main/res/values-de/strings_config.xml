@@ -45,7 +45,7 @@
     <string name="config_gamepad_calibration_phase_review">Bereit zum Speichern</string>
     <string name="config_gamepad_calibration_phase_committed">Gespeichert</string>
     <string name="config_gamepad_calibration_phase_cancelled">Abgebrochen</string>
-    <string name="config_gamepad_calibration_waiting_controller">Verbinden Sie einen Controller mit unterstütztem Analog-Stick oder Trigger. Die Kalibrierung beginnt, sobald Sie erstmals einen Stick bewegen oder einen Trigger drücken; die bestehende Kalibrierung bleibt bis zum Speichern unverändert.</string>
+    <string name="config_gamepad_calibration_waiting_controller">Verbinden Sie einen Controller mit unterstütztem Analogstick oder Trigger. Bewegen Sie einen Stick oder drücken Sie einen Trigger, um zu beginnen. Die bestehende Kalibrierung bleibt unverändert, sofern Sie keine neue speichern oder sie zurücksetzen.</string>
     <string name="config_gamepad_calibration_no_analog_ranges">Dieser Controller stellt keine unterstützten Analog-Stick- oder Trigger-Bereiche bereit.</string>
     <string name="config_gamepad_calibration_start">Lassen Sie alle Sticks zentriert und alle Trigger losgelassen, bis der Neutralstellungs-Timer abgelaufen ist.</string>
     <string name="config_gamepad_calibration_save_failed">Kalibrierung konnte nicht gespeichert werden. Die bestehende Kalibrierung bleibt unverändert.</string>
@@ -56,7 +56,7 @@
     <string name="config_gamepad_calibration_trigger_instructions">Lassen Sie jeden erkannten Trigger los, drücken Sie ihn vollständig durch und tippen Sie dann auf „Weiter“.</string>
     <string name="config_gamepad_calibration_review_instructions">Speichern Sie, um die Kalibrierung dieses Controllers zu ersetzen.</string>
     <string name="config_gamepad_calibration_saved">Kalibrierung gespeichert.</string>
-    <string name="config_gamepad_calibration_cancelled">Kalibrierung abgebrochen. Die vorherige Kalibrierung bleibt unverändert.</string>
+    <string name="config_gamepad_calibration_cancelled">Kalibrierung abgebrochen.</string>
     <string name="config_gamepad_calibration_waiting_samples">Kalibrierung wartet auf Controller-Messwerte.</string>
     <string name="config_gamepad_diagnosis_header">Controller-Diagnose</string>
     <string name="config_gamepad_diagnosis_mode">Status: <xliff:g id="status" example="enabled">%1$s</xliff:g> · Quelle: <xliff:g id="source" example="controller">%2$s</xliff:g></string>

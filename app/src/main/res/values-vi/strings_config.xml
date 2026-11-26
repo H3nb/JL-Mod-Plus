@@ -45,7 +45,7 @@
     <string name="config_gamepad_calibration_phase_review">Sẵn sàng lưu</string>
     <string name="config_gamepad_calibration_phase_committed">Đã lưu</string>
     <string name="config_gamepad_calibration_phase_cancelled">Đã hủy</string>
-    <string name="config_gamepad_calibration_waiting_controller">Kết nối tay cầm có cần analog hoặc nút cò được hỗ trợ. Quá trình hiệu chỉnh bắt đầu khi bạn di chuyển cần hoặc nhấn cò lần đầu; hiệu chỉnh hiện tại sẽ giữ nguyên cho đến khi bạn lưu.</string>
+    <string name="config_gamepad_calibration_waiting_controller">Kết nối tay cầm có cần analog hoặc nút cò được hỗ trợ. Di chuyển cần hoặc nhấn nút cò để bắt đầu. Hiệu chỉnh hiện tại sẽ giữ nguyên trừ khi bạn lưu bản hiệu chỉnh mới hoặc đặt lại.</string>
     <string name="config_gamepad_calibration_no_analog_ranges">Tay cầm này không cung cấp phạm vi cần analog hoặc nút cò được hỗ trợ.</string>
     <string name="config_gamepad_calibration_start">Giữ tất cả cần analog ở chính giữa và thả hết các nút cò cho đến khi hết thời gian đo vị trí trung lập.</string>
     <string name="config_gamepad_calibration_save_failed">Không thể lưu hiệu chỉnh. Hiệu chỉnh hiện tại vẫn giữ nguyên.</string>
@@ -56,7 +56,7 @@
     <string name="config_gamepad_calibration_trigger_instructions">Thả ra rồi nhấn hết hành trình mọi nút cò đã phát hiện, sau đó nhấn Tiếp theo.</string>
     <string name="config_gamepad_calibration_review_instructions">Lưu để thay thế dữ liệu hiệu chỉnh của tay cầm này.</string>
     <string name="config_gamepad_calibration_saved">Đã lưu hiệu chỉnh.</string>
-    <string name="config_gamepad_calibration_cancelled">Đã hủy hiệu chỉnh. Hiệu chỉnh trước đó vẫn giữ nguyên.</string>
+    <string name="config_gamepad_calibration_cancelled">Đã hủy hiệu chỉnh.</string>
     <string name="config_gamepad_calibration_waiting_samples">Quá trình hiệu chỉnh đang chờ mẫu tín hiệu từ tay cầm.</string>
     <string name="config_gamepad_diagnosis_header">Chẩn đoán tay cầm</string>
     <string name="config_gamepad_diagnosis_mode">Trạng thái: <xliff:g id="status" example="enabled">%1$s</xliff:g> · Nguồn: <xliff:g id="source" example="controller">%2$s</xliff:g></string>

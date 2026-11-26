@@ -45,7 +45,7 @@
     <string name="config_gamepad_calibration_phase_review">Готово за запазване</string>
     <string name="config_gamepad_calibration_phase_committed">Запазено</string>
     <string name="config_gamepad_calibration_phase_cancelled">Отменено</string>
-    <string name="config_gamepad_calibration_waiting_controller">Свържете контролер с поддържан аналогов стик или спусък. Калибрирането започва при първото движение на стик или натискане на спусък; текущата калибрация остава непроменена, докато не запазите.</string>
+    <string name="config_gamepad_calibration_waiting_controller">Свържете контролер с поддържан аналогов стик или спусък. За да започнете, преместете стик или натиснете спусък. Текущото калибриране остава непроменено, освен ако не запазите ново или не го нулирате.</string>
     <string name="config_gamepad_calibration_no_analog_ranges">Този контролер не предоставя поддържани обхвати за аналогов стик или спусък.</string>
     <string name="config_gamepad_calibration_start">Дръжте всеки стик в центъра и всеки спусък отпуснат, докато таймерът за неутрална позиция изтече.</string>
     <string name="config_gamepad_calibration_save_failed">Калибрацията не можа да бъде запазена. Текущата калибрация остава непроменена.</string>
@@ -56,7 +56,7 @@
     <string name="config_gamepad_calibration_trigger_instructions">Отпуснете и натиснете докрай всеки открит спусък, след което докоснете „Напред“.</string>
     <string name="config_gamepad_calibration_review_instructions">Запазете, за да замените калибрацията на този контролер.</string>
     <string name="config_gamepad_calibration_saved">Калибрацията е запазена.</string>
-    <string name="config_gamepad_calibration_cancelled">Калибрирането е отменено. Предишната калибрация остава непроменена.</string>
+    <string name="config_gamepad_calibration_cancelled">Калибрирането е отменено.</string>
     <string name="config_gamepad_calibration_waiting_samples">Калибрирането изчаква данни от контролера.</string>
     <string name="config_gamepad_diagnosis_header">Диагностика на контролера</string>
     <string name="config_gamepad_diagnosis_mode">Състояние: <xliff:g id="status" example="enabled">%1$s</xliff:g> · Източник: <xliff:g id="source" example="controller">%2$s</xliff:g></string>

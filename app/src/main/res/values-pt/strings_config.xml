@@ -45,7 +45,7 @@
     <string name="config_gamepad_calibration_phase_review">Pronto para guardar</string>
     <string name="config_gamepad_calibration_phase_committed">Guardado</string>
     <string name="config_gamepad_calibration_phase_cancelled">Cancelado</string>
-    <string name="config_gamepad_calibration_waiting_controller">Ligue um comando com um manípulo analógico ou gatilho suportado. A calibração começa quando mover um manípulo ou premir um gatilho pela primeira vez; a calibração existente mantém-se inalterada até guardar.</string>
+    <string name="config_gamepad_calibration_waiting_controller">Ligue um comando com um manípulo analógico ou gatilho suportado. Mova um manípulo ou prima um gatilho para começar. A calibração atual mantém-se inalterada, a menos que guarde uma nova ou a reponha.</string>
     <string name="config_gamepad_calibration_no_analog_ranges">Este comando não fornece intervalos suportados de manípulo analógico ou gatilho.</string>
     <string name="config_gamepad_calibration_start">Mantenha todos os manípulos centrados e todos os gatilhos soltos até o temporizador neutro terminar.</string>
     <string name="config_gamepad_calibration_save_failed">Não foi possível guardar a calibração. A calibração existente mantém-se inalterada.</string>
@@ -56,7 +56,7 @@
     <string name="config_gamepad_calibration_trigger_instructions">Solte e prima completamente cada gatilho detetado e toque em Seguinte.</string>
     <string name="config_gamepad_calibration_review_instructions">Guarde para substituir a calibração deste comando.</string>
     <string name="config_gamepad_calibration_saved">Calibração guardada.</string>
-    <string name="config_gamepad_calibration_cancelled">Calibração cancelada. A calibração anterior mantém-se inalterada.</string>
+    <string name="config_gamepad_calibration_cancelled">Calibração cancelada.</string>
     <string name="config_gamepad_calibration_waiting_samples">A calibração está a aguardar amostras do comando.</string>
     <string name="config_gamepad_diagnosis_header">Diagnóstico do comando</string>
     <string name="config_gamepad_diagnosis_mode">Estado: <xliff:g id="status" example="enabled">%1$s</xliff:g> · Origem: <xliff:g id="source" example="controller">%2$s</xliff:g></string>

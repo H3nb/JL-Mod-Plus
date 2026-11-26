@@ -42,7 +42,7 @@
     <string name="config_gamepad_calibration_phase_review">可以保存</string>
     <string name="config_gamepad_calibration_phase_committed">已保存</string>
     <string name="config_gamepad_calibration_phase_cancelled">已取消</string>
-    <string name="config_gamepad_calibration_waiting_controller">请连接支持模拟摇杆或扳机的手柄。首次推动摇杆或按下扳机后将开始校准；在保存之前，现有校准保持不变。</string>
+    <string name="config_gamepad_calibration_waiting_controller">请连接支持模拟摇杆或扳机的手柄。推动摇杆或按下扳机即可开始。除非保存新的校准数据或重置，否则现有校准保持不变。</string>
     <string name="config_gamepad_calibration_no_analog_ranges">此手柄不提供受支持的模拟摇杆或扳机行程范围。</string>
     <string name="config_gamepad_calibration_start">请让所有摇杆保持居中并松开所有扳机，直至居中计时完成。</string>
     <string name="config_gamepad_calibration_save_failed">无法保存校准，现有校准保持不变。</string>
@@ -53,7 +53,7 @@
     <string name="config_gamepad_calibration_trigger_instructions">请完全松开再按到底每个已检测到的扳机，然后点按“下一步”。</string>
     <string name="config_gamepad_calibration_review_instructions">保存后将替换此手柄的校准数据。</string>
     <string name="config_gamepad_calibration_saved">校准已保存。</string>
-    <string name="config_gamepad_calibration_cancelled">校准已取消，原有校准保持不变。</string>
+    <string name="config_gamepad_calibration_cancelled">校准已取消。</string>
     <string name="config_gamepad_calibration_waiting_samples">校准正在等待手柄采样数据。</string>
     <string name="config_gamepad_diagnosis_header">手柄诊断</string>
     <string name="config_gamepad_diagnosis_mode">状态：<xliff:g id="status" example="enabled">%1$s</xliff:g> · 来源：<xliff:g id="source" example="controller">%2$s</xliff:g></string>

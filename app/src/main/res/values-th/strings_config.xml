@@ -45,7 +45,7 @@
     <string name="config_gamepad_calibration_phase_review">พร้อมบันทึก</string>
     <string name="config_gamepad_calibration_phase_committed">บันทึกแล้ว</string>
     <string name="config_gamepad_calibration_phase_cancelled">ยกเลิกแล้ว</string>
-    <string name="config_gamepad_calibration_waiting_controller">เชื่อมต่อคอนโทรลเลอร์ที่มีอนาล็อกสติ๊กหรือไกปุ่มที่รองรับ การปรับเทียบจะเริ่มเมื่อคุณขยับสติ๊กหรือกดไกปุ่มครั้งแรก การปรับเทียบเดิมจะยังไม่เปลี่ยนแปลงจนกว่าคุณจะบันทึก</string>
+    <string name="config_gamepad_calibration_waiting_controller">เชื่อมต่อคอนโทรลเลอร์ที่มีอนาล็อกสติ๊กหรือปุ่มทริกเกอร์ที่รองรับ ขยับสติ๊กหรือกดปุ่มทริกเกอร์เพื่อเริ่ม การปรับเทียบเดิมจะไม่เปลี่ยนแปลง เว้นแต่คุณจะบันทึกการปรับเทียบใหม่หรือรีเซ็ต</string>
     <string name="config_gamepad_calibration_no_analog_ranges">คอนโทรลเลอร์นี้ไม่มีช่วงอนาล็อกสติ๊กหรือไกปุ่มที่รองรับ</string>
     <string name="config_gamepad_calibration_start">ปล่อยสติ๊กทุกอันไว้ตรงกลางและปล่อยไกปุ่มทุกอันจนกว่าตัวนับเวลาตำแหน่งกึ่งกลางจะเสร็จสิ้น</string>
     <string name="config_gamepad_calibration_save_failed">ไม่สามารถบันทึกการปรับเทียบได้ การปรับเทียบเดิมจะยังคงอยู่</string>
@@ -56,7 +56,7 @@
     <string name="config_gamepad_calibration_trigger_instructions">ปล่อยแล้วกดไกปุ่มทุกอันที่ตรวจพบให้สุด จากนั้นแตะ ถัดไป</string>
     <string name="config_gamepad_calibration_review_instructions">บันทึกเพื่อแทนที่ข้อมูลการปรับเทียบของคอนโทรลเลอร์นี้</string>
     <string name="config_gamepad_calibration_saved">บันทึกการปรับเทียบแล้ว</string>
-    <string name="config_gamepad_calibration_cancelled">ยกเลิกการปรับเทียบแล้ว การปรับเทียบก่อนหน้ายังคงไม่เปลี่ยนแปลง</string>
+    <string name="config_gamepad_calibration_cancelled">ยกเลิกการปรับเทียบแล้ว</string>
     <string name="config_gamepad_calibration_waiting_samples">การปรับเทียบกำลังรอข้อมูลตัวอย่างจากคอนโทรลเลอร์</string>
     <string name="config_gamepad_diagnosis_header">การวินิจฉัยคอนโทรลเลอร์</string>
     <string name="config_gamepad_diagnosis_mode">สถานะ: <xliff:g id="status" example="enabled">%1$s</xliff:g> · แหล่งที่มา: <xliff:g id="source" example="controller">%2$s</xliff:g></string>

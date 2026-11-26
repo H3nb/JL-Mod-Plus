@@ -45,7 +45,7 @@
     <string name="config_gamepad_calibration_phase_review">جاهز للحفظ</string>
     <string name="config_gamepad_calibration_phase_committed">تم الحفظ</string>
     <string name="config_gamepad_calibration_phase_cancelled">تم الإلغاء</string>
-    <string name="config_gamepad_calibration_waiting_controller">صِل وحدة تحكم تحتوي على عصا تحكم تناظرية أو زناد مدعوم. تبدأ المعايرة عند أول حركة للعصا أو ضغط على الزناد؛ وتبقى المعايرة الحالية دون تغيير حتى تحفظها.</string>
+    <string name="config_gamepad_calibration_waiting_controller">صِل وحدة تحكم تحتوي على عصا تحكم تناظرية أو زناد مدعوم. حرّك عصا أو اضغط على زناد للبدء. تظل المعايرة الحالية دون تغيير ما لم تحفظ معايرة جديدة أو تعِد ضبطها.</string>
     <string name="config_gamepad_calibration_no_analog_ranges">لا توفر وحدة التحكم هذه نطاقات مدعومة لعصا التحكم التناظرية أو الزنادات.</string>
     <string name="config_gamepad_calibration_start">أبقِ كل عصا في المنتصف وكل زناد محررًا حتى ينتهي مؤقت الوضع المحايد.</string>
     <string name="config_gamepad_calibration_save_failed">تعذّر حفظ المعايرة. تبقى المعايرة الحالية دون تغيير.</string>
@@ -56,7 +56,7 @@
     <string name="config_gamepad_calibration_trigger_instructions">حرّر كل زناد مكتشف واضغطه بالكامل، ثم انقر على «التالي».</string>
     <string name="config_gamepad_calibration_review_instructions">احفظ لاستبدال معايرة وحدة التحكم هذه.</string>
     <string name="config_gamepad_calibration_saved">تم حفظ المعايرة.</string>
-    <string name="config_gamepad_calibration_cancelled">أُلغيت المعايرة. تبقى المعايرة السابقة دون تغيير.</string>
+    <string name="config_gamepad_calibration_cancelled">أُلغيت المعايرة.</string>
     <string name="config_gamepad_calibration_waiting_samples">تنتظر المعايرة عينات من وحدة التحكم.</string>
     <string name="config_gamepad_diagnosis_header">تشخيص وحدة التحكم</string>
     <string name="config_gamepad_diagnosis_mode">الحالة: <xliff:g id="status" example="enabled">%1$s</xliff:g> · المصدر: <xliff:g id="source" example="controller">%2$s</xliff:g></string>

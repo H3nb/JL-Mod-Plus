@@ -45,7 +45,7 @@
     <string name="config_gamepad_calibration_phase_review">ସେଭ୍ କରିବାକୁ ପ୍ରସ୍ତୁତ</string>
     <string name="config_gamepad_calibration_phase_committed">ସେଭ୍ ହୋଇଛି</string>
     <string name="config_gamepad_calibration_phase_cancelled">ବାତିଲ୍ ହୋଇଛି</string>
-    <string name="config_gamepad_calibration_waiting_controller">ସମର୍ଥିତ ଆନାଲଗ୍ ଷ୍ଟିକ୍ କିମ୍ବା ଟ୍ରିଗର୍ ଥିବା ଏକ କଣ୍ଟ୍ରୋଲର୍ ସଂଯୋଗ କରନ୍ତୁ। ଆପଣ ପ୍ରଥମେ ଷ୍ଟିକ୍ ଘୁଞ୍ଚାଇଲେ କିମ୍ବା ଟ୍ରିଗର୍ ଦବାଇଲେ କ୍ୟାଲିବ୍ରେସନ୍ ଆରମ୍ଭ ହୁଏ; ସେଭ୍ ନ କରିବା ପର୍ଯ୍ୟନ୍ତ ବିଦ୍ୟମାନ କ୍ୟାଲିବ୍ରେସନ୍ ଅପରିବର୍ତ୍ତିତ ରହେ।</string>
+    <string name="config_gamepad_calibration_waiting_controller">ସମର୍ଥିତ ଆନାଲଗ୍ ଷ୍ଟିକ୍ କିମ୍ବା ଟ୍ରିଗର୍ ଥିବା କଣ୍ଟ୍ରୋଲର୍ ସଂଯୋଗ କରନ୍ତୁ। ଆରମ୍ଭ କରିବାକୁ ଷ୍ଟିକ୍ ଘୁଞ୍ଚାନ୍ତୁ କିମ୍ବା ଟ୍ରିଗର୍ ଦବାନ୍ତୁ। ନୂଆ କ୍ୟାଲିବ୍ରେସନ୍ ସେଭ୍ କିମ୍ବା ରିସେଟ୍ ନ କଲେ ବର୍ତ୍ତମାନର କ୍ୟାଲିବ୍ରେସନ୍ ବଦଳିବ ନାହିଁ।</string>
     <string name="config_gamepad_calibration_no_analog_ranges">ଏହି କଣ୍ଟ୍ରୋଲର୍ ସମର୍ଥିତ ଆନାଲଗ୍ ଷ୍ଟିକ୍ କିମ୍ବା ଟ୍ରିଗର୍ ସୀମା ପ୍ରଦାନ କରେ ନାହିଁ।</string>
     <string name="config_gamepad_calibration_start">ନିଉଟ୍ରାଲ୍ ଟାଇମର୍ ଶେଷ ନ ହେବା ପର୍ଯ୍ୟନ୍ତ ପ୍ରତି ଷ୍ଟିକ୍ କୁ କେନ୍ଦ୍ରରେ ଏବଂ ପ୍ରତି ଟ୍ରିଗର୍ କୁ ମୁକ୍ତ ରଖନ୍ତୁ।</string>
     <string name="config_gamepad_calibration_save_failed">କ୍ୟାଲିବ୍ରେସନ୍ ସେଭ୍ ହୋଇପାରିଲା ନାହିଁ। ବିଦ୍ୟମାନ କ୍ୟାଲିବ୍ରେସନ୍ ଅପରିବର୍ତ୍ତିତ ରହିଛି।</string>
@@ -56,7 +56,7 @@
     <string name="config_gamepad_calibration_trigger_instructions">ଚିହ୍ନଟ ହୋଇଥିବା ପ୍ରତ୍ୟେକ ଟ୍ରିଗର୍ ଛାଡ଼ି ଦିଅନ୍ତୁ ଓ ପୂରା ଦବାନ୍ତୁ, ତାପରେ ପରବର୍ତ୍ତୀ ଟ୍ୟାପ୍ କରନ୍ତୁ।</string>
     <string name="config_gamepad_calibration_review_instructions">ଏହି କଣ୍ଟ୍ରୋଲର୍‌ର କ୍ୟାଲିବ୍ରେସନ୍ ବଦଳାଇବା ପାଇଁ ସେଭ୍ କରନ୍ତୁ।</string>
     <string name="config_gamepad_calibration_saved">କ୍ୟାଲିବ୍ରେସନ୍ ସେଭ୍ ହେଲା।</string>
-    <string name="config_gamepad_calibration_cancelled">କ୍ୟାଲିବ୍ରେସନ୍ ବାତିଲ୍ ହେଲା। ପୂର୍ବ କ୍ୟାଲିବ୍ରେସନ୍ ଅପରିବର୍ତ୍ତିତ ରହିଛି।</string>
+    <string name="config_gamepad_calibration_cancelled">କ୍ୟାଲିବ୍ରେସନ୍ ବାତିଲ୍ ହେଲା।</string>
     <string name="config_gamepad_calibration_waiting_samples">କ୍ୟାଲିବ୍ରେସନ୍ କଣ୍ଟ୍ରୋଲର୍ ନମୁନା ପାଇଁ ଅପେକ୍ଷା କରୁଛି।</string>
     <string name="config_gamepad_diagnosis_header">କଣ୍ଟ୍ରୋଲର୍ ଡାଏଗ୍ନୋଷ୍ଟିକ୍ସ୍</string>
     <string name="config_gamepad_diagnosis_mode">ସ୍ଥିତି: <xliff:g id="status" example="enabled">%1$s</xliff:g> · ଉତ୍ସ: <xliff:g id="source" example="controller">%2$s</xliff:g></string>

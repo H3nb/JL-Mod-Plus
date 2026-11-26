@@ -45,7 +45,7 @@
     <string name="config_gamepad_calibration_phase_review">සුරැකීමට සූදානම්</string>
     <string name="config_gamepad_calibration_phase_committed">සුරකින ලදී</string>
     <string name="config_gamepad_calibration_phase_cancelled">අවලංගු කරන ලදී</string>
-    <string name="config_gamepad_calibration_waiting_controller">සහාය දක්වන ඇනලොග් ස්ටික් හෝ ට්‍රිගර් සහිත පාලකයක් සම්බන්ධ කරන්න. ඔබ පළමුව ස්ටික් එකක් ගෙන යන විට හෝ ට්‍රිගරයක් ඔබන විට ක්‍රමාංකනය ඇරඹේ; ඔබ සුරකින තෙක් පවතින ක්‍රමාංකනය නොවෙනස්ව පවතී.</string>
+    <string name="config_gamepad_calibration_waiting_controller">සහාය දක්වන ඇනලොග් ස්ටික් හෝ ට්‍රිගර් සහිත පාලකයක් සම්බන්ධ කරන්න. ආරම්භ කිරීමට ස්ටික් එකක් ගෙන යන්න හෝ ට්‍රිගරයක් ඔබන්න. නව ක්‍රමාංකනයක් සුරැකුවහොත් හෝ එය යළි සැකසුවහොත් මිස පවතින ක්‍රමාංකනය වෙනස් නොවේ.</string>
     <string name="config_gamepad_calibration_no_analog_ranges">මෙම පාලකය සහාය දක්වන ඇනලොග් ස්ටික් හෝ ට්‍රිගර් පරාසයන් ලබා නොදේ.</string>
     <string name="config_gamepad_calibration_start">මධ්‍යස්ථ ටයිමරය අවසන් වන තෙක් සෑම ස්ටික් එකක්ම මැද තබා සෑම ට්‍රිගරයක්ම අතහැර තබන්න.</string>
     <string name="config_gamepad_calibration_save_failed">ක්‍රමාංකනය සුරැකීමට නොහැකි විය. පවතින ක්‍රමාංකනය නොවෙනස්ව පවතී.</string>
@@ -56,7 +56,7 @@
     <string name="config_gamepad_calibration_trigger_instructions">හඳුනාගත් සෑම ට්‍රිගරයක්ම අතහැර සම්පූර්ණයෙන් ඔබා, ඉන්පසු “ඊළඟ” තට්ටු කරන්න.</string>
     <string name="config_gamepad_calibration_review_instructions">මෙම පාලකයේ ක්‍රමාංකනය ප්‍රතිස්ථාපනය කිරීමට සුරකින්න.</string>
     <string name="config_gamepad_calibration_saved">ක්‍රමාංකනය සුරකින ලදී.</string>
-    <string name="config_gamepad_calibration_cancelled">ක්‍රමාංකනය අවලංගු කරන ලදී. පෙර ක්‍රමාංකනය නොවෙනස්ව පවතී.</string>
+    <string name="config_gamepad_calibration_cancelled">ක්‍රමාංකනය අවලංගු කරන ලදී.</string>
     <string name="config_gamepad_calibration_waiting_samples">ක්‍රමාංකනය පාලක නියැදි බලාපොරොත්තුවෙන් සිටී.</string>
     <string name="config_gamepad_diagnosis_header">පාලක දෝෂ විනිශ්චය</string>
     <string name="config_gamepad_diagnosis_mode">තත්ත්වය: <xliff:g id="status" example="enabled">%1$s</xliff:g> · මූලාශ්‍රය: <xliff:g id="source" example="controller">%2$s</xliff:g></string>

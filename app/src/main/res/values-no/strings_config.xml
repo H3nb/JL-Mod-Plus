@@ -45,7 +45,7 @@
     <string name="config_gamepad_calibration_phase_review">Klar til å lagre</string>
     <string name="config_gamepad_calibration_phase_committed">Lagret</string>
     <string name="config_gamepad_calibration_phase_cancelled">Avbrutt</string>
-    <string name="config_gamepad_calibration_waiting_controller">Koble til en kontroller med en støttet analogspak eller avtrekker. Kalibreringen starter når du først beveger en spak eller trykker på en avtrekker; eksisterende kalibrering forblir uendret til du lagrer.</string>
+    <string name="config_gamepad_calibration_waiting_controller">Koble til en kontroller med en støttet analogspak eller avtrekker. Beveg en spak eller trykk på en avtrekker for å begynne. Den eksisterende kalibreringen endres bare hvis du lagrer en ny eller tilbakestiller den.</string>
     <string name="config_gamepad_calibration_no_analog_ranges">Denne kontrolleren tilbyr ingen støttede områder for analogspak eller avtrekker.</string>
     <string name="config_gamepad_calibration_start">Hold alle spaker i midtstilling og slipp alle avtrekkere til nøytraltidtakeren er ferdig.</string>
     <string name="config_gamepad_calibration_save_failed">Kunne ikke lagre kalibreringen. Eksisterende kalibrering forblir uendret.</string>
@@ -56,7 +56,7 @@
     <string name="config_gamepad_calibration_trigger_instructions">Slipp hver oppdagede avtrekker, trykk den helt inn og trykk deretter på «Neste».</string>
     <string name="config_gamepad_calibration_review_instructions">Lagre for å erstatte kalibreringen for denne kontrolleren.</string>
     <string name="config_gamepad_calibration_saved">Kalibrering lagret.</string>
-    <string name="config_gamepad_calibration_cancelled">Kalibrering avbrutt. Forrige kalibrering er uendret.</string>
+    <string name="config_gamepad_calibration_cancelled">Kalibrering avbrutt.</string>
     <string name="config_gamepad_calibration_waiting_samples">Kalibreringen venter på målinger fra kontrolleren.</string>
     <string name="config_gamepad_diagnosis_header">Kontrollerdiagnostikk</string>
     <string name="config_gamepad_diagnosis_mode">Status: <xliff:g id="status" example="enabled">%1$s</xliff:g> · Kilde: <xliff:g id="source" example="controller">%2$s</xliff:g></string>

@@ -45,7 +45,7 @@
     <string name="config_gamepad_calibration_phase_review">Gereed om te stoor</string>
     <string name="config_gamepad_calibration_phase_committed">Gestoor</string>
     <string name="config_gamepad_calibration_phase_cancelled">Gekanselleer</string>
-    <string name="config_gamepad_calibration_waiting_controller">Koppel ’n beheerder met ’n ondersteunde analoogstok of sneller. Kalibrering begin wanneer jy die eerste keer ’n stok beweeg of ’n sneller druk; die bestaande kalibrering bly onveranderd totdat jy stoor.</string>
+    <string name="config_gamepad_calibration_waiting_controller">Koppel ’n beheerder met ’n ondersteunde analoogstok of sneller. Beweeg ’n stok of druk ’n sneller om te begin. Die bestaande kalibrering bly onveranderd tensy jy ’n nuwe een stoor of dit terugstel.</string>
     <string name="config_gamepad_calibration_no_analog_ranges">Hierdie beheerder verskaf nie ondersteunde analoogstok- of snellerreekse nie.</string>
     <string name="config_gamepad_calibration_start">Hou elke stok gesentreer en elke sneller losgelaat totdat die neutrale tydhouer voltooi is.</string>
     <string name="config_gamepad_calibration_save_failed">Kon nie kalibrering stoor nie. Die bestaande kalibrering bly onveranderd.</string>
@@ -56,7 +56,7 @@
     <string name="config_gamepad_calibration_trigger_instructions">Laat elke bespeurde sneller los, druk dit heeltemal in en tik dan op Volgende.</string>
     <string name="config_gamepad_calibration_review_instructions">Stoor om die kalibrering vir hierdie beheerder te vervang.</string>
     <string name="config_gamepad_calibration_saved">Kalibrering gestoor.</string>
-    <string name="config_gamepad_calibration_cancelled">Kalibrering gekanselleer. Die vorige kalibrering is onveranderd.</string>
+    <string name="config_gamepad_calibration_cancelled">Kalibrering gekanselleer.</string>
     <string name="config_gamepad_calibration_waiting_samples">Kalibrering wag vir beheerdermonsters.</string>
     <string name="config_gamepad_diagnosis_header">Beheerderdiagnostiek</string>
     <string name="config_gamepad_diagnosis_mode">Status: <xliff:g id="status" example="enabled">%1$s</xliff:g> · Bron: <xliff:g id="source" example="controller">%2$s</xliff:g></string>

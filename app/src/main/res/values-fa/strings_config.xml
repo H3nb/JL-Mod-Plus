@@ -45,7 +45,7 @@
     <string name="config_gamepad_calibration_phase_review">آماده ذخیره</string>
     <string name="config_gamepad_calibration_phase_committed">ذخیره شد</string>
     <string name="config_gamepad_calibration_phase_cancelled">لغو شد</string>
-    <string name="config_gamepad_calibration_waiting_controller">دسته بازی‌ای با آنالوگ یا ماشه پشتیبانی‌شده متصل کنید. کالیبراسیون با اولین حرکت آنالوگ یا فشردن ماشه آغاز می‌شود؛ کالیبراسیون فعلی تا زمان ذخیره بدون تغییر می‌ماند.</string>
+    <string name="config_gamepad_calibration_waiting_controller">دسته‌ای با استیک آنالوگ یا ماشه پشتیبانی‌شده متصل کنید. برای شروع، استیک را حرکت دهید یا ماشه را فشار دهید. کالیبراسیون فعلی فقط در صورت ذخیره کالیبراسیون جدید یا بازنشانی آن تغییر می‌کند.</string>
     <string name="config_gamepad_calibration_no_analog_ranges">این دسته بازی بازه‌های پشتیبانی‌شده برای آنالوگ یا ماشه ارائه نمی‌دهد.</string>
     <string name="config_gamepad_calibration_start">تا پایان تایمر حالت خنثی، همه آنالوگ‌ها را در مرکز و همه ماشه‌ها را رها نگه دارید.</string>
     <string name="config_gamepad_calibration_save_failed">ذخیره کالیبراسیون ممکن نشد. کالیبراسیون فعلی بدون تغییر می‌ماند.</string>
@@ -56,7 +56,7 @@
     <string name="config_gamepad_calibration_trigger_instructions">هر ماشه شناسایی‌شده را رها کنید و تا انتها فشار دهید، سپس روی «بعدی» بزنید.</string>
     <string name="config_gamepad_calibration_review_instructions">برای جایگزینی کالیبراسیون این دسته بازی، آن را ذخیره کنید.</string>
     <string name="config_gamepad_calibration_saved">کالیبراسیون ذخیره شد.</string>
-    <string name="config_gamepad_calibration_cancelled">کالیبراسیون لغو شد. کالیبراسیون قبلی بدون تغییر باقی ماند.</string>
+    <string name="config_gamepad_calibration_cancelled">کالیبراسیون لغو شد.</string>
     <string name="config_gamepad_calibration_waiting_samples">کالیبراسیون منتظر نمونه‌های دسته بازی است.</string>
     <string name="config_gamepad_diagnosis_header">عیب‌یابی دسته بازی</string>
     <string name="config_gamepad_diagnosis_mode">وضعیت: <xliff:g id="status" example="enabled">%1$s</xliff:g> · منبع: <xliff:g id="source" example="controller">%2$s</xliff:g></string>

@@ -44,7 +44,7 @@
     <string name="config_gamepad_calibration_phase_review">Kaydetmeye hazır</string>
     <string name="config_gamepad_calibration_phase_committed">Kaydedildi</string>
     <string name="config_gamepad_calibration_phase_cancelled">İptal edildi</string>
-    <string name="config_gamepad_calibration_waiting_controller">Desteklenen bir analog çubuğa veya tetiğe sahip bir kumanda bağlayın. Kalibrasyon, bir çubuğu ilk hareket ettirdiğinizde veya tetiğe bastığınızda başlar; mevcut kalibrasyon siz kaydedene kadar değişmez.</string>
+    <string name="config_gamepad_calibration_waiting_controller">Desteklenen bir analog çubuğa veya tetiğe sahip bir kumanda bağlayın. Başlamak için bir çubuğu hareket ettirin veya tetiğe basın. Yeni bir kalibrasyon kaydetmediğiniz veya mevcut kalibrasyonu sıfırlamadığınız sürece kalibrasyon değişmez.</string>
     <string name="config_gamepad_calibration_no_analog_ranges">Bu kumanda desteklenen analog çubuk veya tetik aralıkları sağlamıyor.</string>
     <string name="config_gamepad_calibration_start">Nötr zamanlayıcı tamamlanana kadar tüm çubukları ortada ve tüm tetikleri serbest bırakın.</string>
     <string name="config_gamepad_calibration_save_failed">Kalibrasyon kaydedilemedi. Mevcut kalibrasyon değişmeden kaldı.</string>
@@ -55,7 +55,7 @@
     <string name="config_gamepad_calibration_trigger_instructions">Algılanan her tetiği bırakıp sonuna kadar basın, ardından İleri’ye dokunun.</string>
     <string name="config_gamepad_calibration_review_instructions">Bu kumandanın kalibrasyonunu değiştirmek için kaydedin.</string>
     <string name="config_gamepad_calibration_saved">Kalibrasyon kaydedildi.</string>
-    <string name="config_gamepad_calibration_cancelled">Kalibrasyon iptal edildi. Önceki kalibrasyon değişmedi.</string>
+    <string name="config_gamepad_calibration_cancelled">Kalibrasyon iptal edildi.</string>
     <string name="config_gamepad_calibration_waiting_samples">Kalibrasyon kumanda örneklerini bekliyor.</string>
     <string name="config_gamepad_diagnosis_header">Kumanda tanılaması</string>
     <string name="config_gamepad_diagnosis_mode">Durum: <xliff:g id="status" example="enabled">%1$s</xliff:g> · Kaynak: <xliff:g id="source" example="controller">%2$s</xliff:g></string>

@@ -45,7 +45,7 @@
     <string name="config_gamepad_calibration_phase_review">Можно сохранить</string>
     <string name="config_gamepad_calibration_phase_committed">Сохранено</string>
     <string name="config_gamepad_calibration_phase_cancelled">Отменено</string>
-    <string name="config_gamepad_calibration_waiting_controller">Подключите контроллер с поддерживаемым аналоговым стиком или триггером. Калибровка начнётся при первом движении стика или нажатии триггера; текущая калибровка останется без изменений, пока вы не сохраните новую.</string>
+    <string name="config_gamepad_calibration_waiting_controller">Подключите контроллер с поддерживаемым аналоговым стиком или триггером. Для начала отклоните стик или нажмите триггер. Текущая калибровка не изменится, пока вы не сохраните новую или не сбросите её.</string>
     <string name="config_gamepad_calibration_no_analog_ranges">Этот контроллер не передаёт поддерживаемые диапазоны аналоговых стиков или триггеров.</string>
     <string name="config_gamepad_calibration_start">Удерживайте все стики в центре и не нажимайте триггеры до завершения таймера нейтрального положения.</string>
     <string name="config_gamepad_calibration_save_failed">Не удалось сохранить калибровку. Текущая калибровка осталась без изменений.</string>
@@ -56,7 +56,7 @@
     <string name="config_gamepad_calibration_trigger_instructions">Отпустите и полностью нажмите каждый обнаруженный триггер, затем нажмите «Далее».</string>
     <string name="config_gamepad_calibration_review_instructions">Сохраните, чтобы заменить калибровку этого контроллера.</string>
     <string name="config_gamepad_calibration_saved">Калибровка сохранена.</string>
-    <string name="config_gamepad_calibration_cancelled">Калибровка отменена. Предыдущая калибровка осталась без изменений.</string>
+    <string name="config_gamepad_calibration_cancelled">Калибровка отменена.</string>
     <string name="config_gamepad_calibration_waiting_samples">Калибровка ожидает данные от контроллера.</string>
     <string name="config_gamepad_diagnosis_header">Диагностика контроллера</string>
     <string name="config_gamepad_diagnosis_mode">Состояние: <xliff:g id="status" example="enabled">%1$s</xliff:g> · Источник: <xliff:g id="source" example="controller">%2$s</xliff:g></string>

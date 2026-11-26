@@ -45,7 +45,7 @@
     <string name="config_gamepad_calibration_phase_review">Prêt à enregistrer</string>
     <string name="config_gamepad_calibration_phase_committed">Enregistré</string>
     <string name="config_gamepad_calibration_phase_cancelled">Annulé</string>
-    <string name="config_gamepad_calibration_waiting_controller">Connectez une manette équipée d’un stick analogique ou d’une gâchette pris en charge. Le calibrage commence dès que vous déplacez un stick ou appuyez sur une gâchette ; le calibrage actuel reste inchangé jusqu’à l’enregistrement.</string>
+    <string name="config_gamepad_calibration_waiting_controller">Connectez une manette équipée d’un stick analogique ou d’une gâchette pris en charge. Déplacez un stick ou appuyez sur une gâchette pour commencer. Le calibrage actuel reste inchangé, sauf si vous en enregistrez un nouveau ou le réinitialisez.</string>
     <string name="config_gamepad_calibration_no_analog_ranges">Cette manette ne fournit aucune plage analogique prise en charge pour les sticks ou les gâchettes.</string>
     <string name="config_gamepad_calibration_start">Maintenez chaque stick au centre et chaque gâchette relâchée jusqu’à la fin du compte à rebours neutre.</string>
     <string name="config_gamepad_calibration_save_failed">Impossible d’enregistrer le calibrage. Le calibrage existant reste inchangé.</string>
@@ -56,7 +56,7 @@
     <string name="config_gamepad_calibration_trigger_instructions">Relâchez puis enfoncez complètement chaque gâchette détectée, puis appuyez sur Suivant.</string>
     <string name="config_gamepad_calibration_review_instructions">Enregistrez pour remplacer le calibrage de cette manette.</string>
     <string name="config_gamepad_calibration_saved">Calibrage enregistré.</string>
-    <string name="config_gamepad_calibration_cancelled">Calibrage annulé. Le calibrage précédent reste inchangé.</string>
+    <string name="config_gamepad_calibration_cancelled">Calibrage annulé.</string>
     <string name="config_gamepad_calibration_waiting_samples">Le calibrage attend des échantillons de la manette.</string>
     <string name="config_gamepad_diagnosis_header">Diagnostic de la manette</string>
     <string name="config_gamepad_diagnosis_mode">État : <xliff:g id="status" example="enabled">%1$s</xliff:g> · Source : <xliff:g id="source" example="controller">%2$s</xliff:g></string>

@@ -56,7 +56,7 @@
     <string name="config_gamepad_calibration_trigger_instructions">Lepaskan setiap trigger yang terdeteksi, lalu tekan hingga batas maksimal. Ketuk Berikutnya untuk melanjutkan.</string>
     <string name="config_gamepad_calibration_review_instructions">Simpan untuk mengganti kalibrasi pengontrol ini.</string>
     <string name="config_gamepad_calibration_saved">Kalibrasi tersimpan.</string>
-    <string name="config_gamepad_calibration_cancelled">Kalibrasi dibatalkan. Kalibrasi sebelumnya tidak berubah.</string>
+    <string name="config_gamepad_calibration_cancelled">Kalibrasi dibatalkan.</string>
     <string name="config_gamepad_calibration_waiting_samples">Kalibrasi menunggu sampel pengontrol.</string>
     <string name="config_gamepad_diagnosis_header">Diagnostik pengontrol</string>
     <string name="config_gamepad_diagnosis_mode">Status: <xliff:g id="status" example="enabled">%1$s</xliff:g> · Sumber: <xliff:g id="source" example="controller">%2$s</xliff:g></string>
