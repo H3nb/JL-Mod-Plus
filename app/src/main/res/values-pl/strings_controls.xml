@@ -47,7 +47,7 @@
     <string name="control_skin_full" tools:ignore="MissingTranslation">Cały przycisk</string>
     <string name="control_skin_normal_image" tools:ignore="MissingTranslation">Obraz normalny</string>
     <string name="control_skin_pressed_image" tools:ignore="MissingTranslation">Obraz po naciśnięciu</string>
-    <string name="control_skin_delete_warning" tools:ignore="MissingTranslation">Usunąć ten globalny zestaw skórek i wszystkie jego obrazy? MIDlety korzystające z niego wrócą do domyślnego sterowania.</string>
+    <string name="control_skin_delete_warning" tools:ignore="MissingTranslation">Usunąć ten współdzielony zestaw skórek i wszystkie jego obrazy? MIDlety korzystające z niego wrócą do domyślnego sterowania przy następnym uruchomieniu.</string>
     <string name="control_skin_invalid_image" tools:ignore="MissingTranslation">Wybierz obraz PNG, WebP lub SVG.</string>
     <string name="control_skin_operation_failed" tools:ignore="MissingTranslation">Nie udało się zaktualizować zestawu skórek sterowania.</string>
     <string name="control_skin_missing" tools:ignore="MissingTranslation">Niedostępny zestaw (domyślne sterowanie)</string>

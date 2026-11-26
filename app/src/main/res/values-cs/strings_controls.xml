@@ -47,7 +47,7 @@
     <string name="control_skin_full" tools:ignore="MissingTranslation">Celé tlačítko</string>
     <string name="control_skin_normal_image" tools:ignore="MissingTranslation">Výchozí obrázek</string>
     <string name="control_skin_pressed_image" tools:ignore="MissingTranslation">Obrázek při stisknutí</string>
-    <string name="control_skin_delete_warning" tools:ignore="MissingTranslation">Smazat tuto globální sadu vzhledu a všechny její obrázky? MIDlety, které ji používají, se vrátí k výchozímu ovládání.</string>
+    <string name="control_skin_delete_warning" tools:ignore="MissingTranslation">Smazat tuto sdílenou sadu vzhledu a všechny její obrázky? MIDlety, které ji používají, při příštím spuštění použijí výchozí ovládání.</string>
     <string name="control_skin_invalid_image" tools:ignore="MissingTranslation">Vyberte obrázek ve formátu PNG, WebP nebo SVG.</string>
     <string name="control_skin_operation_failed" tools:ignore="MissingTranslation">Sadu vzhledu ovládání se nepodařilo aktualizovat.</string>
     <string name="control_skin_missing" tools:ignore="MissingTranslation">Nedostupná sada (výchozí ovládání)</string>

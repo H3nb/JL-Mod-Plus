@@ -40,14 +40,14 @@
     <string name="control_skin_already_available" tools:ignore="MissingTranslation">A(z) <xliff:g id="skin_name" example="Classic Nokia">%1$s</xliff:g> már elérhető</string>
     <string name="control_skin_exported" tools:ignore="MissingTranslation">Mentve: <xliff:g id="skin_name" example="Classic Nokia">%1$s</xliff:g></string>
     <string name="control_skin_archive_invalid_path" tools:ignore="MissingTranslation">A kiválasztott hely nem érhető el.</string>
-    <string name="control_skin_archive_import_failed" tools:ignore="MissingTranslation">Nem sikerült importálni a vezérlőkinézetet. Győződjön meg róla, hogy a ZIP egy érvényes készletet tartalmaz.</string>
+    <string name="control_skin_archive_import_failed" tools:ignore="MissingTranslation">Nem sikerült importálni a vezérlőkinézetet. Győződjön meg róla, hogy a ZIP pontosan egy érvényes készletet tartalmaz.</string>
     <string name="control_skin_archive_export_failed" tools:ignore="MissingTranslation">Nem sikerült exportálni a vezérlőkinézetet. Válasszon írható mappát a kinézetkönyvtáron kívül.</string>
     <string name="control_skin_name" tools:ignore="MissingTranslation">Készlet neve</string>
     <string name="control_skin_icon" tools:ignore="MissingTranslation">Csak ikon</string>
     <string name="control_skin_full" tools:ignore="MissingTranslation">Teljes gomb</string>
     <string name="control_skin_normal_image" tools:ignore="MissingTranslation">Normál kép</string>
     <string name="control_skin_pressed_image" tools:ignore="MissingTranslation">Lenyomott kép</string>
-    <string name="control_skin_delete_warning" tools:ignore="MissingTranslation">Törli ezt a globális kinézetkészletet és minden képét? Az ezt használó MIDlet-ek visszatérnek az alapértelmezett vezérlőkre.</string>
+    <string name="control_skin_delete_warning" tools:ignore="MissingTranslation">Törli ezt a megosztott kinézetkészletet és az összes képét? Az ezt használó MIDlet-ek a következő indításkor az alapértelmezett vezérlőket használják.</string>
     <string name="control_skin_invalid_image" tools:ignore="MissingTranslation">Válasszon PNG-, WebP- vagy SVG-képet.</string>
     <string name="control_skin_operation_failed" tools:ignore="MissingTranslation">Nem sikerült frissíteni a vezérlőkinézet-készletet.</string>
     <string name="control_skin_missing" tools:ignore="MissingTranslation">Nem elérhető készlet (alapértelmezett vezérlők)</string>

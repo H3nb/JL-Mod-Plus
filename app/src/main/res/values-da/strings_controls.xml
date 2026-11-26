@@ -47,7 +47,7 @@
     <string name="control_skin_full" tools:ignore="MissingTranslation">Fuld knap</string>
     <string name="control_skin_normal_image" tools:ignore="MissingTranslation">Normalt billede</string>
     <string name="control_skin_pressed_image" tools:ignore="MissingTranslation">Billede ved tryk</string>
-    <string name="control_skin_delete_warning" tools:ignore="MissingTranslation">Vil du slette dette globale skinsæt og alle dets billeder? MIDlets, der bruger det, falder tilbage til standardkontrollerne.</string>
+    <string name="control_skin_delete_warning" tools:ignore="MissingTranslation">Vil du slette dette delte skinsæt og alle dets billeder? MIDlets, der bruger det, vender tilbage til standardkontrollerne, næste gang de startes.</string>
     <string name="control_skin_invalid_image" tools:ignore="MissingTranslation">Vælg et PNG-, WebP- eller SVG-billede.</string>
     <string name="control_skin_operation_failed" tools:ignore="MissingTranslation">Kontrolskinsættet kunne ikke opdateres.</string>
     <string name="control_skin_missing" tools:ignore="MissingTranslation">Utilgængeligt sæt (standardkontroller)</string>

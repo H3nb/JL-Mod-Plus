@@ -47,7 +47,7 @@
     <string name="control_skin_full" tools:ignore="MissingTranslation">ボタン全体</string>
     <string name="control_skin_normal_image" tools:ignore="MissingTranslation">通常時の画像</string>
     <string name="control_skin_pressed_image" tools:ignore="MissingTranslation">押下時の画像</string>
-    <string name="control_skin_delete_warning" tools:ignore="MissingTranslation">このグローバルスキンセットとすべての画像を削除しますか？このセットを使用している MIDlet はデフォルトコントロールに戻ります。</string>
+    <string name="control_skin_delete_warning" tools:ignore="MissingTranslation">この共有スキンセットとすべての画像を削除しますか？このセットを使用している MIDlet は次回起動時にデフォルトのコントロールに戻ります。</string>
     <string name="control_skin_invalid_image" tools:ignore="MissingTranslation">PNG、WebP、または SVG 画像を選択してください。</string>
     <string name="control_skin_operation_failed" tools:ignore="MissingTranslation">コントロールスキンセットを更新できませんでした。</string>
     <string name="control_skin_missing" tools:ignore="MissingTranslation">利用できないセット（デフォルトコントロール）</string>

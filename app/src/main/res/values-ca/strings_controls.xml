@@ -40,14 +40,14 @@
     <string name="control_skin_already_available" tools:ignore="MissingTranslation"><xliff:g id="skin_name" example="Classic Nokia">%1$s</xliff:g> ja està disponible</string>
     <string name="control_skin_exported" tools:ignore="MissingTranslation">S’ha desat <xliff:g id="skin_name" example="Classic Nokia">%1$s</xliff:g></string>
     <string name="control_skin_archive_invalid_path" tools:ignore="MissingTranslation">La ubicació seleccionada no està disponible.</string>
-    <string name="control_skin_archive_import_failed" tools:ignore="MissingTranslation">No s’ha pogut importar l’aspecte dels controls. Assegura’t que el ZIP contingui un conjunt vàlid.</string>
+    <string name="control_skin_archive_import_failed" tools:ignore="MissingTranslation">No s’ha pogut importar l’aspecte dels controls. Assegura’t que el ZIP contingui un únic conjunt vàlid.</string>
     <string name="control_skin_archive_export_failed" tools:ignore="MissingTranslation">No s’ha pogut exportar l’aspecte dels controls. Tria una carpeta amb permís d’escriptura fora de la biblioteca d’aspectes.</string>
     <string name="control_skin_name" tools:ignore="MissingTranslation">Nom del conjunt</string>
     <string name="control_skin_icon" tools:ignore="MissingTranslation">Només icona</string>
     <string name="control_skin_full" tools:ignore="MissingTranslation">Botó complet</string>
     <string name="control_skin_normal_image" tools:ignore="MissingTranslation">Imatge normal</string>
     <string name="control_skin_pressed_image" tools:ignore="MissingTranslation">Imatge premuda</string>
-    <string name="control_skin_delete_warning" tools:ignore="MissingTranslation">Vols suprimir aquest conjunt global d’aspectes i totes les seves imatges? Els MIDlets que l’utilitzin tornaran als controls predeterminats.</string>
+    <string name="control_skin_delete_warning" tools:ignore="MissingTranslation">Vols suprimir aquest conjunt compartit d’aspectes i totes les seves imatges? Els MIDlets que l’utilitzin tornaran als controls predeterminats la propera vegada que s’iniciïn.</string>
     <string name="control_skin_invalid_image" tools:ignore="MissingTranslation">Tria una imatge PNG, WebP o SVG.</string>
     <string name="control_skin_operation_failed" tools:ignore="MissingTranslation">No s’ha pogut actualitzar el conjunt d’aspectes dels controls.</string>
     <string name="control_skin_missing" tools:ignore="MissingTranslation">Conjunt no disponible (controls predeterminats)</string>

@@ -40,14 +40,14 @@
     <string name="control_skin_already_available" tools:ignore="MissingTranslation"><xliff:g id="skin_name" example="Classic Nokia">%1$s</xliff:g> è già disponibile</string>
     <string name="control_skin_exported" tools:ignore="MissingTranslation"><xliff:g id="skin_name" example="Classic Nokia">%1$s</xliff:g> salvato</string>
     <string name="control_skin_archive_invalid_path" tools:ignore="MissingTranslation">La posizione selezionata non è disponibile.</string>
-    <string name="control_skin_archive_import_failed" tools:ignore="MissingTranslation">Impossibile importare la skin dei controlli. Assicurati che il file ZIP contenga un set valido.</string>
+    <string name="control_skin_archive_import_failed" tools:ignore="MissingTranslation">Impossibile importare la skin dei controlli. Assicurati che il file ZIP contenga un solo set valido.</string>
     <string name="control_skin_archive_export_failed" tools:ignore="MissingTranslation">Impossibile esportare la skin dei controlli. Scegli una cartella scrivibile esterna alla libreria delle skin.</string>
     <string name="control_skin_name" tools:ignore="MissingTranslation">Nome set</string>
     <string name="control_skin_icon" tools:ignore="MissingTranslation">Solo icona</string>
     <string name="control_skin_full" tools:ignore="MissingTranslation">Pulsante completo</string>
     <string name="control_skin_normal_image" tools:ignore="MissingTranslation">Immagine normale</string>
     <string name="control_skin_pressed_image" tools:ignore="MissingTranslation">Immagine premuta</string>
-    <string name="control_skin_delete_warning" tools:ignore="MissingTranslation">Eliminare questo set di skin globale e tutte le sue immagini? I MIDlet che lo usano torneranno ai controlli predefiniti.</string>
+    <string name="control_skin_delete_warning" tools:ignore="MissingTranslation">Eliminare questo set di skin condiviso e tutte le sue immagini? I MIDlet che lo usano torneranno ai controlli predefiniti al prossimo avvio.</string>
     <string name="control_skin_invalid_image" tools:ignore="MissingTranslation">Scegli un’immagine PNG, WebP o SVG.</string>
     <string name="control_skin_operation_failed" tools:ignore="MissingTranslation">Impossibile aggiornare il set di skin dei controlli.</string>
     <string name="control_skin_missing" tools:ignore="MissingTranslation">Set non disponibile (controlli predefiniti)</string>

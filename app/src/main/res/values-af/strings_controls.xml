@@ -47,7 +47,7 @@
     <string name="control_skin_full" tools:ignore="MissingTranslation">Volle knoppie</string>
     <string name="control_skin_normal_image" tools:ignore="MissingTranslation">Normale beeld</string>
     <string name="control_skin_pressed_image" tools:ignore="MissingTranslation">Gedrukte beeld</string>
-    <string name="control_skin_delete_warning" tools:ignore="MissingTranslation">Vee hierdie globale omslagstel en al sy beelde uit? MIDlets wat dit gebruik, sal terugval na verstekkontroles.</string>
+    <string name="control_skin_delete_warning" tools:ignore="MissingTranslation">Vee hierdie gedeelde omslagstel en al sy beelde uit? MIDlets wat dit gebruik, sal die verstekkontroles gebruik wanneer hulle weer begin.</string>
     <string name="control_skin_invalid_image" tools:ignore="MissingTranslation">Kies ’n PNG-, WebP- of SVG-beeld.</string>
     <string name="control_skin_operation_failed" tools:ignore="MissingTranslation">Kon nie kontrole-omslagstel opdateer nie.</string>
     <string name="control_skin_missing" tools:ignore="MissingTranslation">Onbeskikbare stel (verstekkontroles)</string>
@@ -79,8 +79,8 @@
     <string name="control_skin_overlay_left" tools:ignore="MissingTranslation">Oorleg links</string>
     <string name="control_skin_overlay_right" tools:ignore="MissingTranslation">Oorleg regs</string>
     <string name="control_skin_analog_base" tools:ignore="MissingTranslation">Basisbeeld</string>
-    <string name="control_skin_analog_thumb" tools:ignore="MissingTranslation">Duimbeeld</string>
-    <string name="control_skin_analog_thumb_pressed" tools:ignore="MissingTranslation">Aktiewe duimbeeld</string>
+    <string name="control_skin_analog_thumb" tools:ignore="MissingTranslation">Stuurknopbeeld</string>
+    <string name="control_skin_analog_thumb_pressed" tools:ignore="MissingTranslation">Beeld van die aktiewe stuurknop</string>
     <string name="control_skin_preview_directions" tools:ignore="MissingTranslation">Voorskou rigtings</string>
     <string name="control_skin_preview_direction" tools:ignore="MissingTranslation">Voorskou <xliff:g id="direction" example="Up">%1$s</xliff:g></string>
     <string name="control_skin_builtin_preview" tools:ignore="MissingTranslation">Verstek</string>

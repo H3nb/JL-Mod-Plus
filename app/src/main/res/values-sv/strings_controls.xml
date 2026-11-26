@@ -40,14 +40,14 @@
     <string name="control_skin_already_available" tools:ignore="MissingTranslation"><xliff:g id="skin_name" example="Classic Nokia">%1$s</xliff:g> finns redan</string>
     <string name="control_skin_exported" tools:ignore="MissingTranslation">Sparade <xliff:g id="skin_name" example="Classic Nokia">%1$s</xliff:g></string>
     <string name="control_skin_archive_invalid_path" tools:ignore="MissingTranslation">Den valda platsen är inte tillgänglig.</string>
-    <string name="control_skin_archive_import_failed" tools:ignore="MissingTranslation">Det gick inte att importera kontrollutseendet. Kontrollera att ZIP-filen innehåller en giltig uppsättning.</string>
+    <string name="control_skin_archive_import_failed" tools:ignore="MissingTranslation">Det gick inte att importera kontrollutseendet. Kontrollera att ZIP-filen innehåller exakt en giltig uppsättning.</string>
     <string name="control_skin_archive_export_failed" tools:ignore="MissingTranslation">Det gick inte att exportera kontrollutseendet. Välj en skrivbar mapp utanför utseendebiblioteket.</string>
     <string name="control_skin_name" tools:ignore="MissingTranslation">Uppsättningsnamn</string>
     <string name="control_skin_icon" tools:ignore="MissingTranslation">Endast ikon</string>
     <string name="control_skin_full" tools:ignore="MissingTranslation">Hel knapp</string>
     <string name="control_skin_normal_image" tools:ignore="MissingTranslation">Normal bild</string>
     <string name="control_skin_pressed_image" tools:ignore="MissingTranslation">Nedtryckt bild</string>
-    <string name="control_skin_delete_warning" tools:ignore="MissingTranslation">Radera den här globala utseendeuppsättningen och alla dess bilder? MIDlets som använder den återgår till standardkontroller.</string>
+    <string name="control_skin_delete_warning" tools:ignore="MissingTranslation">Radera den här delade utseendeuppsättningen och alla dess bilder? MIDlets som använder den återgår till standardkontroller nästa gång de startas.</string>
     <string name="control_skin_invalid_image" tools:ignore="MissingTranslation">Välj en PNG-, WebP- eller SVG-bild.</string>
     <string name="control_skin_operation_failed" tools:ignore="MissingTranslation">Det gick inte att uppdatera utseendeuppsättningen.</string>
     <string name="control_skin_missing" tools:ignore="MissingTranslation">Otillgänglig uppsättning (standardkontroller)</string>

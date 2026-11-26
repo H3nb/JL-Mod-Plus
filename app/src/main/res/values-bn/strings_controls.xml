@@ -40,14 +40,14 @@
     <string name="control_skin_already_available" tools:ignore="MissingTranslation"><xliff:g id="skin_name" example="Classic Nokia">%1$s</xliff:g> আগে থেকেই রয়েছে</string>
     <string name="control_skin_exported" tools:ignore="MissingTranslation"><xliff:g id="skin_name" example="Classic Nokia">%1$s</xliff:g> সেভ করা হয়েছে</string>
     <string name="control_skin_archive_invalid_path" tools:ignore="MissingTranslation">নির্বাচিত অবস্থানটি উপলব্ধ নয়।</string>
-    <string name="control_skin_archive_import_failed" tools:ignore="MissingTranslation">কন্ট্রোল স্কিন ইম্পোর্ট করা যায়নি। নিশ্চিত করুন যে ZIP ফাইলে একটি বৈধ সেট রয়েছে।</string>
+    <string name="control_skin_archive_import_failed" tools:ignore="MissingTranslation">কন্ট্রোল স্কিন ইম্পোর্ট করা যায়নি। ZIP ফাইলে শুধু একটি বৈধ স্কিন সেট আছে কি না নিশ্চিত করুন।</string>
     <string name="control_skin_archive_export_failed" tools:ignore="MissingTranslation">কন্ট্রোল স্কিন এক্সপোর্ট করা যায়নি। স্কিন লাইব্রেরির বাইরে একটি লেখার যোগ্য ফোল্ডার বেছে নিন।</string>
     <string name="control_skin_name" tools:ignore="MissingTranslation">সেটের নাম</string>
     <string name="control_skin_icon" tools:ignore="MissingTranslation">শুধু আইকন</string>
     <string name="control_skin_full" tools:ignore="MissingTranslation">সম্পূর্ণ বাটন</string>
     <string name="control_skin_normal_image" tools:ignore="MissingTranslation">স্বাভাবিক ছবি</string>
     <string name="control_skin_pressed_image" tools:ignore="MissingTranslation">চাপা অবস্থায় ছবি</string>
-    <string name="control_skin_delete_warning" tools:ignore="MissingTranslation">এই গ্লোবাল স্কিন সেট এবং এর সব ছবি মুছবেন? যেসব MIDlet এটি ব্যবহার করছে সেগুলো ডিফল্ট কন্ট্রোলে ফিরে যাবে।</string>
+    <string name="control_skin_delete_warning" tools:ignore="MissingTranslation">এই শেয়ার করা স্কিন সেট এবং এর সব ছবি মুছবেন? যেসব MIDlet এটি ব্যবহার করে, পরের বার চালু হলে সেগুলো ডিফল্ট কন্ট্রোল ব্যবহার করবে।</string>
     <string name="control_skin_invalid_image" tools:ignore="MissingTranslation">একটি PNG, WebP বা SVG ছবি বেছে নিন।</string>
     <string name="control_skin_operation_failed" tools:ignore="MissingTranslation">কন্ট্রোল স্কিন সেট আপডেট করা যায়নি।</string>
     <string name="control_skin_missing" tools:ignore="MissingTranslation">সেট উপলব্ধ নয় (ডিফল্ট কন্ট্রোল)</string>
@@ -79,8 +79,8 @@
     <string name="control_skin_overlay_left" tools:ignore="MissingTranslation">বামে ওভারলে</string>
     <string name="control_skin_overlay_right" tools:ignore="MissingTranslation">ডানে ওভারলে</string>
     <string name="control_skin_analog_base" tools:ignore="MissingTranslation">বেস ছবি</string>
-    <string name="control_skin_analog_thumb" tools:ignore="MissingTranslation">থাম্ব ছবি</string>
-    <string name="control_skin_analog_thumb_pressed" tools:ignore="MissingTranslation">সক্রিয় থাম্ব ছবি</string>
+    <string name="control_skin_analog_thumb" tools:ignore="MissingTranslation">স্টিকের ছবি</string>
+    <string name="control_skin_analog_thumb_pressed" tools:ignore="MissingTranslation">সক্রিয় স্টিকের ছবি</string>
     <string name="control_skin_preview_directions" tools:ignore="MissingTranslation">দিকনির্দেশনা প্রিভিউ</string>
     <string name="control_skin_preview_direction" tools:ignore="MissingTranslation">প্রিভিউ: <xliff:g id="direction" example="Up">%1$s</xliff:g></string>
     <string name="control_skin_builtin_preview" tools:ignore="MissingTranslation">ডিফল্ট</string>

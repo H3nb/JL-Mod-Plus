@@ -40,14 +40,14 @@
     <string name="control_skin_already_available" tools:ignore="MissingTranslation"><xliff:g id="skin_name" example="Classic Nokia">%1$s</xliff:g> पहले से उपलब्ध है</string>
     <string name="control_skin_exported" tools:ignore="MissingTranslation"><xliff:g id="skin_name" example="Classic Nokia">%1$s</xliff:g> सहेजा गया</string>
     <string name="control_skin_archive_invalid_path" tools:ignore="MissingTranslation">चयनित स्थान उपलब्ध नहीं है।</string>
-    <string name="control_skin_archive_import_failed" tools:ignore="MissingTranslation">कंट्रोल स्किन आयात नहीं की जा सकी। सुनिश्चित करें कि ZIP में एक मान्य सेट है।</string>
+    <string name="control_skin_archive_import_failed" tools:ignore="MissingTranslation">कंट्रोल स्किन इंपोर्ट नहीं की जा सकी। पक्का करें कि ZIP में सिर्फ़ एक मान्य स्किन सेट हो।</string>
     <string name="control_skin_archive_export_failed" tools:ignore="MissingTranslation">कंट्रोल स्किन निर्यात नहीं की जा सकी। स्किन लाइब्रेरी के बाहर एक लिखने योग्य फ़ोल्डर चुनें।</string>
     <string name="control_skin_name" tools:ignore="MissingTranslation">सेट का नाम</string>
     <string name="control_skin_icon" tools:ignore="MissingTranslation">केवल आइकन</string>
     <string name="control_skin_full" tools:ignore="MissingTranslation">पूरा बटन</string>
     <string name="control_skin_normal_image" tools:ignore="MissingTranslation">सामान्य चित्र</string>
     <string name="control_skin_pressed_image" tools:ignore="MissingTranslation">दबाए जाने का चित्र</string>
-    <string name="control_skin_delete_warning" tools:ignore="MissingTranslation">यह ग्लोबल स्किन सेट और इसके सभी चित्र हटाएं? इसका उपयोग करने वाले MIDlets डिफ़ॉल्ट कंट्रोल पर लौट जाएंगे।</string>
+    <string name="control_skin_delete_warning" tools:ignore="MissingTranslation">यह साझा स्किन सेट और इसकी सभी इमेज हटाएं? इसका इस्तेमाल करने वाले MIDlet अगली बार शुरू होने पर डिफ़ॉल्ट कंट्रोल इस्तेमाल करेंगे।</string>
     <string name="control_skin_invalid_image" tools:ignore="MissingTranslation">PNG, WebP या SVG चित्र चुनें।</string>
     <string name="control_skin_operation_failed" tools:ignore="MissingTranslation">कंट्रोल स्किन सेट अपडेट नहीं किया जा सका।</string>
     <string name="control_skin_missing" tools:ignore="MissingTranslation">सेट उपलब्ध नहीं है (डिफ़ॉल्ट कंट्रोल)</string>
@@ -79,8 +79,8 @@
     <string name="control_skin_overlay_left" tools:ignore="MissingTranslation">बाएं ओवरले</string>
     <string name="control_skin_overlay_right" tools:ignore="MissingTranslation">दाएं ओवरले</string>
     <string name="control_skin_analog_base" tools:ignore="MissingTranslation">बेस चित्र</string>
-    <string name="control_skin_analog_thumb" tools:ignore="MissingTranslation">थंब चित्र</string>
-    <string name="control_skin_analog_thumb_pressed" tools:ignore="MissingTranslation">सक्रिय थंब चित्र</string>
+    <string name="control_skin_analog_thumb" tools:ignore="MissingTranslation">स्टिक की इमेज</string>
+    <string name="control_skin_analog_thumb_pressed" tools:ignore="MissingTranslation">सक्रिय स्टिक की इमेज</string>
     <string name="control_skin_preview_directions" tools:ignore="MissingTranslation">दिशाओं का पूर्वावलोकन</string>
     <string name="control_skin_preview_direction" tools:ignore="MissingTranslation"><xliff:g id="direction" example="Up">%1$s</xliff:g> पूर्वावलोकन</string>
     <string name="control_skin_builtin_preview" tools:ignore="MissingTranslation">डिफ़ॉल्ट</string>

@@ -40,14 +40,14 @@
     <string name="control_skin_already_available" tools:ignore="MissingTranslation"><xliff:g id="skin_name" example="Classic Nokia">%1$s</xliff:g> já está disponível</string>
     <string name="control_skin_exported" tools:ignore="MissingTranslation"><xliff:g id="skin_name" example="Classic Nokia">%1$s</xliff:g> salvo</string>
     <string name="control_skin_archive_invalid_path" tools:ignore="MissingTranslation">O local selecionado não está disponível.</string>
-    <string name="control_skin_archive_import_failed" tools:ignore="MissingTranslation">Não foi possível importar o visual de controles. Verifique se o ZIP contém um conjunto válido.</string>
+    <string name="control_skin_archive_import_failed" tools:ignore="MissingTranslation">Não foi possível importar o visual dos controles. Verifique se o ZIP contém apenas um conjunto válido.</string>
     <string name="control_skin_archive_export_failed" tools:ignore="MissingTranslation">Não foi possível exportar o visual de controles. Escolha uma pasta gravável fora da biblioteca de visuais.</string>
     <string name="control_skin_name" tools:ignore="MissingTranslation">Nome do conjunto</string>
     <string name="control_skin_icon" tools:ignore="MissingTranslation">Somente ícone</string>
     <string name="control_skin_full" tools:ignore="MissingTranslation">Botão completo</string>
     <string name="control_skin_normal_image" tools:ignore="MissingTranslation">Imagem normal</string>
     <string name="control_skin_pressed_image" tools:ignore="MissingTranslation">Imagem pressionada</string>
-    <string name="control_skin_delete_warning" tools:ignore="MissingTranslation">Excluir este conjunto de visual global e todas as suas imagens? Os MIDlets que o utilizam voltarão aos controles padrão.</string>
+    <string name="control_skin_delete_warning" tools:ignore="MissingTranslation">Excluir este conjunto de visual compartilhado e todas as suas imagens? Os MIDlets que o utilizam voltarão aos controles padrão na próxima vez que forem iniciados.</string>
     <string name="control_skin_invalid_image" tools:ignore="MissingTranslation">Escolha uma imagem PNG, WebP ou SVG.</string>
     <string name="control_skin_operation_failed" tools:ignore="MissingTranslation">Não foi possível atualizar o conjunto de visual de controles.</string>
     <string name="control_skin_missing" tools:ignore="MissingTranslation">Conjunto indisponível (controles padrão)</string>
@@ -80,8 +80,8 @@
     <string name="control_skin_overlay_left" tools:ignore="MissingTranslation">Sobreposição para a esquerda</string>
     <string name="control_skin_overlay_right" tools:ignore="MissingTranslation">Sobreposição para a direita</string>
     <string name="control_skin_analog_base" tools:ignore="MissingTranslation">Imagem da base</string>
-    <string name="control_skin_analog_thumb" tools:ignore="MissingTranslation">Imagem do botão</string>
-    <string name="control_skin_analog_thumb_pressed" tools:ignore="MissingTranslation">Imagem do botão ativo</string>
+    <string name="control_skin_analog_thumb" tools:ignore="MissingTranslation">Imagem da alavanca</string>
+    <string name="control_skin_analog_thumb_pressed" tools:ignore="MissingTranslation">Imagem da alavanca em uso</string>
     <string name="control_skin_preview_directions" tools:ignore="MissingTranslation">Visualizar direções</string>
     <string name="control_skin_preview_direction" tools:ignore="MissingTranslation">Visualizar <xliff:g id="direction" example="Up">%1$s</xliff:g></string>
     <string name="control_skin_builtin_preview" tools:ignore="MissingTranslation">Padrão</string>

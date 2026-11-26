@@ -40,14 +40,14 @@
     <string name="control_skin_already_available" tools:ignore="MissingTranslation"><xliff:g id="skin_name" example="Classic Nokia">%1$s</xliff:g> දැනටමත් තිබේ</string>
     <string name="control_skin_exported" tools:ignore="MissingTranslation"><xliff:g id="skin_name" example="Classic Nokia">%1$s</xliff:g> සුරකින ලදී</string>
     <string name="control_skin_archive_invalid_path" tools:ignore="MissingTranslation">තෝරාගත් ස්ථානය ලබා ගත නොහැක.</string>
-    <string name="control_skin_archive_import_failed" tools:ignore="MissingTranslation">පාලන ආවරණය ආයාත කිරීමට නොහැකි විය. ZIP ගොනුවේ වලංගු කට්ටලයක් ඇති බවට වග බලා ගන්න.</string>
+    <string name="control_skin_archive_import_failed" tools:ignore="MissingTranslation">පාලන ආවරණය ආයාත කිරීමට නොහැකි විය. ZIP ගොනුවේ ඇත්තේ එක් වලංගු කට්ටලයක් පමණක් බව තහවුරු කර ගන්න.</string>
     <string name="control_skin_archive_export_failed" tools:ignore="MissingTranslation">පාලන ආවරණය නිර්යාත කිරීමට නොහැකි විය. ආවරණ පුස්තකාලයෙන් පිටත ලිවිය හැකි ෆෝල්ඩරයක් තෝරන්න.</string>
     <string name="control_skin_name" tools:ignore="MissingTranslation">කට්ටලයේ නම</string>
     <string name="control_skin_icon" tools:ignore="MissingTranslation">නිරූපකය පමණි</string>
     <string name="control_skin_full" tools:ignore="MissingTranslation">සම්පූර්ණ බොත්තම</string>
     <string name="control_skin_normal_image" tools:ignore="MissingTranslation">සාමාන්‍ය රූපය</string>
     <string name="control_skin_pressed_image" tools:ignore="MissingTranslation">එබූ රූපය</string>
-    <string name="control_skin_delete_warning" tools:ignore="MissingTranslation">මෙම ගෝලීය ආවරණ කට්ටලය සහ එහි සියලුම රූප මකන්නද? එය භාවිතා කරන MIDlets පෙරනිමි පාලන වෙත ආපසු යනු ඇත.</string>
+    <string name="control_skin_delete_warning" tools:ignore="MissingTranslation">මෙම හවුල් ආවරණ කට්ටලය සහ එහි සියලුම රූප මකන්නද? එය භාවිතා කරන MIDlet යෙදුම් ඊළඟ වර ආරම්භ කළ විට පෙරනිමි පාලන භාවිතා කරනු ඇත.</string>
     <string name="control_skin_invalid_image" tools:ignore="MissingTranslation">PNG, WebP හෝ SVG රූපයක් තෝරන්න.</string>
     <string name="control_skin_operation_failed" tools:ignore="MissingTranslation">පාලන ආවරණ කට්ටලය යාවත්කාලීන කිරීමට නොහැකි විය.</string>
     <string name="control_skin_missing" tools:ignore="MissingTranslation">නොමැති කට්ටලය (පෙරනිමි පාලන)</string>

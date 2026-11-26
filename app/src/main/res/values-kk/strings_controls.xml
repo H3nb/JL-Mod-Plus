@@ -47,7 +47,7 @@
     <string name="control_skin_full" tools:ignore="MissingTranslation">Толық түйме</string>
     <string name="control_skin_normal_image" tools:ignore="MissingTranslation">Қалыпты сурет</string>
     <string name="control_skin_pressed_image" tools:ignore="MissingTranslation">Басылған сурет</string>
-    <string name="control_skin_delete_warning" tools:ignore="MissingTranslation">Осы жалпы безендіру жинағын және оның барлық суретін жою керек пе? Оны пайдаланатын MIDlet-тер әдепкі басқаруға оралады.</string>
+    <string name="control_skin_delete_warning" tools:ignore="MissingTranslation">Осы ортақ безендіру жинағын және оның барлық суретін жою керек пе? Оны пайдаланатын MIDlet-тер келесі іске қосылғанда әдепкі басқару элементтерін пайдаланады.</string>
     <string name="control_skin_invalid_image" tools:ignore="MissingTranslation">PNG, WebP немесе SVG суретін таңдаңыз.</string>
     <string name="control_skin_operation_failed" tools:ignore="MissingTranslation">Басқару безендіру жинағы жаңартылмады.</string>
     <string name="control_skin_missing" tools:ignore="MissingTranslation">Жинақ қолжетімсіз (әдепкі басқару)</string>

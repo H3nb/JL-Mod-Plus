@@ -40,14 +40,14 @@
     <string name="control_skin_already_available" tools:ignore="MissingTranslation"><xliff:g id="skin_name" example="Classic Nokia">%1$s</xliff:g> ist bereits vorhanden</string>
     <string name="control_skin_exported" tools:ignore="MissingTranslation"><xliff:g id="skin_name" example="Classic Nokia">%1$s</xliff:g> gespeichert</string>
     <string name="control_skin_archive_invalid_path" tools:ignore="MissingTranslation">Der ausgewählte Speicherort ist nicht verfügbar.</string>
-    <string name="control_skin_archive_import_failed" tools:ignore="MissingTranslation">Steuerungs-Skin konnte nicht importiert werden. Stellen Sie sicher, dass die ZIP-Datei ein gültiges Set enthält.</string>
+    <string name="control_skin_archive_import_failed" tools:ignore="MissingTranslation">Steuerungs-Skin konnte nicht importiert werden. Stellen Sie sicher, dass die ZIP-Datei genau ein gültiges Skin-Set enthält.</string>
     <string name="control_skin_archive_export_failed" tools:ignore="MissingTranslation">Steuerungs-Skin konnte nicht exportiert werden. Wählen Sie einen beschreibbaren Ordner außerhalb der Skin-Bibliothek.</string>
     <string name="control_skin_name" tools:ignore="MissingTranslation">Name des Sets</string>
     <string name="control_skin_icon" tools:ignore="MissingTranslation">Nur Symbol</string>
     <string name="control_skin_full" tools:ignore="MissingTranslation">Vollständige Taste</string>
     <string name="control_skin_normal_image" tools:ignore="MissingTranslation">Normales Bild</string>
     <string name="control_skin_pressed_image" tools:ignore="MissingTranslation">Bild (gedrückt)</string>
-    <string name="control_skin_delete_warning" tools:ignore="MissingTranslation">Dieses globale Skin-Set und alle zugehörigen Bilder löschen? MIDlets, die es verwenden, wechseln zurück zur Standardsteuerung.</string>
+    <string name="control_skin_delete_warning" tools:ignore="MissingTranslation">Dieses gemeinsam genutzte Skin-Set und alle zugehörigen Bilder löschen? MIDlets, die es verwenden, nutzen beim nächsten Start die Standardsteuerung.</string>
     <string name="control_skin_invalid_image" tools:ignore="MissingTranslation">Wählen Sie ein PNG-, WebP- oder SVG-Bild aus.</string>
     <string name="control_skin_operation_failed" tools:ignore="MissingTranslation">Steuerungs-Skin-Set konnte nicht aktualisiert werden.</string>
     <string name="control_skin_missing" tools:ignore="MissingTranslation">Set nicht verfügbar (Standardsteuerung)</string>

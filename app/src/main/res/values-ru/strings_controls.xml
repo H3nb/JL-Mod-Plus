@@ -47,7 +47,7 @@
     <string name="control_skin_full" tools:ignore="MissingTranslation">Полная кнопка</string>
     <string name="control_skin_normal_image" tools:ignore="MissingTranslation">Обычное изображение</string>
     <string name="control_skin_pressed_image" tools:ignore="MissingTranslation">Изображение при нажатии</string>
-    <string name="control_skin_delete_warning" tools:ignore="MissingTranslation">Удалить этот глобальный набор скинов и все его изображения? MIDlet, использующие его, перейдут на кнопки по умолчанию.</string>
+    <string name="control_skin_delete_warning" tools:ignore="MissingTranslation">Удалить этот общий набор скинов и все его изображения? Использующие его MIDlet при следующем запуске вернутся к стандартным кнопкам.</string>
     <string name="control_skin_invalid_image" tools:ignore="MissingTranslation">Выберите изображение в формате PNG, WebP или SVG.</string>
     <string name="control_skin_operation_failed" tools:ignore="MissingTranslation">Не удалось обновить набор скинов управления.</string>
     <string name="control_skin_missing" tools:ignore="MissingTranslation">Набор недоступен (кнопки по умолчанию)</string>
@@ -68,8 +68,8 @@
     <string name="control_skin_edit_named" tools:ignore="MissingTranslation">Кнопка <xliff:g id="button_label" example="5">%1$s</xliff:g></string>
     <string name="control_skin_change_image" tools:ignore="MissingTranslation">Изменить</string>
     <string name="control_skin_pick_image" tools:ignore="MissingTranslation">Выбрать изображение</string>
-    <string name="control_skin_soft_left" tools:ignore="MissingTranslation">Левая софт</string>
-    <string name="control_skin_soft_right" tools:ignore="MissingTranslation">Правая софт</string>
+    <string name="control_skin_soft_left" tools:ignore="MissingTranslation">Левая софт-клавиша</string>
+    <string name="control_skin_soft_right" tools:ignore="MissingTranslation">Правая софт-клавиша</string>
     <string name="control_skin_fire" tools:ignore="MissingTranslation">Огонь</string>
     <string name="control_skin_menu" tools:ignore="MissingTranslation">Меню</string>
     <string name="control_skin_movement" tools:ignore="MissingTranslation">Управление движением</string>

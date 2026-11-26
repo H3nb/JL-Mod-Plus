@@ -47,7 +47,7 @@
     <string name="control_skin_full" tools:ignore="MissingTranslation">Цело дугме</string>
     <string name="control_skin_normal_image" tools:ignore="MissingTranslation">Редовна слика</string>
     <string name="control_skin_pressed_image" tools:ignore="MissingTranslation">Слика при притиску</string>
-    <string name="control_skin_delete_warning" tools:ignore="MissingTranslation">Обрисати овај глобални сет маски и све његове слике? MIDlet-и који га користе вратиће се на подразумеване контроле.</string>
+    <string name="control_skin_delete_warning" tools:ignore="MissingTranslation">Обрисати овај дељени сет маски и све његове слике? MIDlet-и који га користе вратиће се на подразумеване контроле при следећем покретању.</string>
     <string name="control_skin_invalid_image" tools:ignore="MissingTranslation">Изаберите PNG, WebP или SVG слику.</string>
     <string name="control_skin_operation_failed" tools:ignore="MissingTranslation">Није могуће ажурирати сет маски контрола.</string>
     <string name="control_skin_missing" tools:ignore="MissingTranslation">Недоступан сет (подразумеване контроле)</string>

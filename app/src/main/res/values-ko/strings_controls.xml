@@ -47,7 +47,7 @@
     <string name="control_skin_full" tools:ignore="MissingTranslation">전체 버튼</string>
     <string name="control_skin_normal_image" tools:ignore="MissingTranslation">기본 이미지</string>
     <string name="control_skin_pressed_image" tools:ignore="MissingTranslation">누른 상태 이미지</string>
-    <string name="control_skin_delete_warning" tools:ignore="MissingTranslation">이 전역 스킨 세트와 모든 이미지를 삭제할까요? 이 세트를 사용하는 MIDlet은 기본 컨트롤로 되돌아갑니다.</string>
+    <string name="control_skin_delete_warning" tools:ignore="MissingTranslation">이 공유 스킨 세트와 모든 이미지를 삭제할까요? 이 세트를 사용하는 MIDlet은 다음 실행 시 기본 컨트롤로 돌아갑니다.</string>
     <string name="control_skin_invalid_image" tools:ignore="MissingTranslation">PNG, WebP 또는 SVG 이미지를 선택하세요.</string>
     <string name="control_skin_operation_failed" tools:ignore="MissingTranslation">컨트롤 스킨 세트를 업데이트할 수 없습니다.</string>
     <string name="control_skin_missing" tools:ignore="MissingTranslation">사용할 수 없는 세트(기본 컨트롤)</string>

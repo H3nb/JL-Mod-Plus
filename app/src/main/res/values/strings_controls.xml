@@ -40,14 +40,14 @@
     <string name="control_skin_already_available"><xliff:g id="skin_name" example="Classic Nokia">%1$s</xliff:g> is already available</string>
     <string name="control_skin_exported">Saved <xliff:g id="skin_name" example="Classic Nokia">%1$s</xliff:g></string>
     <string name="control_skin_archive_invalid_path">Selected location is unavailable.</string>
-    <string name="control_skin_archive_import_failed">Couldn’t import control skin. Make sure the ZIP contains one valid set.</string>
+    <string name="control_skin_archive_import_failed">Couldn’t import control skin. Make sure the ZIP contains exactly one valid skin set.</string>
     <string name="control_skin_archive_export_failed">Couldn’t export control skin. Choose a writable folder outside the skin library.</string>
     <string name="control_skin_name">Set name</string>
     <string name="control_skin_icon">Icon only</string>
     <string name="control_skin_full">Full button</string>
     <string name="control_skin_normal_image">Normal image</string>
     <string name="control_skin_pressed_image">Pressed image</string>
-    <string name="control_skin_delete_warning">Delete this global skin set and all its images? MIDlets using it will fall back to default controls.</string>
+    <string name="control_skin_delete_warning">Delete this shared skin set and all its images? MIDlets using it will use built-in controls the next time they start.</string>
     <string name="control_skin_invalid_image">Choose a PNG, WebP, or SVG image.</string>
     <string name="control_skin_operation_failed">Couldn’t update control skin set.</string>
     <string name="control_skin_missing">Unavailable set (default controls)</string>

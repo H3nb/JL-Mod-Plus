@@ -40,14 +40,14 @@
     <string name="control_skin_already_available" tools:ignore="MissingTranslation"><xliff:g id="skin_name" example="Classic Nokia">%1$s</xliff:g> 已存在</string>
     <string name="control_skin_exported" tools:ignore="MissingTranslation">已保存 <xliff:g id="skin_name" example="Classic Nokia">%1$s</xliff:g></string>
     <string name="control_skin_archive_invalid_path" tools:ignore="MissingTranslation">所选位置不可用。</string>
-    <string name="control_skin_archive_import_failed" tools:ignore="MissingTranslation">无法导入虚拟按键皮肤。请确认 ZIP 文件包含一套有效的皮肤包。</string>
+    <string name="control_skin_archive_import_failed" tools:ignore="MissingTranslation">无法导入虚拟按键皮肤。请确认 ZIP 文件中仅包含一套有效的皮肤。</string>
     <string name="control_skin_archive_export_failed" tools:ignore="MissingTranslation">无法导出虚拟按键皮肤。请选择皮肤库之外的可写文件夹。</string>
     <string name="control_skin_name" tools:ignore="MissingTranslation">皮肤包名称</string>
     <string name="control_skin_icon" tools:ignore="MissingTranslation">仅图标</string>
     <string name="control_skin_full" tools:ignore="MissingTranslation">完整按键</string>
     <string name="control_skin_normal_image" tools:ignore="MissingTranslation">常规图像</string>
     <string name="control_skin_pressed_image" tools:ignore="MissingTranslation">按下图像</string>
-    <string name="control_skin_delete_warning" tools:ignore="MissingTranslation">确定删除此全局皮肤包及其全部图像吗？使用该皮肤包的 MIDlet 将回退至默认虚拟按键。</string>
+    <string name="control_skin_delete_warning" tools:ignore="MissingTranslation">删除此共享皮肤包及其全部图像？使用该皮肤包的 MIDlet 将在下次启动时恢复使用默认按键。</string>
     <string name="control_skin_invalid_image" tools:ignore="MissingTranslation">请选择 PNG、WebP 或 SVG 图像。</string>
     <string name="control_skin_operation_failed" tools:ignore="MissingTranslation">无法更新虚拟按键皮肤包。</string>
     <string name="control_skin_missing" tools:ignore="MissingTranslation">皮肤包不可用（默认按键）</string>

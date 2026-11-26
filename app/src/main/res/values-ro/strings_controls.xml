@@ -47,7 +47,7 @@
     <string name="control_skin_full" tools:ignore="MissingTranslation">Buton complet</string>
     <string name="control_skin_normal_image" tools:ignore="MissingTranslation">Imagine normală</string>
     <string name="control_skin_pressed_image" tools:ignore="MissingTranslation">Imagine la apăsare</string>
-    <string name="control_skin_delete_warning" tools:ignore="MissingTranslation">Ștergeți acest set global de skinuri și toate imaginile sale? MIDlet-urile care îl folosesc vor reveni la controalele implicite.</string>
+    <string name="control_skin_delete_warning" tools:ignore="MissingTranslation">Ștergeți acest set de skinuri partajat și toate imaginile sale? MIDlet-urile care îl folosesc vor reveni la controalele implicite la următoarea pornire.</string>
     <string name="control_skin_invalid_image" tools:ignore="MissingTranslation">Alegeți o imagine PNG, WebP sau SVG.</string>
     <string name="control_skin_operation_failed" tools:ignore="MissingTranslation">Setul de skinuri pentru controale nu a putut fi actualizat.</string>
     <string name="control_skin_missing" tools:ignore="MissingTranslation">Set indisponibil (controale implicite)</string>

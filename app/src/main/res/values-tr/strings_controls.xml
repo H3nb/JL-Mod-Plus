@@ -40,14 +40,14 @@
     <string name="control_skin_already_available" tools:ignore="MissingTranslation"><xliff:g id="skin_name" example="Classic Nokia">%1$s</xliff:g> zaten mevcut</string>
     <string name="control_skin_exported" tools:ignore="MissingTranslation">Kaydedildi: <xliff:g id="skin_name" example="Classic Nokia">%1$s</xliff:g></string>
     <string name="control_skin_archive_invalid_path" tools:ignore="MissingTranslation">Seçilen konum kullanılamıyor.</string>
-    <string name="control_skin_archive_import_failed" tools:ignore="MissingTranslation">Kontrol kaplaması içe aktarılamadı. ZIP dosyasının geçerli bir set içerdiğinden emin olun.</string>
+    <string name="control_skin_archive_import_failed" tools:ignore="MissingTranslation">Kontrol kaplaması içe aktarılamadı. ZIP dosyasının yalnızca bir geçerli set içerdiğinden emin olun.</string>
     <string name="control_skin_archive_export_failed" tools:ignore="MissingTranslation">Kontrol kaplaması dışa aktarılamadı. Kaplama kitaplığı dışında yazılabilir bir klasör seçin.</string>
     <string name="control_skin_name" tools:ignore="MissingTranslation">Set adı</string>
     <string name="control_skin_icon" tools:ignore="MissingTranslation">Yalnızca simge</string>
     <string name="control_skin_full" tools:ignore="MissingTranslation">Tam düğme</string>
     <string name="control_skin_normal_image" tools:ignore="MissingTranslation">Normal görsel</string>
     <string name="control_skin_pressed_image" tools:ignore="MissingTranslation">Basılı görsel</string>
-    <string name="control_skin_delete_warning" tools:ignore="MissingTranslation">Bu genel kaplama seti ve tüm görselleri silinsin mi? Bunu kullanan MIDlet’ler varsayılan kontrollere dönecektir.</string>
+    <string name="control_skin_delete_warning" tools:ignore="MissingTranslation">Bu paylaşılan kaplama seti ve tüm görselleri silinsin mi? Bu seti kullanan MIDlet’ler bir sonraki başlatmada varsayılan kontrolleri kullanır.</string>
     <string name="control_skin_invalid_image" tools:ignore="MissingTranslation">Bir PNG, WebP veya SVG görseli seçin.</string>
     <string name="control_skin_operation_failed" tools:ignore="MissingTranslation">Kontrol kaplama seti güncellenemedi.</string>
     <string name="control_skin_missing" tools:ignore="MissingTranslation">Set kullanılamıyor (varsayılan kontroller)</string>

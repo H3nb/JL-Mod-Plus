@@ -40,14 +40,14 @@
     <string name="control_skin_already_available" tools:ignore="MissingTranslation"><xliff:g id="skin_name" example="Classic Nokia">%1$s</xliff:g> از قبل موجود است</string>
     <string name="control_skin_exported" tools:ignore="MissingTranslation"><xliff:g id="skin_name" example="Classic Nokia">%1$s</xliff:g> ذخیره شد</string>
     <string name="control_skin_archive_invalid_path" tools:ignore="MissingTranslation">مکان انتخاب‌شده در دسترس نیست.</string>
-    <string name="control_skin_archive_import_failed" tools:ignore="MissingTranslation">وارد کردن پوسته کنترل‌ها ممکن نشد. مطمئن شوید فایل ZIP شامل یک مجموعه معتبر است.</string>
+    <string name="control_skin_archive_import_failed" tools:ignore="MissingTranslation">وارد کردن پوسته کنترل‌ها ممکن نشد. مطمئن شوید فایل ZIP فقط یک مجموعه پوسته معتبر دارد.</string>
     <string name="control_skin_archive_export_failed" tools:ignore="MissingTranslation">برون‌ریزی پوسته کنترل‌ها ممکن نشد. پوشه‌ای قابل نوشتن بیرون از کتابخانه پوسته‌ها انتخاب کنید.</string>
     <string name="control_skin_name" tools:ignore="MissingTranslation">نام مجموعه</string>
     <string name="control_skin_icon" tools:ignore="MissingTranslation">فقط نماد</string>
     <string name="control_skin_full" tools:ignore="MissingTranslation">کل دکمه</string>
     <string name="control_skin_normal_image" tools:ignore="MissingTranslation">تصویر عادی</string>
     <string name="control_skin_pressed_image" tools:ignore="MissingTranslation">تصویر فشرده‌شده</string>
-    <string name="control_skin_delete_warning" tools:ignore="MissingTranslation">این مجموعه پوسته سراسری و همه تصاویر آن حذف شود؟ MIDletهایی که از آن استفاده می‌کنند به کنترل‌های پیش‌فرض برمی‌گردند.</string>
+    <string name="control_skin_delete_warning" tools:ignore="MissingTranslation">این مجموعه پوسته مشترک و همه تصاویر آن حذف شود؟ MIDletهایی که از آن استفاده می‌کنند، در اجرای بعدی به کنترل‌های پیش‌فرض برمی‌گردند.</string>
     <string name="control_skin_invalid_image" tools:ignore="MissingTranslation">تصویری با قالب PNG، WebP یا SVG انتخاب کنید.</string>
     <string name="control_skin_operation_failed" tools:ignore="MissingTranslation">به‌روزرسانی مجموعه پوسته کنترل‌ها ممکن نشد.</string>
     <string name="control_skin_missing" tools:ignore="MissingTranslation">مجموعه در دسترس نیست (کنترل‌های پیش‌فرض)</string>

@@ -47,7 +47,7 @@
     <string name="control_skin_full" tools:ignore="MissingTranslation">الزر بالكامل</string>
     <string name="control_skin_normal_image" tools:ignore="MissingTranslation">الصورة العادية</string>
     <string name="control_skin_pressed_image" tools:ignore="MissingTranslation">الصورة عند الضغط</string>
-    <string name="control_skin_delete_warning" tools:ignore="MissingTranslation">هل تريد حذف مجموعة المظهر العامة هذه وجميع صورها؟ ستعود تطبيقات MIDlet التي تستخدمها إلى عناصر التحكم الافتراضية.</string>
+    <string name="control_skin_delete_warning" tools:ignore="MissingTranslation">هل تريد حذف مجموعة المظهر المشتركة هذه وجميع صورها؟ ستعود تطبيقات MIDlet التي تستخدمها إلى عناصر التحكم الافتراضية عند تشغيلها مرة أخرى.</string>
     <string name="control_skin_invalid_image" tools:ignore="MissingTranslation">اختر صورة بصيغة PNG أو WebP أو SVG.</string>
     <string name="control_skin_operation_failed" tools:ignore="MissingTranslation">تعذّر تحديث مجموعة مظهر عناصر التحكم.</string>
     <string name="control_skin_missing" tools:ignore="MissingTranslation">مجموعة غير متوفرة (عناصر التحكم الافتراضية)</string>

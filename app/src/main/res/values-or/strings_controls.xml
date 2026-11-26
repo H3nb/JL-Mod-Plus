@@ -40,14 +40,14 @@
     <string name="control_skin_already_available" tools:ignore="MissingTranslation"><xliff:g id="skin_name" example="Classic Nokia">%1$s</xliff:g> ପୂର୍ବରୁ ଉପଲବ୍ଧ ଅଛି</string>
     <string name="control_skin_exported" tools:ignore="MissingTranslation"><xliff:g id="skin_name" example="Classic Nokia">%1$s</xliff:g> ସେଭ୍ ହେଲା</string>
     <string name="control_skin_archive_invalid_path" tools:ignore="MissingTranslation">ଚୟନିତ ଅବସ୍ଥାନ ଉପଲବ୍ଧ ନାହିଁ।</string>
-    <string name="control_skin_archive_import_failed" tools:ignore="MissingTranslation">କଣ୍ଟ୍ରୋଲ୍ ସ୍କିନ୍ ଇମ୍ପୋର୍ଟ ହୋଇପାରିଲା ନାହିଁ। ZIP ରେ ଏକ ବୈଧ ସେଟ୍ ଅଛି କି ନାହିଁ ନିଶ୍ଚିତ କରନ୍ତୁ।</string>
+    <string name="control_skin_archive_import_failed" tools:ignore="MissingTranslation">କଣ୍ଟ୍ରୋଲ୍ ସ୍କିନ୍ ଇମ୍ପୋର୍ଟ ହୋଇପାରିଲା ନାହିଁ। ZIP ରେ କେବଳ ଗୋଟିଏ ବୈଧ ସ୍କିନ୍ ସେଟ୍ ଅଛି କି ନାହିଁ ନିଶ୍ଚିତ କରନ୍ତୁ।</string>
     <string name="control_skin_archive_export_failed" tools:ignore="MissingTranslation">କଣ୍ଟ୍ରୋଲ୍ ସ୍କିନ୍ ଏକ୍ସପୋର୍ଟ ହୋଇପାରିଲା ନାହିଁ। ସ୍କିନ୍ ଲାଇବ୍ରେରୀ ବାହାରେ ଏକ ଲେଖାଯୋଗ୍ୟ ଫୋଲ୍ଡର୍ ବାଛନ୍ତୁ।</string>
     <string name="control_skin_name" tools:ignore="MissingTranslation">ସେଟ୍ ନାମ</string>
     <string name="control_skin_icon" tools:ignore="MissingTranslation">କେବଳ ଆଇକନ୍</string>
     <string name="control_skin_full" tools:ignore="MissingTranslation">ସମ୍ପୂର୍ଣ୍ଣ ବଟନ୍</string>
     <string name="control_skin_normal_image" tools:ignore="MissingTranslation">ସାଧାରଣ ଇମେଜ୍</string>
     <string name="control_skin_pressed_image" tools:ignore="MissingTranslation">ଦବାଯାଇଥିବା ଇମେଜ୍</string>
-    <string name="control_skin_delete_warning" tools:ignore="MissingTranslation">ଏହି ଗ୍ଲୋବାଲ୍ ସ୍କିନ୍ ସେଟ୍ ଏବଂ ଏହାର ସମସ୍ତ ଇମେଜ୍ ଡିଲିଟ୍ କରିବେ କି? ଏହାକୁ ବ୍ୟବହାର କରୁଥିବା MIDlet ଗୁଡ଼ିକ ଡିଫଲ୍ଟ କଣ୍ଟ୍ରୋଲ୍ କୁ ଫେରିଯିବ।</string>
+    <string name="control_skin_delete_warning" tools:ignore="MissingTranslation">ଏହି ଶେୟାର୍ କରାଯାଇଥିବା ସ୍କିନ୍ ସେଟ୍ ଏବଂ ଏହାର ସମସ୍ତ ଇମେଜ୍ ଡିଲିଟ୍ କରିବେ କି? ଏହାକୁ ବ୍ୟବହାର କରୁଥିବା MIDlet ଗୁଡ଼ିକ ପରବର୍ତ୍ତୀ ଥର ଚାଲୁ ହେଲେ ଡିଫଲ୍ଟ କଣ୍ଟ୍ରୋଲ୍ ବ୍ୟବହାର କରିବେ।</string>
     <string name="control_skin_invalid_image" tools:ignore="MissingTranslation">ଏକ PNG, WebP କିମ୍ବା SVG ଇମେଜ୍ ବାଛନ୍ତୁ।</string>
     <string name="control_skin_operation_failed" tools:ignore="MissingTranslation">କଣ୍ଟ୍ରୋଲ୍ ସ୍କିନ୍ ସେଟ୍ ଅପଡେଟ୍ ହୋଇପାରିଲା ନାହିଁ।</string>
     <string name="control_skin_missing" tools:ignore="MissingTranslation">ଅନୁପଲବ୍ଧ ସେଟ୍ (ଡିଫଲ୍ଟ କଣ୍ଟ୍ରୋଲ୍)</string>
@@ -79,8 +79,8 @@
     <string name="control_skin_overlay_left" tools:ignore="MissingTranslation">ବାମ ଓଭରଲେ</string>
     <string name="control_skin_overlay_right" tools:ignore="MissingTranslation">ଡାହାଣ ଓଭରଲେ</string>
     <string name="control_skin_analog_base" tools:ignore="MissingTranslation">ବେସ୍ ଇମେଜ୍</string>
-    <string name="control_skin_analog_thumb" tools:ignore="MissingTranslation">ଥମ୍ବ ଇମେଜ୍</string>
-    <string name="control_skin_analog_thumb_pressed" tools:ignore="MissingTranslation">ସକ୍ରିୟ ଥମ୍ବ ଇମେଜ୍</string>
+    <string name="control_skin_analog_thumb" tools:ignore="MissingTranslation">ଷ୍ଟିକ୍ ଇମେଜ୍</string>
+    <string name="control_skin_analog_thumb_pressed" tools:ignore="MissingTranslation">ସକ୍ରିୟ ଷ୍ଟିକ୍ ଇମେଜ୍</string>
     <string name="control_skin_preview_directions" tools:ignore="MissingTranslation">ଦିଗ ପ୍ରିଭ୍ୟୁ କରନ୍ତୁ</string>
     <string name="control_skin_preview_direction" tools:ignore="MissingTranslation"><xliff:g id="direction" example="Up">%1$s</xliff:g> ପ୍ରିଭ୍ୟୁ</string>
     <string name="control_skin_builtin_preview" tools:ignore="MissingTranslation">ଡିଫଲ୍ଟ</string>

@@ -47,7 +47,7 @@
     <string name="control_skin_full" tools:ignore="MissingTranslation">Koko painike</string>
     <string name="control_skin_normal_image" tools:ignore="MissingTranslation">Normaali kuva</string>
     <string name="control_skin_pressed_image" tools:ignore="MissingTranslation">Painettu kuva</string>
-    <string name="control_skin_delete_warning" tools:ignore="MissingTranslation">Poistetaanko tämä yleinen ulkoasusarja ja kaikki sen kuvat? Sitä käyttävät MIDletit palaavat oletusohjaimiin.</string>
+    <string name="control_skin_delete_warning" tools:ignore="MissingTranslation">Poistetaanko tämä jaettu ulkoasusarja ja kaikki sen kuvat? Sitä käyttävät MIDletit palaavat oletusohjaimiin seuraavalla käynnistyskerralla.</string>
     <string name="control_skin_invalid_image" tools:ignore="MissingTranslation">Valitse PNG-, WebP- tai SVG-kuva.</string>
     <string name="control_skin_operation_failed" tools:ignore="MissingTranslation">Ohjainulkoasusarjaa ei voitu päivittää.</string>
     <string name="control_skin_missing" tools:ignore="MissingTranslation">Sarja ei saatavilla (oletusohjaimet)</string>

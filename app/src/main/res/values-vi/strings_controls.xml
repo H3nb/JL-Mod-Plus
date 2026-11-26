@@ -40,14 +40,14 @@
     <string name="control_skin_already_available" tools:ignore="MissingTranslation"><xliff:g id="skin_name" example="Classic Nokia">%1$s</xliff:g> đã có sẵn</string>
     <string name="control_skin_exported" tools:ignore="MissingTranslation">Đã lưu <xliff:g id="skin_name" example="Classic Nokia">%1$s</xliff:g></string>
     <string name="control_skin_archive_invalid_path" tools:ignore="MissingTranslation">Vị trí đã chọn không khả dụng.</string>
-    <string name="control_skin_archive_import_failed" tools:ignore="MissingTranslation">Không thể nhập giao diện điều khiển. Đảm bảo tệp ZIP chứa một bộ hợp lệ.</string>
+    <string name="control_skin_archive_import_failed" tools:ignore="MissingTranslation">Không thể nhập giao diện điều khiển. Đảm bảo tệp ZIP chỉ chứa một bộ giao diện hợp lệ.</string>
     <string name="control_skin_archive_export_failed" tools:ignore="MissingTranslation">Không thể xuất giao diện điều khiển. Hãy chọn một thư mục có thể ghi bên ngoài thư viện giao diện.</string>
     <string name="control_skin_name" tools:ignore="MissingTranslation">Tên bộ</string>
     <string name="control_skin_icon" tools:ignore="MissingTranslation">Chỉ biểu tượng</string>
     <string name="control_skin_full" tools:ignore="MissingTranslation">Toàn bộ nút</string>
     <string name="control_skin_normal_image" tools:ignore="MissingTranslation">Ảnh bình thường</string>
     <string name="control_skin_pressed_image" tools:ignore="MissingTranslation">Ảnh khi nhấn</string>
-    <string name="control_skin_delete_warning" tools:ignore="MissingTranslation">Xóa bộ giao diện chung này cùng toàn bộ ảnh của nó? Các MIDlet đang dùng bộ này sẽ quay về điều khiển mặc định.</string>
+    <string name="control_skin_delete_warning" tools:ignore="MissingTranslation">Xóa bộ giao diện dùng chung này cùng toàn bộ ảnh của nó? Các MIDlet sử dụng bộ này sẽ quay về điều khiển mặc định vào lần khởi chạy tiếp theo.</string>
     <string name="control_skin_invalid_image" tools:ignore="MissingTranslation">Hãy chọn ảnh PNG, WebP hoặc SVG.</string>
     <string name="control_skin_operation_failed" tools:ignore="MissingTranslation">Không thể cập nhật bộ giao diện điều khiển.</string>
     <string name="control_skin_missing" tools:ignore="MissingTranslation">Bộ không khả dụng (điều khiển mặc định)</string>
