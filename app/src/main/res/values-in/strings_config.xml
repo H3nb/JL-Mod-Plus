@@ -161,7 +161,7 @@
     <string name="config_controls_connect_controller">Hubungkan pengontrol untuk mengkalibrasi</string>
     <string name="config_controls_color_skin_notice">Skin tombol penuh dapat menggantikan warna, bentuk, dan garis tepi tombol default.</string>
     <string name="config_current_value">Nilai saat ini</string>
-    <string name="config_maintenance">Reset &amp; data</string>
+    <string name="config_maintenance">Reset dan data</string>
     <string name="config_midlet_actions" tools:ignore="MissingTranslation">Tindakan MIDlet</string>
     <string name="config_profile_maintenance" tools:ignore="MissingTranslation">Tindakan profil</string>
     <string name="config_reset_profile_settings" tools:ignore="MissingTranslation">Reset draf profil</string>
