@@ -49,7 +49,7 @@
     <string name="control_skin_pressed_image" tools:ignore="MissingTranslation">تصویر فشرده‌شده</string>
     <string name="control_skin_delete_warning" tools:ignore="MissingTranslation">این مجموعه پوسته مشترک و همه تصاویر آن حذف شود؟ MIDletهایی که از آن استفاده می‌کنند، در اجرای بعدی به کنترل‌های پیش‌فرض برمی‌گردند.</string>
     <string name="control_skin_invalid_image" tools:ignore="MissingTranslation">تصویری با قالب PNG، WebP یا SVG انتخاب کنید.</string>
-    <string name="control_skin_operation_failed" tools:ignore="MissingTranslation">به‌روزرسانی مجموعه پوسته کنترل‌ها ممکن نشد.</string>
+    <string name="control_skin_operation_failed" tools:ignore="MissingTranslation">عملیات پوسته کنترل کامل نشد.</string>
     <string name="control_skin_missing" tools:ignore="MissingTranslation">مجموعه در دسترس نیست (کنترل‌های پیش‌فرض)</string>
     <string name="control_skin_remove_image" tools:ignore="MissingTranslation">حذف</string>
     <string name="control_skin_manage" tools:ignore="MissingTranslation">مدیریت مجموعه</string>
@@ -102,4 +102,6 @@
     <string name="layout_editor_guide_tools">ابزارهای ویرایشگر</string>
     <string name="layout_editor_guide_done">برای ذخیره، صرف‌نظر یا ادامه ویرایش روی «انجام شد» بزنید.</string>
     <string name="layout_editor_guide_start">شروع ویرایش</string>
+    <string name="control_skin_invalid_name">از ۱ تا ۶۱ حرف، عدد، فاصله یا . _ ( ) - استفاده کنید. با حرف یا عدد شروع کنید و با نقطه پایان ندهید.</string>
+    <string name="control_skin_image_validation_failed">یک تصویر معتبر PNG، WebP یا SVG با حجم حداکثر 8 MiB انتخاب کنید. ابعاد PNG و WebP نباید بیشتر از 2048 × 2048 پیکسل باشد.</string>
 </resources>

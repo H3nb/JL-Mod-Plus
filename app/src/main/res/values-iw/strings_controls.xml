@@ -49,7 +49,7 @@
     <string name="control_skin_pressed_image" tools:ignore="MissingTranslation">תמונה במצב לחוץ</string>
     <string name="control_skin_delete_warning" tools:ignore="MissingTranslation">למחוק את ערכת העיצוב המשותפת הזו ואת כל התמונות שלה? יישומי MIDlet שמשתמשים בה יחזרו לפקדי ברירת המחדל בהפעלה הבאה.</string>
     <string name="control_skin_invalid_image" tools:ignore="MissingTranslation">יש לבחור תמונת PNG, WebP או SVG.</string>
-    <string name="control_skin_operation_failed" tools:ignore="MissingTranslation">לא ניתן לעדכן את ערכת העיצוב לפקדים.</string>
+    <string name="control_skin_operation_failed" tools:ignore="MissingTranslation">לא ניתן היה להשלים את הפעולה על עיצוב הפקדים.</string>
     <string name="control_skin_missing" tools:ignore="MissingTranslation">ערכה לא זמינה (פקדי ברירת מחדל)</string>
     <string name="control_skin_remove_image" tools:ignore="MissingTranslation">הסרה</string>
     <string name="control_skin_manage" tools:ignore="MissingTranslation">ניהול ערכה</string>
@@ -103,4 +103,6 @@
     <string name="layout_editor_guide_tools">כלי עריכה</string>
     <string name="layout_editor_guide_done">יש להקיש על “סיום” כדי לשמור, לבטל שינויים או להמשיך בעריכה.</string>
     <string name="layout_editor_guide_start">התחלת עריכה</string>
+    <string name="control_skin_invalid_name">יש להשתמש ב-1–61 אותיות, ספרות, רווחים או . _ ( ) -. יש להתחיל באות או ספרה ולא לסיים בנקודה.</string>
+    <string name="control_skin_image_validation_failed">יש לבחור תמונת PNG,‏ WebP או SVG תקינה בגודל של עד 8 MiB. המידות של תמונות PNG ו-WebP לא יעלו על 2048 × 2048 פיקסלים.</string>
 </resources>

@@ -49,7 +49,7 @@
     <string name="control_skin_pressed_image" tools:ignore="MissingTranslation">Immagine premuta</string>
     <string name="control_skin_delete_warning" tools:ignore="MissingTranslation">Eliminare questo set di skin condiviso e tutte le sue immagini? I MIDlet che lo usano torneranno ai controlli predefiniti al prossimo avvio.</string>
     <string name="control_skin_invalid_image" tools:ignore="MissingTranslation">Scegli un’immagine PNG, WebP o SVG.</string>
-    <string name="control_skin_operation_failed" tools:ignore="MissingTranslation">Impossibile aggiornare il set di skin dei controlli.</string>
+    <string name="control_skin_operation_failed" tools:ignore="MissingTranslation">Impossibile completare l’operazione sulla skin dei controlli.</string>
     <string name="control_skin_missing" tools:ignore="MissingTranslation">Set non disponibile (controlli predefiniti)</string>
     <string name="control_skin_remove_image" tools:ignore="MissingTranslation">Rimuovi</string>
     <string name="control_skin_manage" tools:ignore="MissingTranslation">Gestisci set</string>
@@ -103,4 +103,6 @@
     <string name="layout_editor_guide_tools">Strumenti dell’editor</string>
     <string name="layout_editor_guide_done">Tocca Fine per salvare, scartare o continuare a modificare.</string>
     <string name="layout_editor_guide_start">Inizia modifica</string>
+    <string name="control_skin_invalid_name">Usa da 1 a 61 lettere, numeri, spazi o . _ ( ) -. Inizia con una lettera o un numero e non terminare con un punto.</string>
+    <string name="control_skin_image_validation_failed">Scegli un’immagine PNG, WebP o SVG valida fino a 8 MiB. Le immagini PNG e WebP non devono superare 2048 × 2048 pixel.</string>
 </resources>

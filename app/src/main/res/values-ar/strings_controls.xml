@@ -49,7 +49,7 @@
     <string name="control_skin_pressed_image" tools:ignore="MissingTranslation">الصورة عند الضغط</string>
     <string name="control_skin_delete_warning" tools:ignore="MissingTranslation">هل تريد حذف مجموعة المظهر المشتركة هذه وجميع صورها؟ ستعود تطبيقات MIDlet التي تستخدمها إلى عناصر التحكم الافتراضية عند تشغيلها مرة أخرى.</string>
     <string name="control_skin_invalid_image" tools:ignore="MissingTranslation">اختر صورة بصيغة PNG أو WebP أو SVG.</string>
-    <string name="control_skin_operation_failed" tools:ignore="MissingTranslation">تعذّر تحديث مجموعة مظهر عناصر التحكم.</string>
+    <string name="control_skin_operation_failed" tools:ignore="MissingTranslation">تعذّر إكمال عملية مظهر عناصر التحكم.</string>
     <string name="control_skin_missing" tools:ignore="MissingTranslation">مجموعة غير متوفرة (عناصر التحكم الافتراضية)</string>
     <string name="control_skin_remove_image" tools:ignore="MissingTranslation">إزالة</string>
     <string name="control_skin_manage" tools:ignore="MissingTranslation">إدارة المجموعة</string>
@@ -106,4 +106,6 @@
     <string name="layout_editor_guide_tools">أدوات المحرر</string>
     <string name="layout_editor_guide_done">انقر على «تم» للحفظ أو التجاهل أو متابعة التعديل.</string>
     <string name="layout_editor_guide_start">بدء التعديل</string>
+    <string name="control_skin_invalid_name">استخدم من 1 إلى 61 حرفًا أو رقمًا أو مسافة أو رمزًا من . _ ( ) -. ابدأ بحرف أو رقم ولا تنه الاسم بنقطة.</string>
+    <string name="control_skin_image_validation_failed">اختر صورة PNG أو WebP أو SVG صالحة بحجم لا يتجاوز 8 MiB. يجب ألا تتجاوز أبعاد صور PNG وWebP ‏2048 × 2048 بكسل.</string>
 </resources>

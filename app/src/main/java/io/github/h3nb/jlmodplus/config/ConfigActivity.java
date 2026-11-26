@@ -1396,13 +1396,9 @@ public class ConfigActivity extends AppCompatActivity {
         assetTasks.acknowledge();
         if (result.failure != null) {
             Log.w(TAG, "Asset file action failed", result.failure);
-            String message = result.failure.getMessage();
-            int resource = "Asset name already used".equals(message)
-                    || result.failure instanceof ConfigAssetFiles.NameConflictException
+            int resource = result.failure instanceof ConfigAssetFiles.NameConflictException
                     ? R.string.file_picker_folder_exists
-                    : ("Unsupported asset".equals(message)
-                        || "Invalid asset file".equals(message)
-                        || "Invalid asset format".equals(message))
+                    : result.failure instanceof ConfigAssetFiles.InvalidAssetException
                     ? R.string.config_asset_invalid : R.string.config_asset_operation_failed;
             showConfigNotice(resource);
             return;

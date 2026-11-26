@@ -194,4 +194,6 @@ data class BulkInstallResult(
     val reviewReason: BulkInstallReviewReason? = null,
     /** Non-fatal notices that should remain visually distinct from ordinary success detail. */
     val warning: String? = null,
+    /** Bounded technical evidence; not the localized outcome explanation. */
+    val diagnosticDetail: String? = null,
 )

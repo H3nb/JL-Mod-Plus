@@ -49,7 +49,7 @@
     <string name="control_skin_pressed_image" tools:ignore="MissingTranslation">รูปภาพขณะกด</string>
     <string name="control_skin_delete_warning" tools:ignore="MissingTranslation">ลบชุดสกินที่ใช้ร่วมกันนี้และรูปภาพทั้งหมดหรือไม่? MIDlet ที่ใช้ชุดนี้จะกลับไปใช้ปุ่มควบคุมเริ่มต้นเมื่อเปิดใช้งานครั้งถัดไป</string>
     <string name="control_skin_invalid_image" tools:ignore="MissingTranslation">เลือกรูปภาพ PNG, WebP หรือ SVG</string>
-    <string name="control_skin_operation_failed" tools:ignore="MissingTranslation">ไม่สามารถอัปเดตชุดสกินปุ่มควบคุมได้</string>
+    <string name="control_skin_operation_failed" tools:ignore="MissingTranslation">ไม่สามารถดำเนินการกับสกินปุ่มควบคุมให้เสร็จสมบูรณ์ได้</string>
     <string name="control_skin_missing" tools:ignore="MissingTranslation">ชุดไม่พร้อมใช้งาน (ใช้ปุ่มควบคุมเริ่มต้น)</string>
     <string name="control_skin_remove_image" tools:ignore="MissingTranslation">นำออก</string>
     <string name="control_skin_manage" tools:ignore="MissingTranslation">จัดการชุด</string>
@@ -101,4 +101,6 @@
     <string name="layout_editor_guide_tools">เครื่องมือแก้ไข</string>
     <string name="layout_editor_guide_done">แตะ เสร็จสิ้น เพื่อบันทึก ละทิ้ง หรือแก้ไขต่อ</string>
     <string name="layout_editor_guide_start">เริ่มแก้ไข</string>
+    <string name="control_skin_invalid_name">ใช้ตัวอักษร ตัวเลข ช่องว่าง หรือ . _ ( ) - จำนวน 1–61 อักขระ ขึ้นต้นด้วยตัวอักษรหรือตัวเลข และห้ามลงท้ายด้วยจุด</string>
+    <string name="control_skin_image_validation_failed">เลือกรูป PNG, WebP หรือ SVG ที่ถูกต้อง ขนาดไม่เกิน 8 MiB รูป PNG และ WebP ต้องมีขนาดไม่เกิน 2048 × 2048 พิกเซล</string>
 </resources>

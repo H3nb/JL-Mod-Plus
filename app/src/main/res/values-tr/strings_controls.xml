@@ -49,7 +49,7 @@
     <string name="control_skin_pressed_image" tools:ignore="MissingTranslation">Basılı görsel</string>
     <string name="control_skin_delete_warning" tools:ignore="MissingTranslation">Bu paylaşılan kaplama seti ve tüm görselleri silinsin mi? Bu seti kullanan MIDlet’ler bir sonraki başlatmada varsayılan kontrolleri kullanır.</string>
     <string name="control_skin_invalid_image" tools:ignore="MissingTranslation">Bir PNG, WebP veya SVG görseli seçin.</string>
-    <string name="control_skin_operation_failed" tools:ignore="MissingTranslation">Kontrol kaplama seti güncellenemedi.</string>
+    <string name="control_skin_operation_failed" tools:ignore="MissingTranslation">Kontrol kaplaması işlemi tamamlanamadı.</string>
     <string name="control_skin_missing" tools:ignore="MissingTranslation">Set kullanılamıyor (varsayılan kontroller)</string>
     <string name="control_skin_remove_image" tools:ignore="MissingTranslation">Kaldır</string>
     <string name="control_skin_manage" tools:ignore="MissingTranslation">Seti yönet</string>
@@ -102,4 +102,6 @@
     <string name="layout_editor_guide_tools">Düzenleyici araçları</string>
     <string name="layout_editor_guide_done">Kaydetmek, vazgeçmek veya düzenlemeye devam etmek için Bitti’ye dokunun.</string>
     <string name="layout_editor_guide_start">Düzenlemeye başla</string>
+    <string name="control_skin_invalid_name">1–61 harf, rakam, boşluk veya . _ ( ) - karakteri kullanın. Harf veya rakamla başlayın ve noktayla bitirmeyin.</string>
+    <string name="control_skin_image_validation_failed">En fazla 8 MiB boyutunda geçerli bir PNG, WebP veya SVG görseli seçin. PNG ve WebP görselleri 2048 × 2048 pikseli aşmamalıdır.</string>
 </resources>

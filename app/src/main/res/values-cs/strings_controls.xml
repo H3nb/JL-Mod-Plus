@@ -49,7 +49,7 @@
     <string name="control_skin_pressed_image" tools:ignore="MissingTranslation">Obrázek při stisknutí</string>
     <string name="control_skin_delete_warning" tools:ignore="MissingTranslation">Smazat tuto sdílenou sadu vzhledu a všechny její obrázky? MIDlety, které ji používají, při příštím spuštění použijí výchozí ovládání.</string>
     <string name="control_skin_invalid_image" tools:ignore="MissingTranslation">Vyberte obrázek ve formátu PNG, WebP nebo SVG.</string>
-    <string name="control_skin_operation_failed" tools:ignore="MissingTranslation">Sadu vzhledu ovládání se nepodařilo aktualizovat.</string>
+    <string name="control_skin_operation_failed" tools:ignore="MissingTranslation">Operaci se vzhledem ovládacích prvků se nepodařilo dokončit.</string>
     <string name="control_skin_missing" tools:ignore="MissingTranslation">Nedostupná sada (výchozí ovládání)</string>
     <string name="control_skin_remove_image" tools:ignore="MissingTranslation">Odebrat</string>
     <string name="control_skin_manage" tools:ignore="MissingTranslation">Spravovat sadu</string>
@@ -104,4 +104,6 @@
     <string name="layout_editor_guide_tools">Nástroje editoru</string>
     <string name="layout_editor_guide_done">Klepnutím na Hotovo můžete změny uložit, zahodit nebo pokračovat v úpravách.</string>
     <string name="layout_editor_guide_start">Začít upravovat</string>
+    <string name="control_skin_invalid_name">Použijte 1–61 písmen, číslic, mezer nebo znaků . _ ( ) -. Začněte písmenem či číslicí a nekončete tečkou.</string>
+    <string name="control_skin_image_validation_failed">Vyberte platný obrázek PNG, WebP nebo SVG do 8 MiB. PNG a WebP nesmí překročit 2048 × 2048 pixelů.</string>
 </resources>

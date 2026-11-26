@@ -49,7 +49,7 @@
     <string name="control_skin_pressed_image" tools:ignore="MissingTranslation">Басылған сурет</string>
     <string name="control_skin_delete_warning" tools:ignore="MissingTranslation">Осы ортақ безендіру жинағын және оның барлық суретін жою керек пе? Оны пайдаланатын MIDlet-тер келесі іске қосылғанда әдепкі басқару элементтерін пайдаланады.</string>
     <string name="control_skin_invalid_image" tools:ignore="MissingTranslation">PNG, WebP немесе SVG суретін таңдаңыз.</string>
-    <string name="control_skin_operation_failed" tools:ignore="MissingTranslation">Басқару безендіру жинағы жаңартылмады.</string>
+    <string name="control_skin_operation_failed" tools:ignore="MissingTranslation">Басқару мұқабасының операциясын аяқтау мүмкін болмады.</string>
     <string name="control_skin_missing" tools:ignore="MissingTranslation">Жинақ қолжетімсіз (әдепкі басқару)</string>
     <string name="control_skin_remove_image" tools:ignore="MissingTranslation">Алып тастау</string>
     <string name="control_skin_manage" tools:ignore="MissingTranslation">Жинақты басқару</string>
@@ -102,4 +102,6 @@
     <string name="layout_editor_guide_tools">Өңдегіш құралдары</string>
     <string name="layout_editor_guide_done">Сақтау, болдырмау немесе өңдеуді жалғастыру үшін «Дайын» түймесін түртіңіз.</string>
     <string name="layout_editor_guide_start">Өңдеуді бастау</string>
+    <string name="control_skin_invalid_name">1–61 әріп, сан, бос орын немесе . _ ( ) - таңбасын пайдаланыңыз. Әріптен не саннан бастаңыз және нүктемен аяқтамаңыз.</string>
+    <string name="control_skin_image_validation_failed">8 MiB-қа дейінгі жарамды PNG, WebP немесе SVG кескінін таңдаңыз. PNG және WebP өлшемдері 2048 × 2048 пиксельден аспауы керек.</string>
 </resources>

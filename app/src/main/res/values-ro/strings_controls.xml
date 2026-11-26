@@ -49,7 +49,7 @@
     <string name="control_skin_pressed_image" tools:ignore="MissingTranslation">Imagine la apăsare</string>
     <string name="control_skin_delete_warning" tools:ignore="MissingTranslation">Ștergeți acest set de skinuri partajat și toate imaginile sale? MIDlet-urile care îl folosesc vor reveni la controalele implicite la următoarea pornire.</string>
     <string name="control_skin_invalid_image" tools:ignore="MissingTranslation">Alegeți o imagine PNG, WebP sau SVG.</string>
-    <string name="control_skin_operation_failed" tools:ignore="MissingTranslation">Setul de skinuri pentru controale nu a putut fi actualizat.</string>
+    <string name="control_skin_operation_failed" tools:ignore="MissingTranslation">Operația asupra aspectului comenzilor nu a putut fi finalizată.</string>
     <string name="control_skin_missing" tools:ignore="MissingTranslation">Set indisponibil (controale implicite)</string>
     <string name="control_skin_remove_image" tools:ignore="MissingTranslation">Elimină</string>
     <string name="control_skin_manage" tools:ignore="MissingTranslation">Gestionează setul</string>
@@ -103,4 +103,6 @@
     <string name="layout_editor_guide_tools">Instrumente de editare</string>
     <string name="layout_editor_guide_done">Atingeți Gata pentru a salva, a renunța sau a continua editarea.</string>
     <string name="layout_editor_guide_start">Începe editarea</string>
+    <string name="control_skin_invalid_name">Folosiți 1–61 de litere, cifre, spații sau . _ ( ) -. Începeți cu o literă sau o cifră și nu terminați cu punct.</string>
+    <string name="control_skin_image_validation_failed">Alegeți o imagine PNG, WebP sau SVG validă de până la 8 MiB. PNG și WebP nu trebuie să depășească 2048 × 2048 pixeli.</string>
 </resources>

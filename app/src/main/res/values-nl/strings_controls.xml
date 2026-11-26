@@ -49,7 +49,7 @@
     <string name="control_skin_pressed_image" tools:ignore="MissingTranslation">Ingedrukte afbeelding</string>
     <string name="control_skin_delete_warning" tools:ignore="MissingTranslation">Deze gedeelde skinset en alle bijbehorende afbeeldingen verwijderen? MIDlets die deze set gebruiken, vallen bij de volgende start terug op de standaardbediening.</string>
     <string name="control_skin_invalid_image" tools:ignore="MissingTranslation">Kies een PNG-, WebP- of SVG-afbeelding.</string>
-    <string name="control_skin_operation_failed" tools:ignore="MissingTranslation">Kan bedieningsskinset niet bijwerken.</string>
+    <string name="control_skin_operation_failed" tools:ignore="MissingTranslation">De bewerking van de bedieningsskin kon niet worden voltooid.</string>
     <string name="control_skin_missing" tools:ignore="MissingTranslation">Niet-beschikbare set (standaardbediening)</string>
     <string name="control_skin_remove_image" tools:ignore="MissingTranslation">Verwijderen</string>
     <string name="control_skin_manage" tools:ignore="MissingTranslation">Set beheren</string>
@@ -102,4 +102,6 @@
     <string name="layout_editor_guide_tools">Editorhulpmiddelen</string>
     <string name="layout_editor_guide_done">Tik op Gereed om op te slaan, te verwerpen of verder te bewerken.</string>
     <string name="layout_editor_guide_start">Beginnen met bewerken</string>
+    <string name="control_skin_invalid_name">Gebruik 1–61 letters, cijfers, spaties of . _ ( ) -. Begin met een letter of cijfer en eindig niet met een punt.</string>
+    <string name="control_skin_image_validation_failed">Kies een geldige PNG-, WebP- of SVG-afbeelding van maximaal 8 MiB. PNG en WebP mogen niet groter zijn dan 2048 × 2048 pixels.</string>
 </resources>

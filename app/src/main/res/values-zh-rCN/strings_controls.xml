@@ -49,7 +49,7 @@
     <string name="control_skin_pressed_image" tools:ignore="MissingTranslation">按下图像</string>
     <string name="control_skin_delete_warning" tools:ignore="MissingTranslation">删除此共享皮肤包及其全部图像？使用该皮肤包的 MIDlet 将在下次启动时恢复使用默认按键。</string>
     <string name="control_skin_invalid_image" tools:ignore="MissingTranslation">请选择 PNG、WebP 或 SVG 图像。</string>
-    <string name="control_skin_operation_failed" tools:ignore="MissingTranslation">无法更新虚拟按键皮肤包。</string>
+    <string name="control_skin_operation_failed" tools:ignore="MissingTranslation">无法完成控件皮肤操作。</string>
     <string name="control_skin_missing" tools:ignore="MissingTranslation">皮肤包不可用（默认按键）</string>
     <string name="control_skin_remove_image" tools:ignore="MissingTranslation">移除</string>
     <string name="control_skin_manage" tools:ignore="MissingTranslation">管理皮肤包</string>
@@ -101,4 +101,6 @@
     <string name="layout_editor_guide_tools">编辑工具</string>
     <string name="layout_editor_guide_done">轻按“完成”可保存、放弃或继续编辑。</string>
     <string name="layout_editor_guide_start">开始编辑</string>
+    <string name="control_skin_invalid_name">请使用 1–61 个字母、数字、空格或 . _ ( ) - 字符。以字母或数字开头，不能以句点结尾。</string>
+    <string name="control_skin_image_validation_failed">请选择不超过 8 MiB 的有效 PNG、WebP 或 SVG 图片。PNG 和 WebP 图片不得超过 2048 × 2048 像素。</string>
 </resources>

@@ -49,7 +49,7 @@
     <string name="control_skin_pressed_image" tools:ignore="MissingTranslation">दबाए जाने का चित्र</string>
     <string name="control_skin_delete_warning" tools:ignore="MissingTranslation">यह साझा स्किन सेट और इसकी सभी इमेज हटाएं? इसका इस्तेमाल करने वाले MIDlet अगली बार शुरू होने पर डिफ़ॉल्ट कंट्रोल इस्तेमाल करेंगे।</string>
     <string name="control_skin_invalid_image" tools:ignore="MissingTranslation">PNG, WebP या SVG चित्र चुनें।</string>
-    <string name="control_skin_operation_failed" tools:ignore="MissingTranslation">कंट्रोल स्किन सेट अपडेट नहीं किया जा सका।</string>
+    <string name="control_skin_operation_failed" tools:ignore="MissingTranslation">कंट्रोल स्किन का ऑपरेशन पूरा नहीं हो सका।</string>
     <string name="control_skin_missing" tools:ignore="MissingTranslation">सेट उपलब्ध नहीं है (डिफ़ॉल्ट कंट्रोल)</string>
     <string name="control_skin_remove_image" tools:ignore="MissingTranslation">हटाएं</string>
     <string name="control_skin_manage" tools:ignore="MissingTranslation">सेट प्रबंधित करें</string>
@@ -102,4 +102,6 @@
     <string name="layout_editor_guide_tools">एडिटर टूल</string>
     <string name="layout_editor_guide_done">सहेजने, छोड़ने या संपादन जारी रखने के लिए “हो गया” पर टैप करें।</string>
     <string name="layout_editor_guide_start">संपादन शुरू करें</string>
+    <string name="control_skin_invalid_name">1–61 अक्षर, अंक, स्पेस या . _ ( ) - का उपयोग करें। अक्षर या अंक से शुरू करें और बिंदु पर समाप्त न करें।</string>
+    <string name="control_skin_image_validation_failed">8 MiB तक की मान्य PNG, WebP या SVG इमेज चुनें। PNG और WebP के आयाम 2048 × 2048 पिक्सेल से अधिक नहीं होने चाहिए।</string>
 </resources>

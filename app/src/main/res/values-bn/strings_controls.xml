@@ -49,7 +49,7 @@
     <string name="control_skin_pressed_image" tools:ignore="MissingTranslation">চাপা অবস্থায় ছবি</string>
     <string name="control_skin_delete_warning" tools:ignore="MissingTranslation">এই শেয়ার করা স্কিন সেট এবং এর সব ছবি মুছবেন? যেসব MIDlet এটি ব্যবহার করে, পরের বার চালু হলে সেগুলো ডিফল্ট কন্ট্রোল ব্যবহার করবে।</string>
     <string name="control_skin_invalid_image" tools:ignore="MissingTranslation">একটি PNG, WebP বা SVG ছবি বেছে নিন।</string>
-    <string name="control_skin_operation_failed" tools:ignore="MissingTranslation">কন্ট্রোল স্কিন সেট আপডেট করা যায়নি।</string>
+    <string name="control_skin_operation_failed" tools:ignore="MissingTranslation">কন্ট্রোল স্কিন অপারেশন সম্পূর্ণ করা যায়নি।</string>
     <string name="control_skin_missing" tools:ignore="MissingTranslation">সেট উপলব্ধ নয় (ডিফল্ট কন্ট্রোল)</string>
     <string name="control_skin_remove_image" tools:ignore="MissingTranslation">সরান</string>
     <string name="control_skin_manage" tools:ignore="MissingTranslation">সেট পরিচালনা করুন</string>
@@ -102,4 +102,6 @@
     <string name="layout_editor_guide_tools">এডিটর টুলস</string>
     <string name="layout_editor_guide_done">সেভ, বাতিল বা সম্পাদনা চালিয়ে যেতে সম্পন্ন-তে ট্যাপ করুন।</string>
     <string name="layout_editor_guide_start">সম্পাদনা শুরু করুন</string>
+    <string name="control_skin_invalid_name">১–৬১টি অক্ষর, সংখ্যা, স্পেস বা . _ ( ) - ব্যবহার করুন। অক্ষর বা সংখ্যা দিয়ে শুরু করুন এবং ডট দিয়ে শেষ করবেন না।</string>
+    <string name="control_skin_image_validation_failed">সর্বোচ্চ 8 MiB-এর একটি বৈধ PNG, WebP বা SVG ছবি বেছে নিন। PNG ও WebP-এর আকার 2048 × 2048 পিক্সেলের বেশি হতে পারবে না।</string>
 </resources>

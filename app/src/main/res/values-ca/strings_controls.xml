@@ -49,7 +49,7 @@
     <string name="control_skin_pressed_image" tools:ignore="MissingTranslation">Imatge premuda</string>
     <string name="control_skin_delete_warning" tools:ignore="MissingTranslation">Vols suprimir aquest conjunt compartit d’aspectes i totes les seves imatges? Els MIDlets que l’utilitzin tornaran als controls predeterminats la propera vegada que s’iniciïn.</string>
     <string name="control_skin_invalid_image" tools:ignore="MissingTranslation">Tria una imatge PNG, WebP o SVG.</string>
-    <string name="control_skin_operation_failed" tools:ignore="MissingTranslation">No s’ha pogut actualitzar el conjunt d’aspectes dels controls.</string>
+    <string name="control_skin_operation_failed" tools:ignore="MissingTranslation">No s’ha pogut completar l’operació de l’aspecte dels controls.</string>
     <string name="control_skin_missing" tools:ignore="MissingTranslation">Conjunt no disponible (controls predeterminats)</string>
     <string name="control_skin_remove_image" tools:ignore="MissingTranslation">Suprimeix</string>
     <string name="control_skin_manage" tools:ignore="MissingTranslation">Gestiona el conjunt</string>
@@ -103,4 +103,6 @@
     <string name="layout_editor_guide_tools">Eines de l’editor</string>
     <string name="layout_editor_guide_done">Toca Fet per desar, descartar o continuar editant.</string>
     <string name="layout_editor_guide_start">Comença a editar</string>
+    <string name="control_skin_invalid_name">Utilitza entre 1 i 61 lletres, números, espais o . _ ( ) -. Comença amb una lletra o un número i no acabis amb un punt.</string>
+    <string name="control_skin_image_validation_failed">Tria una imatge PNG, WebP o SVG vàlida de fins a 8 MiB. Les imatges PNG i WebP no poden superar els 2048 × 2048 píxels.</string>
 </resources>

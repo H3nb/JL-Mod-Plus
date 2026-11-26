@@ -49,7 +49,7 @@
     <string name="control_skin_pressed_image" tools:ignore="MissingTranslation">එබූ රූපය</string>
     <string name="control_skin_delete_warning" tools:ignore="MissingTranslation">මෙම හවුල් ආවරණ කට්ටලය සහ එහි සියලුම රූප මකන්නද? එය භාවිතා කරන MIDlet යෙදුම් ඊළඟ වර ආරම්භ කළ විට පෙරනිමි පාලන භාවිතා කරනු ඇත.</string>
     <string name="control_skin_invalid_image" tools:ignore="MissingTranslation">PNG, WebP හෝ SVG රූපයක් තෝරන්න.</string>
-    <string name="control_skin_operation_failed" tools:ignore="MissingTranslation">පාලන ආවරණ කට්ටලය යාවත්කාලීන කිරීමට නොහැකි විය.</string>
+    <string name="control_skin_operation_failed" tools:ignore="MissingTranslation">පාලක ස්කින් මෙහෙයුම සම්පූර්ණ කළ නොහැකි විය.</string>
     <string name="control_skin_missing" tools:ignore="MissingTranslation">නොමැති කට්ටලය (පෙරනිමි පාලන)</string>
     <string name="control_skin_remove_image" tools:ignore="MissingTranslation">ඉවත් කරන්න</string>
     <string name="control_skin_manage" tools:ignore="MissingTranslation">කට්ටලය කළමනාකරණය කරන්න</string>
@@ -102,4 +102,6 @@
     <string name="layout_editor_guide_tools">සංස්කාරක මෙවලම්</string>
     <string name="layout_editor_guide_done">සුරැකීමට, ඉවතලීමට හෝ සංස්කරණය දිගටම කිරීමට “අවසන්” තට්ටු කරන්න.</string>
     <string name="layout_editor_guide_start">සංස්කරණය අරඹන්න</string>
+    <string name="control_skin_invalid_name">අකුරු, ඉලක්කම්, හිස්තැන් හෝ . _ ( ) - යොදා අක්ෂර 1–61ක් භාවිතා කරන්න. අකුරකින් හෝ ඉලක්කමකින් ආරම්භ කර තිතකින් අවසන් නොකරන්න.</string>
+    <string name="control_skin_image_validation_failed">8 MiB දක්වා වලංගු PNG, WebP හෝ SVG රූපයක් තෝරන්න. PNG සහ WebP රූප 2048 × 2048 පික්සල ඉක්මවිය නොහැක.</string>
 </resources>

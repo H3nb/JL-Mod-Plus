@@ -49,7 +49,7 @@
     <string name="control_skin_pressed_image" tools:ignore="MissingTranslation">ଦବାଯାଇଥିବା ଇମେଜ୍</string>
     <string name="control_skin_delete_warning" tools:ignore="MissingTranslation">ଏହି ଶେୟାର୍ କରାଯାଇଥିବା ସ୍କିନ୍ ସେଟ୍ ଏବଂ ଏହାର ସମସ୍ତ ଇମେଜ୍ ଡିଲିଟ୍ କରିବେ କି? ଏହାକୁ ବ୍ୟବହାର କରୁଥିବା MIDlet ଗୁଡ଼ିକ ପରବର୍ତ୍ତୀ ଥର ଚାଲୁ ହେଲେ ଡିଫଲ୍ଟ କଣ୍ଟ୍ରୋଲ୍ ବ୍ୟବହାର କରିବେ।</string>
     <string name="control_skin_invalid_image" tools:ignore="MissingTranslation">ଏକ PNG, WebP କିମ୍ବା SVG ଇମେଜ୍ ବାଛନ୍ତୁ।</string>
-    <string name="control_skin_operation_failed" tools:ignore="MissingTranslation">କଣ୍ଟ୍ରୋଲ୍ ସ୍କିନ୍ ସେଟ୍ ଅପଡେଟ୍ ହୋଇପାରିଲା ନାହିଁ।</string>
+    <string name="control_skin_operation_failed" tools:ignore="MissingTranslation">କଣ୍ଟ୍ରୋଲ୍ ସ୍କିନ୍ ଅପରେସନ୍ ସମ୍ପୂର୍ଣ୍ଣ ହୋଇପାରିଲା ନାହିଁ।</string>
     <string name="control_skin_missing" tools:ignore="MissingTranslation">ଅନୁପଲବ୍ଧ ସେଟ୍ (ଡିଫଲ୍ଟ କଣ୍ଟ୍ରୋଲ୍)</string>
     <string name="control_skin_remove_image" tools:ignore="MissingTranslation">ଅପସାରଣ କରନ୍ତୁ</string>
     <string name="control_skin_manage" tools:ignore="MissingTranslation">ସେଟ୍ ପରିଚାଳନା କରନ୍ତୁ</string>
@@ -102,4 +102,6 @@
     <string name="layout_editor_guide_tools">ଏଡିଟର୍ ଟୁଲ୍</string>
     <string name="layout_editor_guide_done">ସେଭ୍ କରିବାକୁ, ବାତିଲ୍ କରିବାକୁ କିମ୍ବା ଏଡିଟିଂ ଜାରି ରଖିବାକୁ ସମ୍ପୂର୍ଣ୍ଣ ଉପରେ ଟ୍ୟାପ୍ କରନ୍ତୁ।</string>
     <string name="layout_editor_guide_start">ଏଡିଟିଂ ଆରମ୍ଭ କରନ୍ତୁ</string>
+    <string name="control_skin_invalid_name">1–61ଟି ଅକ୍ଷର, ସଂଖ୍ୟା, ସ୍ପେସ୍ କିମ୍ବା . _ ( ) - ବ୍ୟବହାର କରନ୍ତୁ। ଅକ୍ଷର କିମ୍ବା ସଂଖ୍ୟାରେ ଆରମ୍ଭ କରନ୍ତୁ ଏବଂ ଡଟ୍‌ରେ ଶେଷ କରନ୍ତୁ ନାହିଁ।</string>
+    <string name="control_skin_image_validation_failed">8 MiB ପର୍ଯ୍ୟନ୍ତ ଏକ ବୈଧ PNG, WebP କିମ୍ବା SVG ଛବି ବାଛନ୍ତୁ। PNG ଏବଂ WebP 2048 × 2048 ପିକ୍ସେଲ୍‌ରୁ ବଡ଼ ହେବା ଉଚିତ ନୁହେଁ।</string>
 </resources>

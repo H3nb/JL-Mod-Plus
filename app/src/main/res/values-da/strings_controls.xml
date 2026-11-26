@@ -49,7 +49,7 @@
     <string name="control_skin_pressed_image" tools:ignore="MissingTranslation">Billede ved tryk</string>
     <string name="control_skin_delete_warning" tools:ignore="MissingTranslation">Vil du slette dette delte skinsæt og alle dets billeder? MIDlets, der bruger det, vender tilbage til standardkontrollerne, næste gang de startes.</string>
     <string name="control_skin_invalid_image" tools:ignore="MissingTranslation">Vælg et PNG-, WebP- eller SVG-billede.</string>
-    <string name="control_skin_operation_failed" tools:ignore="MissingTranslation">Kontrolskinsættet kunne ikke opdateres.</string>
+    <string name="control_skin_operation_failed" tools:ignore="MissingTranslation">Handlingen for kontroltemaet kunne ikke fuldføres.</string>
     <string name="control_skin_missing" tools:ignore="MissingTranslation">Utilgængeligt sæt (standardkontroller)</string>
     <string name="control_skin_remove_image" tools:ignore="MissingTranslation">Fjern</string>
     <string name="control_skin_manage" tools:ignore="MissingTranslation">Administrer sæt</string>
@@ -102,4 +102,6 @@
     <string name="layout_editor_guide_tools">Redigeringsværktøjer</string>
     <string name="layout_editor_guide_done">Tryk på Udført for at gemme, kassere eller fortsætte redigeringen.</string>
     <string name="layout_editor_guide_start">Start redigering</string>
+    <string name="control_skin_invalid_name">Brug 1–61 bogstaver, tal, mellemrum eller . _ ( ) -. Begynd med et bogstav eller tal, og slut ikke med et punktum.</string>
+    <string name="control_skin_image_validation_failed">Vælg et gyldigt PNG-, WebP- eller SVG-billede på op til 8 MiB. PNG og WebP må ikke overstige 2048 × 2048 pixels.</string>
 </resources>

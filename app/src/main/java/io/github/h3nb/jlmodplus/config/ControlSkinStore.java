@@ -28,6 +28,19 @@ public final class ControlSkinStore {
     private static final int MAX_DIMENSION = 2048;
     private static final String META = "skin.json";
 
+    public static final class InvalidNameException extends IOException {
+        InvalidNameException() { super("Invalid set name"); }
+    }
+
+    public static final class NameConflictException extends IOException {
+        NameConflictException() { super("Set name already in use"); }
+    }
+
+    public static final class ImageValidationException extends IOException {
+        ImageValidationException(String detail) { super(detail); }
+        ImageValidationException(String detail, Throwable cause) { super(detail, cause); }
+    }
+
     public static final class SetInfo {
         public final String id;
         public final String name;
@@ -71,7 +84,7 @@ public final class ControlSkinStore {
         String value = name.trim();
         if (!value.matches("[\\p{L}\\p{N}][\\p{L}\\p{N} ._()\\-]{0,60}")
                 || value.equals(".") || value.equals("..") || value.endsWith(".")) {
-            throw new IOException("Invalid set name");
+            throw new InvalidNameException();
         }
         return value;
     }
@@ -196,7 +209,7 @@ public final class ControlSkinStore {
         File[] existing = base.listFiles();
         if (existing == null) throw new IOException("Cannot list sets");
         for (File file : existing) {
-            if (file.getName().equalsIgnoreCase(safe)) throw new IOException("Set name already in use");
+            if (file.getName().equalsIgnoreCase(safe)) throw new NameConflictException();
         }
         File target = new File(base, safe);
         checkedFolder(workdir, target);
@@ -337,10 +350,14 @@ public final class ControlSkinStore {
     /** Shared image contract for interactive asset edits and full-set ZIP imports. */
     public static void validateImage(File file, String suffix) throws IOException {
         if (file.length() < 1 || file.length() > MAX_IMAGE_BYTES) {
-            throw new IOException("Image must be between 1 byte and 8 MiB");
+            throw new ImageValidationException("Image must be between 1 byte and 8 MiB");
         }
         if (".svg".equals(suffix)) {
-            SvgRasterizer.read(file);
+            try {
+                SvgRasterizer.read(file);
+            } catch (IOException failure) {
+                throw new ImageValidationException("SVG validation failed", failure);
+            }
         } else if (".png".equals(suffix) || ".webp".equals(suffix)) {
             BitmapFactory.Options options = new BitmapFactory.Options();
             options.inJustDecodeBounds = true;
@@ -349,10 +366,10 @@ public final class ControlSkinStore {
                     || options.outWidth > MAX_DIMENSION || options.outHeight > MAX_DIMENSION
                     || !("image/png".equals(options.outMimeType) && ".png".equals(suffix)
                         || "image/webp".equals(options.outMimeType) && ".webp".equals(suffix))) {
-                throw new IOException("Invalid or oversized PNG/WebP");
+                throw new ImageValidationException("Invalid or oversized PNG/WebP");
             }
         } else {
-            throw new IOException("Unsupported image format");
+            throw new ImageValidationException("Unsupported image format");
         }
     }
 
@@ -376,7 +393,7 @@ public final class ControlSkinStore {
                 byte[] bytes = new byte[8192]; int n;
                 while ((n = source.read(bytes)) != -1) {
                     size += n;
-                    if (size > MAX_IMAGE_BYTES) throw new IOException("Image exceeds 8 MB");
+                    if (size > MAX_IMAGE_BYTES) throw new ImageValidationException("Image exceeds 8 MiB");
                     out.write(bytes, 0, n);
                 }
                 out.getFD().sync();

@@ -49,7 +49,7 @@
     <string name="control_skin_pressed_image" tools:ignore="MissingTranslation">Painettu kuva</string>
     <string name="control_skin_delete_warning" tools:ignore="MissingTranslation">Poistetaanko tämä jaettu ulkoasusarja ja kaikki sen kuvat? Sitä käyttävät MIDletit palaavat oletusohjaimiin seuraavalla käynnistyskerralla.</string>
     <string name="control_skin_invalid_image" tools:ignore="MissingTranslation">Valitse PNG-, WebP- tai SVG-kuva.</string>
-    <string name="control_skin_operation_failed" tools:ignore="MissingTranslation">Ohjainulkoasusarjaa ei voitu päivittää.</string>
+    <string name="control_skin_operation_failed" tools:ignore="MissingTranslation">Ohjainulkoasun toimintoa ei voitu viimeistellä.</string>
     <string name="control_skin_missing" tools:ignore="MissingTranslation">Sarja ei saatavilla (oletusohjaimet)</string>
     <string name="control_skin_remove_image" tools:ignore="MissingTranslation">Poista</string>
     <string name="control_skin_manage" tools:ignore="MissingTranslation">Hallinnoi sarjaa</string>
@@ -102,4 +102,6 @@
     <string name="layout_editor_guide_tools">Muokkaimen työkalut</string>
     <string name="layout_editor_guide_done">Napauta Valmis tallentaaksesi, hylätäksesi tai jatkaaksesi muokkausta.</string>
     <string name="layout_editor_guide_start">Aloita muokkaus</string>
+    <string name="control_skin_invalid_name">Käytä 1–61 kirjainta, numeroa, välilyöntiä tai merkkejä . _ ( ) -. Aloita kirjaimella tai numerolla, äläkä päätä nimeä pisteeseen.</string>
+    <string name="control_skin_image_validation_failed">Valitse kelvollinen PNG-, WebP- tai SVG-kuva, jonka koko on enintään 8 MiB. PNG- ja WebP-kuvat saavat olla enintään 2048 × 2048 pikseliä.</string>
 </resources>

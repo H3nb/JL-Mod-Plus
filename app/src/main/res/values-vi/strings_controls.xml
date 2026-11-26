@@ -49,7 +49,7 @@
     <string name="control_skin_pressed_image" tools:ignore="MissingTranslation">Ảnh khi nhấn</string>
     <string name="control_skin_delete_warning" tools:ignore="MissingTranslation">Xóa bộ giao diện dùng chung này cùng toàn bộ ảnh của nó? Các MIDlet sử dụng bộ này sẽ quay về điều khiển mặc định vào lần khởi chạy tiếp theo.</string>
     <string name="control_skin_invalid_image" tools:ignore="MissingTranslation">Hãy chọn ảnh PNG, WebP hoặc SVG.</string>
-    <string name="control_skin_operation_failed" tools:ignore="MissingTranslation">Không thể cập nhật bộ giao diện điều khiển.</string>
+    <string name="control_skin_operation_failed" tools:ignore="MissingTranslation">Không thể hoàn tất thao tác với giao diện điều khiển.</string>
     <string name="control_skin_missing" tools:ignore="MissingTranslation">Bộ không khả dụng (điều khiển mặc định)</string>
     <string name="control_skin_remove_image" tools:ignore="MissingTranslation">Xóa</string>
     <string name="control_skin_manage" tools:ignore="MissingTranslation">Quản lý bộ</string>
@@ -101,4 +101,6 @@
     <string name="layout_editor_guide_tools">Công cụ chỉnh sửa</string>
     <string name="layout_editor_guide_done">Nhấn Xong để lưu, hủy bỏ hoặc tiếp tục chỉnh sửa.</string>
     <string name="layout_editor_guide_start">Bắt đầu chỉnh sửa</string>
+    <string name="control_skin_invalid_name">Dùng 1–61 chữ cái, chữ số, dấu cách hoặc ký tự . _ ( ) -. Bắt đầu bằng chữ cái hoặc chữ số và không kết thúc bằng dấu chấm.</string>
+    <string name="control_skin_image_validation_failed">Chọn ảnh PNG, WebP hoặc SVG hợp lệ có dung lượng tối đa 8 MiB. Ảnh PNG và WebP không được lớn hơn 2048 × 2048 pixel.</string>
 </resources>

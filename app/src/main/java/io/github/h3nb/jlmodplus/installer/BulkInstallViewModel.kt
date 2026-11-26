@@ -51,7 +51,10 @@ class BulkInstallViewModel : ViewModel() {
             val cancelled: Boolean,
             val fatalError: String? = null,
         ) : State
-        data class Error(val message: String) : State
+        data class Error(
+            @androidx.annotation.StringRes val messageRes: Int = R.string.bulk_install_prepare_failed,
+            val diagnosticDetail: String? = null,
+        ) : State
     }
 
     private val mutableState = MutableStateFlow<State>(State.Idle)
@@ -70,7 +73,7 @@ class BulkInstallViewModel : ViewModel() {
     fun reviewUnfinished(library: LibraryViewModel) {
         val finished = mutableState.value as? State.Finished ?: return
         if (!library.isReadyGeneration(finished.plan.generation, finished.plan.workdir)) {
-            mutableState.value = State.Error(library.getApplication<Application>().getString(R.string.bulk_install_library_changed))
+            mutableState.value = State.Error(R.string.bulk_install_library_changed)
             return
         }
         val unfinished = finished.results.filter {
@@ -131,7 +134,7 @@ class BulkInstallViewModel : ViewModel() {
                 if (mutableState.value is State.Planning) mutableState.value = State.Idle
             } catch (error: Throwable) {
                 cleanupSourceStage()
-                mutableState.value = State.Error(boundedMessage(error))
+                mutableState.value = State.Error(diagnosticDetail = boundedMessage(error))
             } finally {
                 planningJob = null
                 if (closeRequested.get()) cleanupSourceStage()
@@ -244,7 +247,7 @@ class BulkInstallViewModel : ViewModel() {
             } catch (_: CancellationException) {
                 if (mutableState.value is State.Planning) mutableState.value = State.Idle
             } catch (error: Throwable) {
-                mutableState.value = State.Error(boundedMessage(error))
+                mutableState.value = State.Error(diagnosticDetail = boundedMessage(error))
             } finally {
                 planningJob = null
             }
@@ -292,7 +295,7 @@ class BulkInstallViewModel : ViewModel() {
             } catch (_: CancellationException) {
                 if (mutableState.value is State.Planning) mutableState.value = State.Idle
             } catch (error: Throwable) {
-                mutableState.value = State.Error(boundedMessage(error))
+                mutableState.value = State.Error(diagnosticDetail = boundedMessage(error))
             } finally {
                 LibraryUniversalBundleStager.cleanup(staged)
                 planningJob = null
@@ -408,7 +411,7 @@ class BulkInstallViewModel : ViewModel() {
             } catch (_: CancellationException) {
                 if (mutableState.value is State.Planning) mutableState.value = State.Idle
             } catch (error: Throwable) {
-                mutableState.value = State.Error(boundedMessage(error))
+                mutableState.value = State.Error(diagnosticDetail = boundedMessage(error))
             } finally {
                 planningJob = null
                 if (closeRequested.get()) cleanupSourceStage()
@@ -464,7 +467,8 @@ class BulkInstallViewModel : ViewModel() {
                         results += executeItem(plan, item, library, singleConfirmed)
                     } catch (error: FatalBatchException) {
                         val detail = boundedMessage(error.cause ?: error)
-                        results += BulkInstallResult(item.id, item.name, BulkInstallResultKind.Failed, detail)
+                        results += BulkInstallResult(item.id, item.name, BulkInstallResultKind.Failed,
+                            warning = error.warning, diagnosticDetail = detail)
                         fatalError = detail
                     } catch (cancelled: CancellationException) {
                         throw cancelled
@@ -473,7 +477,7 @@ class BulkInstallViewModel : ViewModel() {
                             item.id,
                             item.name,
                             BulkInstallResultKind.Failed,
-                            boundedMessage(error),
+                            diagnosticDetail = boundedMessage(error),
                         )
                     }
                     mutableState.value = State.Running(
@@ -526,7 +530,8 @@ class BulkInstallViewModel : ViewModel() {
             } catch (cancelled: CancellationException) { throw cancelled }
             catch (error: Exception) {
                 BulkInstallResult(item.id, item.name, BulkInstallResultKind.PartiallyInstalled,
-                    boundedMessage(error), item.restoreAppId, item.restoreStorageKey)
+                    installedAppId = item.restoreAppId, installedStorageKey = item.restoreStorageKey,
+                    diagnosticDetail = boundedMessage(error))
             }
         }
         val requestedSource = when (item.action) {
@@ -606,7 +611,7 @@ class BulkInstallViewModel : ViewModel() {
                 throw FatalBatchException(IllegalStateException("Library generation changed during batch revalidation"))
             }
             val descriptor = activeInstaller.newDescriptor
-                ?: return failed(item, "Installer returned no descriptor during revalidation")
+                ?: return failed(item, diagnosticDetail = "Installer returned no descriptor during revalidation")
             val candidates = library.findBySourceIdentity(
                 plan.generation,
                 plan.workdir,
@@ -646,8 +651,9 @@ class BulkInstallViewModel : ViewModel() {
                 } catch (cancelled: CancellationException) { throw cancelled }
                 catch (error: Exception) {
                     return BulkInstallResult(item.id, item.name, BulkInstallResultKind.PartiallyInstalled,
-                        boundedMessage(error), activeInstaller.installedId,
-                        activeInstaller.installedPath?.let { File(it).name })
+                        installedAppId = activeInstaller.installedId,
+                        installedStorageKey = activeInstaller.installedPath?.let { File(it).name },
+                        diagnosticDetail = boundedMessage(error))
                 }
                 return BulkInstallResult(
                     item.id,
@@ -674,7 +680,7 @@ class BulkInstallViewModel : ViewModel() {
             }
             val installCode = activeInstaller.installAwait()
             if (installCode != AppInstaller.STATUS_SUCCESS) {
-                return failed(item, "Installer stopped with status $installCode")
+                return failed(item, diagnosticDetail = "Installer stopped with status $installCode")
             }
             try {
                 restoreBundlePayloadIfPresent(plan, item, activeInstaller, library)
@@ -684,9 +690,10 @@ class BulkInstallViewModel : ViewModel() {
                     item.id,
                     item.name,
                     BulkInstallResultKind.PartiallyInstalled,
-                    withInstallerNotices(boundedMessage(error), activeInstaller, library),
-                    activeInstaller.installedId,
-                    File(activeInstaller.installedPath).name,
+                    installedAppId = activeInstaller.installedId,
+                    installedStorageKey = File(activeInstaller.installedPath).name,
+                    warning = installerNotices(activeInstaller, library),
+                    diagnosticDetail = boundedMessage(error),
                 )
             }
             val kind = when {
@@ -705,11 +712,13 @@ class BulkInstallViewModel : ViewModel() {
         } catch (cancelled: CancellationException) {
             throw cancelled
         } catch (error: Throwable) {
-            val reportedError = installerNotices(installer, library)?.let {
-                RuntimeException(it + "\n\n" + boundedMessage(error), error)
-            } ?: error
-            if (isFatalEnvironmentError(error)) throw FatalBatchException(reportedError)
-            throw reportedError
+            val warning = installerNotices(installer, library)
+            if (error is FatalBatchException) {
+                throw FatalBatchException(error.cause ?: error, warning ?: error.warning)
+            }
+            if (isFatalEnvironmentError(error)) throw FatalBatchException(error, warning)
+            return BulkInstallResult(item.id, item.name, BulkInstallResultKind.Failed,
+                warning = warning, diagnosticDetail = boundedMessage(error))
         } finally {
             if (installer == null) {
                 scratch.clear()
@@ -816,12 +825,6 @@ class BulkInstallViewModel : ViewModel() {
         ).takeIf { it.isNotEmpty() }?.joinToString("\n\n")
     }
 
-    private fun withInstallerNotices(
-        detail: String,
-        installer: AppInstaller?,
-        library: LibraryViewModel,
-    ): String = installerNotices(installer, library)?.let { "$it\n\n$detail" } ?: detail
-
     private fun isFatalEnvironmentError(error: Throwable): Boolean {
         var cursor: Throwable? = error
         while (cursor != null) {
@@ -834,8 +837,9 @@ class BulkInstallViewModel : ViewModel() {
         return false
     }
 
-    private fun failed(item: BulkInstallItem, detail: String) =
-        BulkInstallResult(item.id, item.name, BulkInstallResultKind.Failed, detail)
+    private fun failed(item: BulkInstallItem, detail: String? = null, diagnosticDetail: String? = null) =
+        BulkInstallResult(item.id, item.name, BulkInstallResultKind.Failed,
+            detail = detail, diagnosticDetail = diagnosticDetail)
 
     fun close() {
         closeRequested.set(true)
@@ -864,7 +868,7 @@ class BulkInstallViewModel : ViewModel() {
         close()
     }
 
-    private class FatalBatchException(cause: Throwable) : RuntimeException(cause)
+    private class FatalBatchException(cause: Throwable, val warning: String? = null) : RuntimeException(cause)
 
     private fun boundedMessage(error: Throwable): String =
         boundedInstallerFailureMessage(error)

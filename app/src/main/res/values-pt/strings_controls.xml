@@ -49,7 +49,7 @@
     <string name="control_skin_pressed_image" tools:ignore="MissingTranslation">Imagem premida</string>
     <string name="control_skin_delete_warning" tools:ignore="MissingTranslation">Eliminar este conjunto de visual partilhado e todas as suas imagens? Os MIDlets que o utilizam voltarão aos controlos predefinidos da próxima vez que forem iniciados.</string>
     <string name="control_skin_invalid_image" tools:ignore="MissingTranslation">Escolha uma imagem PNG, WebP ou SVG.</string>
-    <string name="control_skin_operation_failed" tools:ignore="MissingTranslation">Não foi possível atualizar o conjunto de visual dos controlos.</string>
+    <string name="control_skin_operation_failed" tools:ignore="MissingTranslation">Não foi possível concluir a operação da skin dos controlos.</string>
     <string name="control_skin_missing" tools:ignore="MissingTranslation">Conjunto indisponível (controlos predefinidos)</string>
     <string name="control_skin_remove_image" tools:ignore="MissingTranslation">Remover</string>
     <string name="control_skin_manage" tools:ignore="MissingTranslation">Gerir conjunto</string>
@@ -103,4 +103,6 @@
     <string name="layout_editor_guide_tools">Ferramentas do editor</string>
     <string name="layout_editor_guide_done">Toque em Concluído para guardar, rejeitar ou continuar a editar.</string>
     <string name="layout_editor_guide_start">Iniciar edição</string>
+    <string name="control_skin_invalid_name">Utilize entre 1 e 61 letras, números, espaços ou . _ ( ) -. Comece por uma letra ou número e não termine com um ponto.</string>
+    <string name="control_skin_image_validation_failed">Escolha uma imagem PNG, WebP ou SVG válida até 8 MiB. As imagens PNG e WebP não podem exceder 2048 × 2048 píxeis.</string>
 </resources>

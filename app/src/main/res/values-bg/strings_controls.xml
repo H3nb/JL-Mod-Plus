@@ -49,7 +49,7 @@
     <string name="control_skin_pressed_image" tools:ignore="MissingTranslation">Изображение при натискане</string>
     <string name="control_skin_delete_warning" tools:ignore="MissingTranslation">Да се изтрие ли този споделен набор за облик заедно с всичките му изображения? MIDlet-ите, които го използват, ще се върнат към стандартните контроли при следващото стартиране.</string>
     <string name="control_skin_invalid_image" tools:ignore="MissingTranslation">Изберете изображение във формат PNG, WebP или SVG.</string>
-    <string name="control_skin_operation_failed" tools:ignore="MissingTranslation">Наборът за облик на контролите не можа да бъде актуализиран.</string>
+    <string name="control_skin_operation_failed" tools:ignore="MissingTranslation">Операцията с облика на контролите не бе завършена.</string>
     <string name="control_skin_missing" tools:ignore="MissingTranslation">Недостъпен набор (стандартни контроли)</string>
     <string name="control_skin_remove_image" tools:ignore="MissingTranslation">Премахване</string>
     <string name="control_skin_manage" tools:ignore="MissingTranslation">Управление на набора</string>
@@ -102,4 +102,6 @@
     <string name="layout_editor_guide_tools">Инструменти на редактора</string>
     <string name="layout_editor_guide_done">Докоснете „Готово“, за да запазите, отхвърлите или продължите редактирането.</string>
     <string name="layout_editor_guide_start">Начало на редактирането</string>
+    <string name="control_skin_invalid_name">Използвайте 1–61 букви, цифри, интервали или . _ ( ) -. Започнете с буква или цифра и не завършвайте с точка.</string>
+    <string name="control_skin_image_validation_failed">Изберете валидно изображение PNG, WebP или SVG до 8 MiB. PNG и WebP не трябва да надвишават 2048 × 2048 пиксела.</string>
 </resources>

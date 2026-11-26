@@ -49,7 +49,7 @@
     <string name="control_skin_pressed_image" tools:ignore="MissingTranslation">누른 상태 이미지</string>
     <string name="control_skin_delete_warning" tools:ignore="MissingTranslation">이 공유 스킨 세트와 모든 이미지를 삭제할까요? 이 세트를 사용하는 MIDlet은 다음 실행 시 기본 컨트롤로 돌아갑니다.</string>
     <string name="control_skin_invalid_image" tools:ignore="MissingTranslation">PNG, WebP 또는 SVG 이미지를 선택하세요.</string>
-    <string name="control_skin_operation_failed" tools:ignore="MissingTranslation">컨트롤 스킨 세트를 업데이트할 수 없습니다.</string>
+    <string name="control_skin_operation_failed" tools:ignore="MissingTranslation">컨트롤 스킨 작업을 완료할 수 없습니다.</string>
     <string name="control_skin_missing" tools:ignore="MissingTranslation">사용할 수 없는 세트(기본 컨트롤)</string>
     <string name="control_skin_remove_image" tools:ignore="MissingTranslation">제거</string>
     <string name="control_skin_manage" tools:ignore="MissingTranslation">세트 관리</string>
@@ -101,4 +101,6 @@
     <string name="layout_editor_guide_tools">편집 도구</string>
     <string name="layout_editor_guide_done">완료를 탭하여 저장, 버리기 또는 계속 편집할 수 있습니다.</string>
     <string name="layout_editor_guide_start">편집 시작</string>
+    <string name="control_skin_invalid_name">문자, 숫자, 공백 또는 . _ ( ) - 기호를 1~61자 사용하세요. 문자나 숫자로 시작하고 마침표로 끝내지 마세요.</string>
+    <string name="control_skin_image_validation_failed">8 MiB 이하의 유효한 PNG, WebP 또는 SVG 이미지를 선택하세요. PNG와 WebP는 2048 × 2048픽셀 이하여야 합니다.</string>
 </resources>

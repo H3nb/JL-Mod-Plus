@@ -49,7 +49,7 @@
     <string name="control_skin_pressed_image">Pressed image</string>
     <string name="control_skin_delete_warning">Delete this shared skin set and all its images? MIDlets using it will use built-in controls the next time they start.</string>
     <string name="control_skin_invalid_image">Choose a PNG, WebP, or SVG image.</string>
-    <string name="control_skin_operation_failed">Couldn’t update control skin set.</string>
+    <string name="control_skin_operation_failed">Couldn’t complete the control skin operation.</string>
     <string name="control_skin_missing">Unavailable set (default controls)</string>
     <string name="control_skin_remove_image">Remove</string>
     <string name="control_skin_manage">Manage set</string>
@@ -102,4 +102,6 @@
     <string name="layout_editor_guide_tools">Editor tools</string>
     <string name="layout_editor_guide_done">Tap Done to save, discard, or continue editing.</string>
     <string name="layout_editor_guide_start">Start editing</string>
+    <string name="control_skin_invalid_name">Use 1–61 letters, numbers, spaces, or . _ ( ) -. Start with a letter or number and don’t end with a period.</string>
+    <string name="control_skin_image_validation_failed">Choose a valid PNG, WebP, or SVG image up to 8 MiB. PNG and WebP must be no larger than 2048 × 2048 pixels.</string>
 </resources>

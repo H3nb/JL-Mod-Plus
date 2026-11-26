@@ -49,7 +49,7 @@
     <string name="control_skin_pressed_image" tools:ignore="MissingTranslation">Nedtryckt bild</string>
     <string name="control_skin_delete_warning" tools:ignore="MissingTranslation">Radera den här delade utseendeuppsättningen och alla dess bilder? MIDlets som använder den återgår till standardkontroller nästa gång de startas.</string>
     <string name="control_skin_invalid_image" tools:ignore="MissingTranslation">Välj en PNG-, WebP- eller SVG-bild.</string>
-    <string name="control_skin_operation_failed" tools:ignore="MissingTranslation">Det gick inte att uppdatera utseendeuppsättningen.</string>
+    <string name="control_skin_operation_failed" tools:ignore="MissingTranslation">Det gick inte att slutföra åtgärden för kontrollskalet.</string>
     <string name="control_skin_missing" tools:ignore="MissingTranslation">Otillgänglig uppsättning (standardkontroller)</string>
     <string name="control_skin_remove_image" tools:ignore="MissingTranslation">Ta bort</string>
     <string name="control_skin_manage" tools:ignore="MissingTranslation">Hantera uppsättning</string>
@@ -102,4 +102,6 @@
     <string name="layout_editor_guide_tools">Redigeringsverktyg</string>
     <string name="layout_editor_guide_done">Tryck på Klar för att spara, kassera eller fortsätta redigera.</string>
     <string name="layout_editor_guide_start">Börja redigera</string>
+    <string name="control_skin_invalid_name">Använd 1–61 bokstäver, siffror, mellanslag eller . _ ( ) -. Börja med en bokstav eller siffra och avsluta inte med en punkt.</string>
+    <string name="control_skin_image_validation_failed">Välj en giltig PNG-, WebP- eller SVG-bild på högst 8 MiB. PNG och WebP får inte vara större än 2048 × 2048 pixlar.</string>
 </resources>

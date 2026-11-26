@@ -49,7 +49,7 @@
     <string name="control_skin_pressed_image" tools:ignore="MissingTranslation">Gedrukte beeld</string>
     <string name="control_skin_delete_warning" tools:ignore="MissingTranslation">Vee hierdie gedeelde omslagstel en al sy beelde uit? MIDlets wat dit gebruik, sal die verstekkontroles gebruik wanneer hulle weer begin.</string>
     <string name="control_skin_invalid_image" tools:ignore="MissingTranslation">Kies ’n PNG-, WebP- of SVG-beeld.</string>
-    <string name="control_skin_operation_failed" tools:ignore="MissingTranslation">Kon nie kontrole-omslagstel opdateer nie.</string>
+    <string name="control_skin_operation_failed" tools:ignore="MissingTranslation">Kon nie die beheer-velbewerking voltooi nie.</string>
     <string name="control_skin_missing" tools:ignore="MissingTranslation">Onbeskikbare stel (verstekkontroles)</string>
     <string name="control_skin_remove_image" tools:ignore="MissingTranslation">Verwyder</string>
     <string name="control_skin_manage" tools:ignore="MissingTranslation">Bestuur stel</string>
@@ -102,4 +102,6 @@
     <string name="layout_editor_guide_tools">Redigeerdernutsgoed</string>
     <string name="layout_editor_guide_done">Tik Klaar om te stoor, weg te gooi of voort te gaan met redigering.</string>
     <string name="layout_editor_guide_start">Begin redigeer</string>
+    <string name="control_skin_invalid_name">Gebruik 1–61 letters, syfers, spasies of . _ ( ) -. Begin met ’n letter of syfer en moenie met ’n punt eindig nie.</string>
+    <string name="control_skin_image_validation_failed">Kies ’n geldige PNG-, WebP- of SVG-prent van hoogstens 8 MiB. PNG en WebP mag nie groter as 2048 × 2048 pieksels wees nie.</string>
 </resources>

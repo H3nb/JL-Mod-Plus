@@ -49,7 +49,7 @@
     <string name="control_skin_pressed_image" tools:ignore="MissingTranslation">Lenyomott kép</string>
     <string name="control_skin_delete_warning" tools:ignore="MissingTranslation">Törli ezt a megosztott kinézetkészletet és az összes képét? Az ezt használó MIDlet-ek a következő indításkor az alapértelmezett vezérlőket használják.</string>
     <string name="control_skin_invalid_image" tools:ignore="MissingTranslation">Válasszon PNG-, WebP- vagy SVG-képet.</string>
-    <string name="control_skin_operation_failed" tools:ignore="MissingTranslation">Nem sikerült frissíteni a vezérlőkinézet-készletet.</string>
+    <string name="control_skin_operation_failed" tools:ignore="MissingTranslation">Nem sikerült befejezni a vezérlők megjelenésével kapcsolatos műveletet.</string>
     <string name="control_skin_missing" tools:ignore="MissingTranslation">Nem elérhető készlet (alapértelmezett vezérlők)</string>
     <string name="control_skin_remove_image" tools:ignore="MissingTranslation">Eltávolítás</string>
     <string name="control_skin_manage" tools:ignore="MissingTranslation">Készlet kezelése</string>
@@ -102,4 +102,6 @@
     <string name="layout_editor_guide_tools">Szerkesztőeszközök</string>
     <string name="layout_editor_guide_done">Koppintson a Kész gombra a mentéshez, elvetéshez vagy a szerkesztés folytatásához.</string>
     <string name="layout_editor_guide_start">Szerkesztés indítása</string>
+    <string name="control_skin_invalid_name">Használjon 1–61 betűt, számjegyet, szóközt vagy . _ ( ) - karaktert. Betűvel vagy számjeggyel kezdje, és ne ponttal zárja.</string>
+    <string name="control_skin_image_validation_failed">Válasszon érvényes, legfeljebb 8 MiB méretű PNG-, WebP- vagy SVG-képet. A PNG és WebP képek mérete legfeljebb 2048 × 2048 képpont lehet.</string>
 </resources>
