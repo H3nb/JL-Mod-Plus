@@ -309,8 +309,16 @@ public class MemoryRecipeInstrumentedTest {
         indexOnly.putString("slot", "0");
         assertEquals(MemoryEngineContract.RESULT_OK,
                 status(runner.run(TOKEN, bitfield, indexOnly, false, true)));
-        assertEquals(MemoryEngineContract.RESULT_INVALID_REQUEST,
-                status(runner.run(TOKEN, bitfield, indexOnly, false, false)));
+        Bundle missing = runner.run(TOKEN, bitfield, indexOnly, false, false);
+        assertEquals(MemoryEngineContract.RESULT_INVALID_REQUEST, status(missing));
+        assertEquals(MemoryEngineContract.REASON_RECIPE_INVALID_INPUT,
+                missing.getInt(MemoryEngineContract.KEY_OPERATION_REASON));
+        Bundle invalid = inputs(0, 1, 1);
+        invalid.putString("quantity", "not-a-number");
+        Bundle invalidInput = runner.run(TOKEN, bitfield, invalid, false, false);
+        assertEquals(MemoryEngineContract.RESULT_INVALID_REQUEST, status(invalidInput));
+        assertEquals(MemoryEngineContract.REASON_RECIPE_INVALID_INPUT,
+                invalidInput.getInt(MemoryEngineContract.KEY_OPERATION_REASON));
         assertEquals(3, (root.inventory.slots[0] >>> 8) & 255);
         String encoded = "{\"kind\":\"encoded32le\",\"path\":["
                 + field(ROOT, "encoded", "[B")
@@ -406,6 +414,8 @@ public class MemoryRecipeInstrumentedTest {
         Bundle result = runner.run(TOKEN, recipe(first + "," + second),
                 inputs(0, 50, 700), false, false);
         assertEquals(MemoryEngineContract.RESULT_INVALID_REQUEST, status(result));
+        assertEquals(MemoryEngineContract.REASON_RECIPE_VALUE_RANGE,
+                result.getInt(MemoryEngineContract.KEY_OPERATION_REASON));
         assertEquals(10, root.coins);
     }
 
@@ -719,8 +729,10 @@ public class MemoryRecipeInstrumentedTest {
             | ((root.encoded[2] & 255) << 16) | (root.encoded[3] << 24);
         assertEquals(58279306 - 1010, actualRaw);
         root.coins = 1;
-        assertEquals(MemoryEngineContract.RESULT_IDENTITY_UNSAFE,
-            status(runner.run(TOKEN, recipe, new Bundle(), false, false)));
+        Bundle inconsistent = runner.run(TOKEN, recipe, new Bundle(), false, false);
+        assertEquals(MemoryEngineContract.RESULT_IDENTITY_UNSAFE, status(inconsistent));
+        assertEquals(MemoryEngineContract.REASON_RECIPE_INCONSISTENT_VALUES,
+                inconsistent.getInt(MemoryEngineContract.KEY_OPERATION_REASON));
         assertEquals(1, root.coins);
         assertEquals(MemoryEngineContract.RESULT_INVALID_REQUEST,
             status(runner.run(TOKEN, recipe, new Bundle(), true, false)));
@@ -919,6 +931,16 @@ public class MemoryRecipeInstrumentedTest {
         assertEquals(Integer.MAX_VALUE, root.coins);
     }
 
+    @Test public void unavailableGuestReferenceReportsTargetNotReady() {
+        root.inventory = null;
+        Bundle result = runner.run(TOKEN, recipe(bitfieldAction()),
+                inputs(0, 50, 99), false, false);
+        assertEquals(MemoryEngineContract.RESULT_TARGET_LOST, status(result));
+        assertEquals(MemoryEngineContract.REASON_RECIPE_TARGET_NOT_READY,
+                result.getInt(MemoryEngineContract.KEY_OPERATION_REASON));
+        assertEquals(10, root.coins);
+    }
+
     @Test public void rejectsWrongDescriptorAndRuntimeGeneration() {
         String wrong = "{\"kind\":\"set\",\"path\":[" + field(ROOT,"coins","S") + "],"
             + "\"valueInput\":\"coins\"}";
@@ -926,5 +948,11 @@ public class MemoryRecipeInstrumentedTest {
             status(runner.run(TOKEN,recipe(wrong),inputs(0,50,99),false,false)));
         assertEquals(MemoryEngineContract.RESULT_TARGET_LOST,
             status(runner.run(TOKEN + 1,recipe(bitfieldAction()),inputs(0,50,99),false,false)));
+        String differentMidlet = recipe(bitfieldAction()).replace(
+                "\"mainClass\":\"" + ROOT + "\"", "\"mainClass\":\"other/Game\"");
+        Bundle wrongMidlet = runner.run(TOKEN, differentMidlet, inputs(0,50,99), false,false);
+        assertEquals(MemoryEngineContract.RESULT_IDENTITY_UNSAFE, status(wrongMidlet));
+        assertEquals(MemoryEngineContract.REASON_RECIPE_WRONG_MIDLET,
+                wrongMidlet.getInt(MemoryEngineContract.KEY_OPERATION_REASON));
     }
 }

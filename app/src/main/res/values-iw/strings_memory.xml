@@ -283,4 +283,9 @@
     <string name="memory_scripts_resource_limit">הסקריפט הגיע למגבלת בטיחות. יש לצמצם את היעדים או להפסיק הקפאות שאינן בשימוש.</string>
     <string name="memory_scripts_target_changed">לא ניתן היה לאמת את יעד הסקריפט. יש לרענן את הערכים ולבדוק את הסימניות.</string>
     <string name="memory_scripts_operation_unavailable">פעולת סקריפט זו אינה נתמכת עבור היעד הנוכחי.</string>
+    <string name="memory_scripts_invalid_input">יש לבדוק את הקלטים של הסקריפט ולהזין ערכים תקינים בטווחים המותרים.</string>
+    <string name="memory_scripts_value_range">ערך נמצא מחוץ לטווח הנתמך. יש לבדוק את הסקריפט ואת הערכים שלו.</string>
+    <string name="memory_scripts_inconsistent_values">העותקים של אותו ערך אינם תואמים. יש לבדוק את מצב המשחק לפני ניסיון נוסף.</string>
+    <string name="memory_scripts_wrong_midlet">סקריפט זה מיועד ל-MIDlet אחר. יש לפתוח את ה-MIDlet המתאים או לבחור סקריפט אחר.</string>
+    <string name="memory_scripts_target_not_ready">יעד הסקריפט עדיין אינו מוכן. יש לחזור למסך המתאים במשחק ולנסות שוב.</string>
 </resources>

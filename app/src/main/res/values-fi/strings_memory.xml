@@ -277,4 +277,9 @@
     <string name="memory_scripts_resource_limit">Skripti saavutti turvarajan. Vähennä sen kohteita tai lopeta tarpeettomat jäädytykset.</string>
     <string name="memory_scripts_target_changed">Skriptin kohdetta ei voitu varmistaa. Päivitä arvot ja tarkista kirjanmerkit.</string>
     <string name="memory_scripts_operation_unavailable">Tätä skriptin toimintoa ei tueta nykyiselle kohteelle.</string>
+    <string name="memory_scripts_invalid_input">Tarkista skriptin syötteet. Anna kelvolliset arvot sallituilla alueilla.</string>
+    <string name="memory_scripts_value_range">Arvo on tuetun alueen ulkopuolella. Tarkista skripti ja sen arvot.</string>
+    <string name="memory_scripts_inconsistent_values">Saman arvon kopiot eivät vastaa toisiaan. Tarkista pelin tila ennen uutta yritystä.</string>
+    <string name="memory_scripts_wrong_midlet">Tämä skripti on tarkoitettu toiselle MIDletille. Avaa oikea MIDlet tai valitse toinen skripti.</string>
+    <string name="memory_scripts_target_not_ready">Skriptin kohde ei ole vielä valmis. Palaa kyseiseen pelinäkymään ja yritä uudelleen.</string>
 </resources>

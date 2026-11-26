@@ -277,4 +277,9 @@
     <string name="memory_scripts_resource_limit">Скриптът достигна ограничение за безопасност. Намалете целите му или спрете неизползваните замразявания.</string>
     <string name="memory_scripts_target_changed">Целта на скрипта не можа да бъде проверена. Обновете стойностите му и проверете отметките.</string>
     <string name="memory_scripts_operation_unavailable">Тази операция на скрипта не се поддържа за текущата цел.</string>
+    <string name="memory_scripts_invalid_input">Проверете входните данни на скрипта. Въведете валидни стойности в допустимите диапазони.</string>
+    <string name="memory_scripts_value_range">Стойност е извън поддържания диапазон. Проверете скрипта и стойностите му.</string>
+    <string name="memory_scripts_inconsistent_values">Копията на една и съща стойност се различават. Проверете състоянието на играта, преди да опитате отново.</string>
+    <string name="memory_scripts_wrong_midlet">Този скрипт е за друг MIDlet. Отворете правилния MIDlet или изберете друг скрипт.</string>
+    <string name="memory_scripts_target_not_ready">Целта на скрипта не е готова. Върнете се на съответния екран на играта и опитайте отново.</string>
 </resources>

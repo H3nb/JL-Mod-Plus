@@ -289,4 +289,9 @@
     <string name="memory_scripts_resource_limit">Skrypt osiągnął limit bezpieczeństwa. Zmniejsz liczbę celów lub zatrzymaj nieużywane zamrożenia.</string>
     <string name="memory_scripts_target_changed">Nie udało się zweryfikować celu skryptu. Odśwież wartości i sprawdź zakładki.</string>
     <string name="memory_scripts_operation_unavailable">Ta operacja skryptu nie jest obsługiwana dla bieżącego celu.</string>
+    <string name="memory_scripts_invalid_input">Sprawdź dane wejściowe skryptu. Wprowadź prawidłowe wartości z dozwolonych zakresów.</string>
+    <string name="memory_scripts_value_range">Wartość wykracza poza obsługiwany zakres. Sprawdź skrypt i jego wartości.</string>
+    <string name="memory_scripts_inconsistent_values">Kopie tej samej wartości różnią się. Przed ponowną próbą sprawdź stan gry.</string>
+    <string name="memory_scripts_wrong_midlet">Ten skrypt jest przeznaczony dla innego MIDletu. Otwórz właściwy MIDlet lub wybierz inny skrypt.</string>
+    <string name="memory_scripts_target_not_ready">Cel skryptu nie jest jeszcze gotowy. Wróć do odpowiedniego ekranu gry i spróbuj ponownie.</string>
 </resources>

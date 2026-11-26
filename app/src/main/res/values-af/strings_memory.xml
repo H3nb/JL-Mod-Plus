@@ -277,4 +277,9 @@
     <string name="memory_scripts_resource_limit">Die skrip het ’n veiligheidslimiet bereik. Verminder sy teikens of stop ongebruikte vriesings.</string>
     <string name="memory_scripts_target_changed">Kon nie die skrip se teiken verifieer nie. Herlaai sy waardes en gaan die boekmerke na.</string>
     <string name="memory_scripts_operation_unavailable">Hierdie skripbewerking word nie vir die huidige teiken ondersteun nie.</string>
+    <string name="memory_scripts_invalid_input">Gaan die skripinsette na. Voer geldige waardes binne die toegelate reekse in.</string>
+    <string name="memory_scripts_value_range">’n Waarde is buite die ondersteunde reeks. Gaan die skrip en sy waardes na.</string>
+    <string name="memory_scripts_inconsistent_values">Kopieë van dieselfde waarde verskil. Gaan die speletjietoestand na voordat jy weer probeer.</string>
+    <string name="memory_scripts_wrong_midlet">Hierdie skrip is vir ’n ander MIDlet. Maak die korrekte MIDlet oop of kies ’n ander skrip.</string>
+    <string name="memory_scripts_target_not_ready">Die skripteiken is nie gereed nie. Gaan terug na die toepaslike speletjieskerm en probeer weer.</string>
 </resources>

@@ -135,4 +135,28 @@ class MemoryOperationMessagesTest {
         )!!.resource)
     }
 
+    @Test
+    fun scriptReasonsDistinguishRecoveryActions() {
+        val cases = listOf(
+            Triple(MemoryEngineContract.RESULT_INVALID_REQUEST,
+                MemoryEngineContract.REASON_RECIPE_INVALID_INPUT, R.string.memory_scripts_invalid_input),
+            Triple(MemoryEngineContract.RESULT_INVALID_REQUEST,
+                MemoryEngineContract.REASON_RECIPE_VALUE_RANGE, R.string.memory_scripts_value_range),
+            Triple(MemoryEngineContract.RESULT_IDENTITY_UNSAFE,
+                MemoryEngineContract.REASON_RECIPE_INCONSISTENT_VALUES, R.string.memory_scripts_inconsistent_values),
+            Triple(MemoryEngineContract.RESULT_IDENTITY_UNSAFE,
+                MemoryEngineContract.REASON_RECIPE_WRONG_MIDLET, R.string.memory_scripts_wrong_midlet),
+            Triple(MemoryEngineContract.RESULT_TARGET_LOST,
+                MemoryEngineContract.REASON_RECIPE_TARGET_NOT_READY, R.string.memory_scripts_target_not_ready),
+        )
+        for ((result, reason, resource) in cases) {
+            assertEquals(resource, memoryOperationMessage(result, reason, script = true)?.resource)
+        }
+        assertNull(memoryOperationMessage(MemoryEngineContract.RESULT_OK,
+            MemoryEngineContract.REASON_RECIPE_WRONG_MIDLET, script = true))
+        assertEquals(R.string.memory_editor_partial_write, memoryOperationMessage(
+            MemoryEngineContract.RESULT_PARTIAL_WRITE,
+            MemoryEngineContract.REASON_RECIPE_VALUE_RANGE, script = true)?.resource)
+    }
+
 }

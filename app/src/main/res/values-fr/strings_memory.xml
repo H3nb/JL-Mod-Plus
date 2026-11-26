@@ -283,4 +283,9 @@
     <string name="memory_scripts_resource_limit">Le script a atteint une limite de sécurité. Réduisez le nombre de cibles ou arrêtez les gels inutilisés.</string>
     <string name="memory_scripts_target_changed">Impossible de vérifier la cible du script. Actualisez ses valeurs et vérifiez les signets.</string>
     <string name="memory_scripts_operation_unavailable">Cette opération du script n’est pas prise en charge pour la cible actuelle.</string>
+    <string name="memory_scripts_invalid_input">Vérifiez les entrées du script. Saisissez des valeurs valides dans les plages autorisées.</string>
+    <string name="memory_scripts_value_range">Une valeur est hors de la plage prise en charge. Vérifiez le script et ses valeurs.</string>
+    <string name="memory_scripts_inconsistent_values">Les copies d’une même valeur ne correspondent pas. Vérifiez l’état du jeu avant de réessayer.</string>
+    <string name="memory_scripts_wrong_midlet">Ce script est destiné à un autre MIDlet. Ouvrez le bon MIDlet ou choisissez un autre script.</string>
+    <string name="memory_scripts_target_not_ready">La cible du script n’est pas prête. Revenez à l’écran concerné du jeu, puis réessayez.</string>
 </resources>

@@ -271,4 +271,9 @@
     <string name="memory_scripts_resource_limit">スクリプトが安全上の制限に達しました。対象を減らすか、使用していない固定を解除してください。</string>
     <string name="memory_scripts_target_changed">スクリプトの対象を確認できませんでした。値を更新し、ブックマークを確認してください。</string>
     <string name="memory_scripts_operation_unavailable">このスクリプト操作は現在の対象に対応していません。</string>
+    <string name="memory_scripts_invalid_input">スクリプトの入力を確認してください。許容範囲内の有効な値を入力してください。</string>
+    <string name="memory_scripts_value_range">値が対応範囲を超えています。スクリプトとその値を確認してください。</string>
+    <string name="memory_scripts_inconsistent_values">同じ値のコピーが一致していません。ゲームの状態を確認してから再試行してください。</string>
+    <string name="memory_scripts_wrong_midlet">このスクリプトは別の MIDlet 用です。正しい MIDlet を開くか、別のスクリプトを選択してください。</string>
+    <string name="memory_scripts_target_not_ready">スクリプトの対象がまだ準備できていません。ゲームの該当画面に戻ってから再試行してください。</string>
 </resources>

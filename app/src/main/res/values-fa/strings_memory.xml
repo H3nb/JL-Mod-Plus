@@ -277,4 +277,9 @@
     <string name="memory_scripts_resource_limit">اسکریپت به محدودیت ایمنی رسیده است. اهداف آن را کمتر کنید یا قفل‌های بدون استفاده را متوقف کنید.</string>
     <string name="memory_scripts_target_changed">تأیید هدف اسکریپت ممکن نشد. مقادیر آن را تازه‌سازی و نشانک‌ها را بررسی کنید.</string>
     <string name="memory_scripts_operation_unavailable">این عملیات اسکریپت برای هدف فعلی پشتیبانی نمی‌شود.</string>
+    <string name="memory_scripts_invalid_input">ورودی‌های اسکریپت را بررسی کنید. مقادیر معتبر در محدوده‌های مجاز وارد کنید.</string>
+    <string name="memory_scripts_value_range">یک مقدار خارج از محدودهٔ پشتیبانی‌شده است. اسکریپت و مقادیر آن را بررسی کنید.</string>
+    <string name="memory_scripts_inconsistent_values">نسخه‌های یک مقدار با هم مطابقت ندارند. پیش از تلاش دوباره وضعیت بازی را بررسی کنید.</string>
+    <string name="memory_scripts_wrong_midlet">این اسکریپت برای MIDlet دیگری است. MIDlet مناسب را باز کنید یا اسکریپت دیگری انتخاب کنید.</string>
+    <string name="memory_scripts_target_not_ready">هدف اسکریپت آماده نیست. به صفحهٔ مربوط در بازی برگردید و دوباره تلاش کنید.</string>
 </resources>

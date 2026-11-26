@@ -277,4 +277,9 @@
     <string name="memory_scripts_resource_limit">स्क्रिप्ट सुरक्षा सीमा तक पहुंच गई है। इसके टारगेट कम करें या इस्तेमाल न हो रहे फ़्रीज़ बंद करें।</string>
     <string name="memory_scripts_target_changed">स्क्रिप्ट का टारगेट सत्यापित नहीं हो सका। मान रीफ़्रेश करें और बुकमार्क जांचें।</string>
     <string name="memory_scripts_operation_unavailable">मौजूदा टारगेट के लिए यह स्क्रिप्ट ऑपरेशन समर्थित नहीं है।</string>
+    <string name="memory_scripts_invalid_input">स्क्रिप्ट के इनपुट जांचें। अनुमत सीमाओं में मान्य मान दर्ज करें।</string>
+    <string name="memory_scripts_value_range">एक मान समर्थित सीमा से बाहर है। स्क्रिप्ट और उसके मान जांचें।</string>
+    <string name="memory_scripts_inconsistent_values">एक ही मान की कॉपियां मेल नहीं खातीं। फिर कोशिश करने से पहले गेम की स्थिति जांचें।</string>
+    <string name="memory_scripts_wrong_midlet">यह स्क्रिप्ट किसी दूसरे MIDlet के लिए है। सही MIDlet खोलें या दूसरी स्क्रिप्ट चुनें।</string>
+    <string name="memory_scripts_target_not_ready">स्क्रिप्ट का टारगेट तैयार नहीं है। गेम की संबंधित स्क्रीन पर लौटकर फिर कोशिश करें।</string>
 </resources>

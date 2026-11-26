@@ -271,4 +271,9 @@
     <string name="memory_scripts_resource_limit">指令碼已達安全限制。請減少目標數量或停止不使用的凍結操作。</string>
     <string name="memory_scripts_target_changed">無法驗證指令碼目標。請重新整理數值並檢查書籤。</string>
     <string name="memory_scripts_operation_unavailable">目前的目標不支援此指令碼操作。</string>
+    <string name="memory_scripts_invalid_input">請檢查指令碼輸入，並輸入允許範圍內的有效數值。</string>
+    <string name="memory_scripts_value_range">有數值超出支援範圍。請檢查指令碼及其數值。</string>
+    <string name="memory_scripts_inconsistent_values">同一數值的多個副本不一致。請檢查遊戲狀態後再試一次。</string>
+    <string name="memory_scripts_wrong_midlet">此指令碼適用於其他 MIDlet。請開啟正確的 MIDlet 或選擇其他指令碼。</string>
+    <string name="memory_scripts_target_not_ready">指令碼目標尚未就緒。請返回相關遊戲畫面後再試一次。</string>
 </resources>

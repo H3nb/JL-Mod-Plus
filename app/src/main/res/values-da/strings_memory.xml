@@ -277,4 +277,9 @@
     <string name="memory_scripts_resource_limit">Scriptet har nået en sikkerhedsgrænse. Reducer antallet af mål, eller stop ubrugte frysninger.</string>
     <string name="memory_scripts_target_changed">Scriptets mål kunne ikke verificeres. Opdater værdierne, og kontrollér bogmærkerne.</string>
     <string name="memory_scripts_operation_unavailable">Denne scripthandling understøttes ikke for det aktuelle mål.</string>
+    <string name="memory_scripts_invalid_input">Kontrollér scriptets input. Indtast gyldige værdier inden for de tilladte intervaller.</string>
+    <string name="memory_scripts_value_range">En værdi ligger uden for det understøttede interval. Kontrollér scriptet og dets værdier.</string>
+    <string name="memory_scripts_inconsistent_values">Kopier af samme værdi stemmer ikke overens. Kontrollér spillets tilstand, før du prøver igen.</string>
+    <string name="memory_scripts_wrong_midlet">Dette script er til en anden MIDlet. Åbn den rigtige MIDlet, eller vælg et andet script.</string>
+    <string name="memory_scripts_target_not_ready">Scriptets mål er ikke klar. Gå tilbage til den relevante spilskærm, og prøv igen.</string>
 </resources>

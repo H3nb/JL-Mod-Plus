@@ -267,4 +267,9 @@
     <string name="memory_scripts_resource_limit">脚本已达到安全限制。请减少目标数量或停止不使用的冻结操作。</string>
     <string name="memory_scripts_target_changed">无法验证脚本目标。请刷新值并检查书签。</string>
     <string name="memory_scripts_operation_unavailable">当前目标不支持此脚本操作。</string>
+    <string name="memory_scripts_invalid_input">请检查脚本输入，并在允许的范围内输入有效值。</string>
+    <string name="memory_scripts_value_range">有值超出支持的范围。请检查脚本及其数值。</string>
+    <string name="memory_scripts_inconsistent_values">同一数值的多个副本不一致。请检查游戏状态后重试。</string>
+    <string name="memory_scripts_wrong_midlet">此脚本适用于其他 MIDlet。请打开正确的 MIDlet 或选择其他脚本。</string>
+    <string name="memory_scripts_target_not_ready">脚本目标尚未就绪。请返回相应的游戏界面后重试。</string>
 </resources>

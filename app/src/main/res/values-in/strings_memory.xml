@@ -271,4 +271,9 @@
     <string name="memory_scripts_resource_limit">Skrip mencapai batas keamanan. Kurangi targetnya atau hentikan pembekuan yang tidak digunakan.</string>
     <string name="memory_scripts_target_changed">Target skrip tidak dapat diverifikasi. Muat ulang nilainya dan periksa penanda.</string>
     <string name="memory_scripts_operation_unavailable">Operasi skrip ini tidak didukung untuk target saat ini.</string>
+    <string name="memory_scripts_invalid_input">Periksa input skrip. Masukkan nilai yang valid dalam rentang yang diizinkan.</string>
+    <string name="memory_scripts_value_range">Ada nilai di luar rentang yang didukung. Periksa skrip dan nilainya.</string>
+    <string name="memory_scripts_inconsistent_values">Salinan nilai yang sama tidak konsisten. Periksa kondisi game sebelum mencoba lagi.</string>
+    <string name="memory_scripts_wrong_midlet">Skrip ini ditujukan untuk MIDlet lain. Buka MIDlet yang sesuai atau pilih skrip lain.</string>
+    <string name="memory_scripts_target_not_ready">Target skrip belum siap. Kembali ke layar game yang sesuai, lalu coba lagi.</string>
 </resources>

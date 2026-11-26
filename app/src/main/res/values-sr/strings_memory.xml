@@ -283,4 +283,9 @@
     <string name="memory_scripts_resource_limit">Скрипта је достигла безбедносно ограничење. Смањите број циљева или зауставите замрзавања која не користите.</string>
     <string name="memory_scripts_target_changed">Није могуће проверити циљ скрипте. Освежите вредности и проверите обележиваче.</string>
     <string name="memory_scripts_operation_unavailable">Ова операција скрипте није подржана за тренутни циљ.</string>
+    <string name="memory_scripts_invalid_input">Проверите уносе скрипте. Унесите важеће вредности у дозвољеним опсезима.</string>
+    <string name="memory_scripts_value_range">Вредност је изван подржаног опсега. Проверите скрипту и њене вредности.</string>
+    <string name="memory_scripts_inconsistent_values">Копије исте вредности се не подударају. Проверите стање игре пре поновног покушаја.</string>
+    <string name="memory_scripts_wrong_midlet">Ова скрипта је намењена другом MIDlet-у. Отворите одговарајући MIDlet или изаберите другу скрипту.</string>
+    <string name="memory_scripts_target_not_ready">Циљ скрипте још није спреман. Вратите се на одговарајући екран игре и покушајте поново.</string>
 </resources>

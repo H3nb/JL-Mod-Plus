@@ -277,4 +277,9 @@
     <string name="memory_scripts_resource_limit">The script reached a safety limit. Reduce its targets or stop unused freezes.</string>
     <string name="memory_scripts_target_changed">Couldn’t verify the script’s target. Refresh its values and check the bookmarks.</string>
     <string name="memory_scripts_operation_unavailable">This script operation isn’t supported for the current target.</string>
+    <string name="memory_scripts_invalid_input">Check the script inputs. Enter valid values within the allowed ranges.</string>
+    <string name="memory_scripts_value_range">A value is outside the supported range. Check the script and its values.</string>
+    <string name="memory_scripts_inconsistent_values">Copies of the same value disagree. Check the game state before trying again.</string>
+    <string name="memory_scripts_wrong_midlet">This script is for a different MIDlet. Open the correct MIDlet or choose another script.</string>
+    <string name="memory_scripts_target_not_ready">The script target isn’t ready. Return to the relevant game screen and try again.</string>
 </resources>

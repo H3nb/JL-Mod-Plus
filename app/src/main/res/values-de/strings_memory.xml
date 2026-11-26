@@ -277,4 +277,9 @@
     <string name="memory_scripts_resource_limit">Das Skript hat eine Sicherheitsgrenze erreicht. Reduzieren Sie die Anzahl der Ziele oder beenden Sie nicht benötigte Einfriervorgänge.</string>
     <string name="memory_scripts_target_changed">Das Skriptziel konnte nicht überprüft werden. Aktualisieren Sie die Werte und prüfen Sie die Lesezeichen.</string>
     <string name="memory_scripts_operation_unavailable">Diese Skriptoperation wird für das aktuelle Ziel nicht unterstützt.</string>
+    <string name="memory_scripts_invalid_input">Prüfen Sie die Skripteingaben. Geben Sie gültige Werte innerhalb der zulässigen Bereiche ein.</string>
+    <string name="memory_scripts_value_range">Ein Wert liegt außerhalb des unterstützten Bereichs. Prüfen Sie das Skript und seine Werte.</string>
+    <string name="memory_scripts_inconsistent_values">Kopien desselben Werts stimmen nicht überein. Prüfen Sie den Spielzustand, bevor Sie es erneut versuchen.</string>
+    <string name="memory_scripts_wrong_midlet">Dieses Skript ist für ein anderes MIDlet bestimmt. Öffnen Sie das richtige MIDlet oder wählen Sie ein anderes Skript.</string>
+    <string name="memory_scripts_target_not_ready">Das Skriptziel ist noch nicht bereit. Kehren Sie zum entsprechenden Spielbildschirm zurück und versuchen Sie es erneut.</string>
 </resources>

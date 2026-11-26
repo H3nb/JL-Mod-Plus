@@ -283,4 +283,9 @@
     <string name="memory_scripts_resource_limit">Scriptul a atins o limită de siguranță. Reduceți numărul țintelor sau opriți înghețările neutilizate.</string>
     <string name="memory_scripts_target_changed">Ținta scriptului nu a putut fi verificată. Reîmprospătați valorile și verificați marcajele.</string>
     <string name="memory_scripts_operation_unavailable">Această operație a scriptului nu este acceptată pentru ținta curentă.</string>
+    <string name="memory_scripts_invalid_input">Verificați datele de intrare ale scriptului. Introduceți valori valide în intervalele permise.</string>
+    <string name="memory_scripts_value_range">O valoare este în afara intervalului acceptat. Verificați scriptul și valorile sale.</string>
+    <string name="memory_scripts_inconsistent_values">Copiile aceleiași valori nu coincid. Verificați starea jocului înainte de a încerca din nou.</string>
+    <string name="memory_scripts_wrong_midlet">Acest script este destinat altui MIDlet. Deschideți MIDletul corect sau alegeți alt script.</string>
+    <string name="memory_scripts_target_not_ready">Ținta scriptului nu este încă pregătită. Reveniți la ecranul corespunzător al jocului și încercați din nou.</string>
 </resources>

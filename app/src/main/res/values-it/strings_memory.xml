@@ -283,4 +283,9 @@
     <string name="memory_scripts_resource_limit">Lo script ha raggiunto un limite di sicurezza. Riduci il numero di destinazioni o disattiva i blocchi inutilizzati.</string>
     <string name="memory_scripts_target_changed">Impossibile verificare la destinazione dello script. Aggiorna i valori e controlla i segnalibri.</string>
     <string name="memory_scripts_operation_unavailable">Questa operazione dello script non è supportata per la destinazione attuale.</string>
+    <string name="memory_scripts_invalid_input">Controlla gli input dello script. Inserisci valori validi negli intervalli consentiti.</string>
+    <string name="memory_scripts_value_range">Un valore è al di fuori dell’intervallo supportato. Controlla lo script e i suoi valori.</string>
+    <string name="memory_scripts_inconsistent_values">Le copie dello stesso valore non coincidono. Controlla lo stato del gioco prima di riprovare.</string>
+    <string name="memory_scripts_wrong_midlet">Questo script è destinato a un altro MIDlet. Apri il MIDlet corretto o scegli un altro script.</string>
+    <string name="memory_scripts_target_not_ready">La destinazione dello script non è pronta. Torna alla schermata pertinente del gioco e riprova.</string>
 </resources>

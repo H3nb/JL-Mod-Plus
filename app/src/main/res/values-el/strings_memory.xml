@@ -277,4 +277,9 @@
     <string name="memory_scripts_resource_limit">Το σενάριο έφτασε σε όριο ασφαλείας. Μειώστε τους στόχους ή διακόψτε τα παγώματα που δεν χρησιμοποιείτε.</string>
     <string name="memory_scripts_target_changed">Δεν ήταν δυνατή η επαλήθευση του στόχου του σεναρίου. Ανανεώστε τις τιμές και ελέγξτε τους σελιδοδείκτες.</string>
     <string name="memory_scripts_operation_unavailable">Αυτή η λειτουργία του σεναρίου δεν υποστηρίζεται για τον τρέχοντα στόχο.</string>
+    <string name="memory_scripts_invalid_input">Ελέγξτε τις εισόδους του σεναρίου. Εισαγάγετε έγκυρες τιμές εντός των επιτρεπόμενων ορίων.</string>
+    <string name="memory_scripts_value_range">Μια τιμή είναι εκτός του υποστηριζόμενου εύρους. Ελέγξτε το σενάριο και τις τιμές του.</string>
+    <string name="memory_scripts_inconsistent_values">Τα αντίγραφα της ίδιας τιμής δεν συμφωνούν. Ελέγξτε την κατάσταση του παιχνιδιού πριν δοκιμάσετε ξανά.</string>
+    <string name="memory_scripts_wrong_midlet">Αυτό το σενάριο προορίζεται για άλλο MIDlet. Ανοίξτε το σωστό MIDlet ή επιλέξτε άλλο σενάριο.</string>
+    <string name="memory_scripts_target_not_ready">Ο στόχος του σεναρίου δεν είναι έτοιμος. Επιστρέψτε στη σχετική οθόνη του παιχνιδιού και δοκιμάστε ξανά.</string>
 </resources>

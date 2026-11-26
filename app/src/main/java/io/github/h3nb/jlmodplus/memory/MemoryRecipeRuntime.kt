@@ -74,7 +74,8 @@ class MemoryRecipeRuntime {
                 java.lang.Integer.TYPE -> checkRange(value, Int.MIN_VALUE.toLong(), Int.MAX_VALUE.toLong())
                 java.lang.Character.TYPE -> checkRange(value, 0L, 65535L)
                 java.lang.Boolean.TYPE -> if (value != 0L && value != 1L) throw Problem(
-                    MemoryEngineContract.RESULT_INVALID_REQUEST, "Boolean requires 0 or 1"
+                    MemoryEngineContract.RESULT_INVALID_REQUEST, "Boolean requires 0 or 1",
+                    MemoryEngineContract.REASON_RECIPE_VALUE_RANGE
                 )
                 java.lang.Long.TYPE -> Unit
                 else -> throw Problem(MemoryEngineContract.RESULT_UNSUPPORTED, "Unsupported write type")
@@ -396,7 +397,7 @@ class MemoryRecipeRuntime {
                     try {
                         Math.subtractExact(action.constant, bits.toInt().toLong())
                     } catch (error: ArithmeticException) {
-                        bad("Decoded value exceeds the supported integer range")
+                        bad("Decoded value exceeds the supported integer range", MemoryEngineContract.REASON_RECIPE_VALUE_RANGE)
                     }
                 }
                 else -> bad("Unsupported action")
@@ -409,7 +410,7 @@ class MemoryRecipeRuntime {
                     if (previous == null) logicalValues[key] = currentLogical
                     else if (previous != currentLogical) {
                         throw Problem(MemoryEngineContract.RESULT_IDENTITY_UNSAFE,
-                            "Inconsistent copies of $key")
+                            "Inconsistent copies of $key", MemoryEngineContract.REASON_RECIPE_INCONSISTENT_VALUES)
                     }
                 }
             }
@@ -422,7 +423,7 @@ class MemoryRecipeRuntime {
                 try {
                     Math.addExact(currentLogical, operand)
                 } catch (error: ArithmeticException) {
-                    bad("Addition exceeds the supported integer range")
+                    bad("Addition exceeds the supported integer range", MemoryEngineContract.REASON_RECIPE_VALUE_RANGE)
                 }
             } else operand
             if (recipe.mode != "legacy" && action.field != null) {
@@ -452,7 +453,7 @@ class MemoryRecipeRuntime {
                     }
                     val newValue = logicalWrite
                     val fieldMask = ((1L shl action.width) - 1L) shl action.shift
-                    if (newValue < 0 || newValue >= (1L shl action.width)) bad("Bitfield value out of range")
+                    if (newValue < 0 || newValue >= (1L shl action.width)) bad("Bitfield value out of range", MemoryEngineContract.REASON_RECIPE_VALUE_RANGE)
                     val masked = (raw and fieldMask.inv()) or (newValue shl action.shift)
                     listOf(when (cells[0].type) {
                         java.lang.Byte.TYPE -> masked.toByte().toLong()
@@ -466,9 +467,9 @@ class MemoryRecipeRuntime {
                     val value = try {
                         Math.subtractExact(action.constant, logicalWrite)
                     } catch (error: ArithmeticException) {
-                        bad("Encoded value overflow")
+                        bad("Encoded value overflow", MemoryEngineContract.REASON_RECIPE_VALUE_RANGE)
                     }
-                    if (value !in Int.MIN_VALUE.toLong()..Int.MAX_VALUE.toLong()) bad("Encoded value overflow")
+                    if (value !in Int.MIN_VALUE.toLong()..Int.MAX_VALUE.toLong()) bad("Encoded value overflow", MemoryEngineContract.REASON_RECIPE_VALUE_RANGE)
                     (0..3).map { ((value ushr (it * 8)) and 0xFF).toByte().toLong() }
                 }
                 else -> bad("Unsupported action")
@@ -509,11 +510,11 @@ class MemoryRecipeRuntime {
     private fun resolve(snapshot: MemoryDiscoveryBridge.Snapshot, root: Root, path: List<Step>,
                         inputs: Map<String, Long>, staticRoots: Map<String, Class<*>>): List<Cell> {
         var current: Any = when (root.kind) {
-            "midlet" -> snapshot.root() ?: throw Problem(MemoryEngineContract.RESULT_TARGET_LOST, "MIDlet not ready")
+            "midlet" -> snapshot.root() ?: throw Problem(MemoryEngineContract.RESULT_TARGET_LOST, "MIDlet not ready", MemoryEngineContract.REASON_RECIPE_TARGET_NOT_READY)
             "displayable" -> snapshot.displayableRoot()
-                ?: throw Problem(MemoryEngineContract.RESULT_TARGET_LOST, "Displayable not ready")
+                ?: throw Problem(MemoryEngineContract.RESULT_TARGET_LOST, "Displayable not ready", MemoryEngineContract.REASON_RECIPE_TARGET_NOT_READY)
             "initializedStatic" -> staticRoots[root.className]
-                ?: throw Problem(MemoryEngineContract.RESULT_TARGET_LOST, "Static class not initialized")
+                ?: throw Problem(MemoryEngineContract.RESULT_TARGET_LOST, "Static class not initialized", MemoryEngineContract.REASON_RECIPE_TARGET_NOT_READY)
             else -> bad("Unsupported root")
         }
         if (internalName(if (current is Class<*>) current else current.javaClass) != root.className) {
@@ -545,7 +546,7 @@ class MemoryRecipeRuntime {
                     field.isAccessible = true
                     if (last) return listOf(Cell(current, field, -1, field.type))
                     current = field.get(if (current is Class<*>) null else current)
-                        ?: throw Problem(MemoryEngineContract.RESULT_TARGET_LOST, "Null guest reference")
+                        ?: throw Problem(MemoryEngineContract.RESULT_TARGET_LOST, "Null guest reference", MemoryEngineContract.REASON_RECIPE_TARGET_NOT_READY)
                 }
                 "index", "slice" -> {
                     if (!current.javaClass.isArray ||
@@ -555,7 +556,7 @@ class MemoryRecipeRuntime {
                     val length = ReflectArray.getLength(current)
                     val start = if (step.kind == "slice") step.start else step.indexInput?.let {
                         val value = inputs[it] ?: bad("Missing index input")
-                        if (value < 0 || value > 1_999_999) bad("Array index out of range")
+                        if (value < 0 || value > 1_999_999) bad("Array index out of range", MemoryEngineContract.REASON_RECIPE_INVALID_INPUT)
                         value.toInt()
                     } ?: step.index ?: bad("Missing array index")
                     val count = if (step.kind == "slice") step.length else 1
@@ -569,7 +570,7 @@ class MemoryRecipeRuntime {
                     }
                     if (count != 1 || current !is Array<*>) bad("Intermediate element is not an object")
                     current = current[start]
-                        ?: throw Problem(MemoryEngineContract.RESULT_TARGET_LOST, "Null array element")
+                        ?: throw Problem(MemoryEngineContract.RESULT_TARGET_LOST, "Null array element", MemoryEngineContract.REASON_RECIPE_TARGET_NOT_READY)
                 }
                 else -> bad("Unsupported path step")
             }
@@ -583,7 +584,7 @@ class MemoryRecipeRuntime {
             throw Problem(MemoryEngineContract.RESULT_TARGET_LOST, "Managed guest runtime unavailable")
         }
         if (internalName(snapshot.root().javaClass) != mainClass) {
-            throw Problem(MemoryEngineContract.RESULT_IDENTITY_UNSAFE, "Recipe targets a different MIDlet")
+            throw Problem(MemoryEngineContract.RESULT_IDENTITY_UNSAFE, "Recipe targets a different MIDlet", MemoryEngineContract.REASON_RECIPE_WRONG_MIDLET)
         }
         return snapshot
     }
@@ -743,15 +744,15 @@ class MemoryRecipeRuntime {
         if (bundle != null && bundle.keySet().any {
                 it !in recipe.inputs && it != EXPECTED_VALUES && it != READ_TICKET
             })
-            bad("Unexpected input")
+            bad("Unexpected input", MemoryEngineContract.REASON_RECIPE_INVALID_INPUT)
         val needed = if (readOnly) recipe.actions.flatMap { action ->
             action.path.mapNotNull(Step::indexInput)
         }.toSet() else recipe.inputs.keys
         for ((name, range) in recipe.inputs) {
             if (name !in needed) continue
-            val text = bundle?.getString(name) ?: bad("Missing input: $name")
-            val value = parseNumber(text)
-            if (value !in range) bad("Input $name outside declared range")
+            val text = bundle?.getString(name) ?: bad("Missing input: $name", MemoryEngineContract.REASON_RECIPE_INVALID_INPUT)
+            val value = parseNumber(text, MemoryEngineContract.REASON_RECIPE_INVALID_INPUT)
+            if (value !in range) bad("Input $name outside declared range", MemoryEngineContract.REASON_RECIPE_INVALID_INPUT)
             values[name] = value
         }
         return values
@@ -788,9 +789,9 @@ class MemoryRecipeRuntime {
     private fun JsonObject.objectAt(name: String): JsonObject =
         this[name] as? JsonObject ?: bad("Expected $name object")
 
-    private fun parseNumber(text: String): Long = try {
+    private fun parseNumber(text: String, reason: Int = MemoryEngineContract.REASON_NONE): Long = try {
         if (text.startsWith("0x", true)) text.substring(2).toLong(16) else text.toLong()
-    } catch (error: NumberFormatException) { bad("Invalid integer constant") }
+    } catch (error: NumberFormatException) { bad("Invalid integer constant", reason) }
 
     private fun internalName(type: Class<*>): String = type.name.replace('.', '/')
     private fun descriptor(type: Class<*>): String = when {
@@ -822,12 +823,11 @@ class MemoryRecipeRuntime {
         private fun parseObject(json: String): JsonObject =
             Json.parseToJsonElement(json) as? JsonObject ?: bad("Expected JSON object")
 
-        private fun bad(detail: String): Nothing = throw Problem(
-            MemoryEngineContract.RESULT_INVALID_REQUEST, detail
-        )
+        private fun bad(detail: String, reason: Int = MemoryEngineContract.REASON_NONE): Nothing =
+            throw Problem(MemoryEngineContract.RESULT_INVALID_REQUEST, detail, reason)
 
         private fun checkRange(value: Long, minimum: Long, maximum: Long) {
-            if (value !in minimum..maximum) bad("Value exceeds primitive range")
+            if (value !in minimum..maximum) bad("Value exceeds primitive range", MemoryEngineContract.REASON_RECIPE_VALUE_RANGE)
         }
 
         private const val MAX_WRITES = 64

@@ -277,4 +277,9 @@
     <string name="memory_scripts_resource_limit">ସ୍କ୍ରିପ୍ଟ୍ ସୁରକ୍ଷା ସୀମାରେ ପହଞ୍ଚିଛି। ଟାର୍ଗେଟ୍ କମାନ୍ତୁ କିମ୍ବା ଅବ୍ୟବହୃତ ଫ୍ରିଜ୍ ବନ୍ଦ କରନ୍ତୁ।</string>
     <string name="memory_scripts_target_changed">ସ୍କ୍ରିପ୍ଟ୍ ଟାର୍ଗେଟ୍ ଯାଞ୍ଚ ହୋଇପାରିଲା ନାହିଁ। ମୂଲ୍ୟ ରିଫ୍ରେସ୍ କରି ବୁକମାର୍କ୍ ଯାଞ୍ଚ କରନ୍ତୁ।</string>
     <string name="memory_scripts_operation_unavailable">ବର୍ତ୍ତମାନର ଟାର୍ଗେଟ୍ ପାଇଁ ଏହି ସ୍କ୍ରିପ୍ଟ୍ ଅପରେସନ୍ ସମର୍ଥିତ ନୁହେଁ।</string>
+    <string name="memory_scripts_invalid_input">ସ୍କ୍ରିପ୍ଟ୍ ଇନ୍‌ପୁଟ୍ ଯାଞ୍ଚ କରନ୍ତୁ। ଅନୁମୋଦିତ ସୀମା ମଧ୍ୟରେ ବୈଧ ମୂଲ୍ୟ ଦିଅନ୍ତୁ।</string>
+    <string name="memory_scripts_value_range">ଏକ ମୂଲ୍ୟ ସମର୍ଥିତ ସୀମା ବାହାରେ ଅଛି। ସ୍କ୍ରିପ୍ଟ୍ ଓ ଏହାର ମୂଲ୍ୟ ଯାଞ୍ଚ କରନ୍ତୁ।</string>
+    <string name="memory_scripts_inconsistent_values">ସମାନ ମୂଲ୍ୟର କପିଗୁଡ଼ିକ ମେଳ ଖାଉନାହିଁ। ପୁଣି ଚେଷ୍ଟା କରିବା ପୂର୍ବରୁ ଗେମ୍ ସ୍ଥିତି ଯାଞ୍ଚ କରନ୍ତୁ।</string>
+    <string name="memory_scripts_wrong_midlet">ଏହି ସ୍କ୍ରିପ୍ଟ୍ ଅନ୍ୟ ଏକ MIDlet ପାଇଁ। ଠିକ୍ MIDlet ଖୋଲନ୍ତୁ କିମ୍ବା ଅନ୍ୟ ସ୍କ୍ରିପ୍ଟ୍ ବାଛନ୍ତୁ।</string>
+    <string name="memory_scripts_target_not_ready">ସ୍କ୍ରିପ୍ଟ୍ ଟାର୍ଗେଟ୍ ପ୍ରସ୍ତୁତ ନାହିଁ। ସମ୍ପୃକ୍ତ ଗେମ୍ ସ୍କ୍ରିନ୍‌କୁ ଫେରି ପୁଣି ଚେଷ୍ଟା କରନ୍ତୁ।</string>
 </resources>

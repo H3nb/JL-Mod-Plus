@@ -277,4 +277,9 @@
     <string name="memory_scripts_resource_limit">ස්ක්‍රිප්ට් එක ආරක්ෂිත සීමාවකට ළඟා වී ඇත. ඉලක්ක ගණන අඩු කරන්න හෝ භාවිත නොකරන කැටි කිරීම් නවත්වන්න.</string>
     <string name="memory_scripts_target_changed">ස්ක්‍රිප්ට් ඉලක්කය තහවුරු කළ නොහැකි විය. අගයන් නැවුම් කර පිටුසන් පරීක්ෂා කරන්න.</string>
     <string name="memory_scripts_operation_unavailable">වත්මන් ඉලක්කය සඳහා මෙම ස්ක්‍රිප්ට් මෙහෙයුමට සහාය නොදක්වයි.</string>
+    <string name="memory_scripts_invalid_input">ස්ක්‍රිප්ට් ආදාන පරීක්ෂා කරන්න. අවසර ලත් පරාස තුළ වලංගු අගයන් ඇතුළත් කරන්න.</string>
+    <string name="memory_scripts_value_range">අගයක් සහාය දක්වන පරාසයෙන් පිටත ඇත. ස්ක්‍රිප්ට් එක සහ එහි අගයන් පරීක්ෂා කරන්න.</string>
+    <string name="memory_scripts_inconsistent_values">එකම අගයේ පිටපත් නොගැළපේ. නැවත උත්සාහ කිරීමට පෙර ක්‍රීඩාවේ තත්ත්වය පරීක්ෂා කරන්න.</string>
+    <string name="memory_scripts_wrong_midlet">මෙම ස්ක්‍රිප්ට් එක වෙනත් MIDlet එකක් සඳහාය. නිවැරදි MIDlet එක විවෘත කරන්න හෝ වෙනත් ස්ක්‍රිප්ට් එකක් තෝරන්න.</string>
+    <string name="memory_scripts_target_not_ready">ස්ක්‍රිප්ට් ඉලක්කය තවම සූදානම් නැත. ක්‍රීඩාවේ අදාළ තිරයට ආපසු ගොස් නැවත උත්සාහ කරන්න.</string>
 </resources>

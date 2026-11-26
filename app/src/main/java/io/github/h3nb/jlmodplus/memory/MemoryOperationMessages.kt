@@ -41,7 +41,20 @@ internal fun memoryOperationMessage(
     ) {
         return MemoryOperationMessage(R.string.memory_scripts_refresh_required)
     }
-    val resource = when (result) {
+    val scriptResource = when (reason) {
+        MemoryEngineContract.REASON_RECIPE_INVALID_INPUT ->
+            if (result == MemoryEngineContract.RESULT_INVALID_REQUEST) R.string.memory_scripts_invalid_input else null
+        MemoryEngineContract.REASON_RECIPE_VALUE_RANGE ->
+            if (result == MemoryEngineContract.RESULT_INVALID_REQUEST) R.string.memory_scripts_value_range else null
+        MemoryEngineContract.REASON_RECIPE_INCONSISTENT_VALUES ->
+            if (result == MemoryEngineContract.RESULT_IDENTITY_UNSAFE) R.string.memory_scripts_inconsistent_values else null
+        MemoryEngineContract.REASON_RECIPE_WRONG_MIDLET ->
+            if (result == MemoryEngineContract.RESULT_IDENTITY_UNSAFE) R.string.memory_scripts_wrong_midlet else null
+        MemoryEngineContract.REASON_RECIPE_TARGET_NOT_READY ->
+            if (result == MemoryEngineContract.RESULT_TARGET_LOST) R.string.memory_scripts_target_not_ready else null
+        else -> null
+    }
+    val resource = scriptResource ?: when (result) {
         MemoryEngineContract.RESULT_OK -> null
         MemoryEngineContract.RESULT_CANCELLED -> R.string.memory_editor_cancelled
         MemoryEngineContract.RESULT_RESOURCE_LIMIT -> if (script) R.string.memory_scripts_resource_limit

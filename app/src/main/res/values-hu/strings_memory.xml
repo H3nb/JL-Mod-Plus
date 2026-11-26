@@ -277,4 +277,9 @@
     <string name="memory_scripts_resource_limit">A szkript elérte a biztonsági korlátot. Csökkentse a célok számát, vagy állítsa le a nem használt rögzítéseket.</string>
     <string name="memory_scripts_target_changed">Nem sikerült ellenőrizni a szkript célját. Frissítse az értékeket, és ellenőrizze a könyvjelzőket.</string>
     <string name="memory_scripts_operation_unavailable">Ez a szkriptművelet nem támogatott a jelenlegi célhoz.</string>
+    <string name="memory_scripts_invalid_input">Ellenőrizze a szkript bemeneteit. Adjon meg érvényes értékeket a megengedett tartományokon belül.</string>
+    <string name="memory_scripts_value_range">Egy érték kívül esik a támogatott tartományon. Ellenőrizze a szkriptet és az értékeit.</string>
+    <string name="memory_scripts_inconsistent_values">Ugyanannak az értéknek a másolatai eltérnek. Újrapróbálkozás előtt ellenőrizze a játék állapotát.</string>
+    <string name="memory_scripts_wrong_midlet">Ez a szkript másik MIDlethez készült. Nyissa meg a megfelelő MIDletet, vagy válasszon másik szkriptet.</string>
+    <string name="memory_scripts_target_not_ready">A szkript célja még nem áll készen. Térjen vissza a játék megfelelő képernyőjére, és próbálja újra.</string>
 </resources>

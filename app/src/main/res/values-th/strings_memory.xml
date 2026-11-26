@@ -271,4 +271,9 @@
     <string name="memory_scripts_resource_limit">สคริปต์ถึงขีดจำกัดด้านความปลอดภัยแล้ว ลดจำนวนเป้าหมายหรือหยุดการตรึงที่ไม่ได้ใช้งาน</string>
     <string name="memory_scripts_target_changed">ไม่สามารถตรวจสอบเป้าหมายของสคริปต์ได้ รีเฟรชค่าและตรวจสอบบุ๊กมาร์ก</string>
     <string name="memory_scripts_operation_unavailable">เป้าหมายปัจจุบันไม่รองรับการดำเนินการนี้ของสคริปต์</string>
+    <string name="memory_scripts_invalid_input">ตรวจสอบข้อมูลที่ป้อนให้สคริปต์ ป้อนค่าที่ถูกต้องภายในช่วงที่อนุญาต</string>
+    <string name="memory_scripts_value_range">มีค่าอยู่นอกช่วงที่รองรับ ตรวจสอบสคริปต์และค่าของสคริปต์</string>
+    <string name="memory_scripts_inconsistent_values">สำเนาของค่าเดียวกันไม่ตรงกัน ตรวจสอบสถานะเกมก่อนลองอีกครั้ง</string>
+    <string name="memory_scripts_wrong_midlet">สคริปต์นี้ใช้กับ MIDlet อื่น เปิด MIDlet ที่ถูกต้องหรือเลือกสคริปต์อื่น</string>
+    <string name="memory_scripts_target_not_ready">เป้าหมายของสคริปต์ยังไม่พร้อม กลับไปที่หน้าจอเกมที่เกี่ยวข้องแล้วลองอีกครั้ง</string>
 </resources>

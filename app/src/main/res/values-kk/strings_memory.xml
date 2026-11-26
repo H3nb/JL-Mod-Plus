@@ -277,4 +277,9 @@
     <string name="memory_scripts_resource_limit">Скрипт қауіпсіздік шегіне жетті. Нысандар санын азайтыңыз немесе пайдаланылмайтын бекітулерді тоқтатыңыз.</string>
     <string name="memory_scripts_target_changed">Скрипт нысанын тексеру мүмкін болмады. Мәндерін жаңартып, бетбелгілерді тексеріңіз.</string>
     <string name="memory_scripts_operation_unavailable">Бұл скрипт операциясы ағымдағы нысан үшін қолдау таппайды.</string>
+    <string name="memory_scripts_invalid_input">Скрипттің кіріс деректерін тексеріңіз. Рұқсат етілген ауқымдағы жарамды мәндерді енгізіңіз.</string>
+    <string name="memory_scripts_value_range">Мән қолдау көрсетілетін ауқымнан тыс. Скрипт пен оның мәндерін тексеріңіз.</string>
+    <string name="memory_scripts_inconsistent_values">Бір мәннің көшірмелері сәйкес келмейді. Қайталап көрмес бұрын ойын күйін тексеріңіз.</string>
+    <string name="memory_scripts_wrong_midlet">Бұл скрипт басқа MIDlet үшін жасалған. Тиісті MIDlet-ті ашыңыз немесе басқа скриптті таңдаңыз.</string>
+    <string name="memory_scripts_target_not_ready">Скрипт нысаны әлі дайын емес. Ойынның тиісті экранына оралып, қайталап көріңіз.</string>
 </resources>

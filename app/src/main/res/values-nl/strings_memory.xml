@@ -277,4 +277,9 @@
     <string name="memory_scripts_resource_limit">Het script heeft een veiligheidslimiet bereikt. Verminder het aantal doelen of stop ongebruikte bevriezingen.</string>
     <string name="memory_scripts_target_changed">Kan het doel van het script niet verifiëren. Vernieuw de waarden en controleer de bladwijzers.</string>
     <string name="memory_scripts_operation_unavailable">Deze scriptbewerking wordt niet ondersteund voor het huidige doel.</string>
+    <string name="memory_scripts_invalid_input">Controleer de scriptinvoer. Voer geldige waarden binnen de toegestane bereiken in.</string>
+    <string name="memory_scripts_value_range">Een waarde ligt buiten het ondersteunde bereik. Controleer het script en de waarden.</string>
+    <string name="memory_scripts_inconsistent_values">Kopieën van dezelfde waarde komen niet overeen. Controleer de spelstatus voordat je het opnieuw probeert.</string>
+    <string name="memory_scripts_wrong_midlet">Dit script is voor een andere MIDlet. Open de juiste MIDlet of kies een ander script.</string>
+    <string name="memory_scripts_target_not_ready">Het scriptdoel is nog niet gereed. Ga terug naar het betreffende spelscherm en probeer het opnieuw.</string>
 </resources>

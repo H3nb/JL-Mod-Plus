@@ -301,4 +301,9 @@
     <string name="memory_scripts_resource_limit">بلغ النص البرمجي حدًا من حدود الأمان. قلّل أهدافه أو أوقف عمليات التجميد غير المستخدمة.</string>
     <string name="memory_scripts_target_changed">تعذّر التحقّق من هدف النص البرمجي. حدّث قيمه وتحقّق من الإشارات المرجعية.</string>
     <string name="memory_scripts_operation_unavailable">عملية النص البرمجي هذه غير مدعومة للهدف الحالي.</string>
+    <string name="memory_scripts_invalid_input">تحقّق من مدخلات النص البرمجي. أدخل قيمًا صالحة ضمن النطاقات المسموح بها.</string>
+    <string name="memory_scripts_value_range">هناك قيمة خارج النطاق المدعوم. تحقّق من النص البرمجي وقيمه.</string>
+    <string name="memory_scripts_inconsistent_values">نسخ القيمة نفسها غير متطابقة. تحقّق من حالة اللعبة قبل إعادة المحاولة.</string>
+    <string name="memory_scripts_wrong_midlet">هذا النص البرمجي مخصّص لـ MIDlet آخر. افتح MIDlet المناسب أو اختر نصًا برمجيًا آخر.</string>
+    <string name="memory_scripts_target_not_ready">هدف النص البرمجي غير جاهز. عُد إلى شاشة اللعبة المعنية وحاول مرة أخرى.</string>
 </resources>

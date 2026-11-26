@@ -277,4 +277,9 @@
     <string name="memory_scripts_resource_limit">স্ক্রিপ্ট নিরাপত্তার সীমায় পৌঁছেছে। টার্গেটের সংখ্যা কমান অথবা অব্যবহৃত ফ্রিজ বন্ধ করুন।</string>
     <string name="memory_scripts_target_changed">স্ক্রিপ্টের টার্গেট যাচাই করা যায়নি। মান রিফ্রেশ করে বুকমার্কগুলো দেখুন।</string>
     <string name="memory_scripts_operation_unavailable">বর্তমান টার্গেটের জন্য এই স্ক্রিপ্ট অপারেশন সমর্থিত নয়।</string>
+    <string name="memory_scripts_invalid_input">স্ক্রিপ্টের ইনপুটগুলো যাচাই করুন। অনুমোদিত সীমার মধ্যে বৈধ মান দিন।</string>
+    <string name="memory_scripts_value_range">একটি মান সমর্থিত সীমার বাইরে। স্ক্রিপ্ট ও তার মানগুলো যাচাই করুন।</string>
+    <string name="memory_scripts_inconsistent_values">একই মানের কপিগুলো মিলছে না। আবার চেষ্টা করার আগে গেমের অবস্থা দেখুন।</string>
+    <string name="memory_scripts_wrong_midlet">এই স্ক্রিপ্টটি অন্য MIDlet-এর জন্য। সঠিক MIDlet খুলুন অথবা অন্য স্ক্রিপ্ট বেছে নিন।</string>
+    <string name="memory_scripts_target_not_ready">স্ক্রিপ্টের টার্গেট প্রস্তুত নয়। গেমের সংশ্লিষ্ট স্ক্রিনে ফিরে আবার চেষ্টা করুন।</string>
 </resources>

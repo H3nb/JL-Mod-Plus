@@ -277,4 +277,9 @@
     <string name="memory_scripts_resource_limit">Betik bir güvenlik sınırına ulaştı. Hedef sayısını azaltın veya kullanılmayan dondurmaları durdurun.</string>
     <string name="memory_scripts_target_changed">Betiğin hedefi doğrulanamadı. Değerleri yenileyin ve yer imlerini kontrol edin.</string>
     <string name="memory_scripts_operation_unavailable">Bu betik işlemi mevcut hedef için desteklenmiyor.</string>
+    <string name="memory_scripts_invalid_input">Betik girdilerini kontrol edin. İzin verilen aralıklarda geçerli değerler girin.</string>
+    <string name="memory_scripts_value_range">Bir değer desteklenen aralığın dışında. Betiği ve değerlerini kontrol edin.</string>
+    <string name="memory_scripts_inconsistent_values">Aynı değerin kopyaları uyuşmuyor. Yeniden denemeden önce oyunun durumunu kontrol edin.</string>
+    <string name="memory_scripts_wrong_midlet">Bu betik başka bir MIDlet içindir. Doğru MIDlet’i açın veya başka bir betik seçin.</string>
+    <string name="memory_scripts_target_not_ready">Betik hedefi henüz hazır değil. İlgili oyun ekranına dönüp yeniden deneyin.</string>
 </resources>

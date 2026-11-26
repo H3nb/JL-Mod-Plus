@@ -289,4 +289,9 @@
     <string name="memory_scripts_resource_limit">Скрипт досяг обмеження безпеки. Зменште кількість цілей або вимкніть невикористовувані заморожування.</string>
     <string name="memory_scripts_target_changed">Не вдалося перевірити ціль скрипта. Оновіть значення та перевірте закладки.</string>
     <string name="memory_scripts_operation_unavailable">Ця операція скрипта не підтримується для поточної цілі.</string>
+    <string name="memory_scripts_invalid_input">Перевірте вхідні дані скрипта. Введіть допустимі значення в дозволених діапазонах.</string>
+    <string name="memory_scripts_value_range">Значення виходить за межі підтримуваного діапазону. Перевірте скрипт і його значення.</string>
+    <string name="memory_scripts_inconsistent_values">Копії одного значення не збігаються. Перевірте стан гри перед повторною спробою.</string>
+    <string name="memory_scripts_wrong_midlet">Цей скрипт призначений для іншого MIDlet. Відкрийте потрібний MIDlet або виберіть інший скрипт.</string>
+    <string name="memory_scripts_target_not_ready">Ціль скрипта ще не готова. Поверніться на відповідний екран гри й спробуйте ще раз.</string>
 </resources>

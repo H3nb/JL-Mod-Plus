@@ -2140,7 +2140,7 @@ internal class MemoryEditorComposeController(
                     message = if (success) context.getString(R.string.memory_scripts_freeze_inactive)
                         else if (code == MemoryEngineContract.RESULT_TARGET_LOST)
                             context.getString(R.string.memory_editor_memory_unavailable)
-                        else operationMessage(code, response)
+                        else operationMessage(code, response, script = true)
                             ?: context.getString(R.string.memory_editor_invalid_request),
                     messageIsError = !success,
                 )

@@ -289,4 +289,9 @@
     <string name="memory_scripts_resource_limit">Skript dosáhl bezpečnostního limitu. Omezte počet cílů nebo ukončete nepoužívaná zmrazení.</string>
     <string name="memory_scripts_target_changed">Cíl skriptu se nepodařilo ověřit. Obnovte hodnoty a zkontrolujte záložky.</string>
     <string name="memory_scripts_operation_unavailable">Tato operace skriptu není pro aktuální cíl podporována.</string>
+    <string name="memory_scripts_invalid_input">Zkontrolujte vstupy skriptu. Zadejte platné hodnoty v povolených rozsazích.</string>
+    <string name="memory_scripts_value_range">Hodnota je mimo podporovaný rozsah. Zkontrolujte skript a jeho hodnoty.</string>
+    <string name="memory_scripts_inconsistent_values">Kopie stejné hodnoty se neshodují. Před dalším pokusem zkontrolujte stav hry.</string>
+    <string name="memory_scripts_wrong_midlet">Tento skript je určen pro jiný MIDlet. Otevřete správný MIDlet nebo vyberte jiný skript.</string>
+    <string name="memory_scripts_target_not_ready">Cíl skriptu není připraven. Vraťte se na příslušnou obrazovku hry a zkuste to znovu.</string>
 </resources>

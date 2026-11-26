@@ -79,6 +79,11 @@ public final class MemoryEngineContract {
 	public static final int REASON_INSPECTOR_FREEZE_START_FAILED = 4;
 	/** A form script needs a fresh verified read before writing. */
 	public static final int REASON_RECIPE_REFRESH_REQUIRED = 5;
+	public static final int REASON_RECIPE_INVALID_INPUT = 6;
+	public static final int REASON_RECIPE_VALUE_RANGE = 7;
+	public static final int REASON_RECIPE_INCONSISTENT_VALUES = 8;
+	public static final int REASON_RECIPE_WRONG_MIDLET = 9;
+	public static final int REASON_RECIPE_TARGET_NOT_READY = 10;
 
 	public static final int CANDIDATE_STABLE = 0;
 	public static final int CANDIDATE_RELOCATING = 1;
