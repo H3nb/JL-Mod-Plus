@@ -21,8 +21,8 @@
     <string name="file_picker_cancel">취소</string>
     <string name="file_picker_search">검색</string>
     <string name="file_picker_sort">정렬</string>
-    <string name="file_picker_select_all">이 폴더의 모든 파일 선택</string>
-    <string name="file_picker_unselect_all">이 폴더의 모든 파일 선택 해제</string>
+    <string name="file_picker_select_all">표시된 파일 모두 선택</string>
+    <string name="file_picker_unselect_all">표시된 파일 모두 선택 해제</string>
     <string name="file_picker_sort_type">폴더 우선</string>
     <string name="file_picker_sort_name_ascending">이름 A–Z</string>
     <string name="file_picker_sort_name_descending">이름 Z–A</string>

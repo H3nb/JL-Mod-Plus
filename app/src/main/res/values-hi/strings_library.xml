@@ -21,8 +21,8 @@
     <string name="file_picker_cancel">रद्द करें</string>
     <string name="file_picker_search">खोजें</string>
     <string name="file_picker_sort">क्रमबद्ध करें</string>
-    <string name="file_picker_select_all">इस फ़ोल्डर की सभी फ़ाइलें चुनें</string>
-    <string name="file_picker_unselect_all">इस फ़ोल्डर की सभी फ़ाइलों का चयन हटाएं</string>
+    <string name="file_picker_select_all">दिखाई गई सभी फ़ाइलें चुनें</string>
+    <string name="file_picker_unselect_all">दिखाई गई सभी फ़ाइलों का चयन हटाएं</string>
     <string name="file_picker_sort_type">फ़ोल्डर पहले</string>
     <string name="file_picker_sort_name_ascending">नाम A–Z</string>
     <string name="file_picker_sort_name_descending">नाम Z–A</string>

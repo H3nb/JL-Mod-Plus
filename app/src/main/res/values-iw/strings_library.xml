@@ -21,8 +21,8 @@
     <string name="file_picker_cancel">ביטול</string>
     <string name="file_picker_search">חיפוש</string>
     <string name="file_picker_sort">מיון</string>
-    <string name="file_picker_select_all">בחירת כל הקבצים בתיקייה זו</string>
-    <string name="file_picker_unselect_all">ביטול בחירת כל הקבצים בתיקייה זו</string>
+    <string name="file_picker_select_all">בחירת כל הקבצים המוצגים</string>
+    <string name="file_picker_unselect_all">ביטול הבחירה של כל הקבצים המוצגים</string>
     <string name="file_picker_sort_type">תיקיות תחילה</string>
     <string name="file_picker_sort_name_ascending">שם A–Z</string>
     <string name="file_picker_sort_name_descending">שם Z–A</string>

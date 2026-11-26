@@ -21,8 +21,8 @@
     <string name="file_picker_cancel">إلغاء</string>
     <string name="file_picker_search">بحث</string>
     <string name="file_picker_sort">فرز</string>
-    <string name="file_picker_select_all">تحديد جميع الملفات في هذا المجلد</string>
-    <string name="file_picker_unselect_all">إلغاء تحديد جميع الملفات في هذا المجلد</string>
+    <string name="file_picker_select_all">تحديد جميع الملفات المعروضة</string>
+    <string name="file_picker_unselect_all">إلغاء تحديد جميع الملفات المعروضة</string>
     <string name="file_picker_sort_type">المجلدات أولًا</string>
     <string name="file_picker_sort_name_ascending">الاسم أ–ي</string>
     <string name="file_picker_sort_name_descending">الاسم ي–أ</string>

@@ -21,8 +21,8 @@
     <string name="file_picker_cancel">Бас тарту</string>
     <string name="file_picker_search">Іздеу</string>
     <string name="file_picker_sort">Сұрыптау</string>
-    <string name="file_picker_select_all">Осы қалтадағы барлық файлды таңдау</string>
-    <string name="file_picker_unselect_all">Осы қалтадағы барлық файл таңдауын алу</string>
+    <string name="file_picker_select_all">Көрсетілген барлық файлды таңдау</string>
+    <string name="file_picker_unselect_all">Көрсетілген барлық файлдың таңдауын алып тастау</string>
     <string name="file_picker_sort_type">Алдымен қалталар</string>
     <string name="file_picker_sort_name_ascending">Атауы А–Я</string>
     <string name="file_picker_sort_name_descending">Атауы Я–А</string>

@@ -21,8 +21,8 @@
     <string name="file_picker_cancel">Hủy</string>
     <string name="file_picker_search">Tìm kiếm</string>
     <string name="file_picker_sort">Sắp xếp</string>
-    <string name="file_picker_select_all">Chọn tất cả tệp trong thư mục này</string>
-    <string name="file_picker_unselect_all">Bỏ chọn tất cả tệp trong thư mục này</string>
+    <string name="file_picker_select_all">Chọn tất cả tệp đang hiển thị</string>
+    <string name="file_picker_unselect_all">Bỏ chọn tất cả tệp đang hiển thị</string>
     <string name="file_picker_sort_type">Thư mục trước</string>
     <string name="file_picker_sort_name_ascending">Tên A–Z</string>
     <string name="file_picker_sort_name_descending">Tên Z–A</string>

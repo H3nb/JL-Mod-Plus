@@ -21,8 +21,8 @@
     <string name="file_picker_cancel">Mégse</string>
     <string name="file_picker_search">Keresés</string>
     <string name="file_picker_sort">Rendezés</string>
-    <string name="file_picker_select_all">Összes fájl kijelölése ebben a mappában</string>
-    <string name="file_picker_unselect_all">Összes fájl kijelölésének törlése ebben a mappában</string>
+    <string name="file_picker_select_all">Az összes megjelenített fájl kijelölése</string>
+    <string name="file_picker_unselect_all">Az összes megjelenített fájl kijelölésének törlése</string>
     <string name="file_picker_sort_type">Mappák elöl</string>
     <string name="file_picker_sort_name_ascending">Név A–Z</string>
     <string name="file_picker_sort_name_descending">Név Z–A</string>

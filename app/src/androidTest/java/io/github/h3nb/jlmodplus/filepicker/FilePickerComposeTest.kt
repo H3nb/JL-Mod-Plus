@@ -212,7 +212,7 @@ class FilePickerComposeTest {
             }
         }
 
-        composeRule.onNodeWithContentDescription("Select all files in this folder").performClick()
+        composeRule.onNodeWithContentDescription(uiString(R.string.file_picker_select_all)).performClick()
         assertEquals("select-all", events.get())
         composeRule.onAllNodesWithTag("file_picker_selection_checkbox").assertCountEquals(1)
     }

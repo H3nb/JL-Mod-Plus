@@ -21,8 +21,8 @@
     <string name="file_picker_cancel">Avbryt</string>
     <string name="file_picker_search">Søk</string>
     <string name="file_picker_sort">Sorter</string>
-    <string name="file_picker_select_all">Velg alle filer i denne mappen</string>
-    <string name="file_picker_unselect_all">Fjern valg for alle filer i denne mappen</string>
+    <string name="file_picker_select_all">Velg alle filer som vises</string>
+    <string name="file_picker_unselect_all">Fjern merking av alle filer som vises</string>
     <string name="file_picker_sort_type">Mapper først</string>
     <string name="file_picker_sort_name_ascending">Navn A–Å</string>
     <string name="file_picker_sort_name_descending">Navn Å–A</string>

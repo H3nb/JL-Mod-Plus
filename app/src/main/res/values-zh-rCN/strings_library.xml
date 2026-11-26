@@ -21,8 +21,8 @@
     <string name="file_picker_cancel">取消</string>
     <string name="file_picker_search">搜索</string>
     <string name="file_picker_sort">排序</string>
-    <string name="file_picker_select_all">全选此文件夹中的文件</string>
-    <string name="file_picker_unselect_all">取消全选此文件夹中的文件</string>
+    <string name="file_picker_select_all">全选当前显示的文件</string>
+    <string name="file_picker_unselect_all">取消选择当前显示的所有文件</string>
     <string name="file_picker_sort_type">文件夹优先</string>
     <string name="file_picker_sort_name_ascending">名称 A–Z</string>
     <string name="file_picker_sort_name_descending">名称 Z–A</string>

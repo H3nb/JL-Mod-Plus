@@ -21,8 +21,8 @@
     <string name="file_picker_cancel">Cancel·la</string>
     <string name="file_picker_search">Cerca</string>
     <string name="file_picker_sort">Ordena</string>
-    <string name="file_picker_select_all">Selecciona tots els fitxers d’aquesta carpeta</string>
-    <string name="file_picker_unselect_all">Desselecciona tots els fitxers d’aquesta carpeta</string>
+    <string name="file_picker_select_all">Selecciona tots els fitxers que es mostren</string>
+    <string name="file_picker_unselect_all">Desselecciona tots els fitxers que es mostren</string>
     <string name="file_picker_sort_type">Primer les carpetes</string>
     <string name="file_picker_sort_name_ascending">Nom A–Z</string>
     <string name="file_picker_sort_name_descending">Nom Z–A</string>

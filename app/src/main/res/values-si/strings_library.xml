@@ -21,8 +21,8 @@
     <string name="file_picker_cancel">අවලංගු කරන්න</string>
     <string name="file_picker_search">සොයන්න</string>
     <string name="file_picker_sort">වර්ග කරන්න</string>
-    <string name="file_picker_select_all">මෙම ෆෝල්ඩරයේ සියලුම ගොනු තෝරන්න</string>
-    <string name="file_picker_unselect_all">මෙම ෆෝල්ඩරයේ සියලුම ගොනු තේරීම ඉවත් කරන්න</string>
+    <string name="file_picker_select_all">පෙන්වා ඇති සියලුම ගොනු තෝරන්න</string>
+    <string name="file_picker_unselect_all">පෙන්වා ඇති සියලුම ගොනු තේරීම ඉවත් කරන්න</string>
     <string name="file_picker_sort_type">ෆෝල්ඩර පළමුව</string>
     <string name="file_picker_sort_name_ascending">නම A–Z</string>
     <string name="file_picker_sort_name_descending">නම Z–A</string>

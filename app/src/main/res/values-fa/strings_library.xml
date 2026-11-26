@@ -21,8 +21,8 @@
     <string name="file_picker_cancel">لغو</string>
     <string name="file_picker_search">جستجو</string>
     <string name="file_picker_sort">مرتب‌سازی</string>
-    <string name="file_picker_select_all">انتخاب همه فایل‌های این پوشه</string>
-    <string name="file_picker_unselect_all">لغو انتخاب همه فایل‌های این پوشه</string>
+    <string name="file_picker_select_all">انتخاب همه فایل‌های نمایش‌داده‌شده</string>
+    <string name="file_picker_unselect_all">لغو انتخاب همه فایل‌های نمایش‌داده‌شده</string>
     <string name="file_picker_sort_type">پوشه‌ها در ابتدا</string>
     <string name="file_picker_sort_name_ascending">نام الف–ی</string>
     <string name="file_picker_sort_name_descending">نام ی–الف</string>

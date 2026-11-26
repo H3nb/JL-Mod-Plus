@@ -21,8 +21,8 @@
     <string name="file_picker_cancel">取消</string>
     <string name="file_picker_search">搜尋</string>
     <string name="file_picker_sort">排序</string>
-    <string name="file_picker_select_all">選取此資料夾中的所有檔案</string>
-    <string name="file_picker_unselect_all">取消選取此資料夾中的所有檔案</string>
+    <string name="file_picker_select_all">選取所有顯示的檔案</string>
+    <string name="file_picker_unselect_all">取消選取所有顯示的檔案</string>
     <string name="file_picker_sort_type">資料夾優先</string>
     <string name="file_picker_sort_name_ascending">名稱 A–Z</string>
     <string name="file_picker_sort_name_descending">名稱 Z–A</string>

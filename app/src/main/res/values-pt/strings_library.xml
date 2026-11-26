@@ -21,8 +21,8 @@
     <string name="file_picker_cancel">Cancelar</string>
     <string name="file_picker_search">Pesquisar</string>
     <string name="file_picker_sort">Ordenar</string>
-    <string name="file_picker_select_all">Selecionar todos os ficheiros nesta pasta</string>
-    <string name="file_picker_unselect_all">Desmarcar todos os ficheiros nesta pasta</string>
+    <string name="file_picker_select_all">Selecionar todos os ficheiros apresentados</string>
+    <string name="file_picker_unselect_all">Desmarcar todos os ficheiros apresentados</string>
     <string name="file_picker_sort_type">Pastas primeiro</string>
     <string name="file_picker_sort_name_ascending">Nome A–Z</string>
     <string name="file_picker_sort_name_descending">Nome Z–A</string>

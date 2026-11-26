@@ -21,8 +21,8 @@
     <string name="file_picker_cancel">Peruuta</string>
     <string name="file_picker_search">Hae</string>
     <string name="file_picker_sort">Lajittele</string>
-    <string name="file_picker_select_all">Valitse kaikki tämän kansion tiedostot</string>
-    <string name="file_picker_unselect_all">Poista kaikkien tämän kansion tiedostojen valinta</string>
+    <string name="file_picker_select_all">Valitse kaikki näytetyt tiedostot</string>
+    <string name="file_picker_unselect_all">Poista kaikkien näytettyjen tiedostojen valinta</string>
     <string name="file_picker_sort_type">Kansiot ensin</string>
     <string name="file_picker_sort_name_ascending">Nimi A–Ö</string>
     <string name="file_picker_sort_name_descending">Nimi Ö–A</string>

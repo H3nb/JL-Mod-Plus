@@ -21,8 +21,8 @@
     <string name="file_picker_cancel">ยกเลิก</string>
     <string name="file_picker_search">ค้นหา</string>
     <string name="file_picker_sort">เรียงลำดับ</string>
-    <string name="file_picker_select_all">เลือกไฟล์ทั้งหมดในโฟลเดอร์นี้</string>
-    <string name="file_picker_unselect_all">ยกเลิกการเลือกไฟล์ทั้งหมดในโฟลเดอร์นี้</string>
+    <string name="file_picker_select_all">เลือกไฟล์ทั้งหมดที่แสดง</string>
+    <string name="file_picker_unselect_all">ยกเลิกการเลือกไฟล์ทั้งหมดที่แสดง</string>
     <string name="file_picker_sort_type">โฟลเดอร์ก่อน</string>
     <string name="file_picker_sort_name_ascending">ชื่อ ก–ฮ / A–Z</string>
     <string name="file_picker_sort_name_descending">ชื่อ ฮ–ก / Z–A</string>

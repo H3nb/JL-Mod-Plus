@@ -21,8 +21,8 @@
     <string name="file_picker_cancel">Zrušit</string>
     <string name="file_picker_search">Hledat</string>
     <string name="file_picker_sort">Seřadit</string>
-    <string name="file_picker_select_all">Vybrat všechny soubory v této složce</string>
-    <string name="file_picker_unselect_all">Zrušit výběr všech souborů v této složce</string>
+    <string name="file_picker_select_all">Vybrat všechny zobrazené soubory</string>
+    <string name="file_picker_unselect_all">Zrušit výběr všech zobrazených souborů</string>
     <string name="file_picker_sort_type">Složky na začátku</string>
     <string name="file_picker_sort_name_ascending">Název A–Z</string>
     <string name="file_picker_sort_name_descending">Název Z–A</string>

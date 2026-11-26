@@ -21,8 +21,8 @@
     <string name="file_picker_cancel">Cancelar</string>
     <string name="file_picker_search">Buscar</string>
     <string name="file_picker_sort">Ordenar</string>
-    <string name="file_picker_select_all">Seleccionar todos los archivos de esta carpeta</string>
-    <string name="file_picker_unselect_all">Deseleccionar todos los archivos de esta carpeta</string>
+    <string name="file_picker_select_all">Seleccionar todos los archivos que se muestran</string>
+    <string name="file_picker_unselect_all">Deseleccionar todos los archivos que se muestran</string>
     <string name="file_picker_sort_type">Carpetas primero</string>
     <string name="file_picker_sort_name_ascending">Nombre A–Z</string>
     <string name="file_picker_sort_name_descending">Nombre Z–A</string>

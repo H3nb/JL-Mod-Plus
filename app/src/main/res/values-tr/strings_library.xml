@@ -21,8 +21,8 @@
     <string name="file_picker_cancel">İptal</string>
     <string name="file_picker_search">Ara</string>
     <string name="file_picker_sort">Sırala</string>
-    <string name="file_picker_select_all">Bu klasördeki tüm dosyaları seç</string>
-    <string name="file_picker_unselect_all">Bu klasördeki tüm dosyaların seçimini kaldır</string>
+    <string name="file_picker_select_all">Görüntülenen tüm dosyaları seç</string>
+    <string name="file_picker_unselect_all">Görüntülenen tüm dosyaların seçimini kaldır</string>
     <string name="file_picker_sort_type">Önce klasörler</string>
     <string name="file_picker_sort_name_ascending">Ad A–Z</string>
     <string name="file_picker_sort_name_descending">Ad Z–A</string>

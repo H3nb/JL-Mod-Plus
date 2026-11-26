@@ -21,8 +21,8 @@
     <string name="file_picker_cancel">Ακύρωση</string>
     <string name="file_picker_search">Αναζήτηση</string>
     <string name="file_picker_sort">Ταξινόμηση</string>
-    <string name="file_picker_select_all">Επιλογή όλων των αρχείων σε αυτόν τον φάκελο</string>
-    <string name="file_picker_unselect_all">Αποεπιλογή όλων των αρχείων σε αυτόν τον φάκελο</string>
+    <string name="file_picker_select_all">Επιλογή όλων των εμφανιζόμενων αρχείων</string>
+    <string name="file_picker_unselect_all">Αποεπιλογή όλων των εμφανιζόμενων αρχείων</string>
     <string name="file_picker_sort_type">Πρώτα οι φάκελοι</string>
     <string name="file_picker_sort_name_ascending">Όνομα Α–Ω</string>
     <string name="file_picker_sort_name_descending">Όνομα Ω–Α</string>

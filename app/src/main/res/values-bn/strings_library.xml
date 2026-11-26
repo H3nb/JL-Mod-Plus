@@ -21,8 +21,8 @@
     <string name="file_picker_cancel">বাতিল</string>
     <string name="file_picker_search">খুঁজুন</string>
     <string name="file_picker_sort">সাজান</string>
-    <string name="file_picker_select_all">এই ফোল্ডারের সব ফাইল নির্বাচন করুন</string>
-    <string name="file_picker_unselect_all">এই ফোল্ডারের সব ফাইল অনির্বাচন করুন</string>
+    <string name="file_picker_select_all">দেখানো সব ফাইল নির্বাচন করুন</string>
+    <string name="file_picker_unselect_all">দেখানো সব ফাইলের নির্বাচন বাতিল করুন</string>
     <string name="file_picker_sort_type">ফোল্ডার আগে</string>
     <string name="file_picker_sort_name_ascending">নাম A–Z</string>
     <string name="file_picker_sort_name_descending">নাম Z–A</string>

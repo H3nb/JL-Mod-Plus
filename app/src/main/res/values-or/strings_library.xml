@@ -21,8 +21,8 @@
     <string name="file_picker_cancel">ବାତିଲ୍ କରନ୍ତୁ</string>
     <string name="file_picker_search">ଖୋଜନ୍ତୁ</string>
     <string name="file_picker_sort">ସଜାନ୍ତୁ</string>
-    <string name="file_picker_select_all">ଏହି ଫୋଲ୍ଡର୍ ର ସମସ୍ତ ଫାଇଲ୍ ଚୟନ କରନ୍ତୁ</string>
-    <string name="file_picker_unselect_all">ଏହି ଫୋଲ୍ଡର୍ ର ସମସ୍ତ ଫାଇଲ୍ ଅଚୟନ କରନ୍ତୁ</string>
+    <string name="file_picker_select_all">ଦେଖାଯାଉଥିବା ସମସ୍ତ ଫାଇଲ୍ ଚୟନ କରନ୍ତୁ</string>
+    <string name="file_picker_unselect_all">ଦେଖାଯାଉଥିବା ସମସ୍ତ ଫାଇଲ୍‌ର ଚୟନ ହଟାନ୍ତୁ</string>
     <string name="file_picker_sort_type">ପ୍ରଥମେ ଫୋଲ୍ଡର୍</string>
     <string name="file_picker_sort_name_ascending">ନାମ A–Z</string>
     <string name="file_picker_sort_name_descending">ନାମ Z–A</string>

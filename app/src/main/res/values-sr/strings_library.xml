@@ -21,8 +21,8 @@
     <string name="file_picker_cancel">Откажи</string>
     <string name="file_picker_search">Претрага</string>
     <string name="file_picker_sort">Сортирај</string>
-    <string name="file_picker_select_all">Изабери све датотеке у овој фасцикли</string>
-    <string name="file_picker_unselect_all">Поништи избор свих датотека у овој фасцикли</string>
+    <string name="file_picker_select_all">Изабери све приказане датотеке</string>
+    <string name="file_picker_unselect_all">Поништи избор свих приказаних датотека</string>
     <string name="file_picker_sort_type">Прво фасцикле</string>
     <string name="file_picker_sort_name_ascending">Назив A–Z</string>
     <string name="file_picker_sort_name_descending">Назив Z–A</string>

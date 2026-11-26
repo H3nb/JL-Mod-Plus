@@ -21,8 +21,8 @@
     <string name="file_picker_cancel">Kanselleer</string>
     <string name="file_picker_search">Soek</string>
     <string name="file_picker_sort">Sorteer</string>
-    <string name="file_picker_select_all">Kies alle lêers in hierdie gids</string>
-    <string name="file_picker_unselect_all">Ontkies alle lêers in hierdie gids</string>
+    <string name="file_picker_select_all">Kies alle lêers wat gewys word</string>
+    <string name="file_picker_unselect_all">Ontkies alle lêers wat gewys word</string>
     <string name="file_picker_sort_type">Gidse eerste</string>
     <string name="file_picker_sort_name_ascending">Naam A–Z</string>
     <string name="file_picker_sort_name_descending">Naam Z–A</string>

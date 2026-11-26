@@ -21,8 +21,8 @@
     <string name="file_picker_cancel">Anulează</string>
     <string name="file_picker_search">Caută</string>
     <string name="file_picker_sort">Sortează</string>
-    <string name="file_picker_select_all">Selectează toate fișierele din acest dosar</string>
-    <string name="file_picker_unselect_all">Deselectează toate fișierele din acest dosar</string>
+    <string name="file_picker_select_all">Selectează toate fișierele afișate</string>
+    <string name="file_picker_unselect_all">Deselectează toate fișierele afișate</string>
     <string name="file_picker_sort_type">Dosarele primele</string>
     <string name="file_picker_sort_name_ascending">Nume A–Z</string>
     <string name="file_picker_sort_name_descending">Nume Z–A</string>

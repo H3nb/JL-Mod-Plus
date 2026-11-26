@@ -21,8 +21,8 @@
     <string name="file_picker_cancel">Annuler</string>
     <string name="file_picker_search">Rechercher</string>
     <string name="file_picker_sort">Trier</string>
-    <string name="file_picker_select_all">Sélectionner tous les fichiers de ce dossier</string>
-    <string name="file_picker_unselect_all">Tout désélectionner dans ce dossier</string>
+    <string name="file_picker_select_all">Sélectionner tous les fichiers affichés</string>
+    <string name="file_picker_unselect_all">Désélectionner tous les fichiers affichés</string>
     <string name="file_picker_sort_type">Dossiers d’abord</string>
     <string name="file_picker_sort_name_ascending">Nom A–Z</string>
     <string name="file_picker_sort_name_descending">Nom Z–A</string>

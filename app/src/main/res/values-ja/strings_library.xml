@@ -21,8 +21,8 @@
     <string name="file_picker_cancel">キャンセル</string>
     <string name="file_picker_search">検索</string>
     <string name="file_picker_sort">並べ替え</string>
-    <string name="file_picker_select_all">このフォルダー内のすべてのファイルを選択</string>
-    <string name="file_picker_unselect_all">このフォルダー内のすべてのファイルの選択を解除</string>
+    <string name="file_picker_select_all">表示中のファイルをすべて選択</string>
+    <string name="file_picker_unselect_all">表示中のファイルの選択をすべて解除</string>
     <string name="file_picker_sort_type">フォルダーを先頭に表示</string>
     <string name="file_picker_sort_name_ascending">名前（昇順）</string>
     <string name="file_picker_sort_name_descending">名前（降順）</string>

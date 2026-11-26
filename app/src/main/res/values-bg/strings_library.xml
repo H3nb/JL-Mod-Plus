@@ -21,8 +21,8 @@
     <string name="file_picker_cancel">Отказ</string>
     <string name="file_picker_search">Търсене</string>
     <string name="file_picker_sort">Сортиране</string>
-    <string name="file_picker_select_all">Избиране на всички файлове в тази папка</string>
-    <string name="file_picker_unselect_all">Премахване на избора за всички файлове в тази папка</string>
+    <string name="file_picker_select_all">Избиране на всички показани файлове</string>
+    <string name="file_picker_unselect_all">Премахване на избора за всички показани файлове</string>
     <string name="file_picker_sort_type">Първо папките</string>
     <string name="file_picker_sort_name_ascending">Име А–Я</string>
     <string name="file_picker_sort_name_descending">Име Я–А</string>

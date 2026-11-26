@@ -21,8 +21,8 @@
     <string name="file_picker_cancel">Annuleren</string>
     <string name="file_picker_search">Zoeken</string>
     <string name="file_picker_sort">Sorteren</string>
-    <string name="file_picker_select_all">Alle bestanden in deze map selecteren</string>
-    <string name="file_picker_unselect_all">Alle bestanden in deze map deselecteren</string>
+    <string name="file_picker_select_all">Alle weergegeven bestanden selecteren</string>
+    <string name="file_picker_unselect_all">Selectie van alle weergegeven bestanden opheffen</string>
     <string name="file_picker_sort_type">Mappen eerst</string>
     <string name="file_picker_sort_name_ascending">Naam A–Z</string>
     <string name="file_picker_sort_name_descending">Naam Z–A</string>

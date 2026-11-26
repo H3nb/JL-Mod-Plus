@@ -21,8 +21,8 @@
     <string name="file_picker_cancel">Отмена</string>
     <string name="file_picker_search">Поиск</string>
     <string name="file_picker_sort">Сортировка</string>
-    <string name="file_picker_select_all">Выбрать все файлы в этой папке</string>
-    <string name="file_picker_unselect_all">Снять выделение со всех файлов в этой папке</string>
+    <string name="file_picker_select_all">Выбрать все отображаемые файлы</string>
+    <string name="file_picker_unselect_all">Снять выделение со всех отображаемых файлов</string>
     <string name="file_picker_sort_type">Сначала папки</string>
     <string name="file_picker_sort_name_ascending">Название (А–Я)</string>
     <string name="file_picker_sort_name_descending">Название (Я–А)</string>

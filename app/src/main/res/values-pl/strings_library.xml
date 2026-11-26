@@ -21,8 +21,8 @@
     <string name="file_picker_cancel">Anuluj</string>
     <string name="file_picker_search">Szukaj</string>
     <string name="file_picker_sort">Sortuj</string>
-    <string name="file_picker_select_all">Zaznacz wszystkie pliki w tym folderze</string>
-    <string name="file_picker_unselect_all">Odznacz wszystkie pliki w tym folderze</string>
+    <string name="file_picker_select_all">Zaznacz wszystkie wyświetlane pliki</string>
+    <string name="file_picker_unselect_all">Odznacz wszystkie wyświetlane pliki</string>
     <string name="file_picker_sort_type">Najpierw foldery</string>
     <string name="file_picker_sort_name_ascending">Nazwa A–Z</string>
     <string name="file_picker_sort_name_descending">Nazwa Z–A</string>

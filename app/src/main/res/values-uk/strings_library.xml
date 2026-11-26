@@ -21,8 +21,8 @@
     <string name="file_picker_cancel">Скасувати</string>
     <string name="file_picker_search">Пошук</string>
     <string name="file_picker_sort">Сортування</string>
-    <string name="file_picker_select_all">Вибрати всі файли в цій папці</string>
-    <string name="file_picker_unselect_all">Скасувати вибір усіх файлів у цій папці</string>
+    <string name="file_picker_select_all">Вибрати всі відображені файли</string>
+    <string name="file_picker_unselect_all">Скасувати вибір усіх відображених файлів</string>
     <string name="file_picker_sort_type">Спочатку папки</string>
     <string name="file_picker_sort_name_ascending">Назва А–Я</string>
     <string name="file_picker_sort_name_descending">Назва Я–А</string>
