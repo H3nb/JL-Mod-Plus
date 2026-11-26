@@ -238,7 +238,7 @@
     <string name="config_help_vk_hide_delay">Hides controls after this delay when they cover the MIDlet screen. A value of 0 disables auto-hide.</string>
     <string name="config_help_reset_layout">Restores the virtual controls layout without changing other MIDlet settings.</string>
     <string name="config_help_skip_resume">After the first successful startApp(), skip later calls when the MIDlet resumes. Use only for MIDlets that fail when resumed.</string>
-    <string name="config_help_soundbank">Chooses the soundbank used for MIDI synthesis.</string>
+    <string name="config_help_soundbank">Selects the soundbank for MIDI synthesis. It does not change prerecorded audio.</string>
     <string name="profile_create_title">Create profile</string>
     <string name="profile_rename_title">Rename profile</string>
     <string name="presets">Profiles</string>
@@ -329,7 +329,7 @@
     <string name="midlet_storage_mode_shared">Virtual</string>
     <string name="midlet_storage_mode_android">Android</string>
     <string name="midlet_storage_mode_shared_summary">Use shared folders in the working folder.</string>
-    <string name="midlet_storage_mode_android_summary">Use Android storage as in previous versions.</string>
+    <string name="midlet_storage_mode_android_summary">Use Android shared storage, subject to Android permissions. MIDlet file permissions are separate from Virtual mode.</string>
     <string name="config_system_properties_reset">Reset to default</string>
     <string name="config_system_properties_reset_title">Reset system properties?</string>
     <string name="config_system_properties_reset_message">Replace the editor contents with the current JL-Mod Plus defaults? Other settings will remain unchanged. Save to apply the reset.</string>

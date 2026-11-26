@@ -239,7 +239,7 @@
     <string name="config_help_vk_hide_delay">Скрива контроле након овог кашњења када прекривају екран MIDlet-а. Вредност 0 онемогућава аутоматско скривање.</string>
     <string name="config_help_reset_layout">Враћа распоред виртуелних контрола без промене осталих подешавања MIDlet-а.</string>
     <string name="config_help_skip_resume">Након првог успешног позива startApp(), прескаче касније позиве приликом наставка MIDlet-а. Користите само за MIDlet-е који отказују при наставку.</string>
-    <string name="config_help_soundbank">Бира звучну банку која се користи за MIDI синтезу.</string>
+    <string name="config_help_soundbank">Бира звучну банку за MIDI синтезу. Не мења унапред снимљени звук.</string>
     <string name="profile_create_title">Направи профил</string>
     <string name="profile_rename_title">Преименуј профил</string>
     <string name="presets">Профили</string>
@@ -330,7 +330,7 @@
     <string name="midlet_storage_mode_shared">Виртуелно</string>
     <string name="midlet_storage_mode_android">Android</string>
     <string name="midlet_storage_mode_shared_summary">Користи дељене фасцикле у радној фасцикли.</string>
-    <string name="midlet_storage_mode_android_summary">Користи Android складиште као у претходним верзијама.</string>
+    <string name="midlet_storage_mode_android_summary">Користи дељено Android складиште у оквиру Android дозвола. Дозволе MIDlet-а за приступ датотекама одвојене су од дозвола у виртуелном режиму.</string>
     <string name="config_system_properties_reset" tools:ignore="MissingTranslation">Врати на подразумевано</string>
     <string name="config_system_properties_reset_title" tools:ignore="MissingTranslation">Ресетовати системска својства?</string>
     <string name="config_system_properties_reset_message" tools:ignore="MissingTranslation">Заменити садржај уређивача тренутним подразумеваним вредностима JL-Mod Plus-а? Остала подешавања ће остати непромењена. Сачувајте да бисте применили ресетовање.</string>

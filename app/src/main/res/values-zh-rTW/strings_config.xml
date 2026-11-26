@@ -237,7 +237,7 @@
     <string name="config_help_vk_hide_delay">當虛擬按鍵覆蓋 MIDlet 螢幕時，經過此延遲時間後自動隱藏。設為 0 可停用自動隱藏。</string>
     <string name="config_help_reset_layout">僅還原虛擬按鍵配置，不會變更其他 MIDlet 設定。</string>
     <string name="config_help_skip_resume">首次成功呼叫 startApp() 後，於 MIDlet 恢復執行時略過後續呼叫。僅適用於恢復時會發生異常的 MIDlet。</string>
-    <string name="config_help_soundbank">選擇用於 MIDI 合成的音源庫。</string>
+    <string name="config_help_soundbank">選擇用於 MIDI 合成的音源庫。不影響預先錄製的音訊。</string>
     <string name="profile_create_title">建立設定檔</string>
     <string name="profile_rename_title">重新命名設定檔</string>
     <string name="presets">設定檔</string>
@@ -328,7 +328,7 @@
     <string name="midlet_storage_mode_shared">虛擬</string>
     <string name="midlet_storage_mode_android">Android</string>
     <string name="midlet_storage_mode_shared_summary">使用工作資料夾中的共用資料夾。</string>
-    <string name="midlet_storage_mode_android_summary">比照先前版本使用 Android 儲存空間。</string>
+    <string name="midlet_storage_mode_android_summary">在 Android 權限允許的範圍內使用 Android 共用儲存空間。MIDlet 的檔案存取權限與虛擬模式分開設定。</string>
     <string name="config_system_properties_reset" tools:ignore="MissingTranslation">重設為預設值</string>
     <string name="config_system_properties_reset_title" tools:ignore="MissingTranslation">要重設系統屬性嗎？</string>
     <string name="config_system_properties_reset_message" tools:ignore="MissingTranslation">要以目前的 JL-Mod Plus 預設值取代編輯器內容嗎？其他設定將維持不變。儲存後才會套用重設。</string>

@@ -237,7 +237,7 @@
     <string name="config_help_vk_hide_delay">Ẩn điều khiển sau khoảng trễ này khi chúng che màn hình MIDlet. Giá trị 0 sẽ tắt tự động ẩn.</string>
     <string name="config_help_reset_layout">Khôi phục bố cục điều khiển ảo mà không thay đổi các cài đặt MIDlet khác.</string>
     <string name="config_help_skip_resume">Sau lần gọi startApp() thành công đầu tiên, bỏ qua các lần gọi tiếp theo khi MIDlet tiếp tục chạy. Chỉ dùng cho các MIDlet bị lỗi khi tiếp tục.</string>
-    <string name="config_help_soundbank">Chọn ngân hàng âm thanh dùng để tổng hợp MIDI.</string>
+    <string name="config_help_soundbank">Chọn ngân hàng âm thanh để tổng hợp MIDI. Không làm thay đổi âm thanh đã thu sẵn.</string>
     <string name="profile_create_title">Tạo hồ sơ</string>
     <string name="profile_rename_title">Đổi tên hồ sơ</string>
     <string name="presets">Hồ sơ</string>
@@ -328,7 +328,7 @@
     <string name="midlet_storage_mode_shared">Ảo</string>
     <string name="midlet_storage_mode_android">Android</string>
     <string name="midlet_storage_mode_shared_summary">Dùng các thư mục dùng chung trong thư mục làm việc.</string>
-    <string name="midlet_storage_mode_android_summary">Dùng bộ nhớ Android như ở các phiên bản trước.</string>
+    <string name="midlet_storage_mode_android_summary">Dùng bộ nhớ dùng chung của Android trong phạm vi quyền Android cho phép. Quyền truy cập tệp của MIDlet được thiết lập riêng với chế độ ảo.</string>
     <string name="config_system_properties_reset" tools:ignore="MissingTranslation">Đặt lại về mặc định</string>
     <string name="config_system_properties_reset_title" tools:ignore="MissingTranslation">Đặt lại thuộc tính hệ thống?</string>
     <string name="config_system_properties_reset_message" tools:ignore="MissingTranslation">Thay thế nội dung trình chỉnh sửa bằng giá trị mặc định hiện tại của JL-Mod Plus? Các cài đặt khác vẫn giữ nguyên. Hãy lưu để áp dụng.</string>

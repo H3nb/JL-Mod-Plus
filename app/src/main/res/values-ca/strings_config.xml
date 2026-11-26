@@ -236,7 +236,7 @@
     <string name="config_help_vk_hide_delay">Amaga els controls després d’aquest retard quan cobreixen la pantalla del MIDlet. El valor 0 desactiva l’ocultació automàtica.</string>
     <string name="config_help_reset_layout">Restaura la disposició dels controls virtuals sense canviar cap altra configuració del MIDlet.</string>
     <string name="config_help_skip_resume">Després del primer startApp() correcte, omet les crides posteriors en reprendre el MIDlet. Utilitza-ho només per a MIDlets que fallen en reprendre’ls.</string>
-    <string name="config_help_soundbank">Tria el banc de sons utilitzat per a la síntesi MIDI.</string>
+    <string name="config_help_soundbank">Tria el banc de sons per a la síntesi MIDI. No modifica l’àudio preenregistrat.</string>
     <string name="profile_create_title">Crea un perfil</string>
     <string name="profile_rename_title">Canvia el nom del perfil</string>
     <string name="presets">Perfils</string>
@@ -327,7 +327,7 @@
     <string name="midlet_storage_mode_shared">Virtual</string>
     <string name="midlet_storage_mode_android">Android</string>
     <string name="midlet_storage_mode_shared_summary">Utilitza carpetes compartides a la carpeta de treball.</string>
-    <string name="midlet_storage_mode_android_summary">Utilitza l’emmagatzematge d’Android com en versions anteriors.</string>
+    <string name="midlet_storage_mode_android_summary">Utilitza l’emmagatzematge compartit d’Android segons els permisos d’Android. Els permisos de fitxers del MIDlet són independents dels del mode virtual.</string>
     <string name="config_system_properties_reset" tools:ignore="MissingTranslation">Restableix als valors predeterminats</string>
     <string name="config_system_properties_reset_title" tools:ignore="MissingTranslation">Vols restablir les propietats del sistema?</string>
     <string name="config_system_properties_reset_message" tools:ignore="MissingTranslation">Vols substituir el contingut de l’editor pels valors predeterminats actuals de JL-Mod Plus? La resta de la configuració no canviarà. Desa per aplicar el restabliment.</string>

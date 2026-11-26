@@ -235,7 +235,7 @@
     <string name="config_help_vk_hide_delay">Kontroller MIDlet ekranını kapladığında bu gecikmeden sonra gizler. 0 değeri otomatik gizlemeyi devre dışı bırakır.</string>
     <string name="config_help_reset_layout">Diğer MIDlet ayarlarını değiştirmeden sanal kontroller düzenini geri yükler.</string>
     <string name="config_help_skip_resume">İlk başarılı startApp() çağrısından sonra MIDlet devam ettirildiğinde sonraki çağrıları atlar. Yalnızca devam ettirilirken hata veren MIDlet’lerde kullanın.</string>
-    <string name="config_help_soundbank">MIDI sentezi için kullanılan ses bankasını seçer.</string>
+    <string name="config_help_soundbank">MIDI sentezi için ses bankasını seçer. Önceden kaydedilmiş sesi değiştirmez.</string>
     <string name="profile_create_title">Profil oluştur</string>
     <string name="profile_rename_title">Profili yeniden adlandır</string>
     <string name="presets">Profiller</string>
@@ -326,7 +326,7 @@
     <string name="midlet_storage_mode_shared">Sanal</string>
     <string name="midlet_storage_mode_android">Android</string>
     <string name="midlet_storage_mode_shared_summary">Çalışma klasöründeki paylaşılan klasörleri kullanır.</string>
-    <string name="midlet_storage_mode_android_summary">Önceki sürümlerdeki gibi Android depolamasını kullanır.</string>
+    <string name="midlet_storage_mode_android_summary">Android izinleri kapsamında paylaşılan Android depolamasını kullanır. MIDlet dosya erişim izinleri sanal moddaki izinlerden ayrıdır.</string>
     <string name="config_system_properties_reset" tools:ignore="MissingTranslation">Varsayılana sıfırla</string>
     <string name="config_system_properties_reset_title" tools:ignore="MissingTranslation">Sistem özellikleri sıfırlansın mı?</string>
     <string name="config_system_properties_reset_message" tools:ignore="MissingTranslation">Düzenleyici içeriği geçerli JL-Mod Plus varsayılanlarıyla değiştirilsin mi? Diğer ayarlar değişmeden kalır. Sıfırlamayı uygulamak için kaydedin.</string>

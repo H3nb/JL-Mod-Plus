@@ -238,7 +238,7 @@
     <string name="config_help_vk_hide_delay">Verbergt bediening na deze vertraging wanneer deze het MIDlet-scherm bedekt. De waarde 0 schakelt automatisch verbergen uit.</string>
     <string name="config_help_reset_layout">Herstelt de indeling van de virtuele bediening zonder andere MIDlet-instellingen te wijzigen.</string>
     <string name="config_help_skip_resume">Slaat na de eerste geslaagde startApp() latere aanroepen over wanneer de MIDlet hervat wordt. Gebruik dit alleen voor MIDlets die vastlopen bij hervatten.</string>
-    <string name="config_help_soundbank">Kiest de soundbank die wordt gebruikt voor MIDI-synthese.</string>
+    <string name="config_help_soundbank">Kiest de soundbank voor MIDI-synthese. Wijzigt geen vooraf opgenomen audio.</string>
     <string name="profile_create_title">Profiel maken</string>
     <string name="profile_rename_title">Profielnaam wijzigen</string>
     <string name="presets">Profielen</string>
@@ -329,7 +329,7 @@
     <string name="midlet_storage_mode_shared">Virtueel</string>
     <string name="midlet_storage_mode_android">Android</string>
     <string name="midlet_storage_mode_shared_summary">Gebruik gedeelde mappen in de werkmap.</string>
-    <string name="midlet_storage_mode_android_summary">Gebruik Android-opslag zoals in eerdere versies.</string>
+    <string name="midlet_storage_mode_android_summary">Gebruik gedeelde Android-opslag binnen de Android-machtigingen. Bestandstoegang voor MIDlets heeft aparte machtigingen ten opzichte van de virtuele modus.</string>
     <string name="config_system_properties_reset" tools:ignore="MissingTranslation">Herstellen naar standaard</string>
     <string name="config_system_properties_reset_title" tools:ignore="MissingTranslation">Systeemeigenschappen herstellen?</string>
     <string name="config_system_properties_reset_message" tools:ignore="MissingTranslation">De inhoud van de editor vervangen door de huidige standaardwaarden van JL-Mod Plus? Andere instellingen blijven ongewijzigd. Sla op om het herstel toe te passen.</string>

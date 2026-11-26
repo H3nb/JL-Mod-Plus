@@ -240,7 +240,7 @@
     <string name="config_help_vk_hide_delay">Приховує елементи керування після цієї затримки, коли вони перекривають екран MIDlet. Значення 0 вимикає автоприховування.</string>
     <string name="config_help_reset_layout">Відновлює розкладку віртуального керування без зміни інших налаштувань MIDlet.</string>
     <string name="config_help_skip_resume">Після першого успішного startApp() пропускати подальші виклики під час відновлення MIDlet. Використовуйте лише для MIDlet, які дають збій після відновлення.</string>
-    <string name="config_help_soundbank">Вибирає банк звуків для синтезу MIDI.</string>
+    <string name="config_help_soundbank">Вибирає банк звуків для синтезу MIDI. Не впливає на попередньо записаний звук.</string>
     <string name="profile_create_title">Створити профіль</string>
     <string name="profile_rename_title">Перейменувати профіль</string>
     <string name="presets">Профілі</string>
@@ -331,7 +331,7 @@
     <string name="midlet_storage_mode_shared">Віртуальний</string>
     <string name="midlet_storage_mode_android">Android</string>
     <string name="midlet_storage_mode_shared_summary">Використовувати спільні папки в робочій папці.</string>
-    <string name="midlet_storage_mode_android_summary">Використовувати сховище Android, як у попередніх версіях.</string>
+    <string name="midlet_storage_mode_android_summary">Використовувати спільне сховище Android у межах дозволів Android. Дозволи MIDlet на доступ до файлів відокремлені від дозволів у віртуальному режимі.</string>
     <string name="config_system_properties_reset" tools:ignore="MissingTranslation">Скинути до стандартних</string>
     <string name="config_system_properties_reset_title" tools:ignore="MissingTranslation">Скинути системні властивості?</string>
     <string name="config_system_properties_reset_message" tools:ignore="MissingTranslation">Замінити вміст редактора поточними стандартними значеннями JL-Mod Plus? Інші налаштування залишаться без змін. Збережіть, щоб застосувати скидання.</string>

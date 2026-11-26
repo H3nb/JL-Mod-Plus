@@ -238,7 +238,7 @@
     <string name="config_help_vk_hide_delay">کنترل‌ها را هنگام پوشاندن صفحه MIDlet پس از این تأخیر پنهان می‌کند. مقدار 0 پنهان شدن خودکار را غیرفعال می‌کند.</string>
     <string name="config_help_reset_layout">چیدمان کنترل‌های مجازی را بدون تغییر سایر تنظیمات MIDlet بازنشانی می‌کند.</string>
     <string name="config_help_skip_resume">پس از نخستین فراخوانی موفق startApp()، فراخوانی‌های بعدی هنگام ازسرگیری MIDlet را رد می‌کند. فقط برای MIDletهایی استفاده کنید که هنگام ازسرگیری دچار خطا می‌شوند.</string>
-    <string name="config_help_soundbank">بانک صدای مورد استفاده برای سنتز MIDI را انتخاب می‌کند.</string>
+    <string name="config_help_soundbank">بانک صدا را برای سنتز MIDI انتخاب می‌کند. صدای از پیش ضبط‌شده را تغییر نمی‌دهد.</string>
     <string name="profile_create_title">ایجاد نمایه</string>
     <string name="profile_rename_title">تغییر نام نمایه</string>
     <string name="presets">نمایه‌ها</string>
@@ -329,7 +329,7 @@
     <string name="midlet_storage_mode_shared">مجازی</string>
     <string name="midlet_storage_mode_android">Android</string>
     <string name="midlet_storage_mode_shared_summary">استفاده از پوشه‌های اشتراکی در پوشه کاری.</string>
-    <string name="midlet_storage_mode_android_summary">استفاده از حافظه Android مانند نسخه‌های قبلی.</string>
+    <string name="midlet_storage_mode_android_summary">استفاده از فضای ذخیره‌سازی مشترک Android در محدوده مجوزهای Android. مجوزهای دسترسی به فایل MIDlet جدا از مجوزهای حالت مجازی هستند.</string>
     <string name="config_system_properties_reset" tools:ignore="MissingTranslation">بازنشانی به پیش‌فرض</string>
     <string name="config_system_properties_reset_title" tools:ignore="MissingTranslation">ویژگی‌های سیستم بازنشانی شود؟</string>
     <string name="config_system_properties_reset_message" tools:ignore="MissingTranslation">محتوای ویرایشگر با پیش‌فرض‌های فعلی JL-Mod Plus جایگزین شود؟ سایر تنظیمات بدون تغییر می‌مانند. برای اعمال بازنشانی ذخیره کنید.</string>

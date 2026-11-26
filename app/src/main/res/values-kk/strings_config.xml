@@ -238,7 +238,7 @@
     <string name="config_help_vk_hide_delay">Басқару элементтері MIDlet экранын жапқанда осы кідірістен кейін жасырады. 0 мәні автоматты жасыруды өшіреді.</string>
     <string name="config_help_reset_layout">Басқа MIDlet параметрлерін өзгертпей, виртуалды басқару орналасуын қалпына келтіреді.</string>
     <string name="config_help_skip_resume">Алғашқы сәтті startApp() шақыруынан кейін MIDlet жалғастырылғанда кейінгі шақыруларды өткізіп жібереді. Тек жалғастыруда істен шығатын MIDlet-тер үшін қолданыңыз.</string>
-    <string name="config_help_soundbank">MIDI синтезі үшін пайдаланылатын дыбыс банкін таңдайды.</string>
+    <string name="config_help_soundbank">MIDI синтезіне арналған дыбыс банкін таңдайды. Алдын ала жазылған дыбысқа әсер етпейді.</string>
     <string name="profile_create_title">Профиль жасау</string>
     <string name="profile_rename_title">Профиль атын өзгерту</string>
     <string name="presets">Профильдер</string>
@@ -329,7 +329,7 @@
     <string name="midlet_storage_mode_shared">Виртуалды</string>
     <string name="midlet_storage_mode_android">Android</string>
     <string name="midlet_storage_mode_shared_summary">Жұмыс қалтасындағы ортақ қалталарды пайдалану.</string>
-    <string name="midlet_storage_mode_android_summary">Алдыңғы нұсқалардағыдай Android жадын пайдалану.</string>
+    <string name="midlet_storage_mode_android_summary">Android рұқсаттары шегінде Android жүйесінің ортақ жадын пайдалану. MIDlet файлдарына қол жеткізу рұқсаттары виртуалды режимнен бөлек реттеледі.</string>
     <string name="config_system_properties_reset" tools:ignore="MissingTranslation">Әдепкіге қайтару</string>
     <string name="config_system_properties_reset_title" tools:ignore="MissingTranslation">Жүйелік сипаттарды қалпына келтіру керек пе?</string>
     <string name="config_system_properties_reset_message" tools:ignore="MissingTranslation">Өңдегіш мазмұнын ағымдағы JL-Mod Plus әдепкі мәндерімен ауыстыру керек пе? Басқа параметрлер өзгермейді. Қалпына келтіруді қолдану үшін сақтаңыз.</string>

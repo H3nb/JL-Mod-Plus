@@ -238,7 +238,7 @@
     <string name="config_help_vk_hide_delay">MIDlet ସ୍କ୍ରିନ୍ ଘୋଡ଼ାଇଥିବା ବେଳେ ଏହି ବିଳମ୍ବ ପରେ କଣ୍ଟ୍ରୋଲ୍ ଲୁଚାଏ। 0 ମୂଲ୍ୟ ଅଟୋ-ହାଇଡ୍ ଅକ୍ଷମ କରେ।</string>
     <string name="config_help_reset_layout">ଅନ୍ୟ MIDlet ସେଟିଂସ୍ ନ ବଦଳାଇ ଭର୍ଚୁଆଲ୍ କଣ୍ଟ୍ରୋଲ୍ ଲେଆଉଟ୍ ପୁନରୁଦ୍ଧାର କରେ।</string>
     <string name="config_help_skip_resume">ପ୍ରଥମ ସଫଳ startApp() ପରେ MIDlet ପୁନଃ ଆରମ୍ଭ ହେଲେ ପରବର୍ତ୍ତୀ କଲ୍ ଛାଡ଼େ। କେବଳ ପୁନଃ ଆରମ୍ଭରେ ବିଫଳ ହେଉଥିବା MIDlet ପାଇଁ ବ୍ୟବହାର କରନ୍ତୁ।</string>
-    <string name="config_help_soundbank">MIDI ସିନ୍ଥେସିସ୍ ପାଇଁ ବ୍ୟବହୃତ ସାଉଣ୍ଡବ୍ୟାଙ୍କ୍ ବାଛେ।</string>
+    <string name="config_help_soundbank">MIDI ସିନ୍ଥେସିସ୍ ପାଇଁ ସାଉଣ୍ଡବ୍ୟାଙ୍କ୍ ବାଛେ। ପୂର୍ବରୁ ରେକର୍ଡ ହୋଇଥିବା ଅଡିଓକୁ ବଦଳାଏ ନାହିଁ।</string>
     <string name="profile_create_title">ପ୍ରୋଫାଇଲ୍ ତିଆରି କରନ୍ତୁ</string>
     <string name="profile_rename_title">ପ୍ରୋଫାଇଲ୍ ପୁନଃନାମକରଣ କରନ୍ତୁ</string>
     <string name="presets">ପ୍ରୋଫାଇଲ୍</string>
@@ -329,7 +329,7 @@
     <string name="midlet_storage_mode_shared">ଭର୍ଚୁଆଲ୍</string>
     <string name="midlet_storage_mode_android">Android</string>
     <string name="midlet_storage_mode_shared_summary">ୱାର୍କିଂ ଫୋଲ୍ଡର୍ ରେ ସେୟାର୍ ଫୋଲ୍ଡର୍ ବ୍ୟବହାର କରନ୍ତୁ।</string>
-    <string name="midlet_storage_mode_android_summary">ପୂର୍ବ ଭର୍ସନ୍ ପରି Android ଷ୍ଟୋରେଜ୍ ବ୍ୟବହାର କରନ୍ତୁ।</string>
+    <string name="midlet_storage_mode_android_summary">Android ଅନୁମତି ଅନୁସାରେ Android ର ସେୟାର୍ ଷ୍ଟୋରେଜ୍ ବ୍ୟବହାର କରନ୍ତୁ। MIDlet ଫାଇଲ୍ ଆକ୍ସେସ୍ ଅନୁମତି ଭର୍ଚୁଆଲ୍ ମୋଡ୍ ଠାରୁ ଅଲଗା।</string>
     <string name="config_system_properties_reset" tools:ignore="MissingTranslation">ଡିଫଲ୍ଟରେ ରିସେଟ୍ କରନ୍ତୁ</string>
     <string name="config_system_properties_reset_title" tools:ignore="MissingTranslation">ସିଷ୍ଟମ୍ ପ୍ରପର୍ଟି ରିସେଟ୍ କରିବେ କି?</string>
     <string name="config_system_properties_reset_message" tools:ignore="MissingTranslation">ଏଡିଟର୍ ବିଷୟବସ୍ତୁକୁ ବର୍ତ୍ତମାନର JL-Mod Plus ଡିଫଲ୍ଟ ସହିତ ବଦଳାଇବେ କି? ଅନ୍ୟ ସେଟିଂସ୍ ଅପରିବର୍ତ୍ତିତ ରହିବ। ରିସେଟ୍ ପ୍ରୟୋଗ କରିବାକୁ ସେଭ୍ କରନ୍ତୁ।</string>

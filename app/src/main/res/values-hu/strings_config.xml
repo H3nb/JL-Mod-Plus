@@ -238,7 +238,7 @@
     <string name="config_help_vk_hide_delay">Ennyi késleltetés után elrejti a vezérlőket, ha azok a MIDlet-képernyőt fedik. A 0 érték letiltja az automatikus elrejtést.</string>
     <string name="config_help_reset_layout">Visszaállítja a virtuális vezérlők elrendezését a MIDlet többi beállításának módosítása nélkül.</string>
     <string name="config_help_skip_resume">Az első sikeres startApp() után kihagyja a későbbi hívásokat a MIDlet folytatásakor. Csak olyan MIDlet-eknél használja, amelyek folytatáskor hibásan működnek.</string>
-    <string name="config_help_soundbank">Kiválasztja a MIDI-szintézishez használt hangbankot.</string>
+    <string name="config_help_soundbank">Kiválasztja a MIDI-szintézishez használt hangbankot. Az előre rögzített hangot nem módosítja.</string>
     <string name="profile_create_title">Profil létrehozása</string>
     <string name="profile_rename_title">Profil átnevezése</string>
     <string name="presets">Profilok</string>
@@ -329,7 +329,7 @@
     <string name="midlet_storage_mode_shared">Virtuális</string>
     <string name="midlet_storage_mode_android">Android</string>
     <string name="midlet_storage_mode_shared_summary">Megosztott mappák használata a munkamappában.</string>
-    <string name="midlet_storage_mode_android_summary">Android tárhely használata, mint a korábbi verziókban.</string>
+    <string name="midlet_storage_mode_android_summary">Az Android megosztott tárhelyének használata az Android engedélyeinek megfelelően. A MIDlet fájlhozzáférési engedélyei elkülönülnek a virtuális mód engedélyeitől.</string>
     <string name="config_system_properties_reset" tools:ignore="MissingTranslation">Alapértelmezés visszaállítása</string>
     <string name="config_system_properties_reset_title" tools:ignore="MissingTranslation">Visszaállítja a rendszertulajdonságokat?</string>
     <string name="config_system_properties_reset_message" tools:ignore="MissingTranslation">Lecseréli a szerkesztő tartalmát a JL-Mod Plus aktuális alapértelmezéseire? A többi beállítás változatlan marad. Mentse a visszaállítás alkalmazásához.</string>

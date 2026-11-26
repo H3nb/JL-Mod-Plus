@@ -239,7 +239,7 @@
     <string name="config_help_vk_hide_delay">Masque les commandes après ce délai lorsqu’elles recouvrent l’écran du MIDlet. La valeur 0 désactive le masquage automatique.</string>
     <string name="config_help_reset_layout">Restaure la disposition des commandes virtuelles sans modifier les autres paramètres du MIDlet.</string>
     <string name="config_help_skip_resume">Après le premier startApp() réussi, ignore les appels suivants lors de la reprise du MIDlet. À n’utiliser que pour les MIDlets qui échouent à la reprise.</string>
-    <string name="config_help_soundbank">Choisit la banque de sons utilisée pour la synthèse MIDI.</string>
+    <string name="config_help_soundbank">Choisit la banque de sons pour la synthèse MIDI. Ne modifie pas les sons préenregistrés.</string>
     <string name="profile_create_title">Créer un profil</string>
     <string name="profile_rename_title">Renommer le profil</string>
     <string name="presets">Profils</string>
@@ -330,7 +330,7 @@
     <string name="midlet_storage_mode_shared">Virtuel</string>
     <string name="midlet_storage_mode_android">Android</string>
     <string name="midlet_storage_mode_shared_summary">Utiliser des dossiers partagés dans le dossier de travail.</string>
-    <string name="midlet_storage_mode_android_summary">Utiliser le stockage Android comme dans les versions précédentes.</string>
+    <string name="midlet_storage_mode_android_summary">Utiliser le stockage partagé d’Android dans la limite des autorisations Android. Les autorisations d’accès aux fichiers du MIDlet sont distinctes de celles du mode virtuel.</string>
     <string name="config_system_properties_reset" tools:ignore="MissingTranslation">Réinitialiser par défaut</string>
     <string name="config_system_properties_reset_title" tools:ignore="MissingTranslation">Réinitialiser les propriétés système ?</string>
     <string name="config_system_properties_reset_message" tools:ignore="MissingTranslation">Remplacer le contenu de l’éditeur par les valeurs par défaut actuelles de JL-Mod Plus ? Les autres paramètres resteront inchangés. Enregistrez pour appliquer la réinitialisation.</string>

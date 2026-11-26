@@ -237,7 +237,7 @@
     <string name="config_help_vk_hide_delay">컨트롤이 MIDlet 화면을 가릴 때 지정한 시간 후에 숨깁니다. 0으로 설정하면 자동 숨김을 사용하지 않습니다.</string>
     <string name="config_help_reset_layout">다른 MIDlet 설정은 변경하지 않고 가상 컨트롤 레이아웃만 복원합니다.</string>
     <string name="config_help_skip_resume">첫 번째 startApp()이 성공한 후 MIDlet을 재개할 때 이후 호출을 건너뜁니다. 재개 시 오류가 발생하는 MIDlet에만 사용하세요.</string>
-    <string name="config_help_soundbank">MIDI 합성에 사용할 사운드뱅크를 선택합니다.</string>
+    <string name="config_help_soundbank">MIDI 합성에 사용할 사운드뱅크를 선택합니다. 미리 녹음된 오디오에는 영향을 주지 않습니다.</string>
     <string name="profile_create_title">프로필 만들기</string>
     <string name="profile_rename_title">프로필 이름 변경</string>
     <string name="presets">프로필</string>
@@ -328,7 +328,7 @@
     <string name="midlet_storage_mode_shared">가상</string>
     <string name="midlet_storage_mode_android">Android</string>
     <string name="midlet_storage_mode_shared_summary">작업 폴더 내의 공유 폴더를 사용합니다.</string>
-    <string name="midlet_storage_mode_android_summary">이전 버전과 동일하게 Android 저장소를 사용합니다.</string>
+    <string name="midlet_storage_mode_android_summary">Android 권한이 허용하는 범위에서 Android 공유 저장소를 사용합니다. MIDlet 파일 접근 권한은 가상 모드와 별도로 설정됩니다.</string>
     <string name="config_system_properties_reset" tools:ignore="MissingTranslation">기본값으로 초기화</string>
     <string name="config_system_properties_reset_title" tools:ignore="MissingTranslation">시스템 속성을 초기화할까요?</string>
     <string name="config_system_properties_reset_message" tools:ignore="MissingTranslation">편집기 내용을 현재 JL-Mod Plus 기본값으로 바꿀까요? 다른 설정은 변경되지 않습니다. 초기화를 적용하려면 저장하세요.</string>

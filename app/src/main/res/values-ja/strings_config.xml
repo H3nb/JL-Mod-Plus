@@ -234,7 +234,7 @@
     <string name="config_help_vk_hide_delay">仮想コントロールが MIDlet 画面に重なっている場合、指定した時間経過後に自動で非表示にします。0 を設定すると自動非表示を無効にします。</string>
     <string name="config_help_reset_layout">他の MIDlet 設定を変更せず、仮想コントロールのレイアウトのみを元に戻します。</string>
     <string name="config_help_skip_resume">最初の startApp() が成功した後、再開時の呼び出しをスキップします。再開時に異常終了する MIDlet にのみ使用してください。</string>
-    <string name="config_help_soundbank">MIDI 音源合成に使用するサウンドバンクを選択します。</string>
+    <string name="config_help_soundbank">MIDI 音源合成に使用するサウンドバンクを選択します。録音済みの音声には影響しません。</string>
     <string name="profile_create_title">プロファイルを作成</string>
     <string name="profile_rename_title">プロファイル名を変更</string>
     <string name="presets">プロファイル</string>
@@ -325,7 +325,7 @@
     <string name="midlet_storage_mode_shared">仮想</string>
     <string name="midlet_storage_mode_android">Android</string>
     <string name="midlet_storage_mode_shared_summary">作業フォルダー内の共有フォルダーを使用します。</string>
-    <string name="midlet_storage_mode_android_summary">以前のバージョンと同様に Android ストレージを使用します。</string>
+    <string name="midlet_storage_mode_android_summary">Android の権限で許可された範囲内で共有ストレージを使用します。MIDlet のファイルアクセス権限は仮想モードとは別に設定されます。</string>
     <string name="config_system_properties_reset" tools:ignore="MissingTranslation">デフォルトにリセット</string>
     <string name="config_system_properties_reset_title" tools:ignore="MissingTranslation">システムプロパティをリセットしますか？</string>
     <string name="config_system_properties_reset_message" tools:ignore="MissingTranslation">エディターの内容を現在の JL-Mod Plus デフォルトに置き換えますか？その他の設定は変更されません。リセットを適用するには保存してください。</string>

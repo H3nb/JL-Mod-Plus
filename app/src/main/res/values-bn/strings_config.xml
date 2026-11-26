@@ -238,7 +238,7 @@
     <string name="config_help_vk_hide_delay">কন্ট্রোলগুলো MIDlet স্ক্রিন ঢেকে রাখলে এই বিলম্বের পর লুকিয়ে ফেলে। মান 0 দিলে স্বয়ংক্রিয় লুকানো বন্ধ থাকে।</string>
     <string name="config_help_reset_layout">অন্যান্য MIDlet সেটিংস পরিবর্তন না করে ভার্চুয়াল কন্ট্রোল লেআউট পুনরুদ্ধার করে।</string>
     <string name="config_help_skip_resume">প্রথম সফল startApp()-এর পর, MIDlet পুনরায় চালু হলে পরবর্তী কলগুলো এড়িয়ে যায়। শুধুমাত্র পুনরায় চালু হলে ব্যর্থ হওয়া MIDlet-এর জন্য ব্যবহার করুন।</string>
-    <string name="config_help_soundbank">MIDI সিন্থেসিসের জন্য ব্যবহৃত সাউন্ডব্যাংক বেছে নেয়।</string>
+    <string name="config_help_soundbank">MIDI সিন্থেসিসের জন্য সাউন্ডব্যাংক বেছে নেয়। আগে থেকে রেকর্ড করা অডিওতে এর কোনো প্রভাব নেই।</string>
     <string name="profile_create_title">প্রোফাইল তৈরি করুন</string>
     <string name="profile_rename_title">প্রোফাইলের নাম পরিবর্তন করুন</string>
     <string name="presets">প্রোফাইল</string>
@@ -329,7 +329,7 @@
     <string name="midlet_storage_mode_shared">ভার্চুয়াল</string>
     <string name="midlet_storage_mode_android">Android</string>
     <string name="midlet_storage_mode_shared_summary">ওয়ার্কিং ফোল্ডারে শেয়ার করা ফোল্ডার ব্যবহার করুন।</string>
-    <string name="midlet_storage_mode_android_summary">আগের ভার্সনের মতো Android স্টোরেজ ব্যবহার করুন।</string>
+    <string name="midlet_storage_mode_android_summary">Android-এর অনুমতি অনুযায়ী শেয়ার করা Android স্টোরেজ ব্যবহার করুন। MIDlet-এর ফাইল অ্যাক্সেসের অনুমতি ভার্চুয়াল মোডের অনুমতি থেকে আলাদা।</string>
     <string name="config_system_properties_reset" tools:ignore="MissingTranslation">ডিফল্টে রিসেট করুন</string>
     <string name="config_system_properties_reset_title" tools:ignore="MissingTranslation">সিস্টেম প্রপার্টি রিসেট করবেন?</string>
     <string name="config_system_properties_reset_message" tools:ignore="MissingTranslation">এডিটরের বিষয়বস্তু বর্তমান JL-Mod Plus ডিফল্ট দিয়ে প্রতিস্থাপন করবেন? অন্যান্য সেটিংস অপরিবর্তিত থাকবে। রিসেট প্রয়োগ করতে সেভ করুন।</string>

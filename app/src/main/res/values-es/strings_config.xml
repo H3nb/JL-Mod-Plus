@@ -236,7 +236,7 @@
     <string name="config_help_vk_hide_delay">Oculta los controles tras este retraso cuando cubren la pantalla del MIDlet. El valor 0 desactiva la ocultación automática.</string>
     <string name="config_help_reset_layout">Restaura el diseño de controles virtuales sin cambiar otros ajustes del MIDlet.</string>
     <string name="config_help_skip_resume">Tras el primer startApp() correcto, omite las llamadas posteriores al reanudar el MIDlet. Úsalo solo en MIDlets que fallan al reanudarse.</string>
-    <string name="config_help_soundbank">Elige el banco de sonidos utilizado para la síntesis MIDI.</string>
+    <string name="config_help_soundbank">Elige el banco de sonidos para la síntesis MIDI. No modifica el audio pregrabado.</string>
     <string name="profile_create_title">Crear perfil</string>
     <string name="profile_rename_title">Cambiar nombre del perfil</string>
     <string name="presets">Perfiles</string>
@@ -327,7 +327,7 @@
     <string name="midlet_storage_mode_shared">Virtual</string>
     <string name="midlet_storage_mode_android">Android</string>
     <string name="midlet_storage_mode_shared_summary">Usa carpetas compartidas en la carpeta de trabajo.</string>
-    <string name="midlet_storage_mode_android_summary">Usa el almacenamiento de Android como en versiones anteriores.</string>
+    <string name="midlet_storage_mode_android_summary">Usa el almacenamiento compartido de Android según los permisos de Android. Los permisos de acceso a archivos del MIDlet son independientes de los del modo virtual.</string>
     <string name="config_system_properties_reset" tools:ignore="MissingTranslation">Restablecer valores predeterminados</string>
     <string name="config_system_properties_reset_title" tools:ignore="MissingTranslation">¿Restablecer propiedades del sistema?</string>
     <string name="config_system_properties_reset_message" tools:ignore="MissingTranslation">¿Reemplazar el contenido del editor con los valores predeterminados actuales de JL-Mod Plus? Los demás ajustes no cambiarán. Guarda para aplicar el restablecimiento.</string>

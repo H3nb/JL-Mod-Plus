@@ -240,7 +240,7 @@
     <string name="config_help_vk_hide_delay">Скрывает элементы управления через указанное время, если они перекрывают экран MIDlet. Значение 0 отключает автоскрытие.</string>
     <string name="config_help_reset_layout">Восстанавливает раскладку виртуального управления, не затрагивая остальные настройки MIDlet.</string>
     <string name="config_help_skip_resume">После первого успешного вызова startApp() пропускает повторные вызовы при возврате в MIDlet. Используйте только для MIDlet, которые дают сбой при возобновлении.</string>
-    <string name="config_help_soundbank">Выбирает банк звуков для синтеза MIDI.</string>
+    <string name="config_help_soundbank">Выбирает банк звуков для синтеза MIDI. Не влияет на заранее записанный звук.</string>
     <string name="profile_create_title">Создать профиль</string>
     <string name="profile_rename_title">Переименовать профиль</string>
     <string name="presets">Профили</string>
@@ -331,7 +331,7 @@
     <string name="midlet_storage_mode_shared">Виртуальное</string>
     <string name="midlet_storage_mode_android">Android</string>
     <string name="midlet_storage_mode_shared_summary">Использовать общие папки в рабочей папке.</string>
-    <string name="midlet_storage_mode_android_summary">Использовать хранилище Android, как в предыдущих версиях.</string>
+    <string name="midlet_storage_mode_android_summary">Использовать общее хранилище Android в пределах разрешений Android. Разрешения MIDlet на доступ к файлам задаются отдельно от виртуального режима.</string>
     <string name="config_system_properties_reset" tools:ignore="MissingTranslation">Сбросить по умолчанию</string>
     <string name="config_system_properties_reset_title" tools:ignore="MissingTranslation">Сбросить системные свойства?</string>
     <string name="config_system_properties_reset_message" tools:ignore="MissingTranslation">Заменить содержимое редактора текущими значениями по умолчанию JL-Mod Plus? Остальные настройки останутся без изменений. Сохраните, чтобы применить сброс.</string>

@@ -238,7 +238,7 @@
     <string name="config_help_vk_hide_delay">Скрива контролите след това забавяне, когато покриват екрана на MIDlet. Стойност 0 изключва автоматичното скриване.</string>
     <string name="config_help_reset_layout">Възстановява подредбата на виртуалните контроли, без да променя другите настройки на MIDlet.</string>
     <string name="config_help_skip_resume">След първото успешно startApp() пропуска последващите извиквания при възобновяване на MIDlet. Използвайте само за MIDlet-и, които се сриват при възобновяване.</string>
-    <string name="config_help_soundbank">Избира звуковата банка, използвана за MIDI синтез.</string>
+    <string name="config_help_soundbank">Избира звуковата банка за MIDI синтез. Не променя предварително записания звук.</string>
     <string name="profile_create_title">Създаване на профил</string>
     <string name="profile_rename_title">Преименуване на профил</string>
     <string name="presets">Профили</string>
@@ -329,7 +329,7 @@
     <string name="midlet_storage_mode_shared">Виртуално</string>
     <string name="midlet_storage_mode_android">Android</string>
     <string name="midlet_storage_mode_shared_summary">Използва споделени папки в работната папка.</string>
-    <string name="midlet_storage_mode_android_summary">Използва хранилището на Android както в предишни версии.</string>
+    <string name="midlet_storage_mode_android_summary">Използва споделеното хранилище на Android според разрешенията на Android. Разрешенията за файлов достъп на MIDlet са отделни от тези във виртуалния режим.</string>
     <string name="config_system_properties_reset" tools:ignore="MissingTranslation">Възстановяване по подразбиране</string>
     <string name="config_system_properties_reset_title" tools:ignore="MissingTranslation">Да се нулират ли системните свойства?</string>
     <string name="config_system_properties_reset_message" tools:ignore="MissingTranslation">Да се замени ли съдържанието на редактора с текущите стандартни стойности на JL-Mod Plus? Другите настройки остават непроменени. Запазете, за да приложите нулирането.</string>

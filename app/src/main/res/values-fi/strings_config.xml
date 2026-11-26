@@ -238,7 +238,7 @@
     <string name="config_help_vk_hide_delay">Piilottaa ohjaimet tämän viiveen jälkeen, kun ne peittävät MIDlet-näytön. Arvo 0 poistaa automaattisen piilotuksen käytöstä.</string>
     <string name="config_help_reset_layout">Palauttaa virtuaaliohjainten asettelun muuttamatta muita MIDlet-asetuksia.</string>
     <string name="config_help_skip_resume">Ohittaa ensimmäisen onnistuneen startApp()-kutsun jälkeen myöhemmät kutsut MIDletin jatkuessa. Käytä vain MIDleteille, jotka epäonnistuvat jatkettaessa.</string>
-    <string name="config_help_soundbank">Valitsee MIDI-synteesissä käytettävän äänipankin.</string>
+    <string name="config_help_soundbank">Valitsee MIDI-synteesissä käytettävän äänipankin. Ei muuta valmiiksi tallennettua ääntä.</string>
     <string name="profile_create_title">Luo profiili</string>
     <string name="profile_rename_title">Nimeä profiili uudelleen</string>
     <string name="presets">Profiilit</string>
@@ -329,7 +329,7 @@
     <string name="midlet_storage_mode_shared">Virtuaalinen</string>
     <string name="midlet_storage_mode_android">Android</string>
     <string name="midlet_storage_mode_shared_summary">Käytä jaettuja kansioita työkansiossa.</string>
-    <string name="midlet_storage_mode_android_summary">Käytä Android-tallennustilaa kuten aiemmissa versioissa.</string>
+    <string name="midlet_storage_mode_android_summary">Käytä Androidin jaettua tallennustilaa Androidin käyttöoikeuksien mukaisesti. MIDletin tiedosto-oikeudet ovat erilliset virtuaalisen tilan oikeuksista.</string>
     <string name="config_system_properties_reset" tools:ignore="MissingTranslation">Palauta oletusarvot</string>
     <string name="config_system_properties_reset_title" tools:ignore="MissingTranslation">Palautetaanko järjestelmäominaisuudet?</string>
     <string name="config_system_properties_reset_message" tools:ignore="MissingTranslation">Korvataanko editorin sisältö JL-Mod Plusin nykyisillä oletusarvoilla? Muut asetukset pysyvät ennallaan. Ota palautus käyttöön tallentamalla.</string>

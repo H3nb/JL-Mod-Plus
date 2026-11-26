@@ -240,7 +240,7 @@
     <string name="config_help_vk_hide_delay">Ukrywa elementy sterowania po tym czasie, gdy zasłaniają ekran MIDletu. Wartość 0 wyłącza autoukrywanie.</string>
     <string name="config_help_reset_layout">Przywraca układ wirtualnego sterowania bez zmiany innych ustawień MIDletu.</string>
     <string name="config_help_skip_resume">Po pierwszym udanym startApp() pomija kolejne wywołania przy wznawianiu MIDletu. Używaj tylko dla MIDletów, które ulegają awarii przy wznawianiu.</string>
-    <string name="config_help_soundbank">Wybiera bank dźwięków używany do syntezy MIDI.</string>
+    <string name="config_help_soundbank">Wybiera bank dźwięków do syntezy MIDI. Nie zmienia wcześniej nagranego dźwięku.</string>
     <string name="profile_create_title">Utwórz profil</string>
     <string name="profile_rename_title">Zmień nazwę profilu</string>
     <string name="presets">Profile</string>
@@ -331,7 +331,7 @@
     <string name="midlet_storage_mode_shared">Wirtualny</string>
     <string name="midlet_storage_mode_android">Android</string>
     <string name="midlet_storage_mode_shared_summary">Używaj współdzielonych folderów w folderze roboczym.</string>
-    <string name="midlet_storage_mode_android_summary">Używaj pamięci Androida tak jak w poprzednich wersjach.</string>
+    <string name="midlet_storage_mode_android_summary">Używaj współdzielonej pamięci Androida w zakresie uprawnień systemu Android. Uprawnienia MIDleta do plików są niezależne od uprawnień w trybie wirtualnym.</string>
     <string name="config_system_properties_reset" tools:ignore="MissingTranslation">Przywróć domyślne</string>
     <string name="config_system_properties_reset_title" tools:ignore="MissingTranslation">Zresetować właściwości systemu?</string>
     <string name="config_system_properties_reset_message" tools:ignore="MissingTranslation">Zastąpić zawartość edytora bieżącymi wartościami domyślnymi JL-Mod Plus? Pozostałe ustawienia nie ulegną zmianie. Zapisz, aby zastosować reset.</string>

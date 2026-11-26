@@ -238,7 +238,7 @@
     <string name="config_help_vk_hide_delay">පාලන MIDlet තිරය ආවරණය කරන විට මෙම ප්‍රමාදයෙන් පසු ඒවා සඟවයි. 0 අගය ස්වයංක්‍රීයව සැඟවීම අබල කරයි.</string>
     <string name="config_help_reset_layout">වෙනත් MIDlet සැකසීම් වෙනස් නොකර අතථ්‍ය පාලන පිරිසැලසුම ප්‍රතිස්ථාපනය කරයි.</string>
     <string name="config_help_skip_resume">පළමු සාර්ථක startApp() වලින් පසු MIDlet නැවත ඇරඹෙන විට පසු ඇමතුම් මඟහරියි. නැවත ඇරඹීමේදී අසාර්ථක වන MIDlets සඳහා පමණක් භාවිතා කරන්න.</string>
-    <string name="config_help_soundbank">MIDI සංස්ලේෂණය සඳහා භාවිතා කරන ශබ්ද බැංකුව තෝරයි.</string>
+    <string name="config_help_soundbank">MIDI සංස්ලේෂණය සඳහා ශබ්ද බැංකුව තෝරයි. කලින් පටිගත කළ ශ්‍රව්‍ය වෙනස් නොකරයි.</string>
     <string name="profile_create_title">පැතිකඩ සාදන්න</string>
     <string name="profile_rename_title">පැතිකඩ නැවත නම් කරන්න</string>
     <string name="presets">පැතිකඩ</string>
@@ -329,7 +329,7 @@
     <string name="midlet_storage_mode_shared">අතථ්‍ය</string>
     <string name="midlet_storage_mode_android">Android</string>
     <string name="midlet_storage_mode_shared_summary">වැඩ කරන ෆෝල්ඩරය තුළ බෙදාගත් ෆෝල්ඩර භාවිතා කරන්න.</string>
-    <string name="midlet_storage_mode_android_summary">පෙර අනුවාදවල මෙන් Android ගබඩාව භාවිතා කරන්න.</string>
+    <string name="midlet_storage_mode_android_summary">Android අවසරවලට යටත්ව Android හි හවුල් ගබඩාව භාවිතා කරන්න. MIDlet ගොනු ප්‍රවේශ අවසර අතථ්‍ය මාදිලියේ අවසරවලින් වෙන්ව පවතී.</string>
     <string name="config_system_properties_reset" tools:ignore="MissingTranslation">පෙරනිමියට යළි පිහිටුවන්න</string>
     <string name="config_system_properties_reset_title" tools:ignore="MissingTranslation">පද්ධති ගුණාංග යළි පිහිටුවන්නද?</string>
     <string name="config_system_properties_reset_message" tools:ignore="MissingTranslation">සංස්කාරක අන්තර්ගතය වත්මන් JL-Mod Plus පෙරනිමි වලින් ප්‍රතිස්ථාපනය කරන්නද? වෙනත් සැකසීම් නොවෙනස්ව පවතී. යළි පිහිටුවීම යෙදීමට සුරකින්න.</string>

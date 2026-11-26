@@ -238,7 +238,7 @@
     <string name="config_help_vk_hide_delay">Blendet Steuerelemente nach dieser Verzögerung aus, wenn sie den MIDlet-Bildschirm verdecken. Der Wert 0 deaktiviert das automatische Ausblenden.</string>
     <string name="config_help_reset_layout">Stellt das Layout der virtuellen Steuerung wieder her, ohne andere MIDlet-Einstellungen zu ändern.</string>
     <string name="config_help_skip_resume">Überspringt nach dem ersten erfolgreichen startApp() weitere Aufrufe beim Fortsetzen des MIDlets. Nur für MIDlets verwenden, die beim Fortsetzen fehlschlagen.</string>
-    <string name="config_help_soundbank">Wählt die Soundbank für die MIDI-Synthese aus.</string>
+    <string name="config_help_soundbank">Wählt die Soundbank für die MIDI-Synthese aus. Bereits aufgezeichnete Audiodaten bleiben unverändert.</string>
     <string name="profile_create_title">Profil erstellen</string>
     <string name="profile_rename_title">Profil umbenennen</string>
     <string name="presets">Profile</string>
@@ -329,7 +329,7 @@
     <string name="midlet_storage_mode_shared">Virtuell</string>
     <string name="midlet_storage_mode_android">Android</string>
     <string name="midlet_storage_mode_shared_summary">Freigegebene Ordner im Arbeitsordner verwenden.</string>
-    <string name="midlet_storage_mode_android_summary">Android-Speicher wie in früheren Versionen verwenden.</string>
+    <string name="midlet_storage_mode_android_summary">Gemeinsamen Android-Speicher im Rahmen der Android-Berechtigungen verwenden. Die Dateizugriffsberechtigungen für MIDlets sind vom virtuellen Modus getrennt.</string>
     <string name="config_system_properties_reset" tools:ignore="MissingTranslation">Auf Standard zurücksetzen</string>
     <string name="config_system_properties_reset_title" tools:ignore="MissingTranslation">Systemeigenschaften zurücksetzen?</string>
     <string name="config_system_properties_reset_message" tools:ignore="MissingTranslation">Den Editor-Inhalt durch die aktuellen Standardwerte von JL-Mod Plus ersetzen? Andere Einstellungen bleiben unverändert. Speichern Sie, um das Zurücksetzen anzuwenden.</string>

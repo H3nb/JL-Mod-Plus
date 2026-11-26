@@ -237,7 +237,7 @@
     <string name="config_help_vk_hide_delay">Skryje ovládání po této prodlevě, pokud překrývá obrazovku MIDletu. Hodnota 0 automatické skrytí vypne.</string>
     <string name="config_help_reset_layout">Obnoví rozvržení virtuálního ovládání beze změny ostatních nastavení MIDletu.</string>
     <string name="config_help_skip_resume">Po prvním úspěšném volání startApp() přeskočí další volání při obnovení MIDletu. Používejte pouze u MIDletů, které při obnovení selhávají.</string>
-    <string name="config_help_soundbank">Vybere zvukovou banku používanou pro syntézu MIDI.</string>
+    <string name="config_help_soundbank">Vybere zvukovou banku pro syntézu MIDI. Nemění předem nahraný zvuk.</string>
     <string name="profile_create_title">Vytvořit profil</string>
     <string name="profile_rename_title">Přejmenovat profil</string>
     <string name="presets">Profily</string>
@@ -328,7 +328,7 @@
     <string name="midlet_storage_mode_shared">Virtuální</string>
     <string name="midlet_storage_mode_android">Android</string>
     <string name="midlet_storage_mode_shared_summary">Používat sdílené složky v pracovní složce.</string>
-    <string name="midlet_storage_mode_android_summary">Používat úložiště Android jako v předchozích verzích.</string>
+    <string name="midlet_storage_mode_android_summary">Používat sdílené úložiště Android v rozsahu oprávnění Androidu. Oprávnění MIDletu k souborům jsou oddělená od virtuálního režimu.</string>
     <string name="config_system_properties_reset" tools:ignore="MissingTranslation">Obnovit výchozí</string>
     <string name="config_system_properties_reset_title" tools:ignore="MissingTranslation">Obnovit systémové vlastnosti?</string>
     <string name="config_system_properties_reset_message" tools:ignore="MissingTranslation">Nahradit obsah editoru aktuálními výchozími hodnotami JL-Mod Plus? Ostatní nastavení zůstanou beze změny. Obnovení projevíte uložením.</string>

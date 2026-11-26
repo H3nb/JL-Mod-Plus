@@ -239,7 +239,7 @@
     <string name="config_help_vk_hide_delay">הסתרת הפקדים לאחר השהיה זו כאשר הם מכסים את מסך ה-MIDlet. ערך 0 משבית הסתרה אוטומטית.</string>
     <string name="config_help_reset_layout">שחזור פריסת הפקדים הווירטואליים מבלי לשנות הגדרות MIDlet אחרות.</string>
     <string name="config_help_skip_resume">לאחר הקריאה המוצלחת הראשונה ל-startApp(), דילוג על קריאות מאוחרות יותר בעת המשך פעולת ה-MIDlet. לשימוש רק ביישומי MIDlet שנכשלים בעת המשך.</string>
-    <string name="config_help_soundbank">בחירת בנק הצלילים המשמש לסינתזת MIDI.</string>
+    <string name="config_help_soundbank">בחירת בנק הצלילים לסינתזת MIDI. אין לכך השפעה על שמע שהוקלט מראש.</string>
     <string name="profile_create_title">יצירת פרופיל</string>
     <string name="profile_rename_title">שינוי שם פרופיל</string>
     <string name="presets">פרופילים</string>
@@ -330,7 +330,7 @@
     <string name="midlet_storage_mode_shared">וירטואלי</string>
     <string name="midlet_storage_mode_android">Android</string>
     <string name="midlet_storage_mode_shared_summary">שימוש בתיקיות משותפות בתוך תיקיית העבודה.</string>
-    <string name="midlet_storage_mode_android_summary">שימוש באחסון Android כמו בגרסאות קודמות.</string>
+    <string name="midlet_storage_mode_android_summary">שימוש באחסון המשותף של Android בכפוף להרשאות Android. הרשאות הגישה לקבצים של MIDlet נפרדות מההרשאות במצב וירטואלי.</string>
     <string name="config_system_properties_reset" tools:ignore="MissingTranslation">איפוס לברירת מחדל</string>
     <string name="config_system_properties_reset_title" tools:ignore="MissingTranslation">לאפס את מאפייני המערכת?</string>
     <string name="config_system_properties_reset_message" tools:ignore="MissingTranslation">להחליף את תוכן העורך בברירות המחדל הנוכחיות של JL-Mod Plus? הגדרות אחרות יישארו ללא שינוי. יש לשמור כדי להחיל את האיפוס.</string>

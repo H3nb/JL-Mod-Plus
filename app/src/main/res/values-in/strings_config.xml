@@ -237,7 +237,7 @@
     <string name="config_help_vk_hide_delay">Menyembunyikan kontrol setelah jeda ini saat menutupi layar MIDlet. Nilai 0 menonaktifkan sembunyi otomatis.</string>
     <string name="config_help_reset_layout">Memulihkan tata letak kontrol virtual tanpa mengubah setelan MIDlet lainnya.</string>
     <string name="config_help_skip_resume">Setelah startApp() pertama berhasil, lewati pemanggilan berikutnya saat MIDlet dilanjutkan. Gunakan hanya jika MIDlet gagal berjalan saat dilanjutkan.</string>
-    <string name="config_help_soundbank">Memilih soundbank yang digunakan untuk menghasilkan suara MIDI.</string>
+    <string name="config_help_soundbank">Memilih soundbank untuk sintesis MIDI. Tidak memengaruhi audio prarekaman.</string>
     <string name="profile_create_title">Buat profil</string>
     <string name="profile_rename_title">Ganti nama profil</string>
     <string name="presets">Profil</string>
@@ -328,7 +328,7 @@
     <string name="midlet_storage_mode_shared">Virtual</string>
     <string name="midlet_storage_mode_android">Android</string>
     <string name="midlet_storage_mode_shared_summary">Gunakan folder bersama di dalam folder kerja.</string>
-    <string name="midlet_storage_mode_android_summary">Gunakan penyimpanan Android seperti pada versi sebelumnya.</string>
+    <string name="midlet_storage_mode_android_summary">Gunakan penyimpanan bersama Android sesuai izin Android. Izin akses file MIDlet diatur terpisah dari mode Virtual.</string>
     <string name="config_system_properties_reset" tools:ignore="MissingTranslation">Kembalikan ke setelan bawaan</string>
     <string name="config_system_properties_reset_title" tools:ignore="MissingTranslation">Reset properti sistem?</string>
     <string name="config_system_properties_reset_message" tools:ignore="MissingTranslation">Ganti isi editor dengan setelan bawaan JL-Mod Plus saat ini? Setelan lain tidak berubah. Simpan untuk menerapkan perubahan.</string>

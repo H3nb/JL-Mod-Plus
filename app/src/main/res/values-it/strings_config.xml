@@ -239,7 +239,7 @@
     <string name="config_help_vk_hide_delay">Nasconde i controlli dopo questo ritardo quando coprono lo schermo del MIDlet. Il valore 0 disattiva il nascondimento automatico.</string>
     <string name="config_help_reset_layout">Ripristina il layout dei controlli virtuali senza modificare le altre impostazioni del MIDlet.</string>
     <string name="config_help_skip_resume">Dopo il primo startApp() riuscito, salta le chiamate successive alla ripresa del MIDlet. Usa solo per MIDlet che si bloccano alla ripresa.</string>
-    <string name="config_help_soundbank">Sceglie il soundbank usato per la sintesi MIDI.</string>
+    <string name="config_help_soundbank">Sceglie il soundbank per la sintesi MIDI. Non modifica l’audio preregistrato.</string>
     <string name="profile_create_title">Crea profilo</string>
     <string name="profile_rename_title">Rinomina profilo</string>
     <string name="presets">Profili</string>
@@ -330,7 +330,7 @@
     <string name="midlet_storage_mode_shared">Virtuale</string>
     <string name="midlet_storage_mode_android">Android</string>
     <string name="midlet_storage_mode_shared_summary">Usa cartelle condivise nella cartella di lavoro.</string>
-    <string name="midlet_storage_mode_android_summary">Usa l’archiviazione Android come nelle versioni precedenti.</string>
+    <string name="midlet_storage_mode_android_summary">Usa lo spazio di archiviazione condiviso di Android nei limiti delle autorizzazioni Android. Le autorizzazioni di accesso ai file del MIDlet sono separate da quelle della modalità virtuale.</string>
     <string name="config_system_properties_reset" tools:ignore="MissingTranslation">Ripristina predefiniti</string>
     <string name="config_system_properties_reset_title" tools:ignore="MissingTranslation">Ripristinare le proprietà di sistema?</string>
     <string name="config_system_properties_reset_message" tools:ignore="MissingTranslation">Sostituire il contenuto dell’editor con i valori predefiniti attuali di JL-Mod Plus? Le altre impostazioni resteranno invariate. Salva per applicare il ripristino.</string>

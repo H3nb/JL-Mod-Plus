@@ -238,7 +238,7 @@
     <string name="config_help_vk_hide_delay">Döljer kontroller efter den här fördröjningen när de täcker MIDlet-skärmen. Värdet 0 inaktiverar automatisk döljning.</string>
     <string name="config_help_reset_layout">Återställer layouten för virtuella kontroller utan att ändra andra MIDlet-inställningar.</string>
     <string name="config_help_skip_resume">Efter första lyckade startApp() hoppas senare anrop över när MIDlet-appen återupptas. Använd bara för MIDlets som misslyckas vid återupptagning.</string>
-    <string name="config_help_soundbank">Väljer den ljudbank som används för MIDI-syntes.</string>
+    <string name="config_help_soundbank">Väljer ljudbanken för MIDI-syntes. Påverkar inte förinspelat ljud.</string>
     <string name="profile_create_title">Skapa profil</string>
     <string name="profile_rename_title">Byt namn på profil</string>
     <string name="presets">Profiler</string>
@@ -329,7 +329,7 @@
     <string name="midlet_storage_mode_shared">Virtuellt</string>
     <string name="midlet_storage_mode_android">Android</string>
     <string name="midlet_storage_mode_shared_summary">Använd delade mappar i arbetsmappen.</string>
-    <string name="midlet_storage_mode_android_summary">Använd Android-lagring som i tidigare versioner.</string>
+    <string name="midlet_storage_mode_android_summary">Använd delad Android-lagring inom ramen för Androids behörigheter. MIDlets filbehörigheter är separata från behörigheterna i virtuellt läge.</string>
     <string name="config_system_properties_reset" tools:ignore="MissingTranslation">Återställ till standard</string>
     <string name="config_system_properties_reset_title" tools:ignore="MissingTranslation">Återställa systemegenskaper?</string>
     <string name="config_system_properties_reset_message" tools:ignore="MissingTranslation">Ersätta innehållet i redigeraren med aktuella standardvärden för JL-Mod Plus? Övriga inställningar påverkas inte. Spara för att tillämpa återställningen.</string>

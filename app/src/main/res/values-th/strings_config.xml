@@ -237,7 +237,7 @@
     <string name="config_help_vk_hide_delay">ซ่อนปุ่มควบคุมหลังจากช่วงเวลานี้เมื่อปุ่มทับหน้าจอ MIDlet ค่า 0 จะปิดการซ่อนอัตโนมัติ</string>
     <string name="config_help_reset_layout">คืนค่าเลย์เอาต์ปุ่มควบคุมเสมือนโดยไม่เปลี่ยนแปลงการตั้งค่าอื่นของ MIDlet</string>
     <string name="config_help_skip_resume">หลังจากเรียก startApp() สำเร็จครั้งแรก ให้ข้ามการเรียกครั้งถัดไปเมื่อ MIDlet กลับมาทำงานต่อ ใช้เฉพาะกับ MIDlet ที่มีปัญหาเมื่อกลับมาทำงานต่อเท่านั้น</string>
-    <string name="config_help_soundbank">เลือกชุดเสียงที่ใช้สำหรับการสังเคราะห์เสียง MIDI</string>
+    <string name="config_help_soundbank">เลือกชุดเสียงสำหรับการสังเคราะห์เสียง MIDI ไม่มีผลต่อเสียงที่บันทึกไว้ล่วงหน้า</string>
     <string name="profile_create_title">สร้างโปรไฟล์</string>
     <string name="profile_rename_title">เปลี่ยนชื่อโปรไฟล์</string>
     <string name="presets">โปรไฟล์</string>
@@ -328,7 +328,7 @@
     <string name="midlet_storage_mode_shared">เสมือน</string>
     <string name="midlet_storage_mode_android">Android</string>
     <string name="midlet_storage_mode_shared_summary">ใช้โฟลเดอร์ที่ใช้ร่วมกันในโฟลเดอร์ทำงาน</string>
-    <string name="midlet_storage_mode_android_summary">ใช้พื้นที่จัดเก็บ Android เหมือนในเวอร์ชันก่อนหน้า</string>
+    <string name="midlet_storage_mode_android_summary">ใช้พื้นที่จัดเก็บข้อมูลที่ใช้ร่วมกันของ Android ตามสิทธิ์ของ Android สิทธิ์เข้าถึงไฟล์ของ MIDlet แยกจากสิทธิ์ในโหมดเสมือน</string>
     <string name="config_system_properties_reset" tools:ignore="MissingTranslation">รีเซ็ตเป็นค่าเริ่มต้น</string>
     <string name="config_system_properties_reset_title" tools:ignore="MissingTranslation">รีเซ็ตคุณสมบัติระบบหรือไม่?</string>
     <string name="config_system_properties_reset_message" tools:ignore="MissingTranslation">แทนที่เนื้อหาในตัวแก้ไขด้วยค่าเริ่มต้นปัจจุบันของ JL-Mod Plus หรือไม่? การตั้งค่าอื่นจะไม่เปลี่ยนแปลง บันทึกเพื่อใช้การรีเซ็ต</string>

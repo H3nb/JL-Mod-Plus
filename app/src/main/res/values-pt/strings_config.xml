@@ -239,7 +239,7 @@
     <string name="config_help_vk_hide_delay">Oculta os controlos após este atraso quando cobrem o ecrã do MIDlet. O valor 0 desativa a ocultação automática.</string>
     <string name="config_help_reset_layout">Restaura o esquema dos controlos virtuais sem alterar outras definições do MIDlet.</string>
     <string name="config_help_skip_resume">Após o primeiro startApp() bem-sucedido, ignora chamadas posteriores quando o MIDlet é retomado. Utilize apenas em MIDlets que falham ao retomar.</string>
-    <string name="config_help_soundbank">Escolhe o banco de sons utilizado para a síntese MIDI.</string>
+    <string name="config_help_soundbank">Escolhe o banco de sons para a síntese MIDI. Não altera o áudio pré-gravado.</string>
     <string name="profile_create_title">Criar perfil</string>
     <string name="profile_rename_title">Mudar o nome do perfil</string>
     <string name="presets">Perfis</string>
@@ -330,7 +330,7 @@
     <string name="midlet_storage_mode_shared">Virtual</string>
     <string name="midlet_storage_mode_android">Android</string>
     <string name="midlet_storage_mode_shared_summary">Utiliza pastas partilhadas na pasta de trabalho.</string>
-    <string name="midlet_storage_mode_android_summary">Utiliza o armazenamento do Android como nas versões anteriores.</string>
+    <string name="midlet_storage_mode_android_summary">Utiliza o armazenamento partilhado do Android de acordo com as permissões do Android. As permissões de acesso a ficheiros do MIDlet são independentes das do modo virtual.</string>
     <string name="config_system_properties_reset" tools:ignore="MissingTranslation">Repor predefinição</string>
     <string name="config_system_properties_reset_title" tools:ignore="MissingTranslation">Repor propriedades do sistema?</string>
     <string name="config_system_properties_reset_message" tools:ignore="MissingTranslation">Substituir o conteúdo do editor pelas predefinições atuais do JL-Mod Plus? As outras definições permanecerão inalteradas. Guarde para aplicar a reposição.</string>

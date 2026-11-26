@@ -239,7 +239,7 @@
     <string name="config_help_vk_hide_delay">Ascunde controalele după această întârziere când acoperă ecranul MIDlet. Valoarea 0 dezactivează ascunderea automată.</string>
     <string name="config_help_reset_layout">Restaurează aspectul controalelor virtuale fără a modifica alte setări MIDlet.</string>
     <string name="config_help_skip_resume">După primul apel reușit startApp(), omite apelurile ulterioare la reluarea MIDlet-ului. Folosiți doar pentru MIDlet-uri care eșuează la reluare.</string>
-    <string name="config_help_soundbank">Alege banca de sunete folosită pentru sinteza MIDI.</string>
+    <string name="config_help_soundbank">Alege banca de sunete pentru sinteza MIDI. Nu modifică sunetul preînregistrat.</string>
     <string name="profile_create_title">Creează profil</string>
     <string name="profile_rename_title">Redenumește profilul</string>
     <string name="presets">Profiluri</string>
@@ -330,7 +330,7 @@
     <string name="midlet_storage_mode_shared">Virtual</string>
     <string name="midlet_storage_mode_android">Android</string>
     <string name="midlet_storage_mode_shared_summary">Folosește dosare partajate din dosarul de lucru.</string>
-    <string name="midlet_storage_mode_android_summary">Folosește stocarea Android ca în versiunile anterioare.</string>
+    <string name="midlet_storage_mode_android_summary">Folosește spațiul de stocare partajat al Android în limitele permisiunilor Android. Permisiunile MIDlet-ului pentru accesul la fișiere sunt separate de cele din modul virtual.</string>
     <string name="config_system_properties_reset" tools:ignore="MissingTranslation">Resetează la valorile implicite</string>
     <string name="config_system_properties_reset_title" tools:ignore="MissingTranslation">Resetați proprietățile de sistem?</string>
     <string name="config_system_properties_reset_message" tools:ignore="MissingTranslation">Înlocuiți conținutul editorului cu valorile implicite curente JL-Mod Plus? Celelalte setări vor rămâne neschimbate. Salvați pentru a aplica resetarea.</string>

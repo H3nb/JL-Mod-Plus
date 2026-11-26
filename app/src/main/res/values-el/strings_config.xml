@@ -235,7 +235,7 @@
     <string name="config_help_vk_hide_delay">Αποκρύπτει τα χειριστήρια μετά από αυτήν την καθυστέρηση όταν καλύπτουν την οθόνη του MIDlet. Η τιμή 0 απενεργοποιεί την αυτόματη απόκρυψη.</string>
     <string name="config_help_reset_layout">Επαναφέρει τη διάταξη των εικονικών χειριστηρίων χωρίς να αλλάζει άλλες ρυθμίσεις του MIDlet.</string>
     <string name="config_help_skip_resume">Μετά την πρώτη επιτυχή κλήση startApp(), παραλείπει επόμενες κλήσεις κατά τη συνέχιση του MIDlet. Χρησιμοποιήστε το μόνο για MIDlet που αποτυγχάνουν κατά τη συνέχιση.</string>
-    <string name="config_help_soundbank">Επιλέγει την τράπεζα ήχων που χρησιμοποιείται για τη σύνθεση MIDI.</string>
+    <string name="config_help_soundbank">Επιλέγει την τράπεζα ήχων για τη σύνθεση MIDI. Δεν επηρεάζει τον προηχογραφημένο ήχο.</string>
     <string name="profile_create_title">Δημιουργία προφίλ</string>
     <string name="profile_rename_title">Μετονομασία προφίλ</string>
     <string name="presets">Προφίλ</string>
@@ -326,7 +326,7 @@
     <string name="midlet_storage_mode_shared">Εικονική</string>
     <string name="midlet_storage_mode_android">Android</string>
     <string name="midlet_storage_mode_shared_summary">Χρήση κοινόχρηστων φακέλων στον φάκελο εργασίας.</string>
-    <string name="midlet_storage_mode_android_summary">Χρήση αποθήκευσης Android όπως σε προηγούμενες εκδόσεις.</string>
+    <string name="midlet_storage_mode_android_summary">Χρήση του κοινόχρηστου χώρου αποθήκευσης Android σύμφωνα με τις άδειες του Android. Οι άδειες αρχείων του MIDlet είναι ξεχωριστές από εκείνες της εικονικής λειτουργίας.</string>
     <string name="config_system_properties_reset" tools:ignore="MissingTranslation">Επαναφορά στις προεπιλογές</string>
     <string name="config_system_properties_reset_title" tools:ignore="MissingTranslation">Επαναφορά ιδιοτήτων συστήματος;</string>
     <string name="config_system_properties_reset_message" tools:ignore="MissingTranslation">Αντικατάσταση του περιεχομένου του επεξεργαστή με τις τρέχουσες προεπιλογές του JL-Mod Plus; Οι άλλες ρυθμίσεις θα παραμείνουν αμετάβλητες. Αποθηκεύστε για να εφαρμόσετε την επαναφορά.</string>

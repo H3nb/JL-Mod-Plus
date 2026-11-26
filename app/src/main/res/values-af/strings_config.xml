@@ -238,7 +238,7 @@
     <string name="config_help_vk_hide_delay">Versteek kontroles na hierdie vertraging wanneer hulle die MIDlet-skerm bedek. ’n Waarde van 0 deaktiveer outoversteek.</string>
     <string name="config_help_reset_layout">Herstel die uitleg van virtuele kontroles sonder om ander MIDlet-instellings te verander.</string>
     <string name="config_help_skip_resume">Slaan latere oproepe oor wanneer die MIDlet hervat ná die eerste suksesvolle startApp(). Gebruik slegs vir MIDlets wat misluk by hervatting.</string>
-    <string name="config_help_soundbank">Kies die klankbank wat vir MIDI-sintese gebruik word.</string>
+    <string name="config_help_soundbank">Kies die klankbank vir MIDI-sintese. Dit verander nie vooraf opgeneemde oudio nie.</string>
     <string name="profile_create_title">Skep profiel</string>
     <string name="profile_rename_title">Hernoem profiel</string>
     <string name="presets">Profiele</string>
@@ -329,7 +329,7 @@
     <string name="midlet_storage_mode_shared">Virtueel</string>
     <string name="midlet_storage_mode_android">Android</string>
     <string name="midlet_storage_mode_shared_summary">Gebruik gedeelde gidse in die werkgids.</string>
-    <string name="midlet_storage_mode_android_summary">Gebruik Android-berging soos in vorige weergawes.</string>
+    <string name="midlet_storage_mode_android_summary">Gebruik gedeelde Android-berging, onderhewig aan Android-toestemmings. MIDlet-lêertoestemmings is apart van dié in virtuele modus.</string>
     <string name="config_system_properties_reset" tools:ignore="MissingTranslation">Stel terug na verstek</string>
     <string name="config_system_properties_reset_title" tools:ignore="MissingTranslation">Stel stelseleienskappe terug?</string>
     <string name="config_system_properties_reset_message" tools:ignore="MissingTranslation">Vervang die redigeerder se inhoud met die huidige JL-Mod Plus-verstekwaardes? Ander instellings bly onveranderd. Stoor om die terugstelling toe te pas.</string>

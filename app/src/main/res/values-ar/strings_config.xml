@@ -242,7 +242,7 @@
     <string name="config_help_vk_hide_delay">يخفي عناصر التحكم بعد هذا التأخير عندما تغطي شاشة MIDlet. القيمة 0 تعطّل الإخفاء التلقائي.</string>
     <string name="config_help_reset_layout">يستعيد تخطيط عناصر التحكم الافتراضية دون تغيير إعدادات MIDlet الأخرى.</string>
     <string name="config_help_skip_resume">بعد أول استدعاء ناجح لـ startApp()، يتم تخطي الاستدعاءات اللاحقة عند استئناف MIDlet. استخدمه فقط لتطبيقات MIDlet التي تفشل عند الاستئناف.</string>
-    <string name="config_help_soundbank">يختار بنك الأصوات المستخدم لتوليف MIDI.</string>
+    <string name="config_help_soundbank">يختار بنك الأصوات لتوليف MIDI. لا يؤثر في الصوت المسجّل مسبقًا.</string>
     <string name="profile_create_title">إنشاء ملف إعدادات</string>
     <string name="profile_rename_title">إعادة تسمية ملف الإعدادات</string>
     <string name="presets">ملفات الإعدادات</string>
@@ -333,7 +333,7 @@
     <string name="midlet_storage_mode_shared">افتراضي</string>
     <string name="midlet_storage_mode_android">Android</string>
     <string name="midlet_storage_mode_shared_summary">استخدام المجلدات المشتركة في مجلد العمل.</string>
-    <string name="midlet_storage_mode_android_summary">استخدام مساحة تخزين Android كما في الإصدارات السابقة.</string>
+    <string name="midlet_storage_mode_android_summary">استخدام مساحة تخزين Android المشتركة وفقًا لأذونات Android. أذونات ملفات MIDlet منفصلة عن أذونات الوضع الافتراضي.</string>
     <string name="config_system_properties_reset" tools:ignore="MissingTranslation">إعادة التعيين إلى الافتراضي</string>
     <string name="config_system_properties_reset_title" tools:ignore="MissingTranslation">هل تريد إعادة تعيين خصائص النظام؟</string>
     <string name="config_system_properties_reset_message" tools:ignore="MissingTranslation">هل تريد استبدال محتويات المحرر بإعدادات JL-Mod Plus الافتراضية الحالية؟ ستبقى الإعدادات الأخرى دون تغيير. احفظ لتطبيق إعادة التعيين.</string>
