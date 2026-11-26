@@ -19,11 +19,7 @@ internal object ControlSkinSetTransfer {
     private const val METADATA = "skin.json"
     private val extensions = setOf("png", "webp", "svg")
 
-    fun validSetName(name: String): Boolean =
-        name.length in 1..61 && name != "." && name != ".." &&
-            !name.endsWith('.') && name.first().isLetterOrDigit() &&
-            name.all { it.isLetterOrDigit() || it == ' ' || it == '.' ||
-                it == '_' || it == '(' || it == ')' || it == '-' }
+    fun validSetName(name: String): Boolean = ControlSkinStore.validSetName(name)
 
     fun validAssetName(name: String): Boolean {
         if (name == METADATA) return true
@@ -85,9 +81,12 @@ internal object ControlSkinSetTransfer {
             val label = sourceName?.takeIf(::validSetName) ?: "Imported control skin"
             var name = label
             var index = 2
-            while (root.listFiles()?.any { it.name.equals(name, ignoreCase = true) } == true) {
+            while (root.listFiles()?.any { ControlSkinStore.sameSetName(it.name, name) } == true) {
                 val suffix = " (" + index++ + ")"
-                name = label.take(61 - suffix.length).trimEnd(' ', '.') + suffix
+                val length = minOf(label.codePointCount(0, label.length),
+                    ControlSkinStore.MAX_NAME_CODE_POINTS - suffix.length)
+                name = label.substring(0, label.offsetByCodePoints(0, length))
+                    .trimEnd(' ', '.') + suffix
             }
             val stage = File(root, ".skin-" + UUID.randomUUID() + ".tmp")
             val target = File(root, name)

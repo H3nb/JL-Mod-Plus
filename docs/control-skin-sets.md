@@ -25,6 +25,12 @@ or .svg extension. All eight slots are optional. D-pad overlays use the same ful
 canvas as the D-pad base to allow exact composition for diagonal presses.
 
 One folder is one set. The folder name is the display name and can be renamed.
+Set names use 1–61 Unicode code points, starting with a letter or number.
+Letters, numbers, combining marks, spaces and the punctuation `. _ ( ) -` are
+allowed thereafter; a name cannot end in a period. Interactive names are
+trimmed. The same validation applies to ZIP roots, including supplementary
+Unicode characters. Canonically equivalent names are compared case-insensitively
+for collisions without normalizing or renaming existing folders.
 `skin.json` stores an independent UUID, so renaming through the editor does
 not invalidate a MIDlet's selection:
 

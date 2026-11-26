@@ -56,6 +56,52 @@ class ControlSkinArchiveTest {
         assertEquals(1, ControlSkinStore.list(destination).size)
     }
 
+    @Test fun unicodeNamesRoundTripAndCanonicalCollisionsDoNotOverwrite() {
+        val source = temporary.newFolder("unicode-source")
+        val destination = temporary.newFolder("unicode-destination")
+        val output = temporary.newFolder("unicode-output")
+        // Devanagari vowel signs, decomposed Latin accents, and supplementary letters.
+        val name = "किरण Cafe\u0301 𐐀"
+        val set = ControlSkinStore.create(source, name)
+        assertEquals(name, ControlSkinStore.findReadonly(source, set.id)!!.name)
+        val archive = ControlSkinArchive.export(source, set.id, output)
+        assertEquals("$name.zip", archive.name)
+        val collision = ControlSkinStore.create(destination, "किरण Café 𐐀")
+        ControlSkinStore.setMode(destination, collision.id, "fire", "full")
+        val imported = ControlSkinArchive.importZip(destination, archive, temporary.root)
+        assertEquals("$name (2)", imported.name)
+        assertEquals(set.id, imported.id)
+        assertEquals("full", ControlSkinStore.mode(collision.folder, "fire"))
+        assertEquals(name, ControlSkinStore.rename(source, set.id, name).name)
+        val renamed = ControlSkinStore.rename(source, set.id, "தமிழ்")
+        assertEquals(set.id, renamed.id)
+        assertEquals("தமிழ்", renamed.name)
+    }
+
+    @Test fun longSupplementaryNamesKeepValidCodePointsWhenImportAddsSuffix() {
+        val source = temporary.newFolder("long-source")
+        val destination = temporary.newFolder("long-destination")
+        val label = "𐐀".repeat(61)
+        val set = ControlSkinStore.create(source, label)
+        val collision = ControlSkinStore.create(destination, label)
+        ControlSkinStore.setMode(destination, collision.id, "fire", "full")
+        val archive = ControlSkinArchive.export(source, set.id, temporary.newFolder("long-out"))
+        val imported = ControlSkinArchive.importZip(destination, archive, temporary.root)
+        assertEquals("𐐀".repeat(57) + " (2)", imported.name)
+        assertTrue(ControlSkinSetTransfer.validSetName(imported.name))
+        assertEquals(set.id, imported.id)
+    }
+
+    @Test fun nameValidationAllowsMarksButRejectsUnsafePaths() {
+        for (name in listOf("தமிழ்", "किरण", "Cafe\u0301", "𐐀".repeat(61))) {
+            assertTrue(name, ControlSkinSetTransfer.validSetName(name))
+        }
+        for (name in listOf("\u0301a", "../outside", "a/b", "a\\b", "a\u0000b",
+            "a\u202eb", "a.", "𐐀".repeat(62))) {
+            assertFalse(name, ControlSkinSetTransfer.validSetName(name))
+        }
+    }
+
     @Test fun collisionCreatesIndependentSetAndRepeatedImportReusesIt() {
         val source = temporary.newFolder("source")
         val set = ControlSkinStore.create(source, "Fantasy")

@@ -7,6 +7,8 @@ import android.system.Os;
 import androidx.annotation.Nullable;
 import org.json.JSONObject;
 import java.io.*;
+import java.text.Normalizer;
+import java.util.regex.Pattern;
 import java.util.*;
 
 /** Workdir-global, folder-based virtual button skin sets. No runtime writes or UI state. */
@@ -27,6 +29,9 @@ public final class ControlSkinStore {
     private static final int MAX_IMAGE_BYTES = 8 * 1024 * 1024;
     private static final int MAX_DIMENSION = 2048;
     private static final String META = "skin.json";
+    static final int MAX_NAME_CODE_POINTS = 61;
+    private static final Pattern SET_NAME = Pattern.compile(
+            "[\\p{L}\\p{N}][\\p{L}\\p{N}\\p{M} ._()\\-]*");
 
     public static final class InvalidNameException extends IOException {
         InvalidNameException() { super("Invalid set name"); }
@@ -80,12 +85,20 @@ public final class ControlSkinStore {
         return suffix.isEmpty() ? "" : filename.substring(0, filename.length() - suffix.length());
     }
 
+    static boolean validSetName(String name) {
+        return name.codePointCount(0, name.length()) <= MAX_NAME_CODE_POINTS
+                && !name.endsWith(".") && SET_NAME.matcher(name).matches();
+    }
+
+    /** Compare canonical spellings without changing any existing folder name. */
+    static boolean sameSetName(String left, String right) {
+        return Normalizer.normalize(left, Normalizer.Form.NFC)
+                .equalsIgnoreCase(Normalizer.normalize(right, Normalizer.Form.NFC));
+    }
+
     private static String safeName(String name) throws IOException {
         String value = name.trim();
-        if (!value.matches("[\\p{L}\\p{N}][\\p{L}\\p{N} ._()\\-]{0,60}")
-                || value.equals(".") || value.equals("..") || value.endsWith(".")) {
-            throw new InvalidNameException();
-        }
+        if (!validSetName(value)) throw new InvalidNameException();
         return value;
     }
 
@@ -209,7 +222,7 @@ public final class ControlSkinStore {
         File[] existing = base.listFiles();
         if (existing == null) throw new IOException("Cannot list sets");
         for (File file : existing) {
-            if (file.getName().equalsIgnoreCase(safe)) throw new NameConflictException();
+            if (sameSetName(file.getName(), safe)) throw new NameConflictException();
         }
         File target = new File(base, safe);
         checkedFolder(workdir, target);
