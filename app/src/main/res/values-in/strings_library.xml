@@ -106,7 +106,7 @@
     <string name="installer_failed_download">Tidak dapat mengunduh aplikasi. Periksa koneksi dan tautan unduhan Anda, lalu coba lagi.</string>
     <string name="installer_failed_storage">Tidak dapat menyelesaikan instalasi. Coba lagi.</string>
     <string name="installer_failed_conversion">Tidak dapat mengonversi aplikasi. Pastikan file lengkap dan didukung, lalu coba lagi.</string>
-    <string name="installer_needs_recovery">File aplikasi tersimpan, tetapi pustaka tidak dapat selesai diperbarui. Muat ulang pustaka sebelum mencoba lagi.</string>
+    <string name="installer_needs_recovery">File aplikasi tersimpan, tetapi pembaruan pustaka gagal diselesaikan. Muat ulang pustaka sebelum mencoba lagi.</string>
     <string name="installer_refresh_library">Muat ulang pustaka</string>
     <string name="installer_cancel_pending">Menghentikan pada titik aman berikutnya…</string>
     <string name="installer_retry_remaining">Tinjau item yang belum selesai</string>
@@ -294,7 +294,7 @@
     <string name="library_donation_summary">Bantu JL-Mod Plus terus berkembang.</string>
     <string name="library_donation_title">Dukung JL-Mod Plus</string>
     <string name="library_donation_message">JL-Mod Plus gratis dan bersifat sumber terbuka. Jika bermanfaat, Anda dapat mendukung pengembangannya melalui donasi sukarela.</string>
-    <string name="library_donation_provider_note">Donasi diproses secara eksternal melalui Sociabuzz.</string>
+    <string name="library_donation_provider_note">Donasi diproses di luar aplikasi melalui Sociabuzz.</string>
     <string name="library_donation_continue">Lanjut ke Sociabuzz</string>
     <string name="library_donation_not_now">Nanti saja</string>
     <string name="library_donation_link_copied">Tidak ada browser. Tautan Sociabuzz telah disalin.</string>
@@ -304,12 +304,12 @@
     <string name="library_bulk_share_apps">Bagikan aplikasi</string>
     <string name="library_bulk_reinstall_apps">Instal ulang</string>
     <string name="library_bulk_export_apps">Ekspor paket</string>
-    <string name="library_enhanced_icons_title">Ikon ditingkatkan</string>
+    <string name="library_enhanced_icons_title">Penyempurnaan ikon</string>
     <string name="library_enhanced_icons_summary">Menyesuaikan bingkai, skala, dan latar belakang ikon agar tampil lebih seragam di pustaka.</string>
     <string name="library_collections_unavailable_title">Koleksi tidak tersedia</string>
     <string name="library_load_failed_message">Tidak dapat memuat pustaka. Coba lagi.</string>
     <string name="bulk_install_prepare_failed">Tidak dapat menyiapkan aplikasi yang dipilih untuk instalasi.</string>
-    <string name="installer_existing_data_preserved">Setelan dan data simpanan yang ada akan tetap dipertahankan.</string>
+    <string name="installer_existing_data_preserved">Setelan dan data simpanan yang ada akan dipertahankan.</string>
     <string name="bulk_install_library_changed">Pustaka berubah setelah peninjauan. Tutup penginstal, lalu pilih kembali file yang ingin diinstal.</string>
     <string name="bulk_install_source_unavailable">File sumber yang diperlukan tidak lagi tersedia. Pilih kembali file yang diperlukan.</string>
     <string name="bulk_install_source_changed">File sumber berubah setelah peninjauan. Pilih filenya lagi.</string>
@@ -323,14 +323,14 @@
     </plurals>
     <string name="bulk_install_reason_jad_jar_mismatch">JAD dan JAR mengidentifikasi aplikasi yang berbeda.</string>
     <string name="bulk_install_reason_conflicting_jads">File JAD dengan atribut berbeda merujuk ke JAR yang sama.</string>
-    <string name="bulk_install_reason_remote_jar">Instal massal tidak dapat mengunduh file JAR jarak jauh.</string>
+    <string name="bulk_install_reason_remote_jar">Instal massal tidak dapat mengunduh file JAR dari sumber jaringan.</string>
     <string name="bulk_install_reason_missing_jar_url">JAD tidak memiliki MIDlet-Jar-URL.</string>
     <!-- %1$s is the exact URI scheme supplied by the JAD; do not translate it. -->
     <string name="bulk_install_reason_unsupported_uri_scheme">JAD merujuk ke JAR dengan skema URI yang tidak didukung: <xliff:g id="scheme" example="http">%1$s</xliff:g>.</string>
     <string name="bulk_install_reason_missing_parent">JAD tidak memiliki folder induk.</string>
     <!-- %1$s is the exact MIDlet-Jar-URL reference, not a normalized filesystem path. -->
     <string name="bulk_install_reason_jar_not_found">JAR yang dirujuk oleh JAD tidak ditemukan: <xliff:g id="file_path" example="game.jar">%1$s</xliff:g>.</string>
-    <string name="bulk_install_reason_duplicate_source">Sumber ini terdeteksi sebagai duplikat dalam kelompok instalasi ini.</string>
+    <string name="bulk_install_reason_duplicate_source">Sumber ini sama dengan sumber lain dalam instalasi massal ini.</string>
     <string name="bulk_install_reason_version_conflict">Beberapa varian aplikasi memiliki versi yang sama.</string>
     <string name="bulk_install_reason_older_candidate">Versi lebih baru dari aplikasi ini ada dalam batch yang sama.</string>
     <string name="bulk_install_reason_source_error">Tidak dapat menyiapkan sumber ini untuk instalasi.</string>
@@ -342,9 +342,9 @@
     <string name="updates_automatic">Periksa otomatis saat pustaka aktif</string>
     <string name="updates_not_checked">Belum diperiksa.</string>
     <string name="updates_checking">Memeriksa pembaruan…</string>
-    <string name="updates_current">Aplikasi sudah versi terbaru.</string>
-    <string name="updates_no_release">Tidak ada rilis resmi yang kompatibel.</string>
-    <string name="updates_not_installable">Rilis baru tersedia, tetapi tidak kompatibel dengan perangkat atau instalasi ini.</string>
+    <string name="updates_current">Anda sudah menggunakan versi terbaru.</string>
+    <string name="updates_no_release">Tidak ada rilis kompatibel yang telah dipublikasikan.</string>
+    <string name="updates_not_installable">Rilis yang lebih baru tersedia, tetapi tidak kompatibel dengan perangkat atau instalasi ini.</string>
     <string name="updates_failed">Tidak dapat memeriksa pembaruan. Periksa koneksi Anda lalu coba lagi.</string>
     <string name="updates_available">Pembaruan tersedia</string>
     <string name="updates_view_release">Lihat rilis</string>
@@ -369,14 +369,14 @@
     <string name="platform_package_choice_message" tools:ignore="MissingTranslation">Tautan ini mengarah ke paket Java ME. Apa yang ingin Anda lakukan?</string>
     <string name="platform_package_install" tools:ignore="MissingTranslation">Instal di JL-Mod Plus</string>
     <string name="platform_package_browser" tools:ignore="MissingTranslation">Buka di browser</string>
-    <string name="platform_package_unavailable" tools:ignore="MissingTranslation">Tidak ada aplikasi yang ditemukan untuk membuka tautan ini.</string>
+    <string name="platform_package_unavailable" tools:ignore="MissingTranslation">Tidak ada aplikasi yang dapat membuka tautan ini.</string>
     <string name="installer_running_update_warning" tools:ignore="MissingTranslation">Aplikasi ini sedang berjalan. Instalasi akan menghentikannya sebelum mengganti filenya. Progres yang belum disimpan mungkin hilang.</string>
     <string name="library_metadata_main_icon">Utama</string>
     <string name="library_metadata_follows_main">Menggunakan ikon utama</string>
     <string name="library_metadata_change">Ubah</string>
     <string name="library_metadata_remove_portrait">Hapus ikon 3:4</string>
-    <string name="library_metadata_discard_title">Buang perubahan?</string>
-    <string name="library_metadata_discard">Buang</string>
+    <string name="library_metadata_discard_title">Abaikan perubahan?</string>
+    <string name="library_metadata_discard">Abaikan</string>
     <string name="library_metadata_default_description">Deskripsi default</string>
     <string name="library_metadata_other_languages">Bahasa lainnya</string>
     <string name="library_metadata_add_language">+ Tambah bahasa</string>
@@ -398,7 +398,7 @@
     <string name="library_selection_action_collection" tools:ignore="MissingTranslation">Koleksi</string>
     <string name="library_selection_action_export" tools:ignore="MissingTranslation">Ekspor</string>
     <string name="library_selection_action_reinstall" tools:ignore="MissingTranslation">Instal ulang</string>
-    <string name="installer_select_companion_jar" tools:ignore="MissingTranslation">JAD ini merujuk ke file JAR terpisah. Pilih JAR yang cocok untuk melanjutkan. Penyedia file eksternal tidak mengizinkan akses ke file di sebelahnya.</string>
+    <string name="installer_select_companion_jar" tools:ignore="MissingTranslation">JAD ini merujuk ke file JAR terpisah. Pilih JAR yang cocok untuk melanjutkan. Penyedia file eksternal tidak mengizinkan akses ke file lain di folder yang sama.</string>
     <string name="installer_select_jar" tools:ignore="MissingTranslation">Pilih JAR</string>
     <string name="installer_wrong_companion_jar" tools:ignore="MissingTranslation">JAR ini tidak cocok dengan JAD yang dipilih. Pilih JAR yang cocok agar setelan JAD tetap dipertahankan.</string>
     <string name="installer_choose_another_jar" tools:ignore="MissingTranslation">Pilih JAR lain</string>
@@ -413,7 +413,7 @@
     <string name="library_details_title" tools:ignore="MissingTranslation">Detail MIDlet</string>
     <string name="library_details_description" tools:ignore="MissingTranslation">Deskripsi</string>
     <string name="library_details_play_stats" tools:ignore="MissingTranslation">Statistik bermain</string>
-    <string name="library_details_launches" tools:ignore="MissingTranslation">Jumlah dibuka</string>
+    <string name="library_details_launches" tools:ignore="MissingTranslation">Jumlah peluncuran</string>
     <string name="library_details_total_time" tools:ignore="MissingTranslation">Total waktu</string>
     <string name="library_details_last_played" tools:ignore="MissingTranslation">Terakhir dimainkan</string>
     <string name="library_details_library_info" tools:ignore="MissingTranslation">Informasi pustaka</string>
@@ -431,10 +431,10 @@
     <string name="library_details_version" tools:ignore="MissingTranslation">Versi</string>
     <string name="library_details_version_value" tools:ignore="MissingTranslation">Versi <xliff:g id="version" example="2.1.0">%1$s</xliff:g></string>
     <string name="library_details_original_description" tools:ignore="MissingTranslation">Deskripsi asli</string>
-    <string name="library_details_permissions" tools:ignore="MissingTranslation">Izin yang dideklarasikan</string>
+    <string name="library_details_permissions" tools:ignore="MissingTranslation">Izin yang tercantum</string>
     <string name="library_details_required" tools:ignore="MissingTranslation">Wajib</string>
     <string name="library_details_optional" tools:ignore="MissingTranslation">Opsional</string>
-    <string name="library_details_no_permissions" tools:ignore="MissingTranslation">Tidak ada izin yang dideklarasikan</string>
+    <string name="library_details_no_permissions" tools:ignore="MissingTranslation">Tidak ada izin yang tercantum</string>
     <string name="library_details_descriptor_attributes" tools:ignore="MissingTranslation">Atribut deskriptor</string>
     <string name="library_details_unavailable" tools:ignore="MissingTranslation">Tidak tersedia</string>
     <string name="library_details_action" tools:ignore="MissingTranslation">Detail</string>

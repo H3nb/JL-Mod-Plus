@@ -21,8 +21,8 @@
     <string name="memory_editor_no_results">Tidak ada hasil</string>
     <string name="memory_editor_no_watch">Daftar pantau kosong</string>
     <string name="memory_editor_unsupported">Editor Memori tidak tersedia untuk runtime ini.</string>
-    <string name="memory_editor_engine_unavailable">Mesin Editor Memori tidak tersedia.</string>
-    <string name="memory_editor_engine_reconnecting">Editor Memori menghubungkan ulang…</string>
+    <string name="memory_editor_engine_unavailable">Layanan Editor Memori tidak tersedia.</string>
+    <string name="memory_editor_engine_reconnecting">Menyambungkan ulang Editor Memori…</string>
     <string name="memory_editor_refresh">Muat ulang</string>
     <string name="memory_editor_undo">Urungkan pemindaian</string>
     <string name="memory_variables_tab">Tersimpan</string>
@@ -244,7 +244,7 @@
     <string name="memory_scripts_empty_hint" tools:ignore="MissingTranslation">Buat skrip untuk mengedit atau membekukan nilai saat bermain.</string>
     <string name="memory_builder_limits" tools:ignore="MissingTranslation">Batas (opsional)</string>
     <string name="memory_editor_selection_limit">Pilih maksimal %1$d nilai.</string>
-    <string name="memory_saved_storage_unavailable">Tidak dapat mengakses item tersimpan.</string>
+    <string name="memory_saved_storage_unavailable">Tidak dapat mengakses item yang tersimpan.</string>
     <string name="memory_bookmark_renamed">Nama penanda diubah</string>
     <string name="memory_editor_memory_unavailable">Memori MIDlet tidak tersedia.</string>
     <string name="memory_bookmark_added">Penanda ditambahkan</string>
@@ -252,7 +252,7 @@
     <string name="memory_bookmarks_removed">Dihapus dari Tersimpan</string>
     <string name="memory_freeze_enabled">Pembekuan aktif</string>
     <string name="memory_freeze_unavailable">Tidak dapat mengaktifkan pembekuan.</string>
-    <string name="memory_list_session_only_failed">Tidak dapat mempertahankan item ini hanya untuk sesi saat ini.</string>
+    <string name="memory_list_session_only_failed">Tidak dapat menyimpan item ini hanya untuk sesi saat ini.</string>
     <string name="memory_list_kept_unlinked">Disimpan untuk peluncuran berikutnya, tetapi tidak dapat ditautkan ke sesi saat ini.</string>
     <string name="memory_list_removal_unavailable">Tidak dapat menghapus item saat koneksi terputus. Coba lagi.</string>
     <string name="memory_list_watch_removed">Pelacakan sesi dihentikan</string>
