@@ -165,7 +165,7 @@
     <string name="effect_bloom_desc">Aggiunge un bagliore morbido attorno alle aree luminose dell’immagine.</string>
     <string name="effect_crt_classic">CRT Classico</string>
     <string name="effect_crt_classic_desc">Imita un televisore CRT con scanline e trama RGB.</string>
-    <string name="effect_crt_beam">Ampiezza fascio</string>
+    <string name="effect_crt_beam">Sottigliezza del fascio</string>
     <string name="effect_brightness">Luminosità</string>
     <string name="effect_contrast">Contrasto</string>
     <string name="effect_saturation">Saturazione</string>

@@ -165,7 +165,7 @@
     <string name="effect_bloom_desc">Erzeugt ein weiches Leuchten um helle Bildbereiche.</string>
     <string name="effect_crt_classic">CRT Classic</string>
     <string name="effect_crt_classic_desc">Imitiert einen Röhrenfernseher mit Scanlines und RGB-Muster.</string>
-    <string name="effect_crt_beam">Strahlschärfe</string>
+    <string name="effect_crt_beam">Strahlverengung</string>
     <string name="effect_brightness">Helligkeit</string>
     <string name="effect_contrast">Kontrast</string>
     <string name="effect_saturation">Sättigung</string>
@@ -184,7 +184,7 @@
     <string name="effect_lcd_brightness">LCD-Helligkeit</string>
     <string name="effect_scanlines">Scanlines Lite</string>
     <string name="effect_scanlines_desc">Fügt dezente horizontale Linien wie bei einem CRT-Bildschirm hinzu.</string>
-    <string name="effect_line_width">Linienbreite</string>
+    <string name="effect_line_width">Linienverengung</string>
     <string name="effect_gamma">Gamma</string>
     <string name="effect_temperature">Farbtemperatur</string>
     <string name="effect_tint">Farbton</string>

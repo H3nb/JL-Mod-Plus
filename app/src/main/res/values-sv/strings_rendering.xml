@@ -165,7 +165,7 @@
     <string name="effect_bloom_desc">Lägger till ett mjukt sken runt ljusa delar av bilden.</string>
     <string name="effect_crt_classic">Klassisk CRT</string>
     <string name="effect_crt_classic_desc">Efterliknar en CRT-TV med skanningslinjer och RGB-mönster.</string>
-    <string name="effect_crt_beam">Strålbredd</string>
+    <string name="effect_crt_beam">Strålens smalhet</string>
     <string name="effect_brightness">Ljusstyrka</string>
     <string name="effect_contrast">Kontrast</string>
     <string name="effect_saturation">Mättnad</string>

@@ -165,7 +165,7 @@
     <string name="effect_bloom_desc">Přidá jemnou záři kolem světlých částí obrazu.</string>
     <string name="effect_crt_classic">Klasické CRT</string>
     <string name="effect_crt_classic_desc">Napodobuje CRT televizor se řádkováním a maskou RGB.</string>
-    <string name="effect_crt_beam">Úzkost paprsku</string>
+    <string name="effect_crt_beam">Zúžení paprsku</string>
     <string name="effect_brightness">Jas</string>
     <string name="effect_contrast">Kontrast</string>
     <string name="effect_saturation">Sytost</string>
@@ -184,7 +184,7 @@
     <string name="effect_lcd_brightness">Jas LCD</string>
     <string name="effect_scanlines">Jemné řádkování</string>
     <string name="effect_scanlines_desc">Přidá nenápadné vodorovné linky jako na CRT displeji.</string>
-    <string name="effect_line_width">Úzkost linek</string>
+    <string name="effect_line_width">Zúžení čar</string>
     <string name="effect_gamma">Gama</string>
     <string name="effect_temperature">Teplota barev</string>
     <string name="effect_tint">Odstín</string>

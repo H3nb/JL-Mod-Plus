@@ -165,7 +165,7 @@
     <string name="effect_bloom_desc">Dodaje delikatną poświatę wokół jasnych obszarów obrazu.</string>
     <string name="effect_crt_classic">Klasyczny CRT</string>
     <string name="effect_crt_classic_desc">Imituje telewizor CRT z liniami skanowania i wzorem RGB.</string>
-    <string name="effect_crt_beam">Szerokość wiązki</string>
+    <string name="effect_crt_beam">Zwężenie wiązki</string>
     <string name="effect_brightness">Jasność</string>
     <string name="effect_contrast">Kontrast</string>
     <string name="effect_saturation">Nasycenie</string>

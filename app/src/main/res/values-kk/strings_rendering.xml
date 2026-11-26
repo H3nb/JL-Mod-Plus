@@ -165,7 +165,7 @@
     <string name="effect_bloom_desc">Кескіннің жарық бөліктерінің айналасына жұмсақ жарқырау қосады.</string>
     <string name="effect_crt_classic">Классикалық CRT</string>
     <string name="effect_crt_classic_desc">Сканерлеу сызықтары мен RGB өрнегі бар CRT теледидарын имитациялайды.</string>
-    <string name="effect_crt_beam">Сәуле ені</string>
+    <string name="effect_crt_beam">Сәуленің жіңішкелігі</string>
     <string name="effect_brightness">Жарықтық</string>
     <string name="effect_contrast">Контраст</string>
     <string name="effect_saturation">Қанықтық</string>

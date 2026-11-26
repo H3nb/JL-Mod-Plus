@@ -6,13 +6,13 @@
     <string name="layout_edit_finish">Selesai mengedit</string>
     <string name="layout_edit_done">Selesai</string>
     <string name="layout_editor_grid_size">Ukuran kisi</string>
-    <string name="layout_editor_grid_coarse">Kasar (16)</string>
+    <string name="layout_editor_grid_coarse">Renggang (16)</string>
     <string name="layout_editor_grid_normal">Normal (24)</string>
-    <string name="layout_editor_grid_fine">Halus (32)</string>
+    <string name="layout_editor_grid_fine">Rapat (32)</string>
     <string name="layout_editor_snap_on">Posisikan otomatis aktif</string>
     <string name="layout_editor_snap_off">Posisikan otomatis nonaktif</string>
     <string name="layout_edit_save_changes">Simpan perubahan pada kontrol virtual?</string>
-    <string name="layout_edit_discard">Buang</string>
+    <string name="layout_edit_discard">Abaikan perubahan</string>
     <string name="layout_edit_continue">Lanjutkan mengedit</string>
     <string name="layout_edit_finished">Pengeditan kontrol virtual selesai.</string>
     <string name="virtual_controls_save_failed">Tidak dapat menyimpan kontrol virtual. Coba lagi.</string>
@@ -45,7 +45,7 @@
     <string name="control_skin_name" tools:ignore="MissingTranslation">Nama set</string>
     <string name="control_skin_icon" tools:ignore="MissingTranslation">Ikon saja</string>
     <string name="control_skin_full" tools:ignore="MissingTranslation">Tombol penuh</string>
-    <string name="control_skin_normal_image" tools:ignore="MissingTranslation">Gambar normal</string>
+    <string name="control_skin_normal_image" tools:ignore="MissingTranslation">Gambar saat tidak ditekan</string>
     <string name="control_skin_pressed_image" tools:ignore="MissingTranslation">Gambar saat ditekan</string>
     <string name="control_skin_delete_warning" tools:ignore="MissingTranslation">Hapus set skin global ini beserta semua gambarnya? MIDlet yang menggunakannya akan kembali menggunakan kontrol bawaan.</string>
     <string name="control_skin_invalid_image" tools:ignore="MissingTranslation">Pilih gambar PNG, WebP, atau SVG.</string>
@@ -61,7 +61,7 @@
     <string name="control_skin_numeric" tools:ignore="MissingTranslation">Keypad</string>
     <string name="control_skin_navigation" tools:ignore="MissingTranslation">Navigasi</string>
     <string name="control_skin_other" tools:ignore="MissingTranslation">Tombol lainnya</string>
-    <string name="control_skin_pressed_requires_normal" tools:ignore="MissingTranslation">Tambahkan gambar normal terlebih dahulu.</string>
+    <string name="control_skin_pressed_requires_normal" tools:ignore="MissingTranslation">Tambahkan gambar untuk kondisi tidak ditekan terlebih dahulu.</string>
     <string name="control_skin_edit_named" tools:ignore="MissingTranslation">Tombol <xliff:g id="button_label" example="5">%1$s</xliff:g></string>
     <string name="control_skin_change_image" tools:ignore="MissingTranslation">Ubah</string>
     <string name="control_skin_pick_image" tools:ignore="MissingTranslation">Pilih gambar</string>
@@ -86,19 +86,19 @@
     <string name="control_skin_custom_preview" tools:ignore="MissingTranslation">Disesuaikan</string>
     <string name="layout_editor_group_on">Ubah ukuran bersama</string>
     <string name="layout_editor_group_off">Ubah ukuran satu per satu</string>
-    <string name="layout_editor_snap_grid">Tempelkan ke kisi</string>
-    <string name="layout_editor_snap_controls">Tempelkan ke tombol</string>
-    <string name="layout_editor_snap_resize">Tempelkan saat mengubah ukuran</string>
-    <string name="layout_editor_snap_resize_on">Tempel ukuran: Aktif</string>
-    <string name="layout_editor_snap_resize_off">Tempel ukuran: Nonaktif</string>
-    <string name="layout_editor_snap_grid_on">Tempel kisi: Aktif</string>
-    <string name="layout_editor_snap_grid_off">Tempel kisi: Nonaktif</string>
-    <string name="layout_editor_snap_controls_on">Tempel tombol: Aktif</string>
-    <string name="layout_editor_snap_controls_off">Tempel tombol: Nonaktif</string>
+    <string name="layout_editor_snap_grid">Sejajarkan ke kisi</string>
+    <string name="layout_editor_snap_controls">Sejajarkan ke tombol</string>
+    <string name="layout_editor_snap_resize">Sejajarkan saat mengubah ukuran</string>
+    <string name="layout_editor_snap_resize_on">Penyelarasan ukuran: aktif</string>
+    <string name="layout_editor_snap_resize_off">Penyelarasan ukuran: nonaktif</string>
+    <string name="layout_editor_snap_grid_on">Penyelarasan kisi: aktif</string>
+    <string name="layout_editor_snap_grid_off">Penyelarasan kisi: nonaktif</string>
+    <string name="layout_editor_snap_controls_on">Penyelarasan tombol: aktif</string>
+    <string name="layout_editor_snap_controls_off">Penyelarasan tombol: nonaktif</string>
     <string name="layout_editor_guide_gestures">Gestur</string>
     <string name="layout_editor_guide_move">Seret kontrol untuk memindahkannya.</string>
     <string name="layout_editor_guide_resize">Gunakan dua jari untuk mengubah ukuran. Geser secara horizontal atau vertikal untuk mengubah lebar atau tinggi.</string>
     <string name="layout_editor_guide_tools">Alat editor</string>
-    <string name="layout_editor_guide_done">Ketuk Selesai untuk menyimpan, membuang, atau melanjutkan pengeditan.</string>
+    <string name="layout_editor_guide_done">Ketuk Selesai untuk menyimpan atau mengabaikan perubahan, atau melanjutkan pengeditan.</string>
     <string name="layout_editor_guide_start">Mulai mengedit</string>
 </resources>
