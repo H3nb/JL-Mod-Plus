@@ -2,9 +2,9 @@
 <!-- Shared UI actions, generic labels, dialogs, and About screen. -->
 <resources xmlns:xliff="urn:oasis:names:tc:xliff:document:1.2">
     <string name="about">حول التطبيق</string>
-    <string name="about_message">شغّل التطبيقات والألعاب الكلاسيكية، ونظّم ملفات MIDlet في المكتبة، وخصّص عناصر التحكم والعرض والصوت والأداء. تطبيق JL-Mod Plus مجاني ومفتوح المصدر.</string>
+    <string name="about_message">شغّل التطبيقات والألعاب الكلاسيكية، ونظّم تطبيقات MIDlet في مكتبتك، وخصّص عناصر التحكم والعرض والصوت والأداء. تطبيق JL-Mod Plus مجاني ومفتوح المصدر.</string>
     <string name="about_subtitle">محاكي Java ME لنظام Android</string>
-    <string name="about_compatibility">يعتمد التوافق على ملف MIDlet والجهاز وواجهات Java ME المدعومة. قد تعمل بعض التطبيقات بشكل مختلف عمّا كانت عليه في هواتفها الأصلية.</string>
+    <string name="about_compatibility">يعتمد التوافق على تطبيق MIDlet والجهاز وواجهات Java ME المدعومة. قد تعمل بعض التطبيقات بشكل مختلف عمّا كانت عليه على أجهزتها الأصلية.</string>
     <string name="about_lineage_title">أصل المشروع</string>
     <string name="about_build_title">معلومات الإصدار</string>
     <string name="about_version_label">الإصدار</string>

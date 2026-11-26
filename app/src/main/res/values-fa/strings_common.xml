@@ -4,7 +4,7 @@
     <string name="about">درباره برنامه</string>
     <string name="about_message">برنامه‌ها و بازی‌های کلاسیک را اجرا کنید، MIDletها را در کتابخانه خود سازمان‌دهی کنید و کنترل‌ها، نمایشگر، صدا و عملکرد را سفارشی‌سازی کنید. JL-Mod Plus رایگان و متن‌باز است.</string>
     <string name="about_subtitle">شبیه‌ساز Java ME برای Android</string>
-    <string name="about_compatibility">سازگاری به MIDlet، دستگاه و APIهای پشتیبانی‌شده Java ME بستگی دارد. برخی برنامه‌ها ممکن است متفاوت از عملکردشان روی گوشی‌های اصلی رفتار کنند.</string>
+    <string name="about_compatibility">سازگاری به MIDlet، دستگاه و APIهای پشتیبانی‌شده Java ME بستگی دارد. ممکن است برخی برنامه‌ها دقیقاً مانند زمانی که روی دستگاه اصلی اجرا می‌شدند، عمل نکنند.</string>
     <string name="about_lineage_title">خاستگاه پروژه</string>
     <string name="about_build_title">اطلاعات ساخت</string>
     <string name="about_version_label">نسخه</string>

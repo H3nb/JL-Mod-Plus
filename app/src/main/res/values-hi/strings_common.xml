@@ -4,7 +4,7 @@
     <string name="about">जानकारी</string>
     <string name="about_message">क्लासिक ऐप्स और गेम चलाएं, अपनी लाइब्रेरी में MIDlets व्यवस्थित करें और कंट्रोल, डिस्प्ले, ऑडियो व परफ़ॉर्मेंस कस्टमाइज़ करें। JL-Mod Plus निःशुल्क और ओपन सोर्स है।</string>
     <string name="about_subtitle">Android के लिए Java ME एमुलेटर</string>
-    <string name="about_compatibility">कम्पैटिबिलिटी MIDlet, डिवाइस और समर्थित Java ME APIs पर निर्भर करती है। कुछ ऐप्स अपने मूल फ़ोन की तुलना में अलग व्यवहार कर सकते हैं।</string>
+    <string name="about_compatibility">कम्पैटिबिलिटी MIDlet, डिवाइस और समर्थित Java ME API पर निर्भर करती है। हो सकता है कि कुछ ऐप्स अपने मूल डिवाइस पर जिस तरह काम करते थे, उस तरह काम न करें।</string>
     <string name="about_lineage_title">प्रोजेक्ट की उत्पत्ति</string>
     <string name="about_build_title">बिल्ड जानकारी</string>
     <string name="about_version_label">संस्करण</string>

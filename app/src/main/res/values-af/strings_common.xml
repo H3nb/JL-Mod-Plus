@@ -4,7 +4,7 @@
     <string name="about">Meer oor</string>
     <string name="about_message">Laat loop klassieke programme en speletjies, organiseer MIDlets in jou biblioteek, en pas kontroles, skerm, oudio en werkverrigting aan. JL-Mod Plus is gratis en oopbron.</string>
     <string name="about_subtitle">Java ME-emulator vir Android</string>
-    <string name="about_compatibility">Versoenbaarheid hang af van die MIDlet, toestel en gesteunde Java ME-API’s. Sommige programme kan anders optree as op hul oorspronklike fone.</string>
+    <string name="about_compatibility">Versoenbaarheid hang af van die MIDlet, toestel en gesteunde Java ME-API’s. Sommige programme kan anders werk as op die toestelle waarvoor hulle oorspronklik bedoel was.</string>
     <string name="about_lineage_title">Oorsprong van die projek</string>
     <string name="about_build_title">Bou-inligting</string>
     <string name="about_version_label">Weergawe</string>

@@ -4,7 +4,7 @@
     <string name="about">Πληροφορίες</string>
     <string name="about_message">Εκτελέστε κλασικές εφαρμογές και παιχνίδια, οργανώστε τα MIDlet στη βιβλιοθήκη σας και προσαρμόστε τα χειριστήρια, την οθόνη, τον ήχο και την απόδοση. Το JL-Mod Plus είναι δωρεάν και ανοιχτού κώδικα.</string>
     <string name="about_subtitle">Εξομοιωτής Java ME για Android</string>
-    <string name="about_compatibility">Η συμβατότητα εξαρτάται από το MIDlet, τη συσκευή και τα υποστηριζόμενα API της Java ME. Ορισμένες εφαρμογές ενδέχεται να συμπεριφέρονται διαφορετικά από ό,τι στα αρχικά τους τηλέφωνα.</string>
+    <string name="about_compatibility">Η συμβατότητα εξαρτάται από το MIDlet, τη συσκευή και τα υποστηριζόμενα API της Java ME. Ορισμένες εφαρμογές ενδέχεται να λειτουργούν διαφορετικά από ό,τι στις αρχικές συσκευές.</string>
     <string name="about_lineage_title">Προέλευση έργου</string>
     <string name="about_build_title">Πληροφορίες έκδοσης</string>
     <string name="about_version_label">Έκδοση</string>
@@ -14,7 +14,7 @@
     <string name="about_github_link_copied">Δεν βρέθηκε πρόγραμμα περιήγησης. Ο σύνδεσμος GitHub αντιγράφηκε στο πρόχειρο.</string>
     <string name="about_github_browser_unavailable">Δεν βρέθηκε πρόγραμμα περιήγησης για το άνοιγμα του GitHub.</string>
     <string name="about_lineage">Το JL-Mod Plus είναι μια ανεξάρτητη διακλάδωση του JL-Mod από τον woesss (Yury Kharchenko). Το JL-Mod βασίζεται στο J2ME Loader του Nikita Shakarun, το οποίο προέρχεται από το J2meLoader της NaikSoftware.</string>
-    <string name="about_evolution">Το JL-Mod Plus επεκτείνει αυτή τη βάση με σύγχρονη διεπαφή, πιο ικανή βιβλιοθήκη MIDlet, νέες δυνατότητες και υποστήριξη για νεότερες εκδόσεις Android.</string>
+    <string name="about_evolution">Το JL-Mod Plus αξιοποιεί αυτή τη βάση και προσφέρει σύγχρονη διεπαφή, πιο ολοκληρωμένη βιβλιοθήκη MIDlet, νέες δυνατότητες και υποστήριξη για νεότερες εκδόσεις Android.</string>
     <string name="action_back">Πίσω</string>
     <string name="action_settings">Ρυθμίσεις</string>
     <string name="CANCEL_CMD">Ακύρωση</string>

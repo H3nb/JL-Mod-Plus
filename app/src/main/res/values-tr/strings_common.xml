@@ -4,7 +4,7 @@
     <string name="about">Hakkında</string>
     <string name="about_message">Klasik uygulamaları ve oyunları çalıştırın, MIDlet’leri kitaplığınızda düzenleyin; kontrolleri, ekranı, sesi ve performansı özelleştirin. JL-Mod Plus ücretsiz ve açık kaynaklıdır.</string>
     <string name="about_subtitle">Android için Java ME öykünücüsü</string>
-    <string name="about_compatibility">Uyumluluk MIDlet’e, cihaza ve desteklenen Java ME API’lerine bağlıdır. Bazı uygulamalar orijinal telefonlarındakinden farklı davranabilir.</string>
+    <string name="about_compatibility">Uyumluluk MIDlet’e, cihaza ve desteklenen Java ME API’lerine bağlıdır. Bazı uygulamalar orijinal cihazlarındaki gibi çalışmayabilir.</string>
     <string name="about_lineage_title">Proje kökeni</string>
     <string name="about_build_title">Derleme bilgileri</string>
     <string name="about_version_label">Sürüm</string>

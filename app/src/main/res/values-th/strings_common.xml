@@ -4,7 +4,7 @@
     <string name="about">เกี่ยวกับ</string>
     <string name="about_message">เรียกใช้แอปและเกมคลาสสิก จัดระเบียบ MIDlet ในคลังแอปของคุณ และปรับแต่งการควบคุม การแสดงผล เสียง และประสิทธิภาพ JL-Mod Plus เป็นซอฟต์แวร์ฟรีและโอเพนซอร์ส</string>
     <string name="about_subtitle">โปรแกรมจำลอง Java ME สำหรับ Android</string>
-    <string name="about_compatibility">ความเข้ากันได้ขึ้นอยู่กับ MIDlet อุปกรณ์ และ Java ME API ที่รองรับ แอปบางตัวอาจทำงานแตกต่างจากบนโทรศัพท์รุ่นดั้งเดิม</string>
+    <string name="about_compatibility">ความเข้ากันได้ขึ้นอยู่กับ MIDlet อุปกรณ์ และ Java ME API ที่รองรับ แอปบางตัวอาจทำงานแตกต่างจากตอนที่ใช้งานบนอุปกรณ์เดิม</string>
     <string name="about_lineage_title">ที่มาของโปรเจกต์</string>
     <string name="about_build_title">ข้อมูลบิลด์</string>
     <string name="about_version_label">เวอร์ชัน</string>

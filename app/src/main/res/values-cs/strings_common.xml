@@ -4,7 +4,7 @@
     <string name="about">O aplikaci</string>
     <string name="about_message">Spouštějte klasické aplikace a hry, organizujte MIDlety v knihovně a přizpůsobujte si ovládání, zobrazení, zvuk i výkon. JL-Mod Plus je bezplatná aplikace s otevřeným zdrojovým kódem.</string>
     <string name="about_subtitle">Emulátor Java ME pro Android</string>
-    <string name="about_compatibility">Kompatibilita závisí na MIDletu, zařízení a podporovaných rozhraních Java ME API. Některé aplikace se mohou chovat jinak než na původních telefonech.</string>
+    <string name="about_compatibility">Kompatibilita závisí na MIDletu, zařízení a podporovaných rozhraních Java ME API. Některé aplikace se mohou chovat jinak než na původních zařízeních.</string>
     <string name="about_lineage_title">Původ projektu</string>
     <string name="about_build_title">Informace o sestavení</string>
     <string name="about_version_label">Verze</string>
@@ -14,7 +14,7 @@
     <string name="about_github_link_copied">Nebyl nalezen žádný prohlížeč. Odkaz na GitHub byl zkopírován do schránky.</string>
     <string name="about_github_browser_unavailable">Nebyl nalezen žádný prohlížeč pro otevření GitHubu.</string>
     <string name="about_lineage">JL-Mod Plus je nezávislý fork aplikace JL-Mod od woessse (Yury Kharchenko). JL-Mod vychází z aplikace J2ME Loader od Nikity Shakaruna, která navazuje na J2meLoader od NaikSoftware.</string>
-    <string name="about_evolution">JL-Mod Plus na tomto základu staví moderní rozhraní, schopnější knihovnu MIDletů, nové funkce a podporu novějších verzí systému Android.</string>
+    <string name="about_evolution">JL-Mod Plus na tomto základu staví moderní rozhraní, propracovanější knihovnu MIDletů, nové funkce a podporu novějších verzí systému Android.</string>
     <string name="action_back">Zpět</string>
     <string name="action_settings">Nastavení</string>
     <string name="CANCEL_CMD">Zrušit</string>

@@ -4,7 +4,7 @@
     <string name="about">ବିଷୟରେ</string>
     <string name="about_message">କ୍ଲାସିକ୍ ଆପ୍ ଓ ଗେମ୍ ଚଲାନ୍ତୁ, ଆପଣଙ୍କ ଲାଇବ୍ରେରୀରେ MIDlet ଗୁଡ଼ିକୁ ସଜାନ୍ତୁ ଏବଂ କଣ୍ଟ୍ରୋଲ୍, ଡିସପ୍ଲେ, ଅଡିଓ ଓ ପରଫରମାନ୍ସ କଷ୍ଟମାଇଜ୍ କରନ୍ତୁ। JL-Mod Plus ମାଗଣା ଏବଂ ଓପନ୍ ସୋର୍ସ ଅଟେ।</string>
     <string name="about_subtitle">Android ପାଇଁ Java ME ଏମୁଲେଟର୍</string>
-    <string name="about_compatibility">ସୁସଙ୍ଗତତା MIDlet, ଡିଭାଇସ୍ ଏବଂ ସମର୍ଥିତ Java ME API ଉପରେ ନିର୍ଭର କରେ। କିଛି ଆପ୍ ସେଗୁଡ଼ିକର ମୂଳ ଫୋନ୍ ତୁଳନାରେ ଭିନ୍ନ ଭାବେ କାମ କରିପାରେ।</string>
+    <string name="about_compatibility">ସୁସଙ୍ଗତତା MIDlet, ଡିଭାଇସ୍ ଏବଂ ସମର୍ଥିତ Java ME API ଉପରେ ନିର୍ଭର କରେ। କିଛି ଆପ୍ ମୂଳ ଡିଭାଇସ୍‌ରେ ଯେପରି କାମ କରୁଥିଲା, ସେପରି କାମ ନ କରିପାରେ।</string>
     <string name="about_lineage_title">ପ୍ରୋଜେକ୍ଟର ଉତ୍ପତ୍ତି</string>
     <string name="about_build_title">ବିଲ୍ଡ୍ ସୂଚନା</string>
     <string name="about_version_label">ଭର୍ସନ୍</string>

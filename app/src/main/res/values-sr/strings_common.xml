@@ -4,7 +4,7 @@
     <string name="about">О апликацији</string>
     <string name="about_message">Покрећите класичне апликације и игре, организујте MIDlet-е у библиотеци и прилагодите контроле, приказ, звук и перформансе. JL-Mod Plus је бесплатан софтвер отвореног кода.</string>
     <string name="about_subtitle">Java ME емулатор за Android</string>
-    <string name="about_compatibility">Компатибилност зависи од MIDlet-а, уређаја и подржаних Java ME API-ја. Неке апликације се могу понашати другачије него на оригиналним телефонима.</string>
+    <string name="about_compatibility">Компатибилност зависи од MIDlet-а, уређаја и подржаних Java ME API-ја. Неке апликације могу да раде другачије него на оригиналним уређајима.</string>
     <string name="about_lineage_title">Порекло пројекта</string>
     <string name="about_build_title">Информације о верзији</string>
     <string name="about_version_label">Верзија</string>

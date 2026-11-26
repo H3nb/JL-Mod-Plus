@@ -4,7 +4,7 @@
     <string name="about">Névjegy</string>
     <string name="about_message">Futtasson klasszikus alkalmazásokat és játékokat, rendezze a MIDlet-eket a könyvtárában, és szabja testre a vezérlőket, a kijelzőt, a hangot és a teljesítményt. A JL-Mod Plus ingyenes és nyílt forráskódú.</string>
     <string name="about_subtitle">Java ME emulátor Androidra</string>
-    <string name="about_compatibility">A kompatibilitás a MIDlet-től, az eszköztől és a támogatott Java ME API-któl függ. Egyes alkalmazások eltérően működhetnek az eredeti telefonokon tapasztaltakhoz képest.</string>
+    <string name="about_compatibility">A kompatibilitás a MIDlettől, az eszköztől és a támogatott Java ME API-któl függ. Egyes alkalmazások másképp működhetnek, mint az eredeti eszközökön.</string>
     <string name="about_lineage_title">A projekt eredete</string>
     <string name="about_build_title">Buildinformációk</string>
     <string name="about_version_label">Verzió</string>

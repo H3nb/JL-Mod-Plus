@@ -4,7 +4,7 @@
     <string name="about">Despre</string>
     <string name="about_message">Rulați aplicații și jocuri clasice, organizați MIDlet-urile în bibliotecă și personalizați controalele, afișajul, sunetul și performanța. JL-Mod Plus este gratuit și open source.</string>
     <string name="about_subtitle">Emulator Java ME pentru Android</string>
-    <string name="about_compatibility">Compatibilitatea depinde de MIDlet, de dispozitiv și de API-urile Java ME acceptate. Unele aplicații se pot comporta diferit față de telefoanele originale.</string>
+    <string name="about_compatibility">Compatibilitatea depinde de MIDlet, de dispozitiv și de API-urile Java ME acceptate. Unele aplicații pot funcționa diferit față de modul în care funcționau pe dispozitivele originale.</string>
     <string name="about_lineage_title">Originea proiectului</string>
     <string name="about_build_title">Informații despre versiune</string>
     <string name="about_version_label">Versiune</string>
@@ -14,7 +14,7 @@
     <string name="about_github_link_copied">Nu a fost găsit niciun browser. Linkul GitHub a fost copiat în clipboard.</string>
     <string name="about_github_browser_unavailable">Nu a fost găsit niciun browser pentru a deschide GitHub.</string>
     <string name="about_lineage">JL-Mod Plus este o ramificare independentă a JL-Mod realizat de woesss (Yury Kharchenko). JL-Mod se bazează pe J2ME Loader de Nikita Shakarun, care provine din J2meLoader de la NaikSoftware.</string>
-    <string name="about_evolution">JL-Mod Plus continuă această bază cu o interfață modernă, o bibliotecă de MIDlet-uri mai capabilă, funcții noi și compatibilitate cu versiunile mai noi de Android.</string>
+    <string name="about_evolution">JL-Mod Plus dezvoltă această bază cu o interfață modernă, o bibliotecă de MIDlet-uri mai complexă, funcții noi și compatibilitate cu versiunile mai noi de Android.</string>
     <string name="action_back">Înapoi</string>
     <string name="action_settings">Setări</string>
     <string name="CANCEL_CMD">Anulează</string>

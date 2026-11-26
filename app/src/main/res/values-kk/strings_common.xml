@@ -4,7 +4,7 @@
     <string name="about">Қолданба туралы</string>
     <string name="about_message">Классикалық қолданбалар мен ойындарды іске қосыңыз, кітапханаңыздағы MIDlet-терді реттеңіз және басқару, экран, дыбыс пен өнімділікті теңшеңіз. JL-Mod Plus — тегін әрі ашық бастапқы коды бар жоба.</string>
     <string name="about_subtitle">Android жүйесіне арналған Java ME эмуляторы</string>
-    <string name="about_compatibility">Үйлесімділік MIDlet-ке, құрылғыға және қолдау көрсетілетін Java ME API-ларына байланысты. Кейбір қолданбалар түпнұсқа телефондардағыдан өзгеше жұмыс істеуі мүмкін.</string>
+    <string name="about_compatibility">Үйлесімділік MIDlet-ке, құрылғыға және қолдау көрсетілетін Java ME API-ларына байланысты. Кейбір қолданбалар бастапқы құрылғылардағыдай жұмыс істемеуі мүмкін.</string>
     <string name="about_lineage_title">Жобаның шығу тегі</string>
     <string name="about_build_title">Құрастыру ақпараты</string>
     <string name="about_version_label">Нұсқа</string>

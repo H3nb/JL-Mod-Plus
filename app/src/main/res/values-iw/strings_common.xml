@@ -2,9 +2,9 @@
 <!-- Shared UI actions, generic labels, dialogs, and About screen. -->
 <resources xmlns:xliff="urn:oasis:names:tc:xliff:document:1.2">
     <string name="about">אודות</string>
-    <string name="about_message">הפעלת אפליקציות ומשחקים קלאסיים, ארגון קובצי MIDlet בספרייה והתאמה אישית של פקדים, תצוגה, שמע וביצועים. JL-Mod Plus היא תוכנה חינמית בקוד פתוח.</string>
+    <string name="about_message">אפשר להפעיל אפליקציות ומשחקים קלאסיים, לארגן יישומי MIDlet בספרייה ולהתאים אישית את הפקדים, התצוגה, השמע והביצועים. JL-Mod Plus היא אפליקציה חינמית בקוד פתוח.</string>
     <string name="about_subtitle">אמולטור Java ME עבור Android</string>
-    <string name="about_compatibility">התאימות תלויה ב-MIDlet, במכשיר ובממשקי Java ME API הנתמכים. חלק מהאפליקציות עשויות לפעול באופן שונה מאשר בטלפונים המקוריים שלהן.</string>
+    <string name="about_compatibility">התאימות תלויה ב-MIDlet, במכשיר ובממשקי Java ME API הנתמכים. חלק מהאפליקציות עשויות לפעול באופן שונה מאשר במכשירים המקוריים שלהן.</string>
     <string name="about_lineage_title">מקורות הפרויקט</string>
     <string name="about_build_title">פרטי גרסת הבנייה</string>
     <string name="about_version_label">גרסה</string>

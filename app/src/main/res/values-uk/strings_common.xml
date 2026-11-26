@@ -4,7 +4,7 @@
     <string name="about">Про додаток</string>
     <string name="about_message">Запускайте класичні додатки та ігри, упорядковуйте MIDlet у своїй бібліотеці й налаштовуйте керування, екран, звук і продуктивність. JL-Mod Plus — безкоштовний проєкт із відкритим кодом.</string>
     <string name="about_subtitle">Емулятор Java ME для Android</string>
-    <string name="about_compatibility">Сумісність залежить від MIDlet, пристрою та підтримуваних API Java ME. Деякі додатки можуть працювати інакше, ніж на оригінальних телефонах.</string>
+    <string name="about_compatibility">Сумісність залежить від MIDlet, пристрою та підтримуваних API Java ME. Деякі додатки можуть працювати інакше, ніж на оригінальних пристроях.</string>
     <string name="about_lineage_title">Походження проєкту</string>
     <string name="about_build_title">Інформація про збірку</string>
     <string name="about_version_label">Версія</string>

@@ -4,7 +4,7 @@
     <string name="about">Om</string>
     <string name="about_message">Kjør klassiske apper og spill, organiser MIDlets i biblioteket ditt, og tilpass kontroller, skjerm, lyd og ytelse. JL-Mod Plus er gratis og har åpen kildekode.</string>
     <string name="about_subtitle">Java ME-emulator for Android</string>
-    <string name="about_compatibility">Kompatibiliteten avhenger av MIDlet-en, enheten og støttede Java ME-API-er. Enkelte apper kan oppføre seg annerledes enn på de opprinnelige telefonene.</string>
+    <string name="about_compatibility">Kompatibiliteten avhenger av MIDlet-en, enheten og støttede Java ME-API-er. Enkelte apper kan fungere annerledes enn på de opprinnelige enhetene.</string>
     <string name="about_lineage_title">Prosjekthistorikk</string>
     <string name="about_build_title">Bygginformasjon</string>
     <string name="about_version_label">Versjon</string>

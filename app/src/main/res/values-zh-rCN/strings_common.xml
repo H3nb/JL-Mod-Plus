@@ -4,7 +4,7 @@
     <string name="about">关于</string>
     <string name="about_message">运行经典应用和游戏，在应用库中整理 MIDlet，并自定义按键、显示、音频与性能。JL-Mod Plus 是一款免费开源软件。</string>
     <string name="about_subtitle">适用于 Android 的 Java ME 模拟器</string>
-    <string name="about_compatibility">兼容性取决于具体 MIDlet、设备以及所支持的 Java ME API。部分应用的运行表现可能与原版手机有所不同。</string>
+    <string name="about_compatibility">兼容性取决于 MIDlet、设备以及所支持的 Java ME API。部分应用的运行表现可能与其在原始设备上的表现有所不同。</string>
     <string name="about_lineage_title">项目渊源</string>
     <string name="about_build_title">构建信息</string>
     <string name="about_version_label">版本</string>
