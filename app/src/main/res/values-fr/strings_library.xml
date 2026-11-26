@@ -167,13 +167,13 @@
     <string name="library_import_done">Pack d’application importé.</string>
     <string name="library_import_done_with_warning">Pack d’application importé avec des avertissements.</string>
     <string name="library_import_invalid_bundle">Le pack d’application sélectionné est non valide, endommagé ou non pris en charge. Choisissez un pack d’application JL-Mod Plus valide et réessayez.</string>
-    <string name="library_import_restore_existing">Cette application est déjà installée. Les paramètres et sauvegardes inclus remplaceront les données existantes ; les signets sont fusionnés, sauf si les paramètres sont également inclus.</string>
+    <string name="library_import_restore_existing">Cette application est déjà installée. Les paramètres et sauvegardes inclus remplaceront les données existantes. Dans les paquets récents, les signets sont fusionnés s’ils sont importés sans les paramètres, remplacés s’ils sont importés avec les paramètres et conservés s’ils ne sont pas inclus. La restauration des paramètres depuis un ancien paquet peut également remplacer les signets.</string>
     <string name="library_import_restore_failed">Application installée, mais impossible de restaurer les données du pack. Réessayer la restauration ?</string>
     <string name="library_play_stats_summary">Lancements : <xliff:g id="launch_count" example="12">%1$d</xliff:g> · Temps total : <xliff:g id="total_time" example="2h 15m">%2$s</xliff:g></string>
     <string name="library_share_chooser_title">Partager l’application</string>
     <string name="library_export_chooser_title">Exporter</string>
     <string name="library_export_progress">Exportation… <xliff:g id="completed" example="3">%1$d</xliff:g>/<xliff:g id="total" example="10">%2$d</xliff:g></string>
-    <string name="library_transfer_unavailable">Impossible de préparer l’exportation. Fermez tout MIDlet en cours d’exécution et réessayez.</string>
+    <string name="library_transfer_unavailable">Impossible d’exporter. Fermez les MIDlets sélectionnés qui sont en cours d’exécution, puis réessayez.</string>
     <string name="library_back">Retour à la bibliothèque</string>
     <string name="library_sort">Trier les applications</string>
     <string name="library_search_clear">Effacer la recherche</string>

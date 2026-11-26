@@ -161,13 +161,13 @@
     <string name="library_import_done">アプリバンドルをインポートしました。</string>
     <string name="library_import_done_with_warning">アプリバンドルをインポートしましたが、警告が発生しました。</string>
     <string name="library_import_invalid_bundle">選択したアプリバンドルは無効、破損、または非対応です。有効な JL-Mod Plus アプリバンドルを選択してもう一度お試しください。</string>
-    <string name="library_import_restore_existing">このアプリはすでにインストールされています。バンドルに含まれる設定とセーブデータは既存データを置き換えます。設定が含まれていない場合、ブックマークは統合されます。</string>
+    <string name="library_import_restore_existing">このアプリはすでにインストールされています。バンドルに含まれる設定とセーブデータは既存データを置き換えます。新しい形式のバンドルでは、ブックマークを設定なしでインポートすると統合され、設定と一緒にインポートすると置き換えられます。ブックマークが含まれていない場合は既存のものが保持されます。古いバンドルから設定を復元すると、ブックマークも置き換えられる場合があります。</string>
     <string name="library_import_restore_failed">アプリはインストールされましたが、バンドルデータを復元できませんでした。復元を再試行しますか？</string>
     <string name="library_play_stats_summary">起動回数: <xliff:g id="launch_count" example="12">%1$d</xliff:g> · 合計時間: <xliff:g id="total_time" example="2h 15m">%2$s</xliff:g></string>
     <string name="library_share_chooser_title">アプリを共有</string>
     <string name="library_export_chooser_title">エクスポート</string>
     <string name="library_export_progress">エクスポート中… <xliff:g id="completed" example="3">%1$d</xliff:g>/<xliff:g id="total" example="10">%2$d</xliff:g></string>
-    <string name="library_transfer_unavailable">エクスポートを準備できませんでした。実行中の MIDlet をすべて閉じてからもう一度お試しください。</string>
+    <string name="library_transfer_unavailable">エクスポートできませんでした。選択した MIDlet のうち実行中のものを終了してから、もう一度お試しください。</string>
     <string name="library_back">ライブラリに戻る</string>
     <string name="library_sort">アプリを並べ替え</string>
     <string name="library_search_clear">検索をクリア</string>

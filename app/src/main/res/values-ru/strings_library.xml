@@ -170,13 +170,13 @@
     <string name="library_import_done">Пакет приложения импортирован.</string>
     <string name="library_import_done_with_warning">Пакет приложения импортирован с предупреждениями.</string>
     <string name="library_import_invalid_bundle">Выбранный пакет приложения некорректен, повреждён или не поддерживается. Выберите корректный пакет приложения JL-Mod Plus и повторите попытку.</string>
-    <string name="library_import_restore_existing">Это приложение уже установлено. Включённые настройки и сохранения заменят существующие данные; закладки будут объединены, если не включены настройки.</string>
+    <string name="library_import_restore_existing">Это приложение уже установлено. Включённые в пакет настройки и сохранения заменят существующие данные. В пакетах нового формата закладки объединяются при импорте без настроек, заменяются при импорте с настройками и сохраняются, если их нет в пакете. Восстановление настроек из старых пакетов также может заменить закладки.</string>
     <string name="library_import_restore_failed">Приложение установлено, но восстановить данные из пакета не удалось. Повторить восстановление?</string>
     <string name="library_play_stats_summary">Запуски: <xliff:g id="launch_count" example="12">%1$d</xliff:g> · Всего времени: <xliff:g id="total_time" example="2h 15m">%2$s</xliff:g></string>
     <string name="library_share_chooser_title">Поделиться приложением</string>
     <string name="library_export_chooser_title">Экспорт</string>
     <string name="library_export_progress">Экспорт… <xliff:g id="completed" example="3">%1$d</xliff:g>/<xliff:g id="total" example="10">%2$d</xliff:g></string>
-    <string name="library_transfer_unavailable">Не удалось подготовить экспорт. Закройте запущенные MIDlet и повторите попытку.</string>
+    <string name="library_transfer_unavailable">Не удалось выполнить экспорт. Закройте выбранные MIDlet, которые сейчас запущены, и повторите попытку.</string>
     <string name="library_back">Назад в библиотеку</string>
     <string name="library_sort">Сортировка приложений</string>
     <string name="library_search_clear">Очистить поиск</string>

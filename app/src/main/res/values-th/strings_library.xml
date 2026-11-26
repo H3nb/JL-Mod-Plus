@@ -161,13 +161,13 @@
     <string name="library_import_done">นำเข้าชุดไฟล์แอปแล้ว</string>
     <string name="library_import_done_with_warning">นำเข้าชุดไฟล์แอปแล้วพร้อมคำเตือน</string>
     <string name="library_import_invalid_bundle">ชุดไฟล์แอปที่เลือกไม่ถูกต้อง เสียหาย หรือไม่รองรับ เลือกชุดไฟล์แอป JL-Mod Plus ที่ถูกต้องแล้วลองอีกครั้ง</string>
-    <string name="library_import_restore_existing">ติดตั้งแอปนี้ไว้แล้ว การตั้งค่าและข้อมูลบันทึกที่แนบมาจะแทนที่ข้อมูลเดิม ส่วนบุ๊กมาร์กจะถูกรวมเข้าด้วยกันเว้นแต่จะมีการแนบการตั้งค่ามาด้วย</string>
+    <string name="library_import_restore_existing">ติดตั้งแอปนี้ไว้แล้ว การตั้งค่าและข้อมูลบันทึกที่รวมมาในแพ็กเกจจะแทนที่ข้อมูลเดิม สำหรับแพ็กเกจรูปแบบใหม่ บุ๊กมาร์กจะรวมกับของเดิมเมื่อนำเข้าโดยไม่มีการตั้งค่า จะแทนที่ของเดิมเมื่อนำเข้าพร้อมการตั้งค่า และจะคงของเดิมไว้หากไม่มีบุ๊กมาร์กในแพ็กเกจ การคืนค่าการตั้งค่าจากแพ็กเกจรุ่นเก่าอาจแทนที่บุ๊กมาร์กด้วย</string>
     <string name="library_import_restore_failed">ติดตั้งแอปแล้ว แต่ไม่สามารถกู้คืนข้อมูลชุดไฟล์ได้ ลองกู้คืนอีกครั้งหรือไม่?</string>
     <string name="library_play_stats_summary">จำนวนครั้งที่เปิด: <xliff:g id="launch_count" example="12">%1$d</xliff:g> · เวลารวม: <xliff:g id="total_time" example="2h 15m">%2$s</xliff:g></string>
     <string name="library_share_chooser_title">แชร์แอป</string>
     <string name="library_export_chooser_title">ส่งออก</string>
     <string name="library_export_progress">กำลังส่งออก… <xliff:g id="completed" example="3">%1$d</xliff:g>/<xliff:g id="total" example="10">%2$d</xliff:g></string>
-    <string name="library_transfer_unavailable">ไม่สามารถเตรียมการส่งออกได้ ปิด MIDlet ที่กำลังทำงานอยู่ทั้งหมดแล้วลองอีกครั้ง</string>
+    <string name="library_transfer_unavailable">ไม่สามารถส่งออกได้ ปิด MIDlet ที่เลือกซึ่งกำลังทำงานอยู่ แล้วลองอีกครั้ง</string>
     <string name="library_back">กลับไปยังคลังแอป</string>
     <string name="library_sort">เรียงลำดับแอป</string>
     <string name="library_search_clear">ล้างการค้นหา</string>

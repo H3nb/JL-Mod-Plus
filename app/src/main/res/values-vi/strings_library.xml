@@ -161,13 +161,13 @@
     <string name="library_import_done">Đã nhập gói ứng dụng.</string>
     <string name="library_import_done_with_warning">Đã nhập gói ứng dụng kèm cảnh báo.</string>
     <string name="library_import_invalid_bundle">Gói ứng dụng đã chọn không hợp lệ, bị hỏng hoặc không được hỗ trợ. Hãy chọn một gói ứng dụng JL-Mod Plus hợp lệ rồi thử lại.</string>
-    <string name="library_import_restore_existing">Ứng dụng này đã được cài đặt. Cài đặt và dữ liệu lưu đi kèm sẽ thay thế dữ liệu hiện có; dấu trang sẽ được gộp trừ khi gói cũng bao gồm cài đặt.</string>
+    <string name="library_import_restore_existing">Ứng dụng này đã được cài đặt. Cài đặt và dữ liệu lưu có trong gói sẽ thay thế dữ liệu hiện có. Với gói định dạng mới, dấu trang được gộp khi nhập mà không kèm cài đặt, được thay thế khi nhập cùng cài đặt và được giữ nguyên nếu không có trong gói. Khôi phục cài đặt từ gói cũ cũng có thể thay thế dấu trang.</string>
     <string name="library_import_restore_failed">Đã cài đặt ứng dụng nhưng không thể khôi phục dữ liệu trong gói. Thử khôi phục lại?</string>
     <string name="library_play_stats_summary">Số lần mở: <xliff:g id="launch_count" example="12">%1$d</xliff:g> · Tổng thời gian: <xliff:g id="total_time" example="2h 15m">%2$s</xliff:g></string>
     <string name="library_share_chooser_title">Chia sẻ ứng dụng</string>
     <string name="library_export_chooser_title">Xuất</string>
     <string name="library_export_progress">Đang xuất… <xliff:g id="completed" example="3">%1$d</xliff:g>/<xliff:g id="total" example="10">%2$d</xliff:g></string>
-    <string name="library_transfer_unavailable">Không thể chuẩn bị bản xuất. Hãy đóng mọi MIDlet đang chạy rồi thử lại.</string>
+    <string name="library_transfer_unavailable">Không thể xuất. Đóng các MIDlet đã chọn đang chạy, rồi thử lại.</string>
     <string name="library_back">Quay lại thư viện</string>
     <string name="library_sort">Sắp xếp ứng dụng</string>
     <string name="library_search_clear">Xóa tìm kiếm</string>

@@ -164,13 +164,13 @@
     <string name="library_import_done">App-paket importerat.</string>
     <string name="library_import_done_with_warning">App-paket importerat med varningar.</string>
     <string name="library_import_invalid_bundle">Det valda app-paketet är ogiltigt, skadat eller stöds inte. Välj ett giltigt JL-Mod Plus-app-paket och försök igen.</string>
-    <string name="library_import_restore_existing">Den här appen är redan installerad. Inkluderade inställningar och spardata ersätter befintliga data; bokmärken slås samman om inte inställningar också ingår.</string>
+    <string name="library_import_restore_existing">Den här appen är redan installerad. Inkluderade inställningar och spardata ersätter befintliga data. I nyare paket slås bokmärken samman vid import utan inställningar, ersätts vid import med inställningar och behålls om de inte ingår. Återställning av inställningar från äldre paket kan också ersätta bokmärken.</string>
     <string name="library_import_restore_failed">Appen installerades, men dess paketdata kunde inte återställas. Försöka återställa igen?</string>
     <string name="library_play_stats_summary">Starter: <xliff:g id="launch_count" example="12">%1$d</xliff:g> · Total tid: <xliff:g id="total_time" example="2h 15m">%2$s</xliff:g></string>
     <string name="library_share_chooser_title">Dela app</string>
     <string name="library_export_chooser_title">Exportera</string>
     <string name="library_export_progress">Exporterar… <xliff:g id="completed" example="3">%1$d</xliff:g>/<xliff:g id="total" example="10">%2$d</xliff:g></string>
-    <string name="library_transfer_unavailable">Det gick inte att förbereda exporten. Stäng eventuella aktiva MIDlets och försök igen.</string>
+    <string name="library_transfer_unavailable">Det gick inte att exportera. Stäng de markerade MIDlets som körs och försök igen.</string>
     <string name="library_back">Tillbaka till biblioteket</string>
     <string name="library_sort">Sortera appar</string>
     <string name="library_search_clear">Rensa sökning</string>

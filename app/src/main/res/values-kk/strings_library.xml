@@ -164,13 +164,13 @@
     <string name="library_import_done">Қолданба жинағы импортталды.</string>
     <string name="library_import_done_with_warning">Қолданба жинағы ескертулермен импортталды.</string>
     <string name="library_import_invalid_bundle">Таңдалған қолданба жинағы жарамсыз, зақымдалған немесе қолдау көрсетілмейді. Жарамды JL-Mod Plus қолданба жинағын таңдап, қайталап көріңіз.</string>
-    <string name="library_import_restore_existing">Бұл қолданба бұрыннан орнатылған. Қамтылған параметрлер мен сақталған деректер бар деректерді ауыстырады; параметрлер де қамтылмаса, бетбелгілер біріктіріледі.</string>
+    <string name="library_import_restore_existing">Бұл қолданба бұрыннан орнатылған. Пакеттегі параметрлер мен сақталған деректер бар деректерді ауыстырады. Жаңа пішімдегі пакеттерде бетбелгілер параметрлерсіз импортталса біріктіріледі, параметрлермен бірге импортталса ауыстырылады, ал пакетке қосылмаса сақталады. Ескі пакеттерден параметрлерді қалпына келтіру де бетбелгілерді ауыстыруы мүмкін.</string>
     <string name="library_import_restore_failed">Қолданба орнатылды, бірақ жинақ деректері қалпына келтірілмеді. Қайталап көру керек пе?</string>
     <string name="library_play_stats_summary">Іске қосулар: <xliff:g id="launch_count" example="12">%1$d</xliff:g> · Жалпы уақыт: <xliff:g id="total_time" example="2h 15m">%2$s</xliff:g></string>
     <string name="library_share_chooser_title">Қолданбаны бөлісу</string>
     <string name="library_export_chooser_title">Экспорттау</string>
     <string name="library_export_progress">Экспортталуда… <xliff:g id="completed" example="3">%1$d</xliff:g>/<xliff:g id="total" example="10">%2$d</xliff:g></string>
-    <string name="library_transfer_unavailable">Экспорт дайындалмады. Іске қосулы MIDlet-терді жауып, қайталап көріңіз.</string>
+    <string name="library_transfer_unavailable">Экспорттау мүмкін болмады. Таңдалған MIDlet-тердің іске қосылып тұрғандарын жауып, қайталап көріңіз.</string>
     <string name="library_back">Кітапханаға оралу</string>
     <string name="library_sort">Қолданбаларды сұрыптау</string>
     <string name="library_search_clear">Іздеуді тазалау</string>

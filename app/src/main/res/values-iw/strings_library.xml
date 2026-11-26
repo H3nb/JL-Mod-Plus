@@ -167,13 +167,13 @@
     <string name="library_import_done">חבילת האפליקציה יובאה.</string>
     <string name="library_import_done_with_warning">חבילת האפליקציה יובאה עם אזהרות.</string>
     <string name="library_import_invalid_bundle">חבילת האפליקציה שנבחרה אינה תקינה, פגומה או אינה נתמכת. יש לבחור חבילת אפליקציה תקינה של JL-Mod Plus ולנסות שוב.</string>
-    <string name="library_import_restore_existing">אפליקציה זו כבר מותקנת. הגדרות ונתוני שמירה הכלולים בחבילה יחליפו את הנתונים הקיימים; סימניות ימוזגו אלא אם כן כלולות גם הגדרות.</string>
+    <string name="library_import_restore_existing">אפליקציה זו כבר מותקנת. ההגדרות ונתוני השמירה הכלולים בחבילה יחליפו את הנתונים הקיימים. בחבילות חדשות יותר, סימניות מתמזגות אם מייבאים אותן ללא הגדרות, מחליפות את הסימניות הקיימות אם מייבאים אותן עם הגדרות, ונשמרות ללא שינוי אם הן אינן כלולות בחבילה. שחזור הגדרות מחבילות ישנות יותר עשוי להחליף גם את הסימניות.</string>
     <string name="library_import_restore_failed">האפליקציה הותקנה, אך לא ניתן לשחזר את נתוני החבילה שלה. לנסות לשחזר שוב?</string>
     <string name="library_play_stats_summary">הפעלות: <xliff:g id="launch_count" example="12">%1$d</xliff:g> · זמן כולל: <xliff:g id="total_time" example="2h 15m">%2$s</xliff:g></string>
     <string name="library_share_chooser_title">שיתוף אפליקציה</string>
     <string name="library_export_chooser_title">ייצוא</string>
     <string name="library_export_progress">מייצא… <xliff:g id="completed" example="3">%1$d</xliff:g>/<xliff:g id="total" example="10">%2$d</xliff:g></string>
-    <string name="library_transfer_unavailable">לא ניתן להכין את הייצוא. יש לסגור כל MIDlet פעיל ולנסות שוב.</string>
+    <string name="library_transfer_unavailable">לא ניתן לייצא. יש לסגור את יישומי ה-MIDlet שנבחרו ופועלים כרגע ולנסות שוב.</string>
     <string name="library_back">חזרה לספרייה</string>
     <string name="library_sort">מיון אפליקציות</string>
     <string name="library_search_clear">ניקוי החיפוש</string>

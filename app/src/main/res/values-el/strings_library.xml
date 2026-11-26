@@ -164,13 +164,13 @@
     <string name="library_import_done">Το πακέτο εφαρμογής εισήχθη.</string>
     <string name="library_import_done_with_warning">Το πακέτο εφαρμογής εισήχθη με προειδοποιήσεις.</string>
     <string name="library_import_invalid_bundle">Το επιλεγμένο πακέτο εφαρμογής είναι μη έγκυρο, κατεστραμμένο ή μη υποστηριζόμενο. Επιλέξτε ένα έγκυρο πακέτο εφαρμογής JL-Mod Plus και δοκιμάστε ξανά.</string>
-    <string name="library_import_restore_existing">Αυτή η εφαρμογή είναι ήδη εγκατεστημένη. Οι ρυθμίσεις και τα αποθηκευμένα δεδομένα που περιλαμβάνονται θα αντικαταστήσουν τα υπάρχοντα δεδομένα· οι σελιδοδείκτες συγχωνεύονται εκτός αν περιλαμβάνονται και οι ρυθμίσεις.</string>
+    <string name="library_import_restore_existing">Αυτή η εφαρμογή είναι ήδη εγκατεστημένη. Οι ρυθμίσεις και τα αποθηκευμένα δεδομένα που περιλαμβάνονται θα αντικαταστήσουν τα υπάρχοντα δεδομένα. Στα νεότερα πακέτα, οι σελιδοδείκτες συγχωνεύονται όταν εισάγονται χωρίς ρυθμίσεις, αντικαθίστανται όταν εισάγονται μαζί με ρυθμίσεις και διατηρούνται αν δεν περιλαμβάνονται. Η επαναφορά ρυθμίσεων από παλαιότερα πακέτα μπορεί επίσης να αντικαταστήσει τους σελιδοδείκτες.</string>
     <string name="library_import_restore_failed">Η εφαρμογή εγκαταστάθηκε, αλλά δεν ήταν δυνατή η επαναφορά των δεδομένων του πακέτου. Επανάληψη επαναφοράς;</string>
     <string name="library_play_stats_summary">Εκκινήσεις: <xliff:g id="launch_count" example="12">%1$d</xliff:g> · Συνολικός χρόνος: <xliff:g id="total_time" example="2h 15m">%2$s</xliff:g></string>
     <string name="library_share_chooser_title">Κοινοποίηση εφαρμογής</string>
     <string name="library_export_chooser_title">Εξαγωγή</string>
     <string name="library_export_progress">Εξαγωγή… <xliff:g id="completed" example="3">%1$d</xliff:g>/<xliff:g id="total" example="10">%2$d</xliff:g></string>
-    <string name="library_transfer_unavailable">Δεν ήταν δυνατή η προετοιμασία της εξαγωγής. Κλείστε τυχόν εκτελούμενο MIDlet και δοκιμάστε ξανά.</string>
+    <string name="library_transfer_unavailable">Η εξαγωγή απέτυχε. Κλείστε τα επιλεγμένα MIDlet που εκτελούνται και δοκιμάστε ξανά.</string>
     <string name="library_back">Επιστροφή στη βιβλιοθήκη</string>
     <string name="library_sort">Ταξινόμηση εφαρμογών</string>
     <string name="library_search_clear">Εκκαθάριση αναζήτησης</string>

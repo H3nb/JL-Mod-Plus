@@ -164,13 +164,13 @@
     <string name="library_import_done">App-bundel geïmporteerd.</string>
     <string name="library_import_done_with_warning">App-bundel geïmporteerd met waarschuwingen.</string>
     <string name="library_import_invalid_bundle">De geselecteerde app-bundel is ongeldig, beschadigd of niet ondersteund. Kies een geldige JL-Mod Plus-app-bundel en probeer het opnieuw.</string>
-    <string name="library_import_restore_existing">Deze app is al geïnstalleerd. Inbegrepen instellingen en opslaggegevens vervangen bestaande gegevens; bladwijzers worden samengevoegd tenzij instellingen ook zijn inbegrepen.</string>
+    <string name="library_import_restore_existing">Deze app is al geïnstalleerd. De opgenomen instellingen en opslaggegevens vervangen de bestaande gegevens. In nieuwere bundels worden bladwijzers samengevoegd bij import zonder instellingen, vervangen bij import met instellingen en behouden als ze niet zijn opgenomen. Herstel van instellingen uit oudere bundels kan ook bladwijzers vervangen.</string>
     <string name="library_import_restore_failed">App geïnstalleerd, maar bundelgegevens konden niet worden hersteld. Herstellen opnieuw proberen?</string>
     <string name="library_play_stats_summary">Keer gestart: <xliff:g id="launch_count" example="12">%1$d</xliff:g> · Totale tijd: <xliff:g id="total_time" example="2h 15m">%2$s</xliff:g></string>
     <string name="library_share_chooser_title">App delen</string>
     <string name="library_export_chooser_title">Exporteren</string>
     <string name="library_export_progress">Exporteren… <xliff:g id="completed" example="3">%1$d</xliff:g>/<xliff:g id="total" example="10">%2$d</xliff:g></string>
-    <string name="library_transfer_unavailable">Kan export niet voorbereiden. Sluit actieve MIDlets en probeer het opnieuw.</string>
+    <string name="library_transfer_unavailable">Kan niet exporteren. Sluit de geselecteerde MIDlets die actief zijn en probeer het opnieuw.</string>
     <string name="library_back">Terug naar bibliotheek</string>
     <string name="library_sort">Apps sorteren</string>
     <string name="library_search_clear">Zoekopdracht wissen</string>

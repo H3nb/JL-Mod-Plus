@@ -164,13 +164,13 @@
     <string name="library_import_done">ଆପ୍ ବଣ୍ଡଲ୍ ଇମ୍ପୋର୍ଟ ହେଲା।</string>
     <string name="library_import_done_with_warning">ଚେତାବନୀ ସହିତ ଆପ୍ ବଣ୍ଡଲ୍ ଇମ୍ପୋର୍ଟ ହେଲା।</string>
     <string name="library_import_invalid_bundle">ଚୟନିତ ଆପ୍ ବଣ୍ଡଲ୍ ଅବୈଧ, କ୍ଷତିଗ୍ରସ୍ତ କିମ୍ବା ଅସମର୍ଥିତ। ଏକ ବୈଧ JL-Mod Plus ଆପ୍ ବଣ୍ଡଲ୍ ବାଛନ୍ତୁ ଏବଂ ପୁନଃ ଚେଷ୍ଟା କରନ୍ତୁ।</string>
-    <string name="library_import_restore_existing">ଏହି ଆପ୍ ପୂର୍ବରୁ ଇନଷ୍ଟଲ୍ ଅଛି। ଅନ୍ତର୍ଭୁକ୍ତ ସେଟିଂସ୍ ଏବଂ ସେଭ୍ ଡାଟା ବିଦ୍ୟମାନ ଡାଟାକୁ ବଦଳାଇବ; ସେଟିଂସ୍ ଅନ୍ତର୍ଭୁକ୍ତ ନ ଥିଲେ ବୁକମାର୍କ୍ ମିଶ୍ରଣ ହେବ।</string>
+    <string name="library_import_restore_existing">ଏହି ଆପ୍ ପୂର୍ବରୁ ଇନଷ୍ଟଲ୍ ହୋଇଛି। ଅନ୍ତର୍ଭୁକ୍ତ ସେଟିଂସ୍ ଏବଂ ସେଭ୍ ଡାଟା ବିଦ୍ୟମାନ ଡାଟାକୁ ବଦଳାଇବ। ନୂଆ ଫର୍ମାଟର ପ୍ୟାକେଜରେ ସେଟିଂସ୍ ବିନା ବୁକମାର୍କ୍ ଇମ୍ପୋର୍ଟ କଲେ ସେଗୁଡ଼ିକ ମିଶିଯାଏ, ସେଟିଂସ୍ ସହିତ ଇମ୍ପୋର୍ଟ କଲେ ବଦଳିଯାଏ ଏବଂ ଅନ୍ତର୍ଭୁକ୍ତ ନ ଥିଲେ ପୁରୁଣା ବୁକମାର୍କ୍ ରହିଥାଏ। ପୁରୁଣା ପ୍ୟାକେଜରୁ ସେଟିଂସ୍ ପୁନରୁଦ୍ଧାର କଲେ ମଧ୍ୟ ବୁକମାର୍କ୍ ବଦଳିପାରେ।</string>
     <string name="library_import_restore_failed">ଆପ୍ ଇନଷ୍ଟଲ୍ ହେଲା, କିନ୍ତୁ ଏହାର ବଣ୍ଡଲ୍ ଡାଟା ପୁନରୁଦ୍ଧାର ହୋଇପାରିଲା ନାହିଁ। ପୁନରୁଦ୍ଧାର ପୁନଃ ଚେଷ୍ଟା କରିବେ କି?</string>
     <string name="library_play_stats_summary">ଲଞ୍ଚ: <xliff:g id="launch_count" example="12">%1$d</xliff:g> · ମୋଟ ସମୟ: <xliff:g id="total_time" example="2h 15m">%2$s</xliff:g></string>
     <string name="library_share_chooser_title">ଆପ୍ ସେୟାର୍ କରନ୍ତୁ</string>
     <string name="library_export_chooser_title">ଏକ୍ସପୋର୍ଟ କରନ୍ତୁ</string>
     <string name="library_export_progress">ଏକ୍ସପୋର୍ଟ ହେଉଛି… <xliff:g id="completed" example="3">%1$d</xliff:g>/<xliff:g id="total" example="10">%2$d</xliff:g></string>
-    <string name="library_transfer_unavailable">ଏକ୍ସପୋର୍ଟ ପ୍ରସ୍ତୁତ ହୋଇପାରିଲା ନାହିଁ। ଚାଲୁଥିବା ଯେକୌଣସି MIDlet ବନ୍ଦ କରି ପୁନଃ ଚେଷ୍ଟା କରନ୍ତୁ।</string>
+    <string name="library_transfer_unavailable">ଏକ୍ସପୋର୍ଟ ହୋଇପାରିଲା ନାହିଁ। ଚାଲୁଥିବା ଚୟନିତ MIDlet ବନ୍ଦ କରି ପୁନଃ ଚେଷ୍ଟା କରନ୍ତୁ।</string>
     <string name="library_back">ଲାଇବ୍ରେରୀକୁ ଫେରନ୍ତୁ</string>
     <string name="library_sort">ଆପ୍ ସଜାନ୍ତୁ</string>
     <string name="library_search_clear">ସର୍ଚ୍ଚ୍ ଖାଲି କରନ୍ତୁ</string>

@@ -167,13 +167,13 @@
     <string name="library_import_done">Pacchetto app importato.</string>
     <string name="library_import_done_with_warning">Pacchetto app importato con avvisi.</string>
     <string name="library_import_invalid_bundle">Il pacchetto app selezionato non è valido, è danneggiato o non è supportato. Scegli un pacchetto app JL-Mod Plus valido e riprova.</string>
-    <string name="library_import_restore_existing">Questa app è già installata. Le impostazioni e i dati di salvataggio inclusi sostituiranno quelli esistenti; i segnalibri vengono uniti a meno che non siano incluse anche le impostazioni.</string>
+    <string name="library_import_restore_existing">Questa app è già installata. Le impostazioni e i dati di salvataggio inclusi sostituiranno quelli esistenti. Nei pacchetti più recenti, i segnalibri vengono uniti se importati senza le impostazioni, sostituiti se importati con le impostazioni e conservati se non inclusi. Anche il ripristino delle impostazioni da pacchetti meno recenti può sostituire i segnalibri.</string>
     <string name="library_import_restore_failed">App installata, ma non è stato possibile ripristinare i dati del pacchetto. Riprovare il ripristino?</string>
     <string name="library_play_stats_summary">Avvii: <xliff:g id="launch_count" example="12">%1$d</xliff:g> · Tempo totale: <xliff:g id="total_time" example="2h 15m">%2$s</xliff:g></string>
     <string name="library_share_chooser_title">Condividi app</string>
     <string name="library_export_chooser_title">Esporta</string>
     <string name="library_export_progress">Esportazione… <xliff:g id="completed" example="3">%1$d</xliff:g>/<xliff:g id="total" example="10">%2$d</xliff:g></string>
-    <string name="library_transfer_unavailable">Impossibile preparare l’esportazione. Chiudi eventuali MIDlet in esecuzione e riprova.</string>
+    <string name="library_transfer_unavailable">Impossibile esportare. Chiudi i MIDlet selezionati che sono in esecuzione e riprova.</string>
     <string name="library_back">Torna alla libreria</string>
     <string name="library_sort">Ordina app</string>
     <string name="library_search_clear">Cancella ricerca</string>

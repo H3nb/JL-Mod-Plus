@@ -167,13 +167,13 @@
     <string name="library_import_done">S’ha importat el paquet d’aplicació.</string>
     <string name="library_import_done_with_warning">Paquet d’aplicació importat amb avisos.</string>
     <string name="library_import_invalid_bundle">El paquet d’aplicació seleccionat no és vàlid, està malmès o no és compatible. Tria un paquet d’aplicació vàlid de JL-Mod Plus i torna-ho a provar.</string>
-    <string name="library_import_restore_existing">Aquesta aplicació ja està instal·lada. La configuració i les dades desades incloses substituiran les dades existents; els marcadors es combinaran llevat que també s’hi inclogui la configuració.</string>
+    <string name="library_import_restore_existing">Aquesta aplicació ja està instal·lada. La configuració i les dades desades incloses substituiran les dades existents. En els paquets més nous, els marcadors es combinen si s’importen sense la configuració, se substitueixen si s’importen amb la configuració i es conserven si no s’hi inclouen. Restaurar la configuració d’un paquet antic també pot substituir els marcadors.</string>
     <string name="library_import_restore_failed">Aplicació instal·lada, però no s’han pogut restaurar les dades del paquet. Vols tornar a provar de restaurar-les?</string>
     <string name="library_play_stats_summary">Inicis: <xliff:g id="launch_count" example="12">%1$d</xliff:g> · Temps total: <xliff:g id="total_time" example="2h 15m">%2$s</xliff:g></string>
     <string name="library_share_chooser_title">Comparteix l’aplicació</string>
     <string name="library_export_chooser_title">Exporta</string>
     <string name="library_export_progress">S’està exportant… <xliff:g id="completed" example="3">%1$d</xliff:g>/<xliff:g id="total" example="10">%2$d</xliff:g></string>
-    <string name="library_transfer_unavailable">No s’ha pogut preparar l’exportació. Tanca qualsevol MIDlet en execució i torna-ho a provar.</string>
+    <string name="library_transfer_unavailable">No s’ha pogut exportar. Tanca els MIDlets seleccionats que estiguin en execució i torna-ho a provar.</string>
     <string name="library_back">Torna a la biblioteca</string>
     <string name="library_sort">Ordena les aplicacions</string>
     <string name="library_search_clear">Esborra la cerca</string>

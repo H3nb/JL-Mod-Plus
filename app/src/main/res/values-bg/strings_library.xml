@@ -164,13 +164,13 @@
     <string name="library_import_done">Пакетът на приложението е импортиран.</string>
     <string name="library_import_done_with_warning">Пакетът на приложението е импортиран с предупреждения.</string>
     <string name="library_import_invalid_bundle">Избраният пакет на приложението е невалиден, повреден или неподдържан. Изберете валиден пакет на JL-Mod Plus и опитайте отново.</string>
-    <string name="library_import_restore_existing">Това приложение вече е инсталирано. Включените настройки и запазени данни ще заменят съществуващите; отметките се обединяват, освен ако не са включени и настройките.</string>
+    <string name="library_import_restore_existing">Това приложение вече е инсталирано. Включените настройки и запазени данни ще заменят съществуващите. При по-новите пакети отметките се обединяват при импортиране без настройки, заменят се при импортиране с настройки и се запазват, ако не са включени. Възстановяването на настройки от по-стари пакети също може да замени отметките.</string>
     <string name="library_import_restore_failed">Приложението е инсталирано, но данните от пакета му не можаха да бъдат възстановени. Нов опит за възстановяване?</string>
     <string name="library_play_stats_summary">Стартирания: <xliff:g id="launch_count" example="12">%1$d</xliff:g> · Общо време: <xliff:g id="total_time" example="2h 15m">%2$s</xliff:g></string>
     <string name="library_share_chooser_title">Споделяне на приложението</string>
     <string name="library_export_chooser_title">Експортиране</string>
     <string name="library_export_progress">Експортиране… <xliff:g id="completed" example="3">%1$d</xliff:g>/<xliff:g id="total" example="10">%2$d</xliff:g></string>
-    <string name="library_transfer_unavailable">Експортирането не можа да бъде подготвено. Затворете работещите MIDlet-и и опитайте отново.</string>
+    <string name="library_transfer_unavailable">Експортирането не бе успешно. Затворете избраните MIDlet-и, които работят, и опитайте отново.</string>
     <string name="library_back">Назад към библиотеката</string>
     <string name="library_sort">Сортиране на приложенията</string>
     <string name="library_search_clear">Изчистване на търсенето</string>

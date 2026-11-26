@@ -164,13 +164,13 @@
     <string name="library_import_done">بسته برنامه وارد شد.</string>
     <string name="library_import_done_with_warning">بسته برنامه با هشدار وارد شد.</string>
     <string name="library_import_invalid_bundle">بسته برنامه انتخاب‌شده نامعتبر، آسیب‌دیده یا پشتیبانی‌نشده است. یک بسته برنامه معتبر JL-Mod Plus انتخاب کنید و دوباره تلاش کنید.</string>
-    <string name="library_import_restore_existing">این برنامه از قبل نصب است. تنظیمات و داده‌های ذخیره همراه جایگزین داده‌های فعلی می‌شوند؛ نشانک‌ها ادغام می‌شوند مگر اینکه تنظیمات نیز شامل شده باشند.</string>
+    <string name="library_import_restore_existing">این برنامه از قبل نصب است. تنظیمات و داده‌های ذخیره همراه جایگزین داده‌های فعلی می‌شوند. در بسته‌های جدیدتر، نشانک‌ها در صورت ورود بدون تنظیمات ادغام می‌شوند، در صورت ورود همراه با تنظیمات جایگزین می‌شوند و اگر در بسته نباشند حفظ می‌شوند. بازیابی تنظیمات از بسته‌های قدیمی‌تر نیز ممکن است نشانک‌ها را جایگزین کند.</string>
     <string name="library_import_restore_failed">برنامه نصب شد، اما بازیابی داده‌های بسته آن ممکن نشد. بازیابی دوباره امتحان شود؟</string>
     <string name="library_play_stats_summary">دفعات اجرا: <xliff:g id="launch_count" example="12">%1$d</xliff:g> · زمان کل: <xliff:g id="total_time" example="2h 15m">%2$s</xliff:g></string>
     <string name="library_share_chooser_title">هم‌رسانی برنامه</string>
     <string name="library_export_chooser_title">برون‌ریزی</string>
     <string name="library_export_progress">در حال برون‌ریزی… <xliff:g id="completed" example="3">%1$d</xliff:g>/<xliff:g id="total" example="10">%2$d</xliff:g></string>
-    <string name="library_transfer_unavailable">آماده‌سازی برون‌ریزی ممکن نشد. هر MIDlet در حال اجرا را ببندید و دوباره تلاش کنید.</string>
+    <string name="library_transfer_unavailable">برون‌ریزی ممکن نشد. MIDletهای انتخاب‌شده‌ای را که در حال اجرا هستند ببندید و دوباره تلاش کنید.</string>
     <string name="library_back">بازگشت به کتابخانه</string>
     <string name="library_sort">مرتب‌سازی برنامه‌ها</string>
     <string name="library_search_clear">پاک کردن جستجو</string>

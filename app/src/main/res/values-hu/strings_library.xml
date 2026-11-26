@@ -164,13 +164,13 @@
     <string name="library_import_done">Alkalmazáscsomag importálva.</string>
     <string name="library_import_done_with_warning">Alkalmazáscsomag importálva figyelmeztetésekkel.</string>
     <string name="library_import_invalid_bundle">A kiválasztott alkalmazáscsomag érvénytelen, sérült vagy nem támogatott. Válasszon érvényes JL-Mod Plus alkalmazáscsomagot, és próbálja újra.</string>
-    <string name="library_import_restore_existing">Ez az alkalmazás már telepítve van. A mellékelt beállítások és mentett adatok felülírják a meglévőket; a könyvjelzők egyesülnek, kivéve ha a beállítások is mellékelve vannak.</string>
+    <string name="library_import_restore_existing">Ez az alkalmazás már telepítve van. A mellékelt beállítások és mentett adatok felülírják a meglévőket. Az újabb csomagoknál a könyvjelzők beállítások nélküli importáláskor egyesülnek, beállításokkal együtt importálva felülírják a meglévőket, és megmaradnak, ha nincsenek mellékelve. A régebbi csomagokból visszaállított beállítások a könyvjelzőket is felülírhatják.</string>
     <string name="library_import_restore_failed">Az alkalmazás telepítve, de a csomagadatait nem sikerült visszaállítani. Megpróbálja újra visszaállítani?</string>
     <string name="library_play_stats_summary">Indítások: <xliff:g id="launch_count" example="12">%1$d</xliff:g> · Összes idő: <xliff:g id="total_time" example="2h 15m">%2$s</xliff:g></string>
     <string name="library_share_chooser_title">Alkalmazás megosztása</string>
     <string name="library_export_chooser_title">Exportálás</string>
     <string name="library_export_progress">Exportálás… <xliff:g id="completed" example="3">%1$d</xliff:g>/<xliff:g id="total" example="10">%2$d</xliff:g></string>
-    <string name="library_transfer_unavailable">Nem sikerült előkészíteni az exportálást. Zárja be a futó MIDlet-eket, és próbálja újra.</string>
+    <string name="library_transfer_unavailable">Nem sikerült az exportálás. Zárja be a kiválasztott futó MIDlet-eket, és próbálja újra.</string>
     <string name="library_back">Vissza a könyvtárba</string>
     <string name="library_sort">Alkalmazások rendezése</string>
     <string name="library_search_clear">Keresés törlése</string>

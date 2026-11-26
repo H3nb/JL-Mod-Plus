@@ -164,13 +164,13 @@
     <string name="library_import_done">Uygulama paketi içe aktarıldı.</string>
     <string name="library_import_done_with_warning">Uygulama paketi uyarılarla içe aktarıldı.</string>
     <string name="library_import_invalid_bundle">Seçilen uygulama paketi geçersiz, bozuk veya desteklenmiyor. Geçerli bir JL-Mod Plus uygulama paketi seçip yeniden deneyin.</string>
-    <string name="library_import_restore_existing">Bu uygulama zaten yüklü. Dahil edilen ayarlar ve kayıtlı veriler mevcut verilerin yerini alır; ayarlar da dahil edilmedikçe yer imleri birleştirilir.</string>
+    <string name="library_import_restore_existing">Bu uygulama zaten yüklü. Pakete dahil edilen ayarlar ve kayıtlı veriler mevcut verilerin yerini alır. Yeni biçimdeki paketlerde yer imleri ayarlar olmadan içe aktarıldığında birleştirilir, ayarlarla birlikte içe aktarıldığında mevcut yer imlerinin yerini alır ve pakete dahil edilmediğinde korunur. Eski paketlerden ayarları geri yüklemek de yer imlerini değiştirebilir.</string>
     <string name="library_import_restore_failed">Uygulama yüklendi ancak paket verileri geri yüklenemedi. Geri yükleme yeniden denensin mi?</string>
     <string name="library_play_stats_summary">Başlatmalar: <xliff:g id="launch_count" example="12">%1$d</xliff:g> · Toplam süre: <xliff:g id="total_time" example="2h 15m">%2$s</xliff:g></string>
     <string name="library_share_chooser_title">Uygulamayı paylaş</string>
     <string name="library_export_chooser_title">Dışa aktar</string>
     <string name="library_export_progress">Dışa aktarılıyor… <xliff:g id="completed" example="3">%1$d</xliff:g>/<xliff:g id="total" example="10">%2$d</xliff:g></string>
-    <string name="library_transfer_unavailable">Dışa aktarma hazırlanamadı. Çalışan MIDlet’leri kapatıp yeniden deneyin.</string>
+    <string name="library_transfer_unavailable">Dışa aktarılamadı. Seçili MIDlet’lerden çalışanları kapatıp yeniden deneyin.</string>
     <string name="library_back">Kitaplığa dön</string>
     <string name="library_sort">Uygulamaları sırala</string>
     <string name="library_search_clear">Aramayı temizle</string>

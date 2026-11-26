@@ -167,13 +167,13 @@
     <string name="library_import_done">Pacote de app importado.</string>
     <string name="library_import_done_with_warning">Pacote de app importado com avisos.</string>
     <string name="library_import_invalid_bundle">O pacote de app selecionado é inválido, está corrompido ou não é compatível. Escolha um pacote de app válido do JL-Mod Plus e tente novamente.</string>
-    <string name="library_import_restore_existing">Este app já está instalado. As configurações e os dados salvos incluídos substituirão os dados existentes; os marcadores são mesclados, a menos que as configurações também estejam incluídas.</string>
+    <string name="library_import_restore_existing">Este app já está instalado. As configurações e os dados salvos incluídos substituirão os dados existentes. Nos pacotes mais recentes, os marcadores são mesclados quando importados sem as configurações, substituídos quando importados com elas e mantidos quando não estão incluídos. Restaurar configurações de pacotes antigos também pode substituir os marcadores.</string>
     <string name="library_import_restore_failed">App instalado, mas não foi possível restaurar os dados do pacote. Tentar restaurar novamente?</string>
     <string name="library_play_stats_summary">Execuções: <xliff:g id="launch_count" example="12">%1$d</xliff:g> · Tempo total: <xliff:g id="total_time" example="2h 15m">%2$s</xliff:g></string>
     <string name="library_share_chooser_title">Compartilhar app</string>
     <string name="library_export_chooser_title">Exportar</string>
     <string name="library_export_progress">Exportando… <xliff:g id="completed" example="3">%1$d</xliff:g>/<xliff:g id="total" example="10">%2$d</xliff:g></string>
-    <string name="library_transfer_unavailable">Não foi possível preparar a exportação. Feche qualquer MIDlet em execução e tente novamente.</string>
+    <string name="library_transfer_unavailable">Não foi possível exportar. Feche os MIDlets selecionados que estiverem em execução e tente novamente.</string>
     <string name="library_back">Voltar para a biblioteca</string>
     <string name="library_sort">Ordenar apps</string>
     <string name="library_search_clear">Limpar pesquisa</string>

@@ -167,13 +167,13 @@
     <string name="library_import_done">Пакет апликације је увезен.</string>
     <string name="library_import_done_with_warning">Пакет апликације је увезен уз упозорења.</string>
     <string name="library_import_invalid_bundle">Изабрани пакет апликације је неисправан, оштећен или неподржан. Изаберите исправан JL-Mod Plus пакет апликације и покушајте поново.</string>
-    <string name="library_import_restore_existing">Ова апликација је већ инсталирана. Укључена подешавања и сачувани подаци замениће постојеће; обележивачи ће се спојити осим ако нису укључена и подешавања.</string>
+    <string name="library_import_restore_existing">Ова апликација је већ инсталирана. Укључена подешавања и сачувани подаци замениће постојеће. У новијим пакетима обележивачи се спајају при увозу без подешавања, замењују при увозу са подешавањима и задржавају ако нису укључени. Враћање подешавања из старијих пакета такође може заменити обележиваче.</string>
     <string name="library_import_restore_failed">Апликација је инсталирана, али подаци из пакета нису могли да се врате. Покушати враћање поново?</string>
     <string name="library_play_stats_summary">Покретања: <xliff:g id="launch_count" example="12">%1$d</xliff:g> · Укупно време: <xliff:g id="total_time" example="2h 15m">%2$s</xliff:g></string>
     <string name="library_share_chooser_title">Подели апликацију</string>
     <string name="library_export_chooser_title">Извези</string>
     <string name="library_export_progress">Извоз… <xliff:g id="completed" example="3">%1$d</xliff:g>/<xliff:g id="total" example="10">%2$d</xliff:g></string>
-    <string name="library_transfer_unavailable">Није могуће припремити извоз. Затворите све покренуте MIDlet-е и покушајте поново.</string>
+    <string name="library_transfer_unavailable">Извоз није успео. Затворите изабране MIDlet-е који су покренути и покушајте поново.</string>
     <string name="library_back">Назад у библиотеку</string>
     <string name="library_sort">Сортирај апликације</string>
     <string name="library_search_clear">Обриши претрагу</string>

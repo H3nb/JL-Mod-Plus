@@ -164,13 +164,13 @@
     <string name="library_import_done">Sovelluspaketti tuotu.</string>
     <string name="library_import_done_with_warning">Sovelluspaketti tuotu varoituksin.</string>
     <string name="library_import_invalid_bundle">Valittu sovelluspaketti on virheellinen, vioittunut tai tukematon. Valitse kelvollinen JL-Mod Plus -sovelluspaketti ja yritä uudelleen.</string>
-    <string name="library_import_restore_existing">Tämä sovellus on jo asennettu. Mukana olevat asetukset ja tallennustiedot korvaavat nykyiset tiedot; kirjanmerkit yhdistetään, ellei myös asetuksia sisällytetä.</string>
+    <string name="library_import_restore_existing">Tämä sovellus on jo asennettu. Mukana olevat asetukset ja tallennustiedot korvaavat nykyiset tiedot. Uudemmissa paketeissa kirjanmerkit yhdistetään, jos ne tuodaan ilman asetuksia, korvataan, jos ne tuodaan asetusten mukana, ja säilytetään, jos niitä ei ole paketissa. Asetusten palauttaminen vanhemmista paketeista voi myös korvata kirjanmerkit.</string>
     <string name="library_import_restore_failed">Sovellus asennettiin, mutta sen pakettitietoja ei voitu palauttaa. Yritetäänkö palautusta uudelleen?</string>
     <string name="library_play_stats_summary">Käynnistyksiä: <xliff:g id="launch_count" example="12">%1$d</xliff:g> · Kokonaisaika: <xliff:g id="total_time" example="2h 15m">%2$s</xliff:g></string>
     <string name="library_share_chooser_title">Jaa sovellus</string>
     <string name="library_export_chooser_title">Vie</string>
     <string name="library_export_progress">Viedään… <xliff:g id="completed" example="3">%1$d</xliff:g>/<xliff:g id="total" example="10">%2$d</xliff:g></string>
-    <string name="library_transfer_unavailable">Vientiä ei voitu valmistella. Sulje käynnissä olevat MIDletit ja yritä uudelleen.</string>
+    <string name="library_transfer_unavailable">Vienti epäonnistui. Sulje käynnissä olevat valitut MIDletit ja yritä uudelleen.</string>
     <string name="library_back">Takaisin kirjastoon</string>
     <string name="library_sort">Lajittele sovellukset</string>
     <string name="library_search_clear">Tyhjennä haku</string>

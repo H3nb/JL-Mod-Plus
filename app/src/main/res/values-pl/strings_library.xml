@@ -170,13 +170,13 @@
     <string name="library_import_done">Zaimportowano pakiet aplikacji.</string>
     <string name="library_import_done_with_warning">Zaimportowano pakiet aplikacji z ostrzeżeniami.</string>
     <string name="library_import_invalid_bundle">Wybrany pakiet aplikacji jest nieprawidłowy, uszkodzony lub nieobsługiwany. Wybierz prawidłowy pakiet aplikacji JL-Mod Plus i spróbuj ponownie.</string>
-    <string name="library_import_restore_existing">Ta aplikacja jest już zainstalowana. Dołączone ustawienia i zapisane dane zastąpią istniejące dane; zakładki są scalane, chyba że dołączono również ustawienia.</string>
+    <string name="library_import_restore_existing">Ta aplikacja jest już zainstalowana. Dołączone ustawienia i zapisane dane zastąpią istniejące dane. W nowszych pakietach zakładki są scalane przy imporcie bez ustawień, zastępowane przy imporcie z ustawieniami i zachowywane, jeśli nie zostały dołączone. Przywrócenie ustawień ze starszych pakietów również może zastąpić zakładki.</string>
     <string name="library_import_restore_failed">Aplikacja została zainstalowana, ale nie udało się przywrócić danych pakietu. Spróbować przywrócić ponownie?</string>
     <string name="library_play_stats_summary">Uruchomienia: <xliff:g id="launch_count" example="12">%1$d</xliff:g> · Łączny czas: <xliff:g id="total_time" example="2h 15m">%2$s</xliff:g></string>
     <string name="library_share_chooser_title">Udostępnij aplikację</string>
     <string name="library_export_chooser_title">Eksportuj</string>
     <string name="library_export_progress">Eksportowanie… <xliff:g id="completed" example="3">%1$d</xliff:g>/<xliff:g id="total" example="10">%2$d</xliff:g></string>
-    <string name="library_transfer_unavailable">Nie udało się przygotować eksportu. Zamknij wszystkie uruchomione MIDlety i spróbuj ponownie.</string>
+    <string name="library_transfer_unavailable">Nie udało się wyeksportować. Zamknij uruchomione MIDlety spośród wybranych i spróbuj ponownie.</string>
     <string name="library_back">Wróć do biblioteki</string>
     <string name="library_sort">Sortuj aplikacje</string>
     <string name="library_search_clear">Wyczyść wyszukiwanie</string>

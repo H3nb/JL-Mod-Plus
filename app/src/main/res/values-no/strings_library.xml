@@ -164,13 +164,13 @@
     <string name="library_import_done">App-pakke importert.</string>
     <string name="library_import_done_with_warning">App-pakke importert med advarsler.</string>
     <string name="library_import_invalid_bundle">Den valgte app-pakken er ugyldig, skadet eller støttes ikke. Velg en gyldig JL-Mod Plus-app-pakke og prøv på nytt.</string>
-    <string name="library_import_restore_existing">Denne appen er allerede installert. Inkluderte innstillinger og lagringsdata erstatter eksisterende data; bokmerker slås sammen med mindre innstillinger også er inkludert.</string>
+    <string name="library_import_restore_existing">Denne appen er allerede installert. Inkluderte innstillinger og lagringsdata erstatter eksisterende data. I nyere pakker slås bokmerker sammen når de importeres uten innstillinger, erstattes når de importeres med innstillinger, og beholdes hvis de ikke er inkludert. Gjenoppretting av innstillinger fra eldre pakker kan også erstatte bokmerker.</string>
     <string name="library_import_restore_failed">App installert, men pakkedataene kunne ikke gjenopprettes. Vil du prøve å gjenopprette på nytt?</string>
     <string name="library_play_stats_summary">Oppstarter: <xliff:g id="launch_count" example="12">%1$d</xliff:g> · Total tid: <xliff:g id="total_time" example="2h 15m">%2$s</xliff:g></string>
     <string name="library_share_chooser_title">Del app</string>
     <string name="library_export_chooser_title">Eksporter</string>
     <string name="library_export_progress">Eksporterer… <xliff:g id="completed" example="3">%1$d</xliff:g>/<xliff:g id="total" example="10">%2$d</xliff:g></string>
-    <string name="library_transfer_unavailable">Kunne ikke forberede eksporten. Lukk eventuelle kjørende MIDlets og prøv på nytt.</string>
+    <string name="library_transfer_unavailable">Kunne ikke eksportere. Lukk valgte MIDlets som kjører, og prøv på nytt.</string>
     <string name="library_back">Tilbake til biblioteket</string>
     <string name="library_sort">Sorter apper</string>
     <string name="library_search_clear">Tøm søk</string>

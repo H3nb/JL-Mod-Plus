@@ -167,13 +167,13 @@
     <string name="library_import_done">Paquete de aplicación importado.</string>
     <string name="library_import_done_with_warning">Paquete de aplicación importado con advertencias.</string>
     <string name="library_import_invalid_bundle">El paquete de aplicación seleccionado no es válido, está dañado o no es compatible. Elige un paquete de aplicación válido de JL-Mod Plus e inténtalo de nuevo.</string>
-    <string name="library_import_restore_existing">Esta aplicación ya está instalada. Los ajustes y datos guardados incluidos reemplazarán los datos existentes; los marcadores se combinarán salvo que también se incluyan los ajustes.</string>
+    <string name="library_import_restore_existing">Esta aplicación ya está instalada. Los ajustes y datos guardados incluidos reemplazarán los datos existentes. En los paquetes más recientes, los marcadores se combinan si se importan sin ajustes, se reemplazan si se importan junto con los ajustes y se conservan si no están incluidos. Restaurar los ajustes de paquetes antiguos también puede reemplazar los marcadores.</string>
     <string name="library_import_restore_failed">Aplicación instalada, pero no se pudieron restaurar los datos del paquete. ¿Reintentar la restauración?</string>
     <string name="library_play_stats_summary">Inicios: <xliff:g id="launch_count" example="12">%1$d</xliff:g> · Tiempo total: <xliff:g id="total_time" example="2h 15m">%2$s</xliff:g></string>
     <string name="library_share_chooser_title">Compartir aplicación</string>
     <string name="library_export_chooser_title">Exportar</string>
     <string name="library_export_progress">Exportando… <xliff:g id="completed" example="3">%1$d</xliff:g>/<xliff:g id="total" example="10">%2$d</xliff:g></string>
-    <string name="library_transfer_unavailable">No se pudo preparar la exportación. Cierra cualquier MIDlet en ejecución e inténtalo de nuevo.</string>
+    <string name="library_transfer_unavailable">No se pudo exportar. Cierra los MIDlets seleccionados que estén en ejecución e inténtalo de nuevo.</string>
     <string name="library_back">Volver a la biblioteca</string>
     <string name="library_sort">Ordenar aplicaciones</string>
     <string name="library_search_clear">Borrar búsqueda</string>

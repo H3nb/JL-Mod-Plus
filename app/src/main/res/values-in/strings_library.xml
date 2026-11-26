@@ -161,13 +161,13 @@
     <string name="library_import_done">Paket aplikasi diimpor.</string>
     <string name="library_import_done_with_warning">Paket aplikasi diimpor dengan peringatan.</string>
     <string name="library_import_invalid_bundle">Paket aplikasi yang dipilih tidak valid, rusak, atau tidak didukung. Pilih paket aplikasi JL-Mod Plus yang valid lalu coba lagi.</string>
-    <string name="library_import_restore_existing">Aplikasi ini sudah terinstal. Setelan dan data simpanan yang disertakan akan mengganti data yang ada; penanda akan digabungkan kecuali setelan juga disertakan.</string>
+    <string name="library_import_restore_existing">Aplikasi ini sudah terinstal. Setelan dan data simpanan yang disertakan akan menggantikan data yang ada. Pada format paket terbaru, penanda digabungkan jika diimpor tanpa setelan, diganti jika diimpor bersama setelan, dan dipertahankan jika tidak disertakan. Pemulihan setelan dari paket lama juga dapat mengganti penanda.</string>
     <string name="library_import_restore_failed">Aplikasi terinstal, tetapi data paket tidak dapat dipulihkan. Coba pulihkan lagi?</string>
     <string name="library_play_stats_summary">Dibuka: <xliff:g id="launch_count" example="12">%1$d</xliff:g> · Total waktu: <xliff:g id="total_time" example="2h 15m">%2$s</xliff:g></string>
     <string name="library_share_chooser_title">Bagikan aplikasi</string>
     <string name="library_export_chooser_title">Ekspor</string>
     <string name="library_export_progress">Mengekspor… <xliff:g id="completed" example="3">%1$d</xliff:g>/<xliff:g id="total" example="10">%2$d</xliff:g></string>
-    <string name="library_transfer_unavailable">Tidak dapat menyiapkan ekspor. Tutup MIDlet yang sedang berjalan lalu coba lagi.</string>
+    <string name="library_transfer_unavailable">Tidak dapat mengekspor. Tutup MIDlet yang dipilih jika masih berjalan, lalu coba lagi.</string>
     <string name="library_back">Kembali ke pustaka</string>
     <string name="library_sort">Urutkan aplikasi</string>
     <string name="library_search_clear">Hapus pencarian</string>

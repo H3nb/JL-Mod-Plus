@@ -164,13 +164,13 @@
     <string name="library_import_done">Apppakke importeret.</string>
     <string name="library_import_done_with_warning">Apppakke importeret med advarsler.</string>
     <string name="library_import_invalid_bundle">Den valgte apppakke er ugyldig, beskadiget eller ikke understøttet. Vælg en gyldig JL-Mod Plus-apppakke, og prøv igen.</string>
-    <string name="library_import_restore_existing">Denne app er allerede installeret. Inkluderede indstillinger og gemte data erstatter eksisterende data; bogmærker flettes, medmindre indstillinger også er inkluderet.</string>
+    <string name="library_import_restore_existing">Denne app er allerede installeret. Inkluderede indstillinger og gemte data erstatter eksisterende data. I nyere pakker flettes bogmærker, hvis de importeres uden indstillinger, erstattes, hvis de importeres med indstillinger, og bevares, hvis de ikke er inkluderet. Gendannelse af indstillinger fra ældre pakker kan også erstatte bogmærker.</string>
     <string name="library_import_restore_failed">Appen blev installeret, men pakkedataene kunne ikke gendannes. Vil du prøve at gendanne igen?</string>
     <string name="library_play_stats_summary">Starter: <xliff:g id="launch_count" example="12">%1$d</xliff:g> · Samlet tid: <xliff:g id="total_time" example="2h 15m">%2$s</xliff:g></string>
     <string name="library_share_chooser_title">Del app</string>
     <string name="library_export_chooser_title">Eksporter</string>
     <string name="library_export_progress">Eksporterer… <xliff:g id="completed" example="3">%1$d</xliff:g>/<xliff:g id="total" example="10">%2$d</xliff:g></string>
-    <string name="library_transfer_unavailable">Eksporten kunne ikke forberedes. Luk alle kørende MIDlets, og prøv igen.</string>
+    <string name="library_transfer_unavailable">Eksporten mislykkedes. Luk de valgte MIDlets, der kører, og prøv igen.</string>
     <string name="library_back">Tilbage til biblioteket</string>
     <string name="library_sort">Sorter apps</string>
     <string name="library_search_clear">Ryd søgning</string>

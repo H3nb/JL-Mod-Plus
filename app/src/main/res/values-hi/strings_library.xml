@@ -164,13 +164,13 @@
     <string name="library_import_done">ऐप बंडल आयात हो गया।</string>
     <string name="library_import_done_with_warning">ऐप बंडल चेतावनियों के साथ आयात हो गया।</string>
     <string name="library_import_invalid_bundle">चयनित ऐप बंडल अमान्य, क्षतिग्रस्त या असमर्थित है। एक मान्य JL-Mod Plus ऐप बंडल चुनें और पुनः प्रयास करें।</string>
-    <string name="library_import_restore_existing">यह ऐप पहले से इंस्टॉल है। शामिल सेटिंग्स और सेव डेटा मौजूदा डेटा को बदल देंगे; यदि सेटिंग्स शामिल नहीं हैं तो बुकमार्क मर्ज हो जाएंगे।</string>
+    <string name="library_import_restore_existing">यह ऐप पहले से इंस्टॉल है। शामिल सेटिंग्स और सेव डेटा मौजूदा डेटा की जगह ले लेंगे। नए फ़ॉर्मैट के पैकेज में बुकमार्क बिना सेटिंग्स के इंपोर्ट करने पर मर्ज होते हैं, सेटिंग्स के साथ इंपोर्ट करने पर बदल जाते हैं और शामिल न होने पर पहले जैसे बने रहते हैं। पुराने पैकेज से सेटिंग्स रीस्टोर करने पर भी बुकमार्क बदल सकते हैं।</string>
     <string name="library_import_restore_failed">ऐप इंस्टॉल हो गया, लेकिन इसका बंडल डेटा पुनर्स्थापित नहीं हो सका। पुनर्स्थापना पुनः प्रयास करें?</string>
     <string name="library_play_stats_summary">लॉन्च: <xliff:g id="launch_count" example="12">%1$d</xliff:g> · कुल समय: <xliff:g id="total_time" example="2h 15m">%2$s</xliff:g></string>
     <string name="library_share_chooser_title">ऐप साझा करें</string>
     <string name="library_export_chooser_title">निर्यात करें</string>
     <string name="library_export_progress">निर्यात हो रहा है… <xliff:g id="completed" example="3">%1$d</xliff:g>/<xliff:g id="total" example="10">%2$d</xliff:g></string>
-    <string name="library_transfer_unavailable">निर्यात तैयार नहीं किया जा सका। कोई भी चल रहा MIDlet बंद करें और पुनः प्रयास करें।</string>
+    <string name="library_transfer_unavailable">एक्सपोर्ट नहीं किया जा सका। चुने गए MIDlet में से जो चल रहे हैं, उन्हें बंद करें और फिर कोशिश करें।</string>
     <string name="library_back">लाइब्रेरी पर वापस जाएं</string>
     <string name="library_sort">ऐप्स क्रमबद्ध करें</string>
     <string name="library_search_clear">खोज साफ़ करें</string>

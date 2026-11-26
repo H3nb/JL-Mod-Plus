@@ -164,13 +164,13 @@
     <string name="library_import_done">Programbundel ingevoer.</string>
     <string name="library_import_done_with_warning">Programbundel ingevoer met waarskuwings.</string>
     <string name="library_import_invalid_bundle">Die gekose programbundel is ongeldig, beskadig of word nie ondersteun nie. Kies ’n geldige JL-Mod Plus-programbundel en probeer weer.</string>
-    <string name="library_import_restore_existing">Hierdie program is reeds geïnstalleer. Ingeslote instellings en stoordata sal bestaande data vervang; boekmerke word saamgevoeg tensy instellings ook ingesluit is.</string>
+    <string name="library_import_restore_existing">Hierdie program is reeds geïnstalleer. Ingeslote instellings en stoordata sal bestaande data vervang. In nuwer pakkette word boekmerke saamgevoeg as hulle sonder instellings ingevoer word, vervang as hulle saam met instellings ingevoer word, en behou as hulle nie ingesluit is nie. Die herstel van instellings uit ouer pakkette kan ook boekmerke vervang.</string>
     <string name="library_import_restore_failed">Program geïnstalleer, maar sy bundeldata kon nie herstel word nie. Probeer weer herstel?</string>
     <string name="library_play_stats_summary">Keer oopgemaak: <xliff:g id="launch_count" example="12">%1$d</xliff:g> · Totale tyd: <xliff:g id="total_time" example="2h 15m">%2$s</xliff:g></string>
     <string name="library_share_chooser_title">Deel program</string>
     <string name="library_export_chooser_title">Voer uit</string>
     <string name="library_export_progress">Voer tans uit… <xliff:g id="completed" example="3">%1$d</xliff:g>/<xliff:g id="total" example="10">%2$d</xliff:g></string>
-    <string name="library_transfer_unavailable">Kon nie die uitvoer voorberei nie. Maak enige lopende MIDlet toe en probeer weer.</string>
+    <string name="library_transfer_unavailable">Kon nie uitvoer nie. Maak enige gekose MIDlets wat nog loop toe en probeer weer.</string>
     <string name="library_back">Terug na biblioteek</string>
     <string name="library_sort">Sorteer programme</string>
     <string name="library_search_clear">Maak soektog skoon</string>

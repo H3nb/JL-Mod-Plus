@@ -164,13 +164,13 @@
     <string name="library_import_done">অ্যাপ বান্ডেল ইম্পোর্ট হয়েছে।</string>
     <string name="library_import_done_with_warning">সতর্কতাসহ অ্যাপ বান্ডেল ইম্পোর্ট হয়েছে।</string>
     <string name="library_import_invalid_bundle">নির্বাচিত অ্যাপ বান্ডেলটি অবৈধ, ক্ষতিগ্রস্ত বা অসমর্থিত। একটি বৈধ JL-Mod Plus অ্যাপ বান্ডেল বেছে নিয়ে আবার চেষ্টা করুন।</string>
-    <string name="library_import_restore_existing">এই অ্যাপটি আগে থেকেই ইনস্টল করা আছে। অন্তর্ভুক্ত সেটিংস ও সেভ ডেটা বিদ্যমান ডেটা প্রতিস্থাপন করবে; সেটিংসও অন্তর্ভুক্ত না থাকলে বুকমার্কগুলো একত্রিত হবে।</string>
+    <string name="library_import_restore_existing">এই অ্যাপটি আগে থেকেই ইনস্টল করা আছে। অন্তর্ভুক্ত সেটিংস ও সেভ ডেটা বিদ্যমান ডেটা প্রতিস্থাপন করবে। নতুন ফরম্যাটের প্যাকেজে সেটিংস ছাড়া বুকমার্ক ইম্পোর্ট করলে সেগুলো একত্রিত হয়, সেটিংসের সঙ্গে ইম্পোর্ট করলে প্রতিস্থাপিত হয় এবং অন্তর্ভুক্ত না থাকলে আগের বুকমার্কগুলো অপরিবর্তিত থাকে। পুরোনো প্যাকেজ থেকে সেটিংস রিস্টোর করলেও বুকমার্ক প্রতিস্থাপিত হতে পারে।</string>
     <string name="library_import_restore_failed">অ্যাপ ইনস্টল হয়েছে, তবে এর বান্ডেল ডেটা পুনরুদ্ধার করা যায়নি। পুনরুদ্ধার আবার চেষ্টা করবেন?</string>
     <string name="library_play_stats_summary">চালু হয়েছে: <xliff:g id="launch_count" example="12">%1$d</xliff:g> বার · মোট সময়: <xliff:g id="total_time" example="2h 15m">%2$s</xliff:g></string>
     <string name="library_share_chooser_title">অ্যাপ শেয়ার করুন</string>
     <string name="library_export_chooser_title">এক্সপোর্ট করুন</string>
     <string name="library_export_progress">এক্সপোর্ট হচ্ছে… <xliff:g id="completed" example="3">%1$d</xliff:g>/<xliff:g id="total" example="10">%2$d</xliff:g></string>
-    <string name="library_transfer_unavailable">এক্সপোর্ট প্রস্তুত করা যায়নি। চলমান সব MIDlet বন্ধ করে আবার চেষ্টা করুন।</string>
+    <string name="library_transfer_unavailable">এক্সপোর্ট করা যায়নি। নির্বাচিত MIDlet চলমান থাকলে বন্ধ করে আবার চেষ্টা করুন।</string>
     <string name="library_back">লাইব্রেরিতে ফিরে যান</string>
     <string name="library_sort">অ্যাপ সাজান</string>
     <string name="library_search_clear">সার্চ মুছুন</string>

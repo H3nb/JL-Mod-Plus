@@ -167,13 +167,13 @@
     <string name="library_import_done">Pachetul de aplicație a fost importat.</string>
     <string name="library_import_done_with_warning">Pachetul de aplicație a fost importat cu avertismente.</string>
     <string name="library_import_invalid_bundle">Pachetul de aplicație selectat este nevalid, deteriorat sau neacceptat. Alegeți un pachet de aplicație JL-Mod Plus valid și încercați din nou.</string>
-    <string name="library_import_restore_existing">Această aplicație este deja instalată. Setările și datele salvate incluse le vor înlocui pe cele existente; marcajele sunt îmbinate, cu excepția cazului în care sunt incluse și setările.</string>
+    <string name="library_import_restore_existing">Această aplicație este deja instalată. Setările și datele salvate incluse le vor înlocui pe cele existente. În pachetele mai noi, marcajele sunt îmbinate dacă sunt importate fără setări, înlocuite dacă sunt importate împreună cu setările și păstrate dacă nu sunt incluse. Restaurarea setărilor din pachete mai vechi poate înlocui și marcajele.</string>
     <string name="library_import_restore_failed">Aplicația a fost instalată, dar datele din pachet nu au putut fi restaurate. Încercați din nou restaurarea?</string>
     <string name="library_play_stats_summary">Lansări: <xliff:g id="launch_count" example="12">%1$d</xliff:g> · Timp total: <xliff:g id="total_time" example="2h 15m">%2$s</xliff:g></string>
     <string name="library_share_chooser_title">Trimite aplicația</string>
     <string name="library_export_chooser_title">Exportă</string>
     <string name="library_export_progress">Se exportă… <xliff:g id="completed" example="3">%1$d</xliff:g>/<xliff:g id="total" example="10">%2$d</xliff:g></string>
-    <string name="library_transfer_unavailable">Exportul nu a putut fi pregătit. Închideți orice MIDlet activ și încercați din nou.</string>
+    <string name="library_transfer_unavailable">Exportul nu a reușit. Închideți MIDlet-urile selectate care rulează și încercați din nou.</string>
     <string name="library_back">Înapoi la bibliotecă</string>
     <string name="library_sort">Sortează aplicațiile</string>
     <string name="library_search_clear">Șterge căutarea</string>

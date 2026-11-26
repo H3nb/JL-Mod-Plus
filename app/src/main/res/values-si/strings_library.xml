@@ -164,13 +164,13 @@
     <string name="library_import_done">යෙදුම් පොදිය ආයාත කරන ලදී.</string>
     <string name="library_import_done_with_warning">යෙදුම් පොදිය අවවාද සමඟින් ආයාත කරන ලදී.</string>
     <string name="library_import_invalid_bundle">තෝරාගත් යෙදුම් පොදිය වලංගු නොවේ, හානි වී ඇත හෝ සහාය නොදක්වයි. වලංගු JL-Mod Plus යෙදුම් පොදියක් තෝරා නැවත උත්සාහ කරන්න.</string>
-    <string name="library_import_restore_existing">මෙම යෙදුම දැනටමත් ස්ථාපනය කර ඇත. ඇතුළත් සැකසීම් සහ සුරැකි දත්ත පවතින දත්ත ප්‍රතිස්ථාපනය කරයි; සැකසීම් ද ඇතුළත් නොවේ නම් පිටුසන් ඒකාබද්ධ කෙරේ.</string>
+    <string name="library_import_restore_existing">මෙම යෙදුම දැනටමත් ස්ථාපනය කර ඇත. ඇතුළත් සැකසීම් සහ සුරැකි දත්ත පවතින දත්ත ප්‍රතිස්ථාපනය කරයි. නව ආකෘතියේ පැකේජවල පිටුසන් සැකසීම් නොමැතිව ආයාත කළ විට ඒකාබද්ධ වේ, සැකසීම් සමඟ ආයාත කළ විට ප්‍රතිස්ථාපනය වේ, ඇතුළත් නොවේ නම් පවතින පිටුසන් රැකේ. පැරණි පැකේජවලින් සැකසීම් ප්‍රතිසාධනය කිරීමෙන් ද පිටුසන් ප්‍රතිස්ථාපනය විය හැක.</string>
     <string name="library_import_restore_failed">යෙදුම ස්ථාපනය වූ නමුත් එහි පොදි දත්ත ප්‍රතිස්ථාපනය කිරීමට නොහැකි විය. ප්‍රතිස්ථාපනය නැවත උත්සාහ කරන්නද?</string>
     <string name="library_play_stats_summary">දියත් කිරීම්: <xliff:g id="launch_count" example="12">%1$d</xliff:g> · මුළු කාලය: <xliff:g id="total_time" example="2h 15m">%2$s</xliff:g></string>
     <string name="library_share_chooser_title">යෙදුම බෙදා ගන්න</string>
     <string name="library_export_chooser_title">නිර්යාත කරන්න</string>
     <string name="library_export_progress">නිර්යාත වෙමින්… <xliff:g id="completed" example="3">%1$d</xliff:g>/<xliff:g id="total" example="10">%2$d</xliff:g></string>
-    <string name="library_transfer_unavailable">නිර්යාත කිරීම සූදානම් කිරීමට නොහැකි විය. ධාවනය වන ඕනෑම MIDlet එකක් වසා නැවත උත්සාහ කරන්න.</string>
+    <string name="library_transfer_unavailable">නිර්යාත කිරීමට නොහැකි විය. ධාවනය වන තෝරාගත් MIDlet වසා නැවත උත්සාහ කරන්න.</string>
     <string name="library_back">පුස්තකාලය වෙත ආපසු</string>
     <string name="library_sort">යෙදුම් වර්ග කරන්න</string>
     <string name="library_search_clear">සෙවීම හිස් කරන්න</string>

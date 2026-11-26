@@ -170,13 +170,13 @@
     <string name="library_import_done">Balíček aplikace byl importován.</string>
     <string name="library_import_done_with_warning">Balíček aplikace byl importován s upozorněními.</string>
     <string name="library_import_invalid_bundle">Vybraný balíček aplikace je neplatný, poškozený nebo nepodporovaný. Vyberte platný balíček aplikace JL-Mod Plus a zkuste to znovu.</string>
-    <string name="library_import_restore_existing">Tato aplikace je již nainstalována. Zahrnuté nastavení a uložená data nahradí stávající data; záložky se sloučí, pokud není zahrnuto také nastavení.</string>
+    <string name="library_import_restore_existing">Tato aplikace je již nainstalována. Zahrnuté nastavení a uložená data nahradí stávající data. U novějších balíčků se záložky při importu bez nastavení sloučí, při importu s nastavením nahradí a pokud nejsou zahrnuty, zůstanou zachovány. Obnovení nastavení ze starších balíčků může také nahradit záložky.</string>
     <string name="library_import_restore_failed">Aplikace byla nainstalována, ale data jejího balíčku se nepodařilo obnovit. Zkusit obnovení znovu?</string>
     <string name="library_play_stats_summary">Spuštění: <xliff:g id="launch_count" example="12">%1$d</xliff:g> · Celkový čas: <xliff:g id="total_time" example="2h 15m">%2$s</xliff:g></string>
     <string name="library_share_chooser_title">Sdílet aplikaci</string>
     <string name="library_export_chooser_title">Exportovat</string>
     <string name="library_export_progress">Exportování… <xliff:g id="completed" example="3">%1$d</xliff:g>/<xliff:g id="total" example="10">%2$d</xliff:g></string>
-    <string name="library_transfer_unavailable">Export se nepodařilo připravit. Zavřete všechny běžící MIDlety a zkuste to znovu.</string>
+    <string name="library_transfer_unavailable">Export se nezdařil. Ukončete vybrané MIDlety, které právě běží, a zkuste to znovu.</string>
     <string name="library_back">Zpět do knihovny</string>
     <string name="library_sort">Seřadit aplikace</string>
     <string name="library_search_clear">Vymazat hledání</string>

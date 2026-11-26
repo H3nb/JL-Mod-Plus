@@ -176,13 +176,13 @@
     <string name="library_import_done">تم استيراد حزمة التطبيق.</string>
     <string name="library_import_done_with_warning">تم استيراد حزمة التطبيق مع وجود تحذيرات.</string>
     <string name="library_import_invalid_bundle">حزمة التطبيق المحددة غير صالحة أو تالفة أو غير مدعومة. اختر حزمة تطبيق JL-Mod Plus صالحة وحاول مرة أخرى.</string>
-    <string name="library_import_restore_existing">هذا التطبيق مثبّت بالفعل. ستستبدل الإعدادات وبيانات الحفظ المضمّنة البيانات الحالية؛ وتُدمج الإشارات المرجعية ما لم تكن الإعدادات مضمّنة أيضًا.</string>
+    <string name="library_import_restore_existing">هذا التطبيق مثبّت بالفعل. ستحلّ الإعدادات وبيانات الحفظ المضمّنة محل البيانات الحالية. في الحزم الأحدث، تُدمج الإشارات المرجعية عند استيرادها دون الإعدادات، وتُستبدل عند استيرادها مع الإعدادات، وتبقى كما هي إذا لم تُضمّن في الحزمة. قد تؤدي استعادة الإعدادات من حزم أقدم إلى استبدال الإشارات المرجعية أيضًا.</string>
     <string name="library_import_restore_failed">تم تثبيت التطبيق، لكن تعذّرت استعادة بيانات حزمته. هل تريد إعادة محاولة الاستعادة؟</string>
     <string name="library_play_stats_summary">مرات التشغيل: <xliff:g id="launch_count" example="12">%1$d</xliff:g> · إجمالي الوقت: <xliff:g id="total_time" example="2h 15m">%2$s</xliff:g></string>
     <string name="library_share_chooser_title">مشاركة التطبيق</string>
     <string name="library_export_chooser_title">تصدير</string>
     <string name="library_export_progress">جارٍ التصدير… <xliff:g id="completed" example="3">%1$d</xliff:g>/<xliff:g id="total" example="10">%2$d</xliff:g></string>
-    <string name="library_transfer_unavailable">تعذّر تحضير التصدير. أغلق أي تطبيق MIDlet قيد التشغيل وحاول مرة أخرى.</string>
+    <string name="library_transfer_unavailable">تعذّر التصدير. أغلق تطبيقات MIDlet المحددة التي لا تزال قيد التشغيل، ثم حاول مرة أخرى.</string>
     <string name="library_back">العودة إلى المكتبة</string>
     <string name="library_sort">فرز التطبيقات</string>
     <string name="library_search_clear">مسح البحث</string>

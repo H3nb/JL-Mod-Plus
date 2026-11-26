@@ -158,13 +158,13 @@
     <string name="library_import_done">应用包已导入。</string>
     <string name="library_import_done_with_warning">应用包已导入，但存在警告。</string>
     <string name="library_import_invalid_bundle">所选应用包无效、已损坏或不受支持。请选择有效的 JL-Mod Plus 应用包后重试。</string>
-    <string name="library_import_restore_existing">此应用已安装。包内包含的设置和存档数据将替换现有数据；除非同时包含设置，否则书签将与现有内容合并。</string>
+    <string name="library_import_restore_existing">此应用已安装。包内的设置和存档数据将替换现有数据。对于新格式的应用包，仅导入书签而不导入设置时，书签将与现有书签合并；同时导入书签和设置时，将替换现有书签；未包含书签时，将保留现有书签。从旧格式的应用包恢复设置时，也可能替换书签。</string>
     <string name="library_import_restore_failed">应用已安装，但无法还原应用包数据。是否重试还原？</string>
     <string name="library_play_stats_summary">启动次数：<xliff:g id="launch_count" example="12">%1$d</xliff:g> · 累计时长：<xliff:g id="total_time" example="2h 15m">%2$s</xliff:g></string>
     <string name="library_share_chooser_title">分享应用</string>
     <string name="library_export_chooser_title">导出</string>
     <string name="library_export_progress">正在导出… <xliff:g id="completed" example="3">%1$d</xliff:g>/<xliff:g id="total" example="10">%2$d</xliff:g></string>
-    <string name="library_transfer_unavailable">无法准备导出。请关闭正在运行的 MIDlet 后重试。</string>
+    <string name="library_transfer_unavailable">无法导出。请关闭所选应用中正在运行的 MIDlet，然后重试。</string>
     <string name="library_back">返回应用库</string>
     <string name="library_sort">排序方式</string>
     <string name="library_search_clear">清除搜索</string>

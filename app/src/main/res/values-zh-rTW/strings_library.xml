@@ -161,13 +161,13 @@
     <string name="library_import_done">已匯入應用程式封包。</string>
     <string name="library_import_done_with_warning">已匯入應用程式封包，但出現警告。</string>
     <string name="library_import_invalid_bundle">所選應用程式封包無效、已損毀或不支援。請選擇有效的 JL-Mod Plus 應用程式封包後再試一次。</string>
-    <string name="library_import_restore_existing">此應用程式已安裝。封包內的設定與存檔資料將取代現有資料；除非同時包含設定，否則書籤將進行合併。</string>
+    <string name="library_import_restore_existing">此應用程式已安裝。封包內的設定與存檔資料將取代現有資料。使用新格式的封包時，匯入書籤但不匯入設定會合併書籤；同時匯入書籤與設定會取代現有書籤；未包含書籤則會保留現有書籤。從舊格式的封包還原設定時，也可能取代書籤。</string>
     <string name="library_import_restore_failed">應用程式已安裝，但無法還原其封包資料。要重試還原嗎？</string>
     <string name="library_play_stats_summary">啟動次數：<xliff:g id="launch_count" example="12">%1$d</xliff:g> · 總遊玩時間：<xliff:g id="total_time" example="2h 15m">%2$s</xliff:g></string>
     <string name="library_share_chooser_title">分享應用程式</string>
     <string name="library_export_chooser_title">匯出</string>
     <string name="library_export_progress">正在匯出… <xliff:g id="completed" example="3">%1$d</xliff:g>/<xliff:g id="total" example="10">%2$d</xliff:g></string>
-    <string name="library_transfer_unavailable">無法準備匯出。請關閉所有執行中的 MIDlet 後再試一次。</string>
+    <string name="library_transfer_unavailable">無法匯出。請關閉所選應用程式中正在執行的 MIDlet，然後再試一次。</string>
     <string name="library_back">返回應用程式庫</string>
     <string name="library_sort">排序應用程式</string>
     <string name="library_search_clear">清除搜尋</string>
