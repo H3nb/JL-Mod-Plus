@@ -267,4 +267,14 @@
     <string name="memory_list_removal_unknown_error">Белгісіз қате</string>
     <string name="memory_editor_edit_freeze_failed">Мән жаңартылды, бірақ оны бекіту басталмады. Қайталап көрмес бұрын ағымдағы мәнді тексеріңіз.</string>
     <string name="memory_scripts_freeze_inactive">Скрипт арқылы бекіту өшірулі.</string>
+    <string name="memory_bookmark_change_incomplete">Бетбелгіні өзгертуді аяқтау мүмкін болмады. Қайталап көрмес бұрын сақталған элементтерді тексеріңіз.</string>
+    <string name="memory_editor_value_updated">Мән жаңартылды.</string>
+    <string name="memory_editor_value_updated_frozen">Мән жаңартылып, бекіту қосылды.</string>
+    <string name="memory_scripts_delete_failed">Скриптті жою мүмкін болмады. Қайталап көрмес бұрын бекіту күйін тексеріңіз.</string>
+    <string name="memory_scripts_check_input">Скриптті дайындау мүмкін болмады. Оның мәндері мен бетбелгілерін тексеріңіз.</string>
+    <string name="memory_scripts_read_failed">Ағымдағы мәндерді оқу мүмкін болмады. Жаңартып, қайталап көріңіз.</string>
+    <string name="memory_technical_details">Техникалық мәліметтер</string>
+    <string name="memory_scripts_resource_limit">Скрипт қауіпсіздік шегіне жетті. Нысандар санын азайтыңыз немесе пайдаланылмайтын бекітулерді тоқтатыңыз.</string>
+    <string name="memory_scripts_target_changed">Скрипт нысанын тексеру мүмкін болмады. Мәндерін жаңартып, бетбелгілерді тексеріңіз.</string>
+    <string name="memory_scripts_operation_unavailable">Бұл скрипт операциясы ағымдағы нысан үшін қолдау таппайды.</string>
 </resources>

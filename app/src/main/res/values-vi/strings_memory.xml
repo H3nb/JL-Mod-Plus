@@ -261,4 +261,14 @@
     <string name="memory_list_removal_unknown_error">Lỗi không xác định</string>
     <string name="memory_editor_edit_freeze_failed">Đã cập nhật giá trị nhưng không thể bắt đầu đóng băng. Kiểm tra giá trị hiện tại trước khi thử lại.</string>
     <string name="memory_scripts_freeze_inactive">Tính năng đóng băng của tập lệnh đã tắt.</string>
+    <string name="memory_bookmark_change_incomplete">Không thể hoàn tất thay đổi dấu trang. Kiểm tra các mục đã lưu trước khi thử lại.</string>
+    <string name="memory_editor_value_updated">Đã cập nhật giá trị.</string>
+    <string name="memory_editor_value_updated_frozen">Đã cập nhật giá trị và bật đóng băng.</string>
+    <string name="memory_scripts_delete_failed">Không thể xóa tập lệnh. Kiểm tra trạng thái đóng băng trước khi thử lại.</string>
+    <string name="memory_scripts_check_input">Không thể chuẩn bị tập lệnh. Kiểm tra các giá trị và dấu trang.</string>
+    <string name="memory_scripts_read_failed">Không thể đọc các giá trị hiện tại. Làm mới rồi thử lại.</string>
+    <string name="memory_technical_details">Chi tiết kỹ thuật</string>
+    <string name="memory_scripts_resource_limit">Tập lệnh đã đạt giới hạn an toàn. Giảm số mục tiêu hoặc dừng các thao tác đóng băng không dùng đến.</string>
+    <string name="memory_scripts_target_changed">Không thể xác minh mục tiêu của tập lệnh. Làm mới các giá trị và kiểm tra dấu trang.</string>
+    <string name="memory_scripts_operation_unavailable">Thao tác này của tập lệnh không được hỗ trợ đối với mục tiêu hiện tại.</string>
 </resources>

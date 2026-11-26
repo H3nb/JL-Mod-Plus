@@ -267,4 +267,14 @@
     <string name="memory_list_removal_unknown_error">Unknown error</string>
     <string name="memory_editor_edit_freeze_failed">Value updated, but freeze couldn’t start. Check the current value before trying again.</string>
     <string name="memory_scripts_freeze_inactive">Script freeze is off.</string>
+    <string name="memory_bookmark_change_incomplete">Couldn’t complete the bookmark change. Check Saved before trying again.</string>
+    <string name="memory_editor_value_updated">Value updated.</string>
+    <string name="memory_editor_value_updated_frozen">Value updated and freeze enabled.</string>
+    <string name="memory_scripts_delete_failed">Couldn’t delete the script. Check its freeze status before trying again.</string>
+    <string name="memory_scripts_check_input">Couldn’t prepare the script. Check its values and bookmarks.</string>
+    <string name="memory_scripts_read_failed">Couldn’t read current values. Refresh and try again.</string>
+    <string name="memory_technical_details">Technical details</string>
+    <string name="memory_scripts_resource_limit">The script reached a safety limit. Reduce its targets or stop unused freezes.</string>
+    <string name="memory_scripts_target_changed">Couldn’t verify the script’s target. Refresh its values and check the bookmarks.</string>
+    <string name="memory_scripts_operation_unavailable">This script operation isn’t supported for the current target.</string>
 </resources>

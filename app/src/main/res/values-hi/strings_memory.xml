@@ -267,4 +267,14 @@
     <string name="memory_list_removal_unknown_error">अज्ञात गड़बड़ी</string>
     <string name="memory_editor_edit_freeze_failed">मान अपडेट किया गया, लेकिन फ़्रीज़ शुरू नहीं हो सका। दोबारा कोशिश करने से पहले मौजूदा मान जांचें।</string>
     <string name="memory_scripts_freeze_inactive">स्क्रिप्ट का फ़्रीज़ बंद है।</string>
+    <string name="memory_bookmark_change_incomplete">बुकमार्क में बदलाव पूरा नहीं हो सका। फिर कोशिश करने से पहले सहेजे गए आइटम देखें।</string>
+    <string name="memory_editor_value_updated">मान अपडेट हो गया।</string>
+    <string name="memory_editor_value_updated_frozen">मान अपडेट हो गया और फ़्रीज़ चालू हो गया।</string>
+    <string name="memory_scripts_delete_failed">स्क्रिप्ट मिटाई नहीं जा सकी। फिर कोशिश करने से पहले उसकी फ़्रीज़ स्थिति देखें।</string>
+    <string name="memory_scripts_check_input">स्क्रिप्ट तैयार नहीं हो सकी। इसके मान और बुकमार्क जांचें।</string>
+    <string name="memory_scripts_read_failed">मौजूदा मान पढ़े नहीं जा सके। रीफ़्रेश करके फिर कोशिश करें।</string>
+    <string name="memory_technical_details">तकनीकी जानकारी</string>
+    <string name="memory_scripts_resource_limit">स्क्रिप्ट सुरक्षा सीमा तक पहुंच गई है। इसके टारगेट कम करें या इस्तेमाल न हो रहे फ़्रीज़ बंद करें।</string>
+    <string name="memory_scripts_target_changed">स्क्रिप्ट का टारगेट सत्यापित नहीं हो सका। मान रीफ़्रेश करें और बुकमार्क जांचें।</string>
+    <string name="memory_scripts_operation_unavailable">मौजूदा टारगेट के लिए यह स्क्रिप्ट ऑपरेशन समर्थित नहीं है।</string>
 </resources>

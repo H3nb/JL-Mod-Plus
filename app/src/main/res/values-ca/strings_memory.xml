@@ -273,4 +273,14 @@
     <string name="memory_list_removal_unknown_error">Error desconegut</string>
     <string name="memory_editor_edit_freeze_failed">Valor actualitzat, però no s’ha pogut iniciar la congelació. Comprova el valor actual abans de tornar-ho a provar.</string>
     <string name="memory_scripts_freeze_inactive">La congelació del script està desactivada.</string>
+    <string name="memory_bookmark_change_incomplete">No s’ha pogut completar el canvi del marcador. Comprova Desats abans de tornar-ho a provar.</string>
+    <string name="memory_editor_value_updated">Valor actualitzat.</string>
+    <string name="memory_editor_value_updated_frozen">Valor actualitzat i congelació activada.</string>
+    <string name="memory_scripts_delete_failed">No s’ha pogut suprimir el script. Comprova l’estat de la congelació abans de tornar-ho a provar.</string>
+    <string name="memory_scripts_check_input">No s’ha pogut preparar el script. Comprova’n els valors i els marcadors.</string>
+    <string name="memory_scripts_read_failed">No s’han pogut llegir els valors actuals. Actualitza’ls i torna-ho a provar.</string>
+    <string name="memory_technical_details">Detalls tècnics</string>
+    <string name="memory_scripts_resource_limit">El script ha arribat a un límit de seguretat. Redueix els objectius o atura les congelacions que no utilitzes.</string>
+    <string name="memory_scripts_target_changed">No s’ha pogut verificar l’objectiu del script. Actualitza’n els valors i comprova els marcadors.</string>
+    <string name="memory_scripts_operation_unavailable">Aquesta operació del script no és compatible amb l’objectiu actual.</string>
 </resources>

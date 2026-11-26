@@ -267,4 +267,14 @@
     <string name="memory_list_removal_unknown_error">Άγνωστο σφάλμα</string>
     <string name="memory_editor_edit_freeze_failed">Η τιμή ενημερώθηκε, αλλά δεν ήταν δυνατή η έναρξη του παγώματος. Ελέγξτε την τρέχουσα τιμή πριν δοκιμάσετε ξανά.</string>
     <string name="memory_scripts_freeze_inactive">Το πάγωμα από το σενάριο είναι ανενεργό.</string>
+    <string name="memory_bookmark_change_incomplete">Δεν ήταν δυνατή η ολοκλήρωση της αλλαγής του σελιδοδείκτη. Ελέγξτε τα Αποθηκευμένα πριν δοκιμάσετε ξανά.</string>
+    <string name="memory_editor_value_updated">Η τιμή ενημερώθηκε.</string>
+    <string name="memory_editor_value_updated_frozen">Η τιμή ενημερώθηκε και το πάγωμα ενεργοποιήθηκε.</string>
+    <string name="memory_scripts_delete_failed">Δεν ήταν δυνατή η διαγραφή του σεναρίου. Ελέγξτε την κατάσταση παγώματος πριν δοκιμάσετε ξανά.</string>
+    <string name="memory_scripts_check_input">Δεν ήταν δυνατή η προετοιμασία του σεναρίου. Ελέγξτε τις τιμές και τους σελιδοδείκτες του.</string>
+    <string name="memory_scripts_read_failed">Δεν ήταν δυνατή η ανάγνωση των τρεχουσών τιμών. Ανανεώστε και δοκιμάστε ξανά.</string>
+    <string name="memory_technical_details">Τεχνικές λεπτομέρειες</string>
+    <string name="memory_scripts_resource_limit">Το σενάριο έφτασε σε όριο ασφαλείας. Μειώστε τους στόχους ή διακόψτε τα παγώματα που δεν χρησιμοποιείτε.</string>
+    <string name="memory_scripts_target_changed">Δεν ήταν δυνατή η επαλήθευση του στόχου του σεναρίου. Ανανεώστε τις τιμές και ελέγξτε τους σελιδοδείκτες.</string>
+    <string name="memory_scripts_operation_unavailable">Αυτή η λειτουργία του σεναρίου δεν υποστηρίζεται για τον τρέχοντα στόχο.</string>
 </resources>

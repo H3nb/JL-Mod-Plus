@@ -267,4 +267,14 @@
     <string name="memory_list_removal_unknown_error">خطای ناشناخته</string>
     <string name="memory_editor_edit_freeze_failed">مقدار به‌روزرسانی شد، اما ثابت‌سازی آغاز نشد. پیش از تلاش مجدد، مقدار فعلی را بررسی کنید.</string>
     <string name="memory_scripts_freeze_inactive">ثابت‌سازی اسکریپت غیرفعال است.</string>
+    <string name="memory_bookmark_change_incomplete">تغییر نشانک کامل نشد. پیش از تلاش دوباره، بخش ذخیره‌شده‌ها را بررسی کنید.</string>
+    <string name="memory_editor_value_updated">مقدار به‌روز شد.</string>
+    <string name="memory_editor_value_updated_frozen">مقدار به‌روز و قفل کردن فعال شد.</string>
+    <string name="memory_scripts_delete_failed">حذف اسکریپت ممکن نشد. پیش از تلاش دوباره، وضعیت قفل کردن آن را بررسی کنید.</string>
+    <string name="memory_scripts_check_input">آماده‌سازی اسکریپت ممکن نشد. مقادیر و نشانک‌های آن را بررسی کنید.</string>
+    <string name="memory_scripts_read_failed">خواندن مقادیر فعلی ممکن نشد. تازه‌سازی کنید و دوباره تلاش کنید.</string>
+    <string name="memory_technical_details">جزئیات فنی</string>
+    <string name="memory_scripts_resource_limit">اسکریپت به محدودیت ایمنی رسیده است. اهداف آن را کمتر کنید یا قفل‌های بدون استفاده را متوقف کنید.</string>
+    <string name="memory_scripts_target_changed">تأیید هدف اسکریپت ممکن نشد. مقادیر آن را تازه‌سازی و نشانک‌ها را بررسی کنید.</string>
+    <string name="memory_scripts_operation_unavailable">این عملیات اسکریپت برای هدف فعلی پشتیبانی نمی‌شود.</string>
 </resources>

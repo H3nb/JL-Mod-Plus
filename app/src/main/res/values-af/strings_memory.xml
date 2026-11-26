@@ -267,4 +267,14 @@
     <string name="memory_list_removal_unknown_error">Onbekende fout</string>
     <string name="memory_editor_edit_freeze_failed">Waarde opgedateer, maar bevriesing kon nie begin nie. Kontroleer die huidige waarde voordat jy weer probeer.</string>
     <string name="memory_scripts_freeze_inactive">Skripbevriesing is af.</string>
+    <string name="memory_bookmark_change_incomplete">Kon nie die boekmerkwysiging voltooi nie. Gaan Gestoor na voordat jy weer probeer.</string>
+    <string name="memory_editor_value_updated">Waarde bygewerk.</string>
+    <string name="memory_editor_value_updated_frozen">Waarde bygewerk en vriesing geaktiveer.</string>
+    <string name="memory_scripts_delete_failed">Kon nie die skrip uitvee nie. Gaan die vriesstatus na voordat jy weer probeer.</string>
+    <string name="memory_scripts_check_input">Kon nie die skrip voorberei nie. Gaan sy waardes en boekmerke na.</string>
+    <string name="memory_scripts_read_failed">Kon nie huidige waardes lees nie. Herlaai en probeer weer.</string>
+    <string name="memory_technical_details">Tegniese besonderhede</string>
+    <string name="memory_scripts_resource_limit">Die skrip het ’n veiligheidslimiet bereik. Verminder sy teikens of stop ongebruikte vriesings.</string>
+    <string name="memory_scripts_target_changed">Kon nie die skrip se teiken verifieer nie. Herlaai sy waardes en gaan die boekmerke na.</string>
+    <string name="memory_scripts_operation_unavailable">Hierdie skripbewerking word nie vir die huidige teiken ondersteun nie.</string>
 </resources>

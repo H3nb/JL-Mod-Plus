@@ -279,4 +279,14 @@
     <string name="memory_list_removal_unknown_error">Невідома помилка</string>
     <string name="memory_editor_edit_freeze_failed">Значення оновлено, але не вдалося почати замороження. Перевірте поточне значення перед повторною спробою.</string>
     <string name="memory_scripts_freeze_inactive">Замороження скриптом вимкнено.</string>
+    <string name="memory_bookmark_change_incomplete">Не вдалося завершити зміну закладки. Перевірте збережені елементи перед повторною спробою.</string>
+    <string name="memory_editor_value_updated">Значення оновлено.</string>
+    <string name="memory_editor_value_updated_frozen">Значення оновлено й заморожування ввімкнено.</string>
+    <string name="memory_scripts_delete_failed">Не вдалося видалити скрипт. Перевірте стан заморожування перед повторною спробою.</string>
+    <string name="memory_scripts_check_input">Не вдалося підготувати скрипт. Перевірте його значення та закладки.</string>
+    <string name="memory_scripts_read_failed">Не вдалося прочитати поточні значення. Оновіть і спробуйте ще раз.</string>
+    <string name="memory_technical_details">Технічні відомості</string>
+    <string name="memory_scripts_resource_limit">Скрипт досяг обмеження безпеки. Зменште кількість цілей або вимкніть невикористовувані заморожування.</string>
+    <string name="memory_scripts_target_changed">Не вдалося перевірити ціль скрипта. Оновіть значення та перевірте закладки.</string>
+    <string name="memory_scripts_operation_unavailable">Ця операція скрипта не підтримується для поточної цілі.</string>
 </resources>

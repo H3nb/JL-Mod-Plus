@@ -273,4 +273,14 @@
     <string name="memory_list_removal_unknown_error">שגיאה לא ידועה</string>
     <string name="memory_editor_edit_freeze_failed">הערך עודכן, אך לא ניתן היה להתחיל את ההקפאה. יש לבדוק את הערך הנוכחי לפני ניסיון נוסף.</string>
     <string name="memory_scripts_freeze_inactive">ההקפאה של הסקריפט כבויה.</string>
+    <string name="memory_bookmark_change_incomplete">לא ניתן היה להשלים את השינוי בסימנייה. יש לבדוק את הפריטים השמורים לפני ניסיון נוסף.</string>
+    <string name="memory_editor_value_updated">הערך עודכן.</string>
+    <string name="memory_editor_value_updated_frozen">הערך עודכן וההקפאה הופעלה.</string>
+    <string name="memory_scripts_delete_failed">לא ניתן היה למחוק את הסקריפט. יש לבדוק את מצב ההקפאה לפני ניסיון נוסף.</string>
+    <string name="memory_scripts_check_input">לא ניתן היה להכין את הסקריפט. יש לבדוק את הערכים והסימניות שלו.</string>
+    <string name="memory_scripts_read_failed">לא ניתן היה לקרוא את הערכים הנוכחיים. יש לרענן ולנסות שוב.</string>
+    <string name="memory_technical_details">פרטים טכניים</string>
+    <string name="memory_scripts_resource_limit">הסקריפט הגיע למגבלת בטיחות. יש לצמצם את היעדים או להפסיק הקפאות שאינן בשימוש.</string>
+    <string name="memory_scripts_target_changed">לא ניתן היה לאמת את יעד הסקריפט. יש לרענן את הערכים ולבדוק את הסימניות.</string>
+    <string name="memory_scripts_operation_unavailable">פעולת סקריפט זו אינה נתמכת עבור היעד הנוכחי.</string>
 </resources>

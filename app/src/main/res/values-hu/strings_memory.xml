@@ -267,4 +267,14 @@
     <string name="memory_list_removal_unknown_error">Ismeretlen hiba</string>
     <string name="memory_editor_edit_freeze_failed">Az érték frissült, de a befagyasztás nem indult el. Újabb próbálkozás előtt ellenőrizd az aktuális értéket.</string>
     <string name="memory_scripts_freeze_inactive">A szkript befagyasztása ki van kapcsolva.</string>
+    <string name="memory_bookmark_change_incomplete">Nem sikerült befejezni a könyvjelző módosítását. Újrapróbálkozás előtt ellenőrizze a Mentett elemeket.</string>
+    <string name="memory_editor_value_updated">Érték frissítve.</string>
+    <string name="memory_editor_value_updated_frozen">Érték frissítve, rögzítés bekapcsolva.</string>
+    <string name="memory_scripts_delete_failed">Nem sikerült törölni a szkriptet. Újrapróbálkozás előtt ellenőrizze a rögzítés állapotát.</string>
+    <string name="memory_scripts_check_input">Nem sikerült előkészíteni a szkriptet. Ellenőrizze az értékeit és könyvjelzőit.</string>
+    <string name="memory_scripts_read_failed">Nem sikerült beolvasni az aktuális értékeket. Frissítse őket, és próbálja újra.</string>
+    <string name="memory_technical_details">Technikai részletek</string>
+    <string name="memory_scripts_resource_limit">A szkript elérte a biztonsági korlátot. Csökkentse a célok számát, vagy állítsa le a nem használt rögzítéseket.</string>
+    <string name="memory_scripts_target_changed">Nem sikerült ellenőrizni a szkript célját. Frissítse az értékeket, és ellenőrizze a könyvjelzőket.</string>
+    <string name="memory_scripts_operation_unavailable">Ez a szkriptművelet nem támogatott a jelenlegi célhoz.</string>
 </resources>

@@ -273,4 +273,14 @@
     <string name="memory_list_removal_unknown_error">Erreur inconnue</string>
     <string name="memory_editor_edit_freeze_failed">Valeur mise à jour, mais impossible de la figer. Vérifiez la valeur actuelle avant de réessayer.</string>
     <string name="memory_scripts_freeze_inactive">Le figeage par le script est désactivé.</string>
+    <string name="memory_bookmark_change_incomplete">Impossible de terminer la modification du signet. Vérifiez les éléments enregistrés avant de réessayer.</string>
+    <string name="memory_editor_value_updated">Valeur mise à jour.</string>
+    <string name="memory_editor_value_updated_frozen">Valeur mise à jour et gel activé.</string>
+    <string name="memory_scripts_delete_failed">Impossible de supprimer le script. Vérifiez l’état du gel avant de réessayer.</string>
+    <string name="memory_scripts_check_input">Impossible de préparer le script. Vérifiez ses valeurs et ses signets.</string>
+    <string name="memory_scripts_read_failed">Impossible de lire les valeurs actuelles. Actualisez-les, puis réessayez.</string>
+    <string name="memory_technical_details">Détails techniques</string>
+    <string name="memory_scripts_resource_limit">Le script a atteint une limite de sécurité. Réduisez le nombre de cibles ou arrêtez les gels inutilisés.</string>
+    <string name="memory_scripts_target_changed">Impossible de vérifier la cible du script. Actualisez ses valeurs et vérifiez les signets.</string>
+    <string name="memory_scripts_operation_unavailable">Cette opération du script n’est pas prise en charge pour la cible actuelle.</string>
 </resources>

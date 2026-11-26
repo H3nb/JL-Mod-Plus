@@ -279,4 +279,14 @@
     <string name="memory_list_removal_unknown_error">Nieznany błąd</string>
     <string name="memory_editor_edit_freeze_failed">Wartość zaktualizowano, ale nie udało się rozpocząć zamrażania. Sprawdź bieżącą wartość przed ponowną próbą.</string>
     <string name="memory_scripts_freeze_inactive">Zamrażanie przez skrypt jest wyłączone.</string>
+    <string name="memory_bookmark_change_incomplete">Nie udało się ukończyć zmiany zakładki. Przed ponowną próbą sprawdź Zapisane.</string>
+    <string name="memory_editor_value_updated">Zaktualizowano wartość.</string>
+    <string name="memory_editor_value_updated_frozen">Zaktualizowano wartość i włączono zamrożenie.</string>
+    <string name="memory_scripts_delete_failed">Nie udało się usunąć skryptu. Przed ponowną próbą sprawdź stan zamrożenia.</string>
+    <string name="memory_scripts_check_input">Nie udało się przygotować skryptu. Sprawdź jego wartości i zakładki.</string>
+    <string name="memory_scripts_read_failed">Nie udało się odczytać bieżących wartości. Odśwież i spróbuj ponownie.</string>
+    <string name="memory_technical_details">Szczegóły techniczne</string>
+    <string name="memory_scripts_resource_limit">Skrypt osiągnął limit bezpieczeństwa. Zmniejsz liczbę celów lub zatrzymaj nieużywane zamrożenia.</string>
+    <string name="memory_scripts_target_changed">Nie udało się zweryfikować celu skryptu. Odśwież wartości i sprawdź zakładki.</string>
+    <string name="memory_scripts_operation_unavailable">Ta operacja skryptu nie jest obsługiwana dla bieżącego celu.</string>
 </resources>

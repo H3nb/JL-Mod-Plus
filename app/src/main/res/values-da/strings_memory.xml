@@ -267,4 +267,14 @@
     <string name="memory_list_removal_unknown_error">Ukendt fejl</string>
     <string name="memory_editor_edit_freeze_failed">Værdien er opdateret, men fastfrysningen kunne ikke startes. Kontrollér den aktuelle værdi, før du prøver igen.</string>
     <string name="memory_scripts_freeze_inactive">Scriptets fastfrysning er slået fra.</string>
+    <string name="memory_bookmark_change_incomplete">Bogmærkeændringen kunne ikke fuldføres. Kontrollér Gemte, før du prøver igen.</string>
+    <string name="memory_editor_value_updated">Værdi opdateret.</string>
+    <string name="memory_editor_value_updated_frozen">Værdi opdateret og frysning aktiveret.</string>
+    <string name="memory_scripts_delete_failed">Scriptet kunne ikke slettes. Kontrollér dets frysetilstand, før du prøver igen.</string>
+    <string name="memory_scripts_check_input">Scriptet kunne ikke forberedes. Kontrollér dets værdier og bogmærker.</string>
+    <string name="memory_scripts_read_failed">De aktuelle værdier kunne ikke læses. Opdater, og prøv igen.</string>
+    <string name="memory_technical_details">Tekniske detaljer</string>
+    <string name="memory_scripts_resource_limit">Scriptet har nået en sikkerhedsgrænse. Reducer antallet af mål, eller stop ubrugte frysninger.</string>
+    <string name="memory_scripts_target_changed">Scriptets mål kunne ikke verificeres. Opdater værdierne, og kontrollér bogmærkerne.</string>
+    <string name="memory_scripts_operation_unavailable">Denne scripthandling understøttes ikke for det aktuelle mål.</string>
 </resources>

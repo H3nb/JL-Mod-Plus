@@ -261,4 +261,14 @@
     <string name="memory_list_removal_unknown_error">不明なエラー</string>
     <string name="memory_editor_edit_freeze_failed">値を更新しましたが、固定を開始できませんでした。再試行する前に現在の値を確認してください。</string>
     <string name="memory_scripts_freeze_inactive">スクリプトによる固定は無効です。</string>
+    <string name="memory_bookmark_change_incomplete">ブックマークの変更を完了できませんでした。再試行する前に保存済み項目を確認してください。</string>
+    <string name="memory_editor_value_updated">値を更新しました。</string>
+    <string name="memory_editor_value_updated_frozen">値を更新し、固定を有効にしました。</string>
+    <string name="memory_scripts_delete_failed">スクリプトを削除できませんでした。再試行する前に固定の状態を確認してください。</string>
+    <string name="memory_scripts_check_input">スクリプトを準備できませんでした。値とブックマークを確認してください。</string>
+    <string name="memory_scripts_read_failed">現在の値を読み取れませんでした。更新してからもう一度お試しください。</string>
+    <string name="memory_technical_details">技術的な詳細</string>
+    <string name="memory_scripts_resource_limit">スクリプトが安全上の制限に達しました。対象を減らすか、使用していない固定を解除してください。</string>
+    <string name="memory_scripts_target_changed">スクリプトの対象を確認できませんでした。値を更新し、ブックマークを確認してください。</string>
+    <string name="memory_scripts_operation_unavailable">このスクリプト操作は現在の対象に対応していません。</string>
 </resources>

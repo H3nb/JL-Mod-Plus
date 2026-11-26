@@ -267,4 +267,14 @@
     <string name="memory_list_removal_unknown_error">Okänt fel</string>
     <string name="memory_editor_edit_freeze_failed">Värdet uppdaterades, men frysningen kunde inte startas. Kontrollera det aktuella värdet innan du försöker igen.</string>
     <string name="memory_scripts_freeze_inactive">Skriptets frysning är avstängd.</string>
+    <string name="memory_bookmark_change_incomplete">Det gick inte att slutföra bokmärkesändringen. Kontrollera Sparat innan du försöker igen.</string>
+    <string name="memory_editor_value_updated">Värdet har uppdaterats.</string>
+    <string name="memory_editor_value_updated_frozen">Värdet har uppdaterats och frysning aktiverats.</string>
+    <string name="memory_scripts_delete_failed">Det gick inte att ta bort skriptet. Kontrollera dess frysningsstatus innan du försöker igen.</string>
+    <string name="memory_scripts_check_input">Det gick inte att förbereda skriptet. Kontrollera dess värden och bokmärken.</string>
+    <string name="memory_scripts_read_failed">Det gick inte att läsa aktuella värden. Uppdatera och försök igen.</string>
+    <string name="memory_technical_details">Teknisk information</string>
+    <string name="memory_scripts_resource_limit">Skriptet har nått en säkerhetsgräns. Minska antalet mål eller stoppa frysningar som inte används.</string>
+    <string name="memory_scripts_target_changed">Det gick inte att verifiera skriptets mål. Uppdatera värdena och kontrollera bokmärkena.</string>
+    <string name="memory_scripts_operation_unavailable">Den här skriptåtgärden stöds inte för det aktuella målet.</string>
 </resources>

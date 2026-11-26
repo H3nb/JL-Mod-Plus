@@ -261,4 +261,14 @@
     <string name="memory_list_removal_unknown_error">Kesalahan tidak diketahui</string>
     <string name="memory_editor_edit_freeze_failed">Nilai telah diubah, tetapi pembekuan tidak dapat dimulai. Periksa nilai saat ini sebelum mencoba lagi.</string>
     <string name="memory_scripts_freeze_inactive">Pembekuan skrip tidak aktif.</string>
+    <string name="memory_bookmark_change_incomplete">Perubahan penanda tidak dapat diselesaikan. Periksa Tersimpan sebelum mencoba lagi.</string>
+    <string name="memory_editor_value_updated">Nilai diperbarui.</string>
+    <string name="memory_editor_value_updated_frozen">Nilai diperbarui dan pembekuan diaktifkan.</string>
+    <string name="memory_scripts_delete_failed">Tidak dapat menghapus skrip. Periksa status pembekuannya sebelum mencoba lagi.</string>
+    <string name="memory_scripts_check_input">Tidak dapat menyiapkan skrip. Periksa nilai dan penandanya.</string>
+    <string name="memory_scripts_read_failed">Tidak dapat membaca nilai terkini. Muat ulang, lalu coba lagi.</string>
+    <string name="memory_technical_details">Detail teknis</string>
+    <string name="memory_scripts_resource_limit">Skrip mencapai batas keamanan. Kurangi targetnya atau hentikan pembekuan yang tidak digunakan.</string>
+    <string name="memory_scripts_target_changed">Target skrip tidak dapat diverifikasi. Muat ulang nilainya dan periksa penanda.</string>
+    <string name="memory_scripts_operation_unavailable">Operasi skrip ini tidak didukung untuk target saat ini.</string>
 </resources>

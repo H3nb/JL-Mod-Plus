@@ -125,6 +125,12 @@ class MemoryScriptsComposeTest {
         waitForJsonValidation()
         rule.onNodeWithTag("memory-script-editor").performTextReplacement("{")
         rule.onNodeWithTag("memory-script-save").assertIsNotEnabled()
+        val invalidScript = uiText(R.string.memory_scripts_invalid)
+        rule.waitUntil(timeoutMillis = 5_000) {
+            rule.onAllNodesWithText(invalidScript).fetchSemanticsNodes().isNotEmpty()
+        }
+        rule.onNodeWithText(invalidScript).assertIsDisplayed()
+        rule.onNodeWithText(uiText(R.string.memory_technical_details)).assertIsDisplayed()
         rule.onNodeWithTag("memory-script-editor").performTextReplacement(sample)
         waitForJsonValidation()
         rule.onNodeWithText("Save").performClick()

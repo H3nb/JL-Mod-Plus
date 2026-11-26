@@ -291,4 +291,14 @@
     <string name="memory_list_removal_unknown_error">خطأ غير معروف</string>
     <string name="memory_editor_edit_freeze_failed">تم تحديث القيمة، لكن تعذّر بدء التجميد. تحقّق من القيمة الحالية قبل المحاولة مجددًا.</string>
     <string name="memory_scripts_freeze_inactive">تجميد البرنامج النصي غير مفعّل.</string>
+    <string name="memory_bookmark_change_incomplete">تعذّر إكمال تغيير الإشارة المرجعية. تحقّق من المحفوظات قبل إعادة المحاولة.</string>
+    <string name="memory_editor_value_updated">تم تحديث القيمة.</string>
+    <string name="memory_editor_value_updated_frozen">تم تحديث القيمة وتفعيل التجميد.</string>
+    <string name="memory_scripts_delete_failed">تعذّر حذف النص البرمجي. تحقّق من حالة التجميد قبل إعادة المحاولة.</string>
+    <string name="memory_scripts_check_input">تعذّر إعداد النص البرمجي. تحقّق من قيمه وإشاراته المرجعية.</string>
+    <string name="memory_scripts_read_failed">تعذّرت قراءة القيم الحالية. حدّثها وحاول مرة أخرى.</string>
+    <string name="memory_technical_details">التفاصيل التقنية</string>
+    <string name="memory_scripts_resource_limit">بلغ النص البرمجي حدًا من حدود الأمان. قلّل أهدافه أو أوقف عمليات التجميد غير المستخدمة.</string>
+    <string name="memory_scripts_target_changed">تعذّر التحقّق من هدف النص البرمجي. حدّث قيمه وتحقّق من الإشارات المرجعية.</string>
+    <string name="memory_scripts_operation_unavailable">عملية النص البرمجي هذه غير مدعومة للهدف الحالي.</string>
 </resources>

@@ -267,4 +267,14 @@
     <string name="memory_list_removal_unknown_error">නොදන්නා දෝෂයකි</string>
     <string name="memory_editor_edit_freeze_failed">අගය යාවත්කාලීන කරන ලදී, නමුත් අගය ස්ථිර කිරීම ආරම්භ කළ නොහැකි විය. නැවත උත්සාහ කිරීමට පෙර වත්මන් අගය පරීක්ෂා කරන්න.</string>
     <string name="memory_scripts_freeze_inactive">ස්ක්‍රිප්ට් මඟින් අගයන් ස්ථිර කිරීම අක්‍රියයි.</string>
+    <string name="memory_bookmark_change_incomplete">පිටුසන වෙනස් කිරීම සම්පූර්ණ කළ නොහැකි විය. නැවත උත්සාහ කිරීමට පෙර සුරැකි අයිතම පරීක්ෂා කරන්න.</string>
+    <string name="memory_editor_value_updated">අගය යාවත්කාලීන කළා.</string>
+    <string name="memory_editor_value_updated_frozen">අගය යාවත්කාලීන කර කැටි කිරීම සක්‍රිය කළා.</string>
+    <string name="memory_scripts_delete_failed">ස්ක්‍රිප්ට් එක මකා දැමිය නොහැකි විය. නැවත උත්සාහ කිරීමට පෙර එහි කැටි කිරීමේ තත්ත්වය පරීක්ෂා කරන්න.</string>
+    <string name="memory_scripts_check_input">ස්ක්‍රිප්ට් එක සූදානම් කළ නොහැකි විය. එහි අගයන් සහ පිටුසන් පරීක්ෂා කරන්න.</string>
+    <string name="memory_scripts_read_failed">වත්මන් අගයන් කියවිය නොහැකි විය. නැවුම් කර නැවත උත්සාහ කරන්න.</string>
+    <string name="memory_technical_details">තාක්ෂණික විස්තර</string>
+    <string name="memory_scripts_resource_limit">ස්ක්‍රිප්ට් එක ආරක්ෂිත සීමාවකට ළඟා වී ඇත. ඉලක්ක ගණන අඩු කරන්න හෝ භාවිත නොකරන කැටි කිරීම් නවත්වන්න.</string>
+    <string name="memory_scripts_target_changed">ස්ක්‍රිප්ට් ඉලක්කය තහවුරු කළ නොහැකි විය. අගයන් නැවුම් කර පිටුසන් පරීක්ෂා කරන්න.</string>
+    <string name="memory_scripts_operation_unavailable">වත්මන් ඉලක්කය සඳහා මෙම ස්ක්‍රිප්ට් මෙහෙයුමට සහාය නොදක්වයි.</string>
 </resources>

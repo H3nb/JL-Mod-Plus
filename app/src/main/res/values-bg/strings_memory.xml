@@ -267,4 +267,14 @@
     <string name="memory_list_removal_unknown_error">Неизвестна грешка</string>
     <string name="memory_editor_edit_freeze_failed">Стойността е обновена, но замразяването не можа да започне. Проверете текущата стойност, преди да опитате отново.</string>
     <string name="memory_scripts_freeze_inactive">Замразяването от скрипта е изключено.</string>
+    <string name="memory_bookmark_change_incomplete">Промяната на отметката не бе завършена. Проверете „Запазени“, преди да опитате отново.</string>
+    <string name="memory_editor_value_updated">Стойността е актуализирана.</string>
+    <string name="memory_editor_value_updated_frozen">Стойността е актуализирана и замразяването е включено.</string>
+    <string name="memory_scripts_delete_failed">Скриптът не бе изтрит. Проверете състоянието на замразяването му, преди да опитате отново.</string>
+    <string name="memory_scripts_check_input">Скриптът не можа да бъде подготвен. Проверете стойностите и отметките му.</string>
+    <string name="memory_scripts_read_failed">Текущите стойности не можаха да бъдат прочетени. Обновете и опитайте отново.</string>
+    <string name="memory_technical_details">Технически подробности</string>
+    <string name="memory_scripts_resource_limit">Скриптът достигна ограничение за безопасност. Намалете целите му или спрете неизползваните замразявания.</string>
+    <string name="memory_scripts_target_changed">Целта на скрипта не можа да бъде проверена. Обновете стойностите му и проверете отметките.</string>
+    <string name="memory_scripts_operation_unavailable">Тази операция на скрипта не се поддържа за текущата цел.</string>
 </resources>

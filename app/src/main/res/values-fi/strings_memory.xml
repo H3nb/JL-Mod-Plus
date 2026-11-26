@@ -267,4 +267,14 @@
     <string name="memory_list_removal_unknown_error">Tuntematon virhe</string>
     <string name="memory_editor_edit_freeze_failed">Arvo päivitettiin, mutta jäädytystä ei voitu aloittaa. Tarkista nykyinen arvo ennen uutta yritystä.</string>
     <string name="memory_scripts_freeze_inactive">Skriptin jäädytys ei ole käytössä.</string>
+    <string name="memory_bookmark_change_incomplete">Kirjanmerkin muutosta ei voitu viimeistellä. Tarkista Tallennetut ennen uutta yritystä.</string>
+    <string name="memory_editor_value_updated">Arvo päivitetty.</string>
+    <string name="memory_editor_value_updated_frozen">Arvo päivitetty ja jäädytys käytössä.</string>
+    <string name="memory_scripts_delete_failed">Skriptiä ei voitu poistaa. Tarkista sen jäädytyksen tila ennen uutta yritystä.</string>
+    <string name="memory_scripts_check_input">Skriptiä ei voitu valmistella. Tarkista sen arvot ja kirjanmerkit.</string>
+    <string name="memory_scripts_read_failed">Nykyisiä arvoja ei voitu lukea. Päivitä ja yritä uudelleen.</string>
+    <string name="memory_technical_details">Tekniset tiedot</string>
+    <string name="memory_scripts_resource_limit">Skripti saavutti turvarajan. Vähennä sen kohteita tai lopeta tarpeettomat jäädytykset.</string>
+    <string name="memory_scripts_target_changed">Skriptin kohdetta ei voitu varmistaa. Päivitä arvot ja tarkista kirjanmerkit.</string>
+    <string name="memory_scripts_operation_unavailable">Tätä skriptin toimintoa ei tueta nykyiselle kohteelle.</string>
 </resources>

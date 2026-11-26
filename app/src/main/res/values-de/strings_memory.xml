@@ -267,4 +267,14 @@
     <string name="memory_list_removal_unknown_error">Unbekannter Fehler</string>
     <string name="memory_editor_edit_freeze_failed">Wert aktualisiert, aber die Fixierung konnte nicht gestartet werden. Prüfe den aktuellen Wert, bevor du es erneut versuchst.</string>
     <string name="memory_scripts_freeze_inactive">Die Fixierung durch das Skript ist deaktiviert.</string>
+    <string name="memory_bookmark_change_incomplete">Die Lesezeichenänderung konnte nicht abgeschlossen werden. Prüfen Sie „Gespeichert“, bevor Sie es erneut versuchen.</string>
+    <string name="memory_editor_value_updated">Wert aktualisiert.</string>
+    <string name="memory_editor_value_updated_frozen">Wert aktualisiert und Einfrieren aktiviert.</string>
+    <string name="memory_scripts_delete_failed">Das Skript konnte nicht gelöscht werden. Prüfen Sie den Einfrierstatus, bevor Sie es erneut versuchen.</string>
+    <string name="memory_scripts_check_input">Das Skript konnte nicht vorbereitet werden. Prüfen Sie seine Werte und Lesezeichen.</string>
+    <string name="memory_scripts_read_failed">Aktuelle Werte konnten nicht gelesen werden. Aktualisieren Sie sie und versuchen Sie es erneut.</string>
+    <string name="memory_technical_details">Technische Details</string>
+    <string name="memory_scripts_resource_limit">Das Skript hat eine Sicherheitsgrenze erreicht. Reduzieren Sie die Anzahl der Ziele oder beenden Sie nicht benötigte Einfriervorgänge.</string>
+    <string name="memory_scripts_target_changed">Das Skriptziel konnte nicht überprüft werden. Aktualisieren Sie die Werte und prüfen Sie die Lesezeichen.</string>
+    <string name="memory_scripts_operation_unavailable">Diese Skriptoperation wird für das aktuelle Ziel nicht unterstützt.</string>
 </resources>

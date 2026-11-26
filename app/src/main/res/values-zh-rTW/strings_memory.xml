@@ -261,4 +261,14 @@
     <string name="memory_list_removal_unknown_error">未知錯誤</string>
     <string name="memory_editor_edit_freeze_failed">數值已更新，但無法啟動數值鎖定。請先檢查目前的數值，再試一次。</string>
     <string name="memory_scripts_freeze_inactive">指令碼數值鎖定已關閉。</string>
+    <string name="memory_bookmark_change_incomplete">無法完成書籤變更。請先檢查已儲存的項目，再試一次。</string>
+    <string name="memory_editor_value_updated">已更新數值。</string>
+    <string name="memory_editor_value_updated_frozen">已更新數值並啟用凍結。</string>
+    <string name="memory_scripts_delete_failed">無法刪除指令碼。請先檢查凍結狀態，再試一次。</string>
+    <string name="memory_scripts_check_input">無法準備指令碼。請檢查數值與書籤。</string>
+    <string name="memory_scripts_read_failed">無法讀取目前的數值。請重新整理後再試一次。</string>
+    <string name="memory_technical_details">技術詳細資料</string>
+    <string name="memory_scripts_resource_limit">指令碼已達安全限制。請減少目標數量或停止不使用的凍結操作。</string>
+    <string name="memory_scripts_target_changed">無法驗證指令碼目標。請重新整理數值並檢查書籤。</string>
+    <string name="memory_scripts_operation_unavailable">目前的目標不支援此指令碼操作。</string>
 </resources>

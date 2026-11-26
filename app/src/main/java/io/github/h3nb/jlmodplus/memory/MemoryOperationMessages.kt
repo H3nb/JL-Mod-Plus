@@ -23,6 +23,7 @@ internal fun memoryOperationMessage(
     skipped: Int = 0,
     notAttempted: Int = 0,
     skippedByType: Int = 0,
+    script: Boolean = false,
 ): MemoryOperationMessage? {
     if (result == MemoryEngineContract.RESULT_PARTIAL_WRITE &&
         reason == MemoryEngineContract.REASON_REVERT_REMOVE_COMMIT_FAILED
@@ -43,16 +44,21 @@ internal fun memoryOperationMessage(
     val resource = when (result) {
         MemoryEngineContract.RESULT_OK -> null
         MemoryEngineContract.RESULT_CANCELLED -> R.string.memory_editor_cancelled
-        MemoryEngineContract.RESULT_RESOURCE_LIMIT -> R.string.memory_editor_resource_limit
-        MemoryEngineContract.RESULT_TARGET_LOST -> R.string.memory_editor_engine_reconnecting
+        MemoryEngineContract.RESULT_RESOURCE_LIMIT -> if (script) R.string.memory_scripts_resource_limit
+            else R.string.memory_editor_resource_limit
+        MemoryEngineContract.RESULT_TARGET_LOST -> if (script) R.string.memory_editor_memory_unavailable
+            else R.string.memory_editor_engine_reconnecting
         MemoryEngineContract.RESULT_NO_SESSION -> when (reason) {
             MemoryEngineContract.REASON_NO_RUNTIME -> R.string.memory_editor_no_runtime
             MemoryEngineContract.REASON_NO_SEARCH_HISTORY -> R.string.memory_editor_no_search_history
             else -> R.string.memory_editor_invalid_request
         }
-        MemoryEngineContract.RESULT_IDENTITY_UNSAFE -> R.string.memory_editor_identity_unsafe
-        MemoryEngineContract.RESULT_SAFETY_LIMIT -> R.string.memory_editor_safety_limit
-        MemoryEngineContract.RESULT_UNSUPPORTED -> R.string.memory_editor_unsupported
+        MemoryEngineContract.RESULT_IDENTITY_UNSAFE -> if (script) R.string.memory_scripts_target_changed
+            else R.string.memory_editor_identity_unsafe
+        MemoryEngineContract.RESULT_SAFETY_LIMIT -> if (script) R.string.memory_scripts_resource_limit
+            else R.string.memory_editor_safety_limit
+        MemoryEngineContract.RESULT_UNSUPPORTED -> if (script) R.string.memory_scripts_operation_unavailable
+            else R.string.memory_editor_unsupported
         MemoryEngineContract.RESULT_PARTIAL_WRITE -> R.string.memory_editor_partial_write
         else -> R.string.memory_editor_invalid_request
     }

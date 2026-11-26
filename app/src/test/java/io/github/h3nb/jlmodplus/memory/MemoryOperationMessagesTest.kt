@@ -103,4 +103,36 @@ class MemoryOperationMessagesTest {
         assertNull(message.explanation)
         assertEquals(listOf(0, 0, 0, 0, 3), message.arguments)
     }
+
+    @Test
+    fun scriptFailuresUseRecoveryForScriptTargetsRatherThanSearchResults() {
+        val cases = listOf(
+            MemoryEngineContract.RESULT_RESOURCE_LIMIT to R.string.memory_scripts_resource_limit,
+            MemoryEngineContract.RESULT_SAFETY_LIMIT to R.string.memory_scripts_resource_limit,
+            MemoryEngineContract.RESULT_TARGET_LOST to R.string.memory_editor_memory_unavailable,
+            MemoryEngineContract.RESULT_IDENTITY_UNSAFE to R.string.memory_scripts_target_changed,
+            MemoryEngineContract.RESULT_UNSUPPORTED to R.string.memory_scripts_operation_unavailable,
+        )
+        for ((result, resource) in cases) {
+            assertEquals(resource, memoryOperationMessage(result, script = true)!!.resource)
+        }
+        assertEquals(R.string.memory_editor_identity_unsafe,
+            memoryOperationMessage(MemoryEngineContract.RESULT_IDENTITY_UNSAFE)!!.resource)
+    }
+
+    @Test
+    fun scriptFailuresRetainWriteCountsAndSpecificRefreshReason() {
+        val outcome = memoryOperationMessage(
+            MemoryEngineContract.RESULT_IDENTITY_UNSAFE, written = 1,
+            unconfirmed = 2, notAttempted = 3, script = true,
+        )!!
+        assertEquals(R.string.memory_editor_write_failure_outcome, outcome.resource)
+        assertEquals(R.string.memory_scripts_target_changed, outcome.explanation)
+        assertEquals(listOf(1, 2, 0, 3, 0), outcome.arguments)
+        assertEquals(R.string.memory_scripts_refresh_required, memoryOperationMessage(
+            MemoryEngineContract.RESULT_IDENTITY_UNSAFE,
+            reason = MemoryEngineContract.REASON_RECIPE_REFRESH_REQUIRED, script = true,
+        )!!.resource)
+    }
+
 }

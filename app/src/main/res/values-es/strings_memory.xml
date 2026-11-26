@@ -273,4 +273,14 @@
     <string name="memory_list_removal_unknown_error">Error desconocido</string>
     <string name="memory_editor_edit_freeze_failed">Valor actualizado, pero no se pudo iniciar la congelación. Comprueba el valor actual antes de volver a intentarlo.</string>
     <string name="memory_scripts_freeze_inactive">La congelación del script está desactivada.</string>
+    <string name="memory_bookmark_change_incomplete">No se pudo completar el cambio del marcador. Revisa Guardados antes de volver a intentarlo.</string>
+    <string name="memory_editor_value_updated">Valor actualizado.</string>
+    <string name="memory_editor_value_updated_frozen">Valor actualizado y congelación activada.</string>
+    <string name="memory_scripts_delete_failed">No se pudo eliminar el script. Comprueba el estado de la congelación antes de volver a intentarlo.</string>
+    <string name="memory_scripts_check_input">No se pudo preparar el script. Revisa sus valores y marcadores.</string>
+    <string name="memory_scripts_read_failed">No se pudieron leer los valores actuales. Actualiza los valores e inténtalo de nuevo.</string>
+    <string name="memory_technical_details">Detalles técnicos</string>
+    <string name="memory_scripts_resource_limit">El script alcanzó un límite de seguridad. Reduce sus objetivos o detén las congelaciones que no uses.</string>
+    <string name="memory_scripts_target_changed">No se pudo verificar el objetivo del script. Actualiza sus valores y revisa los marcadores.</string>
+    <string name="memory_scripts_operation_unavailable">Esta operación del script no es compatible con el objetivo actual.</string>
 </resources>

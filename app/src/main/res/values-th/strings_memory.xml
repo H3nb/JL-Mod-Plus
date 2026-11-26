@@ -261,4 +261,14 @@
     <string name="memory_list_removal_unknown_error">ข้อผิดพลาดที่ไม่ทราบสาเหตุ</string>
     <string name="memory_editor_edit_freeze_failed">อัปเดตค่าแล้ว แต่ไม่สามารถเริ่มล็อกค่าได้ ตรวจสอบค่าปัจจุบันก่อนลองอีกครั้ง</string>
     <string name="memory_scripts_freeze_inactive">การล็อกค่าของสคริปต์ปิดอยู่</string>
+    <string name="memory_bookmark_change_incomplete">ไม่สามารถเปลี่ยนบุ๊กมาร์กให้เสร็จสมบูรณ์ได้ ตรวจสอบรายการที่บันทึกไว้ก่อนลองอีกครั้ง</string>
+    <string name="memory_editor_value_updated">อัปเดตค่าแล้ว</string>
+    <string name="memory_editor_value_updated_frozen">อัปเดตค่าและเปิดการตรึงแล้ว</string>
+    <string name="memory_scripts_delete_failed">ไม่สามารถลบสคริปต์ได้ ตรวจสอบสถานะการตรึงก่อนลองอีกครั้ง</string>
+    <string name="memory_scripts_check_input">ไม่สามารถเตรียมสคริปต์ได้ ตรวจสอบค่าและบุ๊กมาร์ก</string>
+    <string name="memory_scripts_read_failed">ไม่สามารถอ่านค่าปัจจุบันได้ รีเฟรชแล้วลองอีกครั้ง</string>
+    <string name="memory_technical_details">รายละเอียดทางเทคนิค</string>
+    <string name="memory_scripts_resource_limit">สคริปต์ถึงขีดจำกัดด้านความปลอดภัยแล้ว ลดจำนวนเป้าหมายหรือหยุดการตรึงที่ไม่ได้ใช้งาน</string>
+    <string name="memory_scripts_target_changed">ไม่สามารถตรวจสอบเป้าหมายของสคริปต์ได้ รีเฟรชค่าและตรวจสอบบุ๊กมาร์ก</string>
+    <string name="memory_scripts_operation_unavailable">เป้าหมายปัจจุบันไม่รองรับการดำเนินการนี้ของสคริปต์</string>
 </resources>

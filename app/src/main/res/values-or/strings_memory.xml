@@ -267,4 +267,14 @@
     <string name="memory_list_removal_unknown_error">ଅଜଣା ତ୍ରୁଟି</string>
     <string name="memory_editor_edit_freeze_failed">ମୂଲ୍ୟ ଅପଡେଟ୍ ହେଲା, କିନ୍ତୁ ଫ୍ରିଜ୍ ଆରମ୍ଭ କରିହେଲା ନାହିଁ। ପୁଣି ଚେଷ୍ଟା କରିବା ପୂର୍ବରୁ ବର୍ତ୍ତମାନର ମୂଲ୍ୟ ଯାଞ୍ଚ କରନ୍ତୁ।</string>
     <string name="memory_scripts_freeze_inactive">ସ୍କ୍ରିପ୍ଟର ଫ୍ରିଜ୍ ବନ୍ଦ ଅଛି।</string>
+    <string name="memory_bookmark_change_incomplete">ବୁକମାର୍କ୍ ପରିବର୍ତ୍ତନ ସମ୍ପୂର୍ଣ୍ଣ ହୋଇପାରିଲା ନାହିଁ। ପୁଣି ଚେଷ୍ଟା କରିବା ପୂର୍ବରୁ ସେଭ୍ ହୋଇଥିବା ଆଇଟମ୍ ଦେଖନ୍ତୁ।</string>
+    <string name="memory_editor_value_updated">ମୂଲ୍ୟ ଅପଡେଟ୍ ହୋଇଛି।</string>
+    <string name="memory_editor_value_updated_frozen">ମୂଲ୍ୟ ଅପଡେଟ୍ ହୋଇଛି ଏବଂ ଫ୍ରିଜ୍ ସକ୍ରିୟ ହୋଇଛି।</string>
+    <string name="memory_scripts_delete_failed">ସ୍କ୍ରିପ୍ଟ୍ ଡିଲିଟ୍ ହୋଇପାରିଲା ନାହିଁ। ପୁଣି ଚେଷ୍ଟା କରିବା ପୂର୍ବରୁ ଫ୍ରିଜ୍ ସ୍ଥିତି ଯାଞ୍ଚ କରନ୍ତୁ।</string>
+    <string name="memory_scripts_check_input">ସ୍କ୍ରିପ୍ଟ୍ ପ୍ରସ୍ତୁତ ହୋଇପାରିଲା ନାହିଁ। ଏହାର ମୂଲ୍ୟ ଓ ବୁକମାର୍କ୍ ଯାଞ୍ଚ କରନ୍ତୁ।</string>
+    <string name="memory_scripts_read_failed">ବର୍ତ୍ତମାନର ମୂଲ୍ୟ ପଢ଼ିହେଲା ନାହିଁ। ରିଫ୍ରେସ୍ କରି ପୁଣି ଚେଷ୍ଟା କରନ୍ତୁ।</string>
+    <string name="memory_technical_details">ବୈଷୟିକ ବିବରଣୀ</string>
+    <string name="memory_scripts_resource_limit">ସ୍କ୍ରିପ୍ଟ୍ ସୁରକ୍ଷା ସୀମାରେ ପହଞ୍ଚିଛି। ଟାର୍ଗେଟ୍ କମାନ୍ତୁ କିମ୍ବା ଅବ୍ୟବହୃତ ଫ୍ରିଜ୍ ବନ୍ଦ କରନ୍ତୁ।</string>
+    <string name="memory_scripts_target_changed">ସ୍କ୍ରିପ୍ଟ୍ ଟାର୍ଗେଟ୍ ଯାଞ୍ଚ ହୋଇପାରିଲା ନାହିଁ। ମୂଲ୍ୟ ରିଫ୍ରେସ୍ କରି ବୁକମାର୍କ୍ ଯାଞ୍ଚ କରନ୍ତୁ।</string>
+    <string name="memory_scripts_operation_unavailable">ବର୍ତ୍ତମାନର ଟାର୍ଗେଟ୍ ପାଇଁ ଏହି ସ୍କ୍ରିପ୍ଟ୍ ଅପରେସନ୍ ସମର୍ଥିତ ନୁହେଁ।</string>
 </resources>

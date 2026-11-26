@@ -273,4 +273,14 @@
     <string name="memory_list_removal_unknown_error">Eroare necunoscută</string>
     <string name="memory_editor_edit_freeze_failed">Valoarea a fost actualizată, dar înghețarea nu a putut fi pornită. Verificați valoarea actuală înainte de a încerca din nou.</string>
     <string name="memory_scripts_freeze_inactive">Înghețarea prin script este dezactivată.</string>
+    <string name="memory_bookmark_change_incomplete">Modificarea marcajului nu a putut fi finalizată. Verificați elementele salvate înainte de a încerca din nou.</string>
+    <string name="memory_editor_value_updated">Valoare actualizată.</string>
+    <string name="memory_editor_value_updated_frozen">Valoare actualizată și înghețare activată.</string>
+    <string name="memory_scripts_delete_failed">Scriptul nu a putut fi șters. Verificați starea înghețării înainte de a încerca din nou.</string>
+    <string name="memory_scripts_check_input">Scriptul nu a putut fi pregătit. Verificați valorile și marcajele sale.</string>
+    <string name="memory_scripts_read_failed">Valorile curente nu au putut fi citite. Reîmprospătați și încercați din nou.</string>
+    <string name="memory_technical_details">Detalii tehnice</string>
+    <string name="memory_scripts_resource_limit">Scriptul a atins o limită de siguranță. Reduceți numărul țintelor sau opriți înghețările neutilizate.</string>
+    <string name="memory_scripts_target_changed">Ținta scriptului nu a putut fi verificată. Reîmprospătați valorile și verificați marcajele.</string>
+    <string name="memory_scripts_operation_unavailable">Această operație a scriptului nu este acceptată pentru ținta curentă.</string>
 </resources>

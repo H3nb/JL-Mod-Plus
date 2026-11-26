@@ -267,4 +267,14 @@
     <string name="memory_list_removal_unknown_error">Bilinmeyen hata</string>
     <string name="memory_editor_edit_freeze_failed">Değer güncellendi ancak dondurma başlatılamadı. Tekrar denemeden önce mevcut değeri kontrol edin.</string>
     <string name="memory_scripts_freeze_inactive">Komut dosyasının dondurma özelliği kapalı.</string>
+    <string name="memory_bookmark_change_incomplete">Yer imi değişikliği tamamlanamadı. Yeniden denemeden önce kayıtlı öğeleri kontrol edin.</string>
+    <string name="memory_editor_value_updated">Değer güncellendi.</string>
+    <string name="memory_editor_value_updated_frozen">Değer güncellendi ve dondurma etkinleştirildi.</string>
+    <string name="memory_scripts_delete_failed">Betik silinemedi. Yeniden denemeden önce dondurma durumunu kontrol edin.</string>
+    <string name="memory_scripts_check_input">Betik hazırlanamadı. Değerleri ve yer imlerini kontrol edin.</string>
+    <string name="memory_scripts_read_failed">Mevcut değerler okunamadı. Yenileyip yeniden deneyin.</string>
+    <string name="memory_technical_details">Teknik ayrıntılar</string>
+    <string name="memory_scripts_resource_limit">Betik bir güvenlik sınırına ulaştı. Hedef sayısını azaltın veya kullanılmayan dondurmaları durdurun.</string>
+    <string name="memory_scripts_target_changed">Betiğin hedefi doğrulanamadı. Değerleri yenileyin ve yer imlerini kontrol edin.</string>
+    <string name="memory_scripts_operation_unavailable">Bu betik işlemi mevcut hedef için desteklenmiyor.</string>
 </resources>

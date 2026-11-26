@@ -279,4 +279,14 @@
     <string name="memory_list_removal_unknown_error">Neznámá chyba</string>
     <string name="memory_editor_edit_freeze_failed">Hodnota byla aktualizována, ale zmrazení se nepodařilo spustit. Před dalším pokusem zkontrolujte aktuální hodnotu.</string>
     <string name="memory_scripts_freeze_inactive">Zmrazení skriptem je vypnuté.</string>
+    <string name="memory_bookmark_change_incomplete">Změnu záložky se nepodařilo dokončit. Před dalším pokusem zkontrolujte sekci Uložené.</string>
+    <string name="memory_editor_value_updated">Hodnota aktualizována.</string>
+    <string name="memory_editor_value_updated_frozen">Hodnota aktualizována a zmrazení zapnuto.</string>
+    <string name="memory_scripts_delete_failed">Skript se nepodařilo smazat. Před dalším pokusem zkontrolujte stav jeho zmrazení.</string>
+    <string name="memory_scripts_check_input">Skript se nepodařilo připravit. Zkontrolujte jeho hodnoty a záložky.</string>
+    <string name="memory_scripts_read_failed">Aktuální hodnoty se nepodařilo načíst. Obnovte je a zkuste to znovu.</string>
+    <string name="memory_technical_details">Technické podrobnosti</string>
+    <string name="memory_scripts_resource_limit">Skript dosáhl bezpečnostního limitu. Omezte počet cílů nebo ukončete nepoužívaná zmrazení.</string>
+    <string name="memory_scripts_target_changed">Cíl skriptu se nepodařilo ověřit. Obnovte hodnoty a zkontrolujte záložky.</string>
+    <string name="memory_scripts_operation_unavailable">Tato operace skriptu není pro aktuální cíl podporována.</string>
 </resources>

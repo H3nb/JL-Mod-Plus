@@ -867,7 +867,7 @@ internal class MemoryEditorComposeController(
             }
             SavedVariableRow(record.getString("id").orEmpty(),
                 record.getString("label").orEmpty(),
-                description.ifBlank { "Needs relink" }, locator != null) to locator
+                description, locator != null) to locator
         }
     }
 
@@ -888,7 +888,7 @@ internal class MemoryEditorComposeController(
         savedLocators = emptyMap()
         savedRefreshPending = false
         if (authority == null) {
-            state = state.copy(savedError = "Saved storage is connecting")
+            state = state.copy(savedError = context.getString(R.string.loading_info))
             return
         }
         runIpc {
@@ -1022,7 +1022,7 @@ internal class MemoryEditorComposeController(
         return watch?.label?.takeIf(String::isNotBlank)
             ?: watch?.source?.shortFieldName?.takeIf(String::isNotBlank)
             ?: result?.source?.shortFieldName?.takeIf(String::isNotBlank)
-            ?: "Variable"
+            ?: context.getString(R.string.memory_editor_search_hint)
     }
 
     /**
@@ -1070,7 +1070,7 @@ internal class MemoryEditorComposeController(
                 if (result.isSuccess) afterStored()
                 else {
                     state = state.copy(
-                        message = result.exceptionOrNull()?.message ?: "Bookmark failed",
+                        message = localizedFailure(R.string.memory_bookmark_change_incomplete, result.exceptionOrNull()),
                         messageIsError = true,
                     )
                     reloadState()
@@ -1096,7 +1096,7 @@ internal class MemoryEditorComposeController(
                 state = state.copy(
                     busy = false,
                     message = if (outcome.isSuccess) context.getString(R.string.memory_bookmark_added)
-                        else outcome.exceptionOrNull()?.message,
+                        else localizedFailure(R.string.memory_bookmark_change_incomplete, outcome.exceptionOrNull()),
                     messageIsError = outcome.isFailure,
                 )
                 if (state.variablesTab) refreshSavedVariables()
@@ -1135,7 +1135,7 @@ internal class MemoryEditorComposeController(
                 if (!value.resolved) {
                     state = state.copy(
                         savedValues = state.savedValues + (id to value),
-                        message = value.detail,
+                        message = localizedSavedFailure(value),
                         messageIsError = true,
                     )
                     endSavedEdit()
@@ -1178,23 +1178,22 @@ internal class MemoryEditorComposeController(
         if (token == 0L || !state.writeSupported ||
             state.savedValues[id]?.resolved != true || state.busy) return
         runIpc {
-            val result = runCatching {
-                val edited = savedValue(engine.editSaved(token, id, replacement.trim()), bound = true)
-                val freezeResult = if (freezeAfter && edited.resolved) {
-                    engine.freezeSaved(token, id, label, replacement.trim())
-                } else null
-                edited to freezeResult
+            val editResult = runCatching {
+                savedValue(engine.editSaved(token, id, replacement.trim()), bound = true)
             }
+            val edited = editResult.getOrElse {
+                SavedVariableRuntimeValue(MemoryEngineContract.RESULT_TARGET_LOST,
+                    detail = it.message.orEmpty())
+            }
+            val freezeResult = if (freezeAfter && edited.resolved) {
+                runCatching { engine.freezeSaved(token, id, label, replacement.trim()) }
+            } else null
             post {
                 if (destroyed || generation != savedGeneration || !state.visible ||
                     state.runtimeToken != token || service !== engine ||
                     state.savedVariables.none { it.id == id }) return@post
-                val pair = result.getOrNull()
-                val edited = pair?.first ?: SavedVariableRuntimeValue(
-                    MemoryEngineContract.RESULT_TARGET_LOST,
-                    detail = result.exceptionOrNull()?.message.orEmpty(),
-                )
-                val freezeCode = pair?.second?.getInt(
+                val freezeReply = freezeResult?.getOrNull()
+                val freezeCode = freezeReply?.getInt(
                     MemoryEngineContract.KEY_MANAGED_OPERATION_RESULT,
                     MemoryEngineContract.RESULT_TARGET_LOST,
                 )
@@ -1202,12 +1201,11 @@ internal class MemoryEditorComposeController(
                     freezeCode != MemoryEngineContract.RESULT_OK
                 val error = !edited.resolved || freezeFailed
                 val message = when {
-                    !edited.resolved -> edited.detail.ifBlank { "Saved edit was rejected" }
-                    freezeFailed -> "Value updated, but Freeze failed: " +
-                        (pair?.second?.getString(MemoryEngineContract.KEY_DIAGNOSTIC_DETAIL)
-                            ?: "Watch/Freeze is unavailable")
-                    freezeAfter -> "Saved value updated and frozen in Watch"
-                    else -> "Saved value updated"
+                    !edited.resolved -> localizedSavedFailure(edited)
+                    freezeFailed -> localizedFailure(R.string.memory_editor_edit_freeze_failed,
+                        freezeResult?.exceptionOrNull(), freezeReply?.getString(MemoryEngineContract.KEY_DIAGNOSTIC_DETAIL))
+                    freezeAfter -> context.getString(R.string.memory_editor_value_updated_frozen)
+                    else -> context.getString(R.string.memory_editor_value_updated)
                 }
                 state = state.copy(
                     savedValues = state.savedValues + (id to edited),
@@ -1250,7 +1248,7 @@ internal class MemoryEditorComposeController(
                 if (destroyed || state.runtimeToken != token || service !== engine) return@post
                 state = state.copy(busy = false,
                     message = if (outcome.isSuccess) context.getString(R.string.memory_bookmark_relinked)
-                        else outcome.exceptionOrNull()?.message,
+                        else localizedFailure(R.string.memory_bookmark_change_incomplete, outcome.exceptionOrNull()),
                     messageIsError = outcome.isFailure)
                 if (state.variablesTab) refreshSavedVariables()
                 reloadState()
@@ -1301,7 +1299,7 @@ internal class MemoryEditorComposeController(
                 if (state.variablesTab && state.runtimeToken == token) {
                     if (generation != savedGeneration) {
                         if (result.isFailure) {
-                            state = state.copy(message = result.exceptionOrNull()?.message,
+                            state = state.copy(message = localizedFailure(R.string.memory_bookmark_change_incomplete, result.exceptionOrNull()),
                                 messageIsError = true)
                         }
                     } else {
@@ -1320,14 +1318,14 @@ internal class MemoryEditorComposeController(
                             )
                         } else {
                             state = state.copy(
-                                message = result.exceptionOrNull()?.message, messageIsError = true,
+                                message = localizedFailure(R.string.memory_bookmark_change_incomplete, result.exceptionOrNull()), messageIsError = true,
                             )
                             refreshSavedVariables()
                         }
                     }
                 }
-                onComplete?.invoke(result.exceptionOrNull()?.message
-                    ?: if (result.isFailure) context.getString(R.string.memory_list_removal_unknown_error) else null)
+                onComplete?.invoke(if (result.isFailure)
+                    context.getString(R.string.memory_bookmark_change_incomplete) else null)
             }
         }
     }
@@ -1348,7 +1346,7 @@ internal class MemoryEditorComposeController(
                 if (destroyed || !state.variablesTab || state.runtimeToken != token) return@post
                 if (generation != savedGeneration) {
                     if (result.isFailure) {
-                        state = state.copy(message = result.exceptionOrNull()?.message,
+                        state = state.copy(message = localizedFailure(R.string.memory_bookmark_change_incomplete, result.exceptionOrNull()),
                             messageIsError = true)
                     }
                     return@post // A newer mutation or reload owns the final catalog.
@@ -1366,7 +1364,7 @@ internal class MemoryEditorComposeController(
                         message = context.getString(R.string.memory_bookmark_renamed), messageIsError = false,
                     )
                 } else {
-                    state = state.copy(message = result.exceptionOrNull()?.message,
+                    state = state.copy(message = localizedFailure(R.string.memory_bookmark_change_incomplete, result.exceptionOrNull()),
                         messageIsError = true)
                     refreshSavedVariables()
                 }
@@ -1401,11 +1399,7 @@ internal class MemoryEditorComposeController(
         else MemoryEngineContract.MAX_RESULT_PAGE_SIZE
         if (id !in state.selected && state.selected.size >= selectionLimit) {
             state = state.copy(
-                message = if (state.variablesTab) {
-                    "Watch selection is limited to $selectionLimit rows"
-                } else {
-                    "Selection is limited to $selectionLimit visible result rows"
-                },
+                message = context.getString(R.string.memory_editor_selection_limit, selectionLimit),
                 messageIsError = true,
             )
             return
@@ -1646,8 +1640,8 @@ internal class MemoryEditorComposeController(
                     MemoryEngineContract.RESULT_OK
                 state = state.copy(
                     message = if (success) context.getString(R.string.memory_freeze_enabled)
-                        else response?.getString(MemoryEngineContract.KEY_DIAGNOSTIC_DETAIL)
-                            ?: result.exceptionOrNull()?.message ?: context.getString(R.string.memory_freeze_unavailable),
+                        else localizedFailure(R.string.memory_freeze_unavailable, result.exceptionOrNull(),
+                            response?.getString(MemoryEngineContract.KEY_DIAGNOSTIC_DETAIL)),
                     messageIsError = !success,
                 )
                 if (success) reloadState()
@@ -1700,7 +1694,7 @@ internal class MemoryEditorComposeController(
                     connection != connectionGeneration || service !== engine) return@post
                 state = state.copy(
                     message = when {
-                        outcome.isFailure -> outcome.exceptionOrNull()?.message
+                        outcome.isFailure -> localizedFailure(R.string.memory_bookmark_change_incomplete, outcome.exceptionOrNull())
                         outcome.getOrNull() == true -> context.getString(R.string.memory_list_kept)
                         else -> context.getString(R.string.memory_list_kept_unlinked)
                     },
@@ -1900,11 +1894,12 @@ internal class MemoryEditorComposeController(
             post {
                 if (destroyed || token != state.runtimeToken) return@post
                 val success = result.isSuccess
+                val failure = if (success) null else localizedFailure(R.string.memory_scripts_save_failed, result.exceptionOrNull())
                 state = state.copy(
                     scripts = result.getOrNull() ?: state.scripts,
-                    scriptsError = if (success) null else result.exceptionOrNull()?.message,
+                    scriptsError = failure,
                     message = if (success) context.getString(R.string.memory_scripts_saved)
-                        else result.exceptionOrNull()?.message,
+                        else failure,
                     messageIsError = !success,
                 )
                 refreshRecipeFreezeState(force = true)
@@ -1932,11 +1927,12 @@ internal class MemoryEditorComposeController(
             post {
                 if (destroyed || token != state.runtimeToken) return@post
                 val success = result.isSuccess
+                val failure = if (success) null else localizedFailure(R.string.memory_scripts_delete_failed, result.exceptionOrNull())
                 state = state.copy(
                     scripts = result.getOrNull() ?: state.scripts,
-                    scriptsError = if (success) null else result.exceptionOrNull()?.message,
+                    scriptsError = failure,
                     message = if (success) context.getString(R.string.memory_scripts_deleted)
-                        else result.exceptionOrNull()?.message,
+                        else failure,
                     messageIsError = !success,
                 )
                 refreshRecipeFreezeState(force = true)
@@ -1989,7 +1985,7 @@ internal class MemoryEditorComposeController(
                 locator, savedTarget().third, savedId, value.trim(),
                 state.savedVariables.firstOrNull { it.id == savedId }?.label.orEmpty()
             )
-        }.getOrElse { return it.message ?: "Cannot generate automation" }
+        }.getOrElse { return localizedFailure(R.string.memory_scripts_check_input, it) }
         runMemoryRecipe(document, emptyMap(), freeze, false)
         return null
     }
@@ -2019,14 +2015,16 @@ internal class MemoryEditorComposeController(
                     MemoryEngineContract.RESULT_TARGET_LOST,
                 ) ?: MemoryEngineContract.RESULT_TARGET_LOST
                 if (code != MemoryEngineContract.RESULT_OK) {
-                    onReady(null, reply?.getString(MemoryEngineContract.KEY_DIAGNOSTIC_DETAIL)
-                        ?: outcome.exceptionOrNull()?.message ?: "Cannot read current value")
+                    android.util.Log.w("MemoryEditor", reply?.getString(MemoryEngineContract.KEY_DIAGNOSTIC_DETAIL)
+                        ?: "Script read failed", outcome.exceptionOrNull())
+                    onReady(null, operationMessage(code, reply, script = true)
+                        ?: context.getString(R.string.memory_editor_invalid_request))
                     return@post
                 }
                 val names = reply?.getStringArray("recipeReadInputs")
                 val values = reply?.getStringArray("recipeReadValues")
                 if (names == null || values == null || names.size != values.size) {
-                    onReady(null, "Recipe returned invalid read results")
+                    onReady(null, localizedFailure(R.string.memory_scripts_read_failed, null, "Recipe returned invalid read results"))
                 } else {
                     onReady(names.indices.map { index ->
                         MemoryRecipeReadValue(
@@ -2082,22 +2080,13 @@ internal class MemoryEditorComposeController(
                     MemoryEngineContract.RESULT_TARGET_LOST)
                     ?: MemoryEngineContract.RESULT_TARGET_LOST
                 val success = code == MemoryEngineContract.RESULT_OK
-                val localizedResult = code == MemoryEngineContract.RESULT_PARTIAL_WRITE ||
-                    response?.getInt(MemoryEngineContract.KEY_OPERATION_REASON) ==
-                        MemoryEngineContract.REASON_RECIPE_REFRESH_REQUIRED
-                if (localizedResult) {
+                if (!success) {
                     android.util.Log.w("MemoryEditor",
-                        response?.getString(MemoryEngineContract.KEY_DIAGNOSTIC_DETAIL).orEmpty())
+                        response?.getString(MemoryEngineContract.KEY_DIAGNOSTIC_DETAIL) ?: "Script execution failed",
+                        result.exceptionOrNull())
                 }
                 state = state.copy(
-                    message = when {
-                        localizedResult ||
-                            (success && !preview && response?.containsKey(MemoryEngineContract.KEY_MANAGED_WRITTEN) == true) ->
-                            operationMessage(code, response)
-                        else -> response?.getString(MemoryEngineContract.KEY_DIAGNOSTIC_DETAIL)
-                            ?: result.exceptionOrNull()?.message
-                            ?: context.getString(R.string.memory_editor_memory_unavailable)
-                    },
+                    message = operationMessage(code, response, script = true),
                     messageIsError = !success,
                 )
                 if (success && !preview) {
@@ -2406,7 +2395,7 @@ internal class MemoryEditorComposeController(
                 if (destroyed || state.runtimeToken != token || service !== engine) return@post
                 state = state.copy(busy = false,
                     message = if (result.isSuccess) context.getString(R.string.memory_bookmark_added)
-                        else result.exceptionOrNull()?.message,
+                        else localizedFailure(R.string.memory_bookmark_change_incomplete, result.exceptionOrNull()),
                     messageIsError = result.isFailure)
                 if (state.variablesTab) refreshSavedVariables()
                 reloadState()
@@ -2481,8 +2470,7 @@ internal class MemoryEditorComposeController(
                 } else {
                     state = state.copy(
                         message = if (result != null) operationMessage(code, result)
-                            else outcome.exceptionOrNull()?.message
-                                ?: context.getString(R.string.memory_editor_memory_unavailable),
+                            else localizedFailure(R.string.memory_editor_memory_unavailable, outcome.exceptionOrNull()),
                         messageIsError = true,
                     )
                 }
@@ -2520,7 +2508,7 @@ internal class MemoryEditorComposeController(
                     val authority = savedAuthority ?: error(context.getString(R.string.memory_saved_storage_unavailable))
                     val label = snapshot.logicalRows.firstOrNull {
                         it.relativeOffset == relativeOffset
-                    }?.label ?: "Variable"
+                    }?.label ?: context.getString(R.string.memory_editor_search_hint)
                     val bookmarkId = persistInspectorBookmark(engine, authority, token,
                         snapshot, relativeOffset, label)
                     engine.editInspectorAndFreezeBookmark(
@@ -2553,8 +2541,7 @@ internal class MemoryEditorComposeController(
                     } else {
                         state = state.copy(
                             message = if (result != null) operationMessage(code, result)
-                                else outcome.exceptionOrNull()?.message
-                                    ?: context.getString(R.string.memory_editor_memory_unavailable),
+                                else localizedFailure(R.string.memory_editor_memory_unavailable, outcome.exceptionOrNull()),
                             messageIsError = true,
                         )
                     }
@@ -2702,7 +2689,23 @@ internal class MemoryEditorComposeController(
             if (detail == null) context.getString(resource) else context.getString(resource, detail)
         }
 
-    private fun operationMessage(result: Int, details: Bundle?): String? {
+    private fun localizedFailure(resource: Int, failure: Throwable?, detail: String? = null): String {
+        android.util.Log.w("MemoryEditor", detail ?: "Memory Editor operation failed", failure)
+        return context.getString(resource)
+    }
+
+    private fun localizedSavedFailure(value: SavedVariableRuntimeValue): String {
+        android.util.Log.w("MemoryEditor", value.detail)
+        return when (value.code) {
+            MemoryEngineContract.RESULT_NO_SESSION,
+            MemoryEngineContract.RESULT_IDENTITY_UNSAFE -> context.getString(R.string.memory_bookmark_unavailable)
+            MemoryEngineContract.RESULT_TARGET_LOST -> context.getString(R.string.memory_editor_memory_unavailable)
+            else -> operationMessage(value.code, null)
+                ?: context.getString(R.string.memory_editor_invalid_request)
+        }
+    }
+
+    private fun operationMessage(result: Int, details: Bundle?, script: Boolean = false): String? {
         val message = memoryOperationMessage(
             result,
             reason = details?.getInt(MemoryEngineContract.KEY_OPERATION_REASON) ?: MemoryEngineContract.REASON_NONE,
@@ -2711,6 +2714,7 @@ internal class MemoryEditorComposeController(
             skipped = details?.getInt(MemoryEngineContract.KEY_MANAGED_SKIPPED) ?: 0,
             notAttempted = details?.getInt(MemoryEngineContract.KEY_MANAGED_NOT_ATTEMPTED) ?: 0,
             skippedByType = details?.getInt(MemoryEngineContract.KEY_MANAGED_SKIPPED_BY_TYPE) ?: 0,
+            script = script,
         ) ?: return null
         val arguments = buildList<Any> {
             message.explanation?.let { add(context.getString(it)) }

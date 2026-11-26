@@ -267,4 +267,14 @@
     <string name="memory_list_removal_unknown_error">Onbekende fout</string>
     <string name="memory_editor_edit_freeze_failed">Waarde bijgewerkt, maar bevriezing kon niet worden gestart. Controleer de huidige waarde voordat je het opnieuw probeert.</string>
     <string name="memory_scripts_freeze_inactive">Scriptbevriezing is uitgeschakeld.</string>
+    <string name="memory_bookmark_change_incomplete">De wijziging van de bladwijzer kon niet worden voltooid. Controleer Opgeslagen voordat je het opnieuw probeert.</string>
+    <string name="memory_editor_value_updated">Waarde bijgewerkt.</string>
+    <string name="memory_editor_value_updated_frozen">Waarde bijgewerkt en bevriezing ingeschakeld.</string>
+    <string name="memory_scripts_delete_failed">Kan het script niet verwijderen. Controleer de bevriezingsstatus voordat je het opnieuw probeert.</string>
+    <string name="memory_scripts_check_input">Kan het script niet voorbereiden. Controleer de waarden en bladwijzers.</string>
+    <string name="memory_scripts_read_failed">Kan de huidige waarden niet lezen. Vernieuw en probeer het opnieuw.</string>
+    <string name="memory_technical_details">Technische details</string>
+    <string name="memory_scripts_resource_limit">Het script heeft een veiligheidslimiet bereikt. Verminder het aantal doelen of stop ongebruikte bevriezingen.</string>
+    <string name="memory_scripts_target_changed">Kan het doel van het script niet verifiëren. Vernieuw de waarden en controleer de bladwijzers.</string>
+    <string name="memory_scripts_operation_unavailable">Deze scriptbewerking wordt niet ondersteund voor het huidige doel.</string>
 </resources>

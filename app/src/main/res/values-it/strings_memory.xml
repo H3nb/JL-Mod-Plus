@@ -273,4 +273,14 @@
     <string name="memory_list_removal_unknown_error">Errore sconosciuto</string>
     <string name="memory_editor_edit_freeze_failed">Valore aggiornato, ma non è stato possibile avviare il blocco. Controlla il valore attuale prima di riprovare.</string>
     <string name="memory_scripts_freeze_inactive">Il blocco dello script è disattivato.</string>
+    <string name="memory_bookmark_change_incomplete">Impossibile completare la modifica del segnalibro. Controlla Salvati prima di riprovare.</string>
+    <string name="memory_editor_value_updated">Valore aggiornato.</string>
+    <string name="memory_editor_value_updated_frozen">Valore aggiornato e blocco attivato.</string>
+    <string name="memory_scripts_delete_failed">Impossibile eliminare lo script. Controlla lo stato del blocco prima di riprovare.</string>
+    <string name="memory_scripts_check_input">Impossibile preparare lo script. Controlla i valori e i segnalibri.</string>
+    <string name="memory_scripts_read_failed">Impossibile leggere i valori attuali. Aggiornali e riprova.</string>
+    <string name="memory_technical_details">Dettagli tecnici</string>
+    <string name="memory_scripts_resource_limit">Lo script ha raggiunto un limite di sicurezza. Riduci il numero di destinazioni o disattiva i blocchi inutilizzati.</string>
+    <string name="memory_scripts_target_changed">Impossibile verificare la destinazione dello script. Aggiorna i valori e controlla i segnalibri.</string>
+    <string name="memory_scripts_operation_unavailable">Questa operazione dello script non è supportata per la destinazione attuale.</string>
 </resources>

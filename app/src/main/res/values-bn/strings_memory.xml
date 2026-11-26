@@ -267,4 +267,14 @@
     <string name="memory_list_removal_unknown_error">অজানা ত্রুটি</string>
     <string name="memory_editor_edit_freeze_failed">মান আপডেট হয়েছে, কিন্তু ফ্রিজ চালু করা যায়নি। আবার চেষ্টা করার আগে বর্তমান মান পরীক্ষা করুন।</string>
     <string name="memory_scripts_freeze_inactive">স্ক্রিপ্টের ফ্রিজ বন্ধ আছে।</string>
+    <string name="memory_bookmark_change_incomplete">বুকমার্ক পরিবর্তন সম্পূর্ণ করা যায়নি। আবার চেষ্টা করার আগে সেভ করা আইটেমগুলো দেখুন।</string>
+    <string name="memory_editor_value_updated">মান আপডেট করা হয়েছে।</string>
+    <string name="memory_editor_value_updated_frozen">মান আপডেট করা হয়েছে এবং ফ্রিজ চালু হয়েছে।</string>
+    <string name="memory_scripts_delete_failed">স্ক্রিপ্ট মুছতে পারেনি। আবার চেষ্টা করার আগে ফ্রিজের অবস্থা দেখুন।</string>
+    <string name="memory_scripts_check_input">স্ক্রিপ্ট প্রস্তুত করা যায়নি। মান ও বুকমার্কগুলো যাচাই করুন।</string>
+    <string name="memory_scripts_read_failed">বর্তমান মান পড়া যায়নি। রিফ্রেশ করে আবার চেষ্টা করুন।</string>
+    <string name="memory_technical_details">প্রযুক্তিগত বিবরণ</string>
+    <string name="memory_scripts_resource_limit">স্ক্রিপ্ট নিরাপত্তার সীমায় পৌঁছেছে। টার্গেটের সংখ্যা কমান অথবা অব্যবহৃত ফ্রিজ বন্ধ করুন।</string>
+    <string name="memory_scripts_target_changed">স্ক্রিপ্টের টার্গেট যাচাই করা যায়নি। মান রিফ্রেশ করে বুকমার্কগুলো দেখুন।</string>
+    <string name="memory_scripts_operation_unavailable">বর্তমান টার্গেটের জন্য এই স্ক্রিপ্ট অপারেশন সমর্থিত নয়।</string>
 </resources>
