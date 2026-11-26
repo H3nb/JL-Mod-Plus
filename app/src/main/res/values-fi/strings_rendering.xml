@@ -16,9 +16,9 @@
     <string name="perf_overlay_bottom_right">Alaoikea</string>
     <string name="internal_resolution_title" tools:ignore="MissingTranslation">Renderöintitarkkuus</string>
     <string name="internal_resolution_auto" tools:ignore="MissingTranslation">Automaattinen</string>
-    <string name="internal_resolution_description" tools:ignore="MissingTranslation">Renderöi tuetun 2D- ja 3D-grafiikan tarkemmin. Automaattinen sovittaa pelin näkymään; ota käyttöön käynnistämällä uudelleen.</string>
+    <string name="internal_resolution_description" tools:ignore="MissingTranslation">Asettaa tuetun 2D- ja 3D-grafiikan renderöintitarkkuuden. Automaattinen asetus valitsee kertoimen näyttöalueen ja laitteen rajoitusten mukaan. Ota muutos käyttöön käynnistämällä MIDlet uudelleen.</string>
     <string name="bitmap_upscaling_title" tools:ignore="MissingTranslation">Bittikarttojen skaalaus</string>
-    <string name="bitmap_upscaling_description" tools:ignore="MissingTranslation">Skaalaa muuttumattomat 2D-spritet ja läpinäkymättömät Micro3D-mallien tekstuurit MMPX- tai xBR Lv3 -algoritmilla. M3G-tekstuurit säilyvät ennallaan; ota käyttöön käynnistämällä uudelleen.</string>
+    <string name="bitmap_upscaling_description" tools:ignore="MissingTranslation">MMPX ja xBR Lv3 parantavat muuttumattomia 2D-kuvia ja muuttumattomia, läpinäkymättömiä Micro3D-mallien tekstuureja. M3G-tekstuurit säilyvät ennallaan. Ota muutos käyttöön käynnistämällä MIDlet uudelleen.</string>
     <string name="bitmap_upscaling_nearest" tools:ignore="MissingTranslation">Lähin naapuri</string>
     <string name="bitmap_upscaling_bilinear" tools:ignore="MissingTranslation">Bilineaarinen</string>
     <string name="bitmap_upscaling_mmpx" tools:ignore="MissingTranslation">MMPX</string>
@@ -149,7 +149,7 @@
     <string name="render_bitmap_memory_reduced">Bittikarttojen skaalauksen muisti loppui. Käytetään alkuperäisiä kuvia tai pienempää skaalausta. Kokeile pienempää renderöintitarkkuutta tai vapauta muistia ja käynnistä uudelleen.</string>
     <string name="render_texture_memory_reduced">Micro3D-tekstuurien skaalaus epäonnistui. Käytetään alkuperäisiä tekstuureja. Kokeile pienempää renderöintitarkkuutta tai vapauta muistia ja käynnistä uudelleen.</string>
     <string name="render_resolution_reduced">Renderöintitarkkuus laskettiin tasolta <xliff:g id="from_scale" example="4">%1$d</xliff:g>× tasolle <xliff:g id="to_scale" example="2">%2$d</xliff:g>× muisti- tai GPU-rajoitusten vuoksi. Kokeile pienempää asetusta tai vapauta muistia ja käynnistä uudelleen.</string>
-    <string name="render_gpu_texture_limit">Tämä kuva on liian suuri GPU:lle jopa 1×-tarkkuudella. Kokeile pienempää pelitarkkuutta tai vaihda grafiikkatilaa.</string>
+    <string name="render_gpu_texture_limit">Pelikuva ylittää GPU:n tekstuurikokorajan jopa 1×-kertoimella. Pienennä MIDletin näytön kokoa tai vaihda grafiikkatilaa.</string>
     <string name="render_gpu_upload_failed">Pelikuvaa ei voitu siirtää GPU:lle. Yritetään uudelleen. Kokeile sulkea muita sovelluksia tai vaihtaa grafiikkatilaa.</string>
     <string name="render_effect_gles">Tehosteet tallennetaan, mutta ne renderöidään vain OpenGL ES:llä.</string>
     <string name="render_effect_legacy_file_error">Valitusta .ini-tiedostosta ei voitu ladata kelvollista legacy-varjostinta.</string>

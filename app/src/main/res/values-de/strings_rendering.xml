@@ -16,9 +16,9 @@
     <string name="perf_overlay_bottom_right">Unten rechts</string>
     <string name="internal_resolution_title" tools:ignore="MissingTranslation">Renderauflösung</string>
     <string name="internal_resolution_auto" tools:ignore="MissingTranslation">Automatisch</string>
-    <string name="internal_resolution_description" tools:ignore="MissingTranslation">Rendert unterstützte 2D- und 3D-Grafik detailreicher. „Automatisch“ passt sich dem Spiel-Viewport an; zum Anwenden neu starten.</string>
+    <string name="internal_resolution_description" tools:ignore="MissingTranslation">Legt die Auflösung für das Rendern unterstützter 2D- und 3D-Grafik fest. „Automatisch“ wählt einen Faktor anhand des Anzeigebereichs und der Gerätegrenzen. Starten Sie das MIDlet neu, um die Änderung anzuwenden.</string>
     <string name="bitmap_upscaling_title" tools:ignore="MissingTranslation">Bitmap-Skalierung</string>
-    <string name="bitmap_upscaling_description" tools:ignore="MissingTranslation">Skaliert unveränderliche 2D-Sprites sowie opake Micro3D-Modelltexturen mit MMPX oder xBR Lv3. M3G-Texturen bleiben unverändert; zum Anwenden neu starten.</string>
+    <string name="bitmap_upscaling_description" tools:ignore="MissingTranslation">MMPX und xBR Lv3 verbessern unveränderliche 2D-Bilder sowie unveränderliche, opake Micro3D-Modelltexturen. M3G-Texturen bleiben unverändert. Starten Sie das MIDlet neu, um die Änderung anzuwenden.</string>
     <string name="bitmap_upscaling_nearest" tools:ignore="MissingTranslation">Nächster Nachbar</string>
     <string name="bitmap_upscaling_bilinear" tools:ignore="MissingTranslation">Bilinear</string>
     <string name="bitmap_upscaling_mmpx" tools:ignore="MissingTranslation">MMPX</string>
@@ -149,7 +149,7 @@
     <string name="render_bitmap_memory_reduced">Nicht genügend Speicher für die Bitmap-Skalierung. Originalbilder oder eine niedrigere Skalierung werden verwendet. Versuchen Sie eine niedrigere Renderauflösung oder geben Sie Speicher frei und starten Sie neu.</string>
     <string name="render_texture_memory_reduced">Die Skalierung der Micro3D-Texturen ist fehlgeschlagen. Originaltexturen werden verwendet. Versuchen Sie eine niedrigere Renderauflösung oder geben Sie Speicher frei und starten Sie neu.</string>
     <string name="render_resolution_reduced">Renderauflösung aufgrund von Speicher- oder GPU-Grenzen von <xliff:g id="from_scale" example="4">%1$d</xliff:g>× auf <xliff:g id="to_scale" example="2">%2$d</xliff:g>× reduziert. Versuchen Sie eine niedrigere Einstellung oder geben Sie Speicher frei und starten Sie neu.</string>
-    <string name="render_gpu_texture_limit">Dieses Bild ist selbst bei 1× zu groß für die GPU. Versuchen Sie eine kleinere Spielauflösung oder wechseln Sie den Grafikmodus.</string>
+    <string name="render_gpu_texture_limit">Das Spielbild überschreitet selbst bei 1× die maximale Texturgröße der GPU. Verringern Sie die MIDlet-Bildschirmgröße oder wechseln Sie den Grafikmodus.</string>
     <string name="render_gpu_upload_failed">Das Spielbild konnte nicht auf die GPU geladen werden. Erneuter Versuch läuft. Schließen Sie andere Apps oder wechseln Sie den Grafikmodus.</string>
     <string name="render_effect_gles">Effekte werden gespeichert, aber nur mit OpenGL ES gerendert.</string>
     <string name="render_effect_legacy_file_error">Aus der ausgewählten .ini-Datei konnte kein gültiger Legacy-Shader geladen werden.</string>

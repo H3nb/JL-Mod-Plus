@@ -16,9 +16,9 @@
     <string name="perf_overlay_bottom_right">Κάτω δεξιά</string>
     <string name="internal_resolution_title" tools:ignore="MissingTranslation">Ανάλυση απόδοσης</string>
     <string name="internal_resolution_auto" tools:ignore="MissingTranslation">Αυτόματη</string>
-    <string name="internal_resolution_description" tools:ignore="MissingTranslation">Αποδίδει υποστηριζόμενα γραφικά 2D και 3D με μεγαλύτερη λεπτομέρεια. Η επιλογή Αυτόματη προσαρμόζεται στην περιοχή προβολής του παιχνιδιού· επανεκκινήστε για εφαρμογή.</string>
+    <string name="internal_resolution_description" tools:ignore="MissingTranslation">Ορίζει την ανάλυση απόδοσης για τα υποστηριζόμενα γραφικά 2D και 3D. Η αυτόματη επιλογή καθορίζει την κλίμακα με βάση την περιοχή προβολής και τους περιορισμούς της συσκευής. Επανεκκινήστε το MIDlet για εφαρμογή.</string>
     <string name="bitmap_upscaling_title" tools:ignore="MissingTranslation">Κλιμάκωση bitmap</string>
-    <string name="bitmap_upscaling_description" tools:ignore="MissingTranslation">Κλιμακώνει αμετάβλητα sprites 2D και αδιαφανείς υφές μοντέλων Micro3D με MMPX ή xBR Lv3. Οι υφές M3G δεν αλλάζουν· επανεκκινήστε για εφαρμογή.</string>
+    <string name="bitmap_upscaling_description" tools:ignore="MissingTranslation">Τα MMPX και xBR Lv3 βελτιώνουν αμετάβλητες εικόνες 2D και αμετάβλητες, αδιαφανείς υφές μοντέλων Micro3D. Οι υφές M3G παραμένουν αμετάβλητες. Επανεκκινήστε το MIDlet για εφαρμογή.</string>
     <string name="bitmap_upscaling_nearest" tools:ignore="MissingTranslation">Πλησιέστερος γείτονας</string>
     <string name="bitmap_upscaling_bilinear" tools:ignore="MissingTranslation">Διγραμμική</string>
     <string name="bitmap_upscaling_mmpx" tools:ignore="MissingTranslation">MMPX</string>
@@ -148,7 +148,7 @@
     <string name="render_bitmap_memory_reduced">Η κλιμάκωση bitmap εξάντλησε τη μνήμη. Θα χρησιμοποιηθούν οι αρχικές εικόνες ή μικρότερη κλίμακα. Δοκιμάστε χαμηλότερη ανάλυση απόδοσης ή ελευθερώστε μνήμη και επανεκκινήστε.</string>
     <string name="render_texture_memory_reduced">Η κλιμάκωση υφών Micro3D απέτυχε. Θα χρησιμοποιηθούν οι αρχικές υφές. Δοκιμάστε χαμηλότερη ανάλυση απόδοσης ή ελευθερώστε μνήμη και επανεκκινήστε.</string>
     <string name="render_resolution_reduced">Η ανάλυση απόδοσης μειώθηκε από <xliff:g id="from_scale" example="4">%1$d</xliff:g>× σε <xliff:g id="to_scale" example="2">%2$d</xliff:g>× λόγω ορίων μνήμης ή GPU. Δοκιμάστε χαμηλότερη ρύθμιση ή ελευθερώστε μνήμη και επανεκκινήστε.</string>
-    <string name="render_gpu_texture_limit">Αυτή η εικόνα είναι πολύ μεγάλη για τη GPU ακόμα και στο 1×. Δοκιμάστε μικρότερη ανάλυση παιχνιδιού ή αλλάξτε λειτουργία γραφικών.</string>
+    <string name="render_gpu_texture_limit">Η εικόνα του παιχνιδιού υπερβαίνει το μέγιστο μέγεθος υφής της GPU ακόμη και στο 1×. Μειώστε το μέγεθος οθόνης του MIDlet ή αλλάξτε λειτουργία γραφικών.</string>
     <string name="render_gpu_upload_failed">Δεν ήταν δυνατή η φόρτωση της εικόνας του παιχνιδιού στη GPU. Γίνεται επανάληψη. Δοκιμάστε να κλείσετε άλλες εφαρμογές ή να αλλάξετε λειτουργία γραφικών.</string>
     <string name="render_effect_gles">Τα εφέ αποθηκεύονται, αλλά αποδίδονται μόνο με OpenGL ES.</string>
     <string name="render_effect_legacy_file_error">Δεν ήταν δυνατή η φόρτωση έγκυρου παλαιού shader από το επιλεγμένο αρχείο .ini.</string>

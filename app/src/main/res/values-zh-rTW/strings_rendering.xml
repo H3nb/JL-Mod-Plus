@@ -16,9 +16,9 @@
     <string name="perf_overlay_bottom_right">右下角</string>
     <string name="internal_resolution_title" tools:ignore="MissingTranslation">渲染解析度</string>
     <string name="internal_resolution_auto" tools:ignore="MissingTranslation">自動</string>
-    <string name="internal_resolution_description" tools:ignore="MissingTranslation">以更高細節渲染支援的 2D 與 3D 畫面。「自動」會配合遊戲視口大小；需重新啟動才會套用。</string>
+    <string name="internal_resolution_description" tools:ignore="MissingTranslation">設定支援的 2D 和 3D 算繪解析度。自動模式會根據顯示區域與裝置限制選擇縮放倍率。重新啟動 MIDlet 以套用變更。</string>
     <string name="bitmap_upscaling_title" tools:ignore="MissingTranslation">點陣圖放大</string>
-    <string name="bitmap_upscaling_description" tools:ignore="MissingTranslation">使用 MMPX 或 xBR Lv3 放大不可變的 2D 精靈圖與不透明 Micro3D 模型材質。M3G 材質維持不變；需重新啟動才會套用。</string>
+    <string name="bitmap_upscaling_description" tools:ignore="MissingTranslation">MMPX 和 xBR Lv3 可改善不可修改的 2D 影像，以及 Micro3D 模型中不可修改的不透明紋理。M3G 紋理維持不變。重新啟動 MIDlet 以套用變更。</string>
     <string name="bitmap_upscaling_nearest" tools:ignore="MissingTranslation">最近鄰</string>
     <string name="bitmap_upscaling_bilinear" tools:ignore="MissingTranslation">雙線性</string>
     <string name="bitmap_upscaling_mmpx" tools:ignore="MissingTranslation">MMPX</string>
@@ -149,7 +149,7 @@
     <string name="render_bitmap_memory_reduced">點陣圖放大因記憶體不足而受限，將改用原始圖片或較低倍率。請嘗試調降渲染解析度或釋放記憶體後重新啟動。</string>
     <string name="render_texture_memory_reduced">Micro3D 材質放大失敗，將改用原始材質。請嘗試調降渲染解析度或釋放記憶體後重新啟動。</string>
     <string name="render_resolution_reduced">由於記憶體或 GPU 限制，渲染解析度已從 <xliff:g id="from_scale" example="4">%1$d</xliff:g>× 調降至 <xliff:g id="to_scale" example="2">%2$d</xliff:g>×。請嘗試調降設定或釋放記憶體後重新啟動。</string>
-    <string name="render_gpu_texture_limit">即使在 1× 下，此畫面仍超出 GPU 上限。請嘗試較小的遊戲解析度或切換圖形模式。</string>
+    <string name="render_gpu_texture_limit">即使在 1× 倍率下，遊戲影像仍超出 GPU 的紋理尺寸限制。請縮小 MIDlet 的螢幕尺寸或切換圖形模式。</string>
     <string name="render_gpu_upload_failed">無法將遊戲畫面傳送至 GPU，正在重試。請嘗試關閉其他應用程式或切換圖形模式。</string>
     <string name="render_effect_gles">效果設定已儲存，但僅在使用 OpenGL ES 時才會渲染。</string>
     <string name="render_effect_legacy_file_error">無法從所選 .ini 檔案載入有效的舊版著色器。</string>

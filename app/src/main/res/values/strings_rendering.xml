@@ -16,9 +16,9 @@
     <string name="perf_overlay_bottom_right">Bottom right</string>
     <string name="internal_resolution_title">Render resolution</string>
     <string name="internal_resolution_auto">Auto</string>
-    <string name="internal_resolution_description">Renders supported 2D and 3D at higher detail. Auto fits the game viewport; restart to apply.</string>
+    <string name="internal_resolution_description">Sets the resolution for supported 2D and 3D rendering. Auto chooses a scale based on the display area and device limits. Restart the MIDlet to apply.</string>
     <string name="bitmap_upscaling_title">Bitmap upscaling</string>
-    <string name="bitmap_upscaling_description">Upscales immutable 2D sprites, and opaque Micro3D model textures with MMPX or xBR Lv3. M3G textures are unchanged; restart to apply.</string>
+    <string name="bitmap_upscaling_description">MMPX and xBR Lv3 enhance immutable 2D images and immutable, opaque Micro3D model textures. M3G textures are unchanged. Restart the MIDlet to apply.</string>
     <string name="bitmap_upscaling_nearest">Nearest neighbor</string>
     <string name="bitmap_upscaling_bilinear">Bilinear</string>
     <string name="bitmap_upscaling_mmpx">MMPX</string>
@@ -149,7 +149,7 @@
     <string name="render_bitmap_memory_reduced">Bitmap upscaling ran out of memory. Original images or a lower scale will be used. Try a lower render resolution or free memory, then restart.</string>
     <string name="render_texture_memory_reduced">Micro3D texture upscaling failed. Original textures will be used. Try a lower render resolution or free memory, then restart.</string>
     <string name="render_resolution_reduced">Render resolution reduced from <xliff:g id="from_scale" example="4">%1$d</xliff:g>× to <xliff:g id="to_scale" example="2">%2$d</xliff:g>× due to memory or GPU limits. Try a lower setting or free memory, then restart.</string>
-    <string name="render_gpu_texture_limit">This image is too large for the GPU even at 1×. Try a smaller game resolution or switch graphics mode.</string>
+    <string name="render_gpu_texture_limit">The game image exceeds the GPU texture size limit even at 1×. Reduce the MIDlet screen size or switch graphics mode.</string>
     <string name="render_gpu_upload_failed">Couldn’t upload the game image to the GPU. Retrying. Try closing other apps or switching graphics mode.</string>
     <string name="render_effect_gles">Effects are saved but only rendered with OpenGL ES.</string>
     <string name="render_effect_legacy_file_error">Couldn’t load a valid legacy shader from the selected .ini file.</string>

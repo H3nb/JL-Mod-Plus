@@ -16,9 +16,9 @@
     <string name="perf_overlay_bottom_right">Долу вдясно</string>
     <string name="internal_resolution_title" tools:ignore="MissingTranslation">Резолюция на рендиране</string>
     <string name="internal_resolution_auto" tools:ignore="MissingTranslation">Автоматично</string>
-    <string name="internal_resolution_description" tools:ignore="MissingTranslation">Рендира поддържаната 2D и 3D графика с по-висока детайлност. „Автоматично“ се адаптира към прозореца на играта; рестартирайте, за да се приложи.</string>
+    <string name="internal_resolution_description" tools:ignore="MissingTranslation">Задава резолюцията за рендиране на поддържаната 2D и 3D графика. „Автоматично“ избира мащаб според областта за показване и ограниченията на устройството. Рестартирайте MIDlet, за да приложите промяната.</string>
     <string name="bitmap_upscaling_title" tools:ignore="MissingTranslation">Мащабиране на растерни изображения</string>
-    <string name="bitmap_upscaling_description" tools:ignore="MissingTranslation">Подобрява мащаба на неизменяеми 2D спрайтове и непрозрачни текстури на Micro3D модели чрез MMPX или xBR Lv3. Текстурите M3G остават непроменени; рестартирайте, за да се приложи.</string>
+    <string name="bitmap_upscaling_description" tools:ignore="MissingTranslation">MMPX и xBR Lv3 подобряват неизменяеми 2D изображения и неизменяеми непрозрачни текстури на Micro3D модели. Текстурите M3G остават непроменени. Рестартирайте MIDlet, за да приложите промяната.</string>
     <string name="bitmap_upscaling_nearest" tools:ignore="MissingTranslation">Най-близък съсед</string>
     <string name="bitmap_upscaling_bilinear" tools:ignore="MissingTranslation">Билинейно</string>
     <string name="bitmap_upscaling_mmpx" tools:ignore="MissingTranslation">MMPX</string>
@@ -149,7 +149,7 @@
     <string name="render_bitmap_memory_reduced">Паметта не достигна при мащабиране на растерни изображения. Ще се използват оригиналните изображения или по-нисък мащаб. Опитайте по-ниска резолюция на рендиране или освободете памет, след което рестартирайте.</string>
     <string name="render_texture_memory_reduced">Мащабирането на текстурите Micro3D не успя. Ще се използват оригиналните текстури. Опитайте по-ниска резолюция на рендиране или освободете памет, след което рестартирайте.</string>
     <string name="render_resolution_reduced">Резолюцията на рендиране беше намалена от <xliff:g id="from_scale" example="4">%1$d</xliff:g>× на <xliff:g id="to_scale" example="2">%2$d</xliff:g>× поради ограничения на паметта или GPU. Опитайте по-ниска настройка или освободете памет, след което рестартирайте.</string>
-    <string name="render_gpu_texture_limit">Това изображение е твърде голямо за GPU дори при 1×. Опитайте по-малка резолюция на играта или сменете графичния режим.</string>
+    <string name="render_gpu_texture_limit">Изображението на играта надвишава максималния размер на текстурата за GPU дори при 1×. Намалете размера на екрана на MIDlet или сменете графичния режим.</string>
     <string name="render_gpu_upload_failed">Изображението на играта не можа да бъде заредено в GPU. Повторен опит. Затворете други приложения или сменете графичния режим.</string>
     <string name="render_effect_gles">Ефектите се запазват, но се рендират само с OpenGL ES.</string>
     <string name="render_effect_legacy_file_error">Не можа да се зареди валиден наследен шейдър от избрания .ini файл.</string>

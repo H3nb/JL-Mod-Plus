@@ -16,9 +16,9 @@
     <string name="perf_overlay_bottom_right">Nederst till höger</string>
     <string name="internal_resolution_title" tools:ignore="MissingTranslation">Renderingsupplösning</string>
     <string name="internal_resolution_auto" tools:ignore="MissingTranslation">Auto</string>
-    <string name="internal_resolution_description" tools:ignore="MissingTranslation">Renderar 2D och 3D som stöds med högre detaljrikedom. Auto anpassar sig till spelets visningsyta; starta om för att tillämpa.</string>
+    <string name="internal_resolution_description" tools:ignore="MissingTranslation">Ställer in upplösningen för 2D- och 3D-rendering som stöds. Automatiskt läge väljer en skalfaktor utifrån visningsområdet och enhetens begränsningar. Starta om MIDlet för att tillämpa ändringarna.</string>
     <string name="bitmap_upscaling_title" tools:ignore="MissingTranslation">Bitmappsuppskalning</string>
-    <string name="bitmap_upscaling_description" tools:ignore="MissingTranslation">Skalar upp oföränderliga 2D-sprites och ogenomskinliga Micro3D-modelltexturer med MMPX eller xBR Lv3. M3G-texturer ändras inte; starta om för att tillämpa.</string>
+    <string name="bitmap_upscaling_description" tools:ignore="MissingTranslation">MMPX och xBR Lv3 förbättrar oföränderliga 2D-bilder och oföränderliga, ogenomskinliga texturer i Micro3D-modeller. M3G-texturer förblir oförändrade. Starta om MIDlet för att tillämpa ändringarna.</string>
     <string name="bitmap_upscaling_nearest" tools:ignore="MissingTranslation">Närmaste granne</string>
     <string name="bitmap_upscaling_bilinear" tools:ignore="MissingTranslation">Bilinjär</string>
     <string name="bitmap_upscaling_mmpx" tools:ignore="MissingTranslation">MMPX</string>
@@ -149,7 +149,7 @@
     <string name="render_bitmap_memory_reduced">Bitmappsuppskalningen fick slut på minne. Originalbilder eller en lägre skala kommer att användas. Prova en lägre renderingsupplösning eller frigör minne och starta om.</string>
     <string name="render_texture_memory_reduced">Uppskalning av Micro3D-texturer misslyckades. Originaltexturer kommer att användas. Prova en lägre renderingsupplösning eller frigör minne och starta om.</string>
     <string name="render_resolution_reduced">Renderingsupplösningen sänktes från <xliff:g id="from_scale" example="4">%1$d</xliff:g>× till <xliff:g id="to_scale" example="2">%2$d</xliff:g>× på grund av minnes- eller GPU-gränser. Prova en lägre inställning eller frigör minne och starta om.</string>
-    <string name="render_gpu_texture_limit">Den här bilden är för stor för GPU:n även vid 1×. Prova en mindre spelupplösning eller byt grafikläge.</string>
+    <string name="render_gpu_texture_limit">Spelbilden överskrider grafikprocessorns gräns för texturstorlek även vid 1×. Minska skärmstorleken för MIDlet eller byt grafikläge.</string>
     <string name="render_gpu_upload_failed">Det gick inte att läsa upp spelbilden till GPU:n. Försöker igen. Prova att stänga andra appar eller byta grafikläge.</string>
     <string name="render_effect_gles">Effekter sparas men renderas bara med OpenGL ES.</string>
     <string name="render_effect_legacy_file_error">Det gick inte att läsa in en giltig äldre shader från den valda .ini-filen.</string>

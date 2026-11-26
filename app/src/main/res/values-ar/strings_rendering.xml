@@ -16,9 +16,9 @@
     <string name="perf_overlay_bottom_right">أسفل اليمين</string>
     <string name="internal_resolution_title" tools:ignore="MissingTranslation">دقة العرض</string>
     <string name="internal_resolution_auto" tools:ignore="MissingTranslation">تلقائي</string>
-    <string name="internal_resolution_description" tools:ignore="MissingTranslation">يعرض الرسوميات ثنائية وثلاثية الأبعاد المدعومة بتفاصيل أعلى. يلائم الوضع التلقائي إطار عرض اللعبة؛ أعد التشغيل للتطبيق.</string>
+    <string name="internal_resolution_description" tools:ignore="MissingTranslation">يضبط دقة عرض الرسوميات ثنائية وثلاثية الأبعاد المدعومة. يختار الوضع التلقائي مقياسًا وفقًا لمنطقة العرض وحدود الجهاز. أعد تشغيل MIDlet لتطبيق التغيير.</string>
     <string name="bitmap_upscaling_title" tools:ignore="MissingTranslation">تحسين دقة الصور النقطية</string>
-    <string name="bitmap_upscaling_description" tools:ignore="MissingTranslation">يحسّن دقة العناصر الرسومية ثنائية الأبعاد الثابتة، وإكساءات نماذج Micro3D المعتمة باستخدام MMPX أو xBR Lv3. تبقى إكساءات M3G دون تغيير؛ أعد التشغيل للتطبيق.</string>
+    <string name="bitmap_upscaling_description" tools:ignore="MissingTranslation">يحسّن MMPX وxBR Lv3 الصور ثنائية الأبعاد غير القابلة للتعديل وإكساءات نماذج Micro3D المعتمة غير القابلة للتعديل. تبقى إكساءات M3G دون تغيير. أعد تشغيل MIDlet لتطبيق التغيير.</string>
     <string name="bitmap_upscaling_nearest" tools:ignore="MissingTranslation">أقرب جار</string>
     <string name="bitmap_upscaling_bilinear" tools:ignore="MissingTranslation">ثنائي الخطية</string>
     <string name="bitmap_upscaling_mmpx" tools:ignore="MissingTranslation">MMPX</string>
@@ -149,7 +149,7 @@
     <string name="render_bitmap_memory_reduced">نفدت الذاكرة أثناء تحسين دقة الصور النقطية. ستُستخدم الصور الأصلية أو مقياس أقل. جرّب خفض دقة العرض أو تحرير الذاكرة، ثم أعد التشغيل.</string>
     <string name="render_texture_memory_reduced">فشل تحسين دقة إكساءات Micro3D. ستُستخدم الإكساءات الأصلية. جرّب خفض دقة العرض أو تحرير الذاكرة، ثم أعد التشغيل.</string>
     <string name="render_resolution_reduced">تم خفض دقة العرض من <xliff:g id="from_scale" example="4">%1$d</xliff:g>× إلى <xliff:g id="to_scale" example="2">%2$d</xliff:g>× بسبب قيود الذاكرة أو GPU. جرّب إعدادًا أقل أو حرّر الذاكرة، ثم أعد التشغيل.</string>
-    <string name="render_gpu_texture_limit">هذه الصورة كبيرة جدًا على GPU حتى عند 1×. جرّب دقة لعبة أصغر أو بدّل وضع الرسوميات.</string>
+    <string name="render_gpu_texture_limit">يتجاوز حجم صورة اللعبة الحد الأقصى لحجم الإكساءات الذي يدعمه GPU حتى عند 1×. قلّل حجم شاشة MIDlet أو بدّل وضع الرسوميات.</string>
     <string name="render_gpu_upload_failed">تعذّر رفع صورة اللعبة إلى GPU. جارٍ إعادة المحاولة. جرّب إغلاق التطبيقات الأخرى أو تبديل وضع الرسوميات.</string>
     <string name="render_effect_gles">تُحفظ التأثيرات ولكنها تُصيَّر فقط باستخدام OpenGL ES.</string>
     <string name="render_effect_legacy_file_error">تعذّر تحميل مظلل قديم صالح من ملف .ini المحدد.</string>

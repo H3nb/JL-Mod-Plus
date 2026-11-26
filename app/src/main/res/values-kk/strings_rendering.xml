@@ -16,9 +16,9 @@
     <string name="perf_overlay_bottom_right">Төменгі оң</string>
     <string name="internal_resolution_title" tools:ignore="MissingTranslation">Рендеринг ажыратымдылығы</string>
     <string name="internal_resolution_auto" tools:ignore="MissingTranslation">Авто</string>
-    <string name="internal_resolution_description" tools:ignore="MissingTranslation">Қолдау көрсетілетін 2D және 3D графиканы жоғары детальмен рендерлейді. «Авто» ойын көрініс аймағына бейімделеді; қолдану үшін қайта іске қосыңыз.</string>
+    <string name="internal_resolution_description" tools:ignore="MissingTranslation">Қолдау көрсетілетін 2D және 3D графиканы өңдеу ажыратымдылығын орнатады. Автоматты режим көрсету аймағы мен құрылғы шектеулеріне қарай масштабты таңдайды. Өзгерістерді қолдану үшін MIDlet қолданбасын қайта іске қосыңыз.</string>
     <string name="bitmap_upscaling_title" tools:ignore="MissingTranslation">Растрлық масштабтау</string>
-    <string name="bitmap_upscaling_description" tools:ignore="MissingTranslation">Өзгермейтін 2D спрайттарды және мөлдір емес Micro3D модель текстураларын MMPX немесе xBR Lv3 арқылы үлкейтеді. M3G текстуралары өзгермейді; қолдану үшін қайта іске қосыңыз.</string>
+    <string name="bitmap_upscaling_description" tools:ignore="MissingTranslation">MMPX және xBR Lv3 өзгермейтін 2D кескіндері мен Micro3D модельдерінің өзгермейтін, мөлдір емес текстураларын жақсартады. M3G текстуралары өзгермейді. Өзгерістерді қолдану үшін MIDlet қолданбасын қайта іске қосыңыз.</string>
     <string name="bitmap_upscaling_nearest" tools:ignore="MissingTranslation">Ең жақын көрші</string>
     <string name="bitmap_upscaling_bilinear" tools:ignore="MissingTranslation">Билинейлі</string>
     <string name="bitmap_upscaling_mmpx" tools:ignore="MissingTranslation">MMPX</string>
@@ -149,7 +149,7 @@
     <string name="render_bitmap_memory_reduced">Растрлық масштабтау үшін жад жетпеді. Түпнұсқа кескіндер немесе төменірек масштаб қолданылады. Рендеринг ажыратымдылығын төмендетіңіз немесе жадты босатып, қайта іске қосыңыз.</string>
     <string name="render_texture_memory_reduced">Micro3D текстураларын масштабтау сәтсіз аяқталды. Түпнұсқа текстуралар қолданылады. Рендеринг ажыратымдылығын төмендетіңіз немесе жадты босатып, қайта іске қосыңыз.</string>
     <string name="render_resolution_reduced">Жад немесе GPU шектеуіне байланысты рендеринг ажыратымдылығы <xliff:g id="from_scale" example="4">%1$d</xliff:g>× мәнінен <xliff:g id="to_scale" example="2">%2$d</xliff:g>× мәніне төмендетілді. Төменірек параметрді таңдаңыз немесе жадты босатып, қайта іске қосыңыз.</string>
-    <string name="render_gpu_texture_limit">Бұл кескін GPU үшін тіпті 1× кезінде де тым үлкен. Ойын ажыратымдылығын кішірейтіңіз немесе графика режимін ауыстырыңыз.</string>
+    <string name="render_gpu_texture_limit">Ойын кескіні 1× масштабында да GPU текстурасының өлшем шегінен асады. MIDlet экранының өлшемін азайтыңыз немесе графика режимін ауыстырыңыз.</string>
     <string name="render_gpu_upload_failed">Ойын кескіні GPU-ға жүктелмеді. Қайталануда. Басқа қолданбаларды жауып көріңіз немесе графика режимін ауыстырыңыз.</string>
     <string name="render_effect_gles">Әсерлер сақталады, бірақ тек OpenGL ES арқылы рендерленеді.</string>
     <string name="render_effect_legacy_file_error">Таңдалған .ini файлынан жарамды ескі шейдер жүктелмеді.</string>

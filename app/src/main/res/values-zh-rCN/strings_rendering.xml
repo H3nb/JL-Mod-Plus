@@ -16,9 +16,9 @@
     <string name="perf_overlay_bottom_right">右下角</string>
     <string name="internal_resolution_title" tools:ignore="MissingTranslation">渲染分辨率</string>
     <string name="internal_resolution_auto" tools:ignore="MissingTranslation">自动</string>
-    <string name="internal_resolution_description" tools:ignore="MissingTranslation">以更高精细度渲染受支持的 2D 与 3D 画面。“自动”将适配游戏视口；需重启生效。</string>
+    <string name="internal_resolution_description" tools:ignore="MissingTranslation">设置受支持的 2D 和 3D 渲染分辨率。自动模式根据显示区域和设备限制选择缩放倍率。重新启动 MIDlet 后应用更改。</string>
     <string name="bitmap_upscaling_title" tools:ignore="MissingTranslation">位图放大</string>
-    <string name="bitmap_upscaling_description" tools:ignore="MissingTranslation">放大不可变 2D 精灵图像，并使用 MMPX 或 xBR Lv3 放大不透明的 Micro3D 模型纹理。M3G 纹理不受影响；需重启生效。</string>
+    <string name="bitmap_upscaling_description" tools:ignore="MissingTranslation">MMPX 和 xBR Lv3 可改善不可修改的 2D 图像，以及 Micro3D 模型中不可修改的不透明纹理。M3G 纹理保持不变。重新启动 MIDlet 后应用更改。</string>
     <string name="bitmap_upscaling_nearest" tools:ignore="MissingTranslation">最邻近插值</string>
     <string name="bitmap_upscaling_bilinear" tools:ignore="MissingTranslation">双线性插值</string>
     <string name="bitmap_upscaling_mmpx" tools:ignore="MissingTranslation">MMPX</string>
@@ -148,7 +148,7 @@
     <string name="render_bitmap_memory_reduced">位图放大内存不足，将改用原始图像或较低倍率。请尝试降低渲染分辨率或释放内存后重启。</string>
     <string name="render_texture_memory_reduced">Micro3D 纹理放大失败，将改用原始纹理。请尝试降低渲染分辨率或释放内存后重启。</string>
     <string name="render_resolution_reduced">受限于内存或 GPU，渲染分辨率已从 <xliff:g id="from_scale" example="4">%1$d</xliff:g>× 降至 <xliff:g id="to_scale" example="2">%2$d</xliff:g>×。请尝试调低设置或释放内存后重启。</string>
-    <string name="render_gpu_texture_limit">即使在 1× 倍率下，此画面也超出了 GPU 纹理限制。请尝试降低游戏分辨率或切换图形模式。</string>
+    <string name="render_gpu_texture_limit">即使在 1× 倍率下，游戏图像也超出了 GPU 的纹理尺寸限制。请减小 MIDlet 屏幕尺寸或切换图形模式。</string>
     <string name="render_gpu_upload_failed">无法将游戏画面上传至 GPU，正在重试。请尝试关闭其他应用或切换图形模式。</string>
     <string name="render_effect_gles">效果设置已保存，但仅在 OpenGL ES 下渲染生效。</string>
     <string name="render_effect_legacy_file_error">无法从所选 .ini 文件加载有效的旧版着色器。</string>

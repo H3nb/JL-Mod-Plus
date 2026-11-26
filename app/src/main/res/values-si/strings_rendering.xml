@@ -16,9 +16,9 @@
     <string name="perf_overlay_bottom_right">පහළ දකුණ</string>
     <string name="internal_resolution_title" tools:ignore="MissingTranslation">විදැහුම් විභේදනය</string>
     <string name="internal_resolution_auto" tools:ignore="MissingTranslation">ස්වයංක්‍රීය</string>
-    <string name="internal_resolution_description" tools:ignore="MissingTranslation">සහාය දක්වන 2D සහ 3D වැඩි විස්තර සහිතව විදහා දක්වයි. “ස්වයංක්‍රීය” ක්‍රීඩා දර්ශන කවුළුවට ගැළපේ; යෙදීමට නැවත අරඹන්න.</string>
+    <string name="internal_resolution_description" tools:ignore="MissingTranslation">සහාය දක්වන 2D සහ 3D විදැහුම්කරණයේ විභේදනය සකසයි. ස්වයංක්‍රීය ප්‍රකාරය දර්ශන ප්‍රදේශය සහ උපාංගයේ සීමා අනුව පරිමාණයක් තෝරයි. වෙනස්කම් යෙදීමට MIDlet නැවත ආරම්භ කරන්න.</string>
     <string name="bitmap_upscaling_title" tools:ignore="MissingTranslation">බිට්මැප් ඉහළ පරිමාණය</string>
-    <string name="bitmap_upscaling_description" tools:ignore="MissingTranslation">MMPX හෝ xBR Lv3 සමඟින් වෙනස් නොවන 2D ස්ප්‍රයිට් සහ පාරාන්ධ Micro3D ආකෘති වයනය ඉහළ පරිමාණය කරයි. M3G වයනය නොවෙනස්ව පවතී; යෙදීමට නැවත අරඹන්න.</string>
+    <string name="bitmap_upscaling_description" tools:ignore="MissingTranslation">MMPX සහ xBR Lv3 මඟින් වෙනස් කළ නොහැකි 2D රූප සහ Micro3D ආකෘතිවල වෙනස් කළ නොහැකි පාරාන්ධ වයනවල ගුණාත්මකභාවය වැඩි දියුණු කරයි. M3G වයන වෙනස් නොවේ. වෙනස්කම් යෙදීමට MIDlet නැවත ආරම්භ කරන්න.</string>
     <string name="bitmap_upscaling_nearest" tools:ignore="MissingTranslation">ආසන්නතම අසල්වැසියා</string>
     <string name="bitmap_upscaling_bilinear" tools:ignore="MissingTranslation">ද්වි-රේඛීය</string>
     <string name="bitmap_upscaling_mmpx" tools:ignore="MissingTranslation">MMPX</string>
@@ -149,7 +149,7 @@
     <string name="render_bitmap_memory_reduced">බිට්මැප් ඉහළ පරිමාණය සඳහා මතකය අවසන් විය. මුල් රූප හෝ අඩු පරිමාණයක් භාවිතා කෙරේ. අඩු විදැහුම් විභේදනයක් උත්සාහ කරන්න හෝ මතකය නිදහස් කර නැවත අරඹන්න.</string>
     <string name="render_texture_memory_reduced">Micro3D වයනය ඉහළ පරිමාණය අසාර්ථක විය. මුල් වයනය භාවිතා කෙරේ. අඩු විදැහුම් විභේදනයක් උත්සාහ කරන්න හෝ මතකය නිදහස් කර නැවත අරඹන්න.</string>
     <string name="render_resolution_reduced">මතක හෝ GPU සීමාවන් නිසා විදැහුම් විභේදනය <xliff:g id="from_scale" example="4">%1$d</xliff:g>× සිට <xliff:g id="to_scale" example="2">%2$d</xliff:g>× දක්වා අඩු කරන ලදී. අඩු සැකසීමක් උත්සාහ කරන්න හෝ මතකය නිදහස් කර නැවත අරඹන්න.</string>
-    <string name="render_gpu_texture_limit">මෙම රූපය 1× දී පවා GPU සඳහා ඉතා විශාලයි. කුඩා ක්‍රීඩා විභේදනයක් උත්සාහ කරන්න හෝ ග්‍රැෆික් ප්‍රකාරය මාරු කරන්න.</string>
+    <string name="render_gpu_texture_limit">1× පරිමාණයේදී පවා ක්‍රීඩාවේ රූපය GPU වයන ප්‍රමාණ සීමාව ඉක්මවයි. MIDlet තිරයේ ප්‍රමාණය අඩු කරන්න හෝ චිත්‍රක ප්‍රකාරය වෙනස් කරන්න.</string>
     <string name="render_gpu_upload_failed">ක්‍රීඩා රූපය GPU වෙත උඩුගත කිරීමට නොහැකි විය. නැවත උත්සාහ කරමින්. වෙනත් යෙදුම් වසා දැමීමට හෝ ග්‍රැෆික් ප්‍රකාරය මාරු කිරීමට උත්සාහ කරන්න.</string>
     <string name="render_effect_gles">ප්‍රයෝග සුරකින නමුත් විදහා දක්වන්නේ OpenGL ES සමඟ පමණි.</string>
     <string name="render_effect_legacy_file_error">තෝරාගත් .ini ගොනුවෙන් වලංගු පැරණි ශේඩරයක් පූරණය කිරීමට නොහැකි විය.</string>

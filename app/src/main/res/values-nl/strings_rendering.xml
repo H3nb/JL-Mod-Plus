@@ -16,9 +16,9 @@
     <string name="perf_overlay_bottom_right">Rechtsonder</string>
     <string name="internal_resolution_title" tools:ignore="MissingTranslation">Renderresolutie</string>
     <string name="internal_resolution_auto" tools:ignore="MissingTranslation">Automatisch</string>
-    <string name="internal_resolution_description" tools:ignore="MissingTranslation">Rendert ondersteunde 2D en 3D met meer detail. Automatisch past zich aan de game-viewport aan; start opnieuw om toe te passen.</string>
+    <string name="internal_resolution_description" tools:ignore="MissingTranslation">Stelt de resolutie in voor ondersteunde 2D- en 3D-rendering. Automatisch kiest een schaalfactor op basis van het weergavegebied en de limieten van het apparaat. Start de MIDlet opnieuw om wijzigingen toe te passen.</string>
     <string name="bitmap_upscaling_title" tools:ignore="MissingTranslation">Bitmap-opschaling</string>
-    <string name="bitmap_upscaling_description" tools:ignore="MissingTranslation">Schaalt onveranderlijke 2D-sprites en ondoorzichtige Micro3D-modeltexturen op met MMPX of xBR Lv3. M3G-texturen blijven ongewijzigd; start opnieuw om toe te passen.</string>
+    <string name="bitmap_upscaling_description" tools:ignore="MissingTranslation">MMPX en xBR Lv3 verbeteren onveranderlijke 2D-afbeeldingen en onveranderlijke, ondoorzichtige texturen van Micro3D-modellen. M3G-texturen blijven ongewijzigd. Start de MIDlet opnieuw om wijzigingen toe te passen.</string>
     <string name="bitmap_upscaling_nearest" tools:ignore="MissingTranslation">Nearest neighbor</string>
     <string name="bitmap_upscaling_bilinear" tools:ignore="MissingTranslation">Bilineair</string>
     <string name="bitmap_upscaling_mmpx" tools:ignore="MissingTranslation">MMPX</string>
@@ -149,7 +149,7 @@
     <string name="render_bitmap_memory_reduced">Onvoldoende geheugen voor bitmap-opschaling. Oorspronkelijke afbeeldingen of een lagere schaal worden gebruikt. Probeer een lagere renderresolutie of maak geheugen vrij en start opnieuw.</string>
     <string name="render_texture_memory_reduced">Opschaling van Micro3D-texturen is mislukt. Oorspronkelijke texturen worden gebruikt. Probeer een lagere renderresolutie of maak geheugen vrij en start opnieuw.</string>
     <string name="render_resolution_reduced">Renderresolutie verlaagd van <xliff:g id="from_scale" example="4">%1$d</xliff:g>× naar <xliff:g id="to_scale" example="2">%2$d</xliff:g>× vanwege geheugen- of GPU-limieten. Probeer een lagere instelling of maak geheugen vrij en start opnieuw.</string>
-    <string name="render_gpu_texture_limit">Deze afbeelding is zelfs op 1× te groot voor de GPU. Probeer een kleinere gameresolutie of wissel van grafische modus.</string>
+    <string name="render_gpu_texture_limit">De gameafbeelding overschrijdt zelfs bij 1× de maximale textuurgrootte van de GPU. Verklein het schermformaat van de MIDlet of wijzig de grafische modus.</string>
     <string name="render_gpu_upload_failed">Kan het gamebeeld niet naar de GPU uploaden. Opnieuw proberen. Sluit andere apps of wissel van grafische modus.</string>
     <string name="render_effect_gles">Effecten worden opgeslagen, maar alleen gerenderd met OpenGL ES.</string>
     <string name="render_effect_legacy_file_error">Kan geen geldige legacy-shader laden uit het geselecteerde .ini-bestand.</string>

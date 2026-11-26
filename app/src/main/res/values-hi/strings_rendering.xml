@@ -16,9 +16,9 @@
     <string name="perf_overlay_bottom_right">नीचे दाएं</string>
     <string name="internal_resolution_title" tools:ignore="MissingTranslation">रेंडर रिज़ॉल्यूशन</string>
     <string name="internal_resolution_auto" tools:ignore="MissingTranslation">स्वचालित</string>
-    <string name="internal_resolution_description" tools:ignore="MissingTranslation">समर्थित 2D और 3D को अधिक विवरण में रेंडर करता है। “स्वचालित” गेम व्यूपोर्ट में फ़िट होता है; लागू करने के लिए पुनः प्रारंभ करें।</string>
+    <string name="internal_resolution_description" tools:ignore="MissingTranslation">समर्थित 2D और 3D रेंडरिंग का रिज़ॉल्यूशन तय करता है। स्वचालित विकल्प डिस्प्ले क्षेत्र और डिवाइस की सीमाओं के अनुसार स्केल चुनता है। बदलाव लागू करने के लिए MIDlet को फिर से शुरू करें।</string>
     <string name="bitmap_upscaling_title" tools:ignore="MissingTranslation">बिटमैप अपस्केलिंग</string>
-    <string name="bitmap_upscaling_description" tools:ignore="MissingTranslation">MMPX या xBR Lv3 से अपरिवर्तनीय 2D स्प्राइट्स और अपारदर्शी Micro3D मॉडल टेक्सचर को अपस्केल करता है। M3G टेक्सचर अपरिवर्तित रहते हैं; लागू करने के लिए पुनः प्रारंभ करें।</string>
+    <string name="bitmap_upscaling_description" tools:ignore="MissingTranslation">MMPX और xBR Lv3 अपरिवर्तनीय 2D चित्रों तथा Micro3D मॉडल के अपरिवर्तनीय, अपारदर्शी टेक्सचर को बेहतर बनाते हैं। M3G टेक्सचर नहीं बदलते। बदलाव लागू करने के लिए MIDlet को फिर से शुरू करें।</string>
     <string name="bitmap_upscaling_nearest" tools:ignore="MissingTranslation">नियरेस्ट नेबर</string>
     <string name="bitmap_upscaling_bilinear" tools:ignore="MissingTranslation">बाइलीनियर</string>
     <string name="bitmap_upscaling_mmpx" tools:ignore="MissingTranslation">MMPX</string>
@@ -149,7 +149,7 @@
     <string name="render_bitmap_memory_reduced">बिटमैप अपस्केलिंग के लिए मेमोरी समाप्त हो गई। मूल चित्र या कम स्केल उपयोग किया जाएगा। निम्न रेंडर रिज़ॉल्यूशन चुनें या मेमोरी खाली करें, फिर पुनः प्रारंभ करें।</string>
     <string name="render_texture_memory_reduced">Micro3D टेक्सचर अपस्केलिंग विफल रही। मूल टेक्सचर उपयोग किए जाएंगे। निम्न रेंडर रिज़ॉल्यूशन चुनें या मेमोरी खाली करें, फिर पुनः प्रारंभ करें।</string>
     <string name="render_resolution_reduced">मेमोरी या GPU सीमाओं के कारण रेंडर रिज़ॉल्यूशन <xliff:g id="from_scale" example="4">%1$d</xliff:g>× से घटकर <xliff:g id="to_scale" example="2">%2$d</xliff:g>× हो गया। निम्न सेटिंग चुनें या मेमोरी खाली करें, फिर पुनः प्रारंभ करें।</string>
-    <string name="render_gpu_texture_limit">यह चित्र 1× पर भी GPU के लिए बहुत बड़ा है। छोटा गेम रिज़ॉल्यूशन आज़माएं या ग्राफ़िक्स मोड बदलें।</string>
+    <string name="render_gpu_texture_limit">गेम का चित्र 1× पर भी GPU की अधिकतम टेक्सचर आकार सीमा से बड़ा है। MIDlet की स्क्रीन का आकार कम करें या ग्राफ़िक्स मोड बदलें।</string>
     <string name="render_gpu_upload_failed">गेम चित्र GPU पर अपलोड नहीं हो सका। पुनः प्रयास जारी है। अन्य ऐप्स बंद करें या ग्राफ़िक्स मोड बदलें।</string>
     <string name="render_effect_gles">प्रभाव सहेजे जाते हैं, लेकिन केवल OpenGL ES के साथ रेंडर होते हैं।</string>
     <string name="render_effect_legacy_file_error">चयनित .ini फ़ाइल से कोई मान्य लेगेसी शेडर लोड नहीं किया जा सका।</string>

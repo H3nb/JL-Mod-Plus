@@ -16,9 +16,9 @@
     <string name="perf_overlay_bottom_right">Inferior direito</string>
     <string name="internal_resolution_title" tools:ignore="MissingTranslation">Resolução de renderização</string>
     <string name="internal_resolution_auto" tools:ignore="MissingTranslation">Automático</string>
-    <string name="internal_resolution_description" tools:ignore="MissingTranslation">Renderiza gráficos 2D e 3D compatíveis com mais detalhes. Automático ajusta à janela do jogo; reinicie para aplicar.</string>
+    <string name="internal_resolution_description" tools:ignore="MissingTranslation">Define a resolução da renderização 2D e 3D compatível. O modo automático escolhe um fator de escala com base na área de exibição e nos limites do dispositivo. Reinicie o MIDlet para aplicar as alterações.</string>
     <string name="bitmap_upscaling_title" tools:ignore="MissingTranslation">Aprimoramento de bitmap</string>
-    <string name="bitmap_upscaling_description" tools:ignore="MissingTranslation">Aprimora sprites 2D imutáveis e texturas opacas de modelos Micro3D com MMPX ou xBR Lv3. Texturas M3G permanecem inalteradas; reinicie para aplicar.</string>
+    <string name="bitmap_upscaling_description" tools:ignore="MissingTranslation">MMPX e xBR Lv3 melhoram as imagens 2D imutáveis e as texturas imutáveis e opacas dos modelos Micro3D. As texturas M3G permanecem inalteradas. Reinicie o MIDlet para aplicar as alterações.</string>
     <string name="bitmap_upscaling_nearest" tools:ignore="MissingTranslation">Vizinho mais próximo</string>
     <string name="bitmap_upscaling_bilinear" tools:ignore="MissingTranslation">Bilinear</string>
     <string name="bitmap_upscaling_mmpx" tools:ignore="MissingTranslation">MMPX</string>
@@ -149,7 +149,7 @@
     <string name="render_bitmap_memory_reduced">O aprimoramento de bitmap ficou sem memória. Serão usadas as imagens originais ou uma escala menor. Tente uma resolução de renderização menor ou libere memória e reinicie.</string>
     <string name="render_texture_memory_reduced">O aprimoramento de texturas Micro3D falhou. Serão usadas as texturas originais. Tente uma resolução de renderização menor ou libere memória e reinicie.</string>
     <string name="render_resolution_reduced">Resolução de renderização reduzida de <xliff:g id="from_scale" example="4">%1$d</xliff:g>× para <xliff:g id="to_scale" example="2">%2$d</xliff:g>× devido a limites de memória ou da GPU. Tente uma opção menor ou libere memória e reinicie.</string>
-    <string name="render_gpu_texture_limit">Esta imagem é grande demais para a GPU mesmo em 1×. Tente uma resolução de jogo menor ou altere o modo gráfico.</string>
+    <string name="render_gpu_texture_limit">A imagem do jogo excede o limite de tamanho das texturas da GPU, mesmo na escala de 1×. Reduza o tamanho da tela do MIDlet ou altere o modo gráfico.</string>
     <string name="render_gpu_upload_failed">Não foi possível enviar a imagem do jogo para a GPU. Tentando novamente. Tente fechar outros apps ou alterar o modo gráfico.</string>
     <string name="render_effect_gles">Os efeitos são salvos, mas só são renderizados com OpenGL ES.</string>
     <string name="render_effect_legacy_file_error">Não foi possível carregar um shader legado válido do arquivo .ini selecionado.</string>

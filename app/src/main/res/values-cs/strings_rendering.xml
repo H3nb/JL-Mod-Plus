@@ -16,9 +16,9 @@
     <string name="perf_overlay_bottom_right">Vpravo dole</string>
     <string name="internal_resolution_title" tools:ignore="MissingTranslation">Rozlišení vykreslování</string>
     <string name="internal_resolution_auto" tools:ignore="MissingTranslation">Automaticky</string>
-    <string name="internal_resolution_description" tools:ignore="MissingTranslation">Vykresluje podporovanou 2D a 3D grafiku ve vyšších detailech. Možnost Automaticky se přizpůsobí výřezu hry; změna se projeví po restartu.</string>
+    <string name="internal_resolution_description" tools:ignore="MissingTranslation">Nastavuje rozlišení vykreslování podporované 2D a 3D grafiky. Automatická volba určí měřítko podle plochy zobrazení a omezení zařízení. Změna se projeví po restartu MIDletu.</string>
     <string name="bitmap_upscaling_title" tools:ignore="MissingTranslation">Zvětšování bitmap</string>
-    <string name="bitmap_upscaling_description" tools:ignore="MissingTranslation">Zvětšuje neměnné 2D sprity a neprůhledné textury modelů Micro3D pomocí MMPX nebo xBR Lv3. Textury M3G zůstávají beze změny; změna se projeví po restartu.</string>
+    <string name="bitmap_upscaling_description" tools:ignore="MissingTranslation">MMPX a xBR Lv3 vylepšují neměnné 2D obrázky a neměnné, neprůhledné textury modelů Micro3D. Textury M3G zůstávají beze změny. Změna se projeví po restartu MIDletu.</string>
     <string name="bitmap_upscaling_nearest" tools:ignore="MissingTranslation">Nejbližší soused</string>
     <string name="bitmap_upscaling_bilinear" tools:ignore="MissingTranslation">Bilineární</string>
     <string name="bitmap_upscaling_mmpx" tools:ignore="MissingTranslation">MMPX</string>
@@ -149,7 +149,7 @@
     <string name="render_bitmap_memory_reduced">Zvětšování bitmap vyčerpalo paměť. Použijí se původní obrázky nebo nižší měřítko. Zkuste nižší rozlišení vykreslování nebo uvolněte paměť a restartujte.</string>
     <string name="render_texture_memory_reduced">Zvětšování textur Micro3D selhalo. Použijí se původní textury. Zkuste nižší rozlišení vykreslování nebo uvolněte paměť a restartujte.</string>
     <string name="render_resolution_reduced">Rozlišení vykreslování bylo kvůli omezení paměti nebo GPU sníženo z <xliff:g id="from_scale" example="4">%1$d</xliff:g>× na <xliff:g id="to_scale" example="2">%2$d</xliff:g>×. Zkuste nižší nastavení nebo uvolněte paměť a restartujte.</string>
-    <string name="render_gpu_texture_limit">Tento obraz je pro GPU příliš velký i při 1×. Zkuste menší rozlišení hry nebo přepněte grafický režim.</string>
+    <string name="render_gpu_texture_limit">Obraz hry překračuje maximální velikost textury GPU i při měřítku 1×. Zmenšete velikost obrazovky MIDletu nebo přepněte grafický režim.</string>
     <string name="render_gpu_upload_failed">Obraz hry se nepodařilo nahrát do GPU. Opakuji pokus. Zkuste zavřít ostatní aplikace nebo přepnout grafický režim.</string>
     <string name="render_effect_gles">Efekty se uloží, ale vykreslují se pouze s OpenGL ES.</string>
     <string name="render_effect_legacy_file_error">Z vybraného souboru .ini se nepodařilo načíst platný starší shader.</string>

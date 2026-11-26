@@ -16,9 +16,9 @@
     <string name="perf_overlay_bottom_right">Sağ alt</string>
     <string name="internal_resolution_title" tools:ignore="MissingTranslation">İşleme çözünürlüğü</string>
     <string name="internal_resolution_auto" tools:ignore="MissingTranslation">Otomatik</string>
-    <string name="internal_resolution_description" tools:ignore="MissingTranslation">Desteklenen 2B ve 3B grafikleri daha yüksek ayrıntıyla işler. Otomatik, oyun görüntü alanına uyar; uygulamak için yeniden başlatın.</string>
+    <string name="internal_resolution_description" tools:ignore="MissingTranslation">Desteklenen 2D ve 3D işleme çözünürlüğünü ayarlar. Otomatik mod, görüntüleme alanına ve cihazın sınırlarına göre bir ölçek seçer. Değişiklikleri uygulamak için MIDlet’i yeniden başlatın.</string>
     <string name="bitmap_upscaling_title" tools:ignore="MissingTranslation">Bitmap ölçeklendirme</string>
-    <string name="bitmap_upscaling_description" tools:ignore="MissingTranslation">Değişmez 2B hareketli grafikleri ve opak Micro3D model dokularını MMPX veya xBR Lv3 ile ölçeklendirir. M3G dokuları değişmez; uygulamak için yeniden başlatın.</string>
+    <string name="bitmap_upscaling_description" tools:ignore="MissingTranslation">MMPX ve xBR Lv3, değiştirilemeyen 2D görüntüleri ve Micro3D modellerinin değiştirilemeyen, opak dokularını iyileştirir. M3G dokuları değişmez. Değişiklikleri uygulamak için MIDlet’i yeniden başlatın.</string>
     <string name="bitmap_upscaling_nearest" tools:ignore="MissingTranslation">En yakın komşu</string>
     <string name="bitmap_upscaling_bilinear" tools:ignore="MissingTranslation">Çift doğrusal</string>
     <string name="bitmap_upscaling_mmpx" tools:ignore="MissingTranslation">MMPX</string>
@@ -148,7 +148,7 @@
     <string name="render_bitmap_memory_reduced">Bitmap ölçeklendirme için bellek yetersiz. Orijinal görseller veya daha düşük bir ölçek kullanılacak. Daha düşük bir işleme çözünürlüğü deneyin veya bellek boşaltıp yeniden başlatın.</string>
     <string name="render_texture_memory_reduced">Micro3D doku ölçeklendirme başarısız oldu. Orijinal dokular kullanılacak. Daha düşük bir işleme çözünürlüğü deneyin veya bellek boşaltıp yeniden başlatın.</string>
     <string name="render_resolution_reduced">Bellek veya GPU sınırları nedeniyle işleme çözünürlüğü <xliff:g id="from_scale" example="4">%1$d</xliff:g>× değerinden <xliff:g id="to_scale" example="2">%2$d</xliff:g>× değerine düşürüldü. Daha düşük bir ayar deneyin veya bellek boşaltıp yeniden başlatın.</string>
-    <string name="render_gpu_texture_limit">Bu görüntü 1× ölçeğinde bile GPU için çok büyük. Daha küçük bir oyun çözünürlüğü deneyin veya grafik modunu değiştirin.</string>
+    <string name="render_gpu_texture_limit">Oyun görüntüsü 1× ölçekte bile GPU’nun doku boyutu sınırını aşıyor. MIDlet ekran boyutunu küçültün veya grafik modunu değiştirin.</string>
     <string name="render_gpu_upload_failed">Oyun görüntüsü GPU’ya yüklenemedi. Yeniden deneniyor. Diğer uygulamaları kapatmayı veya grafik modunu değiştirmeyi deneyin.</string>
     <string name="render_effect_gles">Efektler kaydedilir ancak yalnızca OpenGL ES ile işlenir.</string>
     <string name="render_effect_legacy_file_error">Seçilen .ini dosyasından geçerli bir eski shader yüklenemedi.</string>
