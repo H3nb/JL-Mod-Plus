@@ -43,7 +43,7 @@
     <string name="crash_report_copied">Rapport gekopieerd</string>
     <string name="crash_report_bundle_preparing">Diagnostisch pakket voorbereiden…</string>
     <string name="crash_report_bundle_ready_title">Diagnostisch pakket gereed</string>
-    <string name="crash_report_bundle_ready_message"><xliff:g id="name" example="Example">%1$s</xliff:g>\n\nOpgeslagen in Downloads → JL-Mod Plus Diagnostics.\n\nVoeg dit bestand toe voordat je het GitHub-issue indient. Het diagnostische pakket wordt openbaar zodra het aan het issue is toegevoegd.</string>
+    <string name="crash_report_bundle_ready_message"><xliff:g id="name" example="Example">%1$s</xliff:g>\n\nOpgeslagen in Downloads → JL-Mod Plus Diagnostics.\n\nControleer het bestand op gevoelige informatie en voeg het toe voordat je het GitHub-issue indient. Het bestand wordt openbaar zodra je het toevoegt.</string>
     <string name="locate_bundle">Pakket zoeken</string>
     <string name="open_github">GitHub openen</string>
     <string name="crash_report_bundle_failed">Kan het diagnostische pakket niet voorbereiden.</string>

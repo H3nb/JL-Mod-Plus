@@ -45,7 +45,7 @@
     <string name="crash_report_copied">Skopiowano raport</string>
     <string name="crash_report_bundle_preparing">Przygotowywanie pakietu diagnostycznego…</string>
     <string name="crash_report_bundle_ready_title">Pakiet diagnostyczny jest gotowy</string>
-    <string name="crash_report_bundle_ready_message"><xliff:g id="name" example="Example">%1$s</xliff:g>\n\nZapisano w Pobrane → JL-Mod Plus Diagnostics.\n\nDołącz ten plik przed wysłaniem zgłoszenia na GitHubie. Po dołączeniu do zgłoszenia pakiet diagnostyczny będzie publiczny.</string>
+    <string name="crash_report_bundle_ready_message"><xliff:g id="name" example="Example">%1$s</xliff:g>\n\nZapisano w Pobrane → JL-Mod Plus Diagnostics.\n\nSprawdź, czy plik nie zawiera poufnych informacji, a następnie dołącz go przed wysłaniem zgłoszenia w GitHubie. Plik stanie się publiczny w chwili dołączenia.</string>
     <string name="locate_bundle">Znajdź pakiet</string>
     <string name="open_github">Otwórz GitHuba</string>
     <string name="crash_report_bundle_failed">Nie udało się przygotować pakietu diagnostycznego.</string>

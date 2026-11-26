@@ -43,7 +43,7 @@
     <string name="crash_report_copied">रिपोर्ट कॉपी हो गई</string>
     <string name="crash_report_bundle_preparing">डायग्नोस्टिक बंडल तैयार किया जा रहा है…</string>
     <string name="crash_report_bundle_ready_title">डायग्नोस्टिक बंडल तैयार है</string>
-    <string name="crash_report_bundle_ready_message"><xliff:g id="name" example="Example">%1$s</xliff:g>\n\nDownloads → JL-Mod Plus Diagnostics में सहेजा गया।\n\nGitHub इश्यू सबमिट करने से पहले यह फ़ाइल अटैच करें। इश्यू से अटैच होने के बाद डायग्नोस्टिक बंडल सार्वजनिक हो जाएगा।</string>
+    <string name="crash_report_bundle_ready_message"><xliff:g id="name" example="Example">%1$s</xliff:g>\n\nDownloads → JL-Mod Plus Diagnostics में सहेजा गया।\n\nजांच लें कि फ़ाइल में कोई संवेदनशील जानकारी तो नहीं है, फिर GitHub इश्यू सबमिट करने से पहले इसे अटैच करें। अटैच होते ही फ़ाइल सार्वजनिक हो जाएगी.</string>
     <string name="locate_bundle">बंडल खोजें</string>
     <string name="open_github">GitHub खोलें</string>
     <string name="crash_report_bundle_failed">डायग्नोस्टिक बंडल तैयार नहीं किया जा सका।</string>

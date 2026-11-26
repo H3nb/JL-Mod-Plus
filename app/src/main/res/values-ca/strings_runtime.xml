@@ -44,7 +44,7 @@
     <string name="crash_report_copied">S’ha copiat l’informe</string>
     <string name="crash_report_bundle_preparing">S’està preparant el paquet de diagnòstic…</string>
     <string name="crash_report_bundle_ready_title">Paquet de diagnòstic a punt</string>
-    <string name="crash_report_bundle_ready_message"><xliff:g id="name" example="Example">%1$s</xliff:g>\n\nDesat a Downloads → JL-Mod Plus Diagnostics.\n\nAdjunta aquest fitxer abans d’enviar la incidència a GitHub. El paquet de diagnòstic serà públic un cop adjuntat a la incidència.</string>
+    <string name="crash_report_bundle_ready_message"><xliff:g id="name" example="Example">%1$s</xliff:g>\n\nDesat a Downloads → JL-Mod Plus Diagnostics.\n\nComprova si el fitxer conté informació sensible i adjunta’l abans d’enviar la incidència a GitHub. El fitxer serà públic tan bon punt l’adjuntis.</string>
     <string name="locate_bundle">Localitza el paquet</string>
     <string name="open_github">Obre GitHub</string>
     <string name="crash_report_bundle_failed">No s’ha pogut preparar el paquet de diagnòstic.</string>

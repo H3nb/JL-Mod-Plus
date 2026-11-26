@@ -42,7 +42,7 @@
     <string name="crash_report_copied">Laporan disalin</string>
     <string name="crash_report_bundle_preparing">Menyiapkan paket diagnostik…</string>
     <string name="crash_report_bundle_ready_title">Paket diagnostik siap</string>
-    <string name="crash_report_bundle_ready_message"><xliff:g id="name" example="Example">%1$s</xliff:g>\n\nTersimpan di Downloads → JL-Mod Plus Diagnostics.\n\nLampirkan file ini sebelum mengirim isu GitHub. Paket diagnostik akan bersifat publik setelah dilampirkan ke isu.</string>
+    <string name="crash_report_bundle_ready_message"><xliff:g id="name" example="Example">%1$s</xliff:g>\n\nTersimpan di Downloads → JL-Mod Plus Diagnostics.\n\nPeriksa apakah file ini memuat informasi sensitif, lalu lampirkan sebelum mengirim laporan masalah di GitHub. File dapat diakses publik begitu dilampirkan.</string>
     <string name="locate_bundle">Cari paket</string>
     <string name="open_github">Buka GitHub</string>
     <string name="crash_report_bundle_failed">Tidak dapat menyiapkan paket diagnostik.</string>

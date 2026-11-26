@@ -43,7 +43,7 @@
     <string name="crash_report_copied">Rapport kopieret</string>
     <string name="crash_report_bundle_preparing">Forbereder diagnostikpakke…</string>
     <string name="crash_report_bundle_ready_title">Diagnostikpakke klar</string>
-    <string name="crash_report_bundle_ready_message"><xliff:g id="name" example="Example">%1$s</xliff:g>\n\nGemt i Overførsler → JL-Mod Plus Diagnostics.\n\nVedhæft denne fil, før du indsender GitHub-sagen. Diagnostikpakken bliver offentlig, når den vedhæftes sagen.</string>
+    <string name="crash_report_bundle_ready_message"><xliff:g id="name" example="Example">%1$s</xliff:g>\n\nGemt i Overførsler → JL-Mod Plus Diagnostics.\n\nKontrollér, om filen indeholder følsomme oplysninger, og vedhæft den, før du indsender GitHub-sagen. Filen bliver offentlig, så snart den vedhæftes.</string>
     <string name="locate_bundle">Find pakke</string>
     <string name="open_github">Åbn GitHub</string>
     <string name="crash_report_bundle_failed">Diagnostikpakken kunne ikke forberedes.</string>

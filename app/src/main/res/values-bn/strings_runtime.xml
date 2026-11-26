@@ -43,7 +43,7 @@
     <string name="crash_report_copied">রিপোর্ট কপি করা হয়েছে</string>
     <string name="crash_report_bundle_preparing">ডায়াগনস্টিক বান্ডেল তৈরি হচ্ছে…</string>
     <string name="crash_report_bundle_ready_title">ডায়াগনস্টিক বান্ডেল প্রস্তুত</string>
-    <string name="crash_report_bundle_ready_message"><xliff:g id="name" example="Example">%1$s</xliff:g>\n\nডাউনলোড → JL-Mod Plus Diagnostics-এ সেভ করা হয়েছে।\n\nGitHub ইস্যু জমা দেওয়ার আগে এই ফাইলটি সংযুক্ত করুন। ইস্যুতে সংযুক্ত করলে ডায়াগনস্টিক বান্ডেলটি সবার জন্য উন্মুক্ত হবে।</string>
+    <string name="crash_report_bundle_ready_message"><xliff:g id="name" example="Example">%1$s</xliff:g>\n\nডাউনলোড → JL-Mod Plus Diagnostics-এ সেভ করা হয়েছে।\n\nফাইলটিতে সংবেদনশীল তথ্য আছে কি না দেখে নিন, তারপর GitHub ইস্যু জমা দেওয়ার আগে ফাইলটি সংযুক্ত করুন। সংযুক্ত করলেই ফাইলটি সবার জন্য উন্মুক্ত হবে।</string>
     <string name="locate_bundle">বান্ডেল খুঁজুন</string>
     <string name="open_github">GitHub খুলুন</string>
     <string name="crash_report_bundle_failed">ডায়াগনস্টিক বান্ডেল তৈরি করা যায়নি।</string>

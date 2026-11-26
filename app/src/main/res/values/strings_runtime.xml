@@ -43,7 +43,7 @@
     <string name="crash_report_copied">Report copied</string>
     <string name="crash_report_bundle_preparing">Preparing diagnostic bundle…</string>
     <string name="crash_report_bundle_ready_title">Diagnostic bundle ready</string>
-    <string name="crash_report_bundle_ready_message"><xliff:g id="name" example="Example">%1$s</xliff:g>\n\nSaved in Downloads → JL-Mod Plus Diagnostics.\n\nAttach this file before submitting the GitHub issue. The diagnostic bundle will be public once attached to the issue.</string>
+    <string name="crash_report_bundle_ready_message"><xliff:g id="name" example="Example">%1$s</xliff:g>\n\nSaved in Downloads → JL-Mod Plus Diagnostics.\n\nCheck this file for sensitive information, then attach it before submitting the GitHub issue. The file becomes public as soon as it is attached.</string>
     <string name="locate_bundle">Locate bundle</string>
     <string name="open_github">Open GitHub</string>
     <string name="crash_report_bundle_failed">Couldn’t prepare the diagnostic bundle.</string>

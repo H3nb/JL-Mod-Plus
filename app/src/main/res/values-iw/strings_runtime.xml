@@ -44,7 +44,7 @@
     <string name="crash_report_copied">הדוח הועתק</string>
     <string name="crash_report_bundle_preparing">מכין חבילת אבחון…</string>
     <string name="crash_report_bundle_ready_title">חבילת האבחון מוכנה</string>
-    <string name="crash_report_bundle_ready_message"><xliff:g id="name" example="Example">%1$s</xliff:g>\n\nנשמר בתיקייה הורדות ← JL-Mod Plus Diagnostics.\n\nיש לצרף קובץ זה לפני שליחת הדיווח ב-GitHub. חבילת האבחון תהיה ציבורית לאחר צירופה לדיווח.</string>
+    <string name="crash_report_bundle_ready_message"><xliff:g id="name" example="Example">%1$s</xliff:g>\n\nנשמר בתיקייה הורדות ← JL-Mod Plus Diagnostics.\n\nיש לבדוק אם הקובץ מכיל מידע רגיש, ולאחר מכן לצרף אותו לפני שליחת הדיווח ב-GitHub. הקובץ יהפוך לציבורי ברגע שיצורף.</string>
     <string name="locate_bundle">איתור החבילה</string>
     <string name="open_github">פתיחת GitHub</string>
     <string name="crash_report_bundle_failed">לא ניתן להכין את חבילת האבחון.</string>

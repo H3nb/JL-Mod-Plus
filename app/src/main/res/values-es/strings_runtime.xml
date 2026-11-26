@@ -44,7 +44,7 @@
     <string name="crash_report_copied">Informe copiado</string>
     <string name="crash_report_bundle_preparing">Preparando paquete de diagnóstico…</string>
     <string name="crash_report_bundle_ready_title">Paquete de diagnóstico listo</string>
-    <string name="crash_report_bundle_ready_message"><xliff:g id="name" example="Example">%1$s</xliff:g>\n\nGuardado en Downloads → JL-Mod Plus Diagnostics.\n\nAdjunta este archivo antes de enviar la incidencia en GitHub. El paquete de diagnóstico será público una vez adjunto a la incidencia.</string>
+    <string name="crash_report_bundle_ready_message"><xliff:g id="name" example="Example">%1$s</xliff:g>\n\nGuardado en Downloads → JL-Mod Plus Diagnostics.\n\nComprueba si el archivo contiene información confidencial y adjúntalo antes de enviar la incidencia en GitHub. El archivo será público desde el momento en que lo adjuntes.</string>
     <string name="locate_bundle">Localizar paquete</string>
     <string name="open_github">Abrir GitHub</string>
     <string name="crash_report_bundle_failed">No se pudo preparar el paquete de diagnóstico.</string>

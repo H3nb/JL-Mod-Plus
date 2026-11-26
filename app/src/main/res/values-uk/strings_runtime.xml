@@ -45,7 +45,7 @@
     <string name="crash_report_copied">Звіт скопійовано</string>
     <string name="crash_report_bundle_preparing">Підготовка пакета діагностики…</string>
     <string name="crash_report_bundle_ready_title">Пакет діагностики готовий</string>
-    <string name="crash_report_bundle_ready_message"><xliff:g id="name" example="Example">%1$s</xliff:g>\n\nЗбережено в Завантаження → JL-Mod Plus Diagnostics.\n\nПрикріпіть цей файл перед надсиланням звернення на GitHub. Після прикріплення пакет діагностики стане загальнодоступним.</string>
+    <string name="crash_report_bundle_ready_message"><xliff:g id="name" example="Example">%1$s</xliff:g>\n\nЗбережено в Завантаження → JL-Mod Plus Diagnostics.\n\nПеревірте, чи немає у файлі конфіденційних даних, а потім прикріпіть його перед надсиланням повідомлення про проблему на GitHub. Файл стане загальнодоступним одразу після прикріплення.</string>
     <string name="locate_bundle">Знайти пакет</string>
     <string name="open_github">Відкрити GitHub</string>
     <string name="crash_report_bundle_failed">Не вдалося підготувати пакет діагностики.</string>

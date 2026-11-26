@@ -41,7 +41,7 @@
     <string name="crash_report_copied">已复制报告</string>
     <string name="crash_report_bundle_preparing">正在准备诊断包…</string>
     <string name="crash_report_bundle_ready_title">诊断包已就绪</string>
-    <string name="crash_report_bundle_ready_message"><xliff:g id="name" example="Example">%1$s</xliff:g>\n\n已保存至 Downloads → JL-Mod Plus Diagnostics。\n\n提交 GitHub Issue 前请附上此文件。文件上传至 Issue 后将公开可见。</string>
+    <string name="crash_report_bundle_ready_message"><xliff:g id="name" example="Example">%1$s</xliff:g>\n\n已保存至 Downloads → JL-Mod Plus Diagnostics。\n\n请检查文件是否包含敏感信息，然后在提交 GitHub Issue 前将其作为附件添加。文件一旦添加为附件，即可被公开访问。</string>
     <string name="locate_bundle">定位诊断包</string>
     <string name="open_github">打开 GitHub</string>
     <string name="crash_report_bundle_failed">无法准备诊断包。</string>

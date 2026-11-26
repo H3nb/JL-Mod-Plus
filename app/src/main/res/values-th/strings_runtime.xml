@@ -42,7 +42,7 @@
     <string name="crash_report_copied">คัดลอกรายงานแล้ว</string>
     <string name="crash_report_bundle_preparing">กำลังเตรียมชุดไฟล์วินิจฉัย…</string>
     <string name="crash_report_bundle_ready_title">ชุดไฟล์วินิจฉัยพร้อมแล้ว</string>
-    <string name="crash_report_bundle_ready_message"><xliff:g id="name" example="Example">%1$s</xliff:g>\n\nบันทึกไว้ใน ดาวน์โหลด → JL-Mod Plus Diagnostics\n\nแนบไฟล์นี้ก่อนส่งปัญหาบน GitHub ชุดไฟล์วินิจฉัยจะแสดงเป็นสาธารณะเมื่อแนบกับปัญหา</string>
+    <string name="crash_report_bundle_ready_message"><xliff:g id="name" example="Example">%1$s</xliff:g>\n\nบันทึกไว้ใน ดาวน์โหลด → JL-Mod Plus Diagnostics\n\nตรวจสอบว่าไฟล์มีข้อมูลที่ละเอียดอ่อนหรือไม่ จากนั้นแนบไฟล์ก่อนส่ง Issue บน GitHub ไฟล์จะเป็นสาธารณะทันทีที่แนบ</string>
     <string name="locate_bundle">ค้นหาไฟล์</string>
     <string name="open_github">เปิด GitHub</string>
     <string name="crash_report_bundle_failed">ไม่สามารถเตรียมชุดไฟล์วินิจฉัยได้</string>

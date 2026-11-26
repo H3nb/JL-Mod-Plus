@@ -43,7 +43,7 @@
     <string name="crash_report_copied">Verslag gekopieer</string>
     <string name="crash_report_bundle_preparing">Berei diagnostiese bundel voor…</string>
     <string name="crash_report_bundle_ready_title">Diagnostiese bundel gereed</string>
-    <string name="crash_report_bundle_ready_message"><xliff:g id="name" example="Example">%1$s</xliff:g>\n\nGestoor in Aflaaie → JL-Mod Plus Diagnostics.\n\nHeg hierdie lêer aan voordat jy die GitHub-kwessie indien. Die diagnostiese bundel sal publiek wees sodra dit by die kwessie aangeheg is.</string>
+    <string name="crash_report_bundle_ready_message"><xliff:g id="name" example="Example">%1$s</xliff:g>\n\nGestoor in Aflaaie → JL-Mod Plus Diagnostics.\n\nKontroleer die lêer vir sensitiewe inligting en heg dit aan voordat jy die GitHub-kwessie indien. Die lêer word publiek sodra dit aangeheg is.</string>
     <string name="locate_bundle">Vind bundel</string>
     <string name="open_github">Maak GitHub oop</string>
     <string name="crash_report_bundle_failed">Kon nie die diagnostiese bundel voorberei nie.</string>

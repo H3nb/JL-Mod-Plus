@@ -43,7 +43,7 @@
     <string name="crash_report_copied">Rapor kopyalandı</string>
     <string name="crash_report_bundle_preparing">Tanılama paketi hazırlanıyor…</string>
     <string name="crash_report_bundle_ready_title">Tanılama paketi hazır</string>
-    <string name="crash_report_bundle_ready_message"><xliff:g id="name" example="Example">%1$s</xliff:g>\n\nDownloads → JL-Mod Plus Diagnostics klasörüne kaydedildi.\n\nGitHub sorun kaydını göndermeden önce bu dosyayı ekleyin. Sorun kaydına eklendiğinde tanılama paketi herkese açık olacaktır.</string>
+    <string name="crash_report_bundle_ready_message"><xliff:g id="name" example="Example">%1$s</xliff:g>\n\nDownloads → JL-Mod Plus Diagnostics klasörüne kaydedildi.\n\nDosyada hassas bilgiler olup olmadığını kontrol edin, ardından GitHub sorun bildirimini göndermeden önce dosyayı ekleyin. Dosya eklendiği anda herkese açık olur.</string>
     <string name="locate_bundle">Paketi bul</string>
     <string name="open_github">GitHub’ı aç</string>
     <string name="crash_report_bundle_failed">Tanılama paketi hazırlanamadı.</string>

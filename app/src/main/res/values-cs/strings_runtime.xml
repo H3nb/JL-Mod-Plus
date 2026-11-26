@@ -45,7 +45,7 @@
     <string name="crash_report_copied">Zpráva byla zkopírována</string>
     <string name="crash_report_bundle_preparing">Příprava diagnostického balíčku…</string>
     <string name="crash_report_bundle_ready_title">Diagnostický balíček je připraven</string>
-    <string name="crash_report_bundle_ready_message"><xliff:g id="name" example="Example">%1$s</xliff:g>\n\nUloženo ve složce Stažené soubory → JL-Mod Plus Diagnostics.\n\nPřed odesláním hlášení na GitHubu tento soubor přiložte. Po přiložení k hlášení bude diagnostický balíček veřejný.</string>
+    <string name="crash_report_bundle_ready_message"><xliff:g id="name" example="Example">%1$s</xliff:g>\n\nUloženo ve složce Stažené soubory → JL-Mod Plus Diagnostics.\n\nZkontrolujte, zda soubor neobsahuje citlivé údaje, a přiložte jej před odesláním hlášení na GitHubu. Ihned po přiložení bude soubor veřejný.</string>
     <string name="locate_bundle">Najít balíček</string>
     <string name="open_github">Otevřít GitHub</string>
     <string name="crash_report_bundle_failed">Diagnostický balíček se nepodařilo připravit.</string>

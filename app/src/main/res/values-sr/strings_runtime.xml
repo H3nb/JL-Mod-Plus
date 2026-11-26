@@ -44,7 +44,7 @@
     <string name="crash_report_copied">Извештај је копиран</string>
     <string name="crash_report_bundle_preparing">Припрема дијагностичког пакета…</string>
     <string name="crash_report_bundle_ready_title">Дијагностички пакет је спреман</string>
-    <string name="crash_report_bundle_ready_message"><xliff:g id="name" example="Example">%1$s</xliff:g>\n\nСачувано у Преузимања → JL-Mod Plus Diagnostics.\n\nПриложите ову датотеку пре слања пријаве на GitHub-у. Дијагностички пакет ће бити јаван када се приложи уз пријаву.</string>
+    <string name="crash_report_bundle_ready_message"><xliff:g id="name" example="Example">%1$s</xliff:g>\n\nСачувано у Преузимања → JL-Mod Plus Diagnostics.\n\nПроверите да ли датотека садржи осетљиве податке, па је приложите пре слања пријаве на GitHub-у. Датотека постаје јавно доступна чим је приложите.</string>
     <string name="locate_bundle">Пронађи пакет</string>
     <string name="open_github">Отвори GitHub</string>
     <string name="crash_report_bundle_failed">Није могуће припремити дијагностички пакет.</string>

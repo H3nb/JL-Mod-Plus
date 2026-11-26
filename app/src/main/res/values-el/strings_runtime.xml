@@ -43,7 +43,7 @@
     <string name="crash_report_copied">Η αναφορά αντιγράφηκε</string>
     <string name="crash_report_bundle_preparing">Προετοιμασία πακέτου διάγνωσης…</string>
     <string name="crash_report_bundle_ready_title">Το πακέτο διάγνωσης είναι έτοιμο</string>
-    <string name="crash_report_bundle_ready_message"><xliff:g id="name" example="Example">%1$s</xliff:g>\n\nΑποθηκεύτηκε στον φάκελο Downloads → JL-Mod Plus Diagnostics.\n\nΕπισυνάψτε αυτό το αρχείο πριν υποβάλετε το ζήτημα στο GitHub. Το πακέτο διάγνωσης θα είναι δημόσιο μόλις επισυναφθεί στο ζήτημα.</string>
+    <string name="crash_report_bundle_ready_message"><xliff:g id="name" example="Example">%1$s</xliff:g>\n\nΑποθηκεύτηκε στον φάκελο Downloads → JL-Mod Plus Diagnostics.\n\nΕλέγξτε αν το αρχείο περιέχει ευαίσθητες πληροφορίες και επισυνάψτε το πριν υποβάλετε το ζήτημα στο GitHub. Το αρχείο γίνεται δημόσιο μόλις επισυναφθεί.</string>
     <string name="locate_bundle">Εντοπισμός πακέτου</string>
     <string name="open_github">Άνοιγμα GitHub</string>
     <string name="crash_report_bundle_failed">Δεν ήταν δυνατή η προετοιμασία του πακέτου διάγνωσης.</string>

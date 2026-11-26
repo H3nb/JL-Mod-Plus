@@ -43,7 +43,7 @@
     <string name="crash_report_copied">වාර්තාව පිටපත් කරන ලදී</string>
     <string name="crash_report_bundle_preparing">දෝෂ විනිශ්චය පොදිය සූදානම් වෙමින්…</string>
     <string name="crash_report_bundle_ready_title">දෝෂ විනිශ්චය පොදිය සූදානම්</string>
-    <string name="crash_report_bundle_ready_message"><xliff:g id="name" example="Example">%1$s</xliff:g>\n\nDownloads → JL-Mod Plus Diagnostics හි සුරකින ලදී.\n\nGitHub ගැටලුව ඉදිරිපත් කිරීමට පෙර මෙම ගොනුව අමුණන්න. ගැටලුවට ඇමිණූ පසු දෝෂ විනිශ්චය පොදිය ප්‍රසිද්ධ වනු ඇත.</string>
+    <string name="crash_report_bundle_ready_message"><xliff:g id="name" example="Example">%1$s</xliff:g>\n\nDownloads → JL-Mod Plus Diagnostics හි සුරකින ලදී.\n\nගොනුවේ සංවේදී තොරතුරු තිබේදැයි පරීක්ෂා කර, GitHub ගැටලුව ඉදිරිපත් කිරීමට පෙර එය අමුණන්න. ගොනුව ඇමුණු සැණින් එය ප්‍රසිද්ධ වේ.</string>
     <string name="locate_bundle">පොදිය සොයන්න</string>
     <string name="open_github">GitHub විවෘත කරන්න</string>
     <string name="crash_report_bundle_failed">දෝෂ විනිශ්චය පොදිය සූදානම් කිරීමට නොහැකි විය.</string>

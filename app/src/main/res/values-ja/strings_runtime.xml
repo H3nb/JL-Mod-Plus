@@ -42,7 +42,7 @@
     <string name="crash_report_copied">レポートをコピーしました</string>
     <string name="crash_report_bundle_preparing">診断バンドルを準備中…</string>
     <string name="crash_report_bundle_ready_title">診断バンドルの準備ができました</string>
-    <string name="crash_report_bundle_ready_message"><xliff:g id="name" example="Example">%1$s</xliff:g>\n\n保存先: ダウンロード → JL-Mod Plus Diagnostics\n\nGitHub の Issue を送信する前に、このファイルを添付してください。Issue に添付すると、診断バンドルは公開されます。</string>
+    <string name="crash_report_bundle_ready_message"><xliff:g id="name" example="Example">%1$s</xliff:g>\n\n保存先: ダウンロード → JL-Mod Plus Diagnostics\n\nファイルに機密情報が含まれていないか確認してから、GitHubのIssueを送信する前に添付してください。ファイルは添付した時点で公開されます。</string>
     <string name="locate_bundle">バンドルの場所を開く</string>
     <string name="open_github">GitHub を開く</string>
     <string name="crash_report_bundle_failed">診断バンドルを準備できませんでした。</string>

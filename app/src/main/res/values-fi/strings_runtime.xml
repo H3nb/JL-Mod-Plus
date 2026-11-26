@@ -43,7 +43,7 @@
     <string name="crash_report_copied">Raportti kopioitu</string>
     <string name="crash_report_bundle_preparing">Valmistellaan diagnostiikkapakettia…</string>
     <string name="crash_report_bundle_ready_title">Diagnostiikkapaketti valmis</string>
-    <string name="crash_report_bundle_ready_message"><xliff:g id="name" example="Example">%1$s</xliff:g>\n\nTallennettu kansioon Lataukset → JL-Mod Plus Diagnostics.\n\nLiitä tämä tiedosto ennen GitHub-vikailmoituksen lähettämistä. Diagnostiikkapaketti on julkinen, kun se liitetään ilmoitukseen.</string>
+    <string name="crash_report_bundle_ready_message"><xliff:g id="name" example="Example">%1$s</xliff:g>\n\nTallennettu kansioon Lataukset → JL-Mod Plus Diagnostics.\n\nTarkista, ettei tiedostossa ole arkaluonteisia tietoja, ja liitä se ennen GitHub-ilmoituksen lähettämistä. Tiedosto tulee julkiseksi heti, kun se liitetään.</string>
     <string name="locate_bundle">Paikanna paketti</string>
     <string name="open_github">Avaa GitHub</string>
     <string name="crash_report_bundle_failed">Diagnostiikkapakettia ei voitu valmistella.</string>

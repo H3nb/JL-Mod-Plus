@@ -43,7 +43,7 @@
     <string name="crash_report_copied">Есеп көшірілді</string>
     <string name="crash_report_bundle_preparing">Диагностика бумасы дайындалуда…</string>
     <string name="crash_report_bundle_ready_title">Диагностика бумасы дайын</string>
-    <string name="crash_report_bundle_ready_message"><xliff:g id="name" example="Example">%1$s</xliff:g>\n\nЖүктеп алынғандар → JL-Mod Plus Diagnostics қалтасына сақталды.\n\nGitHub-та хабарлама жібермес бұрын осы файлды тіркеңіз. Тіркелген соң диагностика бумасы барлығына көрінеді.</string>
+    <string name="crash_report_bundle_ready_message"><xliff:g id="name" example="Example">%1$s</xliff:g>\n\nЖүктеп алынғандар → JL-Mod Plus Diagnostics қалтасына сақталды.\n\nФайлда құпия ақпарат бар-жоғын тексеріп, GitHub мәселесін жібермес бұрын оны тіркеңіз. Файл тіркелген сәттен бастап жалпыға қолжетімді болады.</string>
     <string name="locate_bundle">Буманы табу</string>
     <string name="open_github">GitHub ашу</string>
     <string name="crash_report_bundle_failed">Диагностика бумасы дайындалмады.</string>

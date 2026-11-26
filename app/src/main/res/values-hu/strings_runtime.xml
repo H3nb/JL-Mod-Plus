@@ -43,7 +43,7 @@
     <string name="crash_report_copied">Jelentés másolva</string>
     <string name="crash_report_bundle_preparing">Diagnosztikai csomag előkészítése…</string>
     <string name="crash_report_bundle_ready_title">A diagnosztikai csomag elkészült</string>
-    <string name="crash_report_bundle_ready_message"><xliff:g id="name" example="Example">%1$s</xliff:g>\n\nMentve ide: Letöltések → JL-Mod Plus Diagnostics.\n\nCsatolja ezt a fájlt a GitHub-hibajegy beküldése előtt. A diagnosztikai csomag nyilvánossá válik a hibajegyhez csatolás után.</string>
+    <string name="crash_report_bundle_ready_message"><xliff:g id="name" example="Example">%1$s</xliff:g>\n\nMentve ide: Letöltések → JL-Mod Plus Diagnostics.\n\nEllenőrizze, hogy a fájl nem tartalmaz-e érzékeny adatokat, majd csatolja a GitHub-hibajegy beküldése előtt. A fájl a csatolás pillanatában nyilvánossá válik.</string>
     <string name="locate_bundle">Csomag megkeresése</string>
     <string name="open_github">GitHub megnyitása</string>
     <string name="crash_report_bundle_failed">Nem sikerült előkészíteni a diagnosztikai csomagot.</string>

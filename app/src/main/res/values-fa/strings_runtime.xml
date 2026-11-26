@@ -43,7 +43,7 @@
     <string name="crash_report_copied">گزارش کپی شد</string>
     <string name="crash_report_bundle_preparing">در حال آماده‌سازی بسته عیب‌یابی…</string>
     <string name="crash_report_bundle_ready_title">بسته عیب‌یابی آماده است</string>
-    <string name="crash_report_bundle_ready_message"><xliff:g id="name" example="Example">%1$s</xliff:g>\n\nدر بارگیری‌ها ← JL-Mod Plus Diagnostics ذخیره شد.\n\nپیش از ثبت مسئله در GitHub این فایل را پیوست کنید. بسته عیب‌یابی پس از پیوست شدن به مسئله عمومی خواهد شد.</string>
+    <string name="crash_report_bundle_ready_message"><xliff:g id="name" example="Example">%1$s</xliff:g>\n\nدر بارگیری‌ها ← JL-Mod Plus Diagnostics ذخیره شد.\n\nفایل را از نظر وجود اطلاعات حساس بررسی کنید و سپس آن را پیش از ارسال مسئله در GitHub پیوست کنید. فایل به محض پیوست شدن عمومی می‌شود.</string>
     <string name="locate_bundle">پیدا کردن بسته</string>
     <string name="open_github">باز کردن GitHub</string>
     <string name="crash_report_bundle_failed">آماده‌سازی بسته عیب‌یابی ممکن نشد.</string>

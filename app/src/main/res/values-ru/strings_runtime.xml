@@ -45,7 +45,7 @@
     <string name="crash_report_copied">Отчёт скопирован</string>
     <string name="crash_report_bundle_preparing">Подготовка архива диагностики…</string>
     <string name="crash_report_bundle_ready_title">Архив диагностики готов</string>
-    <string name="crash_report_bundle_ready_message"><xliff:g id="name" example="Example">%1$s</xliff:g>\n\nСохранено в «Загрузки → JL-Mod Plus Diagnostics».\n\nПрикрепите этот файл перед отправкой отчёта об ошибке на GitHub. После прикрепления архив диагностики станет общедоступным.</string>
+    <string name="crash_report_bundle_ready_message"><xliff:g id="name" example="Example">%1$s</xliff:g>\n\nСохранено в «Загрузки → JL-Mod Plus Diagnostics».\n\nПроверьте, нет ли в файле конфиденциальных данных, и прикрепите его перед отправкой сообщения о проблеме на GitHub. Файл станет общедоступным сразу после прикрепления.</string>
     <string name="locate_bundle">Найти архив</string>
     <string name="open_github">Открыть GitHub</string>
     <string name="crash_report_bundle_failed">Не удалось подготовить архив диагностики.</string>

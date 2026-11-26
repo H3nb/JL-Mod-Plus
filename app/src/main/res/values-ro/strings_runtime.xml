@@ -44,7 +44,7 @@
     <string name="crash_report_copied">Raport copiat</string>
     <string name="crash_report_bundle_preparing">Se pregătește pachetul de diagnosticare…</string>
     <string name="crash_report_bundle_ready_title">Pachet de diagnosticare pregătit</string>
-    <string name="crash_report_bundle_ready_message"><xliff:g id="name" example="Example">%1$s</xliff:g>\n\nSalvat în Downloads → JL-Mod Plus Diagnostics.\n\nAtașați acest fișier înainte de a trimite tichetul pe GitHub. Pachetul de diagnosticare va deveni public odată atașat tichetului.</string>
+    <string name="crash_report_bundle_ready_message"><xliff:g id="name" example="Example">%1$s</xliff:g>\n\nSalvat în Downloads → JL-Mod Plus Diagnostics.\n\nVerificați dacă fișierul conține informații sensibile, apoi atașați-l înainte de a trimite sesizarea pe GitHub. Fișierul devine public imediat ce este atașat.</string>
     <string name="locate_bundle">Localizează pachetul</string>
     <string name="open_github">Deschide GitHub</string>
     <string name="crash_report_bundle_failed">Pachetul de diagnosticare nu a putut fi pregătit.</string>

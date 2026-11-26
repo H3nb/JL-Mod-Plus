@@ -47,7 +47,7 @@
     <string name="crash_report_copied">تم نسخ التقرير</string>
     <string name="crash_report_bundle_preparing">جارٍ تحضير حزمة التشخيص…</string>
     <string name="crash_report_bundle_ready_title">حزمة التشخيص جاهزة</string>
-    <string name="crash_report_bundle_ready_message"><xliff:g id="name" example="Example">%1$s</xliff:g>\n\nتم الحفظ في التنزيلات ← JL-Mod Plus Diagnostics.\n\nأرفق هذا الملف قبل إرسال بلاغ GitHub. ستصبح حزمة التشخيص عامة بمجرد إرفاقها بالبلاغ.</string>
+    <string name="crash_report_bundle_ready_message"><xliff:g id="name" example="Example">%1$s</xliff:g>\n\nتم الحفظ في التنزيلات ← JL-Mod Plus Diagnostics.\n\nتحقّق مما إذا كان الملف يحتوي على معلومات حساسة، ثم أرفقه قبل إرسال بلاغ GitHub. سيصبح الملف متاحًا للعامة بمجرد إرفاقه.</string>
     <string name="locate_bundle">تحديد موقع الحزمة</string>
     <string name="open_github">فتح GitHub</string>
     <string name="crash_report_bundle_failed">تعذّر تحضير حزمة التشخيص.</string>

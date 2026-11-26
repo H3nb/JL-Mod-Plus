@@ -42,7 +42,7 @@
     <string name="crash_report_copied">보고서 복사됨</string>
     <string name="crash_report_bundle_preparing">진단 번들 준비 중…</string>
     <string name="crash_report_bundle_ready_title">진단 번들 준비 완료</string>
-    <string name="crash_report_bundle_ready_message"><xliff:g id="name" example="Example">%1$s</xliff:g>\n\nDownloads → JL-Mod Plus Diagnostics에 저장되었습니다.\n\nGitHub 이슈를 제출하기 전에 이 파일을 첨부하세요. 이슈에 첨부된 진단 번들은 공개됩니다.</string>
+    <string name="crash_report_bundle_ready_message"><xliff:g id="name" example="Example">%1$s</xliff:g>\n\nDownloads → JL-Mod Plus Diagnostics에 저장되었습니다.\n\n파일에 민감한 정보가 없는지 확인한 후 GitHub 이슈를 제출하기 전에 첨부하세요. 파일은 첨부하는 즉시 공개됩니다.</string>
     <string name="locate_bundle">번들 위치 찾기</string>
     <string name="open_github">GitHub 열기</string>
     <string name="crash_report_bundle_failed">진단 번들을 준비할 수 없습니다.</string>

@@ -43,7 +43,7 @@
     <string name="crash_report_copied">Отчетът е копиран</string>
     <string name="crash_report_bundle_preparing">Подготвяне на диагностичния пакет…</string>
     <string name="crash_report_bundle_ready_title">Диагностичният пакет е готов</string>
-    <string name="crash_report_bundle_ready_message"><xliff:g id="name" example="Example">%1$s</xliff:g>\n\nЗапазено в Изтегляния → JL-Mod Plus Diagnostics.\n\nПрикачете този файл, преди да изпратите сигнала в GitHub. Диагностичният пакет ще стане публичен, след като бъде прикачен към сигнала.</string>
+    <string name="crash_report_bundle_ready_message"><xliff:g id="name" example="Example">%1$s</xliff:g>\n\nЗапазено в Изтегляния → JL-Mod Plus Diagnostics.\n\nПроверете дали файлът съдържа чувствителна информация и го прикачете, преди да изпратите сигнала в GitHub. Файлът става публичен веднага след прикачването.</string>
     <string name="locate_bundle">Намиране на пакета</string>
     <string name="open_github">Отваряне на GitHub</string>
     <string name="crash_report_bundle_failed">Диагностичният пакет не можа да бъде подготвен.</string>

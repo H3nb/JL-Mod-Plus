@@ -42,7 +42,7 @@
     <string name="crash_report_copied">Đã sao chép báo cáo</string>
     <string name="crash_report_bundle_preparing">Đang chuẩn bị gói chẩn đoán…</string>
     <string name="crash_report_bundle_ready_title">Gói chẩn đoán đã sẵn sàng</string>
-    <string name="crash_report_bundle_ready_message"><xliff:g id="name" example="Example">%1$s</xliff:g>\n\nĐã lưu trong Tải xuống → JL-Mod Plus Diagnostics.\n\nHãy đính kèm tệp này trước khi gửi vấn đề lên GitHub. Gói chẩn đoán sẽ hiển thị công khai sau khi đính kèm.</string>
+    <string name="crash_report_bundle_ready_message"><xliff:g id="name" example="Example">%1$s</xliff:g>\n\nĐã lưu trong Tải xuống → JL-Mod Plus Diagnostics.\n\nKiểm tra xem tệp có chứa thông tin nhạy cảm hay không, rồi đính kèm tệp trước khi gửi báo cáo vấn đề trên GitHub. Tệp sẽ được công khai ngay khi đính kèm.</string>
     <string name="locate_bundle">Mở vị trí gói</string>
     <string name="open_github">Mở GitHub</string>
     <string name="crash_report_bundle_failed">Không thể chuẩn bị gói chẩn đoán.</string>

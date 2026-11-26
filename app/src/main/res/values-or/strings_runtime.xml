@@ -43,7 +43,7 @@
     <string name="crash_report_copied">ରିପୋର୍ଟ କପି ହେଲା</string>
     <string name="crash_report_bundle_preparing">ଡାଏଗ୍ନୋଷ୍ଟିକ୍ ବଣ୍ଡଲ୍ ପ୍ରସ୍ତୁତ ହେଉଛି…</string>
     <string name="crash_report_bundle_ready_title">ଡାଏଗ୍ନୋଷ୍ଟିକ୍ ବଣ୍ଡଲ୍ ପ୍ରସ୍ତୁତ</string>
-    <string name="crash_report_bundle_ready_message"><xliff:g id="name" example="Example">%1$s</xliff:g>\n\nDownloads → JL-Mod Plus Diagnostics ରେ ସେଭ୍ ହେଲା।\n\nGitHub ଇସ୍ୟୁ ଦାଖଲ କରିବା ପୂର୍ବରୁ ଏହି ଫାଇଲ୍ ସଂଲଗ୍ନ କରନ୍ତୁ। ଇସ୍ୟୁରେ ସଂଲଗ୍ନ ହେବା ପରେ ଡାଏଗ୍ନୋଷ୍ଟିକ୍ ବଣ୍ଡଲ୍ ସାର୍ବଜନୀନ ହୋଇଯିବ।</string>
+    <string name="crash_report_bundle_ready_message"><xliff:g id="name" example="Example">%1$s</xliff:g>\n\nDownloads → JL-Mod Plus Diagnostics ରେ ସେଭ୍ ହେଲା।\n\nଫାଇଲ୍‌ରେ ସମ୍ବେଦନଶୀଳ ତଥ୍ୟ ଅଛି କି ନାହିଁ ଯାଞ୍ଚ କରନ୍ତୁ, ତାପରେ GitHub ଇସ୍ୟୁ ଦାଖଲ କରିବା ପୂର୍ବରୁ ଏହାକୁ ସଂଲଗ୍ନ କରନ୍ତୁ। ସଂଲଗ୍ନ କରିବା ମାତ୍ରେ ଫାଇଲ୍ ସର୍ବସାଧାରଣଙ୍କ ପାଇଁ ଉପଲବ୍ଧ ହେବ।</string>
     <string name="locate_bundle">ବଣ୍ଡଲ୍ ଖୋଜନ୍ତୁ</string>
     <string name="open_github">GitHub ଖୋଲନ୍ତୁ</string>
     <string name="crash_report_bundle_failed">ଡାଏଗ୍ନୋଷ୍ଟିକ୍ ବଣ୍ଡଲ୍ ପ୍ରସ୍ତୁତ କରାଯାଇପାରିଲା ନାହିଁ।</string>
