@@ -42,7 +42,7 @@
     <string name="config_gamepad_calibration_phase_neutral">중립 위치 대기 중</string>
     <string name="config_gamepad_calibration_phase_stick_range">스틱 범위</string>
     <string name="config_gamepad_calibration_phase_trigger_range">트리거 범위</string>
-    <string name="config_gamepad_calibration_phase_review">검토</string>
+    <string name="config_gamepad_calibration_phase_review">저장할 준비 완료</string>
     <string name="config_gamepad_calibration_phase_committed">저장됨</string>
     <string name="config_gamepad_calibration_phase_cancelled">취소됨</string>
     <string name="config_gamepad_calibration_waiting_controller">지원되는 아날로그 스틱 또는 트리거가 있는 컨트롤러를 연결하세요. 스틱을 처음 움직이거나 트리거를 누르면 보정이 시작되며, 저장하기 전까지 기존 보정은 변경되지 않습니다.</string>
@@ -53,8 +53,8 @@
     <string name="config_gamepad_calibration_rejected">보정 거부됨: <xliff:g id="name" example="Example">%1$s</xliff:g></string>
     <string name="config_gamepad_calibration_neutral_instructions">중립 타이머가 완료될 때까지 감지된 모든 스틱을 중앙에 두고 모든 트리거에서 손을 떼세요.</string>
     <string name="config_gamepad_calibration_stick_instructions">감지된 모든 스틱을 모든 방향으로 끝까지 움직인 다음 다음을 누르세요.</string>
-    <string name="config_gamepad_calibration_trigger_instructions">감지된 모든 트리거를 놓았다가 끝까지 누른 다음 다음을 눌러 검토하세요.</string>
-    <string name="config_gamepad_calibration_review_instructions">검토할 준비가 되었습니다. 저장하면 이 컨트롤러의 보정만 교체됩니다.</string>
+    <string name="config_gamepad_calibration_trigger_instructions">감지된 모든 트리거를 놓았다가 끝까지 누른 다음 ‘다음’을 탭하세요.</string>
+    <string name="config_gamepad_calibration_review_instructions">저장하면 이 컨트롤러의 보정 정보가 교체됩니다.</string>
     <string name="config_gamepad_calibration_saved">보정이 저장되었습니다.</string>
     <string name="config_gamepad_calibration_cancelled">보정이 취소되었습니다. 이전 보정은 변경되지 않았습니다.</string>
     <string name="config_gamepad_calibration_waiting_samples">컨트롤러 샘플을 기다리는 중입니다.</string>
@@ -214,7 +214,7 @@
     <string name="config_help_fps_limit">1× 에뮬레이션 속도 기준의 FPS 제한을 설정합니다. 실제 제한은 에뮬레이션 속도를 따르며, 0(최대)은 디스플레이의 최대 주사율을 사용합니다.</string>
     <string name="config_timing_mode_full_guest">에뮬레이션 시간</string>
     <string name="config_timing_mode_real_wall">시스템 시간</string>
-    <string name="config_help_emulation_speed">MIDlet 클록 속도와 지원되는 지연 시간을 변경합니다. Android 오디오와 UI는 정상 속도를 유지합니다.</string>
+    <string name="config_help_emulation_speed">현재 세션에서 MIDlet의 지원되는 타이머와 지연 시간을 조절합니다. 에뮬레이션 시간을 선택하면 날짜와 시간도 설정한 속도에 따라 바뀝니다. 미디어 재생과 Android UI는 정상 속도를 유지합니다.</string>
     <string name="config_help_timing_mode">MIDlet이 에뮬레이션 시간을 사용할지 시스템 시간을 사용할지 선택합니다. 상대 지연 시간은 에뮬레이션 속도에 맞춰 계속 조절됩니다.</string>
     <string name="config_help_timing_unavailable">이 MIDlet 설치에서는 시간 설정을 사용할 수 없습니다. 사용하려면 MIDlet을 재설치하거나 다시 변환하세요.</string>
     <string name="config_help_generic_color">이 시각적 요소의 색상을 설정합니다.</string>

@@ -41,7 +41,7 @@
     <string name="config_gamepad_calibration_phase_neutral">S’està esperant la posició neutra</string>
     <string name="config_gamepad_calibration_phase_stick_range">Interval de palanques</string>
     <string name="config_gamepad_calibration_phase_trigger_range">Interval de gallets</string>
-    <string name="config_gamepad_calibration_phase_review">Revisió</string>
+    <string name="config_gamepad_calibration_phase_review">A punt per desar</string>
     <string name="config_gamepad_calibration_phase_committed">Desat</string>
     <string name="config_gamepad_calibration_phase_cancelled">Cancel·lat</string>
     <string name="config_gamepad_calibration_waiting_controller">Connecta un comandament amb una palanca analògica o un gallet compatible. El calibratge comença quan mous una palanca o prems un gallet per primera vegada; el calibratge existent no canviarà fins que desis.</string>
@@ -52,8 +52,8 @@
     <string name="config_gamepad_calibration_rejected">Calibratge rebutjat: <xliff:g id="name" example="Example">%1$s</xliff:g></string>
     <string name="config_gamepad_calibration_neutral_instructions">Mantén centrades totes les palanques detectades i deixats anar tots els gallets detectats fins que acabi el temporitzador de posició neutra.</string>
     <string name="config_gamepad_calibration_stick_instructions">Mou cada palanca detectada per tot el seu recorregut en totes les direccions i després prem Següent.</string>
-    <string name="config_gamepad_calibration_trigger_instructions">Deixa anar i prem a fons cada gallet detectat i després prem Següent per revisar-ho.</string>
-    <string name="config_gamepad_calibration_review_instructions">A punt per revisar. Desar només substitueix el calibratge d’aquest comandament.</string>
+    <string name="config_gamepad_calibration_trigger_instructions">Deixa anar i prem a fons cada gallet detectat i després toca Següent.</string>
+    <string name="config_gamepad_calibration_review_instructions">Desa per substituir el calibratge d’aquest comandament.</string>
     <string name="config_gamepad_calibration_saved">Calibratge desat.</string>
     <string name="config_gamepad_calibration_cancelled">Calibratge cancel·lat. El calibratge anterior no ha canviat.</string>
     <string name="config_gamepad_calibration_waiting_samples">El calibratge està esperant mostres del comandament.</string>
@@ -213,7 +213,7 @@
     <string name="config_help_fps_limit">Defineix el límit d’FPS a velocitat d’emulació 1×. El límit efectiu segueix la velocitat d’emulació; 0 (Màxim) utilitza la freqüència d’actualització màxima de la pantalla.</string>
     <string name="config_timing_mode_full_guest">Temps d’emulació</string>
     <string name="config_timing_mode_real_wall">Temps del sistema</string>
-    <string name="config_help_emulation_speed">Canvia la velocitat del rellotge del MIDlet i els retards compatibles. L’àudio i la interfície d’Android continuen a velocitat normal.</string>
+    <string name="config_help_emulation_speed">Ajusta els temporitzadors i els retards compatibles del MIDlet durant aquesta sessió. Si se selecciona Temps d’emulació, la data i l’hora també segueixen la velocitat. La reproducció multimèdia i la interfície d’Android mantenen la velocitat normal.</string>
     <string name="config_help_timing_mode">Tria si el MIDlet utilitza el temps d’emulació o el temps del sistema. Els retards relatius continuen escalant amb la velocitat d’emulació.</string>
     <string name="config_help_timing_unavailable">La configuració de temps no està disponible per a aquesta instal·lació del MIDlet. Reinstal·la o torna a convertir el MIDlet per activar-la.</string>
     <string name="config_help_generic_color">Defineix el color d’aquest element visual.</string>

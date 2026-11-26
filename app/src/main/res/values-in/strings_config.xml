@@ -41,20 +41,20 @@
     <string name="config_gamepad_calibration_profile">Tanda pengenal pengontrol: <xliff:g id="profile_name" example="Action Games">%1$s</xliff:g></string>
     <string name="config_gamepad_calibration_phase_neutral">Menunggu posisi netral</string>
     <string name="config_gamepad_calibration_phase_stick_range">Rentang stik</string>
-    <string name="config_gamepad_calibration_phase_trigger_range">Rentang pemicu</string>
-    <string name="config_gamepad_calibration_phase_review">Tinjau</string>
+    <string name="config_gamepad_calibration_phase_trigger_range">Rentang trigger</string>
+    <string name="config_gamepad_calibration_phase_review">Siap disimpan</string>
     <string name="config_gamepad_calibration_phase_committed">Tersimpan</string>
     <string name="config_gamepad_calibration_phase_cancelled">Dibatalkan</string>
-    <string name="config_gamepad_calibration_waiting_controller">Hubungkan pengontrol dengan stik analog atau pemicu yang didukung. Kalibrasi dimulai saat Anda pertama kali menggerakkan stik atau menekan pemicu; kalibrasi sebelumnya tidak berubah sampai Anda menyimpan.</string>
-    <string name="config_gamepad_calibration_no_analog_ranges">Pengontrol ini tidak menyediakan rentang stik analog atau pemicu yang didukung.</string>
-    <string name="config_gamepad_calibration_start">Biarkan semua stik di tengah dan semua pemicu dilepas hingga penghitung posisi netral selesai.</string>
+    <string name="config_gamepad_calibration_waiting_controller">Hubungkan pengontrol dengan stik analog atau trigger yang didukung. Gerakkan stik atau tekan trigger untuk memulai kalibrasi. Kalibrasi sebelumnya tidak berubah hingga Anda menyimpan hasil kalibrasi atau meresetnya.</string>
+    <string name="config_gamepad_calibration_no_analog_ranges">Pengontrol ini tidak memiliki stik analog atau trigger dengan rentang yang didukung.</string>
+    <string name="config_gamepad_calibration_start">Pertahankan semua stik di posisi tengah dan jangan tekan trigger hingga tahap berikutnya dimulai.</string>
     <string name="config_gamepad_calibration_save_failed">Tidak dapat menyimpan kalibrasi. Kalibrasi sebelumnya tidak berubah.</string>
     <string name="config_gamepad_calibration_no_supported_ranges">Tidak ada rentang analog yang didukung.</string>
     <string name="config_gamepad_calibration_rejected">Kalibrasi ditolak: <xliff:g id="name" example="Example">%1$s</xliff:g></string>
-    <string name="config_gamepad_calibration_neutral_instructions">Biarkan semua stik yang terdeteksi di tengah dan semua pemicu dilepas hingga penghitung posisi netral selesai.</string>
-    <string name="config_gamepad_calibration_stick_instructions">Gerakkan setiap stik yang terdeteksi ke seluruh rentang ke segala arah, lalu tekan Berikutnya.</string>
-    <string name="config_gamepad_calibration_trigger_instructions">Lepas lalu tekan penuh setiap pemicu yang terdeteksi, kemudian tekan Berikutnya untuk meninjau.</string>
-    <string name="config_gamepad_calibration_review_instructions">Siap ditinjau. Menyimpan hanya mengganti kalibrasi pengontrol ini.</string>
+    <string name="config_gamepad_calibration_neutral_instructions">Pertahankan semua stik yang terdeteksi di posisi tengah dan jangan tekan trigger hingga tahap berikutnya dimulai.</string>
+    <string name="config_gamepad_calibration_stick_instructions">Gerakkan setiap stik yang terdeteksi hingga batas maksimal ke segala arah, lalu ketuk Berikutnya.</string>
+    <string name="config_gamepad_calibration_trigger_instructions">Lepaskan setiap trigger yang terdeteksi, lalu tekan hingga batas maksimal. Ketuk Berikutnya untuk melanjutkan.</string>
+    <string name="config_gamepad_calibration_review_instructions">Simpan untuk mengganti kalibrasi pengontrol ini.</string>
     <string name="config_gamepad_calibration_saved">Kalibrasi tersimpan.</string>
     <string name="config_gamepad_calibration_cancelled">Kalibrasi dibatalkan. Kalibrasi sebelumnya tidak berubah.</string>
     <string name="config_gamepad_calibration_waiting_samples">Kalibrasi menunggu sampel pengontrol.</string>
@@ -64,7 +64,7 @@
     <string name="config_gamepad_diagnosis_analog_settings">Setelan analog:</string>
     <string name="config_gamepad_diagnosis_left_stick">Stik kiri</string>
     <string name="config_gamepad_diagnosis_right_stick">Stik kanan</string>
-    <string name="config_gamepad_diagnosis_triggers">Pemicu</string>
+    <string name="config_gamepad_diagnosis_triggers">Trigger</string>
     <string name="config_gamepad_diagnosis_pointer">Mode penunjuk</string>
     <string name="config_gamepad_status_enabled">aktif</string>
     <string name="config_gamepad_status_disabled">nonaktif</string>
@@ -77,8 +77,8 @@
     <string name="config_gamepad_calibration_issue_non_finite">sampel tidak hingga</string>
     <string name="config_gamepad_calibration_issue_insufficient_samples">sampel tidak mencukupi</string>
     <string name="config_gamepad_calibration_issue_invalid_range">rentang tidak valid</string>
-    <string name="config_gamepad_calibration_issue_rest_outside_range">nilai diam di luar rentang</string>
-    <string name="config_gamepad_calibration_issue_rest_too_noisy">posisi diam kurang stabil</string>
+    <string name="config_gamepad_calibration_issue_rest_outside_range">nilai posisi netral di luar rentang</string>
+    <string name="config_gamepad_calibration_issue_rest_too_noisy">posisi netral kurang stabil</string>
     <string name="config_gamepad_calibration_phase_unknown">Status tidak tersedia</string>
     <string name="config_gamepad_diagnosis_capabilities">Kemampuan pengontrol terhubung:</string>
     <string name="config_gamepad_diagnosis_descriptor">Deskriptor: <xliff:g id="name" example="Example">%1$s</xliff:g></string>
@@ -214,7 +214,7 @@
     <string name="config_help_fps_limit">Mengatur batas FPS pada kecepatan emulasi 1×. Batas efektif mengikuti kecepatan emulasi; 0 (Maksimum) menggunakan laju penyegaran maksimum layar.</string>
     <string name="config_timing_mode_full_guest">Waktu emulasi</string>
     <string name="config_timing_mode_real_wall">Waktu sistem</string>
-    <string name="config_help_emulation_speed">Mengubah laju waktu MIDlet dan durasi jeda yang didukung. Audio dan antarmuka Android tetap berjalan pada kecepatan normal.</string>
+    <string name="config_help_emulation_speed">Menyesuaikan timer dan jeda MIDlet yang didukung selama sesi ini. Jika Waktu emulasi dipilih, tanggal dan waktu juga mengikuti kecepatan emulasi. Pemutaran media dan antarmuka Android tetap berjalan pada kecepatan normal.</string>
     <string name="config_help_timing_mode">Memilih sumber waktu MIDlet: waktu emulasi atau waktu sistem. Durasi jeda relatif tetap mengikuti kecepatan emulasi.</string>
     <string name="config_help_timing_unavailable">Setelan waktu tidak tersedia untuk MIDlet ini. Instal ulang atau konversi ulang MIDlet untuk mengaktifkannya.</string>
     <string name="config_help_generic_color">Mengatur warna elemen visual ini.</string>

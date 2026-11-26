@@ -42,7 +42,7 @@
     <string name="config_gamepad_calibration_phase_neutral">Se așteaptă poziția neutră</string>
     <string name="config_gamepad_calibration_phase_stick_range">Interval stick</string>
     <string name="config_gamepad_calibration_phase_trigger_range">Interval trăgaci</string>
-    <string name="config_gamepad_calibration_phase_review">Verificare</string>
+    <string name="config_gamepad_calibration_phase_review">Gata de salvare</string>
     <string name="config_gamepad_calibration_phase_committed">Salvat</string>
     <string name="config_gamepad_calibration_phase_cancelled">Anulat</string>
     <string name="config_gamepad_calibration_waiting_controller">Conectați un controler cu un stick analogic sau un trăgaci compatibil. Calibrarea începe la prima mișcare a unui stick sau apăsare a unui trăgaci; calibrarea existentă rămâne neschimbată până când salvați.</string>
@@ -53,8 +53,8 @@
     <string name="config_gamepad_calibration_rejected">Calibrare respinsă: <xliff:g id="name" example="Example">%1$s</xliff:g></string>
     <string name="config_gamepad_calibration_neutral_instructions">Mențineți toate stickurile detectate centrate și toate trăgacele detectate eliberate până la expirarea cronometrului de poziție neutră.</string>
     <string name="config_gamepad_calibration_stick_instructions">Mișcați fiecare stick detectat pe întregul său interval în toate direcțiile, apoi apăsați Înainte.</string>
-    <string name="config_gamepad_calibration_trigger_instructions">Eliberați și apăsați complet fiecare trăgaci detectat, apoi apăsați Înainte pentru verificare.</string>
-    <string name="config_gamepad_calibration_review_instructions">Gata pentru verificare. Salvarea înlocuiește doar calibrarea acestui controler.</string>
+    <string name="config_gamepad_calibration_trigger_instructions">Eliberați și apăsați complet fiecare trăgaci detectat, apoi atingeți Înainte.</string>
+    <string name="config_gamepad_calibration_review_instructions">Salvați pentru a înlocui calibrarea acestui controler.</string>
     <string name="config_gamepad_calibration_saved">Calibrare salvată.</string>
     <string name="config_gamepad_calibration_cancelled">Calibrare anulată. Calibrarea anterioară rămâne neschimbată.</string>
     <string name="config_gamepad_calibration_waiting_samples">Calibrarea așteaptă eșantioane de la controler.</string>
@@ -216,7 +216,7 @@
     <string name="config_help_fps_limit">Setează limita FPS la viteza de emulare 1×. Limita efectivă urmărește viteza de emulare; 0 (Maxim) folosește rata maximă de reîmprospătare a ecranului.</string>
     <string name="config_timing_mode_full_guest">Timp de emulare</string>
     <string name="config_timing_mode_real_wall">Timp de sistem</string>
-    <string name="config_help_emulation_speed">Modifică viteza ceasului MIDlet și întârzierile acceptate. Sunetul și interfața Android rămân la viteză normală.</string>
+    <string name="config_help_emulation_speed">Ajustează temporizatoarele și întârzierile acceptate ale MIDlet-ului pentru această sesiune. Dacă este selectat Timp de emulare, data și ora urmează și ele viteza aleasă. Redarea media și interfața Android își păstrează viteza normală.</string>
     <string name="config_help_timing_mode">Alege dacă MIDlet-ul folosește timpul de emulare sau timpul de sistem. Întârzierile relative rămân scalate cu viteza de emulare.</string>
     <string name="config_help_timing_unavailable">Setările de timp nu sunt disponibile pentru această instalare MIDlet. Reinstalați sau reconvertiți MIDlet-ul pentru a le activa.</string>
     <string name="config_help_generic_color">Setează culoarea acestui element vizual.</string>

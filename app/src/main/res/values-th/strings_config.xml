@@ -42,7 +42,7 @@
     <string name="config_gamepad_calibration_phase_neutral">รอตำแหน่งกึ่งกลาง</string>
     <string name="config_gamepad_calibration_phase_stick_range">ระยะของสติ๊ก</string>
     <string name="config_gamepad_calibration_phase_trigger_range">ระยะของไกปุ่ม</string>
-    <string name="config_gamepad_calibration_phase_review">ตรวจสอบ</string>
+    <string name="config_gamepad_calibration_phase_review">พร้อมบันทึก</string>
     <string name="config_gamepad_calibration_phase_committed">บันทึกแล้ว</string>
     <string name="config_gamepad_calibration_phase_cancelled">ยกเลิกแล้ว</string>
     <string name="config_gamepad_calibration_waiting_controller">เชื่อมต่อคอนโทรลเลอร์ที่มีอนาล็อกสติ๊กหรือไกปุ่มที่รองรับ การปรับเทียบจะเริ่มเมื่อคุณขยับสติ๊กหรือกดไกปุ่มครั้งแรก การปรับเทียบเดิมจะยังไม่เปลี่ยนแปลงจนกว่าคุณจะบันทึก</string>
@@ -53,8 +53,8 @@
     <string name="config_gamepad_calibration_rejected">ปฏิเสธการปรับเทียบ: <xliff:g id="name" example="Example">%1$s</xliff:g></string>
     <string name="config_gamepad_calibration_neutral_instructions">ปล่อยสติ๊กทั้งหมดที่ตรวจพบไว้ตรงกลางและปล่อยไกปุ่มทั้งหมดจนกว่าตัวนับเวลาตำแหน่งกึ่งกลางจะเสร็จสิ้น</string>
     <string name="config_gamepad_calibration_stick_instructions">ดันสติ๊กทุกอันที่ตรวจพบไปให้สุดระยะในทุกทิศทาง จากนั้นกด ถัดไป</string>
-    <string name="config_gamepad_calibration_trigger_instructions">ปล่อยแล้วกดไกปุ่มทุกอันที่ตรวจพบให้สุด จากนั้นกด ถัดไป เพื่อตรวจสอบ</string>
-    <string name="config_gamepad_calibration_review_instructions">พร้อมสำหรับการตรวจสอบ การบันทึกจะแทนที่เฉพาะการปรับเทียบของคอนโทรลเลอร์นี้เท่านั้น</string>
+    <string name="config_gamepad_calibration_trigger_instructions">ปล่อยแล้วกดไกปุ่มทุกอันที่ตรวจพบให้สุด จากนั้นแตะ ถัดไป</string>
+    <string name="config_gamepad_calibration_review_instructions">บันทึกเพื่อแทนที่ข้อมูลการปรับเทียบของคอนโทรลเลอร์นี้</string>
     <string name="config_gamepad_calibration_saved">บันทึกการปรับเทียบแล้ว</string>
     <string name="config_gamepad_calibration_cancelled">ยกเลิกการปรับเทียบแล้ว การปรับเทียบก่อนหน้ายังคงไม่เปลี่ยนแปลง</string>
     <string name="config_gamepad_calibration_waiting_samples">การปรับเทียบกำลังรอข้อมูลตัวอย่างจากคอนโทรลเลอร์</string>
@@ -214,7 +214,7 @@
     <string name="config_help_fps_limit">ตั้งค่าจำกัด FPS ที่ความเร็วการจำลอง 1× ขีดจำกัดจริงจะปรับตามความเร็วการจำลอง ค่า 0 (สูงสุด) จะใช้อัตรารีเฟรชสูงสุดของหน้าจอ</string>
     <string name="config_timing_mode_full_guest">เวลาจำลอง</string>
     <string name="config_timing_mode_real_wall">เวลาระบบ</string>
-    <string name="config_help_emulation_speed">เปลี่ยนความเร็วนาฬิกาของ MIDlet และช่วงหน่วงเวลาที่รองรับ เสียงและอินเทอร์เฟซ Android จะยังคงทำงานด้วยความเร็วปกติ</string>
+    <string name="config_help_emulation_speed">ปรับตัวจับเวลาและช่วงหน่วงเวลาที่รองรับของ MIDlet สำหรับเซสชันนี้ หากเลือกเวลาจำลอง วันที่และเวลาจะเปลี่ยนตามความเร็วที่เลือกด้วย การเล่นสื่อและอินเทอร์เฟซ Android จะยังคงทำงานด้วยความเร็วปกติ</string>
     <string name="config_help_timing_mode">เลือกว่า MIDlet จะใช้เวลาจำลองหรือเวลาระบบ ช่วงหน่วงเวลาสัมพัทธ์จะยังคงปรับตามความเร็วการจำลอง</string>
     <string name="config_help_timing_unavailable">การตั้งค่าเวลาไม่พร้อมใช้งานสำหรับการติดตั้ง MIDlet นี้ ติดตั้งใหม่หรือแปลง MIDlet ใหม่เพื่อเปิดใช้งาน</string>
     <string name="config_help_generic_color">กำหนดสีขององค์ประกอบภาพนี้</string>

@@ -42,7 +42,7 @@
     <string name="config_gamepad_calibration_phase_neutral">Odotetaan lepoasentoa</string>
     <string name="config_gamepad_calibration_phase_stick_range">Sauvan liikealue</string>
     <string name="config_gamepad_calibration_phase_trigger_range">Liipaisimen liikealue</string>
-    <string name="config_gamepad_calibration_phase_review">Tarkistus</string>
+    <string name="config_gamepad_calibration_phase_review">Valmis tallennettavaksi</string>
     <string name="config_gamepad_calibration_phase_committed">Tallennettu</string>
     <string name="config_gamepad_calibration_phase_cancelled">Peruutettu</string>
     <string name="config_gamepad_calibration_waiting_controller">Yhdistä ohjain, jossa on tuettu analoginen sauva tai liipaisin. Kalibrointi alkaa, kun liikutat sauvaa tai painat liipaisinta; nykyinen kalibrointi säilyy ennallaan, kunnes tallennat.</string>
@@ -53,8 +53,8 @@
     <string name="config_gamepad_calibration_rejected">Kalibrointi hylätty: <xliff:g id="name" example="Example">%1$s</xliff:g></string>
     <string name="config_gamepad_calibration_neutral_instructions">Pidä kaikki havaitut sauvat keskellä ja kaikki havaitut liipaisimet vapautettuina, kunnes lepoasennon ajastin päättyy.</string>
     <string name="config_gamepad_calibration_stick_instructions">Liikuta jokaista havaittua sauvaa koko liikealueellaan kaikkiin suuntiin ja paina sitten Seuraava.</string>
-    <string name="config_gamepad_calibration_trigger_instructions">Vapauta ja paina jokainen havaittu liipaisin pohjaan asti ja paina sitten Seuraava tarkistaaksesi.</string>
-    <string name="config_gamepad_calibration_review_instructions">Valmis tarkistettavaksi. Tallentaminen korvaa vain tämän ohjaimen kalibroinnin.</string>
+    <string name="config_gamepad_calibration_trigger_instructions">Vapauta jokainen havaittu liipaisin ja paina se pohjaan asti. Napauta sitten Seuraava.</string>
+    <string name="config_gamepad_calibration_review_instructions">Korvaa tämän ohjaimen kalibrointi tallentamalla.</string>
     <string name="config_gamepad_calibration_saved">Kalibrointi tallennettu.</string>
     <string name="config_gamepad_calibration_cancelled">Kalibrointi peruutettu. Edellinen kalibrointi säilyy ennallaan.</string>
     <string name="config_gamepad_calibration_waiting_samples">Kalibrointi odottaa ohjaimen mittaustietoja.</string>
@@ -215,7 +215,7 @@
     <string name="config_help_fps_limit">Asettaa FPS-rajan 1×-emulointinopeudella. Todellinen raja seuraa emulointinopeutta; 0 (Enimmäismäärä) käyttää näytön suurinta virkistystaajuutta.</string>
     <string name="config_timing_mode_full_guest">Emulointiaika</string>
     <string name="config_timing_mode_real_wall">Järjestelmäaika</string>
-    <string name="config_help_emulation_speed">Muuttaa MIDletin kellonopeutta ja tuettuja viiveitä. Androidin ääni ja käyttöliittymä pysyvät normaalilla nopeudella.</string>
+    <string name="config_help_emulation_speed">Säätää MIDletin tuettuja ajastimia ja viiveitä tämän istunnon aikana. Jos Emulointiaika on valittu, myös päivämäärä ja kellonaika seuraavat nopeutta. Median toisto ja Androidin käyttöliittymä toimivat normaalilla nopeudella.</string>
     <string name="config_help_timing_mode">Valitsee, käyttääkö MIDlet emulointiaikaa vai järjestelmäaikaa. Suhteelliset viiveet skaalautuvat edelleen emulointinopeuden mukaan.</string>
     <string name="config_help_timing_unavailable">Aika-asetukset eivät ole käytettävissä tälle MIDlet-asennukselle. Ota ne käyttöön asentamalla tai muuntamalla MIDlet uudelleen.</string>
     <string name="config_help_generic_color">Asettaa tämän visuaalisen elementin värin.</string>

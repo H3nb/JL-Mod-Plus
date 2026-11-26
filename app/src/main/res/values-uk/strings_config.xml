@@ -42,7 +42,7 @@
     <string name="config_gamepad_calibration_phase_neutral">Очікування нейтрального положення</string>
     <string name="config_gamepad_calibration_phase_stick_range">Діапазон стіка</string>
     <string name="config_gamepad_calibration_phase_trigger_range">Діапазон тригера</string>
-    <string name="config_gamepad_calibration_phase_review">Перевірка</string>
+    <string name="config_gamepad_calibration_phase_review">Готово до збереження</string>
     <string name="config_gamepad_calibration_phase_committed">Збережено</string>
     <string name="config_gamepad_calibration_phase_cancelled">Скасовано</string>
     <string name="config_gamepad_calibration_waiting_controller">Підключіть контролер із підтримуваним аналоговим стіком або тригером. Калібрування розпочнеться після першого руху стіка або натискання тригера; наявне калібрування не зміниться, доки ви не збережете нове.</string>
@@ -53,8 +53,8 @@
     <string name="config_gamepad_calibration_rejected">Калібрування відхилено: <xliff:g id="name" example="Example">%1$s</xliff:g></string>
     <string name="config_gamepad_calibration_neutral_instructions">Тримайте всі виявлені стіки в центрі, а всі виявлені тригери відпущеними, доки не завершиться таймер нейтрального положення.</string>
     <string name="config_gamepad_calibration_stick_instructions">Проведіть кожен виявлений стік по всьому діапазону в усіх напрямках, а потім натисніть «Далі».</string>
-    <string name="config_gamepad_calibration_trigger_instructions">Відпустіть і повністю натисніть кожен виявлений тригер, а потім натисніть «Далі» для перевірки.</string>
-    <string name="config_gamepad_calibration_review_instructions">Готово до перевірки. Збереження замінить лише калібрування цього контролера.</string>
+    <string name="config_gamepad_calibration_trigger_instructions">Відпустіть і повністю натисніть кожен виявлений тригер, а потім торкніться «Далі».</string>
+    <string name="config_gamepad_calibration_review_instructions">Збережіть, щоб замінити калібрування цього контролера.</string>
     <string name="config_gamepad_calibration_saved">Калібрування збережено.</string>
     <string name="config_gamepad_calibration_cancelled">Калібрування скасовано. Попереднє калібрування залишилося без змін.</string>
     <string name="config_gamepad_calibration_waiting_samples">Калібрування очікує вибірки від контролера.</string>
@@ -217,7 +217,7 @@
     <string name="config_help_fps_limit">Задає обмеження FPS за швидкості емуляції 1×. Фактичне обмеження змінюється відповідно до швидкості емуляції; 0 (Максимум) використовує максимальну частоту оновлення екрана.</string>
     <string name="config_timing_mode_full_guest">Час емуляції</string>
     <string name="config_timing_mode_real_wall">Системний час</string>
-    <string name="config_help_emulation_speed">Змінює швидкість годинника MIDlet і підтримувані затримки. Звук та інтерфейс Android працюють зі звичайною швидкістю.</string>
+    <string name="config_help_emulation_speed">Налаштовує підтримувані таймери й затримки MIDlet для поточного сеансу. Якщо вибрано «Час емуляції», дата й час також змінюються з вибраною швидкістю. Відтворення медіа та інтерфейс Android працюють зі звичайною швидкістю.</string>
     <string name="config_help_timing_mode">Вибирає, чи використовує MIDlet час емуляції, чи системний час. Відносні затримки й надалі масштабуються зі швидкістю емуляції.</string>
     <string name="config_help_timing_unavailable">Налаштування часу недоступні для цієї інсталяції MIDlet. Перевстановіть або повторно перетворіть MIDlet, щоб увімкнути їх.</string>
     <string name="config_help_generic_color">Задає колір цього візуального елемента.</string>

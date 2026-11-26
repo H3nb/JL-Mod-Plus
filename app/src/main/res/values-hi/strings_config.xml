@@ -42,7 +42,7 @@
     <string name="config_gamepad_calibration_phase_neutral">न्यूट्रल की प्रतीक्षा</string>
     <string name="config_gamepad_calibration_phase_stick_range">स्टिक सीमा</string>
     <string name="config_gamepad_calibration_phase_trigger_range">ट्रिगर सीमा</string>
-    <string name="config_gamepad_calibration_phase_review">समीक्षा</string>
+    <string name="config_gamepad_calibration_phase_review">सहेजने के लिए तैयार</string>
     <string name="config_gamepad_calibration_phase_committed">सहेजा गया</string>
     <string name="config_gamepad_calibration_phase_cancelled">रद्द किया गया</string>
     <string name="config_gamepad_calibration_waiting_controller">समर्थित एनालॉग स्टिक या ट्रिगर वाला कंट्रोलर कनेक्ट करें। पहली बार स्टिक हिलाने या ट्रिगर दबाने पर कैलिब्रेशन शुरू होता है; आपके सहेजने तक मौजूदा कैलिब्रेशन अपरिवर्तित रहता है।</string>
@@ -53,8 +53,8 @@
     <string name="config_gamepad_calibration_rejected">कैलिब्रेशन अस्वीकृत: <xliff:g id="name" example="Example">%1$s</xliff:g></string>
     <string name="config_gamepad_calibration_neutral_instructions">न्यूट्रल टाइमर पूरा होने तक पहचाने गए सभी स्टिक को केंद्र में रखें और सभी ट्रिगर छोड़े रखें।</string>
     <string name="config_gamepad_calibration_stick_instructions">पहचाने गए प्रत्येक स्टिक को सभी दिशाओं में पूरी सीमा तक घुमाएं, फिर “अगला” दबाएं।</string>
-    <string name="config_gamepad_calibration_trigger_instructions">पहचाने गए प्रत्येक ट्रिगर को छोड़ें और पूरा दबाएं, फिर समीक्षा के लिए “अगला” दबाएं।</string>
-    <string name="config_gamepad_calibration_review_instructions">समीक्षा के लिए तैयार। सहेजने से केवल इस कंट्रोलर का कैलिब्रेशन बदलेगा।</string>
+    <string name="config_gamepad_calibration_trigger_instructions">पहचाने गए हर ट्रिगर को छोड़कर पूरा दबाएं, फिर “अगला” पर टैप करें।</string>
+    <string name="config_gamepad_calibration_review_instructions">इस कंट्रोलर का कैलिब्रेशन बदलने के लिए सहेजें।</string>
     <string name="config_gamepad_calibration_saved">कैलिब्रेशन सहेजा गया।</string>
     <string name="config_gamepad_calibration_cancelled">कैलिब्रेशन रद्द किया गया। पिछला कैलिब्रेशन अपरिवर्तित है।</string>
     <string name="config_gamepad_calibration_waiting_samples">कैलिब्रेशन कंट्रोलर नमूनों की प्रतीक्षा कर रहा है।</string>
@@ -215,7 +215,7 @@
     <string name="config_help_fps_limit">1× एमुलेशन गति पर FPS सीमा सेट करता है। प्रभावी सीमा एमुलेशन गति के अनुसार बदलती है; 0 (अधिकतम) डिस्प्ले की अधिकतम रिफ़्रेश दर उपयोग करता है।</string>
     <string name="config_timing_mode_full_guest">एमुलेशन समय</string>
     <string name="config_timing_mode_real_wall">सिस्टम समय</string>
-    <string name="config_help_emulation_speed">MIDlet घड़ी की गति और समर्थित विलंब बदलता है। Android ऑडियो और UI सामान्य गति पर रहते हैं।</string>
+    <string name="config_help_emulation_speed">इस सेशन के लिए MIDlet के समर्थित टाइमर और विलंब को समायोजित करता है। एमुलेशन समय चुने जाने पर तारीख और समय भी चुनी गई गति के अनुसार बदलते हैं। मीडिया प्लेबैक और Android इंटरफ़ेस सामान्य गति पर रहते हैं।</string>
     <string name="config_help_timing_mode">चुनता है कि MIDlet एमुलेशन समय उपयोग करे या सिस्टम समय। सापेक्ष विलंब एमुलेशन गति के साथ स्केल रहते हैं।</string>
     <string name="config_help_timing_unavailable">इस MIDlet इंस्टॉलेशन के लिए समय सेटिंग्स उपलब्ध नहीं हैं। इन्हें सक्षम करने के लिए MIDlet को पुनः इंस्टॉल या पुनः रूपांतरित करें।</string>
     <string name="config_help_generic_color">इस दृश्य तत्व का रंग सेट करता है।</string>

@@ -42,7 +42,7 @@
     <string name="config_gamepad_calibration_phase_neutral">Đang chờ vị trí trung lập</string>
     <string name="config_gamepad_calibration_phase_stick_range">Phạm vi cần analog</string>
     <string name="config_gamepad_calibration_phase_trigger_range">Phạm vi nút cò</string>
-    <string name="config_gamepad_calibration_phase_review">Xem lại</string>
+    <string name="config_gamepad_calibration_phase_review">Sẵn sàng lưu</string>
     <string name="config_gamepad_calibration_phase_committed">Đã lưu</string>
     <string name="config_gamepad_calibration_phase_cancelled">Đã hủy</string>
     <string name="config_gamepad_calibration_waiting_controller">Kết nối tay cầm có cần analog hoặc nút cò được hỗ trợ. Quá trình hiệu chỉnh bắt đầu khi bạn di chuyển cần hoặc nhấn cò lần đầu; hiệu chỉnh hiện tại sẽ giữ nguyên cho đến khi bạn lưu.</string>
@@ -53,8 +53,8 @@
     <string name="config_gamepad_calibration_rejected">Hiệu chỉnh bị từ chối: <xliff:g id="name" example="Example">%1$s</xliff:g></string>
     <string name="config_gamepad_calibration_neutral_instructions">Giữ tất cả cần analog đã phát hiện ở chính giữa và thả hết các nút cò đã phát hiện cho đến khi hết thời gian đo vị trí trung lập.</string>
     <string name="config_gamepad_calibration_stick_instructions">Di chuyển hết phạm vi mọi cần analog đã phát hiện theo tất cả các hướng, sau đó nhấn Tiếp theo.</string>
-    <string name="config_gamepad_calibration_trigger_instructions">Thả ra rồi nhấn hết hành trình mọi nút cò đã phát hiện, sau đó nhấn Tiếp theo để xem lại.</string>
-    <string name="config_gamepad_calibration_review_instructions">Sẵn sàng xem lại. Lưu sẽ chỉ thay thế hiệu chỉnh của tay cầm này.</string>
+    <string name="config_gamepad_calibration_trigger_instructions">Thả ra rồi nhấn hết hành trình mọi nút cò đã phát hiện, sau đó nhấn Tiếp theo.</string>
+    <string name="config_gamepad_calibration_review_instructions">Lưu để thay thế dữ liệu hiệu chỉnh của tay cầm này.</string>
     <string name="config_gamepad_calibration_saved">Đã lưu hiệu chỉnh.</string>
     <string name="config_gamepad_calibration_cancelled">Đã hủy hiệu chỉnh. Hiệu chỉnh trước đó vẫn giữ nguyên.</string>
     <string name="config_gamepad_calibration_waiting_samples">Quá trình hiệu chỉnh đang chờ mẫu tín hiệu từ tay cầm.</string>
@@ -214,7 +214,7 @@
     <string name="config_help_fps_limit">Đặt giới hạn FPS ở tốc độ giả lập 1×. Giới hạn thực tế thay đổi theo tốc độ giả lập; 0 (Tối đa) dùng tần số quét tối đa của màn hình.</string>
     <string name="config_timing_mode_full_guest">Thời gian giả lập</string>
     <string name="config_timing_mode_real_wall">Thời gian hệ thống</string>
-    <string name="config_help_emulation_speed">Thay đổi tốc độ đồng hồ MIDlet và các khoảng trễ được hỗ trợ. Âm thanh và giao diện Android vẫn chạy ở tốc độ bình thường.</string>
+    <string name="config_help_emulation_speed">Điều chỉnh bộ hẹn giờ và khoảng trễ được hỗ trợ của MIDlet trong phiên này. Nếu chọn Thời gian giả lập, ngày và giờ cũng thay đổi theo tốc độ đã chọn. Tính năng phát nội dung đa phương tiện và giao diện Android vẫn chạy ở tốc độ bình thường.</string>
     <string name="config_help_timing_mode">Chọn việc MIDlet dùng thời gian giả lập hay thời gian hệ thống. Các khoảng trễ tương đối vẫn tỷ lệ theo tốc độ giả lập.</string>
     <string name="config_help_timing_unavailable">Cài đặt thời gian không khả dụng cho bản cài đặt MIDlet này. Hãy cài đặt lại hoặc chuyển đổi lại MIDlet để bật.</string>
     <string name="config_help_generic_color">Đặt màu cho thành phần hiển thị này.</string>

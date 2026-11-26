@@ -42,7 +42,7 @@
     <string name="config_gamepad_calibration_phase_neutral">Waiting for neutral</string>
     <string name="config_gamepad_calibration_phase_stick_range">Stick range</string>
     <string name="config_gamepad_calibration_phase_trigger_range">Trigger range</string>
-    <string name="config_gamepad_calibration_phase_review">Review</string>
+    <string name="config_gamepad_calibration_phase_review">Ready to save</string>
     <string name="config_gamepad_calibration_phase_committed">Saved</string>
     <string name="config_gamepad_calibration_phase_cancelled">Canceled</string>
     <string name="config_gamepad_calibration_waiting_controller">Connect a controller with a supported analog stick or trigger. Calibration begins when you first move a stick or press a trigger; the existing calibration remains unchanged until you save.</string>
@@ -53,8 +53,8 @@
     <string name="config_gamepad_calibration_rejected">Calibration rejected: <xliff:g id="name" example="Example">%1$s</xliff:g></string>
     <string name="config_gamepad_calibration_neutral_instructions">Keep all detected sticks centered and all detected triggers released until the neutral timer completes.</string>
     <string name="config_gamepad_calibration_stick_instructions">Move every detected stick through its full range in all directions, then press Next.</string>
-    <string name="config_gamepad_calibration_trigger_instructions">Release and fully press every detected trigger, then press Next to review.</string>
-    <string name="config_gamepad_calibration_review_instructions">Ready to review. Saving replaces only this controller’s calibration.</string>
+    <string name="config_gamepad_calibration_trigger_instructions">Release and fully press every detected trigger, then tap Next.</string>
+    <string name="config_gamepad_calibration_review_instructions">Save to replace the calibration for this controller.</string>
     <string name="config_gamepad_calibration_saved">Calibration saved.</string>
     <string name="config_gamepad_calibration_cancelled">Calibration canceled. The previous calibration is unchanged.</string>
     <string name="config_gamepad_calibration_waiting_samples">Calibration is waiting for controller samples.</string>
@@ -215,7 +215,7 @@
     <string name="config_help_fps_limit">Sets the FPS limit at 1× emulation speed. The effective limit follows emulation speed; 0 (Maximum) uses the display’s maximum refresh rate.</string>
     <string name="config_timing_mode_full_guest">Emulation time</string>
     <string name="config_timing_mode_real_wall">System time</string>
-    <string name="config_help_emulation_speed">Changes the MIDlet clock speed and supported delays. Android audio and UI remain at normal speed.</string>
+    <string name="config_help_emulation_speed">Adjusts supported MIDlet timers and delays for this session. With Emulation time selected, date and time also follow the speed. Media playback and the Android interface stay at normal speed.</string>
     <string name="config_help_timing_mode">Chooses whether the MIDlet uses emulation time or system time. Relative delays remain scaled with emulation speed.</string>
     <string name="config_help_timing_unavailable">Time settings are unavailable for this MIDlet installation. Reinstall or reconvert the MIDlet to enable them.</string>
     <string name="config_help_generic_color">Sets the color of this visual element.</string>

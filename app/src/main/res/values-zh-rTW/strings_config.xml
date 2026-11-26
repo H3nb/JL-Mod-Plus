@@ -42,7 +42,7 @@
     <string name="config_gamepad_calibration_phase_neutral">等待中立位置</string>
     <string name="config_gamepad_calibration_phase_stick_range">搖桿範圍</string>
     <string name="config_gamepad_calibration_phase_trigger_range">扳機鍵範圍</string>
-    <string name="config_gamepad_calibration_phase_review">檢閱</string>
+    <string name="config_gamepad_calibration_phase_review">可以儲存</string>
     <string name="config_gamepad_calibration_phase_committed">已儲存</string>
     <string name="config_gamepad_calibration_phase_cancelled">已取消</string>
     <string name="config_gamepad_calibration_waiting_controller">請連接支援類比搖桿或扳機鍵的控制器。首次移動搖桿或按下扳機鍵時將開始校正；在儲存之前，現有校正資料維持不變。</string>
@@ -53,8 +53,8 @@
     <string name="config_gamepad_calibration_rejected">校正未通過：<xliff:g id="name" example="Example">%1$s</xliff:g></string>
     <string name="config_gamepad_calibration_neutral_instructions">請保持所有偵測到的搖桿置中並放開所有偵測到的扳機鍵，直到中立計時完成。</string>
     <string name="config_gamepad_calibration_stick_instructions">請將每個偵測到的搖桿朝各方向推至最大範圍，然後按下「下一步」。</string>
-    <string name="config_gamepad_calibration_trigger_instructions">請放開再完全按下每個偵測到的扳機鍵，然後按下「下一步」檢閱。</string>
-    <string name="config_gamepad_calibration_review_instructions">已準備好檢閱。儲存後只會取代此控制器的校正資料。</string>
+    <string name="config_gamepad_calibration_trigger_instructions">請放開再完全按下每個偵測到的扳機鍵，然後輕觸「下一步」。</string>
+    <string name="config_gamepad_calibration_review_instructions">儲存後將取代此控制器的校正資料。</string>
     <string name="config_gamepad_calibration_saved">已儲存校正資料。</string>
     <string name="config_gamepad_calibration_cancelled">已取消校正，先前的校正資料維持不變。</string>
     <string name="config_gamepad_calibration_waiting_samples">正在等待控制器輸入取樣。</string>
@@ -214,7 +214,7 @@
     <string name="config_help_fps_limit">設定 1× 模擬速度下的 FPS 上限。實際上限會隨模擬速度縮放；設為 0（最高）將採用顯示器的最高更新率。</string>
     <string name="config_timing_mode_full_guest">模擬時間</string>
     <string name="config_timing_mode_real_wall">系統時間</string>
-    <string name="config_help_emulation_speed">調整 MIDlet 的時脈速度與支援的延遲時間。Android 音訊與介面維持正常速度。</string>
+    <string name="config_help_emulation_speed">調整本次工作階段中 MIDlet 支援的計時器與延遲時間。選擇模擬時間時，日期和時間也會依所選速度變化。媒體播放和 Android 介面仍維持正常速度。</string>
     <string name="config_help_timing_mode">選擇 MIDlet 要使用模擬時間或系統時間。相對延遲仍會隨模擬速度縮放。</string>
     <string name="config_help_timing_unavailable">此 MIDlet 安裝版本不支援時間設定，請重新安裝或重新轉換此 MIDlet 以啟用。</string>
     <string name="config_help_generic_color">設定此視覺元素的顏色。</string>

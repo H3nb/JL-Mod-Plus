@@ -42,7 +42,7 @@
     <string name="config_gamepad_calibration_phase_neutral">Wag vir neutraal</string>
     <string name="config_gamepad_calibration_phase_stick_range">Stokreeks</string>
     <string name="config_gamepad_calibration_phase_trigger_range">Snellerreeks</string>
-    <string name="config_gamepad_calibration_phase_review">Hersien</string>
+    <string name="config_gamepad_calibration_phase_review">Gereed om te stoor</string>
     <string name="config_gamepad_calibration_phase_committed">Gestoor</string>
     <string name="config_gamepad_calibration_phase_cancelled">Gekanselleer</string>
     <string name="config_gamepad_calibration_waiting_controller">Koppel ’n beheerder met ’n ondersteunde analoogstok of sneller. Kalibrering begin wanneer jy die eerste keer ’n stok beweeg of ’n sneller druk; die bestaande kalibrering bly onveranderd totdat jy stoor.</string>
@@ -53,8 +53,8 @@
     <string name="config_gamepad_calibration_rejected">Kalibrering afgekeur: <xliff:g id="name" example="Example">%1$s</xliff:g></string>
     <string name="config_gamepad_calibration_neutral_instructions">Hou alle bespeurde stokke gesentreer en alle bespeurde snellers losgelaat totdat die neutrale tydhouer voltooi is.</string>
     <string name="config_gamepad_calibration_stick_instructions">Beweeg elke bespeurde stok deur sy volle reeks in alle rigtings, en druk dan Volgende.</string>
-    <string name="config_gamepad_calibration_trigger_instructions">Laat elke bespeurde sneller los en druk dit volledig in, en druk dan Volgende om te hersien.</string>
-    <string name="config_gamepad_calibration_review_instructions">Gereed om te hersien. Stoor vervang slegs hierdie beheerder se kalibrering.</string>
+    <string name="config_gamepad_calibration_trigger_instructions">Laat elke bespeurde sneller los, druk dit heeltemal in en tik dan op Volgende.</string>
+    <string name="config_gamepad_calibration_review_instructions">Stoor om die kalibrering vir hierdie beheerder te vervang.</string>
     <string name="config_gamepad_calibration_saved">Kalibrering gestoor.</string>
     <string name="config_gamepad_calibration_cancelled">Kalibrering gekanselleer. Die vorige kalibrering is onveranderd.</string>
     <string name="config_gamepad_calibration_waiting_samples">Kalibrering wag vir beheerdermonsters.</string>
@@ -215,7 +215,7 @@
     <string name="config_help_fps_limit">Stel die FPS-limiet teen 1×-emulasiespoed. Die effektiewe limiet volg emulasiespoed; 0 (Maksimum) gebruik die skerm se maksimum verversingstempo.</string>
     <string name="config_timing_mode_full_guest">Emulasietyd</string>
     <string name="config_timing_mode_real_wall">Stelseltyd</string>
-    <string name="config_help_emulation_speed">Verander die MIDlet-klokspoed en ondersteunde vertragings. Android-oudio en -koppelvlak bly teen normale spoed.</string>
+    <string name="config_help_emulation_speed">Pas ondersteunde MIDlet-tydhouers en vertragings vir hierdie sessie aan. Met Emulasietyd gekies, volg datum en tyd ook die spoed. Mediaterugspeel en die Android-koppelvlak bly teen normale spoed.</string>
     <string name="config_help_timing_mode">Kies of die MIDlet emulasietyd of stelseltyd gebruik. Relatiewe vertragings bly geskaal met emulasiespoed.</string>
     <string name="config_help_timing_unavailable">Tydinstellings is nie vir hierdie MIDlet-installasie beskikbaar nie. Herinstalleer of skakel die MIDlet weer om om dit te aktiveer.</string>
     <string name="config_help_generic_color">Stel die kleur van hierdie visuele element.</string>

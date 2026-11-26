@@ -42,7 +42,7 @@
     <string name="config_gamepad_calibration_phase_neutral">در انتظار حالت خنثی</string>
     <string name="config_gamepad_calibration_phase_stick_range">بازه آنالوگ</string>
     <string name="config_gamepad_calibration_phase_trigger_range">بازه ماشه</string>
-    <string name="config_gamepad_calibration_phase_review">بازبینی</string>
+    <string name="config_gamepad_calibration_phase_review">آماده ذخیره</string>
     <string name="config_gamepad_calibration_phase_committed">ذخیره شد</string>
     <string name="config_gamepad_calibration_phase_cancelled">لغو شد</string>
     <string name="config_gamepad_calibration_waiting_controller">دسته بازی‌ای با آنالوگ یا ماشه پشتیبانی‌شده متصل کنید. کالیبراسیون با اولین حرکت آنالوگ یا فشردن ماشه آغاز می‌شود؛ کالیبراسیون فعلی تا زمان ذخیره بدون تغییر می‌ماند.</string>
@@ -53,8 +53,8 @@
     <string name="config_gamepad_calibration_rejected">کالیبراسیون رد شد: <xliff:g id="name" example="Example">%1$s</xliff:g></string>
     <string name="config_gamepad_calibration_neutral_instructions">تا پایان تایمر حالت خنثی، همه آنالوگ‌های شناسایی‌شده را در مرکز و همه ماشه‌های شناسایی‌شده را رها نگه دارید.</string>
     <string name="config_gamepad_calibration_stick_instructions">هر آنالوگ شناسایی‌شده را در تمام جهات تا انتهای بازه‌اش حرکت دهید، سپس روی «بعدی» بزنید.</string>
-    <string name="config_gamepad_calibration_trigger_instructions">هر ماشه شناسایی‌شده را رها کرده و تا انتها فشار دهید، سپس برای بازبینی روی «بعدی» بزنید.</string>
-    <string name="config_gamepad_calibration_review_instructions">آماده بازبینی. ذخیره کردن فقط کالیبراسیون همین دسته بازی را جایگزین می‌کند.</string>
+    <string name="config_gamepad_calibration_trigger_instructions">هر ماشه شناسایی‌شده را رها کنید و تا انتها فشار دهید، سپس روی «بعدی» بزنید.</string>
+    <string name="config_gamepad_calibration_review_instructions">برای جایگزینی کالیبراسیون این دسته بازی، آن را ذخیره کنید.</string>
     <string name="config_gamepad_calibration_saved">کالیبراسیون ذخیره شد.</string>
     <string name="config_gamepad_calibration_cancelled">کالیبراسیون لغو شد. کالیبراسیون قبلی بدون تغییر باقی ماند.</string>
     <string name="config_gamepad_calibration_waiting_samples">کالیبراسیون منتظر نمونه‌های دسته بازی است.</string>
@@ -215,7 +215,7 @@
     <string name="config_help_fps_limit">محدودیت FPS را در سرعت شبیه‌سازی 1× تنظیم می‌کند. محدودیت مؤثر از سرعت شبیه‌سازی پیروی می‌کند؛ مقدار 0 (حداکثر) از بیشترین نرخ نوسازی نمایشگر استفاده می‌کند.</string>
     <string name="config_timing_mode_full_guest">زمان شبیه‌سازی</string>
     <string name="config_timing_mode_real_wall">زمان سیستم</string>
-    <string name="config_help_emulation_speed">سرعت ساعت MIDlet و تأخیرهای پشتیبانی‌شده را تغییر می‌دهد. صدا و رابط کاربری Android با سرعت عادی باقی می‌مانند.</string>
+    <string name="config_help_emulation_speed">زمان‌سنج‌ها و تأخیرهای پشتیبانی‌شده MIDlet را برای این جلسه تنظیم می‌کند. اگر زمان شبیه‌سازی انتخاب شده باشد، تاریخ و ساعت نیز با سرعت انتخابی تغییر می‌کنند. پخش رسانه و رابط کاربری Android با سرعت عادی ادامه می‌یابند.</string>
     <string name="config_help_timing_mode">تعیین می‌کند MIDlet از زمان شبیه‌سازی استفاده کند یا زمان سیستم. تأخیرهای نسبی همچنان با سرعت شبیه‌سازی مقیاس‌بندی می‌شوند.</string>
     <string name="config_help_timing_unavailable">تنظیمات زمان برای این نصب MIDlet در دسترس نیست. برای فعال‌سازی، MIDlet را دوباره نصب یا تبدیل کنید.</string>
     <string name="config_help_generic_color">رنگ این عنصر بصری را تنظیم می‌کند.</string>

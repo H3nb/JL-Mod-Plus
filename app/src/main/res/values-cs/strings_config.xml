@@ -40,7 +40,7 @@
     <string name="config_gamepad_calibration_phase_neutral">Čekání na neutrální polohu</string>
     <string name="config_gamepad_calibration_phase_stick_range">Rozsah páček</string>
     <string name="config_gamepad_calibration_phase_trigger_range">Rozsah spouští</string>
-    <string name="config_gamepad_calibration_phase_review">Kontrola</string>
+    <string name="config_gamepad_calibration_phase_review">Připraveno k uložení</string>
     <string name="config_gamepad_calibration_phase_committed">Uloženo</string>
     <string name="config_gamepad_calibration_phase_cancelled">Zrušeno</string>
     <string name="config_gamepad_calibration_waiting_controller">Připojte ovladač s podporovanou analogovou páčkou nebo spouští. Kalibrace začne po prvním pohybu páčkou nebo stisknutí spouště; stávající kalibrace zůstane beze změny, dokud ji neuložíte.</string>
@@ -51,8 +51,8 @@
     <string name="config_gamepad_calibration_rejected">Kalibrace byla odmítnuta: <xliff:g id="name" example="Example">%1$s</xliff:g></string>
     <string name="config_gamepad_calibration_neutral_instructions">Ponechte všechny zjištěné páčky ve středu a všechny zjištěné spouště uvolněné, dokud nedoběhne časovač neutrální polohy.</string>
     <string name="config_gamepad_calibration_stick_instructions">Pohybujte každou zjištěnou páčkou v jejím plném rozsahu všemi směry a poté stiskněte Další.</string>
-    <string name="config_gamepad_calibration_trigger_instructions">Uvolněte a zcela stiskněte každou zjištěnou spoušť a poté stiskněte Další pro kontrolu.</string>
-    <string name="config_gamepad_calibration_review_instructions">Připraveno ke kontrole. Uložením nahradíte pouze kalibraci tohoto ovladače.</string>
+    <string name="config_gamepad_calibration_trigger_instructions">Uvolněte a zcela stiskněte každou zjištěnou spoušť a poté klepněte na Další.</string>
+    <string name="config_gamepad_calibration_review_instructions">Uložením nahradíte kalibraci tohoto ovladače.</string>
     <string name="config_gamepad_calibration_saved">Kalibrace byla uložena.</string>
     <string name="config_gamepad_calibration_cancelled">Kalibrace byla zrušena. Předchozí kalibrace zůstává beze změny.</string>
     <string name="config_gamepad_calibration_waiting_samples">Kalibrace čeká na vzorky z ovladače.</string>
@@ -214,7 +214,7 @@
     <string name="config_help_fps_limit">Nastavuje limit FPS při 1× rychlosti emulace. Skutečný limit se řídí rychlostí emulace; hodnota 0 (Maximum) používá maximální obnovovací frekvenci displeje.</string>
     <string name="config_timing_mode_full_guest">Čas emulace</string>
     <string name="config_timing_mode_real_wall">Systémový čas</string>
-    <string name="config_help_emulation_speed">Mění rychlost hodin MIDletu a podporovaných prodlev. Zvuk a rozhraní Androidu běží normální rychlostí.</string>
+    <string name="config_help_emulation_speed">Upravuje podporované časovače a prodlevy MIDletu pro aktuální relaci. Při nastavení Čas emulace se zvolenou rychlostí mění i datum a čas v MIDletu. Přehrávání médií a rozhraní Androidu běží běžnou rychlostí.</string>
     <string name="config_help_timing_mode">Určuje, zda MIDlet používá čas emulace, nebo systémový čas. Relativní prodlevy zůstávají škálované rychlostí emulace.</string>
     <string name="config_help_timing_unavailable">Nastavení času není pro tuto instalaci MIDletu k dispozici. Chcete-li je povolit, MIDlet přeinstalujte nebo znovu převeďte.</string>
     <string name="config_help_generic_color">Nastavuje barvu tohoto vizuálního prvku.</string>

@@ -41,7 +41,7 @@
     <string name="config_gamepad_calibration_phase_neutral">Αναμονή για ουδέτερη θέση</string>
     <string name="config_gamepad_calibration_phase_stick_range">Εύρος μοχλών</string>
     <string name="config_gamepad_calibration_phase_trigger_range">Εύρος σκανδάλων</string>
-    <string name="config_gamepad_calibration_phase_review">Ανασκόπηση</string>
+    <string name="config_gamepad_calibration_phase_review">Έτοιμο για αποθήκευση</string>
     <string name="config_gamepad_calibration_phase_committed">Αποθηκεύτηκε</string>
     <string name="config_gamepad_calibration_phase_cancelled">Ακυρώθηκε</string>
     <string name="config_gamepad_calibration_waiting_controller">Συνδέστε ένα χειριστήριο με υποστηριζόμενο αναλογικό μοχλό ή σκανδάλη. Η βαθμονόμηση ξεκινά όταν μετακινήσετε έναν μοχλό ή πατήσετε μια σκανδάλη για πρώτη φορά· η υπάρχουσα βαθμονόμηση παραμένει αμετάβλητη μέχρι να αποθηκεύσετε.</string>
@@ -52,8 +52,8 @@
     <string name="config_gamepad_calibration_rejected">Η βαθμονόμηση απορρίφθηκε: <xliff:g id="name" example="Example">%1$s</xliff:g></string>
     <string name="config_gamepad_calibration_neutral_instructions">Διατηρήστε όλους τους εντοπισμένους μοχλούς στο κέντρο και όλες τις εντοπισμένες σκανδάλες ελεύθερες μέχρι να ολοκληρωθεί το χρονόμετρο ουδέτερης θέσης.</string>
     <string name="config_gamepad_calibration_stick_instructions">Μετακινήστε κάθε εντοπισμένο μοχλό σε όλο το εύρος του προς όλες τις κατευθύνσεις και έπειτα πατήστε Επόμενο.</string>
-    <string name="config_gamepad_calibration_trigger_instructions">Αφήστε και πατήστε πλήρως κάθε εντοπισμένη σκανδάλη και έπειτα πατήστε Επόμενο για ανασκόπηση.</string>
-    <string name="config_gamepad_calibration_review_instructions">Έτοιμο για ανασκόπηση. Η αποθήκευση αντικαθιστά μόνο τη βαθμονόμηση αυτού του χειριστηρίου.</string>
+    <string name="config_gamepad_calibration_trigger_instructions">Αφήστε και πατήστε πλήρως κάθε εντοπισμένη σκανδάλη και έπειτα πατήστε Επόμενο.</string>
+    <string name="config_gamepad_calibration_review_instructions">Αποθηκεύστε για να αντικαταστήσετε τη βαθμονόμηση αυτού του χειριστηρίου.</string>
     <string name="config_gamepad_calibration_saved">Η βαθμονόμηση αποθηκεύτηκε.</string>
     <string name="config_gamepad_calibration_cancelled">Η βαθμονόμηση ακυρώθηκε. Η προηγούμενη βαθμονόμηση παραμένει αμετάβλητη.</string>
     <string name="config_gamepad_calibration_waiting_samples">Η βαθμονόμηση αναμένει δείγματα από το χειριστήριο.</string>
@@ -212,7 +212,7 @@
     <string name="config_help_fps_limit">Ορίζει το όριο FPS σε ταχύτητα εξομοίωσης 1×. Το πραγματικό όριο ακολουθεί την ταχύτητα εξομοίωσης· το 0 (Μέγιστο) χρησιμοποιεί τον μέγιστο ρυθμό ανανέωσης της οθόνης.</string>
     <string name="config_timing_mode_full_guest">Χρόνος εξομοίωσης</string>
     <string name="config_timing_mode_real_wall">Χρόνος συστήματος</string>
-    <string name="config_help_emulation_speed">Αλλάζει την ταχύτητα ρολογιού του MIDlet και τις υποστηριζόμενες καθυστερήσεις. Ο ήχος και η διεπαφή του Android παραμένουν σε κανονική ταχύτητα.</string>
+    <string name="config_help_emulation_speed">Προσαρμόζει τους υποστηριζόμενους χρονοδιακόπτες και τις καθυστερήσεις του MIDlet για αυτήν την περίοδο λειτουργίας. Αν έχει επιλεγεί Χρόνος εξομοίωσης, η ημερομηνία και η ώρα ακολουθούν επίσης την ταχύτητα. Η αναπαραγωγή πολυμέσων και η διεπαφή του Android διατηρούν την κανονική τους ταχύτητα.</string>
     <string name="config_help_timing_mode">Επιλέγει αν το MIDlet χρησιμοποιεί χρόνο εξομοίωσης ή χρόνο συστήματος. Οι σχετικές καθυστερήσεις εξακολουθούν να κλιμακώνονται με την ταχύτητα εξομοίωσης.</string>
     <string name="config_help_timing_unavailable">Οι ρυθμίσεις χρόνου δεν είναι διαθέσιμες για αυτήν την εγκατάσταση MIDlet. Επανεγκαταστήστε ή μετατρέψτε ξανά το MIDlet για να τις ενεργοποιήσετε.</string>
     <string name="config_help_generic_color">Ορίζει το χρώμα αυτού του οπτικού στοιχείου.</string>

@@ -42,7 +42,7 @@
     <string name="config_gamepad_calibration_phase_neutral">Venter på neutral</string>
     <string name="config_gamepad_calibration_phase_stick_range">Styrepindudslag</string>
     <string name="config_gamepad_calibration_phase_trigger_range">Aftrækkerudslag</string>
-    <string name="config_gamepad_calibration_phase_review">Gennemse</string>
+    <string name="config_gamepad_calibration_phase_review">Klar til at gemme</string>
     <string name="config_gamepad_calibration_phase_committed">Gemt</string>
     <string name="config_gamepad_calibration_phase_cancelled">Annulleret</string>
     <string name="config_gamepad_calibration_waiting_controller">Tilslut en controller med en understøttet analog styrepind eller aftrækker. Kalibreringen starter, første gang du bevæger en styrepind eller trykker på en aftrækker; den eksisterende kalibrering forbliver uændret, indtil du gemmer.</string>
@@ -53,8 +53,8 @@
     <string name="config_gamepad_calibration_rejected">Kalibrering afvist: <xliff:g id="name" example="Example">%1$s</xliff:g></string>
     <string name="config_gamepad_calibration_neutral_instructions">Hold alle registrerede styrepinde centreret og alle registrerede aftrækkere sluppet, indtil neutraltimeren er færdig.</string>
     <string name="config_gamepad_calibration_stick_instructions">Bevæg hver registreret styrepind gennem hele sit udslag i alle retninger, og tryk derefter på Næste.</string>
-    <string name="config_gamepad_calibration_trigger_instructions">Slip og tryk hver registreret aftrækker helt i bund, og tryk derefter på Næste for at gennemse.</string>
-    <string name="config_gamepad_calibration_review_instructions">Klar til gennemgang. Hvis du gemmer, erstattes kun denne controllers kalibrering.</string>
+    <string name="config_gamepad_calibration_trigger_instructions">Slip hver registreret aftrækker, tryk den helt i bund, og tryk derefter på Næste.</string>
+    <string name="config_gamepad_calibration_review_instructions">Gem for at erstatte kalibreringen for denne controller.</string>
     <string name="config_gamepad_calibration_saved">Kalibrering gemt.</string>
     <string name="config_gamepad_calibration_cancelled">Kalibrering annulleret. Den forrige kalibrering er uændret.</string>
     <string name="config_gamepad_calibration_waiting_samples">Kalibreringen venter på inputprøver fra controlleren.</string>
@@ -215,7 +215,7 @@
     <string name="config_help_fps_limit">Indstiller FPS-grænsen ved 1× emuleringshastighed. Den effektive grænse følger emuleringshastigheden; 0 (Maksimum) bruger skærmens højeste opdateringshastighed.</string>
     <string name="config_timing_mode_full_guest">Emuleringstid</string>
     <string name="config_timing_mode_real_wall">Systemtid</string>
-    <string name="config_help_emulation_speed">Ændrer MIDlet’ens urhastighed og understøttede forsinkelser. Android-lyd og -brugerflade forbliver i normal hastighed.</string>
+    <string name="config_help_emulation_speed">Justerer understøttede timere og forsinkelser i MIDlet’en for denne session. Hvis Emuleringstid er valgt, følger dato og klokkeslæt også hastigheden. Medieafspilning og Androids brugerflade fortsætter ved normal hastighed.</string>
     <string name="config_help_timing_mode">Vælger, om MIDlet’en bruger emuleringstid eller systemtid. Relative forsinkelser skaleres stadig med emuleringshastigheden.</string>
     <string name="config_help_timing_unavailable">Tidsindstillinger er ikke tilgængelige for denne MIDlet-installation. Geninstaller eller genkonverter MIDlet’en for at aktivere dem.</string>
     <string name="config_help_generic_color">Indstiller farven på dette visuelle element.</string>

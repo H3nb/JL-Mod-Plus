@@ -42,7 +42,7 @@
     <string name="config_gamepad_calibration_phase_neutral">ממתין לנקודת אמצע</string>
     <string name="config_gamepad_calibration_phase_stick_range">טווח סטיק</string>
     <string name="config_gamepad_calibration_phase_trigger_range">טווח הדקים</string>
-    <string name="config_gamepad_calibration_phase_review">סקירה</string>
+    <string name="config_gamepad_calibration_phase_review">מוכן לשמירה</string>
     <string name="config_gamepad_calibration_phase_committed">נשמר</string>
     <string name="config_gamepad_calibration_phase_cancelled">בוטל</string>
     <string name="config_gamepad_calibration_waiting_controller">יש לחבר בקר עם סטיק אנלוגי או הדק נתמכים. הכיול מתחיל בהזזה הראשונה של סטיק או בלחיצה על הדק; הכיול הקיים נשאר ללא שינוי עד לשמירה.</string>
@@ -53,8 +53,8 @@
     <string name="config_gamepad_calibration_rejected">הכיול נדחה: <xliff:g id="name" example="Example">%1$s</xliff:g></string>
     <string name="config_gamepad_calibration_neutral_instructions">יש להשאיר את כל הסטיקים שזוהו במרכז ואת כל ההדקים שזוהו משוחררים עד להשלמת טיימר נקודת האמצע.</string>
     <string name="config_gamepad_calibration_stick_instructions">יש להזיז כל סטיק שזוהה לכל אורך הטווח שלו בכל הכיוונים ולאחר מכן ללחוץ על “הבא”.</string>
-    <string name="config_gamepad_calibration_trigger_instructions">יש לשחרר וללחוץ לחיצה מלאה על כל הדק שזוהה ולאחר מכן ללחוץ על “הבא” לסקירה.</string>
-    <string name="config_gamepad_calibration_review_instructions">מוכן לסקירה. השמירה תחליף רק את הכיול של בקר זה.</string>
+    <string name="config_gamepad_calibration_trigger_instructions">יש לשחרר כל הדק שזוהה, ללחוץ עליו עד הסוף ולאחר מכן להקיש על “הבא”.</string>
+    <string name="config_gamepad_calibration_review_instructions">יש לשמור כדי להחליף את הכיול של בקר זה.</string>
     <string name="config_gamepad_calibration_saved">הכיול נשמר.</string>
     <string name="config_gamepad_calibration_cancelled">הכיול בוטל. הכיול הקודם נשאר ללא שינוי.</string>
     <string name="config_gamepad_calibration_waiting_samples">הכיול ממתין לדגימות מהבקר.</string>
@@ -216,7 +216,7 @@
     <string name="config_help_fps_limit">קביעת מגבלת ה-FPS במהירות אמולציה 1×. המגבלה בפועל מתאימה את עצמה למהירות האמולציה; 0 (מקסימום) משתמש בקצב הרענון המרבי של המסך.</string>
     <string name="config_timing_mode_full_guest">זמן אמולציה</string>
     <string name="config_timing_mode_real_wall">זמן מערכת</string>
-    <string name="config_help_emulation_speed">שינוי מהירות השעון של ה-MIDlet והשהיות נתמכות. השמע והממשק של Android נשארים במהירות רגילה.</string>
+    <string name="config_help_emulation_speed">התאמת הקוצבים וההשהיות הנתמכים ב-MIDlet למשך ההפעלה הנוכחית. כאשר נבחר זמן אמולציה, גם התאריך והשעה משתנים בהתאם למהירות. הפעלת המדיה וממשק Android נשארים במהירות רגילה.</string>
     <string name="config_help_timing_mode">בחירה אם ה-MIDlet משתמש בזמן אמולציה או בזמן מערכת. השהיות יחסיות נשארות מותאמות למהירות האמולציה.</string>
     <string name="config_help_timing_unavailable">הגדרות הזמן אינן זמינות עבור התקנת MIDlet זו. יש להתקין או להמיר מחדש את ה-MIDlet כדי להפעיל אותן.</string>
     <string name="config_help_generic_color">קביעת הצבע של רכיב חזותי זה.</string>

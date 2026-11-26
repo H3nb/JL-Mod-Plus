@@ -42,7 +42,7 @@
     <string name="config_gamepad_calibration_phase_neutral">Чекање неутралног положаја</string>
     <string name="config_gamepad_calibration_phase_stick_range">Опсег палице</string>
     <string name="config_gamepad_calibration_phase_trigger_range">Опсег окидача</string>
-    <string name="config_gamepad_calibration_phase_review">Преглед</string>
+    <string name="config_gamepad_calibration_phase_review">Спремно за чување</string>
     <string name="config_gamepad_calibration_phase_committed">Сачувано</string>
     <string name="config_gamepad_calibration_phase_cancelled">Отказано</string>
     <string name="config_gamepad_calibration_waiting_controller">Повежите контролер са подржаном аналогном палицом или окидачем. Калибрација почиње када први пут померите палицу или притиснете окидач; постојећа калибрација остаје непромењена док не сачувате.</string>
@@ -53,8 +53,8 @@
     <string name="config_gamepad_calibration_rejected">Калибрација одбијена: <xliff:g id="name" example="Example">%1$s</xliff:g></string>
     <string name="config_gamepad_calibration_neutral_instructions">Држите све откривене палице у центру и отпустите све откривене окидаче док се не заврши тајмер неутралног положаја.</string>
     <string name="config_gamepad_calibration_stick_instructions">Померите сваку откривену палицу кроз цео опсег у свим смеровима, па притисните „Даље”.</string>
-    <string name="config_gamepad_calibration_trigger_instructions">Отпустите и потпуно притисните сваки откривени окидач, па притисните „Даље” за преглед.</string>
-    <string name="config_gamepad_calibration_review_instructions">Спремно за преглед. Чување замењује само калибрацију овог контролера.</string>
+    <string name="config_gamepad_calibration_trigger_instructions">Отпустите и потпуно притисните сваки откривени окидач, па додирните „Даље”.</string>
+    <string name="config_gamepad_calibration_review_instructions">Сачувајте да бисте заменили калибрацију овог контролера.</string>
     <string name="config_gamepad_calibration_saved">Калибрација је сачувана.</string>
     <string name="config_gamepad_calibration_cancelled">Калибрација је отказана. Претходна калибрација је непромењена.</string>
     <string name="config_gamepad_calibration_waiting_samples">Калибрација чека узорке контролера.</string>
@@ -216,7 +216,7 @@
     <string name="config_help_fps_limit">Подешава ограничење FPS-а при брзини емулације 1×. Стварно ограничење прати брзину емулације; 0 (Максимум) користи максималну стопу освежавања екрана.</string>
     <string name="config_timing_mode_full_guest">Време емулације</string>
     <string name="config_timing_mode_real_wall">Системско време</string>
-    <string name="config_help_emulation_speed">Мења брзину такта MIDlet-а и подржана кашњења. Android звук и интерфејс остају на нормалној брзини.</string>
+    <string name="config_help_emulation_speed">Прилагођава подржане тајмере и кашњења MIDlet-а за текућу сесију. Ако је изабрано Време емулације, датум и време такође прате изабрану брзину. Репродукција медија и Android интерфејс остају на нормалној брзини.</string>
     <string name="config_help_timing_mode">Бира да ли MIDlet користи време емулације или системско време. Релативна кашњења остају скалирана са брзином емулације.</string>
     <string name="config_help_timing_unavailable">Подешавања времена нису доступна за ову инсталацију MIDlet-а. Поново инсталирајте или конвертујте MIDlet да бисте их омогућили.</string>
     <string name="config_help_generic_color">Подешава боју овог визуелног елемента.</string>

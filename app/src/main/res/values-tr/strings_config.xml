@@ -41,7 +41,7 @@
     <string name="config_gamepad_calibration_phase_neutral">Nötr konum bekleniyor</string>
     <string name="config_gamepad_calibration_phase_stick_range">Çubuk aralığı</string>
     <string name="config_gamepad_calibration_phase_trigger_range">Tetik aralığı</string>
-    <string name="config_gamepad_calibration_phase_review">İnceleme</string>
+    <string name="config_gamepad_calibration_phase_review">Kaydetmeye hazır</string>
     <string name="config_gamepad_calibration_phase_committed">Kaydedildi</string>
     <string name="config_gamepad_calibration_phase_cancelled">İptal edildi</string>
     <string name="config_gamepad_calibration_waiting_controller">Desteklenen bir analog çubuğa veya tetiğe sahip bir kumanda bağlayın. Kalibrasyon, bir çubuğu ilk hareket ettirdiğinizde veya tetiğe bastığınızda başlar; mevcut kalibrasyon siz kaydedene kadar değişmez.</string>
@@ -52,8 +52,8 @@
     <string name="config_gamepad_calibration_rejected">Kalibrasyon reddedildi: <xliff:g id="name" example="Example">%1$s</xliff:g></string>
     <string name="config_gamepad_calibration_neutral_instructions">Nötr zamanlayıcı tamamlanana kadar algılanan tüm çubukları ortada ve algılanan tüm tetikleri serbest tutun.</string>
     <string name="config_gamepad_calibration_stick_instructions">Algılanan her çubuğu tüm yönlerde tam aralığı boyunca hareket ettirin, ardından İleri’ye basın.</string>
-    <string name="config_gamepad_calibration_trigger_instructions">Algılanan her tetiği serbest bırakıp sonuna kadar basın, ardından incelemek için İleri’ye basın.</string>
-    <string name="config_gamepad_calibration_review_instructions">İncelemeye hazır. Kaydetme yalnızca bu kumandanın kalibrasyonunu değiştirir.</string>
+    <string name="config_gamepad_calibration_trigger_instructions">Algılanan her tetiği bırakıp sonuna kadar basın, ardından İleri’ye dokunun.</string>
+    <string name="config_gamepad_calibration_review_instructions">Bu kumandanın kalibrasyonunu değiştirmek için kaydedin.</string>
     <string name="config_gamepad_calibration_saved">Kalibrasyon kaydedildi.</string>
     <string name="config_gamepad_calibration_cancelled">Kalibrasyon iptal edildi. Önceki kalibrasyon değişmedi.</string>
     <string name="config_gamepad_calibration_waiting_samples">Kalibrasyon kumanda örneklerini bekliyor.</string>
@@ -212,7 +212,7 @@
     <string name="config_help_fps_limit">1× öykünme hızında FPS sınırını ayarlar. Etkin sınır öykünme hızını izler; 0 (Maksimum) ekranın maksimum yenileme hızını kullanır.</string>
     <string name="config_timing_mode_full_guest">Öykünme zamanı</string>
     <string name="config_timing_mode_real_wall">Sistem zamanı</string>
-    <string name="config_help_emulation_speed">MIDlet saat hızını ve desteklenen gecikmeleri değiştirir. Android sesi ve arayüzü normal hızda kalır.</string>
+    <string name="config_help_emulation_speed">Bu oturum için MIDlet’in desteklenen zamanlayıcılarını ve gecikmelerini ayarlar. Öykünme zamanı seçildiğinde tarih ve saat de seçilen hıza göre değişir. Medya oynatma ve Android arayüzü normal hızda kalır.</string>
     <string name="config_help_timing_mode">MIDlet’in öykünme zamanını mı yoksa sistem zamanını mı kullanacağını seçer. Göreli gecikmeler öykünme hızıyla ölçeklenmeye devam eder.</string>
     <string name="config_help_timing_unavailable">Bu MIDlet kurulumu için zaman ayarları kullanılamıyor. Etkinleştirmek için MIDlet’i yeniden yükleyin veya yeniden dönüştürün.</string>
     <string name="config_help_generic_color">Bu görsel öğenin rengini ayarlar.</string>

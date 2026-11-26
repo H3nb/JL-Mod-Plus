@@ -42,7 +42,7 @@
     <string name="config_gamepad_calibration_phase_neutral">Wachten op neutrale stand</string>
     <string name="config_gamepad_calibration_phase_stick_range">Stickbereik</string>
     <string name="config_gamepad_calibration_phase_trigger_range">Triggerbereik</string>
-    <string name="config_gamepad_calibration_phase_review">Controleren</string>
+    <string name="config_gamepad_calibration_phase_review">Klaar om op te slaan</string>
     <string name="config_gamepad_calibration_phase_committed">Opgeslagen</string>
     <string name="config_gamepad_calibration_phase_cancelled">Geannuleerd</string>
     <string name="config_gamepad_calibration_waiting_controller">Verbind een controller met een ondersteunde analoge stick of trigger. De kalibratie begint zodra je een stick beweegt of een trigger indrukt; de bestaande kalibratie blijft ongewijzigd totdat je opslaat.</string>
@@ -53,8 +53,8 @@
     <string name="config_gamepad_calibration_rejected">Kalibratie geweigerd: <xliff:g id="name" example="Example">%1$s</xliff:g></string>
     <string name="config_gamepad_calibration_neutral_instructions">Houd alle gedetecteerde sticks gecentreerd en alle gedetecteerde triggers losgelaten totdat de neutrale timer is afgelopen.</string>
     <string name="config_gamepad_calibration_stick_instructions">Beweeg elke gedetecteerde stick over het volledige bereik in alle richtingen en druk vervolgens op Volgende.</string>
-    <string name="config_gamepad_calibration_trigger_instructions">Laat elke gedetecteerde trigger los, druk deze volledig in en druk vervolgens op Volgende om te controleren.</string>
-    <string name="config_gamepad_calibration_review_instructions">Klaar om te controleren. Opslaan vervangt alleen de kalibratie van deze controller.</string>
+    <string name="config_gamepad_calibration_trigger_instructions">Laat elke gedetecteerde trigger los, druk deze volledig in en tik vervolgens op Volgende.</string>
+    <string name="config_gamepad_calibration_review_instructions">Sla op om de kalibratie van deze controller te vervangen.</string>
     <string name="config_gamepad_calibration_saved">Kalibratie opgeslagen.</string>
     <string name="config_gamepad_calibration_cancelled">Kalibratie geannuleerd. De vorige kalibratie blijft ongewijzigd.</string>
     <string name="config_gamepad_calibration_waiting_samples">Kalibratie wacht op controllermetingen.</string>
@@ -215,7 +215,7 @@
     <string name="config_help_fps_limit">Stelt de FPS-limiet in bij 1× emulatiesnelheid. De effectieve limiet volgt de emulatiesnelheid; 0 (Maximum) gebruikt de maximale verversingssnelheid van het scherm.</string>
     <string name="config_timing_mode_full_guest">Emulatietijd</string>
     <string name="config_timing_mode_real_wall">Systeemtijd</string>
-    <string name="config_help_emulation_speed">Wijzigt de kloksnelheid van de MIDlet en ondersteunde vertragingen. Android-audio en -interface blijven op normale snelheid.</string>
+    <string name="config_help_emulation_speed">Past ondersteunde timers en vertragingen van de MIDlet voor deze sessie aan. Als Emulatietijd is geselecteerd, volgen datum en tijd ook de gekozen snelheid. Mediaweergave en de Android-interface blijven op normale snelheid.</string>
     <string name="config_help_timing_mode">Kiest of de MIDlet emulatietijd of systeemtijd gebruikt. Relatieve vertragingen blijven meeschalen met de emulatiesnelheid.</string>
     <string name="config_help_timing_unavailable">Tijdinstellingen zijn niet beschikbaar voor deze MIDlet-installatie. Installeer of converteer de MIDlet opnieuw om ze in te schakelen.</string>
     <string name="config_help_generic_color">Stelt de kleur van dit visuele element in.</string>

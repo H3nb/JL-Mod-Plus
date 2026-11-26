@@ -42,7 +42,7 @@
     <string name="config_gamepad_calibration_phase_neutral">මධ්‍යස්ථ පිහිටීම බලාපොරොත්තුවෙන්</string>
     <string name="config_gamepad_calibration_phase_stick_range">ස්ටික් පරාසය</string>
     <string name="config_gamepad_calibration_phase_trigger_range">ට්‍රිගර් පරාසය</string>
-    <string name="config_gamepad_calibration_phase_review">සමාලෝචනය</string>
+    <string name="config_gamepad_calibration_phase_review">සුරැකීමට සූදානම්</string>
     <string name="config_gamepad_calibration_phase_committed">සුරකින ලදී</string>
     <string name="config_gamepad_calibration_phase_cancelled">අවලංගු කරන ලදී</string>
     <string name="config_gamepad_calibration_waiting_controller">සහාය දක්වන ඇනලොග් ස්ටික් හෝ ට්‍රිගර් සහිත පාලකයක් සම්බන්ධ කරන්න. ඔබ පළමුව ස්ටික් එකක් ගෙන යන විට හෝ ට්‍රිගරයක් ඔබන විට ක්‍රමාංකනය ඇරඹේ; ඔබ සුරකින තෙක් පවතින ක්‍රමාංකනය නොවෙනස්ව පවතී.</string>
@@ -53,8 +53,8 @@
     <string name="config_gamepad_calibration_rejected">ක්‍රමාංකනය ප්‍රතික්ෂේප විය: <xliff:g id="name" example="Example">%1$s</xliff:g></string>
     <string name="config_gamepad_calibration_neutral_instructions">මධ්‍යස්ථ ටයිමරය අවසන් වන තෙක් හඳුනාගත් සියලුම ස්ටික් මැද තබා හඳුනාගත් සියලුම ට්‍රිගර් අතහැර තබන්න.</string>
     <string name="config_gamepad_calibration_stick_instructions">හඳුනාගත් සෑම ස්ටික් එකක්ම සියලු දිශාවලට සම්පූර්ණ පරාසය දක්වා ගෙන ගොස්, ඉන්පසු “ඊළඟ” ඔබන්න.</string>
-    <string name="config_gamepad_calibration_trigger_instructions">හඳුනාගත් සෑම ට්‍රිගරයක්ම අතහැර සම්පූර්ණයෙන්ම ඔබා, ඉන්පසු සමාලෝචනය කිරීමට “ඊළඟ” ඔබන්න.</string>
-    <string name="config_gamepad_calibration_review_instructions">සමාලෝචනයට සූදානම්. සුරැකීමෙන් ප්‍රතිස්ථාපනය වන්නේ මෙම පාලකයේ ක්‍රමාංකනය පමණි.</string>
+    <string name="config_gamepad_calibration_trigger_instructions">හඳුනාගත් සෑම ට්‍රිගරයක්ම අතහැර සම්පූර්ණයෙන් ඔබා, ඉන්පසු “ඊළඟ” තට්ටු කරන්න.</string>
+    <string name="config_gamepad_calibration_review_instructions">මෙම පාලකයේ ක්‍රමාංකනය ප්‍රතිස්ථාපනය කිරීමට සුරකින්න.</string>
     <string name="config_gamepad_calibration_saved">ක්‍රමාංකනය සුරකින ලදී.</string>
     <string name="config_gamepad_calibration_cancelled">ක්‍රමාංකනය අවලංගු කරන ලදී. පෙර ක්‍රමාංකනය නොවෙනස්ව පවතී.</string>
     <string name="config_gamepad_calibration_waiting_samples">ක්‍රමාංකනය පාලක නියැදි බලාපොරොත්තුවෙන් සිටී.</string>
@@ -215,7 +215,7 @@
     <string name="config_help_fps_limit">1× අනුකරණ වේගයේදී FPS සීමාව සකසයි. සඵල සීමාව අනුකරණ වේගය අනුගමනය කරයි; 0 (උපරිම) සංදර්ශකයේ උපරිම නැවුම් අනුපාතය භාවිතා කරයි.</string>
     <string name="config_timing_mode_full_guest">අනුකරණ වේලාව</string>
     <string name="config_timing_mode_real_wall">පද්ධති වේලාව</string>
-    <string name="config_help_emulation_speed">MIDlet ඔරලෝසු වේගය සහ සහාය දක්වන ප්‍රමාදයන් වෙනස් කරයි. Android ශ්‍රව්‍ය සහ අතුරුමුහුණත සාමාන්‍ය වේගයෙන් පවතී.</string>
+    <string name="config_help_emulation_speed">මෙම සැසිය සඳහා MIDlet හි සහාය දක්වන ටයිමර සහ ප්‍රමාද සකසයි. අනුකරණ වේලාව තෝරා ඇති විට දිනය සහ වේලාව ද තෝරාගත් වේගයට අනුව වෙනස් වේ. මාධ්‍ය ධාවනය සහ Android අතුරුමුහුණත සාමාන්‍ය වේගයෙන් පවතී.</string>
     <string name="config_help_timing_mode">MIDlet අනුකරණ වේලාව හෝ පද්ධති වේලාව භාවිතා කරන්නේද යන්න තෝරයි. සාපේක්ෂ ප්‍රමාදයන් අනුකරණ වේගය සමඟ පරිමාණය වී පවතී.</string>
     <string name="config_help_timing_unavailable">මෙම MIDlet ස්ථාපනය සඳහා වේලා සැකසීම් ලබා ගත නොහැක. ඒවා සබල කිරීමට MIDlet නැවත ස්ථාපනය හෝ නැවත පරිවර්තනය කරන්න.</string>
     <string name="config_help_generic_color">මෙම දෘශ්‍ය අංගයේ වර්ණය සකසයි.</string>

@@ -42,7 +42,7 @@
     <string name="config_gamepad_calibration_phase_neutral">En attente de position neutre</string>
     <string name="config_gamepad_calibration_phase_stick_range">Course du stick</string>
     <string name="config_gamepad_calibration_phase_trigger_range">Course de la gâchette</string>
-    <string name="config_gamepad_calibration_phase_review">Vérification</string>
+    <string name="config_gamepad_calibration_phase_review">Prêt à enregistrer</string>
     <string name="config_gamepad_calibration_phase_committed">Enregistré</string>
     <string name="config_gamepad_calibration_phase_cancelled">Annulé</string>
     <string name="config_gamepad_calibration_waiting_controller">Connectez une manette équipée d’un stick analogique ou d’une gâchette pris en charge. Le calibrage commence dès que vous déplacez un stick ou appuyez sur une gâchette ; le calibrage actuel reste inchangé jusqu’à l’enregistrement.</string>
@@ -53,8 +53,8 @@
     <string name="config_gamepad_calibration_rejected">Calibrage refusé : <xliff:g id="name" example="Example">%1$s</xliff:g></string>
     <string name="config_gamepad_calibration_neutral_instructions">Maintenez tous les sticks détectés au centre et toutes les gâchettes détectées relâchées jusqu’à la fin du compte à rebours neutre.</string>
     <string name="config_gamepad_calibration_stick_instructions">Déplacez chaque stick détecté sur toute sa course dans toutes les directions, puis appuyez sur Suivant.</string>
-    <string name="config_gamepad_calibration_trigger_instructions">Relâchez puis enfoncez complètement chaque gâchette détectée, puis appuyez sur Suivant pour vérifier.</string>
-    <string name="config_gamepad_calibration_review_instructions">Prêt pour vérification. L’enregistrement remplace uniquement le calibrage de cette manette.</string>
+    <string name="config_gamepad_calibration_trigger_instructions">Relâchez puis enfoncez complètement chaque gâchette détectée, puis appuyez sur Suivant.</string>
+    <string name="config_gamepad_calibration_review_instructions">Enregistrez pour remplacer le calibrage de cette manette.</string>
     <string name="config_gamepad_calibration_saved">Calibrage enregistré.</string>
     <string name="config_gamepad_calibration_cancelled">Calibrage annulé. Le calibrage précédent reste inchangé.</string>
     <string name="config_gamepad_calibration_waiting_samples">Le calibrage attend des échantillons de la manette.</string>
@@ -216,7 +216,7 @@
     <string name="config_help_fps_limit">Définit la limite de FPS à la vitesse d’émulation 1×. La limite effective suit la vitesse d’émulation ; 0 (Maximum) utilise le taux de rafraîchissement maximal de l’écran.</string>
     <string name="config_timing_mode_full_guest">Temps d’émulation</string>
     <string name="config_timing_mode_real_wall">Heure système</string>
-    <string name="config_help_emulation_speed">Modifie la vitesse d’horloge du MIDlet et les délais pris en charge. L’audio et l’interface Android restent à vitesse normale.</string>
+    <string name="config_help_emulation_speed">Ajuste les minuteurs et les délais pris en charge par le MIDlet pour cette session. Si Temps d’émulation est sélectionné, la date et l’heure suivent également la vitesse. La lecture multimédia et l’interface Android restent à vitesse normale.</string>
     <string name="config_help_timing_mode">Choisit si le MIDlet utilise le temps d’émulation ou l’heure système. Les délais relatifs restent ajustés à la vitesse d’émulation.</string>
     <string name="config_help_timing_unavailable">Les paramètres d’horloge ne sont pas disponibles pour cette installation du MIDlet. Réinstallez ou reconvertissez le MIDlet pour les activer.</string>
     <string name="config_help_generic_color">Définit la couleur de cet élément visuel.</string>

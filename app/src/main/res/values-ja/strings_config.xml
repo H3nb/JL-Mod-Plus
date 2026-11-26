@@ -40,7 +40,7 @@
     <string name="config_gamepad_calibration_phase_neutral">中立位置を待機中</string>
     <string name="config_gamepad_calibration_phase_stick_range">スティックの可動範囲</string>
     <string name="config_gamepad_calibration_phase_trigger_range">トリガーの可動範囲</string>
-    <string name="config_gamepad_calibration_phase_review">確認</string>
+    <string name="config_gamepad_calibration_phase_review">保存できます</string>
     <string name="config_gamepad_calibration_phase_committed">保存済み</string>
     <string name="config_gamepad_calibration_phase_cancelled">キャンセル済み</string>
     <string name="config_gamepad_calibration_waiting_controller">対応するアナログスティックまたはトリガーを備えたコントローラーを接続してください。最初にスティックを動かすかトリガーを押すとキャリブレーションが始まります。保存するまで既存のキャリブレーションは変更されません。</string>
@@ -51,8 +51,8 @@
     <string name="config_gamepad_calibration_rejected">キャリブレーションが拒否されました: <xliff:g id="name" example="Example">%1$s</xliff:g></string>
     <string name="config_gamepad_calibration_neutral_instructions">中立位置の計測タイマーが完了するまで、検出されたすべてのスティックを中央に保ち、すべてのトリガーを離した状態にしてください。</string>
     <string name="config_gamepad_calibration_stick_instructions">検出されたすべてのスティックを全方向に端まで動かしてから、「次へ」を押してください。</string>
-    <string name="config_gamepad_calibration_trigger_instructions">検出されたすべてのトリガーを離した状態から奥まで押し込んでから、「次へ」を押して確認してください。</string>
-    <string name="config_gamepad_calibration_review_instructions">確認の準備ができました。保存すると、このコントローラーのキャリブレーションのみが置き換わります。</string>
+    <string name="config_gamepad_calibration_trigger_instructions">検出されたすべてのトリガーを離した状態から奥まで押し込んでから、「次へ」をタップしてください。</string>
+    <string name="config_gamepad_calibration_review_instructions">保存すると、このコントローラーのキャリブレーションが置き換わります。</string>
     <string name="config_gamepad_calibration_saved">キャリブレーションを保存しました。</string>
     <string name="config_gamepad_calibration_cancelled">キャリブレーションをキャンセルしました。以前のキャリブレーションは変更されません。</string>
     <string name="config_gamepad_calibration_waiting_samples">コントローラーからの入力サンプルを待機しています。</string>
@@ -211,7 +211,7 @@
     <string name="config_help_fps_limit">1× エミュレーション速度時の FPS 上限を設定します。実効上限はエミュレーション速度に連動し、0（最大）ではディスプレイの最大リフレッシュレートを使用します。</string>
     <string name="config_timing_mode_full_guest">エミュレーション時刻</string>
     <string name="config_timing_mode_real_wall">システム時刻</string>
-    <string name="config_help_emulation_speed">MIDlet のクロック速度と対応する遅延を変更します。Android のオーディオと UI は通常速度のままです。</string>
+    <string name="config_help_emulation_speed">このセッションで MIDlet の対応タイマーや待ち時間を調整します。エミュレーション時刻を選択している場合は、日付と時刻も設定した速度に連動します。メディア再生と Android の UI は通常の速度のままです。</string>
     <string name="config_help_timing_mode">MIDlet がエミュレーション時刻とシステム時刻のどちらを使用するかを選択します。相対的な遅延は引き続きエミュレーション速度に連動します。</string>
     <string name="config_help_timing_unavailable">この MIDlet のインストール状態では時刻設定を利用できません。有効にするには MIDlet を再インストールまたは再変換してください。</string>
     <string name="config_help_generic_color">この表示要素の色を設定します。</string>

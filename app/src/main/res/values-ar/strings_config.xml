@@ -42,7 +42,7 @@
     <string name="config_gamepad_calibration_phase_neutral">بانتظار الوضع المحايد</string>
     <string name="config_gamepad_calibration_phase_stick_range">نطاق العصا</string>
     <string name="config_gamepad_calibration_phase_trigger_range">نطاق الزناد</string>
-    <string name="config_gamepad_calibration_phase_review">مراجعة</string>
+    <string name="config_gamepad_calibration_phase_review">جاهز للحفظ</string>
     <string name="config_gamepad_calibration_phase_committed">تم الحفظ</string>
     <string name="config_gamepad_calibration_phase_cancelled">تم الإلغاء</string>
     <string name="config_gamepad_calibration_waiting_controller">صِل وحدة تحكم تحتوي على عصا تحكم تناظرية أو زناد مدعوم. تبدأ المعايرة عند أول حركة للعصا أو ضغط على الزناد؛ وتبقى المعايرة الحالية دون تغيير حتى تحفظها.</string>
@@ -53,8 +53,8 @@
     <string name="config_gamepad_calibration_rejected">رُفضت المعايرة: <xliff:g id="name" example="Example">%1$s</xliff:g></string>
     <string name="config_gamepad_calibration_neutral_instructions">أبقِ جميع العصي المكتشفة في المنتصف وجميع الزنادات المكتشفة محررة حتى ينتهي مؤقت الوضع المحايد.</string>
     <string name="config_gamepad_calibration_stick_instructions">حرّك كل عصا مكتشفة عبر كامل نطاقها في جميع الاتجاهات، ثم اضغط على «التالي».</string>
-    <string name="config_gamepad_calibration_trigger_instructions">حرّر كل زناد مكتشف واضغطه بالكامل، ثم اضغط على «التالي» للمراجعة.</string>
-    <string name="config_gamepad_calibration_review_instructions">جاهز للمراجعة. يستبدل الحفظ معايرة وحدة التحكم هذه فقط.</string>
+    <string name="config_gamepad_calibration_trigger_instructions">حرّر كل زناد مكتشف واضغطه بالكامل، ثم انقر على «التالي».</string>
+    <string name="config_gamepad_calibration_review_instructions">احفظ لاستبدال معايرة وحدة التحكم هذه.</string>
     <string name="config_gamepad_calibration_saved">تم حفظ المعايرة.</string>
     <string name="config_gamepad_calibration_cancelled">أُلغيت المعايرة. تبقى المعايرة السابقة دون تغيير.</string>
     <string name="config_gamepad_calibration_waiting_samples">تنتظر المعايرة عينات من وحدة التحكم.</string>
@@ -219,7 +219,7 @@
     <string name="config_help_fps_limit">يضبط حد FPS عند سرعة محاكاة 1×. يتبع الحد الفعلي سرعة المحاكاة؛ ويستخدم 0 (الحد الأقصى) أعلى معدل تحديث للشاشة.</string>
     <string name="config_timing_mode_full_guest">وقت المحاكاة</string>
     <string name="config_timing_mode_real_wall">وقت النظام</string>
-    <string name="config_help_emulation_speed">يغيّر سرعة ساعة MIDlet والتأخيرات المدعومة. يبقى صوت Android وواجهته بالسرعة العادية.</string>
+    <string name="config_help_emulation_speed">يضبط المؤقتات والتأخيرات المدعومة في MIDlet لهذه الجلسة. عند اختيار وقت المحاكاة، يتبع التاريخ والوقت السرعة أيضًا. يظل تشغيل الوسائط وواجهة Android بالسرعة العادية.</string>
     <string name="config_help_timing_mode">يختار ما إذا كان تطبيق MIDlet يستخدم وقت المحاكاة أم وقت النظام. وتبقى التأخيرات النسبية متناسبة مع سرعة المحاكاة.</string>
     <string name="config_help_timing_unavailable">إعدادات الوقت غير متوفرة لتثبيت MIDlet هذا. أعد تثبيت تطبيق MIDlet أو أعد تحويله لتفعيلها.</string>
     <string name="config_help_generic_color">يضبط لون هذا العنصر البصري.</string>

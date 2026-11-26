@@ -39,7 +39,7 @@
     <string name="config_gamepad_calibration_phase_neutral">等待居中</string>
     <string name="config_gamepad_calibration_phase_stick_range">摇杆行程</string>
     <string name="config_gamepad_calibration_phase_trigger_range">扳机行程</string>
-    <string name="config_gamepad_calibration_phase_review">确认结果</string>
+    <string name="config_gamepad_calibration_phase_review">可以保存</string>
     <string name="config_gamepad_calibration_phase_committed">已保存</string>
     <string name="config_gamepad_calibration_phase_cancelled">已取消</string>
     <string name="config_gamepad_calibration_waiting_controller">请连接支持模拟摇杆或扳机的手柄。首次推动摇杆或按下扳机后将开始校准；在保存之前，现有校准保持不变。</string>
@@ -50,8 +50,8 @@
     <string name="config_gamepad_calibration_rejected">校准被拒绝：<xliff:g id="name" example="Example">%1$s</xliff:g></string>
     <string name="config_gamepad_calibration_neutral_instructions">请让所有已检测到的摇杆保持居中并松开所有已检测到的扳机，直至居中计时完成。</string>
     <string name="config_gamepad_calibration_stick_instructions">请将每个已检测到的摇杆朝各个方向推至最大行程，然后按“下一步”。</string>
-    <string name="config_gamepad_calibration_trigger_instructions">请完全松开再按到底每个已检测到的扳机，然后按“下一步”确认结果。</string>
-    <string name="config_gamepad_calibration_review_instructions">已准备就绪，可供确认。保存后仅会替换此手柄的校准数据。</string>
+    <string name="config_gamepad_calibration_trigger_instructions">请完全松开再按到底每个已检测到的扳机，然后点按“下一步”。</string>
+    <string name="config_gamepad_calibration_review_instructions">保存后将替换此手柄的校准数据。</string>
     <string name="config_gamepad_calibration_saved">校准已保存。</string>
     <string name="config_gamepad_calibration_cancelled">校准已取消，原有校准保持不变。</string>
     <string name="config_gamepad_calibration_waiting_samples">校准正在等待手柄采样数据。</string>
@@ -209,7 +209,7 @@
     <string name="config_help_fps_limit">设置 1× 模拟速度下的 FPS 上限。实际帧率上限会随模拟速度同步缩放；设为 0（最高）时使用屏幕最高刷新率。</string>
     <string name="config_timing_mode_full_guest">模拟时间</string>
     <string name="config_timing_mode_real_wall">系统时间</string>
-    <string name="config_help_emulation_speed">调整 MIDlet 的时钟速度及受支持的延迟。Android 音频和界面仍保持正常速度。</string>
+    <string name="config_help_emulation_speed">调整本次会话中 MIDlet 支持的计时器和延迟。选择模拟时间时，日期和时间也会随所选速度变化。媒体播放和 Android 界面仍保持正常速度。</string>
     <string name="config_help_timing_mode">选择 MIDlet 使用模拟时间还是系统时间。相对延迟仍会随模拟速度缩放。</string>
     <string name="config_help_timing_unavailable">此已安装的 MIDlet 不支持时间设置。请重新安装或重新转换该 MIDlet 以启用。</string>
     <string name="config_help_generic_color">设置此视觉元素的颜色。</string>

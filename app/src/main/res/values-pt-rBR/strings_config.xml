@@ -42,7 +42,7 @@
     <string name="config_gamepad_calibration_phase_neutral">Aguardando posição neutra</string>
     <string name="config_gamepad_calibration_phase_stick_range">Alcance dos analógicos</string>
     <string name="config_gamepad_calibration_phase_trigger_range">Alcance dos gatilhos</string>
-    <string name="config_gamepad_calibration_phase_review">Revisão</string>
+    <string name="config_gamepad_calibration_phase_review">Pronto para salvar</string>
     <string name="config_gamepad_calibration_phase_committed">Salvo</string>
     <string name="config_gamepad_calibration_phase_cancelled">Cancelado</string>
     <string name="config_gamepad_calibration_waiting_controller">Conecte um controle com analógico ou gatilho compatível. A calibração começa na primeira vez que você mover um analógico ou pressionar um gatilho; a calibração atual permanece inalterada até você salvar.</string>
@@ -53,8 +53,8 @@
     <string name="config_gamepad_calibration_rejected">Calibração rejeitada: <xliff:g id="name" example="Example">%1$s</xliff:g></string>
     <string name="config_gamepad_calibration_neutral_instructions">Mantenha todos os analógicos detectados centralizados e todos os gatilhos detectados soltos até o temporizador neutro terminar.</string>
     <string name="config_gamepad_calibration_stick_instructions">Mova cada analógico detectado por todo o seu alcance em todas as direções e pressione Avançar.</string>
-    <string name="config_gamepad_calibration_trigger_instructions">Solte e pressione totalmente cada gatilho detectado e pressione Avançar para revisar.</string>
-    <string name="config_gamepad_calibration_review_instructions">Pronto para revisar. Salvar substitui apenas a calibração deste controle.</string>
+    <string name="config_gamepad_calibration_trigger_instructions">Solte e pressione totalmente cada gatilho detectado e toque em Avançar.</string>
+    <string name="config_gamepad_calibration_review_instructions">Salve para substituir a calibração deste controle.</string>
     <string name="config_gamepad_calibration_saved">Calibração salva.</string>
     <string name="config_gamepad_calibration_cancelled">Calibração cancelada. A calibração anterior permanece inalterada.</string>
     <string name="config_gamepad_calibration_waiting_samples">A calibração está aguardando amostras do controle.</string>
@@ -216,7 +216,7 @@
     <string name="config_help_fps_limit">Define o limite de FPS na velocidade de emulação 1×. O limite efetivo acompanha a velocidade de emulação; 0 (Máximo) usa a taxa de atualização máxima da tela.</string>
     <string name="config_timing_mode_full_guest">Tempo de emulação</string>
     <string name="config_timing_mode_real_wall">Hora do sistema</string>
-    <string name="config_help_emulation_speed">Altera a velocidade do relógio do MIDlet e os atrasos compatíveis. O áudio e a interface do Android continuam em velocidade normal.</string>
+    <string name="config_help_emulation_speed">Ajusta os temporizadores e atrasos compatíveis do MIDlet durante esta sessão. Se Tempo de emulação estiver selecionado, a data e a hora também acompanham a velocidade. A reprodução de mídia e a interface do Android mantêm a velocidade normal.</string>
     <string name="config_help_timing_mode">Escolhe se o MIDlet usa o tempo de emulação ou a hora do sistema. Os atrasos relativos continuam escalados conforme a velocidade de emulação.</string>
     <string name="config_help_timing_unavailable">As configurações de tempo não estão disponíveis para esta instalação do MIDlet. Reinstale ou reconverta o MIDlet para ativá-las.</string>
     <string name="config_help_generic_color">Define a cor deste elemento visual.</string>

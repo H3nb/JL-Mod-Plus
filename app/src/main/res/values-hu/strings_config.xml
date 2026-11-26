@@ -42,7 +42,7 @@
     <string name="config_gamepad_calibration_phase_neutral">Várakozás nyugalmi helyzetre</string>
     <string name="config_gamepad_calibration_phase_stick_range">Karok tartománya</string>
     <string name="config_gamepad_calibration_phase_trigger_range">Ravaszok tartománya</string>
-    <string name="config_gamepad_calibration_phase_review">Áttekintés</string>
+    <string name="config_gamepad_calibration_phase_review">Mentésre kész</string>
     <string name="config_gamepad_calibration_phase_committed">Mentve</string>
     <string name="config_gamepad_calibration_phase_cancelled">Megszakítva</string>
     <string name="config_gamepad_calibration_waiting_controller">Csatlakoztasson támogatott analóg karral vagy ravasszal rendelkező kontrollert. A kalibrálás az első karmozdulatnál vagy ravaszlenyomásnál indul; a meglévő kalibrálás a mentésig változatlan marad.</string>
@@ -53,8 +53,8 @@
     <string name="config_gamepad_calibration_rejected">Kalibrálás elutasítva: <xliff:g id="name" example="Example">%1$s</xliff:g></string>
     <string name="config_gamepad_calibration_neutral_instructions">Tartsa az összes észlelt kart középen, az összes észlelt ravaszt pedig elengedve, amíg a nyugalmi időzítő le nem jár.</string>
     <string name="config_gamepad_calibration_stick_instructions">Mozgassa végig az összes észlelt kart a teljes tartományán minden irányban, majd nyomja meg a Tovább gombot.</string>
-    <string name="config_gamepad_calibration_trigger_instructions">Engedje el, majd nyomja le teljesen az összes észlelt ravaszt, végül nyomja meg a Tovább gombot az áttekintéshez.</string>
-    <string name="config_gamepad_calibration_review_instructions">Készen áll az áttekintésre. A mentés csak ennek a kontrollernek a kalibrálását cseréli le.</string>
+    <string name="config_gamepad_calibration_trigger_instructions">Engedje el, majd nyomja le teljesen az összes észlelt ravaszt, végül koppintson a Tovább gombra.</string>
+    <string name="config_gamepad_calibration_review_instructions">Mentéssel lecserélheti ennek a kontrollernek a kalibrálását.</string>
     <string name="config_gamepad_calibration_saved">Kalibrálás mentve.</string>
     <string name="config_gamepad_calibration_cancelled">Kalibrálás megszakítva. Az előző kalibrálás változatlan maradt.</string>
     <string name="config_gamepad_calibration_waiting_samples">A kalibrálás a kontroller mintáira vár.</string>
@@ -215,7 +215,7 @@
     <string name="config_help_fps_limit">Beállítja az FPS-korlátot 1× emulációs sebességnél. A tényleges korlát követi az emulációs sebességet; a 0 (Maximum) a kijelző maximális frissítési gyakoriságát használja.</string>
     <string name="config_timing_mode_full_guest">Emulációs idő</string>
     <string name="config_timing_mode_real_wall">Rendszeridő</string>
-    <string name="config_help_emulation_speed">Módosítja a MIDlet órajel-sebességét és a támogatott késleltetéseket. Az Android hangja és felülete normál sebességgel fut tovább.</string>
+    <string name="config_help_emulation_speed">Az adott munkamenetre módosítja a MIDlet támogatott időzítőit és késleltetéseit. Emulációs idő választásakor a dátum és az idő is követi a sebességet. A médialejátszás és az Android kezelőfelülete normál sebességen marad.</string>
     <string name="config_help_timing_mode">Kiválasztja, hogy a MIDlet emulációs időt vagy rendszeridőt használjon. A relatív késleltetések továbbra is az emulációs sebességgel skálázódnak.</string>
     <string name="config_help_timing_unavailable">Az időbeállítások nem érhetők el ehhez a MIDlet-telepítéshez. Az engedélyezésükhöz telepítse újra vagy konvertálja újra a MIDlet-et.</string>
     <string name="config_help_generic_color">Beállítja ennek a vizuális elemnek a színét.</string>
