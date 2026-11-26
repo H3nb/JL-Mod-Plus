@@ -21,7 +21,7 @@
     <string name="PREF_FONT_MEDIUM">Mellem</string>
     <string name="PREF_FONT_SIZE_IN_SP">Brug Android-skriftstørrelse</string>
     <string name="PREF_FONT_SMALL">Lille</string>
-    <string name="PREF_FORCE_FULLSCREEN">Start uden kommandolinje</string>
+    <string name="PREF_FORCE_FULLSCREEN">Start uden kommandobjælke</string>
     <string name="pref_graphics_hw_gles">Hardwareacceleration (OpenGL ES)</string>
     <string name="pref_graphics_hw_surface">Hardwareacceleration (Surface)</string>
     <string name="pref_graphics_hw_view">Hardwareacceleration (Vindue)</string>
@@ -71,7 +71,7 @@
     <string name="PREF_UNIT_MS">ms</string>
     <string name="pref_vibration_title">Vibration</string>
     <string name="PREF_VIRTUAL_KEYBOARD_OPTIONS">Vis virtuelle kontroller</string>
-    <string name="PREF_VK_ALPHA">Gennemsigtighed</string>
+    <string name="PREF_VK_ALPHA">Opacitet</string>
     <string name="PREF_VK_FEEDBACK">Haptisk feedback</string>
     <string name="PREF_VK_HIDE_DELAY">Forsinkelse før automatisk skjul</string>
     <string name="pref_vk_hide_hint">Deaktiveret</string>

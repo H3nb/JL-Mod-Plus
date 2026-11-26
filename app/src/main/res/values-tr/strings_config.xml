@@ -153,9 +153,9 @@
     <string name="config_controls_color_label_pressed">Basılı etiket</string>
     <string name="config_controls_color_outline_short">Dış çizgi</string>
     <string name="config_controls_disabled_hint">Sanal kontroller şu anda kapalı. Yine de buradan özelleştirebilirsiniz.</string>
-    <string name="config_controls_opacity_help" formatted="false">Sanal kontrollerin saydamlığını ayarlar: %0 tamamen saydam, %100 tamamen görünürdür.</string>
+    <string name="config_controls_opacity_help" formatted="false">Sanal kontrollerin opaklığını ayarlar. %0 değerinde kontroller saydamdır, %100 değerinde ek saydamlık uygulanmaz.</string>
     <string name="config_controls_opaque_outside">MIDlet ekranı dışındaki kontrolleri saydamlık olmadan göster</string>
-    <string name="config_controls_opaque_outside_help">MIDlet ekranı dışındaki kontroller opaklığı yoksayar. Ekran üzerindeki kontroller seçilen opaklığı kullanmaya devam eder.</string>
+    <string name="config_controls_opaque_outside_help">Bu seçenek açıkken MIDlet ekranının tamamen dışında kalan kontroller ek saydamlık uygulanmadan gösterilir. Ekranla örtüşen kontroller seçilen opaklığı kullanır.</string>
     <string name="config_controls_connect_controller">Kalibre etmek için bir kumanda bağlayın</string>
     <string name="config_controls_color_skin_notice">Tam düğme kaplaması varsayılan düğme renklerinin, şeklinin ve dış çizgisinin yerini alabilir.</string>
     <string name="config_current_value">Geçerli değer</string>

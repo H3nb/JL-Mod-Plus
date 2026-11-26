@@ -71,7 +71,7 @@
     <string name="PREF_UNIT_MS">মি.সে.</string>
     <string name="pref_vibration_title">ভাইব্রেশন</string>
     <string name="PREF_VIRTUAL_KEYBOARD_OPTIONS">ভার্চুয়াল কন্ট্রোল দেখান</string>
-    <string name="PREF_VK_ALPHA">স্বচ্ছতা</string>
+    <string name="PREF_VK_ALPHA">অস্বচ্ছতা</string>
     <string name="PREF_VK_FEEDBACK">হ্যাপটিক ফিডব্যাক</string>
     <string name="PREF_VK_HIDE_DELAY">স্বয়ংক্রিয় লুকানোর বিলম্ব</string>
     <string name="pref_vk_hide_hint">বন্ধ</string>

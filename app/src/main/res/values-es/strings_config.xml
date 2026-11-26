@@ -154,9 +154,9 @@
     <string name="config_controls_color_label_pressed">Etiqueta pulsada</string>
     <string name="config_controls_color_outline_short">Contorno</string>
     <string name="config_controls_disabled_hint">Los controles virtuales están desactivados actualmente. Aun así, puedes personalizarlos aquí.</string>
-    <string name="config_controls_opacity_help" formatted="false">Ajusta la transparencia de los controles virtuales: 0% es totalmente transparente y 100% es totalmente visible.</string>
+    <string name="config_controls_opacity_help" formatted="false">Ajusta la opacidad de los controles virtuales. Al 0 %, los controles son transparentes; al 100 %, no se aplica transparencia adicional.</string>
     <string name="config_controls_opaque_outside">Mostrar controles sin transparencia fuera de la pantalla del MIDlet</string>
-    <string name="config_controls_opaque_outside_help">Los controles fuera de la pantalla del MIDlet ignoran la opacidad. Los controles sobre la pantalla siguen usando la opacidad seleccionada.</string>
+    <string name="config_controls_opaque_outside_help">Si activas esta opción, los controles que están completamente fuera de la pantalla del MIDlet se muestran sin transparencia adicional. Los que se superponen a la pantalla usan la opacidad seleccionada.</string>
     <string name="config_controls_connect_controller">Conecta un mando para calibrar</string>
     <string name="config_controls_color_skin_notice">Un aspecto de botón completo puede reemplazar los colores, la forma y el contorno predeterminados del botón.</string>
     <string name="config_current_value">Valor actual</string>

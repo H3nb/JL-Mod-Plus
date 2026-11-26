@@ -157,9 +157,9 @@
     <string name="config_controls_color_label_pressed">Притиснута ознака</string>
     <string name="config_controls_color_outline_short">Обрис</string>
     <string name="config_controls_disabled_hint">Виртуелне контроле су тренутно искључене. И даље можете да их прилагођавате овде.</string>
-    <string name="config_controls_opacity_help" formatted="false">Подешава провидност виртуелних контрола: 0% је потпуно провидно; 100% је потпуно видљиво.</string>
+    <string name="config_controls_opacity_help" formatted="false">Подешава непровидност виртуелних контрола. На 0% контроле су провидне, док се на 100% не примењује додатна провидност.</string>
     <string name="config_controls_opaque_outside">Прикажи контроле без провидности изван екрана MIDlet-а</string>
-    <string name="config_controls_opaque_outside_help">Контроле изван екрана MIDlet-а занемарују непровидност. Контроле преко екрана и даље прате изабрану непровидност.</string>
+    <string name="config_controls_opaque_outside_help">Када је ова опција укључена, контроле које се у потпуности налазе изван екрана MIDlet-а приказују се без додатне провидности. Контроле које преклапају екран користе изабрану непровидност.</string>
     <string name="config_controls_connect_controller">Повежите контролер за калибрацију</string>
     <string name="config_controls_color_skin_notice">Маска целог дугмета може заменити подразумеване боје, облик и обрис дугмади.</string>
     <string name="config_current_value">Тренутна вредност</string>

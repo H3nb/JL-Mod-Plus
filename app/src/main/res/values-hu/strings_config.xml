@@ -156,9 +156,9 @@
     <string name="config_controls_color_label_pressed">Lenyomott felirat</string>
     <string name="config_controls_color_outline_short">Körvonal</string>
     <string name="config_controls_disabled_hint">A virtuális vezérlők jelenleg ki vannak kapcsolva. Ennek ellenére itt testreszabhatja őket.</string>
-    <string name="config_controls_opacity_help" formatted="false">A virtuális vezérlők átlátszóságát állítja be: a 0% teljesen átlátszó, a 100% teljesen látható.</string>
+    <string name="config_controls_opacity_help" formatted="false">A virtuális vezérlők átlátszatlanságát állítja be. 0% esetén a vezérlők átlátszók, 100% esetén pedig nincs hozzáadott átlátszóság.</string>
     <string name="config_controls_opaque_outside">Vezérlők megjelenítése átlátszóság nélkül a MIDlet-képernyőn kívül</string>
-    <string name="config_controls_opaque_outside_help">A MIDlet-képernyőn kívüli vezérlők figyelmen kívül hagyják az átlátszatlanságot. A képernyő feletti vezérlők továbbra is a beállított átlátszatlanságot használják.</string>
+    <string name="config_controls_opaque_outside_help">Ha ez a beállítás be van kapcsolva, a MIDlet képernyőjén teljesen kívül eső vezérlők további átlátszóság nélkül jelennek meg. A képernyőt átfedő vezérlők a beállított átlátszatlanságot használják.</string>
     <string name="config_controls_connect_controller">Csatlakoztasson kontrollert a kalibráláshoz</string>
     <string name="config_controls_color_skin_notice">A teljes gombos kinézet felülírhatja az alapértelmezett gombszíneket, alakot és körvonalat.</string>
     <string name="config_current_value">Jelenlegi érték</string>

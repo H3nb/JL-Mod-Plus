@@ -152,9 +152,9 @@
     <string name="config_controls_color_label_pressed">押下時のラベル</string>
     <string name="config_controls_color_outline_short">枠線</string>
     <string name="config_controls_disabled_hint">仮想コントロールは現在オフです。この画面で引き続きカスタマイズできます。</string>
-    <string name="config_controls_opacity_help" formatted="false">仮想コントロールの透明度を調整します。0% で完全に透明、100% で完全に不透明になります。</string>
+    <string name="config_controls_opacity_help" formatted="false">仮想コントロールの不透明度を調整します。0% では透明になり、100% では元の画像や色に透明度を追加しません。</string>
     <string name="config_controls_opaque_outside">MIDlet 画面外のコントロールを不透明で表示</string>
-    <string name="config_controls_opaque_outside_help">MIDlet 画面の外側にあるコントロールは不透明度の設定を無視します。画面上に重なるコントロールには引き続き不透明度が適用されます。</string>
+    <string name="config_controls_opaque_outside_help">オンにすると、MIDlet の画面と重ならないコントロールは透明度を追加せずに表示されます。画面と重なるコントロールには設定した不透明度が適用されます。</string>
     <string name="config_controls_connect_controller">キャリブレーションするにはコントローラーを接続してください</string>
     <string name="config_controls_color_skin_notice">ボタン全体スキンを使用すると、デフォルトのボタン色、形状、枠線が置き換わる場合があります。</string>
     <string name="config_current_value">現在の値</string>

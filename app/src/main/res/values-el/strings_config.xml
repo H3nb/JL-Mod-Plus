@@ -153,9 +153,9 @@
     <string name="config_controls_color_label_pressed">Πατημένη ετικέτα</string>
     <string name="config_controls_color_outline_short">Περίγραμμα</string>
     <string name="config_controls_disabled_hint">Τα εικονικά χειριστήρια είναι αυτήν τη στιγμή ανενεργά. Μπορείτε ωστόσο να τα προσαρμόσετε εδώ.</string>
-    <string name="config_controls_opacity_help" formatted="false">Προσαρμόζει τη διαφάνεια των εικονικών χειριστηρίων: 0% είναι πλήρως διαφανές, 100% είναι πλήρως ορατό.</string>
+    <string name="config_controls_opacity_help" formatted="false">Ρυθμίζει την αδιαφάνεια των εικονικών χειριστηρίων. Στο 0% τα χειριστήρια είναι διαφανή, ενώ στο 100% δεν εφαρμόζεται πρόσθετη διαφάνεια.</string>
     <string name="config_controls_opaque_outside">Εμφάνιση χειριστηρίων χωρίς διαφάνεια εκτός της οθόνης MIDlet</string>
-    <string name="config_controls_opaque_outside_help">Τα χειριστήρια εκτός της οθόνης MIDlet αγνοούν την αδιαφάνεια. Τα χειριστήρια πάνω από την οθόνη εξακολουθούν να ακολουθούν την επιλεγμένη αδιαφάνεια.</string>
+    <string name="config_controls_opaque_outside_help">Όταν είναι ενεργή αυτή η επιλογή, τα χειριστήρια που βρίσκονται εξ ολοκλήρου έξω από την οθόνη του MIDlet εμφανίζονται χωρίς πρόσθετη διαφάνεια. Όσα επικαλύπτουν την οθόνη χρησιμοποιούν την επιλεγμένη αδιαφάνεια.</string>
     <string name="config_controls_connect_controller">Συνδέστε ένα χειριστήριο για βαθμονόμηση</string>
     <string name="config_controls_color_skin_notice">Μια εμφάνιση πλήρους κουμπιού μπορεί να αντικαταστήσει τα προεπιλεγμένα χρώματα, το σχήμα και το περίγραμμα των κουμπιών.</string>
     <string name="config_current_value">Τρέχουσα τιμή</string>

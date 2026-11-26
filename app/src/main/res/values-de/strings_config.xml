@@ -156,9 +156,9 @@
     <string name="config_controls_color_label_pressed">Beschriftung (gedrückt)</string>
     <string name="config_controls_color_outline_short">Kontur</string>
     <string name="config_controls_disabled_hint">Die virtuelle Steuerung ist derzeit deaktiviert. Sie können sie hier dennoch anpassen.</string>
-    <string name="config_controls_opacity_help" formatted="false">Passt die Transparenz der virtuellen Steuerung an: 0 % ist vollständig transparent, 100 % ist vollständig sichtbar.</string>
+    <string name="config_controls_opacity_help" formatted="false">Legt die Deckkraft der virtuellen Steuerelemente fest. Bei 0 % sind sie transparent; bei 100 % wird keine zusätzliche Transparenz angewendet.</string>
     <string name="config_controls_opaque_outside">Steuerung außerhalb des MIDlet-Bildschirms ohne Transparenz anzeigen</string>
-    <string name="config_controls_opaque_outside_help">Steuerelemente außerhalb des MIDlet-Bildschirms ignorieren die Deckkraft. Steuerelemente über dem Bildschirm folgen weiterhin der gewählten Deckkraft.</string>
+    <string name="config_controls_opaque_outside_help">Wenn diese Option aktiviert ist, werden Steuerelemente, die vollständig außerhalb des MIDlet-Bildschirms liegen, ohne zusätzliche Transparenz dargestellt. Bei Steuerelementen, die den Bildschirm überlappen, gilt die gewählte Deckkraft.</string>
     <string name="config_controls_connect_controller">Controller zum Kalibrieren verbinden</string>
     <string name="config_controls_color_skin_notice">Ein Skin für vollständige Tasten kann Standardfarben, -form und -kontur der Tasten ersetzen.</string>
     <string name="config_current_value">Aktueller Wert</string>

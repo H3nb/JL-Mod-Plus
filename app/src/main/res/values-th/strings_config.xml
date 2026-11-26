@@ -155,9 +155,9 @@
     <string name="config_controls_color_label_pressed">ป้ายชื่อขณะกด</string>
     <string name="config_controls_color_outline_short">เส้นขอบ</string>
     <string name="config_controls_disabled_hint">ปุ่มควบคุมเสมือนปิดอยู่ขณะนี้ คุณยังสามารถปรับแต่งที่นี่ได้</string>
-    <string name="config_controls_opacity_help" formatted="false">ปรับความโปร่งใสของปุ่มควบคุมเสมือน: 0% คือโปร่งใสทั้งหมด และ 100% คือทึบแสงทั้งหมด</string>
+    <string name="config_controls_opacity_help" formatted="false">ปรับความทึบของปุ่มควบคุมเสมือน ที่ 0% ปุ่มจะโปร่งใส และที่ 100% จะไม่มีการเพิ่มความโปร่งใส</string>
     <string name="config_controls_opaque_outside">แสดงปุ่มควบคุมแบบไม่โปร่งใสนอกหน้าจอ MIDlet</string>
-    <string name="config_controls_opaque_outside_help">ปุ่มควบคุมที่อยู่นอกหน้าจอ MIDlet จะไม่ใช้ค่าความทึบ ส่วนปุ่มที่วางทับหน้าจอจะยังคงใช้ความทึบที่เลือกไว้</string>
+    <string name="config_controls_opaque_outside_help">เมื่อเปิดใช้ตัวเลือกนี้ ปุ่มควบคุมที่อยู่นอกหน้าจอ MIDlet ทั้งหมดจะแสดงโดยไม่เพิ่มความโปร่งใส ส่วนปุ่มที่ซ้อนทับหน้าจอจะใช้ค่าความทึบที่เลือกไว้</string>
     <string name="config_controls_connect_controller">เชื่อมต่อคอนโทรลเลอร์เพื่อปรับเทียบ</string>
     <string name="config_controls_color_skin_notice">สกินแบบปุ่มเต็มอาจแทนที่สี รูปร่าง และเส้นขอบเริ่มต้นของปุ่ม</string>
     <string name="config_current_value">ค่าปัจจุบัน</string>

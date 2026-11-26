@@ -156,9 +156,9 @@
     <string name="config_controls_color_label_pressed">दबाया गया लेबल</string>
     <string name="config_controls_color_outline_short">आउटलाइन</string>
     <string name="config_controls_disabled_hint">वर्चुअल कंट्रोल वर्तमान में बंद हैं। आप इन्हें फिर भी यहां कस्टमाइज़ कर सकते हैं।</string>
-    <string name="config_controls_opacity_help" formatted="false">वर्चुअल कंट्रोल की पारदर्शिता समायोजित करता है: 0% पूरी तरह पारदर्शी है; 100% पूरी तरह दृश्यमान है।</string>
+    <string name="config_controls_opacity_help" formatted="false">वर्चुअल कंट्रोल की अपारदर्शिता तय करता है। 0% पर कंट्रोल पारदर्शी होते हैं और 100% पर अतिरिक्त पारदर्शिता लागू नहीं होती।</string>
     <string name="config_controls_opaque_outside">MIDlet स्क्रीन के बाहर कंट्रोल को बिना पारदर्शिता के दिखाएं</string>
-    <string name="config_controls_opaque_outside_help">MIDlet स्क्रीन के बाहर के कंट्रोल अपारदर्शिता को अनदेखा करते हैं। स्क्रीन के ऊपर के कंट्रोल चयनित अपारदर्शिता का पालन करते हैं।</string>
+    <string name="config_controls_opaque_outside_help">यह विकल्प चालू होने पर MIDlet स्क्रीन से पूरी तरह बाहर के कंट्रोल बिना अतिरिक्त पारदर्शिता के दिखते हैं। स्क्रीन पर आने वाले कंट्रोल चुनी गई अपारदर्शिता का उपयोग करते हैं।</string>
     <string name="config_controls_connect_controller">कैलिब्रेट करने के लिए कंट्रोलर कनेक्ट करें</string>
     <string name="config_controls_color_skin_notice">पूरे बटन वाली स्किन डिफ़ॉल्ट बटन रंग, आकार और आउटलाइन को बदल सकती है।</string>
     <string name="config_current_value">वर्तमान मान</string>

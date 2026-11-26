@@ -156,9 +156,9 @@
     <string name="config_controls_color_label_pressed">Gedrukte etiket</string>
     <string name="config_controls_color_outline_short">Buiterand</string>
     <string name="config_controls_disabled_hint">Virtuele kontroles is tans af. Jy kan hulle steeds hier aanpas.</string>
-    <string name="config_controls_opacity_help" formatted="false">Pas die deursigtigheid van virtuele kontroles aan: 0% is heeltemal deursigtig; 100% is heeltemal sigbaar.</string>
+    <string name="config_controls_opacity_help" formatted="false">Pas die ondeursigtigheid van virtuele kontroles aan. By 0% is die kontroles deursigtig; by 100% word geen ekstra deursigtigheid toegepas nie.</string>
     <string name="config_controls_opaque_outside">Wys kontroles sonder deursigtigheid buite die MIDlet-skerm</string>
-    <string name="config_controls_opaque_outside_help">Kontroles buite die MIDlet-skerm ignoreer ondeursigtigheid. Kontroles oor die skerm volg steeds die gekose ondeursigtigheid.</string>
+    <string name="config_controls_opaque_outside_help">Wanneer dié opsie aan is, word kontroles wat heeltemal buite die MIDlet-skerm lê sonder ekstra deursigtigheid vertoon. Kontroles wat die skerm oorvleuel, gebruik die gekose ondeursigtigheid.</string>
     <string name="config_controls_connect_controller">Koppel ’n beheerder om te kalibreer</string>
     <string name="config_controls_color_skin_notice">’n Volle knoppie-omslag kan die verstekknoppiekleure, -vorm en -buiterand vervang.</string>
     <string name="config_current_value">Huidige waarde</string>

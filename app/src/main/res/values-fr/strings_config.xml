@@ -157,9 +157,9 @@
     <string name="config_controls_color_label_pressed">Libellé enfoncé</string>
     <string name="config_controls_color_outline_short">Contour</string>
     <string name="config_controls_disabled_hint">Les commandes virtuelles sont actuellement désactivées. Vous pouvez tout de même les personnaliser ici.</string>
-    <string name="config_controls_opacity_help" formatted="false">Ajuste la transparence des commandes virtuelles : 0 % correspond à une transparence totale ; 100 % à une visibilité complète.</string>
+    <string name="config_controls_opacity_help" formatted="false">Règle l’opacité des commandes virtuelles. À 0 %, elles sont transparentes ; à 100 %, aucune transparence supplémentaire n’est appliquée.</string>
     <string name="config_controls_opaque_outside">Afficher les commandes sans transparence en dehors de l’écran du MIDlet</string>
-    <string name="config_controls_opaque_outside_help">Les commandes situées en dehors de l’écran du MIDlet ignorent l’opacité. Celles placées sur l’écran suivent toujours l’opacité choisie.</string>
+    <string name="config_controls_opaque_outside_help">Lorsque cette option est activée, les commandes situées entièrement en dehors de l’écran du MIDlet s’affichent sans transparence supplémentaire. Celles qui chevauchent l’écran utilisent l’opacité choisie.</string>
     <string name="config_controls_connect_controller">Connectez une manette pour la calibrer</string>
     <string name="config_controls_color_skin_notice">Un habillage de bouton complet peut remplacer les couleurs, la forme et le contour par défaut.</string>
     <string name="config_current_value">Valeur actuelle</string>

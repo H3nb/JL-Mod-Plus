@@ -154,9 +154,9 @@
     <string name="config_controls_color_label_pressed">Etiqueta premuda</string>
     <string name="config_controls_color_outline_short">Contorn</string>
     <string name="config_controls_disabled_hint">Els controls virtuals estan desactivats actualment. Tot i això, els pots personalitzar aquí.</string>
-    <string name="config_controls_opacity_help" formatted="false">Ajusta la transparència dels controls virtuals: 0% és totalment transparent i 100% és totalment visible.</string>
+    <string name="config_controls_opacity_help" formatted="false">Ajusta l’opacitat dels controls virtuals. Al 0 %, els controls són transparents; al 100 %, no s’hi aplica cap transparència addicional.</string>
     <string name="config_controls_opaque_outside">Mostra els controls sense transparència fora de la pantalla del MIDlet</string>
-    <string name="config_controls_opaque_outside_help">Els controls fora de la pantalla del MIDlet ignoren l’opacitat. Els controls sobre la pantalla continuen seguint l’opacitat seleccionada.</string>
+    <string name="config_controls_opaque_outside_help">Quan aquesta opció està activada, els controls situats completament fora de la pantalla del MIDlet es mostren sense transparència addicional. Els que se superposen a la pantalla mantenen l’opacitat seleccionada.</string>
     <string name="config_controls_connect_controller">Connecta un comandament per calibrar</string>
     <string name="config_controls_color_skin_notice">Un aspecte de botó complet pot substituir els colors, la forma i el contorn predeterminats del botó.</string>
     <string name="config_current_value">Valor actual</string>

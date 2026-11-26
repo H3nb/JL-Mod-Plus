@@ -158,9 +158,9 @@
     <string name="config_controls_color_label_pressed">Натиснутий підпис</string>
     <string name="config_controls_color_outline_short">Контур</string>
     <string name="config_controls_disabled_hint">Віртуальне керування зараз вимкнено. Ви все одно можете налаштувати його тут.</string>
-    <string name="config_controls_opacity_help" formatted="false">Регулює прозорість віртуального керування: 0% — повністю прозоре; 100% — повністю видиме.</string>
+    <string name="config_controls_opacity_help" formatted="false">Регулює непрозорість віртуальних елементів керування. За 0% вони прозорі, а за 100% додаткова прозорість не застосовується.</string>
     <string name="config_controls_opaque_outside">Показувати керування без прозорості за межами екрана MIDlet</string>
-    <string name="config_controls_opaque_outside_help">Елементи керування поза екраном MIDlet ігнорують непрозорість. Елементи поверх екрана й надалі використовують вибрану непрозорість.</string>
+    <string name="config_controls_opaque_outside_help">Коли цей параметр увімкнено, елементи керування, розташовані повністю поза екраном MIDlet, відображаються без додаткової прозорості. Для елементів, які перекривають екран, використовується вибрана непрозорість.</string>
     <string name="config_controls_connect_controller">Підключіть контролер для калібрування</string>
     <string name="config_controls_color_skin_notice">Оформлення повної кнопки може замінити стандартні кольори, форму та контур кнопок.</string>
     <string name="config_current_value">Поточне значення</string>

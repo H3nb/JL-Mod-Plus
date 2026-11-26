@@ -156,9 +156,9 @@
     <string name="config_controls_color_label_pressed">Басылған белгі</string>
     <string name="config_controls_color_outline_short">Жиек</string>
     <string name="config_controls_disabled_hint">Виртуалды басқару қазір өшірулі. Оны осында әлі де теңшей аласыз.</string>
-    <string name="config_controls_opacity_help" formatted="false">Виртуалды басқарудың мөлдірлігін реттейді: 0% — толық мөлдір; 100% — толық көрінетін.</string>
+    <string name="config_controls_opacity_help" formatted="false">Виртуалды басқару элементтерінің мөлдірсіздігін реттейді. 0% мәнінде элементтер мөлдір болады, ал 100% мәнінде қосымша мөлдірлік қолданылмайды.</string>
     <string name="config_controls_opaque_outside">MIDlet экранынан тыс басқаруды мөлдірліксіз көрсету</string>
-    <string name="config_controls_opaque_outside_help">MIDlet экранынан тыс элементтер мөлдірсіздікті елемейді. Экран үстіндегі элементтер таңдалған мөлдірсіздікті сақтайды.</string>
+    <string name="config_controls_opaque_outside_help">Бұл параметр қосылса, MIDlet экранынан толық тыс орналасқан басқару элементтері қосымша мөлдірліксіз көрсетіледі. Экранмен қабаттасатын элементтер таңдалған мөлдірсіздікті қолданады.</string>
     <string name="config_controls_connect_controller">Калибрлеу үшін контроллерді қосыңыз</string>
     <string name="config_controls_color_skin_notice">Толық түйме безендіруі әдепкі түйме түстерін, пішінін және жиегін ауыстыруы мүмкін.</string>
     <string name="config_current_value">Ағымдағы мән</string>

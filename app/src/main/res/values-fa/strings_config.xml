@@ -156,9 +156,9 @@
     <string name="config_controls_color_label_pressed">برچسب فشرده‌شده</string>
     <string name="config_controls_color_outline_short">خط حاشیه</string>
     <string name="config_controls_disabled_hint">کنترل‌های مجازی هم‌اکنون خاموش هستند. همچنان می‌توانید آن‌ها را اینجا سفارشی‌سازی کنید.</string>
-    <string name="config_controls_opacity_help" formatted="false">شفافیت کنترل‌های مجازی را تنظیم می‌کند: 0% کاملاً شفاف و 100% کاملاً نمایان است.</string>
+    <string name="config_controls_opacity_help" formatted="false">میزان کدری کنترل‌های مجازی را تنظیم می‌کند. در ۰٪ کنترل‌ها شفاف هستند و در ۱۰۰٪ شفافیت اضافی اعمال نمی‌شود.</string>
     <string name="config_controls_opaque_outside">نمایش کنترل‌ها بدون شفافیت بیرون از صفحه MIDlet</string>
-    <string name="config_controls_opaque_outside_help">کنترل‌های بیرون از صفحه MIDlet شفافیت را نادیده می‌گیرند. کنترل‌های روی صفحه همچنان از شفافیت انتخاب‌شده پیروی می‌کنند.</string>
+    <string name="config_controls_opaque_outside_help">با فعال کردن این گزینه، کنترل‌هایی که کاملاً خارج از صفحه MIDlet قرار دارند بدون شفافیت اضافی نمایش داده می‌شوند. کنترل‌هایی که روی صفحه قرار می‌گیرند از میزان کدری انتخاب‌شده استفاده می‌کنند.</string>
     <string name="config_controls_connect_controller">برای کالیبراسیون یک دسته بازی متصل کنید</string>
     <string name="config_controls_color_skin_notice">پوسته کل دکمه ممکن است رنگ، شکل و خط حاشیه پیش‌فرض دکمه را جایگزین کند.</string>
     <string name="config_current_value">مقدار فعلی</string>

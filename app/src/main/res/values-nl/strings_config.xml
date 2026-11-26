@@ -156,9 +156,9 @@
     <string name="config_controls_color_label_pressed">Ingedrukt label</string>
     <string name="config_controls_color_outline_short">Omlijning</string>
     <string name="config_controls_disabled_hint">Virtuele bediening is momenteel uitgeschakeld. Je kunt deze hier nog steeds aanpassen.</string>
-    <string name="config_controls_opacity_help" formatted="false">Past de transparantie van de virtuele bediening aan: 0% is volledig transparant; 100% is volledig zichtbaar.</string>
+    <string name="config_controls_opacity_help" formatted="false">Past de dekking van de virtuele bedieningselementen aan. Bij 0% zijn ze transparant; bij 100% wordt geen extra transparantie toegepast.</string>
     <string name="config_controls_opaque_outside">Bediening zonder transparantie tonen buiten het MIDlet-scherm</string>
-    <string name="config_controls_opaque_outside_help">Bediening buiten het MIDlet-scherm negeert de dekking. Bediening over het scherm blijft de geselecteerde dekking volgen.</string>
+    <string name="config_controls_opaque_outside_help">Als deze optie is ingeschakeld, worden bedieningselementen die volledig buiten het MIDlet-scherm liggen zonder extra transparantie weergegeven. Elementen die het scherm overlappen, gebruiken de gekozen dekking.</string>
     <string name="config_controls_connect_controller">Verbind een controller om te kalibreren</string>
     <string name="config_controls_color_skin_notice">Een skin met volledige knoppen kan de standaard knopkleuren, vorm en omlijning vervangen.</string>
     <string name="config_current_value">Huidige waarde</string>

@@ -155,9 +155,9 @@
     <string name="config_controls_color_label_pressed">Nhãn khi nhấn</string>
     <string name="config_controls_color_outline_short">Viền</string>
     <string name="config_controls_disabled_hint">Điều khiển ảo hiện đang tắt. Bạn vẫn có thể tùy chỉnh chúng tại đây.</string>
-    <string name="config_controls_opacity_help" formatted="false">Điều chỉnh độ trong suốt của điều khiển ảo: 0% là trong suốt hoàn toàn; 100% là hiển thị hoàn toàn.</string>
+    <string name="config_controls_opacity_help" formatted="false">Điều chỉnh độ mờ của các nút điều khiển ảo. Ở mức 0%, các nút trong suốt; ở mức 100%, không áp dụng thêm độ trong suốt.</string>
     <string name="config_controls_opaque_outside">Hiển thị điều khiển không trong suốt bên ngoài màn hình MIDlet</string>
-    <string name="config_controls_opaque_outside_help">Điều khiển bên ngoài màn hình MIDlet sẽ bỏ qua độ mờ. Điều khiển nằm trên màn hình vẫn tuân theo độ mờ đã chọn.</string>
+    <string name="config_controls_opaque_outside_help">Khi bật tùy chọn này, các nút điều khiển nằm hoàn toàn bên ngoài màn hình MIDlet được hiển thị mà không tăng độ trong suốt. Các nút chồng lên màn hình vẫn dùng độ mờ đã chọn.</string>
     <string name="config_controls_connect_controller">Kết nối tay cầm để hiệu chỉnh</string>
     <string name="config_controls_color_skin_notice">Giao diện toàn bộ nút có thể thay thế màu nút, hình dạng và viền mặc định.</string>
     <string name="config_current_value">Giá trị hiện tại</string>

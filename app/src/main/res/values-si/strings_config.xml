@@ -156,9 +156,9 @@
     <string name="config_controls_color_label_pressed">එබූ ලේබලය</string>
     <string name="config_controls_color_outline_short">පිටත රේඛාව</string>
     <string name="config_controls_disabled_hint">අතථ්‍ය පාලන දැනට අක්‍රියයි. ඔබට තවමත් මෙහිදී ඒවා අභිරුචිකරණය කළ හැකිය.</string>
-    <string name="config_controls_opacity_help" formatted="false">අතථ්‍ය පාලන විනිවිදභාවය සීරුමාරු කරයි: 0% සම්පූර්ණයෙන්ම විනිවිද පෙනෙන අතර 100% සම්පූර්ණයෙන්ම දෘශ්‍යමාන වේ.</string>
+    <string name="config_controls_opacity_help" formatted="false">අතථ්‍ය පාලනවල පාරාන්ධතාව සකසයි. 0% දී පාලන විනිවිද පෙනෙන අතර 100% දී අමතර විනිවිදභාවයක් යොදන්නේ නැත.</string>
     <string name="config_controls_opaque_outside">MIDlet තිරයෙන් පිටත පාලන විනිවිදභාවයකින් තොරව පෙන්වන්න</string>
-    <string name="config_controls_opaque_outside_help">MIDlet තිරයෙන් පිටත ඇති පාලන පාරාන්ධතාව නොසලකා හරියි. තිරය මත ඇති පාලන තවමත් තෝරාගත් පාරාන්ධතාව අනුගමනය කරයි.</string>
+    <string name="config_controls_opaque_outside_help">මෙම විකල්පය සක්‍රිය විට, MIDlet තිරයෙන් සම්පූර්ණයෙන්ම පිටත ඇති පාලන අමතර විනිවිදභාවයකින් තොරව පෙන්වයි. තිරය මත වැටෙන පාලන සඳහා තෝරාගත් පාරාන්ධතාව යොදයි.</string>
     <string name="config_controls_connect_controller">ක්‍රමාංකනය කිරීමට පාලකයක් සම්බන්ධ කරන්න</string>
     <string name="config_controls_color_skin_notice">සම්පූර්ණ බොත්තම් ආවරණයකට පෙරනිමි බොත්තම් වර්ණ, හැඩය සහ පිටත රේඛාව ප්‍රතිස්ථාපනය කළ හැකිය.</string>
     <string name="config_current_value">වත්මන් අගය</string>

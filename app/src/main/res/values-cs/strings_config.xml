@@ -155,9 +155,9 @@
     <string name="config_controls_color_label_pressed">Stisknutý popisek</string>
     <string name="config_controls_color_outline_short">Obrys</string>
     <string name="config_controls_disabled_hint">Virtuální ovládání je momentálně vypnuté. Stále si ho zde můžete přizpůsobit.</string>
-    <string name="config_controls_opacity_help" formatted="false">Upravuje průhlednost virtuálního ovládání: 0% je zcela průhledné; 100% je plně viditelné.</string>
+    <string name="config_controls_opacity_help" formatted="false">Upravuje neprůhlednost virtuálního ovládání. Při 0 % jsou ovládací prvky průhledné, při 100 % se žádná další průhlednost nepřidává.</string>
     <string name="config_controls_opaque_outside">Zobrazit ovládání mimo obrazovku MIDletu neprůhledně</string>
-    <string name="config_controls_opaque_outside_help">Prvky mimo obrazovku MIDletu ignorují neprůhlednost. Prvky překrývající obrazovku se nadále řídí vybranou neprůhledností.</string>
+    <string name="config_controls_opaque_outside_help">Když je tato možnost zapnutá, ovládací prvky zcela mimo obrazovku MIDletu se zobrazují bez dodatečné průhlednosti. Prvky překrývající obrazovku používají nastavenou neprůhlednost.</string>
     <string name="config_controls_connect_controller">Pro kalibraci připojte ovladač</string>
     <string name="config_controls_color_skin_notice">Vzhled celého tlačítka může nahradit výchozí barvy, tvar a obrys tlačítek.</string>
     <string name="config_current_value">Aktuální hodnota</string>

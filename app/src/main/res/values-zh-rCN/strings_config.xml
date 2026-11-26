@@ -150,9 +150,9 @@
     <string name="config_controls_color_label_pressed">按下标签</string>
     <string name="config_controls_color_outline_short">描边</string>
     <string name="config_controls_disabled_hint">虚拟按键当前已关闭，但你仍可在此自定义其设置。</string>
-    <string name="config_controls_opacity_help" formatted="false">调整虚拟按键的透明度：0% 为完全透明，100% 为完全不透明。</string>
+    <string name="config_controls_opacity_help" formatted="false">调整虚拟控件的不透明度。设为 0% 时控件透明，设为 100% 时不会额外增加透明度。</string>
     <string name="config_controls_opaque_outside">MIDlet 画面外的按键不应用透明</string>
-    <string name="config_controls_opaque_outside_help">位于 MIDlet 画面之外的按键将忽略不透明度设置；覆盖在画面上的按键仍遵循所选不透明度。</string>
+    <string name="config_controls_opaque_outside_help">开启后，完全位于 MIDlet 画面之外的控件不会额外增加透明度。与画面重叠的控件仍使用所选的不透明度。</string>
     <string name="config_controls_connect_controller">连接手柄以进行校准</string>
     <string name="config_controls_color_skin_notice">“完整按键”皮肤可能会替代默认的按键颜色、形状和描边。</string>
     <string name="config_current_value">当前值</string>

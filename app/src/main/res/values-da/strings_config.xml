@@ -156,9 +156,9 @@
     <string name="config_controls_color_label_pressed">Nedtrykket etiket</string>
     <string name="config_controls_color_outline_short">Kontur</string>
     <string name="config_controls_disabled_hint">Virtuelle kontroller er i øjeblikket slået fra. Du kan stadig tilpasse dem her.</string>
-    <string name="config_controls_opacity_help" formatted="false">Justerer de virtuelle kontrollers gennemsigtighed: 0 % er helt gennemsigtig; 100 % er helt synlig.</string>
+    <string name="config_controls_opacity_help" formatted="false">Justerer de virtuelle kontrollers opacitet. Ved 0 % er kontrollerne gennemsigtige; ved 100 % tilføjes ingen ekstra gennemsigtighed.</string>
     <string name="config_controls_opaque_outside">Vis kontroller uden gennemsigtighed uden for MIDlet-skærmen</string>
-    <string name="config_controls_opaque_outside_help">Kontroller uden for MIDlet-skærmen ignorerer gennemsigtighed. Kontroller over skærmen følger stadig den valgte gennemsigtighed.</string>
+    <string name="config_controls_opaque_outside_help">Når denne indstilling er slået til, vises kontroller helt uden for MIDlet-skærmen uden ekstra gennemsigtighed. Kontroller, der overlapper skærmen, bruger den valgte opacitet.</string>
     <string name="config_controls_connect_controller">Tilslut en controller for at kalibrere</string>
     <string name="config_controls_color_skin_notice">Et fuldt knapskin kan erstatte standardknappernes farver, form og kontur.</string>
     <string name="config_current_value">Aktuel værdi</string>

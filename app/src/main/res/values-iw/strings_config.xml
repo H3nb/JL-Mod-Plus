@@ -157,9 +157,9 @@
     <string name="config_controls_color_label_pressed">תווית לחוצה</string>
     <string name="config_controls_color_outline_short">קו מתאר</string>
     <string name="config_controls_disabled_hint">הפקדים הווירטואליים כבויים כרגע. עדיין ניתן להתאים אותם אישית כאן.</string>
-    <string name="config_controls_opacity_help" formatted="false">קביעת שקיפות הפקדים הווירטואליים: 0% פירושו שקוף לחלוטין; 100% פירושו גלוי לחלוטין.</string>
+    <string name="config_controls_opacity_help" formatted="false">קביעת האטימות של הפקדים הווירטואליים. ב-0% הפקדים שקופים, וב-100% לא מתווספת שקיפות.</string>
     <string name="config_controls_opaque_outside">הצגת פקדים ללא שקיפות מחוץ למסך ה-MIDlet</string>
-    <string name="config_controls_opaque_outside_help">פקדים שמחוץ למסך ה-MIDlet מתעלמים מהאטימות. פקדים שעל גבי המסך ממשיכים לפעול לפי האטימות שנבחרה.</string>
+    <string name="config_controls_opaque_outside_help">כאשר האפשרות מופעלת, פקדים הנמצאים במלואם מחוץ למסך ה-MIDlet מוצגים ללא שקיפות נוספת. פקדים החופפים למסך משתמשים באטימות שנבחרה.</string>
     <string name="config_controls_connect_controller">יש לחבר בקר כדי לכייל</string>
     <string name="config_controls_color_skin_notice">ערכת עיצוב של לחצן מלא עשויה להחליף את צבעי הלחצנים, הצורה וקו המתאר של ברירת המחדל.</string>
     <string name="config_current_value">ערך נוכחי</string>

@@ -156,9 +156,9 @@
     <string name="config_controls_color_label_pressed">Nedtryckt etikett</string>
     <string name="config_controls_color_outline_short">Kontur</string>
     <string name="config_controls_disabled_hint">Virtuella kontroller är avstängda just nu. Du kan ändå anpassa dem här.</string>
-    <string name="config_controls_opacity_help" formatted="false">Justerar genomskinligheten för virtuella kontroller: 0 % är helt genomskinligt; 100 % är helt synligt.</string>
+    <string name="config_controls_opacity_help" formatted="false">Justerar de virtuella kontrollernas opacitet. Vid 0 % är kontrollerna genomskinliga, och vid 100 % läggs ingen extra genomskinlighet till.</string>
     <string name="config_controls_opaque_outside">Visa kontroller utan genomskinlighet utanför MIDlet-skärmen</string>
-    <string name="config_controls_opaque_outside_help">Kontroller utanför MIDlet-skärmen ignorerar opaciteten. Kontroller över skärmen följer fortfarande vald opacitet.</string>
+    <string name="config_controls_opaque_outside_help">När alternativet är aktiverat visas kontroller som ligger helt utanför MIDlet-skärmen utan extra genomskinlighet. Kontroller som överlappar skärmen använder vald opacitet.</string>
     <string name="config_controls_connect_controller">Anslut en handkontroll för att kalibrera</string>
     <string name="config_controls_color_skin_notice">Ett utseende med hela knappar kan ersätta standardfärger, form och kontur.</string>
     <string name="config_current_value">Aktuellt värde</string>

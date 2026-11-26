@@ -155,9 +155,9 @@
     <string name="config_controls_color_label_pressed">按下時標籤</string>
     <string name="config_controls_color_outline_short">外框</string>
     <string name="config_controls_disabled_hint">虛擬按鍵目前已關閉，但您仍可在此進行自訂。</string>
-    <string name="config_controls_opacity_help" formatted="false">調整虛擬按鍵的透明度：0% 為完全透明，100% 為完全不透明。</string>
+    <string name="config_controls_opacity_help" formatted="false">調整虛擬控制項的不透明度。設為 0% 時控制項透明，設為 100% 時不會額外增加透明度。</string>
     <string name="config_controls_opaque_outside">在 MIDlet 螢幕外以不透明顯示按鍵</string>
-    <string name="config_controls_opaque_outside_help">位於 MIDlet 螢幕外的按鍵會忽略不透明度設定；重疊於螢幕上的按鍵仍會套用所選的不透明度。</string>
+    <string name="config_controls_opaque_outside_help">開啟後，完全位於 MIDlet 畫面之外的控制項不會額外增加透明度。與畫面重疊的控制項仍會套用所選的不透明度。</string>
     <string name="config_controls_connect_controller">連接控制器即可進行校正</string>
     <string name="config_controls_color_skin_notice">完整按鍵外觀可能會取代預設的按鍵顏色、形狀與外框。</string>
     <string name="config_current_value">目前數值</string>

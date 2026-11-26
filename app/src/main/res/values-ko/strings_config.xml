@@ -155,9 +155,9 @@
     <string name="config_controls_color_label_pressed">누른 라벨</string>
     <string name="config_controls_color_outline_short">윤곽선</string>
     <string name="config_controls_disabled_hint">가상 컨트롤이 현재 꺼져 있습니다. 여기에서 계속 사용자 지정할 수 있습니다.</string>
-    <string name="config_controls_opacity_help" formatted="false">가상 컨트롤의 투명도를 조절합니다. 0%는 완전히 투명하고 100%는 완전히 불투명합니다.</string>
+    <string name="config_controls_opacity_help" formatted="false">가상 컨트롤의 불투명도를 조절합니다. 0%에서는 투명하게 표시되고, 100%에서는 추가 투명도가 적용되지 않습니다.</string>
     <string name="config_controls_opaque_outside">MIDlet 화면 밖에서는 투명도 없이 컨트롤 표시</string>
-    <string name="config_controls_opaque_outside_help">MIDlet 화면 밖의 컨트롤은 불투명도 설정을 무시합니다. 화면 위의 컨트롤에는 선택한 불투명도가 계속 적용됩니다.</string>
+    <string name="config_controls_opaque_outside_help">이 옵션을 켜면 MIDlet 화면과 전혀 겹치지 않는 컨트롤에는 추가 투명도가 적용되지 않습니다. 화면과 겹치는 컨트롤에는 설정한 불투명도가 적용됩니다.</string>
     <string name="config_controls_connect_controller">보정할 컨트롤러를 연결하세요</string>
     <string name="config_controls_color_skin_notice">전체 버튼 스킨은 기본 버튼 색상, 모양 및 윤곽선을 대체할 수 있습니다.</string>
     <string name="config_current_value">현재 값</string>

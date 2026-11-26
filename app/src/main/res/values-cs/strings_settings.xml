@@ -21,7 +21,7 @@
     <string name="PREF_FONT_MEDIUM">Střední</string>
     <string name="PREF_FONT_SIZE_IN_SP">Použít měřítko písma systému Android</string>
     <string name="PREF_FONT_SMALL">Malé</string>
-    <string name="PREF_FORCE_FULLSCREEN">Spustit bez příkazového řádku</string>
+    <string name="PREF_FORCE_FULLSCREEN">Spustit bez lišty příkazů</string>
     <string name="pref_graphics_hw_gles">Hardwarová akcelerace (OpenGL ES)</string>
     <string name="pref_graphics_hw_surface">Hardwarová akcelerace (Surface)</string>
     <string name="pref_graphics_hw_view">Hardwarová akcelerace (Okno)</string>

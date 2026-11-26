@@ -157,9 +157,9 @@
     <string name="config_controls_color_label_pressed">Rótulo pressionado</string>
     <string name="config_controls_color_outline_short">Contorno</string>
     <string name="config_controls_disabled_hint">Os controles virtuais estão desativados no momento. Você ainda pode personalizá-los aqui.</string>
-    <string name="config_controls_opacity_help" formatted="false">Ajusta a transparência dos controles virtuais: 0% é totalmente transparente; 100% é totalmente visível.</string>
+    <string name="config_controls_opacity_help" formatted="false">Ajusta a opacidade dos controles virtuais. Em 0%, os controles ficam transparentes; em 100%, nenhuma transparência adicional é aplicada.</string>
     <string name="config_controls_opaque_outside">Mostrar controles sem transparência fora da tela do MIDlet</string>
-    <string name="config_controls_opaque_outside_help">Os controles fora da tela do MIDlet ignoram a opacidade. Os controles sobre a tela continuam seguindo a opacidade selecionada.</string>
+    <string name="config_controls_opaque_outside_help">Quando esta opção está ativada, os controles que ficam totalmente fora da tela do MIDlet são exibidos sem transparência adicional. Os controles sobrepostos à tela usam a opacidade selecionada.</string>
     <string name="config_controls_connect_controller">Conecte um controle para calibrar</string>
     <string name="config_controls_color_skin_notice">Um visual de botão completo pode substituir as cores, o formato e o contorno padrão dos botões.</string>
     <string name="config_current_value">Valor atual</string>

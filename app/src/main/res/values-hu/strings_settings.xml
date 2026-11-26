@@ -21,7 +21,7 @@
     <string name="PREF_FONT_MEDIUM">Közepes</string>
     <string name="PREF_FONT_SIZE_IN_SP">Android betűméret-skálázás használata</string>
     <string name="PREF_FONT_SMALL">Kicsi</string>
-    <string name="PREF_FORCE_FULLSCREEN">Indítás parancssor nélkül</string>
+    <string name="PREF_FORCE_FULLSCREEN">Indítás parancssáv nélkül</string>
     <string name="pref_graphics_hw_gles">Hardveres gyorsítás (OpenGL ES)</string>
     <string name="pref_graphics_hw_surface">Hardveres gyorsítás (Surface)</string>
     <string name="pref_graphics_hw_view">Hardveres gyorsítás (Ablak)</string>

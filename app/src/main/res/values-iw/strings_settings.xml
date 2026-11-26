@@ -21,7 +21,7 @@
     <string name="PREF_FONT_MEDIUM">בינוני</string>
     <string name="PREF_FONT_SIZE_IN_SP">שימוש בקנה מידה לגופנים של Android</string>
     <string name="PREF_FONT_SMALL">קטן</string>
-    <string name="PREF_FORCE_FULLSCREEN">הפעלה ללא שורת פקודות</string>
+    <string name="PREF_FORCE_FULLSCREEN">הפעלה ללא סרגל פקודות</string>
     <string name="pref_graphics_hw_gles">האצת חומרה (OpenGL ES)</string>
     <string name="pref_graphics_hw_surface">האצת חומרה (Surface)</string>
     <string name="pref_graphics_hw_view">האצת חומרה (Window)</string>

@@ -157,9 +157,9 @@
     <string name="config_controls_color_label_pressed">Etichetă apăsată</string>
     <string name="config_controls_color_outline_short">Contur</string>
     <string name="config_controls_disabled_hint">Controalele virtuale sunt momentan dezactivate. Le puteți personaliza în continuare aici.</string>
-    <string name="config_controls_opacity_help" formatted="false">Ajustează transparența controalelor virtuale: 0% este complet transparent; 100% este complet vizibil.</string>
+    <string name="config_controls_opacity_help" formatted="false">Ajustează opacitatea controalelor virtuale. La 0%, controalele sunt transparente, iar la 100% nu se aplică transparență suplimentară.</string>
     <string name="config_controls_opaque_outside">Afișează controalele fără transparență în afara ecranului MIDlet</string>
-    <string name="config_controls_opaque_outside_help">Controalele din afara ecranului MIDlet ignoră opacitatea. Controalele de peste ecran continuă să respecte opacitatea selectată.</string>
+    <string name="config_controls_opaque_outside_help">Când opțiunea este activată, controalele aflate în întregime în afara ecranului MIDlet-ului sunt afișate fără transparență suplimentară. Cele care se suprapun peste ecran folosesc opacitatea selectată.</string>
     <string name="config_controls_connect_controller">Conectați un controler pentru calibrare</string>
     <string name="config_controls_color_skin_notice">Un skin de tip buton complet poate înlocui culorile, forma și conturul implicite ale butoanelor.</string>
     <string name="config_current_value">Valoare curentă</string>

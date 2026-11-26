@@ -21,7 +21,7 @@
     <string name="PREF_FONT_MEDIUM">Middels</string>
     <string name="PREF_FONT_SIZE_IN_SP">Bruk Androids skriftstørrelse</string>
     <string name="PREF_FONT_SMALL">Liten</string>
-    <string name="PREF_FORCE_FULLSCREEN">Start uten kommandolinje</string>
+    <string name="PREF_FORCE_FULLSCREEN">Start uten kommandofelt</string>
     <string name="pref_graphics_hw_gles">Maskinvareakselerasjon (OpenGL ES)</string>
     <string name="pref_graphics_hw_surface">Maskinvareakselerasjon (Surface)</string>
     <string name="pref_graphics_hw_view">Maskinvareakselerasjon (vindu)</string>

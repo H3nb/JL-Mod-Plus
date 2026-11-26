@@ -156,9 +156,9 @@
     <string name="config_controls_color_label_pressed">ଦବାଯାଇଥିବା ଲେବଲ୍</string>
     <string name="config_controls_color_outline_short">ଆଉଟଲାଇନ୍</string>
     <string name="config_controls_disabled_hint">ଭର୍ଚୁଆଲ୍ କଣ୍ଟ୍ରୋଲ୍ ବର୍ତ୍ତମାନ ଅଫ୍ ଅଛି। ଆପଣ ତଥାପି ଏଠାରେ ସେଗୁଡ଼ିକୁ କଷ୍ଟମାଇଜ୍ କରିପାରିବେ।</string>
-    <string name="config_controls_opacity_help" formatted="false">ଭର୍ଚୁଆଲ୍ କଣ୍ଟ୍ରୋଲ୍ ସ୍ୱଚ୍ଛତା ଆଡଜଷ୍ଟ୍ କରେ: 0% ସମ୍ପୂର୍ଣ୍ଣ ସ୍ୱଚ୍ଛ; 100% ସମ୍ପୂର୍ଣ୍ଣ ଦୃଶ୍ୟମାନ।</string>
+    <string name="config_controls_opacity_help" formatted="false">ଭର୍ଚୁଆଲ୍ କଣ୍ଟ୍ରୋଲ୍‌ର ଅପାସିଟି ସେଟ୍ କରେ। 0%ରେ କଣ୍ଟ୍ରୋଲ୍ ସ୍ୱଚ୍ଛ ରହେ ଏବଂ 100%ରେ ଅତିରିକ୍ତ ସ୍ୱଚ୍ଛତା ପ୍ରୟୋଗ ହୁଏ ନାହିଁ।</string>
     <string name="config_controls_opaque_outside">MIDlet ସ୍କ୍ରିନ୍ ବାହାରେ ସ୍ୱଚ୍ଛତା ବିନା କଣ୍ଟ୍ରୋଲ୍ ଦେଖାନ୍ତୁ</string>
-    <string name="config_controls_opaque_outside_help">MIDlet ସ୍କ୍ରିନ୍ ବାହାରେ ଥିବା କଣ୍ଟ୍ରୋଲ୍ ଅପାସିଟି ଉପେକ୍ଷା କରେ। ସ୍କ୍ରିନ୍ ଉପରେ ଥିବା କଣ୍ଟ୍ରୋଲ୍ ଚୟନିତ ଅପାସିଟି ଅନୁସରଣ କରେ।</string>
+    <string name="config_controls_opaque_outside_help">ଏହି ବିକଳ୍ପ ଅନ୍ ଥିଲେ, MIDlet ସ୍କ୍ରିନ୍‌ର ସମ୍ପୂର୍ଣ୍ଣ ବାହାରେ ଥିବା କଣ୍ଟ୍ରୋଲ୍ ଅତିରିକ୍ତ ସ୍ୱଚ୍ଛତା ବିନା ଦେଖାଯାଏ। ସ୍କ୍ରିନ୍ ଉପରେ ଥିବା କଣ୍ଟ୍ରୋଲ୍‌ରେ ଚୟନିତ ଅପାସିଟି ପ୍ରୟୋଗ ହୁଏ।</string>
     <string name="config_controls_connect_controller">କ୍ୟାଲିବ୍ରେଟ୍ କରିବାକୁ ଏକ କଣ୍ଟ୍ରୋଲର୍ ସଂଯୋଗ କରନ୍ତୁ</string>
     <string name="config_controls_color_skin_notice">ଏକ ସମ୍ପୂର୍ଣ୍ଣ-ବଟନ୍ ସ୍କିନ୍ ଡିଫଲ୍ଟ ବଟନ୍ ରଙ୍ଗ, ଆକୃତି ଏବଂ ଆଉଟଲାଇନ୍ ବଦଳାଇପାରେ।</string>
     <string name="config_current_value">ବର୍ତ୍ତମାନର ମୂଲ୍ୟ</string>

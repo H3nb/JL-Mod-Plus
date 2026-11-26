@@ -158,9 +158,9 @@
     <string name="config_controls_color_label_pressed">Naciśnięta etykieta</string>
     <string name="config_controls_color_outline_short">Obrys</string>
     <string name="config_controls_disabled_hint">Wirtualne sterowanie jest obecnie wyłączone. Nadal możesz je tutaj dostosować.</string>
-    <string name="config_controls_opacity_help" formatted="false">Reguluje przezroczystość wirtualnego sterowania: 0% to pełna przezroczystość, 100% to pełna widoczność.</string>
+    <string name="config_controls_opacity_help" formatted="false">Reguluje krycie wirtualnych elementów sterujących. Przy 0% są one przezroczyste, a przy 100% nie jest stosowana dodatkowa przezroczystość.</string>
     <string name="config_controls_opaque_outside">Pokaż sterowanie bez przezroczystości poza ekranem MIDletu</string>
-    <string name="config_controls_opaque_outside_help">Elementy poza ekranem MIDletu ignorują krycie. Elementy na ekranie nadal korzystają z wybranego krycia.</string>
+    <string name="config_controls_opaque_outside_help">Gdy ta opcja jest włączona, elementy sterujące znajdujące się w całości poza ekranem MIDletu są wyświetlane bez dodatkowej przezroczystości. Elementy nachodzące na ekran używają wybranego krycia.</string>
     <string name="config_controls_connect_controller">Podłącz kontroler, aby skalibrować</string>
     <string name="config_controls_color_skin_notice">Skórka całego przycisku może zastąpić domyślne kolory, kształt i obrys przycisków.</string>
     <string name="config_current_value">Bieżąca wartość</string>

@@ -156,9 +156,9 @@
     <string name="config_controls_color_label_pressed">Trykket etikett</string>
     <string name="config_controls_color_outline_short">Omriss</string>
     <string name="config_controls_disabled_hint">Virtuelle kontroller er for øyeblikket av. Du kan likevel tilpasse dem her.</string>
-    <string name="config_controls_opacity_help" formatted="false">Justerer gjennomsiktigheten for virtuelle kontroller: 0 % er helt gjennomsiktig; 100 % er helt synlig.</string>
+    <string name="config_controls_opacity_help" formatted="false">Justerer ugjennomsiktigheten til de virtuelle kontrollene. Ved 0 % er kontrollene gjennomsiktige, og ved 100 % legges det ikke til ekstra gjennomsiktighet.</string>
     <string name="config_controls_opaque_outside">Vis kontroller uten gjennomsiktighet utenfor MIDlet-skjermen</string>
-    <string name="config_controls_opaque_outside_help">Kontroller utenfor MIDlet-skjermen ignorerer ugjennomsiktighet. Kontroller over skjermen følger fortsatt den valgte ugjennomsiktigheten.</string>
+    <string name="config_controls_opaque_outside_help">Når dette er på, vises kontroller som ligger helt utenfor MIDlet-skjermen, uten ekstra gjennomsiktighet. Kontroller som overlapper skjermen, bruker den valgte ugjennomsiktigheten.</string>
     <string name="config_controls_connect_controller">Koble til en kontroller for å kalibrere</string>
     <string name="config_controls_color_skin_notice">En drakt for hele knapper kan erstatte standard farger, form og omriss for knapper.</string>
     <string name="config_current_value">Gjeldende verdi</string>

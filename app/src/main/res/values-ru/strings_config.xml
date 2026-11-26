@@ -158,9 +158,9 @@
     <string name="config_controls_color_label_pressed">Нажатая подпись</string>
     <string name="config_controls_color_outline_short">Контур</string>
     <string name="config_controls_disabled_hint">Виртуальное управление сейчас выключено. Вы всё равно можете настроить его здесь.</string>
-    <string name="config_controls_opacity_help" formatted="false">Настраивает прозрачность виртуального управления: 0% — полностью прозрачное; 100% — полностью непрозрачное.</string>
+    <string name="config_controls_opacity_help" formatted="false">Настраивает непрозрачность виртуальных элементов управления. При 0% они прозрачны, а при 100% дополнительная прозрачность не применяется.</string>
     <string name="config_controls_opaque_outside">Показывать управление без прозрачности за пределами экрана MIDlet</string>
-    <string name="config_controls_opaque_outside_help">Элементы за пределами экрана MIDlet игнорируют настройку непрозрачности. Элементы поверх экрана используют выбранную непрозрачность.</string>
+    <string name="config_controls_opaque_outside_help">Если эта настройка включена, элементы управления, полностью расположенные за пределами экрана MIDlet, отображаются без дополнительной прозрачности. Для элементов, перекрывающих экран, используется выбранная непрозрачность.</string>
     <string name="config_controls_connect_controller">Подключите контроллер для калибровки</string>
     <string name="config_controls_color_skin_notice">Скин типа «Полная кнопка» может заменить стандартные цвета, форму и контур кнопок.</string>
     <string name="config_current_value">Текущее значение</string>

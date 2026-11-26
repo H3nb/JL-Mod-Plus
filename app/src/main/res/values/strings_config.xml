@@ -156,9 +156,9 @@
     <string name="config_controls_color_label_pressed">Pressed label</string>
     <string name="config_controls_color_outline_short">Outline</string>
     <string name="config_controls_disabled_hint">Virtual controls are currently off. You can still customize them here.</string>
-    <string name="config_controls_opacity_help" formatted="false">Adjusts virtual control transparency: 0% is fully transparent; 100% is fully visible.</string>
+    <string name="config_controls_opacity_help" formatted="false">Adjusts the opacity of virtual controls. At 0%, controls are transparent; at 100%, no extra transparency is applied.</string>
     <string name="config_controls_opaque_outside">Show controls without transparency outside the MIDlet screen</string>
-    <string name="config_controls_opaque_outside_help">Controls outside the MIDlet screen ignore opacity. Controls over the screen still follow the selected opacity.</string>
+    <string name="config_controls_opaque_outside_help">When enabled, controls entirely outside the MIDlet screen are drawn without added transparency. Controls overlapping the screen use the selected opacity.</string>
     <string name="config_controls_connect_controller">Connect a controller to calibrate</string>
     <string name="config_controls_color_skin_notice">A full-button skin can replace the default button colors, shape, and outline.</string>
     <string name="config_current_value">Current value</string>

@@ -160,9 +160,9 @@
     <string name="config_controls_color_label_pressed">التسمية المضغوطة</string>
     <string name="config_controls_color_outline_short">الحد الخارجي</string>
     <string name="config_controls_disabled_hint">عناصر التحكم الافتراضية متوقفة حاليًا. لا يزال بإمكانك تخصيصها هنا.</string>
-    <string name="config_controls_opacity_help" formatted="false">يضبط شفافية عناصر التحكم الافتراضية: 0% شفاف بالكامل؛ و100% مرئي بالكامل.</string>
+    <string name="config_controls_opacity_help" formatted="false">يضبط عتامة عناصر التحكم الافتراضية. عند 0% تكون العناصر شفافة، وعند 100% لا تُطبّق شفافية إضافية.</string>
     <string name="config_controls_opaque_outside">إظهار عناصر التحكم دون شفافية خارج شاشة MIDlet</string>
-    <string name="config_controls_opaque_outside_help">تتجاهل عناصر التحكم خارج شاشة MIDlet مستوى العتامة. أما عناصر التحكم فوق الشاشة فتستمر في اتباع العتامة المحددة.</string>
+    <string name="config_controls_opaque_outside_help">عند تفعيل هذا الخيار، تُعرض عناصر التحكم الواقعة بالكامل خارج شاشة MIDlet دون شفافية إضافية. وتستخدم العناصر المتداخلة مع الشاشة مستوى العتامة المحدد.</string>
     <string name="config_controls_connect_controller">صِل وحدة تحكم للمعايرة</string>
     <string name="config_controls_color_skin_notice">قد يستبدل مظهر الزر بالكامل ألوان الزر وشكله وحده الخارجي الافتراضية.</string>
     <string name="config_current_value">القيمة الحالية</string>
