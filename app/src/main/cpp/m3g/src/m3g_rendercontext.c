@@ -1541,14 +1541,18 @@ M3G_API void m3gSetViewport(M3GRenderContext hCtx,
 
 
 /*!
- * \brief Gets the viewport
+ * \brief Sets the physical pixel density of the bound target
  */
 M3G_API void m3gSetTargetPixelScale(M3GRenderContext hCtx, M3Gint scale)
 {
     RenderContext *ctx = (RenderContext *) hCtx;
+    M3G_VALIDATE_OBJECT(ctx);
     ctx->target.pixelScale = scale;
 }
 
+/*!
+ * \brief Gets the viewport
+ */
 M3G_API void m3gGetViewport(M3GRenderContext hCtx,
                             M3Gint *x, M3Gint *y,
                             M3Gint *width, M3Gint *height)
