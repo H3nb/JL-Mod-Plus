@@ -350,8 +350,10 @@ internal fun MemoryEditorRuntimeRoot(
                     actions.setScriptsTab()
                 }.fold(
                     onSuccess = { null },
-                    onFailure = { it.localizedMessage?.takeIf(String::isNotBlank)
-                        ?: createFailedMessage },
+                    onFailure = {
+                        android.util.Log.w("MemoryEditor", "Could not create script from bookmarks", it)
+                        createFailedMessage
+                    },
                 )
             }
         }

@@ -447,6 +447,36 @@ class MemoryScriptsComposeTest {
         rule.onNodeWithTag("memory-builder-value").assertIsDisplayed()
     }
 
+    @Test fun failedBookmarkScriptCreationShowsLocalizedError() {
+        val bookmark = SavedVariableRow("coin-id", "Coins", "coins", true)
+        val state = MemoryEditorUiState(
+            visible = true, connected = true, supported = true, writeSupported = true,
+            variablesTab = true, scriptsLoaded = true, runtimeToken = 92505L,
+            savedVariables = listOf(bookmark),
+        )
+        val diagnostic = "Bookmark Coins has no verified locator"
+        val actions = object : TestMemoryEditorActions() {
+            override fun captureMemoryScriptBuilderActions(
+                bookmarks: List<SavedVariableRow>,
+            ): List<MemoryScriptBuilderAction> = error(diagnostic)
+
+            override fun setScriptsTab() = throw AssertionError("Failed creation must not open Scripts")
+        }
+        rule.setContent { JLModPlusTheme { MemoryEditorRuntimeRoot(state, actions) } }
+        rule.onNodeWithContentDescription(uiText(R.string.memory_editor_select_result_value)).performClick()
+        val action = uiText(R.string.memory_scripts_create_from_bookmarks)
+        val directAction = rule.onAllNodesWithContentDescription(action)
+        if (directAction.fetchSemanticsNodes().isNotEmpty()) {
+            directAction[0].performClick()
+        } else {
+            rule.onNodeWithContentDescription(uiText(R.string.more)).performClick()
+            rule.onNodeWithText(action).performClick()
+        }
+        rule.onNodeWithText(uiText(R.string.memory_scripts_create_failed)).assertIsDisplayed()
+        rule.onNodeWithText(diagnostic).assertDoesNotExist()
+        rule.onNodeWithContentDescription(uiText(R.string.memory_variables_tab)).assertIsSelected()
+    }
+
     @Test fun builderCreatesQuickActionFromBookmarkWithoutExecutingOnSave() {
         val state = MemoryEditorUiState(
             visible = true, connected = true, supported = true, writeSupported = true,
