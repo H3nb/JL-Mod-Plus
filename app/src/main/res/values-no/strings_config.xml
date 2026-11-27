@@ -48,7 +48,7 @@
     <string name="config_gamepad_calibration_waiting_controller">Koble til en kontroller med en støttet analogspak eller avtrekker. Beveg en spak eller trykk på en avtrekker for å begynne. Den eksisterende kalibreringen endres bare hvis du lagrer en ny eller tilbakestiller den.</string>
     <string name="config_gamepad_calibration_no_analog_ranges">Denne kontrolleren tilbyr ingen støttede områder for analogspak eller avtrekker.</string>
     <string name="config_gamepad_calibration_start">Hold alle spaker i midtstilling og slipp alle avtrekkere til nøytraltidtakeren er ferdig.</string>
-    <string name="config_gamepad_calibration_save_failed">Kunne ikke lagre kalibreringen. Eksisterende kalibrering forblir uendret.</string>
+    <string name="config_gamepad_calibration_save_failed">Kunne ikke lagre kalibreringen. Kontroller gjeldende innstillinger før du prøver på nytt.</string>
     <string name="config_gamepad_calibration_no_supported_ranges">Fant ingen støttede analoge områder.</string>
     <string name="config_gamepad_calibration_rejected">Kalibrering avvist: <xliff:g id="name" example="Example">%1$s</xliff:g></string>
     <string name="config_gamepad_calibration_neutral_instructions">Hold alle oppdagede spaker i midtstilling og slipp alle oppdagede avtrekkere til nøytraltidtakeren er ferdig.</string>

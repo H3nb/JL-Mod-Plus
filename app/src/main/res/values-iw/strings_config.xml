@@ -48,7 +48,7 @@
     <string name="config_gamepad_calibration_waiting_controller">יש לחבר בקר עם סטיק אנלוגי או הדק נתמכים. כדי להתחיל, יש להזיז סטיק או ללחוץ על הדק. הכיול הקיים לא ישתנה אלא אם יישמר כיול חדש או יתבצע איפוס.</string>
     <string name="config_gamepad_calibration_no_analog_ranges">בקר זה אינו מספק טווחי סטיק אנלוגי או הדק נתמכים.</string>
     <string name="config_gamepad_calibration_start">יש להשאיר כל סטיק במרכז וכל הדק משוחרר עד להשלמת טיימר נקודת האמצע.</string>
-    <string name="config_gamepad_calibration_save_failed">לא ניתן לשמור את הכיול. הכיול הקיים נשאר ללא שינוי.</string>
+    <string name="config_gamepad_calibration_save_failed">לא ניתן לשמור את הכיול. יש לבדוק את ההגדרות הנוכחיות לפני ניסיון נוסף.</string>
     <string name="config_gamepad_calibration_no_supported_ranges">לא נמצאו טווחים אנלוגיים נתמכים.</string>
     <string name="config_gamepad_calibration_rejected">הכיול נדחה: <xliff:g id="name" example="Example">%1$s</xliff:g></string>
     <string name="config_gamepad_calibration_neutral_instructions">יש להשאיר את כל הסטיקים שזוהו במרכז ואת כל ההדקים שזוהו משוחררים עד להשלמת טיימר נקודת האמצע.</string>

@@ -48,7 +48,7 @@
     <string name="config_gamepad_calibration_waiting_controller">समर्थित एनालॉग स्टिक या ट्रिगर वाला कंट्रोलर कनेक्ट करें। शुरू करने के लिए स्टिक हिलाएं या ट्रिगर दबाएं। मौजूदा कैलिब्रेशन तभी बदलेगा जब आप नया कैलिब्रेशन सहेजेंगे या उसे रीसेट करेंगे।</string>
     <string name="config_gamepad_calibration_no_analog_ranges">यह कंट्रोलर समर्थित एनालॉग स्टिक या ट्रिगर सीमाएं प्रदान नहीं करता।</string>
     <string name="config_gamepad_calibration_start">न्यूट्रल टाइमर पूरा होने तक सभी स्टिक को केंद्र में रखें और सभी ट्रिगर छोड़े रखें।</string>
-    <string name="config_gamepad_calibration_save_failed">कैलिब्रेशन सहेजा नहीं जा सका। मौजूदा कैलिब्रेशन अपरिवर्तित रहता है।</string>
+    <string name="config_gamepad_calibration_save_failed">कैलिब्रेशन सहेजा नहीं जा सका। दोबारा कोशिश करने से पहले मौजूदा सेटिंग्स जांचें।</string>
     <string name="config_gamepad_calibration_no_supported_ranges">कोई समर्थित एनालॉग सीमा नहीं मिली।</string>
     <string name="config_gamepad_calibration_rejected">कैलिब्रेशन अस्वीकृत: <xliff:g id="name" example="Example">%1$s</xliff:g></string>
     <string name="config_gamepad_calibration_neutral_instructions">न्यूट्रल टाइमर पूरा होने तक पहचाने गए सभी स्टिक को केंद्र में रखें और सभी ट्रिगर छोड़े रखें।</string>

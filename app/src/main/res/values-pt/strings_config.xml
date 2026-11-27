@@ -48,7 +48,7 @@
     <string name="config_gamepad_calibration_waiting_controller">Ligue um comando com um manípulo analógico ou gatilho suportado. Mova um manípulo ou prima um gatilho para começar. A calibração atual mantém-se inalterada, a menos que guarde uma nova ou a reponha.</string>
     <string name="config_gamepad_calibration_no_analog_ranges">Este comando não fornece intervalos suportados de manípulo analógico ou gatilho.</string>
     <string name="config_gamepad_calibration_start">Mantenha todos os manípulos centrados e todos os gatilhos soltos até o temporizador neutro terminar.</string>
-    <string name="config_gamepad_calibration_save_failed">Não foi possível guardar a calibração. A calibração existente mantém-se inalterada.</string>
+    <string name="config_gamepad_calibration_save_failed">Não foi possível guardar a calibração. Verifique as definições atuais antes de tentar novamente.</string>
     <string name="config_gamepad_calibration_no_supported_ranges">Não foram encontrados intervalos analógicos suportados.</string>
     <string name="config_gamepad_calibration_rejected">Calibração rejeitada: <xliff:g id="name" example="Example">%1$s</xliff:g></string>
     <string name="config_gamepad_calibration_neutral_instructions">Mantenha todos os manípulos detetados centrados e todos os gatilhos detetados soltos até o temporizador neutro terminar.</string>

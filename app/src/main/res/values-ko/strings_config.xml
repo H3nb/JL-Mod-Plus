@@ -48,7 +48,7 @@
     <string name="config_gamepad_calibration_waiting_controller">지원되는 아날로그 스틱 또는 트리거가 있는 컨트롤러를 연결하세요. 스틱을 움직이거나 트리거를 눌러 시작하세요. 새 보정 값을 저장하거나 초기화하지 않으면 기존 보정 값은 변경되지 않습니다.</string>
     <string name="config_gamepad_calibration_no_analog_ranges">이 컨트롤러는 지원되는 아날로그 스틱 또는 트리거 범위를 제공하지 않습니다.</string>
     <string name="config_gamepad_calibration_start">중립 타이머가 완료될 때까지 모든 스틱을 중앙에 두고 모든 트리거에서 손을 떼세요.</string>
-    <string name="config_gamepad_calibration_save_failed">보정을 저장할 수 없습니다. 기존 보정이 그대로 유지됩니다.</string>
+    <string name="config_gamepad_calibration_save_failed">보정을 저장할 수 없습니다. 다시 시도하기 전에 현재 설정을 확인하세요.</string>
     <string name="config_gamepad_calibration_no_supported_ranges">지원되는 아날로그 범위를 찾을 수 없습니다.</string>
     <string name="config_gamepad_calibration_rejected">보정 거부됨: <xliff:g id="name" example="Example">%1$s</xliff:g></string>
     <string name="config_gamepad_calibration_neutral_instructions">중립 타이머가 완료될 때까지 감지된 모든 스틱을 중앙에 두고 모든 트리거에서 손을 떼세요.</string>

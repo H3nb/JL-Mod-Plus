@@ -48,7 +48,7 @@
     <string name="config_gamepad_calibration_waiting_controller">ସମର୍ଥିତ ଆନାଲଗ୍ ଷ୍ଟିକ୍ କିମ୍ବା ଟ୍ରିଗର୍ ଥିବା କଣ୍ଟ୍ରୋଲର୍ ସଂଯୋଗ କରନ୍ତୁ। ଆରମ୍ଭ କରିବାକୁ ଷ୍ଟିକ୍ ଘୁଞ୍ଚାନ୍ତୁ କିମ୍ବା ଟ୍ରିଗର୍ ଦବାନ୍ତୁ। ନୂଆ କ୍ୟାଲିବ୍ରେସନ୍ ସେଭ୍ କିମ୍ବା ରିସେଟ୍ ନ କଲେ ବର୍ତ୍ତମାନର କ୍ୟାଲିବ୍ରେସନ୍ ବଦଳିବ ନାହିଁ।</string>
     <string name="config_gamepad_calibration_no_analog_ranges">ଏହି କଣ୍ଟ୍ରୋଲର୍ ସମର୍ଥିତ ଆନାଲଗ୍ ଷ୍ଟିକ୍ କିମ୍ବା ଟ୍ରିଗର୍ ସୀମା ପ୍ରଦାନ କରେ ନାହିଁ।</string>
     <string name="config_gamepad_calibration_start">ନିଉଟ୍ରାଲ୍ ଟାଇମର୍ ଶେଷ ନ ହେବା ପର୍ଯ୍ୟନ୍ତ ପ୍ରତି ଷ୍ଟିକ୍ କୁ କେନ୍ଦ୍ରରେ ଏବଂ ପ୍ରତି ଟ୍ରିଗର୍ କୁ ମୁକ୍ତ ରଖନ୍ତୁ।</string>
-    <string name="config_gamepad_calibration_save_failed">କ୍ୟାଲିବ୍ରେସନ୍ ସେଭ୍ ହୋଇପାରିଲା ନାହିଁ। ବିଦ୍ୟମାନ କ୍ୟାଲିବ୍ରେସନ୍ ଅପରିବର୍ତ୍ତିତ ରହିଛି।</string>
+    <string name="config_gamepad_calibration_save_failed">କ୍ୟାଲିବ୍ରେସନ୍ ସେଭ୍ ହୋଇପାରିଲା ନାହିଁ। ପୁନଃ ଚେଷ୍ଟା କରିବା ପୂର୍ବରୁ ବର୍ତ୍ତମାନର ସେଟିଂସ୍ ଯାଞ୍ଚ କରନ୍ତୁ।</string>
     <string name="config_gamepad_calibration_no_supported_ranges">କୌଣସି ସମର୍ଥିତ ଆନାଲଗ୍ ସୀମା ମିଳିଲା ନାହିଁ।</string>
     <string name="config_gamepad_calibration_rejected">କ୍ୟାଲିବ୍ରେସନ୍ ପ୍ରତ୍ୟାଖ୍ୟାନ ହେଲା: <xliff:g id="name" example="Example">%1$s</xliff:g></string>
     <string name="config_gamepad_calibration_neutral_instructions">ନିଉଟ୍ରାଲ୍ ଟାଇମର୍ ଶେଷ ନ ହେବା ପର୍ଯ୍ୟନ୍ତ ସମସ୍ତ ଚିହ୍ନଟ ଷ୍ଟିକ୍ କୁ କେନ୍ଦ୍ରରେ ଏବଂ ସମସ୍ତ ଚିହ୍ନଟ ଟ୍ରିଗର୍ କୁ ମୁକ୍ତ ରଖନ୍ତୁ।</string>

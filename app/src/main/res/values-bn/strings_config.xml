@@ -48,7 +48,7 @@
     <string name="config_gamepad_calibration_waiting_controller">সমর্থিত অ্যানালগ স্টিক বা ট্রিগারযুক্ত একটি কন্ট্রোলার সংযুক্ত করুন। শুরু করতে স্টিক নাড়ান বা ট্রিগার চাপুন। নতুন ক্যালিব্রেশন সেভ করলে বা রিসেট করলেই কেবল বর্তমান ক্যালিব্রেশন বদলাবে।</string>
     <string name="config_gamepad_calibration_no_analog_ranges">এই কন্ট্রোলারটি কোনো সমর্থিত অ্যানালগ স্টিক বা ট্রিগার পরিসীমা প্রদান করে না।</string>
     <string name="config_gamepad_calibration_start">নিরপেক্ষ টাইমার শেষ না হওয়া পর্যন্ত প্রতিটি স্টিক মাঝখানে রাখুন এবং প্রতিটি ট্রিগার ছেড়ে রাখুন।</string>
-    <string name="config_gamepad_calibration_save_failed">ক্যালিব্রেশন সেভ করা যায়নি। বিদ্যমান ক্যালিব্রেশন অপরিবর্তিত রয়েছে।</string>
+    <string name="config_gamepad_calibration_save_failed">ক্যালিব্রেশন সেভ করা যায়নি। আবার চেষ্টা করার আগে বর্তমান সেটিংস দেখে নিন।</string>
     <string name="config_gamepad_calibration_no_supported_ranges">কোনো সমর্থিত অ্যানালগ পরিসীমা পাওয়া যায়নি।</string>
     <string name="config_gamepad_calibration_rejected">ক্যালিব্রেশন প্রত্যাখ্যাত হয়েছে: <xliff:g id="name" example="Example">%1$s</xliff:g></string>
     <string name="config_gamepad_calibration_neutral_instructions">নিরপেক্ষ টাইমার শেষ না হওয়া পর্যন্ত শনাক্তকৃত সব স্টিক মাঝখানে রাখুন এবং সব ট্রিগার ছেড়ে রাখুন।</string>

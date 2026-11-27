@@ -48,7 +48,7 @@
     <string name="config_gamepad_calibration_waiting_controller">Conecte um controle com analógico ou gatilho compatível. Mova um analógico ou pressione um gatilho para começar. A calibração atual só muda se você salvar uma nova ou redefini-la.</string>
     <string name="config_gamepad_calibration_no_analog_ranges">Este controle não fornece alcances compatíveis de analógico ou gatilho.</string>
     <string name="config_gamepad_calibration_start">Mantenha todos os analógicos centralizados e todos os gatilhos soltos até o temporizador neutro terminar.</string>
-    <string name="config_gamepad_calibration_save_failed">Não foi possível salvar a calibração. A calibração atual permanece inalterada.</string>
+    <string name="config_gamepad_calibration_save_failed">Não foi possível salvar a calibração. Verifique as configurações atuais antes de tentar novamente.</string>
     <string name="config_gamepad_calibration_no_supported_ranges">Nenhum alcance analógico compatível foi encontrado.</string>
     <string name="config_gamepad_calibration_rejected">Calibração rejeitada: <xliff:g id="name" example="Example">%1$s</xliff:g></string>
     <string name="config_gamepad_calibration_neutral_instructions">Mantenha todos os analógicos detectados centralizados e todos os gatilhos detectados soltos até o temporizador neutro terminar.</string>

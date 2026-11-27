@@ -47,7 +47,7 @@
     <string name="config_gamepad_calibration_waiting_controller">Desteklenen bir analog çubuğa veya tetiğe sahip bir kumanda bağlayın. Başlamak için bir çubuğu hareket ettirin veya tetiğe basın. Yeni bir kalibrasyon kaydetmediğiniz veya mevcut kalibrasyonu sıfırlamadığınız sürece kalibrasyon değişmez.</string>
     <string name="config_gamepad_calibration_no_analog_ranges">Bu kumanda desteklenen analog çubuk veya tetik aralıkları sağlamıyor.</string>
     <string name="config_gamepad_calibration_start">Nötr zamanlayıcı tamamlanana kadar tüm çubukları ortada ve tüm tetikleri serbest bırakın.</string>
-    <string name="config_gamepad_calibration_save_failed">Kalibrasyon kaydedilemedi. Mevcut kalibrasyon değişmeden kaldı.</string>
+    <string name="config_gamepad_calibration_save_failed">Kalibrasyon kaydedilemedi. Yeniden denemeden önce mevcut ayarları kontrol edin.</string>
     <string name="config_gamepad_calibration_no_supported_ranges">Desteklenen analog aralığı bulunamadı.</string>
     <string name="config_gamepad_calibration_rejected">Kalibrasyon reddedildi: <xliff:g id="name" example="Example">%1$s</xliff:g></string>
     <string name="config_gamepad_calibration_neutral_instructions">Nötr zamanlayıcı tamamlanana kadar algılanan tüm çubukları ortada ve algılanan tüm tetikleri serbest tutun.</string>

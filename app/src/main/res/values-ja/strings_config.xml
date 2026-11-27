@@ -46,7 +46,7 @@
     <string name="config_gamepad_calibration_waiting_controller">対応するアナログスティックまたはトリガーを備えたコントローラーを接続してください。スティックを動かすか、トリガーを押すと開始します。新しいキャリブレーションを保存するかリセットするまで、既存のキャリブレーションは変更されません。</string>
     <string name="config_gamepad_calibration_no_analog_ranges">このコントローラーは対応するアナログスティックやトリガーの可動範囲を提供していません。</string>
     <string name="config_gamepad_calibration_start">中立位置の計測タイマーが完了するまで、すべてのスティックを中央に保ち、トリガーから指を離してください。</string>
-    <string name="config_gamepad_calibration_save_failed">キャリブレーションを保存できませんでした。既存のキャリブレーションは変更されません。</string>
+    <string name="config_gamepad_calibration_save_failed">キャリブレーションを保存できませんでした。もう一度試す前に、現在の設定を確認してください。</string>
     <string name="config_gamepad_calibration_no_supported_ranges">対応するアナログ可動範囲が見つかりませんでした。</string>
     <string name="config_gamepad_calibration_rejected">キャリブレーションが拒否されました: <xliff:g id="name" example="Example">%1$s</xliff:g></string>
     <string name="config_gamepad_calibration_neutral_instructions">中立位置の計測タイマーが完了するまで、検出されたすべてのスティックを中央に保ち、すべてのトリガーを離した状態にしてください。</string>

@@ -48,7 +48,7 @@
     <string name="config_gamepad_calibration_waiting_controller">Collega un controller con uno stick analogico o un grilletto supportato. Muovi uno stick o premi un grilletto per iniziare. La calibrazione attuale non cambia, a meno che non ne salvi una nuova o la reimposti.</string>
     <string name="config_gamepad_calibration_no_analog_ranges">Questo controller non fornisce intervalli analogici supportati per stick o grilletti.</string>
     <string name="config_gamepad_calibration_start">Mantieni tutti gli stick al centro e tutti i grilletti rilasciati fino al termine del timer della posizione neutra.</string>
-    <string name="config_gamepad_calibration_save_failed">Impossibile salvare la calibrazione. La calibrazione esistente resta invariata.</string>
+    <string name="config_gamepad_calibration_save_failed">Impossibile salvare la calibrazione. Controlla le impostazioni attuali prima di riprovare.</string>
     <string name="config_gamepad_calibration_no_supported_ranges">Nessun intervallo analogico supportato trovato.</string>
     <string name="config_gamepad_calibration_rejected">Calibrazione rifiutata: <xliff:g id="name" example="Example">%1$s</xliff:g></string>
     <string name="config_gamepad_calibration_neutral_instructions">Mantieni centrati tutti gli stick rilevati e rilasciati tutti i grilletti rilevati fino al termine del timer della posizione neutra.</string>

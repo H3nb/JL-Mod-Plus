@@ -48,7 +48,7 @@
     <string name="config_gamepad_calibration_waiting_controller">Csatlakoztasson támogatott analóg karral vagy ravasszal rendelkező kontrollert. A kezdéshez mozgasson meg egy kart vagy nyomjon meg egy ravaszt. A meglévő kalibrálás csak új kalibrálás mentésekor vagy visszaállításkor változik.</string>
     <string name="config_gamepad_calibration_no_analog_ranges">Ez a kontroller nem biztosít támogatott analóg kar- vagy ravasztartományokat.</string>
     <string name="config_gamepad_calibration_start">Tartsa az összes kart középen, az összes ravaszt pedig elengedve, amíg a nyugalmi időzítő le nem jár.</string>
-    <string name="config_gamepad_calibration_save_failed">Nem sikerült menteni a kalibrálást. A meglévő kalibrálás változatlan marad.</string>
+    <string name="config_gamepad_calibration_save_failed">Nem sikerült menteni a kalibrálást. Újrapróbálkozás előtt ellenőrizze az aktuális beállításokat.</string>
     <string name="config_gamepad_calibration_no_supported_ranges">Nem találhatók támogatott analóg tartományok.</string>
     <string name="config_gamepad_calibration_rejected">Kalibrálás elutasítva: <xliff:g id="name" example="Example">%1$s</xliff:g></string>
     <string name="config_gamepad_calibration_neutral_instructions">Tartsa az összes észlelt kart középen, az összes észlelt ravaszt pedig elengedve, amíg a nyugalmi időzítő le nem jár.</string>

@@ -47,7 +47,7 @@
     <string name="config_gamepad_calibration_waiting_controller">Connecta un comandament amb una palanca analògica o un gallet compatible. Mou una palanca o prem un gallet per començar. El calibratge actual no canviarà tret que en desis un de nou o el restableixis.</string>
     <string name="config_gamepad_calibration_no_analog_ranges">Aquest comandament no proporciona intervals compatibles de palanca analògica ni de gallet.</string>
     <string name="config_gamepad_calibration_start">Mantén totes les palanques centrades i tots els gallets deixats anar fins que acabi el temporitzador de posició neutra.</string>
-    <string name="config_gamepad_calibration_save_failed">No s’ha pogut desar el calibratge. El calibratge existent es manté sense canvis.</string>
+    <string name="config_gamepad_calibration_save_failed">No s’ha pogut desar el calibratge. Comprova la configuració actual abans de tornar-ho a provar.</string>
     <string name="config_gamepad_calibration_no_supported_ranges">No s’han trobat intervals analògics compatibles.</string>
     <string name="config_gamepad_calibration_rejected">Calibratge rebutjat: <xliff:g id="name" example="Example">%1$s</xliff:g></string>
     <string name="config_gamepad_calibration_neutral_instructions">Mantén centrades totes les palanques detectades i deixats anar tots els gallets detectats fins que acabi el temporitzador de posició neutra.</string>

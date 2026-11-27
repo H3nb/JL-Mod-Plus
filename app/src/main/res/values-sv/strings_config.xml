@@ -48,7 +48,7 @@
     <string name="config_gamepad_calibration_waiting_controller">Anslut en handkontroll med en analog styrspak eller avtryckare som stöds. Rör en styrspak eller tryck på en avtryckare för att börja. Den befintliga kalibreringen ändras bara om du sparar en ny eller återställer den.</string>
     <string name="config_gamepad_calibration_no_analog_ranges">Den här handkontrollen ger inga analoga styrspaks- eller avtryckaromfång som stöds.</string>
     <string name="config_gamepad_calibration_start">Håll alla styrspakar centrerade och alla avtryckare uppsläppta tills neutraltimern är klar.</string>
-    <string name="config_gamepad_calibration_save_failed">Det gick inte att spara kalibreringen. Befintlig kalibrering är oförändrad.</string>
+    <string name="config_gamepad_calibration_save_failed">Det gick inte att spara kalibreringen. Kontrollera de aktuella inställningarna innan du försöker igen.</string>
     <string name="config_gamepad_calibration_no_supported_ranges">Inga analoga omfång som stöds hittades.</string>
     <string name="config_gamepad_calibration_rejected">Kalibrering avvisad: <xliff:g id="name" example="Example">%1$s</xliff:g></string>
     <string name="config_gamepad_calibration_neutral_instructions">Håll alla identifierade styrspakar centrerade och alla identifierade avtryckare uppsläppta tills neutraltimern är klar.</string>

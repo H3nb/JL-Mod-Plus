@@ -48,7 +48,7 @@
     <string name="config_gamepad_calibration_waiting_controller">Connectez une manette équipée d’un stick analogique ou d’une gâchette pris en charge. Déplacez un stick ou appuyez sur une gâchette pour commencer. Le calibrage actuel reste inchangé, sauf si vous en enregistrez un nouveau ou le réinitialisez.</string>
     <string name="config_gamepad_calibration_no_analog_ranges">Cette manette ne fournit aucune plage analogique prise en charge pour les sticks ou les gâchettes.</string>
     <string name="config_gamepad_calibration_start">Maintenez chaque stick au centre et chaque gâchette relâchée jusqu’à la fin du compte à rebours neutre.</string>
-    <string name="config_gamepad_calibration_save_failed">Impossible d’enregistrer le calibrage. Le calibrage existant reste inchangé.</string>
+    <string name="config_gamepad_calibration_save_failed">Impossible d’enregistrer le calibrage. Vérifiez les paramètres actuels avant de réessayer.</string>
     <string name="config_gamepad_calibration_no_supported_ranges">Aucune plage analogique prise en charge n’a été trouvée.</string>
     <string name="config_gamepad_calibration_rejected">Calibrage refusé : <xliff:g id="name" example="Example">%1$s</xliff:g></string>
     <string name="config_gamepad_calibration_neutral_instructions">Maintenez tous les sticks détectés au centre et toutes les gâchettes détectées relâchées jusqu’à la fin du compte à rebours neutre.</string>

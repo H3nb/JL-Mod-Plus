@@ -48,7 +48,7 @@
     <string name="config_gamepad_calibration_waiting_controller">Conectați un controler cu un stick analogic sau un trăgaci compatibil. Mișcați un stick sau apăsați un trăgaci pentru a începe. Calibrarea actuală rămâne neschimbată dacă nu salvați una nouă sau nu o resetați.</string>
     <string name="config_gamepad_calibration_no_analog_ranges">Acest controler nu oferă intervale analogice compatibile pentru stick sau trăgaci.</string>
     <string name="config_gamepad_calibration_start">Mențineți toate stickurile centrate și toate trăgacele eliberate până la expirarea cronometrului de poziție neutră.</string>
-    <string name="config_gamepad_calibration_save_failed">Calibrarea nu a putut fi salvată. Calibrarea existentă rămâne neschimbată.</string>
+    <string name="config_gamepad_calibration_save_failed">Calibrarea nu a putut fi salvată. Verificați setările actuale înainte de a încerca din nou.</string>
     <string name="config_gamepad_calibration_no_supported_ranges">Nu au fost găsite intervale analogice compatibile.</string>
     <string name="config_gamepad_calibration_rejected">Calibrare respinsă: <xliff:g id="name" example="Example">%1$s</xliff:g></string>
     <string name="config_gamepad_calibration_neutral_instructions">Mențineți toate stickurile detectate centrate și toate trăgacele detectate eliberate până la expirarea cronometrului de poziție neutră.</string>

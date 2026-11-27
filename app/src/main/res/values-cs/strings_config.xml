@@ -46,7 +46,7 @@
     <string name="config_gamepad_calibration_waiting_controller">Připojte ovladač s podporovanou analogovou páčkou nebo spouští. Kalibraci zahájíte pohybem páčky nebo stisknutím spouště. Stávající kalibrace se nezmění, pokud neuložíte novou nebo ji neresetujete.</string>
     <string name="config_gamepad_calibration_no_analog_ranges">Tento ovladač neposkytuje podporované analogové rozsahy páček ani spouští.</string>
     <string name="config_gamepad_calibration_start">Ponechte všechny páčky ve středu a všechny spouště uvolněné, dokud nedoběhne časovač neutrální polohy.</string>
-    <string name="config_gamepad_calibration_save_failed">Kalibraci se nepodařilo uložit. Stávající kalibrace zůstává beze změny.</string>
+    <string name="config_gamepad_calibration_save_failed">Kalibraci se nepodařilo uložit. Před dalším pokusem zkontrolujte aktuální nastavení.</string>
     <string name="config_gamepad_calibration_no_supported_ranges">Nebyly nalezeny žádné podporované analogové rozsahy.</string>
     <string name="config_gamepad_calibration_rejected">Kalibrace byla odmítnuta: <xliff:g id="name" example="Example">%1$s</xliff:g></string>
     <string name="config_gamepad_calibration_neutral_instructions">Ponechte všechny zjištěné páčky ve středu a všechny zjištěné spouště uvolněné, dokud nedoběhne časovač neutrální polohy.</string>

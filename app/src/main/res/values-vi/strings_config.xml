@@ -48,7 +48,7 @@
     <string name="config_gamepad_calibration_waiting_controller">Kết nối tay cầm có cần analog hoặc nút cò được hỗ trợ. Di chuyển cần hoặc nhấn nút cò để bắt đầu. Hiệu chỉnh hiện tại sẽ giữ nguyên trừ khi bạn lưu bản hiệu chỉnh mới hoặc đặt lại.</string>
     <string name="config_gamepad_calibration_no_analog_ranges">Tay cầm này không cung cấp phạm vi cần analog hoặc nút cò được hỗ trợ.</string>
     <string name="config_gamepad_calibration_start">Giữ tất cả cần analog ở chính giữa và thả hết các nút cò cho đến khi hết thời gian đo vị trí trung lập.</string>
-    <string name="config_gamepad_calibration_save_failed">Không thể lưu hiệu chỉnh. Hiệu chỉnh hiện tại vẫn giữ nguyên.</string>
+    <string name="config_gamepad_calibration_save_failed">Không thể lưu hiệu chỉnh. Kiểm tra cài đặt hiện tại trước khi thử lại.</string>
     <string name="config_gamepad_calibration_no_supported_ranges">Không tìm thấy phạm vi analog nào được hỗ trợ.</string>
     <string name="config_gamepad_calibration_rejected">Hiệu chỉnh bị từ chối: <xliff:g id="name" example="Example">%1$s</xliff:g></string>
     <string name="config_gamepad_calibration_neutral_instructions">Giữ tất cả cần analog đã phát hiện ở chính giữa và thả hết các nút cò đã phát hiện cho đến khi hết thời gian đo vị trí trung lập.</string>

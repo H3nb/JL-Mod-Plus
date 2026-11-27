@@ -48,7 +48,7 @@
     <string name="config_gamepad_calibration_waiting_controller">Hubungkan pengontrol dengan stik analog atau trigger yang didukung. Gerakkan stik atau tekan trigger untuk memulai kalibrasi. Kalibrasi sebelumnya tidak berubah hingga Anda menyimpan hasil kalibrasi atau meresetnya.</string>
     <string name="config_gamepad_calibration_no_analog_ranges">Pengontrol ini tidak memiliki stik analog atau trigger dengan rentang yang didukung.</string>
     <string name="config_gamepad_calibration_start">Pertahankan semua stik di posisi tengah dan jangan tekan trigger hingga tahap berikutnya dimulai.</string>
-    <string name="config_gamepad_calibration_save_failed">Tidak dapat menyimpan kalibrasi. Kalibrasi sebelumnya tidak berubah.</string>
+    <string name="config_gamepad_calibration_save_failed">Tidak dapat menyimpan kalibrasi. Periksa setelan saat ini sebelum mencoba lagi.</string>
     <string name="config_gamepad_calibration_no_supported_ranges">Tidak ada rentang analog yang didukung.</string>
     <string name="config_gamepad_calibration_rejected">Kalibrasi ditolak: <xliff:g id="name" example="Example">%1$s</xliff:g></string>
     <string name="config_gamepad_calibration_neutral_instructions">Pertahankan semua stik yang terdeteksi di posisi tengah dan jangan tekan trigger hingga tahap berikutnya dimulai.</string>

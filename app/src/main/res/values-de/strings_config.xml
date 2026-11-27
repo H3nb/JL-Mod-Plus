@@ -48,7 +48,7 @@
     <string name="config_gamepad_calibration_waiting_controller">Verbinden Sie einen Controller mit unterstütztem Analogstick oder Trigger. Bewegen Sie einen Stick oder drücken Sie einen Trigger, um zu beginnen. Die bestehende Kalibrierung bleibt unverändert, sofern Sie keine neue speichern oder sie zurücksetzen.</string>
     <string name="config_gamepad_calibration_no_analog_ranges">Dieser Controller stellt keine unterstützten Analog-Stick- oder Trigger-Bereiche bereit.</string>
     <string name="config_gamepad_calibration_start">Lassen Sie alle Sticks zentriert und alle Trigger losgelassen, bis der Neutralstellungs-Timer abgelaufen ist.</string>
-    <string name="config_gamepad_calibration_save_failed">Kalibrierung konnte nicht gespeichert werden. Die bestehende Kalibrierung bleibt unverändert.</string>
+    <string name="config_gamepad_calibration_save_failed">Kalibrierung konnte nicht gespeichert werden. Überprüfen Sie die aktuellen Einstellungen, bevor Sie es erneut versuchen.</string>
     <string name="config_gamepad_calibration_no_supported_ranges">Keine unterstützten Analogbereiche gefunden.</string>
     <string name="config_gamepad_calibration_rejected">Kalibrierung abgelehnt: <xliff:g id="name" example="Example">%1$s</xliff:g></string>
     <string name="config_gamepad_calibration_neutral_instructions">Lassen Sie alle erkannten Sticks zentriert und alle erkannten Trigger losgelassen, bis der Neutralstellungs-Timer abgelaufen ist.</string>

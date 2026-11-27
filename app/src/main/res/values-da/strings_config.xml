@@ -48,7 +48,7 @@
     <string name="config_gamepad_calibration_waiting_controller">Tilslut en controller med en understøttet analog styrepind eller aftrækker. Bevæg en styrepind, eller tryk på en aftrækker for at begynde. Den eksisterende kalibrering ændres kun, hvis du gemmer en ny eller nulstiller den.</string>
     <string name="config_gamepad_calibration_no_analog_ranges">Denne controller leverer ingen understøttede analoge styrepind- eller aftrækkerområder.</string>
     <string name="config_gamepad_calibration_start">Hold alle styrepinde centreret og alle aftrækkere sluppet, indtil neutraltimeren er færdig.</string>
-    <string name="config_gamepad_calibration_save_failed">Kalibreringen kunne ikke gemmes. Den eksisterende kalibrering forbliver uændret.</string>
+    <string name="config_gamepad_calibration_save_failed">Kalibreringen kunne ikke gemmes. Kontrollér de aktuelle indstillinger, før du prøver igen.</string>
     <string name="config_gamepad_calibration_no_supported_ranges">Der blev ikke fundet nogen understøttede analoge områder.</string>
     <string name="config_gamepad_calibration_rejected">Kalibrering afvist: <xliff:g id="name" example="Example">%1$s</xliff:g></string>
     <string name="config_gamepad_calibration_neutral_instructions">Hold alle registrerede styrepinde centreret og alle registrerede aftrækkere sluppet, indtil neutraltimeren er færdig.</string>

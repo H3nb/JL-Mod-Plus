@@ -48,7 +48,7 @@
     <string name="config_gamepad_calibration_waiting_controller">Yhdistä ohjain, jossa on tuettu analoginen sauva tai liipaisin. Aloita liikuttamalla sauvaa tai painamalla liipaisinta. Nykyinen kalibrointi säilyy ennallaan, ellet tallenna uutta tai nollaa sitä.</string>
     <string name="config_gamepad_calibration_no_analog_ranges">Tämä ohjain ei tarjoa tuettuja analogisten sauvojen tai liipaisinten alueita.</string>
     <string name="config_gamepad_calibration_start">Pidä kaikki sauvat keskellä ja kaikki liipaisimet vapautettuina, kunnes lepoasennon ajastin päättyy.</string>
-    <string name="config_gamepad_calibration_save_failed">Kalibrointia ei voitu tallentaa. Nykyinen kalibrointi säilyy ennallaan.</string>
+    <string name="config_gamepad_calibration_save_failed">Kalibrointia ei voitu tallentaa. Tarkista nykyiset asetukset ennen kuin yrität uudelleen.</string>
     <string name="config_gamepad_calibration_no_supported_ranges">Tuettuja analogisia alueita ei löytynyt.</string>
     <string name="config_gamepad_calibration_rejected">Kalibrointi hylätty: <xliff:g id="name" example="Example">%1$s</xliff:g></string>
     <string name="config_gamepad_calibration_neutral_instructions">Pidä kaikki havaitut sauvat keskellä ja kaikki havaitut liipaisimet vapautettuina, kunnes lepoasennon ajastin päättyy.</string>

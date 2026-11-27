@@ -48,7 +48,7 @@
     <string name="config_gamepad_calibration_waiting_controller">Свържете контролер с поддържан аналогов стик или спусък. За да започнете, преместете стик или натиснете спусък. Текущото калибриране остава непроменено, освен ако не запазите ново или не го нулирате.</string>
     <string name="config_gamepad_calibration_no_analog_ranges">Този контролер не предоставя поддържани обхвати за аналогов стик или спусък.</string>
     <string name="config_gamepad_calibration_start">Дръжте всеки стик в центъра и всеки спусък отпуснат, докато таймерът за неутрална позиция изтече.</string>
-    <string name="config_gamepad_calibration_save_failed">Калибрацията не можа да бъде запазена. Текущата калибрация остава непроменена.</string>
+    <string name="config_gamepad_calibration_save_failed">Калибрацията не можа да бъде запазена. Проверете текущите настройки, преди да опитате отново.</string>
     <string name="config_gamepad_calibration_no_supported_ranges">Не са намерени поддържани аналогови обхвати.</string>
     <string name="config_gamepad_calibration_rejected">Калибрацията е отхвърлена: <xliff:g id="name" example="Example">%1$s</xliff:g></string>
     <string name="config_gamepad_calibration_neutral_instructions">Дръжте всички открити стикове в центъра и всички открити спусъци отпуснати, докато таймерът за неутрална позиция изтече.</string>

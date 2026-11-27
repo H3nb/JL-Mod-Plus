@@ -47,7 +47,7 @@
     <string name="config_gamepad_calibration_waiting_controller">Συνδέστε ένα χειριστήριο με υποστηριζόμενο αναλογικό μοχλό ή σκανδάλη. Μετακινήστε έναν μοχλό ή πατήστε μια σκανδάλη για να ξεκινήσετε. Η υπάρχουσα βαθμονόμηση παραμένει αμετάβλητη, εκτός αν αποθηκεύσετε μια νέα ή την επαναφέρετε.</string>
     <string name="config_gamepad_calibration_no_analog_ranges">Αυτό το χειριστήριο δεν παρέχει υποστηριζόμενα εύρη αναλογικού μοχλού ή σκανδάλης.</string>
     <string name="config_gamepad_calibration_start">Διατηρήστε κάθε μοχλό στο κέντρο και κάθε σκανδάλη ελεύθερη μέχρι να ολοκληρωθεί το χρονόμετρο ουδέτερης θέσης.</string>
-    <string name="config_gamepad_calibration_save_failed">Δεν ήταν δυνατή η αποθήκευση της βαθμονόμησης. Η υπάρχουσα βαθμονόμηση παραμένει αμετάβλητη.</string>
+    <string name="config_gamepad_calibration_save_failed">Δεν ήταν δυνατή η αποθήκευση της βαθμονόμησης. Ελέγξτε τις τρέχουσες ρυθμίσεις πριν δοκιμάσετε ξανά.</string>
     <string name="config_gamepad_calibration_no_supported_ranges">Δεν βρέθηκαν υποστηριζόμενα αναλογικά εύρη.</string>
     <string name="config_gamepad_calibration_rejected">Η βαθμονόμηση απορρίφθηκε: <xliff:g id="name" example="Example">%1$s</xliff:g></string>
     <string name="config_gamepad_calibration_neutral_instructions">Διατηρήστε όλους τους εντοπισμένους μοχλούς στο κέντρο και όλες τις εντοπισμένες σκανδάλες ελεύθερες μέχρι να ολοκληρωθεί το χρονόμετρο ουδέτερης θέσης.</string>

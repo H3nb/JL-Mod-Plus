@@ -48,7 +48,7 @@
     <string name="config_gamepad_calibration_waiting_controller">Koppel ’n beheerder met ’n ondersteunde analoogstok of sneller. Beweeg ’n stok of druk ’n sneller om te begin. Die bestaande kalibrering bly onveranderd tensy jy ’n nuwe een stoor of dit terugstel.</string>
     <string name="config_gamepad_calibration_no_analog_ranges">Hierdie beheerder verskaf nie ondersteunde analoogstok- of snellerreekse nie.</string>
     <string name="config_gamepad_calibration_start">Hou elke stok gesentreer en elke sneller losgelaat totdat die neutrale tydhouer voltooi is.</string>
-    <string name="config_gamepad_calibration_save_failed">Kon nie kalibrering stoor nie. Die bestaande kalibrering bly onveranderd.</string>
+    <string name="config_gamepad_calibration_save_failed">Kon nie kalibrering stoor nie. Gaan die huidige instellings na voordat jy weer probeer.</string>
     <string name="config_gamepad_calibration_no_supported_ranges">Geen ondersteunde analoogreekse gevind nie.</string>
     <string name="config_gamepad_calibration_rejected">Kalibrering afgekeur: <xliff:g id="name" example="Example">%1$s</xliff:g></string>
     <string name="config_gamepad_calibration_neutral_instructions">Hou alle bespeurde stokke gesentreer en alle bespeurde snellers losgelaat totdat die neutrale tydhouer voltooi is.</string>

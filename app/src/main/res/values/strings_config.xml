@@ -48,7 +48,7 @@
     <string name="config_gamepad_calibration_waiting_controller">Connect a controller with a supported analog stick or trigger. Move a stick or press a trigger to begin. The existing calibration stays unchanged unless you save a new one or reset it.</string>
     <string name="config_gamepad_calibration_no_analog_ranges">This controller doesn’t provide supported analog stick or trigger ranges.</string>
     <string name="config_gamepad_calibration_start">Keep every stick centered and every trigger released until the neutral timer completes.</string>
-    <string name="config_gamepad_calibration_save_failed">Couldn’t save calibration. The existing calibration remains unchanged.</string>
+    <string name="config_gamepad_calibration_save_failed">Couldn’t save calibration. Check the current settings before trying again.</string>
     <string name="config_gamepad_calibration_no_supported_ranges">No supported analog ranges were found.</string>
     <string name="config_gamepad_calibration_rejected">Calibration rejected: <xliff:g id="name" example="Example">%1$s</xliff:g></string>
     <string name="config_gamepad_calibration_neutral_instructions">Keep all detected sticks centered and all detected triggers released until the neutral timer completes.</string>

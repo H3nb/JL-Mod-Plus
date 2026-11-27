@@ -48,7 +48,7 @@
     <string name="config_gamepad_calibration_waiting_controller">เชื่อมต่อคอนโทรลเลอร์ที่มีอนาล็อกสติ๊กหรือปุ่มทริกเกอร์ที่รองรับ ขยับสติ๊กหรือกดปุ่มทริกเกอร์เพื่อเริ่ม การปรับเทียบเดิมจะไม่เปลี่ยนแปลง เว้นแต่คุณจะบันทึกการปรับเทียบใหม่หรือรีเซ็ต</string>
     <string name="config_gamepad_calibration_no_analog_ranges">คอนโทรลเลอร์นี้ไม่มีช่วงอนาล็อกสติ๊กหรือไกปุ่มที่รองรับ</string>
     <string name="config_gamepad_calibration_start">ปล่อยสติ๊กทุกอันไว้ตรงกลางและปล่อยไกปุ่มทุกอันจนกว่าตัวนับเวลาตำแหน่งกึ่งกลางจะเสร็จสิ้น</string>
-    <string name="config_gamepad_calibration_save_failed">ไม่สามารถบันทึกการปรับเทียบได้ การปรับเทียบเดิมจะยังคงอยู่</string>
+    <string name="config_gamepad_calibration_save_failed">ไม่สามารถบันทึกการปรับเทียบได้ ตรวจสอบการตั้งค่าปัจจุบันก่อนลองอีกครั้ง</string>
     <string name="config_gamepad_calibration_no_supported_ranges">ไม่พบช่วงอนาล็อกที่รองรับ</string>
     <string name="config_gamepad_calibration_rejected">ปฏิเสธการปรับเทียบ: <xliff:g id="name" example="Example">%1$s</xliff:g></string>
     <string name="config_gamepad_calibration_neutral_instructions">ปล่อยสติ๊กทั้งหมดที่ตรวจพบไว้ตรงกลางและปล่อยไกปุ่มทั้งหมดจนกว่าตัวนับเวลาตำแหน่งกึ่งกลางจะเสร็จสิ้น</string>

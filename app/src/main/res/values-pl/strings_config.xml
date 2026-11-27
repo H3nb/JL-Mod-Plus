@@ -48,7 +48,7 @@
     <string name="config_gamepad_calibration_waiting_controller">Podłącz kontroler z obsługiwanym drążkiem analogowym lub spustem. Porusz drążkiem lub naciśnij spust, aby rozpocząć. Obecna kalibracja zmieni się tylko po zapisaniu nowej lub jej zresetowaniu.</string>
     <string name="config_gamepad_calibration_no_analog_ranges">Ten kontroler nie udostępnia obsługiwanych zakresów drążków analogowych ani spustów.</string>
     <string name="config_gamepad_calibration_start">Utrzymuj wszystkie drążki na środku, a wszystkie spusty zwolnione, dopóki licznik położenia neutralnego nie zakończy odliczania.</string>
-    <string name="config_gamepad_calibration_save_failed">Nie udało się zapisać kalibracji. Obecna kalibracja pozostała bez zmian.</string>
+    <string name="config_gamepad_calibration_save_failed">Nie udało się zapisać kalibracji. Przed ponowną próbą sprawdź bieżące ustawienia.</string>
     <string name="config_gamepad_calibration_no_supported_ranges">Nie znaleziono obsługiwanych zakresów analogowych.</string>
     <string name="config_gamepad_calibration_rejected">Kalibracja odrzucona: <xliff:g id="name" example="Example">%1$s</xliff:g></string>
     <string name="config_gamepad_calibration_neutral_instructions">Utrzymuj wszystkie wykryte drążki na środku, a wszystkie wykryte spusty zwolnione, dopóki licznik położenia neutralnego nie zakończy odliczania.</string>

@@ -48,7 +48,7 @@
     <string name="config_gamepad_calibration_waiting_controller">Қолдау көрсетілетін аналогтық стигі немесе триггері бар контроллерді қосыңыз. Бастау үшін стикті жылжытыңыз немесе триггерді басыңыз. Жаңа калибрлеуді сақтамасаңыз немесе оны бастапқы күйіне қайтармасаңыз, ағымдағы калибрлеу өзгермейді.</string>
     <string name="config_gamepad_calibration_no_analog_ranges">Бұл контроллер қолдау көрсетілетін аналогтық стик немесе триггер ауқымдарын бермейді.</string>
     <string name="config_gamepad_calibration_start">Бейтарап таймер аяқталғанша барлық стикті ортада, ал триггерлерді бос күйде ұстаңыз.</string>
-    <string name="config_gamepad_calibration_save_failed">Калибрлеу сақталмады. Бар калибрлеу өзгеріссіз қалды.</string>
+    <string name="config_gamepad_calibration_save_failed">Калибрлеу сақталмады. Қайталап көрмес бұрын ағымдағы параметрлерді тексеріңіз.</string>
     <string name="config_gamepad_calibration_no_supported_ranges">Қолдау көрсетілетін аналогтық ауқымдар табылмады.</string>
     <string name="config_gamepad_calibration_rejected">Калибрлеу қабылданбады: <xliff:g id="name" example="Example">%1$s</xliff:g></string>
     <string name="config_gamepad_calibration_neutral_instructions">Бейтарап таймер аяқталғанша анықталған барлық стикті ортада, ал триггерлерді бос күйде ұстаңыз.</string>

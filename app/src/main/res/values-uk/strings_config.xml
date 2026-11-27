@@ -48,7 +48,7 @@
     <string name="config_gamepad_calibration_waiting_controller">Підключіть контролер із підтримуваним аналоговим стіком або тригером. Щоб почати, відхиліть стік або натисніть тригер. Поточне калібрування не зміниться, доки ви не збережете нове або не скинете його.</string>
     <string name="config_gamepad_calibration_no_analog_ranges">Цей контролер не надає підтримуваних діапазонів аналогового стіка або тригера.</string>
     <string name="config_gamepad_calibration_start">Тримайте всі стіки в центрі, а всі тригери відпущеними, доки не завершиться таймер нейтрального положення.</string>
-    <string name="config_gamepad_calibration_save_failed">Не вдалося зберегти калібрування. Наявне калібрування залишилося без змін.</string>
+    <string name="config_gamepad_calibration_save_failed">Не вдалося зберегти калібрування. Перевірте поточні налаштування, перш ніж повторити спробу.</string>
     <string name="config_gamepad_calibration_no_supported_ranges">Підтримуваних аналогових діапазонів не знайдено.</string>
     <string name="config_gamepad_calibration_rejected">Калібрування відхилено: <xliff:g id="name" example="Example">%1$s</xliff:g></string>
     <string name="config_gamepad_calibration_neutral_instructions">Тримайте всі виявлені стіки в центрі, а всі виявлені тригери відпущеними, доки не завершиться таймер нейтрального положення.</string>

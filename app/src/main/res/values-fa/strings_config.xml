@@ -48,7 +48,7 @@
     <string name="config_gamepad_calibration_waiting_controller">دسته‌ای با استیک آنالوگ یا ماشه پشتیبانی‌شده متصل کنید. برای شروع، استیک را حرکت دهید یا ماشه را فشار دهید. کالیبراسیون فعلی فقط در صورت ذخیره کالیبراسیون جدید یا بازنشانی آن تغییر می‌کند.</string>
     <string name="config_gamepad_calibration_no_analog_ranges">این دسته بازی بازه‌های پشتیبانی‌شده برای آنالوگ یا ماشه ارائه نمی‌دهد.</string>
     <string name="config_gamepad_calibration_start">تا پایان تایمر حالت خنثی، همه آنالوگ‌ها را در مرکز و همه ماشه‌ها را رها نگه دارید.</string>
-    <string name="config_gamepad_calibration_save_failed">ذخیره کالیبراسیون ممکن نشد. کالیبراسیون فعلی بدون تغییر می‌ماند.</string>
+    <string name="config_gamepad_calibration_save_failed">ذخیره کالیبراسیون ممکن نشد. پیش از تلاش دوباره، تنظیمات فعلی را بررسی کنید.</string>
     <string name="config_gamepad_calibration_no_supported_ranges">بازه آنالوگ پشتیبانی‌شده‌ای یافت نشد.</string>
     <string name="config_gamepad_calibration_rejected">کالیبراسیون رد شد: <xliff:g id="name" example="Example">%1$s</xliff:g></string>
     <string name="config_gamepad_calibration_neutral_instructions">تا پایان تایمر حالت خنثی، همه آنالوگ‌های شناسایی‌شده را در مرکز و همه ماشه‌های شناسایی‌شده را رها نگه دارید.</string>

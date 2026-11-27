@@ -48,7 +48,7 @@
     <string name="config_gamepad_calibration_waiting_controller">Verbind een controller met een ondersteunde analoge stick of trigger. Beweeg een stick of druk een trigger in om te beginnen. De bestaande kalibratie blijft ongewijzigd, tenzij je een nieuwe opslaat of deze reset.</string>
     <string name="config_gamepad_calibration_no_analog_ranges">Deze controller biedt geen ondersteunde analoge stick- of triggerbereiken.</string>
     <string name="config_gamepad_calibration_start">Houd elke stick gecentreerd en elke trigger losgelaten totdat de neutrale timer is afgelopen.</string>
-    <string name="config_gamepad_calibration_save_failed">Kan kalibratie niet opslaan. De bestaande kalibratie blijft ongewijzigd.</string>
+    <string name="config_gamepad_calibration_save_failed">Kan kalibratie niet opslaan. Controleer de huidige instellingen voordat je het opnieuw probeert.</string>
     <string name="config_gamepad_calibration_no_supported_ranges">Geen ondersteunde analoge bereiken gevonden.</string>
     <string name="config_gamepad_calibration_rejected">Kalibratie geweigerd: <xliff:g id="name" example="Example">%1$s</xliff:g></string>
     <string name="config_gamepad_calibration_neutral_instructions">Houd alle gedetecteerde sticks gecentreerd en alle gedetecteerde triggers losgelaten totdat de neutrale timer is afgelopen.</string>

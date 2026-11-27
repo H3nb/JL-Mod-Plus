@@ -48,7 +48,7 @@
     <string name="config_gamepad_calibration_waiting_controller">請連接支援類比搖桿或扳機鍵的控制器。移動搖桿或按下扳機鍵即可開始。除非儲存新的校正資料或重設，否則現有校正資料維持不變。</string>
     <string name="config_gamepad_calibration_no_analog_ranges">此控制器未提供支援的類比搖桿或扳機鍵範圍。</string>
     <string name="config_gamepad_calibration_start">請保持所有搖桿置中且放開所有扳機鍵，直到中立計時完成。</string>
-    <string name="config_gamepad_calibration_save_failed">無法儲存校正資料，現有校正維持不變。</string>
+    <string name="config_gamepad_calibration_save_failed">無法儲存校正資料。請先檢查目前的設定，再試一次。</string>
     <string name="config_gamepad_calibration_no_supported_ranges">找不到支援的類比範圍。</string>
     <string name="config_gamepad_calibration_rejected">校正未通過：<xliff:g id="name" example="Example">%1$s</xliff:g></string>
     <string name="config_gamepad_calibration_neutral_instructions">請保持所有偵測到的搖桿置中並放開所有偵測到的扳機鍵，直到中立計時完成。</string>

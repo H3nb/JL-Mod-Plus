@@ -48,7 +48,7 @@
     <string name="config_gamepad_calibration_waiting_controller">Повежите контролер са подржаном аналогном палицом или окидачем. Померите палицу или притисните окидач да бисте почели. Постојећа калибрација се не мења осим ако сачувате нову или је ресетујете.</string>
     <string name="config_gamepad_calibration_no_analog_ranges">Овај контролер не пружа подржане опсеге аналогне палице или окидача.</string>
     <string name="config_gamepad_calibration_start">Држите све палице у центру и отпустите све окидаче док се не заврши тајмер неутралног положаја.</string>
-    <string name="config_gamepad_calibration_save_failed">Није могуће сачувати калибрацију. Постојећа калибрација остаје непромењена.</string>
+    <string name="config_gamepad_calibration_save_failed">Није могуће сачувати калибрацију. Проверите тренутна подешавања пре поновног покушаја.</string>
     <string name="config_gamepad_calibration_no_supported_ranges">Нису пронађени подржани аналогни опсези.</string>
     <string name="config_gamepad_calibration_rejected">Калибрација одбијена: <xliff:g id="name" example="Example">%1$s</xliff:g></string>
     <string name="config_gamepad_calibration_neutral_instructions">Држите све откривене палице у центру и отпустите све откривене окидаче док се не заврши тајмер неутралног положаја.</string>
