@@ -41,7 +41,7 @@
     <string name="render_game_output">Ieșire joc</string>
     <string name="render_logical_screen_help">Dimensiunea logică raportată jocului.</string>
     <string name="render_internal_resolution">Rezoluție internă</string>
-    <string name="render_internal_unavailable">Doar nativ (1×). Rezoluțiile de randare mai mari nu sunt disponibile pentru această configurație.</string>
+    <string name="render_internal_unavailable">Doar originală (1×). Rezoluțiile de randare mai mari nu sunt disponibile pentru această configurație.</string>
     <string name="render_display_renderer">Motor de afișare</string>
     <string name="render_shader_processing">Procesare shader</string>
     <string name="render_display_scaling">Scalare afișaj</string>
@@ -60,7 +60,7 @@
     <string name="render_parameters_hint">Mutați un glisor pentru a-i ajusta valoarea. Modificările se salvează când eliberați glisorul.</string>
     <string name="render_pass_readonly">Etapele rulează în această ordine. Filtrarea intrării și scalarea ieșirii provin din presetarea selectată.</string>
     <string name="render_pipeline_intro">Traseul de la framebufferul jocului până la ecran.</string>
-    <string name="render_native_short">Nativ (1×)</string>
+    <string name="render_native_short">Originală (1×)</string>
     <string name="render_expand_passes">Afișează etapele</string>
     <string name="render_collapse_passes">Ascunde etapele</string>
     <string name="render_view_all_passes">Detalii etape</string>

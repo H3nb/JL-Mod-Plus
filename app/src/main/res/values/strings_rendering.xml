@@ -41,7 +41,7 @@
     <string name="render_game_output">Game output</string>
     <string name="render_logical_screen_help">Logical size reported to the game.</string>
     <string name="render_internal_resolution">Internal resolution</string>
-    <string name="render_internal_unavailable">Native (1×) only. Higher render resolutions aren’t available for this configuration.</string>
+    <string name="render_internal_unavailable">Original (1×) only. Higher render resolutions aren’t available for this configuration.</string>
     <string name="render_display_renderer">Presentation renderer</string>
     <string name="render_shader_processing">Shader processing</string>
     <string name="render_display_scaling">Display scaling</string>
@@ -60,7 +60,7 @@
     <string name="render_parameters_hint">Move a slider to adjust its value. Changes are saved when you release it.</string>
     <string name="render_pass_readonly">Stages run in this order. Input filtering and output scaling come from the selected preset.</string>
     <string name="render_pipeline_intro">The path from the game framebuffer to your screen.</string>
-    <string name="render_native_short">Native (1×)</string>
+    <string name="render_native_short">Original (1×)</string>
     <string name="render_expand_passes">Show stages</string>
     <string name="render_collapse_passes">Hide stages</string>
     <string name="render_view_all_passes">Stage details</string>

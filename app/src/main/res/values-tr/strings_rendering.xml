@@ -40,7 +40,7 @@
     <string name="render_game_output">Oyun çıkışı</string>
     <string name="render_logical_screen_help">Oyuna bildirilen mantıksal boyut.</string>
     <string name="render_internal_resolution">Dahili çözünürlük</string>
-    <string name="render_internal_unavailable">Yalnızca yerel (1×). Bu yapılandırmada daha yüksek işleme çözünürlükleri kullanılamıyor.</string>
+    <string name="render_internal_unavailable">Yalnızca orijinal (1×). Bu yapılandırmada daha yüksek işleme çözünürlükleri kullanılamıyor.</string>
     <string name="render_display_renderer">Sunum işleyicisi</string>
     <string name="render_shader_processing">Shader işleme</string>
     <string name="render_display_scaling">Ekran ölçekleme</string>
@@ -59,7 +59,7 @@
     <string name="render_parameters_hint">Değerini ayarlamak için bir kaydırıcıyı hareket ettirin. Bıraktığınızda değişiklikler kaydedilir.</string>
     <string name="render_pass_readonly">Aşamalar bu sırayla çalışır. Giriş filtreleme ve çıkış ölçekleme seçilen ön ayardan gelir.</string>
     <string name="render_pipeline_intro">Oyun kare arabelleğinden ekranınıza uzanan yol.</string>
-    <string name="render_native_short">Yerel (1×)</string>
+    <string name="render_native_short">Orijinal (1×)</string>
     <string name="render_expand_passes">Aşamaları göster</string>
     <string name="render_collapse_passes">Aşamaları gizle</string>
     <string name="render_view_all_passes">Aşama ayrıntıları</string>

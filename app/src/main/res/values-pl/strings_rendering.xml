@@ -41,7 +41,7 @@
     <string name="render_game_output">Wyjście gry</string>
     <string name="render_logical_screen_help">Rozmiar logiczny zgłaszany grze.</string>
     <string name="render_internal_resolution">Rozdzielczość wewnętrzna</string>
-    <string name="render_internal_unavailable">Tylko natywna (1×). Wyższe rozdzielczości renderowania nie są dostępne dla tej konfiguracji.</string>
+    <string name="render_internal_unavailable">Tylko oryginalna (1×). Wyższe rozdzielczości renderowania nie są dostępne dla tej konfiguracji.</string>
     <string name="render_display_renderer">Renderer wyświetlania</string>
     <string name="render_shader_processing">Przetwarzanie shadera</string>
     <string name="render_display_scaling">Skalowanie ekranu</string>
@@ -60,7 +60,7 @@
     <string name="render_parameters_hint">Przesuń suwak, aby dostosować wartość. Zmiany są zapisywane po jego puszczeniu.</string>
     <string name="render_pass_readonly">Etapy są wykonywane w tej kolejności. Filtrowanie wejścia i skalowanie wyjścia pochodzą z wybranego ustawienia.</string>
     <string name="render_pipeline_intro">Ścieżka od bufora ramki gry do Twojego ekranu.</string>
-    <string name="render_native_short">Natywna (1×)</string>
+    <string name="render_native_short">Oryginalna (1×)</string>
     <string name="render_expand_passes">Pokaż etapy</string>
     <string name="render_collapse_passes">Ukryj etapy</string>
     <string name="render_view_all_passes">Szczegóły etapów</string>

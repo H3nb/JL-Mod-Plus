@@ -40,7 +40,7 @@
     <string name="render_game_output">Έξοδος παιχνιδιού</string>
     <string name="render_logical_screen_help">Λογικό μέγεθος που αναφέρεται στο παιχνίδι.</string>
     <string name="render_internal_resolution">Εσωτερική ανάλυση</string>
-    <string name="render_internal_unavailable">Μόνο εγγενής (1×). Υψηλότερες αναλύσεις απόδοσης δεν είναι διαθέσιμες για αυτήν τη διαμόρφωση.</string>
+    <string name="render_internal_unavailable">Μόνο αρχική (1×). Υψηλότερες αναλύσεις απόδοσης δεν είναι διαθέσιμες για αυτήν τη διαμόρφωση.</string>
     <string name="render_display_renderer">Μηχανή παρουσίασης</string>
     <string name="render_shader_processing">Επεξεργασία shader</string>
     <string name="render_display_scaling">Κλιμάκωση οθόνης</string>
@@ -59,7 +59,7 @@
     <string name="render_parameters_hint">Μετακινήστε ένα ρυθμιστικό για να προσαρμόσετε την τιμή του. Οι αλλαγές αποθηκεύονται όταν το αφήσετε.</string>
     <string name="render_pass_readonly">Τα στάδια εκτελούνται με αυτή τη σειρά. Το φιλτράρισμα εισόδου και η κλιμάκωση εξόδου προέρχονται από την επιλεγμένη προεπιλογή.</string>
     <string name="render_pipeline_intro">Η διαδρομή από το framebuffer του παιχνιδιού στην οθόνη σας.</string>
-    <string name="render_native_short">Εγγενής (1×)</string>
+    <string name="render_native_short">Αρχική (1×)</string>
     <string name="render_expand_passes">Εμφάνιση σταδίων</string>
     <string name="render_collapse_passes">Απόκρυψη σταδίων</string>
     <string name="render_view_all_passes">Λεπτομέρειες σταδίων</string>

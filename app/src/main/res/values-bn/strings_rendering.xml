@@ -41,7 +41,7 @@
     <string name="render_game_output">গেম আউটপুট</string>
     <string name="render_logical_screen_help">গেমে রিপোর্ট করা লজিক্যাল আকার।</string>
     <string name="render_internal_resolution">অভ্যন্তরীণ রেজোলিউশন</string>
-    <string name="render_internal_unavailable">শুধুমাত্র নেটিভ (1×)। এই কনফিগারেশনের জন্য উচ্চতর রেন্ডার রেজোলিউশন উপলব্ধ নয়।</string>
+    <string name="render_internal_unavailable">শুধুমাত্র মূল (1×)। এই কনফিগারেশনের জন্য উচ্চতর রেন্ডার রেজোলিউশন উপলব্ধ নয়।</string>
     <string name="render_display_renderer">প্রেজেন্টেশন রেন্ডারার</string>
     <string name="render_shader_processing">শেডার প্রসেসিং</string>
     <string name="render_display_scaling">ডিসপ্লে স্কেলিং</string>
@@ -60,7 +60,7 @@
     <string name="render_parameters_hint">মান বদলাতে স্লাইডার সরান। ছেড়ে দিলেই পরিবর্তন সেভ হয়ে যাবে।</string>
     <string name="render_pass_readonly">ধাপগুলো এই ক্রমে চলে। ইনপুট ফিল্টারিং এবং আউটপুট স্কেলিং নির্বাচিত প্রিসেট থেকে আসে।</string>
     <string name="render_pipeline_intro">গেমের ফ্রেমবাফার থেকে আপনার স্ক্রিন পর্যন্ত পথ।</string>
-    <string name="render_native_short">নেটিভ (1×)</string>
+    <string name="render_native_short">মূল (1×)</string>
     <string name="render_expand_passes">ধাপগুলো দেখান</string>
     <string name="render_collapse_passes">ধাপগুলো লুকান</string>
     <string name="render_view_all_passes">ধাপের বিবরণ</string>

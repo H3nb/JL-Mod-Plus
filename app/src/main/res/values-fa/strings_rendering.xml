@@ -41,7 +41,7 @@
     <string name="render_game_output">خروجی بازی</string>
     <string name="render_logical_screen_help">اندازه منطقی گزارش‌شده به بازی.</string>
     <string name="render_internal_resolution">وضوح داخلی</string>
-    <string name="render_internal_unavailable">فقط بومی (1×). وضوح رندر بالاتر برای این پیکربندی در دسترس نیست.</string>
+    <string name="render_internal_unavailable">فقط اصلی (1×). وضوح رندر بالاتر برای این پیکربندی در دسترس نیست.</string>
     <string name="render_display_renderer">رندرکننده نمایش</string>
     <string name="render_shader_processing">پردازش شیدر</string>
     <string name="render_display_scaling">مقیاس‌بندی نمایشگر</string>
@@ -60,7 +60,7 @@
     <string name="render_parameters_hint">لغزنده را برای تنظیم مقدار حرکت دهید. تغییرات با رها کردن آن ذخیره می‌شوند.</string>
     <string name="render_pass_readonly">مراحل به این ترتیب اجرا می‌شوند. فیلتر ورودی و مقیاس خروجی از پیش‌تنظیم انتخاب‌شده می‌آیند.</string>
     <string name="render_pipeline_intro">مسیر از بافر فریم بازی تا نمایشگر شما.</string>
-    <string name="render_native_short">بومی (1×)</string>
+    <string name="render_native_short">اصلی (1×)</string>
     <string name="render_expand_passes">نمایش مراحل</string>
     <string name="render_collapse_passes">پنهان کردن مراحل</string>
     <string name="render_view_all_passes">جزئیات مراحل</string>

@@ -41,7 +41,7 @@
     <string name="render_game_output">Spelutdata</string>
     <string name="render_logical_screen_help">Logisk storlek som rapporteras till spelet.</string>
     <string name="render_internal_resolution">Intern upplösning</string>
-    <string name="render_internal_unavailable">Endast inbyggd (1×). Högre renderingsupplösningar är inte tillgängliga för den här konfigurationen.</string>
+    <string name="render_internal_unavailable">Endast ursprunglig (1×). Högre renderingsupplösningar är inte tillgängliga för den här konfigurationen.</string>
     <string name="render_display_renderer">Visningsrenderare</string>
     <string name="render_shader_processing">Shaderbearbetning</string>
     <string name="render_display_scaling">Skärmskalning</string>

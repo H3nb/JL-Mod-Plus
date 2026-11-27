@@ -41,7 +41,7 @@
     <string name="render_game_output">ゲーム出力</string>
     <string name="render_logical_screen_help">ゲームに通知される論理サイズです。</string>
     <string name="render_internal_resolution">内部解像度</string>
-    <string name="render_internal_unavailable">ネイティブ（1×）のみです。この構成ではより高いレンダー解像度を利用できません。</string>
+    <string name="render_internal_unavailable">元の解像度（1×）のみです。この構成ではより高いレンダー解像度を利用できません。</string>
     <string name="render_display_renderer">表示レンダラー</string>
     <string name="render_shader_processing">シェーダー処理</string>
     <string name="render_display_scaling">表示スケーリング</string>
@@ -60,7 +60,7 @@
     <string name="render_parameters_hint">スライダーを動かして値を調整します。指を離すと変更が保存されます。</string>
     <string name="render_pass_readonly">ステージはこの順番で実行されます。入力フィルタリングと出力スケーリングは選択したプリセットから適用されます。</string>
     <string name="render_pipeline_intro">ゲームのフレームバッファーから画面に表示されるまでの経路です。</string>
-    <string name="render_native_short">ネイティブ（1×）</string>
+    <string name="render_native_short">元の解像度（1×）</string>
     <string name="render_expand_passes">ステージを表示</string>
     <string name="render_collapse_passes">ステージを非表示</string>
     <string name="render_view_all_passes">ステージの詳細</string>

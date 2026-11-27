@@ -41,7 +41,7 @@
     <string name="render_game_output">ଗେମ୍ ଆଉଟପୁଟ୍</string>
     <string name="render_logical_screen_help">ଗେମ୍ କୁ ରିପୋର୍ଟ କରାଯାଇଥିବା ଲଜିକାଲ୍ ଆକାର।</string>
     <string name="render_internal_resolution">ଆଭ୍ୟନ୍ତରୀଣ ରିଜୋଲ୍ୟୁସନ୍</string>
-    <string name="render_internal_unavailable">କେବଳ ନେଟିଭ୍ (1×)। ଏହି କନଫିଗରେସନ୍ ପାଇଁ ଉଚ୍ଚତର ରେଣ୍ଡର୍ ରିଜୋଲ୍ୟୁସନ୍ ଉପଲବ୍ଧ ନାହିଁ।</string>
+    <string name="render_internal_unavailable">କେବଳ ମୂଳ (1×)। ଏହି କନଫିଗରେସନ୍ ପାଇଁ ଉଚ୍ଚତର ରେଣ୍ଡର୍ ରିଜୋଲ୍ୟୁସନ୍ ଉପଲବ୍ଧ ନାହିଁ।</string>
     <string name="render_display_renderer">ପ୍ରେଜେଣ୍ଟେସନ୍ ରେଣ୍ଡରର୍</string>
     <string name="render_shader_processing">ସେଡର୍ ପ୍ରକ୍ରିୟାକରଣ</string>
     <string name="render_display_scaling">ଡିସପ୍ଲେ ସ୍କେଲିଂ</string>
@@ -60,7 +60,7 @@
     <string name="render_parameters_hint">ମୂଲ୍ୟ ଆଡଜଷ୍ଟ୍ କରିବାକୁ ଏକ ସ୍ଲାଇଡର୍ ଘୁଞ୍ଚାନ୍ତୁ। ଛାଡ଼ିବା ମାତ୍ରେ ପରିବର୍ତ୍ତନ ସେଭ୍ ହୁଏ।</string>
     <string name="render_pass_readonly">ପର୍ଯ୍ୟାୟଗୁଡ଼ିକ ଏହି କ୍ରମରେ ଚାଲେ। ଇନପୁଟ୍ ଫିଲ୍ଟରିଂ ଏବଂ ଆଉଟପୁଟ୍ ସ୍କେଲିଂ ଚୟନିତ ପ୍ରିସେଟ୍ ରୁ ଆସେ।</string>
     <string name="render_pipeline_intro">ଗେମ୍ ଫ୍ରେମବଫର୍ ରୁ ଆପଣଙ୍କ ସ୍କ୍ରିନ୍ ପର୍ଯ୍ୟନ୍ତ ପଥ।</string>
-    <string name="render_native_short">ନେଟିଭ୍ (1×)</string>
+    <string name="render_native_short">ମୂଳ (1×)</string>
     <string name="render_expand_passes">ପର୍ଯ୍ୟାୟ ଦେଖାନ୍ତୁ</string>
     <string name="render_collapse_passes">ପର୍ଯ୍ୟାୟ ଲୁଚାନ୍ତୁ</string>
     <string name="render_view_all_passes">ପର୍ଯ୍ୟାୟ ବିବରଣୀ</string>

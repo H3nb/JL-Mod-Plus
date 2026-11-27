@@ -41,7 +41,7 @@
     <string name="render_game_output">Вивід гри</string>
     <string name="render_logical_screen_help">Логічний розмір, який передається грі.</string>
     <string name="render_internal_resolution">Внутрішня роздільна здатність</string>
-    <string name="render_internal_unavailable">Лише рідна (1×). Вищі роздільні здатності рендерингу недоступні для цієї конфігурації.</string>
+    <string name="render_internal_unavailable">Лише оригінальна (1×). Вищі роздільні здатності рендерингу недоступні для цієї конфігурації.</string>
     <string name="render_display_renderer">Рендерер виведення</string>
     <string name="render_shader_processing">Обробка шейдерами</string>
     <string name="render_display_scaling">Масштабування зображення</string>
@@ -60,7 +60,7 @@
     <string name="render_parameters_hint">Переміщуйте повзунок, щоб змінити значення. Зміни зберігаються після відпускання.</string>
     <string name="render_pass_readonly">Етапи виконуються в цьому порядку. Вхідна фільтрація та вихідне масштабування задаються вибраним пресетом.</string>
     <string name="render_pipeline_intro">Шлях від буфера кадрів гри до вашого екрана.</string>
-    <string name="render_native_short">Рідна (1×)</string>
+    <string name="render_native_short">Оригінальна (1×)</string>
     <string name="render_expand_passes">Показати етапи</string>
     <string name="render_collapse_passes">Приховати етапи</string>
     <string name="render_view_all_passes">Деталі етапів</string>

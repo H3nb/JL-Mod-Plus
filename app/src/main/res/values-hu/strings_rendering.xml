@@ -41,7 +41,7 @@
     <string name="render_game_output">Játékkimenet</string>
     <string name="render_logical_screen_help">A játéknak jelentett logikai méret.</string>
     <string name="render_internal_resolution">Belső felbontás</string>
-    <string name="render_internal_unavailable">Csak natív (1×). Magasabb renderelési felbontás nem érhető el ehhez a konfigurációhoz.</string>
+    <string name="render_internal_unavailable">Csak eredeti (1×). Magasabb renderelési felbontás nem érhető el ehhez a konfigurációhoz.</string>
     <string name="render_display_renderer">Megjelenítő renderelő</string>
     <string name="render_shader_processing">Shader-feldolgozás</string>
     <string name="render_display_scaling">Kijelzőméretezés</string>
@@ -60,7 +60,7 @@
     <string name="render_parameters_hint">Húzza el a csúszkát az érték módosításához. A változtatások felengedéskor mentődnek.</string>
     <string name="render_pass_readonly">A szakaszok ebben a sorrendben futnak. A bemeneti szűrés és a kimeneti méretezés a kiválasztott előbeállításból származik.</string>
     <string name="render_pipeline_intro">A játékképkocka útja a képkockapuffertől a képernyőig.</string>
-    <string name="render_native_short">Natív (1×)</string>
+    <string name="render_native_short">Eredeti (1×)</string>
     <string name="render_expand_passes">Szakaszok megjelenítése</string>
     <string name="render_collapse_passes">Szakaszok elrejtése</string>
     <string name="render_view_all_passes">Szakaszok részletei</string>

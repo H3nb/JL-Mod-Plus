@@ -41,7 +41,7 @@
     <string name="render_game_output">Výstup hry</string>
     <string name="render_logical_screen_help">Logická velikost hlášená hře.</string>
     <string name="render_internal_resolution">Interní rozlišení</string>
-    <string name="render_internal_unavailable">Pouze nativní (1×). Vyšší rozlišení vykreslování nejsou pro tuto konfiguraci k dispozici.</string>
+    <string name="render_internal_unavailable">Pouze původní (1×). Vyšší rozlišení vykreslování nejsou pro tuto konfiguraci k dispozici.</string>
     <string name="render_display_renderer">Prezentační vykreslovač</string>
     <string name="render_shader_processing">Zpracování shaderů</string>
     <string name="render_display_scaling">Škálování zobrazení</string>
@@ -60,7 +60,7 @@
     <string name="render_parameters_hint">Posunutím posuvníku upravte hodnotu. Změny se uloží po uvolnění.</string>
     <string name="render_pass_readonly">Fáze probíhají v tomto pořadí. Vstupní filtrování a výstupní škálování pocházejí z vybrané předvolby.</string>
     <string name="render_pipeline_intro">Cesta od snímkové vyrovnávací paměti hry na vaši obrazovku.</string>
-    <string name="render_native_short">Nativní (1×)</string>
+    <string name="render_native_short">Původní (1×)</string>
     <string name="render_expand_passes">Zobrazit fáze</string>
     <string name="render_collapse_passes">Skrýt fáze</string>
     <string name="render_view_all_passes">Podrobnosti fází</string>

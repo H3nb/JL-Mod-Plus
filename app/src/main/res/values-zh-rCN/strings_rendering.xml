@@ -40,7 +40,7 @@
     <string name="render_game_output">游戏输出</string>
     <string name="render_logical_screen_help">向游戏报告的逻辑屏幕尺寸。</string>
     <string name="render_internal_resolution">内部分辨率</string>
-    <string name="render_internal_unavailable">仅支持原生（1×）。当前配置下无法使用更高的渲染分辨率。</string>
+    <string name="render_internal_unavailable">仅支持原始（1×）。当前配置下无法使用更高的渲染分辨率。</string>
     <string name="render_display_renderer">显示渲染器</string>
     <string name="render_shader_processing">着色器处理</string>
     <string name="render_display_scaling">显示缩放</string>
@@ -59,7 +59,7 @@
     <string name="render_parameters_hint">拖动滑块以调整数值，松手后自动保存更改。</string>
     <string name="render_pass_readonly">各阶段按此顺序执行。输入过滤与输出缩放均来自所选预设。</string>
     <string name="render_pipeline_intro">从游戏帧缓冲区到屏幕显示的处理路径。</string>
-    <string name="render_native_short">原生（1×）</string>
+    <string name="render_native_short">原始（1×）</string>
     <string name="render_expand_passes">展开阶段</string>
     <string name="render_collapse_passes">收起阶段</string>
     <string name="render_view_all_passes">阶段详情</string>

@@ -40,7 +40,7 @@
     <string name="render_game_output">Sortida del joc</string>
     <string name="render_logical_screen_help">Mida lògica notificada al joc.</string>
     <string name="render_internal_resolution">Resolució interna</string>
-    <string name="render_internal_unavailable">Només nativa (1×). Les resolucions de renderització més altes no estan disponibles amb aquesta configuració.</string>
+    <string name="render_internal_unavailable">Només original (1×). Les resolucions de renderització més altes no estan disponibles amb aquesta configuració.</string>
     <string name="render_display_renderer">Renderitzador de presentació</string>
     <string name="render_shader_processing">Processament de shaders</string>
     <string name="render_display_scaling">Escalament de pantalla</string>
@@ -59,7 +59,7 @@
     <string name="render_parameters_hint">Mou un control lliscant per ajustar-ne el valor. Els canvis es desen quan el deixes anar.</string>
     <string name="render_pass_readonly">Les etapes s’executen en aquest ordre. El filtratge d’entrada i l’escala de sortida provenen del preajust seleccionat.</string>
     <string name="render_pipeline_intro">El recorregut des de la memòria intermèdia de fotogrames del joc fins a la pantalla.</string>
-    <string name="render_native_short">Nativa (1×)</string>
+    <string name="render_native_short">Original (1×)</string>
     <string name="render_expand_passes">Mostra les etapes</string>
     <string name="render_collapse_passes">Amaga les etapes</string>
     <string name="render_view_all_passes">Detalls de les etapes</string>

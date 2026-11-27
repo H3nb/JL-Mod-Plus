@@ -41,7 +41,7 @@
     <string name="render_game_output">Spielausgabe</string>
     <string name="render_logical_screen_help">An das Spiel gemeldete logische Größe.</string>
     <string name="render_internal_resolution">Interne Auflösung</string>
-    <string name="render_internal_unavailable">Nur nativ (1×). Höhere Renderauflösungen sind für diese Konfiguration nicht verfügbar.</string>
+    <string name="render_internal_unavailable">Nur Originalauflösung (1×). Höhere Renderauflösungen sind für diese Konfiguration nicht verfügbar.</string>
     <string name="render_display_renderer">Darstellungs-Renderer</string>
     <string name="render_shader_processing">Shader-Verarbeitung</string>
     <string name="render_display_scaling">Anzeigeskalierung</string>
@@ -60,7 +60,7 @@
     <string name="render_parameters_hint">Bewegen Sie einen Schieberegler, um den Wert anzupassen. Änderungen werden beim Loslassen gespeichert.</string>
     <string name="render_pass_readonly">Die Stufen werden in dieser Reihenfolge ausgeführt. Eingangsfilterung und Ausgabeskalierung stammen aus der ausgewählten Voreinstellung.</string>
     <string name="render_pipeline_intro">Der Weg vom Spiel-Framebuffer auf Ihren Bildschirm.</string>
-    <string name="render_native_short">Nativ (1×)</string>
+    <string name="render_native_short">Original (1×)</string>
     <string name="render_expand_passes">Stufen anzeigen</string>
     <string name="render_collapse_passes">Stufen ausblenden</string>
     <string name="render_view_all_passes">Stufendetails</string>

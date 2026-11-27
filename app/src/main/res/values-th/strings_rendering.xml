@@ -41,7 +41,7 @@
     <string name="render_game_output">เอาต์พุตของเกม</string>
     <string name="render_logical_screen_help">ขนาดหน้าจอเชิงตรรกะที่รายงานให้เกมทราบ</string>
     <string name="render_internal_resolution">ความละเอียดภายใน</string>
-    <string name="render_internal_unavailable">เนทีฟ (1×) เท่านั้น ไม่สามารถใช้ความละเอียดการเรนเดอร์ที่สูงขึ้นกับการกำหนดค่านี้ได้</string>
+    <string name="render_internal_unavailable">ต้นฉบับ (1×) เท่านั้น ไม่สามารถใช้ความละเอียดการเรนเดอร์ที่สูงขึ้นกับการกำหนดค่านี้ได้</string>
     <string name="render_display_renderer">ตัวเรนเดอร์การแสดงผล</string>
     <string name="render_shader_processing">การประมวลผลเชดเดอร์</string>
     <string name="render_display_scaling">การปรับขนาดการแสดงผล</string>
@@ -60,7 +60,7 @@
     <string name="render_parameters_hint">เลื่อนแถบเพื่อปรับค่า การเปลี่ยนแปลงจะถูกบันทึกเมื่อคุณปล่อยนิ้ว</string>
     <string name="render_pass_readonly">ขั้นตอนจะทำงานตามลำดับนี้ การกรองอินพุตและการปรับขนาดเอาต์พุตมาจากพรีเซ็ตที่เลือก</string>
     <string name="render_pipeline_intro">เส้นทางจากเฟรมบัฟเฟอร์ของเกมไปยังหน้าจอของคุณ</string>
-    <string name="render_native_short">เนทีฟ (1×)</string>
+    <string name="render_native_short">ต้นฉบับ (1×)</string>
     <string name="render_expand_passes">แสดงขั้นตอน</string>
     <string name="render_collapse_passes">ซ่อนขั้นตอน</string>
     <string name="render_view_all_passes">รายละเอียดขั้นตอน</string>

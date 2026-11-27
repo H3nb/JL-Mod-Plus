@@ -41,7 +41,7 @@
     <string name="render_game_output">Output di gioco</string>
     <string name="render_logical_screen_help">Dimensione logica comunicata al gioco.</string>
     <string name="render_internal_resolution">Risoluzione interna</string>
-    <string name="render_internal_unavailable">Solo nativa (1×). Risoluzioni di rendering superiori non sono disponibili per questa configurazione.</string>
+    <string name="render_internal_unavailable">Solo originale (1×). Risoluzioni di rendering superiori non sono disponibili per questa configurazione.</string>
     <string name="render_display_renderer">Renderer di presentazione</string>
     <string name="render_shader_processing">Elaborazione shader</string>
     <string name="render_display_scaling">Ridimensionamento schermo</string>
@@ -60,7 +60,7 @@
     <string name="render_parameters_hint">Sposta un cursore per regolarne il valore. Le modifiche vengono salvate al rilascio.</string>
     <string name="render_pass_readonly">Le fasi vengono eseguite in questo ordine. Il filtro di input e la scala di output provengono dal preset selezionato.</string>
     <string name="render_pipeline_intro">Il percorso dal framebuffer di gioco allo schermo.</string>
-    <string name="render_native_short">Nativa (1×)</string>
+    <string name="render_native_short">Originale (1×)</string>
     <string name="render_expand_passes">Mostra fasi</string>
     <string name="render_collapse_passes">Nascondi fasi</string>
     <string name="render_view_all_passes">Dettagli fasi</string>

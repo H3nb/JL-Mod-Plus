@@ -41,7 +41,7 @@
     <string name="render_game_output">Pelin kuvalähtö</string>
     <string name="render_logical_screen_help">Pelille ilmoitettu looginen koko.</string>
     <string name="render_internal_resolution">Sisäinen tarkkuus</string>
-    <string name="render_internal_unavailable">Vain natiivi (1×). Suuremmat renderöintitarkkuudet eivät ole käytettävissä tällä määrityksellä.</string>
+    <string name="render_internal_unavailable">Vain alkuperäinen (1×). Suuremmat renderöintitarkkuudet eivät ole käytettävissä tällä määrityksellä.</string>
     <string name="render_display_renderer">Esitysrenderöijä</string>
     <string name="render_shader_processing">Varjostinkäsittely</string>
     <string name="render_display_scaling">Näytön skaalaus</string>
@@ -60,7 +60,7 @@
     <string name="render_parameters_hint">Säädä arvoa liukusäätimellä. Muutokset tallennetaan, kun vapautat sen.</string>
     <string name="render_pass_readonly">Vaiheet suoritetaan tässä järjestyksessä. Syötteen suodatus ja tuloksen skaalaus tulevat valitusta esiasetuksesta.</string>
     <string name="render_pipeline_intro">Reitti pelin kuvapuskurista näytöllesi.</string>
-    <string name="render_native_short">Natiivi (1×)</string>
+    <string name="render_native_short">Alkuperäinen (1×)</string>
     <string name="render_expand_passes">Näytä vaiheet</string>
     <string name="render_collapse_passes">Piilota vaiheet</string>
     <string name="render_view_all_passes">Vaiheiden tiedot</string>

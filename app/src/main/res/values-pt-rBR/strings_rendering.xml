@@ -41,7 +41,7 @@
     <string name="render_game_output">Saída do jogo</string>
     <string name="render_logical_screen_help">Tamanho lógico informado ao jogo.</string>
     <string name="render_internal_resolution">Resolução interna</string>
-    <string name="render_internal_unavailable">Somente nativa (1×). Resoluções de renderização mais altas não estão disponíveis para esta configuração.</string>
+    <string name="render_internal_unavailable">Somente original (1×). Resoluções de renderização mais altas não estão disponíveis para esta configuração.</string>
     <string name="render_display_renderer">Renderizador de apresentação</string>
     <string name="render_shader_processing">Processamento de shader</string>
     <string name="render_display_scaling">Escala de tela</string>
@@ -60,7 +60,7 @@
     <string name="render_parameters_hint">Mova um controle deslizante para ajustar o valor. As alterações são salvas quando você o solta.</string>
     <string name="render_pass_readonly">Os estágios são executados nesta ordem. A filtragem de entrada e a escala de saída vêm da predefinição selecionada.</string>
     <string name="render_pipeline_intro">O caminho do framebuffer do jogo até a sua tela.</string>
-    <string name="render_native_short">Nativa (1×)</string>
+    <string name="render_native_short">Original (1×)</string>
     <string name="render_expand_passes">Mostrar estágios</string>
     <string name="render_collapse_passes">Ocultar estágios</string>
     <string name="render_view_all_passes">Detalhes dos estágios</string>

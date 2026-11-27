@@ -41,7 +41,7 @@
     <string name="render_game_output">गेम आउटपुट</string>
     <string name="render_logical_screen_help">गेम को रिपोर्ट किया गया लॉजिकल आकार।</string>
     <string name="render_internal_resolution">आंतरिक रिज़ॉल्यूशन</string>
-    <string name="render_internal_unavailable">केवल नेटिव (1×)। इस कॉन्फ़िगरेशन के लिए उच्च रेंडर रिज़ॉल्यूशन उपलब्ध नहीं हैं।</string>
+    <string name="render_internal_unavailable">केवल मूल (1×)। इस कॉन्फ़िगरेशन के लिए उच्च रेंडर रिज़ॉल्यूशन उपलब्ध नहीं हैं।</string>
     <string name="render_display_renderer">प्रेज़ेंटेशन रेंडरर</string>
     <string name="render_shader_processing">शेडर प्रोसेसिंग</string>
     <string name="render_display_scaling">डिस्प्ले स्केलिंग</string>
@@ -60,7 +60,7 @@
     <string name="render_parameters_hint">मान बदलने के लिए स्लाइडर को खिसकाएं। छोड़ते ही बदलाव सहेजे जाते हैं।</string>
     <string name="render_pass_readonly">चरण इसी क्रम में चलते हैं। इनपुट फ़िल्टरिंग और आउटपुट स्केलिंग चयनित प्रीसेट से आती हैं।</string>
     <string name="render_pipeline_intro">गेम फ़्रेमबफ़र से आपकी स्क्रीन तक का मार्ग।</string>
-    <string name="render_native_short">नेटिव (1×)</string>
+    <string name="render_native_short">मूल (1×)</string>
     <string name="render_expand_passes">चरण दिखाएं</string>
     <string name="render_collapse_passes">चरण छिपाएं</string>
     <string name="render_view_all_passes">चरण विवरण</string>

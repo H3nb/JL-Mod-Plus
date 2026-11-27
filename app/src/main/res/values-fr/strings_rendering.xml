@@ -41,7 +41,7 @@
     <string name="render_game_output">Sortie du jeu</string>
     <string name="render_logical_screen_help">Taille logique signalée au jeu.</string>
     <string name="render_internal_resolution">Résolution interne</string>
-    <string name="render_internal_unavailable">Native (1×) uniquement. Les résolutions de rendu supérieures ne sont pas disponibles pour cette configuration.</string>
+    <string name="render_internal_unavailable">Originale (1×) uniquement. Les résolutions de rendu supérieures ne sont pas disponibles pour cette configuration.</string>
     <string name="render_display_renderer">Moteur de présentation</string>
     <string name="render_shader_processing">Traitement par shader</string>
     <string name="render_display_scaling">Mise à l’échelle de l’affichage</string>
@@ -60,7 +60,7 @@
     <string name="render_parameters_hint">Déplacez un curseur pour ajuster sa valeur. Les modifications sont enregistrées lorsque vous le relâchez.</string>
     <string name="render_pass_readonly">Les étapes s’exécutent dans cet ordre. Le filtrage d’entrée et la mise à l’échelle de sortie proviennent du préréglage sélectionné.</string>
     <string name="render_pipeline_intro">Le chemin du tampon d’image du jeu jusqu’à votre écran.</string>
-    <string name="render_native_short">Native (1×)</string>
+    <string name="render_native_short">Originale (1×)</string>
     <string name="render_expand_passes">Afficher les étapes</string>
     <string name="render_collapse_passes">Masquer les étapes</string>
     <string name="render_view_all_passes">Détails des étapes</string>

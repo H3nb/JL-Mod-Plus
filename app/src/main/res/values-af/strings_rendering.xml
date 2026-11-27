@@ -41,7 +41,7 @@
     <string name="render_game_output">Speluitvoer</string>
     <string name="render_logical_screen_help">Logiese grootte wat aan die spel gerapporteer word.</string>
     <string name="render_internal_resolution">Interne resolusie</string>
-    <string name="render_internal_unavailable">Slegs inheems (1×). Hoër weergawe-resolusies is nie vir hierdie opstelling beskikbaar nie.</string>
+    <string name="render_internal_unavailable">Slegs oorspronklik (1×). Hoër weergawe-resolusies is nie vir hierdie opstelling beskikbaar nie.</string>
     <string name="render_display_renderer">Aanbiedingsweergewer</string>
     <string name="render_shader_processing">Shader-verwerking</string>
     <string name="render_display_scaling">Skermskaal</string>

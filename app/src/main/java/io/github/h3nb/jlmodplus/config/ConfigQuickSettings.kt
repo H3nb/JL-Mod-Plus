@@ -273,4 +273,7 @@ internal fun ConfigQuickSettingDialog(
 
 @Composable
 internal fun renderResolutionOptions(): List<String> =
-    listOf(stringResource(R.string.internal_resolution_auto)) + (1..10).map { "${it}×" }
+    listOf(
+        stringResource(R.string.internal_resolution_auto),
+        stringResource(R.string.render_native_short),
+    ) + (2..10).map { "${it}×" }
