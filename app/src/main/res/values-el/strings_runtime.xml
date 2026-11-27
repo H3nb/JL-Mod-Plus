@@ -48,7 +48,7 @@
     <string name="open_github">Άνοιγμα GitHub</string>
     <string name="crash_report_bundle_failed">Δεν ήταν δυνατή η προετοιμασία του πακέτου διάγνωσης.</string>
     <string name="crash_report_locate_failed">Δεν υπάρχει διαθέσιμος επιλογέας αρχείων για τον εντοπισμό του πακέτου διάγνωσης.</string>
-    <string name="crash_report_bundle_cleanup_failed">Η αναφορά διάγνωσης διαγράφηκε, αλλά δεν ήταν δυνατή η κατάργηση του πακέτου που δημιουργήθηκε.</string>
+    <string name="crash_report_bundle_cleanup_failed">Δεν ήταν δυνατή η κατάργηση του πακέτου που δημιουργήθηκε. Η αναφορά διάγνωσης διατηρήθηκε.</string>
     <string name="crash_report_github_unavailable">Δεν βρέθηκε πρόγραμμα περιήγησης ή εφαρμογή για το άνοιγμα της φόρμας ζητημάτων GitHub.</string>
     <string name="crash_report_delete_title">Διαγραφή αναφοράς διάγνωσης;</string>
     <string name="crash_report_delete_message">Αυτή η ενέργεια καταργεί οριστικά την αναφορά διάγνωσης και τυχόν πακέτο που δημιουργήθηκε από αυτήν τη συσκευή. Τα αρχεία που έχουν ήδη μεταφορτωθεί αλλού δεν επηρεάζονται.</string>
@@ -103,7 +103,7 @@
     <string name="diagnostic_reason_signal">Τερματισμός από σήμα</string>
     <string name="diagnostic_reason_unknown">Άγνωστη αιτία</string>
     <string name="crash_reports_delete_failed">Δεν ήταν δυνατή η διαγραφή ορισμένων αναφορών διάγνωσης. Άλλες ενδέχεται να έχουν καταργηθεί.</string>
-    <string name="crash_reports_bundle_cleanup_failed">Οι αναφορές διάγνωσης διαγράφηκαν, αλλά δεν ήταν δυνατή η κατάργηση ορισμένων πακέτων που δημιουργήθηκαν.</string>
+    <string name="crash_reports_bundle_cleanup_failed">Δεν ήταν δυνατή η κατάργηση ορισμένων πακέτων που δημιουργήθηκαν. Οι αντίστοιχες αναφορές διάγνωσης διατηρήθηκαν. Άλλες αναφορές ενδέχεται να έχουν διαγραφεί.</string>
     <string name="runtime_chrome_update_failed">Δεν ήταν δυνατή η ενημέρωση των ρυθμίσεων οθόνης. Δοκιμάστε ξανά.</string>
     <string name="runtime_fullscreen_update_failed">Δεν ήταν δυνατή η πρόσβαση στη ρύθμιση πλήρους οθόνης. Δοκιμάστε ξανά.</string>
     <string name="runtime_camera_use_front">Χρήση μπροστινής κάμερας</string>

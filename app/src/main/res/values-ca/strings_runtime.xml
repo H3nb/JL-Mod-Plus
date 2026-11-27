@@ -49,7 +49,7 @@
     <string name="open_github">Obre GitHub</string>
     <string name="crash_report_bundle_failed">No s’ha pogut preparar el paquet de diagnòstic.</string>
     <string name="crash_report_locate_failed">No hi ha cap selector de fitxers disponible per localitzar el paquet de diagnòstic.</string>
-    <string name="crash_report_bundle_cleanup_failed">L’informe de diagnòstic s’ha suprimit, però no s’ha pogut eliminar el paquet generat.</string>
+    <string name="crash_report_bundle_cleanup_failed">No s’ha pogut eliminar el paquet generat. S’ha conservat l’informe de diagnòstic.</string>
     <string name="crash_report_github_unavailable">No s’ha trobat cap navegador ni aplicació per obrir el formulari d’incidències de GitHub.</string>
     <string name="crash_report_delete_title">Vols suprimir l’informe de diagnòstic?</string>
     <string name="crash_report_delete_message">Aquesta acció suprimeix permanentment l’informe de diagnòstic i qualsevol paquet generat en aquest dispositiu. Els fitxers ja pujats en altres llocs no es veuran afectats.</string>
@@ -105,7 +105,7 @@
     <string name="diagnostic_reason_signal">Finalització per senyal</string>
     <string name="diagnostic_reason_unknown">Causa desconeguda</string>
     <string name="crash_reports_delete_failed">No s’han pogut suprimir alguns informes de diagnòstic. És possible que d’altres sí que s’hagin eliminat.</string>
-    <string name="crash_reports_bundle_cleanup_failed">Els informes de diagnòstic s’han suprimit, però no s’han pogut eliminar alguns paquets generats.</string>
+    <string name="crash_reports_bundle_cleanup_failed">No s’han pogut eliminar alguns paquets generats. S’han conservat els informes de diagnòstic corresponents. És possible que s’hagin suprimit altres informes.</string>
     <string name="runtime_chrome_update_failed">No s’ha pogut actualitzar la configuració de pantalla. Torna-ho a provar.</string>
     <string name="runtime_fullscreen_update_failed">No s’ha pogut accedir a la configuració de pantalla completa. Torna-ho a provar.</string>
     <string name="runtime_camera_use_front">Utilitza la càmera frontal</string>

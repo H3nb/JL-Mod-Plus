@@ -49,7 +49,7 @@
     <string name="open_github">Ouvrir GitHub</string>
     <string name="crash_report_bundle_failed">Impossible de préparer le dossier de diagnostic.</string>
     <string name="crash_report_locate_failed">Aucun sélecteur de fichiers disponible pour localiser le dossier de diagnostic.</string>
-    <string name="crash_report_bundle_cleanup_failed">Rapport de diagnostic supprimé, mais son archive générée n’a pas pu être supprimée.</string>
+    <string name="crash_report_bundle_cleanup_failed">Impossible de supprimer l’archive générée. Le rapport de diagnostic a été conservé.</string>
     <string name="crash_report_github_unavailable">Aucun navigateur ni aucune application trouvé pour ouvrir le formulaire GitHub.</string>
     <string name="crash_report_delete_title">Supprimer le rapport de diagnostic ?</string>
     <string name="crash_report_delete_message">Cette action supprime définitivement le rapport de diagnostic ainsi que toute archive générée sur cet appareil. Les fichiers déjà envoyés ailleurs ne sont pas affectés.</string>
@@ -106,7 +106,7 @@
     <string name="diagnostic_reason_signal">Arrêt par signal</string>
     <string name="diagnostic_reason_unknown">Cause inconnue</string>
     <string name="crash_reports_delete_failed">Certains rapports de diagnostic n’ont pas pu être supprimés. D’autres ont peut-être été supprimés.</string>
-    <string name="crash_reports_bundle_cleanup_failed">Rapports de diagnostic supprimés, mais certaines archives générées n’ont pas pu être supprimées.</string>
+    <string name="crash_reports_bundle_cleanup_failed">Certaines archives générées n’ont pas pu être supprimées. Les rapports de diagnostic correspondants ont été conservés. D’autres rapports ont peut-être été supprimés.</string>
     <string name="runtime_chrome_update_failed">Impossible de mettre à jour les paramètres d’affichage. Réessayez.</string>
     <string name="runtime_fullscreen_update_failed">Impossible d’accéder au paramètre plein écran. Réessayez.</string>
     <string name="runtime_camera_use_front">Utiliser la caméra frontale</string>

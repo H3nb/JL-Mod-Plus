@@ -47,7 +47,7 @@
     <string name="open_github">GitHub を開く</string>
     <string name="crash_report_bundle_failed">診断バンドルを準備できませんでした。</string>
     <string name="crash_report_locate_failed">診断バンドルの場所を開けるファイル選択アプリが見つかりませんでした。</string>
-    <string name="crash_report_bundle_cleanup_failed">診断レポートは削除されましたが、生成されたバンドルを削除できませんでした。</string>
+    <string name="crash_report_bundle_cleanup_failed">生成されたバンドルを削除できませんでした。診断レポートは保持されています。</string>
     <string name="crash_report_github_unavailable">GitHub の Issue フォームを開けるブラウザーまたはアプリが見つかりませんでした。</string>
     <string name="crash_report_delete_title">診断レポートを削除しますか？</string>
     <string name="crash_report_delete_message">この診断レポートと生成されたバンドルが端末から完全に削除されます。すでに外部へアップロード済みのファイルには影響しません。</string>
@@ -101,7 +101,7 @@
     <string name="diagnostic_reason_signal">シグナルによる終了</string>
     <string name="diagnostic_reason_unknown">原因不明</string>
     <string name="crash_reports_delete_failed">一部の診断レポートを削除できませんでした。その他のレポートは削除されている場合があります。</string>
-    <string name="crash_reports_bundle_cleanup_failed">診断レポートは削除されましたが、生成されたバンドルの一部を削除できませんでした。</string>
+    <string name="crash_reports_bundle_cleanup_failed">生成されたバンドルの一部を削除できませんでした。該当する診断レポートは保持されています。その他のレポートは削除されている場合があります。</string>
     <string name="runtime_chrome_update_failed">表示設定を更新できませんでした。もう一度お試しください。</string>
     <string name="runtime_fullscreen_update_failed">全画面表示の設定にアクセスできませんでした。もう一度お試しください。</string>
     <string name="runtime_camera_use_front">前面カメラを使用</string>

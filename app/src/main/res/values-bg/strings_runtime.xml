@@ -48,7 +48,7 @@
     <string name="open_github">Отваряне на GitHub</string>
     <string name="crash_report_bundle_failed">Диагностичният пакет не можа да бъде подготвен.</string>
     <string name="crash_report_locate_failed">Няма наличен инструмент за избор на файлове за намиране на диагностичния пакет.</string>
-    <string name="crash_report_bundle_cleanup_failed">Диагностичният отчет е изтрит, но генерираният пакет не можа да бъде премахнат.</string>
+    <string name="crash_report_bundle_cleanup_failed">Генерираният пакет не можа да бъде премахнат. Диагностичният отчет е запазен.</string>
     <string name="crash_report_github_unavailable">Не е намерен браузър или приложение за отваряне на формуляра за сигнали в GitHub.</string>
     <string name="crash_report_delete_title">Да се изтрие ли диагностичният отчет?</string>
     <string name="crash_report_delete_message">Това премахва окончателно диагностичния отчет и всеки генериран пакет от това устройство. Вече качените другаде файлове не се засягат.</string>
@@ -104,7 +104,7 @@
     <string name="diagnostic_reason_signal">Прекратяване със сигнал</string>
     <string name="diagnostic_reason_unknown">Неизвестна причина</string>
     <string name="crash_reports_delete_failed">Някои диагностични отчети не можаха да бъдат изтрити. Други може да са премахнати.</string>
-    <string name="crash_reports_bundle_cleanup_failed">Диагностичните отчети са изтрити, но някои генерирани пакети не можаха да бъдат премахнати.</string>
+    <string name="crash_reports_bundle_cleanup_failed">Някои генерирани пакети не можаха да бъдат премахнати. Съответните диагностични отчети са запазени. Други отчети може да са изтрити.</string>
     <string name="runtime_chrome_update_failed">Настройките на дисплея не можаха да бъдат актуализирани. Опитайте отново.</string>
     <string name="runtime_fullscreen_update_failed">Няма достъп до настройката за цял екран. Опитайте отново.</string>
     <string name="runtime_camera_use_front">Използване на предна камера</string>

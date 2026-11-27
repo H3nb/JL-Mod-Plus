@@ -50,7 +50,7 @@
     <string name="open_github">Открыть GitHub</string>
     <string name="crash_report_bundle_failed">Не удалось подготовить архив диагностики.</string>
     <string name="crash_report_locate_failed">Нет файлового менеджера, чтобы найти архив диагностики.</string>
-    <string name="crash_report_bundle_cleanup_failed">Отчёт диагностики удалён, но созданный архив удалить не удалось.</string>
+    <string name="crash_report_bundle_cleanup_failed">Не удалось удалить созданный архив. Отчёт диагностики сохранён.</string>
     <string name="crash_report_github_unavailable">Не найден браузер или приложение для открытия формы отчёта на GitHub.</string>
     <string name="crash_report_delete_title">Удалить отчёт диагностики?</string>
     <string name="crash_report_delete_message">Отчёт диагностики и связанный с ним архив будут безвозвратно удалены с этого устройства. Уже загруженные в другие сервисы файлы останутся без изменений.</string>
@@ -108,7 +108,7 @@
     <string name="diagnostic_reason_signal">Завершение по сигналу</string>
     <string name="diagnostic_reason_unknown">Неизвестная причина</string>
     <string name="crash_reports_delete_failed">Не удалось удалить часть отчётов диагностики. Остальные могли быть удалены.</string>
-    <string name="crash_reports_bundle_cleanup_failed">Отчёты диагностики удалены, но часть созданных архивов удалить не удалось.</string>
+    <string name="crash_reports_bundle_cleanup_failed">Не удалось удалить некоторые созданные архивы. Связанные с ними отчёты диагностики сохранены. Другие отчёты могли быть удалены.</string>
     <string name="runtime_chrome_update_failed">Не удалось обновить настройки экрана. Повторите попытку.</string>
     <string name="runtime_fullscreen_update_failed">Не удалось получить доступ к настройке полноэкранного режима. Повторите попытку.</string>
     <string name="runtime_camera_use_front">Использовать фронтальную камеру</string>

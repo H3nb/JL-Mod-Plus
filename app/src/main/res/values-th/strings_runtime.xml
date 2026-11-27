@@ -47,7 +47,7 @@
     <string name="open_github">เปิด GitHub</string>
     <string name="crash_report_bundle_failed">ไม่สามารถเตรียมชุดไฟล์วินิจฉัยได้</string>
     <string name="crash_report_locate_failed">ไม่มีตัวเลือกไฟล์สำหรับค้นหาชุดไฟล์วินิจฉัย</string>
-    <string name="crash_report_bundle_cleanup_failed">ลบรายงานการวินิจฉัยแล้ว แต่ไม่สามารถลบชุดไฟล์ที่สร้างไว้ได้</string>
+    <string name="crash_report_bundle_cleanup_failed">ไม่สามารถลบชุดไฟล์ที่สร้างไว้ได้ ระบบจึงเก็บรายงานการวินิจฉัยไว้</string>
     <string name="crash_report_github_unavailable">ไม่พบเบราว์เซอร์หรือแอปสำหรับเปิดแบบฟอร์มแจ้งปัญหาบน GitHub</string>
     <string name="crash_report_delete_title">ลบรายงานการวินิจฉัยหรือไม่?</string>
     <string name="crash_report_delete_message">การดำเนินการนี้จะลบรายงานการวินิจฉัยและชุดไฟล์ที่สร้างไว้ทั้งหมดออกจากอุปกรณ์นี้อย่างถาวร ไฟล์ที่อัปโหลดไปยังที่อื่นแล้วจะไม่ได้รับผลกระทบ</string>
@@ -102,7 +102,7 @@
     <string name="diagnostic_reason_signal">ยุติการทำงานด้วยสัญญาณ</string>
     <string name="diagnostic_reason_unknown">ไม่ทราบสาเหตุ</string>
     <string name="crash_reports_delete_failed">ไม่สามารถลบรายงานการวินิจฉัยบางรายการได้ รายการอื่นอาจถูกลบออกแล้ว</string>
-    <string name="crash_reports_bundle_cleanup_failed">ลบรายงานการวินิจฉัยแล้ว แต่ไม่สามารถลบชุดไฟล์ที่สร้างไว้บางรายการได้</string>
+    <string name="crash_reports_bundle_cleanup_failed">ไม่สามารถลบชุดไฟล์ที่สร้างไว้บางชุดได้ ระบบจึงเก็บรายงานการวินิจฉัยที่เกี่ยวข้องไว้ รายงานอื่นอาจถูกลบแล้ว</string>
     <string name="runtime_chrome_update_failed">ไม่สามารถอัปเดตการตั้งค่าการแสดงผลได้ โปรดลองอีกครั้ง</string>
     <string name="runtime_fullscreen_update_failed">ไม่สามารถเข้าถึงการตั้งค่าเต็มหน้าจอได้ โปรดลองอีกครั้ง</string>
     <string name="runtime_camera_use_front">ใช้กล้องหน้า</string>

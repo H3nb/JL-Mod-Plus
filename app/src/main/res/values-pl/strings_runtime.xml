@@ -50,7 +50,7 @@
     <string name="open_github">Otwórz GitHuba</string>
     <string name="crash_report_bundle_failed">Nie udało się przygotować pakietu diagnostycznego.</string>
     <string name="crash_report_locate_failed">Brak selektora plików do zlokalizowania pakietu diagnostycznego.</string>
-    <string name="crash_report_bundle_cleanup_failed">Raport diagnostyczny został usunięty, ale nie udało się usunąć wygenerowanego pakietu.</string>
+    <string name="crash_report_bundle_cleanup_failed">Nie udało się usunąć wygenerowanego pakietu. Raport diagnostyczny został zachowany.</string>
     <string name="crash_report_github_unavailable">Nie znaleziono przeglądarki ani aplikacji do otwarcia formularza zgłoszeń na GitHubie.</string>
     <string name="crash_report_delete_title">Usunąć raport diagnostyczny?</string>
     <string name="crash_report_delete_message">Spowoduje to trwałe usunięcie raportu diagnostycznego i każdego wygenerowanego pakietu z tego urządzenia. Pliki przesłane już w inne miejsca pozostaną nienaruszone.</string>
@@ -108,7 +108,7 @@
     <string name="diagnostic_reason_signal">Zakończenie sygnałem</string>
     <string name="diagnostic_reason_unknown">Nieznana przyczyna</string>
     <string name="crash_reports_delete_failed">Nie udało się usunąć niektórych raportów diagnostycznych. Inne mogły zostać usunięte.</string>
-    <string name="crash_reports_bundle_cleanup_failed">Raporty diagnostyczne zostały usunięte, ale nie udało się usunąć niektórych wygenerowanych pakietów.</string>
+    <string name="crash_reports_bundle_cleanup_failed">Nie udało się usunąć niektórych wygenerowanych pakietów. Powiązane raporty diagnostyczne zostały zachowane. Inne raporty mogły zostać usunięte.</string>
     <string name="runtime_chrome_update_failed">Nie udało się zaktualizować ustawień ekranu. Spróbuj ponownie.</string>
     <string name="runtime_fullscreen_update_failed">Nie udało się uzyskać dostępu do ustawienia pełnego ekranu. Spróbuj ponownie.</string>
     <string name="runtime_camera_use_front">Użyj przedniego aparatu</string>

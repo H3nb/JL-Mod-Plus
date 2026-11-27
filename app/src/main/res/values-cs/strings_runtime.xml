@@ -50,7 +50,7 @@
     <string name="open_github">Otevřít GitHub</string>
     <string name="crash_report_bundle_failed">Diagnostický balíček se nepodařilo připravit.</string>
     <string name="crash_report_locate_failed">Pro zobrazení umístění diagnostického balíčku není k dispozici žádný výběr souborů.</string>
-    <string name="crash_report_bundle_cleanup_failed">Diagnostická zpráva byla smazána, ale vygenerovaný balíček se nepodařilo odebrat.</string>
+    <string name="crash_report_bundle_cleanup_failed">Vygenerovaný balíček se nepodařilo odstranit. Diagnostická zpráva zůstala zachována.</string>
     <string name="crash_report_github_unavailable">Nebyl nalezen žádný prohlížeč ani aplikace pro otevření formuláře hlášení na GitHubu.</string>
     <string name="crash_report_delete_title">Smazat diagnostickou zprávu?</string>
     <string name="crash_report_delete_message">Tímto trvale odstraníte diagnostickou zprávu a případný vygenerovaný balíček z tohoto zařízení. Již nahrané soubory jinde zůstanou nedotčeny.</string>
@@ -107,7 +107,7 @@
     <string name="diagnostic_reason_signal">Ukončení signálem</string>
     <string name="diagnostic_reason_unknown">Neznámá příčina</string>
     <string name="crash_reports_delete_failed">Některé diagnostické zprávy se nepodařilo smazat. Ostatní mohly být odebrány.</string>
-    <string name="crash_reports_bundle_cleanup_failed">Diagnostické zprávy byly smazány, ale některé vygenerované balíčky se nepodařilo odebrat.</string>
+    <string name="crash_reports_bundle_cleanup_failed">Některé vygenerované balíčky se nepodařilo odstranit. Příslušné diagnostické zprávy zůstaly zachovány. Ostatní zprávy mohly být smazány.</string>
     <string name="runtime_chrome_update_failed">Nastavení zobrazení se nepodařilo aktualizovat. Zkuste to znovu.</string>
     <string name="runtime_fullscreen_update_failed">K nastavení celé obrazovky se nepodařilo získat přístup. Zkuste to znovu.</string>
     <string name="runtime_camera_use_front">Použít přední fotoaparát</string>

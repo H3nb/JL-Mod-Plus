@@ -48,7 +48,7 @@
     <string name="open_github">GitHub openen</string>
     <string name="crash_report_bundle_failed">Kan het diagnostische pakket niet voorbereiden.</string>
     <string name="crash_report_locate_failed">Geen bestandskiezer beschikbaar om het diagnostische pakket te zoeken.</string>
-    <string name="crash_report_bundle_cleanup_failed">Diagnostisch rapport verwijderd, maar het gegenereerde pakket kon niet worden verwijderd.</string>
+    <string name="crash_report_bundle_cleanup_failed">Het gegenereerde pakket kon niet worden verwijderd. Het diagnostische rapport is behouden.</string>
     <string name="crash_report_github_unavailable">Geen browser of app gevonden om het GitHub-issueformulier te openen.</string>
     <string name="crash_report_delete_title">Diagnostisch rapport verwijderen?</string>
     <string name="crash_report_delete_message">Hiermee worden het diagnostische rapport en eventuele gegenereerde pakketten permanent van dit apparaat verwijderd. Bestanden die al elders zijn geüpload, blijven behouden.</string>
@@ -104,7 +104,7 @@
     <string name="diagnostic_reason_signal">Beëindiging door signaal</string>
     <string name="diagnostic_reason_unknown">Onbekende oorzaak</string>
     <string name="crash_reports_delete_failed">Sommige diagnostische rapporten konden niet worden verwijderd. Andere zijn mogelijk wel verwijderd.</string>
-    <string name="crash_reports_bundle_cleanup_failed">Diagnostische rapporten verwijderd, maar sommige gegenereerde pakketten konden niet worden verwijderd.</string>
+    <string name="crash_reports_bundle_cleanup_failed">Sommige gegenereerde pakketten konden niet worden verwijderd. De bijbehorende diagnostische rapporten zijn behouden. Andere rapporten zijn mogelijk verwijderd.</string>
     <string name="runtime_chrome_update_failed">Kan weergave-instellingen niet bijwerken. Probeer het opnieuw.</string>
     <string name="runtime_fullscreen_update_failed">Kan geen toegang krijgen tot de instelling voor volledig scherm. Probeer het opnieuw.</string>
     <string name="runtime_camera_use_front">Camera aan voorzijde gebruiken</string>

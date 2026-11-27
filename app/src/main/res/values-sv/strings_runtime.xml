@@ -48,7 +48,7 @@
     <string name="open_github">Öppna GitHub</string>
     <string name="crash_report_bundle_failed">Det gick inte att förbereda diagnostikpaketet.</string>
     <string name="crash_report_locate_failed">Ingen filväljare är tillgänglig för att visa diagnostikpaketet.</string>
-    <string name="crash_report_bundle_cleanup_failed">Diagnostikrapporten raderades, men det skapade paketet kunde inte tas bort.</string>
+    <string name="crash_report_bundle_cleanup_failed">Det skapade paketet kunde inte tas bort. Diagnostikrapporten finns kvar.</string>
     <string name="crash_report_github_unavailable">Ingen webbläsare eller app hittades för att öppna GitHubs ärendeformulär.</string>
     <string name="crash_report_delete_title">Radera diagnostikrapport?</string>
     <string name="crash_report_delete_message">Detta tar permanent bort diagnostikrapporten och eventuellt skapat paket från den här enheten. Filer som redan laddats upp någon annanstans påverkas inte.</string>
@@ -104,7 +104,7 @@
     <string name="diagnostic_reason_signal">Signalavslut</string>
     <string name="diagnostic_reason_unknown">Okänd orsak</string>
     <string name="crash_reports_delete_failed">Vissa diagnostikrapporter kunde inte raderas. Andra kan ha tagits bort.</string>
-    <string name="crash_reports_bundle_cleanup_failed">Diagnostikrapporter raderades, men vissa skapade paket kunde inte tas bort.</string>
+    <string name="crash_reports_bundle_cleanup_failed">Vissa skapade paket kunde inte tas bort. Tillhörande diagnostikrapporter finns kvar. Andra rapporter kan ha raderats.</string>
     <string name="runtime_chrome_update_failed">Det gick inte att uppdatera visningsinställningarna. Försök igen.</string>
     <string name="runtime_fullscreen_update_failed">Det gick inte att komma åt helskärmsinställningen. Försök igen.</string>
     <string name="runtime_camera_use_front">Använd främre kamera</string>

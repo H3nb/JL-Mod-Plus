@@ -50,7 +50,7 @@
     <string name="open_github">Відкрити GitHub</string>
     <string name="crash_report_bundle_failed">Не вдалося підготувати пакет діагностики.</string>
     <string name="crash_report_locate_failed">Немає засобу вибору файлів для пошуку пакета діагностики.</string>
-    <string name="crash_report_bundle_cleanup_failed">Звіт діагностики видалено, але не вдалося вилучити створений пакет.</string>
+    <string name="crash_report_bundle_cleanup_failed">Не вдалося вилучити створений пакет. Звіт діагностики збережено.</string>
     <string name="crash_report_github_unavailable">Не знайдено браузер або додаток для відкриття форми звернення на GitHub.</string>
     <string name="crash_report_delete_title">Видалити звіт діагностики?</string>
     <string name="crash_report_delete_message">Це назавжди видалить звіт діагностики та створений пакет із цього пристрою. Файли, уже завантажені в інше місце, не зміняться.</string>
@@ -108,7 +108,7 @@
     <string name="diagnostic_reason_signal">Завершення за сигналом</string>
     <string name="diagnostic_reason_unknown">Невідома причина</string>
     <string name="crash_reports_delete_failed">Деякі звіти діагностики не вдалося видалити. Інші могли бути вилучені.</string>
-    <string name="crash_reports_bundle_cleanup_failed">Звіти діагностики видалено, але деякі створені пакети не вдалося вилучити.</string>
+    <string name="crash_reports_bundle_cleanup_failed">Не вдалося вилучити деякі створені пакети. Відповідні звіти діагностики збережено. Інші звіти могли бути видалені.</string>
     <string name="runtime_chrome_update_failed">Не вдалося оновити налаштування відображення. Спробуйте ще раз.</string>
     <string name="runtime_fullscreen_update_failed">Не вдалося отримати доступ до налаштування повноекранного режиму. Спробуйте ще раз.</string>
     <string name="runtime_camera_use_front">Фронтальна камера</string>

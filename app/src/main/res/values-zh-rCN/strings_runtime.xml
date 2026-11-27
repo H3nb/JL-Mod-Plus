@@ -46,7 +46,7 @@
     <string name="open_github">打开 GitHub</string>
     <string name="crash_report_bundle_failed">无法准备诊断包。</string>
     <string name="crash_report_locate_failed">没有可用的文件选择器来定位诊断包。</string>
-    <string name="crash_report_bundle_cleanup_failed">诊断报告已删除，但无法移除其生成的诊断包。</string>
+    <string name="crash_report_bundle_cleanup_failed">无法删除已生成的诊断包，诊断报告已保留。</string>
     <string name="crash_report_github_unavailable">未找到可用于打开 GitHub Issue 表单的浏览器或应用。</string>
     <string name="crash_report_delete_title">删除诊断报告？</string>
     <string name="crash_report_delete_message">此操作将从本设备永久移除该诊断报告及所有已生成的诊断包。已上传到其他位置的文件不受影响。</string>
@@ -98,7 +98,7 @@
     <string name="diagnostic_reason_signal">信号终止</string>
     <string name="diagnostic_reason_unknown">未知原因</string>
     <string name="crash_reports_delete_failed">部分诊断报告无法删除，其余报告可能已被移除。</string>
-    <string name="crash_reports_bundle_cleanup_failed">诊断报告已删除，但部分已生成的诊断包无法移除。</string>
+    <string name="crash_reports_bundle_cleanup_failed">部分已生成的诊断包无法删除，对应的诊断报告已保留。其他报告可能已被删除。</string>
     <string name="runtime_chrome_update_failed">无法更新显示设置，请重试。</string>
     <string name="runtime_fullscreen_update_failed">无法访问全屏模式设置，请重试。</string>
     <string name="runtime_camera_use_front">使用前置摄像头</string>

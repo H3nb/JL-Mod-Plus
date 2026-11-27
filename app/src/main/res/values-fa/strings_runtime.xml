@@ -48,7 +48,7 @@
     <string name="open_github">باز کردن GitHub</string>
     <string name="crash_report_bundle_failed">آماده‌سازی بسته عیب‌یابی ممکن نشد.</string>
     <string name="crash_report_locate_failed">انتخابگر فایلی برای پیدا کردن بسته عیب‌یابی در دسترس نیست.</string>
-    <string name="crash_report_bundle_cleanup_failed">گزارش عیب‌یابی حذف شد، اما حذف بسته تولیدشده آن ممکن نشد.</string>
+    <string name="crash_report_bundle_cleanup_failed">حذف بسته تولیدشده ممکن نشد. گزارش عیب‌یابی حفظ شد.</string>
     <string name="crash_report_github_unavailable">مرورگر یا برنامه‌ای برای باز کردن فرم گزارش GitHub یافت نشد.</string>
     <string name="crash_report_delete_title">گزارش عیب‌یابی حذف شود؟</string>
     <string name="crash_report_delete_message">این کار گزارش عیب‌یابی و هر بسته تولیدشده را برای همیشه از این دستگاه حذف می‌کند. فایل‌هایی که قبلاً در جای دیگری بارگذاری شده‌اند تأثیری نمی‌پذیرند.</string>
@@ -104,7 +104,7 @@
     <string name="diagnostic_reason_signal">خاتمه با سیگنال</string>
     <string name="diagnostic_reason_unknown">علت نامشخص</string>
     <string name="crash_reports_delete_failed">حذف برخی از گزارش‌های عیب‌یابی ممکن نشد. سایر موارد ممکن است حذف شده باشند.</string>
-    <string name="crash_reports_bundle_cleanup_failed">گزارش‌های عیب‌یابی حذف شدند، اما حذف برخی از بسته‌های تولیدشده ممکن نشد.</string>
+    <string name="crash_reports_bundle_cleanup_failed">حذف برخی بسته‌های تولیدشده ممکن نشد. گزارش‌های عیب‌یابی مربوط به آن‌ها حفظ شدند. ممکن است گزارش‌های دیگر حذف شده باشند.</string>
     <string name="runtime_chrome_update_failed">به‌روزرسانی تنظیمات نمایشگر ممکن نشد. دوباره تلاش کنید.</string>
     <string name="runtime_fullscreen_update_failed">دسترسی به تنظیم تمام‌صفحه ممکن نشد. دوباره تلاش کنید.</string>
     <string name="runtime_camera_use_front">استفاده از دوربین جلو</string>

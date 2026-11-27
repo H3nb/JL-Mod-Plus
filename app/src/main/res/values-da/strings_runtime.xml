@@ -48,7 +48,7 @@
     <string name="open_github">Åbn GitHub</string>
     <string name="crash_report_bundle_failed">Diagnostikpakken kunne ikke forberedes.</string>
     <string name="crash_report_locate_failed">Ingen filvælger tilgængelig til at finde diagnostikpakken.</string>
-    <string name="crash_report_bundle_cleanup_failed">Diagnostikrapporten blev slettet, men den genererede pakke kunne ikke fjernes.</string>
+    <string name="crash_report_bundle_cleanup_failed">Den genererede pakke kunne ikke fjernes. Diagnostikrapporten er bevaret.</string>
     <string name="crash_report_github_unavailable">Ingen browser eller app fundet til at åbne GitHub-fejlformularen.</string>
     <string name="crash_report_delete_title">Vil du slette diagnostikrapporten?</string>
     <string name="crash_report_delete_message">Dette fjerner diagnostikrapporten og eventuelle genererede pakker permanent fra denne enhed. Filer, der allerede er uploadet andre steder, påvirkes ikke.</string>
@@ -104,7 +104,7 @@
     <string name="diagnostic_reason_signal">Afslutning ved signal</string>
     <string name="diagnostic_reason_unknown">Ukendt årsag</string>
     <string name="crash_reports_delete_failed">Nogle diagnostikrapporter kunne ikke slettes. Andre kan være blevet fjernet.</string>
-    <string name="crash_reports_bundle_cleanup_failed">Diagnostikrapporter blev slettet, men nogle genererede pakker kunne ikke fjernes.</string>
+    <string name="crash_reports_bundle_cleanup_failed">Nogle genererede pakker kunne ikke fjernes. De tilhørende diagnostikrapporter er bevaret. Andre rapporter kan være blevet slettet.</string>
     <string name="runtime_chrome_update_failed">Skærmindstillingerne kunne ikke opdateres. Prøv igen.</string>
     <string name="runtime_fullscreen_update_failed">Fuldskærmsindstillingen kunne ikke tilgås. Prøv igen.</string>
     <string name="runtime_camera_use_front">Brug frontkamera</string>

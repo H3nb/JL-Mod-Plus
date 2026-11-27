@@ -48,7 +48,7 @@
     <string name="open_github">Maak GitHub oop</string>
     <string name="crash_report_bundle_failed">Kon nie die diagnostiese bundel voorberei nie.</string>
     <string name="crash_report_locate_failed">Geen lêerkieser beskikbaar om die diagnostiese bundel te vind nie.</string>
-    <string name="crash_report_bundle_cleanup_failed">Diagnostiese verslag uitgevee, maar die gegenereerde bundel kon nie verwyder word nie.</string>
+    <string name="crash_report_bundle_cleanup_failed">Die gegenereerde bundel kon nie verwyder word nie. Die diagnostiese verslag is behou.</string>
     <string name="crash_report_github_unavailable">Geen blaaier of program gevind om die GitHub-kwessievorm oop te maak nie.</string>
     <string name="crash_report_delete_title">Vee diagnostiese verslag uit?</string>
     <string name="crash_report_delete_message">Dit verwyder die diagnostiese verslag en enige gegenereerde bundel permanent van hierdie toestel. Lêers wat reeds elders opgelaai is, word nie geraak nie.</string>
@@ -104,7 +104,7 @@
     <string name="diagnostic_reason_signal">Seinbeëindiging</string>
     <string name="diagnostic_reason_unknown">Onbekende oorsaak</string>
     <string name="crash_reports_delete_failed">Sommige diagnostiese verslae kon nie uitgevee word nie. Ander is dalk verwyder.</string>
-    <string name="crash_reports_bundle_cleanup_failed">Diagnostiese verslae uitgevee, maar sommige gegenereerde bundels kon nie verwyder word nie.</string>
+    <string name="crash_reports_bundle_cleanup_failed">Sommige gegenereerde bundels kon nie verwyder word nie. Die betrokke diagnostiese verslae is behou. Ander verslae is dalk uitgevee.</string>
     <string name="runtime_chrome_update_failed">Kon nie skerminstellings opdateer nie. Probeer weer.</string>
     <string name="runtime_fullscreen_update_failed">Kon nie toegang tot die volskerminstelling kry nie. Probeer weer.</string>
     <string name="runtime_camera_use_front">Gebruik voorkamera</string>

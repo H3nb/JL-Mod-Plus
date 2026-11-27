@@ -49,7 +49,7 @@
     <string name="open_github">Отвори GitHub</string>
     <string name="crash_report_bundle_failed">Није могуће припремити дијагностички пакет.</string>
     <string name="crash_report_locate_failed">Нема доступног бирача датотека за проналажење дијагностичког пакета.</string>
-    <string name="crash_report_bundle_cleanup_failed">Дијагностички извештај је обрисан, али његов генерисани пакет није могао да се уклони.</string>
+    <string name="crash_report_bundle_cleanup_failed">Генерисани пакет није могао да се уклони. Дијагностички извештај је задржан.</string>
     <string name="crash_report_github_unavailable">Није пронађен прегледач или апликација за отварање GitHub обрасца за пријаву.</string>
     <string name="crash_report_delete_title">Обрисати дијагностички извештај?</string>
     <string name="crash_report_delete_message">Овим се трајно уклања дијагностички извештај и сваки генерисани пакет са овог уређаја. Датотеке већ отпремљене на друго место остају нетакнуте.</string>
@@ -106,7 +106,7 @@
     <string name="diagnostic_reason_signal">Прекид сигналом</string>
     <string name="diagnostic_reason_unknown">Непознат узрок</string>
     <string name="crash_reports_delete_failed">Неке дијагностичке извештаје није било могуће обрисати. Остали су можда уклоњени.</string>
-    <string name="crash_reports_bundle_cleanup_failed">Дијагностички извештаји су обрисани, али неки генерисани пакети нису могли да се уклоне.</string>
+    <string name="crash_reports_bundle_cleanup_failed">Неки генерисани пакети нису могли да се уклоне. Одговарајући дијагностички извештаји су задржани. Други извештаји су можда обрисани.</string>
     <string name="runtime_chrome_update_failed">Није могуће ажурирати подешавања приказа. Покушајте поново.</string>
     <string name="runtime_fullscreen_update_failed">Није могуће приступити подешавању целог екрана. Покушајте поново.</string>
     <string name="runtime_camera_use_front">Користи предњу камеру</string>

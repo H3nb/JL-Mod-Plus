@@ -49,7 +49,7 @@
     <string name="open_github">Deschide GitHub</string>
     <string name="crash_report_bundle_failed">Pachetul de diagnosticare nu a putut fi pregătit.</string>
     <string name="crash_report_locate_failed">Nu există niciun selector de fișiere disponibil pentru a localiza pachetul de diagnosticare.</string>
-    <string name="crash_report_bundle_cleanup_failed">Raportul de diagnosticare a fost șters, dar pachetul generat nu a putut fi eliminat.</string>
+    <string name="crash_report_bundle_cleanup_failed">Pachetul generat nu a putut fi eliminat. Raportul de diagnosticare a fost păstrat.</string>
     <string name="crash_report_github_unavailable">Nu a fost găsit niciun browser sau aplicație pentru a deschide formularul de tichete GitHub.</string>
     <string name="crash_report_delete_title">Ștergeți raportul de diagnosticare?</string>
     <string name="crash_report_delete_message">Această acțiune elimină definitiv raportul de diagnosticare și orice pachet generat de pe acest dispozitiv. Fișierele încărcate deja în altă parte nu sunt afectate.</string>
@@ -106,7 +106,7 @@
     <string name="diagnostic_reason_signal">Terminare prin semnal</string>
     <string name="diagnostic_reason_unknown">Cauză necunoscută</string>
     <string name="crash_reports_delete_failed">Unele rapoarte de diagnosticare nu au putut fi șterse. Este posibil ca altele să fi fost eliminate.</string>
-    <string name="crash_reports_bundle_cleanup_failed">Rapoartele de diagnosticare au fost șterse, dar unele pachete generate nu au putut fi eliminate.</string>
+    <string name="crash_reports_bundle_cleanup_failed">Unele pachete generate nu au putut fi eliminate. Rapoartele de diagnosticare asociate au fost păstrate. Este posibil ca alte rapoarte să fi fost șterse.</string>
     <string name="runtime_chrome_update_failed">Setările de afișare nu au putut fi actualizate. Încercați din nou.</string>
     <string name="runtime_fullscreen_update_failed">Setarea de ecran complet nu a putut fi accesată. Încercați din nou.</string>
     <string name="runtime_camera_use_front">Folosește camera frontală</string>

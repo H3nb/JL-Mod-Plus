@@ -47,7 +47,7 @@
     <string name="open_github">GitHub 열기</string>
     <string name="crash_report_bundle_failed">진단 번들을 준비할 수 없습니다.</string>
     <string name="crash_report_locate_failed">진단 번들 위치를 찾을 수 있는 파일 선택기가 없습니다.</string>
-    <string name="crash_report_bundle_cleanup_failed">진단 보고서는 삭제되었지만 생성된 번들을 제거할 수 없습니다.</string>
+    <string name="crash_report_bundle_cleanup_failed">생성된 번들을 삭제할 수 없습니다. 진단 보고서는 보존되었습니다.</string>
     <string name="crash_report_github_unavailable">GitHub 이슈 양식을 열 수 있는 브라우저나 앱을 찾을 수 없습니다.</string>
     <string name="crash_report_delete_title">진단 보고서를 삭제할까요?</string>
     <string name="crash_report_delete_message">이 기기에서 진단 보고서와 생성된 모든 번들이 영구적으로 삭제됩니다. 이미 다른 곳에 업로드된 파일은 영향을 받지 않습니다.</string>
@@ -102,7 +102,7 @@
     <string name="diagnostic_reason_signal">시그널 종료</string>
     <string name="diagnostic_reason_unknown">알 수 없는 원인</string>
     <string name="crash_reports_delete_failed">일부 진단 보고서를 삭제할 수 없습니다. 나머지 보고서는 삭제되었을 수 있습니다.</string>
-    <string name="crash_reports_bundle_cleanup_failed">진단 보고서는 삭제되었지만 일부 생성된 번들을 제거할 수 없습니다.</string>
+    <string name="crash_reports_bundle_cleanup_failed">생성된 번들 중 일부를 삭제할 수 없습니다. 해당 진단 보고서는 보존되었습니다. 다른 보고서는 삭제되었을 수 있습니다.</string>
     <string name="runtime_chrome_update_failed">디스플레이 설정을 업데이트할 수 없습니다. 다시 시도하세요.</string>
     <string name="runtime_fullscreen_update_failed">전체 화면 설정에 액세스할 수 없습니다. 다시 시도하세요.</string>
     <string name="runtime_camera_use_front">전면 카메라 사용</string>

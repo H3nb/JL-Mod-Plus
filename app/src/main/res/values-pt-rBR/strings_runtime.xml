@@ -49,7 +49,7 @@
     <string name="open_github">Abrir GitHub</string>
     <string name="crash_report_bundle_failed">Não foi possível preparar o pacote de diagnóstico.</string>
     <string name="crash_report_locate_failed">Nenhum seletor de arquivos disponível para localizar o pacote de diagnóstico.</string>
-    <string name="crash_report_bundle_cleanup_failed">Relatório de diagnóstico excluído, mas não foi possível remover o pacote gerado.</string>
+    <string name="crash_report_bundle_cleanup_failed">Não foi possível remover o pacote gerado. O relatório de diagnóstico foi mantido.</string>
     <string name="crash_report_github_unavailable">Nenhum navegador ou app encontrado para abrir o formulário de problemas do GitHub.</string>
     <string name="crash_report_delete_title">Excluir relatório de diagnóstico?</string>
     <string name="crash_report_delete_message">Isso remove permanentemente o relatório de diagnóstico e qualquer pacote gerado deste dispositivo. Arquivos já enviados para outros locais não são afetados.</string>
@@ -106,7 +106,7 @@
     <string name="diagnostic_reason_signal">Encerramento por sinal</string>
     <string name="diagnostic_reason_unknown">Causa desconhecida</string>
     <string name="crash_reports_delete_failed">Alguns relatórios de diagnóstico não puderam ser excluídos. Outros podem ter sido removidos.</string>
-    <string name="crash_reports_bundle_cleanup_failed">Relatórios de diagnóstico excluídos, mas alguns pacotes gerados não puderam ser removidos.</string>
+    <string name="crash_reports_bundle_cleanup_failed">Não foi possível remover alguns pacotes gerados. Os relatórios de diagnóstico correspondentes foram mantidos. Outros relatórios podem ter sido excluídos.</string>
     <string name="runtime_chrome_update_failed">Não foi possível atualizar as configurações de tela. Tente novamente.</string>
     <string name="runtime_fullscreen_update_failed">Não foi possível acessar a configuração de tela cheia. Tente novamente.</string>
     <string name="runtime_camera_use_front">Usar câmera frontal</string>

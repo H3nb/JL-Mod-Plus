@@ -273,14 +273,14 @@ public class CrashReportsActivity extends AppCompatActivity {
 				if (isFinishing() || isDestroyed()) return;
 				composeController.setProcessingReports(false);
 				updateStoredRecords();
-				if (!finalAllSourcesDeleted) {
-					composeController.showNotice(getString(records.size() > 1
-							? R.string.crash_reports_delete_failed
-							: R.string.crash_report_delete_failed), 6_000L);
-				} else if (!finalAllBundlesDeleted) {
+				if (!finalAllBundlesDeleted) {
 					composeController.showNotice(getString(records.size() > 1
 							? R.string.crash_reports_bundle_cleanup_failed
 							: R.string.crash_report_bundle_cleanup_failed), 6_000L);
+				} else if (!finalAllSourcesDeleted) {
+					composeController.showNotice(getString(records.size() > 1
+							? R.string.crash_reports_delete_failed
+							: R.string.crash_report_delete_failed), 6_000L);
 				}
 			});
 		}, "JLP-delete-diagnostics").start();

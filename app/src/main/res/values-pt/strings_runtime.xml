@@ -49,7 +49,7 @@
     <string name="open_github">Abrir GitHub</string>
     <string name="crash_report_bundle_failed">Não foi possível preparar o pacote de diagnóstico.</string>
     <string name="crash_report_locate_failed">Nenhum seletor de ficheiros disponível para localizar o pacote de diagnóstico.</string>
-    <string name="crash_report_bundle_cleanup_failed">Relatório de diagnóstico eliminado, mas não foi possível remover o pacote gerado.</string>
+    <string name="crash_report_bundle_cleanup_failed">Não foi possível remover o pacote gerado. O relatório de diagnóstico foi mantido.</string>
     <string name="crash_report_github_unavailable">Nenhum navegador ou aplicação encontrado para abrir o formulário de problemas do GitHub.</string>
     <string name="crash_report_delete_title">Eliminar relatório de diagnóstico?</string>
     <string name="crash_report_delete_message">Isto remove permanentemente o relatório de diagnóstico e qualquer pacote gerado deste dispositivo. Os ficheiros já enviados para outro local não são afetados.</string>
@@ -106,7 +106,7 @@
     <string name="diagnostic_reason_signal">Terminação por sinal</string>
     <string name="diagnostic_reason_unknown">Causa desconhecida</string>
     <string name="crash_reports_delete_failed">Não foi possível eliminar alguns relatórios de diagnóstico. Outros podem ter sido removidos.</string>
-    <string name="crash_reports_bundle_cleanup_failed">Relatórios de diagnóstico eliminados, mas não foi possível remover alguns pacotes gerados.</string>
+    <string name="crash_reports_bundle_cleanup_failed">Não foi possível remover alguns pacotes gerados. Os relatórios de diagnóstico correspondentes foram mantidos. Outros relatórios podem ter sido eliminados.</string>
     <string name="runtime_chrome_update_failed">Não foi possível atualizar as definições de visualização. Tente novamente.</string>
     <string name="runtime_fullscreen_update_failed">Não foi possível aceder à definição de ecrã inteiro. Tente novamente.</string>
     <string name="runtime_camera_use_front">Usar câmara frontal</string>

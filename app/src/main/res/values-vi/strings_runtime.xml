@@ -47,7 +47,7 @@
     <string name="open_github">Mở GitHub</string>
     <string name="crash_report_bundle_failed">Không thể chuẩn bị gói chẩn đoán.</string>
     <string name="crash_report_locate_failed">Không có trình chọn tệp nào để mở vị trí gói chẩn đoán.</string>
-    <string name="crash_report_bundle_cleanup_failed">Đã xóa báo cáo chẩn đoán nhưng không thể xóa gói đã tạo.</string>
+    <string name="crash_report_bundle_cleanup_failed">Không thể xóa gói đã tạo. Báo cáo chẩn đoán được giữ lại.</string>
     <string name="crash_report_github_unavailable">Không tìm thấy trình duyệt hoặc ứng dụng nào để mở biểu mẫu sự cố GitHub.</string>
     <string name="crash_report_delete_title">Xóa báo cáo chẩn đoán?</string>
     <string name="crash_report_delete_message">Thao tác này sẽ xóa vĩnh viễn báo cáo chẩn đoán và mọi gói đã tạo khỏi thiết bị này. Các tệp đã tải lên nơi khác sẽ không bị ảnh hưởng.</string>
@@ -102,7 +102,7 @@
     <string name="diagnostic_reason_signal">Kết thúc bằng tín hiệu</string>
     <string name="diagnostic_reason_unknown">Nguyên nhân không xác định</string>
     <string name="crash_reports_delete_failed">Không thể xóa một số báo cáo chẩn đoán. Các báo cáo khác có thể đã bị xóa.</string>
-    <string name="crash_reports_bundle_cleanup_failed">Đã xóa báo cáo chẩn đoán nhưng không thể xóa một số gói đã tạo.</string>
+    <string name="crash_reports_bundle_cleanup_failed">Không thể xóa một số gói đã tạo. Các báo cáo chẩn đoán tương ứng được giữ lại. Các báo cáo khác có thể đã bị xóa.</string>
     <string name="runtime_chrome_update_failed">Không thể cập nhật cài đặt hiển thị. Hãy thử lại.</string>
     <string name="runtime_fullscreen_update_failed">Không thể truy cập cài đặt toàn màn hình. Hãy thử lại.</string>
     <string name="runtime_camera_use_front">Dùng camera trước</string>

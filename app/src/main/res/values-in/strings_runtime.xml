@@ -47,7 +47,7 @@
     <string name="open_github">Buka GitHub</string>
     <string name="crash_report_bundle_failed">Tidak dapat menyiapkan paket diagnostik.</string>
     <string name="crash_report_locate_failed">Tidak ada pemilih file untuk menemukan paket diagnostik.</string>
-    <string name="crash_report_bundle_cleanup_failed">Laporan diagnostik dihapus, tetapi paket yang dibuat tidak dapat dihapus.</string>
+    <string name="crash_report_bundle_cleanup_failed">Tidak dapat menghapus paket diagnostik. Laporan diagnostik tidak dihapus.</string>
     <string name="crash_report_github_unavailable">Tidak ada browser atau aplikasi untuk membuka formulir isu GitHub.</string>
     <string name="crash_report_delete_title">Hapus laporan diagnostik?</string>
     <string name="crash_report_delete_message">Tindakan ini menghapus permanen laporan diagnostik dan paket yang dibuat dari perangkat ini. File yang sudah diunggah di tempat lain tidak terpengaruh.</string>
@@ -102,7 +102,7 @@
     <string name="diagnostic_reason_signal">Proses dihentikan oleh sinyal</string>
     <string name="diagnostic_reason_unknown">Penyebab tidak diketahui</string>
     <string name="crash_reports_delete_failed">Beberapa laporan diagnostik tidak dapat dihapus. Laporan lainnya mungkin telah dihapus.</string>
-    <string name="crash_reports_bundle_cleanup_failed">Laporan diagnostik dihapus, tetapi beberapa paket yang dibuat tidak dapat dihapus.</string>
+    <string name="crash_reports_bundle_cleanup_failed">Beberapa paket diagnostik tidak dapat dihapus. Laporan terkait tidak dihapus. Laporan lainnya mungkin telah dihapus.</string>
     <string name="runtime_chrome_update_failed">Tidak dapat memperbarui setelan tampilan. Coba lagi.</string>
     <string name="runtime_fullscreen_update_failed">Tidak dapat mengakses setelan layar penuh. Coba lagi.</string>
     <string name="runtime_camera_use_front">Gunakan kamera depan</string>

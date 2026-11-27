@@ -48,7 +48,7 @@
     <string name="open_github">GitHub විවෘත කරන්න</string>
     <string name="crash_report_bundle_failed">දෝෂ විනිශ්චය පොදිය සූදානම් කිරීමට නොහැකි විය.</string>
     <string name="crash_report_locate_failed">දෝෂ විනිශ්චය පොදිය සොයා ගැනීමට ගොනු තෝරකයක් නොමැත.</string>
-    <string name="crash_report_bundle_cleanup_failed">දෝෂ විනිශ්චය වාර්තාව මකා දමන ලදී, නමුත් එහි සෑදූ පොදිය ඉවත් කිරීමට නොහැකි විය.</string>
+    <string name="crash_report_bundle_cleanup_failed">සෑදූ පොදිය ඉවත් කිරීමට නොහැකි විය. දෝෂ විනිශ්චය වාර්තාව තබා ගන්නා ලදී.</string>
     <string name="crash_report_github_unavailable">GitHub ගැටලු පෝරමය විවෘත කිරීමට බ්‍රව්සරයක් හෝ යෙදුමක් හමු නොවීය.</string>
     <string name="crash_report_delete_title">දෝෂ විනිශ්චය වාර්තාව මකන්නද?</string>
     <string name="crash_report_delete_message">මෙය මෙම උපාංගයෙන් දෝෂ විනිශ්චය වාර්තාව සහ ඕනෑම සෑදූ පොදියක් ස්ථිරවම ඉවත් කරයි. වෙනත් තැනක දැනටමත් උඩුගත කළ ගොනුවලට බලපෑමක් නැත.</string>
@@ -104,7 +104,7 @@
     <string name="diagnostic_reason_signal">සංඥා අවසන් කිරීම</string>
     <string name="diagnostic_reason_unknown">නොදන්නා හේතුව</string>
     <string name="crash_reports_delete_failed">සමහර දෝෂ විනිශ්චය වාර්තා මැකීමට නොහැකි විය. අනෙක්වා ඉවත් කර තිබිය හැකිය.</string>
-    <string name="crash_reports_bundle_cleanup_failed">දෝෂ විනිශ්චය වාර්තා මකා දමන ලදී, නමුත් සමහර සෑදූ පොදි ඉවත් කිරීමට නොහැකි විය.</string>
+    <string name="crash_reports_bundle_cleanup_failed">සෑදූ පොදි කිහිපයක් ඉවත් කිරීමට නොහැකි විය. ඒවාට අදාළ දෝෂ විනිශ්චය වාර්තා තබා ගන්නා ලදී. අනෙක් වාර්තා මකා දමා තිබිය හැකිය.</string>
     <string name="runtime_chrome_update_failed">සංදර්ශක සැකසීම් යාවත්කාලීන කිරීමට නොහැකි විය. නැවත උත්සාහ කරන්න.</string>
     <string name="runtime_fullscreen_update_failed">පූර්ණ තිර සැකසීමට ප්‍රවේශ වීමට නොහැකි විය. නැවත උත්සාහ කරන්න.</string>
     <string name="runtime_camera_use_front">ඉදිරිපස කැමරාව භාවිතා කරන්න</string>

@@ -48,7 +48,7 @@
     <string name="open_github">GitHub öffnen</string>
     <string name="crash_report_bundle_failed">Das Diagnosepaket konnte nicht vorbereitet werden.</string>
     <string name="crash_report_locate_failed">Keine Dateiauswahl verfügbar, um das Diagnosepaket anzuzeigen.</string>
-    <string name="crash_report_bundle_cleanup_failed">Diagnosebericht gelöscht, aber das erstellte Paket konnte nicht entfernt werden.</string>
+    <string name="crash_report_bundle_cleanup_failed">Das erstellte Paket konnte nicht entfernt werden. Der Diagnosebericht wurde beibehalten.</string>
     <string name="crash_report_github_unavailable">Kein Browser oder keine App zum Öffnen des GitHub-Issue-Formulars gefunden.</string>
     <string name="crash_report_delete_title">Diagnosebericht löschen?</string>
     <string name="crash_report_delete_message">Dadurch werden der Diagnosebericht und alle zugehörigen Pakete dauerhaft von diesem Gerät entfernt. Bereits anderswo hochgeladene Dateien sind nicht betroffen.</string>
@@ -104,7 +104,7 @@
     <string name="diagnostic_reason_signal">Signalabbruch</string>
     <string name="diagnostic_reason_unknown">Unbekannte Ursache</string>
     <string name="crash_reports_delete_failed">Einige Diagnoseberichte konnten nicht gelöscht werden. Andere wurden möglicherweise entfernt.</string>
-    <string name="crash_reports_bundle_cleanup_failed">Diagnoseberichte gelöscht, aber einige erstellte Pakete konnten nicht entfernt werden.</string>
+    <string name="crash_reports_bundle_cleanup_failed">Einige erstellte Pakete konnten nicht entfernt werden. Die zugehörigen Diagnoseberichte wurden beibehalten. Andere Berichte wurden möglicherweise gelöscht.</string>
     <string name="runtime_chrome_update_failed">Anzeigeeinstellungen konnten nicht aktualisiert werden. Versuchen Sie es erneut.</string>
     <string name="runtime_fullscreen_update_failed">Auf die Vollbildeinstellung konnte nicht zugegriffen werden. Versuchen Sie es erneut.</string>
     <string name="runtime_camera_use_front">Frontkamera verwenden</string>

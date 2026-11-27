@@ -48,7 +48,7 @@
     <string name="open_github">Open GitHub</string>
     <string name="crash_report_bundle_failed">Couldn’t prepare the diagnostic bundle.</string>
     <string name="crash_report_locate_failed">No file picker available to locate the diagnostic bundle.</string>
-    <string name="crash_report_bundle_cleanup_failed">Diagnostic report deleted, but its generated bundle couldn’t be removed.</string>
+    <string name="crash_report_bundle_cleanup_failed">Couldn’t remove the generated bundle. The diagnostic report was kept.</string>
     <string name="crash_report_github_unavailable">No browser or app found to open the GitHub issue form.</string>
     <string name="crash_report_delete_title">Delete diagnostic report?</string>
     <string name="crash_report_delete_message">This permanently removes the diagnostic report and any generated bundle from this device. Files already uploaded elsewhere aren’t affected.</string>
@@ -104,7 +104,7 @@
     <string name="diagnostic_reason_signal">Signal termination</string>
     <string name="diagnostic_reason_unknown">Unknown cause</string>
     <string name="crash_reports_delete_failed">Some diagnostic reports couldn’t be deleted. Others may have been removed.</string>
-    <string name="crash_reports_bundle_cleanup_failed">Diagnostic reports deleted, but some generated bundles couldn’t be removed.</string>
+    <string name="crash_reports_bundle_cleanup_failed">Some generated bundles couldn’t be removed. Their diagnostic reports were kept. Other reports may have been deleted.</string>
     <string name="runtime_chrome_update_failed">Couldn’t update display settings. Try again.</string>
     <string name="runtime_fullscreen_update_failed">Couldn’t access the fullscreen setting. Try again.</string>
     <string name="runtime_camera_use_front">Use front camera</string>

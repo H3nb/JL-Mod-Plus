@@ -302,13 +302,11 @@ public class CrashReportDetailsActivity extends AppCompatActivity {
 					deletingRecord = false;
 					if (!isFinishing() && !isDestroyed()) {
 						ThemedToast.show(
-								this, R.string.crash_report_delete_failed, Toast.LENGTH_LONG);
+								this, result.bundleDeleted
+										? R.string.crash_report_delete_failed
+										: R.string.crash_report_bundle_cleanup_failed, Toast.LENGTH_LONG);
 					}
 					return;
-				}
-				if (!result.bundleDeleted && !isFinishing() && !isDestroyed()) {
-					ThemedToast.show(
-							this, R.string.crash_report_bundle_cleanup_failed, Toast.LENGTH_LONG);
 				}
 				finish();
 			});

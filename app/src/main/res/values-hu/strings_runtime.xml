@@ -48,7 +48,7 @@
     <string name="open_github">GitHub megnyitása</string>
     <string name="crash_report_bundle_failed">Nem sikerült előkészíteni a diagnosztikai csomagot.</string>
     <string name="crash_report_locate_failed">Nem áll rendelkezésre fájlválasztó a diagnosztikai csomag megkereséséhez.</string>
-    <string name="crash_report_bundle_cleanup_failed">A diagnosztikai jelentés törölve lett, de a létrehozott csomagot nem sikerült eltávolítani.</string>
+    <string name="crash_report_bundle_cleanup_failed">A létrehozott csomagot nem sikerült eltávolítani. A diagnosztikai jelentés megmaradt.</string>
     <string name="crash_report_github_unavailable">Nem található böngésző vagy alkalmazás a GitHub hibabejelentő űrlapjának megnyitásához.</string>
     <string name="crash_report_delete_title">Törli a diagnosztikai jelentést?</string>
     <string name="crash_report_delete_message">Ez véglegesen eltávolítja a diagnosztikai jelentést és az esetlegesen létrehozott csomagot erről az eszközről. A máshová már feltöltött fájlokat ez nem érinti.</string>
@@ -104,7 +104,7 @@
     <string name="diagnostic_reason_signal">Szignál miatti leállás</string>
     <string name="diagnostic_reason_unknown">Ismeretlen ok</string>
     <string name="crash_reports_delete_failed">Néhány diagnosztikai jelentést nem sikerült törölni. Más jelentések törlődhettek.</string>
-    <string name="crash_reports_bundle_cleanup_failed">A diagnosztikai jelentések törölve lettek, de néhány létrehozott csomagot nem sikerült eltávolítani.</string>
+    <string name="crash_reports_bundle_cleanup_failed">Néhány létrehozott csomagot nem sikerült eltávolítani. A hozzájuk tartozó diagnosztikai jelentések megmaradtak. Más jelentések törlődhettek.</string>
     <string name="runtime_chrome_update_failed">Nem sikerült frissíteni a kijelzőbeállításokat. Próbálja újra.</string>
     <string name="runtime_fullscreen_update_failed">Nem sikerült elérni a teljes képernyős beállítást. Próbálja újra.</string>
     <string name="runtime_camera_use_front">Előlapi kamera használata</string>

@@ -48,7 +48,7 @@
     <string name="open_github">GitHub खोलें</string>
     <string name="crash_report_bundle_failed">डायग्नोस्टिक बंडल तैयार नहीं किया जा सका।</string>
     <string name="crash_report_locate_failed">डायग्नोस्टिक बंडल खोजने के लिए कोई फ़ाइल पिकर उपलब्ध नहीं है।</string>
-    <string name="crash_report_bundle_cleanup_failed">डायग्नोस्टिक रिपोर्ट हटा दी गई, लेकिन इसका बनाया गया बंडल हटाया नहीं जा सका।</string>
+    <string name="crash_report_bundle_cleanup_failed">बनाया गया बंडल हटाया नहीं जा सका। डायग्नोस्टिक रिपोर्ट को नहीं हटाया गया।</string>
     <string name="crash_report_github_unavailable">GitHub इश्यू फ़ॉर्म खोलने के लिए कोई ब्राउज़र या ऐप नहीं मिला।</string>
     <string name="crash_report_delete_title">डायग्नोस्टिक रिपोर्ट हटाएं?</string>
     <string name="crash_report_delete_message">इससे इस डिवाइस से डायग्नोस्टिक रिपोर्ट और कोई भी बनाया गया बंडल स्थायी रूप से हट जाएगा। कहीं और पहले से अपलोड की गई फ़ाइलें प्रभावित नहीं होंगी।</string>
@@ -104,7 +104,7 @@
     <string name="diagnostic_reason_signal">सिग्नल समाप्ति</string>
     <string name="diagnostic_reason_unknown">अज्ञात कारण</string>
     <string name="crash_reports_delete_failed">कुछ डायग्नोस्टिक रिपोर्ट हटाई नहीं जा सकीं। अन्य रिपोर्ट हट गई हो सकती हैं।</string>
-    <string name="crash_reports_bundle_cleanup_failed">डायग्नोस्टिक रिपोर्ट हटा दी गईं, लेकिन कुछ बनाए गए बंडल हटाए नहीं जा सके।</string>
+    <string name="crash_reports_bundle_cleanup_failed">बनाए गए कुछ बंडल हटाए नहीं जा सके। उनसे जुड़ी डायग्नोस्टिक रिपोर्ट नहीं हटाई गईं। अन्य रिपोर्ट हट गई हो सकती हैं।</string>
     <string name="runtime_chrome_update_failed">डिस्प्ले सेटिंग्स अपडेट नहीं की जा सकीं। पुनः प्रयास करें।</string>
     <string name="runtime_fullscreen_update_failed">फ़ुलस्क्रीन सेटिंग एक्सेस नहीं की जा सकी। पुनः प्रयास करें।</string>
     <string name="runtime_camera_use_front">फ़्रंट कैमरा उपयोग करें</string>

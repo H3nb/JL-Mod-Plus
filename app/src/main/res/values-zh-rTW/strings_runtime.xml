@@ -47,7 +47,7 @@
     <string name="open_github">開啟 GitHub</string>
     <string name="crash_report_bundle_failed">無法準備診斷封包。</string>
     <string name="crash_report_locate_failed">找不到可用來定位診斷封包的檔案選擇器。</string>
-    <string name="crash_report_bundle_cleanup_failed">已刪除診斷報告，但無法移除產生的封包。</string>
+    <string name="crash_report_bundle_cleanup_failed">無法移除已產生的封包，診斷報告已保留。</string>
     <string name="crash_report_github_unavailable">找不到可開啟 GitHub 問題表單的瀏覽器或應用程式。</string>
     <string name="crash_report_delete_title">要刪除診斷報告嗎？</string>
     <string name="crash_report_delete_message">這會從此裝置永久移除該診斷報告及任何產生的封包，不會影響已上傳至其他位置的檔案。</string>
@@ -102,7 +102,7 @@
     <string name="diagnostic_reason_signal">訊號終止</string>
     <string name="diagnostic_reason_unknown">未知原因</string>
     <string name="crash_reports_delete_failed">部分診斷報告無法刪除，其他報告可能已移除。</string>
-    <string name="crash_reports_bundle_cleanup_failed">已刪除診斷報告，但部分產生的封包無法移除。</string>
+    <string name="crash_reports_bundle_cleanup_failed">部分已產生的封包無法移除，對應的診斷報告已保留。其他報告可能已刪除。</string>
     <string name="runtime_chrome_update_failed">無法更新顯示設定，請再試一次。</string>
     <string name="runtime_fullscreen_update_failed">無法存取全螢幕設定，請再試一次。</string>
     <string name="runtime_camera_use_front">使用前鏡頭</string>

@@ -48,7 +48,7 @@
     <string name="open_github">GitHub’ı aç</string>
     <string name="crash_report_bundle_failed">Tanılama paketi hazırlanamadı.</string>
     <string name="crash_report_locate_failed">Tanılama paketini bulmak için kullanılabilir dosya seçici yok.</string>
-    <string name="crash_report_bundle_cleanup_failed">Tanılama raporu silindi ancak oluşturulan paketi kaldırılamadı.</string>
+    <string name="crash_report_bundle_cleanup_failed">Oluşturulan paket kaldırılamadı. Tanılama raporu saklandı.</string>
     <string name="crash_report_github_unavailable">GitHub sorun formunu açacak tarayıcı veya uygulama bulunamadı.</string>
     <string name="crash_report_delete_title">Tanılama raporu silinsin mi?</string>
     <string name="crash_report_delete_message">Bu işlem tanılama raporunu ve oluşturulan tüm paketleri bu cihazdan kalıcı olarak kaldırır. Başka bir yere yüklenmiş dosyalar etkilenmez.</string>
@@ -103,7 +103,7 @@
     <string name="diagnostic_reason_signal">Sinyal ile sonlandırma</string>
     <string name="diagnostic_reason_unknown">Bilinmeyen neden</string>
     <string name="crash_reports_delete_failed">Bazı tanılama raporları silinemedi. Diğerleri kaldırılmış olabilir.</string>
-    <string name="crash_reports_bundle_cleanup_failed">Tanılama raporları silindi ancak oluşturulan bazı paketler kaldırılamadı.</string>
+    <string name="crash_reports_bundle_cleanup_failed">Oluşturulan bazı paketler kaldırılamadı. İlgili tanılama raporları saklandı. Diğer raporlar silinmiş olabilir.</string>
     <string name="runtime_chrome_update_failed">Ekran ayarları güncellenemedi. Yeniden deneyin.</string>
     <string name="runtime_fullscreen_update_failed">Tam ekran ayarına erişilemedi. Yeniden deneyin.</string>
     <string name="runtime_camera_use_front">Ön kamerayı kullan</string>

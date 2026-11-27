@@ -49,7 +49,7 @@
     <string name="open_github">Abrir GitHub</string>
     <string name="crash_report_bundle_failed">No se pudo preparar el paquete de diagnóstico.</string>
     <string name="crash_report_locate_failed">No hay ningún selector de archivos disponible para localizar el paquete de diagnóstico.</string>
-    <string name="crash_report_bundle_cleanup_failed">Se eliminó el informe de diagnóstico, pero no se pudo quitar el paquete generado.</string>
+    <string name="crash_report_bundle_cleanup_failed">No se pudo eliminar el paquete generado. Se conservó el informe de diagnóstico.</string>
     <string name="crash_report_github_unavailable">No se encontró ningún navegador ni aplicación para abrir el formulario de incidencias de GitHub.</string>
     <string name="crash_report_delete_title">¿Eliminar informe de diagnóstico?</string>
     <string name="crash_report_delete_message">Esta acción elimina permanentemente el informe de diagnóstico y cualquier paquete generado en este dispositivo. Los archivos ya subidos a otros sitios no se verán afectados.</string>
@@ -105,7 +105,7 @@
     <string name="diagnostic_reason_signal">Terminación por señal</string>
     <string name="diagnostic_reason_unknown">Causa desconocida</string>
     <string name="crash_reports_delete_failed">No se pudieron eliminar algunos informes de diagnóstico. Es posible que otros sí se hayan quitado.</string>
-    <string name="crash_reports_bundle_cleanup_failed">Se eliminaron los informes de diagnóstico, pero no se pudieron quitar algunos paquetes generados.</string>
+    <string name="crash_reports_bundle_cleanup_failed">No se pudieron eliminar algunos paquetes generados. Se conservaron los informes de diagnóstico correspondientes. Es posible que otros informes se hayan eliminado.</string>
     <string name="runtime_chrome_update_failed">No se pudieron actualizar los ajustes de pantalla. Inténtalo de nuevo.</string>
     <string name="runtime_fullscreen_update_failed">No se pudo acceder al ajuste de pantalla completa. Inténtalo de nuevo.</string>
     <string name="runtime_camera_use_front">Usar cámara frontal</string>

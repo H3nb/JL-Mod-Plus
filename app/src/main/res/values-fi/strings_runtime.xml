@@ -48,7 +48,7 @@
     <string name="open_github">Avaa GitHub</string>
     <string name="crash_report_bundle_failed">Diagnostiikkapakettia ei voitu valmistella.</string>
     <string name="crash_report_locate_failed">Tiedostovalitsinta ei ole käytettävissä diagnostiikkapaketin paikantamiseksi.</string>
-    <string name="crash_report_bundle_cleanup_failed">Diagnostiikkaraportti poistettiin, mutta sen luotua pakettia ei voitu poistaa.</string>
+    <string name="crash_report_bundle_cleanup_failed">Luotua pakettia ei voitu poistaa. Diagnostiikkaraportti säilytettiin.</string>
     <string name="crash_report_github_unavailable">Selainta tai sovellusta ei löytynyt GitHub-ilmoituslomakkeen avaamiseksi.</string>
     <string name="crash_report_delete_title">Poistetaanko diagnostiikkaraportti?</string>
     <string name="crash_report_delete_message">Tämä poistaa diagnostiikkaraportin ja mahdolliset luodut paketit pysyvästi tästä laitteesta. Muualle jo ladatut tiedostot eivät muutu.</string>
@@ -104,7 +104,7 @@
     <string name="diagnostic_reason_signal">Signaalin päättämä</string>
     <string name="diagnostic_reason_unknown">Tuntematon syy</string>
     <string name="crash_reports_delete_failed">Joitakin diagnostiikkaraportteja ei voitu poistaa. Muut on saatettu poistaa.</string>
-    <string name="crash_reports_bundle_cleanup_failed">Diagnostiikkaraportit poistettiin, mutta joitakin luotuja paketteja ei voitu poistaa.</string>
+    <string name="crash_reports_bundle_cleanup_failed">Joitakin luotuja paketteja ei voitu poistaa. Niitä vastaavat diagnostiikkaraportit säilytettiin. Muut raportit on saatettu poistaa.</string>
     <string name="runtime_chrome_update_failed">Näyttöasetuksia ei voitu päivittää. Yritä uudelleen.</string>
     <string name="runtime_fullscreen_update_failed">Koko näytön asetusta ei voitu käyttää. Yritä uudelleen.</string>
     <string name="runtime_camera_use_front">Käytä etukameraa</string>

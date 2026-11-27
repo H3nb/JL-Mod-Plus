@@ -49,7 +49,7 @@
     <string name="open_github">פתיחת GitHub</string>
     <string name="crash_report_bundle_failed">לא ניתן להכין את חבילת האבחון.</string>
     <string name="crash_report_locate_failed">לא נמצא בוחר קבצים זמין לאיתור חבילת האבחון.</string>
-    <string name="crash_report_bundle_cleanup_failed">דוח האבחון נמחק, אך לא ניתן להסיר את החבילה שנוצרה עבורו.</string>
+    <string name="crash_report_bundle_cleanup_failed">לא ניתן להסיר את החבילה שנוצרה. דוח האבחון נשמר.</string>
     <string name="crash_report_github_unavailable">לא נמצאו דפדפן או אפליקציה לפתיחת טופס הדיווח ב-GitHub.</string>
     <string name="crash_report_delete_title">למחוק את דוח האבחון?</string>
     <string name="crash_report_delete_message">פעולה זו מסירה לצמיתות את דוח האבחון וכל חבילה שנוצרה ממכשיר זה. קבצים שכבר הועלו למקום אחר אינם מושפעים.</string>
@@ -106,7 +106,7 @@
     <string name="diagnostic_reason_signal">סיום באות מערכת</string>
     <string name="diagnostic_reason_unknown">סיבה לא ידועה</string>
     <string name="crash_reports_delete_failed">לא ניתן למחוק חלק מדוחות האבחון. ייתכן שדוחות אחרים הוסרו.</string>
-    <string name="crash_reports_bundle_cleanup_failed">דוחות האבחון נמחקו, אך לא ניתן להסיר חלק מהחבילות שנוצרו.</string>
+    <string name="crash_reports_bundle_cleanup_failed">לא ניתן להסיר חלק מהחבילות שנוצרו. דוחות האבחון המשויכים אליהן נשמרו. ייתכן שדוחות אחרים נמחקו.</string>
     <string name="runtime_chrome_update_failed">לא ניתן לעדכן את הגדרות התצוגה. יש לנסות שוב.</string>
     <string name="runtime_fullscreen_update_failed">לא ניתן לגשת להגדרת המסך המלא. יש לנסות שוב.</string>
     <string name="runtime_camera_use_front">שימוש במצלמה קדמית</string>

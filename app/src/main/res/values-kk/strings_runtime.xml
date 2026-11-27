@@ -48,7 +48,7 @@
     <string name="open_github">GitHub ашу</string>
     <string name="crash_report_bundle_failed">Диагностика бумасы дайындалмады.</string>
     <string name="crash_report_locate_failed">Диагностика бумасын табу үшін файл таңдағыш қолжетімсіз.</string>
-    <string name="crash_report_bundle_cleanup_failed">Диагностика есебі жойылды, бірақ жасалған бума өшірілмеді.</string>
+    <string name="crash_report_bundle_cleanup_failed">Жасалған буманы жою мүмкін болмады. Диагностика есебі сақталды.</string>
     <string name="crash_report_github_unavailable">GitHub хабарлама пішінін ашу үшін браузер немесе қолданба табылмады.</string>
     <string name="crash_report_delete_title">Диагностика есебін жою керек пе?</string>
     <string name="crash_report_delete_message">Бұл диагностика есебін және осы құрылғыда жасалған буманы біржола жояды. Басқа жерге жүктелген файлдарға әсер етпейді.</string>
@@ -104,7 +104,7 @@
     <string name="diagnostic_reason_signal">Сигналмен аяқталу</string>
     <string name="diagnostic_reason_unknown">Белгісіз себеп</string>
     <string name="crash_reports_delete_failed">Кейбір диагностика есептері жойылмады. Басқалары өшірілген болуы мүмкін.</string>
-    <string name="crash_reports_bundle_cleanup_failed">Диагностика есептері жойылды, бірақ кейбір жасалған бумалар өшірілмеді.</string>
+    <string name="crash_reports_bundle_cleanup_failed">Жасалған кейбір бумаларды жою мүмкін болмады. Оларға қатысты диагностика есептері сақталды. Басқа есептер жойылған болуы мүмкін.</string>
     <string name="runtime_chrome_update_failed">Көрсету параметрлері жаңартылмады. Қайталап көріңіз.</string>
     <string name="runtime_fullscreen_update_failed">Толық экран параметріне қол жеткізілмеді. Қайталап көріңіз.</string>
     <string name="runtime_camera_use_front">Алдыңғы камераны қолдану</string>
