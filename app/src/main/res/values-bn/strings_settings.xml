@@ -10,7 +10,7 @@
     <string name="pref_audio_title">MIDI</string>
     <string name="pref_button_shape_oval">ডিম্বাকৃতি</string>
     <string name="pref_button_shape_rect">আয়তক্ষেত্র</string>
-    <string name="pref_button_shape_round">গোলাকার আয়তক্ষেত্র</string>
+    <string name="pref_button_shape_round">গোল কোণযুক্ত আয়তক্ষেত্র</string>
     <string name="pref_button_shape_title">কীপ্যাড বাটনের আকৃতি</string>
     <string name="pref_category_experimental">পরীক্ষামূলক</string>
     <string name="pref_emulator_dir">ওয়ার্কিং ফোল্ডার</string>

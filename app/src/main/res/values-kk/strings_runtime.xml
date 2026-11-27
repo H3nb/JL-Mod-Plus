@@ -72,9 +72,9 @@
     <string name="reconversion_done_with_warning">Үйлесімділік түрлендіруі ескертулермен аяқталды.</string>
     <string name="reconversion_error_summary">Бұл MIDlet автоматты түрде түрлендірілмеді.</string>
     <string name="runtime_invalid_intent">Жарамсыз іске қосу сұрауы: MIDlet жолы жоқ.</string>
-    <string name="runtime_storage_in_use">MIDlet жадын басқа орындау ортасы пайдаланып жатыр.</string>
+    <string name="runtime_storage_in_use">MIDlet-тің сақтау орнын басқа орындау ортасы пайдаланып жатыр.</string>
     <string name="runtime_installation_changed">Бұл MIDlet іске қосуға дайындалмады.</string>
-    <string name="runtime_storage_unavailable">MIDlet жады дайындалмады.</string>
+    <string name="runtime_storage_unavailable">MIDlet-тің сақтау орнын дайындау мүмкін болмады.</string>
     <string name="runtime_no_midlets">Бұл қолданбада MIDlet табылмады.</string>
     <!-- Runtime grouped controls derive body, accent, outline, icon, and selected-icon colors from the existing virtual-control appearance settings. -->
     <string name="runtime_virtual_controls_title">Виртуалды басқару</string>

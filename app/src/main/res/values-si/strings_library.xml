@@ -294,7 +294,7 @@
     <string name="library_metadata_edit_title">පාරදත්ත සංස්කරණය කරන්න</string>
     <string name="library_metadata_icon">නිරූපකය</string>
     <string name="library_metadata_name">නම</string>
-    <string name="library_metadata_vendor">විකුණුම්කරු</string>
+    <string name="library_metadata_vendor">ප්‍රකාශකයා</string>
     <string name="library_metadata_reset_to_original">මුල් තත්ත්වයට යළි පිහිටුවන්න</string>
     <string name="library_metadata_save">සුරකින්න</string>
     <string name="library_hide_grid_titles_summary">ජාලක දසුනේ MIDlet නම් සඟවයි. ලැයිස්තු දසුනේ ඒවා දෘශ්‍යමානව පවතී.</string>
@@ -453,7 +453,7 @@
     <string name="library_details_entry_points" tools:ignore="MissingTranslation">MIDlet ඇතුළත් කිරීම්</string>
     <string name="library_details_original_metadata" tools:ignore="MissingTranslation">මුල් පාරදත්ත</string>
     <string name="library_details_name" tools:ignore="MissingTranslation">නම</string>
-    <string name="library_details_vendor" tools:ignore="MissingTranslation">විකුණුම්කරු</string>
+    <string name="library_details_vendor" tools:ignore="MissingTranslation">ප්‍රකාශකයා</string>
     <string name="library_details_version" tools:ignore="MissingTranslation">අනුවාදය</string>
     <string name="library_details_version_value" tools:ignore="MissingTranslation">අනුවාදය <xliff:g id="version" example="2.1.0">%1$s</xliff:g></string>
     <string name="library_details_original_description" tools:ignore="MissingTranslation">මුල් විස්තරය</string>

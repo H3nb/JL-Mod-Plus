@@ -294,7 +294,7 @@
     <string name="library_metadata_edit_title">ମେଟାଡାଟା ଏଡିଟ୍ କରନ୍ତୁ</string>
     <string name="library_metadata_icon">ଆଇକନ୍</string>
     <string name="library_metadata_name">ନାମ</string>
-    <string name="library_metadata_vendor">ବିକ୍ରେତା</string>
+    <string name="library_metadata_vendor">ପ୍ରକାଶକ</string>
     <string name="library_metadata_reset_to_original">ମୂଳ ଅବସ୍ଥାକୁ ରିସେଟ୍ କରନ୍ତୁ</string>
     <string name="library_metadata_save">ସେଭ୍ କରନ୍ତୁ</string>
     <string name="library_hide_grid_titles_summary">ଗ୍ରିଡ୍ ଦୃଶ୍ୟରେ MIDlet ନାମ ଲୁଚାନ୍ତୁ। ତାଲିକା ଦୃଶ୍ୟ ସେଗୁଡ଼ିକୁ ଦୃଶ୍ୟମାନ ରଖେ।</string>
@@ -453,7 +453,7 @@
     <string name="library_details_entry_points" tools:ignore="MissingTranslation">MIDlet ଏଣ୍ଟ୍ରି</string>
     <string name="library_details_original_metadata" tools:ignore="MissingTranslation">ମୂଳ ମେଟାଡାଟା</string>
     <string name="library_details_name" tools:ignore="MissingTranslation">ନାମ</string>
-    <string name="library_details_vendor" tools:ignore="MissingTranslation">ବିକ୍ରେତା</string>
+    <string name="library_details_vendor" tools:ignore="MissingTranslation">ପ୍ରକାଶକ</string>
     <string name="library_details_version" tools:ignore="MissingTranslation">ଭର୍ସନ୍</string>
     <string name="library_details_version_value" tools:ignore="MissingTranslation">ଭର୍ସନ୍ <xliff:g id="version" example="2.1.0">%1$s</xliff:g></string>
     <string name="library_details_original_description" tools:ignore="MissingTranslation">ମୂଳ ବିବରଣୀ</string>

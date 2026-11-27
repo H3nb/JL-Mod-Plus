@@ -3,14 +3,14 @@
 <resources xmlns:tools="http://schemas.android.com/tools">
     <string name="pref_app_sort_date">ଯୋଗ କରାଯାଇଥିବା ତାରିଖ</string>
     <string name="pref_app_sort_name">ନାମ</string>
-    <string name="pref_app_sort_vendor">ବିକ୍ରେତା</string>
+    <string name="pref_app_sort_vendor">ପ୍ରକାଶକ</string>
     <string name="pref_app_sort_ascending">ଆରୋହୀ</string>
     <string name="pref_app_sort_descending">ଅବରୋହୀ</string>
     <string name="pref_apps_view">ଲେଆଉଟ୍</string>
     <string name="pref_audio_title">MIDI</string>
     <string name="pref_button_shape_oval">ଅଣ୍ଡାକୃତି</string>
     <string name="pref_button_shape_rect">ଆୟତକ୍ଷେତ୍ର</string>
-    <string name="pref_button_shape_round">ଗୋଲାକାର ଆୟତକ୍ଷେତ୍ର</string>
+    <string name="pref_button_shape_round">ଗୋଲ କୋଣ ଥିବା ଆୟତକ୍ଷେତ୍ର</string>
     <string name="pref_button_shape_title">କିପ୍ୟାଡ୍ ବଟନ୍ ଆକୃତି</string>
     <string name="pref_category_experimental">ପରୀକ୍ଷାମୂଳକ</string>
     <string name="pref_emulator_dir">ୱାର୍କିଂ ଫୋଲ୍ଡର୍</string>

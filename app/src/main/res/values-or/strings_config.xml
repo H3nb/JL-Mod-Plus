@@ -7,7 +7,7 @@
     <string name="config_missing_app_storage_generic">ଆପ୍ ମିଳିଲା ନାହିଁ।\nଷ୍ଟୋରେଜ୍ ଡିଭାଇସ୍ ଉପଲବ୍ଧ ଅଛି କି ନାହିଁ ଯାଞ୍ଚ କରନ୍ତୁ, କିମ୍ବା ସର୍ଟକଟ୍ ପୁନଃ ତିଆରି କରନ୍ତୁ।</string>
     <string name="midlet_name"><b>ନାମ: </b></string>
     <string name="midlet_size"><b>ଆକାର: </b></string>
-    <string name="midlet_vendor"><b>ବିକ୍ରେତା: </b></string>
+    <string name="midlet_vendor"><b>ପ୍ରକାଶକ: </b></string>
     <string name="midlet_version"><b>ଭର୍ସନ୍: </b></string>
     <string name="config_destination_graphics">ଡିସପ୍ଲେ</string>
     <string name="config_destination_rendering" tools:ignore="MissingTranslation">ଗ୍ରାଫିକ୍ସ୍</string>

@@ -3,14 +3,14 @@
 <resources xmlns:tools="http://schemas.android.com/tools">
     <string name="pref_app_sort_date">එක් කළ දිනය</string>
     <string name="pref_app_sort_name">නම</string>
-    <string name="pref_app_sort_vendor">විකුණුම්කරු</string>
+    <string name="pref_app_sort_vendor">ප්‍රකාශකයා</string>
     <string name="pref_app_sort_ascending">ආරෝහණ</string>
     <string name="pref_app_sort_descending">අවරෝහණ</string>
     <string name="pref_apps_view">පිරිසැලසුම</string>
     <string name="pref_audio_title">MIDI</string>
     <string name="pref_button_shape_oval">ඉලිප්සාකාර</string>
     <string name="pref_button_shape_rect">සෘජුකෝණාස්‍රය</string>
-    <string name="pref_button_shape_round">වටකුරු සෘජුකෝණාස්‍රය</string>
+    <string name="pref_button_shape_round">වටකුරු කොන් සහිත සෘජුකෝණාස්‍රය</string>
     <string name="pref_button_shape_title">යතුරුපුවරු බොත්තම් හැඩය</string>
     <string name="pref_category_experimental">පරීක්ෂණාත්මක</string>
     <string name="pref_emulator_dir">වැඩ කරන ෆෝල්ඩරය</string>
@@ -99,7 +99,7 @@
     <string name="settings_section_runtime_screen" tools:ignore="MissingTranslation">ක්‍රීඩා කරන අතරතුර තිරය</string>
     <string name="settings_section_runtime_features" tools:ignore="MissingTranslation">ක්‍රීඩා තුළ විශේෂාංග</string>
     <string name="settings_section_library_appearance">පුස්තකාල පෙනුම</string>
-    <string name="settings_section_midlet_runtime">MIDlet ධාවන කාලය</string>
+    <string name="settings_section_midlet_runtime">MIDlet ධාවන පරිසරය</string>
     <string name="settings_section_storage">ගබඩාව</string>
     <string name="settings_section_profiles">පැතිකඩ</string>
     <string name="settings_profiles_summary">වෙනත් MIDlets හරහා නැවත භාවිතා කළ හැකි පැතිකඩ කළමනාකරණය කරන්න.</string>

@@ -23,7 +23,7 @@
     </plurals>
     <string name="memory_editor_no_results">ප්‍රතිඵල නොමැත</string>
     <string name="memory_editor_no_watch">නිරීක්ෂණ ලැයිස්තුව හිස්ය</string>
-    <string name="memory_editor_unsupported">මෙම ධාවන කාලය සඳහා මතක සංස්කාරකය ලබා ගත නොහැක.</string>
+    <string name="memory_editor_unsupported">මෙම ධාවන පරිසරය තුළ මතක සංස්කාරකය භාවිතා කළ නොහැක.</string>
     <string name="memory_editor_engine_unavailable">මතක සංස්කාරක එන්ජිම ලබා ගත නොහැක.</string>
     <string name="memory_editor_engine_reconnecting">මතක සංස්කාරකය නැවත සම්බන්ධ වෙමින්…</string>
     <string name="memory_editor_refresh">නැවුම් කරන්න</string>
@@ -113,7 +113,7 @@
     <string name="memory_editor_keypad_clear">හිස් කරන්න</string>
     <string name="memory_editor_peek_underlay">පහළ MIDlet බැලීමට ඔබාගෙන සිටින්න</string>
     <string name="memory_editor_peek_underlay_active">පහළ MIDlet පෙන්වමින්</string>
-    <string name="memory_editor_no_runtime">සක්‍රිය MIDlet ධාවන කාලයක් නොමැත.</string>
+    <string name="memory_editor_no_runtime">සක්‍රිය MIDlet ධාවන පරිසරයක් නොමැත.</string>
     <string name="memory_editor_no_search_history">ප්‍රතිස්ථාපනය කිරීමට පෙර සෙවීමක් නොමැත.</string>
     <string name="memory_editor_partial_write">ලිවීමේ මෙහෙයුම සම්පූර්ණයෙන්ම අවසන් නොවීය. නැවත උත්සාහ කිරීමට පෙර වත්මන් අගයන් පරීක්ෂා කරන්න.</string>
     <!-- Independent write counts: confirmed, unconfirmed, skipped, not attempted, and incompatible data type. -->

@@ -72,7 +72,7 @@
     <string name="reconversion_done_with_warning">ගැළපුම් පරිවර්තනය අවවාද සමඟින් සම්පූර්ණ විය.</string>
     <string name="reconversion_error_summary">මෙම MIDlet ස්වයංක්‍රීයව පරිවර්තනය කිරීමට නොහැකි විය.</string>
     <string name="runtime_invalid_intent">වලංගු නොවන දියත් කිරීමේ ඉල්ලීම: MIDlet මාර්ගය නොමැත.</string>
-    <string name="runtime_storage_in_use">MIDlet ගබඩාව දැනටමත් වෙනත් ධාවන කාලයක් මඟින් භාවිතා කරයි.</string>
+    <string name="runtime_storage_in_use">MIDlet ගබඩාව දැනටමත් වෙනත් ධාවන පරිසරයක් භාවිතා කරයි.</string>
     <string name="runtime_installation_changed">මෙම MIDlet දියත් කිරීමට සූදානම් කිරීමට නොහැකි විය.</string>
     <string name="runtime_storage_unavailable">MIDlet ගබඩාව සූදානම් කිරීමට නොහැකි විය.</string>
     <string name="runtime_no_midlets">මෙම යෙදුමේ MIDlets හමු නොවීය.</string>

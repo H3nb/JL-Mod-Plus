@@ -10,7 +10,7 @@
     <string name="pref_audio_title">MIDI</string>
     <string name="pref_button_shape_oval">Сопақша</string>
     <string name="pref_button_shape_rect">Тіктөртбұрыш</string>
-    <string name="pref_button_shape_round">Дөңгеленген тіктөртбұрыш</string>
+    <string name="pref_button_shape_round">Бұрыштары дөңгеленген тіктөртбұрыш</string>
     <string name="pref_button_shape_title">Пернетақта түймелерінің пішіні</string>
     <string name="pref_category_experimental">Эксперименттік</string>
     <string name="pref_emulator_dir">Жұмыс қалтасы</string>
@@ -99,7 +99,7 @@
     <string name="settings_section_runtime_screen" tools:ignore="MissingTranslation">Ойын кезіндегі экран</string>
     <string name="settings_section_runtime_features" tools:ignore="MissingTranslation">Ойын ішіндегі мүмкіндіктер</string>
     <string name="settings_section_library_appearance">Кітапхана көрінісі</string>
-    <string name="settings_section_midlet_runtime">MIDlet орындалуы</string>
+    <string name="settings_section_midlet_runtime">MIDlet орындау ортасы</string>
     <string name="settings_section_storage">Жад</string>
     <string name="settings_section_profiles">Профильдер</string>
     <string name="settings_profiles_summary">Басқа MIDlet-терде қайта пайдалануға болатын профильдерді басқарыңыз.</string>

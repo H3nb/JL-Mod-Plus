@@ -301,7 +301,7 @@
     <string name="config_search_requires_fps" tools:ignore="MissingTranslation">Орнын өзгерту үшін «FPS көрсету» параметрін қосыңыз.</string>
     <string name="midlet_running_notification_title">MIDlet іске қосулы</string>
     <string name="midlet_running_notification_text">«<xliff:g id="name" example="Example">%1$s</xliff:g>» жұмыс істеп тұр.</string>
-    <string name="midlet_running_notification_channel">MIDlet орындалуы</string>
+    <string name="midlet_running_notification_channel">MIDlet орындау ортасы</string>
     <string name="config_gamepad_directions_numeric_v2">Сандық пернетақта</string>
     <string name="midlet_file_permission_title">Жадқа қолжетімділік</string>
     <string name="midlet_file_permission_read">Бұл MIDlet файлдарды оқығысы келеді.</string>

@@ -7,7 +7,7 @@
     <string name="config_missing_app_storage_generic">යෙදුම හමු නොවීය.\nගබඩා උපාංගය තිබේදැයි පරීක්ෂා කරන්න, නැතහොත් කෙටිමඟ නැවත සාදන්න.</string>
     <string name="midlet_name"><b>නම: </b></string>
     <string name="midlet_size"><b>ප්‍රමාණය: </b></string>
-    <string name="midlet_vendor"><b>විකුණුම්කරු: </b></string>
+    <string name="midlet_vendor"><b>ප්‍රකාශකයා: </b></string>
     <string name="midlet_version"><b>අනුවාදය: </b></string>
     <string name="config_destination_graphics">සංදර්ශකය</string>
     <string name="config_destination_rendering" tools:ignore="MissingTranslation">ග්‍රැෆික්</string>
@@ -295,13 +295,13 @@
     <string name="config_analog_stick">ඇනලොග් ස්ටික්</string>
     <string name="config_analog_stick_summary">ප්‍රාථමික ඇනලොග් ස්ටික් සඳහා අක්‍රිය, 4-දිශා, 8-දිශා හෝ සංඛ්‍යාත්මක යතුරුපුවරුව තෝරන්න. පාලක බොත්තම් යතුරු සිතියම්ගත කිරීම් භාවිතා කරයි.</string>
     <string name="config_analog_stick_off">අක්‍රියයි</string>
-    <string name="config_controller_help_body_compact">පාලක බොත්තම් යතුරුපුවරු සහ දුරකථන යතුරු මෙන් එකම යතුරු සිතියම්ගත කිරීම් භාවිතා කරයි. ඇනලොග් ස්ටික් MIDlet වෙත යවන්නේ දිශා ආදාන පමණි. Android ආපසු යතුර එහි සාමාන්‍ය හැසිරීම තබා ගනී; M වෙත සිතියම්ගත කළ ඕනෑම භෞතික බොත්තමක් ධාවන කාල MIDlet මෙනුව විවෘත කරයි.</string>
+    <string name="config_controller_help_body_compact">පාලක බොත්තම් යතුරුපුවරු සහ දුරකථන යතුරු මෙන් එකම යතුරු සිතියම්ගත කිරීම් භාවිතා කරයි. ඇනලොග් ස්ටික් MIDlet වෙත යවන්නේ දිශා ආදාන පමණි. Android ආපසු යතුර එහි සාමාන්‍ය හැසිරීම තබා ගනී; M වෙත සිතියම්ගත කළ ඕනෑම භෞතික බොත්තමක් MIDlet ධාවනය වන අතරතුර එහි මෙනුව විවෘත කරයි.</string>
     <string name="config_show_fps_title" tools:ignore="MissingTranslation">FPS පෙන්වන්න</string>
     <string name="config_show_fps_help" tools:ignore="MissingTranslation">ක්‍රීඩා කරන අතරතුර රාමු අනුපාතය පෙන්වයි.</string>
     <string name="config_search_requires_fps" tools:ignore="MissingTranslation">ස්ථානය වෙනස් කිරීමට “FPS පෙන්වන්න” ක්‍රියාත්මක කරන්න.</string>
     <string name="midlet_running_notification_title">MIDlet ධාවනය වේ</string>
     <string name="midlet_running_notification_text"><xliff:g id="name" example="Example">%1$s</xliff:g> ධාවනය වෙමින් පවතී.</string>
-    <string name="midlet_running_notification_channel">MIDlet ධාවන කාලය</string>
+    <string name="midlet_running_notification_channel">MIDlet ධාවන පරිසරය</string>
     <string name="config_gamepad_directions_numeric_v2">සංඛ්‍යාත්මක යතුරුපුවරුව</string>
     <string name="midlet_file_permission_title">ගබඩා ප්‍රවේශය</string>
     <string name="midlet_file_permission_read">මෙම MIDlet හට ගොනු කියවීමට අවශ්‍යයි.</string>
