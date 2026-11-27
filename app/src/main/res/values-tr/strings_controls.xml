@@ -79,8 +79,8 @@
     <string name="control_skin_overlay_left" tools:ignore="MissingTranslation">Sol katmanı</string>
     <string name="control_skin_overlay_right" tools:ignore="MissingTranslation">Sağ katmanı</string>
     <string name="control_skin_analog_base" tools:ignore="MissingTranslation">Taban görseli</string>
-    <string name="control_skin_analog_thumb" tools:ignore="MissingTranslation">Başlık görseli</string>
-    <string name="control_skin_analog_thumb_pressed" tools:ignore="MissingTranslation">Etkin başlık görseli</string>
+    <string name="control_skin_analog_thumb" tools:ignore="MissingTranslation">Analog çubuk görseli</string>
+    <string name="control_skin_analog_thumb_pressed" tools:ignore="MissingTranslation">Etkin analog çubuk görseli</string>
     <string name="control_skin_preview_directions" tools:ignore="MissingTranslation">Yönleri önizle</string>
     <string name="control_skin_preview_direction" tools:ignore="MissingTranslation">Önizle: <xliff:g id="direction" example="Up">%1$s</xliff:g></string>
     <string name="control_skin_builtin_preview" tools:ignore="MissingTranslation">Varsayılan</string>

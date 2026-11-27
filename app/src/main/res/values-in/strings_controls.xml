@@ -9,8 +9,8 @@
     <string name="layout_editor_grid_coarse">Renggang (16)</string>
     <string name="layout_editor_grid_normal">Normal (24)</string>
     <string name="layout_editor_grid_fine">Rapat (32)</string>
-    <string name="layout_editor_snap_on">Posisikan otomatis aktif</string>
-    <string name="layout_editor_snap_off">Posisikan otomatis nonaktif</string>
+    <string name="layout_editor_snap_on">Penyelarasan: aktif</string>
+    <string name="layout_editor_snap_off">Penyelarasan: nonaktif</string>
     <string name="layout_edit_save_changes">Simpan perubahan pada kontrol virtual?</string>
     <string name="layout_edit_discard">Abaikan perubahan</string>
     <string name="layout_edit_continue">Lanjutkan mengedit</string>
@@ -44,12 +44,12 @@
     <string name="control_skin_archive_export_failed" tools:ignore="MissingTranslation">Tidak dapat mengekspor skin kontrol. Pilih folder di luar pustaka skin yang dapat ditulis.</string>
     <string name="control_skin_name" tools:ignore="MissingTranslation">Nama set</string>
     <string name="control_skin_icon" tools:ignore="MissingTranslation">Ikon saja</string>
-    <string name="control_skin_full" tools:ignore="MissingTranslation">Tombol penuh</string>
+    <string name="control_skin_full" tools:ignore="MissingTranslation">Seluruh tombol</string>
     <string name="control_skin_normal_image" tools:ignore="MissingTranslation">Gambar saat tidak ditekan</string>
     <string name="control_skin_pressed_image" tools:ignore="MissingTranslation">Gambar saat ditekan</string>
     <string name="control_skin_delete_warning" tools:ignore="MissingTranslation">Hapus set skin bersama ini beserta semua gambarnya? MIDlet yang menggunakannya akan kembali memakai kontrol bawaan saat dijalankan lagi.</string>
     <string name="control_skin_invalid_image" tools:ignore="MissingTranslation">Pilih gambar PNG, WebP, atau SVG.</string>
-    <string name="control_skin_operation_failed" tools:ignore="MissingTranslation">Tidak dapat menyelesaikan operasi skin kontrol.</string>
+    <string name="control_skin_operation_failed" tools:ignore="MissingTranslation">Tindakan pada skin kontrol gagal.</string>
     <string name="control_skin_missing" tools:ignore="MissingTranslation">Set skin tidak tersedia (kontrol bawaan)</string>
     <string name="control_skin_remove_image" tools:ignore="MissingTranslation">Hapus</string>
     <string name="control_skin_manage" tools:ignore="MissingTranslation">Kelola set</string>
@@ -61,12 +61,12 @@
     <string name="control_skin_numeric" tools:ignore="MissingTranslation">Keypad</string>
     <string name="control_skin_navigation" tools:ignore="MissingTranslation">Navigasi</string>
     <string name="control_skin_other" tools:ignore="MissingTranslation">Tombol lainnya</string>
-    <string name="control_skin_pressed_requires_normal" tools:ignore="MissingTranslation">Tambahkan gambar untuk kondisi tidak ditekan terlebih dahulu.</string>
+    <string name="control_skin_pressed_requires_normal" tools:ignore="MissingTranslation">Tambahkan dahulu gambar tombol saat tidak ditekan.</string>
     <string name="control_skin_edit_named" tools:ignore="MissingTranslation">Tombol <xliff:g id="button_label" example="5">%1$s</xliff:g></string>
     <string name="control_skin_change_image" tools:ignore="MissingTranslation">Ubah</string>
     <string name="control_skin_pick_image" tools:ignore="MissingTranslation">Pilih gambar</string>
-    <string name="control_skin_soft_left" tools:ignore="MissingTranslation">Soft Kiri</string>
-    <string name="control_skin_soft_right" tools:ignore="MissingTranslation">Soft Kanan</string>
+    <string name="control_skin_soft_left" tools:ignore="MissingTranslation">Tombol fungsi kiri</string>
+    <string name="control_skin_soft_right" tools:ignore="MissingTranslation">Tombol fungsi kanan</string>
     <string name="control_skin_fire" tools:ignore="MissingTranslation">Tengah</string>
     <string name="control_skin_menu" tools:ignore="MissingTranslation">Menu</string>
     <string name="control_skin_movement" tools:ignore="MissingTranslation">Kontrol arah</string>
@@ -79,15 +79,15 @@
     <string name="control_skin_overlay_right" tools:ignore="MissingTranslation">Overlay kanan</string>
     <string name="control_skin_analog_base" tools:ignore="MissingTranslation">Gambar dasar</string>
     <string name="control_skin_analog_thumb" tools:ignore="MissingTranslation">Gambar tuas</string>
-    <string name="control_skin_analog_thumb_pressed" tools:ignore="MissingTranslation">Gambar tuas aktif</string>
+    <string name="control_skin_analog_thumb_pressed" tools:ignore="MissingTranslation">Gambar tuas saat digunakan</string>
     <string name="control_skin_preview_directions" tools:ignore="MissingTranslation">Pratinjau arah</string>
     <string name="control_skin_preview_direction" tools:ignore="MissingTranslation">Pratinjau <xliff:g id="direction" example="Up">%1$s</xliff:g></string>
     <string name="control_skin_builtin_preview" tools:ignore="MissingTranslation">Bawaan</string>
     <string name="control_skin_custom_preview" tools:ignore="MissingTranslation">Disesuaikan</string>
     <string name="layout_editor_group_on">Ubah ukuran bersama</string>
     <string name="layout_editor_group_off">Ubah ukuran satu per satu</string>
-    <string name="layout_editor_snap_grid">Sejajarkan ke kisi</string>
-    <string name="layout_editor_snap_controls">Sejajarkan ke tombol</string>
+    <string name="layout_editor_snap_grid">Sejajarkan dengan kisi</string>
+    <string name="layout_editor_snap_controls">Sejajarkan dengan tombol</string>
     <string name="layout_editor_snap_resize">Sejajarkan saat mengubah ukuran</string>
     <string name="layout_editor_snap_resize_on">Penyelarasan ukuran: aktif</string>
     <string name="layout_editor_snap_resize_off">Penyelarasan ukuran: nonaktif</string>

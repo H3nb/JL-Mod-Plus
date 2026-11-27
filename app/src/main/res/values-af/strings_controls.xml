@@ -66,8 +66,8 @@
     <string name="control_skin_edit_named" tools:ignore="MissingTranslation">Knoppie <xliff:g id="button_label" example="5">%1$s</xliff:g></string>
     <string name="control_skin_change_image" tools:ignore="MissingTranslation">Verander</string>
     <string name="control_skin_pick_image" tools:ignore="MissingTranslation">Kies beeld</string>
-    <string name="control_skin_soft_left" tools:ignore="MissingTranslation">Sag L</string>
-    <string name="control_skin_soft_right" tools:ignore="MissingTranslation">Sag R</string>
+    <string name="control_skin_soft_left" tools:ignore="MissingTranslation">Linker funksiesleutel</string>
+    <string name="control_skin_soft_right" tools:ignore="MissingTranslation">Regter funksiesleutel</string>
     <string name="control_skin_fire" tools:ignore="MissingTranslation">Vuur</string>
     <string name="control_skin_menu" tools:ignore="MissingTranslation">Kieslys</string>
     <string name="control_skin_movement" tools:ignore="MissingTranslation">Bewegingskontroles</string>

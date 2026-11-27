@@ -5,7 +5,7 @@
     <string name="about_message">Jalankan aplikasi dan game klasik, kelola MIDlet di pustaka, serta sesuaikan kontrol, tampilan, audio, dan performa. JL-Mod Plus adalah aplikasi gratis dengan kode sumber terbuka.</string>
     <string name="about_subtitle">Emulator Java ME untuk Android</string>
     <string name="about_compatibility">Kompatibilitas bergantung pada MIDlet, perangkat, dan API Java ME yang didukung. Beberapa aplikasi mungkin berjalan berbeda dari saat digunakan di perangkat aslinya.</string>
-    <string name="about_lineage_title">Asal usul proyek</string>
+    <string name="about_lineage_title">Asal-usul proyek</string>
     <string name="about_build_title">Informasi build</string>
     <string name="about_version_label">Versi</string>
     <string name="about_build_label">Build</string>

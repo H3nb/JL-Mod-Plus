@@ -66,8 +66,8 @@
     <string name="control_skin_edit_named" tools:ignore="MissingTranslation">Κουμπί <xliff:g id="button_label" example="5">%1$s</xliff:g></string>
     <string name="control_skin_change_image" tools:ignore="MissingTranslation">Αλλαγή</string>
     <string name="control_skin_pick_image" tools:ignore="MissingTranslation">Επιλογή εικόνας</string>
-    <string name="control_skin_soft_left" tools:ignore="MissingTranslation">Αριστερό πλήκτρο</string>
-    <string name="control_skin_soft_right" tools:ignore="MissingTranslation">Δεξί πλήκτρο</string>
+    <string name="control_skin_soft_left" tools:ignore="MissingTranslation">Αριστερό πλήκτρο επιλογής</string>
+    <string name="control_skin_soft_right" tools:ignore="MissingTranslation">Δεξί πλήκτρο επιλογής</string>
     <string name="control_skin_fire" tools:ignore="MissingTranslation">Βολή</string>
     <string name="control_skin_menu" tools:ignore="MissingTranslation">Μενού</string>
     <string name="control_skin_movement" tools:ignore="MissingTranslation">Χειριστήρια κίνησης</string>

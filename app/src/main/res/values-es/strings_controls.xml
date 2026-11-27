@@ -67,8 +67,8 @@
     <string name="control_skin_edit_named" tools:ignore="MissingTranslation">Botón <xliff:g id="button_label" example="5">%1$s</xliff:g></string>
     <string name="control_skin_change_image" tools:ignore="MissingTranslation">Cambiar</string>
     <string name="control_skin_pick_image" tools:ignore="MissingTranslation">Elegir imagen</string>
-    <string name="control_skin_soft_left" tools:ignore="MissingTranslation">Tecla izq.</string>
-    <string name="control_skin_soft_right" tools:ignore="MissingTranslation">Tecla der.</string>
+    <string name="control_skin_soft_left" tools:ignore="MissingTranslation">Tecla de función izq.</string>
+    <string name="control_skin_soft_right" tools:ignore="MissingTranslation">Tecla de función der.</string>
     <string name="control_skin_fire" tools:ignore="MissingTranslation">Disparo</string>
     <string name="control_skin_menu" tools:ignore="MissingTranslation">Menú</string>
     <string name="control_skin_movement" tools:ignore="MissingTranslation">Controles de movimiento</string>

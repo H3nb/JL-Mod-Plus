@@ -4,8 +4,8 @@
     <string name="pref_app_sort_date">Tanggal ditambahkan</string>
     <string name="pref_app_sort_name">Nama</string>
     <string name="pref_app_sort_vendor">Vendor</string>
-    <string name="pref_app_sort_ascending">Menaik</string>
-    <string name="pref_app_sort_descending">Menurun</string>
+    <string name="pref_app_sort_ascending">Urutan naik</string>
+    <string name="pref_app_sort_descending">Urutan turun</string>
     <string name="pref_apps_view">Tata letak</string>
     <string name="pref_audio_title">MIDI</string>
     <string name="pref_button_shape_oval">Oval</string>
@@ -76,7 +76,7 @@
     <string name="PREF_VK_HIDE_DELAY">Jeda sebelum kontrol disembunyikan</string>
     <string name="pref_vk_hide_hint">Nonaktif</string>
     <string name="PREF_VK_OUTLINE">Warna garis tepi</string>
-    <string name="pref_vk_save_alert">Ganti tata letak kontrol virtual kustom dengan tata letak saat ini?</string>
+    <string name="pref_vk_save_alert">Ganti tata letak kustom kontrol virtual dengan tata letak saat ini?</string>
     <string name="PREF_VK_SEL_BACK">Warna tombol saat ditekan</string>
     <string name="PREF_VK_SEL_FORE">Warna label dan simbol saat ditekan</string>
     <string name="pref_vk_type_arrows">Panah</string>
