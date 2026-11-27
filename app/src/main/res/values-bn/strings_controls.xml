@@ -102,6 +102,6 @@
     <string name="layout_editor_guide_tools">এডিটর টুলস</string>
     <string name="layout_editor_guide_done">সেভ, বাতিল বা সম্পাদনা চালিয়ে যেতে সম্পন্ন-তে ট্যাপ করুন।</string>
     <string name="layout_editor_guide_start">সম্পাদনা শুরু করুন</string>
-    <string name="control_skin_invalid_name">১–৬১টি অক্ষর, সংখ্যা, স্পেস বা . _ ( ) - ব্যবহার করুন। অক্ষর বা সংখ্যা দিয়ে শুরু করুন এবং ডট দিয়ে শেষ করবেন না।</string>
+    <string name="control_skin_invalid_name">১–৬১টি অক্ষর ব্যবহার করুন: বর্ণ, সংখ্যা, সংযুক্ত চিহ্ন, স্পেস বা . _ ( ) -। বর্ণ বা সংখ্যা দিয়ে শুরু করুন এবং বিন্দু দিয়ে শেষ করবেন না।</string>
     <string name="control_skin_image_validation_failed">সর্বোচ্চ 8 MiB-এর একটি বৈধ PNG, WebP বা SVG ছবি বেছে নিন। PNG ও WebP-এর আকার 2048 × 2048 পিক্সেলের বেশি হতে পারবে না।</string>
 </resources>

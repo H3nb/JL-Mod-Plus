@@ -102,6 +102,6 @@
     <string name="layout_editor_guide_tools">සංස්කාරක මෙවලම්</string>
     <string name="layout_editor_guide_done">සුරැකීමට, ඉවතලීමට හෝ සංස්කරණය දිගටම කිරීමට “අවසන්” තට්ටු කරන්න.</string>
     <string name="layout_editor_guide_start">සංස්කරණය අරඹන්න</string>
-    <string name="control_skin_invalid_name">අකුරු, ඉලක්කම්, හිස්තැන් හෝ . _ ( ) - යොදා අක්ෂර 1–61ක් භාවිතා කරන්න. අකුරකින් හෝ ඉලක්කමකින් ආරම්භ කර තිතකින් අවසන් නොකරන්න.</string>
+    <string name="control_skin_invalid_name">අක්ෂර 1–61ක් භාවිතා කරන්න: අකුරු, ඉලක්කම්, සංයෝජක ලකුණු, හිස්තැන් හෝ . _ ( ) -. අකුරකින් හෝ ඉලක්කමකින් ආරම්භ කර තිතකින් අවසන් නොකරන්න.</string>
     <string name="control_skin_image_validation_failed">8 MiB දක්වා වලංගු PNG, WebP හෝ SVG රූපයක් තෝරන්න. PNG සහ WebP රූප 2048 × 2048 පික්සල ඉක්මවිය නොහැක.</string>
 </resources>

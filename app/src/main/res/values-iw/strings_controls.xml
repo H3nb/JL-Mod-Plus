@@ -103,6 +103,6 @@
     <string name="layout_editor_guide_tools">כלי עריכה</string>
     <string name="layout_editor_guide_done">יש להקיש על “סיום” כדי לשמור, לבטל שינויים או להמשיך בעריכה.</string>
     <string name="layout_editor_guide_start">התחלת עריכה</string>
-    <string name="control_skin_invalid_name">יש להשתמש ב-1–61 אותיות, ספרות, רווחים או . _ ( ) -. יש להתחיל באות או ספרה ולא לסיים בנקודה.</string>
+    <string name="control_skin_invalid_name">יש להשתמש ב-1–61 תווים: אותיות, ספרות, סימנים משולבים, רווחים או . _ ( ) -. יש להתחיל באות או ספרה ולא לסיים בנקודה.</string>
     <string name="control_skin_image_validation_failed">יש לבחור תמונת PNG,‏ WebP או SVG תקינה בגודל של עד 8 MiB. המידות של תמונות PNG ו-WebP לא יעלו על 2048 × 2048 פיקסלים.</string>
 </resources>

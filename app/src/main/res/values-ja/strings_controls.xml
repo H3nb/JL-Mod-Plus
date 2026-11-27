@@ -101,6 +101,6 @@
     <string name="layout_editor_guide_tools">編集ツール</string>
     <string name="layout_editor_guide_done">「完了」をタップすると、保存・破棄・編集の続行を選べます。</string>
     <string name="layout_editor_guide_start">編集を開始</string>
-    <string name="control_skin_invalid_name">1～61 文字の文字、数字、スペース、または . _ ( ) - を使用してください。先頭は文字または数字にし、末尾にピリオドを使用しないでください。</string>
+    <string name="control_skin_invalid_name">文字、数字、結合文字、スペース、または . _ ( ) - を使って、1～61 文字で指定してください。先頭は文字または数字にし、末尾にピリオドを使用しないでください。</string>
     <string name="control_skin_image_validation_failed">8 MiB 以下の有効な PNG、WebP、SVG 画像を選択してください。PNG と WebP は 2048 × 2048 ピクセル以下にしてください。</string>
 </resources>

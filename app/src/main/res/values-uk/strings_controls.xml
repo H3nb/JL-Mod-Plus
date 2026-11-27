@@ -104,6 +104,6 @@
     <string name="layout_editor_guide_tools">Інструменти редактора</string>
     <string name="layout_editor_guide_done">Натисніть «Готово», щоб зберегти, відхилити або продовжити редагування.</string>
     <string name="layout_editor_guide_start">Почати редагування</string>
-    <string name="control_skin_invalid_name">Використовуйте 1–61 літеру, цифру, пробіл або символ . _ ( ) -. Починайте з літери чи цифри й не завершуйте крапкою.</string>
+    <string name="control_skin_invalid_name">Використовуйте 1–61 символ: літери, цифри, комбінувальні знаки, пробіли або . _ ( ) -. Починайте з літери чи цифри й не завершуйте крапкою.</string>
     <string name="control_skin_image_validation_failed">Виберіть дійсне зображення PNG, WebP або SVG розміром до 8 МіБ. Розміри PNG і WebP не мають перевищувати 2048 × 2048 пікселів.</string>
 </resources>

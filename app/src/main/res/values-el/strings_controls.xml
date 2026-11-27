@@ -102,6 +102,6 @@
     <string name="layout_editor_guide_tools">Εργαλεία επεξεργαστή</string>
     <string name="layout_editor_guide_done">Πατήστε Τέλος για αποθήκευση, απόρριψη ή συνέχεια επεξεργασίας.</string>
     <string name="layout_editor_guide_start">Έναρξη επεξεργασίας</string>
-    <string name="control_skin_invalid_name">Χρησιμοποιήστε 1–61 γράμματα, αριθμούς, κενά ή . _ ( ) -. Ξεκινήστε με γράμμα ή αριθμό και μην τελειώνετε με τελεία.</string>
+    <string name="control_skin_invalid_name">Χρησιμοποιήστε 1–61 χαρακτήρες: γράμματα, αριθμούς, συνδυαστικά σημάδια, κενά ή . _ ( ) -. Ξεκινήστε με γράμμα ή αριθμό και μην τελειώνετε με τελεία.</string>
     <string name="control_skin_image_validation_failed">Επιλέξτε έγκυρη εικόνα PNG, WebP ή SVG έως 8 MiB. Οι εικόνες PNG και WebP δεν πρέπει να υπερβαίνουν τα 2048 × 2048 pixel.</string>
 </resources>

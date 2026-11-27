@@ -102,6 +102,6 @@
     <string name="layout_editor_guide_tools">एडिटर टूल</string>
     <string name="layout_editor_guide_done">सहेजने, छोड़ने या संपादन जारी रखने के लिए “हो गया” पर टैप करें।</string>
     <string name="layout_editor_guide_start">संपादन शुरू करें</string>
-    <string name="control_skin_invalid_name">1–61 अक्षर, अंक, स्पेस या . _ ( ) - का उपयोग करें। अक्षर या अंक से शुरू करें और बिंदु पर समाप्त न करें।</string>
+    <string name="control_skin_invalid_name">1–61 वर्णों का उपयोग करें: अक्षर, अंक, संयोजक चिह्न, स्पेस या . _ ( ) -। अक्षर या अंक से शुरू करें और बिंदु पर समाप्त न करें।</string>
     <string name="control_skin_image_validation_failed">8 MiB तक की मान्य PNG, WebP या SVG इमेज चुनें। PNG और WebP के आयाम 2048 × 2048 पिक्सेल से अधिक नहीं होने चाहिए।</string>
 </resources>

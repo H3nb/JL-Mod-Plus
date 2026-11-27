@@ -102,6 +102,6 @@
     <string name="layout_editor_guide_tools">Redigeerdernutsgoed</string>
     <string name="layout_editor_guide_done">Tik Klaar om te stoor, weg te gooi of voort te gaan met redigering.</string>
     <string name="layout_editor_guide_start">Begin redigeer</string>
-    <string name="control_skin_invalid_name">Gebruik 1–61 letters, syfers, spasies of . _ ( ) -. Begin met ’n letter of syfer en moenie met ’n punt eindig nie.</string>
+    <string name="control_skin_invalid_name">Gebruik 1–61 karakters: letters, syfers, kombinerende tekens, spasies of . _ ( ) -. Begin met ’n letter of syfer en moenie met ’n punt eindig nie.</string>
     <string name="control_skin_image_validation_failed">Kies ’n geldige PNG-, WebP- of SVG-prent van hoogstens 8 MiB. PNG en WebP mag nie groter as 2048 × 2048 pieksels wees nie.</string>
 </resources>

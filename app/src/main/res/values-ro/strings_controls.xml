@@ -103,6 +103,6 @@
     <string name="layout_editor_guide_tools">Instrumente de editare</string>
     <string name="layout_editor_guide_done">Atingeți Gata pentru a salva, a renunța sau a continua editarea.</string>
     <string name="layout_editor_guide_start">Începe editarea</string>
-    <string name="control_skin_invalid_name">Folosiți 1–61 de litere, cifre, spații sau . _ ( ) -. Începeți cu o literă sau o cifră și nu terminați cu punct.</string>
+    <string name="control_skin_invalid_name">Folosiți 1–61 de caractere: litere, cifre, semne combinante, spații sau . _ ( ) -. Începeți cu o literă sau o cifră și nu terminați cu punct.</string>
     <string name="control_skin_image_validation_failed">Alegeți o imagine PNG, WebP sau SVG validă de până la 8 MiB. PNG și WebP nu trebuie să depășească 2048 × 2048 pixeli.</string>
 </resources>

@@ -101,6 +101,6 @@
     <string name="layout_editor_guide_tools">編輯器工具</string>
     <string name="layout_editor_guide_done">輕觸「完成」即可儲存、捨棄或繼續編輯。</string>
     <string name="layout_editor_guide_start">開始編輯</string>
-    <string name="control_skin_invalid_name">請使用 1–61 個字母、數字、空格或 . _ ( ) - 字元。以字母或數字開頭，不可使用句點結尾。</string>
+    <string name="control_skin_invalid_name">請使用 1–61 個字元：字母、數字、組合標記、空格或 . _ ( ) -。以字母或數字開頭，不可使用句點結尾。</string>
     <string name="control_skin_image_validation_failed">請選擇不超過 8 MiB 的有效 PNG、WebP 或 SVG 圖片。PNG 和 WebP 圖片不得超過 2048 × 2048 像素。</string>
 </resources>

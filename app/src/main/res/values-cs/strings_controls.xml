@@ -104,6 +104,6 @@
     <string name="layout_editor_guide_tools">Nástroje editoru</string>
     <string name="layout_editor_guide_done">Klepnutím na Hotovo můžete změny uložit, zahodit nebo pokračovat v úpravách.</string>
     <string name="layout_editor_guide_start">Začít upravovat</string>
-    <string name="control_skin_invalid_name">Použijte 1–61 písmen, číslic, mezer nebo znaků . _ ( ) -. Začněte písmenem či číslicí a nekončete tečkou.</string>
+    <string name="control_skin_invalid_name">Použijte 1–61 znaků: písmena, číslice, kombinační znaky, mezery nebo . _ ( ) -. Začněte písmenem či číslicí a nekončete tečkou.</string>
     <string name="control_skin_image_validation_failed">Vyberte platný obrázek PNG, WebP nebo SVG do 8 MiB. PNG a WebP nesmí překročit 2048 × 2048 pixelů.</string>
 </resources>

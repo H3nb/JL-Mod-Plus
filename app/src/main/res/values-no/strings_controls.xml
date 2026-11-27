@@ -102,6 +102,6 @@
     <string name="layout_editor_guide_tools">Redigeringsverktøy</string>
     <string name="layout_editor_guide_done">Trykk på «Ferdig» for å lagre, forkaste eller fortsette redigeringen.</string>
     <string name="layout_editor_guide_start">Start redigering</string>
-    <string name="control_skin_invalid_name">Bruk 1–61 bokstaver, tall, mellomrom eller . _ ( ) -. Begynn med en bokstav eller et tall, og ikke avslutt med punktum.</string>
+    <string name="control_skin_invalid_name">Bruk 1–61 tegn: bokstaver, tall, kombinerende tegn, mellomrom eller . _ ( ) -. Begynn med en bokstav eller et tall, og ikke avslutt med punktum.</string>
     <string name="control_skin_image_validation_failed">Velg et gyldig PNG-, WebP- eller SVG-bilde på opptil 8 MiB. PNG og WebP kan ikke være større enn 2048 × 2048 piksler.</string>
 </resources>

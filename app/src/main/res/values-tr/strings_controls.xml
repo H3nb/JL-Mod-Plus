@@ -102,6 +102,6 @@
     <string name="layout_editor_guide_tools">Düzenleyici araçları</string>
     <string name="layout_editor_guide_done">Kaydetmek, vazgeçmek veya düzenlemeye devam etmek için Bitti’ye dokunun.</string>
     <string name="layout_editor_guide_start">Düzenlemeye başla</string>
-    <string name="control_skin_invalid_name">1–61 harf, rakam, boşluk veya . _ ( ) - karakteri kullanın. Harf veya rakamla başlayın ve noktayla bitirmeyin.</string>
+    <string name="control_skin_invalid_name">1–61 karakter kullanın: harf, rakam, birleştirici işaret, boşluk veya . _ ( ) -. Harf veya rakamla başlayın ve noktayla bitirmeyin.</string>
     <string name="control_skin_image_validation_failed">En fazla 8 MiB boyutunda geçerli bir PNG, WebP veya SVG görseli seçin. PNG ve WebP görselleri 2048 × 2048 pikseli aşmamalıdır.</string>
 </resources>

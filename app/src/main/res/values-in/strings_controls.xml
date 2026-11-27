@@ -31,7 +31,7 @@
     <string name="control_skin_default" tools:ignore="MissingTranslation">Tombol bawaan</string>
     <string name="control_skin_edit" tools:ignore="MissingTranslation">Edit</string>
     <string name="control_skin_rename" tools:ignore="MissingTranslation">Ganti nama</string>
-    <string name="control_skin_duplicate" tools:ignore="MissingTranslation">Duplikat</string>
+    <string name="control_skin_duplicate" tools:ignore="MissingTranslation">Gandakan</string>
     <string name="control_skin_delete" tools:ignore="MissingTranslation">Hapus</string>
     <string name="control_skin_import_zip" tools:ignore="MissingTranslation">Impor ZIP</string>
     <string name="control_skin_export_zip" tools:ignore="MissingTranslation">Ekspor ZIP</string>
@@ -101,6 +101,6 @@
     <string name="layout_editor_guide_tools">Alat editor</string>
     <string name="layout_editor_guide_done">Ketuk Selesai untuk menyimpan atau mengabaikan perubahan, atau melanjutkan pengeditan.</string>
     <string name="layout_editor_guide_start">Mulai mengedit</string>
-    <string name="control_skin_invalid_name">Gunakan 1–61 karakter berupa huruf, angka, spasi, atau . _ ( ) -. Awali dengan huruf atau angka dan jangan akhiri dengan titik.</string>
+    <string name="control_skin_invalid_name">Gunakan 1–61 karakter: huruf, angka, tanda gabung, spasi, atau . _ ( ) -. Awali dengan huruf atau angka dan jangan akhiri dengan titik.</string>
     <string name="control_skin_image_validation_failed">Pilih gambar PNG, WebP, atau SVG yang valid hingga 8 MiB. PNG dan WebP tidak boleh melebihi 2048 × 2048 piksel.</string>
 </resources>

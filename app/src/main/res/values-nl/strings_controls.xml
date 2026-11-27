@@ -102,6 +102,6 @@
     <string name="layout_editor_guide_tools">Editorhulpmiddelen</string>
     <string name="layout_editor_guide_done">Tik op Gereed om op te slaan, te verwerpen of verder te bewerken.</string>
     <string name="layout_editor_guide_start">Beginnen met bewerken</string>
-    <string name="control_skin_invalid_name">Gebruik 1–61 letters, cijfers, spaties of . _ ( ) -. Begin met een letter of cijfer en eindig niet met een punt.</string>
+    <string name="control_skin_invalid_name">Gebruik 1–61 tekens: letters, cijfers, combinatietekens, spaties of . _ ( ) -. Begin met een letter of cijfer en eindig niet met een punt.</string>
     <string name="control_skin_image_validation_failed">Kies een geldige PNG-, WebP- of SVG-afbeelding van maximaal 8 MiB. PNG en WebP mogen niet groter zijn dan 2048 × 2048 pixels.</string>
 </resources>

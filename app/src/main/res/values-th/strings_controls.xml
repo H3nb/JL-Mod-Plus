@@ -101,6 +101,6 @@
     <string name="layout_editor_guide_tools">เครื่องมือแก้ไข</string>
     <string name="layout_editor_guide_done">แตะ เสร็จสิ้น เพื่อบันทึก ละทิ้ง หรือแก้ไขต่อ</string>
     <string name="layout_editor_guide_start">เริ่มแก้ไข</string>
-    <string name="control_skin_invalid_name">ใช้ตัวอักษร ตัวเลข ช่องว่าง หรือ . _ ( ) - จำนวน 1–61 อักขระ ขึ้นต้นด้วยตัวอักษรหรือตัวเลข และห้ามลงท้ายด้วยจุด</string>
+    <string name="control_skin_invalid_name">ใช้ 1–61 อักขระ ได้แก่ ตัวอักษร ตัวเลข เครื่องหมายประกอบอักขระ ช่องว่าง หรือ . _ ( ) - ขึ้นต้นด้วยตัวอักษรหรือตัวเลข และห้ามลงท้ายด้วยจุด</string>
     <string name="control_skin_image_validation_failed">เลือกรูป PNG, WebP หรือ SVG ที่ถูกต้อง ขนาดไม่เกิน 8 MiB รูป PNG และ WebP ต้องมีขนาดไม่เกิน 2048 × 2048 พิกเซล</string>
 </resources>

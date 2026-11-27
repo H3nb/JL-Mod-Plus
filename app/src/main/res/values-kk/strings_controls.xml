@@ -102,6 +102,6 @@
     <string name="layout_editor_guide_tools">Өңдегіш құралдары</string>
     <string name="layout_editor_guide_done">Сақтау, болдырмау немесе өңдеуді жалғастыру үшін «Дайын» түймесін түртіңіз.</string>
     <string name="layout_editor_guide_start">Өңдеуді бастау</string>
-    <string name="control_skin_invalid_name">1–61 әріп, сан, бос орын немесе . _ ( ) - таңбасын пайдаланыңыз. Әріптен не саннан бастаңыз және нүктемен аяқтамаңыз.</string>
+    <string name="control_skin_invalid_name">1–61 таңба пайдаланыңыз: әріптер, сандар, біріктірілетін белгілер, бос орындар немесе . _ ( ) -. Әріптен не саннан бастаңыз және нүктемен аяқтамаңыз.</string>
     <string name="control_skin_image_validation_failed">8 MiB-қа дейінгі жарамды PNG, WebP немесе SVG кескінін таңдаңыз. PNG және WebP өлшемдері 2048 × 2048 пиксельден аспауы керек.</string>
 </resources>

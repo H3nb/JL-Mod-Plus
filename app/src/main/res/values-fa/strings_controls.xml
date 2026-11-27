@@ -102,6 +102,6 @@
     <string name="layout_editor_guide_tools">ابزارهای ویرایشگر</string>
     <string name="layout_editor_guide_done">برای ذخیره، صرف‌نظر یا ادامه ویرایش روی «انجام شد» بزنید.</string>
     <string name="layout_editor_guide_start">شروع ویرایش</string>
-    <string name="control_skin_invalid_name">از ۱ تا ۶۱ حرف، عدد، فاصله یا . _ ( ) - استفاده کنید. با حرف یا عدد شروع کنید و با نقطه پایان ندهید.</string>
+    <string name="control_skin_invalid_name">از ۱ تا ۶۱ نویسه استفاده کنید: حرف، عدد، علامت ترکیبی، فاصله یا . _ ( ) -. با حرف یا عدد شروع کنید و با نقطه پایان ندهید.</string>
     <string name="control_skin_image_validation_failed">یک تصویر معتبر PNG، WebP یا SVG با حجم حداکثر 8 MiB انتخاب کنید. ابعاد PNG و WebP نباید بیشتر از 2048 × 2048 پیکسل باشد.</string>
 </resources>

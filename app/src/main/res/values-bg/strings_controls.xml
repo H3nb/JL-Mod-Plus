@@ -102,6 +102,6 @@
     <string name="layout_editor_guide_tools">Инструменти на редактора</string>
     <string name="layout_editor_guide_done">Докоснете „Готово“, за да запазите, отхвърлите или продължите редактирането.</string>
     <string name="layout_editor_guide_start">Начало на редактирането</string>
-    <string name="control_skin_invalid_name">Използвайте 1–61 букви, цифри, интервали или . _ ( ) -. Започнете с буква или цифра и не завършвайте с точка.</string>
+    <string name="control_skin_invalid_name">Използвайте 1–61 знака: букви, цифри, комбиниращи знаци, интервали или . _ ( ) -. Започнете с буква или цифра и не завършвайте с точка.</string>
     <string name="control_skin_image_validation_failed">Изберете валидно изображение PNG, WebP или SVG до 8 MiB. PNG и WebP не трябва да надвишават 2048 × 2048 пиксела.</string>
 </resources>

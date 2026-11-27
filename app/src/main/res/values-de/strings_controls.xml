@@ -102,6 +102,6 @@
     <string name="layout_editor_guide_tools">Editor-Werkzeuge</string>
     <string name="layout_editor_guide_done">Tippen Sie auf „Fertig“, um zu speichern, zu verwerfen oder weiterzubearbeiten.</string>
     <string name="layout_editor_guide_start">Bearbeitung starten</string>
-    <string name="control_skin_invalid_name">Verwenden Sie 1–61 Buchstaben, Ziffern, Leerzeichen oder . _ ( ) -. Beginnen Sie mit einem Buchstaben oder einer Ziffer und enden Sie nicht mit einem Punkt.</string>
+    <string name="control_skin_invalid_name">Verwenden Sie 1–61 Zeichen: Buchstaben, Ziffern, kombinierende Zeichen, Leerzeichen oder . _ ( ) -. Beginnen Sie mit einem Buchstaben oder einer Ziffer und enden Sie nicht mit einem Punkt.</string>
     <string name="control_skin_image_validation_failed">Wählen Sie ein gültiges PNG-, WebP- oder SVG-Bild mit bis zu 8 MiB. PNG und WebP dürfen höchstens 2048 × 2048 Pixel groß sein.</string>
 </resources>

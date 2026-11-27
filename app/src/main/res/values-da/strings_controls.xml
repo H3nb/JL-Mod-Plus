@@ -102,6 +102,6 @@
     <string name="layout_editor_guide_tools">Redigeringsværktøjer</string>
     <string name="layout_editor_guide_done">Tryk på Udført for at gemme, kassere eller fortsætte redigeringen.</string>
     <string name="layout_editor_guide_start">Start redigering</string>
-    <string name="control_skin_invalid_name">Brug 1–61 bogstaver, tal, mellemrum eller . _ ( ) -. Begynd med et bogstav eller tal, og slut ikke med et punktum.</string>
+    <string name="control_skin_invalid_name">Brug 1–61 tegn: bogstaver, tal, kombinerende tegn, mellemrum eller . _ ( ) -. Begynd med et bogstav eller tal, og slut ikke med et punktum.</string>
     <string name="control_skin_image_validation_failed">Vælg et gyldigt PNG-, WebP- eller SVG-billede på op til 8 MiB. PNG og WebP må ikke overstige 2048 × 2048 pixels.</string>
 </resources>

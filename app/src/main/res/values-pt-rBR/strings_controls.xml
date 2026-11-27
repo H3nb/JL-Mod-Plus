@@ -103,6 +103,6 @@
     <string name="layout_editor_guide_tools">Ferramentas do editor</string>
     <string name="layout_editor_guide_done">Toque em Concluir para salvar, descartar ou continuar editando.</string>
     <string name="layout_editor_guide_start">Começar a editar</string>
-    <string name="control_skin_invalid_name">Use de 1 a 61 letras, números, espaços ou . _ ( ) -. Comece com uma letra ou número e não termine com ponto.</string>
+    <string name="control_skin_invalid_name">Use de 1 a 61 caracteres: letras, números, marcas combinantes, espaços ou . _ ( ) -. Comece com uma letra ou número e não termine com ponto.</string>
     <string name="control_skin_image_validation_failed">Escolha uma imagem PNG, WebP ou SVG válida de até 8 MiB. PNG e WebP não podem exceder 2048 × 2048 pixels.</string>
 </resources>

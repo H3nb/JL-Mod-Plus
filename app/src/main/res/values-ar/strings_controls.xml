@@ -106,6 +106,6 @@
     <string name="layout_editor_guide_tools">أدوات المحرر</string>
     <string name="layout_editor_guide_done">انقر على «تم» للحفظ أو التجاهل أو متابعة التعديل.</string>
     <string name="layout_editor_guide_start">بدء التعديل</string>
-    <string name="control_skin_invalid_name">استخدم من 1 إلى 61 حرفًا أو رقمًا أو مسافة أو رمزًا من . _ ( ) -. ابدأ بحرف أو رقم ولا تنه الاسم بنقطة.</string>
+    <string name="control_skin_invalid_name">استخدم من 1 إلى 61 محرفًا: أحرف أو أرقام أو علامات مركّبة أو مسافات أو رموز . _ ( ) -. ابدأ بحرف أو رقم ولا تنه الاسم بنقطة.</string>
     <string name="control_skin_image_validation_failed">اختر صورة PNG أو WebP أو SVG صالحة بحجم لا يتجاوز 8 MiB. يجب ألا تتجاوز أبعاد صور PNG وWebP ‏2048 × 2048 بكسل.</string>
 </resources>

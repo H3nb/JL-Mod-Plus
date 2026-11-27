@@ -102,6 +102,6 @@
     <string name="layout_editor_guide_tools">Szerkesztőeszközök</string>
     <string name="layout_editor_guide_done">Koppintson a Kész gombra a mentéshez, elvetéshez vagy a szerkesztés folytatásához.</string>
     <string name="layout_editor_guide_start">Szerkesztés indítása</string>
-    <string name="control_skin_invalid_name">Használjon 1–61 betűt, számjegyet, szóközt vagy . _ ( ) - karaktert. Betűvel vagy számjeggyel kezdje, és ne ponttal zárja.</string>
+    <string name="control_skin_invalid_name">Használjon 1–61 karaktert: betűt, számjegyet, kombináló jelet, szóközt vagy . _ ( ) - jelet. Betűvel vagy számjeggyel kezdje, és ne ponttal zárja.</string>
     <string name="control_skin_image_validation_failed">Válasszon érvényes, legfeljebb 8 MiB méretű PNG-, WebP- vagy SVG-képet. A PNG és WebP képek mérete legfeljebb 2048 × 2048 képpont lehet.</string>
 </resources>

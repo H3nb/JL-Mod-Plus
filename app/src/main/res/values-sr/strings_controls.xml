@@ -103,6 +103,6 @@
     <string name="layout_editor_guide_tools">Алатке уређивача</string>
     <string name="layout_editor_guide_done">Додирните „Готово” да бисте сачували, одбацили или наставили уређивање.</string>
     <string name="layout_editor_guide_start">Започни уређивање</string>
-    <string name="control_skin_invalid_name">Користите 1–61 слово, цифру, размак или . _ ( ) -. Почните словом или цифром и не завршавајте тачком.</string>
+    <string name="control_skin_invalid_name">Користите 1–61 знак: слова, цифре, комбиноване знакове, размаке или . _ ( ) -. Почните словом или цифром и не завршавајте тачком.</string>
     <string name="control_skin_image_validation_failed">Изаберите исправну PNG, WebP или SVG слику до 8 MiB. PNG и WebP не смеју бити већи од 2048 × 2048 пиксела.</string>
 </resources>

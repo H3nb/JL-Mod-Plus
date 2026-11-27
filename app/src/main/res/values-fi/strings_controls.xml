@@ -102,6 +102,6 @@
     <string name="layout_editor_guide_tools">Muokkaimen työkalut</string>
     <string name="layout_editor_guide_done">Napauta Valmis tallentaaksesi, hylätäksesi tai jatkaaksesi muokkausta.</string>
     <string name="layout_editor_guide_start">Aloita muokkaus</string>
-    <string name="control_skin_invalid_name">Käytä 1–61 kirjainta, numeroa, välilyöntiä tai merkkejä . _ ( ) -. Aloita kirjaimella tai numerolla, äläkä päätä nimeä pisteeseen.</string>
+    <string name="control_skin_invalid_name">Käytä 1–61 merkkiä: kirjaimia, numeroita, yhdistäviä merkkejä, välilyöntejä tai . _ ( ) -. Aloita kirjaimella tai numerolla, äläkä päätä nimeä pisteeseen.</string>
     <string name="control_skin_image_validation_failed">Valitse kelvollinen PNG-, WebP- tai SVG-kuva, jonka koko on enintään 8 MiB. PNG- ja WebP-kuvat saavat olla enintään 2048 × 2048 pikseliä.</string>
 </resources>
