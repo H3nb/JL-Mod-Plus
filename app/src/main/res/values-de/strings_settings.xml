@@ -99,7 +99,7 @@
     <string name="settings_section_runtime_screen" tools:ignore="MissingTranslation">Bildschirm beim Spielen</string>
     <string name="settings_section_runtime_features" tools:ignore="MissingTranslation">Funktionen im Spiel</string>
     <string name="settings_section_library_appearance">Darstellung der Bibliothek</string>
-    <string name="settings_section_midlet_runtime">MIDlet-Laufzeit</string>
+    <string name="settings_section_midlet_runtime">MIDlet-Laufzeitumgebung</string>
     <string name="settings_section_storage">Speicher</string>
     <string name="settings_section_profiles">Profile</string>
     <string name="settings_profiles_summary">Verwalten Sie Profile zur Wiederverwendung in anderen MIDlets.</string>

@@ -305,33 +305,33 @@
     <string name="midlet_running_notification_text">Aplikacja <xliff:g id="name" example="Example">%1$s</xliff:g> jest uruchomiona.</string>
     <string name="midlet_running_notification_channel">Środowisko uruchomieniowe MIDletów</string>
     <string name="config_gamepad_directions_numeric_v2">Klawiatura numeryczna</string>
-    <string name="midlet_file_permission_title">Dostęp do pamięci</string>
+    <string name="midlet_file_permission_title">Dostęp do plików</string>
     <string name="midlet_file_permission_read">Ten MIDlet chce odczytywać pliki.</string>
     <string name="midlet_file_permission_write">Ten MIDlet chce tworzyć, zmieniać lub usuwać pliki.</string>
     <string name="midlet_file_permission_allow_once">Zezwól raz</string>
     <string name="midlet_file_permission_allow_session">Zezwól podczas działania MIDletu</string>
     <string name="midlet_file_permission_allow_always">Zawsze zezwalaj</string>
     <string name="midlet_file_permission_deny">Zawsze odmawiaj</string>
-    <string name="midlet_permissions_settings_title">Uprawnienia dostępu do pamięci</string>
+    <string name="midlet_permissions_settings_title">Uprawnienia dostępu do plików</string>
     <string name="midlet_permissions_read">Odczyt plików</string>
     <string name="midlet_permissions_write">Zmiana plików</string>
     <string name="midlet_permissions_ask">Pytaj</string>
     <string name="midlet_permissions_allow">Zawsze zezwalaj</string>
     <string name="midlet_permissions_deny">Odmów</string>
-    <string name="midlet_permissions_save_failed">Nie udało się zapisać ustawień pamięci.</string>
+    <string name="midlet_permissions_save_failed">Nie udało się zapisać ustawień przechowywania danych.</string>
     <string name="config_avoid_camera_cutout_title">Omijaj wycięcie aparatu</string>
     <string name="config_avoid_camera_cutout_summary">Utrzymuje ekran MIDletu i wirtualne sterowanie poza obszarem aparatu lub wycięcia ekranu.</string>
     <string name="midlet_permissions_write_summary">Obejmuje tworzenie i usuwanie plików.</string>
     <string name="midlet_legacy_import_title">Starsze zapisy Siemens</string>
     <string name="midlet_legacy_import_action">Wybierz stary plik zapisu</string>
-    <string name="midlet_legacy_import_summary">Kopiuj stary plik zapisu do prywatnej pamięci Siemens tego MIDletu. Najpierw zatrzymaj MIDlet.</string>
-    <string name="midlet_legacy_import_success">Skopiowano plik do prywatnej pamięci tego MIDletu.</string>
+    <string name="midlet_legacy_import_summary">Skopiuj stary plik zapisu do prywatnego obszaru danych Siemens tego MIDletu. Najpierw zatrzymaj MIDlet.</string>
+    <string name="midlet_legacy_import_success">Skopiowano plik do prywatnego obszaru danych tego MIDletu.</string>
     <string name="midlet_legacy_import_failed">Import nie powiódł się. Zatrzymaj MIDlet i upewnij się, że plik docelowy jeszcze nie istnieje.</string>
-    <string name="midlet_storage_mode_title">Tryb pamięci</string>
+    <string name="midlet_storage_mode_title">Tryb przechowywania danych</string>
     <string name="midlet_storage_mode_shared">Wirtualny</string>
     <string name="midlet_storage_mode_android">Android</string>
     <string name="midlet_storage_mode_shared_summary">Używaj współdzielonych folderów w folderze roboczym.</string>
-    <string name="midlet_storage_mode_android_summary">Używaj współdzielonej pamięci Androida w zakresie uprawnień systemu Android. Uprawnienia MIDleta do plików są niezależne od uprawnień w trybie wirtualnym.</string>
+    <string name="midlet_storage_mode_android_summary">Używaj współdzielonej przestrzeni na dane w zakresie uprawnień systemu Android. Uprawnienia MIDletu do plików są niezależne od uprawnień w trybie wirtualnym.</string>
     <string name="config_system_properties_reset" tools:ignore="MissingTranslation">Przywróć domyślne</string>
     <string name="config_system_properties_reset_title" tools:ignore="MissingTranslation">Zresetować właściwości systemu?</string>
     <string name="config_system_properties_reset_message" tools:ignore="MissingTranslation">Zastąpić zawartość edytora bieżącymi wartościami domyślnymi JL-Mod Plus? Pozostałe ustawienia nie ulegną zmianie. Zapisz, aby zastosować reset.</string>

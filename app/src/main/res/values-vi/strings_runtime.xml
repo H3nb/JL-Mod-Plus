@@ -70,9 +70,9 @@
     <string name="reconversion_done_with_warning">Đã chuyển đổi tương thích kèm cảnh báo.</string>
     <string name="reconversion_error_summary">Không thể tự động chuyển đổi MIDlet này.</string>
     <string name="runtime_invalid_intent">Yêu cầu khởi chạy không hợp lệ: thiếu đường dẫn MIDlet.</string>
-    <string name="runtime_storage_in_use">Bộ nhớ MIDlet đang được dùng bởi một phiên chạy khác.</string>
+    <string name="runtime_storage_in_use">Không gian lưu trữ của MIDlet đang được một phiên chạy khác sử dụng.</string>
     <string name="runtime_installation_changed">Không thể chuẩn bị MIDlet này để khởi chạy.</string>
-    <string name="runtime_storage_unavailable">Không thể chuẩn bị bộ nhớ MIDlet.</string>
+    <string name="runtime_storage_unavailable">Không thể chuẩn bị không gian lưu trữ của MIDlet.</string>
     <string name="runtime_no_midlets">Không tìm thấy MIDlet nào trong ứng dụng này.</string>
     <!-- Runtime grouped controls derive body, accent, outline, icon, and selected-icon colors from the existing virtual-control appearance settings. -->
     <string name="runtime_virtual_controls_title">Điều khiển ảo</string>

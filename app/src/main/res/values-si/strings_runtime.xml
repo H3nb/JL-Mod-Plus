@@ -101,7 +101,7 @@
     <string name="diagnostic_reason_java_crash">Java බිඳවැටීම</string>
     <string name="diagnostic_reason_native_crash">දේශීය බිඳවැටීම</string>
     <string name="diagnostic_reason_anr">යෙදුම ප්‍රතිචාර නොදක්වයි</string>
-    <string name="diagnostic_reason_signal">සංඥා අවසන් කිරීම</string>
+    <string name="diagnostic_reason_signal">සංඥාවක් නිසා ක්‍රියාවලිය අවසන් වීම</string>
     <string name="diagnostic_reason_unknown">නොදන්නා හේතුව</string>
     <string name="crash_reports_delete_failed">සමහර දෝෂ විනිශ්චය වාර්තා මැකීමට නොහැකි විය. අනෙක්වා ඉවත් කර තිබිය හැකිය.</string>
     <string name="crash_reports_bundle_cleanup_failed">සෑදූ පොදි කිහිපයක් ඉවත් කිරීමට නොහැකි විය. ඒවාට අදාළ දෝෂ විනිශ්චය වාර්තා තබා ගන්නා ලදී. අනෙක් වාර්තා මකා දමා තිබිය හැකිය.</string>

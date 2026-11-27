@@ -101,7 +101,7 @@
     <string name="diagnostic_reason_java_crash">Java କ୍ରାସ୍</string>
     <string name="diagnostic_reason_native_crash">ନେଟିଭ୍ କ୍ରାସ୍</string>
     <string name="diagnostic_reason_anr">ଆପ୍ ପ୍ରତିକ୍ରିୟା ଦେଉନାହିଁ</string>
-    <string name="diagnostic_reason_signal">ସିଗନାଲ୍ ସମାପ୍ତି</string>
+    <string name="diagnostic_reason_signal">ସିଗନାଲ୍ ଯୋଗୁଁ ପ୍ରୋସେସ୍ ବନ୍ଦ</string>
     <string name="diagnostic_reason_unknown">ଅଜଣା କାରଣ</string>
     <string name="crash_reports_delete_failed">କିଛି ଡାଏଗ୍ନୋଷ୍ଟିକ୍ ରିପୋର୍ଟ୍ ଡିଲିଟ୍ ହୋଇପାରିଲା ନାହିଁ। ଅନ୍ୟଗୁଡ଼ିକ ଅପସାରିତ ହୋଇଥାଇପାରେ।</string>
     <string name="crash_reports_bundle_cleanup_failed">ତିଆରି ହୋଇଥିବା କିଛି ବଣ୍ଡଲ୍ ଅପସାରଣ କରାଯାଇପାରିଲା ନାହିଁ। ସମ୍ପୃକ୍ତ ଡାଏଗ୍ନୋଷ୍ଟିକ୍ ରିପୋର୍ଟ୍‌ଗୁଡ଼ିକ ରଖାଯାଇଛି। ଅନ୍ୟ ରିପୋର୍ଟ୍‌ଗୁଡ଼ିକ ଡିଲିଟ୍ ହୋଇଥାଇପାରେ।</string>

@@ -23,7 +23,7 @@
     </plurals>
     <string name="memory_editor_no_results">Keine Ergebnisse</string>
     <string name="memory_editor_no_watch">Überwachung ist leer</string>
-    <string name="memory_editor_unsupported">Der Speicher-Editor ist für diese Laufzeit nicht verfügbar.</string>
+    <string name="memory_editor_unsupported">Der Speicher-Editor ist in dieser Laufzeitumgebung nicht verfügbar.</string>
     <string name="memory_editor_engine_unavailable">Die Speicher-Editor-Engine ist nicht verfügbar.</string>
     <string name="memory_editor_engine_reconnecting">Speicher-Editor verbindet erneut…</string>
     <string name="memory_editor_refresh">Aktualisieren</string>
@@ -113,7 +113,7 @@
     <string name="memory_editor_keypad_clear">Löschen</string>
     <string name="memory_editor_peek_underlay">Gedrückt halten, um das MIDlet darunter anzuzeigen</string>
     <string name="memory_editor_peek_underlay_active">MIDlet darunter wird angezeigt</string>
-    <string name="memory_editor_no_runtime">Keine aktive MIDlet-Laufzeit.</string>
+    <string name="memory_editor_no_runtime">Keine aktive MIDlet-Laufzeitumgebung.</string>
     <string name="memory_editor_no_search_history">Keine frühere Suche zum Wiederherstellen.</string>
     <string name="memory_editor_partial_write">Der Schreibvorgang wurde nicht vollständig abgeschlossen. Prüfen Sie die aktuellen Werte, bevor Sie es erneut versuchen.</string>
     <!-- Independent write counts: confirmed, unconfirmed, skipped, not attempted, and incompatible data type. -->
@@ -252,7 +252,7 @@
     <string name="memory_editor_selection_limit">Wähle höchstens %1$d Werte aus.</string>
     <string name="memory_saved_storage_unavailable">Auf gespeicherte Elemente kann nicht zugegriffen werden.</string>
     <string name="memory_bookmark_renamed">Lesezeichen umbenannt</string>
-    <string name="memory_editor_memory_unavailable">Der MIDlet-Speicher ist nicht verfügbar.</string>
+    <string name="memory_editor_memory_unavailable">Der Arbeitsspeicher des MIDlets ist nicht verfügbar.</string>
     <string name="memory_bookmark_added">Lesezeichen hinzugefügt</string>
     <string name="memory_bookmark_relinked">Lesezeichen neu verknüpft</string>
     <string name="memory_bookmarks_removed">Aus gespeicherten Elementen entfernt</string>

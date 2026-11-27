@@ -302,33 +302,33 @@
     <string name="midlet_running_notification_text"><xliff:g id="name" example="Example">%1$s</xliff:g> đang chạy.</string>
     <string name="midlet_running_notification_channel">Môi trường chạy MIDlet</string>
     <string name="config_gamepad_directions_numeric_v2">Bàn phím số</string>
-    <string name="midlet_file_permission_title">Quyền truy cập bộ nhớ</string>
+    <string name="midlet_file_permission_title">Truy cập bộ nhớ lưu trữ</string>
     <string name="midlet_file_permission_read">MIDlet này muốn đọc tệp.</string>
     <string name="midlet_file_permission_write">MIDlet này muốn tạo, thay đổi hoặc xóa tệp.</string>
     <string name="midlet_file_permission_allow_once">Cho phép một lần</string>
     <string name="midlet_file_permission_allow_session">Cho phép khi MIDlet đang chạy</string>
     <string name="midlet_file_permission_allow_always">Luôn cho phép</string>
     <string name="midlet_file_permission_deny">Luôn từ chối</string>
-    <string name="midlet_permissions_settings_title">Quyền truy cập bộ nhớ</string>
+    <string name="midlet_permissions_settings_title">Quyền truy cập bộ nhớ lưu trữ</string>
     <string name="midlet_permissions_read">Đọc tệp</string>
     <string name="midlet_permissions_write">Thay đổi tệp</string>
     <string name="midlet_permissions_ask">Hỏi</string>
     <string name="midlet_permissions_allow">Luôn cho phép</string>
     <string name="midlet_permissions_deny">Từ chối</string>
-    <string name="midlet_permissions_save_failed">Không thể lưu cài đặt bộ nhớ.</string>
+    <string name="midlet_permissions_save_failed">Không thể lưu cài đặt lưu trữ.</string>
     <string name="config_avoid_camera_cutout_title">Tránh vùng khuyết camera</string>
     <string name="config_avoid_camera_cutout_summary">Giữ màn hình MIDlet và điều khiển ảo tránh khỏi vùng khuyết camera hoặc tai thỏ.</string>
     <string name="midlet_permissions_write_summary">Bao gồm tạo và xóa tệp.</string>
     <string name="midlet_legacy_import_title">Bản lưu Siemens cũ</string>
     <string name="midlet_legacy_import_action">Chọn tệp lưu cũ</string>
-    <string name="midlet_legacy_import_summary">Sao chép tệp lưu cũ vào bộ nhớ Siemens riêng của MIDlet này. Hãy dừng MIDlet trước.</string>
-    <string name="midlet_legacy_import_success">Đã sao chép tệp vào bộ nhớ riêng của MIDlet này.</string>
+    <string name="midlet_legacy_import_summary">Sao chép tệp lưu cũ vào không gian lưu trữ Siemens riêng của MIDlet này. Hãy dừng MIDlet trước.</string>
+    <string name="midlet_legacy_import_success">Đã sao chép tệp vào không gian lưu trữ riêng của MIDlet này.</string>
     <string name="midlet_legacy_import_failed">Nhập không thành công. Hãy dừng MIDlet và đảm bảo tệp đích chưa tồn tại.</string>
     <string name="midlet_storage_mode_title">Chế độ lưu trữ</string>
     <string name="midlet_storage_mode_shared">Ảo</string>
     <string name="midlet_storage_mode_android">Android</string>
     <string name="midlet_storage_mode_shared_summary">Dùng các thư mục dùng chung trong thư mục làm việc.</string>
-    <string name="midlet_storage_mode_android_summary">Dùng bộ nhớ dùng chung của Android trong phạm vi quyền Android cho phép. Quyền truy cập tệp của MIDlet được thiết lập riêng với chế độ ảo.</string>
+    <string name="midlet_storage_mode_android_summary">Dùng không gian lưu trữ dùng chung của Android trong phạm vi quyền Android cho phép. Quyền truy cập tệp của MIDlet được thiết lập riêng với chế độ ảo.</string>
     <string name="config_system_properties_reset" tools:ignore="MissingTranslation">Đặt lại về mặc định</string>
     <string name="config_system_properties_reset_title" tools:ignore="MissingTranslation">Đặt lại thuộc tính hệ thống?</string>
     <string name="config_system_properties_reset_message" tools:ignore="MissingTranslation">Thay thế nội dung trình chỉnh sửa bằng giá trị mặc định hiện tại của JL-Mod Plus? Các cài đặt khác vẫn giữ nguyên. Hãy lưu để áp dụng.</string>

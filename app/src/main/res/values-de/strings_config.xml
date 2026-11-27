@@ -301,7 +301,7 @@
     <string name="config_search_requires_fps" tools:ignore="MissingTranslation">Aktivieren Sie „FPS anzeigen“, um die Position zu ändern.</string>
     <string name="midlet_running_notification_title">MIDlet wird ausgeführt</string>
     <string name="midlet_running_notification_text"><xliff:g id="name" example="Example">%1$s</xliff:g> wird ausgeführt.</string>
-    <string name="midlet_running_notification_channel">MIDlet-Laufzeit</string>
+    <string name="midlet_running_notification_channel">MIDlet-Laufzeitumgebung</string>
     <string name="config_gamepad_directions_numeric_v2">Ziffernblock</string>
     <string name="midlet_file_permission_title">Speicherzugriff</string>
     <string name="midlet_file_permission_read">Dieses MIDlet möchte Dateien lesen.</string>

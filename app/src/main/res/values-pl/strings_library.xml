@@ -34,13 +34,13 @@
     <string name="file_picker_file">Plik</string>
     <string name="file_picker_preview_named">Podgląd: <xliff:g id="name" example="Example">%1$s</xliff:g></string>
     <string name="file_picker_preview_unavailable">Podgląd niedostępny</string>
-    <string name="file_picker_storage_volume">Wolumin pamięci</string>
+    <string name="file_picker_storage_volume">Wolumin danych</string>
     <string name="file_picker_empty">Brak pasujących plików</string>
     <string name="file_picker_empty_folder">Nie znaleziono folderów</string>
     <string name="file_picker_no_matches">Brak wyników</string>
-    <string name="file_picker_permission_required">Wymagane uprawnienie do pamięci</string>
-    <string name="file_picker_permission_message">Zezwól na dostęp do pamięci, aby przeglądać pliki i foldery na tym urządzeniu.</string>
-    <string name="file_picker_permission_denied">Nie przyznano dostępu do pamięci.</string>
+    <string name="file_picker_permission_required">Wymagane uprawnienie do plików</string>
+    <string name="file_picker_permission_message">Zezwól na dostęp do plików, aby przeglądać pliki i foldery na tym urządzeniu.</string>
+    <string name="file_picker_permission_denied">Nie przyznano dostępu do plików.</string>
     <string name="file_picker_grant_access">Przyznaj dostęp</string>
     <string name="file_picker_retry">Ponów</string>
     <string name="file_picker_load_failed">Nie udało się otworzyć tego folderu.</string>
@@ -93,7 +93,7 @@
     <string name="library_expand_description">Rozwiń opis</string>
     <string name="library_collapse_description">Zwiń opis</string>
     <string name="no_data_for_display">Brak aplikacji do wyświetlenia</string>
-    <string name="permission_request_failed">Wymagane jest uprawnienie do zapisu w pamięci.</string>
+    <string name="permission_request_failed">Wymagane jest uprawnienie do zapisu plików.</string>
     <string name="reinstall">Ta aplikacja jest już zainstalowana. Zainstalować ją ponownie?</string>
     <string name="reinstall_newest">Zaktualizować tę aplikację do wersji <xliff:g id="version" example="2.1.0">%1$s</xliff:g>?\n\nObecnie zainstalowana: <xliff:g id="current_version" example="2.0.0">%2$s</xliff:g></string>
     <string name="reinstall_older">Zastąpić tę aplikację wersją <xliff:g id="version" example="2.1.0">%1$s</xliff:g>?\n\nObecnie zainstalowana: <xliff:g id="current_version" example="2.0.0">%2$s</xliff:g>\nStarsza wersja może nie działać poprawnie z istniejącymi danymi.</string>

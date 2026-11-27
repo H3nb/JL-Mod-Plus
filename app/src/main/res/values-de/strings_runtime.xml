@@ -72,9 +72,9 @@
     <string name="reconversion_done_with_warning">Kompatibilitätskonvertierung mit Warnungen abgeschlossen.</string>
     <string name="reconversion_error_summary">Dieses MIDlet konnte nicht automatisch konvertiert werden.</string>
     <string name="runtime_invalid_intent">Ungültige Startanforderung: Der MIDlet-Pfad fehlt.</string>
-    <string name="runtime_storage_in_use">Der MIDlet-Speicher wird bereits von einer anderen Laufzeit verwendet.</string>
+    <string name="runtime_storage_in_use">Der Speicherort des MIDlets wird bereits von einer anderen Laufzeitumgebung verwendet.</string>
     <string name="runtime_installation_changed">Dieses MIDlet konnte nicht für den Start vorbereitet werden.</string>
-    <string name="runtime_storage_unavailable">Der MIDlet-Speicher konnte nicht vorbereitet werden.</string>
+    <string name="runtime_storage_unavailable">Der Speicherort des MIDlets konnte nicht vorbereitet werden.</string>
     <string name="runtime_no_midlets">In dieser App wurden keine MIDlets gefunden.</string>
     <!-- Runtime grouped controls derive body, accent, outline, icon, and selected-icon colors from the existing virtual-control appearance settings. -->
     <string name="runtime_virtual_controls_title">Virtuelle Steuerung</string>

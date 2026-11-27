@@ -92,7 +92,7 @@
     <string name="PREF_TIMING_MODE">Źródło czasu</string>
     <string name="settings_section_appearance">Wygląd aplikacji</string>
     <string name="settings_section_appearance_language" tools:ignore="MissingTranslation">Wygląd i język</string>
-    <string name="settings_section_storage_profiles" tools:ignore="MissingTranslation">Pamięć i profile</string>
+    <string name="settings_section_storage_profiles" tools:ignore="MissingTranslation">Przechowywanie danych i profile</string>
     <string name="settings_section_language">Język</string>
     <string name="settings_section_library_icons" tools:ignore="MissingTranslation">Ikony biblioteki</string>
     <string name="settings_section_library_grid" tools:ignore="MissingTranslation">Układ siatki</string>
@@ -100,7 +100,7 @@
     <string name="settings_section_runtime_features" tools:ignore="MissingTranslation">Funkcje w grze</string>
     <string name="settings_section_library_appearance">Wygląd biblioteki</string>
     <string name="settings_section_midlet_runtime">Środowisko uruchomieniowe MIDletów</string>
-    <string name="settings_section_storage">Pamięć</string>
+    <string name="settings_section_storage">Przechowywanie danych</string>
     <string name="settings_section_profiles">Profile</string>
     <string name="settings_profiles_summary">Zarządzaj profilami, których możesz używać w różnych MIDletach.</string>
     <string name="pref_accent_title">Kolor akcentu</string>

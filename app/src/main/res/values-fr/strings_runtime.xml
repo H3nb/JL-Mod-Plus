@@ -42,13 +42,13 @@
     <string name="share_selected_reports" tools:ignore="MissingTranslation">Partager les rapports sélectionnés</string>
     <string name="delete_selected_reports">Supprimer les rapports sélectionnés</string>
     <string name="crash_report_copied">Rapport copié</string>
-    <string name="crash_report_bundle_preparing">Préparation du dossier de diagnostic…</string>
-    <string name="crash_report_bundle_ready_title">Dossier de diagnostic prêt</string>
+    <string name="crash_report_bundle_preparing">Préparation de l’archive de diagnostic…</string>
+    <string name="crash_report_bundle_ready_title">Archive de diagnostic prête</string>
     <string name="crash_report_bundle_ready_message"><xliff:g id="name" example="Example">%1$s</xliff:g>\n\nEnregistré dans Téléchargements → JL-Mod Plus Diagnostics.\n\nVérifiez que le fichier ne contient pas d’informations sensibles, puis joignez-le avant d’envoyer le signalement sur GitHub. Le fichier devient public dès qu’il est joint.</string>
     <string name="locate_bundle">Localiser le fichier</string>
     <string name="open_github">Ouvrir GitHub</string>
-    <string name="crash_report_bundle_failed">Impossible de préparer le dossier de diagnostic.</string>
-    <string name="crash_report_locate_failed">Aucun sélecteur de fichiers disponible pour localiser le dossier de diagnostic.</string>
+    <string name="crash_report_bundle_failed">Impossible de préparer l’archive de diagnostic.</string>
+    <string name="crash_report_locate_failed">Aucun sélecteur de fichiers disponible pour localiser l’archive de diagnostic.</string>
     <string name="crash_report_bundle_cleanup_failed">Impossible de supprimer l’archive générée. Le rapport de diagnostic a été conservé.</string>
     <string name="crash_report_github_unavailable">Aucun navigateur ni aucune application trouvé pour ouvrir le formulaire GitHub.</string>
     <string name="crash_report_delete_title">Supprimer le rapport de diagnostic ?</string>

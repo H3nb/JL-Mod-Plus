@@ -76,9 +76,9 @@
     <string name="reconversion_done_with_warning">Konwersja zgodności zakończyła się z ostrzeżeniami.</string>
     <string name="reconversion_error_summary">Nie udało się automatycznie przekonwertować tego MIDletu.</string>
     <string name="runtime_invalid_intent">Nieprawidłowe żądanie uruchomienia: brak ścieżki MIDletu.</string>
-    <string name="runtime_storage_in_use">Pamięć MIDletu jest już używana przez inne środowisko uruchomieniowe.</string>
+    <string name="runtime_storage_in_use">Miejsce na dane MIDletu jest już używane przez inne środowisko uruchomieniowe.</string>
     <string name="runtime_installation_changed">Nie udało się przygotować tego MIDletu do uruchomienia.</string>
-    <string name="runtime_storage_unavailable">Nie udało się przygotować pamięci MIDletu.</string>
+    <string name="runtime_storage_unavailable">Nie udało się przygotować miejsca na dane MIDletu.</string>
     <string name="runtime_no_midlets">Nie znaleziono MIDletów w tej aplikacji.</string>
     <!-- Runtime grouped controls derive body, accent, outline, icon, and selected-icon colors from the existing virtual-control appearance settings. -->
     <string name="runtime_virtual_controls_title">Wirtualne sterowanie</string>
