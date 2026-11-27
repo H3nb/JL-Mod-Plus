@@ -57,7 +57,7 @@
     <string name="PREF_SHADER_FILTER">স্ক্রিন শেডার</string>
     <string name="pref_skin_not_set">কোনোটিই নয়</string>
     <string name="pref_skin_title">স্কিন</string>
-    <string name="pref_skip_resume_call">পুনরায় চালু করার সময় startApp() এড়িয়ে যান</string>
+    <string name="pref_skip_resume_call">বিরতির পর চালিয়ে যাওয়ার সময় startApp() এড়িয়ে যান</string>
     <string name="pref_soundbank_title">MIDI সাউন্ডব্যাংক</string>
     <string name="PREF_SYS_PROPS">সিস্টেম প্রপার্টি</string>
     <string name="pref_theme_auto_battery">অটো (ব্যাটারি সেভার)</string>

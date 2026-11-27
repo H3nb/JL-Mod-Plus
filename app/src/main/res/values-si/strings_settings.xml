@@ -57,7 +57,7 @@
     <string name="PREF_SHADER_FILTER">තිර ශේඩරය</string>
     <string name="pref_skin_not_set">කිසිවක් නැත</string>
     <string name="pref_skin_title">ආවරණය</string>
-    <string name="pref_skip_resume_call">නැවත ඇරඹීමේදී startApp() මඟහරින්න</string>
+    <string name="pref_skip_resume_call">විරාමයකින් පසු දිගටම ක්‍රියාත්මක කිරීමේදී startApp() මඟහරින්න</string>
     <string name="pref_soundbank_title">MIDI ශබ්ද බැංකුව</string>
     <string name="PREF_SYS_PROPS">පද්ධති ගුණාංග</string>
     <string name="pref_theme_auto_battery">ස්වයංක්‍රීය (බැටරි සුරැකුම)</string>

@@ -57,7 +57,7 @@
     <string name="PREF_SHADER_FILTER">ସ୍କ୍ରିନ୍ ସେଡର୍</string>
     <string name="pref_skin_not_set">କିଛି ନୁହେଁ</string>
     <string name="pref_skin_title">ସ୍କିନ୍</string>
-    <string name="pref_skip_resume_call">ପୁନଃ ଆରମ୍ଭରେ startApp() ଛାଡ଼ନ୍ତୁ</string>
+    <string name="pref_skip_resume_call">ବିରତି ପରେ ଚାଲୁ ରଖିବାବେଳେ startApp() ଛାଡ଼ନ୍ତୁ</string>
     <string name="pref_soundbank_title">MIDI ସାଉଣ୍ଡବ୍ୟାଙ୍କ୍</string>
     <string name="PREF_SYS_PROPS">ସିଷ୍ଟମ୍ ପ୍ରପର୍ଟି</string>
     <string name="pref_theme_auto_battery">ଅଟୋ (ବ୍ୟାଟେରୀ ସେଭର୍)</string>

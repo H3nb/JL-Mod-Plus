@@ -237,7 +237,7 @@
     <string name="config_help_vk_feedback">ସେଟିଂସ୍ ରେ ଭାଇବ୍ରେସନ୍ ସକ୍ଷମ ଥିଲେ ଭର୍ଚୁଆଲ୍ କଣ୍ଟ୍ରୋଲ୍ ଦବାଇଲେ କମ୍ପନ ହୁଏ।</string>
     <string name="config_help_vk_hide_delay">MIDlet ସ୍କ୍ରିନ୍ ଘୋଡ଼ାଇଥିବା ବେଳେ ଏହି ବିଳମ୍ବ ପରେ କଣ୍ଟ୍ରୋଲ୍ ଲୁଚାଏ। 0 ମୂଲ୍ୟ ଅଟୋ-ହାଇଡ୍ ଅକ୍ଷମ କରେ।</string>
     <string name="config_help_reset_layout">ଅନ୍ୟ MIDlet ସେଟିଂସ୍ ନ ବଦଳାଇ ଭର୍ଚୁଆଲ୍ କଣ୍ଟ୍ରୋଲ୍ ଲେଆଉଟ୍ ପୁନରୁଦ୍ଧାର କରେ।</string>
-    <string name="config_help_skip_resume">ପ୍ରଥମ ସଫଳ startApp() ପରେ MIDlet ପୁନଃ ଆରମ୍ଭ ହେଲେ ପରବର୍ତ୍ତୀ କଲ୍ ଛାଡ଼େ। କେବଳ ପୁନଃ ଆରମ୍ଭରେ ବିଫଳ ହେଉଥିବା MIDlet ପାଇଁ ବ୍ୟବହାର କରନ୍ତୁ।</string>
+    <string name="config_help_skip_resume">ପ୍ରଥମ ସଫଳ startApp() କଲ୍ ପରେ, ବିରତି ପରେ MIDlet ଚାଲୁ ରଖିବାବେଳେ ପରବର୍ତ୍ତୀ କଲ୍ ଛାଡ଼େ। କେବଳ ବିରତି ପରେ ଚାଲୁ ରଖିବାରେ ବିଫଳ ହେଉଥିବା MIDlet ପାଇଁ ବ୍ୟବହାର କରନ୍ତୁ।</string>
     <string name="config_help_soundbank">MIDI ସିନ୍ଥେସିସ୍ ପାଇଁ ସାଉଣ୍ଡବ୍ୟାଙ୍କ୍ ବାଛେ। ପୂର୍ବରୁ ରେକର୍ଡ ହୋଇଥିବା ଅଡିଓକୁ ବଦଳାଏ ନାହିଁ।</string>
     <string name="profile_create_title">ପ୍ରୋଫାଇଲ୍ ତିଆରି କରନ୍ତୁ</string>
     <string name="profile_rename_title">ପ୍ରୋଫାଇଲ୍ ପୁନଃନାମକରଣ କରନ୍ତୁ</string>

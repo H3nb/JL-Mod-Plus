@@ -3,7 +3,7 @@
 <resources xmlns:tools="http://schemas.android.com/tools">
     <string name="pref_app_sort_date">जोड़ने की तिथि</string>
     <string name="pref_app_sort_name">नाम</string>
-    <string name="pref_app_sort_vendor">विक्रेता</string>
+    <string name="pref_app_sort_vendor">प्रकाशक</string>
     <string name="pref_app_sort_ascending">आरोही क्रम</string>
     <string name="pref_app_sort_descending">अवरोही क्रम</string>
     <string name="pref_apps_view">लेआउट</string>
@@ -57,7 +57,7 @@
     <string name="PREF_SHADER_FILTER">स्क्रीन शेडर</string>
     <string name="pref_skin_not_set">कोई नहीं</string>
     <string name="pref_skin_title">स्किन</string>
-    <string name="pref_skip_resume_call">पुनः शुरू करने पर startApp() छोड़ें</string>
+    <string name="pref_skip_resume_call">विराम के बाद जारी रखने पर startApp() कॉल छोड़ें</string>
     <string name="pref_soundbank_title">MIDI साउंडबैंक</string>
     <string name="PREF_SYS_PROPS">सिस्टम प्रॉपर्टीज़</string>
     <string name="pref_theme_auto_battery">स्वचालित (बैटरी सेवर)</string>

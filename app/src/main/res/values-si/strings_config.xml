@@ -237,7 +237,7 @@
     <string name="config_help_vk_feedback">සැකසීම් තුළ කම්පනය සබල කර ඇත්නම් අතථ්‍ය පාලනයක් එබූ විට කම්පනය වේ.</string>
     <string name="config_help_vk_hide_delay">පාලන MIDlet තිරය ආවරණය කරන විට මෙම ප්‍රමාදයෙන් පසු ඒවා සඟවයි. 0 අගය ස්වයංක්‍රීයව සැඟවීම අබල කරයි.</string>
     <string name="config_help_reset_layout">වෙනත් MIDlet සැකසීම් වෙනස් නොකර අතථ්‍ය පාලන පිරිසැලසුම ප්‍රතිස්ථාපනය කරයි.</string>
-    <string name="config_help_skip_resume">පළමු සාර්ථක startApp() වලින් පසු MIDlet නැවත ඇරඹෙන විට පසු ඇමතුම් මඟහරියි. නැවත ඇරඹීමේදී අසාර්ථක වන MIDlets සඳහා පමණක් භාවිතා කරන්න.</string>
+    <string name="config_help_skip_resume">පළමු සාර්ථක startApp() ඇමතුමෙන් පසු, MIDlet එක විරාමයකින් පසු දිගටම ක්‍රියාත්මක කිරීමේදී එම ක්‍රමයේ පසු ඇමතුම් මඟහරියි. විරාමයකින් පසු දිගටම ක්‍රියාත්මක කිරීමට අසමත් වන MIDlet සඳහා පමණක් භාවිතා කරන්න.</string>
     <string name="config_help_soundbank">MIDI සංස්ලේෂණය සඳහා ශබ්ද බැංකුව තෝරයි. කලින් පටිගත කළ ශ්‍රව්‍ය වෙනස් නොකරයි.</string>
     <string name="profile_create_title">පැතිකඩ සාදන්න</string>
     <string name="profile_rename_title">පැතිකඩ නැවත නම් කරන්න</string>

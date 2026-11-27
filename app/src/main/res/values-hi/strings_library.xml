@@ -294,7 +294,7 @@
     <string name="library_metadata_edit_title">मेटाडेटा संपादित करें</string>
     <string name="library_metadata_icon">आइकन</string>
     <string name="library_metadata_name">नाम</string>
-    <string name="library_metadata_vendor">विक्रेता</string>
+    <string name="library_metadata_vendor">प्रकाशक</string>
     <string name="library_metadata_reset_to_original">मूल पर रीसेट करें</string>
     <string name="library_metadata_save">सहेजें</string>
     <string name="library_hide_grid_titles_summary">ग्रिड दृश्य में MIDlet नाम छिपाता है। सूची दृश्य में वे दिखाई देते रहेंगे।</string>
@@ -453,7 +453,7 @@
     <string name="library_details_entry_points" tools:ignore="MissingTranslation">MIDlet प्रविष्टियां</string>
     <string name="library_details_original_metadata" tools:ignore="MissingTranslation">मूल मेटाडेटा</string>
     <string name="library_details_name" tools:ignore="MissingTranslation">नाम</string>
-    <string name="library_details_vendor" tools:ignore="MissingTranslation">विक्रेता</string>
+    <string name="library_details_vendor" tools:ignore="MissingTranslation">प्रकाशक</string>
     <string name="library_details_version" tools:ignore="MissingTranslation">संस्करण</string>
     <string name="library_details_version_value" tools:ignore="MissingTranslation">संस्करण <xliff:g id="version" example="2.1.0">%1$s</xliff:g></string>
     <string name="library_details_original_description" tools:ignore="MissingTranslation">मूल विवरण</string>

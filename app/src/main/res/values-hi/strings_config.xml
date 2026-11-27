@@ -7,7 +7,7 @@
     <string name="config_missing_app_storage_generic">ऐप नहीं मिला।\nजांचें कि स्टोरेज डिवाइस उपलब्ध है या नहीं, अथवा शॉर्टकट पुनः बनाएं।</string>
     <string name="midlet_name"><b>नाम: </b></string>
     <string name="midlet_size"><b>आकार: </b></string>
-    <string name="midlet_vendor"><b>विक्रेता: </b></string>
+    <string name="midlet_vendor"><b>प्रकाशक: </b></string>
     <string name="midlet_version"><b>संस्करण: </b></string>
     <string name="config_destination_graphics">डिस्प्ले</string>
     <string name="config_destination_rendering" tools:ignore="MissingTranslation">ग्राफ़िक्स</string>
@@ -237,7 +237,7 @@
     <string name="config_help_vk_feedback">यदि सेटिंग्स में वाइब्रेशन सक्षम है, तो वर्चुअल कंट्रोल दबाने पर कंपन होता है।</string>
     <string name="config_help_vk_hide_delay">जब कंट्रोल MIDlet स्क्रीन को ढकते हैं, तो इस देरी के बाद उन्हें छिपा देता है। 0 मान स्वतः छिपाने को अक्षम करता है।</string>
     <string name="config_help_reset_layout">अन्य MIDlet सेटिंग्स बदले बिना वर्चुअल कंट्रोल लेआउट पुनर्स्थापित करता है।</string>
-    <string name="config_help_skip_resume">पहले सफल startApp() के बाद MIDlet पुनः शुरू होने पर बाद के कॉल छोड़ देता है। केवल उन्हीं MIDlets के लिए उपयोग करें जो पुनः शुरू होने पर विफल होते हैं।</string>
+    <string name="config_help_skip_resume">पहले सफल startApp() कॉल के बाद, MIDlet को विराम के बाद जारी रखने पर इस विधि के अगले कॉल छोड़ दिए जाते हैं। इसका उपयोग केवल उन MIDlets के लिए करें जो विराम के बाद जारी रखने पर विफल होते हैं।</string>
     <string name="config_help_soundbank">MIDI सिंथेसिस के लिए साउंडबैंक चुनता है। पहले से रिकॉर्ड किए गए ऑडियो पर इसका असर नहीं पड़ता।</string>
     <string name="profile_create_title">प्रोफ़ाइल बनाएं</string>
     <string name="profile_rename_title">प्रोफ़ाइल का नाम बदलें</string>
