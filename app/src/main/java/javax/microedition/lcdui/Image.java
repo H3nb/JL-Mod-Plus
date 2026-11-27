@@ -182,15 +182,18 @@ public class Image {
 	}
 
 	public synchronized void getRGB(int[] rgbData, int offset, int scanlength, int x, int y, int width, int height) {
-		if (pixelScale == 1) {
-			bitmap.getPixels(rgbData, offset, scanlength, x, y, width, height);
-			return;
-		}
-		if (x < 0 || y < 0 || width < 0 || height < 0
-				|| (long) x + width > getWidth() || (long) y + height > getHeight()) {
+		if (rgbData == null) throw new NullPointerException();
+		if (x < 0 || y < 0 || (long) x + width > getWidth()
+				|| (long) y + height > getHeight()) {
 			throw new IllegalArgumentException("Logical image read outside bounds");
 		}
-		if (width == 0 || height == 0) return;
+		if (width <= 0 || height <= 0) return;
+		if (Math.abs((long) scanlength) < width) throw new IllegalArgumentException("Invalid scanlength");
+		PixelArray.checkBounds(rgbData.length, offset, scanlength, width, height);
+		if (pixelScale == 1) {
+			bitmap.getPixels(rgbData, offset, height == 1 ? width : scanlength, x, y, width, height);
+			return;
+		}
 		// Centre samples preserve guest-sized reads without exposing physical coordinates.
 		// Antialiased edges are not guaranteed pixel-identical to a separate 1x render.
 		int[] row = new int[width * pixelScale];
@@ -227,12 +230,15 @@ public class Image {
 		if (x < 0 || y < 0 || width < 0 || height < 0
 				|| (long) x + width > getWidth() || (long) y + height > getHeight())
 			throw new IllegalArgumentException("Logical image write outside bounds");
+		if (pixels == null) throw new NullPointerException();
+		if (width == 0 || height == 0) return;
+		if (Math.abs((long) scanlength) < width) throw new IllegalArgumentException("Invalid scanlength");
+		PixelArray.checkBounds(pixels.length, offset, scanlength, width, height);
 		int scale = pixelScale;
 		if (scale == 1) {
-			bitmap.setPixels(pixels, offset, scanlength, x, y, width, height);
+			bitmap.setPixels(pixels, offset, height == 1 ? width : scanlength, x, y, width, height);
 			return;
 		}
-		if (width == 0 || height == 0) return;
 		int[] physicalRow = new int[width * scale];
 		for (int row = 0; row < height; row++) {
 			for (int col = 0; col < width; col++) {

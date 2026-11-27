@@ -19,6 +19,26 @@ import javax.microedition.lcdui.Image;
 @RunWith(AndroidJUnit4.class)
 public class DirectGraphicsRenderingTest {
 	@Test
+	public void invalidPaddedReadbackLeavesBothArrayTypesUnchanged() {
+		for (int scale : new int[]{1, 3}) {
+			Image image = Image.createDisplayTarget(4, 4, scale);
+			try {
+				DirectGraphics graphics = DirectUtils.getDirectGraphics(image.getGraphics());
+				int[] ints = {17, 17};
+				short[] shorts = {17, 17};
+				org.junit.Assert.assertThrows(ArrayIndexOutOfBoundsException.class,
+						() -> graphics.getPixels(ints, 0, 2, 0, 0, 1, 2, DirectGraphics.TYPE_INT_8888_ARGB));
+				org.junit.Assert.assertThrows(ArrayIndexOutOfBoundsException.class,
+						() -> graphics.getPixels(shorts, 0, 2, 0, 0, 1, 2, DirectGraphics.TYPE_USHORT_565_RGB));
+				org.junit.Assert.assertArrayEquals(new int[]{17, 17}, ints);
+				org.junit.Assert.assertArrayEquals(new short[]{17, 17}, shorts);
+			} finally {
+				image.getBitmap().recycle();
+			}
+		}
+	}
+
+	@Test
 	public void acutePolygonRetainsRasterInteriorAndOutlineWithoutFragments() {
 		int[][] shapes = {
 				{64, 262, 57, 250, 10, 196},

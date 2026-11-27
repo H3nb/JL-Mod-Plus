@@ -695,7 +695,7 @@ public class Render {
 					selectAffineTrans(cmd & 0xFFFFFF);
 					break;
 				case Graphics3D.COMMAND_AMBIENT_LIGHT: {
-					env.light.ambIntensity = i++;
+					env.light.ambIntensity = cmds[i++];
 					break;
 				}
 				case Graphics3D.COMMAND_ATTRIBUTE:
@@ -709,10 +709,10 @@ public class Render {
 					updateClip();
 					break;
 				case Graphics3D.COMMAND_DIRECTION_LIGHT: {
-					env.light.x = i++;
-					env.light.y = i++;
-					env.light.z = i++;
-					env.light.dirIntensity = i++;
+					env.light.x = cmds[i++];
+					env.light.y = cmds[i++];
+					env.light.z = cmds[i++];
+					env.light.dirIntensity = cmds[i++];
 					break;
 				}
 				case Graphics3D.COMMAND_FLUSH:

@@ -64,6 +64,7 @@ public class Graphics implements
 	private final Paint drawPaint = new Paint();
 	private final Paint fillPaint = new Paint();
 	private final Paint polygonPaint = new Paint();
+	private final Paint textPaint = new Paint();
 
 	// Cached Graphics instances outlive profile changes; choose the active session at draw time.
 	private static volatile BitmapUpscaling activeBitmapUpscaling =
@@ -588,7 +589,8 @@ public class Graphics implements
 
 	public void drawChars(char[] data, int offset, int length, int x, int y, int anchor) {
 		synchronized (this.image) {
-			Paint paint = font.paint;
+			Paint paint = textPaint;
+			paint.set(font.paint);
 			if ((anchor & Graphics.RIGHT) != 0) {
 				paint.setTextAlign(Paint.Align.RIGHT);
 			} else if ((anchor & Graphics.HCENTER) != 0) {
@@ -615,7 +617,8 @@ public class Graphics implements
 
 	public void drawString(String text, int x, int y, int anchor) {
 		synchronized (this.image) {
-			Paint paint = font.paint;
+			Paint paint = textPaint;
+			paint.set(font.paint);
 			if ((anchor & Graphics.RIGHT) != 0) {
 				paint.setTextAlign(Paint.Align.RIGHT);
 			} else if ((anchor & Graphics.HCENTER) != 0) {
@@ -690,7 +693,8 @@ public class Graphics implements
 
 	public void drawSubstring(String str, int offset, int len, int x, int y, int anchor) {
 		synchronized (this.image) {
-			Paint paint = font.paint;
+			Paint paint = textPaint;
+			paint.set(font.paint);
 			if ((anchor & Graphics.RIGHT) != 0) {
 				paint.setTextAlign(Paint.Align.RIGHT);
 			} else if ((anchor & Graphics.HCENTER) != 0) {
@@ -826,29 +830,15 @@ public class Graphics implements
 			if (rgbData == null) {
 				throw new NullPointerException();
 			}
-			if (width == 0 || height == 0) {
-				return;
-			}
-			if (offset < 0 || offset > rgbData.length) {
-				throw new ArrayIndexOutOfBoundsException();
-			}
-			if (width < 0 || height < 0) {
-				// TODO: 21.03.2021 This situation has not been verified and the correctness of such arguments is unknown.
-				Log.w(getClass().getSimpleName(), "drawRGB: width=" + width + ", height=" + height);
-			}
-			if (scanlength > 0) {
-				if (offset + scanlength * (height - 1) + width > rgbData.length) {
-					throw new ArrayIndexOutOfBoundsException();
-				}
-			} else {
-				if (offset + width > rgbData.length || offset + scanlength * (height - 1) < 0) {
-					throw new ArrayIndexOutOfBoundsException();
-				}
-			}
+			if (rgbData == null) throw new NullPointerException();
+			if (width <= 0 || height <= 0) return;
+			PixelArray.checkBounds(rgbData.length, offset, scanlength, width, height);
+			long count = (long) width * height;
+			if (count > Integer.MAX_VALUE) throw new OutOfMemoryError("Pixel rectangle too large");
 
 			// copy pixels to a new array and apply processAlpha flag here,
 			// to avoid Android restrictions
-			int[] pixels = new int[height * width];
+			int[] pixels = new int[(int) count];
 			int alphaCorrection = processAlpha ? Color.TRANSPARENT : Color.BLACK;
 			for (int i = 0; i < height; i++) {
 				int s = offset + i * scanlength;

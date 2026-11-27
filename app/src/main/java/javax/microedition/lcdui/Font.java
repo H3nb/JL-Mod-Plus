@@ -60,7 +60,7 @@ public class Font {
 	private static final Font[] fonts = new Font[FONT_COUNT];
 	private static final float[] sizes = {22, 18, 26};
 
-	private static boolean antiAlias;
+	private static volatile boolean antiAlias;
 
 	final Paint paint = new Paint();
 	final float ascent;
@@ -106,10 +106,18 @@ public class Font {
 	}
 
 	public static Font getFont(int fontSpecifier) {
+		if (fontSpecifier != FONT_STATIC_TEXT && fontSpecifier != FONT_INPUT_TEXT) {
+			throw new IllegalArgumentException("Invalid font specifier");
+		}
 		return getDefaultFont();
 	}
 
-	public static Font getFont(int face, int style, int size) {
+	public static synchronized Font getFont(int face, int style, int size) {
+		if ((face != FACE_SYSTEM && face != FACE_MONOSPACE && face != FACE_PROPORTIONAL)
+				|| (style & ~(STYLE_BOLD | STYLE_ITALIC | STYLE_UNDERLINED)) != 0
+				|| (size != SIZE_SMALL && size != SIZE_MEDIUM && size != SIZE_LARGE)) {
+			throw new IllegalArgumentException("Invalid font attributes");
+		}
 		int index = ((face >> 5) * 3 + (size >> 3) << 3) + style;
 		Font font = fonts[index];
 
@@ -167,7 +175,7 @@ public class Font {
 	}
 
 	public boolean isBold() {
-		return style == STYLE_BOLD;
+		return (style & STYLE_BOLD) != 0;
 	}
 
 	public boolean isPlain() {
@@ -175,10 +183,10 @@ public class Font {
 	}
 
 	public boolean isItalic() {
-		return style == STYLE_ITALIC;
+		return (style & STYLE_ITALIC) != 0;
 	}
 
-	public static void applySettings(ProfileModel params) {
+	public static synchronized void applySettings(ProfileModel params) {
 		antiAlias = params.fontAA;
 
 		float small = params.fontSizeSmall;

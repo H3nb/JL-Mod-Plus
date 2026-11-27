@@ -4,7 +4,9 @@
 
 #include "utils.h"
 #include <android/bitmap.h>
-#include <vector>
+#include <cstdint>
+#include <cstdlib>
+#include <memory>
 
 #ifdef __cplusplus
 extern "C" {
@@ -21,6 +23,36 @@ static void blit(JNIEnv *env, jint x, jint y, jint width, jint height, jobject b
                                    "AndroidBitmap_getInfo() failed!")
         return;
     }
+    if (info.format != ANDROID_BITMAP_FORMAT_RGBA_8888
+            || info.stride < static_cast<uint64_t>(info.width) * 4u
+            || x < 0 || y < 0 || width < 0 || height < 0
+            || static_cast<uint64_t>(x) + width > info.width
+            || static_cast<uint64_t>(y) + height > info.height) {
+        GLES_UTILS_RAISE_EXCEPTION(env, "java/lang/IllegalArgumentException",
+                                  "GLES readback outside RGBA8888 Bitmap bounds")
+        return;
+    }
+    if (width == 0 || height == 0) return;
+
+    const uint64_t bytes = static_cast<uint64_t>(width) * height * 4u;
+    if (bytes > SIZE_MAX) {
+        GLES_UTILS_RAISE_EXCEPTION(env, "java/lang/OutOfMemoryError", "GLES readback too large")
+        return;
+    }
+    // Allocate before pinning the bitmap; no shared scratch storage across contexts.
+    std::unique_ptr<uint8_t, decltype(&std::free)> buf(
+            static_cast<uint8_t *>(std::malloc(static_cast<size_t>(bytes))), &std::free);
+    if (!buf) {
+        GLES_UTILS_RAISE_EXCEPTION(env, "java/lang/OutOfMemoryError", "GLES readback allocation failed")
+        return;
+    }
+    uint8_t *data = buf.get();
+    ret = readPixels(x, y, width, height, data);
+    if (ret != 0) {
+        LOGE("glReadPixels() failed! error=%d", ret)
+        return;
+    }
+
     void *pixels;
     ret = AndroidBitmap_lockPixels(env, bitmap_buffer, &pixels);
     if (ret < 0) {
@@ -30,36 +62,25 @@ static void blit(JNIEnv *env, jint x, jint y, jint width, jint height, jobject b
         return;
     }
 
-    static std::vector<uint8_t> buf;
-    if (buf.capacity() < width * height * 4) {
-        buf.resize(width * height * 4, 0);
-    }
-    uint8_t *data = buf.data();
-    ret = readPixels(x, y, width, height, data);
-
-    if (ret == 0) {
-        const uint32_t bs = info.stride;
-        pixels = ((uint8_t *) pixels) + x * 4 /*RGBA*/ + bs * y;
-        for (int i = height - 1; i >= 0; --i) {
-            uint8_t *src = &data[i * width * 4];
-            uint8_t *dst = static_cast<uint8_t *>(pixels);
-            for (int j = 0; j < width; ++j) {
-                uint32_t r = *src++;
-                uint32_t g = *src++;
-                uint32_t b = *src++;
-                uint32_t a = *src++;
-                uint32_t tmp = (a * r + (255 - a) * *dst) / 255;
-                *dst++ = tmp > 255 ? 255 : tmp;
-                tmp = (a * g + (255 - a) * *dst) / 255;
-                *dst++ = tmp > 255 ? 255 : tmp;
-                tmp = (a * b + (255 - a) * *dst) / 255;
-                *dst++ = tmp > 255 ? 255 : tmp;
-                *dst++ = 255;
-            }
-            pixels = ((uint8_t *) pixels) + bs;
+    const uint32_t bs = info.stride;
+    pixels = ((uint8_t *) pixels) + static_cast<size_t>(x) * 4u + static_cast<size_t>(bs) * y;
+    for (int i = height - 1; i >= 0; --i) {
+        uint8_t *src = &data[static_cast<size_t>(i) * width * 4u];
+        uint8_t *dst = static_cast<uint8_t *>(pixels);
+        for (int j = 0; j < width; ++j) {
+            uint32_t r = *src++;
+            uint32_t g = *src++;
+            uint32_t b = *src++;
+            uint32_t a = *src++;
+            uint32_t tmp = (a * r + (255 - a) * *dst) / 255;
+            *dst++ = tmp > 255 ? 255 : tmp;
+            tmp = (a * g + (255 - a) * *dst) / 255;
+            *dst++ = tmp > 255 ? 255 : tmp;
+            tmp = (a * b + (255 - a) * *dst) / 255;
+            *dst++ = tmp > 255 ? 255 : tmp;
+            *dst++ = 255;
         }
-    } else {
-        LOGE("glReadPixels() failed! error=%d", ret)
+        pixels = ((uint8_t *) pixels) + bs;
     }
     ret = AndroidBitmap_unlockPixels(env, bitmap_buffer);
     if (ret < 0) {

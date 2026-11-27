@@ -395,8 +395,9 @@ public class DirectGraphicsImp implements DirectGraphics {
 			throw new NullPointerException();
 		} else if (x < 0 || y < 0 || width < 0 || height < 0 || scanlength < width) {
 			throw new IllegalArgumentException();
-		} else if (offset < 0 || offset + width + (height - 1) > pixels.length) {
-			throw new IllegalArgumentException();
+		} else if (width > 0 && height > 0
+				&& (offset < 0 || (long) offset + (long) (height - 1) * scanlength + width > pixels.length)) {
+			throw new ArrayIndexOutOfBoundsException();
 		} else if (format != TYPE_INT_888_RGB && format != TYPE_INT_8888_ARGB) {
 			throw new IllegalArgumentException("Illegal format: " + format);
 		} else if (width == 0 || height == 0) {
@@ -427,8 +428,9 @@ public class DirectGraphicsImp implements DirectGraphics {
 			throw new NullPointerException();
 		} else if (x < 0 || y < 0 || width < 0 || height < 0 || scanlength < width) {
 			throw new IllegalArgumentException();
-		} else if (offset < 0 || offset + width + (height - 1) > pixels.length) {
-			throw new IllegalArgumentException();
+		} else if (width > 0 && height > 0
+				&& (offset < 0 || (long) offset + (long) (height - 1) * scanlength + width > pixels.length)) {
+			throw new ArrayIndexOutOfBoundsException();
 		} else if (width == 0 || height == 0) {
 			return;
 		}

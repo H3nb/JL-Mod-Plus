@@ -948,9 +948,10 @@ public abstract class Canvas extends Displayable {
 			}
 		}
 		Bitmap bitmap = Bitmap.createBitmap(onWidth, onHeight, Bitmap.Config.ARGB_8888);
-		canvasWrapper.bind(new android.graphics.Canvas(bitmap));
+		CanvasWrapper screenshot = new CanvasWrapper(settings.screenFilter);
+		screenshot.bind(new android.graphics.Canvas(bitmap));
 		synchronized (bufferLock) {
-			canvasWrapper.drawImage(offscreenCopy, new RectF(0, 0, onWidth, onHeight));
+			screenshot.drawImage(offscreenCopy, new RectF(0, 0, bitmap.getWidth(), bitmap.getHeight()));
 		}
 		return bitmap;
 	}
