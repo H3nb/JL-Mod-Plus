@@ -38,11 +38,11 @@
     <string name="memory_list_kept" tools:ignore="MissingTranslation">Conservé pour le prochain lancement</string>
     <string name="memory_list_empty" tools:ignore="MissingTranslation">Aucun signet enregistré</string>
     <string name="memory_list_empty_hint" tools:ignore="MissingTranslation">Ajoutez une variable de Recherche ou de l’Inspecteur aux signets pour la suivre ici.</string>
-    <string name="memory_list_remove_confirm" tools:ignore="MissingTranslation">Supprimer d’Enregistrés ? Toute valeur figée active cessera de l’être.</string>
+    <string name="memory_list_remove_confirm" tools:ignore="MissingTranslation">Retirer de la liste « Enregistrés » ? Les valeurs figées concernées ne le seront plus.</string>
     <string name="memory_list_add" tools:ignore="MissingTranslation">Ajouter aux signets</string>
     <string name="memory_bookmark_relink" tools:ignore="MissingTranslation">Réassocier</string>
     <string name="memory_bookmark_relink_hint" tools:ignore="MissingTranslation">Sélectionnez la variable de remplacement dans Recherche, puis choisissez Réassocier.</string>
-    <string name="memory_bookmark_relink_confirm" tools:ignore="MissingTranslation">Associer ce signet à la variable sélectionnée ? S’il est figé, le verrouillage s’arrêtera.</string>
+    <string name="memory_bookmark_relink_confirm" tools:ignore="MissingTranslation">Associer ce signet à la variable sélectionnée ? Si une valeur est figée par ce signet, elle ne le sera plus.</string>
     <string name="memory_bookmark_unavailable" tools:ignore="MissingTranslation">Indisponible — sélectionnez Réassocier pour choisir une cible</string>
     <string name="memory_editor_watch">Suivi</string>
     <string name="memory_editor_search_tab">Recherche</string>
@@ -173,10 +173,10 @@
     <string name="memory_recipes_title" tools:ignore="MissingTranslation">Action rapide</string>
     <string name="memory_recipes_simple_from_saved" tools:ignore="MissingTranslation">Cible : <xliff:g id="bookmark_name" example="Coins">%1$s</xliff:g></string>
     <string name="memory_recipes_preview" tools:ignore="MissingTranslation">Aperçu des cibles</string>
-    <string name="memory_recipes_stop_freeze" tools:ignore="MissingTranslation">Arrêter de figer le script</string>
-    <string name="memory_recipes_freeze" tools:ignore="MissingTranslation">Maintenir figé tant que ce jeu tourne</string>
+    <string name="memory_recipes_stop_freeze" tools:ignore="MissingTranslation">Arrêter de figer les valeurs</string>
+    <string name="memory_recipes_freeze" tools:ignore="MissingTranslation">Maintenir les valeurs figées tant que le jeu est en cours</string>
     <string name="memory_recipes_run" tools:ignore="MissingTranslation">Exécuter</string>
-    <string name="memory_recipes_active_freezes" tools:ignore="MissingTranslation">Scripts figés actifs</string>
+    <string name="memory_recipes_active_freezes" tools:ignore="MissingTranslation">Scripts qui figent des valeurs</string>
     <string name="memory_recipes_target_unavailable" tools:ignore="MissingTranslation">La cible du signet est indisponible. Actualisez-la ou réassociez-la avant l’exécution.</string>
     <string name="memory_recipes_preview_values" tools:ignore="MissingTranslation">Valeurs actuelles : <xliff:g id="name" example="Example">%1$s</xliff:g></string>
     <string name="memory_scripts_title" tools:ignore="MissingTranslation">Scripts</string>
@@ -201,7 +201,7 @@
     <string name="memory_scripts_paste" tools:ignore="MissingTranslation">Coller</string>
     <string name="memory_scripts_clipboard_invalid" tools:ignore="MissingTranslation">Le presse-papiers est vide ou le document dépasse 64 Kio</string>
     <string name="memory_scripts_invalid" tools:ignore="MissingTranslation">Format de script non valide</string>
-    <string name="memory_scripts_freeze_active" tools:ignore="MissingTranslation">Figer actif pour ce script</string>
+    <string name="memory_scripts_freeze_active" tools:ignore="MissingTranslation">Ce script fige des valeurs</string>
     <string name="memory_scripts_delete" tools:ignore="MissingTranslation">Supprimer</string>
     <string name="memory_scripts_delete_confirm" tools:ignore="MissingTranslation">Supprimer <xliff:g id="name" example="Example">%1$s</xliff:g> ? Toute valeur figée par ce script cessera de l’être.</string>
     <string name="memory_scripts_empty" tools:ignore="MissingTranslation">Aucun script enregistré</string>
@@ -224,7 +224,7 @@
     <string name="memory_scripts_choose_type" tools:ignore="MissingTranslation">Nouveau script</string>
     <string name="memory_scripts_choose_hint" tools:ignore="MissingTranslation">Choisissez le mode de fonctionnement de ce script.</string>
     <string name="memory_builder_json_editor" tools:ignore="MissingTranslation">Éditeur JSON</string>
-    <string name="memory_builder_freeze_hint" tools:ignore="MissingTranslation">Maintient les valeurs sélectionnées figées tant que le script est activé. Désactiver Figer ne restaure pas leurs valeurs précédentes.</string>
+    <string name="memory_builder_freeze_hint" tools:ignore="MissingTranslation">Maintient les valeurs sélectionnées figées tant que l’option est activée. Désactiver cette option ne rétablit pas les valeurs précédentes.</string>
     <string name="memory_builder_form_hint" tools:ignore="MissingTranslation">Crée un formulaire qui lit les valeurs actuelles avant d’appliquer les modifications.</string>
     <string name="memory_builder_actions_hint" tools:ignore="MissingTranslation">Applique les modifications une fois à chaque appui sur Exécuter. Ajouter et Soustraire utilisent les valeurs actuelles, y compris les modifications des exécutions précédentes.</string>
     <string name="memory_builder_name" tools:ignore="MissingTranslation">Nom du script</string>
@@ -248,7 +248,7 @@
     <string name="memory_builder_min" tools:ignore="MissingTranslation">Minimum (facultatif)</string>
     <string name="memory_builder_max" tools:ignore="MissingTranslation">Maximum (facultatif)</string>
     <string name="memory_builder_add_target" tools:ignore="MissingTranslation">Ajouter une cible</string>
-    <string name="memory_builder_freeze_short" tools:ignore="MissingTranslation">Maintenir les valeurs sélectionnées à des montants fixes</string>
+    <string name="memory_builder_freeze_short" tools:ignore="MissingTranslation">Maintenir les valeurs sélectionnées constantes</string>
     <string name="memory_builder_form_short" tools:ignore="MissingTranslation">Ajuster plusieurs valeurs au même endroit</string>
     <string name="memory_builder_actions_short" tools:ignore="MissingTranslation">Exécuter des actions ponctuelles Définir, Ajouter ou Soustraire</string>
     <string name="memory_editor_refine_scan" tools:ignore="MissingTranslation">Affiner</string>
@@ -262,7 +262,7 @@
     <string name="memory_bookmark_added">Signet ajouté</string>
     <string name="memory_bookmark_relinked">Signet réassocié</string>
     <string name="memory_bookmarks_removed">Retiré des éléments enregistrés</string>
-    <string name="memory_freeze_enabled">Figeage activé</string>
+    <string name="memory_freeze_enabled">Valeur figée</string>
     <string name="memory_freeze_unavailable">Impossible de figer la valeur.</string>
     <string name="memory_list_session_only_failed">Impossible de conserver cet élément uniquement pour la session actuelle.</string>
     <string name="memory_list_kept_unlinked">Enregistré pour le prochain lancement, mais impossible de le lier à la session actuelle.</string>
@@ -272,15 +272,15 @@
     <string name="memory_list_watch_removal_failed">Impossible de supprimer le suivi de la session : %1$s</string>
     <string name="memory_list_removal_unknown_error">Erreur inconnue</string>
     <string name="memory_editor_edit_freeze_failed">Valeur mise à jour, mais impossible de la figer. Vérifiez la valeur actuelle avant de réessayer.</string>
-    <string name="memory_scripts_freeze_inactive">Le figeage par le script est désactivé.</string>
+    <string name="memory_scripts_freeze_inactive">Le script ne fige plus de valeurs.</string>
     <string name="memory_bookmark_change_incomplete">Impossible de terminer la modification du signet. Vérifiez les éléments enregistrés avant de réessayer.</string>
     <string name="memory_editor_value_updated">Valeur mise à jour.</string>
-    <string name="memory_editor_value_updated_frozen">Valeur mise à jour et gel activé.</string>
-    <string name="memory_scripts_delete_failed">Impossible de supprimer le script. Vérifiez l’état du gel avant de réessayer.</string>
+    <string name="memory_editor_value_updated_frozen">Valeur mise à jour et figée.</string>
+    <string name="memory_scripts_delete_failed">Impossible de supprimer le script. Vérifiez s’il fige toujours des valeurs avant de réessayer.</string>
     <string name="memory_scripts_check_input">Impossible de préparer le script. Vérifiez ses valeurs et ses signets.</string>
     <string name="memory_scripts_read_failed">Impossible de lire les valeurs actuelles. Actualisez-les, puis réessayez.</string>
     <string name="memory_technical_details">Détails techniques</string>
-    <string name="memory_scripts_resource_limit">Le script a atteint une limite de sécurité. Réduisez le nombre de cibles ou arrêtez les gels inutilisés.</string>
+    <string name="memory_scripts_resource_limit">Le script a atteint une limite de sécurité. Réduisez le nombre de cibles ou arrêtez de figer les valeurs qui n’en ont plus besoin.</string>
     <string name="memory_scripts_target_changed">Impossible de vérifier la cible du script. Actualisez ses valeurs et vérifiez les signets.</string>
     <string name="memory_scripts_operation_unavailable">Cette opération du script n’est pas prise en charge pour la cible actuelle.</string>
     <string name="memory_scripts_invalid_input">Vérifiez les entrées du script. Saisissez des valeurs valides dans les plages autorisées.</string>

@@ -102,7 +102,7 @@
     <string name="memory_editor_refresh_snapshot">Momentaufnahme aktualisieren</string>
     <string name="memory_editor_select_result_value">Dieses Lesezeichen auswählen</string>
     <string name="memory_editor_freeze_after_edit">Nach dem Anwenden einfrieren</string>
-    <string name="memory_editor_freeze_after_edit_help">Hält diesen Wert gesperrt und speichert ihn als Lesezeichen unter „Gespeichert“.</string>
+    <string name="memory_editor_freeze_after_edit_help">Hält den Wert konstant und legt unter „Gespeichert“ ein Lesezeichen an.</string>
     <string name="memory_editor_expression_single_hint">Geben Sie einen Wert ein oder trennen Sie Gruppenwerte mit Semikolons (;).</string>
     <string name="memory_editor_expression_group_needs_type">Wählen Sie einen bestimmten Datentyp für die Gruppensuche.</string>
     <plurals name="memory_editor_expression_group_hint">
@@ -167,10 +167,10 @@
     <string name="memory_recipes_title" tools:ignore="MissingTranslation">Schnellaktion</string>
     <string name="memory_recipes_simple_from_saved" tools:ignore="MissingTranslation">Ziel: <xliff:g id="bookmark_name" example="Coins">%1$s</xliff:g></string>
     <string name="memory_recipes_preview" tools:ignore="MissingTranslation">Ziele in Vorschau</string>
-    <string name="memory_recipes_stop_freeze" tools:ignore="MissingTranslation">Skript-Einfrieren stoppen</string>
+    <string name="memory_recipes_stop_freeze" tools:ignore="MissingTranslation">Einfrieren beenden</string>
     <string name="memory_recipes_freeze" tools:ignore="MissingTranslation">Eingefroren halten, solange dieses Spiel läuft</string>
     <string name="memory_recipes_run" tools:ignore="MissingTranslation">Ausführen</string>
-    <string name="memory_recipes_active_freezes" tools:ignore="MissingTranslation">Aktives Skript-Einfrieren</string>
+    <string name="memory_recipes_active_freezes" tools:ignore="MissingTranslation">Skripte, die Werte einfrieren</string>
     <string name="memory_recipes_target_unavailable" tools:ignore="MissingTranslation">Lesezeichenziel ist nicht verfügbar. Aktualisieren oder verknüpfen Sie es vor dem Ausführen neu.</string>
     <string name="memory_recipes_preview_values" tools:ignore="MissingTranslation">Aktuelle Werte: <xliff:g id="name" example="Example">%1$s</xliff:g></string>
     <string name="memory_scripts_title" tools:ignore="MissingTranslation">Skripte</string>
@@ -195,7 +195,7 @@
     <string name="memory_scripts_paste" tools:ignore="MissingTranslation">Einfügen</string>
     <string name="memory_scripts_clipboard_invalid" tools:ignore="MissingTranslation">Die Zwischenablage ist leer oder das Dokument ist größer als 64 KiB</string>
     <string name="memory_scripts_invalid" tools:ignore="MissingTranslation">Ungültiges Skriptformat</string>
-    <string name="memory_scripts_freeze_active" tools:ignore="MissingTranslation">Einfrieren für dieses Skript aktiv</string>
+    <string name="memory_scripts_freeze_active" tools:ignore="MissingTranslation">Dieses Skript friert Werte ein</string>
     <string name="memory_scripts_delete" tools:ignore="MissingTranslation">Löschen</string>
     <string name="memory_scripts_delete_confirm" tools:ignore="MissingTranslation">„<xliff:g id="name" example="Example">%1$s</xliff:g>“ löschen? Aktives Einfrieren für dieses Skript wird beendet.</string>
     <string name="memory_scripts_empty" tools:ignore="MissingTranslation">Keine Skripte gespeichert</string>
@@ -218,7 +218,7 @@
     <string name="memory_scripts_choose_type" tools:ignore="MissingTranslation">Neues Skript</string>
     <string name="memory_scripts_choose_hint" tools:ignore="MissingTranslation">Wählen Sie aus, wie dieses Skript funktionieren soll.</string>
     <string name="memory_builder_json_editor" tools:ignore="MissingTranslation">JSON-Editor</string>
-    <string name="memory_builder_freeze_hint" tools:ignore="MissingTranslation">Hält ausgewählte Werte gesperrt, solange aktiviert. Das Deaktivieren von „Einfrieren“ stellt die vorherigen Werte nicht wieder her.</string>
+    <string name="memory_builder_freeze_hint" tools:ignore="MissingTranslation">Hält die ausgewählten Werte konstant, solange die Option aktiviert ist. Beim Aufheben des Einfrierens werden die vorherigen Werte nicht wiederhergestellt.</string>
     <string name="memory_builder_form_hint" tools:ignore="MissingTranslation">Erstellt ein Formular, das vor dem Anwenden von Änderungen aktuelle Werte ausliest.</string>
     <string name="memory_builder_actions_hint" tools:ignore="MissingTranslation">Wendet Änderungen bei jedem Tippen auf „Ausführen“ einmal an. Addition und Subtraktion verwenden die aktuellen Werte, einschließlich Änderungen aus früheren Durchläufen.</string>
     <string name="memory_builder_name" tools:ignore="MissingTranslation">Skriptname</string>
@@ -242,31 +242,31 @@
     <string name="memory_builder_min" tools:ignore="MissingTranslation">Minimum (optional)</string>
     <string name="memory_builder_max" tools:ignore="MissingTranslation">Maximum (optional)</string>
     <string name="memory_builder_add_target" tools:ignore="MissingTranslation">Ziel hinzufügen</string>
-    <string name="memory_builder_freeze_short" tools:ignore="MissingTranslation">Ausgewählte Werte auf festen Beträgen halten</string>
+    <string name="memory_builder_freeze_short" tools:ignore="MissingTranslation">Ausgewählte Werte konstant halten</string>
     <string name="memory_builder_form_short" tools:ignore="MissingTranslation">Mehrere Werte an einem Ort anpassen</string>
     <string name="memory_builder_actions_short" tools:ignore="MissingTranslation">Einmalige Aktionen zum Festlegen, Addieren oder Subtrahieren ausführen</string>
     <string name="memory_editor_refine_scan" tools:ignore="MissingTranslation">Verfeinern</string>
     <string name="memory_scripts_saved_count" tools:ignore="MissingTranslation"><xliff:g id="count" example="3">%1$d</xliff:g> gespeichert</string>
     <string name="memory_scripts_empty_hint" tools:ignore="MissingTranslation">Erstellen Sie ein Skript, um Werte während des Spielens zu bearbeiten oder einzufrieren.</string>
     <string name="memory_builder_limits" tools:ignore="MissingTranslation">Grenzwerte (optional)</string>
-    <string name="memory_editor_selection_limit">Wähle höchstens %1$d Werte aus.</string>
+    <string name="memory_editor_selection_limit">Wählen Sie höchstens %1$d Werte aus.</string>
     <string name="memory_saved_storage_unavailable">Auf gespeicherte Elemente kann nicht zugegriffen werden.</string>
     <string name="memory_bookmark_renamed">Lesezeichen umbenannt</string>
     <string name="memory_editor_memory_unavailable">Der Arbeitsspeicher des MIDlets ist nicht verfügbar.</string>
     <string name="memory_bookmark_added">Lesezeichen hinzugefügt</string>
     <string name="memory_bookmark_relinked">Lesezeichen neu verknüpft</string>
     <string name="memory_bookmarks_removed">Aus gespeicherten Elementen entfernt</string>
-    <string name="memory_freeze_enabled">Fixierung aktiviert</string>
-    <string name="memory_freeze_unavailable">Fixierung konnte nicht aktiviert werden.</string>
+    <string name="memory_freeze_enabled">Einfrieren aktiviert</string>
+    <string name="memory_freeze_unavailable">Einfrieren konnte nicht aktiviert werden.</string>
     <string name="memory_list_session_only_failed">Das Element konnte nicht nur für die aktuelle Sitzung beibehalten werden.</string>
     <string name="memory_list_kept_unlinked">Für den nächsten Start gespeichert, aber nicht mit der aktuellen Sitzung verknüpft.</string>
-    <string name="memory_list_removal_unavailable">Ohne Verbindung können keine Elemente entfernt werden. Versuche es erneut.</string>
+    <string name="memory_list_removal_unavailable">Ohne Verbindung können keine Elemente entfernt werden. Versuchen Sie es erneut.</string>
     <string name="memory_list_watch_removed">Sitzungsüberwachung entfernt</string>
     <string name="memory_list_bookmark_removal_failed">Lesezeichen konnten nicht entfernt werden: %1$s</string>
     <string name="memory_list_watch_removal_failed">Sitzungsüberwachung konnte nicht entfernt werden: %1$s</string>
     <string name="memory_list_removal_unknown_error">Unbekannter Fehler</string>
-    <string name="memory_editor_edit_freeze_failed">Wert aktualisiert, aber die Fixierung konnte nicht gestartet werden. Prüfe den aktuellen Wert, bevor du es erneut versuchst.</string>
-    <string name="memory_scripts_freeze_inactive">Die Fixierung durch das Skript ist deaktiviert.</string>
+    <string name="memory_editor_edit_freeze_failed">Wert aktualisiert, konnte aber nicht eingefroren werden. Prüfen Sie den aktuellen Wert, bevor Sie es erneut versuchen.</string>
+    <string name="memory_scripts_freeze_inactive">Das Skript friert keine Werte mehr ein.</string>
     <string name="memory_bookmark_change_incomplete">Die Lesezeichenänderung konnte nicht abgeschlossen werden. Prüfen Sie „Gespeichert“, bevor Sie es erneut versuchen.</string>
     <string name="memory_editor_value_updated">Wert aktualisiert.</string>
     <string name="memory_editor_value_updated_frozen">Wert aktualisiert und Einfrieren aktiviert.</string>
