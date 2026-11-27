@@ -152,8 +152,12 @@ public class Image {
 	}
 
 	public static Image createRGBImage(int[] rgb, int width, int height, boolean processAlpha) {
+		if (rgb == null) throw new NullPointerException();
+		if (width <= 0 || height <= 0) throw new IllegalArgumentException("Invalid image size");
+		long count = (long) width * height;
+		if (count > rgb.length) throw new ArrayIndexOutOfBoundsException();
 		if (!processAlpha) {
-			final int length = width * height;
+			final int length = (int) count;
 			int[] tmp = new int[length];
 			for (int i = 0; i < length; i++) {
 				tmp[i] = rgb[i] | 0xFF000000;
@@ -164,6 +168,7 @@ public class Image {
 	}
 
 	public synchronized Graphics getGraphics() {
+		if (!mutable) throw new IllegalStateException("Image is immutable");
 		Graphics next = new Graphics(this);
 		if (retainedGraphics != null) retainedGraphics.put(next, Boolean.TRUE);
 		return next;
@@ -207,14 +212,14 @@ public class Image {
 	}
 
 	/** Host vendor APIs address logical pixels even when the backing is supersampled. */
-	public int getLogicalPixel(int x, int y) {
+	public synchronized int getLogicalPixel(int x, int y) {
 		if (x < 0 || y < 0 || x >= getWidth() || y >= getHeight())
 			throw new IllegalArgumentException("Logical pixel outside bounds");
 		int scale = pixelScale;
 		return bitmap.getPixel(x * scale + scale / 2, y * scale + scale / 2);
 	}
 
-	public void setLogicalPixel(int x, int y, int argb) {
+	public synchronized void setLogicalPixel(int x, int y, int argb) {
 		if (x < 0 || y < 0 || x >= getWidth() || y >= getHeight())
 			throw new IllegalArgumentException("Logical pixel outside bounds");
 		if (pixelScale == 1) {
@@ -225,7 +230,7 @@ public class Image {
 	}
 
 	/** Write exact ARGB values, including transparency, to the whole physical pixel cell. */
-	public void setLogicalPixels(int[] pixels, int offset, int scanlength,
+	public synchronized void setLogicalPixels(int[] pixels, int offset, int scanlength,
 			int x, int y, int width, int height) {
 		if (x < 0 || y < 0 || width < 0 || height < 0
 				|| (long) x + width > getWidth() || (long) y + height > getHeight())

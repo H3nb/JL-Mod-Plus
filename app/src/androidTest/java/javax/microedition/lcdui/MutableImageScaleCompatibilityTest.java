@@ -124,6 +124,19 @@ public class MutableImageScaleCompatibilityTest {
         }
     }
 
+    @Test public void immutableAndOversizedRgbImagesRejectInvalidOperations() {
+        Image image = Image.createRGBImage(new int[]{0xFFFF0000}, 1, 1, true);
+        try {
+            org.junit.Assert.assertThrows(IllegalStateException.class, image::getGraphics);
+            for (boolean processAlpha : new boolean[]{false, true}) {
+                org.junit.Assert.assertThrows(ArrayIndexOutOfBoundsException.class,
+                        () -> Image.createRGBImage(new int[1], Integer.MAX_VALUE, 2, processAlpha));
+            }
+        } finally {
+            image.getBitmap().recycle();
+        }
+    }
+
     @Test public void invalidArrayReadAndWriteDoNotPartiallyModifyPixels() {
         for (int scale : new int[]{1, 3}) {
             Image image = Image.createDisplayTarget(4, 3, scale);

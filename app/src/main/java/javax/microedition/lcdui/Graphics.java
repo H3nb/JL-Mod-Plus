@@ -864,33 +864,41 @@ public class Graphics implements
 						 int x_dest, int y_dest, int anchor) {
 		synchronized (this.image) {
 			if (width <= 0 || height <= 0) return;
+			long sourceX = (long) x_src + translateX;
+			long sourceY = (long) y_src + translateY;
+			if (sourceX < 0 || sourceY < 0 || sourceX + width > image.getWidth()
+					|| sourceY + height > image.getHeight()) {
+				throw new IllegalArgumentException("Copy source outside logical image bounds");
+			}
+			final int sx = (int) sourceX;
+			final int sy = (int) sourceY;
 			final int scale = image.getPixelScale();
 			final int[] pixels = scale == 1 ? new int[width * height] : null;
 			if (scale == 1) {
-				image.getBitmap().getPixels(pixels, 0, width, x_src, y_src, width, height);
+				image.getBitmap().getPixels(pixels, 0, width, sx, sy, width, height);
 			}
 			float dx;
 			if ((anchor & Graphics.RIGHT) != 0) {
-				dx = x_dest - width;
+				dx = (long) x_dest - width;
 			} else if ((anchor & Graphics.HCENTER) != 0) {
-				dx = x_dest - width / 2.0f;
+				dx = (long) x_dest - width / 2;
 			} else {
 				dx = x_dest;
 			}
 			float dy;
 			if ((anchor & Graphics.BOTTOM) != 0) {
-				dy = y_dest - height;
+				dy = (long) y_dest - height;
 			} else if ((anchor & Graphics.VCENTER) != 0) {
-				dy = y_dest - height / 2.0f;
+				dy = (long) y_dest - height / 2;
 			} else {
 				dy = y_dest;
 			}
 			if (scale == 1) {
-				canvas.drawBitmap(pixels, 0, width, dx, dy, width, height, false, null);
+				canvas.drawBitmap(pixels, 0, width, dx, dy, width, height, true, null);
 			} else {
 				// Snapshot before writing: source/destination may overlap on the same Bitmap.
 				Bitmap snapshot = Bitmap.createBitmap(image.getBitmap(),
-						x_src * scale, y_src * scale, width * scale, height * scale);
+						sx * scale, sy * scale, width * scale, height * scale);
 				try {
 					rectF.set(dx, dy, dx + width, dy + height);
 					canvas.drawBitmap(snapshot, null, rectF, null);
@@ -939,13 +947,19 @@ public class Graphics implements
 	}
 
 	private void flushImage(Image source, int x, int y, int width, int height) {
-		rect.set(x, y, x + width, y + height);
+		if (width <= 0 || height <= 0) return;
+		int left = Math.max(0, x);
+		int top = Math.max(0, y);
+		int right = (int) Math.min((long) x + width, Math.min(source.getWidth(), image.getWidth()));
+		int bottom = (int) Math.min((long) y + height, Math.min(source.getHeight(), image.getHeight()));
+		if (left >= right || top >= bottom) return;
+		rect.set(left, top, right, bottom);
 		int sourceScale = source.getPixelScale();
 		if (sourceScale == 1) {
 			canvas.drawBitmap(source.getBitmap(), rect, rect, null);
 		} else {
-			Rect physicalSource = new Rect(x * sourceScale, y * sourceScale,
-					(x + width) * sourceScale, (y + height) * sourceScale);
+			Rect physicalSource = new Rect(left * sourceScale, top * sourceScale,
+					right * sourceScale, bottom * sourceScale);
 			canvas.drawBitmap(source.getBitmap(), physicalSource, rect, null);
 		}
 	}

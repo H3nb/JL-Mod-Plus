@@ -33,18 +33,21 @@ Readback of antialiased HD raster edges can differ from a separate 1× render.
 The runtime reconstructs immutable LCDUI image regions before composing
 them into an HD target. `drawRegion` isolates the source rectangle to prevent
 filtering across neighboring tiles in a sprite atlas. The cache is shared
-within the currently selected graphics profile, bounded to one sixteenth of the Java heap limit, and keyed by bitmap identity, generation, region and
-reconstruction factor. Reconstruction is reduced when its estimated output
-would exceed the cache budget; the cache never grows to fit a single entry. Existing `Graphics` objects consult the active
-session cache at draw time, so retained framebuffers cannot use a previous
-profile's enhancement mode.
+within the currently selected graphics profile, bounded to one sixteenth
+of the Java heap limit, and keyed by bitmap identity, generation, region
+and reconstruction factor. Reconstruction is reduced when its estimated
+output would exceed the cache budget; the cache never grows to fit a
+single entry. Existing `Graphics` objects consult the active session cache
+at draw time, so retained framebuffers cannot use a previous profile's
+enhancement mode.
 
-Reconstruction is independent of the render target factor. MMPX and Edge-aware
-use factors from 2× through 4× where the result does not exceed 4 MiB;
-otherwise the original source is drawn using Nearest. For example,
-a 240×320 image with a 4× target is reconstructed at 3× and then composed
-at the target density. MMPX preserves source palette colors; Edge-aware
-antialiases reconstructed edges with alpha-aware interpolation.
+Reconstruction is independent of the render target factor. It is limited by
+the requested target density, the maximum factor of 10×, and the applicable
+allocation limits. LCDUI MMPX uses the exact 2× quadrant reconstruction for
+even factors and composes it with nearest sampling; odd factors retain their
+distinct center subpixels. Edge-aware antialiases reconstructed edges with
+alpha-aware interpolation. If reconstruction cannot fit the resource limits,
+the runtime reduces the factor or draws the original source.
 
 Mutable `Image`, `drawRGB` and ordinary guest off-screen surfaces are not
 source-enhanced; their contents may change on every frame. An unsuccessful

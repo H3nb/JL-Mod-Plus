@@ -80,8 +80,16 @@ final class BitmapUpscaling {
         int factor = source.isMutable() ? 1 : ImageEnhancementPolicy.chooseFactor(
                 sourceRect.width(), sourceRect.height(), targetScale, Integer.MAX_VALUE);
         long regionPixels = (long) sourceRect.width() * sourceRect.height();
-        while (factor > 1 && regionPixels > maximumOutputPixels()
-                / ((long) factor * factor)) factor--;
+        while (factor > 1) {
+            // Even MMPX factors repeat each 2x quadrant exactly. LCDUI uses
+            // nearest sampling for MMPX; no larger intermediate is needed.
+            int reconstruction = mode == MMPX && (factor & 1) == 0 ? 2 : factor;
+            if (regionPixels <= maximumOutputPixels() / ((long) reconstruction * reconstruction)) {
+                factor = reconstruction;
+                break;
+            }
+            factor--;
+        }
         Bitmap enhanced = factor == 1 ? null : prepare(bitmap, sourceRect, factor);
         // xBR reconstruction is already antialiased; smooth only the remaining
         // non-integer resampling. MMPX retains hard source-palette transitions.

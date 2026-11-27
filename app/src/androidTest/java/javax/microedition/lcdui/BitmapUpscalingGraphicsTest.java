@@ -74,6 +74,32 @@ public class BitmapUpscalingGraphicsTest {
         }
     }
 
+    @Test public void evenMmpxCompositionMatchesFullReconstruction() {
+        int black = 0xFF000000, white = 0xFFFFFFFF;
+        int[] raw = {black, white, black, white, black, black, black, black, black};
+        Image source = Image.createRGBImage(raw, 3, 3, true);
+        Graphics.configureBitmapUpscaling(BitmapUpscaling.MMPX);
+        try {
+            assertNotEquals(black, MmpxScaler.scale2x(raw, 3, 3)[2 * 6 + 2]);
+            for (int factor : new int[]{2, 4, 6, 8, 10}) {
+                Image target = Image.createDisplayTarget(3, 3, factor);
+                try {
+                    target.getGraphics().drawImage(source, 0, 0, Graphics.TOP | Graphics.LEFT);
+                    int[] expected = MmpxScaler.scale(raw, 3, 3, factor);
+                    int side = 3 * factor;
+                    int[] actual = new int[side * side];
+                    target.getBitmap().getPixels(actual, 0, side, 0, 0, side, side);
+                    assertArrayEquals("MMPX factor " + factor, expected, actual);
+                } finally {
+                    target.getBitmap().recycle();
+                }
+            }
+        } finally {
+            Graphics.configureBitmapUpscaling(BitmapUpscaling.NEAREST);
+            source.getBitmap().recycle();
+        }
+    }
+
     @Test public void bitmapModesLeaveMutableImageUnmodified() {
         Graphics.configureBitmapUpscaling(BitmapUpscaling.EDGE_AWARE);
         Image source=Image.createImage(2,2);
