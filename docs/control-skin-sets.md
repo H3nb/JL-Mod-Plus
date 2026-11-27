@@ -31,6 +31,9 @@ allowed thereafter; a name cannot end in a period. Interactive names are
 trimmed. The same validation applies to ZIP roots, including supplementary
 Unicode characters. Canonically equivalent names are compared case-insensitively
 for collisions without normalizing or renaming existing folders.
+The duplicate action suggests an editable numbered name (such as `Fantasy (2)`)
+using the same name-length and collision rules as ZIP import. The store validates
+the final name again when the user confirms.
 `skin.json` stores an independent UUID, so renaming through the editor does
 not invalidate a MIDlet's selection:
 

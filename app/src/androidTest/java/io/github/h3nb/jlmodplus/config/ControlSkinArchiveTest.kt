@@ -92,6 +92,25 @@ class ControlSkinArchiveTest {
         assertEquals(set.id, imported.id)
     }
 
+    @Test fun duplicateNameSuggestionIsLanguageIndependentAndAvoidsKnownCollisions() {
+        val workdir = temporary.newFolder("duplicate-name")
+        val source = ControlSkinStore.create(workdir, "Cafe\u0301")
+        ControlSkinStore.create(workdir, "Café (2)")
+        val suggested = ControlSkinSetTransfer.availableName(
+            source.name, ControlSkinStore.list(workdir).map { it.name },
+        )
+        assertEquals("Cafe\u0301 (3)", suggested)
+        assertTrue(ControlSkinSetTransfer.validSetName(suggested))
+        val copy = ControlSkinStore.duplicate(workdir, source.id, suggested)
+        assertNotEquals(source.id, copy.id)
+        assertEquals(suggested, copy.name)
+
+        val longName = "𐐀".repeat(61)
+        val longSuggestion = ControlSkinSetTransfer.availableName(longName, listOf(longName))
+        assertEquals("𐐀".repeat(57) + " (2)", longSuggestion)
+        assertTrue(ControlSkinSetTransfer.validSetName(longSuggestion))
+    }
+
     @Test fun nameValidationAllowsMarksButRejectsUnsafePaths() {
         for (name in listOf("தமிழ்", "किरण", "Cafe\u0301", "𐐀".repeat(61))) {
             assertTrue(name, ControlSkinSetTransfer.validSetName(name))

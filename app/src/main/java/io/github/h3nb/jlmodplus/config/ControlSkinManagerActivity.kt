@@ -712,7 +712,11 @@ class ControlSkinManagerActivity : AppCompatActivity() {
             )
             DropdownMenuItem(
                 text = { Text(stringResource(R.string.control_skin_duplicate)) },
-                onClick = { onDismiss(); editName(NameAction.DUPLICATE, set.id, set.name + " Copy") },
+                onClick = {
+                    onDismiss()
+                    val name = ControlSkinSetTransfer.availableName(set.name, sets.map { it.name })
+                    editName(NameAction.DUPLICATE, set.id, name)
+                },
             )
             DropdownMenuItem(
                 text = { Text(stringResource(R.string.control_skin_export_zip)) },

@@ -21,6 +21,19 @@ internal object ControlSkinSetTransfer {
 
     fun validSetName(name: String): Boolean = ControlSkinStore.validSetName(name)
 
+    fun availableName(label: String, existingNames: Collection<String>): String {
+        var name = label
+        var index = 2
+        while (existingNames.any { ControlSkinStore.sameSetName(it, name) }) {
+            val suffix = " (" + index++ + ")"
+            val length = minOf(label.codePointCount(0, label.length),
+                ControlSkinStore.MAX_NAME_CODE_POINTS - suffix.length)
+            name = label.substring(0, label.offsetByCodePoints(0, length))
+                .trimEnd(' ', '.') + suffix
+        }
+        return name
+    }
+
     fun validAssetName(name: String): Boolean {
         if (name == METADATA) return true
         if (name.isBlank() || name.startsWith('.') || name.endsWith(' ') ||
@@ -79,15 +92,8 @@ internal object ControlSkinSetTransfer {
             }
             val installedId = if (original == null) sourceId else UUID.randomUUID().toString()
             val label = sourceName?.takeIf(::validSetName) ?: "Imported control skin"
-            var name = label
-            var index = 2
-            while (root.listFiles()?.any { ControlSkinStore.sameSetName(it.name, name) } == true) {
-                val suffix = " (" + index++ + ")"
-                val length = minOf(label.codePointCount(0, label.length),
-                    ControlSkinStore.MAX_NAME_CODE_POINTS - suffix.length)
-                name = label.substring(0, label.offsetByCodePoints(0, length))
-                    .trimEnd(' ', '.') + suffix
-            }
+            val existing = root.listFiles() ?: throw IOException("Cannot list control skin sets")
+            val name = availableName(label, existing.map(File::getName))
             val stage = File(root, ".skin-" + UUID.randomUUID() + ".tmp")
             val target = File(root, name)
             if (!stage.mkdir()) throw IOException("Cannot stage imported control skin")
