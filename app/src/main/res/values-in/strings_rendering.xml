@@ -27,7 +27,7 @@
     <string name="render_shader_effects">Efek shader</string>
     <string name="render_pipeline_title">Alur rendering</string>
     <string name="render_shader_preset">Preset shader</string>
-    <string name="render_shader_picker_help">Gabungkan efek bawaan dan shader lawas Anda sendiri dalam tumpukan efek berurutan.</string>
+    <string name="render_shader_picker_help">Susun efek bawaan dan shader lawas Anda dalam satu rangkaian efek.</string>
     <string name="render_shader_requires_gles">Shader disimpan, tetapi hanya diterapkan saat OpenGL ES dipilih.</string>
     <string name="render_shader_missing">Shader yang dipilih tidak ada di pustaka. Pilih preset lain atau pulihkan filenya.</string>
     <string name="render_shader_parameters">Parameter shader</string>
@@ -47,9 +47,9 @@
     <string name="render_display_scaling">Penskalaan tampilan</string>
     <string name="render_display_viewport">Area tampilan game</string>
     <string name="render_texture_filtering">Filter penskalaan layar</string>
-    <string name="render_texture_filtering_help">Memilih Nearest atau Linear untuk gambar game akhir. Efek dapat menimpanya.</string>
+    <string name="render_texture_filtering_help">Memilih Nearest atau Linear untuk gambar akhir game. Efek shader dapat menggunakan filter lain.</string>
     <string name="render_viewport_note">Ukuran area tampilan ditentukan dari tata letak layar sebelum tahap shader direncanakan. Panah menunjukkan aliran gambar, bukan urutan penghitungan tata letak.</string>
-    <string name="render_pipeline_help">Lihat cara frame game sampai ke layar, lalu edit setiap tahapannya.</string>
+    <string name="render_pipeline_help">Lihat alur frame game hingga ditampilkan di layar, lalu sesuaikan setiap tahapnya.</string>
     <string name="render_no_shader">Pilih preset untuk mengubah tampilan game.</string>
     <string name="render_shader_adjust">Sesuaikan parameter</string>
     <string name="render_legacy_tuning_hint">Sesuaikan parameter efek lawas ini.</string>
@@ -73,7 +73,7 @@
     <string name="render_custom_empty">Tambahkan shader untuk memulai rangkaian kustom.</string>
     <string name="render_custom_stage_count"><xliff:g id="count" example="3">%1$d</xliff:g> tahap shader kustom</string>
     <string name="render_custom_add">Tambahkan shader</string>
-    <string name="render_custom_add_hint">Pilih file shader .glsl mandiri eksternal.</string>
+    <string name="render_custom_add_hint">Pilih file sumber .glsl yang dapat digunakan secara mandiri.</string>
     <string name="render_custom_no_sources">Tidak ada shader lawas yang ditemukan. Tambahkan file shader .ini ke folder shaders, lalu buka kembali setelan.</string>
     <string name="render_custom_scale">Output: <xliff:g id="scale" example="2">%1$d</xliff:g>× tahap sebelumnya</string>
     <string name="render_custom_output_scale">Ukuran output untuk tahap berikutnya</string>
@@ -124,10 +124,10 @@
     <string name="render_effect_legacy_source">Sumber: <xliff:g id="shader_name" example="CRT Classic">%1$s</xliff:g></string>
     <string name="render_effect_removed">Efek dihapus</string>
     <string name="render_effect_undo">Urungkan</string>
-    <string name="render_effect_catalog_hint">Ketuk efek untuk menambahkannya ke tumpukan.</string>
+    <string name="render_effect_catalog_hint">Ketuk efek untuk menambahkannya ke rangkaian efek.</string>
     <string name="render_effect_user_folder_hint">File INI, VSH, dan FSH harus berada di folder shaders.</string>
-    <string name="render_effect_legacy_scale_note">Shader lawas dirender pada resolusi area tampilan layar; flag OutputResolution dan Upscaling di file .ini diabaikan.</string>
-    <string name="render_effect_legacy_metadata_missing">Setelan dari file .ini shader ini tidak ditemukan. File sumbernya mungkin masih dapat dirender.</string>
+    <string name="render_effect_legacy_scale_note">Shader lawas menggunakan resolusi area tampilan game; opsi OutputResolution dan Upscaling dalam file .ini diabaikan.</string>
+    <string name="render_effect_legacy_metadata_missing">Setelan dari file .ini shader ini tidak ditemukan. Shader mungkin masih berfungsi menggunakan file sumbernya.</string>
     <string name="render_effect_count"><xliff:g id="count" example="2">%1$d</xliff:g> aktif</string>
     <string name="render_effect_add">Tambahkan efek</string>
     <string name="render_effect_builtin">Efek bawaan</string>
@@ -143,14 +143,14 @@
     <string name="render_effect_no_parameters">Efek ini tidak memiliki parameter yang dapat disesuaikan.</string>
     <string name="render_effect_parameter_number">Parameter <xliff:g id="count" example="2">%1$d</xliff:g></string>
     <string name="render_effect_restore">Reset parameter</string>
-    <string name="render_effect_missing">Tidak tersedia: <xliff:g id="shader_name" example="CRT Classic">%1$s</xliff:g>. Efek bawaan ini tidak tersedia di versi ini. Hapus dari tumpukan.</string>
-    <string name="render_effect_limit">Tumpukan mendukung hingga 16 tahap shader (beberapa efek menggunakan lebih dari satu tahap).</string>
+    <string name="render_effect_missing">Tidak tersedia: <xliff:g id="shader_name" example="CRT Classic">%1$s</xliff:g>. Efek bawaan ini tidak tersedia di versi ini. Hapus dari rangkaian efek.</string>
+    <string name="render_effect_limit">Rangkaian efek mendukung hingga 16 tahap shader (beberapa efek menggunakan lebih dari satu tahap).</string>
     <string name="render_effect_unavailable">Efek shader tidak dapat dijalankan. Gambar game asli ditampilkan. Coba kurangi jumlah efek atau turunkan resolusi render.</string>
-    <string name="render_bitmap_memory_reduced">Memori tidak cukup untuk meningkatkan skala bitmap. Gambar asli atau skala lebih rendah akan digunakan. Coba turunkan resolusi render atau bebaskan memori, lalu mulai ulang.</string>
-    <string name="render_texture_memory_reduced">Peningkatan skala tekstur Micro3D gagal. Tekstur asli akan digunakan. Coba turunkan resolusi render atau bebaskan memori, lalu mulai ulang.</string>
-    <string name="render_resolution_reduced">Resolusi render diturunkan dari <xliff:g id="from_scale" example="4">%1$d</xliff:g>× ke <xliff:g id="to_scale" example="2">%2$d</xliff:g>× karena batas memori atau GPU. Coba pilih resolusi lebih rendah atau bebaskan memori, lalu mulai ulang.</string>
+    <string name="render_bitmap_memory_reduced">Memori tidak cukup untuk meningkatkan skala bitmap. Gambar asli atau skala yang lebih rendah akan digunakan. Coba turunkan resolusi render atau kosongkan sebagian memori, lalu mulai ulang.</string>
+    <string name="render_texture_memory_reduced">Peningkatan skala tekstur Micro3D gagal. Tekstur asli akan digunakan. Coba turunkan resolusi render atau kosongkan sebagian memori, lalu mulai ulang.</string>
+    <string name="render_resolution_reduced">Resolusi render diturunkan dari <xliff:g id="from_scale" example="4">%1$d</xliff:g>× ke <xliff:g id="to_scale" example="2">%2$d</xliff:g>× karena batas memori atau GPU. Coba pilih resolusi lebih rendah atau kosongkan sebagian memori, lalu mulai ulang.</string>
     <string name="render_gpu_texture_limit">Ukuran gambar game melebihi batas ukuran tekstur GPU, bahkan pada skala 1×. Kurangi ukuran layar MIDlet atau ganti mode grafis.</string>
-    <string name="render_gpu_upload_failed">Tidak dapat mengunggah gambar game ke GPU. Sedang mencoba lagi. Coba tutup aplikasi lain atau ganti mode grafis.</string>
+    <string name="render_gpu_upload_failed">Tidak dapat mengirim gambar game ke GPU. Sedang mencoba lagi. Coba tutup aplikasi lain atau ganti mode grafis.</string>
     <string name="render_effect_gles">Efek disimpan, tetapi hanya dirender dengan OpenGL ES.</string>
     <string name="render_effect_legacy_file_error">Tidak dapat memuat shader lawas yang valid dari file .ini yang dipilih.</string>
     <string name="effect_color">Penyesuaian warna</string>
@@ -169,17 +169,17 @@
     <string name="effect_brightness">Kecerahan</string>
     <string name="effect_contrast">Kontras</string>
     <string name="effect_saturation">Saturasi</string>
-    <string name="effect_strength">Kekuatan</string>
+    <string name="effect_strength">Intensitas</string>
     <string name="effect_color_levels">Tingkat warna</string>
     <string name="effect_edge">Intensitas tepi</string>
     <string name="effect_threshold">Ambang kecerahan</string>
     <string name="effect_radius">Radius pengaburan</string>
-    <string name="effect_mask_strength">Kekuatan mask</string>
-    <string name="effect_scan_strength">Kekuatan garis pindai</string>
+    <string name="effect_mask_strength">Intensitas mask</string>
+    <string name="effect_scan_strength">Intensitas garis pindai</string>
     <string name="effect_bright_boost">Peningkatan kecerahan</string>
     <string name="effect_lcd">LCD</string>
     <string name="effect_lcd_desc">Meniru kisi piksel dan subpiksel layar LCD warna klasik.</string>
-    <string name="effect_lcd_grid">Kekuatan kisi</string>
+    <string name="effect_lcd_grid">Intensitas kisi</string>
     <string name="effect_lcd_subpixel">Subpiksel RGB</string>
     <string name="effect_lcd_brightness">Kecerahan LCD</string>
     <string name="effect_scanlines">Scanlines Lite</string>

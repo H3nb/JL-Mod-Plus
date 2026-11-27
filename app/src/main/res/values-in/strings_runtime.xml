@@ -29,7 +29,7 @@
     <string name="crash_reports_loading">Memuat laporan diagnostik</string>
     <string name="crash_report_midlet_failure">Kegagalan sesi MIDlet</string>
     <string name="crash_report_java_report">Laporan diagnostik Java</string>
-    <string name="crash_report_process_exit">Laporan keluar proses</string>
+    <string name="crash_report_process_exit">Laporan penghentian proses</string>
     <string name="crash_report_list_subtitle"><xliff:g id="report_type" example="Java crash">%1$s</xliff:g> · <xliff:g id="timestamp" example="Nov 25, 09:40">%2$s</xliff:g></string>
     <plurals name="crash_reports_selected_count">
         <item quantity="other"><xliff:g id="count" example="3">%1$d</xliff:g> dipilih</item>
@@ -48,13 +48,13 @@
     <string name="crash_report_bundle_failed">Tidak dapat menyiapkan paket diagnostik.</string>
     <string name="crash_report_locate_failed">Tidak ada pemilih file untuk menemukan paket diagnostik.</string>
     <string name="crash_report_bundle_cleanup_failed">Tidak dapat menghapus paket diagnostik. Laporan diagnostik tidak dihapus.</string>
-    <string name="crash_report_github_unavailable">Tidak ada browser atau aplikasi untuk membuka formulir isu GitHub.</string>
+    <string name="crash_report_github_unavailable">Tidak ada browser atau aplikasi yang dapat membuka formulir laporan masalah di GitHub.</string>
     <string name="crash_report_delete_title">Hapus laporan diagnostik?</string>
-    <string name="crash_report_delete_message">Tindakan ini menghapus permanen laporan diagnostik dan paket yang dibuat dari perangkat ini. File yang sudah diunggah di tempat lain tidak terpengaruh.</string>
+    <string name="crash_report_delete_message">Laporan diagnostik dan paket yang telah dibuat akan dihapus secara permanen dari perangkat ini. File yang sudah diunggah di tempat lain tidak terpengaruh.</string>
     <plurals name="crash_reports_batch_delete_title">
         <item quantity="other">Hapus <xliff:g id="count" example="3">%1$d</xliff:g> laporan diagnostik?</item>
     </plurals>
-    <string name="crash_reports_batch_delete_message">Tindakan ini menghapus permanen laporan diagnostik yang dipilih dan paket yang dibuat dari perangkat ini. File yang sudah diunggah di tempat lain tidak terpengaruh.</string>
+    <string name="crash_reports_batch_delete_message">Laporan diagnostik yang dipilih dan paket yang telah dibuat akan dihapus secara permanen dari perangkat ini. File yang sudah diunggah di tempat lain tidak terpengaruh.</string>
     <string name="crash_report_delete_failed">Tidak dapat menghapus laporan.</string>
     <string name="crash_report_unavailable">Laporan ini tidak lagi tersedia.</string>
     <string name="process_exit_recovery_title">Proses berhenti tak terduga</string>
@@ -79,8 +79,8 @@
     <string name="runtime_virtual_controls_dpad">D-pad</string>
     <string name="runtime_virtual_controls_analog">Stik analog</string>
     <string name="runtime_virtual_controls_edit">Edit tata letak</string>
-    <string name="runtime_virtual_controls_edit_guide_title">Panduan edit tata letak</string>
-    <string name="runtime_virtual_controls_edit_guide_message">Seret kontrol untuk memindahkannya. Untuk tombol, geser dua jari secara horizontal atau vertikal untuk mengubah lebar atau tinggi, atau secara diagonal untuk mengubah keduanya. Cubit untuk mengubah ukuran D-pad atau stik analog secara proporsional. Ketuk Selesai setelah mengatur tata letak.</string>
+    <string name="runtime_virtual_controls_edit_guide_title">Panduan pengeditan tata letak</string>
+    <string name="runtime_virtual_controls_edit_guide_message">Seret kontrol untuk memindahkannya. Geser dua jari secara horizontal atau vertikal untuk mengubah lebar atau tinggi tombol, atau secara diagonal untuk mengubah keduanya. Rapatkan atau renggangkan dua jari untuk mengubah ukuran D-pad atau stik analog secara proporsional. Ketuk Selesai setelah mengatur tata letak.</string>
     <string name="runtime_virtual_controls_edit_guide_dont_show_again">Jangan tampilkan lagi</string>
     <string name="runtime_virtual_controls_switch_layout">Pilih tata letak kontrol</string>
     <string name="runtime_virtual_controls_show_controls">Pilih kontrol yang ditampilkan</string>
@@ -91,7 +91,7 @@
     <string name="screenshot_saved_path">Screenshot tersimpan di <xliff:g id="path" example="Pictures/Bounce Tales/Screenshot_20261125-103000.png">%1$s</xliff:g></string>
     <!-- Deliberate English fallback until reviewed translations are available. -->
     <string name="log_save_success" tools:ignore="MissingTranslation"><xliff:g id="name" example="Example">%1$s</xliff:g> tersimpan di Downloads → JL-Mod Plus Diagnostics.</string>
-    <string name="log_save_partial" tools:ignore="MissingTranslation">Sebagian log tersimpan sebagai <xliff:g id="name" example="Example">%1$s</xliff:g> di Downloads → JL-Mod Plus Diagnostics.</string>
+    <string name="log_save_partial" tools:ignore="MissingTranslation">Log tidak lengkap tersimpan sebagai <xliff:g id="name" example="Example">%1$s</xliff:g> di Downloads → JL-Mod Plus Diagnostics.</string>
     <string name="log_save_empty" tools:ignore="MissingTranslation">Tidak ada catatan log aplikasi yang tersedia di buffer Android.</string>
     <string name="log_save_timeout" tools:ignore="MissingTranslation">Waktu pengumpulan log habis. Tidak ada file yang disimpan.</string>
     <string name="log_save_failed">Tidak dapat menyimpan log.</string>

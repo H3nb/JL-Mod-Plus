@@ -47,11 +47,11 @@
     <string name="config_gamepad_calibration_phase_cancelled">Dibatalkan</string>
     <string name="config_gamepad_calibration_waiting_controller">Hubungkan pengontrol dengan stik analog atau trigger yang didukung. Gerakkan stik atau tekan trigger untuk memulai kalibrasi. Kalibrasi sebelumnya tidak berubah hingga Anda menyimpan hasil kalibrasi atau meresetnya.</string>
     <string name="config_gamepad_calibration_no_analog_ranges">Pengontrol ini tidak memiliki stik analog atau trigger dengan rentang yang didukung.</string>
-    <string name="config_gamepad_calibration_start">Pertahankan semua stik di posisi tengah dan jangan tekan trigger hingga tahap berikutnya dimulai.</string>
+    <string name="config_gamepad_calibration_start">Pertahankan semua stik di posisi tengah dan jangan tekan trigger hingga waktu pengukuran posisi netral habis.</string>
     <string name="config_gamepad_calibration_save_failed">Tidak dapat menyimpan kalibrasi. Periksa setelan saat ini sebelum mencoba lagi.</string>
     <string name="config_gamepad_calibration_no_supported_ranges">Tidak ada rentang analog yang didukung.</string>
     <string name="config_gamepad_calibration_rejected">Kalibrasi ditolak: <xliff:g id="name" example="Example">%1$s</xliff:g></string>
-    <string name="config_gamepad_calibration_neutral_instructions">Pertahankan semua stik yang terdeteksi di posisi tengah dan jangan tekan trigger hingga tahap berikutnya dimulai.</string>
+    <string name="config_gamepad_calibration_neutral_instructions">Pertahankan semua stik yang terdeteksi di posisi tengah dan jangan tekan trigger yang terdeteksi hingga waktu pengukuran posisi netral habis.</string>
     <string name="config_gamepad_calibration_stick_instructions">Gerakkan setiap stik yang terdeteksi hingga batas maksimal ke segala arah, lalu ketuk Berikutnya.</string>
     <string name="config_gamepad_calibration_trigger_instructions">Lepaskan setiap trigger yang terdeteksi, lalu tekan hingga batas maksimal. Ketuk Berikutnya untuk melanjutkan.</string>
     <string name="config_gamepad_calibration_review_instructions">Simpan untuk mengganti kalibrasi pengontrol ini.</string>
@@ -74,7 +74,7 @@
     <string name="config_gamepad_diagnosis_device"><xliff:g id="device_name" example="Xbox Controller">%1$s</xliff:g> (#<xliff:g id="device_id" example="1">%2$d</xliff:g>)</string>
     <string name="config_gamepad_calibration_issue_no_channels">tidak ada kanal yang didukung</string>
     <string name="config_gamepad_calibration_issue_invalid_constraints">batasan kalibrasi tidak valid</string>
-    <string name="config_gamepad_calibration_issue_non_finite">sampel tidak hingga</string>
+    <string name="config_gamepad_calibration_issue_non_finite">nilai sampel bukan bilangan berhingga</string>
     <string name="config_gamepad_calibration_issue_insufficient_samples">sampel tidak mencukupi</string>
     <string name="config_gamepad_calibration_issue_invalid_range">rentang tidak valid</string>
     <string name="config_gamepad_calibration_issue_rest_outside_range">nilai posisi netral di luar rentang</string>
@@ -145,20 +145,20 @@
     <string name="config_controls_virtual_keyboard">Kontrol virtual</string>
     <string name="config_controls_virtual_keyboard_colors">Warna kontrol virtual</string>
     <string name="config_virtual_controls_color_preview">Pratinjau warna</string>
-    <string name="config_virtual_controls_preview_normal">Normal</string>
+    <string name="config_virtual_controls_preview_normal">Tidak ditekan</string>
     <string name="config_virtual_controls_preview_pressed">Ditekan</string>
     <string name="config_controls_maintenance">Tata letak</string>
     <string name="config_controls_skin_help">Mengubah tampilan tombol keypad, D-pad, dan stik analog menggunakan gambar kustom.</string>
-    <string name="config_controls_color_button_normal">Tombol normal</string>
-    <string name="config_controls_color_button_pressed">Tombol ditekan</string>
-    <string name="config_controls_color_label_normal">Label normal</string>
-    <string name="config_controls_color_label_pressed">Label ditekan</string>
+    <string name="config_controls_color_button_normal">Tombol saat tidak ditekan</string>
+    <string name="config_controls_color_button_pressed">Tombol saat ditekan</string>
+    <string name="config_controls_color_label_normal">Label saat tidak ditekan</string>
+    <string name="config_controls_color_label_pressed">Label saat ditekan</string>
     <string name="config_controls_color_outline_short">Garis tepi</string>
     <string name="config_controls_disabled_hint">Kontrol virtual sedang nonaktif. Anda tetap dapat menyesuaikannya di sini.</string>
     <string name="config_controls_opacity_help" formatted="false">Mengatur opasitas kontrol virtual. Pada 0%, kontrol menjadi transparan; pada 100%, tidak ada transparansi tambahan.</string>
     <string name="config_controls_opaque_outside">Tampilkan kontrol tanpa transparansi di luar layar MIDlet</string>
     <string name="config_controls_opaque_outside_help">Jika aktif, kontrol yang sepenuhnya berada di luar layar MIDlet ditampilkan tanpa transparansi tambahan. Kontrol yang menutupi sebagian layar mengikuti opasitas yang dipilih.</string>
-    <string name="config_controls_connect_controller">Hubungkan pengontrol untuk mengkalibrasi</string>
+    <string name="config_controls_connect_controller">Hubungkan pengontrol untuk melakukan kalibrasi</string>
     <string name="config_controls_color_skin_notice">Skin tombol penuh dapat menggantikan warna, bentuk, dan garis tepi tombol default.</string>
     <string name="config_current_value">Nilai saat ini</string>
     <string name="config_maintenance">Reset dan data</string>
@@ -184,7 +184,7 @@
     <string name="profile_template_operation_failed">Tidak dapat menyelesaikan operasi profil.</string>
     <string name="config_help_screen_size">Mengatur resolusi layar Java ME virtual yang digunakan oleh MIDlet.</string>
     <string name="config_help_orientation">Memilih orientasi layar saat MIDlet berjalan.</string>
-    <string name="config_help_scale_type">Pilih cara game menyesuaikan tampilan layar. Pilih Manual untuk mengatur skala kustom.</string>
+    <string name="config_help_scale_type">Pilih cara menyesuaikan ukuran game dengan layar. Pilih Manual untuk mengatur skala kustom.</string>
     <string name="config_help_scale_ratio" formatted="false">Menyesuaikan ukuran tampilan dari 1% hingga 1000%. Pada 100%, game menggunakan ukuran aslinya; nilai lebih besar dapat melebihi batas layar.</string>
     <string name="config_help_lock_custom_resolution_ratio">Menjaga rasio aspek saat mengedit resolusi kustom.</string>
     <string name="config_help_virtual_keyboard">Menampilkan kontrol di layar untuk MIDlet ini.</string>
@@ -234,10 +234,10 @@
     <string name="config_help_key_mapping">Memetakan tombol fisik Android ke tindakan keypad Java ME.</string>
     <string name="config_help_vk_button_shape">Mengatur bentuk default tombol keypad. D-pad dan stik analog memiliki bentuknya sendiri.</string>
     <string name="config_help_vk_feedback">Bergetar saat kontrol virtual ditekan jika getaran diaktifkan di Setelan.</string>
-    <string name="config_help_vk_hide_delay">Menyembunyikan kontrol setelah jeda ini saat menutupi layar MIDlet. Nilai 0 menonaktifkan sembunyi otomatis.</string>
+    <string name="config_help_vk_hide_delay">Menyembunyikan kontrol setelah jeda ini jika kontrol menutupi layar MIDlet. Nilai 0 menonaktifkan penyembunyian otomatis.</string>
     <string name="config_help_reset_layout">Memulihkan tata letak kontrol virtual tanpa mengubah setelan MIDlet lainnya.</string>
     <string name="config_help_skip_resume">Setelah startApp() pertama berhasil, lewati pemanggilan berikutnya saat MIDlet dilanjutkan. Gunakan hanya jika MIDlet gagal berjalan saat dilanjutkan.</string>
-    <string name="config_help_soundbank">Memilih soundbank untuk sintesis MIDI. Tidak memengaruhi audio prarekaman.</string>
+    <string name="config_help_soundbank">Memilih soundbank untuk sintesis MIDI. Tidak memengaruhi audio yang sudah direkam.</string>
     <string name="profile_create_title">Buat profil</string>
     <string name="profile_rename_title">Ganti nama profil</string>
     <string name="presets">Profil</string>
@@ -337,8 +337,8 @@
     <string name="config_asset_name">Nama file</string>
     <string name="config_asset_delete_confirmation">Hapus <xliff:g id="name" example="Example">%1$s</xliff:g> dari folder kerja? MIDlet lain mungkin juga menggunakan file ini. Salinan di tempat lain tidak terpengaruh.</string>
     <string name="config_asset_imported">Disalin dan dipilih: <xliff:g id="name" example="Example">%1$s</xliff:g></string>
-    <string name="config_asset_reused">File yang ada dipilih: <xliff:g id="name" example="Example">%1$s</xliff:g></string>
-    <string name="config_asset_renamed">Diganti nama menjadi <xliff:g id="name" example="Example">%1$s</xliff:g></string>
+    <string name="config_asset_reused">File yang sudah ada dipilih: <xliff:g id="name" example="Example">%1$s</xliff:g></string>
+    <string name="config_asset_renamed">Nama diubah menjadi <xliff:g id="name" example="Example">%1$s</xliff:g></string>
     <string name="config_asset_deleted"><xliff:g id="name" example="Example">%1$s</xliff:g> dihapus</string>
     <string name="config_asset_invalid">File tidak didukung atau tidak valid.</string>
     <string name="config_asset_operation_failed">Tidak dapat menyelesaikan operasi file.</string>
