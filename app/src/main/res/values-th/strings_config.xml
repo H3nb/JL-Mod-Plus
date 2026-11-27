@@ -74,7 +74,7 @@
     <string name="config_gamepad_diagnosis_device"><xliff:g id="device_name" example="Xbox Controller">%1$s</xliff:g> (#<xliff:g id="device_id" example="1">%2$d</xliff:g>)</string>
     <string name="config_gamepad_calibration_issue_no_channels">ไม่มีช่องสัญญาณที่รองรับ</string>
     <string name="config_gamepad_calibration_issue_invalid_constraints">เงื่อนไขการปรับเทียบไม่ถูกต้อง</string>
-    <string name="config_gamepad_calibration_issue_non_finite">ตัวอย่างค่าไม่จำกัด</string>
+    <string name="config_gamepad_calibration_issue_non_finite">ค่าตัวอย่างเป็น NaN หรืออนันต์</string>
     <string name="config_gamepad_calibration_issue_insufficient_samples">ข้อมูลตัวอย่างไม่เพียงพอ</string>
     <string name="config_gamepad_calibration_issue_invalid_range">ช่วงค่าไม่ถูกต้อง</string>
     <string name="config_gamepad_calibration_issue_rest_outside_range">ค่าพักอยู่นอกช่วง</string>

@@ -74,7 +74,7 @@
     <string name="config_gamepad_diagnosis_device"><xliff:g id="device_name" example="Xbox Controller">%1$s</xliff:g> (#<xliff:g id="device_id" example="1">%2$d</xliff:g>)</string>
     <string name="config_gamepad_calibration_issue_no_channels">कोई समर्थित चैनल नहीं</string>
     <string name="config_gamepad_calibration_issue_invalid_constraints">अमान्य कैलिब्रेशन शर्तें</string>
-    <string name="config_gamepad_calibration_issue_non_finite">असीमित नमूना</string>
+    <string name="config_gamepad_calibration_issue_non_finite">नमूने का मान परिमित नहीं है</string>
     <string name="config_gamepad_calibration_issue_insufficient_samples">अपर्याप्त नमूने</string>
     <string name="config_gamepad_calibration_issue_invalid_range">अमान्य सीमा</string>
     <string name="config_gamepad_calibration_issue_rest_outside_range">विराम मान सीमा से बाहर</string>

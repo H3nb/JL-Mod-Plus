@@ -74,7 +74,7 @@
     <string name="config_gamepad_diagnosis_device"><xliff:g id="device_name" example="Xbox Controller">%1$s</xliff:g> (#<xliff:g id="device_id" example="1">%2$d</xliff:g>)</string>
     <string name="config_gamepad_calibration_issue_no_channels">немає підтримуваних каналів</string>
     <string name="config_gamepad_calibration_issue_invalid_constraints">некоректні обмеження калібрування</string>
-    <string name="config_gamepad_calibration_issue_non_finite">нескінченна вибірка</string>
+    <string name="config_gamepad_calibration_issue_non_finite">значення вибірки не є скінченним</string>
     <string name="config_gamepad_calibration_issue_insufficient_samples">недостатньо вибірок</string>
     <string name="config_gamepad_calibration_issue_invalid_range">некоректний діапазон</string>
     <string name="config_gamepad_calibration_issue_rest_outside_range">значення спокою поза діапазоном</string>

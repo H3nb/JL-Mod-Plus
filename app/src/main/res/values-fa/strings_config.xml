@@ -74,7 +74,7 @@
     <string name="config_gamepad_diagnosis_device"><xliff:g id="device_name" example="Xbox Controller">%1$s</xliff:g> (#<xliff:g id="device_id" example="1">%2$d</xliff:g>)</string>
     <string name="config_gamepad_calibration_issue_no_channels">کانال پشتیبانی‌شده‌ای وجود ندارد</string>
     <string name="config_gamepad_calibration_issue_invalid_constraints">محدودیت‌های کالیبراسیون نامعتبر است</string>
-    <string name="config_gamepad_calibration_issue_non_finite">نمونه نامتناهی</string>
+    <string name="config_gamepad_calibration_issue_non_finite">مقدار نمونه متناهی نیست</string>
     <string name="config_gamepad_calibration_issue_insufficient_samples">نمونه‌های ناکافی</string>
     <string name="config_gamepad_calibration_issue_invalid_range">بازه نامعتبر</string>
     <string name="config_gamepad_calibration_issue_rest_outside_range">مقدار حالت سکون خارج از بازه است</string>

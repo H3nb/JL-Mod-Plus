@@ -74,7 +74,7 @@
     <string name="config_gamepad_diagnosis_device"><xliff:g id="device_name" example="Xbox Controller">%1$s</xliff:g> (#<xliff:g id="device_id" example="1">%2$d</xliff:g>)</string>
     <string name="config_gamepad_calibration_issue_no_channels">কোনো সমর্থিত চ্যানেল নেই</string>
     <string name="config_gamepad_calibration_issue_invalid_constraints">অবৈধ ক্যালিব্রেশন শর্ত</string>
-    <string name="config_gamepad_calibration_issue_non_finite">অসীম নমুনা</string>
+    <string name="config_gamepad_calibration_issue_non_finite">নমুনার মান সসীম নয়</string>
     <string name="config_gamepad_calibration_issue_insufficient_samples">অপর্যাপ্ত নমুনা</string>
     <string name="config_gamepad_calibration_issue_invalid_range">অবৈধ পরিসীমা</string>
     <string name="config_gamepad_calibration_issue_rest_outside_range">স্থির মান পরিসীমার বাইরে</string>
@@ -146,13 +146,13 @@
     <string name="config_controls_virtual_keyboard">ভার্চুয়াল কন্ট্রোল</string>
     <string name="config_controls_virtual_keyboard_colors">ভার্চুয়াল কন্ট্রোলের রঙ</string>
     <string name="config_virtual_controls_color_preview">রঙের প্রিভিউ</string>
-    <string name="config_virtual_controls_preview_normal">ছাড়া অবস্থা</string>
+    <string name="config_virtual_controls_preview_normal">না চাপলে</string>
     <string name="config_virtual_controls_preview_pressed">চাপা অবস্থা</string>
     <string name="config_controls_maintenance">লেআউট</string>
     <string name="config_controls_skin_help">কাস্টম ছবি ব্যবহার করে কীপ্যাড বাটন, ডি-প্যাড এবং অ্যানালগ স্টিকের চেহারা পরিবর্তন করে।</string>
-    <string name="config_controls_color_button_normal">ছাড়া বাটন</string>
+    <string name="config_controls_color_button_normal">না চাপা বাটন</string>
     <string name="config_controls_color_button_pressed">চাপা বাটন</string>
-    <string name="config_controls_color_label_normal">ছাড়া লেবেল</string>
+    <string name="config_controls_color_label_normal">না চাপলে লেবেল</string>
     <string name="config_controls_color_label_pressed">চাপা লেবেল</string>
     <string name="config_controls_color_outline_short">আউটলাইন</string>
     <string name="config_controls_disabled_hint">ভার্চুয়াল কন্ট্রোল বর্তমানে বন্ধ রয়েছে। আপনি তবুও এখানে এগুলো কাস্টমাইজ করতে পারেন।</string>

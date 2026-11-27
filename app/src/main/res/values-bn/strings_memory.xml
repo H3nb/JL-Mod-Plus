@@ -141,11 +141,11 @@
     <string name="memory_editor_path_incomplete">রেফারেন্স পাথ ইন্সপেকশন সীমা অতিক্রম করেছে।</string>
     <string name="memory_editor_source_unknown">উৎস শনাক্ত করা যায়নি</string>
     <string name="memory_editor_incremental_edit">ক্রমান্বয়ে বাড়ান</string>
-    <string name="memory_editor_increment_step">ধাপ</string>
+    <string name="memory_editor_increment_step">মানের ব্যবধান</string>
     <string name="memory_editor_increment_invalid">একটি পূর্ণসংখ্যা টাইপ এবং এর সীমার মধ্যে থাকা মান ব্যবহার করুন।</string>
     <!-- The batch dialog title already shows the number of selected values. -->
     <string name="memory_editor_increment_preview">প্রিভিউ: <xliff:g id="name" example="Example">%1$s</xliff:g></string>
-    <string name="memory_editor_panel_opacity">প্যানেলের স্বচ্ছতা</string>
+    <string name="memory_editor_panel_opacity">প্যানেলের অস্বচ্ছতা</string>
     <string name="memory_editor_panel_opacity_help">সার্চ করার সময় গেমের মান দেখতে ব্যাকগ্রাউন্ড সামঞ্জস্য করুন। লেখা এবং আইকন দৃশ্যমান থাকবে।</string>
     <string name="memory_editor_reconversion_required" tools:ignore="MissingTranslation">এই MIDlet-এর ইনস্টল করা কনভার্সন মেমোরি এডিটরের সাথে সামঞ্জস্যপূর্ণ নয়। গেমটি বন্ধ করুন, তারপর JL-Mod Plus-এ এটি পুনরায় কনভার্ট বা ইনস্টল করুন।</string>
     <string name="memory_saved_tab" tools:ignore="MissingTranslation">সেভ করা</string>
@@ -245,7 +245,7 @@
     <string name="memory_builder_freeze_short" tools:ignore="MissingTranslation">নির্বাচিত মানগুলো নির্দিষ্ট পরিমাণে স্থির রাখুন</string>
     <string name="memory_builder_form_short" tools:ignore="MissingTranslation">একই জায়গায় একাধিক মান সামঞ্জস্য করুন</string>
     <string name="memory_builder_actions_short" tools:ignore="MissingTranslation">এককালীন সেট করুন, যোগ করুন বা বিয়োগ করুন কাজ চালান</string>
-    <string name="memory_editor_refine_scan" tools:ignore="MissingTranslation">পরিশোধন</string>
+    <string name="memory_editor_refine_scan" tools:ignore="MissingTranslation">ফলাফল ছাঁটাই করুন</string>
     <string name="memory_scripts_saved_count" tools:ignore="MissingTranslation"><xliff:g id="count" example="3">%1$d</xliff:g>টি সেভ করা</string>
     <string name="memory_scripts_empty_hint" tools:ignore="MissingTranslation">খেলার সময় মান সম্পাদনা বা ফ্রিজ করতে একটি স্ক্রিপ্ট তৈরি করুন।</string>
     <string name="memory_builder_limits" tools:ignore="MissingTranslation">সীমা (ঐচ্ছিক)</string>

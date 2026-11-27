@@ -34,13 +34,13 @@
     <string name="file_picker_file">Файл</string>
     <string name="file_picker_preview_named">«<xliff:g id="name" example="Example">%1$s</xliff:g>» алдын ала көру</string>
     <string name="file_picker_preview_unavailable">Алдын ала көру қолжетімсіз</string>
-    <string name="file_picker_storage_volume">Жад томы</string>
+    <string name="file_picker_storage_volume">Сақтау томы</string>
     <string name="file_picker_empty">Сәйкес файлдар жоқ</string>
     <string name="file_picker_empty_folder">Қалталар табылмады</string>
     <string name="file_picker_no_matches">Сәйкестіктер жоқ</string>
-    <string name="file_picker_permission_required">Жад рұқсаты қажет</string>
-    <string name="file_picker_permission_message">Осы құрылғыдағы файлдар мен қалталарды шолу үшін жадқа қолжетімділікке рұқсат беріңіз.</string>
-    <string name="file_picker_permission_denied">Жадқа қолжетімділік берілмеді.</string>
+    <string name="file_picker_permission_required">Сақтау орнына қол жеткізу рұқсаты қажет</string>
+    <string name="file_picker_permission_message">Осы құрылғыдағы файлдар мен қалталарды шолу үшін сақтау орнына қол жеткізуге рұқсат беріңіз.</string>
+    <string name="file_picker_permission_denied">Сақтау орнына қол жеткізуге рұқсат берілмеді.</string>
     <string name="file_picker_grant_access">Рұқсат беру</string>
     <string name="file_picker_retry">Қайталау</string>
     <string name="file_picker_load_failed">Бұл қалта ашылмады.</string>
@@ -93,7 +93,7 @@
     <string name="library_expand_description">Сипаттаманы жаю</string>
     <string name="library_collapse_description">Сипаттаманы жию</string>
     <string name="no_data_for_display">Көрсетілетін қолданбалар жоқ</string>
-    <string name="permission_request_failed">Жадқа жазу рұқсаты қажет.</string>
+    <string name="permission_request_failed">Сақтау орнына жазу рұқсаты қажет.</string>
     <string name="reinstall">Бұл қолданба бұрыннан орнатылған. Қайта орнату керек пе?</string>
     <string name="reinstall_newest">Бұл қолданбаны <xliff:g id="version" example="2.1.0">%1$s</xliff:g> нұсқасына жаңарту керек пе?\n\nҚазір орнатылған: <xliff:g id="current_version" example="2.0.0">%2$s</xliff:g></string>
     <string name="reinstall_older">Бұл қолданбаны <xliff:g id="version" example="2.1.0">%1$s</xliff:g> нұсқасымен ауыстыру керек пе?\n\nҚазір орнатылған: <xliff:g id="current_version" example="2.0.0">%2$s</xliff:g>\nЕскі нұсқа бар деректермен дұрыс жұмыс істемеуі мүмкін.</string>

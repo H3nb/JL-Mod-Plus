@@ -141,7 +141,7 @@
     <string name="memory_editor_path_incomplete">ରେଫରେନ୍ସ ପଥ ଯାଞ୍ଚ ସୀମା ଅତିକ୍ରମ କରୁଛି।</string>
     <string name="memory_editor_source_unknown">ଉତ୍ସ ଟ୍ରେସ୍ ହୋଇନାହିଁ</string>
     <string name="memory_editor_incremental_edit">ବୃଦ୍ଧି କରନ୍ତୁ</string>
-    <string name="memory_editor_increment_step">ପଦକ୍ଷେପ</string>
+    <string name="memory_editor_increment_step">ମୂଲ୍ୟର ବ୍ୟବଧାନ</string>
     <string name="memory_editor_increment_invalid">ଗୋଟିଏ ପୂର୍ଣ୍ଣସଂଖ୍ୟା ପ୍ରକାର ଏବଂ ଏହାର ସୀମା ମଧ୍ୟରେ ଥିବା ମୂଲ୍ୟ ବ୍ୟବହାର କରନ୍ତୁ।</string>
     <!-- The batch dialog title already shows the number of selected values. -->
     <string name="memory_editor_increment_preview">ପ୍ରିଭ୍ୟୁ: <xliff:g id="name" example="Example">%1$s</xliff:g></string>
@@ -245,7 +245,7 @@
     <string name="memory_builder_freeze_short" tools:ignore="MissingTranslation">ଚୟନିତ ମୂଲ୍ୟଗୁଡ଼ିକୁ ନିର୍ଦ୍ଦିଷ୍ଟ ପରିମାଣରେ ରଖନ୍ତୁ</string>
     <string name="memory_builder_form_short" tools:ignore="MissingTranslation">ଗୋଟିଏ ସ୍ଥାନରେ ଏକାଧିକ ମୂଲ୍ୟ ଆଡଜଷ୍ଟ୍ କରନ୍ତୁ</string>
     <string name="memory_builder_actions_short" tools:ignore="MissingTranslation">ଏକକାଳୀନ ସେଟ୍, ଯୋଗ କିମ୍ବା ବିୟୋଗ କାର୍ଯ୍ୟ ଚଲାନ୍ତୁ</string>
-    <string name="memory_editor_refine_scan" tools:ignore="MissingTranslation">ପରିଷ୍କାର କରନ୍ତୁ</string>
+    <string name="memory_editor_refine_scan" tools:ignore="MissingTranslation">ଫଳାଫଳ ସୀମିତ କରନ୍ତୁ</string>
     <string name="memory_scripts_saved_count" tools:ignore="MissingTranslation"><xliff:g id="count" example="3">%1$d</xliff:g> ସେଭ୍ ହୋଇଥିବା</string>
     <string name="memory_scripts_empty_hint" tools:ignore="MissingTranslation">ଖେଳିବା ସମୟରେ ମୂଲ୍ୟ ଏଡିଟ୍ କିମ୍ବା ଫ୍ରିଜ୍ କରିବାକୁ ଏକ ସ୍କ୍ରିପ୍ଟ୍ ତିଆରି କରନ୍ତୁ।</string>
     <string name="memory_builder_limits" tools:ignore="MissingTranslation">ସୀମା (ବୈକଳ୍ପିକ)</string>

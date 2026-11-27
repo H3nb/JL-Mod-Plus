@@ -74,7 +74,7 @@
     <string name="config_gamepad_diagnosis_device"><xliff:g id="device_name" example="Xbox Controller">%1$s</xliff:g> (#<xliff:g id="device_id" example="1">%2$d</xliff:g>)</string>
     <string name="config_gamepad_calibration_issue_no_channels">ei tuettuja kanavia</string>
     <string name="config_gamepad_calibration_issue_invalid_constraints">virheelliset kalibrointirajat</string>
-    <string name="config_gamepad_calibration_issue_non_finite">ääretön mittausarvo</string>
+    <string name="config_gamepad_calibration_issue_non_finite">mittausarvo ei ole äärellinen</string>
     <string name="config_gamepad_calibration_issue_insufficient_samples">liian vähän mittauksia</string>
     <string name="config_gamepad_calibration_issue_invalid_range">virheellinen alue</string>
     <string name="config_gamepad_calibration_issue_rest_outside_range">lepoarvo alueen ulkopuolella</string>

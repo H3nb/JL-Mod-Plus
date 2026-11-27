@@ -74,7 +74,7 @@
     <string name="config_gamepad_diagnosis_device"><xliff:g id="device_name" example="Xbox Controller">%1$s</xliff:g> (#<xliff:g id="device_id" example="1">%2$d</xliff:g>)</string>
     <string name="config_gamepad_calibration_issue_no_channels">brak obsługiwanych kanałów</string>
     <string name="config_gamepad_calibration_issue_invalid_constraints">nieprawidłowe ograniczenia kalibracji</string>
-    <string name="config_gamepad_calibration_issue_non_finite">nieskończona próbka</string>
+    <string name="config_gamepad_calibration_issue_non_finite">wartość próbki nie jest skończona</string>
     <string name="config_gamepad_calibration_issue_insufficient_samples">zbyt mało próbek</string>
     <string name="config_gamepad_calibration_issue_invalid_range">nieprawidłowy zakres</string>
     <string name="config_gamepad_calibration_issue_rest_outside_range">wartość spoczynkowa poza zakresem</string>

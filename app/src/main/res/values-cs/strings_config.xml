@@ -72,7 +72,7 @@
     <string name="config_gamepad_diagnosis_device"><xliff:g id="device_name" example="Xbox Controller">%1$s</xliff:g> (#<xliff:g id="device_id" example="1">%2$d</xliff:g>)</string>
     <string name="config_gamepad_calibration_issue_no_channels">žádné podporované kanály</string>
     <string name="config_gamepad_calibration_issue_invalid_constraints">neplatná omezení kalibrace</string>
-    <string name="config_gamepad_calibration_issue_non_finite">nekonečná hodnota vzorku</string>
+    <string name="config_gamepad_calibration_issue_non_finite">hodnota vzorku není konečné číslo</string>
     <string name="config_gamepad_calibration_issue_insufficient_samples">nedostatek vzorků</string>
     <string name="config_gamepad_calibration_issue_invalid_range">neplatný rozsah</string>
     <string name="config_gamepad_calibration_issue_rest_outside_range">klidová hodnota mimo rozsah</string>

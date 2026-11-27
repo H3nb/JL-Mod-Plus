@@ -74,7 +74,7 @@
     <string name="config_gamepad_diagnosis_device"><xliff:g id="device_name" example="Xbox Controller">%1$s</xliff:g> (#<xliff:g id="device_id" example="1">%2$d</xliff:g>)</string>
     <string name="config_gamepad_calibration_issue_no_channels">සහාය දක්වන නාලිකා නොමැත</string>
     <string name="config_gamepad_calibration_issue_invalid_constraints">වලංගු නොවන ක්‍රමාංකන සීමාවන්</string>
-    <string name="config_gamepad_calibration_issue_non_finite">අසීමිත නියැදිය</string>
+    <string name="config_gamepad_calibration_issue_non_finite">නියැදි අගය පරිමිත නොවේ</string>
     <string name="config_gamepad_calibration_issue_insufficient_samples">ප්‍රමාණවත් නොවන නියැදි</string>
     <string name="config_gamepad_calibration_issue_invalid_range">වලංගු නොවන පරාසය</string>
     <string name="config_gamepad_calibration_issue_rest_outside_range">විවේක අගය පරාසයෙන් පිටතයි</string>

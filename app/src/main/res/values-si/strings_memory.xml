@@ -141,7 +141,7 @@
     <string name="memory_editor_path_incomplete">යොමු මාර්ගය පරීක්ෂණ සීමාව ඉක්මවයි.</string>
     <string name="memory_editor_source_unknown">මූලාශ්‍රය සොයා නොගැනිණි</string>
     <string name="memory_editor_incremental_edit">ක්‍රමික වැඩි කිරීම</string>
-    <string name="memory_editor_increment_step">පියවර</string>
+    <string name="memory_editor_increment_step">අගයන් අතර වෙනස</string>
     <string name="memory_editor_increment_invalid">එක් පූර්ණ සංඛ්‍යා වර්ගයක් සහ එහි පරාසය තුළ අගයන් භාවිතා කරන්න.</string>
     <!-- The batch dialog title already shows the number of selected values. -->
     <string name="memory_editor_increment_preview">පෙරදසුන: <xliff:g id="name" example="Example">%1$s</xliff:g></string>
@@ -245,7 +245,7 @@
     <string name="memory_builder_freeze_short" tools:ignore="MissingTranslation">තෝරාගත් අගයන් ස්ථිර ප්‍රමාණවල තබා ගන්න</string>
     <string name="memory_builder_form_short" tools:ignore="MissingTranslation">අගයන් කිහිපයක් එකම ස්ථානයකින් සීරුමාරු කරන්න</string>
     <string name="memory_builder_actions_short" tools:ignore="MissingTranslation">එක් වරක් සැකසීම, එක් කිරීම හෝ අඩු කිරීමේ ක්‍රියා ධාවනය කරන්න</string>
-    <string name="memory_editor_refine_scan" tools:ignore="MissingTranslation">පිරිපහදු කරන්න</string>
+    <string name="memory_editor_refine_scan" tools:ignore="MissingTranslation">ප්‍රතිඵල සීමා කරන්න</string>
     <string name="memory_scripts_saved_count" tools:ignore="MissingTranslation"><xliff:g id="count" example="3">%1$d</xliff:g> සුරකින ලදී</string>
     <string name="memory_scripts_empty_hint" tools:ignore="MissingTranslation">ක්‍රීඩා කරන අතරතුර අගයන් සංස්කරණය කිරීමට හෝ ස්ථිර කිරීමට ස්ක්‍රිප්ට් එකක් සාදන්න.</string>
     <string name="memory_builder_limits" tools:ignore="MissingTranslation">සීමාවන් (විකල්ප)</string>

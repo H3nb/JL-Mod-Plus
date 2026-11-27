@@ -145,7 +145,7 @@
     <string name="memory_editor_increment_invalid">Brug én heltalstype og værdier inden for dens interval.</string>
     <!-- The batch dialog title already shows the number of selected values. -->
     <string name="memory_editor_increment_preview">Forhåndsvisning: <xliff:g id="name" example="Example">%1$s</xliff:g></string>
-    <string name="memory_editor_panel_opacity">Panelgennemsigtighed</string>
+    <string name="memory_editor_panel_opacity">Panelets opacitet</string>
     <string name="memory_editor_panel_opacity_help">Juster baggrunden for at se spillets værdier under søgning. Tekst og ikoner forbliver synlige.</string>
     <string name="memory_editor_reconversion_required" tools:ignore="MissingTranslation">Denne MIDlets installerede konvertering er ikke kompatibel med Hukommelseseditor. Luk spillet, og genkonverter eller geninstaller det i JL-Mod Plus.</string>
     <string name="memory_saved_tab" tools:ignore="MissingTranslation">Gemte</string>

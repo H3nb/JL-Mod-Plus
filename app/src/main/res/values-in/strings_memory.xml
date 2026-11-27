@@ -135,7 +135,7 @@
     <string name="memory_editor_path_incomplete">Jalur referensi melebihi batas pemeriksaan.</string>
     <string name="memory_editor_source_unknown">Sumber tidak terlacak</string>
     <string name="memory_editor_incremental_edit">Bertahap</string>
-    <string name="memory_editor_increment_step">Selisih antar nilai</string>
+    <string name="memory_editor_increment_step">Selisih antarnilai</string>
     <string name="memory_editor_increment_invalid">Gunakan satu jenis data bilangan bulat dan pastikan semua nilai berada dalam rentangnya.</string>
     <!-- The batch dialog title already shows the number of selected values. -->
     <string name="memory_editor_increment_preview">Pratinjau: <xliff:g id="name" example="Example">%1$s</xliff:g></string>

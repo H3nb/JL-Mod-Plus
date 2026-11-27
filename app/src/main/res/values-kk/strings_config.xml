@@ -3,8 +3,8 @@
 <resources xmlns:tools="http://schemas.android.com/tools" xmlns:xliff="urn:oasis:names:tc:xliff:document:1.2">
     <!-- %1$s is an optional quoted storage-volume name with a trailing space, or empty. -->
     <!-- %1$s is a raw storage-volume description. -->
-    <string name="config_missing_app_storage_named">Қолданба табылмады.\n«<xliff:g id="storage_name" example="SD card">%1$s</xliff:g>» жад құрылғысының қолжетімділігін тексеріңіз немесе таңбашаны қайта жасаңыз.</string>
-    <string name="config_missing_app_storage_generic">Қолданба табылмады.\nЖад құрылғысының қолжетімділігін тексеріңіз немесе таңбашаны қайта жасаңыз.</string>
+    <string name="config_missing_app_storage_named">Қолданба табылмады.\n«<xliff:g id="storage_name" example="SD card">%1$s</xliff:g>» сақтау құрылғысының қолжетімділігін тексеріңіз немесе таңбашаны қайта жасаңыз.</string>
+    <string name="config_missing_app_storage_generic">Қолданба табылмады.\nСақтау құрылғысының қолжетімділігін тексеріңіз немесе таңбашаны қайта жасаңыз.</string>
     <string name="midlet_name"><b>Атауы: </b></string>
     <string name="midlet_size"><b>Өлшемі: </b></string>
     <string name="midlet_vendor"><b>Өндіруші: </b></string>
@@ -74,7 +74,7 @@
     <string name="config_gamepad_diagnosis_device"><xliff:g id="device_name" example="Xbox Controller">%1$s</xliff:g> (#<xliff:g id="device_id" example="1">%2$d</xliff:g>)</string>
     <string name="config_gamepad_calibration_issue_no_channels">қолдау көрсетілетін арналар жоқ</string>
     <string name="config_gamepad_calibration_issue_invalid_constraints">жарамсыз калибрлеу шектеулері</string>
-    <string name="config_gamepad_calibration_issue_non_finite">шексіз үлгі</string>
+    <string name="config_gamepad_calibration_issue_non_finite">өлшеу мәні ақырлы сан емес</string>
     <string name="config_gamepad_calibration_issue_insufficient_samples">үлгілер жеткіліксіз</string>
     <string name="config_gamepad_calibration_issue_invalid_range">жарамсыз ауқым</string>
     <string name="config_gamepad_calibration_issue_rest_outside_range">тыныштық мәні ауқымнан тыс</string>
@@ -146,13 +146,13 @@
     <string name="config_controls_virtual_keyboard">Виртуалды басқару</string>
     <string name="config_controls_virtual_keyboard_colors">Виртуалды басқару түстері</string>
     <string name="config_virtual_controls_color_preview">Түсті алдын ала көру</string>
-    <string name="config_virtual_controls_preview_normal">Бос</string>
+    <string name="config_virtual_controls_preview_normal">Басылмаған</string>
     <string name="config_virtual_controls_preview_pressed">Басылған</string>
     <string name="config_controls_maintenance">Орналасу</string>
     <string name="config_controls_skin_help">Пернетақта түймелерінің, D-pad және аналогтық стиктің көрінісін теңшелген суреттермен өзгертеді.</string>
-    <string name="config_controls_color_button_normal">Бос түйме</string>
+    <string name="config_controls_color_button_normal">Басылмаған түйме</string>
     <string name="config_controls_color_button_pressed">Басылған түйме</string>
-    <string name="config_controls_color_label_normal">Бос белгі</string>
+    <string name="config_controls_color_label_normal">Басылмаған күйдегі белгі</string>
     <string name="config_controls_color_label_pressed">Басылған белгі</string>
     <string name="config_controls_color_outline_short">Жиек</string>
     <string name="config_controls_disabled_hint">Виртуалды басқару қазір өшірулі. Оны осында әлі де теңшей аласыз.</string>
@@ -303,33 +303,33 @@
     <string name="midlet_running_notification_text">«<xliff:g id="name" example="Example">%1$s</xliff:g>» жұмыс істеп тұр.</string>
     <string name="midlet_running_notification_channel">MIDlet орындау ортасы</string>
     <string name="config_gamepad_directions_numeric_v2">Сандық пернетақта</string>
-    <string name="midlet_file_permission_title">Жадқа қолжетімділік</string>
+    <string name="midlet_file_permission_title">Сақтау орнына қол жеткізу</string>
     <string name="midlet_file_permission_read">Бұл MIDlet файлдарды оқығысы келеді.</string>
     <string name="midlet_file_permission_write">Бұл MIDlet файлдарды жасағысы, өзгерткісі немесе жойғысы келеді.</string>
     <string name="midlet_file_permission_allow_once">Бір рет рұқсат беру</string>
     <string name="midlet_file_permission_allow_session">MIDlet жұмыс істеп тұрғанда рұқсат беру</string>
     <string name="midlet_file_permission_allow_always">Әрқашан рұқсат беру</string>
     <string name="midlet_file_permission_deny">Әрқашан тыйым салу</string>
-    <string name="midlet_permissions_settings_title">Жадқа қолжетімділік рұқсаттары</string>
+    <string name="midlet_permissions_settings_title">Сақтау орнына қол жеткізу рұқсаттары</string>
     <string name="midlet_permissions_read">Файлдарды оқу</string>
     <string name="midlet_permissions_write">Файлдарды өзгерту</string>
     <string name="midlet_permissions_ask">Сұрау</string>
     <string name="midlet_permissions_allow">Әрқашан рұқсат беру</string>
     <string name="midlet_permissions_deny">Тыйым салу</string>
-    <string name="midlet_permissions_save_failed">Жад параметрлері сақталмады.</string>
+    <string name="midlet_permissions_save_failed">Сақтау параметрлері сақталмады.</string>
     <string name="config_avoid_camera_cutout_title">Камера ойығын айналып өту</string>
     <string name="config_avoid_camera_cutout_summary">MIDlet экранын және виртуалды басқаруды камера немесе экран ойығынан тыс ұстау.</string>
     <string name="midlet_permissions_write_summary">Файлдарды жасау мен жоюды қамтиды.</string>
     <string name="midlet_legacy_import_title">Ескі Siemens сақтаулары</string>
     <string name="midlet_legacy_import_action">Ескі сақтау файлын таңдау</string>
-    <string name="midlet_legacy_import_summary">Ескі сақтау файлын осы MIDlet-тің жеке Siemens жадына көшіріңіз. Алдымен MIDlet-ті тоқтатыңыз.</string>
-    <string name="midlet_legacy_import_success">Файл осы MIDlet-тің жеке жадына көшірілді.</string>
+    <string name="midlet_legacy_import_summary">Ескі сақтау файлын осы MIDlet-тің жеке Siemens сақтау орнына көшіріңіз. Алдымен MIDlet-ті тоқтатыңыз.</string>
+    <string name="midlet_legacy_import_success">Файл осы MIDlet-тің жеке сақтау орнына көшірілді.</string>
     <string name="midlet_legacy_import_failed">Импорт сәтсіз аяқталды. MIDlet-ті тоқтатып, мақсатты файлдың бұрыннан жоқ екеніне көз жеткізіңіз.</string>
-    <string name="midlet_storage_mode_title">Жад режимі</string>
+    <string name="midlet_storage_mode_title">Сақтау режимі</string>
     <string name="midlet_storage_mode_shared">Виртуалды</string>
     <string name="midlet_storage_mode_android">Android</string>
     <string name="midlet_storage_mode_shared_summary">Жұмыс қалтасындағы ортақ қалталарды пайдалану.</string>
-    <string name="midlet_storage_mode_android_summary">Android рұқсаттары шегінде Android жүйесінің ортақ жадын пайдалану. MIDlet файлдарына қол жеткізу рұқсаттары виртуалды режимнен бөлек реттеледі.</string>
+    <string name="midlet_storage_mode_android_summary">Android рұқсаттары шегінде Android жүйесінің ортақ сақтау орнын пайдалану. MIDlet файлдарына қол жеткізу рұқсаттары виртуалды режимнен бөлек реттеледі.</string>
     <string name="config_system_properties_reset" tools:ignore="MissingTranslation">Әдепкіге қайтару</string>
     <string name="config_system_properties_reset_title" tools:ignore="MissingTranslation">Жүйелік сипаттарды қалпына келтіру керек пе?</string>
     <string name="config_system_properties_reset_message" tools:ignore="MissingTranslation">Өңдегіш мазмұнын ағымдағы JL-Mod Plus әдепкі мәндерімен ауыстыру керек пе? Басқа параметрлер өзгермейді. Қалпына келтіруді қолдану үшін сақтаңыз.</string>

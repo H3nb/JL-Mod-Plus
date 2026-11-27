@@ -92,7 +92,7 @@
     <string name="PREF_TIMING_MODE">Уақыт көзі</string>
     <string name="settings_section_appearance">Қолданба көрінісі</string>
     <string name="settings_section_appearance_language" tools:ignore="MissingTranslation">Көрініс және тіл</string>
-    <string name="settings_section_storage_profiles" tools:ignore="MissingTranslation">Жад және профильдер</string>
+    <string name="settings_section_storage_profiles" tools:ignore="MissingTranslation">Сақтау орны және профильдер</string>
     <string name="settings_section_language">Тіл</string>
     <string name="settings_section_library_icons" tools:ignore="MissingTranslation">Кітапхана белгішелері</string>
     <string name="settings_section_library_grid" tools:ignore="MissingTranslation">Тор орналасуы</string>
@@ -100,7 +100,7 @@
     <string name="settings_section_runtime_features" tools:ignore="MissingTranslation">Ойын ішіндегі мүмкіндіктер</string>
     <string name="settings_section_library_appearance">Кітапхана көрінісі</string>
     <string name="settings_section_midlet_runtime">MIDlet орындау ортасы</string>
-    <string name="settings_section_storage">Жад</string>
+    <string name="settings_section_storage">Сақтау орны</string>
     <string name="settings_section_profiles">Профильдер</string>
     <string name="settings_profiles_summary">Басқа MIDlet-терде қайта пайдалануға болатын профильдерді басқарыңыз.</string>
     <string name="pref_accent_title">Акцент түсі</string>

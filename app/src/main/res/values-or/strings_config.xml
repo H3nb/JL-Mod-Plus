@@ -74,7 +74,7 @@
     <string name="config_gamepad_diagnosis_device"><xliff:g id="device_name" example="Xbox Controller">%1$s</xliff:g> (#<xliff:g id="device_id" example="1">%2$d</xliff:g>)</string>
     <string name="config_gamepad_calibration_issue_no_channels">କୌଣସି ସମର୍ଥିତ ଚ୍ୟାନେଲ୍ ନାହିଁ</string>
     <string name="config_gamepad_calibration_issue_invalid_constraints">ଅବୈଧ କ୍ୟାଲିବ୍ରେସନ୍ ସୀମାବଦ୍ଧତା</string>
-    <string name="config_gamepad_calibration_issue_non_finite">ଅସୀମ ନମୁନା</string>
+    <string name="config_gamepad_calibration_issue_non_finite">ନମୁନାର ମୂଲ୍ୟ ସସୀମ ନୁହେଁ</string>
     <string name="config_gamepad_calibration_issue_insufficient_samples">ଅପର୍ଯ୍ୟାପ୍ତ ନମୁନା</string>
     <string name="config_gamepad_calibration_issue_invalid_range">ଅବୈଧ ସୀମା</string>
     <string name="config_gamepad_calibration_issue_rest_outside_range">ବିଶ୍ରାମ ମୂଲ୍ୟ ସୀମା ବାହାରେ</string>
@@ -146,13 +146,13 @@
     <string name="config_controls_virtual_keyboard">ଭର୍ଚୁଆଲ୍ କଣ୍ଟ୍ରୋଲ୍</string>
     <string name="config_controls_virtual_keyboard_colors">ଭର୍ଚୁଆଲ୍ କଣ୍ଟ୍ରୋଲ୍ ରଙ୍ଗ</string>
     <string name="config_virtual_controls_color_preview">ରଙ୍ଗ ପ୍ରିଭ୍ୟୁ</string>
-    <string name="config_virtual_controls_preview_normal">ମୁକ୍ତ</string>
+    <string name="config_virtual_controls_preview_normal">ଦବାଯାଇନଥିବା</string>
     <string name="config_virtual_controls_preview_pressed">ଦବାଯାଇଥିବା</string>
     <string name="config_controls_maintenance">ଲେଆଉଟ୍</string>
     <string name="config_controls_skin_help">କଷ୍ଟମ୍ ଇମେଜ୍ ବ୍ୟବହାର କରି କିପ୍ୟାଡ୍ ବଟନ୍, D-pad ଏବଂ ଆନାଲଗ୍ ଷ୍ଟିକ୍ ର ରୂପ ବଦଳାଏ।</string>
-    <string name="config_controls_color_button_normal">ମୁକ୍ତ ବଟନ୍</string>
+    <string name="config_controls_color_button_normal">ଦବାଯାଇନଥିବା ବଟନ୍</string>
     <string name="config_controls_color_button_pressed">ଦବାଯାଇଥିବା ବଟନ୍</string>
-    <string name="config_controls_color_label_normal">ମୁକ୍ତ ଲେବଲ୍</string>
+    <string name="config_controls_color_label_normal">ଦବାଯାଇନଥିବା ଅବସ୍ଥାର ଲେବଲ୍</string>
     <string name="config_controls_color_label_pressed">ଦବାଯାଇଥିବା ଲେବଲ୍</string>
     <string name="config_controls_color_outline_short">ଆଉଟଲାଇନ୍</string>
     <string name="config_controls_disabled_hint">ଭର୍ଚୁଆଲ୍ କଣ୍ଟ୍ରୋଲ୍ ବର୍ତ୍ତମାନ ଅଫ୍ ଅଛି। ଆପଣ ତଥାପି ଏଠାରେ ସେଗୁଡ଼ିକୁ କଷ୍ଟମାଇଜ୍ କରିପାରିବେ।</string>
