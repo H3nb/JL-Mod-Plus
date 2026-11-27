@@ -63,10 +63,10 @@ static void blit(JNIEnv *env, jint x, jint y, jint width, jint height, jobject b
     }
 
     const uint32_t bs = info.stride;
-    pixels = ((uint8_t *) pixels) + static_cast<size_t>(x) * 4u + static_cast<size_t>(bs) * y;
     for (int i = height - 1; i >= 0; --i) {
-        uint8_t *src = &data[static_cast<size_t>(i) * width * 4u];
-        uint8_t *dst = static_cast<uint8_t *>(pixels);
+        const uint8_t *src = &data[static_cast<size_t>(i) * width * 4u];
+        uint8_t *dst = static_cast<uint8_t *>(pixels)
+                + static_cast<size_t>(y + height - 1 - i) * bs + static_cast<size_t>(x) * 4u;
         for (int j = 0; j < width; ++j) {
             uint32_t r = *src++;
             uint32_t g = *src++;
@@ -80,7 +80,6 @@ static void blit(JNIEnv *env, jint x, jint y, jint width, jint height, jobject b
             *dst++ = tmp > 255 ? 255 : tmp;
             *dst++ = 255;
         }
-        pixels = ((uint8_t *) pixels) + bs;
     }
     ret = AndroidBitmap_unlockPixels(env, bitmap_buffer);
     if (ret < 0) {

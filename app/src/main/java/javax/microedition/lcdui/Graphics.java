@@ -33,7 +33,6 @@ import android.graphics.Rect;
 import android.graphics.RectF;
 import android.graphics.Region;
 import android.os.Build;
-import android.util.Log;
 
 import com.jblend.graphics.j3d.Effect3D;
 import com.jblend.graphics.j3d.Figure;
@@ -188,19 +187,30 @@ public class Graphics implements
 		synchronized (image) {
 			Rect targetClip = new Rect();
 			canvas.getClipBounds(targetClip);
-			return new RenderTarget(image.getBitmap(), image.getPixelScale(), targetClip);
+			return new RenderTarget(image.getBitmap(), image.getPixelScale(), targetClip,
+					image.getWidth(), image.getHeight(), translateX, translateY);
 		}
 	}
 
 	public static final class RenderTarget {
 		public final Bitmap bitmap;
 		public final int pixelScale;
+		/** Clip in guest-local coordinates, captured independently of the live Graphics. */
 		public final Rect clip;
+		public final int logicalWidth;
+		public final int logicalHeight;
+		public final int translateX;
+		public final int translateY;
 
-		private RenderTarget(Bitmap bitmap, int pixelScale, Rect clip) {
+		private RenderTarget(Bitmap bitmap, int pixelScale, Rect clip,
+				int logicalWidth, int logicalHeight, int translateX, int translateY) {
 			this.bitmap = bitmap;
 			this.pixelScale = pixelScale;
 			this.clip = clip;
+			this.logicalWidth = logicalWidth;
+			this.logicalHeight = logicalHeight;
+			this.translateX = translateX;
+			this.translateY = translateY;
 		}
 	}
 
@@ -827,9 +837,6 @@ public class Graphics implements
 
 	public void drawRGB(int[] rgbData, int offset, int scanlength, int x, int y, int width, int height, boolean processAlpha) {
 		synchronized (this.image) {
-			if (rgbData == null) {
-				throw new NullPointerException();
-			}
 			if (rgbData == null) throw new NullPointerException();
 			if (width <= 0 || height <= 0) return;
 			PixelArray.checkBounds(rgbData.length, offset, scanlength, width, height);

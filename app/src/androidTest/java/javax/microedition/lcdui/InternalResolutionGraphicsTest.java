@@ -395,6 +395,26 @@ public class InternalResolutionGraphicsTest {
         }
     }
 
+    @Test public void renderTargetSnapshotCapturesTranslationAndLogicalContent() {
+        Image image = Image.createDisplayTarget(16, 14, 3);
+        try {
+            image.setSize(12, 10);
+            Graphics graphics = image.getGraphics();
+            graphics.translate(2, 3);
+            graphics.setClip(1, 1, 4, 5);
+            Graphics.RenderTarget target = graphics.captureRenderTarget();
+            graphics.translate(4, 5);
+            assertEquals(2, target.translateX);
+            assertEquals(3, target.translateY);
+            assertEquals(12, target.logicalWidth);
+            assertEquals(10, target.logicalHeight);
+            assertEquals(new android.graphics.Rect(1, 1, 5, 6), target.clip);
+            assertEquals(48, target.bitmap.getWidth());
+        } finally {
+            image.getBitmap().recycle();
+        }
+    }
+
     @Test public void renderTargetSnapshotMatchesDimensionsAcrossResizes() throws Exception {
         Image frame = Image.createDisplayTarget(16, 14, 3);
         frame.enableResizableDisplayTarget();

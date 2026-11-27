@@ -33,9 +33,9 @@ Readback of antialiased HD raster edges can differ from a separate 1× render.
 The runtime reconstructs immutable LCDUI image regions before composing
 them into an HD target. `drawRegion` isolates the source rectangle to prevent
 filtering across neighboring tiles in a sprite atlas. The cache is shared
-within the currently selected graphics profile, bounded to 4–16 MiB based
-on Java heap tier, and keyed by bitmap identity, generation, region and
-reconstruction factor. Existing `Graphics` objects consult the active
+within the currently selected graphics profile, bounded to one sixteenth of the Java heap limit, and keyed by bitmap identity, generation, region and
+reconstruction factor. Reconstruction is reduced when its estimated output
+would exceed the cache budget; the cache never grows to fit a single entry. Existing `Graphics` objects consult the active
 session cache at draw time, so retained framebuffers cannot use a previous
 profile's enhancement mode.
 

@@ -155,10 +155,11 @@ public class Graphics3D {
 
 		if (target instanceof Graphics) {
 			final Graphics finalG = (Graphics) target;
-			buffer = finalG.getBitmap();
-			final int width = buffer.getWidth();
-			final int height = buffer.getHeight();
-			final int scale = finalG.getPixelScale();
+			final Graphics.RenderTarget snapshot = finalG.captureRenderTarget();
+			final Bitmap targetBitmap = snapshot.bitmap;
+			final int width = targetBitmap.getWidth();
+			final int height = targetBitmap.getHeight();
+			final int scale = snapshot.pixelScale;
 			if (width > Defs.MAX_VIEWPORT_WIDTH ||
 					height > Defs.MAX_VIEWPORT_HEIGHT) {
 				throw new IllegalArgumentException();
@@ -167,12 +168,10 @@ public class Graphics3D {
 			// M3G viewport coordinates are relative to the Graphics origin
 			// that is in effect at bind time. Native rendering addresses the
 			// backing Bitmap directly, so keep that origin as a fixed offset.
-			offsetX = finalG.getTranslateX();
-			offsetY = finalG.getTranslateY();
-			final int clipX = finalG.getClipX() + offsetX;
-			final int clipY = finalG.getClipY() + offsetY;
-			final int clipW = finalG.getClipWidth();
-			final int clipH = finalG.getClipHeight();
+			final int clipX = snapshot.clip.left + snapshot.translateX;
+			final int clipY = snapshot.clip.top + snapshot.translateY;
+			final int clipW = snapshot.clip.width();
+			final int clipH = snapshot.clip.height();
 			// The target Bitmap is physically scaled, but guest clip and
 			// translation coordinates remain unchanged.
 			final int physicalClipX = clipX * scale;
@@ -202,9 +201,12 @@ public class Graphics3D {
 									handle, 0, width, height,
 									physicalClipX, physicalClipY, physicalClipW, physicalClipH,
 									finalDepth, finalFlags, iIsProperRenderer,
-									buffer);
+									targetBitmap);
 						}
 					});
+			buffer = targetBitmap;
+			offsetX = snapshot.translateX;
+			offsetY = snapshot.translateY;
 			currentTarget = finalG;
 			targetPixelScale = scale;
 			cur_width = width;
@@ -271,6 +273,7 @@ public class Graphics3D {
 			throw new Error();
 		}
 		currentTarget = null;
+		buffer = null;
 	}
 
 	/**

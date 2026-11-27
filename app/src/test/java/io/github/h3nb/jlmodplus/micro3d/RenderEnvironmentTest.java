@@ -22,6 +22,22 @@ import org.junit.jupiter.api.Test;
 
 public class RenderEnvironmentTest {
 	@Test
+	public void lightingCommandsReadPayloadRatherThanCommandOffsets() {
+		Render render = new Render();
+		render.drawCommandList(new int[] {
+				Graphics3D.COMMAND_LIST_VERSION_1_0,
+				Graphics3D.COMMAND_AMBIENT_LIGHT, 2048,
+				Graphics3D.COMMAND_DIRECTION_LIGHT, -1024, 0, 4096, 3072,
+				Graphics3D.COMMAND_END
+		});
+		assertEquals(2048, render.env.light.ambIntensity);
+		assertEquals(-1024, render.env.light.x);
+		assertEquals(0, render.env.light.y);
+		assertEquals(4096, render.env.light.z);
+		assertEquals(3072, render.env.light.dirIntensity);
+	}
+
+	@Test
 	public void commandListTextureSelectionRestoresZero() {
 		Render render = new Render();
 		render.env.textureIdx = 1;

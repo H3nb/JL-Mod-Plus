@@ -9,6 +9,11 @@ adb shell settings put secure immersive_mode_confirmations confirmed
 
 selectors=(
   'javax.microedition.lcdui.graphics.AmbientColorSamplerTest'
+  'javax.microedition.lcdui.GraphicsArgumentValidationTest'
+  'javax.microedition.lcdui.MutableImageScaleCompatibilityTest#invalidArrayReadAndWriteDoNotPartiallyModifyPixels'
+  'javax.microedition.lcdui.MutableImageScaleCompatibilityTest#siemensTwoBitPixelsRoundTrip'
+  'javax.microedition.lcdui.InternalResolutionGraphicsTest#renderTargetSnapshotCapturesTranslationAndLogicalContent'
+  'com.nokia.mid.ui.DirectGraphicsRenderingTest#invalidPaddedReadbackLeavesBothArrayTypesUnchanged'
   'javax.microedition.lcdui.overlay.DiagnosticTextRenderingTest'
   'javax.microedition.media.MediaBoundaryRuntimeTest'
   'io.github.h3nb.jlmodplus.mmapi.camera.CameraCallTest'

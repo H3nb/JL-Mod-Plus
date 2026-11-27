@@ -15,10 +15,10 @@ import org.junit.runner.RunWith;
 public class BitmapUpscalingGraphicsTest {
     private static final int RED=0xffff0000, BLUE=0xff0000ff;
 
-    @Test public void enhancementCacheBudgetIsBoundedByHeapTier() {
-        assertEquals(4 * 1024 * 1024, BitmapUpscaling.cacheBudgetBytes(32L << 20));
+    @Test public void enhancementCacheBudgetTracksHeapWithoutMinimum() {
+        assertEquals(2 * 1024 * 1024, BitmapUpscaling.cacheBudgetBytes(32L << 20));
         assertEquals(8 * 1024 * 1024, BitmapUpscaling.cacheBudgetBytes(128L << 20));
-        assertEquals(16 * 1024 * 1024, BitmapUpscaling.cacheBudgetBytes(512L << 20));
+        assertEquals(32 * 1024 * 1024, BitmapUpscaling.cacheBudgetBytes(512L << 20));
     }
 
     @Test public void enhancementNeverSamplesAdjacentAtlasTile() {

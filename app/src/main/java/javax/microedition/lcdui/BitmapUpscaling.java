@@ -80,7 +80,7 @@ final class BitmapUpscaling {
         int factor = source.isMutable() ? 1 : ImageEnhancementPolicy.chooseFactor(
                 sourceRect.width(), sourceRect.height(), targetScale, Integer.MAX_VALUE);
         long regionPixels = (long) sourceRect.width() * sourceRect.height();
-        while (factor > 1 && regionPixels > (failedOutputPixels - 1)
+        while (factor > 1 && regionPixels > maximumOutputPixels()
                 / ((long) factor * factor)) factor--;
         Bitmap enhanced = factor == 1 ? null : prepare(bitmap, sourceRect, factor);
         // xBR reconstruction is already antialiased; smooth only the remaining
@@ -92,13 +92,16 @@ final class BitmapUpscaling {
                 enhanced == null ? NEAREST_PAINT : paint);
     }
 
+    private long maximumOutputPixels() {
+        return Math.min(cache.maxSize() / 4L, failedOutputPixels - 1);
+    }
+
     private Bitmap prepare(Bitmap bitmap, Rect rect, int scale) {
         if (bitmap.isRecycled()) return null;
         int width = rect.width();
         int height = rect.height();
         if (scale < 1 || width <= 0 || height <= 0
-                || (long) width * height > Math.min(
-                        ImageEnhancementPolicy.MAX_RESULT_PIXELS, failedOutputPixels - 1)
+                || (long) width * height > maximumOutputPixels()
                         / ((long) scale * scale)) return null;
         long outputPixels = (long) width * height * scale * scale;
 
@@ -125,8 +128,8 @@ final class BitmapUpscaling {
                         Bitmap.Config.ARGB_8888);
             }
         } catch (OutOfMemoryError error) {
-            failedOutputPixels = Math.min(failedOutputPixels, outputPixels);
             synchronized (cache) {
+                failedOutputPixels = Math.min(failedOutputPixels, outputPixels);
                 cache.evictAll();
             }
             MicroActivity activity = ContextHolder.getActivity();
@@ -139,13 +142,10 @@ final class BitmapUpscaling {
             Bitmap existing = cache.get(key);
             if (existing != null) return existing;
             int bytes = output.getAllocationByteCount();
-            if (bytes > cache.maxSize()) {
-                cache.evictAll();
-                cache.resize(bytes);
-            } else if ((long) cache.size() + bytes > Integer.MAX_VALUE) {
-                cache.evictAll();
+            if (bytes <= cache.maxSize() && outputPixels < failedOutputPixels) {
+                if ((long) cache.size() + bytes > Integer.MAX_VALUE) cache.evictAll();
+                cache.put(key, output);
             }
-            cache.put(key, output);
         }
         return output;
     }
