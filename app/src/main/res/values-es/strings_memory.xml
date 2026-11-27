@@ -49,7 +49,7 @@
     <string name="memory_editor_search_known_values">Buscar valores conocidos</string>
     <string name="memory_editor_search_unknown_values">Buscar valores desconocidos</string>
     <string name="memory_editor_add_to_watch">Añadir valores seleccionados a marcadores</string>
-    <string name="memory_editor_no_candidates">No se encontraron valores buscables</string>
+    <string name="memory_editor_no_candidates">No se encontraron valores en los que buscar</string>
     <string name="memory_editor_edit">Editar</string>
     <plurals name="memory_editor_edit_batch">
         <item quantity="one">Editar <xliff:g id="count" example="3">%1$d</xliff:g> valor</item>
@@ -107,7 +107,7 @@
     <string name="memory_editor_refresh_snapshot">Actualizar instantánea</string>
     <string name="memory_editor_select_result_value">Seleccionar este marcador</string>
     <string name="memory_editor_freeze_after_edit">Congelar al aplicar</string>
-    <string name="memory_editor_freeze_after_edit_help">Mantiene este valor bloqueado y lo guarda como marcador en Guardados.</string>
+    <string name="memory_editor_freeze_after_edit_help">Mantiene este valor constante y añade un marcador en Guardados.</string>
     <string name="memory_editor_expression_single_hint">Introduce un valor o separa varios valores de grupo con punto y coma (;).</string>
     <string name="memory_editor_expression_group_needs_type">Elige un tipo de datos específico para la búsqueda en grupo.</string>
     <plurals name="memory_editor_expression_group_hint">
@@ -121,7 +121,7 @@
     <string name="memory_editor_peek_underlay_active">Mostrando el MIDlet debajo</string>
     <string name="memory_editor_no_runtime">No hay ningún MIDlet en ejecución.</string>
     <string name="memory_editor_no_search_history">No hay ninguna búsqueda anterior para restaurar.</string>
-    <string name="memory_editor_partial_write">La operación de escritura no se completó por completo. Comprueba los valores actuales antes de volver a intentarlo.</string>
+    <string name="memory_editor_partial_write">La escritura quedó incompleta. Comprueba los valores actuales antes de volver a intentarlo.</string>
     <!-- Recuentos de escritura independientes: confirmados, sin confirmar, omitidos, no intentados y tipo de datos incompatible. -->
     <string name="memory_editor_write_outcome">Escrituras confirmadas: <xliff:g id="confirmed" example="3">%1$d</xliff:g>. Sin confirmar: <xliff:g id="unconfirmed" example="0">%2$d</xliff:g>. Omitidas: <xliff:g id="skipped" example="0">%3$d</xliff:g>. No intentadas: <xliff:g id="not_attempted" example="0">%4$d</xliff:g>. Omitidas por tipo: <xliff:g id="skipped_by_type" example="0">%5$d</xliff:g>.</string>
     <!-- %1$s es una explicación localizada del resultado; %2$d a %6$d son los mismos recuentos de escritura independientes. -->
@@ -130,7 +130,7 @@
     <string name="memory_editor_next_scan_result">Resultados del siguiente análisis: <xliff:g id="before_count" example="120">%1$d</xliff:g> → <xliff:g id="after_count" example="14">%2$d</xliff:g></string>
     <string name="memory_editor_type_auto">Automático</string>
     <string name="memory_editor_remove_candidates_title">¿Quitar los resultados seleccionados?</string>
-    <string name="memory_editor_remove_candidates_description">Quitar: elimina los resultados seleccionados de la lista de búsqueda. Los valores en la memoria del juego no cambian.\n\nRevertir y quitar: también restaura los valores anteriores a sus últimas ediciones confirmadas, pero solo si los valores actuales aún coinciden con los valores resultantes de esas ediciones. Los valores congelados y los resultados con conflictos permanecen en la lista.</string>
+    <string name="memory_editor_remove_candidates_description">Quitar: elimina los resultados seleccionados de la lista de búsqueda sin modificar la memoria del juego.\n\nRevertir y quitar: también restaura el valor anterior a la última edición confirmada de cada resultado, pero solo si el valor actual sigue coincidiendo con el de esa edición. Los valores congelados y los resultados que no se puedan restaurar de forma segura permanecen en la lista.</string>
     <string name="memory_editor_revert_and_remove">Revertir y quitar</string>
     <string name="memory_editor_revert_remove_commit_failed">Es posible que los valores se hayan restaurado, pero no se pudieron quitar los resultados. Actualiza e inténtalo de nuevo; no se sobrescribirán los valores cambiados por el juego.</string>
     <string name="memory_editor_revert_remove_outcome">Restaurados: <xliff:g id="restored" example="2">%1$d</xliff:g>. Quitados: <xliff:g id="removed" example="2">%2$d</xliff:g>. Conflictos: <xliff:g id="conflicts" example="0">%3$d</xliff:g>. Sin confirmar: <xliff:g id="unconfirmed" example="0">%4$d</xliff:g>. No intentados: <xliff:g id="not_attempted" example="0">%5$d</xliff:g>.</string>
@@ -173,10 +173,10 @@
     <string name="memory_recipes_title" tools:ignore="MissingTranslation">Acción rápida</string>
     <string name="memory_recipes_simple_from_saved" tools:ignore="MissingTranslation">Destino: <xliff:g id="bookmark_name" example="Coins">%1$s</xliff:g></string>
     <string name="memory_recipes_preview" tools:ignore="MissingTranslation">Vista previa de destinos</string>
-    <string name="memory_recipes_stop_freeze" tools:ignore="MissingTranslation">Detener congelación del script</string>
-    <string name="memory_recipes_freeze" tools:ignore="MissingTranslation">Mantener congelado mientras se ejecuta este juego</string>
+    <string name="memory_recipes_stop_freeze" tools:ignore="MissingTranslation">Dejar de congelar valores</string>
+    <string name="memory_recipes_freeze" tools:ignore="MissingTranslation">Mantener los valores congelados mientras el juego esté en ejecución</string>
     <string name="memory_recipes_run" tools:ignore="MissingTranslation">Ejecutar</string>
-    <string name="memory_recipes_active_freezes" tools:ignore="MissingTranslation">Congelaciones de script activas</string>
+    <string name="memory_recipes_active_freezes" tools:ignore="MissingTranslation">Scripts que congelan valores</string>
     <string name="memory_recipes_target_unavailable" tools:ignore="MissingTranslation">El destino del marcador no está disponible. Actualízalo o vuelve a vincularlo antes de ejecutarlo.</string>
     <string name="memory_recipes_preview_values" tools:ignore="MissingTranslation">Valores actuales: <xliff:g id="name" example="Example">%1$s</xliff:g></string>
     <string name="memory_scripts_title" tools:ignore="MissingTranslation">Scripts</string>
@@ -201,9 +201,9 @@
     <string name="memory_scripts_paste" tools:ignore="MissingTranslation">Pegar</string>
     <string name="memory_scripts_clipboard_invalid" tools:ignore="MissingTranslation">El portapapeles está vacío o el documento supera los 64 KiB</string>
     <string name="memory_scripts_invalid" tools:ignore="MissingTranslation">Formato de script no válido</string>
-    <string name="memory_scripts_freeze_active" tools:ignore="MissingTranslation">Congelación activa para este script</string>
+    <string name="memory_scripts_freeze_active" tools:ignore="MissingTranslation">Este script está congelando valores</string>
     <string name="memory_scripts_delete" tools:ignore="MissingTranslation">Eliminar</string>
-    <string name="memory_scripts_delete_confirm" tools:ignore="MissingTranslation">¿Eliminar <xliff:g id="name" example="Example">%1$s</xliff:g>? Se detendrá cualquier congelación activa de este script.</string>
+    <string name="memory_scripts_delete_confirm" tools:ignore="MissingTranslation">¿Eliminar <xliff:g id="name" example="Example">%1$s</xliff:g>? Los valores que este script mantiene congelados dejarán de estarlo.</string>
     <string name="memory_scripts_empty" tools:ignore="MissingTranslation">No hay scripts guardados</string>
     <string name="memory_scripts_unsaved_title" tools:ignore="MissingTranslation">¿Descartar script sin guardar?</string>
     <string name="memory_scripts_unsaved_message" tools:ignore="MissingTranslation">Los cambios del script no se han guardado.</string>
@@ -243,12 +243,12 @@
     <string name="memory_builder_edit_json" tools:ignore="MissingTranslation">Editar JSON</string>
     <string name="memory_builder_search_bookmarks" tools:ignore="MissingTranslation">Buscar marcadores</string>
     <string name="memory_builder_no_bookmarks" tools:ignore="MissingTranslation">No hay marcadores verificados que coincidan. Añade un valor a marcadores en Buscar o vuelve a vincular uno en Guardados.</string>
-    <string name="memory_builder_needs_relink" tools:ignore="MissingTranslation">Requiere revincular</string>
+    <string name="memory_builder_needs_relink" tools:ignore="MissingTranslation">Es necesario volver a vincular</string>
     <string name="memory_builder_add_selected" tools:ignore="MissingTranslation">Añadir seleccionados</string>
     <string name="memory_builder_min" tools:ignore="MissingTranslation">Mínimo (opcional)</string>
     <string name="memory_builder_max" tools:ignore="MissingTranslation">Máximo (opcional)</string>
     <string name="memory_builder_add_target" tools:ignore="MissingTranslation">Añadir destino</string>
-    <string name="memory_builder_freeze_short" tools:ignore="MissingTranslation">Mantener los valores seleccionados en cantidades fijas</string>
+    <string name="memory_builder_freeze_short" tools:ignore="MissingTranslation">Mantener constantes los valores seleccionados</string>
     <string name="memory_builder_form_short" tools:ignore="MissingTranslation">Ajustar varios valores en un solo lugar</string>
     <string name="memory_builder_actions_short" tools:ignore="MissingTranslation">Ejecutar acciones puntuales de Establecer, Sumar o Restar</string>
     <string name="memory_editor_refine_scan" tools:ignore="MissingTranslation">Refinar</string>
@@ -272,11 +272,11 @@
     <string name="memory_list_watch_removal_failed">No se pudo quitar el seguimiento de la sesión: %1$s</string>
     <string name="memory_list_removal_unknown_error">Error desconocido</string>
     <string name="memory_editor_edit_freeze_failed">Valor actualizado, pero no se pudo iniciar la congelación. Comprueba el valor actual antes de volver a intentarlo.</string>
-    <string name="memory_scripts_freeze_inactive">La congelación del script está desactivada.</string>
+    <string name="memory_scripts_freeze_inactive">El script ya no mantiene valores congelados.</string>
     <string name="memory_bookmark_change_incomplete">No se pudo completar el cambio del marcador. Revisa Guardados antes de volver a intentarlo.</string>
     <string name="memory_editor_value_updated">Valor actualizado.</string>
     <string name="memory_editor_value_updated_frozen">Valor actualizado y congelación activada.</string>
-    <string name="memory_scripts_delete_failed">No se pudo eliminar el script. Comprueba el estado de la congelación antes de volver a intentarlo.</string>
+    <string name="memory_scripts_delete_failed">No se pudo eliminar el script. Comprueba si sigue congelando valores antes de volver a intentarlo.</string>
     <string name="memory_scripts_check_input">No se pudo preparar el script. Revisa sus valores y marcadores.</string>
     <string name="memory_scripts_read_failed">No se pudieron leer los valores actuales. Actualiza los valores e inténtalo de nuevo.</string>
     <string name="memory_technical_details">Detalles técnicos</string>
