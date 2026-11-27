@@ -127,7 +127,7 @@
     <string name="render_effect_catalog_hint">輕觸效果即可加入堆疊。</string>
     <string name="render_effect_user_folder_hint">INI、VSH 與 FSH 檔案必須放在 shaders 資料夾中。</string>
     <string name="render_effect_legacy_scale_note">舊版著色器會以螢幕視口解析度渲染，將忽略 .ini 中的 OutputResolution 與 Upscaling 旗標。</string>
-    <string name="render_effect_legacy_metadata_missing">找不到此著色器 .ini 檔案中的設定，但其來源檔案仍可能正常渲染。</string>
+    <string name="render_effect_legacy_metadata_missing">找不到此著色器 .ini 檔案中的設定。著色器仍可能使用其來源檔案正常運作。</string>
     <string name="render_effect_count">已啟用 <xliff:g id="count" example="2">%1$d</xliff:g> 項</string>
     <string name="render_effect_add">新增效果</string>
     <string name="render_effect_builtin">內建效果</string>

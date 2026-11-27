@@ -127,7 +127,7 @@
     <string name="render_effect_catalog_hint">Lisää tehoste pinoon napauttamalla.</string>
     <string name="render_effect_user_folder_hint">INI-, VSH- ja FSH-tiedostojen on oltava shaders-kansiossa.</string>
     <string name="render_effect_legacy_scale_note">Legacy-varjostimet renderöidään näytön näyttöalueen tarkkuudella; .ini-tiedoston OutputResolution- ja Upscaling-liput ohitetaan.</string>
-    <string name="render_effect_legacy_metadata_missing">Tämän varjostimen .ini-tiedoston asetuksia ei löytynyt. Sen lähdetiedostot saattavat silti toimia.</string>
+    <string name="render_effect_legacy_metadata_missing">Tämän varjostimen .ini-tiedoston asetuksia ei löytynyt. Varjostin saattaa silti toimia lähdetiedostojensa avulla.</string>
     <string name="render_effect_count"><xliff:g id="count" example="2">%1$d</xliff:g> aktiivista</string>
     <string name="render_effect_add">Lisää tehoste</string>
     <string name="render_effect_builtin">Sisäänrakennetut tehosteet</string>

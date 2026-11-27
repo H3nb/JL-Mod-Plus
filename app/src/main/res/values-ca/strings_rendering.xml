@@ -126,7 +126,7 @@
     <string name="render_effect_catalog_hint">Toca un efecte per afegir-lo a la pila.</string>
     <string name="render_effect_user_folder_hint">Els fitxers INI, VSH i FSH han de ser a la carpeta de shaders.</string>
     <string name="render_effect_legacy_scale_note">Els shaders heretats es renderitzen a la resolució de l’àrea de visualització de la pantalla; els indicadors OutputResolution i Upscaling del fitxer .ini s’ignoren.</string>
-    <string name="render_effect_legacy_metadata_missing">No s’ha trobat la configuració del fitxer .ini d’aquest shader. És possible que els seus fitxers font encara es renderitzin.</string>
+    <string name="render_effect_legacy_metadata_missing">No s’ha trobat la configuració del fitxer .ini d’aquest shader. És possible que el shader encara funcioni amb els seus fitxers font.</string>
     <string name="render_effect_count"><xliff:g id="count" example="2">%1$d</xliff:g> actius</string>
     <string name="render_effect_add">Afegeix un efecte</string>
     <string name="render_effect_builtin">Efectes integrats</string>

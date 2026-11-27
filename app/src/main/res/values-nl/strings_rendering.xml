@@ -127,7 +127,7 @@
     <string name="render_effect_catalog_hint">Tik op een effect om het aan de stapel toe te voegen.</string>
     <string name="render_effect_user_folder_hint">INI-, VSH- en FSH-bestanden moeten in de map shaders staan.</string>
     <string name="render_effect_legacy_scale_note">Legacy-shaders renderen op de resolutie van de scherm-viewport; de vlaggen OutputResolution en Upscaling in .ini worden genegeerd.</string>
-    <string name="render_effect_legacy_metadata_missing">Instellingen uit het .ini-bestand van deze shader zijn niet gevonden. De bronbestanden kunnen mogelijk nog steeds worden gerenderd.</string>
+    <string name="render_effect_legacy_metadata_missing">Instellingen uit het .ini-bestand van deze shader zijn niet gevonden. De shader werkt mogelijk nog met de bronbestanden.</string>
     <string name="render_effect_count"><xliff:g id="count" example="2">%1$d</xliff:g> actief</string>
     <string name="render_effect_add">Effect toevoegen</string>
     <string name="render_effect_builtin">Ingebouwde effecten</string>

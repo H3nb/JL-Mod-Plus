@@ -127,7 +127,7 @@
     <string name="render_effect_catalog_hint">Klepnutím na efekt jej přidáte do zásobníku.</string>
     <string name="render_effect_user_folder_hint">Soubory INI, VSH a FSH musí být umístěny ve složce shaders.</string>
     <string name="render_effect_legacy_scale_note">Starší shadery se vykreslují v rozlišení výřezu obrazovky; příznaky OutputResolution a Upscaling v souboru .ini jsou ignorovány.</string>
-    <string name="render_effect_legacy_metadata_missing">Nastavení ze souboru .ini tohoto shaderu nebyla nalezena. Jeho zdrojové soubory se přesto mohou vykreslit.</string>
+    <string name="render_effect_legacy_metadata_missing">Nastavení ze souboru .ini tohoto shaderu nebyla nalezena. Shader přesto může fungovat se svými zdrojovými soubory.</string>
     <string name="render_effect_count">Aktivní: <xliff:g id="count" example="2">%1$d</xliff:g></string>
     <string name="render_effect_add">Přidat efekt</string>
     <string name="render_effect_builtin">Vestavěné efekty</string>

@@ -127,7 +127,7 @@
     <string name="render_effect_catalog_hint">Додирните ефекат да бисте га додали у стек.</string>
     <string name="render_effect_user_folder_hint">INI, VSH и FSH датотеке морају бити у фасцикли shaders.</string>
     <string name="render_effect_legacy_scale_note">Стари шејдери се рендерују у резолуцији приказног оквира екрана; заставице OutputResolution и Upscaling из .ini датотеке се занемарују.</string>
-    <string name="render_effect_legacy_metadata_missing">Подешавања из .ini датотеке овог шејдера нису пронађена. Његове изворне датотеке можда и даље могу да се рендерују.</string>
+    <string name="render_effect_legacy_metadata_missing">Подешавања из .ini датотеке овог шејдера нису пронађена. Шејдер можда и даље ради са својим изворним датотекама.</string>
     <string name="render_effect_count">Активних: <xliff:g id="count" example="2">%1$d</xliff:g></string>
     <string name="render_effect_add">Додај ефекат</string>
     <string name="render_effect_builtin">Уграђени ефекти</string>

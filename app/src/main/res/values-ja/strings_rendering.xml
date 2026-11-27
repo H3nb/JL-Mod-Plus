@@ -127,7 +127,7 @@
     <string name="render_effect_catalog_hint">エフェクトをタップするとスタックに追加されます。</string>
     <string name="render_effect_user_folder_hint">INI、VSH、FSH ファイルはシェーダーフォルダーに配置する必要があります。</string>
     <string name="render_effect_legacy_scale_note">レガシーシェーダーは画面のビューポート解像度で描画されます。.ini の OutputResolution および Upscaling フラグは無視されます。</string>
-    <string name="render_effect_legacy_metadata_missing">このシェーダーの .ini ファイルの設定が見つかりませんでした。ソースファイル自体は描画できる場合があります。</string>
+    <string name="render_effect_legacy_metadata_missing">このシェーダーの .ini ファイルの設定が見つかりませんでした。ソースファイルを使ってシェーダーが引き続き動作する場合があります。</string>
     <string name="render_effect_count"><xliff:g id="count" example="2">%1$d</xliff:g> 件が有効</string>
     <string name="render_effect_add">エフェクトを追加</string>
     <string name="render_effect_builtin">内蔵エフェクト</string>

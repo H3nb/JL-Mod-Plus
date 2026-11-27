@@ -127,7 +127,7 @@
     <string name="render_effect_catalog_hint">স্ট্যাকে যোগ করতে একটি ইফেক্টে ট্যাপ করুন।</string>
     <string name="render_effect_user_folder_hint">INI, VSH এবং FSH ফাইলগুলো shaders ফোল্ডারে থাকতে হবে।</string>
     <string name="render_effect_legacy_scale_note">লিগ্যাসি শেডারগুলো স্ক্রিন ভিউপোর্ট রেজোলিউশনে রেন্ডার হয়; .ini ফাইলের OutputResolution এবং Upscaling ফ্ল্যাগ উপেক্ষা করা হয়।</string>
-    <string name="render_effect_legacy_metadata_missing">এই শেডারের .ini ফাইল থেকে সেটিংস পাওয়া যায়নি। এর সোর্স ফাইলগুলো তবুও রেন্ডার হতে পারে।</string>
+    <string name="render_effect_legacy_metadata_missing">এই শেডারের .ini ফাইল থেকে সেটিংস পাওয়া যায়নি। তবে সোর্স ফাইলগুলো ব্যবহার করে শেডারটি এখনও কাজ করতে পারে।</string>
     <string name="render_effect_count"><xliff:g id="count" example="2">%1$d</xliff:g>টি সক্রিয়</string>
     <string name="render_effect_add">ইফেক্ট যোগ করুন</string>
     <string name="render_effect_builtin">বিল্ট-ইন ইফেক্ট</string>

@@ -127,7 +127,7 @@
     <string name="render_effect_catalog_hint">Koppintson egy effektre a listához való hozzáadásához.</string>
     <string name="render_effect_user_folder_hint">Az INI, VSH és FSH fájloknak a shaders mappában kell lenniük.</string>
     <string name="render_effect_legacy_scale_note">Az örökölt shaderek a képernyő játéknézetének felbontásában renderelnek; az .ini OutputResolution és Upscaling jelzői figyelmen kívül maradnak.</string>
-    <string name="render_effect_legacy_metadata_missing">A shader .ini fájljának beállításai nem találhatók. A forrásfájlok ennek ellenére renderelhetők lehetnek.</string>
+    <string name="render_effect_legacy_metadata_missing">A shader .ini fájljának beállításai nem találhatók. A shader ennek ellenére működhet a forrásfájljaival.</string>
     <string name="render_effect_count"><xliff:g id="count" example="2">%1$d</xliff:g> aktív</string>
     <string name="render_effect_add">Effekt hozzáadása</string>
     <string name="render_effect_builtin">Beépített effektek</string>

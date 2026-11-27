@@ -127,7 +127,7 @@
     <string name="render_effect_catalog_hint">Trykk på en effekt for å legge den til i stabelen.</string>
     <string name="render_effect_user_folder_hint">INI-, VSH- og FSH-filer må ligge i «shaders»-mappen.</string>
     <string name="render_effect_legacy_scale_note">Eldre shadere gjengis i skjermens visningsoppløsning; .ini-flaggene OutputResolution og Upscaling ignoreres.</string>
-    <string name="render_effect_legacy_metadata_missing">Innstillingene fra denne shaderens .ini-fil ble ikke funnet. Kildefilene kan likevel gjengis.</string>
+    <string name="render_effect_legacy_metadata_missing">Innstillingene fra denne shaderens .ini-fil ble ikke funnet. Shaderen kan likevel fungere med kildefilene.</string>
     <string name="render_effect_count"><xliff:g id="count" example="2">%1$d</xliff:g> aktive</string>
     <string name="render_effect_add">Legg til effekt</string>
     <string name="render_effect_builtin">Innebygde effekter</string>

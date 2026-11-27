@@ -127,7 +127,7 @@
     <string name="render_effect_catalog_hint">Стекке қосу үшін әсерді түртіңіз.</string>
     <string name="render_effect_user_folder_hint">INI, VSH және FSH файлдары shaders қалтасында болуы керек.</string>
     <string name="render_effect_legacy_scale_note">Ескі шейдерлер экран көрініс аймағының ажыратымдылығында рендерленеді; .ini файлындағы OutputResolution және Upscaling жалаушалары еленбейді.</string>
-    <string name="render_effect_legacy_metadata_missing">Осы шейдердің .ini файлындағы параметрлер табылмады. Оның бастапқы файлдары әлі де рендерленуі мүмкін.</string>
+    <string name="render_effect_legacy_metadata_missing">Осы шейдердің .ini файлындағы параметрлер табылмады. Шейдер бастапқы файлдары арқылы әлі де жұмыс істеуі мүмкін.</string>
     <string name="render_effect_count"><xliff:g id="count" example="2">%1$d</xliff:g> белсенді</string>
     <string name="render_effect_add">Әсер қосу</string>
     <string name="render_effect_builtin">Кірістірілген әсерлер</string>

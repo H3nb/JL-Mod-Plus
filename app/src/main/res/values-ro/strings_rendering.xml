@@ -127,7 +127,7 @@
     <string name="render_effect_catalog_hint">Atingeți un efect pentru a-l adăuga în stivă.</string>
     <string name="render_effect_user_folder_hint">Fișierele INI, VSH și FSH trebuie să se afle în dosarul shaders.</string>
     <string name="render_effect_legacy_scale_note">Shaderele legacy sunt randate la rezoluția zonei de afișare a ecranului; marcajele .ini OutputResolution și Upscaling sunt ignorate.</string>
-    <string name="render_effect_legacy_metadata_missing">Setările din fișierul .ini al acestui shader nu au fost găsite. Este posibil ca fișierele sursă să poată fi randate în continuare.</string>
+    <string name="render_effect_legacy_metadata_missing">Setările din fișierul .ini al acestui shader nu au fost găsite. Shaderul poate funcționa în continuare cu fișierele sale sursă.</string>
     <string name="render_effect_count"><xliff:g id="count" example="2">%1$d</xliff:g> active</string>
     <string name="render_effect_add">Adaugă efect</string>
     <string name="render_effect_builtin">Efecte integrate</string>

@@ -127,7 +127,7 @@
     <string name="render_effect_catalog_hint">Tippen Sie auf einen Effekt, um ihn zum Stapel hinzuzufügen.</string>
     <string name="render_effect_user_folder_hint">INI-, VSH- und FSH-Dateien müssen im Ordner „shaders“ liegen.</string>
     <string name="render_effect_legacy_scale_note">Legacy-Shader rendern in der Viewport-Auflösung des Bildschirms; .ini-Flags für OutputResolution und Upscaling werden ignoriert.</string>
-    <string name="render_effect_legacy_metadata_missing">Einstellungen aus der .ini-Datei dieses Shaders wurden nicht gefunden. Die Quelldateien werden möglicherweise dennoch gerendert.</string>
+    <string name="render_effect_legacy_metadata_missing">Die Einstellungen aus der .ini-Datei dieses Shaders wurden nicht gefunden. Der Shader funktioniert möglicherweise trotzdem mit seinen Quelldateien.</string>
     <string name="render_effect_count"><xliff:g id="count" example="2">%1$d</xliff:g> aktiv</string>
     <string name="render_effect_add">Effekt hinzufügen</string>
     <string name="render_effect_builtin">Integrierte Effekte</string>

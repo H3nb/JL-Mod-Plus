@@ -127,7 +127,7 @@
     <string name="render_effect_catalog_hint">स्टैक में जोड़ने के लिए किसी प्रभाव पर टैप करें।</string>
     <string name="render_effect_user_folder_hint">INI, VSH और FSH फ़ाइलें shaders फ़ोल्डर में होनी चाहिए।</string>
     <string name="render_effect_legacy_scale_note">लेगेसी शेडर स्क्रीन व्यूपोर्ट रिज़ॉल्यूशन पर रेंडर होते हैं; .ini के OutputResolution और Upscaling फ़्लैग अनदेखे किए जाते हैं।</string>
-    <string name="render_effect_legacy_metadata_missing">इस शेडर की .ini फ़ाइल की सेटिंग्स नहीं मिलीं। इसकी स्रोत फ़ाइलें फिर भी रेंडर हो सकती हैं।</string>
+    <string name="render_effect_legacy_metadata_missing">इस शेडर की .ini फ़ाइल की सेटिंग्स नहीं मिलीं। शेडर अपनी स्रोत फ़ाइलों के साथ फिर भी काम कर सकता है।</string>
     <string name="render_effect_count"><xliff:g id="count" example="2">%1$d</xliff:g> सक्रिय</string>
     <string name="render_effect_add">प्रभाव जोड़ें</string>
     <string name="render_effect_builtin">अंतर्निहित प्रभाव</string>

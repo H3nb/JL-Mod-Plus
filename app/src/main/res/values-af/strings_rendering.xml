@@ -60,7 +60,7 @@
     <string name="render_parameters_hint">Skuif ’n glyer om sy waarde aan te pas. Veranderinge word gestoor wanneer jy dit los.</string>
     <string name="render_pass_readonly">Stadiums loop in hierdie volgorde. Invoerfiltering en uitvoerskaal kom van die gekose voorinstelling.</string>
     <string name="render_pipeline_intro">Die pad van die spel se raambuffer na jou skerm.</string>
-    <string name="render_native_short">Inheems (1×)</string>
+    <string name="render_native_short">Oorspronklik (1×)</string>
     <string name="render_expand_passes">Wys stadiums</string>
     <string name="render_collapse_passes">Versteek stadiums</string>
     <string name="render_view_all_passes">Stadiumbesonderhede</string>
@@ -127,7 +127,7 @@
     <string name="render_effect_catalog_hint">Tik ’n effek om dit by die stapel te voeg.</string>
     <string name="render_effect_user_folder_hint">INI-, VSH- en FSH-lêers moet in die shaders-gids wees.</string>
     <string name="render_effect_legacy_scale_note">Verouderde shaders gee teen die skermpoortresolusie weer; .ini OutputResolution- en Upscaling-vlae word geïgnoreer.</string>
-    <string name="render_effect_legacy_metadata_missing">Instellings uit hierdie shader se .ini-lêer is nie gevind nie. Sy bronlêers kan steeds weergegee word.</string>
+    <string name="render_effect_legacy_metadata_missing">Die instellings uit hierdie shader se .ini-lêer is nie gevind nie. Die shader kan dalk steeds met sy bronlêers werk.</string>
     <string name="render_effect_count"><xliff:g id="count" example="2">%1$d</xliff:g> aktief</string>
     <string name="render_effect_add">Voeg effek by</string>
     <string name="render_effect_builtin">Ingeboude effekte</string>

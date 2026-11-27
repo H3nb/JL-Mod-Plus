@@ -126,7 +126,7 @@
     <string name="render_effect_catalog_hint">轻按效果即可将其添加到效果栈。</string>
     <string name="render_effect_user_folder_hint">INI、VSH 和 FSH 文件必须位于 shaders 文件夹中。</string>
     <string name="render_effect_legacy_scale_note">旧版着色器按屏幕视口分辨率渲染；.ini 中的 OutputResolution 和 Upscaling 标记将被忽略。</string>
-    <string name="render_effect_legacy_metadata_missing">未找到此着色器 .ini 文件中的设置，但其源文件仍可能正常渲染。</string>
+    <string name="render_effect_legacy_metadata_missing">未找到此着色器 .ini 文件中的设置。着色器仍可能使用其源文件正常运行。</string>
     <string name="render_effect_count">已启用 <xliff:g id="count" example="2">%1$d</xliff:g> 项</string>
     <string name="render_effect_add">添加效果</string>
     <string name="render_effect_builtin">内置效果</string>

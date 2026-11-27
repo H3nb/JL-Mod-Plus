@@ -127,7 +127,7 @@
     <string name="render_effect_catalog_hint">برای افزودن یک جلوه به پشته، روی آن بزنید.</string>
     <string name="render_effect_user_folder_hint">فایل‌های INI، VSH و FSH باید در پوشه شیدرها باشند.</string>
     <string name="render_effect_legacy_scale_note">شیدرهای قدیمی با وضوح قاب نمایش صفحه رندر می‌شوند؛ پرچم‌های OutputResolution و Upscaling در فایل .ini نادیده گرفته می‌شوند.</string>
-    <string name="render_effect_legacy_metadata_missing">تنظیمات فایل .ini این شیدر یافت نشد. فایل‌های منبع آن ممکن است همچنان رندر شوند.</string>
+    <string name="render_effect_legacy_metadata_missing">تنظیمات فایل .ini این شیدر یافت نشد. ممکن است شیدر همچنان با فایل‌های منبع خود کار کند.</string>
     <string name="render_effect_count"><xliff:g id="count" example="2">%1$d</xliff:g> فعال</string>
     <string name="render_effect_add">افزودن جلوه</string>
     <string name="render_effect_builtin">جلوه‌های داخلی</string>

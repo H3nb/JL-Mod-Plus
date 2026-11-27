@@ -127,7 +127,7 @@
     <string name="render_effect_catalog_hint">Tocca un effetto per aggiungerlo allo stack.</string>
     <string name="render_effect_user_folder_hint">I file INI, VSH e FSH devono trovarsi nella cartella shaders.</string>
     <string name="render_effect_legacy_scale_note">Gli shader legacy vengono renderizzati alla risoluzione della viewport dello schermo; i flag OutputResolution e Upscaling del file .ini vengono ignorati.</string>
-    <string name="render_effect_legacy_metadata_missing">Impostazioni del file .ini di questo shader non trovate. I file sorgente potrebbero comunque funzionare.</string>
+    <string name="render_effect_legacy_metadata_missing">Impostazioni del file .ini di questo shader non trovate. Lo shader potrebbe comunque funzionare con i suoi file sorgente.</string>
     <string name="render_effect_count"><xliff:g id="count" example="2">%1$d</xliff:g> attivi</string>
     <string name="render_effect_add">Aggiungi effetto</string>
     <string name="render_effect_builtin">Effetti integrati</string>

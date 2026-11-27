@@ -127,7 +127,7 @@
     <string name="render_effect_catalog_hint">יש להקיש על אפקט כדי להוסיף אותו לערימה.</string>
     <string name="render_effect_user_folder_hint">קובצי INI, VSH ו-FSH חייבים להימצא בתיקיית shaders.</string>
     <string name="render_effect_legacy_scale_note">שיידרים ישנים מעובדים ברזולוציית אזור התצוגה של המסך; דגלי OutputResolution ו-Upscaling בקובץ .ini מתעלמים מהם.</string>
-    <string name="render_effect_legacy_metadata_missing">ההגדרות מקובץ ה-.ini של שיידר זה לא נמצאו. ייתכן שקובצי המקור שלו עדיין יעבדו.</string>
+    <string name="render_effect_legacy_metadata_missing">ההגדרות מקובץ ה-.ini של שיידר זה לא נמצאו. ייתכן שהשיידר עדיין יעבוד עם קובצי המקור שלו.</string>
     <string name="render_effect_count"><xliff:g id="count" example="2">%1$d</xliff:g> פעילים</string>
     <string name="render_effect_add">הוספת אפקט</string>
     <string name="render_effect_builtin">אפקטים מובנים</string>

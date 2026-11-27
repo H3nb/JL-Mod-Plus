@@ -127,7 +127,7 @@
     <string name="render_effect_catalog_hint">Натисніть ефект, щоб додати його до стека.</string>
     <string name="render_effect_user_folder_hint">Файли INI, VSH і FSH мають бути в папці shaders.</string>
     <string name="render_effect_legacy_scale_note">Застарілі шейдери рендеряться у роздільній здатності області перегляду екрана; прапорці OutputResolution і Upscaling у .ini ігноруються.</string>
-    <string name="render_effect_legacy_metadata_missing">Налаштування з файла .ini цього шейдера не знайдено. Його вихідні файли все ще можуть рендеритися.</string>
+    <string name="render_effect_legacy_metadata_missing">Налаштування з файла .ini цього шейдера не знайдено. Шейдер усе ще може працювати зі своїми вихідними файлами.</string>
     <string name="render_effect_count">Активних: <xliff:g id="count" example="2">%1$d</xliff:g></string>
     <string name="render_effect_add">Додати ефект</string>
     <string name="render_effect_builtin">Вбудовані ефекти</string>

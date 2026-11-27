@@ -60,7 +60,7 @@
     <string name="render_parameters_hint">Dra ett skjutreglage för att justera värdet. Ändringar sparas när du släpper.</string>
     <string name="render_pass_readonly">Stegen körs i den här ordningen. Indatafiltrering och utskalning kommer från den valda förinställningen.</string>
     <string name="render_pipeline_intro">Vägen från spelets bildbuffert till skärmen.</string>
-    <string name="render_native_short">Inbyggd (1×)</string>
+    <string name="render_native_short">Ursprunglig (1×)</string>
     <string name="render_expand_passes">Visa steg</string>
     <string name="render_collapse_passes">Dölj steg</string>
     <string name="render_view_all_passes">Stegdetaljer</string>
@@ -127,7 +127,7 @@
     <string name="render_effect_catalog_hint">Tryck på en effekt för att lägga till den i stapeln.</string>
     <string name="render_effect_user_folder_hint">INI-, VSH- och FSH-filer måste ligga i mappen shaders.</string>
     <string name="render_effect_legacy_scale_note">Äldre shaders renderas i skärmens visningsupplösning; .ini-flaggorna OutputResolution och Upscaling ignoreras.</string>
-    <string name="render_effect_legacy_metadata_missing">Inställningarna från den här shaderns .ini-fil hittades inte. Dess källfiler kan ändå fungera.</string>
+    <string name="render_effect_legacy_metadata_missing">Inställningarna från den här shaderns .ini-fil hittades inte. Shadern kan ändå fungera med sina källfiler.</string>
     <string name="render_effect_count"><xliff:g id="count" example="2">%1$d</xliff:g> aktiva</string>
     <string name="render_effect_add">Lägg till effekt</string>
     <string name="render_effect_builtin">Inbyggda effekter</string>

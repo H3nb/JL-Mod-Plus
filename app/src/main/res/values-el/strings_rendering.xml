@@ -126,7 +126,7 @@
     <string name="render_effect_catalog_hint">Πατήστε ένα εφέ για να το προσθέσετε στη στοίβα.</string>
     <string name="render_effect_user_folder_hint">Τα αρχεία INI, VSH και FSH πρέπει να βρίσκονται στον φάκελο shaders.</string>
     <string name="render_effect_legacy_scale_note">Τα παλαιά shaders αποδίδονται στην ανάλυση της περιοχής προβολής οθόνης· οι σημαίες OutputResolution και Upscaling του .ini αγνοούνται.</string>
-    <string name="render_effect_legacy_metadata_missing">Δεν βρέθηκαν ρυθμίσεις από το αρχείο .ini αυτού του shader. Τα πηγαία αρχεία του ενδέχεται να εξακολουθούν να αποδίδονται.</string>
+    <string name="render_effect_legacy_metadata_missing">Δεν βρέθηκαν οι ρυθμίσεις από το αρχείο .ini αυτού του shader. Ο shader ενδέχεται να εξακολουθεί να λειτουργεί με τα πηγαία αρχεία του.</string>
     <string name="render_effect_count"><xliff:g id="count" example="2">%1$d</xliff:g> ενεργά</string>
     <string name="render_effect_add">Προσθήκη εφέ</string>
     <string name="render_effect_builtin">Ενσωματωμένα εφέ</string>

@@ -127,7 +127,7 @@
     <string name="render_effect_catalog_hint">Toque num efeito para o adicionar à pilha.</string>
     <string name="render_effect_user_folder_hint">Os ficheiros INI, VSH e FSH têm de estar na pasta shaders.</string>
     <string name="render_effect_legacy_scale_note">Os shaders antigos são renderizados na resolução da área de visualização do ecrã; os indicadores OutputResolution e Upscaling do .ini são ignorados.</string>
-    <string name="render_effect_legacy_metadata_missing">As definições do ficheiro .ini deste shader não foram encontradas. Os ficheiros de origem ainda poderão ser renderizados.</string>
+    <string name="render_effect_legacy_metadata_missing">As definições do ficheiro .ini deste shader não foram encontradas. O shader poderá continuar a funcionar com os seus ficheiros-fonte.</string>
     <string name="render_effect_count"><xliff:g id="count" example="2">%1$d</xliff:g> ativos</string>
     <string name="render_effect_add">Adicionar efeito</string>
     <string name="render_effect_builtin">Efeitos incorporados</string>

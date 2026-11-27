@@ -127,7 +127,7 @@
     <string name="render_effect_catalog_hint">ଷ୍ଟାକ୍ ରେ ଯୋଗ କରିବାକୁ ଏକ ଇଫେକ୍ଟ୍ ଉପରେ ଟ୍ୟାପ୍ କରନ୍ତୁ।</string>
     <string name="render_effect_user_folder_hint">INI, VSH ଏବଂ FSH ଫାଇଲ୍ ଗୁଡ଼ିକ shaders ଫୋଲ୍ଡର୍ ରେ ରହିବା ଆବଶ୍ୟକ।</string>
     <string name="render_effect_legacy_scale_note">ଲେଗାସି ସେଡର୍ ସ୍କ୍ରିନ୍ ଭ୍ୟୁପୋର୍ଟ ରିଜୋଲ୍ୟୁସନ୍ ରେ ରେଣ୍ଡର୍ ହୁଏ; .ini OutputResolution ଏବଂ Upscaling ଫ୍ଲାଗ୍ ଉପେକ୍ଷା କରାଯାଏ।</string>
-    <string name="render_effect_legacy_metadata_missing">ଏହି ସେଡର୍ ର .ini ଫାଇଲ୍ ରୁ ସେଟିଂସ୍ ମିଳିଲା ନାହିଁ। ଏହାର ସୋର୍ସ ଫାଇଲ୍ ତଥାପି ରେଣ୍ଡର୍ ହୋଇପାରେ।</string>
+    <string name="render_effect_legacy_metadata_missing">ଏହି ସେଡର୍‌ର .ini ଫାଇଲ୍‌ରୁ ସେଟିଂସ୍ ମିଳିଲା ନାହିଁ। ସୋର୍ସ ଫାଇଲ୍ ବ୍ୟବହାର କରି ସେଡର୍‌ଟି ତଥାପି କାମ କରିପାରେ।</string>
     <string name="render_effect_count"><xliff:g id="count" example="2">%1$d</xliff:g> ସକ୍ରିୟ</string>
     <string name="render_effect_add">ଇଫେକ୍ଟ୍ ଯୋଗ କରନ୍ତୁ</string>
     <string name="render_effect_builtin">ବିଲ୍ଟ-ଇନ୍ ଇଫେକ୍ଟ୍</string>

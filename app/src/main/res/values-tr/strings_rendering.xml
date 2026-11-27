@@ -126,7 +126,7 @@
     <string name="render_effect_catalog_hint">Yığına eklemek için bir efekte dokunun.</string>
     <string name="render_effect_user_folder_hint">INI, VSH ve FSH dosyaları shaders klasöründe olmalıdır.</string>
     <string name="render_effect_legacy_scale_note">Eski shader’lar ekran görüntü alanı çözünürlüğünde işlenir; .ini dosyasındaki OutputResolution ve Upscaling bayrakları yoksayılır.</string>
-    <string name="render_effect_legacy_metadata_missing">Bu shader’ın .ini dosyasındaki ayarlar bulunamadı. Kaynak dosyaları yine de işlenebilir.</string>
+    <string name="render_effect_legacy_metadata_missing">Bu shader’ın .ini dosyasındaki ayarlar bulunamadı. Shader, kaynak dosyalarıyla yine de çalışabilir.</string>
     <string name="render_effect_count"><xliff:g id="count" example="2">%1$d</xliff:g> etkin</string>
     <string name="render_effect_add">Efekt ekle</string>
     <string name="render_effect_builtin">Yerleşik efektler</string>

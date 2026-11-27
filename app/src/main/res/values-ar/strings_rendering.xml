@@ -127,7 +127,7 @@
     <string name="render_effect_catalog_hint">انقر على تأثير لإضافته إلى السلسلة.</string>
     <string name="render_effect_user_folder_hint">يجب أن تكون ملفات INI وVSH وFSH في مجلد المظللات.</string>
     <string name="render_effect_legacy_scale_note">تُصيَّر المظللات القديمة بدقة إطار عرض الشاشة؛ ويتم تجاهل علامتَي OutputResolution وUpscaling في ملف .ini.</string>
-    <string name="render_effect_legacy_metadata_missing">لم يُعثر على إعدادات ملف .ini لهذا المظلل. قد تظل ملفاته المصدرية قابلة للتصيير.</string>
+    <string name="render_effect_legacy_metadata_missing">لم يُعثر على إعدادات ملف .ini لهذا المظلل. قد يظل المظلل يعمل باستخدام ملفاته المصدرية.</string>
     <string name="render_effect_count"><xliff:g id="count" example="2">%1$d</xliff:g> نشط</string>
     <string name="render_effect_add">إضافة تأثير</string>
     <string name="render_effect_builtin">التأثيرات المدمجة</string>

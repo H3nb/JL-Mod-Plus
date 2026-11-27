@@ -127,7 +127,7 @@
     <string name="render_effect_catalog_hint">Nhấn vào một hiệu ứng để thêm vào chuỗi.</string>
     <string name="render_effect_user_folder_hint">Các tệp INI, VSH và FSH phải nằm trong thư mục shaders.</string>
     <string name="render_effect_legacy_scale_note">Shader cũ kết xuất ở độ phân giải khung hiển thị màn hình; các cờ OutputResolution và Upscaling trong .ini bị bỏ qua.</string>
-    <string name="render_effect_legacy_metadata_missing">Không tìm thấy cài đặt từ tệp .ini của shader này. Các tệp nguồn vẫn có thể kết xuất được.</string>
+    <string name="render_effect_legacy_metadata_missing">Không tìm thấy cài đặt từ tệp .ini của shader này. Shader vẫn có thể hoạt động bằng các tệp nguồn của nó.</string>
     <string name="render_effect_count"><xliff:g id="count" example="2">%1$d</xliff:g> đang bật</string>
     <string name="render_effect_add">Thêm hiệu ứng</string>
     <string name="render_effect_builtin">Hiệu ứng tích hợp sẵn</string>

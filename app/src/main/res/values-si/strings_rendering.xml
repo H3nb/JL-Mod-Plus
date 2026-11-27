@@ -127,7 +127,7 @@
     <string name="render_effect_catalog_hint">ගොඩට එක් කිරීමට ප්‍රයෝගයක් තට්ටු කරන්න.</string>
     <string name="render_effect_user_folder_hint">INI, VSH සහ FSH ගොනු shaders ෆෝල්ඩරයේ තිබිය යුතුය.</string>
     <string name="render_effect_legacy_scale_note">පැරණි ශේඩර් තිර දර්ශන කවුළු විභේදනයේදී විදහා දක්වයි; .ini OutputResolution සහ Upscaling ධජ නොසලකා හරිනු ලැබේ.</string>
-    <string name="render_effect_legacy_metadata_missing">මෙම ශේඩරයේ .ini ගොනුවේ සැකසීම් හමු නොවීය. එහි මූලාශ්‍ර ගොනු තවමත් විදහා දැක්විය හැකිය.</string>
+    <string name="render_effect_legacy_metadata_missing">මෙම ශේඩරයේ .ini ගොනුවේ සැකසීම් හමු නොවීය. ශේඩරය එහි මූලාශ්‍ර ගොනු භාවිතයෙන් තවමත් ක්‍රියා කළ හැකිය.</string>
     <string name="render_effect_count"><xliff:g id="count" example="2">%1$d</xliff:g> සක්‍රියයි</string>
     <string name="render_effect_add">ප්‍රයෝගය එක් කරන්න</string>
     <string name="render_effect_builtin">අන්තර්ගත ප්‍රයෝග</string>

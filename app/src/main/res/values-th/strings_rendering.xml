@@ -127,7 +127,7 @@
     <string name="render_effect_catalog_hint">แตะเอฟเฟกต์เพื่อเพิ่มลงในรายการ</string>
     <string name="render_effect_user_folder_hint">ไฟล์ INI, VSH และ FSH ต้องอยู่ในโฟลเดอร์ shaders</string>
     <string name="render_effect_legacy_scale_note">เชดเดอร์รุ่นเก่าจะเรนเดอร์ที่ความละเอียดของพื้นที่แสดงผล โดยจะละเว้นแฟล็ก OutputResolution และ Upscaling ในไฟล์ .ini</string>
-    <string name="render_effect_legacy_metadata_missing">ไม่พบการตั้งค่าจากไฟล์ .ini ของเชดเดอร์นี้ ไฟล์ต้นฉบับอาจยังสามารถเรนเดอร์ได้</string>
+    <string name="render_effect_legacy_metadata_missing">ไม่พบการตั้งค่าจากไฟล์ .ini ของเชดเดอร์นี้ แต่เชดเดอร์อาจยังทำงานได้โดยใช้ไฟล์ต้นฉบับ</string>
     <string name="render_effect_count">ใช้งาน <xliff:g id="count" example="2">%1$d</xliff:g> รายการ</string>
     <string name="render_effect_add">เพิ่มเอฟเฟกต์</string>
     <string name="render_effect_builtin">เอฟเฟกต์ในตัว</string>
