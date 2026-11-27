@@ -86,6 +86,7 @@ typedef struct
     M3Gbitmask type;
     M3GPixelFormat format;
     M3Gint width, height;
+    M3Gint pixelScale; /* Physical pixels per guest pixel. */
     M3Guint stride;
     /*@shared@*/ void *pixels, *lockedPixels;
     EGLSurface surface;
@@ -511,6 +512,7 @@ static M3Gbool m3gBindRenderTarget(RenderContext *ctx,
     /* Everything checks out; set up the target parameters */
     
     ctx->target.type = targetType;
+    ctx->target.pixelScale = 1;
     ctx->target.width = width;
     ctx->target.height = height;
     ctx->display.width = width;
@@ -1541,6 +1543,12 @@ M3G_API void m3gSetViewport(M3GRenderContext hCtx,
 /*!
  * \brief Gets the viewport
  */
+M3G_API void m3gSetTargetPixelScale(M3GRenderContext hCtx, M3Gint scale)
+{
+    RenderContext *ctx = (RenderContext *) hCtx;
+    ctx->target.pixelScale = scale;
+}
+
 M3G_API void m3gGetViewport(M3GRenderContext hCtx,
                             M3Gint *x, M3Gint *y,
                             M3Gint *width, M3Gint *height)

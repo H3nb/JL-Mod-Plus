@@ -42,10 +42,10 @@ JNIEXPORT jint JNICALL Java_javax_microedition_m3g_Graphics3D__1addLight
 /*
  * Class:     javax_microedition_m3g_Graphics3D
  * Method:    _bindGraphics
- * Signature: (JJIIIIIIZIZ[I)Z
+ * Signature: (JJIIIIIIIZIZLandroid/graphics/Bitmap;)Z
  */
 JNIEXPORT jboolean JNICALL Java_javax_microedition_m3g_Graphics3D__1bindGraphics
-  (JNIEnv *, jclass, jlong, jlong, jint, jint, jint, jint, jint, jint, jboolean, jint, jboolean, jobject);
+  (JNIEnv *, jclass, jlong, jlong, jint, jint, jint, jint, jint, jint, jint, jboolean, jint, jboolean, jobject);
 
 /*
  * Class:     javax_microedition_m3g_Graphics3D

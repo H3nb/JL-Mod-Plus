@@ -92,7 +92,7 @@ JNIEXPORT jboolean JNICALL Java_javax_microedition_m3g_Graphics3D__1isProperRend
  */
 JNIEXPORT jboolean JNICALL Java_javax_microedition_m3g_Graphics3D__1bindGraphics
 (JNIEnv* aEnv, jclass, jlong aCtx, jlong aSurfaceHandle, jint aWidth, jint aHeight,
- jint aClipX, jint aClipY, jint aClipW, jint aClipH,
+ jint aClipX, jint aClipY, jint aClipW, jint aClipH, jint aPixelScale,
  jboolean aDepth, jint aHintBits, jboolean aIsProperRenderer, jobject bitmap)
 {
     M3GRenderContext ctx = (M3GRenderContext)aCtx;
@@ -120,7 +120,7 @@ JNIEXPORT jboolean JNICALL Java_javax_microedition_m3g_Graphics3D__1bindGraphics
         AndroidBitmapInfo info;
         if (AndroidBitmap_getInfo(aEnv, bitmap, &info) < 0
                 || info.format != ANDROID_BITMAP_FORMAT_RGBA_8888
-                || aWidth <= 0 || aHeight <= 0
+                || aWidth <= 0 || aHeight <= 0 || aPixelScale <= 0
                 || info.width != static_cast<uint32_t>(aWidth)
                 || info.height != static_cast<uint32_t>(aHeight)
                 || info.stride < static_cast<uint64_t>(info.width) * 4u) {
@@ -139,6 +139,7 @@ JNIEXPORT jboolean JNICALL Java_javax_microedition_m3g_Graphics3D__1bindGraphics
         m3gBindMemoryTarget((M3GRenderContext)aCtx, pixels_ptr, aWidth, aHeight,
                             M3G_RGB8_32, (M3Guint)info.stride, 0);
         if (CSynchronization::InstanceL()->GetErrorCode() == 0) {
+            m3gSetTargetPixelScale(ctx, aPixelScale);
             m3gSetClipRect((M3GRenderContext)aCtx, aClipX, aClipY, aClipW, aClipH);
             m3gSetViewport((M3GRenderContext)aCtx, aClipX, aClipY, aClipW, aClipH);
         }

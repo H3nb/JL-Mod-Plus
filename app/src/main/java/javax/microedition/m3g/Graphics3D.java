@@ -199,7 +199,7 @@ public class Graphics3D {
 						public void doRun() {
 							iIsImageTarget = _bindGraphics(
 									handle, 0, width, height,
-									physicalClipX, physicalClipY, physicalClipW, physicalClipH,
+									physicalClipX, physicalClipY, physicalClipW, physicalClipH, scale,
 									finalDepth, finalFlags, iIsProperRenderer,
 									targetBitmap);
 						}
@@ -603,7 +603,7 @@ public class Graphics3D {
 												long surfaceHandle,
 												int width, int height,
 												int clipX, int clipY,
-												int clipW, int clipH,
+												int clipW, int clipH, int pixelScale,
 												boolean depth,
 												int hintBits,
 												boolean aIsProperRenderer,

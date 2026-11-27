@@ -283,6 +283,44 @@ public class M3GRuntimeTest {
     }
 
 	@Test
+	public void unscaledSpriteKeepsLogicalSizeAcrossTargetRebinds() {
+		byte[] red = new byte[8 * 6 * 3];
+		for (int i = 0; i < red.length; i += 3) red[i] = (byte) 255;
+		Sprite3D sprite = new Sprite3D(false, new Image2D(Image2D.RGB, 8, 6, red),
+				new Appearance());
+		sprite.setTranslation(0, 0, -4);
+		Camera camera = new Camera();
+		camera.setPerspective(60.0f, 1.0f, 1.0f, 20.0f);
+		World world = new World();
+		world.addChild(camera);
+		world.addChild(sprite);
+		world.setActiveCamera(camera);
+		world.setBackground(createBackground(BACKGROUND_ARGB));
+
+		for (int scale : new int[]{1, 3, 1}) {
+			Image target = Image.createDisplayTarget(SIZE, SIZE, scale);
+			try {
+				g3d.bindTarget(target.getGraphics(), true,
+						Graphics3D.TRUE_COLOR | Graphics3D.OVERWRITE);
+				try {
+					g3d.render(world);
+				} finally {
+					g3d.releaseTarget();
+				}
+				int redCount = 0;
+				for (int y = 0; y < SIZE; y++) {
+					for (int x = 0; x < SIZE; x++) {
+						if ((target.getLogicalPixel(x, y) & RGB_MASK) == 0xFF0000) redCount++;
+					}
+				}
+				assertEquals("Unscaled sprite guest area at " + scale + "x", 8 * 6, redCount);
+			} finally {
+				target.getBitmap().recycle();
+			}
+		}
+	}
+
+	@Test
 	public void image2DTargetClearRoundTripsThroughBackgroundRendering() {
 		Image2D target = new Image2D(Image2D.RGB, SIZE, SIZE);
 		Background clearBackground = createBackground(BACKGROUND_ARGB);

@@ -299,6 +299,10 @@ static M3Gbool m3gGetSpriteCoordinates(Sprite *sprite,
         M3Gint viewport[4];
         if (ctx != NULL) {
             m3gGetViewport(ctx, viewport, viewport + 1, viewport + 2, viewport + 3);
+            /* Crop dimensions and offsets are expressed in guest pixels. */
+            viewport[2] /= ctx->target.pixelScale;
+            viewport[3] /= ctx->target.pixelScale;
+            if (viewport[2] <= 0 || viewport[3] <= 0) return M3G_FALSE;
         }
         else {
             /* Use a dummy viewport, this is only when picking and

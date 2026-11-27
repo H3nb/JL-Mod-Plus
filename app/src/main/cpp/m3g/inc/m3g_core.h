@@ -896,6 +896,7 @@ M3G_API void    m3gBindBitmapTarget     (M3GRenderContext ctx, M3GNativeBitmap h
 M3G_API void    m3gBindImageTarget      (M3GRenderContext ctx, M3GImage hImage);
 M3G_API void    m3gBindEGLSurfaceTarget (M3GRenderContext context, M3GEGLSurface surface);
 M3G_API void    m3gBindMemoryTarget     (M3GRenderContext context, void *pixels, M3Guint width, M3Guint height, M3GPixelFormat format, M3Guint stride, M3Guint userContext);
+M3G_API void    m3gSetTargetPixelScale (M3GRenderContext ctx, M3Gint scale);
 M3G_API void    m3gBindWindowTarget     (M3GRenderContext ctx, M3GNativeWindow hWindow);
 M3G_API void    m3gClear                (M3GRenderContext context, M3GBackground hBackground);
 M3G_API void    m3gClearLights          (M3GRenderContext context);
