@@ -14,12 +14,12 @@
         <item quantity="other"><xliff:g id="count" example="3">%1$d</xliff:g> нәтиже</item>
     </plurals>
     <plurals name="memory_editor_candidates">
-        <item quantity="one"><xliff:g id="count" example="3">%1$d</xliff:g> үміткер</item>
-        <item quantity="other"><xliff:g id="count" example="3">%1$d</xliff:g> үміткер</item>
+        <item quantity="one"><xliff:g id="count" example="3">%1$d</xliff:g> ықтимал нысан</item>
+        <item quantity="other"><xliff:g id="count" example="3">%1$d</xliff:g> ықтимал нысан</item>
     </plurals>
     <plurals name="memory_editor_search_complete">
-        <item quantity="one">Іздеу аяқталды · <xliff:g id="count" example="3">%1$d</xliff:g> үміткер</item>
-        <item quantity="other">Іздеу аяқталды · <xliff:g id="count" example="3">%1$d</xliff:g> үміткер</item>
+        <item quantity="one">Іздеу аяқталды · <xliff:g id="count" example="3">%1$d</xliff:g> ықтимал нысан</item>
+        <item quantity="other">Іздеу аяқталды · <xliff:g id="count" example="3">%1$d</xliff:g> ықтимал нысан</item>
     </plurals>
     <string name="memory_editor_no_results">Нәтиже жоқ</string>
     <string name="memory_editor_no_watch">Бақылау тізімі бос</string>

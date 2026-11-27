@@ -14,12 +14,12 @@
         <item quantity="other"><xliff:g id="count" example="3">%1$d</xliff:g> ଫଳାଫଳ</item>
     </plurals>
     <plurals name="memory_editor_candidates">
-        <item quantity="one"><xliff:g id="count" example="3">%1$d</xliff:g> ପ୍ରାର୍ଥୀ</item>
-        <item quantity="other"><xliff:g id="count" example="3">%1$d</xliff:g> ପ୍ରାର୍ଥୀ</item>
+        <item quantity="one"><xliff:g id="count" example="3">%1$d</xliff:g> ସମ୍ଭାବ୍ୟ ଲକ୍ଷ୍ୟ</item>
+        <item quantity="other"><xliff:g id="count" example="3">%1$d</xliff:g> ସମ୍ଭାବ୍ୟ ଲକ୍ଷ୍ୟ</item>
     </plurals>
     <plurals name="memory_editor_search_complete">
-        <item quantity="one">ସର୍ଚ୍ଚ୍ ସମ୍ପୂର୍ଣ୍ଣ · <xliff:g id="count" example="3">%1$d</xliff:g> ପ୍ରାର୍ଥୀ</item>
-        <item quantity="other">ସର୍ଚ୍ଚ୍ ସମ୍ପୂର୍ଣ୍ଣ · <xliff:g id="count" example="3">%1$d</xliff:g> ପ୍ରାର୍ଥୀ</item>
+        <item quantity="one">ସର୍ଚ୍ଚ୍ ସମ୍ପୂର୍ଣ୍ଣ · <xliff:g id="count" example="3">%1$d</xliff:g> ସମ୍ଭାବ୍ୟ ଲକ୍ଷ୍ୟ</item>
+        <item quantity="other">ସର୍ଚ୍ଚ୍ ସମ୍ପୂର୍ଣ୍ଣ · <xliff:g id="count" example="3">%1$d</xliff:g> ସମ୍ଭାବ୍ୟ ଲକ୍ଷ୍ୟ</item>
     </plurals>
     <string name="memory_editor_no_results">କୌଣସି ଫଳାଫଳ ନାହିଁ</string>
     <string name="memory_editor_no_watch">ୱାଚ୍ ଖାଲି ଅଛି</string>

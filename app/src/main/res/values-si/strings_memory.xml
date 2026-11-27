@@ -14,12 +14,12 @@
         <item quantity="other">ප්‍රතිඵල <xliff:g id="count" example="3">%1$d</xliff:g></item>
     </plurals>
     <plurals name="memory_editor_candidates">
-        <item quantity="one">අපේක්ෂකයා <xliff:g id="count" example="3">%1$d</xliff:g></item>
-        <item quantity="other">අපේක්ෂකයන් <xliff:g id="count" example="3">%1$d</xliff:g></item>
+        <item quantity="one">විය හැකි ඉලක්කය <xliff:g id="count" example="3">%1$d</xliff:g></item>
+        <item quantity="other">විය හැකි ඉලක්ක <xliff:g id="count" example="3">%1$d</xliff:g></item>
     </plurals>
     <plurals name="memory_editor_search_complete">
-        <item quantity="one">සෙවීම අවසන් · අපේක්ෂකයා <xliff:g id="count" example="3">%1$d</xliff:g></item>
-        <item quantity="other">සෙවීම අවසන් · අපේක්ෂකයන් <xliff:g id="count" example="3">%1$d</xliff:g></item>
+        <item quantity="one">සෙවීම අවසන් · විය හැකි ඉලක්කය <xliff:g id="count" example="3">%1$d</xliff:g></item>
+        <item quantity="other">සෙවීම අවසන් · විය හැකි ඉලක්ක <xliff:g id="count" example="3">%1$d</xliff:g></item>
     </plurals>
     <string name="memory_editor_no_results">ප්‍රතිඵල නොමැත</string>
     <string name="memory_editor_no_watch">නිරීක්ෂණ ලැයිස්තුව හිස්ය</string>
