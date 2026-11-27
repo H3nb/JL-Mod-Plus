@@ -170,7 +170,9 @@
     <string name="library_share_chooser_title">ଆପ୍ ସେୟାର୍ କରନ୍ତୁ</string>
     <string name="library_export_chooser_title">ଏକ୍ସପୋର୍ଟ କରନ୍ତୁ</string>
     <string name="library_export_progress">ଏକ୍ସପୋର୍ଟ ହେଉଛି… <xliff:g id="completed" example="3">%1$d</xliff:g>/<xliff:g id="total" example="10">%2$d</xliff:g></string>
-    <string name="library_transfer_unavailable">ଏକ୍ସପୋର୍ଟ ହୋଇପାରିଲା ନାହିଁ। ଚାଲୁଥିବା ଚୟନିତ MIDlet ବନ୍ଦ କରି ପୁନଃ ଚେଷ୍ଟା କରନ୍ତୁ।</string>
+    <string name="library_transfer_unavailable">ଏକ୍ସପୋର୍ଟ ହୋଇପାରିଲା ନାହିଁ।</string>
+    <string name="library_export_data_in_use">ଚୟନିତ ଆପ୍‌ଗୁଡ଼ିକ ମଧ୍ୟରୁ ଗୋଟିଏର ଡାଟା ବ୍ୟବହାର ହେଉଛି। ଚାଲୁଥିବା ଚୟନିତ MIDlet ବନ୍ଦ କରି ପୁନଃ ଚେଷ୍ଟା କରନ୍ତୁ।</string>
+    <string name="library_export_menu_unavailable">ଏକ୍ସପୋର୍ଟ ମେନୁ ଖୋଲିପାରିଲା ନାହିଁ।</string>
     <string name="library_back">ଲାଇବ୍ରେରୀକୁ ଫେରନ୍ତୁ</string>
     <string name="library_sort">ଆପ୍ ସଜାନ୍ତୁ</string>
     <string name="library_search_clear">ସର୍ଚ୍ଚ୍ ଖାଲି କରନ୍ତୁ</string>

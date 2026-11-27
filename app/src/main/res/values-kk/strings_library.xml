@@ -170,7 +170,9 @@
     <string name="library_share_chooser_title">Қолданбаны бөлісу</string>
     <string name="library_export_chooser_title">Экспорттау</string>
     <string name="library_export_progress">Экспортталуда… <xliff:g id="completed" example="3">%1$d</xliff:g>/<xliff:g id="total" example="10">%2$d</xliff:g></string>
-    <string name="library_transfer_unavailable">Экспорттау мүмкін болмады. Таңдалған MIDlet-тердің іске қосылып тұрғандарын жауып, қайталап көріңіз.</string>
+    <string name="library_transfer_unavailable">Экспорттау мүмкін болмады.</string>
+    <string name="library_export_data_in_use">Таңдалған қолданбалардың бірінің деректері пайдаланылып жатыр. Таңдалған MIDlet-тердің іске қосылып тұрғандарын жауып, қайталап көріңіз.</string>
+    <string name="library_export_menu_unavailable">Экспорттау мәзірін ашу мүмкін болмады.</string>
     <string name="library_back">Кітапханаға оралу</string>
     <string name="library_sort">Қолданбаларды сұрыптау</string>
     <string name="library_search_clear">Іздеуді тазалау</string>

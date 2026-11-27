@@ -173,7 +173,9 @@
     <string name="library_share_chooser_title">שיתוף אפליקציה</string>
     <string name="library_export_chooser_title">ייצוא</string>
     <string name="library_export_progress">מייצא… <xliff:g id="completed" example="3">%1$d</xliff:g>/<xliff:g id="total" example="10">%2$d</xliff:g></string>
-    <string name="library_transfer_unavailable">לא ניתן לייצא. יש לסגור את יישומי ה-MIDlet שנבחרו ופועלים כרגע ולנסות שוב.</string>
+    <string name="library_transfer_unavailable">לא ניתן לייצא.</string>
+    <string name="library_export_data_in_use">הנתונים של אחד מהיישומים שנבחרו נמצאים בשימוש. יש לסגור את יישומי ה-MIDlet שנבחרו ופועלים כרגע ולנסות שוב.</string>
+    <string name="library_export_menu_unavailable">לא ניתן לפתוח את תפריט הייצוא.</string>
     <string name="library_back">חזרה לספרייה</string>
     <string name="library_sort">מיון אפליקציות</string>
     <string name="library_search_clear">ניקוי החיפוש</string>

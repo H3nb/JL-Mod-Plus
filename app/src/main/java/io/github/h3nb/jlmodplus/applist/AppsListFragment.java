@@ -49,6 +49,7 @@ import android.widget.Toast;
 import androidx.activity.result.ActivityResultLauncher;
 import androidx.annotation.NonNull;
 import androidx.annotation.Nullable;
+import androidx.annotation.StringRes;
 import androidx.compose.ui.platform.ComposeView;
 import androidx.core.content.pm.ShortcutManagerCompat;
 import androidx.fragment.app.Fragment;
@@ -88,6 +89,7 @@ import io.github.h3nb.jlmodplus.librarydb.LibraryQuickView;
 import io.github.h3nb.jlmodplus.input.HostCommand;
 import io.github.h3nb.jlmodplus.librarydb.LibraryTransferActions;
 import io.github.h3nb.jlmodplus.librarydb.LibraryBundleComponents;
+import io.github.h3nb.jlmodplus.librarydb.LibraryBundleInUseException;
 import io.github.h3nb.jlmodplus.librarydb.LibraryTransferIntents;
 import io.github.h3nb.jlmodplus.librarydb.LibraryViewModel;
 import io.github.h3nb.jlmodplus.settings.SettingsActivity;
@@ -521,7 +523,7 @@ public class AppsListFragment extends Fragment {
                         startActivity(LibraryTransferIntents.exportJar(
                                 requireContext(), prepared, app.getTitle()));
                     } catch (ActivityNotFoundException | SecurityException exception) {
-                        showTransferError(exception);
+                        showTransferError(exception, R.string.library_export_menu_unavailable);
                     }
                 });
             }
@@ -554,7 +556,7 @@ public class AppsListFragment extends Fragment {
                                 startActivity(LibraryTransferIntents.exportBundle(
                                         requireContext(), prepared, app.getTitle()));
                             } catch (ActivityNotFoundException | SecurityException exception) {
-                                showTransferError(exception);
+                                showTransferError(exception, R.string.library_export_menu_unavailable);
                             }
                         }), () -> exportJarOnly(app), false);
             }
@@ -905,7 +907,7 @@ public class AppsListFragment extends Fragment {
                                 startActivity(LibraryTransferIntents.exportJar(
                                         requireContext(), prepared, getString(R.string.library_bulk_export_apps)));
                             } catch (ActivityNotFoundException | SecurityException exception) {
-                                showTransferError(exception);
+                                showTransferError(exception, R.string.library_export_menu_unavailable);
                             }
                         });
             }
@@ -936,7 +938,7 @@ public class AppsListFragment extends Fragment {
                                 startActivity(LibraryTransferIntents.exportBundle(
                                         requireContext(), prepared, getString(R.string.library_bulk_export_apps)));
                             } catch (ActivityNotFoundException | SecurityException exception) {
-                                showTransferError(exception);
+                                showTransferError(exception, R.string.library_export_menu_unavailable);
                             }
                         }), () -> exportJarsOnly(appIds), true);
             }
@@ -1340,10 +1342,16 @@ public class AppsListFragment extends Fragment {
     }
 
     private void showTransferError(Throwable error) {
+        showTransferError(error, error instanceof LibraryBundleInUseException
+                ? R.string.library_export_data_in_use
+                : R.string.library_transfer_unavailable);
+    }
+
+    private void showTransferError(Throwable error, @StringRes int message) {
         Log.e(TAG, "Library transfer failed", error);
         LibraryComposeController controller = composeController;
         if (controller != null && isAdded()) {
-            controller.showNotice(getString(R.string.library_transfer_unavailable));
+            controller.showNotice(getString(message));
         }
     }
 

@@ -167,7 +167,9 @@
     <string name="library_share_chooser_title">앱 공유</string>
     <string name="library_export_chooser_title">내보내기</string>
     <string name="library_export_progress">내보내는 중… <xliff:g id="completed" example="3">%1$d</xliff:g>/<xliff:g id="total" example="10">%2$d</xliff:g></string>
-    <string name="library_transfer_unavailable">내보낼 수 없습니다. 선택한 MIDlet 중 실행 중인 항목을 종료한 후 다시 시도하세요.</string>
+    <string name="library_transfer_unavailable">내보낼 수 없습니다.</string>
+    <string name="library_export_data_in_use">선택한 앱 중 하나의 데이터가 사용 중입니다. 선택한 MIDlet 중 실행 중인 항목을 종료한 후 다시 시도하세요.</string>
+    <string name="library_export_menu_unavailable">내보내기 메뉴를 열 수 없습니다.</string>
     <string name="library_back">라이브러리로 돌아가기</string>
     <string name="library_sort">앱 정렬</string>
     <string name="library_search_clear">검색어 지우기</string>

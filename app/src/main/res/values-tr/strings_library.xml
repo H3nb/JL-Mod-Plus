@@ -170,7 +170,9 @@
     <string name="library_share_chooser_title">Uygulamayı paylaş</string>
     <string name="library_export_chooser_title">Dışa aktar</string>
     <string name="library_export_progress">Dışa aktarılıyor… <xliff:g id="completed" example="3">%1$d</xliff:g>/<xliff:g id="total" example="10">%2$d</xliff:g></string>
-    <string name="library_transfer_unavailable">Dışa aktarılamadı. Seçili MIDlet’lerden çalışanları kapatıp yeniden deneyin.</string>
+    <string name="library_transfer_unavailable">Dışa aktarılamadı.</string>
+    <string name="library_export_data_in_use">Seçili uygulamalardan birinin verileri kullanımda. Seçili MIDlet’lerden çalışanları kapatıp yeniden deneyin.</string>
+    <string name="library_export_menu_unavailable">Dışa aktarma menüsü açılamadı.</string>
     <string name="library_back">Kitaplığa dön</string>
     <string name="library_sort">Uygulamaları sırala</string>
     <string name="library_search_clear">Aramayı temizle</string>

@@ -22,6 +22,8 @@ import io.github.h3nb.jlmodplus.librarydb.LibraryAppEntity
 import io.github.h3nb.jlmodplus.librarydb.LibraryDatabase
 import io.github.h3nb.jlmodplus.librarydb.LibraryFileOperations
 import io.github.h3nb.jlmodplus.librarydb.LibraryBootstrapState
+import io.github.h3nb.jlmodplus.librarydb.LibraryBundleInUseException
+import io.github.h3nb.jlmodplus.librarydb.LibraryBundleRuntimeGuard
 import io.github.h3nb.jlmodplus.librarydb.LibraryStateEntity
 import io.github.h3nb.jlmodplus.librarydb.LibraryViewModel
 import io.github.h3nb.jlmodplus.runtime.RuntimeStorageLease
@@ -44,6 +46,34 @@ import org.junit.runner.RunWith
 
 @RunWith(AndroidJUnit4::class)
 class RuntimeStorageLeaseInstrumentedTest {
+    @Test fun bundleReservationReportsOccupiedStorageAndReleasesEarlierLeases() {
+        val context = InstrumentationRegistry.getInstrumentation().targetContext
+        val root = File(context.cacheDir, "ci-bundle-reservation")
+        val first = File(root, "converted/A")
+        val second = File(root, "converted/B")
+        val apps = listOf(root to "A", root to "B")
+        try {
+            assertTrue(first.mkdirs() || first.isDirectory)
+            assertTrue(second.mkdirs() || second.isDirectory)
+            var called = false
+            requireNotNull(RuntimeStorageLease.acquire(context.filesDir, second)).use {
+                val failure = runCatching {
+                    LibraryBundleRuntimeGuard.withClosedMidlets(context, apps) { called = true }
+                }.exceptionOrNull()
+                assertTrue(failure is LibraryBundleInUseException)
+                assertFalse(called)
+                assertFalse(RuntimeStorageLease.isActive(context.filesDir, first))
+                assertTrue(RuntimeStorageLease.isActive(context.filesDir, second))
+            }
+            LibraryBundleRuntimeGuard.withClosedMidlets(context, apps) { called = true }
+            assertTrue(called)
+            assertFalse(RuntimeStorageLease.isActive(context.filesDir, first))
+            assertFalse(RuntimeStorageLease.isActive(context.filesDir, second))
+        } finally {
+            root.deleteRecursively()
+        }
+    }
+
     @Test fun privateFileConnectionUsesTheLaunchedWorkdirWhileAnotherWorkdirIsActive() = runBlocking {
         val instrumentation = InstrumentationRegistry.getInstrumentation()
         val app = instrumentation.targetContext.applicationContext as Application

@@ -167,7 +167,9 @@
     <string name="library_share_chooser_title">แชร์แอป</string>
     <string name="library_export_chooser_title">ส่งออก</string>
     <string name="library_export_progress">กำลังส่งออก… <xliff:g id="completed" example="3">%1$d</xliff:g>/<xliff:g id="total" example="10">%2$d</xliff:g></string>
-    <string name="library_transfer_unavailable">ไม่สามารถส่งออกได้ ปิด MIDlet ที่เลือกซึ่งกำลังทำงานอยู่ แล้วลองอีกครั้ง</string>
+    <string name="library_transfer_unavailable">ไม่สามารถส่งออกได้</string>
+    <string name="library_export_data_in_use">กำลังมีการใช้ข้อมูลของแอปที่เลือกอยู่ ปิด MIDlet ที่เลือกซึ่งกำลังทำงานอยู่ แล้วลองอีกครั้ง</string>
+    <string name="library_export_menu_unavailable">ไม่สามารถเปิดเมนูส่งออกได้</string>
     <string name="library_back">กลับไปยังคลังแอป</string>
     <string name="library_sort">เรียงลำดับแอป</string>
     <string name="library_search_clear">ล้างการค้นหา</string>

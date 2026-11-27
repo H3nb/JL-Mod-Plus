@@ -173,7 +173,9 @@
     <string name="library_share_chooser_title">Подели апликацију</string>
     <string name="library_export_chooser_title">Извези</string>
     <string name="library_export_progress">Извоз… <xliff:g id="completed" example="3">%1$d</xliff:g>/<xliff:g id="total" example="10">%2$d</xliff:g></string>
-    <string name="library_transfer_unavailable">Извоз није успео. Затворите изабране MIDlet-е који су покренути и покушајте поново.</string>
+    <string name="library_transfer_unavailable">Извоз није успео.</string>
+    <string name="library_export_data_in_use">Подаци једне од изабраних апликација су у употреби. Затворите изабране MIDlet-е који су покренути и покушајте поново.</string>
+    <string name="library_export_menu_unavailable">Није било могуће отворити мени за извоз.</string>
     <string name="library_back">Назад у библиотеку</string>
     <string name="library_sort">Сортирај апликације</string>
     <string name="library_search_clear">Обриши претрагу</string>

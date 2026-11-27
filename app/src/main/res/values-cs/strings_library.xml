@@ -176,7 +176,9 @@
     <string name="library_share_chooser_title">Sdílet aplikaci</string>
     <string name="library_export_chooser_title">Exportovat</string>
     <string name="library_export_progress">Exportování… <xliff:g id="completed" example="3">%1$d</xliff:g>/<xliff:g id="total" example="10">%2$d</xliff:g></string>
-    <string name="library_transfer_unavailable">Export se nezdařil. Ukončete vybrané MIDlety, které právě běží, a zkuste to znovu.</string>
+    <string name="library_transfer_unavailable">Export se nezdařil.</string>
+    <string name="library_export_data_in_use">Data jedné z vybraných aplikací se právě používají. Ukončete vybrané MIDlety, které právě běží, a zkuste to znovu.</string>
+    <string name="library_export_menu_unavailable">Nepodařilo se otevřít nabídku exportu.</string>
     <string name="library_back">Zpět do knihovny</string>
     <string name="library_sort">Seřadit aplikace</string>
     <string name="library_search_clear">Vymazat hledání</string>

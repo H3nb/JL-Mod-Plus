@@ -8,6 +8,8 @@ import io.github.h3nb.jlmodplus.runtime.RuntimeStorageLease
 import java.io.File
 import java.io.IOException
 
+internal class LibraryBundleInUseException : IOException("Selected MIDlet storage is already reserved")
+
 /** Hold each runtime reservation for the complete snapshot or restore, not merely a preflight. */
 internal object LibraryBundleRuntimeGuard {
     fun <T> withClosedMidlets(
@@ -22,7 +24,7 @@ internal object LibraryBundleRuntimeGuard {
                 .forEach { (root, key) ->
                     val converted = File(File(root, "converted"), key)
                     val lease = RuntimeStorageLease.acquire(context.filesDir, converted)
-                        ?: throw IOException("Close the running MIDlet before exporting or importing its data")
+                        ?: throw LibraryBundleInUseException()
                     leases += lease
                 }
             return operation()

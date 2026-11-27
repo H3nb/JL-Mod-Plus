@@ -167,7 +167,9 @@
     <string name="library_share_chooser_title">分享應用程式</string>
     <string name="library_export_chooser_title">匯出</string>
     <string name="library_export_progress">正在匯出… <xliff:g id="completed" example="3">%1$d</xliff:g>/<xliff:g id="total" example="10">%2$d</xliff:g></string>
-    <string name="library_transfer_unavailable">無法匯出。請關閉所選應用程式中正在執行的 MIDlet，然後再試一次。</string>
+    <string name="library_transfer_unavailable">無法匯出。</string>
+    <string name="library_export_data_in_use">其中一個所選應用程式的資料正在使用中。請關閉所選應用程式中正在執行的 MIDlet，然後再試一次。</string>
+    <string name="library_export_menu_unavailable">無法開啟匯出選單。</string>
     <string name="library_back">返回應用程式庫</string>
     <string name="library_sort">排序應用程式</string>
     <string name="library_search_clear">清除搜尋</string>

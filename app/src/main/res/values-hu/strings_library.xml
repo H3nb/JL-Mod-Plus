@@ -170,7 +170,9 @@
     <string name="library_share_chooser_title">Alkalmazás megosztása</string>
     <string name="library_export_chooser_title">Exportálás</string>
     <string name="library_export_progress">Exportálás… <xliff:g id="completed" example="3">%1$d</xliff:g>/<xliff:g id="total" example="10">%2$d</xliff:g></string>
-    <string name="library_transfer_unavailable">Nem sikerült az exportálás. Zárja be a kiválasztott futó MIDlet-eket, és próbálja újra.</string>
+    <string name="library_transfer_unavailable">Nem sikerült az exportálás.</string>
+    <string name="library_export_data_in_use">Az egyik kiválasztott alkalmazás adatai használatban vannak. Zárja be a kiválasztott futó MIDlet-eket, és próbálja újra.</string>
+    <string name="library_export_menu_unavailable">Nem sikerült megnyitni az exportálási menüt.</string>
     <string name="library_back">Vissza a könyvtárba</string>
     <string name="library_sort">Alkalmazások rendezése</string>
     <string name="library_search_clear">Keresés törlése</string>

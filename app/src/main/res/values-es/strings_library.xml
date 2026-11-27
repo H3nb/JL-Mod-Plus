@@ -173,7 +173,9 @@
     <string name="library_share_chooser_title">Compartir aplicación</string>
     <string name="library_export_chooser_title">Exportar</string>
     <string name="library_export_progress">Exportando… <xliff:g id="completed" example="3">%1$d</xliff:g>/<xliff:g id="total" example="10">%2$d</xliff:g></string>
-    <string name="library_transfer_unavailable">No se pudo exportar. Cierra los MIDlets seleccionados que estén en ejecución e inténtalo de nuevo.</string>
+    <string name="library_transfer_unavailable">No se pudo exportar.</string>
+    <string name="library_export_data_in_use">Se están usando los datos de una de las aplicaciones seleccionadas. Cierra los MIDlets seleccionados que estén en ejecución e inténtalo de nuevo.</string>
+    <string name="library_export_menu_unavailable">No se pudo abrir el menú de exportación.</string>
     <string name="library_back">Volver a la biblioteca</string>
     <string name="library_sort">Ordenar aplicaciones</string>
     <string name="library_search_clear">Borrar búsqueda</string>
