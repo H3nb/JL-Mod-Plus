@@ -255,8 +255,8 @@
     <string name="bulk_install_cancel">Abbrechen</string>
     <string name="bulk_install_close">Schließen</string>
     <plurals name="bulk_install_running">
-        <item quantity="one"><xliff:g id="processed" example="3">%1$d</xliff:g> von <xliff:g id="total" example="10">%2$d</xliff:g> App verarbeitet</item>
-        <item quantity="other"><xliff:g id="processed" example="3">%1$d</xliff:g> von <xliff:g id="total" example="10">%2$d</xliff:g> Apps verarbeitet</item>
+        <item quantity="one">Apps verarbeitet: <xliff:g id="processed" example="3">%1$d</xliff:g> von <xliff:g id="total" example="10">%2$d</xliff:g></item>
+        <item quantity="other">Apps verarbeitet: <xliff:g id="processed" example="3">%1$d</xliff:g> von <xliff:g id="total" example="10">%2$d</xliff:g></item>
     </plurals>
     <string name="bulk_install_cancel_requested">Wird nach der aktuellen App angehalten…</string>
     <string name="bulk_install_complete">Mehrfachinstallation abgeschlossen</string>

@@ -255,8 +255,8 @@
     <string name="bulk_install_cancel">Avbryt</string>
     <string name="bulk_install_close">Lukk</string>
     <plurals name="bulk_install_running">
-        <item quantity="one">Behandlet <xliff:g id="processed" example="3">%1$d</xliff:g> av <xliff:g id="total" example="10">%2$d</xliff:g> app</item>
-        <item quantity="other">Behandlet <xliff:g id="processed" example="3">%1$d</xliff:g> av <xliff:g id="total" example="10">%2$d</xliff:g> apper</item>
+        <item quantity="one">Apper behandlet: <xliff:g id="processed" example="3">%1$d</xliff:g> av <xliff:g id="total" example="10">%2$d</xliff:g></item>
+        <item quantity="other">Apper behandlet: <xliff:g id="processed" example="3">%1$d</xliff:g> av <xliff:g id="total" example="10">%2$d</xliff:g></item>
     </plurals>
     <string name="bulk_install_cancel_requested">Stopper etter gjeldende app…</string>
     <string name="bulk_install_complete">Masseinstallasjon fullført</string>

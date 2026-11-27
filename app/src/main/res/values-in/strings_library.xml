@@ -235,7 +235,7 @@
     <string name="bulk_install_cancel">Batal</string>
     <string name="bulk_install_close">Tutup</string>
     <plurals name="bulk_install_running">
-        <item quantity="other">Memproses <xliff:g id="processed" example="3">%1$d</xliff:g> dari <xliff:g id="total" example="10">%2$d</xliff:g> aplikasi</item>
+        <item quantity="other"><xliff:g id="processed" example="3">%1$d</xliff:g> dari <xliff:g id="total" example="10">%2$d</xliff:g> aplikasi telah diproses</item>
     </plurals>
     <string name="bulk_install_cancel_requested">Menghentikan instalasi setelah aplikasi ini selesai diproses…</string>
     <string name="bulk_install_complete">Instalasi massal selesai</string>
