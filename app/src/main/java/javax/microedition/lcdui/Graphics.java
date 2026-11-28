@@ -143,7 +143,8 @@ public class Graphics implements
 		canvas.setMatrix(pixelScaleMatrix);
 		if (newBitmap && Build.VERSION.SDK_INT < Build.VERSION_CODES.O) {
 			// Before O, setBitmap may retain the old clip.
-			canvas.clipRect(image.getBounds(), Region.Op.REPLACE);
+			canvas.clipRect(0, 0, bitmap.getWidth() / scale,
+					bitmap.getHeight() / scale, Region.Op.REPLACE);
 		}
 		canvas.save();
 		canvas.clipRect(image.getBounds());

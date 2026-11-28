@@ -47,19 +47,21 @@ final class PaintBufferPool {
                 image.setSize(width, height);
                 revision = -1;
             }
-            if (source == null || source.get() != published || revision != contentRevision) {
+            boolean coherent = source != null && source.get() == published
+                    && revision == contentRevision;
+            // Neither a failed restore nor an abandoned paint is a coherent frame.
+            revision = -1;
+            if (!coherent) {
                 image.getSingleGraphics().reset(0, 0, width, height);
                 published.copyTo(image);
+                if (source == null || source.get() != published) {
+                    source = new WeakReference<>(published);
+                }
             }
-            // Guest code may now modify the scratch, even if publication is abandoned.
-            revision = -1;
         }
 
         void markPublished(Image published, long contentRevision) {
-            if (source == null || source.get() != published) {
-                source = new WeakReference<>(published);
-            }
-            revision = contentRevision;
+            if (source != null && source.get() == published) revision = contentRevision;
         }
     }
 }

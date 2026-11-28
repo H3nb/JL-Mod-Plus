@@ -95,6 +95,8 @@ selectors=(
 # must not affect Canvas/Compose tests running in the main batch.
 gles_selectors=(
   'io.github.h3nb.jlmodplus.micro3d.EnvironmentTextureGlesTest'
+  'io.github.h3nb.jlmodplus.micro3d.Micro3dInternalResolutionTest#independentRenderContextsSurviveOtherRendererResize'
+  'io.github.h3nb.jlmodplus.micro3d.Micro3dInternalResolutionTest#offscreenTextureTargetResetsThePreviousHdReconstructionScale'
   'javax.microedition.m3g.M3GRuntimeTest#unscaledSpriteKeepsLogicalSizeAcrossTargetRebinds'
 )
 

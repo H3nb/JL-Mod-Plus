@@ -19,8 +19,6 @@ package io.github.h3nb.jlmodplus.micro3d;
 
 import static android.opengl.GLES20.*;
 
-import android.util.Log;
-
 import com.mascotcapsule.micro3d.v3.Graphics3D;
 
 import java.nio.ByteBuffer;
@@ -28,11 +26,17 @@ import java.nio.ByteBuffer;
 import javax.microedition.util.ContextHolder;
 
 abstract class Program {
-	static Tex tex;
-	static Color color;
-	static Simple simple;
-	static Sprite sprite;
-	private static boolean isCreated;
+	/** Created once while the owning Render's EGL context is current. */
+	static final class Bundle {
+		final Tex tex = new Tex();
+		final Color color = new Color();
+		final Simple simple = new Simple();
+		final Sprite sprite = new Sprite();
+
+		Bundle() {
+			glReleaseShaderCompiler();
+		}
+	}
 
 	protected final int id;
 	protected int uAmbIntensity;
@@ -51,15 +55,6 @@ abstract class Program {
 		Render.checkGlError("getLocations");
 	}
 
-	static void create() {
-		if (isCreated) return;
-		tex = new Tex();
-		color = new Color();
-		simple = new Simple();
-		sprite = new Sprite();
-		glReleaseShaderCompiler();
-	}
-
 	private int createProgram(String vertexShader, String fragmentShader) {
 		String vertexShaderCode = ContextHolder.getAssetAsString(vertexShader);
 		String fragmentShaderCode = ContextHolder.getAssetAsString(fragmentShader);
@@ -76,7 +71,7 @@ abstract class Program {
 		glGetProgramiv(program, GL_LINK_STATUS, status, 0);
 		if (status[0] == 0) {
 			String s = glGetProgramInfoLog(program);
-			Log.e(Utils.TAG, "createProgram: " + s);
+			throw new IllegalStateException("Micro3D shader link failed: " + s);
 		}
 		glDeleteShader(vertexId);
 		glDeleteShader(fragmentId);
@@ -107,7 +102,7 @@ abstract class Program {
 		glGetShaderiv(shader, GL_COMPILE_STATUS, status, 0);
 		if (status[0] == 0) {
 			String s = glGetShaderInfoLog(shader);
-			Log.e(Utils.TAG, "loadShader: " + s);
+			throw new IllegalStateException("Micro3D shader compilation failed: " + s);
 		}
 		Render.checkGlError("glCompileShader");
 		return shader;
@@ -118,20 +113,6 @@ abstract class Program {
 	}
 
 	protected abstract void getLocations();
-
-	static void release() {
-		if (!isCreated) return;
-		tex.delete();
-		color.delete();
-		simple.delete();
-		sprite.delete();
-		isCreated = false;
-	}
-
-	void delete() {
-		glDeleteProgram(id);
-		Render.checkGlError("program delete");
-	}
 
 	void setLight(Light light) {
 		if (light == null) {
@@ -271,9 +252,9 @@ abstract class Program {
 			glUniform1i(glGetUniformLocation(id, "uSphereUnit"), 2);
 		}
 
-		void setTex(TextureImpl tex) {
+		void setTex(TextureImpl tex, int targetScale) {
 			if (tex != null) {
-				int id = tex.getId();
+				int id = tex.getId(targetScale);
 				glActiveTexture(GL_TEXTURE0);
 				glBindTexture(GL_TEXTURE_2D, id);
 				glUniform2f(uTexSize, tex.getWidth(), tex.getHeight());
@@ -337,8 +318,8 @@ abstract class Program {
 			glUniform1i(glGetUniformLocation(id, "uTextureUnit"), 0);
 		}
 
-		void setTexture(TextureImpl texture) {
-			int id = texture.getId();
+		void setTexture(TextureImpl texture, int targetScale) {
+			int id = texture.getId(targetScale);
 			glActiveTexture(GL_TEXTURE0);
 			glBindTexture(GL_TEXTURE_2D, id);
 			glUniform2f(uTexSize, texture.getWidth(), texture.getHeight());

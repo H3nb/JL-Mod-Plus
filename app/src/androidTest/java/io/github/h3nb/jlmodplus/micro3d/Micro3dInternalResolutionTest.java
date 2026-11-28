@@ -63,19 +63,19 @@ public class Micro3dInternalResolutionTest {
     @Test
     public void offscreenTextureTargetResetsThePreviousHdReconstructionScale() throws Exception {
         Render render = Render.getRender();
-        Field selectedScale = TextureImpl.class.getDeclaredField("screenTargetScale");
+        Field selectedScale = Render.class.getDeclaredField("targetPixelScale");
         selectedScale.setAccessible(true);
         Image hd = Image.createDisplayTarget(24, 20, 3);
         try {
             render.bind(hd.getGraphics());
             try {
-                assertEquals(3, selectedScale.getInt(null));
+                assertEquals(3, selectedScale.getInt(render));
             } finally {
                 render.release();
             }
             render.bind(new TextureImpl());
             try {
-                assertEquals(1, selectedScale.getInt(null));
+                assertEquals(1, selectedScale.getInt(render));
             } finally {
                 render.release();
             }
@@ -83,6 +83,38 @@ public class Micro3dInternalResolutionTest {
             hd.getBitmap().recycle();
         }
     }
+    @Test
+    public void independentRenderContextsSurviveOtherRendererResize() {
+        Render first = new Render();
+        Render second = new Render();
+        Image a = Image.createDisplayTarget(16, 12, 1);
+        Image b = Image.createDisplayTarget(16, 12, 1);
+        Image larger = Image.createDisplayTarget(24, 20, 2);
+        try {
+            a.getBitmap().eraseColor(Color.RED);
+            b.getBitmap().eraseColor(Color.GREEN);
+            larger.getBitmap().eraseColor(Color.BLUE);
+            first.bind(a.getGraphics());
+            first.release();
+            second.bind(b.getGraphics());
+            second.release();
+            second.bind(larger.getGraphics());
+            second.release();
+            // Resizing the second renderer must not replace programs used by the first.
+            first.bind(a.getGraphics());
+            first.release();
+            assertEquals(Color.RED, a.getLogicalPixel(8, 6));
+            assertEquals(Color.GREEN, b.getLogicalPixel(8, 6));
+            assertEquals(Color.BLUE, larger.getLogicalPixel(12, 10));
+        } finally {
+            first.dispose();
+            second.dispose();
+            a.getBitmap().recycle();
+            b.getBitmap().recycle();
+            larger.getBitmap().recycle();
+        }
+    }
+
     @Test
     public void resizeDuringMicro3dBindingDoesNotWriteIntoTheReplacementBitmap() {
         Render render = Render.getRender();

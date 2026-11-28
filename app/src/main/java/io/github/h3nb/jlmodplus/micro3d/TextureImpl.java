@@ -42,16 +42,11 @@ import javax.microedition.shell.AppClassLoader;
 public final class TextureImpl {
 	private EGLContext uploadedContext;
 	private static volatile int enhancementMode;
-	private static volatile int screenTargetScale = 1;
 	private static final AtomicBoolean enhancementFailureReported = new AtomicBoolean();
 
 	/** Optional host enhancement, never applied to guest-visible texture storage. */
 	public static void configureEnhancement(int mode) {
 		enhancementMode = mode == 2 || mode == 3 ? mode : 0;
-	}
-
-	static void setScreenTargetScale(int scale) {
-		screenTargetScale = Math.max(1, Math.min(10, scale));
 	}
 
 	final TextureData image;
@@ -149,12 +144,16 @@ public final class TextureImpl {
 	}
 
 	int getId() {
+		return getId(1);
+	}
+
+	int getId(int targetScale) {
 		EGLContext currentContext = ((EGL10) EGLContext.getEGL()).eglGetCurrentContext();
 		if (currentContext == null || currentContext.equals(EGL10.EGL_NO_CONTEXT)) {
 			throw new IllegalStateException("Micro3D texture upload requires an EGL context");
 		}
-		int mode = enhancementMode;
-		int targetScale = screenTargetScale;
+		int mode = !isMutable && modelTexture && targetScale > 1 ? enhancementMode : 0;
+		if (mode == 0) targetScale = 1;
 		// GL names can be reused by unrelated textures in an unshared new context.
 		if (uploadedContext == null || !uploadedContext.equals(currentContext)
 				|| !glIsTexture(mTexId)) {

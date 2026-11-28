@@ -153,14 +153,12 @@ public class EnvironmentTextureGlesTest {
             // Exercise optional source enhancement on the same immutable GLES texture.
             // UV coordinates still use the original 64×64 logical texture dimensions.
             TextureImpl.configureEnhancement(2);
-            TextureImpl.setScreenTargetScale(2);
-            assertEquals(modelId, model.impl.getId());
+            assertEquals(modelId, model.impl.getId(2));
             assertRgb(255, 0, 0, sample(modelId, uv,
                     0.25f, 0.25f, GLES20.GL_NEAREST));
             // Transparent palette[0] must retain its original red RGB and alpha
             // contract. MMPX is intentionally bypassed for alpha-masked models.
             TextureImpl.configureEnhancement(0);
-            TextureImpl.setScreenTargetScale(1);
 
             // Prove that reconstruction really reaches GLES for eligible opaque
             // model textures: MMPX changes the upper-left corner of the center
@@ -169,8 +167,7 @@ public class EnvironmentTextureGlesTest {
             opaqueId = opaque.getId();
             assertRgb(0, 0, 0, sample(opaqueId, uv, 0.5f, 0.5f, GLES20.GL_NEAREST));
             TextureImpl.configureEnhancement(2);
-            TextureImpl.setScreenTargetScale(2);
-            assertEquals(opaqueId, opaque.getId());
+            assertEquals(opaqueId, opaque.getId(2));
             int[] sourceColors = {
                     0xff000000, 0xffffffff, 0xff000000,
                     0xffffffff, 0xff000000, 0xff000000,
@@ -182,7 +179,6 @@ public class EnvironmentTextureGlesTest {
                     reconstructed & 255,
                     sample(opaqueId, uv, 2.5f / 6f, 2.5f / 6f, GLES20.GL_NEAREST));
             TextureImpl.configureEnhancement(0);
-            TextureImpl.setScreenTargetScale(1);
 
             // Image-backed texture data must be packed as RGBA bytes on
             // little-endian Android, not as rotated ARGB native-order ints.
@@ -202,7 +198,6 @@ public class EnvironmentTextureGlesTest {
             assertEquals(GLES20.GL_NO_ERROR, GLES20.glGetError());
         } finally {
             TextureImpl.configureEnhancement(0);
-            TextureImpl.setScreenTargetScale(1);
             if (program != 0) GLES20.glDeleteProgram(program);
             if (environmentId != 0) GLES20.glDeleteTextures(1, new int[] {environmentId}, 0);
             if (modelId != 0) GLES20.glDeleteTextures(1, new int[] {modelId}, 0);
@@ -253,7 +248,6 @@ public class EnvironmentTextureGlesTest {
 
             TextureImpl texture = new TextureImpl(opaqueBmp3x3());
             TextureImpl.configureEnhancement(0);
-            TextureImpl.setScreenTargetScale(1);
             textureId = texture.getId();
             assertTrue(GLES20.glIsTexture(textureId));
 
@@ -299,7 +293,6 @@ public class EnvironmentTextureGlesTest {
             if (second != EGL14.EGL_NO_CONTEXT) EGL14.eglDestroyContext(display, second);
             EGL14.eglTerminate(display);
             TextureImpl.configureEnhancement(0);
-            TextureImpl.setScreenTargetScale(1);
         }
     }
 
