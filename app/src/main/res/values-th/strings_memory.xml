@@ -118,7 +118,7 @@
     <string name="memory_editor_next_scan_result">ผลลัพธ์การสแกนครั้งถัดไป: <xliff:g id="before_count" example="120">%1$d</xliff:g> → <xliff:g id="after_count" example="14">%2$d</xliff:g></string>
     <string name="memory_editor_type_auto">อัตโนมัติ</string>
     <string name="memory_editor_remove_candidates_title">นำผลลัพธ์ที่เลือกออกหรือไม่?</string>
-    <string name="memory_editor_remove_candidates_description">นำออก: ลบผลลัพธ์ที่เลือกออกจากรายการค้นหา ค่าในหน่วยความจำของเกมจะไม่เปลี่ยนแปลง\n\nคืนค่าและนำออก: คืนค่ากลับเป็นก่อนการแก้ไขที่ยืนยันครั้งล่าสุดด้วย เฉพาะเมื่อค่าปัจจุบันยังตรงกับค่าหลังการแก้ไขครั้งนั้น ค่าที่ล็อกไว้และผลลัพธ์ที่ขัดแย้งจะยังคงอยู่ในรายการ</string>
+    <string name="memory_editor_remove_candidates_description">นำออก: ลบผลลัพธ์ที่เลือกออกจากรายการค้นหา ค่าในหน่วยความจำของเกมจะไม่เปลี่ยนแปลง\n\nคืนค่าและนำออก: คืนค่ากลับเป็นก่อนการแก้ไขที่ยืนยันครั้งล่าสุดด้วย เฉพาะเมื่อค่าปัจจุบันยังตรงกับค่าหลังการแก้ไขครั้งนั้น ค่าที่ล็อกไว้และผลลัพธ์ที่ไม่สามารถคืนค่าได้อย่างปลอดภัยจะยังคงอยู่ในรายการ</string>
     <string name="memory_editor_revert_and_remove">คืนค่าและนำออก</string>
     <string name="memory_editor_revert_remove_commit_failed">อาจคืนค่าเรียบร้อยแล้ว แต่ไม่สามารถนำผลลัพธ์ออกได้ รีเฟรชแล้วลองอีกครั้ง ค่าที่เกมเปลี่ยนแปลงจะไม่ถูกเขียนทับ</string>
     <string name="memory_editor_revert_remove_outcome">คืนค่าแล้ว: <xliff:g id="restored" example="2">%1$d</xliff:g> · นำออกแล้ว: <xliff:g id="removed" example="2">%2$d</xliff:g> · ขัดแย้ง: <xliff:g id="conflicts" example="0">%3$d</xliff:g> · ยังไม่ยืนยัน: <xliff:g id="unconfirmed" example="0">%4$d</xliff:g> · ไม่ได้ดำเนินการ: <xliff:g id="not_attempted" example="0">%5$d</xliff:g></string>

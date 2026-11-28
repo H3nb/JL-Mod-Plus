@@ -148,7 +148,7 @@
     <string name="memory_editor_next_scan_result">نتائج الفحص التالي: <xliff:g id="before_count" example="120">%1$d</xliff:g> ← <xliff:g id="after_count" example="14">%2$d</xliff:g></string>
     <string name="memory_editor_type_auto">تلقائي</string>
     <string name="memory_editor_remove_candidates_title">هل تريد إزالة النتائج المحددة؟</string>
-    <string name="memory_editor_remove_candidates_description">إزالة: تزيل النتائج المحددة من قائمة البحث، وتبقى القيم في ذاكرة اللعبة دون تغيير.\n\nتراجع وإزالة: تستعيد أيضًا القيم لما قبل آخر تعديل مؤكد، ولكن فقط إذا كانت القيم الحالية لا تزال تطابق القيم الناتجة عن ذلك التعديل. تبقى القيم المجمّدة والنتائج التي بها تعارضات في القائمة.</string>
+    <string name="memory_editor_remove_candidates_description">إزالة: تزيل النتائج المحددة من قائمة البحث، وتبقى القيم في ذاكرة اللعبة دون تغيير.\n\nتراجع وإزالة: تستعيد أيضًا القيم لما قبل آخر تعديل مؤكد، ولكن فقط إذا كانت القيم الحالية لا تزال تطابق القيم الناتجة عن ذلك التعديل. تبقى القيم المجمّدة والنتائج التي يتعذّر استعادتها بأمان في القائمة.</string>
     <string name="memory_editor_revert_and_remove">تراجع وإزالة</string>
     <string name="memory_editor_revert_remove_commit_failed">قد تكون القيم قد استُعيدت، لكن تعذّرت إزالة النتائج. حدّث وحاول مرة أخرى؛ لن تُستبدل القيم التي غيّرتها اللعبة.</string>
     <string name="memory_editor_revert_remove_outcome">المستعادة: <xliff:g id="restored" example="2">%1$d</xliff:g>. المُزالة: <xliff:g id="removed" example="2">%2$d</xliff:g>. التعارضات: <xliff:g id="conflicts" example="0">%3$d</xliff:g>. غير المؤكدة: <xliff:g id="unconfirmed" example="0">%4$d</xliff:g>. لم تُجرَّب: <xliff:g id="not_attempted" example="0">%5$d</xliff:g>.</string>

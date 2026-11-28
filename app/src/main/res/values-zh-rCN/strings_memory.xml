@@ -115,7 +115,7 @@
     <string name="memory_editor_next_scan_result">继续扫描结果：<xliff:g id="before_count" example="120">%1$d</xliff:g> → <xliff:g id="after_count" example="14">%2$d</xliff:g></string>
     <string name="memory_editor_type_auto">自动</string>
     <string name="memory_editor_remove_candidates_title">移除所选结果？</string>
-    <string name="memory_editor_remove_candidates_description">移除：仅将所选结果从搜索列表中移除，游戏内存中的数值保持不变。\n\n还原并移除：若数值仍与上次确认修改后的结果一致，同时将其恢复为修改前的原值。已锁定的数值及存在冲突的结果将保留在列表中。</string>
+    <string name="memory_editor_remove_candidates_description">移除：仅将所选结果从搜索列表中移除，游戏内存中的数值保持不变。\n\n还原并移除：若数值仍与上次确认修改后的结果一致，同时将其恢复为修改前的原值。已锁定的数值及无法安全还原的结果将保留在列表中。</string>
     <string name="memory_editor_revert_and_remove">还原并移除</string>
     <string name="memory_editor_revert_remove_commit_failed">数值可能已还原，但无法移除结果。请刷新后重试；已被游戏改动的数值不会被覆盖。</string>
     <string name="memory_editor_revert_remove_outcome">已还原：<xliff:g id="restored" example="2">%1$d</xliff:g>。已移除：<xliff:g id="removed" example="2">%2$d</xliff:g>。冲突：<xliff:g id="conflicts" example="0">%3$d</xliff:g>。未确认：<xliff:g id="unconfirmed" example="0">%4$d</xliff:g>。未尝试：<xliff:g id="not_attempted" example="0">%5$d</xliff:g>。</string>
