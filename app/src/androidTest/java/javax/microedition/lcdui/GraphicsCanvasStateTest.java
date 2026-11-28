@@ -120,6 +120,31 @@ public class GraphicsCanvasStateTest {
 		assertEquals(WHITE, getPixel(image, 7, 8));
 	}
 
+	@Test
+	public void replacementClipNeverExposesPaddedBackingAndHandlesOverflow() {
+		for (int scale : new int[]{1, 3}) {
+			Image image = Image.createDisplayTarget(12, 10, scale);
+			try {
+				image.setSize(8, 6);
+				Graphics g = image.getGraphics();
+				g.translate(1, 1);
+				g.setClip(0, 0, Integer.MAX_VALUE, Integer.MAX_VALUE);
+				assertEquals(7, g.getClipWidth());
+				assertEquals(5, g.getClipHeight());
+				g.clipRect(2, 2, Integer.MAX_VALUE, Integer.MAX_VALUE);
+				assertEquals(5, g.getClipWidth());
+				assertEquals(3, g.getClipHeight());
+				g.setColor(RED);
+				g.fillRect(0, 0, 12, 10);
+				assertEquals(RED, getPixel(image, 4 * scale, 4 * scale));
+				assertEquals(WHITE, getPixel(image, 8 * scale, 4 * scale));
+				assertEquals(WHITE, getPixel(image, 4 * scale, 6 * scale));
+			} finally {
+				image.getBitmap().recycle();
+			}
+		}
+	}
+
 	private int getPixel(Image image, int x, int y) {
 		return image.getBitmap().getPixel(x, y) & RGB_MASK;
 	}

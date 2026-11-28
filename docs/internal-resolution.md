@@ -33,18 +33,21 @@ Readback of antialiased HD raster edges can differ from a separate 1× render.
 The runtime reconstructs immutable LCDUI image regions before composing
 them into an HD target. `drawRegion` isolates the source rectangle to prevent
 filtering across neighboring tiles in a sprite atlas. The cache is shared
-within the currently selected graphics profile, bounded to 4–16 MiB based
-on Java heap tier, and keyed by bitmap identity, generation, region and
-reconstruction factor. Existing `Graphics` objects consult the active
-session cache at draw time, so retained framebuffers cannot use a previous
-profile's enhancement mode.
+within the currently selected graphics profile, bounded to one sixteenth
+of the Java heap limit, and keyed by bitmap identity, generation, region
+and reconstruction factor. Reconstruction is reduced when its estimated
+output would exceed the cache budget; the cache never grows to fit a
+single entry. Existing `Graphics` objects consult the active session cache
+at draw time, so retained framebuffers cannot use a previous profile's
+enhancement mode.
 
-Reconstruction is independent of the render target factor. MMPX and Edge-aware
-use factors from 2× through 4× where the result does not exceed 4 MiB;
-otherwise the original source is drawn using Nearest. For example,
-a 240×320 image with a 4× target is reconstructed at 3× and then composed
-at the target density. MMPX preserves source palette colors; Edge-aware
-antialiases reconstructed edges with alpha-aware interpolation.
+Reconstruction is independent of the render target factor. It is limited by
+the requested target density, the maximum factor of 10×, and the applicable
+allocation limits. LCDUI MMPX uses the exact 2× quadrant reconstruction for
+even factors and composes it with nearest sampling; odd factors retain their
+distinct center subpixels. Edge-aware antialiases reconstructed edges with
+alpha-aware interpolation. If reconstruction cannot fit the resource limits,
+the runtime reduces the factor or draws the original source.
 
 Mutable `Image`, `drawRGB` and ordinary guest off-screen surfaces are not
 source-enhanced; their contents may change on every frame. An unsuccessful
@@ -70,8 +73,16 @@ mutable render targets retain their original texture pixels. Offscreen
 render-to-texture targets operate at 1× regardless of the previous HD target. Source
 dimensions, palette data and logical UV coordinates remain unchanged.
 Android `Image` textures are explicitly encoded as RGBA bytes before upload.
-Uploaded texture names are scoped to their EGL context, so context loss or
-recreation cannot accidentally reuse another texture with the same numeric GL ID.
+Uploaded texture names are checked against their EGL context, so context
+recreation cannot accidentally reuse another texture with the same numeric
+GL ID. Each renderer owns its shader programs and passes its target density
+to texture upload; resizing its pbuffer does not recreate the shader programs
+or change another renderer's reconstruction density.
+
+**MEXA / OpenGL:** the pbuffer and raw GL calls retain their existing physical
+framebuffer semantics. Readback retains the bitmap captured at bind time,
+even if the LCDUI image is resized before release. Logical framebuffer
+virtualization is not part of this change.
 
 ## Memory and compatibility
 
@@ -90,9 +101,14 @@ the old frame is not written into the new backing buffer; the next MIDlet
 repaint supplies the new frame. Native RGBA8888 readback rejects invalid
 destination rectangles and unsupported Bitmap formats before accessing pixels.
 Operations through retained Java ME Graphics objects share the buffer Image
-monitor with its resize/rebind operation. Each guest paint retains its own
-scratch-buffer reference until the frame is published, so host resizes can
-stage another buffer without waiting for the guest paint event.
+monitor with its resize/rebind operation. A guest paint exclusively claims
+the shared idle scratch surface until it finishes; resizing can stage a
+replacement without touching the active surface. The Canvas publication
+lock captures the published target, content revision and visibility interval
+before calling guest code. A superseded paint is not published into a new
+target or visibility interval. The scratch is restored from the published
+frame after an owner change, abandoned paint or direct flush; steady-state
+painting reuses coherent pixels without another full-frame copy.
 
 The published frame, scratch surface and GameCanvas buffer are allocated
 before the new density is published. If a high-density allocation fails,

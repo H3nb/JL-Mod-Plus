@@ -918,8 +918,8 @@ static void m3gBlitFrameBufferPixels(RenderContext *ctx,
     {
         const int MAX_BLIT_SIZE = 4096; /* should be power of two */
     
-        int xBlits = (width / MAX_BLIT_SIZE) + 1;
-        int yBlits = (height / MAX_BLIT_SIZE) + 1;
+        int xBlits = 1 + (width - 1) / MAX_BLIT_SIZE;
+        int yBlits = 1 + (height - 1) / MAX_BLIT_SIZE;
 
         int xBlit, yBlit;
     

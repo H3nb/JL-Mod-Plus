@@ -152,8 +152,12 @@ public class Image {
 	}
 
 	public static Image createRGBImage(int[] rgb, int width, int height, boolean processAlpha) {
+		if (rgb == null) throw new NullPointerException();
+		if (width <= 0 || height <= 0) throw new IllegalArgumentException("Invalid image size");
+		long count = (long) width * height;
+		if (count > rgb.length) throw new ArrayIndexOutOfBoundsException();
 		if (!processAlpha) {
-			final int length = width * height;
+			final int length = (int) count;
 			int[] tmp = new int[length];
 			for (int i = 0; i < length; i++) {
 				tmp[i] = rgb[i] | 0xFF000000;
@@ -164,6 +168,7 @@ public class Image {
 	}
 
 	public synchronized Graphics getGraphics() {
+		if (!mutable) throw new IllegalStateException("Image is immutable");
 		Graphics next = new Graphics(this);
 		if (retainedGraphics != null) retainedGraphics.put(next, Boolean.TRUE);
 		return next;
@@ -182,15 +187,18 @@ public class Image {
 	}
 
 	public synchronized void getRGB(int[] rgbData, int offset, int scanlength, int x, int y, int width, int height) {
-		if (pixelScale == 1) {
-			bitmap.getPixels(rgbData, offset, scanlength, x, y, width, height);
-			return;
-		}
-		if (x < 0 || y < 0 || width < 0 || height < 0
-				|| (long) x + width > getWidth() || (long) y + height > getHeight()) {
+		if (rgbData == null) throw new NullPointerException();
+		if (x < 0 || y < 0 || (long) x + width > getWidth()
+				|| (long) y + height > getHeight()) {
 			throw new IllegalArgumentException("Logical image read outside bounds");
 		}
-		if (width == 0 || height == 0) return;
+		if (width <= 0 || height <= 0) return;
+		if (Math.abs((long) scanlength) < width) throw new IllegalArgumentException("Invalid scanlength");
+		PixelArray.checkBounds(rgbData.length, offset, scanlength, width, height);
+		if (pixelScale == 1) {
+			bitmap.getPixels(rgbData, offset, height == 1 ? width : scanlength, x, y, width, height);
+			return;
+		}
 		// Centre samples preserve guest-sized reads without exposing physical coordinates.
 		// Antialiased edges are not guaranteed pixel-identical to a separate 1x render.
 		int[] row = new int[width * pixelScale];
@@ -204,14 +212,14 @@ public class Image {
 	}
 
 	/** Host vendor APIs address logical pixels even when the backing is supersampled. */
-	public int getLogicalPixel(int x, int y) {
+	public synchronized int getLogicalPixel(int x, int y) {
 		if (x < 0 || y < 0 || x >= getWidth() || y >= getHeight())
 			throw new IllegalArgumentException("Logical pixel outside bounds");
 		int scale = pixelScale;
 		return bitmap.getPixel(x * scale + scale / 2, y * scale + scale / 2);
 	}
 
-	public void setLogicalPixel(int x, int y, int argb) {
+	public synchronized void setLogicalPixel(int x, int y, int argb) {
 		if (x < 0 || y < 0 || x >= getWidth() || y >= getHeight())
 			throw new IllegalArgumentException("Logical pixel outside bounds");
 		if (pixelScale == 1) {
@@ -222,17 +230,20 @@ public class Image {
 	}
 
 	/** Write exact ARGB values, including transparency, to the whole physical pixel cell. */
-	public void setLogicalPixels(int[] pixels, int offset, int scanlength,
+	public synchronized void setLogicalPixels(int[] pixels, int offset, int scanlength,
 			int x, int y, int width, int height) {
 		if (x < 0 || y < 0 || width < 0 || height < 0
 				|| (long) x + width > getWidth() || (long) y + height > getHeight())
 			throw new IllegalArgumentException("Logical image write outside bounds");
+		if (pixels == null) throw new NullPointerException();
+		if (width == 0 || height == 0) return;
+		if (Math.abs((long) scanlength) < width) throw new IllegalArgumentException("Invalid scanlength");
+		PixelArray.checkBounds(pixels.length, offset, scanlength, width, height);
 		int scale = pixelScale;
 		if (scale == 1) {
-			bitmap.setPixels(pixels, offset, scanlength, x, y, width, height);
+			bitmap.setPixels(pixels, offset, height == 1 ? width : scanlength, x, y, width, height);
 			return;
 		}
-		if (width == 0 || height == 0) return;
 		int[] physicalRow = new int[width * scale];
 		for (int row = 0; row < height; row++) {
 			for (int col = 0; col < width; col++) {

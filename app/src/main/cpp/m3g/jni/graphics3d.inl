@@ -21,8 +21,6 @@
 #define  LOG_TAG    "M3G"
 #define  LOGE(...)  __android_log_print(ANDROID_LOG_ERROR,LOG_TAG,__VA_ARGS__)
 
-void* pixels_ptr;
-
 /*
  * Must be executed in UI thread
  */
@@ -94,7 +92,7 @@ JNIEXPORT jboolean JNICALL Java_javax_microedition_m3g_Graphics3D__1isProperRend
  */
 JNIEXPORT jboolean JNICALL Java_javax_microedition_m3g_Graphics3D__1bindGraphics
 (JNIEnv* aEnv, jclass, jlong aCtx, jlong aSurfaceHandle, jint aWidth, jint aHeight,
- jint aClipX, jint aClipY, jint aClipW, jint aClipH,
+ jint aClipX, jint aClipY, jint aClipW, jint aClipH, jint aPixelScale,
  jboolean aDepth, jint aHintBits, jboolean aIsProperRenderer, jobject bitmap)
 {
     M3GRenderContext ctx = (M3GRenderContext)aCtx;
@@ -119,6 +117,18 @@ JNIEXPORT jboolean JNICALL Java_javax_microedition_m3g_Graphics3D__1bindGraphics
                             M3G_COLOR_BUFFER_BIT|M3G_DEPTH_BUFFER_BIT :
                             M3G_COLOR_BUFFER_BIT) && m3gSetRenderHints((M3GRenderContext)aCtx, aHintBits))
     {
+        AndroidBitmapInfo info;
+        if (AndroidBitmap_getInfo(aEnv, bitmap, &info) < 0
+                || info.format != ANDROID_BITMAP_FORMAT_RGBA_8888
+                || aWidth <= 0 || aHeight <= 0 || aPixelScale <= 0
+                || info.width != static_cast<uint32_t>(aWidth)
+                || info.height != static_cast<uint32_t>(aHeight)
+                || info.stride < static_cast<uint64_t>(info.width) * 4u) {
+            M3G_RAISE_EXCEPTION(aEnv, "java/lang/IllegalArgumentException")
+            M3G_DO_UNLOCK(aEnv)
+            return isImageTarget;
+        }
+        void *pixels_ptr = NULL;
         int ret = AndroidBitmap_lockPixels(aEnv, bitmap, &pixels_ptr);
         if (ret < 0) {
             LOGE("AndroidBitmap_lockPixels() failed ! error=%d", ret);
@@ -127,14 +137,14 @@ JNIEXPORT jboolean JNICALL Java_javax_microedition_m3g_Graphics3D__1bindGraphics
             return isImageTarget;
         }
         m3gBindMemoryTarget((M3GRenderContext)aCtx, pixels_ptr, aWidth, aHeight,
-                            M3G_RGB8_32, (M3Guint)(aWidth * 4), 0);
+                            M3G_RGB8_32, (M3Guint)info.stride, 0);
         if (CSynchronization::InstanceL()->GetErrorCode() == 0) {
+            m3gSetTargetPixelScale(ctx, aPixelScale);
             m3gSetClipRect((M3GRenderContext)aCtx, aClipX, aClipY, aClipW, aClipH);
             m3gSetViewport((M3GRenderContext)aCtx, aClipX, aClipY, aClipW, aClipH);
         }
         else {
             AndroidBitmap_unlockPixels(aEnv, bitmap);
-            pixels_ptr = NULL;
         }
     }
 
@@ -220,7 +230,6 @@ JNIEXPORT void JNICALL Java_javax_microedition_m3g_Graphics3D__1releaseGraphics
     // Release used target surface
 
     int ret = AndroidBitmap_unlockPixels(aEnv, bitmap);
-    pixels_ptr = NULL;
     if (ret < 0) {
         LOGE("AndroidBitmap_unlockPixels() failed ! error=%d", ret);
         M3G_RAISE_EXCEPTION(aEnv, "java/lang/IllegalStateException");

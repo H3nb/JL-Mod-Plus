@@ -9,6 +9,17 @@ adb shell settings put secure immersive_mode_confirmations confirmed
 
 selectors=(
   'javax.microedition.lcdui.graphics.AmbientColorSamplerTest'
+  'javax.microedition.lcdui.GraphicsArgumentValidationTest'
+  'javax.microedition.lcdui.PaintBufferPoolTest'
+  'javax.microedition.lcdui.GraphicsCanvasStateTest#replacementClipNeverExposesPaddedBackingAndHandlesOverflow'
+  'javax.microedition.lcdui.MutableImageScaleCompatibilityTest#invalidArrayReadAndWriteDoNotPartiallyModifyPixels'
+  'javax.microedition.lcdui.MutableImageScaleCompatibilityTest#siemensTwoBitPixelsRoundTrip'
+  'javax.microedition.lcdui.InternalResolutionGraphicsTest#renderTargetSnapshotCapturesTranslationAndLogicalContent'
+  'javax.microedition.lcdui.InternalResolutionGraphicsTest#translatedCopyAreaKeepsOverlappingPixelsAndIntegerAnchor'
+  'javax.microedition.lcdui.InternalResolutionGraphicsTest#flushIntersectsLogicalSourceAndDestinationBeforeScaling'
+  'javax.microedition.lcdui.MutableImageScaleCompatibilityTest#immutableAndOversizedRgbImagesRejectInvalidOperations'
+  'javax.microedition.lcdui.BitmapUpscalingGraphicsTest#evenMmpxCompositionMatchesFullReconstruction'
+  'com.nokia.mid.ui.DirectGraphicsRenderingTest#invalidPaddedReadbackLeavesBothArrayTypesUnchanged'
   'javax.microedition.lcdui.overlay.DiagnosticTextRenderingTest'
   'javax.microedition.media.MediaBoundaryRuntimeTest'
   'io.github.h3nb.jlmodplus.mmapi.camera.CameraCallTest'
@@ -84,6 +95,10 @@ selectors=(
 # must not affect Canvas/Compose tests running in the main batch.
 gles_selectors=(
   'io.github.h3nb.jlmodplus.micro3d.EnvironmentTextureGlesTest'
+  'io.github.h3nb.jlmodplus.micro3d.Micro3dInternalResolutionTest#independentRenderContextsSurviveOtherRendererResize'
+  'io.github.h3nb.jlmodplus.micro3d.Micro3dInternalResolutionTest#offscreenTextureTargetResetsThePreviousHdReconstructionScale'
+  'javax.microedition.m3g.M3GRuntimeTest#unscaledSpriteKeepsLogicalSizeAcrossTargetRebinds'
+  'com.mexa.opgl.OpglTargetLifecycleTest#releaseWritesOnlyTheBitmapCapturedAtBind'
 )
 
 # Tests that mutate process-global/application-global state run in their own instrumentation

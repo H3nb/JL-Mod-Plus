@@ -13,6 +13,21 @@ import org.junit.runner.RunWith;
 @RunWith(AndroidJUnit4.class)
 public class GraphicsArgumentValidationTest {
 	@Test
+	public void combinedFontStylesAndInvalidAttributes() {
+		Font font = Font.getFont(Font.FACE_SYSTEM,
+				Font.STYLE_BOLD | Font.STYLE_ITALIC | Font.STYLE_UNDERLINED, Font.SIZE_MEDIUM);
+		org.junit.Assert.assertTrue(font.isBold());
+		org.junit.Assert.assertTrue(font.isItalic());
+		org.junit.Assert.assertTrue(font.isUnderlined());
+		org.junit.Assert.assertThrows(IllegalArgumentException.class,
+				() -> Font.getFont(1, Font.STYLE_PLAIN, Font.SIZE_MEDIUM));
+		org.junit.Assert.assertThrows(IllegalArgumentException.class,
+				() -> Font.getFont(Font.FACE_SYSTEM, 8, Font.SIZE_MEDIUM));
+		org.junit.Assert.assertThrows(IllegalArgumentException.class,
+				() -> Font.getFont(99));
+	}
+
+	@Test
 	public void illegalRgbAndGrayscaleLeaveSharedArgbStateUntouched() {
 		Graphics graphics = Image.createImage(2, 2).getGraphics();
 		graphics.setColorAlpha(0x7F123456);

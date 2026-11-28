@@ -44,7 +44,7 @@ import javax.microedition.lcdui.Graphics;
 import io.github.h3nb.jlmodplus.micro3d.RenderNode.FigureNode;
 
 public class Render {
-	private static final FloatBuffer BG_VBO = BufferUtils.createFloatBuffer(8 * 2)
+	private final FloatBuffer bgVertices = BufferUtils.createFloatBuffer(8 * 2)
 			.put(new float[]{
 					-1.0f, -1.0f, 0.0f, 0.0f,
 					1.0f, -1.0f, 1.0f, 0.0f,
@@ -63,10 +63,10 @@ public class Render {
 	private EGLSurface eglWindowSurface;
 	private EGLConfig eglConfig;
 	private EGLContext eglContext;
+	private Program.Bundle programs;
 	private final IntBuffer bgTextureId = BufferUtils.createIntBuffer(1).put(-1);
 	private final float[] MVP_TMP = new float[16];
 
-	private Graphics targetGraphics;
 	// Bind and readback must refer to the same Bitmap across host resizes.
 	private Bitmap targetBitmap;
 	// The EGL surface and readback are physical; projections remain logical.
@@ -106,148 +106,141 @@ public class Render {
 
 	private void init() {
 		EGL10 egl = (EGL10) EGLContext.getEGL();
-		eglDisplay = egl.eglGetDisplay(EGL10.EGL_DEFAULT_DISPLAY);
-
-		int[] version = new int[2];
-		egl.eglInitialize(eglDisplay, version);
-
-		int EGL_OPENGL_ES2_BIT = 0x0004;
-		int[] num_config = new int[1];
-		int[] attribs = {
-				EGL10.EGL_RENDERABLE_TYPE, EGL_OPENGL_ES2_BIT,
-				EGL10.EGL_SURFACE_TYPE, EGL10.EGL_PBUFFER_BIT,
-				EGL10.EGL_RED_SIZE, 8,
-				EGL10.EGL_GREEN_SIZE, 8,
-				EGL10.EGL_BLUE_SIZE, 8,
-				EGL10.EGL_ALPHA_SIZE, 8,
-				EGL10.EGL_DEPTH_SIZE, 16,
-				EGL10.EGL_STENCIL_SIZE, EGL10.EGL_DONT_CARE,
-				EGL10.EGL_NONE
-		};
-		EGLConfig[] eglConfigs = new EGLConfig[1];
-		egl.eglChooseConfig(eglDisplay, attribs, eglConfigs, 1, num_config);
-		eglConfig = eglConfigs[0];
-
-		int EGL_CONTEXT_CLIENT_VERSION = 0x3098;
-		int[] attrib_list = {
-				EGL_CONTEXT_CLIENT_VERSION, 2,
-				EGL10.EGL_NONE
-		};
-		eglContext = egl.eglCreateContext(eglDisplay, eglConfig, EGL10.EGL_NO_CONTEXT, attrib_list);
+		EGLDisplay display = egl.eglGetDisplay(EGL10.EGL_DEFAULT_DISPLAY);
+		if (display == null || display.equals(EGL10.EGL_NO_DISPLAY)
+				|| !egl.eglInitialize(display, new int[2])) {
+			throw eglFailure(egl, "initialize");
+		}
+		try {
+			int[] attribs = {
+					EGL10.EGL_RENDERABLE_TYPE, 0x0004, // EGL_OPENGL_ES2_BIT
+					EGL10.EGL_SURFACE_TYPE, EGL10.EGL_PBUFFER_BIT,
+					EGL10.EGL_RED_SIZE, 8,
+					EGL10.EGL_GREEN_SIZE, 8,
+					EGL10.EGL_BLUE_SIZE, 8,
+					EGL10.EGL_ALPHA_SIZE, 8,
+					EGL10.EGL_DEPTH_SIZE, 16,
+					EGL10.EGL_STENCIL_SIZE, EGL10.EGL_DONT_CARE,
+					EGL10.EGL_NONE
+			};
+			EGLConfig[] configs = new EGLConfig[1];
+			int[] count = new int[1];
+			if (!egl.eglChooseConfig(display, attribs, configs, 1, count)
+					|| count[0] == 0 || configs[0] == null) {
+				throw eglFailure(egl, "choose config");
+			}
+			EGLContext context = egl.eglCreateContext(display, configs[0], EGL10.EGL_NO_CONTEXT,
+					new int[]{0x3098, 2, EGL10.EGL_NONE}); // EGL_CONTEXT_CLIENT_VERSION
+			if (context == null || context.equals(EGL10.EGL_NO_CONTEXT)) {
+				throw eglFailure(egl, "create context");
+			}
+			eglDisplay = display;
+			eglConfig = configs[0];
+			eglContext = context;
+		} catch (RuntimeException | Error failure) {
+			egl.eglTerminate(display);
+			throw failure;
+		}
 	}
 
-	public synchronized void bind(Graphics graphics) {
-		this.targetGraphics = graphics;
-		// Host resize may rebind Graphics at any point outside this snapshot.
-		Graphics.RenderTarget target = graphics.captureRenderTarget();
-		targetBitmap = target.bitmap;
-		int width = targetBitmap.getWidth();
-		int height = targetBitmap.getHeight();
-		int scale = target.pixelScale;
-		TextureImpl.setScreenTargetScale(scale);
-		targetPixelScale = scale;
-		env.width = width / scale;
-		env.height = height / scale;
-		if (eglContext == null) {
-			init();
-		}
+	private static IllegalStateException eglFailure(EGL10 egl, String operation) {
+		return new IllegalStateException("Micro3D EGL " + operation + ": 0x"
+				+ Integer.toHexString(egl.eglGetError()));
+	}
+
+	/** Leaves the owning context current; a pbuffer resize does not recreate its programs. */
+	private void ensureSurface(int width, int height, boolean clearNewSurface) {
+		if (eglContext == null) init();
 		EGL10 egl = (EGL10) EGLContext.getEGL();
-		if (surfaceWidth != width || surfaceHeight != height) {
-
-			if (eglWindowSurface != null) {
-				releaseEglContext();
-				egl.eglDestroySurface(eglDisplay, eglWindowSurface);
+		if (eglWindowSurface == null || surfaceWidth != width || surfaceHeight != height) {
+			EGLSurface next = egl.eglCreatePbufferSurface(eglDisplay, eglConfig,
+					new int[]{EGL10.EGL_WIDTH, width, EGL10.EGL_HEIGHT, height, EGL10.EGL_NONE});
+			if (next == null || next.equals(EGL10.EGL_NO_SURFACE)) {
+				throw eglFailure(egl, "create pbuffer");
 			}
-
-			int[] surface_attribs = {
-					EGL10.EGL_WIDTH, width,
-					EGL10.EGL_HEIGHT, height,
-					EGL10.EGL_NONE};
-			eglWindowSurface = egl.eglCreatePbufferSurface(eglDisplay, eglConfig, surface_attribs);
-			egl.eglMakeCurrent(eglDisplay, eglWindowSurface, eglWindowSurface, eglContext);
-
-			glViewport(0, 0, width, height);
-			Program.create();
+			if (!egl.eglMakeCurrent(eglDisplay, next, next, eglContext)) {
+				IllegalStateException failure = eglFailure(egl, "make pbuffer current");
+				egl.eglDestroySurface(eglDisplay, next);
+				throw failure;
+			}
+			EGLSurface previous = eglWindowSurface;
+			eglWindowSurface = next;
 			surfaceWidth = width;
 			surfaceHeight = height;
-			glClearColor(0, 0, 0, 1);
-			glClear(GL_COLOR_BUFFER_BIT);
-		}
-		egl.eglMakeCurrent(eglDisplay, eglWindowSurface, eglWindowSurface, eglContext);
-		Rect clip = this.clip;
-		clip.set(target.clip);
-		int l = clip.left;
-		int t = clip.top;
-		int r = clip.right;
-		int b = clip.bottom;
-		gClip.set(l * scale, t * scale, r * scale, b * scale);
-		if (l == 0 && t == 0 && r == env.width && b == env.height) {
+			if (previous != null) egl.eglDestroySurface(eglDisplay, previous);
+			glViewport(0, 0, width, height);
 			glDisable(GL_SCISSOR_TEST);
+			glDepthMask(true);
+			if (clearNewSurface) {
+				glClearColor(0, 0, 0, 1);
+				glClear(GL_COLOR_BUFFER_BIT);
+			}
 		} else {
-			glEnable(GL_SCISSOR_TEST);
-			glScissor(l * scale, t * scale, (r - l) * scale, (b - t) * scale);
+			bindEglContext();
 		}
-		glClear(GL_DEPTH_BUFFER_BIT);
-		backCopied = false;
-		egl.eglMakeCurrent(eglDisplay, EGL10.EGL_NO_SURFACE, EGL10.EGL_NO_SURFACE, EGL10.EGL_NO_CONTEXT);
+		if (programs == null) programs = new Program.Bundle();
+	}
+
+	public void bind(Graphics graphics) {
+		// Capture the image before acquiring the Render monitor; Graphics calls
+		// may already hold the image monitor when they enter Micro3D.
+		bindGraphics(graphics.captureRenderTarget());
+	}
+
+	private synchronized void bindGraphics(Graphics.RenderTarget target) {
+		Bitmap bitmap = target.bitmap;
+		int width = bitmap.getWidth();
+		int height = bitmap.getHeight();
+		int scale = target.pixelScale;
+		try {
+			ensureSurface(width, height, true);
+			targetPixelScale = scale;
+			env.width = width / scale;
+			env.height = height / scale;
+			clip.set(target.clip);
+			applyClip();
+			gClip.set(clip.left * scale, clip.top * scale,
+					clip.right * scale, clip.bottom * scale);
+			glDepthMask(true);
+			glClear(GL_DEPTH_BUFFER_BIT);
+			targetBitmap = bitmap;
+			targetTexture = null;
+			backCopied = false;
+		} catch (RuntimeException | Error failure) {
+			dispose();
+			throw failure;
+		} finally {
+			releaseEglContext();
+		}
 	}
 
 	public synchronized void bind(TextureImpl tex) {
-		targetBitmap = null;
-		targetTexture = tex;
-		targetPixelScale = 1;
-		// Render-to-texture is 1x even after an HD screen target.
-		TextureImpl.setScreenTargetScale(1);
 		int width = tex.getWidth();
 		int height = tex.getHeight();
-		env.width = width;
-		env.height = height;
-		if (eglContext == null) {
-			init();
+		try {
+			ensureSurface(width, height, false);
+			targetPixelScale = 1;
+			env.width = width;
+			env.height = height;
+			clip.set(0, 0, width, height);
+			gClip.set(clip);
+			applyClip();
+			glDepthMask(true);
+			glClearColor(
+					((clearColor >> 16) & 0xff) / 255.0f,
+					((clearColor >> 8) & 0xff) / 255.0f,
+					(clearColor & 0xff) / 255.0f,
+					1.0f);
+			glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);
+			targetBitmap = null;
+			targetTexture = tex;
+			backCopied = false;
+		} catch (RuntimeException | Error failure) {
+			dispose();
+			throw failure;
+		} finally {
+			releaseEglContext();
 		}
-		EGL10 egl = (EGL10) EGLContext.getEGL();
-		if (surfaceWidth != width || surfaceHeight != height) {
-
-			if (eglWindowSurface != null) {
-				releaseEglContext();
-				egl.eglDestroySurface(eglDisplay, eglWindowSurface);
-			}
-
-			int[] surface_attribs = {
-					EGL10.EGL_WIDTH, width,
-					EGL10.EGL_HEIGHT, height,
-					EGL10.EGL_NONE};
-			eglWindowSurface = egl.eglCreatePbufferSurface(eglDisplay, eglConfig, surface_attribs);
-			egl.eglMakeCurrent(eglDisplay, eglWindowSurface, eglWindowSurface, eglContext);
-
-			glViewport(0, 0, width, height);
-			Program.create();
-			surfaceWidth = width;
-			surfaceHeight = height;
-		}
-		egl.eglMakeCurrent(eglDisplay, eglWindowSurface, eglWindowSurface, eglContext);
-		Rect clip = this.clip;
-		clip.set(0, 0, width, height);
-		int l = clip.left;
-		int t = clip.top;
-		int r = clip.right;
-		int b = clip.bottom;
-		gClip.set(l, t, r, b);
-		if (l == 0 && t == 0 && r == env.width && b == env.height) {
-			glDisable(GL_SCISSOR_TEST);
-		} else {
-			glEnable(GL_SCISSOR_TEST);
-			glScissor(l, t, r - l, b - t);
-		}
-		glClearColor(
-				((clearColor >> 16) & 0xff) / 255.0f,
-				((clearColor >> 8) & 0xff) / 255.0f,
-				(clearColor & 0xff) / 255.0f,
-				1.0f);
-		glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);
-		backCopied = false;
-		egl.eglMakeCurrent(eglDisplay, EGL10.EGL_NO_SURFACE, EGL10.EGL_NO_SURFACE, EGL10.EGL_NO_CONTEXT);
-
 	}
 
 	private static void applyBlending(int blendMode) {
@@ -295,16 +288,16 @@ public class Render {
 		GLUtils.texImage2D(GL_TEXTURE_2D, 0, targetImage, 0);
 		checkGlError("texImage2D");
 
-		final Program.Simple program = Program.simple;
+		final Program.Simple program = programs.simple;
 		program.use();
 
-		BG_VBO.rewind();
-		glVertexAttribPointer(program.aPosition, 2, GL_FLOAT, false, 4 * 4, BG_VBO);
+		bgVertices.rewind();
+		glVertexAttribPointer(program.aPosition, 2, GL_FLOAT, false, 4 * 4, bgVertices);
 		glEnableVertexAttribArray(program.aPosition);
 
 		// координаты текстур
-		BG_VBO.position(2);
-		glVertexAttribPointer(program.aTexture, 2, GL_FLOAT, false, 4 * 4, BG_VBO);
+		bgVertices.position(2);
+		glVertexAttribPointer(program.aTexture, 2, GL_FLOAT, false, 4 * 4, bgVertices);
 		glEnableVertexAttribArray(program.aTexture);
 
 		if (preProcess) {
@@ -333,16 +326,31 @@ public class Render {
 		backCopied = true;
 	}
 
+	/** Destroy only resources owned by this renderer. The context releases its GL programs. */
+	synchronized void dispose() {
+		stack.clear();
+		targetBitmap = null;
+		targetTexture = null;
+		EGL10 egl = (EGL10) EGLContext.getEGL();
+		if (eglDisplay != null) {
+			releaseEglContext();
+			if (eglWindowSurface != null) egl.eglDestroySurface(eglDisplay, eglWindowSurface);
+			if (eglContext != null) egl.eglDestroyContext(eglDisplay, eglContext);
+			egl.eglTerminate(eglDisplay);
+		}
+		eglDisplay = null;
+		eglConfig = null;
+		eglContext = null;
+		eglWindowSurface = null;
+		programs = null;
+		bgTextureId.put(0, -1);
+		surfaceWidth = surfaceHeight = 0;
+	}
+
 	@Override
 	protected void finalize() throws Throwable {
 		try {
-			// Destroy EGL
-			EGL10 egl = (EGL10) EGLContext.getEGL();
-			egl.eglMakeCurrent(eglDisplay, EGL10.EGL_NO_SURFACE, EGL10.EGL_NO_SURFACE, EGL10.EGL_NO_CONTEXT);
-			if (eglWindowSurface != null)
-				egl.eglDestroySurface(eglDisplay, eglWindowSurface);
-			egl.eglDestroyContext(eglDisplay, eglContext);
-			egl.eglTerminate(eglDisplay);
+			dispose();
 		} finally {
 			super.finalize();
 		}
@@ -388,7 +396,7 @@ public class Render {
 				glBufferData(GL_ARRAY_BUFFER, normals.capacity() * 4, normals.rewind(), GL_STREAM_DRAW);
 			}
 			if (model.hasPolyT) {
-				final Program.Tex program = Program.tex;
+				final Program.Tex program = programs.tex;
 				program.use();
 
 				glBindBuffer(GL_ARRAY_BUFFER, bufHandles.get(0));
@@ -424,7 +432,7 @@ public class Render {
 			}
 
 			if (model.hasPolyC) {
-				final Program.Color program = Program.color;
+				final Program.Color program = programs.color;
 				program.use();
 
 				int offset = model.numVerticesPolyT;
@@ -463,7 +471,7 @@ public class Render {
 
 	private void renderModel(TextureImpl[] textures, Model model, boolean enableBlending) {
 		if (textures == null || textures.length == 0) return;
-		Program.Tex program = Program.tex;
+		Program.Tex program = programs.tex;
 		int[][][] meshes = model.subMeshesLengthsT;
 		int length = meshes.length;
 		int blendMode = 0;
@@ -489,10 +497,10 @@ public class Render {
 			for (int face = 0; face < texMesh.length; face++) {
 				int[] lens = texMesh[face];
 				if (face >= textures.length) {
-					program.setTex(null);
+					program.setTex(null, targetPixelScale);
 				} else {
 					TextureImpl tex = textures[face];
-					program.setTex(tex);
+					program.setTex(tex, targetPixelScale);
 				}
 				int cnt = lens[0];
 				if (cnt > 0) {
@@ -552,8 +560,9 @@ public class Render {
 
 	public synchronized void release() {
 		stack.clear();
-		bindEglContext();
+		if (targetBitmap == null && targetTexture == null) return;
 		try {
+			bindEglContext();
 			if (targetTexture != null) {
 				glReadPixels(0, 0, 256, 256, GL_RGBA, GL_UNSIGNED_BYTE, targetTexture.image.getRaster());
 			} else if (targetBitmap != null) {
@@ -565,7 +574,6 @@ public class Render {
 			}
 		} finally {
 			targetTexture = null;
-			targetGraphics = null;
 			targetBitmap = null;
 			releaseEglContext();
 		}
@@ -601,7 +609,7 @@ public class Render {
 
 	private void renderMeshC(RenderNode.PrimitiveNode node) {
 		int command = node.command;
-		Program.Color program = Program.color;
+		Program.Color program = programs.color;
 		program.use();
 		if ((node.attrs & Graphics3D.ENV_ATTR_LIGHTING) != 0 && (command & Graphics3D.PATTR_LIGHTING) != 0 && node.normals != null) {
 			TextureImpl sphere = node.specular;
@@ -644,7 +652,7 @@ public class Render {
 
 	private void renderMeshT(RenderNode.PrimitiveNode node) {
 		int command = node.command;
-		Program.Tex program = Program.tex;
+		Program.Tex program = programs.tex;
 		program.use();
 		if ((node.attrs & Graphics3D.ENV_ATTR_LIGHTING) != 0 && (command & Graphics3D.PATTR_LIGHTING) != 0 && node.normals != null) {
 			TextureImpl sphere = node.specular;
@@ -674,7 +682,7 @@ public class Render {
 		glVertexAttribPointer(program.aColorData, 2, GL_UNSIGNED_BYTE, false, 2, node.texCoords.rewind());
 		glEnableVertexAttribArray(program.aColorData);
 
-		program.setTex(node.texture);
+		program.setTex(node.texture, targetPixelScale);
 
 		glDrawArrays(GL_TRIANGLES, 0, node.vertices.capacity() / 3);
 
@@ -695,7 +703,7 @@ public class Render {
 					selectAffineTrans(cmd & 0xFFFFFF);
 					break;
 				case Graphics3D.COMMAND_AMBIENT_LIGHT: {
-					env.light.ambIntensity = i++;
+					env.light.ambIntensity = cmds[i++];
 					break;
 				}
 				case Graphics3D.COMMAND_ATTRIBUTE:
@@ -709,10 +717,10 @@ public class Render {
 					updateClip();
 					break;
 				case Graphics3D.COMMAND_DIRECTION_LIGHT: {
-					env.light.x = i++;
-					env.light.y = i++;
-					env.light.z = i++;
-					env.light.dirIntensity = i++;
+					env.light.x = cmds[i++];
+					env.light.y = cmds[i++];
+					env.light.z = cmds[i++];
+					env.light.dirIntensity = cmds[i++];
 					break;
 				}
 				case Graphics3D.COMMAND_FLUSH:
@@ -787,6 +795,14 @@ public class Render {
 
 	private void updateClip() {
 		bindEglContext();
+		try {
+			applyClip();
+		} finally {
+			releaseEglContext();
+		}
+	}
+
+	private void applyClip() {
 		Rect clip = this.clip;
 		int l = clip.left;
 		int t = clip.top;
@@ -799,7 +815,6 @@ public class Render {
 			int scale = targetPixelScale;
 			glScissor(l * scale, t * scale, (r - l) * scale, (b - t) * scale);
 		}
-		releaseEglContext();
 	}
 
 	public synchronized void postFigure(FigureImpl figure) {
@@ -1132,10 +1147,10 @@ public class Render {
 
 	public synchronized void drawFigure(FigureImpl figure) {
 		bindEglContext();
-		if (!backCopied && preCopy2D) {
-			copy2d(true);
-		}
 		try {
+			if (!backCopied && preCopy2D) {
+				copy2d(true);
+			}
 			Model model = figure.model;
 			figure.prepareBuffers();
 
@@ -1183,11 +1198,22 @@ public class Render {
 	}
 
 	private void bindEglContext() {
-		((EGL10) EGLContext.getEGL()).eglMakeCurrent(eglDisplay, eglWindowSurface, eglWindowSurface, eglContext);
+		EGL10 egl = (EGL10) EGLContext.getEGL();
+		if (eglContext == null || eglWindowSurface == null) {
+			throw new IllegalStateException("Micro3D renderer is not bound");
+		}
+		if (!egl.eglMakeCurrent(eglDisplay, eglWindowSurface, eglWindowSurface, eglContext)) {
+			throw eglFailure(egl, "make current");
+		}
 	}
 
 	private void releaseEglContext() {
-		((EGL10) EGLContext.getEGL()).eglMakeCurrent(eglDisplay, EGL10.EGL_NO_SURFACE, EGL10.EGL_NO_SURFACE, EGL10.EGL_NO_CONTEXT);
+		if (eglContext == null) return;
+		EGL10 egl = (EGL10) EGLContext.getEGL();
+		if (eglContext.equals(egl.eglGetCurrentContext())) {
+			egl.eglMakeCurrent(eglDisplay, EGL10.EGL_NO_SURFACE,
+					EGL10.EGL_NO_SURFACE, EGL10.EGL_NO_CONTEXT);
+		}
 	}
 
 	public void reset() {
@@ -1278,7 +1304,7 @@ public class Render {
 				break;
 			}
 			case Graphics3D.PRIMITVE_POINT_SPRITES: {
-				Program.Sprite program = Program.sprite;
+				Program.Sprite program = programs.sprite;
 				program.use();
 
 				glVertexAttribPointer(program.aPosition, 4, GL_FLOAT, false, 4 * 4, node.vertices.rewind());
@@ -1287,7 +1313,7 @@ public class Render {
 				glVertexAttribPointer(program.aColorData, 2, GL_UNSIGNED_BYTE, false, 2, node.texCoords.rewind());
 				glEnableVertexAttribArray(program.aColorData);
 
-				program.setTexture(node.texture);
+				program.setTexture(node.texture, targetPixelScale);
 
 				glUniform1i(program.uIsTransparency, (command & Graphics3D.PATTR_COLORKEY));
 				glDrawArrays(GL_TRIANGLES, 0, numPrimitives * 6);
@@ -1300,7 +1326,7 @@ public class Render {
 	}
 
 	private void renderMesh(RenderNode.PrimitiveNode node, int type) {
-		Program.Color program = Program.color;
+		Program.Color program = programs.color;
 		program.use();
 		glVertexAttrib2f(program.aMaterial, 0, 0);
 		program.bindMatrices(MVP_TMP, node.viewMatrix);
@@ -1496,7 +1522,7 @@ public class Render {
 			glFlush();
 			if (targetTexture != null) {
 				glReadPixels(0, 0, 256, 256, GL_RGBA, GL_UNSIGNED_BYTE, targetTexture.image.getRaster());
-			} else if (targetGraphics != null) {
+			} else if (targetBitmap != null) {
 				Rect clip = this.gClip;
 				Utils.glReadPixels(clip.left, clip.top, clip.width(), clip.height(), targetBitmap);
 			}

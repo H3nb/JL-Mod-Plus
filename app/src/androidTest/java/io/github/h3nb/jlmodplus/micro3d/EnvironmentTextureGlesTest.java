@@ -33,6 +33,58 @@ public class EnvironmentTextureGlesTest {
     private static final float TEXEL = 1.0f / 64.0f;
 
     @Test
+    public void nativeReadbackRejectsInvalidDestinationAndPreservesPackAlignment() {
+        android.graphics.Bitmap bitmap = android.graphics.Bitmap.createBitmap(
+                3, 2, android.graphics.Bitmap.Config.ARGB_8888);
+        EGLDisplay display = EGL14.eglGetDisplay(EGL14.EGL_DEFAULT_DISPLAY);
+        EGLContext context = EGL14.EGL_NO_CONTEXT;
+        EGLSurface surface = EGL14.EGL_NO_SURFACE;
+        try {
+            org.junit.Assert.assertThrows(IllegalArgumentException.class,
+                    () -> io.github.h3nb.jlmodplus.gles.GLESUtils.blit2(1, 0, 3, 2, bitmap));
+            int[] version = new int[2];
+            assertTrue(EGL14.eglInitialize(display, version, 0, version, 1));
+            EGLConfig[] configs = new EGLConfig[1];
+            int[] count = new int[1];
+            assertTrue(EGL14.eglChooseConfig(display, new int[]{
+                    EGL14.EGL_SURFACE_TYPE, EGL14.EGL_PBUFFER_BIT,
+                    EGL14.EGL_RENDERABLE_TYPE, 4,
+                    EGL14.EGL_RED_SIZE, 8, EGL14.EGL_GREEN_SIZE, 8,
+                    EGL14.EGL_BLUE_SIZE, 8, EGL14.EGL_ALPHA_SIZE, 8,
+                    EGL14.EGL_NONE}, 0, configs, 0, 1, count, 0));
+            assertTrue(count[0] > 0);
+            context = EGL14.eglCreateContext(display, configs[0], EGL14.EGL_NO_CONTEXT,
+                    new int[]{EGL14.EGL_CONTEXT_CLIENT_VERSION, 2, EGL14.EGL_NONE}, 0);
+            surface = EGL14.eglCreatePbufferSurface(display, configs[0],
+                    new int[]{EGL14.EGL_WIDTH, 3, EGL14.EGL_HEIGHT, 2, EGL14.EGL_NONE}, 0);
+            assertTrue(EGL14.eglMakeCurrent(display, surface, surface, context));
+            GLES20.glClearColor(1f, 0f, 0f, 1f);
+            GLES20.glClear(GLES20.GL_COLOR_BUFFER_BIT);
+            GLES20.glEnable(GLES20.GL_SCISSOR_TEST);
+            GLES20.glScissor(0, 1, 3, 1);
+            GLES20.glClearColor(0f, 1f, 0f, 1f);
+            GLES20.glClear(GLES20.GL_COLOR_BUFFER_BIT);
+            GLES20.glDisable(GLES20.GL_SCISSOR_TEST);
+            GLES20.glPixelStorei(GLES20.GL_PACK_ALIGNMENT, 8);
+            io.github.h3nb.jlmodplus.gles.GLESUtils.blit2(0, 0, 3, 2, bitmap);
+            int[] alignment = new int[1];
+            GLES20.glGetIntegerv(GLES20.GL_PACK_ALIGNMENT, alignment, 0);
+            assertEquals(8, alignment[0]);
+            for (int x = 0; x < 3; x++) {
+                assertEquals(0xFF00FF00, bitmap.getPixel(x, 0));
+                assertEquals(0xFFFF0000, bitmap.getPixel(x, 1));
+            }
+            assertEquals(GLES20.GL_NO_ERROR, GLES20.glGetError());
+        } finally {
+            bitmap.recycle();
+            EGL14.eglMakeCurrent(display, EGL14.EGL_NO_SURFACE, EGL14.EGL_NO_SURFACE, EGL14.EGL_NO_CONTEXT);
+            if (surface != EGL14.EGL_NO_SURFACE) EGL14.eglDestroySurface(display, surface);
+            if (context != EGL14.EGL_NO_CONTEXT) EGL14.eglDestroyContext(display, context);
+            EGL14.eglTerminate(display);
+        }
+    }
+
+    @Test
     public void environmentPaletteZeroAndPaddingRemainBlackAfterGlesUpload() {
         EGLDisplay display = EGL14.eglGetDisplay(EGL14.EGL_DEFAULT_DISPLAY);
         assertTrue(display != EGL14.EGL_NO_DISPLAY);
@@ -101,14 +153,12 @@ public class EnvironmentTextureGlesTest {
             // Exercise optional source enhancement on the same immutable GLES texture.
             // UV coordinates still use the original 64×64 logical texture dimensions.
             TextureImpl.configureEnhancement(2);
-            TextureImpl.setScreenTargetScale(2);
-            assertEquals(modelId, model.impl.getId());
+            assertEquals(modelId, model.impl.getId(2));
             assertRgb(255, 0, 0, sample(modelId, uv,
                     0.25f, 0.25f, GLES20.GL_NEAREST));
             // Transparent palette[0] must retain its original red RGB and alpha
             // contract. MMPX is intentionally bypassed for alpha-masked models.
             TextureImpl.configureEnhancement(0);
-            TextureImpl.setScreenTargetScale(1);
 
             // Prove that reconstruction really reaches GLES for eligible opaque
             // model textures: MMPX changes the upper-left corner of the center
@@ -117,8 +167,7 @@ public class EnvironmentTextureGlesTest {
             opaqueId = opaque.getId();
             assertRgb(0, 0, 0, sample(opaqueId, uv, 0.5f, 0.5f, GLES20.GL_NEAREST));
             TextureImpl.configureEnhancement(2);
-            TextureImpl.setScreenTargetScale(2);
-            assertEquals(opaqueId, opaque.getId());
+            assertEquals(opaqueId, opaque.getId(2));
             int[] sourceColors = {
                     0xff000000, 0xffffffff, 0xff000000,
                     0xffffffff, 0xff000000, 0xff000000,
@@ -130,7 +179,6 @@ public class EnvironmentTextureGlesTest {
                     reconstructed & 255,
                     sample(opaqueId, uv, 2.5f / 6f, 2.5f / 6f, GLES20.GL_NEAREST));
             TextureImpl.configureEnhancement(0);
-            TextureImpl.setScreenTargetScale(1);
 
             // Image-backed texture data must be packed as RGBA bytes on
             // little-endian Android, not as rotated ARGB native-order ints.
@@ -150,7 +198,6 @@ public class EnvironmentTextureGlesTest {
             assertEquals(GLES20.GL_NO_ERROR, GLES20.glGetError());
         } finally {
             TextureImpl.configureEnhancement(0);
-            TextureImpl.setScreenTargetScale(1);
             if (program != 0) GLES20.glDeleteProgram(program);
             if (environmentId != 0) GLES20.glDeleteTextures(1, new int[] {environmentId}, 0);
             if (modelId != 0) GLES20.glDeleteTextures(1, new int[] {modelId}, 0);
@@ -201,7 +248,6 @@ public class EnvironmentTextureGlesTest {
 
             TextureImpl texture = new TextureImpl(opaqueBmp3x3());
             TextureImpl.configureEnhancement(0);
-            TextureImpl.setScreenTargetScale(1);
             textureId = texture.getId();
             assertTrue(GLES20.glIsTexture(textureId));
 
@@ -247,7 +293,6 @@ public class EnvironmentTextureGlesTest {
             if (second != EGL14.EGL_NO_CONTEXT) EGL14.eglDestroyContext(display, second);
             EGL14.eglTerminate(display);
             TextureImpl.configureEnhancement(0);
-            TextureImpl.setScreenTargetScale(1);
         }
     }
 

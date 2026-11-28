@@ -320,9 +320,12 @@ public class M3D {
 			return;
 		}
 		bindEglContext();
-		glFinish();
-		GLESUtils.blit2(x, y, w, h, g.getBitmap());
-		releaseEglContext();
+		try {
+			glFinish();
+			GLESUtils.blit2(x, y, w, h, g.getBitmap());
+		} finally {
+			releaseEglContext();
+		}
 	}
 
 	private void bindEglContext() {

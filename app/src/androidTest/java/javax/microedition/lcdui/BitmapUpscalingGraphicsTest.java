@@ -15,10 +15,10 @@ import org.junit.runner.RunWith;
 public class BitmapUpscalingGraphicsTest {
     private static final int RED=0xffff0000, BLUE=0xff0000ff;
 
-    @Test public void enhancementCacheBudgetIsBoundedByHeapTier() {
-        assertEquals(4 * 1024 * 1024, BitmapUpscaling.cacheBudgetBytes(32L << 20));
+    @Test public void enhancementCacheBudgetTracksHeapWithoutMinimum() {
+        assertEquals(2 * 1024 * 1024, BitmapUpscaling.cacheBudgetBytes(32L << 20));
         assertEquals(8 * 1024 * 1024, BitmapUpscaling.cacheBudgetBytes(128L << 20));
-        assertEquals(16 * 1024 * 1024, BitmapUpscaling.cacheBudgetBytes(512L << 20));
+        assertEquals(32 * 1024 * 1024, BitmapUpscaling.cacheBudgetBytes(512L << 20));
     }
 
     @Test public void enhancementNeverSamplesAdjacentAtlasTile() {
@@ -71,6 +71,32 @@ public class BitmapUpscalingGraphicsTest {
             }
         } finally {
             Graphics.configureBitmapUpscaling(BitmapUpscaling.NEAREST);
+        }
+    }
+
+    @Test public void evenMmpxCompositionMatchesFullReconstruction() {
+        int black = 0xFF000000, white = 0xFFFFFFFF;
+        int[] raw = {black, white, black, white, black, black, black, black, black};
+        Image source = Image.createRGBImage(raw, 3, 3, true);
+        Graphics.configureBitmapUpscaling(BitmapUpscaling.MMPX);
+        try {
+            assertNotEquals(black, MmpxScaler.scale2x(raw, 3, 3)[2 * 6 + 2]);
+            for (int factor : new int[]{2, 4, 6, 8, 10}) {
+                Image target = Image.createDisplayTarget(3, 3, factor);
+                try {
+                    target.getGraphics().drawImage(source, 0, 0, Graphics.TOP | Graphics.LEFT);
+                    int[] expected = MmpxScaler.scale(raw, 3, 3, factor);
+                    int side = 3 * factor;
+                    int[] actual = new int[side * side];
+                    target.getBitmap().getPixels(actual, 0, side, 0, 0, side, side);
+                    assertArrayEquals("MMPX factor " + factor, expected, actual);
+                } finally {
+                    target.getBitmap().recycle();
+                }
+            }
+        } finally {
+            Graphics.configureBitmapUpscaling(BitmapUpscaling.NEAREST);
+            source.getBitmap().recycle();
         }
     }
 

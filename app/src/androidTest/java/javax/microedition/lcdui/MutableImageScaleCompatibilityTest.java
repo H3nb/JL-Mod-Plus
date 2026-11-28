@@ -124,6 +124,56 @@ public class MutableImageScaleCompatibilityTest {
         }
     }
 
+    @Test public void immutableAndOversizedRgbImagesRejectInvalidOperations() {
+        Image image = Image.createRGBImage(new int[]{0xFFFF0000}, 1, 1, true);
+        try {
+            org.junit.Assert.assertThrows(IllegalStateException.class, image::getGraphics);
+            for (boolean processAlpha : new boolean[]{false, true}) {
+                org.junit.Assert.assertThrows(ArrayIndexOutOfBoundsException.class,
+                        () -> Image.createRGBImage(new int[1], Integer.MAX_VALUE, 2, processAlpha));
+            }
+        } finally {
+            image.getBitmap().recycle();
+        }
+    }
+
+    @Test public void invalidArrayReadAndWriteDoNotPartiallyModifyPixels() {
+        for (int scale : new int[]{1, 3}) {
+            Image image = Image.createDisplayTarget(4, 3, scale);
+            try {
+                int[] read = {17, 17, 17};
+                org.junit.Assert.assertThrows(ArrayIndexOutOfBoundsException.class,
+                        () -> image.getRGB(read, 0, 2, 0, 0, 2, 2));
+                org.junit.Assert.assertArrayEquals(new int[]{17, 17, 17}, read);
+                org.junit.Assert.assertThrows(ArrayIndexOutOfBoundsException.class,
+                        () -> image.setLogicalPixels(new int[]{0xFF000000, 0xFF000000, 0xFF000000},
+                                0, 2, 0, 0, 2, 2));
+                assertEquals(0xFFFFFFFF, image.getLogicalPixel(0, 0));
+                image.setLogicalPixels(new int[]{0xFF123456, 0xFF654321}, 1, -1, 0, 0, 1, 2);
+                int[] result = new int[2];
+                image.getRGB(result, 1, -1, 0, 0, 1, 2);
+                org.junit.Assert.assertArrayEquals(new int[]{0xFF123456, 0xFF654321}, result);
+            } finally {
+                image.getBitmap().recycle();
+            }
+        }
+    }
+
+    @Test public void siemensTwoBitPixelsRoundTrip() {
+        Image image = Image.createDisplayTarget(8, 1, 3);
+        try {
+            image.setBlackWhiteAlpha(true);
+            ExtendedImage extended = new ExtendedImage(image);
+            byte[] packed = {(byte) 0x19, (byte) 0x86};
+            extended.setPixels(packed, 0, 0, 8, 1);
+            byte[] result = new byte[2];
+            extended.getPixelBytes(result, 0, 0, 8, 1);
+            org.junit.Assert.assertArrayEquals(packed, result);
+        } finally {
+            image.getBitmap().recycle();
+        }
+    }
+
     @Test public void vendorEncoderKeepsLogicalDimensions() throws Exception {
         Image image = Image.createDisplayTarget(8, 4, 3);
         try {

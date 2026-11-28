@@ -59,6 +59,52 @@ public class InternalResolutionGraphicsTest {
         }
     }
 
+    @Test public void translatedCopyAreaKeepsOverlappingPixelsAndIntegerAnchor() {
+        for (int scale : new int[]{1, 3}) {
+            Image image = Image.createDisplayTarget(10, 4, scale);
+            try {
+                image.setSize(8, 4);
+                image.setLogicalPixels(new int[]{0xFFFF0000, 0xFF00FF00, 0xFF0000FF},
+                        0, 3, 2, 1, 3, 1);
+                Graphics g = image.getGraphics();
+                g.translate(2, 1);
+                // Source: surface x=2..4. Destination: surface x=3..5, overlapping.
+                g.copyArea(0, 0, 3, 1, 2, 0, Graphics.HCENTER | Graphics.TOP);
+                for (int y = scale; y < scale * 2; y++) {
+                    for (int x = 3 * scale; x < 6 * scale; x++) {
+                        int expected = new int[]{0xFFFF0000, 0xFF00FF00, 0xFF0000FF}[x / scale - 3];
+                        assertEquals(expected, image.getBitmap().getPixel(x, y));
+                    }
+                }
+                // The larger backing bitmap must not expose hidden logical pixels.
+                org.junit.Assert.assertThrows(IllegalArgumentException.class,
+                        () -> g.copyArea(5, 0, 2, 1, 0, 0, Graphics.TOP | Graphics.LEFT));
+            } finally {
+                image.getBitmap().recycle();
+            }
+        }
+    }
+
+    @Test public void flushIntersectsLogicalSourceAndDestinationBeforeScaling() {
+        Image source = Image.createDisplayTarget(5, 4, 3);
+        Image target = Image.createDisplayTarget(4, 3, 2);
+        try {
+            Graphics g = source.getGraphics();
+            g.setColor(RED);
+            g.fillRect(0, 0, 5, 4);
+            Graphics dest = target.getGraphics();
+            dest.flush(source, -2, 1, Integer.MAX_VALUE, Integer.MAX_VALUE);
+            for (int y = 0; y < 3; y++) {
+                for (int x = 0; x < 4; x++) {
+                    assertEquals(y == 0 ? RGB : RED, target.getLogicalPixel(x, y) & RGB);
+                }
+            }
+        } finally {
+            source.getBitmap().recycle();
+            target.getBitmap().recycle();
+        }
+    }
+
     @Test public void scaledFrameCopyPreservesPhysicalDetailAtEdges() {
         Image source = Image.createDisplayTarget(12, 10, 2);
         Image destination = Image.createDisplayTarget(12, 10, 2);
@@ -392,6 +438,26 @@ public class InternalResolutionGraphicsTest {
             resizer.join(15000);
             source.getBitmap().recycle();
             target.getBitmap().recycle();
+        }
+    }
+
+    @Test public void renderTargetSnapshotCapturesTranslationAndLogicalContent() {
+        Image image = Image.createDisplayTarget(16, 14, 3);
+        try {
+            image.setSize(12, 10);
+            Graphics graphics = image.getGraphics();
+            graphics.translate(2, 3);
+            graphics.setClip(1, 1, 4, 5);
+            Graphics.RenderTarget target = graphics.captureRenderTarget();
+            graphics.translate(4, 5);
+            assertEquals(2, target.translateX);
+            assertEquals(3, target.translateY);
+            assertEquals(12, target.logicalWidth);
+            assertEquals(10, target.logicalHeight);
+            assertEquals(new android.graphics.Rect(1, 1, 5, 6), target.clip);
+            assertEquals(48, target.bitmap.getWidth());
+        } finally {
+            image.getBitmap().recycle();
         }
     }
 

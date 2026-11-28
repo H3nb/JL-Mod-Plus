@@ -33,7 +33,6 @@ import android.graphics.Rect;
 import android.graphics.RectF;
 import android.graphics.Region;
 import android.os.Build;
-import android.util.Log;
 
 import com.jblend.graphics.j3d.Effect3D;
 import com.jblend.graphics.j3d.Figure;
@@ -64,6 +63,7 @@ public class Graphics implements
 	private final Paint drawPaint = new Paint();
 	private final Paint fillPaint = new Paint();
 	private final Paint polygonPaint = new Paint();
+	private final Paint textPaint = new Paint();
 
 	// Cached Graphics instances outlive profile changes; choose the active session at draw time.
 	private static volatile BitmapUpscaling activeBitmapUpscaling =
@@ -143,9 +143,11 @@ public class Graphics implements
 		canvas.setMatrix(pixelScaleMatrix);
 		if (newBitmap && Build.VERSION.SDK_INT < Build.VERSION_CODES.O) {
 			// Before O, setBitmap may retain the old clip.
-			canvas.clipRect(image.getBounds(), Region.Op.REPLACE);
+			canvas.clipRect(0, 0, bitmap.getWidth() / scale,
+					bitmap.getHeight() / scale, Region.Op.REPLACE);
 		}
 		canvas.save();
+		canvas.clipRect(image.getBounds());
 	}
 
 	void onDisplayTargetResized(int previousWidth, int previousHeight) {
@@ -187,19 +189,30 @@ public class Graphics implements
 		synchronized (image) {
 			Rect targetClip = new Rect();
 			canvas.getClipBounds(targetClip);
-			return new RenderTarget(image.getBitmap(), image.getPixelScale(), targetClip);
+			return new RenderTarget(image.getBitmap(), image.getPixelScale(), targetClip,
+					image.getWidth(), image.getHeight(), translateX, translateY);
 		}
 	}
 
 	public static final class RenderTarget {
 		public final Bitmap bitmap;
 		public final int pixelScale;
+		/** Clip in guest-local coordinates, captured independently of the live Graphics. */
 		public final Rect clip;
+		public final int logicalWidth;
+		public final int logicalHeight;
+		public final int translateX;
+		public final int translateY;
 
-		private RenderTarget(Bitmap bitmap, int pixelScale, Rect clip) {
+		private RenderTarget(Bitmap bitmap, int pixelScale, Rect clip,
+				int logicalWidth, int logicalHeight, int translateX, int translateY) {
 			this.bitmap = bitmap;
 			this.pixelScale = pixelScale;
 			this.clip = clip;
+			this.logicalWidth = logicalWidth;
+			this.logicalHeight = logicalHeight;
+			this.translateX = translateX;
+			this.translateY = translateY;
 		}
 	}
 
@@ -386,9 +399,13 @@ public class Graphics implements
 		return font;
 	}
 
+	private static int clipEnd(int origin, int extent) {
+		return (int) Math.min(Integer.MAX_VALUE, (long) origin + Math.max(0, extent));
+	}
+
 	public void setClip(int x, int y, int width, int height) {
 		synchronized (this.image) {
-			clip.set(x, y, width <= 0 ? x : x + width, height <= 0 ? y : y + height);
+			clip.set(x, y, clipEnd(x, width), clipEnd(y, height));
 			resetCanvasState();
 			canvas.translate(translateX, translateY);
 			canvas.clipRect(clip);
@@ -398,7 +415,7 @@ public class Graphics implements
 
 	public void clipRect(int x, int y, int width, int height) {
 		synchronized (this.image) {
-			clip.set(x, y, width <= 0 ? x : x + width, height <= 0 ? y : y + height);
+			clip.set(x, y, clipEnd(x, width), clipEnd(y, height));
 			canvas.clipRect(clip);
 			canvas.getClipBounds(clip);
 		}
@@ -588,7 +605,8 @@ public class Graphics implements
 
 	public void drawChars(char[] data, int offset, int length, int x, int y, int anchor) {
 		synchronized (this.image) {
-			Paint paint = font.paint;
+			Paint paint = textPaint;
+			paint.set(font.paint);
 			if ((anchor & Graphics.RIGHT) != 0) {
 				paint.setTextAlign(Paint.Align.RIGHT);
 			} else if ((anchor & Graphics.HCENTER) != 0) {
@@ -615,7 +633,8 @@ public class Graphics implements
 
 	public void drawString(String text, int x, int y, int anchor) {
 		synchronized (this.image) {
-			Paint paint = font.paint;
+			Paint paint = textPaint;
+			paint.set(font.paint);
 			if ((anchor & Graphics.RIGHT) != 0) {
 				paint.setTextAlign(Paint.Align.RIGHT);
 			} else if ((anchor & Graphics.HCENTER) != 0) {
@@ -690,7 +709,8 @@ public class Graphics implements
 
 	public void drawSubstring(String str, int offset, int len, int x, int y, int anchor) {
 		synchronized (this.image) {
-			Paint paint = font.paint;
+			Paint paint = textPaint;
+			paint.set(font.paint);
 			if ((anchor & Graphics.RIGHT) != 0) {
 				paint.setTextAlign(Paint.Align.RIGHT);
 			} else if ((anchor & Graphics.HCENTER) != 0) {
@@ -823,32 +843,15 @@ public class Graphics implements
 
 	public void drawRGB(int[] rgbData, int offset, int scanlength, int x, int y, int width, int height, boolean processAlpha) {
 		synchronized (this.image) {
-			if (rgbData == null) {
-				throw new NullPointerException();
-			}
-			if (width == 0 || height == 0) {
-				return;
-			}
-			if (offset < 0 || offset > rgbData.length) {
-				throw new ArrayIndexOutOfBoundsException();
-			}
-			if (width < 0 || height < 0) {
-				// TODO: 21.03.2021 This situation has not been verified and the correctness of such arguments is unknown.
-				Log.w(getClass().getSimpleName(), "drawRGB: width=" + width + ", height=" + height);
-			}
-			if (scanlength > 0) {
-				if (offset + scanlength * (height - 1) + width > rgbData.length) {
-					throw new ArrayIndexOutOfBoundsException();
-				}
-			} else {
-				if (offset + width > rgbData.length || offset + scanlength * (height - 1) < 0) {
-					throw new ArrayIndexOutOfBoundsException();
-				}
-			}
+			if (rgbData == null) throw new NullPointerException();
+			if (width <= 0 || height <= 0) return;
+			PixelArray.checkBounds(rgbData.length, offset, scanlength, width, height);
+			long count = (long) width * height;
+			if (count > Integer.MAX_VALUE) throw new OutOfMemoryError("Pixel rectangle too large");
 
 			// copy pixels to a new array and apply processAlpha flag here,
 			// to avoid Android restrictions
-			int[] pixels = new int[height * width];
+			int[] pixels = new int[(int) count];
 			int alphaCorrection = processAlpha ? Color.TRANSPARENT : Color.BLACK;
 			for (int i = 0; i < height; i++) {
 				int s = offset + i * scanlength;
@@ -867,33 +870,41 @@ public class Graphics implements
 						 int x_dest, int y_dest, int anchor) {
 		synchronized (this.image) {
 			if (width <= 0 || height <= 0) return;
+			long sourceX = (long) x_src + translateX;
+			long sourceY = (long) y_src + translateY;
+			if (sourceX < 0 || sourceY < 0 || sourceX + width > image.getWidth()
+					|| sourceY + height > image.getHeight()) {
+				throw new IllegalArgumentException("Copy source outside logical image bounds");
+			}
+			final int sx = (int) sourceX;
+			final int sy = (int) sourceY;
 			final int scale = image.getPixelScale();
 			final int[] pixels = scale == 1 ? new int[width * height] : null;
 			if (scale == 1) {
-				image.getBitmap().getPixels(pixels, 0, width, x_src, y_src, width, height);
+				image.getBitmap().getPixels(pixels, 0, width, sx, sy, width, height);
 			}
 			float dx;
 			if ((anchor & Graphics.RIGHT) != 0) {
-				dx = x_dest - width;
+				dx = (long) x_dest - width;
 			} else if ((anchor & Graphics.HCENTER) != 0) {
-				dx = x_dest - width / 2.0f;
+				dx = (long) x_dest - width / 2;
 			} else {
 				dx = x_dest;
 			}
 			float dy;
 			if ((anchor & Graphics.BOTTOM) != 0) {
-				dy = y_dest - height;
+				dy = (long) y_dest - height;
 			} else if ((anchor & Graphics.VCENTER) != 0) {
-				dy = y_dest - height / 2.0f;
+				dy = (long) y_dest - height / 2;
 			} else {
 				dy = y_dest;
 			}
 			if (scale == 1) {
-				canvas.drawBitmap(pixels, 0, width, dx, dy, width, height, false, null);
+				canvas.drawBitmap(pixels, 0, width, dx, dy, width, height, true, null);
 			} else {
 				// Snapshot before writing: source/destination may overlap on the same Bitmap.
 				Bitmap snapshot = Bitmap.createBitmap(image.getBitmap(),
-						x_src * scale, y_src * scale, width * scale, height * scale);
+						sx * scale, sy * scale, width * scale, height * scale);
 				try {
 					rectF.set(dx, dy, dx + width, dy + height);
 					canvas.drawBitmap(snapshot, null, rectF, null);
@@ -942,13 +953,19 @@ public class Graphics implements
 	}
 
 	private void flushImage(Image source, int x, int y, int width, int height) {
-		rect.set(x, y, x + width, y + height);
+		if (width <= 0 || height <= 0) return;
+		int left = Math.max(0, x);
+		int top = Math.max(0, y);
+		int right = (int) Math.min((long) x + width, Math.min(source.getWidth(), image.getWidth()));
+		int bottom = (int) Math.min((long) y + height, Math.min(source.getHeight(), image.getHeight()));
+		if (left >= right || top >= bottom) return;
+		rect.set(left, top, right, bottom);
 		int sourceScale = source.getPixelScale();
 		if (sourceScale == 1) {
 			canvas.drawBitmap(source.getBitmap(), rect, rect, null);
 		} else {
-			Rect physicalSource = new Rect(x * sourceScale, y * sourceScale,
-					(x + width) * sourceScale, (y + height) * sourceScale);
+			Rect physicalSource = new Rect(left * sourceScale, top * sourceScale,
+					right * sourceScale, bottom * sourceScale);
 			canvas.drawBitmap(source.getBitmap(), physicalSource, rect, null);
 		}
 	}
