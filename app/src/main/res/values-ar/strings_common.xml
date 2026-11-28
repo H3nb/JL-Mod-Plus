@@ -1,0 +1,47 @@
+<?xml version="1.0" encoding="utf-8"?>
+<!-- Shared UI actions, generic labels, dialogs, and About screen. -->
+<resources xmlns:xliff="urn:oasis:names:tc:xliff:document:1.2">
+    <string name="about">حول التطبيق</string>
+    <string name="about_message">شغّل التطبيقات والألعاب الكلاسيكية، ونظّم تطبيقات MIDlet في مكتبتك، وخصّص عناصر التحكم والعرض والصوت والأداء. تطبيق JL-Mod Plus مجاني ومفتوح المصدر.</string>
+    <string name="about_subtitle">محاكي Java ME لنظام Android</string>
+    <string name="about_compatibility">يعتمد التوافق على تطبيق MIDlet والجهاز وواجهات Java ME المدعومة. قد تعمل بعض التطبيقات بشكل مختلف عمّا كانت عليه على أجهزتها الأصلية.</string>
+    <string name="about_lineage_title">أصل المشروع</string>
+    <string name="about_build_title">معلومات الإصدار</string>
+    <string name="about_version_label">الإصدار</string>
+    <string name="about_build_label">البناء</string>
+    <string name="about_revision_label">مراجعة المصدر</string>
+    <string name="about_links_title">المشروع والتراخيص</string>
+    <string name="about_github_link_copied">لم يُعثر على متصفح. نُسخ رابط GitHub إلى الحافظة.</string>
+    <string name="about_github_browser_unavailable">لم يُعثر على متصفح لفتح GitHub.</string>
+    <string name="about_lineage">يُعد JL-Mod Plus تفرعًا مستقلًا من JL-Mod الذي طوّره woesss (Yury Kharchenko). ويستند JL-Mod إلى J2ME Loader من تطوير Nikita Shakarun، والذي تعود جذوره إلى J2meLoader من NaikSoftware.</string>
+    <string name="about_evolution">يبني JL-Mod Plus على هذا الأساس بواجهة حديثة، ومكتبة MIDlet أكثر قدرة، وميزات جديدة، ودعم لإصدارات Android الأحدث.</string>
+    <string name="action_back">رجوع</string>
+    <string name="action_settings">الإعدادات</string>
+    <string name="CANCEL_CMD">إلغاء</string>
+    <string name="change">تغيير</string>
+    <string name="choose">اختيار</string>
+    <string name="close">إغلاق</string>
+    <string name="cmd_menu">القائمة</string>
+    <string name="CONFIRMATION_REQUIRED">يلزم التأكيد</string>
+    <string name="create">إنشاء</string>
+    <string name="default_label"><xliff:g id="name" example="Example">%1$s</xliff:g> (افتراضي)</string>
+    <string name="dismiss">تجاهل</string>
+    <string name="edit">تعديل</string>
+    <string name="error">خطأ</string>
+    <string name="error_name">أدخل اسمًا.</string>
+    <string name="exit">خروج</string>
+    <string name="help">مساعدة</string>
+    <string name="install">تثبيت</string>
+    <string name="licenses">التراخيص</string>
+    <string name="licenses_unavailable">تفاصيل التراخيص غير متوفرة.</string>
+    <string name="loading_info">جارٍ تحميل المعلومات…</string>
+    <string name="more">المزيد</string>
+    <string name="not_saved_exists">موجود بالفعل</string>
+    <string name="reset">إعادة تعيين</string>
+    <string name="retry">إعادة المحاولة</string>
+    <string name="save">حفظ</string>
+    <string name="saved">تم حفظ <xliff:g id="name" example="Example">%1$s</xliff:g></string>
+    <string name="START_CMD">بدء</string>
+    <string name="warning">تحذير</string>
+    <string name="removed">تمت إزالة <xliff:g id="name" example="Example">%1$s</xliff:g></string>
+</resources>

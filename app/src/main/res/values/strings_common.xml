@@ -1,0 +1,47 @@
+<?xml version="1.0" encoding="utf-8"?>
+<!-- Shared UI actions, generic labels, dialogs, and About screen. -->
+<resources xmlns:xliff="urn:oasis:names:tc:xliff:document:1.2">
+    <string name="about">About</string>
+    <string name="about_message">Run classic apps and games, organize MIDlets in your library, and customize controls, display, audio, and performance. JL-Mod Plus is free and open source.</string>
+    <string name="about_subtitle">Java ME emulator for Android</string>
+    <string name="about_compatibility">Compatibility depends on the MIDlet, device, and supported Java ME APIs. Some apps may not behave exactly as they did on their original devices.</string>
+    <string name="about_lineage_title">Project origins</string>
+    <string name="about_build_title">Build information</string>
+    <string name="about_version_label">Version</string>
+    <string name="about_build_label">Build</string>
+    <string name="about_revision_label">Source revision</string>
+    <string name="about_links_title">Project and licenses</string>
+    <string name="about_github_link_copied">No browser found. GitHub link copied to clipboard.</string>
+    <string name="about_github_browser_unavailable">No browser found to open GitHub.</string>
+    <string name="about_lineage">JL-Mod Plus is an independent fork of JL-Mod by woesss (Yury Kharchenko). JL-Mod is based on J2ME Loader by Nikita Shakarun, which traces back to NaikSoftware’s J2meLoader.</string>
+    <string name="about_evolution">JL-Mod Plus builds on that foundation with a modern interface, a more capable MIDlet library, new features, and support for newer Android versions.</string>
+    <string name="action_back">Back</string>
+    <string name="action_settings">Settings</string>
+    <string name="CANCEL_CMD">Cancel</string>
+    <string name="change">Change</string>
+    <string name="choose">Choose</string>
+    <string name="close">Close</string>
+    <string name="cmd_menu">Menu</string>
+    <string name="CONFIRMATION_REQUIRED">Confirmation required</string>
+    <string name="create">Create</string>
+    <string name="default_label"><xliff:g id="name" example="Example">%1$s</xliff:g> (default)</string>
+    <string name="dismiss">Dismiss</string>
+    <string name="edit">Edit</string>
+    <string name="error">Error</string>
+    <string name="error_name">Enter a name.</string>
+    <string name="exit">Exit</string>
+    <string name="help">Help</string>
+    <string name="install">Install</string>
+    <string name="licenses">Licenses</string>
+    <string name="licenses_unavailable">License details are unavailable.</string>
+    <string name="loading_info">Loading information…</string>
+    <string name="more">More</string>
+    <string name="not_saved_exists">Already exists</string>
+    <string name="reset">Reset</string>
+    <string name="retry">Retry</string>
+    <string name="save">Save</string>
+    <string name="saved">Saved <xliff:g id="name" example="Example">%1$s</xliff:g></string>
+    <string name="START_CMD">Start</string>
+    <string name="warning">Warning</string>
+    <string name="removed">Removed <xliff:g id="name" example="Example">%1$s</xliff:g></string>
+</resources>

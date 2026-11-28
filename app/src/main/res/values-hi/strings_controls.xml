@@ -1,0 +1,107 @@
+<?xml version="1.0" encoding="utf-8"?>
+<!-- Virtual keypad controls, layout editor, physical key mappings, and control skins. -->
+<resources xmlns:tools="http://schemas.android.com/tools" xmlns:xliff="urn:oasis:names:tc:xliff:document:1.2">
+    <string name="alert_map_menu">मेनू कुंजी (M) असाइन नहीं है।\nहो सकता है कि खेलते समय आप MIDlet मेनू न खोल पाएं।</string>
+    <string name="dismiss_mapping">मैपिंग बंद करें</string>
+    <string name="layout_edit_finish">संपादन समाप्त करें</string>
+    <string name="layout_edit_done">हो गया</string>
+    <string name="layout_editor_grid_size">ग्रिड का आकार</string>
+    <string name="layout_editor_grid_coarse">बड़ा (16)</string>
+    <string name="layout_editor_grid_normal">सामान्य (24)</string>
+    <string name="layout_editor_grid_fine">बारीक (32)</string>
+    <string name="layout_editor_snap_on">स्नैप चालू</string>
+    <string name="layout_editor_snap_off">स्नैप बंद</string>
+    <string name="layout_edit_save_changes">वर्चुअल कंट्रोल में किए गए बदलाव सहेजें?</string>
+    <string name="layout_edit_discard">छोड़ें</string>
+    <string name="layout_edit_continue">संपादन जारी रखें</string>
+    <string name="layout_edit_finished">वर्चुअल कंट्रोल का संपादन पूरा हो गया।</string>
+    <string name="virtual_controls_save_failed">वर्चुअल कंट्रोल सहेजे नहीं जा सके। पुनः प्रयास करें।</string>
+    <string name="layout_switch">कंट्रोल लेआउट चुनें</string>
+    <string name="mapping_dialog_key_not_specified">कोई इनपुट असाइन नहीं है।</string>
+    <string name="mapping_dialog_message">इस कंट्रोल को असाइन करने के लिए कोई फ़िज़िकल कुंजी या बटन दबाएं।</string>
+    <string name="mapping_dialog_assigned_inputs">असाइन किए गए इनपुट</string>
+    <string name="mapping_dialog_add_input">आप एक से अधिक फ़िज़िकल इनपुट असाइन कर सकते हैं।</string>
+    <string name="mapping_dialog_remove">हटाएं</string>
+    <string name="mapping_dialog_title">कोई कुंजी या बटन दबाएं</string>
+    <string name="message_reset_layout">वर्चुअल कंट्रोल लेआउट को डिफ़ॉल्ट पर रीसेट करें?</string>
+    <string name="RESET_LAYOUT_CMD">वर्चुअल कंट्रोल लेआउट रीसेट करें</string>
+    <string name="saved_keyboard_layout_summary">वर्चुअल कंट्रोल लेआउट सहेजा गया।</string>
+    <string name="control_skin_title">वर्चुअल कंट्रोल स्किन</string>
+    <string name="control_skin_create" tools:ignore="MissingTranslation">सेट बनाएं</string>
+    <string name="control_skin_default" tools:ignore="MissingTranslation">डिफ़ॉल्ट बटन</string>
+    <string name="control_skin_edit" tools:ignore="MissingTranslation">संपादित करें</string>
+    <string name="control_skin_rename" tools:ignore="MissingTranslation">नाम बदलें</string>
+    <string name="control_skin_duplicate" tools:ignore="MissingTranslation">डुप्लिकेट बनाएं</string>
+    <string name="control_skin_delete" tools:ignore="MissingTranslation">हटाएं</string>
+    <string name="control_skin_import_zip" tools:ignore="MissingTranslation">ZIP आयात करें</string>
+    <string name="control_skin_export_zip" tools:ignore="MissingTranslation">ZIP निर्यात करें</string>
+    <string name="control_skin_select_export_folder" tools:ignore="MissingTranslation">निर्यात फ़ोल्डर चुनें</string>
+    <string name="control_skin_imported" tools:ignore="MissingTranslation"><xliff:g id="skin_name" example="Classic Nokia">%1$s</xliff:g> आयात किया गया</string>
+    <string name="control_skin_already_available" tools:ignore="MissingTranslation"><xliff:g id="skin_name" example="Classic Nokia">%1$s</xliff:g> पहले से उपलब्ध है</string>
+    <string name="control_skin_exported" tools:ignore="MissingTranslation"><xliff:g id="skin_name" example="Classic Nokia">%1$s</xliff:g> सहेजा गया</string>
+    <string name="control_skin_archive_invalid_path" tools:ignore="MissingTranslation">चयनित स्थान उपलब्ध नहीं है।</string>
+    <string name="control_skin_archive_import_failed" tools:ignore="MissingTranslation">कंट्रोल स्किन इंपोर्ट नहीं की जा सकी। पक्का करें कि ZIP में सिर्फ़ एक मान्य स्किन सेट हो।</string>
+    <string name="control_skin_archive_export_failed" tools:ignore="MissingTranslation">कंट्रोल स्किन निर्यात नहीं की जा सकी। स्किन लाइब्रेरी के बाहर एक लिखने योग्य फ़ोल्डर चुनें।</string>
+    <string name="control_skin_name" tools:ignore="MissingTranslation">सेट का नाम</string>
+    <string name="control_skin_icon" tools:ignore="MissingTranslation">केवल आइकन</string>
+    <string name="control_skin_full" tools:ignore="MissingTranslation">पूरा बटन</string>
+    <string name="control_skin_normal_image" tools:ignore="MissingTranslation">सामान्य चित्र</string>
+    <string name="control_skin_pressed_image" tools:ignore="MissingTranslation">दबाए जाने का चित्र</string>
+    <string name="control_skin_delete_warning" tools:ignore="MissingTranslation">यह साझा स्किन सेट और इसकी सभी इमेज हटाएं? इसका इस्तेमाल करने वाले MIDlet अगली बार शुरू होने पर डिफ़ॉल्ट कंट्रोल इस्तेमाल करेंगे।</string>
+    <string name="control_skin_invalid_image" tools:ignore="MissingTranslation">PNG, WebP या SVG चित्र चुनें।</string>
+    <string name="control_skin_operation_failed" tools:ignore="MissingTranslation">कंट्रोल स्किन का ऑपरेशन पूरा नहीं हो सका।</string>
+    <string name="control_skin_missing" tools:ignore="MissingTranslation">सेट उपलब्ध नहीं है (डिफ़ॉल्ट कंट्रोल)</string>
+    <string name="control_skin_remove_image" tools:ignore="MissingTranslation">हटाएं</string>
+    <string name="control_skin_manage" tools:ignore="MissingTranslation">सेट प्रबंधित करें</string>
+    <string name="control_skin_manage_named" tools:ignore="MissingTranslation"><xliff:g id="skin_name" example="Classic Nokia">%1$s</xliff:g> प्रबंधित करें</string>
+    <plurals name="control_skin_count">
+        <item quantity="one"><xliff:g id="count" example="4">%1$d</xliff:g> कस्टमाइज़ किया गया कंट्रोल</item>
+        <item quantity="other"><xliff:g id="count" example="4">%1$d</xliff:g> कस्टमाइज़ किए गए कंट्रोल</item>
+    </plurals>
+    <string name="control_skin_empty" tools:ignore="MissingTranslation">कंट्रोल के चित्र कस्टमाइज़ करने के लिए एक सेट बनाएं।</string>
+    <string name="control_skin_numeric" tools:ignore="MissingTranslation">कीपैड</string>
+    <string name="control_skin_navigation" tools:ignore="MissingTranslation">नेविगेशन</string>
+    <string name="control_skin_other" tools:ignore="MissingTranslation">अन्य बटन</string>
+    <string name="control_skin_pressed_requires_normal" tools:ignore="MissingTranslation">पहले एक सामान्य चित्र जोड़ें।</string>
+    <string name="control_skin_edit_named" tools:ignore="MissingTranslation">बटन <xliff:g id="button_label" example="5">%1$s</xliff:g></string>
+    <string name="control_skin_change_image" tools:ignore="MissingTranslation">बदलें</string>
+    <string name="control_skin_pick_image" tools:ignore="MissingTranslation">चित्र चुनें</string>
+    <string name="control_skin_soft_left" tools:ignore="MissingTranslation">सॉफ़्ट L</string>
+    <string name="control_skin_soft_right" tools:ignore="MissingTranslation">सॉफ़्ट R</string>
+    <string name="control_skin_fire" tools:ignore="MissingTranslation">फ़ायर</string>
+    <string name="control_skin_menu" tools:ignore="MissingTranslation">मेनू</string>
+    <string name="control_skin_movement" tools:ignore="MissingTranslation">मूवमेंट कंट्रोल</string>
+    <string name="control_skin_dpad" tools:ignore="MissingTranslation">डी-पैड</string>
+    <string name="control_skin_analog" tools:ignore="MissingTranslation">एनालॉग स्टिक</string>
+    <string name="control_skin_dpad_base" tools:ignore="MissingTranslation">डी-पैड चित्र</string>
+    <string name="control_skin_overlay_up" tools:ignore="MissingTranslation">ऊपर ओवरले</string>
+    <string name="control_skin_overlay_down" tools:ignore="MissingTranslation">नीचे ओवरले</string>
+    <string name="control_skin_overlay_left" tools:ignore="MissingTranslation">बाएं ओवरले</string>
+    <string name="control_skin_overlay_right" tools:ignore="MissingTranslation">दाएं ओवरले</string>
+    <string name="control_skin_analog_base" tools:ignore="MissingTranslation">बेस चित्र</string>
+    <string name="control_skin_analog_thumb" tools:ignore="MissingTranslation">स्टिक की इमेज</string>
+    <string name="control_skin_analog_thumb_pressed" tools:ignore="MissingTranslation">सक्रिय स्टिक की इमेज</string>
+    <string name="control_skin_preview_directions" tools:ignore="MissingTranslation">दिशाओं का पूर्वावलोकन</string>
+    <string name="control_skin_preview_direction" tools:ignore="MissingTranslation"><xliff:g id="direction" example="Up">%1$s</xliff:g> पूर्वावलोकन</string>
+    <string name="control_skin_builtin_preview" tools:ignore="MissingTranslation">डिफ़ॉल्ट</string>
+    <string name="control_skin_custom_preview" tools:ignore="MissingTranslation">कस्टमाइज़ किया गया</string>
+    <string name="layout_editor_group_on">एक साथ आकार बदलें</string>
+    <string name="layout_editor_group_off">अलग-अलग आकार बदलें</string>
+    <string name="layout_editor_snap_grid">ग्रिड से स्नैप करें</string>
+    <string name="layout_editor_snap_controls">बटनों से स्नैप करें</string>
+    <string name="layout_editor_snap_resize">आकार बदलते समय स्नैप करें</string>
+    <string name="layout_editor_snap_resize_on">आकार स्नैप: चालू</string>
+    <string name="layout_editor_snap_resize_off">आकार स्नैप: बंद</string>
+    <string name="layout_editor_snap_grid_on">ग्रिड स्नैप: चालू</string>
+    <string name="layout_editor_snap_grid_off">ग्रिड स्नैप: बंद</string>
+    <string name="layout_editor_snap_controls_on">बटन स्नैप: चालू</string>
+    <string name="layout_editor_snap_controls_off">बटन स्नैप: बंद</string>
+    <string name="layout_editor_guide_gestures">जेस्चर</string>
+    <string name="layout_editor_guide_move">किसी कंट्रोल को हिलाने के लिए उसे खींचें।</string>
+    <string name="layout_editor_guide_resize">आकार बदलने के लिए दो उंगलियों का उपयोग करें। चौड़ाई या ऊंचाई बदलने के लिए क्षैतिज या लंबवत घुमाएं।</string>
+    <string name="layout_editor_guide_tools">एडिटर टूल</string>
+    <string name="layout_editor_guide_done">सहेजने, छोड़ने या संपादन जारी रखने के लिए “हो गया” पर टैप करें।</string>
+    <string name="layout_editor_guide_start">संपादन शुरू करें</string>
+    <string name="control_skin_invalid_name">1–61 वर्णों का उपयोग करें: अक्षर, अंक, संयोजक चिह्न, स्पेस या . _ ( ) -। अक्षर या अंक से शुरू करें और बिंदु पर समाप्त न करें।</string>
+    <string name="control_skin_image_validation_failed">8 MiB तक की मान्य PNG, WebP या SVG इमेज चुनें। PNG और WebP के आयाम 2048 × 2048 पिक्सेल से अधिक नहीं होने चाहिए।</string>
+</resources>

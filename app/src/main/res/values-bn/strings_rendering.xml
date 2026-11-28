@@ -1,0 +1,212 @@
+<?xml version="1.0" encoding="utf-8"?>
+<!-- Rendering pipeline, internal resolution, bitmap upscaling, shaders, and built-in visual effects. -->
+<resources xmlns:tools="http://schemas.android.com/tools" xmlns:xliff="urn:oasis:names:tc:xliff:document:1.2">
+    <string name="identity_filter">কোনোটিই নয় (সবচেয়ে দ্রুত)</string>
+    <string name="invalid_resolution_not_saved">অবৈধ রেজোলিউশন। প্রিসেট সেভ করা হয়নি।</string>
+    <string name="msg_error_loading_shader">অসমর্থিত শেডার। ডিফল্ট শেডার ব্যবহার করা হচ্ছে।</string>
+    <string name="parallel_screen_redrawing">অ্যাসিঙ্ক্রোনাস স্ক্রিন আপডেট</string>
+    <string name="shader_tuning">শেডার টিউনিং</string>
+    <string name="SWAP_SIZES">প্রস্থ ও উচ্চতা অদলবদল করুন</string>
+    <string name="fps_limit_maximum">সর্বোচ্চ</string>
+    <string name="remove_screen_preset">রেজোলিউশন প্রিসেট সরান</string>
+    <string name="perf_overlay_position_help">একটি কোণ বেছে নিন।</string>
+    <string name="perf_overlay_top_left">উপরে বামে</string>
+    <string name="perf_overlay_top_right">উপরে ডানে</string>
+    <string name="perf_overlay_bottom_left">নিচে বামে</string>
+    <string name="perf_overlay_bottom_right">নিচে ডানে</string>
+    <string name="internal_resolution_title" tools:ignore="MissingTranslation">রেন্ডার রেজোলিউশন</string>
+    <string name="internal_resolution_auto" tools:ignore="MissingTranslation">অটো</string>
+    <string name="internal_resolution_description" tools:ignore="MissingTranslation">সমর্থিত 2D ও 3D রেন্ডারিংয়ের রেজোলিউশন নির্ধারণ করে। অটো ডিসপ্লের এলাকা ও ডিভাইসের সীমা অনুযায়ী স্কেল বেছে নেয়। প্রয়োগ করতে MIDlet রিস্টার্ট করুন।</string>
+    <string name="bitmap_upscaling_title" tools:ignore="MissingTranslation">বিটম্যাপ আপস্কেলিং</string>
+    <string name="bitmap_upscaling_description" tools:ignore="MissingTranslation">MMPX ও xBR Lv3 অপরিবর্তনীয় 2D ছবি এবং Micro3D মডেলের অপরিবর্তনীয়, অস্বচ্ছ টেক্সচার উন্নত করে। M3G টেক্সচার অপরিবর্তিত থাকে। প্রয়োগ করতে MIDlet রিস্টার্ট করুন।</string>
+    <string name="bitmap_upscaling_nearest" tools:ignore="MissingTranslation">নিয়ারেস্ট নেইবার</string>
+    <string name="bitmap_upscaling_bilinear" tools:ignore="MissingTranslation">বাইলিনিয়ার</string>
+    <string name="bitmap_upscaling_mmpx" tools:ignore="MissingTranslation">MMPX</string>
+    <string name="bitmap_upscaling_edge_aware" tools:ignore="MissingTranslation">xBR Lv3</string>
+    <!-- Prototyping only: localized UI copy is pending design review. -->
+    <string name="render_shader_effects">শেডার ইফেক্ট</string>
+    <string name="render_pipeline_title">রেন্ডারিং পাইপলাইন</string>
+    <string name="render_shader_preset">শেডার প্রিসেট</string>
+    <string name="render_shader_picker_help">বিল্ট-ইন এবং আপনার নিজস্ব লিগ্যাসি শেডারগুলো একটি ক্রমানুসারী ইফেক্ট স্ট্যাকে একত্রিত করুন।</string>
+    <string name="render_shader_requires_gles">শেডার সেভ করা হয়, তবে শুধুমাত্র OpenGL ES নির্বাচন করা থাকলেই প্রয়োগ হয়।</string>
+    <string name="render_shader_missing">নির্বাচিত শেডারটি লাইব্রেরিতে নেই। অন্য একটি প্রিসেট বেছে নিন বা এর ফাইলগুলো পুনরুদ্ধার করুন।</string>
+    <string name="render_shader_parameters">শেডার প্যারামিটার</string>
+    <string name="render_shader_reset_parameters">প্যারামিটার রিসেট করুন</string>
+    <string name="render_shader_passes">শেডার পাস</string>
+    <string name="render_shader_pass_count"><xliff:g id="count" example="2">%1$d</xliff:g>টি পাস</string>
+    <string name="render_shader_pass_hint">নির্বাচিত GLSLP প্রিসেটের ধাপগুলো দেখুন।</string>
+    <string name="render_pass_filter">ইনপুট ফিল্টারিং</string>
+    <string name="render_pass_output">আউটপুট আকার (প্রস্থ × উচ্চতা)</string>
+    <string name="render_pipeline_unavailable">প্রিসেট উপলব্ধ নয়</string>
+    <string name="render_game_output">গেম আউটপুট</string>
+    <string name="render_logical_screen_help">গেমে রিপোর্ট করা লজিক্যাল আকার।</string>
+    <string name="render_internal_resolution">অভ্যন্তরীণ রেজোলিউশন</string>
+    <string name="render_internal_unavailable">শুধুমাত্র মূল (1×)। এই কনফিগারেশনের জন্য উচ্চতর রেন্ডার রেজোলিউশন উপলব্ধ নয়।</string>
+    <string name="render_display_renderer">প্রেজেন্টেশন রেন্ডারার</string>
+    <string name="render_shader_processing">শেডার প্রসেসিং</string>
+    <string name="render_display_scaling">ডিসপ্লে স্কেলিং</string>
+    <string name="render_display_viewport">গেম ভিউপোর্ট</string>
+    <string name="render_texture_filtering">স্ক্রিন স্কেলিং ফিল্টার</string>
+    <string name="render_texture_filtering_help">চূড়ান্ত গেম ছবির জন্য নিয়ারেস্ট বা লিনিয়ার বেছে নেয়। ইফেক্ট এটিকে ওভাররাইড করতে পারে।</string>
+    <string name="render_viewport_note">শেডার পাস পরিকল্পনা করার আগে স্ক্রিন লেআউট থেকে ভিউপোর্টের আকার নির্ধারণ করা হয়। তীরগুলো ছবির প্রবাহ দেখায়, লেআউট গণনার ক্রম নয়।</string>
+    <string name="render_pipeline_help">গেমের ফ্রেম কীভাবে ডিসপ্লেতে পৌঁছায় তা দেখুন এবং প্রতিটি ধাপ সম্পাদনা করুন।</string>
+    <string name="render_no_shader">গেমের চেহারা বদলাতে একটি প্রিসেট বেছে নিন।</string>
+    <string name="render_shader_adjust">প্যারামিটার সামঞ্জস্য করুন</string>
+    <string name="render_legacy_tuning_hint">এই লিগ্যাসি ইফেক্টটি সূক্ষ্মভাবে টিউন করুন।</string>
+    <string name="render_shader_customization">কাস্টমাইজ করুন</string>
+    <string name="render_adjustable_count">সামঞ্জস্যযোগ্য প্যারামিটার: <xliff:g id="count" example="3">%1$d</xliff:g></string>
+    <string name="render_pass_summary"><xliff:g id="count" example="3">%1$d</xliff:g>টি ধাপ · প্রিসেট দ্বারা নির্ধারিত</string>
+    <string name="render_shader_preset_note">শেডার ধাপগুলো প্রিসেট দ্বারা নির্ধারিত। আপনি ক্রম পরিবর্তন না করেই এগুলো দেখতে পারেন।</string>
+    <string name="render_parameters_hint">মান বদলাতে স্লাইডার সরান। ছেড়ে দিলেই পরিবর্তন সেভ হয়ে যাবে।</string>
+    <string name="render_pass_readonly">ধাপগুলো এই ক্রমে চলে। ইনপুট ফিল্টারিং এবং আউটপুট স্কেলিং নির্বাচিত প্রিসেট থেকে আসে।</string>
+    <string name="render_pipeline_intro">গেমের ফ্রেমবাফার থেকে আপনার স্ক্রিন পর্যন্ত পথ।</string>
+    <string name="render_native_short">মূল (1×)</string>
+    <string name="render_expand_passes">ধাপগুলো দেখান</string>
+    <string name="render_collapse_passes">ধাপগুলো লুকান</string>
+    <string name="render_view_all_passes">ধাপের বিবরণ</string>
+    <string name="render_pipeline_filter_summary">টেক্সচার ফিল্টারিং: <xliff:g id="shader_name" example="CRT Classic">%1$s</xliff:g></string>
+    <string name="render_pipeline_note">শেডার পাস পরিকল্পনা করার আগে ডিসপ্লে লেআউট ভিউপোর্ট নির্ধারণ করে। ধাপগুলো ছবির প্রবাহ দেখায়।</string>
+    <string name="render_shader_change">অন্য ইফেক্ট বেছে নিন</string>
+    <string name="render_custom_pipeline">কাস্টম পাইপলাইন</string>
+    <string name="render_custom_pipeline_hint">আপনার শেডার ফোল্ডার থেকে স্বতন্ত্র GLSL শেডার একত্রিত করুন।</string>
+    <string name="render_custom_order_help">ইফেক্টগুলো উপর থেকে নিচে চলে। পরিবর্তন না করা পর্যন্ত উত্তরাধিকারসূত্রে পাওয়া GLSLP সেটিংস কার্যকর থাকে।</string>
+    <string name="render_custom_empty">কাস্টম চেইন শুরু করতে একটি শেডার যোগ করুন।</string>
+    <string name="render_custom_stage_count"><xliff:g id="count" example="3">%1$d</xliff:g>টি কাস্টম শেডার ধাপ</string>
+    <string name="render_custom_add">শেডার যোগ করুন</string>
+    <string name="render_custom_add_hint">একটি বাহ্যিক স্বতন্ত্র .glsl সোর্স বেছে নিন।</string>
+    <string name="render_custom_no_sources">কোনো লিগ্যাসি শেডার পাওয়া যায়নি। shaders ফোল্ডারে .ini শেডার ফাইল যোগ করে আবার সেটিংস খুলুন।</string>
+    <string name="render_custom_scale">আউটপুট: আগের ধাপের <xliff:g id="scale" example="2">%1$d</xliff:g>×</string>
+    <string name="render_custom_output_scale">পরবর্তী ধাপের আউটপুট আকার</string>
+    <string name="render_custom_final_viewport">চূড়ান্ত আউটপুট: স্ক্রিনে প্রদর্শিত</string>
+    <string name="render_custom_filter">ইনপুট ফিল্টার: <xliff:g id="shader_name" example="CRT Classic">%1$s</xliff:g></string>
+    <string name="render_custom_up">উপরে</string>
+    <string name="render_custom_down">নিচে</string>
+    <string name="render_custom_remove">সরান</string>
+    <string name="render_custom_cancel">বাতিল</string>
+    <string name="render_custom_save">সেভ করুন</string>
+    <string name="render_custom_default">ডিফল্ট</string>
+    <string name="render_custom_nearest">নিয়ারেস্ট</string>
+    <string name="render_custom_linear">লিনিয়ার</string>
+    <string name="render_custom_checking">শেডার ফাইল যাচাই করা হচ্ছে…</string>
+    <string name="render_active_shader">সক্রিয় ইফেক্ট</string>
+    <string name="render_shader_off">বন্ধ</string>
+    <string name="render_edit_custom_pipeline">শেডার চেইন সম্পাদনা করুন</string>
+    <string name="render_shader_unavailable">উপলব্ধ নয়: <xliff:g id="shader_name" example="CRT Classic">%1$s</xliff:g></string>
+    <string name="render_no_shader_sources">কোনো শেডার পাওয়া যায়নি। shaders ফোল্ডারে লিগ্যাসি .ini শেডার ফাইল যোগ করুন, তারপর আবার সেটিংস খুলুন।</string>
+    <string name="render_shader_mode">শেডার মোড</string>
+    <string name="render_mode_selected">নির্বাচিত</string>
+    <string name="render_gles_shader_default">শেডার ইফেক্ট বন্ধ থাকলে OpenGL ES গেমের আসল ছবি ব্যবহার করে।</string>
+    <string name="render_shader_off_help">কোনো অতিরিক্ত ভিজ্যুয়াল ইফেক্ট নেই।</string>
+    <string name="render_legacy_mode">লিগ্যাসি শেডার</string>
+    <string name="render_legacy_mode_help">shaders ফোল্ডার থেকে একটি .ini ফাইল বেছে নিন।</string>
+    <string name="render_legacy_empty">এই .ini ফাইলে ব্যবহারযোগ্য কোনো শেডার সংজ্ঞা নেই।</string>
+    <string name="render_legacy_select_variant">একটি লিগ্যাসি শেডার বেছে নিন</string>
+    <string name="render_legacy_variant_description">নির্বাচিত .ini ফাইলে শেডার সংজ্ঞা</string>
+    <string name="render_preset_mode">GLSLP প্রিসেট</string>
+    <string name="render_preset_mode_help">নিজস্ব পাসসহ একটি সম্পূর্ণ .glslp পাইপলাইন লোড করুন।</string>
+    <string name="render_custom_pass_count">পাসের সংখ্যা</string>
+    <string name="render_custom_pass_number">পাস <xliff:g id="number" example="1">%1$d</xliff:g></string>
+    <string name="render_custom_pick_file">GLSL ফাইল বেছে নিন</string>
+    <string name="render_custom_add_pass">শেডার পাসের সংখ্যা বাড়ান</string>
+    <string name="render_custom_remove_pass">শেডার পাসের সংখ্যা কমান</string>
+    <string name="render_shader_selected_name">সক্রিয়: <xliff:g id="shader_name" example="CRT Classic">%1$s</xliff:g></string>
+    <string name="render_shader_invalid_picker">নির্বাচিত ফাইলটি ব্যবহার করা যাবে না। shaders ফোল্ডারের ভেতর থেকে একটি লিগ্যাসি .ini ফাইল বেছে নিন।</string>
+    <string name="render_custom_mode">শেডারের ধরন</string>
+    <string name="render_custom_mode_legacy">লিগ্যাসি</string>
+    <string name="render_custom_mode_glsl">GLSL</string>
+    <string name="render_custom_pick_legacy">লিগ্যাসি শেডার বেছে নিন</string>
+    <string name="render_custom_preserve_size">আউটপুট: প্রিসেট থেকে</string>
+    <string name="render_custom_loading">প্রিসেট পাস পড়া হচ্ছে…</string>
+    <string name="render_custom_start_fresh">প্রিসেট ছাড়াই শুরু করুন (উত্তরাধিকারসূত্রে পাওয়া সেটিংস বাতিল করুন)</string>
+    <string name="render_effect_default_settings">ডিফল্ট সেটিংস</string>
+    <string name="render_effect_summary_more">+<xliff:g id="count" example="2">%1$d</xliff:g> আরও</string>
+    <string name="render_effect_legacy_author">নির্মাতা: <xliff:g id="shader_name" example="CRT Classic">%1$s</xliff:g></string>
+    <string name="render_effect_legacy_source">সোর্স: <xliff:g id="shader_name" example="CRT Classic">%1$s</xliff:g></string>
+    <string name="render_effect_removed">ইফেক্ট সরানো হয়েছে</string>
+    <string name="render_effect_undo">পূর্বাবস্থায় ফেরান</string>
+    <string name="render_effect_catalog_hint">স্ট্যাকে যোগ করতে একটি ইফেক্টে ট্যাপ করুন।</string>
+    <string name="render_effect_user_folder_hint">INI, VSH এবং FSH ফাইলগুলো shaders ফোল্ডারে থাকতে হবে।</string>
+    <string name="render_effect_legacy_scale_note">লিগ্যাসি শেডারগুলো স্ক্রিন ভিউপোর্ট রেজোলিউশনে রেন্ডার হয়; .ini ফাইলের OutputResolution এবং Upscaling ফ্ল্যাগ উপেক্ষা করা হয়।</string>
+    <string name="render_effect_legacy_metadata_missing">এই শেডারের .ini ফাইল থেকে সেটিংস পাওয়া যায়নি। তবে সোর্স ফাইলগুলো ব্যবহার করে শেডারটি এখনও কাজ করতে পারে।</string>
+    <string name="render_effect_count"><xliff:g id="count" example="2">%1$d</xliff:g>টি সক্রিয়</string>
+    <string name="render_effect_add">ইফেক্ট যোগ করুন</string>
+    <string name="render_effect_builtin">বিল্ট-ইন ইফেক্ট</string>
+    <string name="render_effect_user">আমার শেডার</string>
+    <string name="render_effect_user_add">.ini ফাইল ব্রাউজ করুন</string>
+    <string name="render_effect_user_empty">shaders ফোল্ডারে কোনো লিগ্যাসি শেডার পাওয়া যায়নি।</string>
+    <string name="render_effect_user_file">একটি লিগ্যাসি .ini ফাইল বেছে নিন</string>
+    <string name="render_effect_empty">গেমের চেহারা কাস্টমাইজ করতে একটি ইফেক্ট যোগ করুন।</string>
+    <string name="render_effect_hint">ইফেক্টগুলো উপর থেকে নিচে চলে। ক্রম বদলাতে চেপে ধরে টেনে নিন।</string>
+    <string name="render_effect_move_up">উপরে সরান</string>
+    <string name="render_effect_move_down">নিচে সরান</string>
+    <string name="render_effect_remove">ইফেক্ট সরান</string>
+    <string name="render_effect_no_parameters">এই ইফেক্টের কোনো সামঞ্জস্যযোগ্য প্যারামিটার নেই।</string>
+    <string name="render_effect_parameter_number">প্যারামিটার <xliff:g id="count" example="2">%1$d</xliff:g></string>
+    <string name="render_effect_restore">প্যারামিটার রিসেট করুন</string>
+    <string name="render_effect_missing">উপলব্ধ নয়: <xliff:g id="shader_name" example="CRT Classic">%1$s</xliff:g>। এই বিল্ট-ইন ইফেক্টটি এই ভার্সনে উপলব্ধ নয়। এটি স্ট্যাক থেকে সরিয়ে ফেলুন।</string>
+    <string name="render_effect_limit">স্ট্যাক সর্বোচ্চ 16টি শেডার পাস সাপোর্ট করে (কিছু ইফেক্ট একাধিক পাস ব্যবহার করে)।</string>
+    <string name="render_effect_unavailable">শেডার ইফেক্ট চালানো যায়নি। গেমের আসল ছবি দেখানো হচ্ছে। কম ইফেক্ট বা কম রেন্ডার রেজোলিউশন চেষ্টা করুন।</string>
+    <string name="render_bitmap_memory_reduced">বিটম্যাপ আপস্কেলিংয়ের জন্য মেমোরি শেষ হয়ে গেছে। আসল ছবি বা কম স্কেল ব্যবহার করা হবে। কম রেন্ডার রেজোলিউশন ব্যবহার করুন বা মেমোরি খালি করে রিস্টার্ট করুন।</string>
+    <string name="render_texture_memory_reduced">Micro3D টেক্সচার আপস্কেলিং ব্যর্থ হয়েছে। আসল টেক্সচার ব্যবহার করা হবে। কম রেন্ডার রেজোলিউশন ব্যবহার করুন বা মেমোরি খালি করে রিস্টার্ট করুন।</string>
+    <string name="render_resolution_reduced">মেমোরি বা GPU সীমার কারণে রেন্ডার রেজোলিউশন <xliff:g id="from_scale" example="4">%1$d</xliff:g>× থেকে <xliff:g id="to_scale" example="2">%2$d</xliff:g>×-এ কমানো হয়েছে। কম সেটিং ব্যবহার করুন বা মেমোরি খালি করে রিস্টার্ট করুন।</string>
+    <string name="render_gpu_texture_limit">1×-এও গেমের ছবি GPU-এর টেক্সচার আকারের সীমা ছাড়িয়ে গেছে। MIDlet স্ক্রিনের আকার কমান বা গ্রাফিক্স মোড পরিবর্তন করুন।</string>
+    <string name="render_gpu_upload_failed">গেমের ছবি GPU-তে আপলোড করা যায়নি। আবার চেষ্টা করা হচ্ছে। অন্য অ্যাপ বন্ধ করুন বা গ্রাফিক্স মোড পরিবর্তন করুন।</string>
+    <string name="render_effect_gles">ইফেক্টগুলো সেভ করা হয়, তবে শুধুমাত্র OpenGL ES-এর সাথেই রেন্ডার হয়।</string>
+    <string name="render_effect_legacy_file_error">নির্বাচিত .ini ফাইল থেকে কোনো বৈধ লিগ্যাসি শেডার লোড করা যায়নি।</string>
+    <string name="effect_color">রঙ সামঞ্জস্য</string>
+    <string name="effect_color_desc">উজ্জ্বলতা, কনট্রাস্ট, স্যাচুরেশন, গামা, রঙের টোন এবং মনোক্রোম সামঞ্জস্য করুন।</string>
+    <string name="effect_vignette">ভিনিয়েট</string>
+    <string name="effect_vignette_desc">মাঝের অংশে মনোযোগ আকর্ষণ করতে কিনারাগুলো গাঢ় করে।</string>
+    <string name="effect_sharpen">শার্পেন</string>
+    <string name="effect_sharpen_desc">ছবির খুঁটিনাটি এবং কিনারা আরও স্পষ্ট করে।</string>
+    <string name="effect_cartoon">সফট কার্টুন</string>
+    <string name="effect_cartoon_desc">রঙের গ্রেডিয়েন্ট সহজ করে এবং নরম আউটলাইন যোগ করে।</string>
+    <string name="effect_bloom">ব্লুম</string>
+    <string name="effect_bloom_desc">ছবির উজ্জ্বল অংশের চারপাশে মৃদু আভা যোগ করে।</string>
+    <string name="effect_crt_classic">CRT ক্লাসিক</string>
+    <string name="effect_crt_classic_desc">স্ক্যানলাইন এবং RGB প্যাটার্নসহ CRT টেলিভিশনের অনুভূতি দেয়।</string>
+    <string name="effect_crt_beam">বিমের সরুতা</string>
+    <string name="effect_brightness">উজ্জ্বলতা</string>
+    <string name="effect_contrast">কনট্রাস্ট</string>
+    <string name="effect_saturation">স্যাচুরেশন</string>
+    <string name="effect_strength">মাত্রা</string>
+    <string name="effect_color_levels">রঙের স্তর</string>
+    <string name="effect_edge">কিনারার তীব্রতা</string>
+    <string name="effect_threshold">উজ্জ্বলতার সীমা</string>
+    <string name="effect_radius">ব্লার ব্যাসার্ধ</string>
+    <string name="effect_mask_strength">মাস্কের মাত্রা</string>
+    <string name="effect_scan_strength">স্ক্যানলাইনের মাত্রা</string>
+    <string name="effect_bright_boost">উজ্জ্বলতা বৃদ্ধি</string>
+    <string name="effect_lcd">LCD</string>
+    <string name="effect_lcd_desc">ক্লাসিক রঙিন LCD-এর পিক্সেল গ্রিড ও সাবপিক্সেল অনুকরণ করে।</string>
+    <string name="effect_lcd_grid">গ্রিডের মাত্রা</string>
+    <string name="effect_lcd_subpixel">RGB সাবপিক্সেল</string>
+    <string name="effect_lcd_brightness">LCD উজ্জ্বলতা</string>
+    <string name="effect_scanlines">স্ক্যানলাইন লাইট</string>
+    <string name="effect_scanlines_desc">CRT ডিসপ্লের মতো সূক্ষ্ম আনুভূমিক রেখা যোগ করে।</string>
+    <string name="effect_line_width">রেখার সরুতা</string>
+    <string name="effect_gamma">গামা</string>
+    <string name="effect_temperature">তাপমাত্রা</string>
+    <string name="effect_tint">টিন্ট</string>
+    <string name="effect_monochrome">মনোক্রোম</string>
+    <string name="effect_depth">কালার ডেপথ ও ডিথারিং</string>
+    <string name="effect_depth_desc">রেট্রো লুকের জন্য ঐচ্ছিক ডিথারিংসহ রঙের প্যালেট সীমিত করে।</string>
+    <string name="effect_depth_format">ডিসপ্লে কালার ফরম্যাট</string>
+    <string name="effect_depth_rgb444">RGB444 · 4,096 রঙ</string>
+    <string name="effect_depth_rgb565">RGB565 · 65,536 রঙ</string>
+    <string name="effect_depth_rgb666">RGB666 · 262,144 রঙ</string>
+    <string name="effect_dither_mode">ডিথারিং প্যাটার্ন</string>
+    <string name="effect_dither_none">বন্ধ</string>
+    <string name="effect_dither_bayer4">Bayer 4×4</string>
+    <string name="effect_dither_bayer8">Bayer 8×8</string>
+    <string name="effect_dither_strength">ডিথারিং মাত্রা</string>
+    <string name="effect_mono_display">মনোক্রোম ডিসপ্লে</string>
+    <string name="effect_mono_display_desc">2 বা 4 টোনে সাদা-কালো, সবুজ বা অ্যাম্বার স্ক্রিন অনুকরণ করে।</string>
+    <string name="effect_mono_palette">LCD রঙ</string>
+    <string name="effect_mono_bw">সাদা-কালো</string>
+    <string name="effect_mono_green">সবুজ LCD</string>
+    <string name="effect_mono_amber">অ্যাম্বার LCD</string>
+    <string name="effect_mono_tones">টোনের সংখ্যা</string>
+    <string name="effect_mono_two">2 টোন</string>
+    <string name="effect_mono_four">4 টোন</string>
+</resources>

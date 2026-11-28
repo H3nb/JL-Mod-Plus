@@ -1,0 +1,47 @@
+<?xml version="1.0" encoding="utf-8"?>
+<!-- Shared UI actions, generic labels, dialogs, and About screen. -->
+<resources xmlns:xliff="urn:oasis:names:tc:xliff:document:1.2">
+    <string name="about">Giới thiệu</string>
+    <string name="about_message">Chạy các ứng dụng và trò chơi cổ điển, sắp xếp MIDlet trong thư viện và tùy chỉnh điều khiển, hiển thị, âm thanh cũng như hiệu năng. JL-Mod Plus hoàn toàn miễn phí và mã nguồn mở.</string>
+    <string name="about_subtitle">Trình giả lập Java ME cho Android</string>
+    <string name="about_compatibility">Khả năng tương thích tùy thuộc vào MIDlet, thiết bị và các API Java ME được hỗ trợ. Một số ứng dụng có thể hoạt động khác so với khi chạy trên thiết bị gốc.</string>
+    <string name="about_lineage_title">Nguồn gốc dự án</string>
+    <string name="about_build_title">Thông tin bản dựng</string>
+    <string name="about_version_label">Phiên bản</string>
+    <string name="about_build_label">Bản dựng</string>
+    <string name="about_revision_label">Bản sửa đổi mã nguồn</string>
+    <string name="about_links_title">Dự án và giấy phép</string>
+    <string name="about_github_link_copied">Không tìm thấy trình duyệt. Đã sao chép liên kết GitHub vào bộ nhớ tạm.</string>
+    <string name="about_github_browser_unavailable">Không tìm thấy trình duyệt để mở GitHub.</string>
+    <string name="about_lineage">JL-Mod Plus là nhánh phát triển độc lập từ JL-Mod của woesss (Yury Kharchenko). JL-Mod dựa trên J2ME Loader của Nikita Shakarun, vốn bắt nguồn từ J2meLoader của NaikSoftware.</string>
+    <string name="about_evolution">JL-Mod Plus phát triển trên nền tảng đó với giao diện hiện đại, thư viện MIDlet mạnh mẽ hơn, nhiều tính năng mới và hỗ trợ các phiên bản Android mới hơn.</string>
+    <string name="action_back">Quay lại</string>
+    <string name="action_settings">Cài đặt</string>
+    <string name="CANCEL_CMD">Hủy</string>
+    <string name="change">Thay đổi</string>
+    <string name="choose">Chọn</string>
+    <string name="close">Đóng</string>
+    <string name="cmd_menu">Menu</string>
+    <string name="CONFIRMATION_REQUIRED">Yêu cầu xác nhận</string>
+    <string name="create">Tạo</string>
+    <string name="default_label"><xliff:g id="name" example="Example">%1$s</xliff:g> (mặc định)</string>
+    <string name="dismiss">Bỏ qua</string>
+    <string name="edit">Chỉnh sửa</string>
+    <string name="error">Lỗi</string>
+    <string name="error_name">Hãy nhập tên.</string>
+    <string name="exit">Thoát</string>
+    <string name="help">Trợ giúp</string>
+    <string name="install">Cài đặt</string>
+    <string name="licenses">Giấy phép</string>
+    <string name="licenses_unavailable">Không có thông tin chi tiết về giấy phép.</string>
+    <string name="loading_info">Đang tải thông tin…</string>
+    <string name="more">Thêm</string>
+    <string name="not_saved_exists">Đã tồn tại</string>
+    <string name="reset">Đặt lại</string>
+    <string name="retry">Thử lại</string>
+    <string name="save">Lưu</string>
+    <string name="saved">Đã lưu <xliff:g id="name" example="Example">%1$s</xliff:g></string>
+    <string name="START_CMD">Bắt đầu</string>
+    <string name="warning">Cảnh báo</string>
+    <string name="removed">Đã xóa <xliff:g id="name" example="Example">%1$s</xliff:g></string>
+</resources>

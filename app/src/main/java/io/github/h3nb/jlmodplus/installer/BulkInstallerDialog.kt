@@ -383,7 +383,8 @@ internal fun BulkInstallSurface(
                         modifier = bodyModifier,
                     )
                     is BulkInstallViewModel.State.Error -> ErrorContent(
-                        message = state.message,
+                        messageRes = state.messageRes,
+                        diagnosticDetail = state.diagnosticDetail,
                         onClose = onClose,
                         modifier = bodyModifier,
                     )
@@ -869,19 +870,10 @@ private fun FinishedContent(
                 state = listState,
                 verticalArrangement = Arrangement.spacedBy(8.dp),
             ) {
-                state.fatalError?.let { fatalError ->
+                if (state.fatalError != null) {
                     item {
-                        Column(verticalArrangement = Arrangement.spacedBy(4.dp)) {
-                            Text(
-                                stringResource(R.string.bulk_install_fatal),
-                                color = MaterialTheme.colorScheme.error,
-                            )
-                            Text(
-                                fatalError,
-                                style = MaterialTheme.typography.bodySmall,
-                                color = MaterialTheme.colorScheme.onSurfaceVariant,
-                            )
-                        }
+                        Text(stringResource(R.string.bulk_install_fatal),
+                            color = MaterialTheme.colorScheme.error)
                     }
                 }
                 if (!single) item { ResultCounters(state.results) }
@@ -923,6 +915,7 @@ private fun FinishedContent(
                                 color = MaterialTheme.colorScheme.onSurfaceVariant,
                             )
                         }
+                        result.diagnosticDetail?.let { InstallerDiagnosticDetails(it) }
                     }
                     HorizontalDivider()
                 }
@@ -986,7 +979,8 @@ private fun resultLabel(kind: BulkInstallResultKind): String = stringResource(
 
 @Composable
 private fun ErrorContent(
-    message: String,
+    @androidx.annotation.StringRes messageRes: Int,
+    diagnosticDetail: String?,
     onClose: () -> Unit,
     modifier: Modifier = Modifier,
 ) {
@@ -994,21 +988,33 @@ private fun ErrorContent(
         modifier = modifier.fillMaxWidth(),
         verticalArrangement = Arrangement.spacedBy(8.dp),
     ) {
-        Text(stringResource(R.string.bulk_install_prepare_failed),
-            color = MaterialTheme.colorScheme.error)
-        Text(
-            text = message,
-            modifier = Modifier
-                .fillMaxWidth()
-                .weight(1f, fill = false)
-                .verticalScroll(rememberScrollState()),
-            style = MaterialTheme.typography.bodySmall,
-            color = MaterialTheme.colorScheme.onSurfaceVariant,
-        )
+        Text(stringResource(messageRes), color = MaterialTheme.colorScheme.error)
+        diagnosticDetail?.let {
+            Column(Modifier.fillMaxWidth().weight(1f, fill = false)
+                .verticalScroll(rememberScrollState())) {
+                InstallerDiagnosticDetails(it)
+            }
+        }
         Row(modifier = Modifier.fillMaxWidth(), horizontalArrangement = Arrangement.End) {
             Button(onClick = onClose) {
                 Text(stringResource(R.string.bulk_install_close))
             }
+        }
+    }
+}
+
+@Composable
+private fun InstallerDiagnosticDetails(detail: String) {
+    if (detail.isBlank()) return
+    var expanded by rememberSaveable(detail) { mutableStateOf(false) }
+    TextButton(onClick = { expanded = !expanded }) {
+        Text(stringResource(if (expanded) R.string.installer_hide_details
+            else R.string.installer_show_details))
+    }
+    if (expanded) {
+        androidx.compose.foundation.text.selection.SelectionContainer {
+            Text(detail, style = MaterialTheme.typography.bodySmall,
+                color = MaterialTheme.colorScheme.onSurfaceVariant)
         }
     }
 }

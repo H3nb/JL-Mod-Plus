@@ -1,0 +1,470 @@
+<?xml version="1.0" encoding="utf-8"?>
+<!-- MIDlet library, collections, metadata editor, bulk/single installer, file picker, and app updates. -->
+<resources xmlns:tools="http://schemas.android.com/tools" xmlns:xliff="urn:oasis:names:tc:xliff:document:1.2">
+    <string name="action_context_delete">Жою</string>
+    <string name="action_context_rename">Атын өзгерту</string>
+    <string name="action_context_shortcut">Таңбаша қосу</string>
+    <string name="action_reinstall">Қайта орнату</string>
+    <string name="alert_msg_workdir_not_exists">Жұмыс қалтасы табылмады:\n<xliff:g id="path" example="/storage/emulated/0/JL-Mod-Plus">%1$s</xliff:g>\nОны жасау керек пе әлде басқа қалта таңдайсыз ба?</string>
+    <string name="converting_wait">JAR түрлендірілуде…</string>
+    <string name="create_apps_dir_failed">Мына жолда жұмыс қалтасы дайындалмады:\n<xliff:g id="path" example="/storage/emulated/0/JL-Mod-Plus">%1$s</xliff:g>\nБасқа қалта таңдаңыз.</string>
+    <string name="install_done">Қолданба орнатылды.</string>
+    <string name="install_done_with_warning">Қолданба ескертулермен орнатылды.</string>
+    <string name="installer_title">MIDlet орнатқышы</string>
+    <string name="installer_error_message">Таңдалған қолданба орнатылмады. Жарамды MIDlet файлын таңдап, қайталап көріңіз.</string>
+    <string name="install_jar_non_matched_jad">Бұл қолданба JAD файлында сипатталғаннан өзгеше.\nJAD файлын елемей, бәрібір орнату керек пе?</string>
+    <string name="file_picker_select_file">Файл таңдау</string>
+    <string name="file_picker_select_folder">Қалта таңдау</string>
+    <string name="file_picker_select_app_bundle">Қолданба жинағын таңдау</string>
+    <string name="file_picker_select_icon">Белгіше таңдау</string>
+    <string name="file_picker_navigate_back">Жоғарғы қалтаға оралу</string>
+    <string name="file_picker_cancel">Бас тарту</string>
+    <string name="file_picker_search">Іздеу</string>
+    <string name="file_picker_sort">Сұрыптау</string>
+    <string name="file_picker_select_all">Көрсетілген барлық файлды таңдау</string>
+    <string name="file_picker_unselect_all">Көрсетілген барлық файлдың таңдауын алып тастау</string>
+    <string name="file_picker_sort_type">Алдымен қалталар</string>
+    <string name="file_picker_sort_name_ascending">Атауы А–Я</string>
+    <string name="file_picker_sort_name_descending">Атауы Я–А</string>
+    <string name="file_picker_sort_modified_newest">Өзгертілген күні: ең жаңасы</string>
+    <string name="file_picker_sort_modified_oldest">Өзгертілген күні: ең ескісі</string>
+    <string name="file_picker_choose">Таңдау</string>
+    <string name="file_picker_current_folder">Ағымдағы қалта</string>
+    <string name="file_picker_parent_folder">Жоғарғы қалта</string>
+    <string name="file_picker_file">Файл</string>
+    <string name="file_picker_preview_named">«<xliff:g id="name" example="Example">%1$s</xliff:g>» алдын ала көру</string>
+    <string name="file_picker_preview_unavailable">Алдын ала көру қолжетімсіз</string>
+    <string name="file_picker_storage_volume">Сақтау томы</string>
+    <string name="file_picker_empty">Сәйкес файлдар жоқ</string>
+    <string name="file_picker_empty_folder">Қалталар табылмады</string>
+    <string name="file_picker_no_matches">Сәйкестіктер жоқ</string>
+    <string name="file_picker_permission_required">Сақтау орнына қол жеткізу рұқсаты қажет</string>
+    <string name="file_picker_permission_message">Осы құрылғыдағы файлдар мен қалталарды шолу үшін сақтау орнына қол жеткізуге рұқсат беріңіз.</string>
+    <string name="file_picker_permission_denied">Сақтау орнына қол жеткізуге рұқсат берілмеді.</string>
+    <string name="file_picker_grant_access">Рұқсат беру</string>
+    <string name="file_picker_retry">Қайталау</string>
+    <string name="file_picker_load_failed">Бұл қалта ашылмады.</string>
+    <string name="file_picker_create_folder">Жаңа қалта</string>
+    <string name="file_picker_create_folder_title">Қалта жасау</string>
+    <string name="file_picker_folder_name">Қалта атауы</string>
+    <string name="file_picker_invalid_folder_name">Жарамды қалта атауын енгізіңіз.</string>
+    <string name="file_picker_folder_exists">Мұндай атаулы элемент бұрыннан бар.</string>
+    <string name="file_picker_create_folder_failed">Қалта жасалмады.</string>
+    <string name="file_picker_selection_unavailable">Таңдалған элемент енді қолжетімсіз.</string>
+    <string name="loading_apps">Қолданбалар жүктелуде</string>
+    <string name="message_delete">Бұл қолданбаны, оның параметрлері мен сақталған деректерін жою керек пе? Бұл оны кітапханадан да жояды.</string>
+    <string name="msg_no_matches">«<xliff:g id="query" example="Bounce">%1$s</xliff:g>» бойынша сәйкестік жоқ</string>
+    <string name="library_destination_apps">Барлық қолданбалар</string>
+    <string name="library_destination_collections">Жинақтар</string>
+    <string name="library_scope_picker_title" tools:ignore="MissingTranslation">Қолданбаларды шолу</string>
+    <string name="library_destination_more">Тағы</string>
+    <string name="library_search_placeholder">Қолданбаларды іздеу…</string>
+    <string name="library_filter_all">Барлығы</string>
+    <string name="library_filter_recently_opened">Жақында ашылғандар</string>
+    <string name="library_filter_recently_added">Жақында қосылғандар</string>
+    <string name="library_filter_favorites">Таңдаулылар</string>
+    <string name="library_add_to_favorites_action">Таңдаулыларға қосу</string>
+    <string name="library_remove_from_favorites_action">Таңдаулылардан алып тастау</string>
+    <string name="library_favorite_coming_soon">Таңдаулылар қолжетімсіз</string>
+    <string name="library_vendor_version"><xliff:g id="vendor" example="Nokia">%1$s</xliff:g> · <xliff:g id="version" example="1.0">%2$s</xliff:g></string>
+    <string name="library_view_list">Тізім</string>
+    <string name="library_view_grid">Тор</string>
+    <string name="library_icon_ratio_title">Белгіше арақатынасы</string>
+    <string name="library_icon_ratio_square">Шаршы (1:1)</string>
+    <string name="library_icon_ratio_portrait">Тік (3:4)</string>
+    <string name="library_icon_shape_title">Белгіше пішіні</string>
+    <string name="library_icon_shape_round">Дөңгеленген бұрыштар</string>
+    <string name="library_icon_shape_square">Тік бұрыштар</string>
+    <string name="library_grid_icon_size_title" tools:ignore="MissingTranslation">Тордағы белгіше өлшемі</string>
+    <string name="library_grid_icon_size_small" tools:ignore="MissingTranslation">Кіші</string>
+    <string name="library_grid_icon_size_standard" tools:ignore="MissingTranslation">Стандартты</string>
+    <string name="library_grid_icon_size_large" tools:ignore="MissingTranslation">Үлкен</string>
+    <string name="library_grid_icon_size_summary" tools:ignore="MissingTranslation">Тор көрінісінде белгіше өлшемі мен баған санын өзгертеді.</string>
+    <string name="library_grid_spacing_title">Тор аралығы</string>
+    <string name="library_grid_spacing_summary" tools:ignore="MissingTranslation">Тек тор көрінісіне қолданылады.</string>
+    <string name="library_grid_spacing_none">Жоқ (0 dp)</string>
+    <string name="library_grid_spacing_compact">Ықшам (4 dp)</string>
+    <string name="library_grid_spacing_standard">Стандартты (8 dp)</string>
+    <string name="library_grid_spacing_spacious">Кең (12 dp)</string>
+    <string name="library_hide_grid_titles">MIDlet атауларын жасыру</string>
+    <string name="library_show_list_description">MIDlet сипаттамаларын көрсету</string>
+    <string name="library_collections_empty_title">Әзірге жинақтар жоқ</string>
+    <string name="library_collections_empty_message">Кітапхана толық жүктелгенше жинақтар қолжетімсіз.</string>
+    <string name="library_expand_description">Сипаттаманы жаю</string>
+    <string name="library_collapse_description">Сипаттаманы жию</string>
+    <string name="no_data_for_display">Көрсетілетін қолданбалар жоқ</string>
+    <string name="permission_request_failed">Сақтау орнына жазу рұқсаты қажет.</string>
+    <string name="reinstall">Бұл қолданба бұрыннан орнатылған. Қайта орнату керек пе?</string>
+    <string name="reinstall_newest">Бұл қолданбаны <xliff:g id="version" example="2.1.0">%1$s</xliff:g> нұсқасына жаңарту керек пе?\n\nҚазір орнатылған: <xliff:g id="current_version" example="2.0.0">%2$s</xliff:g></string>
+    <string name="reinstall_older">Бұл қолданбаны <xliff:g id="version" example="2.1.0">%1$s</xliff:g> нұсқасымен ауыстыру керек пе?\n\nҚазір орнатылған: <xliff:g id="current_version" example="2.0.0">%2$s</xliff:g>\nЕскі нұсқа бар деректермен дұрыс жұмыс істемеуі мүмкін.</string>
+    <string name="warn_install_from_net">Бұл файл интернеттен жүктеп алынады.</string>
+    <string name="installer_ambiguous">Осы пакетке бірнеше орнатылған қолданба сәйкес келеді. Бөлек көшірме орнату керек пе? Бар қолданбалар мен олардың деректері сақталады.</string>
+    <string name="installer_separate_copy">Бөлек көшірме орнату</string>
+    <string name="installer_stage_download">Қолданба жүктеп алынуда…</string>
+    <string name="installer_stage_wait">Басқа әрекетті күтуде…</string>
+    <string name="installer_stage_save">Қолданба сақталуда…</string>
+    <string name="installer_failed_download">Қолданба жүктеп алынбады. Байланыс пен жүктеп алу сілтемесін тексеріп, қайталап көріңіз.</string>
+    <string name="installer_failed_storage">Орнату аяқталмады. Қайталап көріңіз.</string>
+    <string name="installer_failed_conversion">Қолданба түрлендірілмеді. Файлдың толық әрі қолдау көрсетілетініне көз жеткізіп, қайталап көріңіз.</string>
+    <string name="installer_needs_recovery">Қолданба файлдары сақталды, бірақ кітапхана жаңартуды аяқтай алмады. Қайталамас бұрын кітапхананы жаңартыңыз.</string>
+    <string name="installer_refresh_library">Кітапхананы жаңарту</string>
+    <string name="installer_cancel_pending">Келесі қауіпсіз нүктеде тоқтатылуда…</string>
+    <string name="installer_retry_remaining">Аяқталмаған элементтерді қарау</string>
+    <string name="installer_not_processed">Өңделмеген</string>
+    <string name="installer_partial_restore">Қолданба орнатылды, бірақ деректер немесе параметрлер қалпына келтірілмеді.</string>
+    <string name="installer_removed_leftovers">Қолданба жойылды, бірақ кейбір параметрлер немесе сақталған деректер өшірілмеді.</string>
+    <string name="installer_copy_details">Мәліметтерді көшіру</string>
+    <string name="installer_show_details">Мәліметтерді көрсету</string>
+    <string name="installer_hide_details">Мәліметтерді жасыру</string>
+    <!-- %1$d is the number of source Java class files skipped during conversion. -->
+    <plurals name="installer_conversion_warning_summary">
+        <item quantity="one"><xliff:g id="skipped_count" example="2">%1$d</xliff:g> Java класс файлы оқылмағандықтан өткізіп жіберілді. Оны пайдаланатын мүмкіндіктер жұмыс істемеуі мүмкін.</item>
+        <item quantity="other"><xliff:g id="skipped_count" example="2">%1$d</xliff:g> Java класс файлы оқылмағандықтан өткізіп жіберілді. Оларды пайдаланатын мүмкіндіктер жұмыс істемеуі мүмкін.</item>
+    </plurals>
+    <!-- %1$s is the source JAR entry path for the skipped class file. -->
+    <string name="installer_conversion_skipped_entry"><xliff:g id="entry_path" example="com/example/Broken.class">%1$s</xliff:g>\nМәселе: Java класс файлы оқылмады.\nӘрекет: түрлендіру кезінде өткізіп жіберілді.</string>
+    <!-- %1$d is the number of additional bounded conversion diagnostics not shown. -->
+    <plurals name="installer_conversion_omitted_details">
+        <item quantity="one">Қосымша <xliff:g id="omitted_count" example="5">%1$d</xliff:g> түрлендіру мәселесі көрсетілмеген.</item>
+        <item quantity="other">Қосымша <xliff:g id="omitted_count" example="5">%1$d</xliff:g> түрлендіру мәселесі көрсетілмеген.</item>
+    </plurals>
+    <string name="library_collection_new">Жаңа жинақ</string>
+    <string name="library_collection_ready_empty_message">Қолданбаларды файлдарын жылжытпай реттеу үшін жинақтар жасаңыз.</string>
+    <string name="library_collection_add_app">Жинаққа қосу</string>
+    <string name="library_collection_add_apps">Қолданбалар қосу</string>
+    <string name="library_collection_manage_apps">Қолданбаларды таңдау</string>
+    <string name="library_collection_manage" tools:ignore="MissingTranslation">Жинақтарды басқару</string>
+    <string name="library_collection_delete_confirmation" tools:ignore="MissingTranslation">«<xliff:g id="collection_name" example="Favorites">%1$s</xliff:g>» жинағын жою керек пе? Осы жинақтағы қолданбалар орнатылған күйінде қалады.</string>
+    <string name="library_collection_rename_action" tools:ignore="MissingTranslation">«<xliff:g id="collection_name" example="Favorites">%1$s</xliff:g>» жинағының атын өзгерту</string>
+    <string name="library_collection_delete_action" tools:ignore="MissingTranslation">«<xliff:g id="collection_name" example="Favorites">%1$s</xliff:g>» жинағын жою</string>
+    <string name="library_collection_select_action" tools:ignore="MissingTranslation">«<xliff:g id="collection_name" example="Favorites">%1$s</xliff:g>» жинағын таңдау</string>
+    <string name="library_collection_open_action" tools:ignore="MissingTranslation">«<xliff:g id="collection_name" example="Favorites">%1$s</xliff:g>» жинағын ашу</string>
+    <string name="library_collection_rename_selected" tools:ignore="MissingTranslation">Таңдалған жинақтың атын өзгерту</string>
+    <string name="library_collection_delete_selected" tools:ignore="MissingTranslation">Таңдалған жинақтарды жою</string>
+    <plurals name="library_collection_delete_many_confirmation">
+        <item quantity="one"><xliff:g id="count" example="3">%d</xliff:g> жинақты жою керек пе? Қолданбалар орнатылған күйінде қалады.</item>
+        <item quantity="other"><xliff:g id="count" example="3">%d</xliff:g> жинақты жою керек пе? Қолданбалар орнатылған күйінде қалады.</item>
+    </plurals>
+    <string name="library_notifications_title" tools:ignore="MissingTranslation">Хабарландырулар</string>
+    <string name="library_notifications_empty_title" tools:ignore="MissingTranslation">Әзірге хабарландырулар жоқ</string>
+    <string name="library_notifications_empty_summary" tools:ignore="MissingTranslation">Қолданба жаңартулары туралы хабарландырулар қолжетімді болғанда осында пайда болады.</string>
+    <string name="library_collection_manage_apps_summary">Осы жинаққа қосылатын қолданбаларды таңдаңыз.</string>
+    <string name="library_collection_name">Жинақ атауы</string>
+    <string name="library_collection_members_empty">Бұл жинақта қолданбалар жоқ.</string>
+    <string name="library_collection_select_title">Жинақ таңдаңыз</string>
+    <string name="library_collection_select_message">Қолданбаларын көру үшін жинақ таңдаңыз.</string>
+    <string name="library_collection_remove_from_current">Жинақтан алып тастау</string>
+    <string name="library_no_matches">«<xliff:g id="query" example="Bounce">%1$s</xliff:g>» бойынша сәйкестік жоқ</string>
+    <string name="library_action_share_app">Қолданбаны бөлісу</string>
+    <string name="library_action_export_bundle">Қолданба жинағын экспорттау</string>
+    <string name="library_action_import_bundle">Қолданба жинағын импорттау</string>
+    <string name="library_action_import_bundle_summary">Экспортталған қолданбаларды қамтылған параметрлерімен, сақталған деректерімен немесе бетбелгілерімен бірге қалпына келтіріңіз.</string>
+    <string name="library_import_preparing">Қолданба жинағы оқылуда…</string>
+    <string name="library_import_restoring">Қолданба деректері қалпына келтірілуде…</string>
+    <string name="library_import_done">Қолданба жинағы импортталды.</string>
+    <string name="library_import_done_with_warning">Қолданба жинағы ескертулермен импортталды.</string>
+    <string name="library_import_invalid_bundle">Таңдалған қолданба жинағы жарамсыз, зақымдалған немесе қолдау көрсетілмейді. Жарамды JL-Mod Plus қолданба жинағын таңдап, қайталап көріңіз.</string>
+    <string name="library_import_restore_existing">Бұл қолданба бұрыннан орнатылған. Пакеттегі параметрлер мен сақталған деректер бар деректерді ауыстырады. Жаңа пішімдегі пакеттерде бетбелгілер параметрлерсіз импортталса біріктіріледі, параметрлермен бірге импортталса ауыстырылады, ал пакетке қосылмаса сақталады. Ескі пакеттерден параметрлерді қалпына келтіру де бетбелгілерді ауыстыруы мүмкін.</string>
+    <string name="library_import_restore_failed">Қолданба орнатылды, бірақ жинақ деректері қалпына келтірілмеді. Қайталап көру керек пе?</string>
+    <string name="library_play_stats_summary">Іске қосулар: <xliff:g id="launch_count" example="12">%1$d</xliff:g> · Жалпы уақыт: <xliff:g id="total_time" example="2h 15m">%2$s</xliff:g></string>
+    <string name="library_share_chooser_title">Қолданбаны бөлісу</string>
+    <string name="library_export_chooser_title">Экспорттау</string>
+    <string name="library_export_progress">Экспортталуда… <xliff:g id="completed" example="3">%1$d</xliff:g>/<xliff:g id="total" example="10">%2$d</xliff:g></string>
+    <string name="library_transfer_unavailable">Экспорттау мүмкін болмады.</string>
+    <string name="library_export_data_in_use">Таңдалған қолданбалардың бірінің деректері пайдаланылып жатыр. Таңдалған MIDlet-тердің іске қосылып тұрғандарын жауып, қайталап көріңіз.</string>
+    <string name="library_export_menu_unavailable">Экспорттау мәзірін ашу мүмкін болмады.</string>
+    <string name="library_back">Кітапханаға оралу</string>
+    <string name="library_sort">Қолданбаларды сұрыптау</string>
+    <string name="library_search_clear">Іздеуді тазалау</string>
+    <string name="library_description_more">… Толығырақ</string>
+    <string name="library_description_less">Ықшамдау</string>
+    <plurals name="file_picker_selected_count">
+        <item quantity="one"><xliff:g id="count" example="3">%1$d</xliff:g> таңдалды</item>
+        <item quantity="other"><xliff:g id="count" example="3">%1$d</xliff:g> таңдалды</item>
+    </plurals>
+    <plurals name="library_selection_count">
+        <item quantity="one"><xliff:g id="count" example="3">%1$d</xliff:g> қолданба</item>
+        <item quantity="other"><xliff:g id="count" example="3">%1$d</xliff:g> қолданба</item>
+    </plurals>
+    <plurals name="library_collection_member_count">
+        <item quantity="one"><xliff:g id="count" example="3">%1$d</xliff:g> қолданба</item>
+        <item quantity="other"><xliff:g id="count" example="3">%1$d</xliff:g> қолданба</item>
+    </plurals>
+    <plurals name="bulk_install_found">
+        <item quantity="one"><xliff:g id="count" example="3">%1$d</xliff:g> қолданба табылды</item>
+        <item quantity="other"><xliff:g id="count" example="3">%1$d</xliff:g> қолданба табылды</item>
+    </plurals>
+    <plurals name="bulk_install_selected">
+        <item quantity="one"><xliff:g id="count" example="3">%1$d</xliff:g> таңдалды</item>
+        <item quantity="other"><xliff:g id="count" example="3">%1$d</xliff:g> таңдалды</item>
+    </plurals>
+    <plurals name="bulk_install_ready_count">
+        <item quantity="one"><xliff:g id="count" example="3">%1$d</xliff:g> дайын</item>
+        <item quantity="other"><xliff:g id="count" example="3">%1$d</xliff:g> дайын</item>
+    </plurals>
+    <plurals name="bulk_install_skipped_count">
+        <item quantity="one">Бұрыннан орнатылған немесе көшірме: <xliff:g id="count" example="3">%1$d</xliff:g></item>
+        <item quantity="other">Бұрыннан орнатылған немесе көшірме: <xliff:g id="count" example="3">%1$d</xliff:g></item>
+    </plurals>
+    <plurals name="bulk_install_attention_count">
+        <item quantity="one"><xliff:g id="count" example="3">%1$d</xliff:g> тексеруді қажет етеді</item>
+        <item quantity="other"><xliff:g id="count" example="3">%1$d</xliff:g> тексеруді қажет етеді</item>
+    </plurals>
+    <plurals name="bulk_install_installed_count">
+        <item quantity="one"><xliff:g id="count" example="3">%1$d</xliff:g> орнатылды</item>
+        <item quantity="other"><xliff:g id="count" example="3">%1$d</xliff:g> орнатылды</item>
+    </plurals>
+    <plurals name="bulk_install_updated_count">
+        <item quantity="one"><xliff:g id="count" example="3">%1$d</xliff:g> жаңартылды</item>
+        <item quantity="other"><xliff:g id="count" example="3">%1$d</xliff:g> жаңартылды</item>
+    </plurals>
+    <plurals name="bulk_install_reinstalled_count">
+        <item quantity="one"><xliff:g id="count" example="3">%1$d</xliff:g> қайта орнатылды</item>
+        <item quantity="other"><xliff:g id="count" example="3">%1$d</xliff:g> қайта орнатылды</item>
+    </plurals>
+    <plurals name="bulk_install_skipped_result_count">
+        <item quantity="one"><xliff:g id="count" example="3">%1$d</xliff:g> өткізілді</item>
+        <item quantity="other"><xliff:g id="count" example="3">%1$d</xliff:g> өткізілді</item>
+    </plurals>
+    <plurals name="bulk_install_failed_count">
+        <item quantity="one"><xliff:g id="count" example="3">%1$d</xliff:g> сәтсіз</item>
+        <item quantity="other"><xliff:g id="count" example="3">%1$d</xliff:g> сәтсіз</item>
+    </plurals>
+    <plurals name="bulk_install_warning_count">
+        <item quantity="one"><xliff:g id="count" example="3">%1$d</xliff:g> ескерту</item>
+        <item quantity="other"><xliff:g id="count" example="3">%1$d</xliff:g> ескерту</item>
+    </plurals>
+    <plurals name="bulk_install_omitted_sources">
+        <item quantity="one">Тексеру жылдам болуы үшін қосымша <xliff:g id="count" example="3">%1$d</xliff:g> файл өткізіп жіберілді.</item>
+        <item quantity="other">Тексеру жылдам болуы үшін қосымша <xliff:g id="count" example="3">%1$d</xliff:g> файл өткізіп жіберілді.</item>
+    </plurals>
+    <plurals name="library_bulk_delete_confirmation">
+        <item quantity="one"><xliff:g id="count" example="3">%1$d</xliff:g> қолданбаны жою керек пе? Оның файлдары, параметрлері және сақталған деректері кітапханадан жойылады.</item>
+        <item quantity="other"><xliff:g id="count" example="3">%1$d</xliff:g> қолданбаны жою керек пе? Олардың файлдары, параметрлері және сақталған деректері кітапханадан жойылады.</item>
+    </plurals>
+    <plurals name="library_bulk_delete_result">
+        <item quantity="one"><xliff:g id="deleted_count" example="3">%1$d</xliff:g> қолданба жойылды; <xliff:g id="failed_count" example="1">%2$d</xliff:g> сәтсіз.</item>
+        <item quantity="other"><xliff:g id="deleted_count" example="3">%1$d</xliff:g> қолданба жойылды; <xliff:g id="failed_count" example="1">%2$d</xliff:g> сәтсіз.</item>
+    </plurals>
+    <string name="bulk_install_title">Топтық орнату</string>
+    <string name="bulk_install_planning">Таңдалған қолданбалар тексерілуде…</string>
+    <string name="bulk_install_empty">Қолдау көрсетілетін қолданбалар табылмады.</string>
+    <string name="bulk_install_recommended">Ұсынылады</string>
+    <string name="bulk_install_clear">Таңдауды тазалау</string>
+    <string name="bulk_install_install_count">Орнату (<xliff:g id="count" example="3">%1$d</xliff:g>)</string>
+    <string name="bulk_install_cancel">Бас тарту</string>
+    <string name="bulk_install_close">Жабу</string>
+    <plurals name="bulk_install_running">
+        <item quantity="one"><xliff:g id="processed" example="3">%1$d</xliff:g> / <xliff:g id="total" example="10">%2$d</xliff:g> қолданба өңделді</item>
+        <item quantity="other"><xliff:g id="processed" example="3">%1$d</xliff:g> / <xliff:g id="total" example="10">%2$d</xliff:g> қолданба өңделді</item>
+    </plurals>
+    <string name="bulk_install_cancel_requested">Ағымдағы қолданбадан кейін тоқтатылады…</string>
+    <string name="bulk_install_complete">Топтық орнату аяқталды</string>
+    <string name="bulk_install_cancelled">Топтық орнату тоқтатылды</string>
+    <string name="bulk_install_fatal">Топтық орнату тоқтатылды. Қайталамас бұрын аяқталмаған элементтерді қарап шығыңыз.</string>
+    <string name="bulk_install_result_installed">Орнатылды</string>
+    <string name="bulk_install_result_updated">Жаңартылды</string>
+    <string name="bulk_install_result_reinstalled">Қайта орнатылды</string>
+    <string name="bulk_install_result_skipped">Өткізілді</string>
+    <string name="bulk_install_result_failed">Сәтсіз</string>
+    <string name="bulk_install_installed_version">Орнатылған: <xliff:g id="version" example="2.1.0">%1$s</xliff:g></string>
+    <string name="bulk_install_source">Көзі: <xliff:g id="name" example="Example">%1$s</xliff:g></string>
+    <string name="bulk_install_action_separate_copy">Бөлек көшірме ретінде орнату</string>
+    <string name="bulk_install_action_jar_only">Тек JAR орнату</string>
+    <string name="single_install_review_jar_only" tools:ignore="MissingTranslation">Тек JAR тексеру</string>
+    <string name="single_install_jar_only_notice" tools:ignore="MissingTranslation">Тек JAR орнатылады. Жалғастырмас бұрын қолданба атауын, нұсқасын және орнатылу күйін тексеріңіз.</string>
+    <string name="single_install_running_replacement_warning" tools:ignore="MissingTranslation">Егер бұл қолданба іске қосулы болса, орнату файлдарын ауыстырмас бұрын оны тоқтатады. Сақталмаған прогресс жоғалуы мүмкін.</string>
+    <string name="bulk_install_status_new">Жаңа</string>
+    <string name="bulk_install_status_update">Жаңарту</string>
+    <string name="bulk_install_status_downgrade">Ескі нұсқа</string>
+    <string name="bulk_install_status_same">Бұрыннан орнатылған</string>
+    <string name="bulk_install_status_reinstall">Бірдей нұсқа, ықтимал нұсқама</string>
+    <string name="bulk_install_status_ambiguous">Бірнеше орнатылған қолданбаға сәйкес</string>
+    <string name="bulk_install_status_mismatch">JAD/JAR сәйкессіздігі</string>
+    <string name="bulk_install_status_duplicate">Көшірме</string>
+    <string name="bulk_install_status_older_batch">Топтағы ескі нұсқа</string>
+    <string name="bulk_install_status_conflict">Топтық қайшылық</string>
+    <string name="bulk_install_status_remote">Қашықтағы көзге қолдау жоқ</string>
+    <string name="bulk_install_status_error">Жарамсыз көз</string>
+    <string name="bulk_install_reinstall_source_missing">Сақталған JAR қайта орнату үшін қолжетімсіз.</string>
+    <plurals name="bulk_install_reinstall_missing_apps">
+        <item quantity="one">Таңдалған <xliff:g id="count" example="3">%1$d</xliff:g> кітапхана қолданбасы енді қолжетімсіз.</item>
+        <item quantity="other">Таңдалған <xliff:g id="count" example="3">%1$d</xliff:g> кітапхана қолданбасы енді қолжетімсіз.</item>
+    </plurals>
+    <string name="library_metadata_edit_title">Метадеректерді өңдеу</string>
+    <string name="library_metadata_icon">Белгіше</string>
+    <string name="library_metadata_name">Атауы</string>
+    <string name="library_metadata_vendor">Өндіруші</string>
+    <string name="library_metadata_reset_to_original">Түпнұсқаға қайтару</string>
+    <string name="library_metadata_save">Сақтау</string>
+    <string name="library_hide_grid_titles_summary">Тор көрінісінде MIDlet атауларын жасырады. Тізім көрінісінде олар көрініп тұрады.</string>
+    <string name="library_show_list_description_summary">Әр MIDlet сипаттамасын оның атауы мен нұсқасының астында көрсетеді.</string>
+    <string name="library_indexing_progress">Кітапхана индекстелуде… <xliff:g id="completed" example="3">%1$d</xliff:g>/<xliff:g id="total" example="10">%2$d</xliff:g></string>
+    <string name="library_indexing_current">«<xliff:g id="name" example="Example">%1$s</xliff:g>» тексерілуде</string>
+    <string name="library_load_error_title">Кітапхана қолжетімсіз</string>
+    <string name="library_retry">Қайталау</string>
+    <string name="library_reinstall_source_missing">Сақталған JAR қайта орнату үшін қолжетімсіз.</string>
+    <string name="library_action_select">Таңдау</string>
+    <string name="library_selection_select_all">Барлығын таңдау</string>
+    <string name="library_selection_unselect_all">Барлығынан бас тарту</string>
+    <string name="library_selection_checkbox_description">«<xliff:g id="name" example="Example">%1$s</xliff:g>» таңдау</string>
+    <string name="library_selection_checked">Таңдалды</string>
+    <string name="library_selection_unchecked">Таңдалмады</string>
+    <string name="library_action_settings_summary">Жалпы әрекет пен көріністі баптаңыз.</string>
+    <string name="library_action_crash_reports_summary">Сақталған диагностика есептерін қараңыз.</string>
+    <string name="library_action_about_summary">Жобаға шолу, құрастыру ақпараты және сілтемелер.</string>
+    <string name="library_action_licenses_summary">Қолданбаға енгізілген үшінші тарап ескертпелері мен лицензия шарттары.</string>
+    <string name="library_donation_action">Әзірлеуді қолдау</string>
+    <string name="library_donation_summary">JL-Mod Plus дамуына үлес қосыңыз.</string>
+    <string name="library_donation_title">JL-Mod Plus жобасын қолдау</string>
+    <string name="library_donation_message">JL-Mod Plus — тегін әрі ашық бастапқы коды бар жоба. Ол сізге пайдалы болса, ерікті қайырымдылықпен әзірлеуді қолдай аласыз.</string>
+    <string name="library_donation_provider_note">Қайырымдылықтар сыртқы Sociabuzz қызметі арқылы өңделеді.</string>
+    <string name="library_donation_continue">Sociabuzz-ға өту</string>
+    <string name="library_donation_not_now">Қазір емес</string>
+    <string name="library_donation_link_copied">Браузер табылмады. Sociabuzz сілтемесі алмасу буферіне көшірілді.</string>
+    <string name="library_donation_browser_unavailable">Sociabuzz ашу үшін браузер табылмады.</string>
+    <string name="library_bulk_delete_apps">Қолданбаларды жою</string>
+    <string name="library_bulk_add_collection">Жинаққа қосу</string>
+    <string name="library_bulk_share_apps">Қолданбаларды бөлісу</string>
+    <string name="library_bulk_reinstall_apps">Қайта орнату</string>
+    <string name="library_bulk_export_apps">Жинақты экспорттау</string>
+    <string name="library_enhanced_icons_title">Жақсартылған белгішелер</string>
+    <string name="library_enhanced_icons_summary">Кітапханада белгішелер бірыңғай көрінуі үшін жиектеуін, масштабын және плитка фонын реттейді.</string>
+    <string name="library_collections_unavailable_title">Жинақтар қолжетімсіз</string>
+    <string name="library_load_failed_message">Кітапхана жүктелмеді. Қайталап көріңіз.</string>
+    <string name="bulk_install_prepare_failed">Таңдалған қолданбалар орнатуға дайындалмады.</string>
+    <string name="installer_existing_data_preserved">Бар параметрлер мен сақталған деректер сақталады.</string>
+    <string name="bulk_install_library_changed">Тексеруден кейін кітапханаңыз өзгерді. Бұл топты жауып, файлдарды қайта таңдаңыз.</string>
+    <string name="bulk_install_source_unavailable">Қажетті бастапқы файл енді қолжетімсіз. Файлдарды қайта таңдаңыз.</string>
+    <string name="bulk_install_source_changed">Тексеруден кейін бастапқы файл өзгерді. Файлдарды қайта таңдаңыз.</string>
+    <string name="bulk_install_target_unverified">Қайта орнату нысаны расталмады. Бұл топты жауып, қолданбаны қайта таңдаңыз.</string>
+    <string name="bulk_install_result_restored">Қалпына келтірілді</string>
+    <plurals name="bulk_install_restored_count">
+        <item quantity="one"><xliff:g id="count" example="3">%1$d</xliff:g> қалпына келтірілді</item>
+        <item quantity="other"><xliff:g id="count" example="3">%1$d</xliff:g> қалпына келтірілді</item>
+    </plurals>
+    <plurals name="bulk_install_reason_ambiguous_match">
+        <item quantity="one">Бұл көзге <xliff:g id="count" example="3">%1$d</xliff:g> орнатылған қолданба сәйкес келеді.</item>
+        <item quantity="other">Бұл көзге <xliff:g id="count" example="3">%1$d</xliff:g> орнатылған қолданба сәйкес келеді.</item>
+    </plurals>
+    <string name="bulk_install_reason_jad_jar_mismatch">JAD және JAR әртүрлі қолданбаларды көрсетеді.</string>
+    <string name="bulk_install_reason_conflicting_jads">Атрибуттары әртүрлі JAD файлдары бір JAR файлына сілтейді.</string>
+    <string name="bulk_install_reason_remote_jar">Топтық орнату қашықтағы JAR файлдарын жүктеп ала алмайды.</string>
+    <string name="bulk_install_reason_missing_jar_url">JAD файлында MIDlet-Jar-URL жоқ.</string>
+    <!-- %1$s is the exact URI scheme supplied by the JAD; do not translate it. -->
+    <string name="bulk_install_reason_unsupported_uri_scheme">JAD қолдау көрсетілмейтін URI схемасы арқылы JAR файлына сілтейді: <xliff:g id="scheme" example="http">%1$s</xliff:g>.</string>
+    <string name="bulk_install_reason_missing_parent">JAD файлының жоғарғы қалтасы жоқ.</string>
+    <!-- %1$s is the exact MIDlet-Jar-URL reference, not a normalized filesystem path. -->
+    <string name="bulk_install_reason_jar_not_found">JAD сілтеген JAR табылмады: <xliff:g id="file_path" example="game.jar">%1$s</xliff:g>.</string>
+    <string name="bulk_install_reason_duplicate_source">Бұл көз осы топтағы басқа көзді қайталайды.</string>
+    <string name="bulk_install_reason_version_conflict">Бірнеше қолданба нұсқамасының нұсқасы бірдей.</string>
+    <string name="bulk_install_reason_older_candidate">Осы топта бұл қолданбаның жаңарақ нұсқасы бар.</string>
+    <string name="bulk_install_reason_source_error">Бұл көз орнатуға дайындалмады.</string>
+    <string name="updates_title">Жаңартулар</string>
+    <string name="updates_more_summary">JL-Mod Plus жаңа нұсқаларын тексеріңіз.</string>
+    <string name="updates_more_available">Жаңарақ нұсқа қолжетімді.</string>
+    <string name="updates_installed_version">Орнатылған нұсқа: <xliff:g id="version" example="2.1.0">%1$s</xliff:g></string>
+    <string name="updates_build_code">Құрастыру <xliff:g id="build_code" example="247">%1$d</xliff:g></string>
+    <string name="updates_automatic">Кітапхана белсенді кезде автоматты түрде тексеру</string>
+    <string name="updates_not_checked">Әлі тексерілмеген.</string>
+    <string name="updates_checking">Жаңартулар тексерілуде…</string>
+    <string name="updates_current">Соңғы нұсқа орнатылған.</string>
+    <string name="updates_no_release">Үйлесімді жарияланған шығарылым жоқ.</string>
+    <string name="updates_not_installable">Жаңарақ шығарылым бар, бірақ ол осы құрылғымен немесе орнатылыммен үйлесімді емес.</string>
+    <string name="updates_failed">Жаңартулар тексерілмеді. Байланысты тексеріп, қайталап көріңіз.</string>
+    <string name="updates_available">Жаңарту қолжетімді</string>
+    <string name="updates_view_release">Шығарылымды көру</string>
+    <string name="updates_last_checked">Соңғы тексеру: <xliff:g id="timestamp" example="Today, 09:45">%1$s</xliff:g></string>
+    <string name="updates_check">Жаңартуларды тексеру</string>
+    <string name="updates_notice">JL-Mod Plus <xliff:g id="version" example="2.1.0">%1$s</xliff:g> қолжетімді. Параметрлердегі «Жаңартулар» бөлімін қараңыз.</string>
+    <string name="updates_debug_build">Бұл жөндеу құрастыруы. GitHub шығарылымының APK файлдары бөлек орнатылады.</string>
+    <string name="updates_link_copied">Браузер табылмады. Жаңарту сілтемесі алмасу буферіне көшірілді.</string>
+    <string name="updates_browser_unavailable">Жаңарту сілтемесін ашу үшін браузер табылмады.</string>
+    <string name="bulk_install_choose_files">Файлдар</string>
+    <string name="bulk_install_choose_folder">Қалта</string>
+    <string name="bulk_install_unreadable_archives">Оқылмайтын мұрағаттар: <xliff:g id="count" example="3">%1$d</xliff:g></string>
+    <string name="bulk_install_skipped_entries">Өткізілген файлдар немесе мұрағат жазбалары: <xliff:g id="count" example="3">%1$d</xliff:g></string>
+    <string name="bulk_install_selection_options" tools:ignore="MissingTranslation">Таңдау параметрлері</string>
+    <string name="bulk_install_show_details" tools:ignore="MissingTranslation">Мәліметтерді көрсету</string>
+    <string name="bulk_install_hide_details" tools:ignore="MissingTranslation">Мәліметтерді жасыру</string>
+    <string name="bulk_install_filter_all">Барлығы</string>
+    <string name="bulk_install_filter_selected">Таңдалғандар</string>
+    <string name="bulk_install_filter_review">Тексеру</string>
+    <string name="bulk_install_empty_filter">Сәйкес қолданбалар жоқ.</string>
+    <string name="platform_package_choice_title" tools:ignore="MissingTranslation">Java ME пакеті анықталды</string>
+    <string name="platform_package_choice_message" tools:ignore="MissingTranslation">Бұл сілтеме Java ME пакетіне апарады. Не істегіңіз келеді?</string>
+    <string name="platform_package_install" tools:ignore="MissingTranslation">JL-Mod Plus ішінде орнату</string>
+    <string name="platform_package_browser" tools:ignore="MissingTranslation">Браузерде ашу</string>
+    <string name="platform_package_unavailable" tools:ignore="MissingTranslation">Бұл сілтемені ашатын қолданба табылмады.</string>
+    <string name="installer_running_update_warning" tools:ignore="MissingTranslation">Бұл қолданба қазір іске қосулы. Орнату файлдарын ауыстырмас бұрын оны тоқтатады. Сақталмаған прогресс жоғалуы мүмкін.</string>
+    <string name="library_metadata_main_icon">Негізгі</string>
+    <string name="library_metadata_follows_main">Негізгі белгішені пайдаланады</string>
+    <string name="library_metadata_change">Өзгерту</string>
+    <string name="library_metadata_remove_portrait">3:4 белгішесін алып тастау</string>
+    <string name="library_metadata_discard_title">Өзгерістерді болдырмау керек пе?</string>
+    <string name="library_metadata_discard">Болдырмау</string>
+    <string name="library_metadata_default_description">Әдепкі сипаттама</string>
+    <string name="library_metadata_other_languages">Басқа тілдер</string>
+    <string name="library_metadata_add_language">+ Тіл қосу</string>
+    <string name="library_metadata_language_search">Тілді немесе аймақ кодын іздеу</string>
+    <string name="library_metadata_remove_language">Сипаттаманы алып тастау</string>
+    <string name="library_metadata_language_load_failed">Тіл сипаттамалары жүктелмеді. Қайталау үшін «Қайталау» түймесін түртіңіз.</string>
+    <string name="updates_download_apk" tools:ignore="MissingTranslation">APK жүктеп алу</string>
+    <string name="updates_skip_version" tools:ignore="MissingTranslation">Бұл нұсқаны өткізіп жіберу</string>
+    <string name="updates_dialog_message" tools:ignore="MissingTranslation">JL-Mod Plus <xliff:g id="version" example="2.1.0">%1$s</xliff:g> қолжетімді. Сіз <xliff:g id="current_version" example="2.0.0">%2$s</xliff:g> нұсқасын пайдаланып жатырсыз. APK файлын жүктеп алыңыз немесе GitHub-та шығарылымды қараңыз.</string>
+    <string name="library_bundle_components_title" tools:ignore="MissingTranslation">Жинақты экспорттау</string>
+    <string name="library_bundle_components_explanation" tools:ignore="MissingTranslation">Таңдалған қолданбалар әрқашан қамтылады. Таңдалған MIDlet-тердің іске қосылып тұрғандарын жауып, қосымша деректерді таңдаңыз. Ортақ безендірулер, дыбыс банктері және шейдерлер қамтылмайды.</string>
+    <string name="library_bundle_config" tools:ignore="MissingTranslation">Конфигурация</string>
+    <string name="library_bundle_save_data" tools:ignore="MissingTranslation">Сақталған деректер</string>
+    <string name="library_bundle_saved_variables" tools:ignore="MissingTranslation">Бетбелгілер</string>
+    <string name="library_bundle_export" tools:ignore="MissingTranslation">Экспорттау</string>
+    <string name="library_export_jar_only" tools:ignore="MissingTranslation">Тек JAR</string>
+    <string name="library_export_jars_only" tools:ignore="MissingTranslation">Тек JAR файлдары (ZIP)</string>
+    <string name="library_selection_action_delete" tools:ignore="MissingTranslation">Жою</string>
+    <string name="library_selection_action_collection" tools:ignore="MissingTranslation">Жинақ</string>
+    <string name="library_selection_action_export" tools:ignore="MissingTranslation">Экспорттау</string>
+    <string name="library_selection_action_reinstall" tools:ignore="MissingTranslation">Қайта орнату</string>
+    <string name="installer_select_companion_jar" tools:ignore="MissingTranslation">Бұл JAD бөлек JAR файлына сілтейді. Жалғастыру үшін сәйкес JAR файлын таңдаңыз. Сыртқы файл провайдері көрші файлдарға қол жеткізуге рұқсат бермейді.</string>
+    <string name="installer_select_jar" tools:ignore="MissingTranslation">JAR таңдау</string>
+    <string name="installer_wrong_companion_jar" tools:ignore="MissingTranslation">Бұл JAR таңдалған JAD файлына сәйкес келмейді. JAD параметрлерін сақтау үшін сәйкес JAR файлын таңдаңыз.</string>
+    <string name="installer_choose_another_jar" tools:ignore="MissingTranslation">Басқа JAR таңдау</string>
+    <string name="library_app_more_actions" tools:ignore="MissingTranslation">«<xliff:g id="name" example="Example">%1$s</xliff:g>» үшін басқа әрекеттер</string>
+    <string name="library_actions_group_customize" tools:ignore="MissingTranslation">Теңшеу</string>
+    <string name="library_actions_group_organize" tools:ignore="MissingTranslation">Реттеу</string>
+    <string name="library_actions_group_transfer" tools:ignore="MissingTranslation">Тасымалдау және қызмет көрсету</string>
+    <string name="library_collection_more_actions" tools:ignore="MissingTranslation">«<xliff:g id="collection_name" example="Favorites">%1$s</xliff:g>» жинағы үшін басқа әрекеттер</string>
+    <string name="library_settings_preferences" tools:ignore="MissingTranslation">Қолданба баптаулары</string>
+    <string name="library_settings_section_maintenance" tools:ignore="MissingTranslation">Жаңартулар және диагностика</string>
+    <string name="library_settings_section_support" tools:ignore="MissingTranslation">Қолданба туралы және қолдау</string>
+    <string name="library_details_title" tools:ignore="MissingTranslation">MIDlet мәліметтері</string>
+    <string name="library_details_description" tools:ignore="MissingTranslation">Сипаттама</string>
+    <string name="library_details_play_stats" tools:ignore="MissingTranslation">Ойын статистикасы</string>
+    <string name="library_details_launches" tools:ignore="MissingTranslation">Іске қосулар</string>
+    <string name="library_details_total_time" tools:ignore="MissingTranslation">Жалпы уақыт</string>
+    <string name="library_details_last_played" tools:ignore="MissingTranslation">Соңғы ойналған</string>
+    <string name="library_details_library_info" tools:ignore="MissingTranslation">Кітапхана ақпараты</string>
+    <string name="library_details_added" tools:ignore="MissingTranslation">Кітапханаға қосылды</string>
+    <string name="library_details_collections" tools:ignore="MissingTranslation">Жинақтар</string>
+    <string name="library_details_none" tools:ignore="MissingTranslation">Жоқ</string>
+    <string name="library_details_technical" tools:ignore="MissingTranslation">Техникалық ақпарат</string>
+    <string name="library_details_profile" tools:ignore="MissingTranslation">Профиль</string>
+    <string name="library_details_configuration" tools:ignore="MissingTranslation">Конфигурация</string>
+    <string name="library_details_jar_size" tools:ignore="MissingTranslation">Сақталған JAR өлшемі</string>
+    <string name="library_details_entry_points" tools:ignore="MissingTranslation">MIDlet кіру нүктелері</string>
+    <string name="library_details_original_metadata" tools:ignore="MissingTranslation">Түпнұсқа метадеректер</string>
+    <string name="library_details_name" tools:ignore="MissingTranslation">Атауы</string>
+    <string name="library_details_vendor" tools:ignore="MissingTranslation">Өндіруші</string>
+    <string name="library_details_version" tools:ignore="MissingTranslation">Нұсқа</string>
+    <string name="library_details_version_value" tools:ignore="MissingTranslation"><xliff:g id="version" example="2.1.0">%1$s</xliff:g> нұсқасы</string>
+    <string name="library_details_original_description" tools:ignore="MissingTranslation">Түпнұсқа сипаттама</string>
+    <string name="library_details_permissions" tools:ignore="MissingTranslation">Жарияланған рұқсаттар</string>
+    <string name="library_details_required" tools:ignore="MissingTranslation">Міндетті</string>
+    <string name="library_details_optional" tools:ignore="MissingTranslation">Міндетті емес</string>
+    <string name="library_details_no_permissions" tools:ignore="MissingTranslation">Рұқсаттар жарияланбаған</string>
+    <string name="library_details_descriptor_attributes" tools:ignore="MissingTranslation">Дескриптор атрибуттары</string>
+    <string name="library_details_unavailable" tools:ignore="MissingTranslation">Қолжетімсіз</string>
+    <string name="library_details_action" tools:ignore="MissingTranslation">Мәліметтер</string>
+    <string name="library_details_view_details" tools:ignore="MissingTranslation">Мәліметтерді көру</string>
+    <string name="library_actions_more" tools:ignore="MissingTranslation">Көбірек әрекет</string>
+    <string name="library_actions_less" tools:ignore="MissingTranslation">Азырақ әрекет</string>
+</resources>

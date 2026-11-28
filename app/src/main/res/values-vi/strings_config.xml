@@ -1,0 +1,355 @@
+<?xml version="1.0" encoding="utf-8"?>
+<!-- Per-MIDlet configuration, reusable profiles, camera, controller calibration, permissions, and system properties. -->
+<resources xmlns:tools="http://schemas.android.com/tools" xmlns:xliff="urn:oasis:names:tc:xliff:document:1.2">
+    <!-- %1$s is an optional quoted storage-volume name with a trailing space, or empty. -->
+    <!-- %1$s is a raw storage-volume description. -->
+    <string name="config_missing_app_storage_named">Không tìm thấy ứng dụng.\nHãy kiểm tra xem thiết bị lưu trữ “<xliff:g id="storage_name" example="SD card">%1$s</xliff:g>” có khả dụng hay không, hoặc tạo lại lối tắt.</string>
+    <string name="config_missing_app_storage_generic">Không tìm thấy ứng dụng.\nHãy kiểm tra xem thiết bị lưu trữ có khả dụng hay không, hoặc tạo lại lối tắt.</string>
+    <string name="midlet_name"><b>Tên: </b></string>
+    <string name="midlet_size"><b>Kích thước: </b></string>
+    <string name="midlet_vendor"><b>Nhà cung cấp: </b></string>
+    <string name="midlet_version"><b>Phiên bản: </b></string>
+    <string name="config_destination_graphics">Hiển thị</string>
+    <string name="config_destination_rendering" tools:ignore="MissingTranslation">Đồ họa</string>
+    <string name="config_destination_media">Phương tiện</string>
+    <string name="config_camera_title">Camera</string>
+    <string name="config_camera_default_title">Camera mặc định</string>
+    <string name="config_camera_rear">Sau</string>
+    <string name="config_camera_front">Trước</string>
+    <string name="config_camera_resolution_title">Độ phân giải mặc định</string>
+    <string name="config_camera_resolution_auto">Tự động</string>
+    <string name="config_camera_resolution_portrait">480×640 — Dọc</string>
+    <string name="config_camera_resolution_landscape">640×480 — Ngang</string>
+    <string name="config_destination_controls">Điều khiển</string>
+    <string name="config_gamepad_test">Kiểm tra tay cầm</string>
+    <string name="config_gamepad_calibrate">Hiệu chỉnh tay cầm</string>
+    <string name="config_gamepad_calibrate_summary">Đo vị trí trung lập và phạm vi chuyển động của cần analog và nút cò trên tay cầm đã kết nối.</string>
+    <string name="config_gamepad_stick_directions">Hướng kỹ thuật số</string>
+    <string name="config_gamepad_stick_unassigned">Chưa gán</string>
+    <string name="config_gamepad_stick_pointer">Nguồn con trỏ</string>
+    <string name="config_gamepad_opaque_summary">Cấu hình này chứa dữ liệu tay cầm ở định dạng không được hỗ trợ. Dữ liệu được giữ nguyên và không thể chỉnh sửa tại đây.</string>
+    <string name="config_gamepad_unsupported_summary">Cấu hình tay cầm này không được hỗ trợ. Dữ liệu được giữ nguyên và không thể chỉnh sửa tại đây.</string>
+    <string name="config_gamepad_keypad_title">Bàn phím ảo</string>
+    <string name="config_gamepad_calibration_next">Tiếp theo</string>
+    <string name="config_gamepad_mapping_help_title">Trợ giúp ánh xạ tay cầm</string>
+    <string name="config_gamepad_directions_four">4 hướng</string>
+    <string name="config_gamepad_directions_eight">8 hướng</string>
+    <string name="config_gamepad_pointer_off">Tắt</string>
+    <string name="config_gamepad_pointer_cursor">Con trỏ theo tỷ lệ</string>
+    <string name="config_gamepad_pointer_joystick">Cần điều khiển cảm ứng</string>
+    <!-- This is the same controller-identity fingerprint shown in diagnostics. -->
+    <string name="config_gamepad_calibration_profile">Chữ ký định danh tay cầm: <xliff:g id="profile_name" example="Action Games">%1$s</xliff:g></string>
+    <string name="config_gamepad_calibration_phase_neutral">Đang chờ vị trí trung lập</string>
+    <string name="config_gamepad_calibration_phase_stick_range">Phạm vi cần analog</string>
+    <string name="config_gamepad_calibration_phase_trigger_range">Phạm vi nút cò</string>
+    <string name="config_gamepad_calibration_phase_review">Sẵn sàng lưu</string>
+    <string name="config_gamepad_calibration_phase_committed">Đã lưu</string>
+    <string name="config_gamepad_calibration_phase_cancelled">Đã hủy</string>
+    <string name="config_gamepad_calibration_waiting_controller">Kết nối tay cầm có cần analog hoặc nút cò được hỗ trợ. Di chuyển cần hoặc nhấn nút cò để bắt đầu. Hiệu chỉnh hiện tại sẽ giữ nguyên trừ khi bạn lưu bản hiệu chỉnh mới hoặc đặt lại.</string>
+    <string name="config_gamepad_calibration_no_analog_ranges">Tay cầm này không cung cấp phạm vi cần analog hoặc nút cò được hỗ trợ.</string>
+    <string name="config_gamepad_calibration_start">Giữ tất cả cần analog ở chính giữa và thả hết các nút cò cho đến khi hết thời gian đo vị trí trung lập.</string>
+    <string name="config_gamepad_calibration_save_failed">Không thể lưu hiệu chỉnh. Kiểm tra cài đặt hiện tại trước khi thử lại.</string>
+    <string name="config_gamepad_calibration_no_supported_ranges">Không tìm thấy phạm vi analog nào được hỗ trợ.</string>
+    <string name="config_gamepad_calibration_rejected">Hiệu chỉnh bị từ chối: <xliff:g id="name" example="Example">%1$s</xliff:g></string>
+    <string name="config_gamepad_calibration_neutral_instructions">Giữ tất cả cần analog đã phát hiện ở chính giữa và thả hết các nút cò đã phát hiện cho đến khi hết thời gian đo vị trí trung lập.</string>
+    <string name="config_gamepad_calibration_stick_instructions">Di chuyển hết phạm vi mọi cần analog đã phát hiện theo tất cả các hướng, sau đó nhấn Tiếp theo.</string>
+    <string name="config_gamepad_calibration_trigger_instructions">Thả ra rồi nhấn hết hành trình mọi nút cò đã phát hiện, sau đó nhấn Tiếp theo.</string>
+    <string name="config_gamepad_calibration_review_instructions">Lưu để thay thế dữ liệu hiệu chỉnh của tay cầm này.</string>
+    <string name="config_gamepad_calibration_saved">Đã lưu hiệu chỉnh.</string>
+    <string name="config_gamepad_calibration_cancelled">Đã hủy hiệu chỉnh.</string>
+    <string name="config_gamepad_calibration_waiting_samples">Quá trình hiệu chỉnh đang chờ mẫu tín hiệu từ tay cầm.</string>
+    <string name="config_gamepad_diagnosis_header">Chẩn đoán tay cầm</string>
+    <string name="config_gamepad_diagnosis_mode">Trạng thái: <xliff:g id="status" example="enabled">%1$s</xliff:g> · Nguồn: <xliff:g id="source" example="controller">%2$s</xliff:g></string>
+    <string name="config_gamepad_diagnosis_notice">Lưu ý: <xliff:g id="name" example="Example">%1$s</xliff:g></string>
+    <string name="config_gamepad_diagnosis_analog_settings">Cài đặt analog:</string>
+    <string name="config_gamepad_diagnosis_left_stick">Cần trái</string>
+    <string name="config_gamepad_diagnosis_right_stick">Cần phải</string>
+    <string name="config_gamepad_diagnosis_triggers">Nút cò</string>
+    <string name="config_gamepad_diagnosis_pointer">Chế độ con trỏ</string>
+    <string name="config_gamepad_status_enabled">đã bật</string>
+    <string name="config_gamepad_status_disabled">đã tắt</string>
+    <string name="config_gamepad_diagnosis_source_default">mặc định</string>
+    <string name="config_gamepad_diagnosis_source_controller">tay cầm</string>
+    <string name="config_gamepad_diagnosis_source_explicit">chỉ định rõ</string>
+    <string name="config_gamepad_diagnosis_device"><xliff:g id="device_name" example="Xbox Controller">%1$s</xliff:g> (#<xliff:g id="device_id" example="1">%2$d</xliff:g>)</string>
+    <string name="config_gamepad_calibration_issue_no_channels">không có kênh được hỗ trợ</string>
+    <string name="config_gamepad_calibration_issue_invalid_constraints">ràng buộc hiệu chỉnh không hợp lệ</string>
+    <string name="config_gamepad_calibration_issue_non_finite">mẫu tín hiệu không hữu hạn</string>
+    <string name="config_gamepad_calibration_issue_insufficient_samples">không đủ mẫu tín hiệu</string>
+    <string name="config_gamepad_calibration_issue_invalid_range">phạm vi không hợp lệ</string>
+    <string name="config_gamepad_calibration_issue_rest_outside_range">giá trị nghỉ nằm ngoài phạm vi</string>
+    <string name="config_gamepad_calibration_issue_rest_too_noisy">vị trí nghỉ chưa đủ ổn định</string>
+    <string name="config_gamepad_calibration_phase_unknown">Trạng thái không khả dụng</string>
+    <string name="config_gamepad_diagnosis_capabilities">Khả năng của tay cầm đã kết nối:</string>
+    <string name="config_gamepad_diagnosis_descriptor">Bộ mô tả: <xliff:g id="name" example="Example">%1$s</xliff:g></string>
+    <!-- %1$s is a controller-identity fingerprint derived from its descriptor and capabilities. -->
+    <!-- It is not a handwritten signature or a cryptographic signing operation. -->
+    <string name="config_gamepad_diagnosis_signature">Chữ ký định danh: <xliff:g id="name" example="Example">%1$s</xliff:g></string>
+    <string name="config_gamepad_diagnosis_axis">Trục <xliff:g id="axis_index" example="0">%1$d</xliff:g> [<xliff:g id="min_value" example="-1.0">%2$s</xliff:g>, <xliff:g id="max_value" example="1.0">%3$s</xliff:g>] flat=<xliff:g id="flat" example="0.05">%4$s</xliff:g> fuzz=<xliff:g id="fuzz" example="0.01">%5$s</xliff:g></string>
+    <string name="config_gamepad_diagnosis_no_controller">(chưa kết nối tay cầm)</string>
+    <string name="config_gamepad_diagnosis_samples_not_sent">Mẫu tín hiệu đầu vào cố ý không gửi tới MIDlet.</string>
+    <string name="config_destination_system">Hệ thống</string>
+    <string name="config_screen_behavior" tools:ignore="MissingTranslation">Hành vi màn hình</string>
+    <string name="config_screen_size">Kích thước màn hình</string>
+    <string name="config_select_screen_size">Chọn kích thước màn hình</string>
+    <string name="config_current_screen_size">Kích thước hiện tại: <xliff:g id="name" example="Example">%1$s</xliff:g></string>
+    <string name="config_custom_resolution">Độ phân giải tùy chỉnh</string>
+    <string name="profile_custom">Tùy chỉnh</string>
+    <string name="select_dialog_title">Chọn MIDlet</string>
+    <string name="SIZE_PRESETS">Thiết lập sẵn cỡ chữ</string>
+    <string name="config_color_picker_title">Chọn màu</string>
+    <string name="config_color_picker_hex">Mã màu Hex</string>
+    <string name="config_color_picker_hint">Kéo trên bảng màu hoặc nhập giá trị RGB gồm sáu chữ số.</string>
+    <string name="config_color_picker_invalid">Hãy nhập đúng sáu chữ số thập lục phân.</string>
+    <string name="config_color_picker_saturation_value">Độ bão hòa và độ sáng</string>
+    <string name="config_color_picker_hue">Sắc độ</string>
+    <string name="config_decrease_value">Giảm giá trị</string>
+    <string name="config_increase_value">Tăng giá trị</string>
+    <string name="midlet_failure_recovery_title">MIDlet đã dừng đột ngột</string>
+    <string name="midlet_failure_recovery_message">MIDlet đã dừng đột ngột. Thông tin chẩn đoán đã được lưu cục bộ. Bạn có thể tiếp tục sử dụng JL-Mod Plus.</string>
+    <string name="midlet_failure_recovery_message_named">“<xliff:g id="name" example="Example">%1$s</xliff:g>” đã dừng đột ngột. Thông tin chẩn đoán đã được lưu cục bộ. Bạn có thể tiếp tục sử dụng JL-Mod Plus.</string>
+    <plurals name="config_system_properties_value">
+        <item quantity="other"><xliff:g id="count" example="3">%1$d</xliff:g> thuộc tính</item>
+    </plurals>
+    <string name="config_search_suggestions" tools:ignore="MissingTranslation">Cài đặt đề xuất</string>
+    <string name="config_search_clear" tools:ignore="MissingTranslation">Xóa tìm kiếm</string>
+    <string name="config_search_title" tools:ignore="MissingTranslation">Tìm kiếm cài đặt</string>
+    <string name="config_search_hint" tools:ignore="MissingTranslation">Tìm cài đặt, ví dụ: MMPX hoặc hướng màn hình</string>
+    <string name="config_search_no_results" tools:ignore="MissingTranslation">Không có cài đặt nào phù hợp</string>
+    <string name="config_search_upscaling_requires_resolution" tools:ignore="MissingTranslation">Chọn Tự động hoặc 2×–10× trong Độ phân giải kết xuất để định cấu hình nâng cấp độ phân giải bitmap.</string>
+    <string name="config_search_requires_manual_scale" tools:ignore="MissingTranslation">Chọn Thủ công trong Chế độ thu phóng để điều chỉnh tỷ lệ.</string>
+    <string name="config_search_requires_custom_background" tools:ignore="MissingTranslation">Chọn Tùy chỉnh trong Chế độ nền để chỉnh sửa màu nền.</string>
+    <string name="config_search_requires_gles" tools:ignore="MissingTranslation">Chọn Tăng tốc phần cứng (OpenGL ES) trong Chế độ đồ họa để định cấu hình hiệu ứng shader.</string>
+    <string name="config_search_requires_renderer_mode" tools:ignore="MissingTranslation">Chọn Phần mềm hoặc Tăng tốc phần cứng (Surface) trong Chế độ đồ họa để định cấu hình cập nhật màn hình bất đồng bộ.</string>
+    <string name="config_font_page_title" tools:ignore="MissingTranslation">Cài đặt phông chữ</string>
+    <string name="config_display_more" tools:ignore="MissingTranslation">Văn bản và hiệu năng</string>
+    <string name="config_destination_home" tools:ignore="MissingTranslation">Trang chủ</string>
+    <string name="config_overview_profile_draft" tools:ignore="MissingTranslation">Bản nháp hồ sơ</string>
+    <string name="config_overview_profile_draft_summary" tools:ignore="MissingTranslation">Chỉnh sửa hồ sơ có thể dùng lại này, sau đó lưu thay đổi từ thanh công cụ.</string>
+    <string name="config_overview_quick_access" tools:ignore="MissingTranslation">Truy cập nhanh</string>
+    <string name="config_system_properties_editor_label">Thuộc tính</string>
+    <string name="config_overview_enabled" tools:ignore="MissingTranslation">Bật</string>
+    <string name="config_overview_disabled" tools:ignore="MissingTranslation">Tắt</string>
+    <string name="config_overview_media_summary" tools:ignore="MissingTranslation">Ngân hàng âm thanh và camera</string>
+    <string name="config_overview_hint" tools:ignore="MissingTranslation">Chọn một danh mục để tùy chỉnh trò chơi. Mỗi cài đặt chỉ nằm ở một mục duy nhất; các lối tắt này sẽ đưa bạn đến đó.</string>
+    <string name="config_destination_general">Chung</string>
+    <string name="config_basic_display">Màn hình MIDlet</string>
+    <string name="config_display_appearance">Giao diện màn hình</string>
+    <string name="config_display_rendering">Kết xuất</string>
+    <string name="config_image_quality_section" tools:ignore="MissingTranslation">Chất lượng hình ảnh</string>
+    <string name="config_frame_rate_section" tools:ignore="MissingTranslation">Tốc độ khung hình</string>
+    <string name="config_fps_position_title" tools:ignore="MissingTranslation">Vị trí FPS</string>
+    <string name="config_display_text">Văn bản &amp; phông chữ</string>
+    <string name="config_input_mapping_section" tools:ignore="MissingTranslation">Đầu vào &amp; ánh xạ</string>
+    <string name="config_controls_appearance_section" tools:ignore="MissingTranslation">Giao diện điều khiển</string>
+    <string name="config_controls_virtual_keyboard">Điều khiển ảo</string>
+    <string name="config_controls_virtual_keyboard_colors">Màu điều khiển ảo</string>
+    <string name="config_virtual_controls_color_preview">Xem trước màu</string>
+    <string name="config_virtual_controls_preview_normal">Khi thả</string>
+    <string name="config_virtual_controls_preview_pressed">Khi nhấn</string>
+    <string name="config_controls_maintenance">Bố cục</string>
+    <string name="config_controls_skin_help">Thay đổi giao diện của các nút bàn phím, D-pad và cần analog bằng ảnh tùy chỉnh.</string>
+    <string name="config_controls_color_button_normal">Nút khi thả</string>
+    <string name="config_controls_color_button_pressed">Nút khi nhấn</string>
+    <string name="config_controls_color_label_normal">Nhãn khi thả</string>
+    <string name="config_controls_color_label_pressed">Nhãn khi nhấn</string>
+    <string name="config_controls_color_outline_short">Viền</string>
+    <string name="config_controls_disabled_hint">Điều khiển ảo hiện đang tắt. Bạn vẫn có thể tùy chỉnh chúng tại đây.</string>
+    <string name="config_controls_opacity_help" formatted="false">Điều chỉnh độ mờ của các nút điều khiển ảo. Ở mức 0%, các nút trong suốt; ở mức 100%, không áp dụng thêm độ trong suốt.</string>
+    <string name="config_controls_opaque_outside">Hiển thị điều khiển không trong suốt bên ngoài màn hình MIDlet</string>
+    <string name="config_controls_opaque_outside_help">Khi bật tùy chọn này, các nút điều khiển nằm hoàn toàn bên ngoài màn hình MIDlet được hiển thị mà không tăng độ trong suốt. Các nút chồng lên màn hình vẫn dùng độ mờ đã chọn.</string>
+    <string name="config_controls_connect_controller">Kết nối tay cầm để hiệu chỉnh</string>
+    <string name="config_controls_color_skin_notice">Giao diện toàn bộ nút có thể thay thế màu nút, hình dạng và viền mặc định.</string>
+    <string name="config_current_value">Giá trị hiện tại</string>
+    <string name="config_maintenance">Đặt lại &amp; dữ liệu</string>
+    <string name="config_midlet_actions" tools:ignore="MissingTranslation">Thao tác MIDlet</string>
+    <string name="config_profile_maintenance" tools:ignore="MissingTranslation">Thao tác hồ sơ</string>
+    <string name="config_reset_profile_settings" tools:ignore="MissingTranslation">Đặt lại bản nháp hồ sơ</string>
+    <string name="config_reset_profile_settings_summary" tools:ignore="MissingTranslation">Khôi phục cài đặt và điều khiển ảo của bản nháp này về mặc định.</string>
+    <string name="config_system_compatibility" tools:ignore="MissingTranslation">Tương thích giả lập</string>
+    <string name="config_reset_all_settings">Đặt lại cấu hình MIDlet</string>
+    <string name="config_reset_all_settings_summary">Khôi phục cài đặt và điều khiển ảo của MIDlet này về mặc định mà không xóa dữ liệu.</string>
+    <string name="config_delete_app_data">Xóa dữ liệu MIDlet</string>
+    <string name="config_delete_app_data_summary">Xóa vĩnh viễn dữ liệu của MIDlet này, bao gồm cả dữ liệu lưu. Cài đặt của MIDlet vẫn được giữ lại.</string>
+    <string name="config_message_reset_settings">Khôi phục cấu hình MIDlet và điều khiển ảo về mặc định? Dữ liệu đã lưu vẫn nguyên vẹn. MIDlet sẽ không còn nhận các thay đổi từ hồ sơ đã liên kết.</string>
+    <string name="config_message_reset_profile_settings">Đặt lại cài đặt và điều khiển ảo của hồ sơ này về mặc định? Bạn vẫn có thể chỉnh sửa hoặc hủy trước khi lưu.</string>
+    <string name="config_message_delete_app_data">Xóa vĩnh viễn mọi dữ liệu lưu và dữ liệu do MIDlet này tạo? Cài đặt MIDlet sẽ không bị xóa.</string>
+    <string name="config_lock_custom_resolution_ratio">Khóa tỷ lệ khung hình</string>
+    <string name="config_swap_screen_size">Hoán đổi chiều rộng và chiều cao</string>
+    <string name="profile_builtin_settings">Mặc định JL-Mod</string>
+    <string name="profile_default_badge_short">Mặc định cho MIDlet mới</string>
+    <string name="profile_template_summary">Cài đặt MIDlet đã lưu.</string>
+    <string name="profile_name_exists">Đã có hồ sơ trùng tên này.</string>
+    <string name="profile_delete_template_message">Xóa hồ sơ “<xliff:g id="profile_name" example="Action Games">%1$s</xliff:g>”? Các MIDlet đang dùng hồ sơ này sẽ giữ nguyên cài đặt hiện tại nhưng không nhận các bản cập nhật sau này.</string>
+    <string name="profile_template_operation_failed">Không thể hoàn tất thao tác hồ sơ.</string>
+    <string name="config_help_screen_size">Đặt độ phân giải màn hình Java ME ảo mà MIDlet sử dụng.</string>
+    <string name="config_help_orientation">Chọn hướng màn hình khi MIDlet đang chạy.</string>
+    <string name="config_help_scale_type">Chọn cách trò chơi khớp với màn hình. Chọn Thủ công để đặt tỷ lệ tùy chỉnh.</string>
+    <string name="config_help_scale_ratio" formatted="false">Điều chỉnh kích thước hiển thị từ 1% đến 1000%. Ở mức 100%, trò chơi giữ kích thước gốc; giá trị lớn hơn có thể vượt quá màn hình.</string>
+    <string name="config_help_lock_custom_resolution_ratio">Giữ nguyên tỷ lệ khung hình khi chỉnh sửa độ phân giải tùy chỉnh.</string>
+    <string name="config_help_virtual_keyboard">Hiển thị điều khiển ảo trên màn hình cho MIDlet này.</string>
+    <string name="config_help_touch_input">Cho phép MIDlet nhận thao tác chạm từ màn hình cảm ứng.</string>
+    <string name="config_help_background">Lấp đầy khoảng trống xung quanh màn hình MIDlet.</string>
+    <string name="config_background_mode">Chế độ nền</string>
+    <string name="config_background_custom">Tùy chỉnh</string>
+    <string name="config_background_theme">Giao diện</string>
+    <string name="config_background_immersive">Đắm chìm</string>
+    <string name="config_background_theme_help">Dùng màu giao diện của JL-Mod Plus xung quanh màn hình MIDlet.</string>
+    <string name="config_background_immersive_help">Lấp đầy khoảng trống bằng màu lấy mẫu từ màn hình MIDlet.</string>
+    <string name="config_background_dynamic">Màu động</string>
+    <string name="config_background_dynamic_help">Dùng một màu đơn sắc tự động điều chỉnh mượt mà theo màn hình MIDlet.</string>
+    <string name="config_background_custom_color">Màu nền</string>
+    <string name="config_help_background_custom_color">Đặt màu cho khoảng trống xung quanh màn hình MIDlet.</string>
+    <string name="config_help_skin">Hiển thị ảnh hoặc khung tùy chọn xung quanh màn hình MIDlet.</string>
+    <string name="config_help_screen_gravity">Định vị màn hình MIDlet khi còn khoảng trống.</string>
+    <string name="config_help_screen_padding">Thêm khoảng đệm tính bằng pixel giữa màn hình MIDlet và mép vùng hiển thị.</string>
+    <string name="config_help_filter">Dùng lọc tuyến tính để làm mịn màn hình MIDlet khi thu phóng.</string>
+    <string name="config_warning_filter_shader">Lọc tuyến tính làm mịn hình ảnh đầu vào trước khi shader màn hình xử lý và có thể làm giảm độ sắc nét đầu ra.</string>
+    <string name="config_help_immediate">Xử lý sự kiện MIDlet ngay lập tức thay vì đưa vào hàng đợi. Có thể cải thiện độ phản hồi nhưng dễ gây mất ổn định ở một số MIDlet.</string>
+    <string name="config_help_graphics_mode">Chọn luồng kết xuất cho màn hình MIDlet. Tăng tốc phần cứng có thể cải thiện hiệu năng nhưng khả năng tương thích tùy thuộc từng thiết bị.</string>
+    <string name="config_help_shader">Áp dụng shader cho khung hình MIDlet trước khi hiển thị.</string>
+    <string name="config_help_shader_tuning">Các tùy chọn điều chỉnh có sẵn tùy thuộc vào shader đã chọn.</string>
+    <string name="config_help_parallel_redraw">Lên lịch hiển thị khung hình bất đồng bộ. Có thể cải thiện hiệu năng trên một số thiết bị.</string>
+    <string name="config_help_force_fullscreen">Ẩn thanh lệnh khi MIDlet khởi chạy. MIDlet vẫn có thể hiện lại thanh lệnh trong khi chơi.</string>
+    <string name="config_help_fps_limit">Đặt giới hạn FPS ở tốc độ giả lập 1×. Giới hạn thực tế thay đổi theo tốc độ giả lập; 0 (Tối đa) dùng tần số quét tối đa của màn hình.</string>
+    <string name="config_timing_mode_full_guest">Thời gian giả lập</string>
+    <string name="config_timing_mode_real_wall">Thời gian hệ thống</string>
+    <string name="config_help_emulation_speed">Điều chỉnh bộ hẹn giờ và khoảng trễ được hỗ trợ của MIDlet trong phiên này. Nếu chọn Thời gian giả lập, ngày và giờ cũng thay đổi theo tốc độ đã chọn. Tính năng phát nội dung đa phương tiện và giao diện Android vẫn chạy ở tốc độ bình thường.</string>
+    <string name="config_help_timing_mode">Chọn việc MIDlet dùng thời gian giả lập hay thời gian hệ thống. Các khoảng trễ tương đối vẫn tỷ lệ theo tốc độ giả lập.</string>
+    <string name="config_help_timing_unavailable">Cài đặt thời gian không khả dụng cho bản cài đặt MIDlet này. Hãy cài đặt lại hoặc chuyển đổi lại MIDlet để bật.</string>
+    <string name="config_help_generic_color">Đặt màu cho thành phần hiển thị này.</string>
+    <string name="config_help_encoding">Chọn bảng mã ký tự được khai báo qua microedition.encoding.</string>
+    <string name="config_edit_system_properties">Chỉnh sửa thuộc tính hệ thống</string>
+    <string name="config_help_system_properties">Đặt các thuộc tính Java ME nâng cao gửi đến MIDlet.</string>
+    <string name="config_help_system_properties_long">Nhập mỗi thuộc tính trên một dòng theo dạng “tên: giá trị”. Giá trị sai có thể ảnh hưởng đến khả năng tương thích.</string>
+    <string name="config_system_properties_info">Hầu hết các MIDlet không cần thay đổi mục này.</string>
+    <string name="config_font_sizes">Cỡ chữ</string>
+    <string name="config_help_font_sizes">Đặt cỡ chữ Java ME nhỏ, trung bình và lớn cho MIDlet.</string>
+    <string name="config_help_font_sizes_long">Đặt cỡ chữ Java ME theo pixel hoặc đơn vị co giãn khi bật tỷ lệ phông chữ Android. Hãy thay đổi đồng bộ để giữ văn bản cân đối.</string>
+    <string name="config_font_sizes_value">Nhỏ <xliff:g id="small_size" example="12">%1$s</xliff:g> · trung bình <xliff:g id="medium_size" example="16">%2$s</xliff:g> · lớn <xliff:g id="large_size" example="20">%3$s</xliff:g></string>
+    <string name="config_help_font_presets">Áp dụng cỡ chữ phù hợp với các độ phân giải màn hình Java ME phổ biến.</string>
+    <string name="config_help_font_dimensions">Áp dụng tỷ lệ phông chữ của Android cho cỡ chữ Java ME.</string>
+    <string name="config_help_font_aa">Làm mịn viền của văn bản được kết xuất.</string>
+    <string name="config_help_key_layout">Chọn sơ đồ mã phím gửi đến MIDlet.</string>
+    <string name="config_help_key_mapping">Ánh xạ các phím và nút vật lý trên Android với phím Java ME.</string>
+    <string name="config_help_vk_button_shape">Đặt hình dạng mặc định cho các nút bàn phím. D-pad và cần analog có hình dạng riêng.</string>
+    <string name="config_help_vk_feedback">Rung khi nhấn điều khiển ảo nếu tính năng rung được bật trong Cài đặt.</string>
+    <string name="config_help_vk_hide_delay">Ẩn điều khiển sau khoảng trễ này khi chúng che màn hình MIDlet. Giá trị 0 sẽ tắt tự động ẩn.</string>
+    <string name="config_help_reset_layout">Khôi phục bố cục điều khiển ảo mà không thay đổi các cài đặt MIDlet khác.</string>
+    <string name="config_help_skip_resume">Sau lần gọi startApp() thành công đầu tiên, bỏ qua các lần gọi tiếp theo khi MIDlet tiếp tục chạy. Chỉ dùng cho các MIDlet bị lỗi khi tiếp tục.</string>
+    <string name="config_help_soundbank">Chọn ngân hàng âm thanh để tổng hợp MIDI. Không làm thay đổi âm thanh đã thu sẵn.</string>
+    <string name="profile_create_title">Tạo hồ sơ</string>
+    <string name="profile_rename_title">Đổi tên hồ sơ</string>
+    <string name="presets">Hồ sơ</string>
+    <string name="preset_use">Dùng hồ sơ</string>
+    <string name="preset_save_as">Lưu thành hồ sơ</string>
+    <string name="preset_custom_configuration">Cấu hình tùy chỉnh</string>
+    <string name="preset_based_on_modified">Cấu hình hiện tại của MIDlet này khác với <xliff:g id="profile_name" example="Action Games">%1$s</xliff:g>.</string>
+    <string name="preset_builtin">Mặc định JL-Mod</string>
+    <string name="preset_builtin_summary">Cài đặt MIDlet và điều khiển ảo tích hợp sẵn.</string>
+    <string name="preset_picker_title">Dùng hồ sơ</string>
+    <string name="preset_manage">Quản lý hồ sơ</string>
+    <string name="profile_more_actions">Thao tác khác cho <xliff:g id="profile_name" example="Action Games">%1$s</xliff:g></string>
+    <string name="profile_create_summary">Lưu thiết lập có thể dùng lại cho các MIDlet khác.</string>
+    <string name="preset_application_settings">Cài đặt MIDlet</string>
+    <string name="preset_includes_keyboard_layout">Bao gồm bố cục điều khiển ảo.</string>
+    <string name="preset_virtual_keyboard_on">Đã bật điều khiển ảo</string>
+    <string name="preset_virtual_keyboard_off">Đã tắt điều khiển ảo</string>
+    <string name="preset_apply">Áp dụng</string>
+    <string name="preset_apply_failed_summary">Không thể áp dụng hồ sơ này. Hãy kiểm tra nguồn và thử lại.</string>
+    <string name="preset_choose_parts">Chọn nội dung cần áp dụng</string>
+    <string name="preset_name">Tên</string>
+    <string name="preset_save_help">Lưu cài đặt của MIDlet này và bố cục điều khiển ảo (nếu có) thành một hồ sơ. MIDlet này sẽ dùng hồ sơ đó và nhận các bản cập nhật sau này.</string>
+    <string name="preset_update">Cập nhật <xliff:g id="profile_name" example="Action Games">%1$s</xliff:g></string>
+    <string name="preset_update_title">Cập nhật <xliff:g id="profile_name" example="Action Games">%1$s</xliff:g>?</string>
+    <string name="preset_update_summary">Thay thế <xliff:g id="profile_name" example="Action Games">%1$s</xliff:g> bằng cài đặt hiện tại của MIDlet này và bố cục điều khiển ảo (nếu có). Các MIDlet khác đang dùng hồ sơ này sẽ nhận thay đổi vào lần khởi chạy tiếp theo.</string>
+    <string name="preset_update_confirm">Cập nhật</string>
+    <string name="preset_saved_unlinked_warning">Đã lưu hồ sơ, nhưng MIDlet này sẽ không nhận các bản cập nhật sau này từ hồ sơ đó.</string>
+    <string name="profile_default_fallback_notice">Không thể dùng hồ sơ mặc định “<xliff:g id="profile_name" example="Action Games">%1$s</xliff:g>”. Hồ sơ có thể bị thiếu, chưa hoàn chỉnh hoặc không đọc được. Mặc định JL-Mod hiện là hồ sơ mặc định cho các MIDlet mới.</string>
+    <string name="preset_discard_changes_title">Hủy bỏ thay đổi?</string>
+    <string name="preset_discard_changes_summary">Bản nháp hồ sơ này chưa được lưu.</string>
+    <string name="preset_continue_editing">Tiếp tục chỉnh sửa</string>
+    <string name="preset_discard_changes">Hủy bỏ</string>
+    <string name="preset_name_exists">Đã có hồ sơ trùng tên này.</string>
+    <string name="preset_invalid_name">Hãy nhập tên hồ sơ hợp lệ.</string>
+    <string name="preset_manager_default_section">Mặc định cho MIDlet mới</string>
+    <string name="preset_manager_presets_section">Hồ sơ của tôi</string>
+    <string name="preset_manager_keyboard_section">Bố cục điều khiển ảo đã lưu</string>
+    <string name="preset_default_policy_summary">Áp dụng khi cài đặt MIDlet mới.</string>
+    <string name="preset_keyboard_layout_unavailable">Bố cục điều khiển ảo không khả dụng.</string>
+    <string name="edit_preset">Chỉnh sửa hồ sơ</string>
+    <string name="preset_edit_title">Chỉnh sửa hồ sơ: <xliff:g id="profile_name" example="Action Games">%1$s</xliff:g></string>
+    <string name="preset_unavailable_section">Không khả dụng</string>
+    <string name="preset_unavailable_summary">Không thể tải hồ sơ này. Hãy đổi tên hoặc xóa nó.</string>
+    <string name="preset_change_default">Thay đổi</string>
+    <string name="preset_default_picker_title">Mặc định cho MIDlet mới</string>
+    <string name="profile_follows_updates">Theo dõi các bản cập nhật hồ sơ sau này.</string>
+    <string name="profile_apply_whole">Toàn bộ hồ sơ</string>
+    <string name="profile_apply_whole_follows">Thay thế cài đặt và bố cục; theo dõi các bản cập nhật sau này.</string>
+    <string name="profile_apply_whole_without_layout">Thay thế cài đặt, xóa bố cục cục bộ và theo dõi cập nhật.</string>
+    <string name="profile_apply_settings_only">Chỉ cài đặt MIDlet</string>
+    <string name="profile_apply_settings_keeps_layout">Giữ nguyên bố cục của MIDlet này; dùng cấu hình tùy chỉnh.</string>
+    <string name="profile_apply_layout_only">Chỉ bố cục điều khiển ảo</string>
+    <string name="profile_apply_layout_keeps_settings">Giữ nguyên cài đặt của MIDlet này; dùng cấu hình tùy chỉnh.</string>
+    <string name="config_analog_stick">Cần analog</string>
+    <string name="config_analog_stick_summary">Chọn Tắt, 4 hướng, 8 hướng hoặc bàn phím số cho cần analog chính. Các nút tay cầm dùng ánh xạ phím.</string>
+    <string name="config_analog_stick_off">Tắt</string>
+    <string name="config_controller_help_body_compact">Các nút tay cầm dùng chung ánh xạ phím với bàn phím và phím điện thoại. Cần analog chỉ gửi tín hiệu hướng đến MIDlet. Nút Quay lại của Android giữ nguyên hành vi mặc định; bất kỳ nút vật lý nào được gán cho M sẽ mở menu MIDlet khi đang chạy.</string>
+    <string name="config_show_fps_title" tools:ignore="MissingTranslation">Hiển thị FPS</string>
+    <string name="config_show_fps_help" tools:ignore="MissingTranslation">Hiển thị tốc độ khung hình khi chơi.</string>
+    <string name="config_search_requires_fps" tools:ignore="MissingTranslation">Bật Hiển thị FPS để thay đổi vị trí.</string>
+    <string name="midlet_running_notification_title">MIDlet đang chạy</string>
+    <string name="midlet_running_notification_text"><xliff:g id="name" example="Example">%1$s</xliff:g> đang chạy.</string>
+    <string name="midlet_running_notification_channel">Môi trường chạy MIDlet</string>
+    <string name="config_gamepad_directions_numeric_v2">Bàn phím số</string>
+    <string name="midlet_file_permission_title">Truy cập bộ nhớ lưu trữ</string>
+    <string name="midlet_file_permission_read">MIDlet này muốn đọc tệp.</string>
+    <string name="midlet_file_permission_write">MIDlet này muốn tạo, thay đổi hoặc xóa tệp.</string>
+    <string name="midlet_file_permission_allow_once">Cho phép một lần</string>
+    <string name="midlet_file_permission_allow_session">Cho phép khi MIDlet đang chạy</string>
+    <string name="midlet_file_permission_allow_always">Luôn cho phép</string>
+    <string name="midlet_file_permission_deny">Luôn từ chối</string>
+    <string name="midlet_permissions_settings_title">Quyền truy cập bộ nhớ lưu trữ</string>
+    <string name="midlet_permissions_read">Đọc tệp</string>
+    <string name="midlet_permissions_write">Thay đổi tệp</string>
+    <string name="midlet_permissions_ask">Hỏi</string>
+    <string name="midlet_permissions_allow">Luôn cho phép</string>
+    <string name="midlet_permissions_deny">Từ chối</string>
+    <string name="midlet_permissions_save_failed">Không thể lưu cài đặt lưu trữ.</string>
+    <string name="config_avoid_camera_cutout_title">Tránh vùng khuyết camera</string>
+    <string name="config_avoid_camera_cutout_summary">Giữ màn hình MIDlet và điều khiển ảo tránh khỏi vùng khuyết camera hoặc tai thỏ.</string>
+    <string name="midlet_permissions_write_summary">Bao gồm tạo và xóa tệp.</string>
+    <string name="midlet_legacy_import_title">Bản lưu Siemens cũ</string>
+    <string name="midlet_legacy_import_action">Chọn tệp lưu cũ</string>
+    <string name="midlet_legacy_import_summary">Sao chép tệp lưu cũ vào không gian lưu trữ Siemens riêng của MIDlet này. Hãy dừng MIDlet trước.</string>
+    <string name="midlet_legacy_import_success">Đã sao chép tệp vào không gian lưu trữ riêng của MIDlet này.</string>
+    <string name="midlet_legacy_import_failed">Nhập không thành công. Hãy dừng MIDlet và đảm bảo tệp đích chưa tồn tại.</string>
+    <string name="midlet_storage_mode_title">Chế độ lưu trữ</string>
+    <string name="midlet_storage_mode_shared">Ảo</string>
+    <string name="midlet_storage_mode_android">Android</string>
+    <string name="midlet_storage_mode_shared_summary">Dùng các thư mục dùng chung trong thư mục làm việc.</string>
+    <string name="midlet_storage_mode_android_summary">Dùng không gian lưu trữ dùng chung của Android trong phạm vi quyền Android cho phép. Quyền truy cập tệp của MIDlet được thiết lập riêng với chế độ ảo.</string>
+    <string name="config_system_properties_reset" tools:ignore="MissingTranslation">Đặt lại về mặc định</string>
+    <string name="config_system_properties_reset_title" tools:ignore="MissingTranslation">Đặt lại thuộc tính hệ thống?</string>
+    <string name="config_system_properties_reset_message" tools:ignore="MissingTranslation">Thay thế nội dung trình chỉnh sửa bằng giá trị mặc định hiện tại của JL-Mod Plus? Các cài đặt khác vẫn giữ nguyên. Hãy lưu để áp dụng.</string>
+    <string name="config_asset_add">+ Thêm từ tệp</string>
+    <string name="config_asset_copy_hint">Được sao chép vào thư mục làm việc; tệp gốc vẫn giữ nguyên vị trí.</string>
+    <string name="config_asset_name">Tên tệp</string>
+    <string name="config_asset_delete_confirmation">Xóa <xliff:g id="name" example="Example">%1$s</xliff:g> khỏi thư mục làm việc? Các MIDlet khác cũng có thể đang dùng tệp này. Bản sao ở nơi khác sẽ không bị ảnh hưởng.</string>
+    <string name="config_asset_imported">Đã sao chép và chọn: <xliff:g id="name" example="Example">%1$s</xliff:g></string>
+    <string name="config_asset_reused">Đã chọn tệp có sẵn: <xliff:g id="name" example="Example">%1$s</xliff:g></string>
+    <string name="config_asset_renamed">Đã đổi tên thành <xliff:g id="name" example="Example">%1$s</xliff:g></string>
+    <string name="config_asset_deleted">Đã xóa <xliff:g id="name" example="Example">%1$s</xliff:g></string>
+    <string name="config_asset_invalid">Tệp không hợp lệ hoặc không được hỗ trợ.</string>
+    <string name="config_asset_operation_failed">Không thể hoàn tất thao tác tệp.</string>
+    <string name="config_save_failed" tools:ignore="MissingTranslation">Không thể lưu cài đặt. Các thay đổi của bạn vẫn đang mở — hãy thử lại.</string>
+    <string name="config_asset_busy">Hãy hoàn tất thao tác tệp hiện tại trước.</string>
+    <string name="config_quick_settings" tools:ignore="MissingTranslation">Cài đặt nhanh</string>
+    <string name="config_all_settings" tools:ignore="MissingTranslation">Tất cả cài đặt</string>
+    <string name="profile_local_changes_pending" tools:ignore="MissingTranslation">Thay đổi cục bộ chưa được lưu vào hồ sơ</string>
+    <string name="profile_local_configuration_summary" tools:ignore="MissingTranslation">Chỉ cài đặt cho MIDlet này</string>
+    <string name="profile_not_following" tools:ignore="MissingTranslation">Dựa trên <xliff:g id="profile_name" example="Action Games">%1$s</xliff:g> · Không theo dõi cập nhật</string>
+    <string name="profile_stop_following" tools:ignore="MissingTranslation">Ngừng theo dõi hồ sơ</string>
+    <string name="profile_follow_again" tools:ignore="MissingTranslation">Theo dõi lại hồ sơ</string>
+    <string name="profile_follow_again_summary" tools:ignore="MissingTranslation">Thay thế cài đặt cục bộ và điều khiển ảo của MIDlet này bằng hồ sơ <xliff:g id="profile_name" example="Action Games">%1$s</xliff:g> mới nhất, đồng thời theo dõi các bản cập nhật sau này?</string>
+</resources>

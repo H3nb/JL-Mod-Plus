@@ -1,0 +1,47 @@
+<?xml version="1.0" encoding="utf-8"?>
+<!-- Shared UI actions, generic labels, dialogs, and About screen. -->
+<resources xmlns:xliff="urn:oasis:names:tc:xliff:document:1.2">
+    <string name="about">Névjegy</string>
+    <string name="about_message">Futtasson klasszikus alkalmazásokat és játékokat, rendezze a MIDlet-eket a könyvtárában, és szabja testre a vezérlőket, a kijelzőt, a hangot és a teljesítményt. A JL-Mod Plus ingyenes és nyílt forráskódú.</string>
+    <string name="about_subtitle">Java ME emulátor Androidra</string>
+    <string name="about_compatibility">A kompatibilitás a MIDlettől, az eszköztől és a támogatott Java ME API-któl függ. Egyes alkalmazások másképp működhetnek, mint az eredeti eszközökön.</string>
+    <string name="about_lineage_title">A projekt eredete</string>
+    <string name="about_build_title">Buildinformációk</string>
+    <string name="about_version_label">Verzió</string>
+    <string name="about_build_label">Build</string>
+    <string name="about_revision_label">Forráskód-revízió</string>
+    <string name="about_links_title">Projekt és licencek</string>
+    <string name="about_github_link_copied">Nem található böngésző. A GitHub-hivatkozás a vágólapra másolva.</string>
+    <string name="about_github_browser_unavailable">Nem található böngésző a GitHub megnyitásához.</string>
+    <string name="about_lineage">A JL-Mod Plus a woesss (Yury Kharchenko) által készített JL-Mod független forkja. A JL-Mod Nikita Shakarun J2ME Loader alkalmazásán alapul, amely a NaikSoftware J2meLoader projektjéből ered.</string>
+    <string name="about_evolution">A JL-Mod Plus erre az alapra épít modern kezelőfelülettel, sokoldalúbb MIDlet-könyvtárral, új funkciókkal és az újabb Android-verziók támogatásával.</string>
+    <string name="action_back">Vissza</string>
+    <string name="action_settings">Beállítások</string>
+    <string name="CANCEL_CMD">Mégse</string>
+    <string name="change">Módosítás</string>
+    <string name="choose">Kiválasztás</string>
+    <string name="close">Bezárás</string>
+    <string name="cmd_menu">Menü</string>
+    <string name="CONFIRMATION_REQUIRED">Megerősítés szükséges</string>
+    <string name="create">Létrehozás</string>
+    <string name="default_label"><xliff:g id="name" example="Example">%1$s</xliff:g> (alapértelmezett)</string>
+    <string name="dismiss">Bezárás</string>
+    <string name="edit">Szerkesztés</string>
+    <string name="error">Hiba</string>
+    <string name="error_name">Adjon meg egy nevet.</string>
+    <string name="exit">Kilépés</string>
+    <string name="help">Súgó</string>
+    <string name="install">Telepítés</string>
+    <string name="licenses">Licencek</string>
+    <string name="licenses_unavailable">A licencadatok nem érhetők el.</string>
+    <string name="loading_info">Információk betöltése…</string>
+    <string name="more">Továbbiak</string>
+    <string name="not_saved_exists">Már létezik</string>
+    <string name="reset">Visszaállítás</string>
+    <string name="retry">Újra</string>
+    <string name="save">Mentés</string>
+    <string name="saved">Mentve: <xliff:g id="name" example="Example">%1$s</xliff:g></string>
+    <string name="START_CMD">Indítás</string>
+    <string name="warning">Figyelmeztetés</string>
+    <string name="removed">Eltávolítva: <xliff:g id="name" example="Example">%1$s</xliff:g></string>
+</resources>

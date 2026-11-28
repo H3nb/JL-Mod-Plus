@@ -23,25 +23,55 @@ internal fun memoryOperationMessage(
     skipped: Int = 0,
     notAttempted: Int = 0,
     skippedByType: Int = 0,
+    script: Boolean = false,
 ): MemoryOperationMessage? {
     if (result == MemoryEngineContract.RESULT_PARTIAL_WRITE &&
         reason == MemoryEngineContract.REASON_REVERT_REMOVE_COMMIT_FAILED
     ) {
         return MemoryOperationMessage(R.string.memory_editor_revert_remove_commit_failed)
     }
-    val resource = when (result) {
+    if (result == MemoryEngineContract.RESULT_PARTIAL_WRITE &&
+        reason == MemoryEngineContract.REASON_INSPECTOR_FREEZE_START_FAILED
+    ) {
+        return MemoryOperationMessage(R.string.memory_editor_edit_freeze_failed)
+    }
+    if ((result == MemoryEngineContract.RESULT_INVALID_REQUEST ||
+            result == MemoryEngineContract.RESULT_IDENTITY_UNSAFE) &&
+        reason == MemoryEngineContract.REASON_RECIPE_REFRESH_REQUIRED
+    ) {
+        return MemoryOperationMessage(R.string.memory_scripts_refresh_required)
+    }
+    val scriptResource = when (reason) {
+        MemoryEngineContract.REASON_RECIPE_INVALID_INPUT ->
+            if (result == MemoryEngineContract.RESULT_INVALID_REQUEST) R.string.memory_scripts_invalid_input else null
+        MemoryEngineContract.REASON_RECIPE_VALUE_RANGE ->
+            if (result == MemoryEngineContract.RESULT_INVALID_REQUEST) R.string.memory_scripts_value_range else null
+        MemoryEngineContract.REASON_RECIPE_INCONSISTENT_VALUES ->
+            if (result == MemoryEngineContract.RESULT_IDENTITY_UNSAFE) R.string.memory_scripts_inconsistent_values else null
+        MemoryEngineContract.REASON_RECIPE_WRONG_MIDLET ->
+            if (result == MemoryEngineContract.RESULT_IDENTITY_UNSAFE) R.string.memory_scripts_wrong_midlet else null
+        MemoryEngineContract.REASON_RECIPE_TARGET_NOT_READY ->
+            if (result == MemoryEngineContract.RESULT_TARGET_LOST) R.string.memory_scripts_target_not_ready else null
+        else -> null
+    }
+    val resource = scriptResource ?: when (result) {
         MemoryEngineContract.RESULT_OK -> null
         MemoryEngineContract.RESULT_CANCELLED -> R.string.memory_editor_cancelled
-        MemoryEngineContract.RESULT_RESOURCE_LIMIT -> R.string.memory_editor_resource_limit
-        MemoryEngineContract.RESULT_TARGET_LOST -> R.string.memory_editor_engine_reconnecting
+        MemoryEngineContract.RESULT_RESOURCE_LIMIT -> if (script) R.string.memory_scripts_resource_limit
+            else R.string.memory_editor_resource_limit
+        MemoryEngineContract.RESULT_TARGET_LOST -> if (script) R.string.memory_editor_memory_unavailable
+            else R.string.memory_editor_engine_reconnecting
         MemoryEngineContract.RESULT_NO_SESSION -> when (reason) {
             MemoryEngineContract.REASON_NO_RUNTIME -> R.string.memory_editor_no_runtime
             MemoryEngineContract.REASON_NO_SEARCH_HISTORY -> R.string.memory_editor_no_search_history
             else -> R.string.memory_editor_invalid_request
         }
-        MemoryEngineContract.RESULT_IDENTITY_UNSAFE -> R.string.memory_editor_identity_unsafe
-        MemoryEngineContract.RESULT_SAFETY_LIMIT -> R.string.memory_editor_safety_limit
-        MemoryEngineContract.RESULT_UNSUPPORTED -> R.string.memory_editor_unsupported
+        MemoryEngineContract.RESULT_IDENTITY_UNSAFE -> if (script) R.string.memory_scripts_target_changed
+            else R.string.memory_editor_identity_unsafe
+        MemoryEngineContract.RESULT_SAFETY_LIMIT -> if (script) R.string.memory_scripts_resource_limit
+            else R.string.memory_editor_safety_limit
+        MemoryEngineContract.RESULT_UNSUPPORTED -> if (script) R.string.memory_scripts_operation_unavailable
+            else R.string.memory_editor_unsupported
         MemoryEngineContract.RESULT_PARTIAL_WRITE -> R.string.memory_editor_partial_write
         else -> R.string.memory_editor_invalid_request
     }

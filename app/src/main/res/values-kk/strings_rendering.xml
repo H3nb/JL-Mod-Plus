@@ -1,0 +1,212 @@
+<?xml version="1.0" encoding="utf-8"?>
+<!-- Rendering pipeline, internal resolution, bitmap upscaling, shaders, and built-in visual effects. -->
+<resources xmlns:tools="http://schemas.android.com/tools" xmlns:xliff="urn:oasis:names:tc:xliff:document:1.2">
+    <string name="identity_filter">Жоқ (ең жылдам)</string>
+    <string name="invalid_resolution_not_saved">Ажыратымдылық жарамсыз. Алдын ала баптау сақталмады.</string>
+    <string name="msg_error_loading_shader">Қолдау көрсетілмейтін шейдер. Әдепкі шейдер пайдаланылады.</string>
+    <string name="parallel_screen_redrawing">Асинхронды экран жаңартулары</string>
+    <string name="shader_tuning">Шейдерді баптау</string>
+    <string name="SWAP_SIZES">Ені мен биіктігін ауыстыру</string>
+    <string name="fps_limit_maximum">Максимум</string>
+    <string name="remove_screen_preset">Ажыратымдылық үлгісін алып тастау</string>
+    <string name="perf_overlay_position_help">Бұрышты таңдаңыз.</string>
+    <string name="perf_overlay_top_left">Жоғарғы сол</string>
+    <string name="perf_overlay_top_right">Жоғарғы оң</string>
+    <string name="perf_overlay_bottom_left">Төменгі сол</string>
+    <string name="perf_overlay_bottom_right">Төменгі оң</string>
+    <string name="internal_resolution_title" tools:ignore="MissingTranslation">Рендеринг ажыратымдылығы</string>
+    <string name="internal_resolution_auto" tools:ignore="MissingTranslation">Авто</string>
+    <string name="internal_resolution_description" tools:ignore="MissingTranslation">Қолдау көрсетілетін 2D және 3D графиканы өңдеу ажыратымдылығын орнатады. Автоматты режим көрсету аймағы мен құрылғы шектеулеріне қарай масштабты таңдайды. Өзгерістерді қолдану үшін MIDlet қолданбасын қайта іске қосыңыз.</string>
+    <string name="bitmap_upscaling_title" tools:ignore="MissingTranslation">Растрлық масштабтау</string>
+    <string name="bitmap_upscaling_description" tools:ignore="MissingTranslation">MMPX және xBR Lv3 өзгермейтін 2D кескіндері мен Micro3D модельдерінің өзгермейтін, мөлдір емес текстураларын жақсартады. M3G текстуралары өзгермейді. Өзгерістерді қолдану үшін MIDlet қолданбасын қайта іске қосыңыз.</string>
+    <string name="bitmap_upscaling_nearest" tools:ignore="MissingTranslation">Ең жақын көрші</string>
+    <string name="bitmap_upscaling_bilinear" tools:ignore="MissingTranslation">Билинейлі</string>
+    <string name="bitmap_upscaling_mmpx" tools:ignore="MissingTranslation">MMPX</string>
+    <string name="bitmap_upscaling_edge_aware" tools:ignore="MissingTranslation">xBR Lv3</string>
+    <!-- Prototyping only: localized UI copy is pending design review. -->
+    <string name="render_shader_effects">Шейдер әсерлері</string>
+    <string name="render_pipeline_title">Рендеринг тізбегі</string>
+    <string name="render_shader_preset">Шейдер үлгісі</string>
+    <string name="render_shader_picker_help">Кірістірілген және өз ескі шейдерлеріңізді реттелген әсерлер стегінде біріктіріңіз.</string>
+    <string name="render_shader_requires_gles">Шейдерлер сақталады, бірақ тек OpenGL ES таңдалғанда қолданылады.</string>
+    <string name="render_shader_missing">Таңдалған шейдер кітапханада жоқ. Басқа үлгіні таңдаңыз немесе оның файлдарын қалпына келтіріңіз.</string>
+    <string name="render_shader_parameters">Шейдер параметрлері</string>
+    <string name="render_shader_reset_parameters">Параметрлерді қалпына келтіру</string>
+    <string name="render_shader_passes">Шейдер өтулері</string>
+    <string name="render_shader_pass_count"><xliff:g id="count" example="2">%1$d</xliff:g> өту</string>
+    <string name="render_shader_pass_hint">Таңдалған GLSLP үлгісінің кезеңдерін көріңіз.</string>
+    <string name="render_pass_filter">Кіріс сүзгілеуі</string>
+    <string name="render_pass_output">Шығыс өлшемі (ені × биіктігі)</string>
+    <string name="render_pipeline_unavailable">Үлгі қолжетімсіз</string>
+    <string name="render_game_output">Ойын шығысы</string>
+    <string name="render_logical_screen_help">Ойынға хабарланатын логикалық өлшем.</string>
+    <string name="render_internal_resolution">Ішкі ажыратымдылық</string>
+    <string name="render_internal_unavailable">Тек бастапқы (1×). Бұл конфигурация үшін жоғары рендеринг ажыратымдылығы қолжетімсіз.</string>
+    <string name="render_display_renderer">Көрсету рендерері</string>
+    <string name="render_shader_processing">Шейдер өңдеуі</string>
+    <string name="render_display_scaling">Экран масштабтауы</string>
+    <string name="render_display_viewport">Ойын көрініс аймағы</string>
+    <string name="render_texture_filtering">Экран масштабтау сүзгісі</string>
+    <string name="render_texture_filtering_help">Дайын ойын кескіні үшін «Ең жақын» немесе «Сызықтық» сүзгісін таңдайды. Әсерлер оны қайта анықтауы мүмкін.</string>
+    <string name="render_viewport_note">Көрініс аймағының өлшемі шейдер өтулері жоспарланбай тұрып экран орналасуынан анықталады. Көрсеткілер орналасу есептеулерінің ретін емес, кескін ағынын көрсетеді.</string>
+    <string name="render_pipeline_help">Ойын кадрының экранға қалай жететінін көріп, әр кезеңді өңдеңіз.</string>
+    <string name="render_no_shader">Ойын көрінісін өзгерту үшін үлгі таңдаңыз.</string>
+    <string name="render_shader_adjust">Параметрлерді реттеу</string>
+    <string name="render_legacy_tuning_hint">Осы ескі әсерді дәл баптаңыз.</string>
+    <string name="render_shader_customization">Теңшеу</string>
+    <string name="render_adjustable_count">Реттелетін параметрлер: <xliff:g id="count" example="3">%1$d</xliff:g></string>
+    <string name="render_pass_summary"><xliff:g id="count" example="3">%1$d</xliff:g> кезең · Үлгімен анықталған</string>
+    <string name="render_shader_preset_note">Шейдер кезеңдері үлгімен анықталады. Олардың ретін өзгертпей қарап шығуға болады.</string>
+    <string name="render_parameters_hint">Мәнді өзгерту үшін жүгірткіні жылжытыңыз. Өзгерістер босатқанда сақталады.</string>
+    <string name="render_pass_readonly">Кезеңдер осы ретпен орындалады. Кіріс сүзгілеуі мен шығыс масштабтауы таңдалған үлгіден алынады.</string>
+    <string name="render_pipeline_intro">Ойын кадр буферінен экранға дейінгі жол.</string>
+    <string name="render_native_short">Бастапқы (1×)</string>
+    <string name="render_expand_passes">Кезеңдерді көрсету</string>
+    <string name="render_collapse_passes">Кезеңдерді жасыру</string>
+    <string name="render_view_all_passes">Кезең мәліметтері</string>
+    <string name="render_pipeline_filter_summary">Текстура сүзгілеуі: <xliff:g id="shader_name" example="CRT Classic">%1$s</xliff:g></string>
+    <string name="render_pipeline_note">Экран орналасуы шейдер өтулері жоспарланбай тұрып көрініс аймағын анықтайды. Қадамдар кескін ағынын көрсетеді.</string>
+    <string name="render_shader_change">Басқа әсер таңдау</string>
+    <string name="render_custom_pipeline">Теңшелген тізбек</string>
+    <string name="render_custom_pipeline_hint">Шейдерлер қалтаңыздағы жеке GLSL шейдерлерін біріктіріңіз.</string>
+    <string name="render_custom_order_help">Әсерлер жоғарыдан төменге қарай орындалады. Мұраланған GLSLP параметрлері өзгертілмесе күшінде қалады.</string>
+    <string name="render_custom_empty">Теңшелген тізбекті бастау үшін шейдер қосыңыз.</string>
+    <string name="render_custom_stage_count"><xliff:g id="count" example="3">%1$d</xliff:g> теңшелген шейдер кезеңі</string>
+    <string name="render_custom_add">Шейдер қосу</string>
+    <string name="render_custom_add_hint">Сыртқы жеке .glsl файлын таңдаңыз.</string>
+    <string name="render_custom_no_sources">Ескі шейдерлер табылмады. shaders қалтасына .ini шейдер файлдарын қосып, параметрлерді қайта ашыңыз.</string>
+    <string name="render_custom_scale">Шығыс: алдыңғы кезеңнен <xliff:g id="scale" example="2">%1$d</xliff:g>×</string>
+    <string name="render_custom_output_scale">Келесі кезең үшін шығыс өлшемі</string>
+    <string name="render_custom_final_viewport">Соңғы шығыс: экранда көрсетіледі</string>
+    <string name="render_custom_filter">Кіріс сүзгісі: <xliff:g id="shader_name" example="CRT Classic">%1$s</xliff:g></string>
+    <string name="render_custom_up">Жоғары</string>
+    <string name="render_custom_down">Төмен</string>
+    <string name="render_custom_remove">Алып тастау</string>
+    <string name="render_custom_cancel">Бас тарту</string>
+    <string name="render_custom_save">Сақтау</string>
+    <string name="render_custom_default">Әдепкі</string>
+    <string name="render_custom_nearest">Ең жақын</string>
+    <string name="render_custom_linear">Сызықтық</string>
+    <string name="render_custom_checking">Шейдер файлдары тексерілуде…</string>
+    <string name="render_active_shader">Белсенді әсер</string>
+    <string name="render_shader_off">Өшірулі</string>
+    <string name="render_edit_custom_pipeline">Шейдер тізбегін өңдеу</string>
+    <string name="render_shader_unavailable">Қолжетімсіз: <xliff:g id="shader_name" example="CRT Classic">%1$s</xliff:g></string>
+    <string name="render_no_shader_sources">Шейдерлер табылмады. shaders қалтасына ескі .ini шейдер файлдарын қосып, параметрлерді қайта ашыңыз.</string>
+    <string name="render_shader_mode">Шейдер режимі</string>
+    <string name="render_mode_selected">Таңдалды</string>
+    <string name="render_gles_shader_default">Шейдер әсерлері өшірулі болғанда OpenGL ES ойынның түпнұсқа кескінін пайдаланады.</string>
+    <string name="render_shader_off_help">Қосымша визуалды әсерлер жоқ.</string>
+    <string name="render_legacy_mode">Ескі шейдер</string>
+    <string name="render_legacy_mode_help">shaders қалтасынан .ini файлын таңдаңыз.</string>
+    <string name="render_legacy_empty">Бұл .ini файлында жарамды шейдер анықтамалары жоқ.</string>
+    <string name="render_legacy_select_variant">Ескі шейдерді таңдаңыз</string>
+    <string name="render_legacy_variant_description">Таңдалған .ini файлындағы шейдер анықтамасы</string>
+    <string name="render_preset_mode">GLSLP үлгісі</string>
+    <string name="render_preset_mode_help">Өз өтулері бар толық .glslp тізбегін жүктеу.</string>
+    <string name="render_custom_pass_count">Өтулер саны</string>
+    <string name="render_custom_pass_number"><xliff:g id="number" example="1">%1$d</xliff:g>-өту</string>
+    <string name="render_custom_pick_file">GLSL файлын таңдау</string>
+    <string name="render_custom_add_pass">Шейдер өтулерінің санын арттыру</string>
+    <string name="render_custom_remove_pass">Шейдер өтулерінің санын азайту</string>
+    <string name="render_shader_selected_name">Белсенді: <xliff:g id="shader_name" example="CRT Classic">%1$s</xliff:g></string>
+    <string name="render_shader_invalid_picker">Таңдалған файлды пайдалану мүмкін емес. shaders қалтасынан ескі .ini файлын таңдаңыз.</string>
+    <string name="render_custom_mode">Шейдер түрі</string>
+    <string name="render_custom_mode_legacy">Ескі</string>
+    <string name="render_custom_mode_glsl">GLSL</string>
+    <string name="render_custom_pick_legacy">Ескі шейдер таңдау</string>
+    <string name="render_custom_preserve_size">Шығыс: үлгіден</string>
+    <string name="render_custom_loading">Үлгі өтулері оқылуда…</string>
+    <string name="render_custom_start_fresh">Үлгісіз бастау (мұраланған параметрлерді болдырмау)</string>
+    <string name="render_effect_default_settings">Әдепкі параметрлер</string>
+    <string name="render_effect_summary_more">Тағы +<xliff:g id="count" example="2">%1$d</xliff:g></string>
+    <string name="render_effect_legacy_author">Авторы: <xliff:g id="shader_name" example="CRT Classic">%1$s</xliff:g></string>
+    <string name="render_effect_legacy_source">Көзі: <xliff:g id="shader_name" example="CRT Classic">%1$s</xliff:g></string>
+    <string name="render_effect_removed">Әсер алып тасталды</string>
+    <string name="render_effect_undo">Болдырмау</string>
+    <string name="render_effect_catalog_hint">Стекке қосу үшін әсерді түртіңіз.</string>
+    <string name="render_effect_user_folder_hint">INI, VSH және FSH файлдары shaders қалтасында болуы керек.</string>
+    <string name="render_effect_legacy_scale_note">Ескі шейдерлер экран көрініс аймағының ажыратымдылығында рендерленеді; .ini файлындағы OutputResolution және Upscaling жалаушалары еленбейді.</string>
+    <string name="render_effect_legacy_metadata_missing">Осы шейдердің .ini файлындағы параметрлер табылмады. Шейдер бастапқы файлдары арқылы әлі де жұмыс істеуі мүмкін.</string>
+    <string name="render_effect_count"><xliff:g id="count" example="2">%1$d</xliff:g> белсенді</string>
+    <string name="render_effect_add">Әсер қосу</string>
+    <string name="render_effect_builtin">Кірістірілген әсерлер</string>
+    <string name="render_effect_user">Менің шейдерлерім</string>
+    <string name="render_effect_user_add">.ini файлдарын шолу</string>
+    <string name="render_effect_user_empty">shaders қалтасында ескі шейдер табылмады.</string>
+    <string name="render_effect_user_file">Ескі .ini файлын таңдаңыз</string>
+    <string name="render_effect_empty">Ойын көрінісін теңшеу үшін әсер қосыңыз.</string>
+    <string name="render_effect_hint">Әсерлер жоғарыдан төменге қарай орындалады. Ретін өзгерту үшін басып тұрып сүйреңіз.</string>
+    <string name="render_effect_move_up">Жоғары жылжыту</string>
+    <string name="render_effect_move_down">Төмен жылжыту</string>
+    <string name="render_effect_remove">Әсерді алып тастау</string>
+    <string name="render_effect_no_parameters">Бұл әсерде реттелетін параметрлер жоқ.</string>
+    <string name="render_effect_parameter_number"><xliff:g id="count" example="2">%1$d</xliff:g>-параметр</string>
+    <string name="render_effect_restore">Параметрлерді қалпына келтіру</string>
+    <string name="render_effect_missing">Қолжетімсіз: <xliff:g id="shader_name" example="CRT Classic">%1$s</xliff:g>. Бұл кірістірілген әсер осы нұсқада жоқ. Оны стектен алып тастаңыз.</string>
+    <string name="render_effect_limit">Стек 16 шейдер өтуіне дейін қолдайды (кейбір әсерлер бірнеше өтуді пайдаланады).</string>
+    <string name="render_effect_unavailable">Шейдер әсерлері іске қосылмады. Ойынның түпнұсқа кескіні көрсетілуде. Әсерлерді азайтыңыз немесе рендеринг ажыратымдылығын төмендетіңіз.</string>
+    <string name="render_bitmap_memory_reduced">Растрлық масштабтау үшін жад жетпеді. Түпнұсқа кескіндер немесе төменірек масштаб қолданылады. Рендеринг ажыратымдылығын төмендетіңіз немесе жадты босатып, қайта іске қосыңыз.</string>
+    <string name="render_texture_memory_reduced">Micro3D текстураларын масштабтау сәтсіз аяқталды. Түпнұсқа текстуралар қолданылады. Рендеринг ажыратымдылығын төмендетіңіз немесе жадты босатып, қайта іске қосыңыз.</string>
+    <string name="render_resolution_reduced">Жад немесе GPU шектеуіне байланысты рендеринг ажыратымдылығы <xliff:g id="from_scale" example="4">%1$d</xliff:g>× мәнінен <xliff:g id="to_scale" example="2">%2$d</xliff:g>× мәніне төмендетілді. Төменірек параметрді таңдаңыз немесе жадты босатып, қайта іске қосыңыз.</string>
+    <string name="render_gpu_texture_limit">Ойын кескіні 1× масштабында да GPU текстурасының өлшем шегінен асады. MIDlet экранының өлшемін азайтыңыз немесе графика режимін ауыстырыңыз.</string>
+    <string name="render_gpu_upload_failed">Ойын кескіні GPU-ға жүктелмеді. Қайталануда. Басқа қолданбаларды жауып көріңіз немесе графика режимін ауыстырыңыз.</string>
+    <string name="render_effect_gles">Әсерлер сақталады, бірақ тек OpenGL ES арқылы рендерленеді.</string>
+    <string name="render_effect_legacy_file_error">Таңдалған .ini файлынан жарамды ескі шейдер жүктелмеді.</string>
+    <string name="effect_color">Түс реттеу</string>
+    <string name="effect_color_desc">Жарықтық, контраст, қанықтық, гамма, түс реңкі және монохромды реттеңіз.</string>
+    <string name="effect_vignette">Виньетка</string>
+    <string name="effect_vignette_desc">Назарды ортаға аудару үшін шеттерін қараңғылатады.</string>
+    <string name="effect_sharpen">Айқындық</string>
+    <string name="effect_sharpen_desc">Кескіндегі детальдар мен жиектерді айқындайды.</string>
+    <string name="effect_cartoon">Жұмсақ мультфильм</string>
+    <string name="effect_cartoon_desc">Түс ауысуларын жеңілдетіп, жұмсақ жиектер қосады.</string>
+    <string name="effect_bloom">Жарқырау</string>
+    <string name="effect_bloom_desc">Кескіннің жарық бөліктерінің айналасына жұмсақ жарқырау қосады.</string>
+    <string name="effect_crt_classic">Классикалық CRT</string>
+    <string name="effect_crt_classic_desc">Сканерлеу сызықтары мен RGB өрнегі бар CRT теледидарын имитациялайды.</string>
+    <string name="effect_crt_beam">Сәуленің жіңішкелігі</string>
+    <string name="effect_brightness">Жарықтық</string>
+    <string name="effect_contrast">Контраст</string>
+    <string name="effect_saturation">Қанықтық</string>
+    <string name="effect_strength">Күші</string>
+    <string name="effect_color_levels">Түс деңгейлері</string>
+    <string name="effect_edge">Жиек қарқындылығы</string>
+    <string name="effect_threshold">Жарықтық шегі</string>
+    <string name="effect_radius">Бұлыңғырлау радиусы</string>
+    <string name="effect_mask_strength">Маска күші</string>
+    <string name="effect_scan_strength">Сканерлеу сызықтарының күші</string>
+    <string name="effect_bright_boost">Жарықтықты күшейту</string>
+    <string name="effect_lcd">LCD</string>
+    <string name="effect_lcd_desc">Классикалық түрлі-түсті LCD экранының пиксель торы мен субпиксельдерін имитациялайды.</string>
+    <string name="effect_lcd_grid">Тор күші</string>
+    <string name="effect_lcd_subpixel">RGB субпиксельдері</string>
+    <string name="effect_lcd_brightness">LCD жарықтығы</string>
+    <string name="effect_scanlines">Жеңіл сканерлеу сызықтары</string>
+    <string name="effect_scanlines_desc">CRT экранындағыдай нәзік көлденең сызықтар қосады.</string>
+    <string name="effect_line_width">Сызық жіңішкелігі</string>
+    <string name="effect_gamma">Гамма</string>
+    <string name="effect_temperature">Температура</string>
+    <string name="effect_tint">Реңк</string>
+    <string name="effect_monochrome">Монохром</string>
+    <string name="effect_depth">Түс тереңдігі және дизеринг</string>
+    <string name="effect_depth_desc">Ретро көрініс үшін түс палитрасын шектейді және қосымша дизеринг қосады.</string>
+    <string name="effect_depth_format">Экран түс пішімі</string>
+    <string name="effect_depth_rgb444">RGB444 · 4096 түс</string>
+    <string name="effect_depth_rgb565">RGB565 · 65 536 түс</string>
+    <string name="effect_depth_rgb666">RGB666 · 262 144 түс</string>
+    <string name="effect_dither_mode">Дизеринг үлгісі</string>
+    <string name="effect_dither_none">Өшірулі</string>
+    <string name="effect_dither_bayer4">Bayer 4×4</string>
+    <string name="effect_dither_bayer8">Bayer 8×8</string>
+    <string name="effect_dither_strength">Дизеринг күші</string>
+    <string name="effect_mono_display">Монохромды экран</string>
+    <string name="effect_mono_display_desc">2 немесе 4 реңкті ақ-қара, жасыл не кәріптас экрандарды имитациялайды.</string>
+    <string name="effect_mono_palette">LCD түсі</string>
+    <string name="effect_mono_bw">Ақ-қара</string>
+    <string name="effect_mono_green">Жасыл LCD</string>
+    <string name="effect_mono_amber">Кәріптас LCD</string>
+    <string name="effect_mono_tones">Реңк саны</string>
+    <string name="effect_mono_two">2 реңк</string>
+    <string name="effect_mono_four">4 реңк</string>
+</resources>

@@ -1,0 +1,47 @@
+<?xml version="1.0" encoding="utf-8"?>
+<!-- Shared UI actions, generic labels, dialogs, and About screen. -->
+<resources xmlns:xliff="urn:oasis:names:tc:xliff:document:1.2">
+    <string name="about">關於</string>
+    <string name="about_message">執行經典應用程式與遊戲、在應用程式庫中整理 MIDlet，並自訂操作按鍵、顯示、音訊與效能。JL-Mod Plus 為免費開源軟體。</string>
+    <string name="about_subtitle">適用於 Android 的 Java ME 模擬器</string>
+    <string name="about_compatibility">相容性取決於 MIDlet、裝置以及支援的 Java ME API。部分應用程式的運作方式可能與在原始裝置上有所不同。</string>
+    <string name="about_lineage_title">專案淵源</string>
+    <string name="about_build_title">組建資訊</string>
+    <string name="about_version_label">版本</string>
+    <string name="about_build_label">組建</string>
+    <string name="about_revision_label">原始碼修訂版</string>
+    <string name="about_links_title">專案與授權條款</string>
+    <string name="about_github_link_copied">找不到瀏覽器，已將 GitHub 連結複製到剪貼簿。</string>
+    <string name="about_github_browser_unavailable">找不到可開啟 GitHub 的瀏覽器。</string>
+    <string name="about_lineage">JL-Mod Plus 是由 woesss（Yury Kharchenko）所開發 JL-Mod 的獨立分支。JL-Mod 以 Nikita Shakarun 的 J2ME Loader 為基礎，最早可追溯至 NaikSoftware 的 J2meLoader。</string>
+    <string name="about_evolution">JL-Mod Plus 在此基礎上打造了現代化介面、功能更完整的 MIDlet 應用程式庫、全新功能，以及對新版 Android 的支援。</string>
+    <string name="action_back">返回</string>
+    <string name="action_settings">設定</string>
+    <string name="CANCEL_CMD">取消</string>
+    <string name="change">變更</string>
+    <string name="choose">選擇</string>
+    <string name="close">關閉</string>
+    <string name="cmd_menu">選單</string>
+    <string name="CONFIRMATION_REQUIRED">需要確認</string>
+    <string name="create">建立</string>
+    <string name="default_label"><xliff:g id="name" example="Example">%1$s</xliff:g>（預設）</string>
+    <string name="dismiss">關閉</string>
+    <string name="edit">編輯</string>
+    <string name="error">錯誤</string>
+    <string name="error_name">請輸入名稱。</string>
+    <string name="exit">結束</string>
+    <string name="help">說明</string>
+    <string name="install">安裝</string>
+    <string name="licenses">授權條款</string>
+    <string name="licenses_unavailable">無法載入授權條款詳細資訊。</string>
+    <string name="loading_info">正在載入資訊…</string>
+    <string name="more">更多</string>
+    <string name="not_saved_exists">項目已存在</string>
+    <string name="reset">重設</string>
+    <string name="retry">重試</string>
+    <string name="save">儲存</string>
+    <string name="saved">已儲存「<xliff:g id="name" example="Example">%1$s</xliff:g>」</string>
+    <string name="START_CMD">啟動</string>
+    <string name="warning">警告</string>
+    <string name="removed">已移除「<xliff:g id="name" example="Example">%1$s</xliff:g>」</string>
+</resources>

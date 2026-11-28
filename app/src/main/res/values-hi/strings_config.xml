@@ -1,0 +1,356 @@
+<?xml version="1.0" encoding="utf-8"?>
+<!-- Per-MIDlet configuration, reusable profiles, camera, controller calibration, permissions, and system properties. -->
+<resources xmlns:tools="http://schemas.android.com/tools" xmlns:xliff="urn:oasis:names:tc:xliff:document:1.2">
+    <!-- %1$s is an optional quoted storage-volume name with a trailing space, or empty. -->
+    <!-- %1$s is a raw storage-volume description. -->
+    <string name="config_missing_app_storage_named">ऐप नहीं मिला।\nजांचें कि स्टोरेज डिवाइस “<xliff:g id="storage_name" example="SD card">%1$s</xliff:g>” उपलब्ध है या नहीं, अथवा शॉर्टकट पुनः बनाएं।</string>
+    <string name="config_missing_app_storage_generic">ऐप नहीं मिला।\nजांचें कि स्टोरेज डिवाइस उपलब्ध है या नहीं, अथवा शॉर्टकट पुनः बनाएं।</string>
+    <string name="midlet_name"><b>नाम: </b></string>
+    <string name="midlet_size"><b>आकार: </b></string>
+    <string name="midlet_vendor"><b>प्रकाशक: </b></string>
+    <string name="midlet_version"><b>संस्करण: </b></string>
+    <string name="config_destination_graphics">डिस्प्ले</string>
+    <string name="config_destination_rendering" tools:ignore="MissingTranslation">ग्राफ़िक्स</string>
+    <string name="config_destination_media">मीडिया</string>
+    <string name="config_camera_title">कैमरा</string>
+    <string name="config_camera_default_title">डिफ़ॉल्ट कैमरा</string>
+    <string name="config_camera_rear">रियर</string>
+    <string name="config_camera_front">फ़्रंट</string>
+    <string name="config_camera_resolution_title">डिफ़ॉल्ट रिज़ॉल्यूशन</string>
+    <string name="config_camera_resolution_auto">स्वचालित</string>
+    <string name="config_camera_resolution_portrait">480×640 — पोर्ट्रेट</string>
+    <string name="config_camera_resolution_landscape">640×480 — लैंडस्केप</string>
+    <string name="config_destination_controls">कंट्रोल</string>
+    <string name="config_gamepad_test">कंट्रोलर जांचें</string>
+    <string name="config_gamepad_calibrate">कंट्रोलर कैलिब्रेट करें</string>
+    <string name="config_gamepad_calibrate_summary">कनेक्ट किए गए कंट्रोलर की न्यूट्रल स्थिति तथा इसके स्टिक और ट्रिगर की सीमाओं को मापता है।</string>
+    <string name="config_gamepad_stick_directions">डिजिटल दिशाएं</string>
+    <string name="config_gamepad_stick_unassigned">असाइन नहीं</string>
+    <string name="config_gamepad_stick_pointer">पॉइंटर स्रोत</string>
+    <string name="config_gamepad_opaque_summary">इस कॉन्फ़िगरेशन में असमर्थित फ़ॉर्मैट का कंट्रोलर डेटा है। इसे अपरिवर्तित रखा गया है और यहां संपादित नहीं किया जा सकता।</string>
+    <string name="config_gamepad_unsupported_summary">यह कंट्रोलर कॉन्फ़िगरेशन समर्थित नहीं है। इसे अपरिवर्तित रखा गया है और यहां संपादित नहीं किया जा सकता।</string>
+    <string name="config_gamepad_keypad_title">वर्चुअल कीपैड</string>
+    <string name="config_gamepad_calibration_next">अगला</string>
+    <string name="config_gamepad_mapping_help_title">कंट्रोलर मैपिंग सहायता</string>
+    <string name="config_gamepad_directions_four">4-दिशा</string>
+    <string name="config_gamepad_directions_eight">8-दिशा</string>
+    <string name="config_gamepad_pointer_off">बंद</string>
+    <string name="config_gamepad_pointer_cursor">आनुपातिक कर्सर</string>
+    <string name="config_gamepad_pointer_joystick">टच जॉयस्टिक</string>
+    <!-- This is the same controller-identity fingerprint shown in diagnostics. -->
+    <string name="config_gamepad_calibration_profile">कंट्रोलर सिग्नेचर: <xliff:g id="profile_name" example="Action Games">%1$s</xliff:g></string>
+    <string name="config_gamepad_calibration_phase_neutral">न्यूट्रल की प्रतीक्षा</string>
+    <string name="config_gamepad_calibration_phase_stick_range">स्टिक सीमा</string>
+    <string name="config_gamepad_calibration_phase_trigger_range">ट्रिगर सीमा</string>
+    <string name="config_gamepad_calibration_phase_review">सहेजने के लिए तैयार</string>
+    <string name="config_gamepad_calibration_phase_committed">सहेजा गया</string>
+    <string name="config_gamepad_calibration_phase_cancelled">रद्द किया गया</string>
+    <string name="config_gamepad_calibration_waiting_controller">समर्थित एनालॉग स्टिक या ट्रिगर वाला कंट्रोलर कनेक्ट करें। शुरू करने के लिए स्टिक हिलाएं या ट्रिगर दबाएं। मौजूदा कैलिब्रेशन तभी बदलेगा जब आप नया कैलिब्रेशन सहेजेंगे या उसे रीसेट करेंगे।</string>
+    <string name="config_gamepad_calibration_no_analog_ranges">यह कंट्रोलर समर्थित एनालॉग स्टिक या ट्रिगर सीमाएं प्रदान नहीं करता।</string>
+    <string name="config_gamepad_calibration_start">न्यूट्रल टाइमर पूरा होने तक सभी स्टिक को केंद्र में रखें और सभी ट्रिगर छोड़े रखें।</string>
+    <string name="config_gamepad_calibration_save_failed">कैलिब्रेशन सहेजा नहीं जा सका। दोबारा कोशिश करने से पहले मौजूदा सेटिंग्स जांचें।</string>
+    <string name="config_gamepad_calibration_no_supported_ranges">कोई समर्थित एनालॉग सीमा नहीं मिली।</string>
+    <string name="config_gamepad_calibration_rejected">कैलिब्रेशन अस्वीकृत: <xliff:g id="name" example="Example">%1$s</xliff:g></string>
+    <string name="config_gamepad_calibration_neutral_instructions">न्यूट्रल टाइमर पूरा होने तक पहचाने गए सभी स्टिक को केंद्र में रखें और सभी ट्रिगर छोड़े रखें।</string>
+    <string name="config_gamepad_calibration_stick_instructions">पहचाने गए प्रत्येक स्टिक को सभी दिशाओं में पूरी सीमा तक घुमाएं, फिर “अगला” दबाएं।</string>
+    <string name="config_gamepad_calibration_trigger_instructions">पहचाने गए हर ट्रिगर को छोड़कर पूरा दबाएं, फिर “अगला” पर टैप करें।</string>
+    <string name="config_gamepad_calibration_review_instructions">इस कंट्रोलर का कैलिब्रेशन बदलने के लिए सहेजें।</string>
+    <string name="config_gamepad_calibration_saved">कैलिब्रेशन सहेजा गया।</string>
+    <string name="config_gamepad_calibration_cancelled">कैलिब्रेशन रद्द किया गया।</string>
+    <string name="config_gamepad_calibration_waiting_samples">कैलिब्रेशन कंट्रोलर नमूनों की प्रतीक्षा कर रहा है।</string>
+    <string name="config_gamepad_diagnosis_header">कंट्रोलर डायग्नोस्टिक्स</string>
+    <string name="config_gamepad_diagnosis_mode">स्थिति: <xliff:g id="status" example="enabled">%1$s</xliff:g> · स्रोत: <xliff:g id="source" example="controller">%2$s</xliff:g></string>
+    <string name="config_gamepad_diagnosis_notice">सूचना: <xliff:g id="name" example="Example">%1$s</xliff:g></string>
+    <string name="config_gamepad_diagnosis_analog_settings">एनालॉग सेटिंग्स:</string>
+    <string name="config_gamepad_diagnosis_left_stick">बायां स्टिक</string>
+    <string name="config_gamepad_diagnosis_right_stick">दायां स्टिक</string>
+    <string name="config_gamepad_diagnosis_triggers">ट्रिगर</string>
+    <string name="config_gamepad_diagnosis_pointer">पॉइंटर मोड</string>
+    <string name="config_gamepad_status_enabled">सक्षम</string>
+    <string name="config_gamepad_status_disabled">अक्षम</string>
+    <string name="config_gamepad_diagnosis_source_default">डिफ़ॉल्ट</string>
+    <string name="config_gamepad_diagnosis_source_controller">कंट्रोलर</string>
+    <string name="config_gamepad_diagnosis_source_explicit">स्पष्ट</string>
+    <string name="config_gamepad_diagnosis_device"><xliff:g id="device_name" example="Xbox Controller">%1$s</xliff:g> (#<xliff:g id="device_id" example="1">%2$d</xliff:g>)</string>
+    <string name="config_gamepad_calibration_issue_no_channels">कोई समर्थित चैनल नहीं</string>
+    <string name="config_gamepad_calibration_issue_invalid_constraints">अमान्य कैलिब्रेशन शर्तें</string>
+    <string name="config_gamepad_calibration_issue_non_finite">नमूने का मान परिमित नहीं है</string>
+    <string name="config_gamepad_calibration_issue_insufficient_samples">अपर्याप्त नमूने</string>
+    <string name="config_gamepad_calibration_issue_invalid_range">अमान्य सीमा</string>
+    <string name="config_gamepad_calibration_issue_rest_outside_range">विराम मान सीमा से बाहर</string>
+    <string name="config_gamepad_calibration_issue_rest_too_noisy">विराम स्थिति पर्याप्त स्थिर नहीं है</string>
+    <string name="config_gamepad_calibration_phase_unknown">स्थिति उपलब्ध नहीं</string>
+    <string name="config_gamepad_diagnosis_capabilities">कनेक्ट किए गए कंट्रोलर की क्षमताएं:</string>
+    <string name="config_gamepad_diagnosis_descriptor">डिस्क्रिप्टर: <xliff:g id="name" example="Example">%1$s</xliff:g></string>
+    <!-- %1$s is a controller-identity fingerprint derived from its descriptor and capabilities. -->
+    <!-- It is not a handwritten signature or a cryptographic signing operation. -->
+    <string name="config_gamepad_diagnosis_signature">सिग्नेचर: <xliff:g id="name" example="Example">%1$s</xliff:g></string>
+    <string name="config_gamepad_diagnosis_axis">अक्ष <xliff:g id="axis_index" example="0">%1$d</xliff:g> [<xliff:g id="min_value" example="-1.0">%2$s</xliff:g>, <xliff:g id="max_value" example="1.0">%3$s</xliff:g>] flat=<xliff:g id="flat" example="0.05">%4$s</xliff:g> fuzz=<xliff:g id="fuzz" example="0.01">%5$s</xliff:g></string>
+    <string name="config_gamepad_diagnosis_no_controller">(कोई कंट्रोलर कनेक्ट नहीं है)</string>
+    <string name="config_gamepad_diagnosis_samples_not_sent">इनपुट नमूने जानबूझकर MIDlet को नहीं भेजे जाते।</string>
+    <string name="config_destination_system">सिस्टम</string>
+    <string name="config_screen_behavior" tools:ignore="MissingTranslation">स्क्रीन व्यवहार</string>
+    <string name="config_screen_size">स्क्रीन का आकार</string>
+    <string name="config_select_screen_size">स्क्रीन का आकार चुनें</string>
+    <string name="config_current_screen_size">वर्तमान आकार: <xliff:g id="name" example="Example">%1$s</xliff:g></string>
+    <string name="config_custom_resolution">कस्टम रिज़ॉल्यूशन</string>
+    <string name="profile_custom">कस्टम</string>
+    <string name="select_dialog_title">MIDlet चुनें</string>
+    <string name="SIZE_PRESETS">फ़ॉन्ट आकार प्रीसेट</string>
+    <string name="config_color_picker_title">रंग चुनें</string>
+    <string name="config_color_picker_hex">हेक्स रंग</string>
+    <string name="config_color_picker_hint">रंग फ़ील्ड खींचें या छह अंकों का RGB मान दर्ज करें।</string>
+    <string name="config_color_picker_invalid">ठीक छह हेक्साडेसिमल अंक दर्ज करें।</string>
+    <string name="config_color_picker_saturation_value">सैचुरेशन और चमक</string>
+    <string name="config_color_picker_hue">रंगत</string>
+    <string name="config_decrease_value">मान घटाएं</string>
+    <string name="config_increase_value">मान बढ़ाएं</string>
+    <string name="midlet_failure_recovery_title">MIDlet अनपेक्षित रूप से बंद हो गया</string>
+    <string name="midlet_failure_recovery_message">MIDlet अनपेक्षित रूप से बंद हो गया। डायग्नोस्टिक जानकारी स्थानीय रूप से सहेजी गई है। आप JL-Mod Plus का उपयोग जारी रख सकते हैं।</string>
+    <string name="midlet_failure_recovery_message_named">“<xliff:g id="name" example="Example">%1$s</xliff:g>” अनपेक्षित रूप से बंद हो गया। डायग्नोस्टिक जानकारी स्थानीय रूप से सहेजी गई है। आप JL-Mod Plus का उपयोग जारी रख सकते हैं।</string>
+    <plurals name="config_system_properties_value">
+        <item quantity="one"><xliff:g id="count" example="3">%1$d</xliff:g> प्रॉपर्टी</item>
+        <item quantity="other"><xliff:g id="count" example="3">%1$d</xliff:g> प्रॉपर्टीज़</item>
+    </plurals>
+    <string name="config_search_suggestions" tools:ignore="MissingTranslation">सुझाई गई सेटिंग्स</string>
+    <string name="config_search_clear" tools:ignore="MissingTranslation">खोज साफ़ करें</string>
+    <string name="config_search_title" tools:ignore="MissingTranslation">सेटिंग्स खोजें</string>
+    <string name="config_search_hint" tools:ignore="MissingTranslation">सेटिंग खोजें, जैसे MMPX या ओरिएंटेशन</string>
+    <string name="config_search_no_results" tools:ignore="MissingTranslation">कोई मेल खाती सेटिंग नहीं</string>
+    <string name="config_search_upscaling_requires_resolution" tools:ignore="MissingTranslation">बिटमैप अपस्केलिंग कॉन्फ़िगर करने के लिए “रेंडर रिज़ॉल्यूशन” के अंतर्गत “स्वचालित” या 2×–10× चुनें।</string>
+    <string name="config_search_requires_manual_scale" tools:ignore="MissingTranslation">स्केल समायोजित करने के लिए “स्केलिंग मोड” के अंतर्गत “मैन्युअल” चुनें।</string>
+    <string name="config_search_requires_custom_background" tools:ignore="MissingTranslation">बैकग्राउंड रंग संपादित करने के लिए “बैकग्राउंड मोड” के अंतर्गत “कस्टम” चुनें।</string>
+    <string name="config_search_requires_gles" tools:ignore="MissingTranslation">शेडर प्रभाव कॉन्फ़िगर करने के लिए “ग्राफ़िक्स मोड” के अंतर्गत “हार्डवेयर एक्सेलरेशन (OpenGL ES)” चुनें।</string>
+    <string name="config_search_requires_renderer_mode" tools:ignore="MissingTranslation">एसिंक्रोनस स्क्रीन अपडेट कॉन्फ़िगर करने के लिए “ग्राफ़िक्स मोड” के अंतर्गत “सॉफ़्टवेयर” या “हार्डवेयर एक्सेलरेशन (Surface)” चुनें।</string>
+    <string name="config_font_page_title" tools:ignore="MissingTranslation">फ़ॉन्ट सेटिंग्स</string>
+    <string name="config_display_more" tools:ignore="MissingTranslation">टेक्स्ट और परफ़ॉर्मेंस</string>
+    <string name="config_destination_home" tools:ignore="MissingTranslation">होम</string>
+    <string name="config_overview_profile_draft" tools:ignore="MissingTranslation">प्रोफ़ाइल ड्राफ़्ट</string>
+    <string name="config_overview_profile_draft_summary" tools:ignore="MissingTranslation">इस पुनः उपयोग योग्य प्रोफ़ाइल को संपादित करें, फिर टूलबार से अपने बदलाव सहेजें।</string>
+    <string name="config_overview_quick_access" tools:ignore="MissingTranslation">त्वरित पहुंच</string>
+    <string name="config_system_properties_editor_label">प्रॉपर्टीज़</string>
+    <string name="config_overview_enabled" tools:ignore="MissingTranslation">चालू</string>
+    <string name="config_overview_disabled" tools:ignore="MissingTranslation">बंद</string>
+    <string name="config_overview_media_summary" tools:ignore="MissingTranslation">साउंडबैंक और कैमरा</string>
+    <string name="config_overview_hint" tools:ignore="MissingTranslation">अपना गेम कस्टमाइज़ करने के लिए एक श्रेणी चुनें। हर सेटिंग का एक निश्चित स्थान है; ये शॉर्टकट आपको सीधे वहां ले जाते हैं।</string>
+    <string name="config_destination_general">सामान्य</string>
+    <string name="config_basic_display">MIDlet स्क्रीन</string>
+    <string name="config_display_appearance">स्क्रीन का रूप</string>
+    <string name="config_display_rendering">रेंडरिंग</string>
+    <string name="config_image_quality_section" tools:ignore="MissingTranslation">चित्र गुणवत्ता</string>
+    <string name="config_frame_rate_section" tools:ignore="MissingTranslation">फ़्रेम दर</string>
+    <string name="config_fps_position_title" tools:ignore="MissingTranslation">FPS स्थिति</string>
+    <string name="config_display_text">टेक्स्ट और फ़ॉन्ट</string>
+    <string name="config_input_mapping_section" tools:ignore="MissingTranslation">इनपुट और मैपिंग</string>
+    <string name="config_controls_appearance_section" tools:ignore="MissingTranslation">कंट्रोल का रूप</string>
+    <string name="config_controls_virtual_keyboard">वर्चुअल कंट्रोल</string>
+    <string name="config_controls_virtual_keyboard_colors">वर्चुअल कंट्रोल रंग</string>
+    <string name="config_virtual_controls_color_preview">रंग पूर्वावलोकन</string>
+    <string name="config_virtual_controls_preview_normal">सामान्य</string>
+    <string name="config_virtual_controls_preview_pressed">दबाया गया</string>
+    <string name="config_controls_maintenance">लेआउट</string>
+    <string name="config_controls_skin_help">कस्टम चित्रों का उपयोग करके कीपैड बटन, डी-पैड और एनालॉग स्टिक का रूप बदलता है।</string>
+    <string name="config_controls_color_button_normal">सामान्य बटन</string>
+    <string name="config_controls_color_button_pressed">दबाया गया बटन</string>
+    <string name="config_controls_color_label_normal">सामान्य लेबल</string>
+    <string name="config_controls_color_label_pressed">दबाया गया लेबल</string>
+    <string name="config_controls_color_outline_short">आउटलाइन</string>
+    <string name="config_controls_disabled_hint">वर्चुअल कंट्रोल वर्तमान में बंद हैं। आप इन्हें फिर भी यहां कस्टमाइज़ कर सकते हैं।</string>
+    <string name="config_controls_opacity_help" formatted="false">वर्चुअल कंट्रोल की अपारदर्शिता तय करता है। 0% पर कंट्रोल पारदर्शी होते हैं और 100% पर अतिरिक्त पारदर्शिता लागू नहीं होती।</string>
+    <string name="config_controls_opaque_outside">MIDlet स्क्रीन के बाहर कंट्रोल को बिना पारदर्शिता के दिखाएं</string>
+    <string name="config_controls_opaque_outside_help">यह विकल्प चालू होने पर MIDlet स्क्रीन से पूरी तरह बाहर के कंट्रोल बिना अतिरिक्त पारदर्शिता के दिखते हैं। स्क्रीन पर आने वाले कंट्रोल चुनी गई अपारदर्शिता का उपयोग करते हैं।</string>
+    <string name="config_controls_connect_controller">कैलिब्रेट करने के लिए कंट्रोलर कनेक्ट करें</string>
+    <string name="config_controls_color_skin_notice">पूरे बटन वाली स्किन डिफ़ॉल्ट बटन रंग, आकार और आउटलाइन को बदल सकती है।</string>
+    <string name="config_current_value">वर्तमान मान</string>
+    <string name="config_maintenance">रीसेट और डेटा</string>
+    <string name="config_midlet_actions" tools:ignore="MissingTranslation">MIDlet कार्रवाइयां</string>
+    <string name="config_profile_maintenance" tools:ignore="MissingTranslation">प्रोफ़ाइल कार्रवाइयां</string>
+    <string name="config_reset_profile_settings" tools:ignore="MissingTranslation">प्रोफ़ाइल ड्राफ़्ट रीसेट करें</string>
+    <string name="config_reset_profile_settings_summary" tools:ignore="MissingTranslation">इस ड्राफ़्ट की सेटिंग्स और वर्चुअल कंट्रोल को डिफ़ॉल्ट पर पुनर्स्थापित करें।</string>
+    <string name="config_system_compatibility" tools:ignore="MissingTranslation">एमुलेशन कम्पैटिबिलिटी</string>
+    <string name="config_reset_all_settings">MIDlet कॉन्फ़िगरेशन रीसेट करें</string>
+    <string name="config_reset_all_settings_summary">इस MIDlet का डेटा हटाए बिना इसकी सेटिंग्स और वर्चुअल कंट्रोल को डिफ़ॉल्ट पर पुनर्स्थापित करें।</string>
+    <string name="config_delete_app_data">MIDlet डेटा हटाएं</string>
+    <string name="config_delete_app_data_summary">सेव डेटा सहित इस MIDlet का डेटा स्थायी रूप से हटाएं। इसकी सेटिंग्स सुरक्षित रहेंगी।</string>
+    <string name="config_message_reset_settings">MIDlet कॉन्फ़िगरेशन और वर्चुअल कंट्रोल को डिफ़ॉल्ट पर पुनर्स्थापित करें? सहेजा गया डेटा सुरक्षित रहेगा। कोई भी लिंक की गई प्रोफ़ाइल अब फ़ॉलो नहीं होगी।</string>
+    <string name="config_message_reset_profile_settings">इस प्रोफ़ाइल की सेटिंग्स और वर्चुअल कंट्रोल को डिफ़ॉल्ट पर रीसेट करें? आप सहेजने से पहले संपादित या रद्द कर सकते हैं।</string>
+    <string name="config_message_delete_app_data">इस MIDlet द्वारा बनाए गए सभी सेव और डेटा स्थायी रूप से हटाएं? MIDlet सेटिंग्स नहीं हटेंगी।</string>
+    <string name="config_lock_custom_resolution_ratio">आस्पेक्ट रेशियो लॉक करें</string>
+    <string name="config_swap_screen_size">चौड़ाई और ऊंचाई बदलें</string>
+    <string name="profile_builtin_settings">JL-Mod डिफ़ॉल्ट</string>
+    <string name="profile_default_badge_short">नए MIDlets के लिए डिफ़ॉल्ट</string>
+    <string name="profile_template_summary">सहेजी गई MIDlet सेटिंग्स।</string>
+    <string name="profile_name_exists">इस नाम की एक प्रोफ़ाइल पहले से मौजूद है।</string>
+    <string name="profile_delete_template_message">प्रोफ़ाइल “<xliff:g id="profile_name" example="Action Games">%1$s</xliff:g>” हटाएं? इसका उपयोग करने वाले MIDlets अपनी वर्तमान सेटिंग्स बनाए रखेंगे, लेकिन उन्हें भविष्य के अपडेट नहीं मिलेंगे।</string>
+    <string name="profile_template_operation_failed">प्रोफ़ाइल कार्रवाई पूरी नहीं की जा सकी।</string>
+    <string name="config_help_screen_size">MIDlet द्वारा उपयोग किया जाने वाला वर्चुअल Java ME स्क्रीन रिज़ॉल्यूशन सेट करता है।</string>
+    <string name="config_help_orientation">MIDlet चलते समय स्क्रीन का ओरिएंटेशन चुनता है।</string>
+    <string name="config_help_scale_type">चुनें कि गेम डिस्प्ले में कैसे फ़िट हो। कस्टम स्केल सेट करने के लिए “मैन्युअल” चुनें।</string>
+    <string name="config_help_scale_ratio" formatted="false">प्रदर्शित आकार को 1% से 1000% तक समायोजित करता है। 100% पर गेम अपने मूल आकार का उपयोग करता है; बड़े मान स्क्रीन से बाहर जा सकते हैं।</string>
+    <string name="config_help_lock_custom_resolution_ratio">कस्टम रिज़ॉल्यूशन संपादित करते समय आस्पेक्ट रेशियो बनाए रखता है।</string>
+    <string name="config_help_virtual_keyboard">इस MIDlet के लिए ऑन-स्क्रीन कंट्रोल दिखाता है।</string>
+    <string name="config_help_touch_input">MIDlet को टचस्क्रीन से पॉइंटर इनपुट प्राप्त करने देता है।</string>
+    <string name="config_help_background">MIDlet स्क्रीन के चारों ओर खाली स्थान भरता है।</string>
+    <string name="config_background_mode">बैकग्राउंड मोड</string>
+    <string name="config_background_custom">कस्टम</string>
+    <string name="config_background_theme">थीम</string>
+    <string name="config_background_immersive">इमर्सिव</string>
+    <string name="config_background_theme_help">MIDlet स्क्रीन के चारों ओर JL-Mod Plus थीम रंग उपयोग करता है।</string>
+    <string name="config_background_immersive_help">MIDlet स्क्रीन से लिए गए रंगों से खाली स्थान भरता है।</string>
+    <string name="config_background_dynamic">डायनामिक रंग</string>
+    <string name="config_background_dynamic_help">एक ठोस रंग उपयोग करता है जो MIDlet स्क्रीन के अनुसार सहजता से बदलता है।</string>
+    <string name="config_background_custom_color">बैकग्राउंड रंग</string>
+    <string name="config_help_background_custom_color">MIDlet स्क्रीन के चारों ओर खाली स्थान का रंग सेट करता है।</string>
+    <string name="config_help_skin">MIDlet स्क्रीन के चारों ओर एक वैकल्पिक चित्र या फ़्रेम दिखाता है।</string>
+    <string name="config_help_screen_gravity">खाली स्थान होने पर MIDlet स्क्रीन की स्थिति तय करता है।</string>
+    <string name="config_help_screen_padding">MIDlet स्क्रीन और डिस्प्ले क्षेत्र के किनारे के बीच पिक्सेल में पैडिंग जोड़ता है।</string>
+    <string name="config_help_filter">स्केल होने पर MIDlet स्क्रीन को स्मूद बनाने के लिए लीनियर फ़िल्टरिंग उपयोग करता है।</string>
+    <string name="config_warning_filter_shader">लीनियर फ़िल्टरिंग स्क्रीन शेडर से पहले इनपुट को स्मूद करती है और आउटपुट की तीक्ष्णता कम कर सकती है।</string>
+    <string name="config_help_immediate">MIDlet इवेंट्स को कतार में रखने के बजाय तुरंत प्रोसेस करता है। इससे प्रतिक्रिया तेज़ हो सकती है, लेकिन कुछ MIDlets अस्थिर हो सकते हैं।</string>
+    <string name="config_help_graphics_mode">MIDlet स्क्रीन के लिए रेंडरिंग पथ चुनता है। हार्डवेयर एक्सेलरेशन परफ़ॉर्मेंस बढ़ा सकता है, लेकिन कम्पैटिबिलिटी डिवाइस के अनुसार भिन्न होती है।</string>
+    <string name="config_help_shader">प्रदर्शित होने से पहले MIDlet फ़्रेम पर एक शेडर लागू करता है।</string>
+    <string name="config_help_shader_tuning">उपलब्ध कंट्रोल चयनित शेडर पर निर्भर करते हैं।</string>
+    <string name="config_help_parallel_redraw">फ़्रेम प्रदर्शन को एसिंक्रोनस रूप से शेड्यूल करता है। इससे कुछ डिवाइस पर परफ़ॉर्मेंस बढ़ सकता है।</string>
+    <string name="config_help_force_fullscreen">MIDlet शुरू होने पर कमांड बार छिपाता है। खेलते समय MIDlet इसे फिर दिखा सकता है।</string>
+    <string name="config_help_fps_limit">1× एमुलेशन गति पर FPS सीमा सेट करता है। प्रभावी सीमा एमुलेशन गति के अनुसार बदलती है; 0 (अधिकतम) डिस्प्ले की अधिकतम रिफ़्रेश दर उपयोग करता है।</string>
+    <string name="config_timing_mode_full_guest">एमुलेशन समय</string>
+    <string name="config_timing_mode_real_wall">सिस्टम समय</string>
+    <string name="config_help_emulation_speed">इस सेशन के लिए MIDlet के समर्थित टाइमर और विलंब को समायोजित करता है। एमुलेशन समय चुने जाने पर तारीख और समय भी चुनी गई गति के अनुसार बदलते हैं। मीडिया प्लेबैक और Android इंटरफ़ेस सामान्य गति पर रहते हैं।</string>
+    <string name="config_help_timing_mode">चुनता है कि MIDlet एमुलेशन समय उपयोग करे या सिस्टम समय। सापेक्ष विलंब एमुलेशन गति के साथ स्केल रहते हैं।</string>
+    <string name="config_help_timing_unavailable">इस MIDlet इंस्टॉलेशन के लिए समय सेटिंग्स उपलब्ध नहीं हैं। इन्हें सक्षम करने के लिए MIDlet को पुनः इंस्टॉल या पुनः रूपांतरित करें।</string>
+    <string name="config_help_generic_color">इस दृश्य तत्व का रंग सेट करता है।</string>
+    <string name="config_help_encoding">microedition.encoding के रूप में रिपोर्ट की जाने वाली कैरेक्टर एन्कोडिंग चुनता है।</string>
+    <string name="config_edit_system_properties">सिस्टम प्रॉपर्टीज़ संपादित करें</string>
+    <string name="config_help_system_properties">MIDlet को रिपोर्ट की जाने वाली उन्नत Java ME प्रॉपर्टीज़ सेट करता है।</string>
+    <string name="config_help_system_properties_long">प्रति पंक्ति एक प्रॉपर्टी “नाम: मान” के रूप में संपादित करें। गलत मान कम्पैटिबिलिटी को प्रभावित कर सकते हैं।</string>
+    <string name="config_system_properties_info">अधिकांश MIDlets को यहां बदलाव की आवश्यकता नहीं होती।</string>
+    <string name="config_font_sizes">फ़ॉन्ट आकार</string>
+    <string name="config_help_font_sizes">MIDlet के लिए छोटे, मध्यम और बड़े Java ME फ़ॉन्ट आकार सेट करता है।</string>
+    <string name="config_help_font_sizes_long">Java ME फ़ॉन्ट आकार पिक्सेल में, या Android फ़ॉन्ट स्केलिंग सक्षम होने पर स्केल्ड इकाइयों में सेट करता है। संतुलित टेक्स्ट के लिए इन्हें एक साथ बदलें।</string>
+    <string name="config_font_sizes_value">छोटा <xliff:g id="small_size" example="12">%1$s</xliff:g> · मध्यम <xliff:g id="medium_size" example="16">%2$s</xliff:g> · बड़ा <xliff:g id="large_size" example="20">%3$s</xliff:g></string>
+    <string name="config_help_font_presets">सामान्य Java ME स्क्रीन रिज़ॉल्यूशन के अनुकूल फ़ॉन्ट आकार लागू करता है।</string>
+    <string name="config_help_font_dimensions">Java ME फ़ॉन्ट आकार पर Android का फ़ॉन्ट स्केल लागू करता है।</string>
+    <string name="config_help_font_aa">रेंडर किए गए टेक्स्ट के किनारों को स्मूद बनाता है।</string>
+    <string name="config_help_key_layout">MIDlet को रिपोर्ट की जाने वाली कुंजी-कोड योजना चुनता है।</string>
+    <string name="config_help_key_mapping">फ़िज़िकल Android कुंजियों और बटनों को Java ME कीपैड कार्रवाइयों से मैप करता है।</string>
+    <string name="config_help_vk_button_shape">डिफ़ॉल्ट कीपैड बटन का आकार सेट करता है। डी-पैड और एनालॉग स्टिक के अपने आकार होते हैं।</string>
+    <string name="config_help_vk_feedback">यदि सेटिंग्स में वाइब्रेशन सक्षम है, तो वर्चुअल कंट्रोल दबाने पर कंपन होता है।</string>
+    <string name="config_help_vk_hide_delay">जब कंट्रोल MIDlet स्क्रीन को ढकते हैं, तो इस देरी के बाद उन्हें छिपा देता है। 0 मान स्वतः छिपाने को अक्षम करता है।</string>
+    <string name="config_help_reset_layout">अन्य MIDlet सेटिंग्स बदले बिना वर्चुअल कंट्रोल लेआउट पुनर्स्थापित करता है।</string>
+    <string name="config_help_skip_resume">पहले सफल startApp() कॉल के बाद, MIDlet को विराम के बाद जारी रखने पर इस विधि के अगले कॉल छोड़ दिए जाते हैं। इसका उपयोग केवल उन MIDlets के लिए करें जो विराम के बाद जारी रखने पर विफल होते हैं।</string>
+    <string name="config_help_soundbank">MIDI सिंथेसिस के लिए साउंडबैंक चुनता है। पहले से रिकॉर्ड किए गए ऑडियो पर इसका असर नहीं पड़ता।</string>
+    <string name="profile_create_title">प्रोफ़ाइल बनाएं</string>
+    <string name="profile_rename_title">प्रोफ़ाइल का नाम बदलें</string>
+    <string name="presets">प्रोफ़ाइल</string>
+    <string name="preset_use">प्रोफ़ाइल उपयोग करें</string>
+    <string name="preset_save_as">प्रोफ़ाइल के रूप में सहेजें</string>
+    <string name="preset_custom_configuration">कस्टम कॉन्फ़िगरेशन</string>
+    <string name="preset_based_on_modified">इस MIDlet का वर्तमान कॉन्फ़िगरेशन “<xliff:g id="profile_name" example="Action Games">%1$s</xliff:g>” से भिन्न है।</string>
+    <string name="preset_builtin">JL-Mod डिफ़ॉल्ट</string>
+    <string name="preset_builtin_summary">अंतर्निहित MIDlet सेटिंग्स और वर्चुअल कंट्रोल।</string>
+    <string name="preset_picker_title">प्रोफ़ाइल उपयोग करें</string>
+    <string name="preset_manage">प्रोफ़ाइल प्रबंधित करें</string>
+    <string name="profile_more_actions"><xliff:g id="profile_name" example="Action Games">%1$s</xliff:g> के लिए अधिक कार्रवाइयां</string>
+    <string name="profile_create_summary">अन्य MIDlets के लिए पुनः उपयोग योग्य सेटअप सहेजें।</string>
+    <string name="preset_application_settings">MIDlet सेटिंग्स</string>
+    <string name="preset_includes_keyboard_layout">वर्चुअल कंट्रोल लेआउट शामिल है।</string>
+    <string name="preset_virtual_keyboard_on">वर्चुअल कंट्रोल सक्षम</string>
+    <string name="preset_virtual_keyboard_off">वर्चुअल कंट्रोल अक्षम</string>
+    <string name="preset_apply">लागू करें</string>
+    <string name="preset_apply_failed_summary">यह प्रोफ़ाइल लागू नहीं की जा सकी। स्रोत जांचें और पुनः प्रयास करें।</string>
+    <string name="preset_choose_parts">चुनें कि क्या लागू करना है</string>
+    <string name="preset_name">नाम</string>
+    <string name="preset_save_help">इस MIDlet की सेटिंग्स और उपलब्ध होने पर इसका वर्चुअल कंट्रोल लेआउट प्रोफ़ाइल के रूप में सहेजता है। यह MIDlet इस प्रोफ़ाइल का उपयोग करेगा और इसके भविष्य के अपडेट प्राप्त करेगा।</string>
+    <string name="preset_update">“<xliff:g id="profile_name" example="Action Games">%1$s</xliff:g>” अपडेट करें</string>
+    <string name="preset_update_title">“<xliff:g id="profile_name" example="Action Games">%1$s</xliff:g>” अपडेट करें?</string>
+    <string name="preset_update_summary">“<xliff:g id="profile_name" example="Action Games">%1$s</xliff:g>” को इस MIDlet की वर्तमान सेटिंग्स और उपलब्ध होने पर वर्चुअल कंट्रोल लेआउट से बदलता है। इस प्रोफ़ाइल का उपयोग करने वाले अन्य MIDlets को अगली बार शुरू होने पर ये बदलाव मिलेंगे।</string>
+    <string name="preset_update_confirm">अपडेट करें</string>
+    <string name="preset_saved_unlinked_warning">प्रोफ़ाइल सहेजी गई, लेकिन इस MIDlet को इससे भविष्य के अपडेट नहीं मिलेंगे।</string>
+    <string name="profile_default_fallback_notice">डिफ़ॉल्ट प्रोफ़ाइल “<xliff:g id="profile_name" example="Action Games">%1$s</xliff:g>” का उपयोग नहीं किया जा सका। यह अनुपलब्ध, अधूरी या अपठनीय हो सकती है। नए MIDlets के लिए अब “JL-Mod डिफ़ॉल्ट” डिफ़ॉल्ट है।</string>
+    <string name="preset_discard_changes_title">बदलाव छोड़ें?</string>
+    <string name="preset_discard_changes_summary">यह प्रोफ़ाइल ड्राफ़्ट अभी तक सहेजा नहीं गया है।</string>
+    <string name="preset_continue_editing">संपादन जारी रखें</string>
+    <string name="preset_discard_changes">छोड़ें</string>
+    <string name="preset_name_exists">इस नाम की एक प्रोफ़ाइल पहले से मौजूद है।</string>
+    <string name="preset_invalid_name">मान्य प्रोफ़ाइल नाम दर्ज करें।</string>
+    <string name="preset_manager_default_section">नए MIDlets के लिए डिफ़ॉल्ट</string>
+    <string name="preset_manager_presets_section">मेरी प्रोफ़ाइल</string>
+    <string name="preset_manager_keyboard_section">सहेजे गए वर्चुअल कंट्रोल लेआउट</string>
+    <string name="preset_default_policy_summary">नया MIDlet इंस्टॉल होने पर लागू होता है।</string>
+    <string name="preset_keyboard_layout_unavailable">वर्चुअल कंट्रोल लेआउट उपलब्ध नहीं है।</string>
+    <string name="edit_preset">प्रोफ़ाइल संपादित करें</string>
+    <string name="preset_edit_title">प्रोफ़ाइल संपादित करें: <xliff:g id="profile_name" example="Action Games">%1$s</xliff:g></string>
+    <string name="preset_unavailable_section">अनुपलब्ध</string>
+    <string name="preset_unavailable_summary">यह प्रोफ़ाइल लोड नहीं की जा सकी। इसका नाम बदलें या इसे हटाएं।</string>
+    <string name="preset_change_default">बदलें</string>
+    <string name="preset_default_picker_title">नए MIDlets के लिए डिफ़ॉल्ट</string>
+    <string name="profile_follows_updates">भविष्य के प्रोफ़ाइल अपडेट फ़ॉलो करता है।</string>
+    <string name="profile_apply_whole">पूरी प्रोफ़ाइल</string>
+    <string name="profile_apply_whole_follows">सेटिंग्स और लेआउट बदलें; भविष्य के अपडेट फ़ॉलो करें।</string>
+    <string name="profile_apply_whole_without_layout">सेटिंग्स बदलें, स्थानीय लेआउट हटाएं और अपडेट फ़ॉलो करें।</string>
+    <string name="profile_apply_settings_only">केवल MIDlet सेटिंग्स</string>
+    <string name="profile_apply_settings_keeps_layout">इस MIDlet का लेआउट रखें; कस्टम कॉन्फ़िगरेशन उपयोग करें।</string>
+    <string name="profile_apply_layout_only">केवल वर्चुअल कंट्रोल लेआउट</string>
+    <string name="profile_apply_layout_keeps_settings">इस MIDlet की सेटिंग्स रखें; कस्टम कॉन्फ़िगरेशन उपयोग करें।</string>
+    <string name="config_analog_stick">एनालॉग स्टिक</string>
+    <string name="config_analog_stick_summary">प्राथमिक एनालॉग स्टिक के लिए बंद, 4-दिशा, 8-दिशा या न्यूमेरिक कीपैड चुनें। कंट्रोलर बटन कुंजी मैपिंग उपयोग करते हैं।</string>
+    <string name="config_analog_stick_off">बंद</string>
+    <string name="config_controller_help_body_compact">कंट्रोलर बटन कीबोर्ड और फ़ोन कुंजियों जैसी ही कुंजी मैपिंग उपयोग करते हैं। एनालॉग स्टिक MIDlet को केवल दिशा इनपुट भेजता है। Android वापस बटन अपना सामान्य व्यवहार रखता है; M पर मैप किया गया कोई भी फ़िज़िकल बटन रनटाइम MIDlet मेनू खोलता है।</string>
+    <string name="config_show_fps_title" tools:ignore="MissingTranslation">FPS दिखाएं</string>
+    <string name="config_show_fps_help" tools:ignore="MissingTranslation">खेलते समय फ़्रेम दर प्रदर्शित करता है।</string>
+    <string name="config_search_requires_fps" tools:ignore="MissingTranslation">स्थिति बदलने के लिए “FPS दिखाएं” चालू करें।</string>
+    <string name="midlet_running_notification_title">MIDlet चल रहा है</string>
+    <string name="midlet_running_notification_text"><xliff:g id="name" example="Example">%1$s</xliff:g> चल रहा है।</string>
+    <string name="midlet_running_notification_channel">MIDlet रनटाइम</string>
+    <string name="config_gamepad_directions_numeric_v2">न्यूमेरिक कीपैड</string>
+    <string name="midlet_file_permission_title">स्टोरेज एक्सेस</string>
+    <string name="midlet_file_permission_read">यह MIDlet फ़ाइलें पढ़ना चाहता है।</string>
+    <string name="midlet_file_permission_write">यह MIDlet फ़ाइलें बनाना, बदलना या हटाना चाहता है।</string>
+    <string name="midlet_file_permission_allow_once">केवल एक बार अनुमति दें</string>
+    <string name="midlet_file_permission_allow_session">MIDlet चलते समय अनुमति दें</string>
+    <string name="midlet_file_permission_allow_always">हमेशा अनुमति दें</string>
+    <string name="midlet_file_permission_deny">हमेशा अस्वीकार करें</string>
+    <string name="midlet_permissions_settings_title">स्टोरेज एक्सेस अनुमतियां</string>
+    <string name="midlet_permissions_read">फ़ाइलें पढ़ें</string>
+    <string name="midlet_permissions_write">फ़ाइलें बदलें</string>
+    <string name="midlet_permissions_ask">पूछें</string>
+    <string name="midlet_permissions_allow">हमेशा अनुमति दें</string>
+    <string name="midlet_permissions_deny">अस्वीकार करें</string>
+    <string name="midlet_permissions_save_failed">स्टोरेज सेटिंग्स सहेजी नहीं जा सकीं।</string>
+    <string name="config_avoid_camera_cutout_title">कैमरा कटआउट से बचें</string>
+    <string name="config_avoid_camera_cutout_summary">MIDlet स्क्रीन और वर्चुअल कंट्रोल को कैमरा या स्क्रीन कटआउट से दूर रखता है।</string>
+    <string name="midlet_permissions_write_summary">इसमें फ़ाइलें बनाना और हटाना शामिल है।</string>
+    <string name="midlet_legacy_import_title">पुराने Siemens सेव</string>
+    <string name="midlet_legacy_import_action">पुरानी सेव फ़ाइल चुनें</string>
+    <string name="midlet_legacy_import_summary">पुरानी सेव फ़ाइल को इस MIDlet के निजी Siemens स्टोरेज में कॉपी करें। पहले MIDlet को रोकें।</string>
+    <string name="midlet_legacy_import_success">फ़ाइल इस MIDlet के निजी स्टोरेज में कॉपी हो गई।</string>
+    <string name="midlet_legacy_import_failed">आयात विफल रहा। MIDlet रोकें और सुनिश्चित करें कि गंतव्य फ़ाइल पहले से मौजूद नहीं है।</string>
+    <string name="midlet_storage_mode_title">स्टोरेज मोड</string>
+    <string name="midlet_storage_mode_shared">वर्चुअल</string>
+    <string name="midlet_storage_mode_android">Android</string>
+    <string name="midlet_storage_mode_shared_summary">वर्किंग फ़ोल्डर में साझा फ़ोल्डर उपयोग करें।</string>
+    <string name="midlet_storage_mode_android_summary">Android की अनुमतियों के अनुसार Android के साझा स्टोरेज का उपयोग करें। MIDlet की फ़ाइल ऐक्सेस अनुमतियां वर्चुअल मोड से अलग होती हैं।</string>
+    <string name="config_system_properties_reset" tools:ignore="MissingTranslation">डिफ़ॉल्ट पर रीसेट करें</string>
+    <string name="config_system_properties_reset_title" tools:ignore="MissingTranslation">सिस्टम प्रॉपर्टीज़ रीसेट करें?</string>
+    <string name="config_system_properties_reset_message" tools:ignore="MissingTranslation">एडिटर सामग्री को वर्तमान JL-Mod Plus डिफ़ॉल्ट से बदलें? अन्य सेटिंग्स अपरिवर्तित रहेंगी। रीसेट लागू करने के लिए सहेजें।</string>
+    <string name="config_asset_add">+ फ़ाइल से जोड़ें</string>
+    <string name="config_asset_copy_hint">वर्किंग फ़ोल्डर में कॉपी हो जाती है; मूल फ़ाइल अपने स्थान पर रहती है।</string>
+    <string name="config_asset_name">फ़ाइल का नाम</string>
+    <string name="config_asset_delete_confirmation">वर्किंग फ़ोल्डर से “<xliff:g id="name" example="Example">%1$s</xliff:g>” हटाएं? अन्य MIDlets भी इस फ़ाइल का उपयोग कर सकते हैं। अन्य स्थानों की प्रतियां प्रभावित नहीं होंगी।</string>
+    <string name="config_asset_imported">कॉपी और चयनित: <xliff:g id="name" example="Example">%1$s</xliff:g></string>
+    <string name="config_asset_reused">मौजूदा फ़ाइल चयनित: <xliff:g id="name" example="Example">%1$s</xliff:g></string>
+    <string name="config_asset_renamed">नाम बदलकर <xliff:g id="name" example="Example">%1$s</xliff:g> किया गया</string>
+    <string name="config_asset_deleted"><xliff:g id="name" example="Example">%1$s</xliff:g> हटाया गया</string>
+    <string name="config_asset_invalid">असमर्थित या अमान्य फ़ाइल।</string>
+    <string name="config_asset_operation_failed">फ़ाइल कार्रवाई पूरी नहीं की जा सकी।</string>
+    <string name="config_save_failed" tools:ignore="MissingTranslation">सेटिंग्स सहेजी नहीं जा सकीं। आपके बदलाव अभी भी खुले हैं—पुनः प्रयास करें।</string>
+    <string name="config_asset_busy">पहले वर्तमान फ़ाइल कार्रवाई पूरी करें।</string>
+    <string name="config_quick_settings" tools:ignore="MissingTranslation">त्वरित सेटिंग्स</string>
+    <string name="config_all_settings" tools:ignore="MissingTranslation">सभी सेटिंग्स</string>
+    <string name="profile_local_changes_pending" tools:ignore="MissingTranslation">स्थानीय बदलाव प्रोफ़ाइल में सहेजे नहीं गए हैं</string>
+    <string name="profile_local_configuration_summary" tools:ignore="MissingTranslation">केवल इस MIDlet के लिए सेटिंग्स</string>
+    <string name="profile_not_following" tools:ignore="MissingTranslation">“<xliff:g id="profile_name" example="Action Games">%1$s</xliff:g>” पर आधारित · अपडेट फ़ॉलो नहीं हो रहे</string>
+    <string name="profile_stop_following" tools:ignore="MissingTranslation">प्रोफ़ाइल फ़ॉलो करना बंद करें</string>
+    <string name="profile_follow_again" tools:ignore="MissingTranslation">प्रोफ़ाइल फिर से फ़ॉलो करें</string>
+    <string name="profile_follow_again_summary" tools:ignore="MissingTranslation">इस MIDlet की स्थानीय सेटिंग्स और वर्चुअल कंट्रोल को नवीनतम “<xliff:g id="profile_name" example="Action Games">%1$s</xliff:g>” प्रोफ़ाइल से बदलें और इसके भविष्य के अपडेट फ़ॉलो करें?</string>
+</resources>

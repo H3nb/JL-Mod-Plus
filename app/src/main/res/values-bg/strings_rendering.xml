@@ -1,0 +1,212 @@
+<?xml version="1.0" encoding="utf-8"?>
+<!-- Rendering pipeline, internal resolution, bitmap upscaling, shaders, and built-in visual effects. -->
+<resources xmlns:tools="http://schemas.android.com/tools" xmlns:xliff="urn:oasis:names:tc:xliff:document:1.2">
+    <string name="identity_filter">Няма (най-бързо)</string>
+    <string name="invalid_resolution_not_saved">Невалидна резолюция. Шаблонът не беше запазен.</string>
+    <string name="msg_error_loading_shader">Неподдържан шейдър. Използва се стандартният шейдър.</string>
+    <string name="parallel_screen_redrawing">Асинхронно обновяване на екрана</string>
+    <string name="shader_tuning">Настройка на шейдъра</string>
+    <string name="SWAP_SIZES">Размяна на ширина и височина</string>
+    <string name="fps_limit_maximum">Максимум</string>
+    <string name="remove_screen_preset">Премахване на шаблона за резолюция</string>
+    <string name="perf_overlay_position_help">Изберете ъгъл.</string>
+    <string name="perf_overlay_top_left">Горе вляво</string>
+    <string name="perf_overlay_top_right">Горе вдясно</string>
+    <string name="perf_overlay_bottom_left">Долу вляво</string>
+    <string name="perf_overlay_bottom_right">Долу вдясно</string>
+    <string name="internal_resolution_title" tools:ignore="MissingTranslation">Резолюция на рендиране</string>
+    <string name="internal_resolution_auto" tools:ignore="MissingTranslation">Автоматично</string>
+    <string name="internal_resolution_description" tools:ignore="MissingTranslation">Задава резолюцията за рендиране на поддържаната 2D и 3D графика. „Автоматично“ избира мащаб според областта за показване и ограниченията на устройството. Рестартирайте MIDlet, за да приложите промяната.</string>
+    <string name="bitmap_upscaling_title" tools:ignore="MissingTranslation">Мащабиране на растерни изображения</string>
+    <string name="bitmap_upscaling_description" tools:ignore="MissingTranslation">MMPX и xBR Lv3 подобряват неизменяеми 2D изображения и неизменяеми непрозрачни текстури на Micro3D модели. Текстурите M3G остават непроменени. Рестартирайте MIDlet, за да приложите промяната.</string>
+    <string name="bitmap_upscaling_nearest" tools:ignore="MissingTranslation">Най-близък съсед</string>
+    <string name="bitmap_upscaling_bilinear" tools:ignore="MissingTranslation">Билинейно</string>
+    <string name="bitmap_upscaling_mmpx" tools:ignore="MissingTranslation">MMPX</string>
+    <string name="bitmap_upscaling_edge_aware" tools:ignore="MissingTranslation">xBR Lv3</string>
+    <!-- Prototyping only: localized UI copy is pending design review. -->
+    <string name="render_shader_effects">Шейдърни ефекти</string>
+    <string name="render_pipeline_title">Графичен конвейер</string>
+    <string name="render_shader_preset">Шейдърен шаблон</string>
+    <string name="render_shader_picker_help">Комбинирайте вградени и ваши наследени шейдъри в подреден стек от ефекти.</string>
+    <string name="render_shader_requires_gles">Шейдърите се запазват, но се прилагат само когато е избран OpenGL ES.</string>
+    <string name="render_shader_missing">Избраният шейдър не е в библиотеката. Изберете друг шаблон или възстановете файловете му.</string>
+    <string name="render_shader_parameters">Параметри на шейдъра</string>
+    <string name="render_shader_reset_parameters">Нулиране на параметрите</string>
+    <string name="render_shader_passes">Преминавания на шейдъра</string>
+    <string name="render_shader_pass_count"><xliff:g id="count" example="2">%1$d</xliff:g> преминавания</string>
+    <string name="render_shader_pass_hint">Прегледайте етапите от избрания GLSLP шаблон.</string>
+    <string name="render_pass_filter">Входно филтриране</string>
+    <string name="render_pass_output">Изходен размер (ширина × височина)</string>
+    <string name="render_pipeline_unavailable">Шаблонът не е наличен</string>
+    <string name="render_game_output">Изход на играта</string>
+    <string name="render_logical_screen_help">Логически размер, докладван на играта.</string>
+    <string name="render_internal_resolution">Вътрешна резолюция</string>
+    <string name="render_internal_unavailable">Само оригинална (1×). По-високи резолюции на рендиране не са налични за тази конфигурация.</string>
+    <string name="render_display_renderer">Рендерер за показване</string>
+    <string name="render_shader_processing">Обработка с шейдъри</string>
+    <string name="render_display_scaling">Мащабиране на дисплея</string>
+    <string name="render_display_viewport">Прозорец на играта</string>
+    <string name="render_texture_filtering">Филтър за мащабиране на екрана</string>
+    <string name="render_texture_filtering_help">Избира „Най-близък“ или „Линеен“ за финалното изображение на играта. Ефектите може да го заменят.</string>
+    <string name="render_viewport_note">Размерът на прозореца се определя от оформлението на екрана преди планирането на шейдърните преминавания. Стрелките показват потока на изображението, а не реда на изчисленията за оформлението.</string>
+    <string name="render_pipeline_help">Вижте как кадърът на играта достига до дисплея и редактирайте всеки етап.</string>
+    <string name="render_no_shader">Изберете шаблон, за да промените облика на играта.</string>
+    <string name="render_shader_adjust">Настройване на параметри</string>
+    <string name="render_legacy_tuning_hint">Фино настройте този наследен ефект.</string>
+    <string name="render_shader_customization">Персонализиране</string>
+    <string name="render_adjustable_count">Регулируеми параметри: <xliff:g id="count" example="3">%1$d</xliff:g></string>
+    <string name="render_pass_summary"><xliff:g id="count" example="3">%1$d</xliff:g> етапа · Зададени от шаблона</string>
+    <string name="render_shader_preset_note">Етапите на шейдъра са зададени от шаблона. Можете да ги разглеждате, без да променяте реда им.</string>
+    <string name="render_parameters_hint">Плъзнете плъзгача, за да промените стойността. Промените се запазват при отпускане.</string>
+    <string name="render_pass_readonly">Етапите се изпълняват в този ред. Входното филтриране и изходното мащабиране идват от избрания шаблон.</string>
+    <string name="render_pipeline_intro">Пътят от кадровия буфер на играта до вашия екран.</string>
+    <string name="render_native_short">Оригинална (1×)</string>
+    <string name="render_expand_passes">Показване на етапите</string>
+    <string name="render_collapse_passes">Скриване на етапите</string>
+    <string name="render_view_all_passes">Подробности за етапите</string>
+    <string name="render_pipeline_filter_summary">Филтриране на текстури: <xliff:g id="shader_name" example="CRT Classic">%1$s</xliff:g></string>
+    <string name="render_pipeline_note">Оформлението на дисплея определя прозореца преди планирането на шейдърните преминавания. Стъпките показват потока на изображението.</string>
+    <string name="render_shader_change">Избор на друг ефект</string>
+    <string name="render_custom_pipeline">Персонализиран конвейер</string>
+    <string name="render_custom_pipeline_hint">Комбинирайте самостоятелни GLSL шейдъри от вашата папка с шейдъри.</string>
+    <string name="render_custom_order_help">Ефектите се изпълняват отгоре надолу. Наследените настройки от GLSLP остават в сила, освен ако не бъдат променени.</string>
+    <string name="render_custom_empty">Добавете шейдър, за да започнете персонализирана верига.</string>
+    <string name="render_custom_stage_count"><xliff:g id="count" example="3">%1$d</xliff:g> персонализирани шейдърни етапа</string>
+    <string name="render_custom_add">Добавяне на шейдър</string>
+    <string name="render_custom_add_hint">Изберете външен самостоятелен .glsl файл.</string>
+    <string name="render_custom_no_sources">Не са намерени наследени шейдъри. Добавете .ini файлове на шейдъри в папката с шейдъри и отворете настройките отново.</string>
+    <string name="render_custom_scale">Изход: <xliff:g id="scale" example="2">%1$d</xliff:g>× от предишния етап</string>
+    <string name="render_custom_output_scale">Изходен размер за следващия етап</string>
+    <string name="render_custom_final_viewport">Финален изход: показва се на екрана</string>
+    <string name="render_custom_filter">Входен филтър: <xliff:g id="shader_name" example="CRT Classic">%1$s</xliff:g></string>
+    <string name="render_custom_up">Нагоре</string>
+    <string name="render_custom_down">Надолу</string>
+    <string name="render_custom_remove">Премахване</string>
+    <string name="render_custom_cancel">Отказ</string>
+    <string name="render_custom_save">Запазване</string>
+    <string name="render_custom_default">По подразбиране</string>
+    <string name="render_custom_nearest">Най-близък</string>
+    <string name="render_custom_linear">Линеен</string>
+    <string name="render_custom_checking">Проверка на файловете на шейдъра…</string>
+    <string name="render_active_shader">Активен ефект</string>
+    <string name="render_shader_off">Изкл.</string>
+    <string name="render_edit_custom_pipeline">Редактиране на шейдърната верига</string>
+    <string name="render_shader_unavailable">Не е налично: <xliff:g id="shader_name" example="CRT Classic">%1$s</xliff:g></string>
+    <string name="render_no_shader_sources">Не са намерени шейдъри. Добавете наследени .ini файлове на шейдъри в папката с шейдъри, след което отворете настройките отново.</string>
+    <string name="render_shader_mode">Режим на шейдъра</string>
+    <string name="render_mode_selected">Избрано</string>
+    <string name="render_gles_shader_default">OpenGL ES използва оригиналното изображение на играта, когато шейдърните ефекти са изключени.</string>
+    <string name="render_shader_off_help">Без допълнителни визуални ефекти.</string>
+    <string name="render_legacy_mode">Наследен шейдър</string>
+    <string name="render_legacy_mode_help">Изберете .ini файл от папката с шейдъри.</string>
+    <string name="render_legacy_empty">Няма използваеми дефиниции на шейдъри в този .ini файл.</string>
+    <string name="render_legacy_select_variant">Избор на наследен шейдър</string>
+    <string name="render_legacy_variant_description">Дефиниция на шейдър в избрания .ini файл</string>
+    <string name="render_preset_mode">GLSLP шаблон</string>
+    <string name="render_preset_mode_help">Зарежда цял .glslp конвейер със собствените му преминавания.</string>
+    <string name="render_custom_pass_count">Брой преминавания</string>
+    <string name="render_custom_pass_number">Преминаване <xliff:g id="number" example="1">%1$d</xliff:g></string>
+    <string name="render_custom_pick_file">Избор на GLSL файл</string>
+    <string name="render_custom_add_pass">Увеличаване на броя шейдърни преминавания</string>
+    <string name="render_custom_remove_pass">Намаляване на броя шейдърни преминавания</string>
+    <string name="render_shader_selected_name">Активен: <xliff:g id="shader_name" example="CRT Classic">%1$s</xliff:g></string>
+    <string name="render_shader_invalid_picker">Избраният файл не може да се използва. Изберете наследен .ini файл в папката с шейдъри.</string>
+    <string name="render_custom_mode">Тип шейдър</string>
+    <string name="render_custom_mode_legacy">Наследен</string>
+    <string name="render_custom_mode_glsl">GLSL</string>
+    <string name="render_custom_pick_legacy">Избор на наследен шейдър</string>
+    <string name="render_custom_preserve_size">Изход: От шаблона</string>
+    <string name="render_custom_loading">Четене на преминаванията на шаблона…</string>
+    <string name="render_custom_start_fresh">Начало без шаблон (отхвърляне на наследените настройки)</string>
+    <string name="render_effect_default_settings">Стандартни настройки</string>
+    <string name="render_effect_summary_more">+<xliff:g id="count" example="2">%1$d</xliff:g> още</string>
+    <string name="render_effect_legacy_author">От <xliff:g id="shader_name" example="CRT Classic">%1$s</xliff:g></string>
+    <string name="render_effect_legacy_source">Източник: <xliff:g id="shader_name" example="CRT Classic">%1$s</xliff:g></string>
+    <string name="render_effect_removed">Ефектът е премахнат</string>
+    <string name="render_effect_undo">Отмяна</string>
+    <string name="render_effect_catalog_hint">Докоснете ефект, за да го добавите към стека.</string>
+    <string name="render_effect_user_folder_hint">Файловете INI, VSH и FSH трябва да са в папката с шейдъри.</string>
+    <string name="render_effect_legacy_scale_note">Наследените шейдъри се рендират в резолюцията на прозореца на екрана; флаговете OutputResolution и Upscaling в .ini се игнорират.</string>
+    <string name="render_effect_legacy_metadata_missing">Настройките от .ini файла на този шейдър не бяха намерени. Шейдърът все пак може да работи с изходните си файлове.</string>
+    <string name="render_effect_count"><xliff:g id="count" example="2">%1$d</xliff:g> активни</string>
+    <string name="render_effect_add">Добавяне на ефект</string>
+    <string name="render_effect_builtin">Вградени ефекти</string>
+    <string name="render_effect_user">Моите шейдъри</string>
+    <string name="render_effect_user_add">Преглед на .ini файлове</string>
+    <string name="render_effect_user_empty">Не е намерен наследен шейдър в папката с шейдъри.</string>
+    <string name="render_effect_user_file">Избор на наследен .ini файл</string>
+    <string name="render_effect_empty">Добавете ефект, за да персонализирате облика на играта.</string>
+    <string name="render_effect_hint">Ефектите се изпълняват отгоре надолу. Задръжте и плъзнете, за да промените реда.</string>
+    <string name="render_effect_move_up">Преместване нагоре</string>
+    <string name="render_effect_move_down">Преместване надолу</string>
+    <string name="render_effect_remove">Премахване на ефекта</string>
+    <string name="render_effect_no_parameters">Този ефект няма регулируеми параметри.</string>
+    <string name="render_effect_parameter_number">Параметър <xliff:g id="count" example="2">%1$d</xliff:g></string>
+    <string name="render_effect_restore">Нулиране на параметрите</string>
+    <string name="render_effect_missing">Не е налично: <xliff:g id="shader_name" example="CRT Classic">%1$s</xliff:g>. Този вграден ефект не е наличен в тази версия. Премахнете го от стека.</string>
+    <string name="render_effect_limit">Стекът поддържа до 16 шейдърни преминавания (някои ефекти използват повече от едно).</string>
+    <string name="render_effect_unavailable">Шейдърните ефекти не можаха да се стартират. Показва се оригиналното изображение на играта. Опитайте с по-малко ефекти или по-ниска резолюция на рендиране.</string>
+    <string name="render_bitmap_memory_reduced">Паметта не достигна при мащабиране на растерни изображения. Ще се използват оригиналните изображения или по-нисък мащаб. Опитайте по-ниска резолюция на рендиране или освободете памет, след което рестартирайте.</string>
+    <string name="render_texture_memory_reduced">Мащабирането на текстурите Micro3D не успя. Ще се използват оригиналните текстури. Опитайте по-ниска резолюция на рендиране или освободете памет, след което рестартирайте.</string>
+    <string name="render_resolution_reduced">Резолюцията на рендиране беше намалена от <xliff:g id="from_scale" example="4">%1$d</xliff:g>× на <xliff:g id="to_scale" example="2">%2$d</xliff:g>× поради ограничения на паметта или GPU. Опитайте по-ниска настройка или освободете памет, след което рестартирайте.</string>
+    <string name="render_gpu_texture_limit">Изображението на играта надвишава максималния размер на текстурата за GPU дори при 1×. Намалете размера на екрана на MIDlet или сменете графичния режим.</string>
+    <string name="render_gpu_upload_failed">Изображението на играта не можа да бъде заредено в GPU. Повторен опит. Затворете други приложения или сменете графичния режим.</string>
+    <string name="render_effect_gles">Ефектите се запазват, но се рендират само с OpenGL ES.</string>
+    <string name="render_effect_legacy_file_error">Не можа да се зареди валиден наследен шейдър от избрания .ini файл.</string>
+    <string name="effect_color">Настройка на цветовете</string>
+    <string name="effect_color_desc">Регулирайте яркостта, контраста, наситеността, гамата, цветовия тон и монохромния режим.</string>
+    <string name="effect_vignette">Винетиране</string>
+    <string name="effect_vignette_desc">Затъмнява краищата, за да насочи вниманието към центъра.</string>
+    <string name="effect_sharpen">Изостряне</string>
+    <string name="effect_sharpen_desc">Подчертава детайлите и ръбовете в изображението.</string>
+    <string name="effect_cartoon">Мек анимационен ефект</string>
+    <string name="effect_cartoon_desc">Опростява цветовите преливки и добавя меки контури.</string>
+    <string name="effect_bloom">Сияние</string>
+    <string name="effect_bloom_desc">Добавя меко сияние около ярките части на изображението.</string>
+    <string name="effect_crt_classic">Класически CRT</string>
+    <string name="effect_crt_classic_desc">Имитира CRT телевизор със сканиращи линии и RGB шаблон.</string>
+    <string name="effect_crt_beam">Тънкост на лъча</string>
+    <string name="effect_brightness">Яркост</string>
+    <string name="effect_contrast">Контраст</string>
+    <string name="effect_saturation">Наситеност</string>
+    <string name="effect_strength">Сила</string>
+    <string name="effect_color_levels">Цветови нива</string>
+    <string name="effect_edge">Интензивност на ръбовете</string>
+    <string name="effect_threshold">Праг на яркост</string>
+    <string name="effect_radius">Радиус на размазване</string>
+    <string name="effect_mask_strength">Сила на маската</string>
+    <string name="effect_scan_strength">Сила на сканиращите линии</string>
+    <string name="effect_bright_boost">Усилване на яркостта</string>
+    <string name="effect_lcd">LCD</string>
+    <string name="effect_lcd_desc">Имитира пикселната мрежа и подпикселите на класически цветен LCD дисплей.</string>
+    <string name="effect_lcd_grid">Сила на мрежата</string>
+    <string name="effect_lcd_subpixel">RGB подпиксели</string>
+    <string name="effect_lcd_brightness">Яркост на LCD</string>
+    <string name="effect_scanlines">Леки сканиращи линии</string>
+    <string name="effect_scanlines_desc">Добавя фини хоризонтални линии като на CRT дисплей.</string>
+    <string name="effect_line_width">Тънкост на линиите</string>
+    <string name="effect_gamma">Гама</string>
+    <string name="effect_temperature">Цветова температура</string>
+    <string name="effect_tint">Оттенък</string>
+    <string name="effect_monochrome">Монохромен</string>
+    <string name="effect_depth">Дълбочина на цвета и дитъринг</string>
+    <string name="effect_depth_desc">Ограничава цветовата палитра с опционален дитъринг за ретро облик.</string>
+    <string name="effect_depth_format">Цветови формат на дисплея</string>
+    <string name="effect_depth_rgb444">RGB444 · 4 096 цвята</string>
+    <string name="effect_depth_rgb565">RGB565 · 65 536 цвята</string>
+    <string name="effect_depth_rgb666">RGB666 · 262 144 цвята</string>
+    <string name="effect_dither_mode">Шаблон за дитъринг</string>
+    <string name="effect_dither_none">Изкл.</string>
+    <string name="effect_dither_bayer4">Bayer 4×4</string>
+    <string name="effect_dither_bayer8">Bayer 8×8</string>
+    <string name="effect_dither_strength">Сила на дитъринга</string>
+    <string name="effect_mono_display">Монохромен дисплей</string>
+    <string name="effect_mono_display_desc">Имитира черно-бели, зелени или кехлибарени екрани с 2 или 4 нюанса.</string>
+    <string name="effect_mono_palette">Цвят на LCD</string>
+    <string name="effect_mono_bw">Черно-бял</string>
+    <string name="effect_mono_green">Зелен LCD</string>
+    <string name="effect_mono_amber">Кехлибарен LCD</string>
+    <string name="effect_mono_tones">Брой нюанси</string>
+    <string name="effect_mono_two">2 нюанса</string>
+    <string name="effect_mono_four">4 нюанса</string>
+</resources>

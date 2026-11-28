@@ -56,6 +56,11 @@ public final class ConfigAssetFiles {
         NameConflictException(String path) { super("Asset name already used: " + path); }
     }
 
+    public static final class InvalidAssetException extends IOException {
+        InvalidAssetException(String detail) { super(detail); }
+        InvalidAssetException(String detail, Throwable cause) { super(detail, cause); }
+    }
+
     private ConfigAssetFiles() {}
 
     public static File directory(@NonNull File workdir, @NonNull Kind kind) throws IOException {
@@ -132,13 +137,13 @@ public final class ConfigAssetFiles {
             try {
                 SvgRasterizer.read(file);
             } catch (IOException failure) {
-                throw new IOException("Invalid asset format", failure);
+                throw new InvalidAssetException("Invalid asset format", failure);
             }
             return;
         }
         byte[] bytes = new byte[12];
         try (FileInputStream input = new FileInputStream(file)) {
-            if (input.read(bytes) != bytes.length) throw new IOException("Invalid asset file");
+            if (input.read(bytes) != bytes.length) throw new InvalidAssetException("Invalid asset file");
         }
         boolean riff = match(bytes, 0, "RIFF");
         boolean valid;
@@ -150,7 +155,7 @@ public final class ConfigAssetFiles {
                     || match(bytes, 0, "GIF8") || match(bytes, 0, "BM")
                     || (riff && match(bytes, 8, "WEBP"));
         }
-        if (!valid) throw new IOException("Invalid asset format");
+        if (!valid) throw new InvalidAssetException("Invalid asset format");
     }
 
     private static boolean match(byte[] bytes, int offset, String ascii) {
@@ -164,7 +169,7 @@ public final class ConfigAssetFiles {
         File dir = directory(workdir, kind);
         String original = source.getName();
         checkName(original);
-        if (!allowed(kind, original) || !source.isFile()) throw new IOException("Unsupported asset");
+        if (!allowed(kind, original) || !source.isFile()) throw new InvalidAssetException("Unsupported asset");
         checkHeader(kind, source, original);
         File duplicate = existingName(dir, original);
         if (duplicate != null && duplicate.isFile()) {
@@ -255,7 +260,7 @@ public final class ConfigAssetFiles {
         if (source.getName().equals(destinationName)) return destinationName;
         File occupied = existingName(dir, destinationName);
         if (occupied != null && !occupied.equals(source)) {
-            throw new IOException("Asset name already used");
+            throw new NameConflictException(occupied.getPath());
         }
         File target = new File(dir, destinationName);
         publishWithoutReplacing(source, target);

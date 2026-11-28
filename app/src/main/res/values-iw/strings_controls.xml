@@ -1,0 +1,108 @@
+<?xml version="1.0" encoding="utf-8"?>
+<!-- Virtual keypad controls, layout editor, physical key mappings, and control skins. -->
+<resources xmlns:tools="http://schemas.android.com/tools" xmlns:xliff="urn:oasis:names:tc:xliff:document:1.2">
+    <string name="alert_map_menu">מקש התפריט (M) אינו מוקצה.\nייתכן שלא ניתן יהיה לפתוח את תפריט ה-MIDlet במהלך המשחק.</string>
+    <string name="dismiss_mapping">סגירת המיפוי</string>
+    <string name="layout_edit_finish">סיום העריכה</string>
+    <string name="layout_edit_done">סיום</string>
+    <string name="layout_editor_grid_size">גודל רשת</string>
+    <string name="layout_editor_grid_coarse">גסה (16)</string>
+    <string name="layout_editor_grid_normal">רגילה (24)</string>
+    <string name="layout_editor_grid_fine">עדינה (32)</string>
+    <string name="layout_editor_snap_on">הצמדה פעילה</string>
+    <string name="layout_editor_snap_off">הצמדה כבויה</string>
+    <string name="layout_edit_save_changes">לשמור את השינויים בפקדים הווירטואליים?</string>
+    <string name="layout_edit_discard">ביטול שינויים</string>
+    <string name="layout_edit_continue">המשך עריכה</string>
+    <string name="layout_edit_finished">עריכת הפקדים הווירטואליים הסתיימה.</string>
+    <string name="virtual_controls_save_failed">לא ניתן לשמור את הפקדים הווירטואליים. יש לנסות שוב.</string>
+    <string name="layout_switch">בחירת פריסת פקדים</string>
+    <string name="mapping_dialog_key_not_specified">לא הוקצו מקשים.</string>
+    <string name="mapping_dialog_message">יש ללחוץ על מקש או לחצן פיזי כדי להקצות אותו לפקד זה.</string>
+    <string name="mapping_dialog_assigned_inputs">קלטים מוקצים</string>
+    <string name="mapping_dialog_add_input">ניתן להקצות יותר מקלט פיזי אחד.</string>
+    <string name="mapping_dialog_remove">הסרה</string>
+    <string name="mapping_dialog_title">לחיצה על מקש או לחצן</string>
+    <string name="message_reset_layout">לאפס את פריסת הפקדים הווירטואליים לברירת המחדל?</string>
+    <string name="RESET_LAYOUT_CMD">איפוס פריסת פקדים וירטואליים</string>
+    <string name="saved_keyboard_layout_summary">פריסת הפקדים הווירטואליים נשמרה.</string>
+    <string name="control_skin_title">ערכת עיצוב לפקדים וירטואליים</string>
+    <string name="control_skin_create" tools:ignore="MissingTranslation">יצירת ערכה</string>
+    <string name="control_skin_default" tools:ignore="MissingTranslation">לחצני ברירת מחדל</string>
+    <string name="control_skin_edit" tools:ignore="MissingTranslation">עריכה</string>
+    <string name="control_skin_rename" tools:ignore="MissingTranslation">שינוי שם</string>
+    <string name="control_skin_duplicate" tools:ignore="MissingTranslation">שכפול</string>
+    <string name="control_skin_delete" tools:ignore="MissingTranslation">מחיקה</string>
+    <string name="control_skin_import_zip" tools:ignore="MissingTranslation">ייבוא ZIP</string>
+    <string name="control_skin_export_zip" tools:ignore="MissingTranslation">ייצוא ZIP</string>
+    <string name="control_skin_select_export_folder" tools:ignore="MissingTranslation">בחירת תיקיית ייצוא</string>
+    <string name="control_skin_imported" tools:ignore="MissingTranslation">“<xliff:g id="skin_name" example="Classic Nokia">%1$s</xliff:g>” יובאה</string>
+    <string name="control_skin_already_available" tools:ignore="MissingTranslation">“<xliff:g id="skin_name" example="Classic Nokia">%1$s</xliff:g>” כבר זמינה</string>
+    <string name="control_skin_exported" tools:ignore="MissingTranslation">“<xliff:g id="skin_name" example="Classic Nokia">%1$s</xliff:g>” נשמרה</string>
+    <string name="control_skin_archive_invalid_path" tools:ignore="MissingTranslation">המיקום שנבחר אינו זמין.</string>
+    <string name="control_skin_archive_import_failed" tools:ignore="MissingTranslation">לא ניתן לייבא את ערכת העיצוב לפקדים. יש לוודא שקובץ ה-ZIP מכיל ערכה תקינה אחת.</string>
+    <string name="control_skin_archive_export_failed" tools:ignore="MissingTranslation">לא ניתן לייצא את ערכת העיצוב לפקדים. יש לבחור תיקייה הניתנת לכתיבה מחוץ לספריית ערכות העיצוב.</string>
+    <string name="control_skin_name" tools:ignore="MissingTranslation">שם הערכה</string>
+    <string name="control_skin_icon" tools:ignore="MissingTranslation">סמל בלבד</string>
+    <string name="control_skin_full" tools:ignore="MissingTranslation">לחצן מלא</string>
+    <string name="control_skin_normal_image" tools:ignore="MissingTranslation">תמונה רגילה</string>
+    <string name="control_skin_pressed_image" tools:ignore="MissingTranslation">תמונה במצב לחוץ</string>
+    <string name="control_skin_delete_warning" tools:ignore="MissingTranslation">למחוק את ערכת העיצוב המשותפת הזו ואת כל התמונות שלה? יישומי MIDlet שמשתמשים בה יחזרו לפקדי ברירת המחדל בהפעלה הבאה.</string>
+    <string name="control_skin_invalid_image" tools:ignore="MissingTranslation">יש לבחור תמונת PNG, WebP או SVG.</string>
+    <string name="control_skin_operation_failed" tools:ignore="MissingTranslation">לא ניתן היה להשלים את הפעולה על עיצוב הפקדים.</string>
+    <string name="control_skin_missing" tools:ignore="MissingTranslation">ערכה לא זמינה (פקדי ברירת מחדל)</string>
+    <string name="control_skin_remove_image" tools:ignore="MissingTranslation">הסרה</string>
+    <string name="control_skin_manage" tools:ignore="MissingTranslation">ניהול ערכה</string>
+    <string name="control_skin_manage_named" tools:ignore="MissingTranslation">ניהול “<xliff:g id="skin_name" example="Classic Nokia">%1$s</xliff:g>”</string>
+    <plurals name="control_skin_count">
+        <item quantity="one">פקד מותאם אישית <xliff:g id="count" example="4">%1$d</xliff:g></item>
+        <item quantity="two"><xliff:g id="count" example="4">%1$d</xliff:g> פקדים מותאמים אישית</item>
+        <item quantity="other"><xliff:g id="count" example="4">%1$d</xliff:g> פקדים מותאמים אישית</item>
+    </plurals>
+    <string name="control_skin_empty" tools:ignore="MissingTranslation">יש ליצור ערכה כדי להתאים אישית תמונות פקדים.</string>
+    <string name="control_skin_numeric" tools:ignore="MissingTranslation">לוח מקשים</string>
+    <string name="control_skin_navigation" tools:ignore="MissingTranslation">ניווט</string>
+    <string name="control_skin_other" tools:ignore="MissingTranslation">לחצנים אחרים</string>
+    <string name="control_skin_pressed_requires_normal" tools:ignore="MissingTranslation">יש להוסיף תחילה תמונה רגילה.</string>
+    <string name="control_skin_edit_named" tools:ignore="MissingTranslation">לחצן <xliff:g id="button_label" example="5">%1$s</xliff:g></string>
+    <string name="control_skin_change_image" tools:ignore="MissingTranslation">שינוי</string>
+    <string name="control_skin_pick_image" tools:ignore="MissingTranslation">בחירת תמונה</string>
+    <string name="control_skin_soft_left" tools:ignore="MissingTranslation">מקש בחירה שמאלי</string>
+    <string name="control_skin_soft_right" tools:ignore="MissingTranslation">מקש בחירה ימני</string>
+    <string name="control_skin_fire" tools:ignore="MissingTranslation">אישור</string>
+    <string name="control_skin_menu" tools:ignore="MissingTranslation">תפריט</string>
+    <string name="control_skin_movement" tools:ignore="MissingTranslation">פקדי תנועה</string>
+    <string name="control_skin_dpad" tools:ignore="MissingTranslation">מקשי כיוון</string>
+    <string name="control_skin_analog" tools:ignore="MissingTranslation">סטיק אנלוגי</string>
+    <string name="control_skin_dpad_base" tools:ignore="MissingTranslation">תמונת מקשי כיוון</string>
+    <string name="control_skin_overlay_up" tools:ignore="MissingTranslation">שכבת-על למעלה</string>
+    <string name="control_skin_overlay_down" tools:ignore="MissingTranslation">שכבת-על למטה</string>
+    <string name="control_skin_overlay_left" tools:ignore="MissingTranslation">שכבת-על שמאלה</string>
+    <string name="control_skin_overlay_right" tools:ignore="MissingTranslation">שכבת-על ימינה</string>
+    <string name="control_skin_analog_base" tools:ignore="MissingTranslation">תמונת בסיס</string>
+    <string name="control_skin_analog_thumb" tools:ignore="MissingTranslation">תמונת ידית</string>
+    <string name="control_skin_analog_thumb_pressed" tools:ignore="MissingTranslation">תמונת ידית פעילה</string>
+    <string name="control_skin_preview_directions" tools:ignore="MissingTranslation">תצוגה מקדימה של כיוונים</string>
+    <string name="control_skin_preview_direction" tools:ignore="MissingTranslation">תצוגה מקדימה: <xliff:g id="direction" example="Up">%1$s</xliff:g></string>
+    <string name="control_skin_builtin_preview" tools:ignore="MissingTranslation">ברירת מחדל</string>
+    <string name="control_skin_custom_preview" tools:ignore="MissingTranslation">מותאם אישית</string>
+    <string name="layout_editor_group_on">שינוי גודל משותף</string>
+    <string name="layout_editor_group_off">שינוי גודל נפרד</string>
+    <string name="layout_editor_snap_grid">הצמדה לרשת</string>
+    <string name="layout_editor_snap_controls">הצמדה ללחצנים</string>
+    <string name="layout_editor_snap_resize">הצמדה בעת שינוי גודל</string>
+    <string name="layout_editor_snap_resize_on">הצמדת שינוי גודל: פעילה</string>
+    <string name="layout_editor_snap_resize_off">הצמדת שינוי גודל: כבויה</string>
+    <string name="layout_editor_snap_grid_on">הצמדה לרשת: פעילה</string>
+    <string name="layout_editor_snap_grid_off">הצמדה לרשת: כבויה</string>
+    <string name="layout_editor_snap_controls_on">הצמדה ללחצנים: פעילה</string>
+    <string name="layout_editor_snap_controls_off">הצמדה ללחצנים: כבויה</string>
+    <string name="layout_editor_guide_gestures">מחוות</string>
+    <string name="layout_editor_guide_move">יש לגרור פקד כדי להזיז אותו.</string>
+    <string name="layout_editor_guide_resize">יש להשתמש בשתי אצבעות לשינוי גודל. תנועה אופקית או אנכית משנה את הרוחב או הגובה.</string>
+    <string name="layout_editor_guide_tools">כלי עריכה</string>
+    <string name="layout_editor_guide_done">יש להקיש על “סיום” כדי לשמור, לבטל שינויים או להמשיך בעריכה.</string>
+    <string name="layout_editor_guide_start">התחלת עריכה</string>
+    <string name="control_skin_invalid_name">יש להשתמש ב-1–61 תווים: אותיות, ספרות, סימנים משולבים, רווחים או . _ ( ) -. יש להתחיל באות או ספרה ולא לסיים בנקודה.</string>
+    <string name="control_skin_image_validation_failed">יש לבחור תמונת PNG,‏ WebP או SVG תקינה בגודל של עד 8 MiB. המידות של תמונות PNG ו-WebP לא יעלו על 2048 × 2048 פיקסלים.</string>
+</resources>

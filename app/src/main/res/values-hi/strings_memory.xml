@@ -1,0 +1,285 @@
+<?xml version="1.0" encoding="utf-8"?>
+<!-- Memory Editor search, inspector, bookmarks, saved variables, quick actions, and script builder. -->
+<resources xmlns:tools="http://schemas.android.com/tools" xmlns:xliff="urn:oasis:names:tc:xliff:document:1.2">
+    <string name="memory_editor_bubble">मेमोरी एडिटर फ़्लोटिंग बटन</string>
+    <string name="memory_editor_bubble_content_description">मेमोरी एडिटर खोलें</string>
+    <string name="memory_editor_previous_results_page_action">पिछला परिणाम पृष्ठ</string>
+    <string name="memory_editor_next_results_page_action">अगला परिणाम पृष्ठ</string>
+    <string name="memory_editor">मेमोरी एडिटर</string>
+    <string name="memory_editor_search_hint">मान</string>
+    <string name="memory_editor_next_scan">अगला स्कैन</string>
+    <string name="memory_editor_new_search">नई खोज</string>
+    <plurals name="memory_editor_results">
+        <item quantity="one"><xliff:g id="count" example="3">%1$d</xliff:g> परिणाम</item>
+        <item quantity="other"><xliff:g id="count" example="3">%1$d</xliff:g> परिणाम</item>
+    </plurals>
+    <plurals name="memory_editor_candidates">
+        <item quantity="one"><xliff:g id="count" example="3">%1$d</xliff:g> उम्मीदवार</item>
+        <item quantity="other"><xliff:g id="count" example="3">%1$d</xliff:g> उम्मीदवार</item>
+    </plurals>
+    <plurals name="memory_editor_search_complete">
+        <item quantity="one">खोज पूर्ण · <xliff:g id="count" example="3">%1$d</xliff:g> उम्मीदवार</item>
+        <item quantity="other">खोज पूर्ण · <xliff:g id="count" example="3">%1$d</xliff:g> उम्मीदवार</item>
+    </plurals>
+    <string name="memory_editor_no_results">कोई परिणाम नहीं</string>
+    <string name="memory_editor_no_watch">वॉच सूची खाली है</string>
+    <string name="memory_editor_unsupported">इस रनटाइम के लिए मेमोरी एडिटर उपलब्ध नहीं है।</string>
+    <string name="memory_editor_engine_unavailable">मेमोरी एडिटर इंजन उपलब्ध नहीं है।</string>
+    <string name="memory_editor_engine_reconnecting">मेमोरी एडिटर पुनः कनेक्ट हो रहा है…</string>
+    <string name="memory_editor_refresh">रिफ़्रेश करें</string>
+    <string name="memory_editor_undo">स्कैन पूर्ववत करें</string>
+    <string name="memory_variables_tab">सहेजे गए</string>
+    <string name="memory_editor_back" tools:ignore="MissingTranslation">वापस</string>
+    <string name="memory_list_keep" tools:ignore="MissingTranslation">अगले लॉन्च के लिए रखें</string>
+    <string name="memory_list_stop_keeping" tools:ignore="MissingTranslation">रखना बंद करें</string>
+    <string name="memory_list_kept" tools:ignore="MissingTranslation">अगले लॉन्च के लिए रखा गया</string>
+    <string name="memory_list_empty" tools:ignore="MissingTranslation">अभी तक कोई सहेजा गया बुकमार्क नहीं</string>
+    <string name="memory_list_empty_hint" tools:ignore="MissingTranslation">यहां ट्रैक करने के लिए “खोज” या “इंस्पेक्टर” से किसी वेरिएबल को बुकमार्क करें।</string>
+    <string name="memory_list_remove_confirm" tools:ignore="MissingTranslation">“सहेजे गए” से हटाएं? कोई भी सक्रिय फ़्रीज़ बंद हो जाएगा।</string>
+    <string name="memory_list_add" tools:ignore="MissingTranslation">बुकमार्क करें</string>
+    <string name="memory_bookmark_relink" tools:ignore="MissingTranslation">पुनः लिंक करें</string>
+    <string name="memory_bookmark_relink_hint" tools:ignore="MissingTranslation">“खोज” में प्रतिस्थापन वेरिएबल चुनें, फिर “पुनः लिंक करें” चुनें।</string>
+    <string name="memory_bookmark_relink_confirm" tools:ignore="MissingTranslation">इस बुकमार्क को चयनित वेरिएबल से लिंक करें? इस बुकमार्क पर कोई भी सक्रिय फ़्रीज़ बंद हो जाएगा।</string>
+    <string name="memory_bookmark_unavailable" tools:ignore="MissingTranslation">अनुपलब्ध — लक्ष्य चुनने के लिए “पुनः लिंक करें” चुनें</string>
+    <string name="memory_editor_watch">वॉच</string>
+    <string name="memory_editor_search_tab">खोज</string>
+    <string name="memory_editor_search_known_values">ज्ञात मान खोजें</string>
+    <string name="memory_editor_search_unknown_values">अज्ञात मान खोजें</string>
+    <string name="memory_editor_add_to_watch">चयनित मान बुकमार्क करें</string>
+    <string name="memory_editor_no_candidates">कोई खोजने योग्य मान नहीं मिला</string>
+    <string name="memory_editor_edit">संपादित करें</string>
+    <plurals name="memory_editor_edit_batch">
+        <item quantity="one"><xliff:g id="count" example="3">%1$d</xliff:g> मान संपादित करें</item>
+        <item quantity="other"><xliff:g id="count" example="3">%1$d</xliff:g> मान संपादित करें</item>
+    </plurals>
+    <string name="memory_editor_edit_batch_no_common_type">चयनित आइटम चुने गए डेटा प्रकार का समर्थन नहीं करते। संगत आइटम को अलग-अलग संपादित करें।</string>
+    <string name="memory_editor_save">लागू करें</string>
+    <string name="memory_editor_replacement">प्रतिस्थापन मान</string>
+    <string name="memory_editor_freeze">फ़्रीज़</string>
+    <string name="memory_editor_remove">हटाएं</string>
+    <string name="memory_editor_select_visible">दिखने वाले चुनें</string>
+    <string name="memory_editor_clear_selection">चयन साफ़ करें</string>
+    <plurals name="memory_editor_selected">
+        <item quantity="one"><xliff:g id="count" example="3">%1$d</xliff:g> चयनित</item>
+        <item quantity="other"><xliff:g id="count" example="3">%1$d</xliff:g> चयनित</item>
+    </plurals>
+    <string name="memory_editor_close">मेमोरी एडिटर बंद करें</string>
+    <string name="memory_editor_searching">मेमोरी खोजी जा रही है…</string>
+    <string name="memory_editor_working">कार्रवाई लागू हो रही है…</string>
+    <string name="memory_editor_search_progress"><xliff:g id="total_mib" example="64">%2$d</xliff:g> में से <xliff:g id="scanned_mib" example="12">%1$d</xliff:g> MiB स्कैन किया गया</string>
+    <string name="memory_editor_candidate_moved">लक्ष्य अपडेट हुआ</string>
+    <string name="memory_editor_candidate_relocating">पुनः सत्यापित हो रहा है</string>
+    <string name="memory_editor_candidate_ambiguous">अस्पष्ट — लेखन रुका हुआ है</string>
+    <string name="memory_editor_candidate_lost">खो गया — लेखन रुका हुआ है</string>
+    <string name="memory_editor_apply">लागू करें</string>
+    <string name="memory_editor_min_value">न्यूनतम मान</string>
+    <string name="memory_editor_max_value">अधिकतम मान</string>
+    <string name="memory_editor_change_amount">बदलाव की मात्रा</string>
+    <string name="memory_editor_min_change">न्यूनतम बदलाव</string>
+    <string name="memory_editor_max_change">अधिकतम बदलाव</string>
+    <string name="memory_editor_unfreeze">अनफ़्रीज़ करें</string>
+    <string name="memory_editor_cancelled">कार्रवाई रद्द की गई।</string>
+    <string name="memory_editor_resource_limit">मेमोरी एडिटर सुरक्षा सीमा तक पहुंच गया है। अधिक सटीक खोज करें या अनुपयोगी बुकमार्क अथवा फ़्रीज़ हटाएं।</string>
+    <string name="memory_editor_identity_unsafe">चयनित मान या खोज स्थिति सत्यापित नहीं हो सकी। परिणाम रिफ़्रेश करें या इंस्पेक्टर पुनः खोलें, फिर प्रयास करें।</string>
+    <string name="memory_editor_safety_limit">इस कार्रवाई के लिए बहुत अधिक मान चुने गए हैं। कम मान चुनें और पुनः प्रयास करें।</string>
+    <string name="memory_editor_invalid_request">मान या कार्रवाई अमान्य है।</string>
+    <string name="memory_editor_freeze_paused">सुरक्षा के लिए रोका गया</string>
+    <string name="memory_editor_predicate_between">के बीच</string>
+    <string name="memory_editor_predicate_changed">बदला हुआ</string>
+    <string name="memory_editor_predicate_unchanged">अपरिवर्तित</string>
+    <string name="memory_editor_predicate_increased">बढ़ा हुआ</string>
+    <string name="memory_editor_predicate_decreased">घटा हुआ</string>
+    <string name="memory_editor_predicate_increased_by">इतना बढ़ा</string>
+    <string name="memory_editor_predicate_decreased_by">इतना घटा</string>
+    <string name="memory_editor_predicate_changed_by">इतना बदला</string>
+    <string name="memory_editor_predicate_increased_range">सीमा में वृद्धि मात्रा</string>
+    <string name="memory_editor_predicate_decreased_range">सीमा में कमी मात्रा</string>
+    <string name="memory_editor_inspector">इंस्पेक्टर</string>
+    <string name="memory_editor_inspect_memory">निकटवर्ती मेमोरी जांचें</string>
+    <string name="memory_editor_inspector_loading">परिणाम सत्यापित किया जा रहा है और निकटवर्ती मेमोरी पढ़ी जा रही है…</string>
+    <string name="memory_editor_inspector_empty">निकटवर्ती मेमोरी जांचने के लिए एक परिणाम चुनें।</string>
+    <string name="memory_editor_inspector_no_rows">जांचने के लिए कोई निकटवर्ती मेमोरी उपलब्ध नहीं है।</string>
+    <string name="memory_editor_refresh_snapshot">स्नैपशॉट रिफ़्रेश करें</string>
+    <string name="memory_editor_select_result_value">यह बुकमार्क चुनें</string>
+    <string name="memory_editor_freeze_after_edit">लागू करने के बाद फ़्रीज़ करें</string>
+    <string name="memory_editor_freeze_after_edit_help">इस मान को लॉक रखता है और “सहेजे गए” में बुकमार्क करता है।</string>
+    <string name="memory_editor_expression_single_hint">एक मान दर्ज करें या समूह मानों को अर्धविराम (;) से अलग करें।</string>
+    <string name="memory_editor_expression_group_needs_type">समूह खोज के लिए एक विशिष्ट डेटा प्रकार चुनें।</string>
+    <plurals name="memory_editor_expression_group_hint">
+        <item quantity="one">समूह खोज · <xliff:g id="count" example="3">%1$d</xliff:g> मान · एक ही Java ऑब्जेक्ट</item>
+        <item quantity="other">समूह खोज · <xliff:g id="count" example="3">%1$d</xliff:g> मान · एक ही Java ऑब्जेक्ट</item>
+    </plurals>
+    <string name="memory_editor_expression_query_help">उदाहरण: 500 या 500;1000। समूह खोज एक ही Java ऑब्जेक्ट में 2–8 मान खोजती है।</string>
+    <string name="memory_editor_keypad_clear">साफ़ करें</string>
+    <string name="memory_editor_peek_underlay">नीचे MIDlet देखने के लिए दबाकर रखें</string>
+    <string name="memory_editor_peek_underlay_active">नीचे का MIDlet दिखाया जा रहा है</string>
+    <string name="memory_editor_no_runtime">कोई सक्रिय MIDlet रनटाइम नहीं है।</string>
+    <string name="memory_editor_no_search_history">पुनर्स्थापित करने के लिए कोई पिछली खोज नहीं है।</string>
+    <string name="memory_editor_partial_write">लेखन प्रक्रिया पूरी तरह संपन्न नहीं हुई। पुनः प्रयास से पहले वर्तमान मान जांचें।</string>
+    <!-- Independent write counts: confirmed, unconfirmed, skipped, not attempted, and incompatible data type. -->
+    <string name="memory_editor_write_outcome">पुष्ट लेखन: <xliff:g id="confirmed" example="3">%1$d</xliff:g>। अपुष्ट: <xliff:g id="unconfirmed" example="0">%2$d</xliff:g>। छोड़े गए: <xliff:g id="skipped" example="0">%3$d</xliff:g>। प्रयास नहीं किया गया: <xliff:g id="not_attempted" example="0">%4$d</xliff:g>। प्रकार के कारण छोड़े गए: <xliff:g id="skipped_by_type" example="0">%5$d</xliff:g>।</string>
+    <!-- %1$s is a localized outcome explanation; %2$d through %6$d are the same independent write counts. -->
+    <string name="memory_editor_write_failure_outcome"><xliff:g id="reason" example="Write interrupted.">%1$s</xliff:g>\nपुष्ट लेखन: <xliff:g id="confirmed" example="1">%2$d</xliff:g>। अपुष्ट: <xliff:g id="unconfirmed" example="1">%3$d</xliff:g>। छोड़े गए: <xliff:g id="skipped" example="0">%4$d</xliff:g>। प्रयास नहीं किया गया: <xliff:g id="not_attempted" example="0">%5$d</xliff:g>। प्रकार के कारण छोड़े गए: <xliff:g id="skipped_by_type" example="0">%6$d</xliff:g>।</string>
+    <!-- Result counts before (%1$d) and after (%2$d) the completed next scan. -->
+    <string name="memory_editor_next_scan_result">अगले स्कैन के परिणाम: <xliff:g id="before_count" example="120">%1$d</xliff:g> → <xliff:g id="after_count" example="14">%2$d</xliff:g></string>
+    <string name="memory_editor_type_auto">स्वचालित</string>
+    <string name="memory_editor_remove_candidates_title">चयनित परिणाम हटाएं?</string>
+    <string name="memory_editor_remove_candidates_description">हटाएं: चयनित परिणामों को खोज सूची से हटाता है। गेम मेमोरी के मान अपरिवर्तित रहते हैं।\n\nपूर्ववत करें और हटाएं: पिछले पुष्ट संपादन से पहले के मान भी पुनर्स्थापित करता है, लेकिन केवल तब जब वर्तमान मान उस संपादन के बाद के मानों से अब भी मेल खाते हों। फ़्रीज़ मान और वे परिणाम जिनके मान सुरक्षित रूप से पुनर्स्थापित नहीं किए जा सकते सूची में बने रहते हैं।</string>
+    <string name="memory_editor_revert_and_remove">पूर्ववत करें और हटाएं</string>
+    <string name="memory_editor_revert_remove_commit_failed">मान पुनर्स्थापित हो गए हो सकते हैं, लेकिन परिणाम हटाए नहीं जा सके। रिफ़्रेश करें और पुनः प्रयास करें; गेम द्वारा बदले गए मान ओवरराइट नहीं होंगे।</string>
+    <string name="memory_editor_revert_remove_outcome">पुनर्स्थापित: <xliff:g id="restored" example="2">%1$d</xliff:g>। हटाए गए: <xliff:g id="removed" example="2">%2$d</xliff:g>। टकराव: <xliff:g id="conflicts" example="0">%3$d</xliff:g>। अपुष्ट: <xliff:g id="unconfirmed" example="0">%4$d</xliff:g>। प्रयास नहीं किया गया: <xliff:g id="not_attempted" example="0">%5$d</xliff:g>।</string>
+    <string name="memory_editor_set_all">सभी सेट करें</string>
+    <string name="memory_editor_increment_start">प्रारंभिक मान</string>
+    <string name="memory_editor_edit_batch_type_notice">केवल मेल खाने वाले डेटा प्रकार के मान बदले जाएंगे।</string>
+    <string name="memory_editor_write_confirmed">मेमोरी रीडबैक द्वारा पुष्ट मान: <xliff:g id="count" example="3">%1$d</xliff:g>।</string>
+    <string name="memory_editor_candidate_untraced">ऐरे #<xliff:g id="array_id" example="42">%1$d</xliff:g>[<xliff:g id="index" example="3">%2$d</xliff:g>] · स्रोत ट्रेस नहीं हुआ</string>
+    <string name="memory_editor_candidate_static"><xliff:g id="field_name" example="Player.coins">%1$s</xliff:g> · <xliff:g id="reference_kind" example="Static reference">%2$s</xliff:g></string>
+    <string name="memory_editor_candidate_instance"><xliff:g id="field_name" example="Player.hp">%1$s</xliff:g> · <xliff:g id="reference_kind" example="Instance reference">%2$s</xliff:g> · लक्ष्य #<xliff:g id="target_id" example="1">%3$d</xliff:g></string>
+    <string name="memory_editor_reference_static">स्टैटिक रेफ़रेंस</string>
+    <string name="memory_editor_reference_instance">इंस्टेंस रेफ़रेंस</string>
+    <string name="memory_editor_path_changed">स्कैनिंग के बाद रेफ़रेंस पथ बदल गया है।</string>
+    <string name="memory_editor_path_incomplete">रेफ़रेंस पथ निरीक्षण सीमा से अधिक है।</string>
+    <string name="memory_editor_source_unknown">स्रोत ट्रेस नहीं हुआ</string>
+    <string name="memory_editor_incremental_edit">क्रमिक वृद्धि</string>
+    <string name="memory_editor_increment_step">चरण</string>
+    <string name="memory_editor_increment_invalid">एक पूर्णांक प्रकार और उसकी सीमा के भीतर मान उपयोग करें।</string>
+    <!-- The batch dialog title already shows the number of selected values. -->
+    <string name="memory_editor_increment_preview">पूर्वावलोकन: <xliff:g id="name" example="Example">%1$s</xliff:g></string>
+    <string name="memory_editor_panel_opacity">पैनल अपारदर्शिता</string>
+    <string name="memory_editor_panel_opacity_help">खोजते समय गेम मान देखने के लिए बैकग्राउंड समायोजित करें। टेक्स्ट और आइकन दिखाई देते रहेंगे।</string>
+    <string name="memory_editor_reconversion_required" tools:ignore="MissingTranslation">इस MIDlet का इंस्टॉल किया गया रूपांतरण मेमोरी एडिटर के साथ संगत नहीं है। गेम बंद करें, फिर JL-Mod Plus में इसे पुनः रूपांतरित या पुनः इंस्टॉल करें।</string>
+    <string name="memory_saved_tab" tools:ignore="MissingTranslation">सहेजे गए</string>
+    <string name="memory_saved_save" tools:ignore="MissingTranslation">वेरिएबल सहेजें</string>
+    <string name="memory_saved_name" tools:ignore="MissingTranslation">नाम</string>
+    <string name="memory_saved_explanation" tools:ignore="MissingTranslation">बाद के सत्रों के लिए इस सत्यापित मेमोरी पथ को सहेजें। मान कभी भी स्वतः नहीं लिखे जाते।</string>
+    <string name="memory_saved_empty" tools:ignore="MissingTranslation">अभी तक कोई सहेजा गया वेरिएबल नहीं। सहेजने के लिए एक खोज परिणाम चुनें।</string>
+    <string name="memory_saved_not_ready" tools:ignore="MissingTranslation">तैयार नहीं</string>
+    <string name="memory_saved_retry" tools:ignore="MissingTranslation">पुनः प्रयास करें</string>
+    <string name="memory_saved_rename" tools:ignore="MissingTranslation">नाम बदलें</string>
+    <string name="memory_saved_value" tools:ignore="MissingTranslation">मान</string>
+    <string name="memory_saved_delete_confirm" tools:ignore="MissingTranslation">यह सहेजी गई परिभाषा हटाएं? गेम का मान नहीं बदलेगा।</string>
+    <string name="memory_saved_changed" tools:ignore="MissingTranslation">बदला गया</string>
+    <string name="memory_saved_rebound" tools:ignore="MissingTranslation">लक्ष्य अपडेट हुआ</string>
+    <string name="memory_saved_import_summary" tools:ignore="MissingTranslation">सहेजे गए: <xliff:g id="added_count" example="4">%1$d</xliff:g> जोड़े गए, <xliff:g id="existing_count" example="2">%2$d</xliff:g> पहले से मौजूद</string>
+    <string name="memory_saved_incompatible" tools:ignore="MissingTranslation">असंगत</string>
+    <string name="memory_saved_failed" tools:ignore="MissingTranslation">विफल</string>
+    <string name="memory_saved_delete_many_confirm" tools:ignore="MissingTranslation"><xliff:g id="count" example="3">%1$d</xliff:g> सहेजी गई परिभाषाएं हटाएं? गेम के मान नहीं बदलेंगे।</string>
+    <string name="memory_recipes_title" tools:ignore="MissingTranslation">त्वरित कार्रवाई</string>
+    <string name="memory_recipes_simple_from_saved" tools:ignore="MissingTranslation">लक्ष्य: <xliff:g id="bookmark_name" example="Coins">%1$s</xliff:g></string>
+    <string name="memory_recipes_preview" tools:ignore="MissingTranslation">लक्ष्यों का पूर्वावलोकन</string>
+    <string name="memory_recipes_stop_freeze" tools:ignore="MissingTranslation">मानों को फ़्रीज़ करना बंद करें</string>
+    <string name="memory_recipes_freeze" tools:ignore="MissingTranslation">जब तक यह गेम चले, फ़्रीज़ रखें</string>
+    <string name="memory_recipes_run" tools:ignore="MissingTranslation">चलाएं</string>
+    <string name="memory_recipes_active_freezes" tools:ignore="MissingTranslation">मानों को फ़्रीज़ करने वाली स्क्रिप्ट</string>
+    <string name="memory_recipes_target_unavailable" tools:ignore="MissingTranslation">बुकमार्क लक्ष्य उपलब्ध नहीं है। चलाने से पहले इसे रिफ़्रेश करें या पुनः लिंक करें।</string>
+    <string name="memory_recipes_preview_values" tools:ignore="MissingTranslation">वर्तमान मान: <xliff:g id="name" example="Example">%1$s</xliff:g></string>
+    <string name="memory_scripts_title" tools:ignore="MissingTranslation">स्क्रिप्ट</string>
+    <string name="memory_scripts_active" tools:ignore="MissingTranslation">सक्रिय</string>
+    <string name="memory_scripts_inputs" tools:ignore="MissingTranslation">इनपुट</string>
+    <string name="memory_scripts_create_from_bookmarks" tools:ignore="MissingTranslation">स्क्रिप्ट बनाएं</string>
+    <string name="memory_scripts_create_failed" tools:ignore="MissingTranslation">नई स्क्रिप्ट शुरू नहीं की जा सकी।</string>
+    <string name="memory_scripts_draft_in_progress" tools:ignore="MissingTranslation">पहले वर्तमान स्क्रिप्ट ड्राफ़्ट पूरा करें या छोड़ें।</string>
+    <string name="memory_builder_open_saved" tools:ignore="MissingTranslation">“सहेजे गए” खोलें</string>
+    <string name="memory_builder_add_description" tools:ignore="MissingTranslation">विवरण जोड़ें</string>
+    <string name="memory_builder_find_values" tools:ignore="MissingTranslation">मान खोजें</string>
+    <string name="memory_scripts_description" tools:ignore="MissingTranslation">विवरण</string>
+    <string name="memory_scripts_new" tools:ignore="MissingTranslation">नई स्क्रिप्ट</string>
+    <string name="memory_scripts_back" tools:ignore="MissingTranslation">वापस</string>
+    <string name="memory_scripts_edit" tools:ignore="MissingTranslation">संपादित करें</string>
+    <string name="memory_scripts_save" tools:ignore="MissingTranslation">सहेजें</string>
+    <string name="memory_scripts_saved" tools:ignore="MissingTranslation">स्क्रिप्ट सहेजी गई</string>
+    <string name="memory_scripts_deleted" tools:ignore="MissingTranslation">स्क्रिप्ट हटाई गई</string>
+    <string name="memory_scripts_save_failed" tools:ignore="MissingTranslation">स्क्रिप्ट सहेजी नहीं जा सकी।</string>
+    <string name="memory_scripts_editor_hint" tools:ignore="MissingTranslation">समर्थित मेमोरी ऑपरेशन वाली JSON स्क्रिप्ट दर्ज करें या पेस्ट करें। सहेजने से स्क्रिप्ट नहीं चलती।</string>
+    <string name="memory_scripts_paste_hint" tools:ignore="MissingTranslation">स्क्रिप्ट JSON पेस्ट करें</string>
+    <string name="memory_scripts_paste" tools:ignore="MissingTranslation">पेस्ट करें</string>
+    <string name="memory_scripts_clipboard_invalid" tools:ignore="MissingTranslation">क्लिपबोर्ड खाली है या दस्तावेज़ 64 KiB से बड़ा है</string>
+    <string name="memory_scripts_invalid" tools:ignore="MissingTranslation">अमान्य स्क्रिप्ट फ़ॉर्मैट</string>
+    <string name="memory_scripts_freeze_active" tools:ignore="MissingTranslation">यह स्क्रिप्ट मानों को फ़्रीज़ कर रही है</string>
+    <string name="memory_scripts_delete" tools:ignore="MissingTranslation">हटाएं</string>
+    <string name="memory_scripts_delete_confirm" tools:ignore="MissingTranslation">“<xliff:g id="name" example="Example">%1$s</xliff:g>” हटाएं? इस स्क्रिप्ट के लिए कोई भी सक्रिय फ़्रीज़ बंद हो जाएगा।</string>
+    <string name="memory_scripts_empty" tools:ignore="MissingTranslation">कोई स्क्रिप्ट सहेजी नहीं गई</string>
+    <string name="memory_scripts_unsaved_title" tools:ignore="MissingTranslation">न सहेजी गई स्क्रिप्ट छोड़ें?</string>
+    <string name="memory_scripts_unsaved_message" tools:ignore="MissingTranslation">आपकी स्क्रिप्ट में किए गए बदलाव सहेजे नहीं गए हैं।</string>
+    <string name="memory_scripts_discard" tools:ignore="MissingTranslation">छोड़ें</string>
+    <string name="memory_scripts_current_title" tools:ignore="MissingTranslation">अंतिम बार पढ़ा गया</string>
+    <string name="memory_scripts_refresh" tools:ignore="MissingTranslation">रिफ़्रेश करें</string>
+    <string name="memory_scripts_reading" tools:ignore="MissingTranslation">वर्तमान मान पढ़े जा रहे हैं…</string>
+    <string name="memory_scripts_refresh_hint" tools:ignore="MissingTranslation">चल रहे गेम से वर्तमान मान पढ़ने के लिए “रिफ़्रेश करें” पर टैप करें।</string>
+    <string name="memory_scripts_mode_toggle" tools:ignore="MissingTranslation">मान फ़्रीज़ करें</string>
+    <string name="memory_scripts_mode_form" tools:ignore="MissingTranslation">मान एडिटर</string>
+    <string name="memory_scripts_mode_once" tools:ignore="MissingTranslation">त्वरित कार्रवाइयां</string>
+    <string name="memory_scripts_mode_legacy" tools:ignore="MissingTranslation">उन्नत स्क्रिप्ट</string>
+    <string name="memory_scripts_edit_values" tools:ignore="MissingTranslation">मान संपादित करें</string>
+    <string name="memory_scripts_apply" tools:ignore="MissingTranslation">बदलाव लागू करें</string>
+    <string name="memory_scripts_refresh_required" tools:ignore="MissingTranslation">लागू करने से पहले वर्तमान मान सत्यापित करने के लिए रिफ़्रेश करें।</string>
+    <string name="memory_scripts_inconsistent" tools:ignore="MissingTranslation">असंगत प्रतियां: <xliff:g id="name" example="Example">%1$s</xliff:g></string>
+    <string name="memory_editor_minimize" tools:ignore="MissingTranslation">मेमोरी एडिटर छोटा करें</string>
+    <string name="memory_scripts_choose_type" tools:ignore="MissingTranslation">नई स्क्रिप्ट</string>
+    <string name="memory_scripts_choose_hint" tools:ignore="MissingTranslation">चुनें कि यह स्क्रिप्ट कैसे काम करे।</string>
+    <string name="memory_builder_json_editor" tools:ignore="MissingTranslation">JSON एडिटर</string>
+    <string name="memory_builder_freeze_hint" tools:ignore="MissingTranslation">सक्षम रहने पर चयनित मान लॉक रहते हैं। फ़्रीज़ बंद करने से उनके पिछले मान पुनर्स्थापित नहीं होते।</string>
+    <string name="memory_builder_form_hint" tools:ignore="MissingTranslation">ऐसा फ़ॉर्म बनाएं जो बदलाव लागू करने से पहले वर्तमान मान पढ़ता है।</string>
+    <string name="memory_builder_actions_hint" tools:ignore="MissingTranslation">हर बार चलाएं दबाने पर बदलाव एक बार लागू होते हैं। जोड़ें और घटाएं मौजूदा मानों का उपयोग करते हैं, जिनमें पिछली बार चलाने से हुए बदलाव भी शामिल हैं।</string>
+    <string name="memory_builder_name" tools:ignore="MissingTranslation">स्क्रिप्ट का नाम</string>
+    <string name="memory_builder_frozen_values" tools:ignore="MissingTranslation">फ़्रीज़ किए गए मान</string>
+    <string name="memory_builder_fields" tools:ignore="MissingTranslation">फ़ील्ड</string>
+    <string name="memory_builder_actions" tools:ignore="MissingTranslation">कार्रवाइयां</string>
+    <string name="memory_builder_add_bookmarks" tools:ignore="MissingTranslation">बुकमार्क से जोड़ें</string>
+    <string name="memory_builder_empty" tools:ignore="MissingTranslation">कम से कम एक सत्यापित बुकमार्क जोड़ें।</string>
+    <string name="memory_builder_field_label" tools:ignore="MissingTranslation">फ़ील्ड लेबल</string>
+    <string name="memory_builder_keep_at" tools:ignore="MissingTranslation">इस पर रखें</string>
+    <string name="memory_builder_amount" tools:ignore="MissingTranslation">मान / मात्रा</string>
+    <string name="memory_builder_set" tools:ignore="MissingTranslation">सेट करें</string>
+    <string name="memory_builder_add" tools:ignore="MissingTranslation">जोड़ें</string>
+    <string name="memory_builder_subtract" tools:ignore="MissingTranslation">घटाएं</string>
+    <string name="memory_builder_view_json" tools:ignore="MissingTranslation">JSON देखें</string>
+    <string name="memory_builder_edit_json" tools:ignore="MissingTranslation">JSON संपादित करें</string>
+    <string name="memory_builder_search_bookmarks" tools:ignore="MissingTranslation">बुकमार्क खोजें</string>
+    <string name="memory_builder_no_bookmarks" tools:ignore="MissingTranslation">कोई मेल खाने वाला सत्यापित बुकमार्क नहीं। “खोज” में कोई मान बुकमार्क करें या “सहेजे गए” में किसी को पुनः लिंक करें।</string>
+    <string name="memory_builder_needs_relink" tools:ignore="MissingTranslation">पुनः लिंक आवश्यक</string>
+    <string name="memory_builder_add_selected" tools:ignore="MissingTranslation">चयनित जोड़ें</string>
+    <string name="memory_builder_min" tools:ignore="MissingTranslation">न्यूनतम (वैकल्पिक)</string>
+    <string name="memory_builder_max" tools:ignore="MissingTranslation">अधिकतम (वैकल्पिक)</string>
+    <string name="memory_builder_add_target" tools:ignore="MissingTranslation">लक्ष्य जोड़ें</string>
+    <string name="memory_builder_freeze_short" tools:ignore="MissingTranslation">चयनित मान स्थिर रखें</string>
+    <string name="memory_builder_form_short" tools:ignore="MissingTranslation">कई मानों को एक स्थान पर समायोजित करें</string>
+    <string name="memory_builder_actions_short" tools:ignore="MissingTranslation">एक बार की सेट करें, जोड़ें या घटाएं कार्रवाइयां चलाएं</string>
+    <string name="memory_editor_refine_scan" tools:ignore="MissingTranslation">परिष्कृत करें</string>
+    <string name="memory_scripts_saved_count" tools:ignore="MissingTranslation"><xliff:g id="count" example="3">%1$d</xliff:g> सहेजे गए</string>
+    <string name="memory_scripts_empty_hint" tools:ignore="MissingTranslation">खेलते समय मान संपादित करने या फ़्रीज़ करने के लिए एक स्क्रिप्ट बनाएं।</string>
+    <string name="memory_builder_limits" tools:ignore="MissingTranslation">सीमाएं (वैकल्पिक)</string>
+    <string name="memory_editor_selection_limit">अधिकतम %1$d मान चुनें।</string>
+    <string name="memory_saved_storage_unavailable">सहेजे गए आइटम ऐक्सेस नहीं किए जा सके।</string>
+    <string name="memory_bookmark_renamed">बुकमार्क का नाम बदल दिया गया</string>
+    <string name="memory_editor_memory_unavailable">MIDlet मेमोरी उपलब्ध नहीं है।</string>
+    <string name="memory_bookmark_added">बुकमार्क जोड़ा गया</string>
+    <string name="memory_bookmark_relinked">बुकमार्क फिर से लिंक किया गया</string>
+    <string name="memory_bookmarks_removed">सहेजे गए आइटम से हटाया गया</string>
+    <string name="memory_freeze_enabled">फ़्रीज़ चालू है</string>
+    <string name="memory_freeze_unavailable">फ़्रीज़ चालू नहीं हो सका।</string>
+    <string name="memory_list_session_only_failed">यह आइटम केवल मौजूदा सत्र के लिए नहीं रखा जा सका।</string>
+    <string name="memory_list_kept_unlinked">अगली बार शुरू करने के लिए सहेजा गया, लेकिन मौजूदा सत्र से लिंक नहीं हो सका।</string>
+    <string name="memory_list_removal_unavailable">कनेक्शन टूटने पर आइटम नहीं हटाए जा सकते। फिर से कोशिश करें।</string>
+    <string name="memory_list_watch_removed">सत्र की ट्रैकिंग हटा दी गई</string>
+    <string name="memory_list_bookmark_removal_failed">बुकमार्क नहीं हटाए जा सके: %1$s</string>
+    <string name="memory_list_watch_removal_failed">सत्र की ट्रैकिंग नहीं हटाई जा सकी: %1$s</string>
+    <string name="memory_list_removal_unknown_error">अज्ञात गड़बड़ी</string>
+    <string name="memory_editor_edit_freeze_failed">मान अपडेट किया गया, लेकिन फ़्रीज़ शुरू नहीं हो सका। दोबारा कोशिश करने से पहले मौजूदा मान जांचें।</string>
+    <string name="memory_scripts_freeze_inactive">यह स्क्रिप्ट अब मानों को फ़्रीज़ नहीं कर रही है।</string>
+    <string name="memory_bookmark_change_incomplete">बुकमार्क में बदलाव पूरा नहीं हो सका। फिर कोशिश करने से पहले सहेजे गए आइटम देखें।</string>
+    <string name="memory_editor_value_updated">मान अपडेट हो गया।</string>
+    <string name="memory_editor_value_updated_frozen">मान अपडेट हो गया और फ़्रीज़ चालू हो गया।</string>
+    <string name="memory_scripts_delete_failed">स्क्रिप्ट मिटाई नहीं जा सकी। फिर कोशिश करने से पहले उसकी फ़्रीज़ स्थिति देखें।</string>
+    <string name="memory_scripts_check_input">स्क्रिप्ट तैयार नहीं हो सकी। इसके मान और बुकमार्क जांचें।</string>
+    <string name="memory_scripts_read_failed">मौजूदा मान पढ़े नहीं जा सके। रीफ़्रेश करके फिर कोशिश करें।</string>
+    <string name="memory_technical_details">तकनीकी जानकारी</string>
+    <string name="memory_scripts_resource_limit">स्क्रिप्ट सुरक्षा सीमा तक पहुंच गई है। इसके टारगेट कम करें या इस्तेमाल न हो रहे फ़्रीज़ बंद करें।</string>
+    <string name="memory_scripts_target_changed">स्क्रिप्ट का टारगेट सत्यापित नहीं हो सका। मान रीफ़्रेश करें और बुकमार्क जांचें।</string>
+    <string name="memory_scripts_operation_unavailable">मौजूदा टारगेट के लिए यह स्क्रिप्ट ऑपरेशन समर्थित नहीं है।</string>
+    <string name="memory_scripts_invalid_input">स्क्रिप्ट के इनपुट जांचें। अनुमत सीमाओं में मान्य मान दर्ज करें।</string>
+    <string name="memory_scripts_value_range">एक मान समर्थित सीमा से बाहर है। स्क्रिप्ट और उसके मान जांचें।</string>
+    <string name="memory_scripts_inconsistent_values">एक ही मान की कॉपियां मेल नहीं खातीं। फिर कोशिश करने से पहले गेम की स्थिति जांचें।</string>
+    <string name="memory_scripts_wrong_midlet">यह स्क्रिप्ट किसी दूसरे MIDlet के लिए है। सही MIDlet खोलें या दूसरी स्क्रिप्ट चुनें।</string>
+    <string name="memory_scripts_target_not_ready">स्क्रिप्ट का टारगेट तैयार नहीं है। गेम की संबंधित स्क्रीन पर लौटकर फिर कोशिश करें।</string>
+</resources>

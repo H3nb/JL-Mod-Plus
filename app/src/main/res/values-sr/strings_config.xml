@@ -1,0 +1,357 @@
+<?xml version="1.0" encoding="utf-8"?>
+<!-- Per-MIDlet configuration, reusable profiles, camera, controller calibration, permissions, and system properties. -->
+<resources xmlns:tools="http://schemas.android.com/tools" xmlns:xliff="urn:oasis:names:tc:xliff:document:1.2">
+    <!-- %1$s is an optional quoted storage-volume name with a trailing space, or empty. -->
+    <!-- %1$s is a raw storage-volume description. -->
+    <string name="config_missing_app_storage_named">Апликација није пронађена.\nПроверите да ли је уређај за складиштење „<xliff:g id="storage_name" example="SD card">%1$s</xliff:g>” доступан или поново направите пречицу.</string>
+    <string name="config_missing_app_storage_generic">Апликација није пронађена.\nПроверите да ли је уређај за складиштење доступан или поново направите пречицу.</string>
+    <string name="midlet_name"><b>Назив: </b></string>
+    <string name="midlet_size"><b>Величина: </b></string>
+    <string name="midlet_vendor"><b>Добављач: </b></string>
+    <string name="midlet_version"><b>Верзија: </b></string>
+    <string name="config_destination_graphics">Приказ</string>
+    <string name="config_destination_rendering" tools:ignore="MissingTranslation">Графика</string>
+    <string name="config_destination_media">Медији</string>
+    <string name="config_camera_title">Камера</string>
+    <string name="config_camera_default_title">Подразумевана камера</string>
+    <string name="config_camera_rear">Задња</string>
+    <string name="config_camera_front">Предња</string>
+    <string name="config_camera_resolution_title">Подразумевана резолуција</string>
+    <string name="config_camera_resolution_auto">Аутоматски</string>
+    <string name="config_camera_resolution_portrait">480×640 — Усправно</string>
+    <string name="config_camera_resolution_landscape">640×480 — Положено</string>
+    <string name="config_destination_controls">Контроле</string>
+    <string name="config_gamepad_test">Тестирај контролер</string>
+    <string name="config_gamepad_calibrate">Калибриши контролер</string>
+    <string name="config_gamepad_calibrate_summary">Мери неутрални положај повезаног контролера и опсеге његових палица и окидача.</string>
+    <string name="config_gamepad_stick_directions">Дигитални смерови</string>
+    <string name="config_gamepad_stick_unassigned">Није додељено</string>
+    <string name="config_gamepad_stick_pointer">Извор показивача</string>
+    <string name="config_gamepad_opaque_summary">Ова конфигурација садржи податке контролера у неподржаном формату. Сачувани су непромењени и не могу се уређивати овде.</string>
+    <string name="config_gamepad_unsupported_summary">Ова конфигурација контролера није подржана. Сачувана је непромењена и не може се уређивати овде.</string>
+    <string name="config_gamepad_keypad_title">Виртуелна тастатура</string>
+    <string name="config_gamepad_calibration_next">Даље</string>
+    <string name="config_gamepad_mapping_help_title">Помоћ за мапирање контролера</string>
+    <string name="config_gamepad_directions_four">4 смера</string>
+    <string name="config_gamepad_directions_eight">8 смерова</string>
+    <string name="config_gamepad_pointer_off">Искључено</string>
+    <string name="config_gamepad_pointer_cursor">Пропорционални курсор</string>
+    <string name="config_gamepad_pointer_joystick">Додирни џојстик</string>
+    <!-- This is the same controller-identity fingerprint shown in diagnostics. -->
+    <string name="config_gamepad_calibration_profile">Потпис контролера: <xliff:g id="profile_name" example="Action Games">%1$s</xliff:g></string>
+    <string name="config_gamepad_calibration_phase_neutral">Чекање неутралног положаја</string>
+    <string name="config_gamepad_calibration_phase_stick_range">Опсег палице</string>
+    <string name="config_gamepad_calibration_phase_trigger_range">Опсег окидача</string>
+    <string name="config_gamepad_calibration_phase_review">Спремно за чување</string>
+    <string name="config_gamepad_calibration_phase_committed">Сачувано</string>
+    <string name="config_gamepad_calibration_phase_cancelled">Отказано</string>
+    <string name="config_gamepad_calibration_waiting_controller">Повежите контролер са подржаном аналогном палицом или окидачем. Померите палицу или притисните окидач да бисте почели. Постојећа калибрација се не мења осим ако сачувате нову или је ресетујете.</string>
+    <string name="config_gamepad_calibration_no_analog_ranges">Овај контролер не пружа подржане опсеге аналогне палице или окидача.</string>
+    <string name="config_gamepad_calibration_start">Држите све палице у центру и отпустите све окидаче док се не заврши тајмер неутралног положаја.</string>
+    <string name="config_gamepad_calibration_save_failed">Није могуће сачувати калибрацију. Проверите тренутна подешавања пре поновног покушаја.</string>
+    <string name="config_gamepad_calibration_no_supported_ranges">Нису пронађени подржани аналогни опсези.</string>
+    <string name="config_gamepad_calibration_rejected">Калибрација одбијена: <xliff:g id="name" example="Example">%1$s</xliff:g></string>
+    <string name="config_gamepad_calibration_neutral_instructions">Држите све откривене палице у центру и отпустите све откривене окидаче док се не заврши тајмер неутралног положаја.</string>
+    <string name="config_gamepad_calibration_stick_instructions">Померите сваку откривену палицу кроз цео опсег у свим смеровима, па притисните „Даље”.</string>
+    <string name="config_gamepad_calibration_trigger_instructions">Отпустите и потпуно притисните сваки откривени окидач, па додирните „Даље”.</string>
+    <string name="config_gamepad_calibration_review_instructions">Сачувајте да бисте заменили калибрацију овог контролера.</string>
+    <string name="config_gamepad_calibration_saved">Калибрација је сачувана.</string>
+    <string name="config_gamepad_calibration_cancelled">Калибрација је отказана.</string>
+    <string name="config_gamepad_calibration_waiting_samples">Калибрација чека узорке контролера.</string>
+    <string name="config_gamepad_diagnosis_header">Дијагностика контролера</string>
+    <string name="config_gamepad_diagnosis_mode">Статус: <xliff:g id="status" example="enabled">%1$s</xliff:g> · Извор: <xliff:g id="source" example="controller">%2$s</xliff:g></string>
+    <string name="config_gamepad_diagnosis_notice">Напомена: <xliff:g id="name" example="Example">%1$s</xliff:g></string>
+    <string name="config_gamepad_diagnosis_analog_settings">Аналогна подешавања:</string>
+    <string name="config_gamepad_diagnosis_left_stick">Лева палица</string>
+    <string name="config_gamepad_diagnosis_right_stick">Десна палица</string>
+    <string name="config_gamepad_diagnosis_triggers">Окидачи</string>
+    <string name="config_gamepad_diagnosis_pointer">Режим показивача</string>
+    <string name="config_gamepad_status_enabled">омогућено</string>
+    <string name="config_gamepad_status_disabled">онемогућено</string>
+    <string name="config_gamepad_diagnosis_source_default">подразумевано</string>
+    <string name="config_gamepad_diagnosis_source_controller">контролер</string>
+    <string name="config_gamepad_diagnosis_source_explicit">изричито</string>
+    <string name="config_gamepad_diagnosis_device"><xliff:g id="device_name" example="Xbox Controller">%1$s</xliff:g> (#<xliff:g id="device_id" example="1">%2$d</xliff:g>)</string>
+    <string name="config_gamepad_calibration_issue_no_channels">нема подржаних канала</string>
+    <string name="config_gamepad_calibration_issue_invalid_constraints">неисправна ограничења калибрације</string>
+    <string name="config_gamepad_calibration_issue_non_finite">неконачан узорак</string>
+    <string name="config_gamepad_calibration_issue_insufficient_samples">недовољно узорака</string>
+    <string name="config_gamepad_calibration_issue_invalid_range">неисправан опсег</string>
+    <string name="config_gamepad_calibration_issue_rest_outside_range">вредност мировања изван опсега</string>
+    <string name="config_gamepad_calibration_issue_rest_too_noisy">положај мировања није довољно стабилан</string>
+    <string name="config_gamepad_calibration_phase_unknown">Статус није доступан</string>
+    <string name="config_gamepad_diagnosis_capabilities">Могућности повезаног контролера:</string>
+    <string name="config_gamepad_diagnosis_descriptor">Дескриптор: <xliff:g id="name" example="Example">%1$s</xliff:g></string>
+    <!-- %1$s is a controller-identity fingerprint derived from its descriptor and capabilities. -->
+    <!-- It is not a handwritten signature or a cryptographic signing operation. -->
+    <string name="config_gamepad_diagnosis_signature">Потпис: <xliff:g id="name" example="Example">%1$s</xliff:g></string>
+    <string name="config_gamepad_diagnosis_axis">Оса <xliff:g id="axis_index" example="0">%1$d</xliff:g> [<xliff:g id="min_value" example="-1.0">%2$s</xliff:g>, <xliff:g id="max_value" example="1.0">%3$s</xliff:g>] flat=<xliff:g id="flat" example="0.05">%4$s</xliff:g> fuzz=<xliff:g id="fuzz" example="0.01">%5$s</xliff:g></string>
+    <string name="config_gamepad_diagnosis_no_controller">(нема повезаног контролера)</string>
+    <string name="config_gamepad_diagnosis_samples_not_sent">Узорци уноса се намерно не шаљу MIDlet-у.</string>
+    <string name="config_destination_system">Систем</string>
+    <string name="config_screen_behavior" tools:ignore="MissingTranslation">Понашање екрана</string>
+    <string name="config_screen_size">Величина екрана</string>
+    <string name="config_select_screen_size">Изабери величину екрана</string>
+    <string name="config_current_screen_size">Тренутна величина: <xliff:g id="name" example="Example">%1$s</xliff:g></string>
+    <string name="config_custom_resolution">Прилагођена резолуција</string>
+    <string name="profile_custom">Прилагођено</string>
+    <string name="select_dialog_title">Изабери MIDlet</string>
+    <string name="SIZE_PRESETS">Пресети величине фонта</string>
+    <string name="config_color_picker_title">Изабери боју</string>
+    <string name="config_color_picker_hex">Хексадецимална боја</string>
+    <string name="config_color_picker_hint">Превуците поља боја или унесите шестоцифрену RGB вредност.</string>
+    <string name="config_color_picker_invalid">Унесите тачно шест хексадецималних цифара.</string>
+    <string name="config_color_picker_saturation_value">Засићеност и осветљеност</string>
+    <string name="config_color_picker_hue">Нијанса</string>
+    <string name="config_decrease_value">Смањи вредност</string>
+    <string name="config_increase_value">Повећај вредност</string>
+    <string name="midlet_failure_recovery_title">MIDlet се неочекивано зауставио</string>
+    <string name="midlet_failure_recovery_message">MIDlet се неочекивано зауставио. Дијагностичке информације су сачуване локално. Можете наставити да користите JL-Mod Plus.</string>
+    <string name="midlet_failure_recovery_message_named">„<xliff:g id="name" example="Example">%1$s</xliff:g>” се неочекивано зауставио. Дијагностичке информације су сачуване локално. Можете наставити да користите JL-Mod Plus.</string>
+    <plurals name="config_system_properties_value">
+        <item quantity="one"><xliff:g id="count" example="3">%1$d</xliff:g> својство</item>
+        <item quantity="few"><xliff:g id="count" example="3">%1$d</xliff:g> својства</item>
+        <item quantity="other"><xliff:g id="count" example="3">%1$d</xliff:g> својстава</item>
+    </plurals>
+    <string name="config_search_suggestions" tools:ignore="MissingTranslation">Предложена подешавања</string>
+    <string name="config_search_clear" tools:ignore="MissingTranslation">Обриши претрагу</string>
+    <string name="config_search_title" tools:ignore="MissingTranslation">Претражи подешавања</string>
+    <string name="config_search_hint" tools:ignore="MissingTranslation">Пронађите подешавање, нпр. MMPX или оријентација</string>
+    <string name="config_search_no_results" tools:ignore="MissingTranslation">Нема одговарајућих подешавања</string>
+    <string name="config_search_upscaling_requires_resolution" tools:ignore="MissingTranslation">Изаберите „Аутоматски” или 2×–10× под „Резолуција рендеровања” да бисте подесили увећање битмапа.</string>
+    <string name="config_search_requires_manual_scale" tools:ignore="MissingTranslation">Изаберите „Ручно” под „Режим скалирања” да бисте подесили размеру.</string>
+    <string name="config_search_requires_custom_background" tools:ignore="MissingTranslation">Изаберите „Прилагођено” под „Режим позадине” да бисте уредили боју позадине.</string>
+    <string name="config_search_requires_gles" tools:ignore="MissingTranslation">Изаберите „Хардверско убрзање (OpenGL ES)” под „Режим графике” да бисте подесили ефекте шејдера.</string>
+    <string name="config_search_requires_renderer_mode" tools:ignore="MissingTranslation">Изаберите „Софтверско” или „Хардверско убрзање (Surface)” под „Режим графике” да бисте подесили асинхрона ажурирања екрана.</string>
+    <string name="config_font_page_title" tools:ignore="MissingTranslation">Подешавања фонта</string>
+    <string name="config_display_more" tools:ignore="MissingTranslation">Текст и перформансе</string>
+    <string name="config_destination_home" tools:ignore="MissingTranslation">Почетна</string>
+    <string name="config_overview_profile_draft" tools:ignore="MissingTranslation">Нацрт профила</string>
+    <string name="config_overview_profile_draft_summary" tools:ignore="MissingTranslation">Уредите овај вишекратни профил, а затим сачувајте промене са траке са алаткама.</string>
+    <string name="config_overview_quick_access" tools:ignore="MissingTranslation">Брзи приступ</string>
+    <string name="config_system_properties_editor_label">Својства</string>
+    <string name="config_overview_enabled" tools:ignore="MissingTranslation">Укључено</string>
+    <string name="config_overview_disabled" tools:ignore="MissingTranslation">Искључено</string>
+    <string name="config_overview_media_summary" tools:ignore="MissingTranslation">Звучна банка и камера</string>
+    <string name="config_overview_hint" tools:ignore="MissingTranslation">Изаберите категорију да прилагодите игру. Свако подешавање има једно место; ове пречице вас воде директно тамо.</string>
+    <string name="config_destination_general">Опште</string>
+    <string name="config_basic_display">Екран MIDlet-а</string>
+    <string name="config_display_appearance">Изглед екрана</string>
+    <string name="config_display_rendering">Рендеровање</string>
+    <string name="config_image_quality_section" tools:ignore="MissingTranslation">Квалитет слике</string>
+    <string name="config_frame_rate_section" tools:ignore="MissingTranslation">Број слика у секунди</string>
+    <string name="config_fps_position_title" tools:ignore="MissingTranslation">Положај FPS-а</string>
+    <string name="config_display_text">Текст и фонтови</string>
+    <string name="config_input_mapping_section" tools:ignore="MissingTranslation">Унос и мапирање</string>
+    <string name="config_controls_appearance_section" tools:ignore="MissingTranslation">Изглед контрола</string>
+    <string name="config_controls_virtual_keyboard">Виртуелне контроле</string>
+    <string name="config_controls_virtual_keyboard_colors">Боје виртуелних контрола</string>
+    <string name="config_virtual_controls_color_preview">Преглед боја</string>
+    <string name="config_virtual_controls_preview_normal">Отпуштено</string>
+    <string name="config_virtual_controls_preview_pressed">Притиснуто</string>
+    <string name="config_controls_maintenance">Распоред</string>
+    <string name="config_controls_skin_help">Мења изглед дугмади тастатуре, D-pad-а и аналогне палице помоћу прилагођених слика.</string>
+    <string name="config_controls_color_button_normal">Отпуштено дугме</string>
+    <string name="config_controls_color_button_pressed">Притиснуто дугме</string>
+    <string name="config_controls_color_label_normal">Отпуштена ознака</string>
+    <string name="config_controls_color_label_pressed">Притиснута ознака</string>
+    <string name="config_controls_color_outline_short">Обрис</string>
+    <string name="config_controls_disabled_hint">Виртуелне контроле су тренутно искључене. И даље можете да их прилагођавате овде.</string>
+    <string name="config_controls_opacity_help" formatted="false">Подешава непровидност виртуелних контрола. На 0% контроле су провидне, док се на 100% не примењује додатна провидност.</string>
+    <string name="config_controls_opaque_outside">Прикажи контроле без провидности изван екрана MIDlet-а</string>
+    <string name="config_controls_opaque_outside_help">Када је ова опција укључена, контроле које се у потпуности налазе изван екрана MIDlet-а приказују се без додатне провидности. Контроле које преклапају екран користе изабрану непровидност.</string>
+    <string name="config_controls_connect_controller">Повежите контролер за калибрацију</string>
+    <string name="config_controls_color_skin_notice">Маска целог дугмета може заменити подразумеване боје, облик и обрис дугмади.</string>
+    <string name="config_current_value">Тренутна вредност</string>
+    <string name="config_maintenance">Ресетовање и подаци</string>
+    <string name="config_midlet_actions" tools:ignore="MissingTranslation">Радње за MIDlet</string>
+    <string name="config_profile_maintenance" tools:ignore="MissingTranslation">Радње за профил</string>
+    <string name="config_reset_profile_settings" tools:ignore="MissingTranslation">Ресетуј нацрт профила</string>
+    <string name="config_reset_profile_settings_summary" tools:ignore="MissingTranslation">Вратите подешавања и виртуелне контроле овог нацрта на подразумеване вредности.</string>
+    <string name="config_system_compatibility" tools:ignore="MissingTranslation">Компатибилност емулације</string>
+    <string name="config_reset_all_settings">Ресетуј конфигурацију MIDlet-а</string>
+    <string name="config_reset_all_settings_summary">Вратите подешавања и виртуелне контроле овог MIDlet-а на подразумеване вредности без брисања његових података.</string>
+    <string name="config_delete_app_data">Обриши податке MIDlet-а</string>
+    <string name="config_delete_app_data_summary">Трајно обришите податке овог MIDlet-а, укључујући сачуване позиције. Његова подешавања ће остати сачувана.</string>
+    <string name="config_message_reset_settings">Вратити конфигурацију MIDlet-а и виртуелне контроле на подразумеване вредности? Сачувани подаци остају нетакнути. Праћење повезаног профила ће престати.</string>
+    <string name="config_message_reset_profile_settings">Ресетовати подешавања и виртуелне контроле овог профила на подразумеване вредности? И даље можете уредити или отказати пре чувања.</string>
+    <string name="config_message_delete_app_data">Трајно обрисати све сачуване позиције и податке које је направио овај MIDlet? Подешавања MIDlet-а неће бити обрисана.</string>
+    <string name="config_lock_custom_resolution_ratio">Закључај размеру</string>
+    <string name="config_swap_screen_size">Замени ширину и висину</string>
+    <string name="profile_builtin_settings">Подразумевана подешавања JL-Mod-а</string>
+    <string name="profile_default_badge_short">Подразумевано за нове MIDlet-е</string>
+    <string name="profile_template_summary">Сачувана подешавања MIDlet-а.</string>
+    <string name="profile_name_exists">Профил са овим називом већ постоји.</string>
+    <string name="profile_delete_template_message">Обрисати профил „<xliff:g id="profile_name" example="Action Games">%1$s</xliff:g>”? MIDlet-и који га користе задржаће тренутна подешавања, али неће примати будућа ажурирања.</string>
+    <string name="profile_template_operation_failed">Није могуће довршити операцију са профилом.</string>
+    <string name="config_help_screen_size">Подешава резолуцију виртуелног Java ME екрана коју користи MIDlet.</string>
+    <string name="config_help_orientation">Бира оријентацију екрана док MIDlet ради.</string>
+    <string name="config_help_scale_type">Изаберите како се игра прилагођава екрану. Изаберите „Ручно” да поставите прилагођену размеру.</string>
+    <string name="config_help_scale_ratio" formatted="false">Подешава приказану величину од 1% до 1000%. На 100% игра користи оригиналну величину; веће вредности могу прећи ивице екрана.</string>
+    <string name="config_help_lock_custom_resolution_ratio">Чува размеру приликом уређивања прилагођене резолуције.</string>
+    <string name="config_help_virtual_keyboard">Приказује контроле на екрану за овај MIDlet.</string>
+    <string name="config_help_touch_input">Омогућава MIDlet-у да прима унос показивача са екрана осетљивог на додир.</string>
+    <string name="config_help_background">Попуњава неискоришћени простор око екрана MIDlet-а.</string>
+    <string name="config_background_mode">Режим позадине</string>
+    <string name="config_background_custom">Прилагођено</string>
+    <string name="config_background_theme">Тема</string>
+    <string name="config_background_immersive">Имерзивно</string>
+    <string name="config_background_theme_help">Користи боју теме апликације JL-Mod Plus око екрана MIDlet-а.</string>
+    <string name="config_background_immersive_help">Попуњава неискоришћени простор бојама узетим са екрана MIDlet-а.</string>
+    <string name="config_background_dynamic">Динамичка боја</string>
+    <string name="config_background_dynamic_help">Користи једну пуну боју која се глатко прилагођава екрану MIDlet-а.</string>
+    <string name="config_background_custom_color">Боја позадине</string>
+    <string name="config_help_background_custom_color">Подешава боју неискоришћеног простора око екрана MIDlet-а.</string>
+    <string name="config_help_skin">Приказује опциону слику или оквир око екрана MIDlet-а.</string>
+    <string name="config_help_screen_gravity">Поставља екран MIDlet-а када преостане неискоришћени простор.</string>
+    <string name="config_help_screen_padding">Додаје унутрашње маргине у пикселима између екрана MIDlet-а и ивице области приказа.</string>
+    <string name="config_help_filter">Користи линеарно филтрирање за умекшавање екрана MIDlet-а при скалирању.</string>
+    <string name="config_warning_filter_shader">Линеарно филтрирање умекшава улаз пре него што га шејдер екрана обради и може смањити оштрину излаза.</string>
+    <string name="config_help_immediate">Обрађује догађаје MIDlet-а одмах уместо стављања у ред. Може побољшати одзив, али може дестабилизовати неке MIDlet-е.</string>
+    <string name="config_help_graphics_mode">Бира путању рендеровања за екран MIDlet-а. Хардверско убрзање може побољшати перформансе, али компатибилност зависи од уређаја.</string>
+    <string name="config_help_shader">Примењује шејдер на слику MIDlet-а пре приказивања.</string>
+    <string name="config_help_shader_tuning">Доступне контроле зависе од изабраног шејдера.</string>
+    <string name="config_help_parallel_redraw">Заказује приказ кадрова асинхроно. Ово може побољшати перформансе на неким уређајима.</string>
+    <string name="config_help_force_fullscreen">Скрива траку команди при покретању MIDlet-а. MIDlet може поново да је прикаже током играња.</string>
+    <string name="config_help_fps_limit">Подешава ограничење FPS-а при брзини емулације 1×. Стварно ограничење прати брзину емулације; 0 (Максимум) користи максималну стопу освежавања екрана.</string>
+    <string name="config_timing_mode_full_guest">Време емулације</string>
+    <string name="config_timing_mode_real_wall">Системско време</string>
+    <string name="config_help_emulation_speed">Прилагођава подржане тајмере и кашњења MIDlet-а за текућу сесију. Ако је изабрано Време емулације, датум и време такође прате изабрану брзину. Репродукција медија и Android интерфејс остају на нормалној брзини.</string>
+    <string name="config_help_timing_mode">Бира да ли MIDlet користи време емулације или системско време. Релативна кашњења остају скалирана са брзином емулације.</string>
+    <string name="config_help_timing_unavailable">Подешавања времена нису доступна за ову инсталацију MIDlet-а. Поново инсталирајте или конвертујте MIDlet да бисте их омогућили.</string>
+    <string name="config_help_generic_color">Подешава боју овог визуелног елемента.</string>
+    <string name="config_help_encoding">Бира кодирање знакова пријављено као microedition.encoding.</string>
+    <string name="config_edit_system_properties">Уреди системска својства</string>
+    <string name="config_help_system_properties">Подешава напредна Java ME својства пријављена MIDlet-у.</string>
+    <string name="config_help_system_properties_long">Унесите по једно својство у реду у формату „назив: вредност”. Неисправне вредности могу утицати на компатибилност.</string>
+    <string name="config_system_properties_info">Већини MIDlet-а нису потребне промене овде.</string>
+    <string name="config_font_sizes">Величине фонта</string>
+    <string name="config_help_font_sizes">Подешава малу, средњу и велику величину Java ME фонта за MIDlet.</string>
+    <string name="config_help_font_sizes_long">Подешава величине Java ME фонта у пикселима, или у скалираним јединицама када је укључено Android скалирање фонта. Мењајте их заједно ради уравнотеженог текста.</string>
+    <string name="config_font_sizes_value">Мали <xliff:g id="small_size" example="12">%1$s</xliff:g> · средњи <xliff:g id="medium_size" example="16">%2$s</xliff:g> · велики <xliff:g id="large_size" example="20">%3$s</xliff:g></string>
+    <string name="config_help_font_presets">Примењује величине фонта прилагођене уобичајеним резолуцијама Java ME екрана.</string>
+    <string name="config_help_font_dimensions">Примењује Android размеру фонта на величине Java ME фонта.</string>
+    <string name="config_help_font_aa">Умекшава ивице рендерованог текста.</string>
+    <string name="config_help_key_layout">Бира шему кодова тастера која се пријављује MIDlet-у.</string>
+    <string name="config_help_key_mapping">Мапира физичке Android тастере и дугмад на радње Java ME тастатуре.</string>
+    <string name="config_help_vk_button_shape">Подешава подразумевани облик дугмади тастатуре. D-pad и аналогна палица имају сопствене облике.</string>
+    <string name="config_help_vk_feedback">Вибрира при притиску виртуелне контроле ако је вибрација укључена у „Подешавањима”.</string>
+    <string name="config_help_vk_hide_delay">Скрива контроле након овог кашњења када прекривају екран MIDlet-а. Вредност 0 онемогућава аутоматско скривање.</string>
+    <string name="config_help_reset_layout">Враћа распоред виртуелних контрола без промене осталих подешавања MIDlet-а.</string>
+    <string name="config_help_skip_resume">Након првог успешног позива startApp(), прескаче касније позиве приликом наставка MIDlet-а. Користите само за MIDlet-е који отказују при наставку.</string>
+    <string name="config_help_soundbank">Бира звучну банку за MIDI синтезу. Не мења унапред снимљени звук.</string>
+    <string name="profile_create_title">Направи профил</string>
+    <string name="profile_rename_title">Преименуј профил</string>
+    <string name="presets">Профили</string>
+    <string name="preset_use">Користи профил</string>
+    <string name="preset_save_as">Сачувај као профил</string>
+    <string name="preset_custom_configuration">Прилагођена конфигурација</string>
+    <string name="preset_based_on_modified">Тренутна конфигурација овог MIDlet-а разликује се од профила „<xliff:g id="profile_name" example="Action Games">%1$s</xliff:g>”.</string>
+    <string name="preset_builtin">Подразумевана подешавања JL-Mod-а</string>
+    <string name="preset_builtin_summary">Уграђена подешавања MIDlet-а и виртуелне контроле.</string>
+    <string name="preset_picker_title">Користи профил</string>
+    <string name="preset_manage">Управљај профилима</string>
+    <string name="profile_more_actions">Више радњи за „<xliff:g id="profile_name" example="Action Games">%1$s</xliff:g>”</string>
+    <string name="profile_create_summary">Сачувајте вишекратну поставку за друге MIDlet-е.</string>
+    <string name="preset_application_settings">Подешавања MIDlet-а</string>
+    <string name="preset_includes_keyboard_layout">Распоред виртуелних контрола је укључен.</string>
+    <string name="preset_virtual_keyboard_on">Виртуелне контроле су укључене</string>
+    <string name="preset_virtual_keyboard_off">Виртуелне контроле су искључене</string>
+    <string name="preset_apply">Примени</string>
+    <string name="preset_apply_failed_summary">Није могуће применити овај профил. Проверите извор и покушајте поново.</string>
+    <string name="preset_choose_parts">Изаберите шта да примените</string>
+    <string name="preset_name">Назив</string>
+    <string name="preset_save_help">Сачувајте подешавања овог MIDlet-а и, када је доступан, његов распоред виртуелних контрола као профил. Овај MIDlet ће користити профил и примати његова будућа ажурирања.</string>
+    <string name="preset_update">Ажурирај „<xliff:g id="profile_name" example="Action Games">%1$s</xliff:g>”</string>
+    <string name="preset_update_title">Ажурирати „<xliff:g id="profile_name" example="Action Games">%1$s</xliff:g>”?</string>
+    <string name="preset_update_summary">Заменити „<xliff:g id="profile_name" example="Action Games">%1$s</xliff:g>” тренутним подешавањима овог MIDlet-а и, ако је доступан, његовим распоредом виртуелних контрола. Други MIDlet-и који користе овај профил добиће промене при следећем покретању.</string>
+    <string name="preset_update_confirm">Ажурирај</string>
+    <string name="preset_saved_unlinked_warning">Профил је сачуван, али овај MIDlet неће примати будућа ажурирања од њега.</string>
+    <string name="profile_default_fallback_notice">Подразумевани профил „<xliff:g id="profile_name" example="Action Games">%1$s</xliff:g>” није могао да се користи. Можда недостаје, непотпун је или нечитљив. „Подразумевана подешавања JL-Mod-а” су сада подразумевана за нове MIDlet-е.</string>
+    <string name="preset_discard_changes_title">Одбацити промене?</string>
+    <string name="preset_discard_changes_summary">Овај нацрт профила није сачуван.</string>
+    <string name="preset_continue_editing">Настави уређивање</string>
+    <string name="preset_discard_changes">Одбаци</string>
+    <string name="preset_name_exists">Профил са овим називом већ постоји.</string>
+    <string name="preset_invalid_name">Унесите исправан назив профила.</string>
+    <string name="preset_manager_default_section">Подразумевано за нове MIDlet-е</string>
+    <string name="preset_manager_presets_section">Моји профили</string>
+    <string name="preset_manager_keyboard_section">Сачувани распореди виртуелних контрола</string>
+    <string name="preset_default_policy_summary">Примењује се приликом инсталације новог MIDlet-а.</string>
+    <string name="preset_keyboard_layout_unavailable">Распоред виртуелних контрола није доступан.</string>
+    <string name="edit_preset">Уреди профил</string>
+    <string name="preset_edit_title">Уреди профил: <xliff:g id="profile_name" example="Action Games">%1$s</xliff:g></string>
+    <string name="preset_unavailable_section">Недоступно</string>
+    <string name="preset_unavailable_summary">Није могуће учитати овај профил. Преименујте га или обришите.</string>
+    <string name="preset_change_default">Промени</string>
+    <string name="preset_default_picker_title">Подразумевано за нове MIDlet-е</string>
+    <string name="profile_follows_updates">Прати будућа ажурирања профила.</string>
+    <string name="profile_apply_whole">Цео профил</string>
+    <string name="profile_apply_whole_follows">Замени подешавања и распоред; прати будућа ажурирања.</string>
+    <string name="profile_apply_whole_without_layout">Замени подешавања, уклони локални распоред и прати ажурирања.</string>
+    <string name="profile_apply_settings_only">Само подешавања MIDlet-а</string>
+    <string name="profile_apply_settings_keeps_layout">Задржи распоред овог MIDlet-а; користи прилагођену конфигурацију.</string>
+    <string name="profile_apply_layout_only">Само распоред виртуелних контрола</string>
+    <string name="profile_apply_layout_keeps_settings">Задржи подешавања овог MIDlet-а; користи прилагођену конфигурацију.</string>
+    <string name="config_analog_stick">Аналогна палица</string>
+    <string name="config_analog_stick_summary">Изаберите „Искључено”, „4 смера”, „8 смерова” или „Нумеричка тастатура” за главну аналогну палицу. Дугмад контролера користе мапирање тастера.</string>
+    <string name="config_analog_stick_off">Искључено</string>
+    <string name="config_controller_help_body_compact">Дугмад контролера користе исто мапирање тастера као тастатура и тастери телефона. Аналогна палица шаље MIDlet-у само унос смера. Android тастер Назад задржава уобичајено понашање; свако физичко дугме мапирано на M отвара мени MIDlet-а током извршавања.</string>
+    <string name="config_show_fps_title" tools:ignore="MissingTranslation">Прикажи FPS</string>
+    <string name="config_show_fps_help" tools:ignore="MissingTranslation">Приказује број слика у секунди током играња.</string>
+    <string name="config_search_requires_fps" tools:ignore="MissingTranslation">Укључите „Прикажи FPS” да бисте променили положај.</string>
+    <string name="midlet_running_notification_title">MIDlet је покренут</string>
+    <string name="midlet_running_notification_text">„<xliff:g id="name" example="Example">%1$s</xliff:g>” је покренут.</string>
+    <string name="midlet_running_notification_channel">Окружење извршавања MIDlet-а</string>
+    <string name="config_gamepad_directions_numeric_v2">Нумеричка тастатура</string>
+    <string name="midlet_file_permission_title">Приступ складишту</string>
+    <string name="midlet_file_permission_read">Овај MIDlet жели да чита датотеке.</string>
+    <string name="midlet_file_permission_write">Овај MIDlet жели да прави, мења или брише датотеке.</string>
+    <string name="midlet_file_permission_allow_once">Дозволи једном</string>
+    <string name="midlet_file_permission_allow_session">Дозволи док је MIDlet покренут</string>
+    <string name="midlet_file_permission_allow_always">Увек дозволи</string>
+    <string name="midlet_file_permission_deny">Увек одбиј</string>
+    <string name="midlet_permissions_settings_title">Дозволе приступа складишту</string>
+    <string name="midlet_permissions_read">Читање датотека</string>
+    <string name="midlet_permissions_write">Измена датотека</string>
+    <string name="midlet_permissions_ask">Питај</string>
+    <string name="midlet_permissions_allow">Увек дозволи</string>
+    <string name="midlet_permissions_deny">Одбиј</string>
+    <string name="midlet_permissions_save_failed">Није могуће сачувати подешавања складишта.</string>
+    <string name="config_avoid_camera_cutout_title">Избегавај изрез камере</string>
+    <string name="config_avoid_camera_cutout_summary">Држите екран MIDlet-а и виртуелне контроле даље од камере или изреза екрана.</string>
+    <string name="midlet_permissions_write_summary">Укључује прављење и брисање датотека.</string>
+    <string name="midlet_legacy_import_title">Старе Siemens сачуване позиције</string>
+    <string name="midlet_legacy_import_action">Изабери стару датотеку сачуване позиције</string>
+    <string name="midlet_legacy_import_summary">Копирајте стару датотеку сачуване позиције у приватно Siemens складиште овог MIDlet-а. Прво зауставите MIDlet.</string>
+    <string name="midlet_legacy_import_success">Датотека је копирана у приватно складиште овог MIDlet-а.</string>
+    <string name="midlet_legacy_import_failed">Увоз није успео. Зауставите MIDlet и проверите да одредишна датотека већ не постоји.</string>
+    <string name="midlet_storage_mode_title">Режим складишта</string>
+    <string name="midlet_storage_mode_shared">Виртуелно</string>
+    <string name="midlet_storage_mode_android">Android</string>
+    <string name="midlet_storage_mode_shared_summary">Користи дељене фасцикле у радној фасцикли.</string>
+    <string name="midlet_storage_mode_android_summary">Користи дељено Android складиште у оквиру Android дозвола. Дозволе MIDlet-а за приступ датотекама одвојене су од дозвола у виртуелном режиму.</string>
+    <string name="config_system_properties_reset" tools:ignore="MissingTranslation">Врати на подразумевано</string>
+    <string name="config_system_properties_reset_title" tools:ignore="MissingTranslation">Ресетовати системска својства?</string>
+    <string name="config_system_properties_reset_message" tools:ignore="MissingTranslation">Заменити садржај уређивача тренутним подразумеваним вредностима JL-Mod Plus-а? Остала подешавања ће остати непромењена. Сачувајте да бисте применили ресетовање.</string>
+    <string name="config_asset_add">+ Додај из датотеке</string>
+    <string name="config_asset_copy_hint">Копирано у радну фасциклу; оригинална датотека остаје на свом месту.</string>
+    <string name="config_asset_name">Назив датотеке</string>
+    <string name="config_asset_delete_confirmation">Обрисати „<xliff:g id="name" example="Example">%1$s</xliff:g>” из радне фасцикле? Други MIDlet-и такође могу користити ову датотеку. Копије на другим местима остају нетакнуте.</string>
+    <string name="config_asset_imported">Копирано и изабрано: <xliff:g id="name" example="Example">%1$s</xliff:g></string>
+    <string name="config_asset_reused">Изабрана постојећа датотека: <xliff:g id="name" example="Example">%1$s</xliff:g></string>
+    <string name="config_asset_renamed">Преименовано у „<xliff:g id="name" example="Example">%1$s</xliff:g>”</string>
+    <string name="config_asset_deleted">Обрисано: „<xliff:g id="name" example="Example">%1$s</xliff:g>”</string>
+    <string name="config_asset_invalid">Неподржана или неисправна датотека.</string>
+    <string name="config_asset_operation_failed">Није могуће довршити операцију са датотеком.</string>
+    <string name="config_save_failed" tools:ignore="MissingTranslation">Није могуће сачувати подешавања. Ваше промене су и даље отворене — покушајте поново.</string>
+    <string name="config_asset_busy">Прво завршите тренутну операцију са датотеком.</string>
+    <string name="config_quick_settings" tools:ignore="MissingTranslation">Брза подешавања</string>
+    <string name="config_all_settings" tools:ignore="MissingTranslation">Сва подешавања</string>
+    <string name="profile_local_changes_pending" tools:ignore="MissingTranslation">Локалне промене нису сачуване у профилу</string>
+    <string name="profile_local_configuration_summary" tools:ignore="MissingTranslation">Подешавања само за овај MIDlet</string>
+    <string name="profile_not_following" tools:ignore="MissingTranslation">Засновано на „<xliff:g id="profile_name" example="Action Games">%1$s</xliff:g>” · Не прати ажурирања</string>
+    <string name="profile_stop_following" tools:ignore="MissingTranslation">Престани да пратиш профил</string>
+    <string name="profile_follow_again" tools:ignore="MissingTranslation">Поново прати профил</string>
+    <string name="profile_follow_again_summary" tools:ignore="MissingTranslation">Заменити локална подешавања и виртуелне контроле овог MIDlet-а најновијим профилом „<xliff:g id="profile_name" example="Action Games">%1$s</xliff:g>” и пратити његова будућа ажурирања?</string>
+</resources>

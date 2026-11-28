@@ -1,0 +1,106 @@
+<?xml version="1.0" encoding="utf-8"?>
+<!-- Virtual keypad controls, layout editor, physical key mappings, and control skins. -->
+<resources xmlns:tools="http://schemas.android.com/tools" xmlns:xliff="urn:oasis:names:tc:xliff:document:1.2">
+    <string name="alert_map_menu">尚未指派選單鍵（M）。\n遊玩時可能無法開啟 MIDlet 選單。</string>
+    <string name="dismiss_mapping">關閉對應</string>
+    <string name="layout_edit_finish">完成編輯</string>
+    <string name="layout_edit_done">完成</string>
+    <string name="layout_editor_grid_size">格線大小</string>
+    <string name="layout_editor_grid_coarse">粗略（16）</string>
+    <string name="layout_editor_grid_normal">標準（24）</string>
+    <string name="layout_editor_grid_fine">精細（32）</string>
+    <string name="layout_editor_snap_on">開啟對齊</string>
+    <string name="layout_editor_snap_off">關閉對齊</string>
+    <string name="layout_edit_save_changes">要儲存虛擬按鍵的變更嗎？</string>
+    <string name="layout_edit_discard">捨棄</string>
+    <string name="layout_edit_continue">繼續編輯</string>
+    <string name="layout_edit_finished">已完成虛擬按鍵編輯。</string>
+    <string name="virtual_controls_save_failed">無法儲存虛擬按鍵，請再試一次。</string>
+    <string name="layout_switch">選擇按鍵配置</string>
+    <string name="mapping_dialog_key_not_specified">尚未指派任何輸入。</string>
+    <string name="mapping_dialog_message">按下實體按鍵或按鈕，即可將其指派給此控制項。</string>
+    <string name="mapping_dialog_assigned_inputs">已指派的輸入</string>
+    <string name="mapping_dialog_add_input">您可以指派多個實體輸入。</string>
+    <string name="mapping_dialog_remove">移除</string>
+    <string name="mapping_dialog_title">請按下按鍵或按鈕</string>
+    <string name="message_reset_layout">要將虛擬按鍵配置重設為預設值嗎？</string>
+    <string name="RESET_LAYOUT_CMD">重設虛擬按鍵配置</string>
+    <string name="saved_keyboard_layout_summary">已儲存虛擬按鍵配置。</string>
+    <string name="control_skin_title">虛擬按鍵外觀</string>
+    <string name="control_skin_create" tools:ignore="MissingTranslation">建立外觀組</string>
+    <string name="control_skin_default" tools:ignore="MissingTranslation">預設按鍵</string>
+    <string name="control_skin_edit" tools:ignore="MissingTranslation">編輯</string>
+    <string name="control_skin_rename" tools:ignore="MissingTranslation">重新命名</string>
+    <string name="control_skin_duplicate" tools:ignore="MissingTranslation">建立副本</string>
+    <string name="control_skin_delete" tools:ignore="MissingTranslation">刪除</string>
+    <string name="control_skin_import_zip" tools:ignore="MissingTranslation">匯入 ZIP</string>
+    <string name="control_skin_export_zip" tools:ignore="MissingTranslation">匯出 ZIP</string>
+    <string name="control_skin_select_export_folder" tools:ignore="MissingTranslation">選擇匯出資料夾</string>
+    <string name="control_skin_imported" tools:ignore="MissingTranslation">已匯入「<xliff:g id="skin_name" example="Classic Nokia">%1$s</xliff:g>」</string>
+    <string name="control_skin_already_available" tools:ignore="MissingTranslation">「<xliff:g id="skin_name" example="Classic Nokia">%1$s</xliff:g>」已存在</string>
+    <string name="control_skin_exported" tools:ignore="MissingTranslation">已儲存「<xliff:g id="skin_name" example="Classic Nokia">%1$s</xliff:g>」</string>
+    <string name="control_skin_archive_invalid_path" tools:ignore="MissingTranslation">所選位置無法使用。</string>
+    <string name="control_skin_archive_import_failed" tools:ignore="MissingTranslation">無法匯入按鍵外觀。請確認 ZIP 檔案內只包含一組有效的外觀設定。</string>
+    <string name="control_skin_archive_export_failed" tools:ignore="MissingTranslation">無法匯出按鍵外觀。請選擇外觀庫以外且可寫入的資料夾。</string>
+    <string name="control_skin_name" tools:ignore="MissingTranslation">外觀組名稱</string>
+    <string name="control_skin_icon" tools:ignore="MissingTranslation">僅圖示</string>
+    <string name="control_skin_full" tools:ignore="MissingTranslation">完整按鍵</string>
+    <string name="control_skin_normal_image" tools:ignore="MissingTranslation">一般狀態圖片</string>
+    <string name="control_skin_pressed_image" tools:ignore="MissingTranslation">按下狀態圖片</string>
+    <string name="control_skin_delete_warning" tools:ignore="MissingTranslation">要刪除此共用外觀組及其所有圖片嗎？使用此外觀組的 MIDlet 將在下次啟動時恢復使用預設按鍵。</string>
+    <string name="control_skin_invalid_image" tools:ignore="MissingTranslation">請選擇 PNG、WebP 或 SVG 圖片。</string>
+    <string name="control_skin_operation_failed" tools:ignore="MissingTranslation">無法完成控制項外觀操作。</string>
+    <string name="control_skin_missing" tools:ignore="MissingTranslation">外觀組無法使用（使用預設按鍵）</string>
+    <string name="control_skin_remove_image" tools:ignore="MissingTranslation">移除</string>
+    <string name="control_skin_manage" tools:ignore="MissingTranslation">管理外觀組</string>
+    <string name="control_skin_manage_named" tools:ignore="MissingTranslation">管理「<xliff:g id="skin_name" example="Classic Nokia">%1$s</xliff:g>」</string>
+    <plurals name="control_skin_count">
+        <item quantity="other"><xliff:g id="count" example="4">%1$d</xliff:g> 個已自訂按鍵</item>
+    </plurals>
+    <string name="control_skin_empty" tools:ignore="MissingTranslation">建立外觀組即可自訂按鍵圖片。</string>
+    <string name="control_skin_numeric" tools:ignore="MissingTranslation">數字鍵盤</string>
+    <string name="control_skin_navigation" tools:ignore="MissingTranslation">導覽鍵</string>
+    <string name="control_skin_other" tools:ignore="MissingTranslation">其他按鍵</string>
+    <string name="control_skin_pressed_requires_normal" tools:ignore="MissingTranslation">請先新增一般狀態圖片。</string>
+    <string name="control_skin_edit_named" tools:ignore="MissingTranslation">按鍵「<xliff:g id="button_label" example="5">%1$s</xliff:g>」</string>
+    <string name="control_skin_change_image" tools:ignore="MissingTranslation">變更</string>
+    <string name="control_skin_pick_image" tools:ignore="MissingTranslation">選擇圖片</string>
+    <string name="control_skin_soft_left" tools:ignore="MissingTranslation">左功能鍵</string>
+    <string name="control_skin_soft_right" tools:ignore="MissingTranslation">右功能鍵</string>
+    <string name="control_skin_fire" tools:ignore="MissingTranslation">確認鍵</string>
+    <string name="control_skin_menu" tools:ignore="MissingTranslation">選單</string>
+    <string name="control_skin_movement" tools:ignore="MissingTranslation">移動控制項</string>
+    <string name="control_skin_dpad" tools:ignore="MissingTranslation">方向鍵</string>
+    <string name="control_skin_analog" tools:ignore="MissingTranslation">類比搖桿</string>
+    <string name="control_skin_dpad_base" tools:ignore="MissingTranslation">方向鍵圖片</string>
+    <string name="control_skin_overlay_up" tools:ignore="MissingTranslation">向上覆蓋圖</string>
+    <string name="control_skin_overlay_down" tools:ignore="MissingTranslation">向下覆蓋圖</string>
+    <string name="control_skin_overlay_left" tools:ignore="MissingTranslation">向左覆蓋圖</string>
+    <string name="control_skin_overlay_right" tools:ignore="MissingTranslation">向右覆蓋圖</string>
+    <string name="control_skin_analog_base" tools:ignore="MissingTranslation">底座圖片</string>
+    <string name="control_skin_analog_thumb" tools:ignore="MissingTranslation">搖桿帽圖片</string>
+    <string name="control_skin_analog_thumb_pressed" tools:ignore="MissingTranslation">操作中搖桿帽圖片</string>
+    <string name="control_skin_preview_directions" tools:ignore="MissingTranslation">預覽方向</string>
+    <string name="control_skin_preview_direction" tools:ignore="MissingTranslation">預覽<xliff:g id="direction" example="Up">%1$s</xliff:g></string>
+    <string name="control_skin_builtin_preview" tools:ignore="MissingTranslation">預設</string>
+    <string name="control_skin_custom_preview" tools:ignore="MissingTranslation">已自訂</string>
+    <string name="layout_editor_group_on">同步調整大小</string>
+    <string name="layout_editor_group_off">個別調整大小</string>
+    <string name="layout_editor_snap_grid">對齊格線</string>
+    <string name="layout_editor_snap_controls">對齊按鍵</string>
+    <string name="layout_editor_snap_resize">調整大小時對齊</string>
+    <string name="layout_editor_snap_resize_on">縮放對齊：開啟</string>
+    <string name="layout_editor_snap_resize_off">縮放對齊：關閉</string>
+    <string name="layout_editor_snap_grid_on">格線對齊：開啟</string>
+    <string name="layout_editor_snap_grid_off">格線對齊：關閉</string>
+    <string name="layout_editor_snap_controls_on">按鍵對齊：開啟</string>
+    <string name="layout_editor_snap_controls_off">按鍵對齊：關閉</string>
+    <string name="layout_editor_guide_gestures">手勢</string>
+    <string name="layout_editor_guide_move">拖曳控制項即可移動位置。</string>
+    <string name="layout_editor_guide_resize">使用雙指調整大小，水平或垂直滑動可分別調整寬度或高度。</string>
+    <string name="layout_editor_guide_tools">編輯器工具</string>
+    <string name="layout_editor_guide_done">輕觸「完成」即可儲存、捨棄或繼續編輯。</string>
+    <string name="layout_editor_guide_start">開始編輯</string>
+    <string name="control_skin_invalid_name">請使用 1–61 個字元：字母、數字、組合標記、空格或 . _ ( ) -。以字母或數字開頭，不可使用句點結尾。</string>
+    <string name="control_skin_image_validation_failed">請選擇不超過 8 MiB 的有效 PNG、WebP 或 SVG 圖片。PNG 和 WebP 圖片不得超過 2048 × 2048 像素。</string>
+</resources>

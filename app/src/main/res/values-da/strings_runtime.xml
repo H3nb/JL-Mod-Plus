@@ -1,0 +1,116 @@
+<?xml version="1.0" encoding="utf-8"?>
+<!-- Active MIDlet runtime session, screenshots, logs, crash recovery, and diagnostic reports. -->
+<resources xmlns:tools="http://schemas.android.com/tools" xmlns:xliff="urn:oasis:names:tc:xliff:document:1.2">
+    <string name="action_keyboard_ime">Tastatur (IME)</string>
+    <string name="action_lock_orientation">Lås skærmrotation</string>
+    <string name="runtime_replacement_failed">Den kørende MIDlet kunne ikke stoppes. Prøv at åbne den nye igen.</string>
+    <string name="runtime_restart" tools:ignore="MissingTranslation">Genstart</string>
+    <string name="runtime_restart_confirmation" tools:ignore="MissingTranslation">Vil du genstarte denne MIDlet? Ikke-gemte fremskridt kan gå tabt.</string>
+    <string name="FORCE_CLOSE_CONFIRMATION">Vil du stoppe denne MIDlet? Ikke-gemte fremskridt kan gå tabt.</string>
+    <string name="runtime_preset_save_destination">Gem i</string>
+    <string name="runtime_preset_apply_destination">Anvend på</string>
+    <string name="runtime_preset_this_midlet_only">Kun denne MIDlet</string>
+    <string name="runtime_preset_update_destination">Opdater <xliff:g id="profile_name" example="Action Games">%1$s</xliff:g></string>
+    <string name="runtime_preset_local_explanation">Kun denne MIDlets virtuelle kontroller ændres.</string>
+    <string name="runtime_preset_update_explanation">Opdater layoutet for virtuelle kontroller i <xliff:g id="profile_name" example="Action Games">%1$s</xliff:g>.\nAndre MIDlets, der er knyttet til denne profil, får det nye layout næste gang de starter.</string>
+    <string name="runtime_layout_apply_title">Vil du anvende <xliff:g id="name" example="Example">%1$s</xliff:g>?</string>
+    <string name="runtime_apply">Anvend</string>
+    <string name="runtime_preset_update_failed">Gemt for denne MIDlet, men <xliff:g id="profile_name" example="Action Games">%1$s</xliff:g> kunne ikke opdateres.</string>
+    <string name="runtime_preset_update_unlinked"><xliff:g id="profile_name" example="Action Games">%1$s</xliff:g> blev opdateret, men denne MIDlet modtager ikke fremtidige opdateringer fra den.</string>
+    <string name="msg_immediate_mode_disabled">Øjeblikkelig behandling blev deaktiveret, fordi hændelses-callbacks var indlejret for dybt.</string>
+    <string name="msg_press_again_to_close">Tryk igen for at lukke</string>
+    <string name="save_log">Gem log</string>
+    <string name="take_screenshot">Tag skærmbillede</string>
+    <!-- Crash-report UI remains translatable; locales without coverage fall back to default English. -->
+    <string name="crash_reports">Diagnostikrapporter</string>
+    <string name="diagnostic_report">Diagnostikrapport</string>
+    <string name="view_reports">Vis diagnostikrapporter</string>
+    <string name="crash_reports_empty">Ingen lokale diagnostikrapporter</string>
+    <string name="crash_reports_loading">Indlæser diagnostikrapporter</string>
+    <string name="crash_report_midlet_failure">Fejl i MIDlet-session</string>
+    <string name="crash_report_java_report">Java-diagnostikrapport</string>
+    <string name="crash_report_process_exit">Rapport om procesafslutning</string>
+    <string name="crash_report_list_subtitle"><xliff:g id="report_type" example="Java crash">%1$s</xliff:g> · <xliff:g id="timestamp" example="Nov 25, 09:40">%2$s</xliff:g></string>
+    <plurals name="crash_reports_selected_count">
+        <item quantity="one"><xliff:g id="count" example="3">%1$d</xliff:g> valgt</item>
+        <item quantity="other"><xliff:g id="count" example="3">%1$d</xliff:g> valgt</item>
+    </plurals>
+    <string name="copy_report">Kopier</string>
+    <string name="report_on_github">Rapporter på GitHub</string>
+    <string name="delete_report">Slet</string>
+    <string name="share_selected_reports" tools:ignore="MissingTranslation">Del valgte rapporter</string>
+    <string name="delete_selected_reports">Slet valgte rapporter</string>
+    <string name="crash_report_copied">Rapport kopieret</string>
+    <string name="crash_report_bundle_preparing">Forbereder diagnostikpakke…</string>
+    <string name="crash_report_bundle_ready_title">Diagnostikpakke klar</string>
+    <string name="crash_report_bundle_ready_message"><xliff:g id="name" example="Example">%1$s</xliff:g>\n\nGemt i Overførsler → JL-Mod Plus Diagnostics.\n\nKontrollér, om filen indeholder følsomme oplysninger, og vedhæft den, før du indsender GitHub-sagen. Filen bliver offentlig, så snart den vedhæftes.</string>
+    <string name="locate_bundle">Find pakke</string>
+    <string name="open_github">Åbn GitHub</string>
+    <string name="crash_report_bundle_failed">Diagnostikpakken kunne ikke forberedes.</string>
+    <string name="crash_report_locate_failed">Ingen filvælger tilgængelig til at finde diagnostikpakken.</string>
+    <string name="crash_report_bundle_cleanup_failed">Den genererede pakke kunne ikke fjernes. Diagnostikrapporten er bevaret.</string>
+    <string name="crash_report_github_unavailable">Ingen browser eller app fundet til at åbne GitHub-fejlformularen.</string>
+    <string name="crash_report_delete_title">Vil du slette diagnostikrapporten?</string>
+    <string name="crash_report_delete_message">Dette fjerner diagnostikrapporten og eventuelle genererede pakker permanent fra denne enhed. Filer, der allerede er uploadet andre steder, påvirkes ikke.</string>
+    <plurals name="crash_reports_batch_delete_title">
+        <item quantity="one">Vil du slette <xliff:g id="count" example="3">%1$d</xliff:g> diagnostikrapport?</item>
+        <item quantity="other">Vil du slette <xliff:g id="count" example="3">%1$d</xliff:g> diagnostikrapporter?</item>
+    </plurals>
+    <string name="crash_reports_batch_delete_message">Dette fjerner de valgte diagnostikrapporter og eventuelle genererede pakker permanent fra denne enhed. Filer, der allerede er uploadet andre steder, påvirkes ikke.</string>
+    <string name="crash_report_delete_failed">Rapporten kunne ikke slettes.</string>
+    <string name="crash_report_unavailable">Denne rapport er ikke længere tilgængelig.</string>
+    <string name="process_exit_recovery_title">Uventet procesafslutning</string>
+    <string name="process_exit_recovery_message">JL-Mod Plus stoppede uventet i den forrige session (<xliff:g id="reason" example="Java crash">%1$s</xliff:g>). Diagnostikoplysninger blev gemt lokalt.</string>
+    <string name="process_exit_recovery_message_midlet">En MIDlet-proces stoppede uventet i den forrige session (<xliff:g id="reason" example="Java crash">%1$s</xliff:g>). Diagnostikoplysninger blev gemt lokalt.</string>
+    <string name="process_exit_recovery_message_named"><xliff:g id="app_name" example="Bounce Tales">%1$s</xliff:g> stoppede uventet i den forrige session (<xliff:g id="reason" example="Native crash">%2$s</xliff:g>). Diagnostikoplysninger blev gemt lokalt.</string>
+    <string name="select_all_reports">Vælg alle rapporter</string>
+    <string name="clear_report_selection">Ryd valg af rapporter</string>
+    <string name="runtime_memory_button_short" tools:ignore="MissingTranslation">Hukommelsesknap</string>
+    <string name="runtime_action_on" tools:ignore="MissingTranslation">Til</string>
+    <string name="runtime_action_off" tools:ignore="MissingTranslation">Fra</string>
+    <string name="reconverting_wait">Denne MIDlet kræver en engangskonvertering for kompatibilitet, før den kan starte.</string>
+    <string name="reconversion_done_with_warning">Kompatibilitetskonvertering fuldført med advarsler.</string>
+    <string name="reconversion_error_summary">Denne MIDlet kunne ikke konverteres automatisk.</string>
+    <string name="runtime_invalid_intent">Ugyldig startanmodning: MIDlet-stien mangler.</string>
+    <string name="runtime_storage_in_use">MIDlet-lagringen er allerede i brug af en anden runtime.</string>
+    <string name="runtime_installation_changed">Denne MIDlet kunne ikke klargøres til start.</string>
+    <string name="runtime_storage_unavailable">MIDlet-lagringen kunne ikke klargøres.</string>
+    <string name="runtime_no_midlets">Ingen MIDlets fundet i denne app.</string>
+    <!-- Runtime grouped controls derive body, accent, outline, icon, and selected-icon colors from the existing virtual-control appearance settings. -->
+    <string name="runtime_virtual_controls_title">Virtuelle kontroller</string>
+    <string name="runtime_virtual_controls_dpad">D-pad</string>
+    <string name="runtime_virtual_controls_analog">Analog styrepind</string>
+    <string name="runtime_virtual_controls_edit">Rediger layout</string>
+    <string name="runtime_virtual_controls_edit_guide_title">Vejledning til layoutredigering</string>
+    <string name="runtime_virtual_controls_edit_guide_message">Træk kontroller for at flytte dem. For knapper kan du bevæge to fingre vandret eller lodret for at ændre bredde eller højde, eller diagonalt for at ændre begge. Knib for at skalere D-pad eller analog styrepind proportionalt. Tryk på Udført, når du er færdig.</string>
+    <string name="runtime_virtual_controls_edit_guide_dont_show_again">Vis ikke igen</string>
+    <string name="runtime_virtual_controls_switch_layout">Vælg kontrollayout</string>
+    <string name="runtime_virtual_controls_show_controls">Vælg synlige kontroller</string>
+    <string name="runtime_virtual_controls_template_dpad_standard">Standard D-pad</string>
+    <string name="runtime_virtual_controls_template_analog_standard">Standard analog styrepind</string>
+    <string name="screenshot_save_failed">Skærmbilledet kunne ikke gemmes.</string>
+    <!-- %1$s is the saved screenshot's filesystem path. New key replaces the legacy prefix contract. -->
+    <string name="screenshot_saved_path">Skærmbillede gemt i <xliff:g id="path" example="Pictures/Bounce Tales/Screenshot_20261125-103000.png">%1$s</xliff:g></string>
+    <!-- Deliberate English fallback until reviewed translations are available. -->
+    <string name="log_save_success" tools:ignore="MissingTranslation">Gemte <xliff:g id="name" example="Example">%1$s</xliff:g> i Overførsler → JL-Mod Plus Diagnostics.</string>
+    <string name="log_save_partial" tools:ignore="MissingTranslation">Gemte en delvis log som <xliff:g id="name" example="Example">%1$s</xliff:g> i Overførsler → JL-Mod Plus Diagnostics.</string>
+    <string name="log_save_empty" tools:ignore="MissingTranslation">Ingen applogposter er tilgængelige i Android-bufferen.</string>
+    <string name="log_save_timeout" tools:ignore="MissingTranslation">Indsamling af log fik timeout. Ingen fil blev gemt.</string>
+    <string name="log_save_failed">Loggen kunne ikke gemmes.</string>
+    <string name="runtime_midlet_list_failed">Appens MIDlet-liste kunne ikke læses.</string>
+    <string name="diagnostic_reason_java_crash">Java-nedbrud</string>
+    <string name="diagnostic_reason_native_crash">Native-nedbrud</string>
+    <string name="diagnostic_reason_anr">Appen svarer ikke</string>
+    <string name="diagnostic_reason_signal">Afslutning ved signal</string>
+    <string name="diagnostic_reason_unknown">Ukendt årsag</string>
+    <string name="crash_reports_delete_failed">Nogle diagnostikrapporter kunne ikke slettes. Andre kan være blevet fjernet.</string>
+    <string name="crash_reports_bundle_cleanup_failed">Nogle genererede pakker kunne ikke fjernes. De tilhørende diagnostikrapporter er bevaret. Andre rapporter kan være blevet slettet.</string>
+    <string name="runtime_chrome_update_failed">Skærmindstillingerne kunne ikke opdateres. Prøv igen.</string>
+    <string name="runtime_fullscreen_update_failed">Fuldskærmsindstillingen kunne ikke tilgås. Prøv igen.</string>
+    <string name="runtime_camera_use_front">Brug frontkamera</string>
+    <string name="runtime_camera_use_rear">Brug bagkamera</string>
+    <string name="runtime_camera_switch_failed">Kameraet kunne ikke skiftes.</string>
+    <string name="runtime_camera_switch_recording" tools:ignore="MissingTranslation">Stop optagelsen, før du skifter kamera.</string>
+    <string name="date_field_not_set" tools:ignore="MissingTranslation">Ikke angivet</string>
+    <string name="date_field_use_displayed_value" tools:ignore="MissingTranslation">Brug denne værdi</string>
+</resources>

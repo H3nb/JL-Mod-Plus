@@ -1,0 +1,285 @@
+<?xml version="1.0" encoding="utf-8"?>
+<!-- Memory Editor search, inspector, bookmarks, saved variables, quick actions, and script builder. -->
+<resources xmlns:tools="http://schemas.android.com/tools" xmlns:xliff="urn:oasis:names:tc:xliff:document:1.2">
+    <string name="memory_editor_bubble">Memóriaszerkesztő lebegő gomb</string>
+    <string name="memory_editor_bubble_content_description">Memóriaszerkesztő megnyitása</string>
+    <string name="memory_editor_previous_results_page_action">Előző találati oldal</string>
+    <string name="memory_editor_next_results_page_action">Következő találati oldal</string>
+    <string name="memory_editor">Memóriaszerkesztő</string>
+    <string name="memory_editor_search_hint">Érték</string>
+    <string name="memory_editor_next_scan">Következő keresés</string>
+    <string name="memory_editor_new_search">Új keresés</string>
+    <plurals name="memory_editor_results">
+        <item quantity="one"><xliff:g id="count" example="3">%1$d</xliff:g> találat</item>
+        <item quantity="other"><xliff:g id="count" example="3">%1$d</xliff:g> találat</item>
+    </plurals>
+    <plurals name="memory_editor_candidates">
+        <item quantity="one"><xliff:g id="count" example="3">%1$d</xliff:g> jelölt</item>
+        <item quantity="other"><xliff:g id="count" example="3">%1$d</xliff:g> jelölt</item>
+    </plurals>
+    <plurals name="memory_editor_search_complete">
+        <item quantity="one">Keresés befejezve · <xliff:g id="count" example="3">%1$d</xliff:g> jelölt</item>
+        <item quantity="other">Keresés befejezve · <xliff:g id="count" example="3">%1$d</xliff:g> jelölt</item>
+    </plurals>
+    <string name="memory_editor_no_results">Nincs találat</string>
+    <string name="memory_editor_no_watch">A figyelőlista üres</string>
+    <string name="memory_editor_unsupported">A Memóriaszerkesztő nem érhető el ehhez a futtatókörnyezethez.</string>
+    <string name="memory_editor_engine_unavailable">A Memóriaszerkesztő motorja nem érhető el.</string>
+    <string name="memory_editor_engine_reconnecting">A Memóriaszerkesztő újracsatlakozik…</string>
+    <string name="memory_editor_refresh">Frissítés</string>
+    <string name="memory_editor_undo">Keresés visszavonása</string>
+    <string name="memory_variables_tab">Mentett</string>
+    <string name="memory_editor_back" tools:ignore="MissingTranslation">Vissza</string>
+    <string name="memory_list_keep" tools:ignore="MissingTranslation">Megtartás a következő indításig</string>
+    <string name="memory_list_stop_keeping" tools:ignore="MissingTranslation">Megtartás leállítása</string>
+    <string name="memory_list_kept" tools:ignore="MissingTranslation">Megtartva a következő indításig</string>
+    <string name="memory_list_empty" tools:ignore="MissingTranslation">Még nincsenek mentett könyvjelzők</string>
+    <string name="memory_list_empty_hint" tools:ignore="MissingTranslation">Könyvjelzőzzön egy változót a Keresés vagy a Vizsgáló lapon, hogy itt követhesse.</string>
+    <string name="memory_list_remove_confirm" tools:ignore="MissingTranslation">Eltávolítja a Mentett listából? Minden aktív befagyasztás leáll.</string>
+    <string name="memory_list_add" tools:ignore="MissingTranslation">Könyvjelzőzés</string>
+    <string name="memory_bookmark_relink" tools:ignore="MissingTranslation">Újracsatolás</string>
+    <string name="memory_bookmark_relink_hint" tools:ignore="MissingTranslation">Válassza ki a helyettesítő változót a Keresés lapon, majd válassza az Újracsatolás lehetőséget.</string>
+    <string name="memory_bookmark_relink_confirm" tools:ignore="MissingTranslation">Összekapcsolja ezt a könyvjelzőt a kiválasztott változóval? A könyvjelző minden aktív befagyasztása leáll.</string>
+    <string name="memory_bookmark_unavailable" tools:ignore="MissingTranslation">Nem érhető el — válassza az Újracsatolás lehetőséget cél kiválasztásához</string>
+    <string name="memory_editor_watch">Figyelőlista</string>
+    <string name="memory_editor_search_tab">Keresés</string>
+    <string name="memory_editor_search_known_values">Ismert értékek keresése</string>
+    <string name="memory_editor_search_unknown_values">Ismeretlen értékek keresése</string>
+    <string name="memory_editor_add_to_watch">Kijelölt értékek könyvjelzőzése</string>
+    <string name="memory_editor_no_candidates">Nem találhatók kereshető értékek</string>
+    <string name="memory_editor_edit">Szerkesztés</string>
+    <plurals name="memory_editor_edit_batch">
+        <item quantity="one"><xliff:g id="count" example="3">%1$d</xliff:g> érték szerkesztése</item>
+        <item quantity="other"><xliff:g id="count" example="3">%1$d</xliff:g> érték szerkesztése</item>
+    </plurals>
+    <string name="memory_editor_edit_batch_no_common_type">A kijelölt elemek nem támogatják a választott adattípust. Szerkessze külön a kompatibilis elemeket.</string>
+    <string name="memory_editor_save">Alkalmazás</string>
+    <string name="memory_editor_replacement">Új érték</string>
+    <string name="memory_editor_freeze">Befagyasztás</string>
+    <string name="memory_editor_remove">Eltávolítás</string>
+    <string name="memory_editor_select_visible">Láthatók kijelölése</string>
+    <string name="memory_editor_clear_selection">Kijelölés törlése</string>
+    <plurals name="memory_editor_selected">
+        <item quantity="one"><xliff:g id="count" example="3">%1$d</xliff:g> kijelölve</item>
+        <item quantity="other"><xliff:g id="count" example="3">%1$d</xliff:g> kijelölve</item>
+    </plurals>
+    <string name="memory_editor_close">Memóriaszerkesztő bezárása</string>
+    <string name="memory_editor_searching">Keresés a memóriában…</string>
+    <string name="memory_editor_working">Művelet végrehajtása…</string>
+    <string name="memory_editor_search_progress"><xliff:g id="scanned_mib" example="12">%1$d</xliff:g> / <xliff:g id="total_mib" example="64">%2$d</xliff:g> MiB átvizsgálva</string>
+    <string name="memory_editor_candidate_moved">Cél frissítve</string>
+    <string name="memory_editor_candidate_relocating">Újraellenőrzés</string>
+    <string name="memory_editor_candidate_ambiguous">Kétértelmű — írás szüneteltetve</string>
+    <string name="memory_editor_candidate_lost">Elveszett — írás szüneteltetve</string>
+    <string name="memory_editor_apply">Alkalmazás</string>
+    <string name="memory_editor_min_value">Minimum érték</string>
+    <string name="memory_editor_max_value">Maximum érték</string>
+    <string name="memory_editor_change_amount">Változás mértéke</string>
+    <string name="memory_editor_min_change">Minimális változás</string>
+    <string name="memory_editor_max_change">Maximális változás</string>
+    <string name="memory_editor_unfreeze">Feloldás</string>
+    <string name="memory_editor_cancelled">A művelet megszakítva.</string>
+    <string name="memory_editor_resource_limit">A Memóriaszerkesztő elérte a biztonsági korlátot. Próbáljon pontosabb keresést, vagy távolítsa el a nem használt könyvjelzőket és befagyasztásokat.</string>
+    <string name="memory_editor_identity_unsafe">Nem sikerült ellenőrizni a kiválasztott értéket vagy a keresési állapotot. Frissítse a találatokat vagy nyissa meg újra a Vizsgálót, majd próbálja újra.</string>
+    <string name="memory_editor_safety_limit">Túl sok érték van kijelölve ehhez a művelethez. Jelöljön ki kevesebbet, és próbálja újra.</string>
+    <string name="memory_editor_invalid_request">Az érték vagy a művelet érvénytelen.</string>
+    <string name="memory_editor_freeze_paused">Biztonsági okokból szüneteltetve</string>
+    <string name="memory_editor_predicate_between">Között</string>
+    <string name="memory_editor_predicate_changed">Megváltozott</string>
+    <string name="memory_editor_predicate_unchanged">Változatlan</string>
+    <string name="memory_editor_predicate_increased">Nőtt</string>
+    <string name="memory_editor_predicate_decreased">Csökkent</string>
+    <string name="memory_editor_predicate_increased_by">Nőtt ennyivel</string>
+    <string name="memory_editor_predicate_decreased_by">Csökkent ennyivel</string>
+    <string name="memory_editor_predicate_changed_by">Változott ennyivel</string>
+    <string name="memory_editor_predicate_increased_range">Növekedés tartományban</string>
+    <string name="memory_editor_predicate_decreased_range">Csökkenés tartományban</string>
+    <string name="memory_editor_inspector">Vizsgáló</string>
+    <string name="memory_editor_inspect_memory">Közeli memória vizsgálata</string>
+    <string name="memory_editor_inspector_loading">Találat ellenőrzése és közeli memória olvasása…</string>
+    <string name="memory_editor_inspector_empty">Válasszon ki egy találatot a közeli memória vizsgálatához.</string>
+    <string name="memory_editor_inspector_no_rows">Nem érhető el vizsgálható közeli memória.</string>
+    <string name="memory_editor_refresh_snapshot">Pillanatkép frissítése</string>
+    <string name="memory_editor_select_result_value">Könyvjelző kiválasztása</string>
+    <string name="memory_editor_freeze_after_edit">Befagyasztás alkalmazás után</string>
+    <string name="memory_editor_freeze_after_edit_help">Zárolva tartja ezt az értéket, és könyvjelzőzi a Mentett lapon.</string>
+    <string name="memory_editor_expression_single_hint">Adjon meg egy értéket, vagy válassza el a csoportértékeket pontosvesszővel (;).</string>
+    <string name="memory_editor_expression_group_needs_type">Válasszon pontos adattípust a csoportos kereséshez.</string>
+    <plurals name="memory_editor_expression_group_hint">
+        <item quantity="one">Csoportos keresés · <xliff:g id="count" example="3">%1$d</xliff:g> érték · ugyanaz a Java objektum</item>
+        <item quantity="other">Csoportos keresés · <xliff:g id="count" example="3">%1$d</xliff:g> érték · ugyanaz a Java objektum</item>
+    </plurals>
+    <string name="memory_editor_expression_query_help">Példák: 500 vagy 500;1000. A csoportos keresés 2–8 értéket keres ugyanabban a Java objektumban.</string>
+    <string name="memory_editor_keypad_clear">Törlés</string>
+    <string name="memory_editor_peek_underlay">Tartsa lenyomva az alatta lévő MIDlet megtekintéséhez</string>
+    <string name="memory_editor_peek_underlay_active">Az alatta lévő MIDlet megjelenítése</string>
+    <string name="memory_editor_no_runtime">Nincs aktív MIDlet futtatókörnyezet.</string>
+    <string name="memory_editor_no_search_history">Nincs korábbi visszaállítható keresés.</string>
+    <string name="memory_editor_partial_write">Az írási művelet nem fejeződött be teljesen. Ellenőrizze a jelenlegi értékeket, mielőtt újra próbálná.</string>
+    <!-- Independent write counts: confirmed, unconfirmed, skipped, not attempted, and incompatible data type. -->
+    <string name="memory_editor_write_outcome">Megerősített írások: <xliff:g id="confirmed" example="3">%1$d</xliff:g>. Nem megerősített: <xliff:g id="unconfirmed" example="0">%2$d</xliff:g>. Kihagyva: <xliff:g id="skipped" example="0">%3$d</xliff:g>. Nem kísérelt: <xliff:g id="not_attempted" example="0">%4$d</xliff:g>. Típus miatt kihagyva: <xliff:g id="skipped_by_type" example="0">%5$d</xliff:g>.</string>
+    <!-- %1$s is a localized outcome explanation; %2$d through %6$d are the same independent write counts. -->
+    <string name="memory_editor_write_failure_outcome"><xliff:g id="reason" example="Write interrupted.">%1$s</xliff:g>\nMegerősített írások: <xliff:g id="confirmed" example="1">%2$d</xliff:g>. Nem megerősített: <xliff:g id="unconfirmed" example="1">%3$d</xliff:g>. Kihagyva: <xliff:g id="skipped" example="0">%4$d</xliff:g>. Nem kísérelt: <xliff:g id="not_attempted" example="0">%5$d</xliff:g>. Típus miatt kihagyva: <xliff:g id="skipped_by_type" example="0">%6$d</xliff:g>.</string>
+    <!-- Result counts before (%1$d) and after (%2$d) the completed next scan. -->
+    <string name="memory_editor_next_scan_result">Következő keresés találatai: <xliff:g id="before_count" example="120">%1$d</xliff:g> → <xliff:g id="after_count" example="14">%2$d</xliff:g></string>
+    <string name="memory_editor_type_auto">Automatikus</string>
+    <string name="memory_editor_remove_candidates_title">Eltávolítja a kijelölt találatokat?</string>
+    <string name="memory_editor_remove_candidates_description">Eltávolítás: eltávolítja a kijelölt találatokat a keresési listából. A játék memóriájában lévő értékek változatlanok maradnak.\n\nVisszaállítás és eltávolítás: a legutóbbi megerősített szerkesztés előtti értékeket is visszaállítja, de csak akkor, ha a jelenlegi értékek még megegyeznek a szerkesztés utáni értékekkel. A befagyasztott értékek és a biztonságosan vissza nem állítható találatok a listában maradnak.</string>
+    <string name="memory_editor_revert_and_remove">Visszaállítás és eltávolítás</string>
+    <string name="memory_editor_revert_remove_commit_failed">Az értékek visszaállhattak, de a találatokat nem sikerült eltávolítani. Frissítsen és próbálja újra; a játék által módosított értékek nem lesznek felülírva.</string>
+    <string name="memory_editor_revert_remove_outcome">Visszaállítva: <xliff:g id="restored" example="2">%1$d</xliff:g>. Eltávolítva: <xliff:g id="removed" example="2">%2$d</xliff:g>. Ütközések: <xliff:g id="conflicts" example="0">%3$d</xliff:g>. Nem megerősített: <xliff:g id="unconfirmed" example="0">%4$d</xliff:g>. Nem kísérelt: <xliff:g id="not_attempted" example="0">%5$d</xliff:g>.</string>
+    <string name="memory_editor_set_all">Összes beállítása</string>
+    <string name="memory_editor_increment_start">Kezdőérték</string>
+    <string name="memory_editor_edit_batch_type_notice">Csak a megfelelő adattípusú értékek változnak meg.</string>
+    <string name="memory_editor_write_confirmed">Memória-visszaolvasással megerősített értékek: <xliff:g id="count" example="3">%1$d</xliff:g>.</string>
+    <string name="memory_editor_candidate_untraced">Tömb #<xliff:g id="array_id" example="42">%1$d</xliff:g>[<xliff:g id="index" example="3">%2$d</xliff:g>] · Forrás nincs követve</string>
+    <string name="memory_editor_candidate_static"><xliff:g id="field_name" example="Player.coins">%1$s</xliff:g> · <xliff:g id="reference_kind" example="Static reference">%2$s</xliff:g></string>
+    <string name="memory_editor_candidate_instance"><xliff:g id="field_name" example="Player.hp">%1$s</xliff:g> · <xliff:g id="reference_kind" example="Instance reference">%2$s</xliff:g> · cél #<xliff:g id="target_id" example="1">%3$d</xliff:g></string>
+    <string name="memory_editor_reference_static">Statikus hivatkozás</string>
+    <string name="memory_editor_reference_instance">Példányhivatkozás</string>
+    <string name="memory_editor_path_changed">A hivatkozási útvonal megváltozott a keresés óta.</string>
+    <string name="memory_editor_path_incomplete">A hivatkozási útvonal meghaladja a vizsgálati korlátot.</string>
+    <string name="memory_editor_source_unknown">Forrás nincs követve</string>
+    <string name="memory_editor_incremental_edit">Növekményes</string>
+    <string name="memory_editor_increment_step">Lépésköz</string>
+    <string name="memory_editor_increment_invalid">Használjon egy egész szám típust és annak tartományán belüli értékeket.</string>
+    <!-- The batch dialog title already shows the number of selected values. -->
+    <string name="memory_editor_increment_preview">Előnézet: <xliff:g id="name" example="Example">%1$s</xliff:g></string>
+    <string name="memory_editor_panel_opacity">Panel átlátszatlansága</string>
+    <string name="memory_editor_panel_opacity_help">Állítsa be a hátteret, hogy keresés közben lássa a játék értékeit. A szöveg és az ikonok láthatók maradnak.</string>
+    <string name="memory_editor_reconversion_required" tools:ignore="MissingTranslation">A MIDlet telepített átalakítása nem kompatibilis a Memóriaszerkesztővel. Zárja be a játékot, majd konvertálja újra vagy telepítse újra a JL-Mod Plus alkalmazásban.</string>
+    <string name="memory_saved_tab" tools:ignore="MissingTranslation">Mentett</string>
+    <string name="memory_saved_save" tools:ignore="MissingTranslation">Változó mentése</string>
+    <string name="memory_saved_name" tools:ignore="MissingTranslation">Név</string>
+    <string name="memory_saved_explanation" tools:ignore="MissingTranslation">Mentse ezt az ellenőrzött memóriaútvonalat későbbi munkamenetekhez. Az értékek soha nem íródnak át automatikusan.</string>
+    <string name="memory_saved_empty" tools:ignore="MissingTranslation">Még nincsenek mentett változók. Válasszon egy keresési találatot a mentéséhez.</string>
+    <string name="memory_saved_not_ready" tools:ignore="MissingTranslation">Nincs kész</string>
+    <string name="memory_saved_retry" tools:ignore="MissingTranslation">Újra</string>
+    <string name="memory_saved_rename" tools:ignore="MissingTranslation">Átnevezés</string>
+    <string name="memory_saved_value" tools:ignore="MissingTranslation">Érték</string>
+    <string name="memory_saved_delete_confirm" tools:ignore="MissingTranslation">Eltávolítja ezt a mentett definíciót? A játék értéke nem változik meg.</string>
+    <string name="memory_saved_changed" tools:ignore="MissingTranslation">Megváltozott</string>
+    <string name="memory_saved_rebound" tools:ignore="MissingTranslation">Cél frissítve</string>
+    <string name="memory_saved_import_summary" tools:ignore="MissingTranslation">Mentett: <xliff:g id="added_count" example="4">%1$d</xliff:g> hozzáadva, <xliff:g id="existing_count" example="2">%2$d</xliff:g> már meglévő</string>
+    <string name="memory_saved_incompatible" tools:ignore="MissingTranslation">Nem kompatibilis</string>
+    <string name="memory_saved_failed" tools:ignore="MissingTranslation">Sikertelen</string>
+    <string name="memory_saved_delete_many_confirm" tools:ignore="MissingTranslation">Eltávolít <xliff:g id="count" example="3">%1$d</xliff:g> mentett definíciót? A játék értékei nem változnak meg.</string>
+    <string name="memory_recipes_title" tools:ignore="MissingTranslation">Gyorsművelet</string>
+    <string name="memory_recipes_simple_from_saved" tools:ignore="MissingTranslation">Cél: <xliff:g id="bookmark_name" example="Coins">%1$s</xliff:g></string>
+    <string name="memory_recipes_preview" tools:ignore="MissingTranslation">Célok előnézete</string>
+    <string name="memory_recipes_stop_freeze" tools:ignore="MissingTranslation">Értékek befagyasztásának leállítása</string>
+    <string name="memory_recipes_freeze" tools:ignore="MissingTranslation">Befagyasztva tartás a játék futása közben</string>
+    <string name="memory_recipes_run" tools:ignore="MissingTranslation">Futtatás</string>
+    <string name="memory_recipes_active_freezes" tools:ignore="MissingTranslation">Értékeket befagyasztó szkriptek</string>
+    <string name="memory_recipes_target_unavailable" tools:ignore="MissingTranslation">A könyvjelző célja nem érhető el. Frissítse vagy csatolja újra futtatás előtt.</string>
+    <string name="memory_recipes_preview_values" tools:ignore="MissingTranslation">Jelenlegi értékek: <xliff:g id="name" example="Example">%1$s</xliff:g></string>
+    <string name="memory_scripts_title" tools:ignore="MissingTranslation">Szkriptek</string>
+    <string name="memory_scripts_active" tools:ignore="MissingTranslation">Aktív</string>
+    <string name="memory_scripts_inputs" tools:ignore="MissingTranslation">Bemenetek</string>
+    <string name="memory_scripts_create_from_bookmarks" tools:ignore="MissingTranslation">Szkript létrehozása</string>
+    <string name="memory_scripts_create_failed" tools:ignore="MissingTranslation">Nem sikerült új szkriptet indítani.</string>
+    <string name="memory_scripts_draft_in_progress" tools:ignore="MissingTranslation">Először fejezze be vagy vesse el a jelenlegi szkriptpiszkozatot.</string>
+    <string name="memory_builder_open_saved" tools:ignore="MissingTranslation">Mentett megnyitása</string>
+    <string name="memory_builder_add_description" tools:ignore="MissingTranslation">Leírás hozzáadása</string>
+    <string name="memory_builder_find_values" tools:ignore="MissingTranslation">Értékek keresése</string>
+    <string name="memory_scripts_description" tools:ignore="MissingTranslation">Leírás</string>
+    <string name="memory_scripts_new" tools:ignore="MissingTranslation">Új szkript</string>
+    <string name="memory_scripts_back" tools:ignore="MissingTranslation">Vissza</string>
+    <string name="memory_scripts_edit" tools:ignore="MissingTranslation">Szerkesztés</string>
+    <string name="memory_scripts_save" tools:ignore="MissingTranslation">Mentés</string>
+    <string name="memory_scripts_saved" tools:ignore="MissingTranslation">Szkript mentve</string>
+    <string name="memory_scripts_deleted" tools:ignore="MissingTranslation">Szkript törölve</string>
+    <string name="memory_scripts_save_failed" tools:ignore="MissingTranslation">Nem sikerült menteni a szkriptet.</string>
+    <string name="memory_scripts_editor_hint" tools:ignore="MissingTranslation">Írjon be vagy illesszen be egy támogatott memóriaműveleteket használó JSON-szkriptet. A mentés nem futtatja a szkriptet.</string>
+    <string name="memory_scripts_paste_hint" tools:ignore="MissingTranslation">Szkript JSON beillesztése</string>
+    <string name="memory_scripts_paste" tools:ignore="MissingTranslation">Beillesztés</string>
+    <string name="memory_scripts_clipboard_invalid" tools:ignore="MissingTranslation">A vágólap üres, vagy a dokumentum meghaladja a 64 KiB méretet</string>
+    <string name="memory_scripts_invalid" tools:ignore="MissingTranslation">Érvénytelen szkriptformátum</string>
+    <string name="memory_scripts_freeze_active" tools:ignore="MissingTranslation">Ez a szkript értékeket fagyaszt be</string>
+    <string name="memory_scripts_delete" tools:ignore="MissingTranslation">Törlés</string>
+    <string name="memory_scripts_delete_confirm" tools:ignore="MissingTranslation">Törli a(z) <xliff:g id="name" example="Example">%1$s</xliff:g> szkriptet? Minden aktív befagyasztása leáll.</string>
+    <string name="memory_scripts_empty" tools:ignore="MissingTranslation">Nincsenek mentett szkriptek</string>
+    <string name="memory_scripts_unsaved_title" tools:ignore="MissingTranslation">Elveti a nem mentett szkriptet?</string>
+    <string name="memory_scripts_unsaved_message" tools:ignore="MissingTranslation">A szkript módosításai nincsenek mentve.</string>
+    <string name="memory_scripts_discard" tools:ignore="MissingTranslation">Elvetés</string>
+    <string name="memory_scripts_current_title" tools:ignore="MissingTranslation">Utolsó olvasás</string>
+    <string name="memory_scripts_refresh" tools:ignore="MissingTranslation">Frissítés</string>
+    <string name="memory_scripts_reading" tools:ignore="MissingTranslation">Jelenlegi értékek olvasása…</string>
+    <string name="memory_scripts_refresh_hint" tools:ignore="MissingTranslation">Koppintson a Frissítés gombra a futó játék jelenlegi értékeinek beolvasásához.</string>
+    <string name="memory_scripts_mode_toggle" tools:ignore="MissingTranslation">Értékek befagyasztása</string>
+    <string name="memory_scripts_mode_form" tools:ignore="MissingTranslation">Értékszerkesztő</string>
+    <string name="memory_scripts_mode_once" tools:ignore="MissingTranslation">Gyorsműveletek</string>
+    <string name="memory_scripts_mode_legacy" tools:ignore="MissingTranslation">Haladó szkript</string>
+    <string name="memory_scripts_edit_values" tools:ignore="MissingTranslation">Értékek szerkesztése</string>
+    <string name="memory_scripts_apply" tools:ignore="MissingTranslation">Módosítások alkalmazása</string>
+    <string name="memory_scripts_refresh_required" tools:ignore="MissingTranslation">Alkalmazás előtt frissítsen a jelenlegi értékek ellenőrzéséhez.</string>
+    <string name="memory_scripts_inconsistent" tools:ignore="MissingTranslation">Eltérő másolatok: <xliff:g id="name" example="Example">%1$s</xliff:g></string>
+    <string name="memory_editor_minimize" tools:ignore="MissingTranslation">Memóriaszerkesztő kis méretre</string>
+    <string name="memory_scripts_choose_type" tools:ignore="MissingTranslation">Új szkript</string>
+    <string name="memory_scripts_choose_hint" tools:ignore="MissingTranslation">Válassza ki, hogyan működjön ez a szkript.</string>
+    <string name="memory_builder_json_editor" tools:ignore="MissingTranslation">JSON-szerkesztő</string>
+    <string name="memory_builder_freeze_hint" tools:ignore="MissingTranslation">Bekapcsolva zárolva tartja a kijelölt értékeket. A befagyasztás kikapcsolása nem állítja vissza a korábbi értékeket.</string>
+    <string name="memory_builder_form_hint" tools:ignore="MissingTranslation">Készítsen űrlapot, amely a módosítások alkalmazása előtt beolvassa a jelenlegi értékeket.</string>
+    <string name="memory_builder_actions_hint" tools:ignore="MissingTranslation">A Futtatás minden megnyomásakor egyszer alkalmazza a módosításokat. A Hozzáadás és a Kivonás az aktuális értékeket használja, beleértve a korábbi futtatások módosításait is.</string>
+    <string name="memory_builder_name" tools:ignore="MissingTranslation">Szkript neve</string>
+    <string name="memory_builder_frozen_values" tools:ignore="MissingTranslation">Befagyasztott értékek</string>
+    <string name="memory_builder_fields" tools:ignore="MissingTranslation">Mezők</string>
+    <string name="memory_builder_actions" tools:ignore="MissingTranslation">Műveletek</string>
+    <string name="memory_builder_add_bookmarks" tools:ignore="MissingTranslation">Hozzáadás könyvjelzőkből</string>
+    <string name="memory_builder_empty" tools:ignore="MissingTranslation">Adjon hozzá legalább egy ellenőrzött könyvjelzőt.</string>
+    <string name="memory_builder_field_label" tools:ignore="MissingTranslation">Mező felirata</string>
+    <string name="memory_builder_keep_at" tools:ignore="MissingTranslation">Tartsa ezen</string>
+    <string name="memory_builder_amount" tools:ignore="MissingTranslation">Érték / mennyiség</string>
+    <string name="memory_builder_set" tools:ignore="MissingTranslation">Beállítás</string>
+    <string name="memory_builder_add" tools:ignore="MissingTranslation">Hozzáadás</string>
+    <string name="memory_builder_subtract" tools:ignore="MissingTranslation">Kivonás</string>
+    <string name="memory_builder_view_json" tools:ignore="MissingTranslation">JSON megtekintése</string>
+    <string name="memory_builder_edit_json" tools:ignore="MissingTranslation">JSON szerkesztése</string>
+    <string name="memory_builder_search_bookmarks" tools:ignore="MissingTranslation">Könyvjelzők keresése</string>
+    <string name="memory_builder_no_bookmarks" tools:ignore="MissingTranslation">Nincsenek megfelelő ellenőrzött könyvjelzők. Könyvjelzőzzön egy értéket a Keresés lapon, vagy csatoljon újra egyet a Mentett lapon.</string>
+    <string name="memory_builder_needs_relink" tools:ignore="MissingTranslation">Újracsatolás szükséges</string>
+    <string name="memory_builder_add_selected" tools:ignore="MissingTranslation">Kijelöltek hozzáadása</string>
+    <string name="memory_builder_min" tools:ignore="MissingTranslation">Minimum (opcionális)</string>
+    <string name="memory_builder_max" tools:ignore="MissingTranslation">Maximum (opcionális)</string>
+    <string name="memory_builder_add_target" tools:ignore="MissingTranslation">Cél hozzáadása</string>
+    <string name="memory_builder_freeze_short" tools:ignore="MissingTranslation">Kijelölt értékek állandó szinten tartása</string>
+    <string name="memory_builder_form_short" tools:ignore="MissingTranslation">Több érték módosítása egy helyen</string>
+    <string name="memory_builder_actions_short" tools:ignore="MissingTranslation">Egyszeri Beállítás, Hozzáadás vagy Kivonás műveletek futtatása</string>
+    <string name="memory_editor_refine_scan" tools:ignore="MissingTranslation">Pontosítás</string>
+    <string name="memory_scripts_saved_count" tools:ignore="MissingTranslation"><xliff:g id="count" example="3">%1$d</xliff:g> mentve</string>
+    <string name="memory_scripts_empty_hint" tools:ignore="MissingTranslation">Hozzon létre szkriptet az értékek játék közbeni szerkesztéséhez vagy befagyasztásához.</string>
+    <string name="memory_builder_limits" tools:ignore="MissingTranslation">Korlátok (opcionális)</string>
+    <string name="memory_editor_selection_limit">Legfeljebb %1$d értéket válassz ki.</string>
+    <string name="memory_saved_storage_unavailable">A mentett elemek nem érhetők el.</string>
+    <string name="memory_bookmark_renamed">Könyvjelző átnevezve</string>
+    <string name="memory_editor_memory_unavailable">A MIDlet memóriája nem érhető el.</string>
+    <string name="memory_bookmark_added">Könyvjelző hozzáadva</string>
+    <string name="memory_bookmark_relinked">Könyvjelző újracsatolva</string>
+    <string name="memory_bookmarks_removed">Eltávolítva a mentett elemek közül</string>
+    <string name="memory_freeze_enabled">Befagyasztás bekapcsolva</string>
+    <string name="memory_freeze_unavailable">Nem sikerült bekapcsolni a befagyasztást.</string>
+    <string name="memory_list_session_only_failed">Az elemet nem sikerült csak a jelenlegi munkamenetre megtartani.</string>
+    <string name="memory_list_kept_unlinked">Mentve a következő indításhoz, de nem sikerült csatolni a jelenlegi munkamenethez.</string>
+    <string name="memory_list_removal_unavailable">Kapcsolat nélkül nem távolíthatók el az elemek. Próbáld újra.</string>
+    <string name="memory_list_watch_removed">Munkamenet-követés eltávolítva</string>
+    <string name="memory_list_bookmark_removal_failed">Nem sikerült eltávolítani a könyvjelzőket: %1$s</string>
+    <string name="memory_list_watch_removal_failed">Nem sikerült eltávolítani a munkamenet-követést: %1$s</string>
+    <string name="memory_list_removal_unknown_error">Ismeretlen hiba</string>
+    <string name="memory_editor_edit_freeze_failed">Az érték frissült, de a befagyasztás nem indult el. Újabb próbálkozás előtt ellenőrizd az aktuális értéket.</string>
+    <string name="memory_scripts_freeze_inactive">Ez a szkript már nem fagyaszt be értékeket.</string>
+    <string name="memory_bookmark_change_incomplete">Nem sikerült befejezni a könyvjelző módosítását. Újrapróbálkozás előtt ellenőrizze a Mentett elemeket.</string>
+    <string name="memory_editor_value_updated">Érték frissítve.</string>
+    <string name="memory_editor_value_updated_frozen">Érték frissítve, rögzítés bekapcsolva.</string>
+    <string name="memory_scripts_delete_failed">Nem sikerült törölni a szkriptet. Újrapróbálkozás előtt ellenőrizze a rögzítés állapotát.</string>
+    <string name="memory_scripts_check_input">Nem sikerült előkészíteni a szkriptet. Ellenőrizze az értékeit és könyvjelzőit.</string>
+    <string name="memory_scripts_read_failed">Nem sikerült beolvasni az aktuális értékeket. Frissítse őket, és próbálja újra.</string>
+    <string name="memory_technical_details">Technikai részletek</string>
+    <string name="memory_scripts_resource_limit">A szkript elérte a biztonsági korlátot. Csökkentse a célok számát, vagy állítsa le a nem használt rögzítéseket.</string>
+    <string name="memory_scripts_target_changed">Nem sikerült ellenőrizni a szkript célját. Frissítse az értékeket, és ellenőrizze a könyvjelzőket.</string>
+    <string name="memory_scripts_operation_unavailable">Ez a szkriptművelet nem támogatott a jelenlegi célhoz.</string>
+    <string name="memory_scripts_invalid_input">Ellenőrizze a szkript bemeneteit. Adjon meg érvényes értékeket a megengedett tartományokon belül.</string>
+    <string name="memory_scripts_value_range">Egy érték kívül esik a támogatott tartományon. Ellenőrizze a szkriptet és az értékeit.</string>
+    <string name="memory_scripts_inconsistent_values">Ugyanannak az értéknek a másolatai eltérnek. Újrapróbálkozás előtt ellenőrizze a játék állapotát.</string>
+    <string name="memory_scripts_wrong_midlet">Ez a szkript másik MIDlethez készült. Nyissa meg a megfelelő MIDletet, vagy válasszon másik szkriptet.</string>
+    <string name="memory_scripts_target_not_ready">A szkript célja még nem áll készen. Térjen vissza a játék megfelelő képernyőjére, és próbálja újra.</string>
+</resources>

@@ -1,0 +1,212 @@
+<?xml version="1.0" encoding="utf-8"?>
+<!-- Rendering pipeline, internal resolution, bitmap upscaling, shaders, and built-in visual effects. -->
+<resources xmlns:tools="http://schemas.android.com/tools" xmlns:xliff="urn:oasis:names:tc:xliff:document:1.2">
+    <string name="identity_filter">Không có (nhanh nhất)</string>
+    <string name="invalid_resolution_not_saved">Độ phân giải không hợp lệ. Chưa lưu thiết lập sẵn.</string>
+    <string name="msg_error_loading_shader">Shader không được hỗ trợ. Đang dùng shader mặc định.</string>
+    <string name="parallel_screen_redrawing">Cập nhật màn hình bất đồng bộ</string>
+    <string name="shader_tuning">Tinh chỉnh shader</string>
+    <string name="SWAP_SIZES">Hoán đổi chiều rộng và chiều cao</string>
+    <string name="fps_limit_maximum">Tối đa</string>
+    <string name="remove_screen_preset">Xóa thiết lập sẵn độ phân giải</string>
+    <string name="perf_overlay_position_help">Chọn một góc màn hình.</string>
+    <string name="perf_overlay_top_left">Trên bên trái</string>
+    <string name="perf_overlay_top_right">Trên bên phải</string>
+    <string name="perf_overlay_bottom_left">Dưới bên trái</string>
+    <string name="perf_overlay_bottom_right">Dưới bên phải</string>
+    <string name="internal_resolution_title" tools:ignore="MissingTranslation">Độ phân giải kết xuất</string>
+    <string name="internal_resolution_auto" tools:ignore="MissingTranslation">Tự động</string>
+    <string name="internal_resolution_description" tools:ignore="MissingTranslation">Đặt độ phân giải cho quá trình kết xuất 2D và 3D được hỗ trợ. Chế độ tự động chọn hệ số tỉ lệ dựa trên vùng hiển thị và giới hạn của thiết bị. Khởi động lại MIDlet để áp dụng thay đổi.</string>
+    <string name="bitmap_upscaling_title" tools:ignore="MissingTranslation">Nâng cấp độ phân giải bitmap</string>
+    <string name="bitmap_upscaling_description" tools:ignore="MissingTranslation">MMPX và xBR Lv3 cải thiện hình ảnh 2D không thể sửa đổi và kết cấu không trong suốt, không thể sửa đổi của mô hình Micro3D. Kết cấu M3G không thay đổi. Khởi động lại MIDlet để áp dụng thay đổi.</string>
+    <string name="bitmap_upscaling_nearest" tools:ignore="MissingTranslation">Điểm lân cận gần nhất</string>
+    <string name="bitmap_upscaling_bilinear" tools:ignore="MissingTranslation">Song tuyến tính</string>
+    <string name="bitmap_upscaling_mmpx" tools:ignore="MissingTranslation">MMPX</string>
+    <string name="bitmap_upscaling_edge_aware" tools:ignore="MissingTranslation">xBR Lv3</string>
+    <!-- Prototyping only: localized UI copy is pending design review. -->
+    <string name="render_shader_effects">Hiệu ứng shader</string>
+    <string name="render_pipeline_title">Quy trình kết xuất</string>
+    <string name="render_shader_preset">Thiết lập sẵn shader</string>
+    <string name="render_shader_picker_help">Kết hợp shader tích hợp sẵn và shader cũ của bạn thành một chuỗi hiệu ứng theo thứ tự.</string>
+    <string name="render_shader_requires_gles">Shader đã được lưu nhưng chỉ áp dụng khi chọn OpenGL ES.</string>
+    <string name="render_shader_missing">Shader đã chọn không có trong thư viện. Hãy chọn thiết lập sẵn khác hoặc khôi phục tệp của nó.</string>
+    <string name="render_shader_parameters">Tham số shader</string>
+    <string name="render_shader_reset_parameters">Đặt lại tham số</string>
+    <string name="render_shader_passes">Các lượt shader</string>
+    <string name="render_shader_pass_count"><xliff:g id="count" example="2">%1$d</xliff:g> lượt</string>
+    <string name="render_shader_pass_hint">Xem các giai đoạn từ thiết lập sẵn GLSLP đã chọn.</string>
+    <string name="render_pass_filter">Lọc đầu vào</string>
+    <string name="render_pass_output">Kích thước đầu ra (rộng × cao)</string>
+    <string name="render_pipeline_unavailable">Thiết lập sẵn không khả dụng</string>
+    <string name="render_game_output">Đầu ra trò chơi</string>
+    <string name="render_logical_screen_help">Kích thước logic báo về cho trò chơi.</string>
+    <string name="render_internal_resolution">Độ phân giải nội bộ</string>
+    <string name="render_internal_unavailable">Chỉ gốc (1×). Độ phân giải kết xuất cao hơn không khả dụng cho cấu hình này.</string>
+    <string name="render_display_renderer">Trình kết xuất hiển thị</string>
+    <string name="render_shader_processing">Xử lý shader</string>
+    <string name="render_display_scaling">Thu phóng hiển thị</string>
+    <string name="render_display_viewport">Khung hiển thị trò chơi</string>
+    <string name="render_texture_filtering">Bộ lọc thu phóng màn hình</string>
+    <string name="render_texture_filtering_help">Chọn Điểm gần nhất hoặc Tuyến tính cho hình ảnh trò chơi hoàn chỉnh. Các hiệu ứng có thể ghi đè tùy chọn này.</string>
+    <string name="render_viewport_note">Kích thước khung hiển thị được xác định từ bố cục màn hình trước khi lập kế hoạch các lượt shader. Các mũi tên thể hiện luồng hình ảnh, không phải thứ tự tính toán bố cục.</string>
+    <string name="render_pipeline_help">Xem cách khung hình trò chơi đi đến màn hình và chỉnh sửa từng giai đoạn.</string>
+    <string name="render_no_shader">Chọn một thiết lập sẵn để thay đổi giao diện trò chơi.</string>
+    <string name="render_shader_adjust">Điều chỉnh tham số</string>
+    <string name="render_legacy_tuning_hint">Tinh chỉnh hiệu ứng cũ này.</string>
+    <string name="render_shader_customization">Tùy chỉnh</string>
+    <string name="render_adjustable_count">Tham số có thể điều chỉnh: <xliff:g id="count" example="3">%1$d</xliff:g></string>
+    <string name="render_pass_summary"><xliff:g id="count" example="3">%1$d</xliff:g> giai đoạn · Do thiết lập sẵn quy định</string>
+    <string name="render_shader_preset_note">Các giai đoạn shader do thiết lập sẵn quy định. Bạn có thể xem chi tiết nhưng không thay đổi thứ tự của chúng.</string>
+    <string name="render_parameters_hint">Di chuyển thanh trượt để điều chỉnh giá trị. Thay đổi sẽ tự động lưu khi bạn thả tay.</string>
+    <string name="render_pass_readonly">Các giai đoạn chạy theo thứ tự này. Bộ lọc đầu vào và tỷ lệ đầu ra lấy từ thiết lập sẵn đã chọn.</string>
+    <string name="render_pipeline_intro">Đường đi từ bộ đệm khung hình trò chơi đến màn hình của bạn.</string>
+    <string name="render_native_short">Gốc (1×)</string>
+    <string name="render_expand_passes">Hiển thị giai đoạn</string>
+    <string name="render_collapse_passes">Ẩn giai đoạn</string>
+    <string name="render_view_all_passes">Chi tiết giai đoạn</string>
+    <string name="render_pipeline_filter_summary">Lọc kết cấu: <xliff:g id="shader_name" example="CRT Classic">%1$s</xliff:g></string>
+    <string name="render_pipeline_note">Bố cục hiển thị xác định khung hiển thị trước khi lập kế hoạch các lượt shader. Các bước thể hiện luồng hình ảnh.</string>
+    <string name="render_shader_change">Chọn hiệu ứng khác</string>
+    <string name="render_custom_pipeline">Quy trình tùy chỉnh</string>
+    <string name="render_custom_pipeline_hint">Kết hợp các shader GLSL độc lập từ thư mục shader của bạn.</string>
+    <string name="render_custom_order_help">Hiệu ứng chạy từ trên xuống dưới. Các cài đặt GLSLP kế thừa vẫn có hiệu lực trừ khi bị thay đổi.</string>
+    <string name="render_custom_empty">Thêm một shader để bắt đầu chuỗi tùy chỉnh.</string>
+    <string name="render_custom_stage_count"><xliff:g id="count" example="3">%1$d</xliff:g> giai đoạn shader tùy chỉnh</string>
+    <string name="render_custom_add">Thêm shader</string>
+    <string name="render_custom_add_hint">Chọn tệp nguồn .glsl độc lập bên ngoài.</string>
+    <string name="render_custom_no_sources">Không tìm thấy shader cũ nào. Hãy thêm tệp shader .ini vào thư mục shaders rồi mở lại Cài đặt.</string>
+    <string name="render_custom_scale">Đầu ra: <xliff:g id="scale" example="2">%1$d</xliff:g>× giai đoạn trước</string>
+    <string name="render_custom_output_scale">Kích thước đầu ra cho giai đoạn tiếp theo</string>
+    <string name="render_custom_final_viewport">Đầu ra cuối cùng: hiển thị trên màn hình</string>
+    <string name="render_custom_filter">Bộ lọc đầu vào: <xliff:g id="shader_name" example="CRT Classic">%1$s</xliff:g></string>
+    <string name="render_custom_up">Lên</string>
+    <string name="render_custom_down">Xuống</string>
+    <string name="render_custom_remove">Xóa</string>
+    <string name="render_custom_cancel">Hủy</string>
+    <string name="render_custom_save">Lưu</string>
+    <string name="render_custom_default">Mặc định</string>
+    <string name="render_custom_nearest">Điểm gần nhất</string>
+    <string name="render_custom_linear">Tuyến tính</string>
+    <string name="render_custom_checking">Đang kiểm tra tệp shader…</string>
+    <string name="render_active_shader">Hiệu ứng đang bật</string>
+    <string name="render_shader_off">Tắt</string>
+    <string name="render_edit_custom_pipeline">Chỉnh sửa chuỗi shader</string>
+    <string name="render_shader_unavailable">Không khả dụng: <xliff:g id="shader_name" example="CRT Classic">%1$s</xliff:g></string>
+    <string name="render_no_shader_sources">Không tìm thấy shader nào. Hãy thêm tệp shader .ini cũ vào thư mục shaders rồi mở lại Cài đặt.</string>
+    <string name="render_shader_mode">Chế độ shader</string>
+    <string name="render_mode_selected">Đã chọn</string>
+    <string name="render_gles_shader_default">OpenGL ES dùng hình ảnh gốc của trò chơi khi tắt hiệu ứng shader.</string>
+    <string name="render_shader_off_help">Không áp dụng thêm hiệu ứng hình ảnh.</string>
+    <string name="render_legacy_mode">Shader cũ</string>
+    <string name="render_legacy_mode_help">Chọn tệp .ini từ thư mục shaders.</string>
+    <string name="render_legacy_empty">Không có định nghĩa shader hợp lệ nào trong tệp .ini này.</string>
+    <string name="render_legacy_select_variant">Chọn một shader cũ</string>
+    <string name="render_legacy_variant_description">Định nghĩa shader trong tệp .ini đã chọn</string>
+    <string name="render_preset_mode">Thiết lập sẵn GLSLP</string>
+    <string name="render_preset_mode_help">Tải quy trình .glslp hoàn chỉnh với các lượt riêng của nó.</string>
+    <string name="render_custom_pass_count">Số lượt shader</string>
+    <string name="render_custom_pass_number">Lượt <xliff:g id="number" example="1">%1$d</xliff:g></string>
+    <string name="render_custom_pick_file">Chọn tệp GLSL</string>
+    <string name="render_custom_add_pass">Tăng số lượt shader</string>
+    <string name="render_custom_remove_pass">Giảm số lượt shader</string>
+    <string name="render_shader_selected_name">Đang bật: <xliff:g id="shader_name" example="CRT Classic">%1$s</xliff:g></string>
+    <string name="render_shader_invalid_picker">Không thể dùng tệp đã chọn. Hãy chọn tệp .ini cũ bên trong thư mục shaders.</string>
+    <string name="render_custom_mode">Loại shader</string>
+    <string name="render_custom_mode_legacy">Shader cũ</string>
+    <string name="render_custom_mode_glsl">GLSL</string>
+    <string name="render_custom_pick_legacy">Chọn shader cũ</string>
+    <string name="render_custom_preserve_size">Đầu ra: Theo thiết lập sẵn</string>
+    <string name="render_custom_loading">Đang đọc các lượt thiết lập sẵn…</string>
+    <string name="render_custom_start_fresh">Bắt đầu không cần thiết lập sẵn (bỏ cài đặt kế thừa)</string>
+    <string name="render_effect_default_settings">Cài đặt mặc định</string>
+    <string name="render_effect_summary_more">+<xliff:g id="count" example="2">%1$d</xliff:g> nữa</string>
+    <string name="render_effect_legacy_author">Tác giả: <xliff:g id="shader_name" example="CRT Classic">%1$s</xliff:g></string>
+    <string name="render_effect_legacy_source">Nguồn: <xliff:g id="shader_name" example="CRT Classic">%1$s</xliff:g></string>
+    <string name="render_effect_removed">Đã xóa hiệu ứng</string>
+    <string name="render_effect_undo">Hoàn tác</string>
+    <string name="render_effect_catalog_hint">Nhấn vào một hiệu ứng để thêm vào chuỗi.</string>
+    <string name="render_effect_user_folder_hint">Các tệp INI, VSH và FSH phải nằm trong thư mục shaders.</string>
+    <string name="render_effect_legacy_scale_note">Shader cũ kết xuất ở độ phân giải khung hiển thị màn hình; các cờ OutputResolution và Upscaling trong .ini bị bỏ qua.</string>
+    <string name="render_effect_legacy_metadata_missing">Không tìm thấy cài đặt từ tệp .ini của shader này. Shader vẫn có thể hoạt động bằng các tệp nguồn của nó.</string>
+    <string name="render_effect_count"><xliff:g id="count" example="2">%1$d</xliff:g> đang bật</string>
+    <string name="render_effect_add">Thêm hiệu ứng</string>
+    <string name="render_effect_builtin">Hiệu ứng tích hợp sẵn</string>
+    <string name="render_effect_user">Shader của tôi</string>
+    <string name="render_effect_user_add">Duyệt tệp .ini</string>
+    <string name="render_effect_user_empty">Không tìm thấy shader cũ nào trong thư mục shaders.</string>
+    <string name="render_effect_user_file">Chọn tệp .ini cũ</string>
+    <string name="render_effect_empty">Thêm hiệu ứng để tùy chỉnh giao diện trò chơi.</string>
+    <string name="render_effect_hint">Hiệu ứng chạy từ trên xuống dưới. Nhấn giữ và kéo để sắp xếp lại.</string>
+    <string name="render_effect_move_up">Di chuyển lên</string>
+    <string name="render_effect_move_down">Di chuyển xuống</string>
+    <string name="render_effect_remove">Xóa hiệu ứng</string>
+    <string name="render_effect_no_parameters">Hiệu ứng này không có tham số có thể điều chỉnh.</string>
+    <string name="render_effect_parameter_number">Tham số <xliff:g id="count" example="2">%1$d</xliff:g></string>
+    <string name="render_effect_restore">Đặt lại tham số</string>
+    <string name="render_effect_missing">Không khả dụng: <xliff:g id="shader_name" example="CRT Classic">%1$s</xliff:g>. Hiệu ứng tích hợp sẵn này không có trong phiên bản hiện tại. Hãy xóa khỏi chuỗi.</string>
+    <string name="render_effect_limit">Chuỗi hỗ trợ tối đa 16 lượt shader (một số hiệu ứng dùng nhiều lượt).</string>
+    <string name="render_effect_unavailable">Không thể chạy hiệu ứng shader. Đang hiển thị hình ảnh gốc của trò chơi. Hãy thử giảm số hiệu ứng hoặc hạ độ phân giải kết xuất.</string>
+    <string name="render_bitmap_memory_reduced">Nâng cấp độ phân giải bitmap đã hết bộ nhớ. Hệ thống sẽ dùng ảnh gốc hoặc tỷ lệ thấp hơn. Hãy thử hạ độ phân giải kết xuất hoặc giải phóng bộ nhớ, sau đó khởi động lại.</string>
+    <string name="render_texture_memory_reduced">Nâng cấp độ phân giải kết cấu Micro3D không thành công. Hệ thống sẽ dùng kết cấu gốc. Hãy thử hạ độ phân giải kết xuất hoặc giải phóng bộ nhớ, sau đó khởi động lại.</string>
+    <string name="render_resolution_reduced">Độ phân giải kết xuất đã giảm từ <xliff:g id="from_scale" example="4">%1$d</xliff:g>× xuống <xliff:g id="to_scale" example="2">%2$d</xliff:g>× do giới hạn bộ nhớ hoặc GPU. Hãy thử mức thấp hơn hoặc giải phóng bộ nhớ, sau đó khởi động lại.</string>
+    <string name="render_gpu_texture_limit">Hình ảnh trò chơi vượt quá giới hạn kích thước kết cấu của GPU ngay cả ở tỉ lệ 1×. Hãy giảm kích thước màn hình MIDlet hoặc đổi chế độ đồ họa.</string>
+    <string name="render_gpu_upload_failed">Không thể tải hình ảnh trò chơi lên GPU. Đang thử lại. Hãy thử đóng các ứng dụng khác hoặc chuyển chế độ đồ họa.</string>
+    <string name="render_effect_gles">Hiệu ứng đã được lưu nhưng chỉ kết xuất khi dùng OpenGL ES.</string>
+    <string name="render_effect_legacy_file_error">Không thể tải shader cũ hợp lệ từ tệp .ini đã chọn.</string>
+    <string name="effect_color">Điều chỉnh màu sắc</string>
+    <string name="effect_color_desc">Điều chỉnh độ sáng, độ tương phản, độ bão hòa, gamma, tông màu và đơn sắc.</string>
+    <string name="effect_vignette">Làm tối góc</string>
+    <string name="effect_vignette_desc">Làm tối các cạnh để thu hút sự chú ý vào trung tâm.</string>
+    <string name="effect_sharpen">Làm sắc nét</string>
+    <string name="effect_sharpen_desc">Tăng cường chi tiết và đường viền trong hình ảnh.</string>
+    <string name="effect_cartoon">Hoạt hình dịu</string>
+    <string name="effect_cartoon_desc">Đơn giản hóa dải chuyển màu và thêm đường viền mềm mại.</string>
+    <string name="effect_bloom">Phát sáng (Bloom)</string>
+    <string name="effect_bloom_desc">Thêm ánh sáng dịu quanh các vùng sáng của hình ảnh.</string>
+    <string name="effect_crt_classic">CRT cổ điển</string>
+    <string name="effect_crt_classic_desc">Mô phỏng tivi CRT với đường quét và lưới điểm ảnh RGB.</string>
+    <string name="effect_crt_beam">Độ hẹp chùm tia</string>
+    <string name="effect_brightness">Độ sáng</string>
+    <string name="effect_contrast">Độ tương phản</string>
+    <string name="effect_saturation">Độ bão hòa</string>
+    <string name="effect_strength">Cường độ</string>
+    <string name="effect_color_levels">Mức màu</string>
+    <string name="effect_edge">Độ đậm đường viền</string>
+    <string name="effect_threshold">Ngưỡng độ sáng</string>
+    <string name="effect_radius">Bán kính làm mờ</string>
+    <string name="effect_mask_strength">Cường độ lưới mặt nạ</string>
+    <string name="effect_scan_strength">Cường độ đường quét</string>
+    <string name="effect_bright_boost">Tăng độ sáng</string>
+    <string name="effect_lcd">LCD</string>
+    <string name="effect_lcd_desc">Mô phỏng lưới điểm ảnh và điểm ảnh phụ của màn hình LCD màu cổ điển.</string>
+    <string name="effect_lcd_grid">Cường độ lưới</string>
+    <string name="effect_lcd_subpixel">Điểm ảnh phụ RGB</string>
+    <string name="effect_lcd_brightness">Độ sáng LCD</string>
+    <string name="effect_scanlines">Đường quét nhẹ</string>
+    <string name="effect_scanlines_desc">Thêm các đường ngang mảnh giống màn hình CRT.</string>
+    <string name="effect_line_width">Độ mảnh đường quét</string>
+    <string name="effect_gamma">Gamma</string>
+    <string name="effect_temperature">Nhiệt độ màu</string>
+    <string name="effect_tint">Sắc thái</string>
+    <string name="effect_monochrome">Đơn sắc</string>
+    <string name="effect_depth">Độ sâu màu &amp; phối màu điểm ảnh</string>
+    <string name="effect_depth_desc">Giới hạn bảng màu, kèm tùy chọn phối màu điểm ảnh cho phong cách cổ điển.</string>
+    <string name="effect_depth_format">Định dạng màu hiển thị</string>
+    <string name="effect_depth_rgb444">RGB444 · 4.096 màu</string>
+    <string name="effect_depth_rgb565">RGB565 · 65.536 màu</string>
+    <string name="effect_depth_rgb666">RGB666 · 262.144 màu</string>
+    <string name="effect_dither_mode">Kiểu phối màu điểm ảnh</string>
+    <string name="effect_dither_none">Tắt</string>
+    <string name="effect_dither_bayer4">Bayer 4×4</string>
+    <string name="effect_dither_bayer8">Bayer 8×8</string>
+    <string name="effect_dither_strength">Cường độ phối màu</string>
+    <string name="effect_mono_display">Màn hình đơn sắc</string>
+    <string name="effect_mono_display_desc">Mô phỏng màn hình trắng đen, xanh lục hoặc hổ phách với 2 hoặc 4 sắc độ.</string>
+    <string name="effect_mono_palette">Màu LCD</string>
+    <string name="effect_mono_bw">Trắng đen</string>
+    <string name="effect_mono_green">LCD xanh lục</string>
+    <string name="effect_mono_amber">LCD hổ phách</string>
+    <string name="effect_mono_tones">Số sắc độ</string>
+    <string name="effect_mono_two">2 sắc độ</string>
+    <string name="effect_mono_four">4 sắc độ</string>
+</resources>

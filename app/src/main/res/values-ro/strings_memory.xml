@@ -1,0 +1,291 @@
+<?xml version="1.0" encoding="utf-8"?>
+<!-- Memory Editor search, inspector, bookmarks, saved variables, quick actions, and script builder. -->
+<resources xmlns:tools="http://schemas.android.com/tools" xmlns:xliff="urn:oasis:names:tc:xliff:document:1.2">
+    <string name="memory_editor_bubble">Buton flotant Editor de memorie</string>
+    <string name="memory_editor_bubble_content_description">Deschide Editor de memorie</string>
+    <string name="memory_editor_previous_results_page_action">Pagina anterioară de rezultate</string>
+    <string name="memory_editor_next_results_page_action">Pagina următoare de rezultate</string>
+    <string name="memory_editor">Editor de memorie</string>
+    <string name="memory_editor_search_hint">Valoare</string>
+    <string name="memory_editor_next_scan">Scanarea următoare</string>
+    <string name="memory_editor_new_search">Căutare nouă</string>
+    <plurals name="memory_editor_results">
+        <item quantity="one"><xliff:g id="count" example="3">%1$d</xliff:g> rezultat</item>
+        <item quantity="few"><xliff:g id="count" example="3">%1$d</xliff:g> rezultate</item>
+        <item quantity="other"><xliff:g id="count" example="3">%1$d</xliff:g> de rezultate</item>
+    </plurals>
+    <plurals name="memory_editor_candidates">
+        <item quantity="one"><xliff:g id="count" example="3">%1$d</xliff:g> candidat</item>
+        <item quantity="few"><xliff:g id="count" example="3">%1$d</xliff:g> candidați</item>
+        <item quantity="other"><xliff:g id="count" example="3">%1$d</xliff:g> de candidați</item>
+    </plurals>
+    <plurals name="memory_editor_search_complete">
+        <item quantity="one">Căutare finalizată · <xliff:g id="count" example="3">%1$d</xliff:g> candidat</item>
+        <item quantity="few">Căutare finalizată · <xliff:g id="count" example="3">%1$d</xliff:g> candidați</item>
+        <item quantity="other">Căutare finalizată · <xliff:g id="count" example="3">%1$d</xliff:g> de candidați</item>
+    </plurals>
+    <string name="memory_editor_no_results">Niciun rezultat</string>
+    <string name="memory_editor_no_watch">Lista de urmărire este goală</string>
+    <string name="memory_editor_unsupported">Editorul de memorie nu este disponibil pentru acest runtime.</string>
+    <string name="memory_editor_engine_unavailable">Motorul Editorului de memorie nu este disponibil.</string>
+    <string name="memory_editor_engine_reconnecting">Editorul de memorie se reconectează…</string>
+    <string name="memory_editor_refresh">Reîmprospătează</string>
+    <string name="memory_editor_undo">Anulează scanarea</string>
+    <string name="memory_variables_tab">Salvate</string>
+    <string name="memory_editor_back" tools:ignore="MissingTranslation">Înapoi</string>
+    <string name="memory_list_keep" tools:ignore="MissingTranslation">Păstrează pentru următoarea lansare</string>
+    <string name="memory_list_stop_keeping" tools:ignore="MissingTranslation">Nu mai păstra</string>
+    <string name="memory_list_kept" tools:ignore="MissingTranslation">Păstrat pentru următoarea lansare</string>
+    <string name="memory_list_empty" tools:ignore="MissingTranslation">Nu există marcaje salvate</string>
+    <string name="memory_list_empty_hint" tools:ignore="MissingTranslation">Marcați o variabilă din Căutare sau Inspector pentru a o urmări aici.</string>
+    <string name="memory_list_remove_confirm" tools:ignore="MissingTranslation">Eliminați din Salvate? Orice înghețare activă va fi oprită.</string>
+    <string name="memory_list_add" tools:ignore="MissingTranslation">Marchează</string>
+    <string name="memory_bookmark_relink" tools:ignore="MissingTranslation">Reconectează</string>
+    <string name="memory_bookmark_relink_hint" tools:ignore="MissingTranslation">Selectați variabila de înlocuire în Căutare, apoi alegeți Reconectează.</string>
+    <string name="memory_bookmark_relink_confirm" tools:ignore="MissingTranslation">Conectați acest marcaj la variabila selectată? Orice înghețare activă a acestui marcaj va fi oprită.</string>
+    <string name="memory_bookmark_unavailable" tools:ignore="MissingTranslation">Indisponibil — selectați Reconectează pentru a alege o țintă</string>
+    <string name="memory_editor_watch">Urmărire</string>
+    <string name="memory_editor_search_tab">Căutare</string>
+    <string name="memory_editor_search_known_values">Caută valori cunoscute</string>
+    <string name="memory_editor_search_unknown_values">Caută valori necunoscute</string>
+    <string name="memory_editor_add_to_watch">Marchează valorile selectate</string>
+    <string name="memory_editor_no_candidates">Nu s-au găsit valori care pot fi căutate</string>
+    <string name="memory_editor_edit">Editează</string>
+    <plurals name="memory_editor_edit_batch">
+        <item quantity="one">Editează <xliff:g id="count" example="3">%1$d</xliff:g> valoare</item>
+        <item quantity="few">Editează <xliff:g id="count" example="3">%1$d</xliff:g> valori</item>
+        <item quantity="other">Editează <xliff:g id="count" example="3">%1$d</xliff:g> de valori</item>
+    </plurals>
+    <string name="memory_editor_edit_batch_no_common_type">Elementele selectate nu acceptă tipul de date ales. Editați separat elementele compatibile.</string>
+    <string name="memory_editor_save">Aplică</string>
+    <string name="memory_editor_replacement">Valoare nouă</string>
+    <string name="memory_editor_freeze">Îngheață</string>
+    <string name="memory_editor_remove">Elimină</string>
+    <string name="memory_editor_select_visible">Selectează vizibile</string>
+    <string name="memory_editor_clear_selection">Deselectează</string>
+    <plurals name="memory_editor_selected">
+        <item quantity="one"><xliff:g id="count" example="3">%1$d</xliff:g> selectat</item>
+        <item quantity="few"><xliff:g id="count" example="3">%1$d</xliff:g> selectate</item>
+        <item quantity="other"><xliff:g id="count" example="3">%1$d</xliff:g> selectate</item>
+    </plurals>
+    <string name="memory_editor_close">Închide Editor de memorie</string>
+    <string name="memory_editor_searching">Se caută în memorie…</string>
+    <string name="memory_editor_working">Se aplică operațiunea…</string>
+    <string name="memory_editor_search_progress">Scanat <xliff:g id="scanned_mib" example="12">%1$d</xliff:g> din <xliff:g id="total_mib" example="64">%2$d</xliff:g> MiB</string>
+    <string name="memory_editor_candidate_moved">Țintă actualizată</string>
+    <string name="memory_editor_candidate_relocating">Se revalidează</string>
+    <string name="memory_editor_candidate_ambiguous">Ambiguu — scrierile sunt în pauză</string>
+    <string name="memory_editor_candidate_lost">Pierdut — scrierile sunt în pauză</string>
+    <string name="memory_editor_apply">Aplică</string>
+    <string name="memory_editor_min_value">Valoare minimă</string>
+    <string name="memory_editor_max_value">Valoare maximă</string>
+    <string name="memory_editor_change_amount">Valoare modificare</string>
+    <string name="memory_editor_min_change">Modificare minimă</string>
+    <string name="memory_editor_max_change">Modificare maximă</string>
+    <string name="memory_editor_unfreeze">Dezgheață</string>
+    <string name="memory_editor_cancelled">Operațiunea a fost anulată.</string>
+    <string name="memory_editor_resource_limit">Editorul de memorie a atins o limită de siguranță. Încercați o căutare mai specifică sau eliminați marcajele ori înghețările neutilizate.</string>
+    <string name="memory_editor_identity_unsafe">Valoarea selectată sau starea căutării nu a putut fi verificată. Reîmprospătați rezultatele sau redeschideți Inspector, apoi încercați din nou.</string>
+    <string name="memory_editor_safety_limit">Sunt selectate prea multe valori pentru această operațiune. Selectați mai puține și încercați din nou.</string>
+    <string name="memory_editor_invalid_request">Valoarea sau operațiunea nu este validă.</string>
+    <string name="memory_editor_freeze_paused">În pauză pentru siguranță</string>
+    <string name="memory_editor_predicate_between">Între</string>
+    <string name="memory_editor_predicate_changed">Modificat</string>
+    <string name="memory_editor_predicate_unchanged">Nemodificat</string>
+    <string name="memory_editor_predicate_increased">Crescut</string>
+    <string name="memory_editor_predicate_decreased">Scăzut</string>
+    <string name="memory_editor_predicate_increased_by">Crescut cu</string>
+    <string name="memory_editor_predicate_decreased_by">Scăzut cu</string>
+    <string name="memory_editor_predicate_changed_by">Modificat cu</string>
+    <string name="memory_editor_predicate_increased_range">Creștere în interval</string>
+    <string name="memory_editor_predicate_decreased_range">Scădere în interval</string>
+    <string name="memory_editor_inspector">Inspector</string>
+    <string name="memory_editor_inspect_memory">Inspectează memoria apropiată</string>
+    <string name="memory_editor_inspector_loading">Se verifică rezultatul și se citește memoria apropiată…</string>
+    <string name="memory_editor_inspector_empty">Selectați un rezultat pentru a inspecta memoria apropiată.</string>
+    <string name="memory_editor_inspector_no_rows">Nu există memorie apropiată disponibilă pentru inspectare.</string>
+    <string name="memory_editor_refresh_snapshot">Reîmprospătează instantaneul</string>
+    <string name="memory_editor_select_result_value">Selectează acest marcaj</string>
+    <string name="memory_editor_freeze_after_edit">Îngheață după aplicare</string>
+    <string name="memory_editor_freeze_after_edit_help">Menține această valoare blocată și o marchează în Salvate.</string>
+    <string name="memory_editor_expression_single_hint">Introduceți o valoare sau separați valorile de grup cu punct și virgulă (;).</string>
+    <string name="memory_editor_expression_group_needs_type">Alegeți un tip de date specific pentru căutarea de grup.</string>
+    <plurals name="memory_editor_expression_group_hint">
+        <item quantity="one">Căutare de grup · <xliff:g id="count" example="3">%1$d</xliff:g> valoare · același obiect Java</item>
+        <item quantity="few">Căutare de grup · <xliff:g id="count" example="3">%1$d</xliff:g> valori · același obiect Java</item>
+        <item quantity="other">Căutare de grup · <xliff:g id="count" example="3">%1$d</xliff:g> de valori · același obiect Java</item>
+    </plurals>
+    <string name="memory_editor_expression_query_help">Exemple: 500 sau 500;1000. Căutarea de grup caută 2–8 valori în același obiect Java.</string>
+    <string name="memory_editor_keypad_clear">Șterge</string>
+    <string name="memory_editor_peek_underlay">Țineți apăsat pentru a vedea MIDlet-ul de dedesubt</string>
+    <string name="memory_editor_peek_underlay_active">Se afișează MIDlet-ul de dedesubt</string>
+    <string name="memory_editor_no_runtime">Niciun runtime MIDlet activ.</string>
+    <string name="memory_editor_no_search_history">Nu există nicio căutare anterioară de restaurat.</string>
+    <string name="memory_editor_partial_write">Operațiunea de scriere nu s-a finalizat complet. Verificați valorile curente înainte de a încerca din nou.</string>
+    <!-- Independent write counts: confirmed, unconfirmed, skipped, not attempted, and incompatible data type. -->
+    <string name="memory_editor_write_outcome">Scrieri confirmate: <xliff:g id="confirmed" example="3">%1$d</xliff:g>. Neconfirmate: <xliff:g id="unconfirmed" example="0">%2$d</xliff:g>. Omise: <xliff:g id="skipped" example="0">%3$d</xliff:g>. Neîncercate: <xliff:g id="not_attempted" example="0">%4$d</xliff:g>. Omise din cauza tipului: <xliff:g id="skipped_by_type" example="0">%5$d</xliff:g>.</string>
+    <!-- %1$s is a localized outcome explanation; %2$d through %6$d are the same independent write counts. -->
+    <string name="memory_editor_write_failure_outcome"><xliff:g id="reason" example="Write interrupted.">%1$s</xliff:g>\nScrieri confirmate: <xliff:g id="confirmed" example="1">%2$d</xliff:g>. Neconfirmate: <xliff:g id="unconfirmed" example="1">%3$d</xliff:g>. Omise: <xliff:g id="skipped" example="0">%4$d</xliff:g>. Neîncercate: <xliff:g id="not_attempted" example="0">%5$d</xliff:g>. Omise din cauza tipului: <xliff:g id="skipped_by_type" example="0">%6$d</xliff:g>.</string>
+    <!-- Result counts before (%1$d) and after (%2$d) the completed next scan. -->
+    <string name="memory_editor_next_scan_result">Rezultate scanare următoare: <xliff:g id="before_count" example="120">%1$d</xliff:g> → <xliff:g id="after_count" example="14">%2$d</xliff:g></string>
+    <string name="memory_editor_type_auto">Automat</string>
+    <string name="memory_editor_remove_candidates_title">Eliminați rezultatele selectate?</string>
+    <string name="memory_editor_remove_candidates_description">Elimină: Scoate rezultatele selectate din lista de căutare. Valorile din memoria jocului rămân neschimbate.\n\nRevino și elimină: Restaurează și valorile de dinaintea ultimelor editări confirmate, dar numai dacă valorile actuale încă se potrivesc cu valorile de după acele editări. Valorile înghețate și rezultatele care nu pot fi restaurate în siguranță rămân în listă.</string>
+    <string name="memory_editor_revert_and_remove">Revino și elimină</string>
+    <string name="memory_editor_revert_remove_commit_failed">Este posibil ca valorile să fi fost restaurate, dar rezultatele nu au putut fi eliminate. Reîmprospătați și încercați din nou; valorile modificate de joc nu vor fi suprascrise.</string>
+    <string name="memory_editor_revert_remove_outcome">Restaurate: <xliff:g id="restored" example="2">%1$d</xliff:g>. Eliminate: <xliff:g id="removed" example="2">%2$d</xliff:g>. Conflicte: <xliff:g id="conflicts" example="0">%3$d</xliff:g>. Neconfirmate: <xliff:g id="unconfirmed" example="0">%4$d</xliff:g>. Neîncercate: <xliff:g id="not_attempted" example="0">%5$d</xliff:g>.</string>
+    <string name="memory_editor_set_all">Setează toate</string>
+    <string name="memory_editor_increment_start">Valoare de pornire</string>
+    <string name="memory_editor_edit_batch_type_notice">Vor fi modificate doar valorile cu tipuri de date compatibile.</string>
+    <string name="memory_editor_write_confirmed">Valori confirmate prin recitirea memoriei: <xliff:g id="count" example="3">%1$d</xliff:g>.</string>
+    <string name="memory_editor_candidate_untraced">Tablou #<xliff:g id="array_id" example="42">%1$d</xliff:g>[<xliff:g id="index" example="3">%2$d</xliff:g>] · Sursă neurmărită</string>
+    <string name="memory_editor_candidate_static"><xliff:g id="field_name" example="Player.coins">%1$s</xliff:g> · <xliff:g id="reference_kind" example="Static reference">%2$s</xliff:g></string>
+    <string name="memory_editor_candidate_instance"><xliff:g id="field_name" example="Player.hp">%1$s</xliff:g> · <xliff:g id="reference_kind" example="Instance reference">%2$s</xliff:g> · țintă #<xliff:g id="target_id" example="1">%3$d</xliff:g></string>
+    <string name="memory_editor_reference_static">Referință statică</string>
+    <string name="memory_editor_reference_instance">Referință de instanță</string>
+    <string name="memory_editor_path_changed">Calea de referință s-a schimbat de la ultima scanare.</string>
+    <string name="memory_editor_path_incomplete">Calea de referință depășește limita de inspectare.</string>
+    <string name="memory_editor_source_unknown">Sursă neurmărită</string>
+    <string name="memory_editor_incremental_edit">Incrementare</string>
+    <string name="memory_editor_increment_step">Pas</string>
+    <string name="memory_editor_increment_invalid">Folosiți un singur tip întreg și valori din intervalul acestuia.</string>
+    <!-- The batch dialog title already shows the number of selected values. -->
+    <string name="memory_editor_increment_preview">Previzualizare: <xliff:g id="name" example="Example">%1$s</xliff:g></string>
+    <string name="memory_editor_panel_opacity">Opacitate panou</string>
+    <string name="memory_editor_panel_opacity_help">Ajustați fundalul pentru a vedea valorile din joc în timp ce căutați. Textul și pictogramele rămân vizibile.</string>
+    <string name="memory_editor_reconversion_required" tools:ignore="MissingTranslation">Conversia instalată a acestui MIDlet nu este compatibilă cu Editor de memorie. Închideți jocul, apoi reconvertiți-l sau reinstalați-l în JL-Mod Plus.</string>
+    <string name="memory_saved_tab" tools:ignore="MissingTranslation">Salvate</string>
+    <string name="memory_saved_save" tools:ignore="MissingTranslation">Salvează variabila</string>
+    <string name="memory_saved_name" tools:ignore="MissingTranslation">Nume</string>
+    <string name="memory_saved_explanation" tools:ignore="MissingTranslation">Salvați această cale de memorie verificată pentru sesiuni viitoare. Valorile nu sunt scrise niciodată automat.</string>
+    <string name="memory_saved_empty" tools:ignore="MissingTranslation">Nu există variabile salvate încă. Selectați un rezultat de căutare pentru a-l salva.</string>
+    <string name="memory_saved_not_ready" tools:ignore="MissingTranslation">Nepregătit</string>
+    <string name="memory_saved_retry" tools:ignore="MissingTranslation">Încearcă din nou</string>
+    <string name="memory_saved_rename" tools:ignore="MissingTranslation">Redenumește</string>
+    <string name="memory_saved_value" tools:ignore="MissingTranslation">Valoare</string>
+    <string name="memory_saved_delete_confirm" tools:ignore="MissingTranslation">Eliminați această definiție salvată? Valoarea din joc nu se va schimba.</string>
+    <string name="memory_saved_changed" tools:ignore="MissingTranslation">Modificat</string>
+    <string name="memory_saved_rebound" tools:ignore="MissingTranslation">Țintă actualizată</string>
+    <string name="memory_saved_import_summary" tools:ignore="MissingTranslation">Salvate: <xliff:g id="added_count" example="4">%1$d</xliff:g> adăugate, <xliff:g id="existing_count" example="2">%2$d</xliff:g> deja prezente</string>
+    <string name="memory_saved_incompatible" tools:ignore="MissingTranslation">Incompatibil</string>
+    <string name="memory_saved_failed" tools:ignore="MissingTranslation">Eșuat</string>
+    <string name="memory_saved_delete_many_confirm" tools:ignore="MissingTranslation">Eliminați <xliff:g id="count" example="3">%1$d</xliff:g> definiții salvate? Valorile din joc nu se vor schimba.</string>
+    <string name="memory_recipes_title" tools:ignore="MissingTranslation">Acțiune rapidă</string>
+    <string name="memory_recipes_simple_from_saved" tools:ignore="MissingTranslation">Țintă: <xliff:g id="bookmark_name" example="Coins">%1$s</xliff:g></string>
+    <string name="memory_recipes_preview" tools:ignore="MissingTranslation">Previzualizează țintele</string>
+    <string name="memory_recipes_stop_freeze" tools:ignore="MissingTranslation">Oprește înghețarea valorilor</string>
+    <string name="memory_recipes_freeze" tools:ignore="MissingTranslation">Menține înghețat cât timp rulează jocul</string>
+    <string name="memory_recipes_run" tools:ignore="MissingTranslation">Rulează</string>
+    <string name="memory_recipes_active_freezes" tools:ignore="MissingTranslation">Scripturi care îngheață valori</string>
+    <string name="memory_recipes_target_unavailable" tools:ignore="MissingTranslation">Ținta marcajului nu este disponibilă. Reîmprospătați-o sau reconectați-o înainte de rulare.</string>
+    <string name="memory_recipes_preview_values" tools:ignore="MissingTranslation">Valori curente: <xliff:g id="name" example="Example">%1$s</xliff:g></string>
+    <string name="memory_scripts_title" tools:ignore="MissingTranslation">Scripturi</string>
+    <string name="memory_scripts_active" tools:ignore="MissingTranslation">Activ</string>
+    <string name="memory_scripts_inputs" tools:ignore="MissingTranslation">Intrări</string>
+    <string name="memory_scripts_create_from_bookmarks" tools:ignore="MissingTranslation">Creează script</string>
+    <string name="memory_scripts_create_failed" tools:ignore="MissingTranslation">Nu a putut fi început un script nou.</string>
+    <string name="memory_scripts_draft_in_progress" tools:ignore="MissingTranslation">Finalizați sau renunțați mai întâi la ciorna curentă a scriptului.</string>
+    <string name="memory_builder_open_saved" tools:ignore="MissingTranslation">Deschide Salvate</string>
+    <string name="memory_builder_add_description" tools:ignore="MissingTranslation">Adaugă descriere</string>
+    <string name="memory_builder_find_values" tools:ignore="MissingTranslation">Caută valori</string>
+    <string name="memory_scripts_description" tools:ignore="MissingTranslation">Descriere</string>
+    <string name="memory_scripts_new" tools:ignore="MissingTranslation">Script nou</string>
+    <string name="memory_scripts_back" tools:ignore="MissingTranslation">Înapoi</string>
+    <string name="memory_scripts_edit" tools:ignore="MissingTranslation">Editează</string>
+    <string name="memory_scripts_save" tools:ignore="MissingTranslation">Salvează</string>
+    <string name="memory_scripts_saved" tools:ignore="MissingTranslation">Script salvat</string>
+    <string name="memory_scripts_deleted" tools:ignore="MissingTranslation">Script șters</string>
+    <string name="memory_scripts_save_failed" tools:ignore="MissingTranslation">Scriptul nu a putut fi salvat.</string>
+    <string name="memory_scripts_editor_hint" tools:ignore="MissingTranslation">Introduceți sau lipiți un script JSON care utilizează operații de memorie acceptate. Salvarea scriptului nu îl rulează.</string>
+    <string name="memory_scripts_paste_hint" tools:ignore="MissingTranslation">Lipiți JSON-ul scriptului</string>
+    <string name="memory_scripts_paste" tools:ignore="MissingTranslation">Lipește</string>
+    <string name="memory_scripts_clipboard_invalid" tools:ignore="MissingTranslation">Clipboardul este gol sau documentul depășește 64 KiB</string>
+    <string name="memory_scripts_invalid" tools:ignore="MissingTranslation">Format de script nevalid</string>
+    <string name="memory_scripts_freeze_active" tools:ignore="MissingTranslation">Acest script îngheață valori</string>
+    <string name="memory_scripts_delete" tools:ignore="MissingTranslation">Șterge</string>
+    <string name="memory_scripts_delete_confirm" tools:ignore="MissingTranslation">Ștergeți <xliff:g id="name" example="Example">%1$s</xliff:g>? Orice înghețare activă pentru acest script va fi oprită.</string>
+    <string name="memory_scripts_empty" tools:ignore="MissingTranslation">Niciun script salvat</string>
+    <string name="memory_scripts_unsaved_title" tools:ignore="MissingTranslation">Renunțați la scriptul nesalvat?</string>
+    <string name="memory_scripts_unsaved_message" tools:ignore="MissingTranslation">Modificările aduse scriptului nu au fost salvate.</string>
+    <string name="memory_scripts_discard" tools:ignore="MissingTranslation">Renunță</string>
+    <string name="memory_scripts_current_title" tools:ignore="MissingTranslation">Ultima citire</string>
+    <string name="memory_scripts_refresh" tools:ignore="MissingTranslation">Reîmprospătează</string>
+    <string name="memory_scripts_reading" tools:ignore="MissingTranslation">Se citesc valorile curente…</string>
+    <string name="memory_scripts_refresh_hint" tools:ignore="MissingTranslation">Atingeți Reîmprospătează pentru a citi valorile curente din jocul care rulează.</string>
+    <string name="memory_scripts_mode_toggle" tools:ignore="MissingTranslation">Înghețare valori</string>
+    <string name="memory_scripts_mode_form" tools:ignore="MissingTranslation">Editor de valori</string>
+    <string name="memory_scripts_mode_once" tools:ignore="MissingTranslation">Acțiuni rapide</string>
+    <string name="memory_scripts_mode_legacy" tools:ignore="MissingTranslation">Script avansat</string>
+    <string name="memory_scripts_edit_values" tools:ignore="MissingTranslation">Editează valorile</string>
+    <string name="memory_scripts_apply" tools:ignore="MissingTranslation">Aplică modificările</string>
+    <string name="memory_scripts_refresh_required" tools:ignore="MissingTranslation">Reîmprospătați pentru a verifica valorile curente înainte de aplicare.</string>
+    <string name="memory_scripts_inconsistent" tools:ignore="MissingTranslation">Copii inconsecvente: <xliff:g id="name" example="Example">%1$s</xliff:g></string>
+    <string name="memory_editor_minimize" tools:ignore="MissingTranslation">Minimizează Editor de memorie</string>
+    <string name="memory_scripts_choose_type" tools:ignore="MissingTranslation">Script nou</string>
+    <string name="memory_scripts_choose_hint" tools:ignore="MissingTranslation">Alegeți modul în care va funcționa acest script.</string>
+    <string name="memory_builder_json_editor" tools:ignore="MissingTranslation">Editor JSON</string>
+    <string name="memory_builder_freeze_hint" tools:ignore="MissingTranslation">Menține valorile selectate blocate cât timp este activat. Dezactivarea înghețării nu restaurează valorile anterioare.</string>
+    <string name="memory_builder_form_hint" tools:ignore="MissingTranslation">Creează un formular care citește valorile curente înainte de a aplica editările.</string>
+    <string name="memory_builder_actions_hint" tools:ignore="MissingTranslation">Aplică modificările o singură dată la fiecare apăsare pe Rulează. Adună și Scade folosesc valorile curente, inclusiv modificările din rulările anterioare.</string>
+    <string name="memory_builder_name" tools:ignore="MissingTranslation">Nume script</string>
+    <string name="memory_builder_frozen_values" tools:ignore="MissingTranslation">Valori înghețate</string>
+    <string name="memory_builder_fields" tools:ignore="MissingTranslation">Câmpuri</string>
+    <string name="memory_builder_actions" tools:ignore="MissingTranslation">Acțiuni</string>
+    <string name="memory_builder_add_bookmarks" tools:ignore="MissingTranslation">Adaugă din marcaje</string>
+    <string name="memory_builder_empty" tools:ignore="MissingTranslation">Adăugați cel puțin un marcaj verificat.</string>
+    <string name="memory_builder_field_label" tools:ignore="MissingTranslation">Etichetă câmp</string>
+    <string name="memory_builder_keep_at" tools:ignore="MissingTranslation">Menține la</string>
+    <string name="memory_builder_amount" tools:ignore="MissingTranslation">Valoare / cantitate</string>
+    <string name="memory_builder_set" tools:ignore="MissingTranslation">Setează</string>
+    <string name="memory_builder_add" tools:ignore="MissingTranslation">Adună</string>
+    <string name="memory_builder_subtract" tools:ignore="MissingTranslation">Scade</string>
+    <string name="memory_builder_view_json" tools:ignore="MissingTranslation">Vezi JSON</string>
+    <string name="memory_builder_edit_json" tools:ignore="MissingTranslation">Editează JSON</string>
+    <string name="memory_builder_search_bookmarks" tools:ignore="MissingTranslation">Caută marcaje</string>
+    <string name="memory_builder_no_bookmarks" tools:ignore="MissingTranslation">Nu există marcaje verificate care să corespundă. Marcați o valoare în Căutare sau reconectați una în Salvate.</string>
+    <string name="memory_builder_needs_relink" tools:ignore="MissingTranslation">Necesită reconectare</string>
+    <string name="memory_builder_add_selected" tools:ignore="MissingTranslation">Adaugă selectate</string>
+    <string name="memory_builder_min" tools:ignore="MissingTranslation">Minim (opțional)</string>
+    <string name="memory_builder_max" tools:ignore="MissingTranslation">Maxim (opțional)</string>
+    <string name="memory_builder_add_target" tools:ignore="MissingTranslation">Adaugă țintă</string>
+    <string name="memory_builder_freeze_short" tools:ignore="MissingTranslation">Menține constante valorile selectate</string>
+    <string name="memory_builder_form_short" tools:ignore="MissingTranslation">Ajustează mai multe valori într-un singur loc</string>
+    <string name="memory_builder_actions_short" tools:ignore="MissingTranslation">Rulează acțiuni unice de tip Setează, Adună sau Scade</string>
+    <string name="memory_editor_refine_scan" tools:ignore="MissingTranslation">Rafinează</string>
+    <string name="memory_scripts_saved_count" tools:ignore="MissingTranslation"><xliff:g id="count" example="3">%1$d</xliff:g> salvate</string>
+    <string name="memory_scripts_empty_hint" tools:ignore="MissingTranslation">Creați un script pentru a edita sau îngheța valori în timpul jocului.</string>
+    <string name="memory_builder_limits" tools:ignore="MissingTranslation">Limite (opțional)</string>
+    <string name="memory_editor_selection_limit">Selectați cel mult %1$d valori.</string>
+    <string name="memory_saved_storage_unavailable">Elementele salvate nu pot fi accesate.</string>
+    <string name="memory_bookmark_renamed">Marcaj redenumit</string>
+    <string name="memory_editor_memory_unavailable">Memoria MIDletului nu este disponibilă.</string>
+    <string name="memory_bookmark_added">Marcaj adăugat</string>
+    <string name="memory_bookmark_relinked">Marcaj reconectat</string>
+    <string name="memory_bookmarks_removed">Eliminat din elementele salvate</string>
+    <string name="memory_freeze_enabled">Înghețare activată</string>
+    <string name="memory_freeze_unavailable">Înghețarea nu a putut fi activată.</string>
+    <string name="memory_list_session_only_failed">Elementul nu a putut fi păstrat doar pentru sesiunea curentă.</string>
+    <string name="memory_list_kept_unlinked">Salvat pentru următoarea pornire, dar nu a putut fi asociat cu sesiunea curentă.</string>
+    <string name="memory_list_removal_unavailable">Elementele nu pot fi eliminate fără conexiune. Încercați din nou.</string>
+    <string name="memory_list_watch_removed">Monitorizarea sesiunii a fost eliminată</string>
+    <string name="memory_list_bookmark_removal_failed">Marcajele nu au putut fi eliminate: %1$s</string>
+    <string name="memory_list_watch_removal_failed">Monitorizarea sesiunii nu a putut fi eliminată: %1$s</string>
+    <string name="memory_list_removal_unknown_error">Eroare necunoscută</string>
+    <string name="memory_editor_edit_freeze_failed">Valoarea a fost actualizată, dar înghețarea nu a putut fi pornită. Verificați valoarea actuală înainte de a încerca din nou.</string>
+    <string name="memory_scripts_freeze_inactive">Acest script nu mai îngheață valori.</string>
+    <string name="memory_bookmark_change_incomplete">Modificarea marcajului nu a putut fi finalizată. Verificați elementele salvate înainte de a încerca din nou.</string>
+    <string name="memory_editor_value_updated">Valoare actualizată.</string>
+    <string name="memory_editor_value_updated_frozen">Valoare actualizată și înghețare activată.</string>
+    <string name="memory_scripts_delete_failed">Scriptul nu a putut fi șters. Verificați starea înghețării înainte de a încerca din nou.</string>
+    <string name="memory_scripts_check_input">Scriptul nu a putut fi pregătit. Verificați valorile și marcajele sale.</string>
+    <string name="memory_scripts_read_failed">Valorile curente nu au putut fi citite. Reîmprospătați și încercați din nou.</string>
+    <string name="memory_technical_details">Detalii tehnice</string>
+    <string name="memory_scripts_resource_limit">Scriptul a atins o limită de siguranță. Reduceți numărul țintelor sau opriți înghețările neutilizate.</string>
+    <string name="memory_scripts_target_changed">Ținta scriptului nu a putut fi verificată. Reîmprospătați valorile și verificați marcajele.</string>
+    <string name="memory_scripts_operation_unavailable">Această operație a scriptului nu este acceptată pentru ținta curentă.</string>
+    <string name="memory_scripts_invalid_input">Verificați datele de intrare ale scriptului. Introduceți valori valide în intervalele permise.</string>
+    <string name="memory_scripts_value_range">O valoare este în afara intervalului acceptat. Verificați scriptul și valorile sale.</string>
+    <string name="memory_scripts_inconsistent_values">Copiile aceleiași valori nu coincid. Verificați starea jocului înainte de a încerca din nou.</string>
+    <string name="memory_scripts_wrong_midlet">Acest script este destinat altui MIDlet. Deschideți MIDletul corect sau alegeți alt script.</string>
+    <string name="memory_scripts_target_not_ready">Ținta scriptului nu este încă pregătită. Reveniți la ecranul corespunzător al jocului și încercați din nou.</string>
+</resources>

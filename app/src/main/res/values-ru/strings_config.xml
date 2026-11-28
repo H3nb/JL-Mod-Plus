@@ -1,0 +1,358 @@
+<?xml version="1.0" encoding="utf-8"?>
+<!-- Per-MIDlet configuration, reusable profiles, camera, controller calibration, permissions, and system properties. -->
+<resources xmlns:tools="http://schemas.android.com/tools" xmlns:xliff="urn:oasis:names:tc:xliff:document:1.2">
+    <!-- %1$s is an optional quoted storage-volume name with a trailing space, or empty. -->
+    <!-- %1$s is a raw storage-volume description. -->
+    <string name="config_missing_app_storage_named">Приложение не найдено.\nПроверьте, доступен ли накопитель «<xliff:g id="storage_name" example="SD card">%1$s</xliff:g>», или создайте ярлык заново.</string>
+    <string name="config_missing_app_storage_generic">Приложение не найдено.\nПроверьте, доступен ли накопитель, или создайте ярлык заново.</string>
+    <string name="midlet_name"><b>Название: </b></string>
+    <string name="midlet_size"><b>Размер: </b></string>
+    <string name="midlet_vendor"><b>Разработчик: </b></string>
+    <string name="midlet_version"><b>Версия: </b></string>
+    <string name="config_destination_graphics">Экран</string>
+    <string name="config_destination_rendering" tools:ignore="MissingTranslation">Графика</string>
+    <string name="config_destination_media">Медиа</string>
+    <string name="config_camera_title">Камера</string>
+    <string name="config_camera_default_title">Камера по умолчанию</string>
+    <string name="config_camera_rear">Основная</string>
+    <string name="config_camera_front">Фронтальная</string>
+    <string name="config_camera_resolution_title">Разрешение по умолчанию</string>
+    <string name="config_camera_resolution_auto">Авто</string>
+    <string name="config_camera_resolution_portrait">480×640 — Портретная</string>
+    <string name="config_camera_resolution_landscape">640×480 — Альбомная</string>
+    <string name="config_destination_controls">Управление</string>
+    <string name="config_gamepad_test">Проверить контроллер</string>
+    <string name="config_gamepad_calibrate">Калибровать контроллер</string>
+    <string name="config_gamepad_calibrate_summary">Измеряет нейтральное положение подключённого контроллера и диапазоны хода его стиков и триггеров.</string>
+    <string name="config_gamepad_stick_directions">Цифровые направления</string>
+    <string name="config_gamepad_stick_unassigned">Не назначено</string>
+    <string name="config_gamepad_stick_pointer">Источник указателя</string>
+    <string name="config_gamepad_opaque_summary">Эта конфигурация содержит данные контроллера в неподдерживаемом формате. Они сохраняются без изменений и не могут редактироваться здесь.</string>
+    <string name="config_gamepad_unsupported_summary">Эта конфигурация контроллера не поддерживается. Она сохраняется без изменений и не может редактироваться здесь.</string>
+    <string name="config_gamepad_keypad_title">Виртуальная клавиатура</string>
+    <string name="config_gamepad_calibration_next">Далее</string>
+    <string name="config_gamepad_mapping_help_title">Справка по настройке контроллера</string>
+    <string name="config_gamepad_directions_four">4 направления</string>
+    <string name="config_gamepad_directions_eight">8 направлений</string>
+    <string name="config_gamepad_pointer_off">Выкл.</string>
+    <string name="config_gamepad_pointer_cursor">Пропорциональный курсор</string>
+    <string name="config_gamepad_pointer_joystick">Сенсорный джойстик</string>
+    <!-- This is the same controller-identity fingerprint shown in diagnostics. -->
+    <string name="config_gamepad_calibration_profile">Сигнатура контроллера: <xliff:g id="profile_name" example="Action Games">%1$s</xliff:g></string>
+    <string name="config_gamepad_calibration_phase_neutral">Ожидание нейтрального положения</string>
+    <string name="config_gamepad_calibration_phase_stick_range">Диапазон стиков</string>
+    <string name="config_gamepad_calibration_phase_trigger_range">Диапазон триггеров</string>
+    <string name="config_gamepad_calibration_phase_review">Можно сохранить</string>
+    <string name="config_gamepad_calibration_phase_committed">Сохранено</string>
+    <string name="config_gamepad_calibration_phase_cancelled">Отменено</string>
+    <string name="config_gamepad_calibration_waiting_controller">Подключите контроллер с поддерживаемым аналоговым стиком или триггером. Для начала отклоните стик или нажмите триггер. Текущая калибровка не изменится, пока вы не сохраните новую или не сбросите её.</string>
+    <string name="config_gamepad_calibration_no_analog_ranges">Этот контроллер не передаёт поддерживаемые диапазоны аналоговых стиков или триггеров.</string>
+    <string name="config_gamepad_calibration_start">Удерживайте все стики в центре и не нажимайте триггеры до завершения таймера нейтрального положения.</string>
+    <string name="config_gamepad_calibration_save_failed">Не удалось сохранить калибровку. Проверьте текущие настройки, прежде чем повторить попытку.</string>
+    <string name="config_gamepad_calibration_no_supported_ranges">Поддерживаемые аналоговые диапазоны не найдены.</string>
+    <string name="config_gamepad_calibration_rejected">Калибровка отклонена: <xliff:g id="name" example="Example">%1$s</xliff:g></string>
+    <string name="config_gamepad_calibration_neutral_instructions">Удерживайте все обнаруженные стики в центре и отпустите все обнаруженные триггеры до завершения таймера нейтрального положения.</string>
+    <string name="config_gamepad_calibration_stick_instructions">Проведите каждый обнаруженный стик по всему диапазону во всех направлениях, затем нажмите «Далее».</string>
+    <string name="config_gamepad_calibration_trigger_instructions">Отпустите и полностью нажмите каждый обнаруженный триггер, затем нажмите «Далее».</string>
+    <string name="config_gamepad_calibration_review_instructions">Сохраните, чтобы заменить калибровку этого контроллера.</string>
+    <string name="config_gamepad_calibration_saved">Калибровка сохранена.</string>
+    <string name="config_gamepad_calibration_cancelled">Калибровка отменена.</string>
+    <string name="config_gamepad_calibration_waiting_samples">Калибровка ожидает данные от контроллера.</string>
+    <string name="config_gamepad_diagnosis_header">Диагностика контроллера</string>
+    <string name="config_gamepad_diagnosis_mode">Состояние: <xliff:g id="status" example="enabled">%1$s</xliff:g> · Источник: <xliff:g id="source" example="controller">%2$s</xliff:g></string>
+    <string name="config_gamepad_diagnosis_notice">Примечание: <xliff:g id="name" example="Example">%1$s</xliff:g></string>
+    <string name="config_gamepad_diagnosis_analog_settings">Аналоговые параметры:</string>
+    <string name="config_gamepad_diagnosis_left_stick">Левый стик</string>
+    <string name="config_gamepad_diagnosis_right_stick">Правый стик</string>
+    <string name="config_gamepad_diagnosis_triggers">Триггеры</string>
+    <string name="config_gamepad_diagnosis_pointer">Режим указателя</string>
+    <string name="config_gamepad_status_enabled">включено</string>
+    <string name="config_gamepad_status_disabled">выключено</string>
+    <string name="config_gamepad_diagnosis_source_default">по умолчанию</string>
+    <string name="config_gamepad_diagnosis_source_controller">контроллер</string>
+    <string name="config_gamepad_diagnosis_source_explicit">задано вручную</string>
+    <string name="config_gamepad_diagnosis_device"><xliff:g id="device_name" example="Xbox Controller">%1$s</xliff:g> (#<xliff:g id="device_id" example="1">%2$d</xliff:g>)</string>
+    <string name="config_gamepad_calibration_issue_no_channels">нет поддерживаемых каналов</string>
+    <string name="config_gamepad_calibration_issue_invalid_constraints">некорректные ограничения калибровки</string>
+    <string name="config_gamepad_calibration_issue_non_finite">неконечное значение выборки</string>
+    <string name="config_gamepad_calibration_issue_insufficient_samples">недостаточно выборок</string>
+    <string name="config_gamepad_calibration_issue_invalid_range">некорректный диапазон</string>
+    <string name="config_gamepad_calibration_issue_rest_outside_range">нейтральное значение вне диапазона</string>
+    <string name="config_gamepad_calibration_issue_rest_too_noisy">нейтральное положение недостаточно стабильно</string>
+    <string name="config_gamepad_calibration_phase_unknown">Состояние недоступно</string>
+    <string name="config_gamepad_diagnosis_capabilities">Возможности подключённого контроллера:</string>
+    <string name="config_gamepad_diagnosis_descriptor">Дескриптор: <xliff:g id="name" example="Example">%1$s</xliff:g></string>
+    <!-- %1$s is a controller-identity fingerprint derived from its descriptor and capabilities. -->
+    <!-- It is not a handwritten signature or a cryptographic signing operation. -->
+    <string name="config_gamepad_diagnosis_signature">Сигнатура: <xliff:g id="name" example="Example">%1$s</xliff:g></string>
+    <string name="config_gamepad_diagnosis_axis">Ось <xliff:g id="axis_index" example="0">%1$d</xliff:g> [<xliff:g id="min_value" example="-1.0">%2$s</xliff:g>, <xliff:g id="max_value" example="1.0">%3$s</xliff:g>] flat=<xliff:g id="flat" example="0.05">%4$s</xliff:g> fuzz=<xliff:g id="fuzz" example="0.01">%5$s</xliff:g></string>
+    <string name="config_gamepad_diagnosis_no_controller">(нет подключённого контроллера)</string>
+    <string name="config_gamepad_diagnosis_samples_not_sent">Данные ввода намеренно не передаются в MIDlet.</string>
+    <string name="config_destination_system">Система</string>
+    <string name="config_screen_behavior" tools:ignore="MissingTranslation">Поведение экрана</string>
+    <string name="config_screen_size">Размер экрана</string>
+    <string name="config_select_screen_size">Выберите размер экрана</string>
+    <string name="config_current_screen_size">Текущий размер: <xliff:g id="name" example="Example">%1$s</xliff:g></string>
+    <string name="config_custom_resolution">Своё разрешение</string>
+    <string name="profile_custom">Своя</string>
+    <string name="select_dialog_title">Выберите MIDlet</string>
+    <string name="SIZE_PRESETS">Пресеты размера шрифта</string>
+    <string name="config_color_picker_title">Выберите цвет</string>
+    <string name="config_color_picker_hex">HEX-код цвета</string>
+    <string name="config_color_picker_hint">Перетащите поля выбора цвета или введите шестизначное значение RGB.</string>
+    <string name="config_color_picker_invalid">Введите ровно шесть шестнадцатеричных символов.</string>
+    <string name="config_color_picker_saturation_value">Насыщенность и яркость</string>
+    <string name="config_color_picker_hue">Оттенок</string>
+    <string name="config_decrease_value">Уменьшить значение</string>
+    <string name="config_increase_value">Увеличить значение</string>
+    <string name="midlet_failure_recovery_title">MIDlet неожиданно остановился</string>
+    <string name="midlet_failure_recovery_message">Работа MIDlet была неожиданно прервана. Сведения диагностики сохранены локально. Вы можете продолжить работу с JL-Mod Plus.</string>
+    <string name="midlet_failure_recovery_message_named">Работа «<xliff:g id="name" example="Example">%1$s</xliff:g>» была неожиданно прервана. Сведения диагностики сохранены локально. Вы можете продолжить работу с JL-Mod Plus.</string>
+    <plurals name="config_system_properties_value">
+        <item quantity="one"><xliff:g id="count" example="3">%1$d</xliff:g> свойство</item>
+        <item quantity="few"><xliff:g id="count" example="3">%1$d</xliff:g> свойства</item>
+        <item quantity="many"><xliff:g id="count" example="3">%1$d</xliff:g> свойств</item>
+        <item quantity="other"><xliff:g id="count" example="3">%1$d</xliff:g> свойства</item>
+    </plurals>
+    <string name="config_search_suggestions" tools:ignore="MissingTranslation">Рекомендуемые настройки</string>
+    <string name="config_search_clear" tools:ignore="MissingTranslation">Очистить поиск</string>
+    <string name="config_search_title" tools:ignore="MissingTranslation">Поиск настроек</string>
+    <string name="config_search_hint" tools:ignore="MissingTranslation">Найти настройку, например MMPX или ориентация</string>
+    <string name="config_search_no_results" tools:ignore="MissingTranslation">Подходящие настройки не найдены</string>
+    <string name="config_search_upscaling_requires_resolution" tools:ignore="MissingTranslation">Выберите «Авто» или 2×–10× в разделе «Разрешение рендеринга», чтобы настроить растровое масштабирование.</string>
+    <string name="config_search_requires_manual_scale" tools:ignore="MissingTranslation">Выберите «Вручную» в разделе «Режим масштабирования», чтобы настроить масштаб.</string>
+    <string name="config_search_requires_custom_background" tools:ignore="MissingTranslation">Выберите «Свой» в разделе «Режим фона», чтобы изменить цвет фона.</string>
+    <string name="config_search_requires_gles" tools:ignore="MissingTranslation">Выберите «Аппаратное ускорение (OpenGL ES)» в разделе «Режим графики», чтобы настроить шейдерные эффекты.</string>
+    <string name="config_search_requires_renderer_mode" tools:ignore="MissingTranslation">Выберите «Программный» или «Аппаратное ускорение (Surface)» в разделе «Режим графики», чтобы настроить асинхронное обновление экрана.</string>
+    <string name="config_font_page_title" tools:ignore="MissingTranslation">Настройки шрифта</string>
+    <string name="config_display_more" tools:ignore="MissingTranslation">Текст и производительность</string>
+    <string name="config_destination_home" tools:ignore="MissingTranslation">Главная</string>
+    <string name="config_overview_profile_draft" tools:ignore="MissingTranslation">Черновик профиля</string>
+    <string name="config_overview_profile_draft_summary" tools:ignore="MissingTranslation">Отредактируйте этот переиспользуемый профиль и сохраните изменения на панели инструментов.</string>
+    <string name="config_overview_quick_access" tools:ignore="MissingTranslation">Быстрый доступ</string>
+    <string name="config_system_properties_editor_label">Свойства</string>
+    <string name="config_overview_enabled" tools:ignore="MissingTranslation">Вкл.</string>
+    <string name="config_overview_disabled" tools:ignore="MissingTranslation">Выкл.</string>
+    <string name="config_overview_media_summary" tools:ignore="MissingTranslation">Банк звуков и камера</string>
+    <string name="config_overview_hint" tools:ignore="MissingTranslation">Выберите категорию для настройки игры. У каждой настройки одно расположение; эти ярлыки ведут прямо к ним.</string>
+    <string name="config_destination_general">Основные</string>
+    <string name="config_basic_display">Экран MIDlet</string>
+    <string name="config_display_appearance">Оформление экрана</string>
+    <string name="config_display_rendering">Рендеринг</string>
+    <string name="config_image_quality_section" tools:ignore="MissingTranslation">Качество изображения</string>
+    <string name="config_frame_rate_section" tools:ignore="MissingTranslation">Частота кадров</string>
+    <string name="config_fps_position_title" tools:ignore="MissingTranslation">Положение счётчика FPS</string>
+    <string name="config_display_text">Текст и шрифты</string>
+    <string name="config_input_mapping_section" tools:ignore="MissingTranslation">Ввод и назначение клавиш</string>
+    <string name="config_controls_appearance_section" tools:ignore="MissingTranslation">Внешний вид управления</string>
+    <string name="config_controls_virtual_keyboard">Виртуальное управление</string>
+    <string name="config_controls_virtual_keyboard_colors">Цвета виртуального управления</string>
+    <string name="config_virtual_controls_color_preview">Предпросмотр цветов</string>
+    <string name="config_virtual_controls_preview_normal">Обычная</string>
+    <string name="config_virtual_controls_preview_pressed">Нажатая</string>
+    <string name="config_controls_maintenance">Раскладка</string>
+    <string name="config_controls_skin_help">Меняет внешний вид кнопок клавиатуры, D-pad и аналогового стика с помощью пользовательских изображений.</string>
+    <string name="config_controls_color_button_normal">Обычная кнопка</string>
+    <string name="config_controls_color_button_pressed">Нажатая кнопка</string>
+    <string name="config_controls_color_label_normal">Обычная подпись</string>
+    <string name="config_controls_color_label_pressed">Нажатая подпись</string>
+    <string name="config_controls_color_outline_short">Контур</string>
+    <string name="config_controls_disabled_hint">Виртуальное управление сейчас выключено. Вы всё равно можете настроить его здесь.</string>
+    <string name="config_controls_opacity_help" formatted="false">Настраивает непрозрачность виртуальных элементов управления. При 0% они прозрачны, а при 100% дополнительная прозрачность не применяется.</string>
+    <string name="config_controls_opaque_outside">Показывать управление без прозрачности за пределами экрана MIDlet</string>
+    <string name="config_controls_opaque_outside_help">Если эта настройка включена, элементы управления, полностью расположенные за пределами экрана MIDlet, отображаются без дополнительной прозрачности. Для элементов, перекрывающих экран, используется выбранная непрозрачность.</string>
+    <string name="config_controls_connect_controller">Подключите контроллер для калибровки</string>
+    <string name="config_controls_color_skin_notice">Скин типа «Полная кнопка» может заменить стандартные цвета, форму и контур кнопок.</string>
+    <string name="config_current_value">Текущее значение</string>
+    <string name="config_maintenance">Сброс и данные</string>
+    <string name="config_midlet_actions" tools:ignore="MissingTranslation">Действия с MIDlet</string>
+    <string name="config_profile_maintenance" tools:ignore="MissingTranslation">Действия с профилем</string>
+    <string name="config_reset_profile_settings" tools:ignore="MissingTranslation">Сбросить черновик профиля</string>
+    <string name="config_reset_profile_settings_summary" tools:ignore="MissingTranslation">Восстановить настройки и виртуальное управление этого черновика по умолчанию.</string>
+    <string name="config_system_compatibility" tools:ignore="MissingTranslation">Совместимость эмуляции</string>
+    <string name="config_reset_all_settings">Сбросить конфигурацию MIDlet</string>
+    <string name="config_reset_all_settings_summary">Восстановить настройки и виртуальное управление этого MIDlet по умолчанию без удаления его данных.</string>
+    <string name="config_delete_app_data">Удалить данные MIDlet</string>
+    <string name="config_delete_app_data_summary">Безвозвратно удалить данные этого MIDlet, включая сохранения. Его настройки останутся.</string>
+    <string name="config_message_reset_settings">Сбросить конфигурацию MIDlet и виртуальное управление по умолчанию? Сохранённые данные останутся. Связь с профилем будет отключена.</string>
+    <string name="config_message_reset_profile_settings">Сбросить настройки и виртуальное управление этого профиля по умолчанию? Вы сможете изменить или отменить изменения до сохранения.</string>
+    <string name="config_message_delete_app_data">Безвозвратно удалить все сохранения и данные, созданные этим MIDlet? Настройки MIDlet не будут удалены.</string>
+    <string name="config_lock_custom_resolution_ratio">Сохранять пропорции</string>
+    <string name="config_swap_screen_size">Поменять ширину и высоту местами</string>
+    <string name="profile_builtin_settings">JL-Mod по умолчанию</string>
+    <string name="profile_default_badge_short">По умолчанию для новых MIDlet</string>
+    <string name="profile_template_summary">Сохранённые настройки MIDlet.</string>
+    <string name="profile_name_exists">Профиль с таким названием уже существует.</string>
+    <string name="profile_delete_template_message">Удалить профиль «<xliff:g id="profile_name" example="Action Games">%1$s</xliff:g>»? MIDlet, использующие его, сохранят текущие настройки, но больше не будут получать обновления.</string>
+    <string name="profile_template_operation_failed">Не удалось выполнить операцию с профилем.</string>
+    <string name="config_help_screen_size">Задаёт разрешение виртуального экрана Java ME, используемое MIDlet.</string>
+    <string name="config_help_orientation">Выбирает ориентацию экрана во время работы MIDlet.</string>
+    <string name="config_help_scale_type">Выберите, как игра вписывается в экран. Выберите «Вручную», чтобы задать свой масштаб.</string>
+    <string name="config_help_scale_ratio" formatted="false">Изменяет отображаемый размер от 1% до 1000%. При 100% игра отображается в исходном размере; большие значения могут выходить за пределы экрана.</string>
+    <string name="config_help_lock_custom_resolution_ratio">Сохраняет соотношение сторон при изменении пользовательского разрешения.</string>
+    <string name="config_help_virtual_keyboard">Показывает экранные элементы управления для этого MIDlet.</string>
+    <string name="config_help_touch_input">Позволяет MIDlet получать события касания с сенсорного экрана.</string>
+    <string name="config_help_background">Заполняет свободное пространство вокруг экрана MIDlet.</string>
+    <string name="config_background_mode">Режим фона</string>
+    <string name="config_background_custom">Свой</string>
+    <string name="config_background_theme">Тема</string>
+    <string name="config_background_immersive">Иммерсивный</string>
+    <string name="config_background_theme_help">Использует цвет темы JL-Mod Plus вокруг экрана MIDlet.</string>
+    <string name="config_background_immersive_help">Заполняет свободное пространство цветами, взятыми с экрана MIDlet.</string>
+    <string name="config_background_dynamic">Динамический цвет</string>
+    <string name="config_background_dynamic_help">Использует один сплошной цвет, плавно подстраивающийся под экран MIDlet.</string>
+    <string name="config_background_custom_color">Цвет фона</string>
+    <string name="config_help_background_custom_color">Задаёт цвет свободного пространства вокруг экрана MIDlet.</string>
+    <string name="config_help_skin">Показывает дополнительное изображение или рамку вокруг экрана MIDlet.</string>
+    <string name="config_help_screen_gravity">Задаёт положение экрана MIDlet при наличии свободного пространства.</string>
+    <string name="config_help_screen_padding">Добавляет отступ в пикселях между экраном MIDlet и краем области отображения.</string>
+    <string name="config_help_filter">Применяет линейную фильтрацию для сглаживания экрана MIDlet при масштабировании.</string>
+    <string name="config_warning_filter_shader">Линейная фильтрация сглаживает входное изображение до обработки экранным шейдером и может снизить резкость.</string>
+    <string name="config_help_immediate">Обрабатывает события MIDlet сразу, не ставя их в очередь. Может улучшить отзывчивость, но нарушить стабильность некоторых MIDlet.</string>
+    <string name="config_help_graphics_mode">Выбирает способ рендеринга экрана MIDlet. Аппаратное ускорение может повысить производительность, но совместимость зависит от устройства.</string>
+    <string name="config_help_shader">Применяет шейдер к кадру MIDlet перед выводом на экран.</string>
+    <string name="config_help_shader_tuning">Доступные параметры зависят от выбранного шейдера.</string>
+    <string name="config_help_parallel_redraw">Планирует вывод кадров асинхронно. Это может повысить производительность на некоторых устройствах.</string>
+    <string name="config_help_force_fullscreen">Скрывает панель команд при запуске MIDlet. Сам MIDlet может показать её снова во время игры.</string>
+    <string name="config_help_fps_limit">Задаёт лимит FPS при скорости эмуляции 1×. Фактический лимит масштабируется со скоростью эмуляции; 0 («Максимум») использует максимальную частоту обновления экрана.</string>
+    <string name="config_timing_mode_full_guest">Время эмуляции</string>
+    <string name="config_timing_mode_real_wall">Системное время</string>
+    <string name="config_help_emulation_speed">Настраивает поддерживаемые таймеры и задержки MIDlet для текущего сеанса. Если выбрано «Время эмуляции», дата и время также изменяются с заданной скоростью. Воспроизведение медиа и интерфейс Android работают на обычной скорости.</string>
+    <string name="config_help_timing_mode">Выбирает, использует ли MIDlet время эмуляции или системное время. Относительные задержки по-прежнему масштабируются со скоростью эмуляции.</string>
+    <string name="config_help_timing_unavailable">Настройки времени недоступны для этой установки MIDlet. Переустановите или повторно преобразуйте MIDlet, чтобы включить их.</string>
+    <string name="config_help_generic_color">Задаёт цвет этого элемента интерфейса.</string>
+    <string name="config_help_encoding">Выбирает кодировку символов, передаваемую как microedition.encoding.</string>
+    <string name="config_edit_system_properties">Изменить системные свойства</string>
+    <string name="config_help_system_properties">Задаёт расширенные свойства Java ME, передаваемые в MIDlet.</string>
+    <string name="config_help_system_properties_long">Вводите по одному свойству на строку в формате «имя: значение». Некорректные значения могут повлиять на совместимость.</string>
+    <string name="config_system_properties_info">Для большинства MIDlet менять эти параметры не требуется.</string>
+    <string name="config_font_sizes">Размеры шрифта</string>
+    <string name="config_help_font_sizes">Задаёт мелкий, средний и крупный размеры шрифта Java ME для MIDlet.</string>
+    <string name="config_help_font_sizes_long">Задаёт размеры шрифта Java ME в пикселях или масштабируемых единицах при включённом масштабе шрифта Android. Меняйте их согласованно, чтобы текст оставался сбалансированным.</string>
+    <string name="config_font_sizes_value">Мелкий <xliff:g id="small_size" example="12">%1$s</xliff:g> · средний <xliff:g id="medium_size" example="16">%2$s</xliff:g> · крупный <xliff:g id="large_size" example="20">%3$s</xliff:g></string>
+    <string name="config_help_font_presets">Применяет размеры шрифта, подходящие для распространённых разрешений экрана Java ME.</string>
+    <string name="config_help_font_dimensions">Применяет масштаб шрифта Android к размерам шрифта Java ME.</string>
+    <string name="config_help_font_aa">Сглаживает контуры отображаемого текста.</string>
+    <string name="config_help_key_layout">Выбирает схему кодов клавиш, передаваемую в MIDlet.</string>
+    <string name="config_help_key_mapping">Назначает физические клавиши и кнопки Android на действия клавиатуры Java ME.</string>
+    <string name="config_help_vk_button_shape">Задаёт форму кнопок клавиатуры по умолчанию. У D-pad и аналогового стика собственные формы.</string>
+    <string name="config_help_vk_feedback">Вибрирует при нажатии виртуальной кнопки, если в «Настройках» включена вибрация.</string>
+    <string name="config_help_vk_hide_delay">Скрывает элементы управления через указанное время, если они перекрывают экран MIDlet. Значение 0 отключает автоскрытие.</string>
+    <string name="config_help_reset_layout">Восстанавливает раскладку виртуального управления, не затрагивая остальные настройки MIDlet.</string>
+    <string name="config_help_skip_resume">После первого успешного вызова startApp() пропускает повторные вызовы при возврате в MIDlet. Используйте только для MIDlet, которые дают сбой при возобновлении.</string>
+    <string name="config_help_soundbank">Выбирает банк звуков для синтеза MIDI. Не влияет на заранее записанный звук.</string>
+    <string name="profile_create_title">Создать профиль</string>
+    <string name="profile_rename_title">Переименовать профиль</string>
+    <string name="presets">Профили</string>
+    <string name="preset_use">Использовать профиль</string>
+    <string name="preset_save_as">Сохранить как профиль</string>
+    <string name="preset_custom_configuration">Пользовательская конфигурация</string>
+    <string name="preset_based_on_modified">Текущая конфигурация этого MIDlet отличается от профиля «<xliff:g id="profile_name" example="Action Games">%1$s</xliff:g>».</string>
+    <string name="preset_builtin">JL-Mod по умолчанию</string>
+    <string name="preset_builtin_summary">Встроенные настройки MIDlet и виртуального управления.</string>
+    <string name="preset_picker_title">Использовать профиль</string>
+    <string name="preset_manage">Управление профилями</string>
+    <string name="profile_more_actions">Другие действия для «<xliff:g id="profile_name" example="Action Games">%1$s</xliff:g>»</string>
+    <string name="profile_create_summary">Сохраните переиспользуемый набор настроек для других MIDlet.</string>
+    <string name="preset_application_settings">Настройки MIDlet</string>
+    <string name="preset_includes_keyboard_layout">Включена раскладка виртуального управления.</string>
+    <string name="preset_virtual_keyboard_on">Виртуальное управление включено</string>
+    <string name="preset_virtual_keyboard_off">Виртуальное управление выключено</string>
+    <string name="preset_apply">Применить</string>
+    <string name="preset_apply_failed_summary">Не удалось применить профиль. Проверьте источник и повторите попытку.</string>
+    <string name="preset_choose_parts">Выберите, что применить</string>
+    <string name="preset_name">Название</string>
+    <string name="preset_save_help">Сохраняет настройки этого MIDlet и, при наличии, его раскладку виртуального управления как профиль. Этот MIDlet будет использовать профиль и получать его будущие обновления.</string>
+    <string name="preset_update">Обновить «<xliff:g id="profile_name" example="Action Games">%1$s</xliff:g>»</string>
+    <string name="preset_update_title">Обновить «<xliff:g id="profile_name" example="Action Games">%1$s</xliff:g>»?</string>
+    <string name="preset_update_summary">Заменить профиль «<xliff:g id="profile_name" example="Action Games">%1$s</xliff:g>» текущими настройками этого MIDlet и, при наличии, его раскладкой виртуального управления? Другие MIDlet с этим профилем получат изменения при следующем запуске.</string>
+    <string name="preset_update_confirm">Обновить</string>
+    <string name="preset_saved_unlinked_warning">Профиль сохранён, но этот MIDlet не будет получать от него будущие обновления.</string>
+    <string name="profile_default_fallback_notice">Не удалось использовать профиль по умолчанию «<xliff:g id="profile_name" example="Action Games">%1$s</xliff:g>». Возможно, он отсутствует, повреждён или не читается. Теперь для новых MIDlet используется «JL-Mod по умолчанию».</string>
+    <string name="preset_discard_changes_title">Не сохранять изменения?</string>
+    <string name="preset_discard_changes_summary">Этот черновик профиля не сохранён.</string>
+    <string name="preset_continue_editing">Продолжить редактирование</string>
+    <string name="preset_discard_changes">Не сохранять</string>
+    <string name="preset_name_exists">Профиль с таким названием уже существует.</string>
+    <string name="preset_invalid_name">Введите корректное название профиля.</string>
+    <string name="preset_manager_default_section">По умолчанию для новых MIDlet</string>
+    <string name="preset_manager_presets_section">Мои профили</string>
+    <string name="preset_manager_keyboard_section">Сохранённые раскладки виртуального управления</string>
+    <string name="preset_default_policy_summary">Применяется при установке нового MIDlet.</string>
+    <string name="preset_keyboard_layout_unavailable">Раскладка виртуального управления недоступна.</string>
+    <string name="edit_preset">Изменить профиль</string>
+    <string name="preset_edit_title">Изменение профиля: <xliff:g id="profile_name" example="Action Games">%1$s</xliff:g></string>
+    <string name="preset_unavailable_section">Недоступно</string>
+    <string name="preset_unavailable_summary">Не удалось загрузить этот профиль. Переименуйте или удалите его.</string>
+    <string name="preset_change_default">Изменить</string>
+    <string name="preset_default_picker_title">По умолчанию для новых MIDlet</string>
+    <string name="profile_follows_updates">Получает будущие обновления профиля.</string>
+    <string name="profile_apply_whole">Весь профиль</string>
+    <string name="profile_apply_whole_follows">Заменить настройки и раскладку; получать будущие обновления.</string>
+    <string name="profile_apply_whole_without_layout">Заменить настройки, удалить локальную раскладку и получать обновления.</string>
+    <string name="profile_apply_settings_only">Только настройки MIDlet</string>
+    <string name="profile_apply_settings_keeps_layout">Сохранить раскладку этого MIDlet; использовать пользовательскую конфигурацию.</string>
+    <string name="profile_apply_layout_only">Только раскладка виртуального управления</string>
+    <string name="profile_apply_layout_keeps_settings">Сохранить настройки этого MIDlet; использовать пользовательскую конфигурацию.</string>
+    <string name="config_analog_stick">Аналоговый стик</string>
+    <string name="config_analog_stick_summary">Выберите «Выкл.», «4 направления», «8 направлений» или «Цифровая клавиатура» для основного аналогового стика. Кнопки контроллера используют назначение клавиш.</string>
+    <string name="config_analog_stick_off">Выкл.</string>
+    <string name="config_controller_help_body_compact">Кнопки контроллера используют те же назначения клавиш, что и клавиатура или кнопки телефона. Аналоговый стик передаёт в MIDlet только направления. Кнопка «Назад» Android работает как обычно; любая физическая кнопка, назначенная на M, открывает меню MIDlet во время игры.</string>
+    <string name="config_show_fps_title" tools:ignore="MissingTranslation">Показывать FPS</string>
+    <string name="config_show_fps_help" tools:ignore="MissingTranslation">Отображает частоту кадров во время игры.</string>
+    <string name="config_search_requires_fps" tools:ignore="MissingTranslation">Включите «Показывать FPS», чтобы изменить положение.</string>
+    <string name="midlet_running_notification_title">MIDlet запущен</string>
+    <string name="midlet_running_notification_text">Запущено: <xliff:g id="name" example="Example">%1$s</xliff:g>.</string>
+    <string name="midlet_running_notification_channel">Среда запуска MIDlet</string>
+    <string name="config_gamepad_directions_numeric_v2">Цифровая клавиатура</string>
+    <string name="midlet_file_permission_title">Доступ к хранилищу</string>
+    <string name="midlet_file_permission_read">Этот MIDlet запрашивает доступ на чтение файлов.</string>
+    <string name="midlet_file_permission_write">Этот MIDlet запрашивает доступ на создание, изменение и удаление файлов.</string>
+    <string name="midlet_file_permission_allow_once">Разрешить один раз</string>
+    <string name="midlet_file_permission_allow_session">Разрешить, пока запущен MIDlet</string>
+    <string name="midlet_file_permission_allow_always">Разрешать всегда</string>
+    <string name="midlet_file_permission_deny">Всегда запрещать</string>
+    <string name="midlet_permissions_settings_title">Разрешения доступа к хранилищу</string>
+    <string name="midlet_permissions_read">Чтение файлов</string>
+    <string name="midlet_permissions_write">Изменение файлов</string>
+    <string name="midlet_permissions_ask">Спрашивать</string>
+    <string name="midlet_permissions_allow">Разрешать всегда</string>
+    <string name="midlet_permissions_deny">Запретить</string>
+    <string name="midlet_permissions_save_failed">Не удалось сохранить настройки хранилища.</string>
+    <string name="config_avoid_camera_cutout_title">Обходить вырез камеры</string>
+    <string name="config_avoid_camera_cutout_summary">Не размещать экран MIDlet и виртуальное управление в области выреза камеры или экрана.</string>
+    <string name="midlet_permissions_write_summary">Включает создание и удаление файлов.</string>
+    <string name="midlet_legacy_import_title">Устаревшие сохранения Siemens</string>
+    <string name="midlet_legacy_import_action">Выбрать старый файл сохранения</string>
+    <string name="midlet_legacy_import_summary">Копирует старый файл сохранения в личное хранилище Siemens этого MIDlet. Сначала остановите MIDlet.</string>
+    <string name="midlet_legacy_import_success">Файл скопирован в личное хранилище этого MIDlet.</string>
+    <string name="midlet_legacy_import_failed">Сбой импорта. Остановите MIDlet и убедитесь, что файл назначения ещё не существует.</string>
+    <string name="midlet_storage_mode_title">Режим хранилища</string>
+    <string name="midlet_storage_mode_shared">Виртуальное</string>
+    <string name="midlet_storage_mode_android">Android</string>
+    <string name="midlet_storage_mode_shared_summary">Использовать общие папки в рабочей папке.</string>
+    <string name="midlet_storage_mode_android_summary">Использовать общее хранилище Android в пределах разрешений Android. Разрешения MIDlet на доступ к файлам задаются отдельно от виртуального режима.</string>
+    <string name="config_system_properties_reset" tools:ignore="MissingTranslation">Сбросить по умолчанию</string>
+    <string name="config_system_properties_reset_title" tools:ignore="MissingTranslation">Сбросить системные свойства?</string>
+    <string name="config_system_properties_reset_message" tools:ignore="MissingTranslation">Заменить содержимое редактора текущими значениями по умолчанию JL-Mod Plus? Остальные настройки останутся без изменений. Сохраните, чтобы применить сброс.</string>
+    <string name="config_asset_add">+ Добавить из файла</string>
+    <string name="config_asset_copy_hint">Копируется в рабочую папку; исходный файл остаётся на месте.</string>
+    <string name="config_asset_name">Имя файла</string>
+    <string name="config_asset_delete_confirmation">Удалить «<xliff:g id="name" example="Example">%1$s</xliff:g>» из рабочей папки? Другие MIDlet также могут использовать этот файл. Копии в других местах не затрагиваются.</string>
+    <string name="config_asset_imported">Скопировано и выбрано: <xliff:g id="name" example="Example">%1$s</xliff:g></string>
+    <string name="config_asset_reused">Выбран существующий файл: <xliff:g id="name" example="Example">%1$s</xliff:g></string>
+    <string name="config_asset_renamed">Переименовано в «<xliff:g id="name" example="Example">%1$s</xliff:g>»</string>
+    <string name="config_asset_deleted">Удалено: <xliff:g id="name" example="Example">%1$s</xliff:g></string>
+    <string name="config_asset_invalid">Неподдерживаемый или повреждённый файл.</string>
+    <string name="config_asset_operation_failed">Не удалось выполнить операцию с файлом.</string>
+    <string name="config_save_failed" tools:ignore="MissingTranslation">Не удалось сохранить настройки. Ваши изменения по-прежнему открыты — повторите попытку.</string>
+    <string name="config_asset_busy">Сначала дождитесь завершения текущей операции с файлом.</string>
+    <string name="config_quick_settings" tools:ignore="MissingTranslation">Быстрые настройки</string>
+    <string name="config_all_settings" tools:ignore="MissingTranslation">Все настройки</string>
+    <string name="profile_local_changes_pending" tools:ignore="MissingTranslation">Локальные изменения не сохранены в профиль</string>
+    <string name="profile_local_configuration_summary" tools:ignore="MissingTranslation">Настройки только для этого MIDlet</string>
+    <string name="profile_not_following" tools:ignore="MissingTranslation">На основе «<xliff:g id="profile_name" example="Action Games">%1$s</xliff:g>» · Обновления не отслеживаются</string>
+    <string name="profile_stop_following" tools:ignore="MissingTranslation">Отвязать от профиля</string>
+    <string name="profile_follow_again" tools:ignore="MissingTranslation">Снова следовать профилю</string>
+    <string name="profile_follow_again_summary" tools:ignore="MissingTranslation">Заменить локальные настройки и виртуальное управление этого MIDlet актуальной версией профиля «<xliff:g id="profile_name" example="Action Games">%1$s</xliff:g>» и получать его будущие обновления?</string>
+</resources>

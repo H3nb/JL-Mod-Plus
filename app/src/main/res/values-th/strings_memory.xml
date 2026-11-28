@@ -1,0 +1,279 @@
+<?xml version="1.0" encoding="utf-8"?>
+<!-- Memory Editor search, inspector, bookmarks, saved variables, quick actions, and script builder. -->
+<resources xmlns:tools="http://schemas.android.com/tools" xmlns:xliff="urn:oasis:names:tc:xliff:document:1.2">
+    <string name="memory_editor_bubble">ปุ่มลอยตัวแก้ไขหน่วยความจำ</string>
+    <string name="memory_editor_bubble_content_description">เปิดตัวแก้ไขหน่วยความจำ</string>
+    <string name="memory_editor_previous_results_page_action">หน้าผลลัพธ์ก่อนหน้า</string>
+    <string name="memory_editor_next_results_page_action">หน้าผลลัพธ์ถัดไป</string>
+    <string name="memory_editor">ตัวแก้ไขหน่วยความจำ</string>
+    <string name="memory_editor_search_hint">ค่า</string>
+    <string name="memory_editor_next_scan">สแกนครั้งถัดไป</string>
+    <string name="memory_editor_new_search">ค้นหาใหม่</string>
+    <plurals name="memory_editor_results">
+        <item quantity="other"><xliff:g id="count" example="3">%1$d</xliff:g> ผลลัพธ์</item>
+    </plurals>
+    <plurals name="memory_editor_candidates">
+        <item quantity="other"><xliff:g id="count" example="3">%1$d</xliff:g> รายการที่ตรงกัน</item>
+    </plurals>
+    <plurals name="memory_editor_search_complete">
+        <item quantity="other">ค้นหาเสร็จสิ้น · <xliff:g id="count" example="3">%1$d</xliff:g> รายการที่ตรงกัน</item>
+    </plurals>
+    <string name="memory_editor_no_results">ไม่พบผลลัพธ์</string>
+    <string name="memory_editor_no_watch">รายการเฝ้าดูว่างเปล่า</string>
+    <string name="memory_editor_unsupported">ตัวแก้ไขหน่วยความจำไม่พร้อมใช้งานสำหรับรันไทม์นี้</string>
+    <string name="memory_editor_engine_unavailable">เอนจินตัวแก้ไขหน่วยความจำไม่พร้อมใช้งาน</string>
+    <string name="memory_editor_engine_reconnecting">กำลังเชื่อมต่อตัวแก้ไขหน่วยความจำอีกครั้ง…</string>
+    <string name="memory_editor_refresh">รีเฟรช</string>
+    <string name="memory_editor_undo">เลิกทำการสแกน</string>
+    <string name="memory_variables_tab">ที่บันทึกไว้</string>
+    <string name="memory_editor_back" tools:ignore="MissingTranslation">ย้อนกลับ</string>
+    <string name="memory_list_keep" tools:ignore="MissingTranslation">เก็บไว้สำหรับการเปิดครั้งถัดไป</string>
+    <string name="memory_list_stop_keeping" tools:ignore="MissingTranslation">หยุดเก็บไว้</string>
+    <string name="memory_list_kept" tools:ignore="MissingTranslation">เก็บไว้สำหรับการเปิดครั้งถัดไป</string>
+    <string name="memory_list_empty" tools:ignore="MissingTranslation">ยังไม่มีบุ๊กมาร์กที่บันทึกไว้</string>
+    <string name="memory_list_empty_hint" tools:ignore="MissingTranslation">เพิ่มบุ๊กมาร์กตัวแปรจาก ค้นหา หรือ ตัวตรวจสอบ เพื่อติดตามที่นี่</string>
+    <string name="memory_list_remove_confirm" tools:ignore="MissingTranslation">นำออกจาก ที่บันทึกไว้ หรือไม่? การล็อกค่าที่เปิดใช้งานอยู่จะหยุดลง</string>
+    <string name="memory_list_add" tools:ignore="MissingTranslation">บุ๊กมาร์ก</string>
+    <string name="memory_bookmark_relink" tools:ignore="MissingTranslation">เชื่อมโยงใหม่</string>
+    <string name="memory_bookmark_relink_hint" tools:ignore="MissingTranslation">เลือกตัวแปรทดแทนใน ค้นหา จากนั้นเลือก เชื่อมโยงใหม่</string>
+    <string name="memory_bookmark_relink_confirm" tools:ignore="MissingTranslation">เชื่อมโยงบุ๊กมาร์กนี้กับตัวแปรที่เลือกหรือไม่? การล็อกค่าที่เปิดใช้งานอยู่บนบุ๊กมาร์กนี้จะหยุดลง</string>
+    <string name="memory_bookmark_unavailable" tools:ignore="MissingTranslation">ไม่พร้อมใช้งาน — เลือก เชื่อมโยงใหม่ เพื่อเลือกเป้าหมาย</string>
+    <string name="memory_editor_watch">เฝ้าดู</string>
+    <string name="memory_editor_search_tab">ค้นหา</string>
+    <string name="memory_editor_search_known_values">ค้นหาค่าที่ทราบ</string>
+    <string name="memory_editor_search_unknown_values">ค้นหาค่าที่ไม่ทราบ</string>
+    <string name="memory_editor_add_to_watch">เพิ่มค่าที่เลือกเป็นบุ๊กมาร์ก</string>
+    <string name="memory_editor_no_candidates">ไม่พบค่าที่ค้นหาได้</string>
+    <string name="memory_editor_edit">แก้ไข</string>
+    <plurals name="memory_editor_edit_batch">
+        <item quantity="other">แก้ไข <xliff:g id="count" example="3">%1$d</xliff:g> ค่า</item>
+    </plurals>
+    <string name="memory_editor_edit_batch_no_common_type">รายการที่เลือกไม่รองรับชนิดข้อมูลที่เลือก โปรดแก้ไขรายการที่เข้ากันได้แยกกัน</string>
+    <string name="memory_editor_save">นำไปใช้</string>
+    <string name="memory_editor_replacement">ค่าใหม่</string>
+    <string name="memory_editor_freeze">ล็อกค่า</string>
+    <string name="memory_editor_remove">นำออก</string>
+    <string name="memory_editor_select_visible">เลือกที่แสดงอยู่</string>
+    <string name="memory_editor_clear_selection">ล้างการเลือก</string>
+    <plurals name="memory_editor_selected">
+        <item quantity="other">เลือกไว้ <xliff:g id="count" example="3">%1$d</xliff:g> รายการ</item>
+    </plurals>
+    <string name="memory_editor_close">ปิดตัวแก้ไขหน่วยความจำ</string>
+    <string name="memory_editor_searching">กำลังค้นหาหน่วยความจำ…</string>
+    <string name="memory_editor_working">กำลังดำเนินการ…</string>
+    <string name="memory_editor_search_progress">สแกนแล้ว <xliff:g id="scanned_mib" example="12">%1$d</xliff:g> จาก <xliff:g id="total_mib" example="64">%2$d</xliff:g> MiB</string>
+    <string name="memory_editor_candidate_moved">อัปเดตเป้าหมายแล้ว</string>
+    <string name="memory_editor_candidate_relocating">กำลังตรวจสอบซ้ำ</string>
+    <string name="memory_editor_candidate_ambiguous">คลุมเครือ — หยุดการเขียนชั่วคราว</string>
+    <string name="memory_editor_candidate_lost">สูญหาย — หยุดการเขียนชั่วคราว</string>
+    <string name="memory_editor_apply">นำไปใช้</string>
+    <string name="memory_editor_min_value">ค่าต่ำสุด</string>
+    <string name="memory_editor_max_value">ค่าสูงสุด</string>
+    <string name="memory_editor_change_amount">จำนวนที่เปลี่ยนแปลง</string>
+    <string name="memory_editor_min_change">การเปลี่ยนแปลงต่ำสุด</string>
+    <string name="memory_editor_max_change">การเปลี่ยนแปลงสูงสุด</string>
+    <string name="memory_editor_unfreeze">ปลดล็อกค่า</string>
+    <string name="memory_editor_cancelled">ยกเลิกการดำเนินการแล้ว</string>
+    <string name="memory_editor_resource_limit">ตัวแก้ไขหน่วยความจำถึงขีดจำกัดความปลอดภัยแล้ว ลองค้นหาให้เจาะจงมากขึ้น หรือลบบุ๊กมาร์กหรือการล็อกค่าที่ไม่ได้ใช้</string>
+    <string name="memory_editor_identity_unsafe">ไม่สามารถยืนยันค่าที่เลือกหรือสถานะการค้นหาได้ รีเฟรชผลลัพธ์หรือเปิด ตัวตรวจสอบ ใหม่แล้วลองอีกครั้ง</string>
+    <string name="memory_editor_safety_limit">เลือกค่ามากเกินไปสำหรับการดำเนินการนี้ เลือกให้น้อยลงแล้วลองอีกครั้ง</string>
+    <string name="memory_editor_invalid_request">ค่าหรือการดำเนินการไม่ถูกต้อง</string>
+    <string name="memory_editor_freeze_paused">หยุดชั่วคราวเพื่อความปลอดภัย</string>
+    <string name="memory_editor_predicate_between">อยู่ระหว่าง</string>
+    <string name="memory_editor_predicate_changed">เปลี่ยนแปลง</string>
+    <string name="memory_editor_predicate_unchanged">ไม่เปลี่ยนแปลง</string>
+    <string name="memory_editor_predicate_increased">เพิ่มขึ้น</string>
+    <string name="memory_editor_predicate_decreased">ลดลง</string>
+    <string name="memory_editor_predicate_increased_by">เพิ่มขึ้นเท่ากับ</string>
+    <string name="memory_editor_predicate_decreased_by">ลดลงเท่ากับ</string>
+    <string name="memory_editor_predicate_changed_by">เปลี่ยนแปลงเท่ากับ</string>
+    <string name="memory_editor_predicate_increased_range">เพิ่มขึ้นในช่วง</string>
+    <string name="memory_editor_predicate_decreased_range">ลดลงในช่วง</string>
+    <string name="memory_editor_inspector">ตัวตรวจสอบ</string>
+    <string name="memory_editor_inspect_memory">ตรวจสอบหน่วยความจำใกล้เคียง</string>
+    <string name="memory_editor_inspector_loading">กำลังยืนยันผลลัพธ์และอ่านหน่วยความจำใกล้เคียง…</string>
+    <string name="memory_editor_inspector_empty">เลือกผลลัพธ์เพื่อตรวจสอบหน่วยความจำใกล้เคียง</string>
+    <string name="memory_editor_inspector_no_rows">ไม่มีหน่วยความจำใกล้เคียงให้ตรวจสอบ</string>
+    <string name="memory_editor_refresh_snapshot">รีเฟรชสแนปช็อต</string>
+    <string name="memory_editor_select_result_value">เลือกบุ๊กมาร์กนี้</string>
+    <string name="memory_editor_freeze_after_edit">ล็อกค่าหลังนำไปใช้</string>
+    <string name="memory_editor_freeze_after_edit_help">คงค่านี้ไว้ไม่ให้เปลี่ยนแปลงและเพิ่มเป็นบุ๊กมาร์กใน ที่บันทึกไว้</string>
+    <string name="memory_editor_expression_single_hint">ป้อนค่าเดียว หรือคั่นค่าแบบกลุ่มด้วยอัฒภาค (;)</string>
+    <string name="memory_editor_expression_group_needs_type">เลือกชนิดข้อมูลที่เจาะจงสำหรับการค้นหาแบบกลุ่ม</string>
+    <plurals name="memory_editor_expression_group_hint">
+        <item quantity="other">ค้นหาแบบกลุ่ม · <xliff:g id="count" example="3">%1$d</xliff:g> ค่า · ออบเจกต์ Java เดียวกัน</item>
+    </plurals>
+    <string name="memory_editor_expression_query_help">ตัวอย่าง: 500 หรือ 500;1000 การค้นหาแบบกลุ่มจะค้นหา 2–8 ค่าในออบเจกต์ Java เดียวกัน</string>
+    <string name="memory_editor_keypad_clear">ล้าง</string>
+    <string name="memory_editor_peek_underlay">กดค้างเพื่อดู MIDlet ด้านล่าง</string>
+    <string name="memory_editor_peek_underlay_active">กำลังแสดง MIDlet ด้านล่าง</string>
+    <string name="memory_editor_no_runtime">ไม่มีรันไทม์ MIDlet ที่ทำงานอยู่</string>
+    <string name="memory_editor_no_search_history">ไม่มีการค้นหาก่อนหน้าให้กู้คืน</string>
+    <string name="memory_editor_partial_write">การเขียนข้อมูลไม่สมบูรณ์ ตรวจสอบค่าปัจจุบันก่อนลองอีกครั้ง</string>
+    <!-- Independent write counts: confirmed, unconfirmed, skipped, not attempted, and incompatible data type. -->
+    <string name="memory_editor_write_outcome">ยืนยันการเขียนแล้ว: <xliff:g id="confirmed" example="3">%1$d</xliff:g> · ยังไม่ยืนยัน: <xliff:g id="unconfirmed" example="0">%2$d</xliff:g> · ข้าม: <xliff:g id="skipped" example="0">%3$d</xliff:g> · ไม่ได้ดำเนินการ: <xliff:g id="not_attempted" example="0">%4$d</xliff:g> · ข้ามตามชนิดข้อมูล: <xliff:g id="skipped_by_type" example="0">%5$d</xliff:g></string>
+    <!-- %1$s is a localized outcome explanation; %2$d through %6$d are the same independent write counts. -->
+    <string name="memory_editor_write_failure_outcome"><xliff:g id="reason" example="Write interrupted.">%1$s</xliff:g>\nยืนยันการเขียนแล้ว: <xliff:g id="confirmed" example="1">%2$d</xliff:g> · ยังไม่ยืนยัน: <xliff:g id="unconfirmed" example="1">%3$d</xliff:g> · ข้าม: <xliff:g id="skipped" example="0">%4$d</xliff:g> · ไม่ได้ดำเนินการ: <xliff:g id="not_attempted" example="0">%5$d</xliff:g> · ข้ามตามชนิดข้อมูล: <xliff:g id="skipped_by_type" example="0">%6$d</xliff:g></string>
+    <!-- Result counts before (%1$d) and after (%2$d) the completed next scan. -->
+    <string name="memory_editor_next_scan_result">ผลลัพธ์การสแกนครั้งถัดไป: <xliff:g id="before_count" example="120">%1$d</xliff:g> → <xliff:g id="after_count" example="14">%2$d</xliff:g></string>
+    <string name="memory_editor_type_auto">อัตโนมัติ</string>
+    <string name="memory_editor_remove_candidates_title">นำผลลัพธ์ที่เลือกออกหรือไม่?</string>
+    <string name="memory_editor_remove_candidates_description">นำออก: ลบผลลัพธ์ที่เลือกออกจากรายการค้นหา ค่าในหน่วยความจำของเกมจะไม่เปลี่ยนแปลง\n\nคืนค่าและนำออก: คืนค่ากลับเป็นก่อนการแก้ไขที่ยืนยันครั้งล่าสุดด้วย เฉพาะเมื่อค่าปัจจุบันยังตรงกับค่าหลังการแก้ไขครั้งนั้น ค่าที่ล็อกไว้และผลลัพธ์ที่ไม่สามารถคืนค่าได้อย่างปลอดภัยจะยังคงอยู่ในรายการ</string>
+    <string name="memory_editor_revert_and_remove">คืนค่าและนำออก</string>
+    <string name="memory_editor_revert_remove_commit_failed">อาจคืนค่าเรียบร้อยแล้ว แต่ไม่สามารถนำผลลัพธ์ออกได้ รีเฟรชแล้วลองอีกครั้ง ค่าที่เกมเปลี่ยนแปลงจะไม่ถูกเขียนทับ</string>
+    <string name="memory_editor_revert_remove_outcome">คืนค่าแล้ว: <xliff:g id="restored" example="2">%1$d</xliff:g> · นำออกแล้ว: <xliff:g id="removed" example="2">%2$d</xliff:g> · ขัดแย้ง: <xliff:g id="conflicts" example="0">%3$d</xliff:g> · ยังไม่ยืนยัน: <xliff:g id="unconfirmed" example="0">%4$d</xliff:g> · ไม่ได้ดำเนินการ: <xliff:g id="not_attempted" example="0">%5$d</xliff:g></string>
+    <string name="memory_editor_set_all">กำหนดทั้งหมด</string>
+    <string name="memory_editor_increment_start">ค่าเริ่มต้น</string>
+    <string name="memory_editor_edit_batch_type_notice">จะเปลี่ยนเฉพาะค่าที่มีชนิดข้อมูลตรงกันเท่านั้น</string>
+    <string name="memory_editor_write_confirmed">ค่าที่ยืนยันด้วยการอ่านหน่วยความจำกลับ: <xliff:g id="count" example="3">%1$d</xliff:g></string>
+    <string name="memory_editor_candidate_untraced">อาร์เรย์ #<xliff:g id="array_id" example="42">%1$d</xliff:g>[<xliff:g id="index" example="3">%2$d</xliff:g>] · ไม่ทราบแหล่งที่มา</string>
+    <string name="memory_editor_candidate_static"><xliff:g id="field_name" example="Player.coins">%1$s</xliff:g> · <xliff:g id="reference_kind" example="Static reference">%2$s</xliff:g></string>
+    <string name="memory_editor_candidate_instance"><xliff:g id="field_name" example="Player.hp">%1$s</xliff:g> · <xliff:g id="reference_kind" example="Instance reference">%2$s</xliff:g> · เป้าหมาย #<xliff:g id="target_id" example="1">%3$d</xliff:g></string>
+    <string name="memory_editor_reference_static">การอ้างอิงแบบคงที่</string>
+    <string name="memory_editor_reference_instance">การอ้างอิงอินสแตนซ์</string>
+    <string name="memory_editor_path_changed">เส้นทางการอ้างอิงเปลี่ยนแปลงตั้งแต่การสแกน</string>
+    <string name="memory_editor_path_incomplete">เส้นทางการอ้างอิงเกินขีดจำกัดการตรวจสอบ</string>
+    <string name="memory_editor_source_unknown">ไม่ทราบแหล่งที่มา</string>
+    <string name="memory_editor_incremental_edit">เพิ่มค่าตามลำดับ</string>
+    <string name="memory_editor_increment_step">ระยะเพิ่ม</string>
+    <string name="memory_editor_increment_invalid">ใช้ชนิดจำนวนเต็มเพียงชนิดเดียวและค่าที่อยู่ในช่วงที่รองรับ</string>
+    <!-- The batch dialog title already shows the number of selected values. -->
+    <string name="memory_editor_increment_preview">ตัวอย่าง: <xliff:g id="name" example="Example">%1$s</xliff:g></string>
+    <string name="memory_editor_panel_opacity">ความทึบของแผง</string>
+    <string name="memory_editor_panel_opacity_help">ปรับพื้นหลังเพื่อดูค่าในเกมขณะค้นหา ข้อความและไอคอนจะยังคงมองเห็นได้</string>
+    <string name="memory_editor_reconversion_required" tools:ignore="MissingTranslation">ไฟล์ที่แปลงและติดตั้งของ MIDlet นี้ไม่เข้ากันกับตัวแก้ไขหน่วยความจำ ปิดเกมแล้วแปลงใหม่หรือติดตั้งใหม่ใน JL-Mod Plus</string>
+    <string name="memory_saved_tab" tools:ignore="MissingTranslation">ที่บันทึกไว้</string>
+    <string name="memory_saved_save" tools:ignore="MissingTranslation">บันทึกตัวแปร</string>
+    <string name="memory_saved_name" tools:ignore="MissingTranslation">ชื่อ</string>
+    <string name="memory_saved_explanation" tools:ignore="MissingTranslation">บันทึกเส้นทางหน่วยความจำที่ยืนยันแล้วนี้ไว้สำหรับเซสชันถัดไป ระบบจะไม่เขียนค่าอัตโนมัติ</string>
+    <string name="memory_saved_empty" tools:ignore="MissingTranslation">ยังไม่มีตัวแปรที่บันทึกไว้ เลือกผลลัพธ์การค้นหาเพื่อบันทึก</string>
+    <string name="memory_saved_not_ready" tools:ignore="MissingTranslation">ยังไม่พร้อม</string>
+    <string name="memory_saved_retry" tools:ignore="MissingTranslation">ลองใหม่</string>
+    <string name="memory_saved_rename" tools:ignore="MissingTranslation">เปลี่ยนชื่อ</string>
+    <string name="memory_saved_value" tools:ignore="MissingTranslation">ค่า</string>
+    <string name="memory_saved_delete_confirm" tools:ignore="MissingTranslation">ลบคำจำกัดความที่บันทึกไว้นี้หรือไม่? ค่าในเกมจะไม่เปลี่ยนแปลง</string>
+    <string name="memory_saved_changed" tools:ignore="MissingTranslation">เปลี่ยนแปลงแล้ว</string>
+    <string name="memory_saved_rebound" tools:ignore="MissingTranslation">อัปเดตเป้าหมายแล้ว</string>
+    <string name="memory_saved_import_summary" tools:ignore="MissingTranslation">ที่บันทึกไว้: เพิ่ม <xliff:g id="added_count" example="4">%1$d</xliff:g> รายการ, มีอยู่แล้ว <xliff:g id="existing_count" example="2">%2$d</xliff:g> รายการ</string>
+    <string name="memory_saved_incompatible" tools:ignore="MissingTranslation">เข้ากันไม่ได้</string>
+    <string name="memory_saved_failed" tools:ignore="MissingTranslation">ล้มเหลว</string>
+    <string name="memory_saved_delete_many_confirm" tools:ignore="MissingTranslation">ลบคำจำกัดความที่บันทึกไว้ <xliff:g id="count" example="3">%1$d</xliff:g> รายการหรือไม่? ค่าในเกมจะไม่เปลี่ยนแปลง</string>
+    <string name="memory_recipes_title" tools:ignore="MissingTranslation">การทำงานด่วน</string>
+    <string name="memory_recipes_simple_from_saved" tools:ignore="MissingTranslation">เป้าหมาย: <xliff:g id="bookmark_name" example="Coins">%1$s</xliff:g></string>
+    <string name="memory_recipes_preview" tools:ignore="MissingTranslation">ดูตัวอย่างเป้าหมาย</string>
+    <string name="memory_recipes_stop_freeze" tools:ignore="MissingTranslation">หยุดการล็อกค่าของสคริปต์</string>
+    <string name="memory_recipes_freeze" tools:ignore="MissingTranslation">ล็อกค่าไว้ตลอดเวลาที่เกมนี้ทำงาน</string>
+    <string name="memory_recipes_run" tools:ignore="MissingTranslation">เรียกใช้</string>
+    <string name="memory_recipes_active_freezes" tools:ignore="MissingTranslation">การล็อกค่าของสคริปต์ที่ทำงานอยู่</string>
+    <string name="memory_recipes_target_unavailable" tools:ignore="MissingTranslation">เป้าหมายบุ๊กมาร์กไม่พร้อมใช้งาน รีเฟรชหรือเชื่อมโยงใหม่ก่อนเรียกใช้</string>
+    <string name="memory_recipes_preview_values" tools:ignore="MissingTranslation">ค่าปัจจุบัน: <xliff:g id="name" example="Example">%1$s</xliff:g></string>
+    <string name="memory_scripts_title" tools:ignore="MissingTranslation">สคริปต์</string>
+    <string name="memory_scripts_active" tools:ignore="MissingTranslation">ทำงานอยู่</string>
+    <string name="memory_scripts_inputs" tools:ignore="MissingTranslation">อินพุต</string>
+    <string name="memory_scripts_create_from_bookmarks" tools:ignore="MissingTranslation">สร้างสคริปต์</string>
+    <string name="memory_scripts_create_failed" tools:ignore="MissingTranslation">ไม่สามารถเริ่มสร้างสคริปต์ใหม่ได้</string>
+    <string name="memory_scripts_draft_in_progress" tools:ignore="MissingTranslation">ทำร่างสคริปต์ปัจจุบันให้เสร็จหรือละทิ้งก่อน</string>
+    <string name="memory_builder_open_saved" tools:ignore="MissingTranslation">เปิด ที่บันทึกไว้</string>
+    <string name="memory_builder_add_description" tools:ignore="MissingTranslation">เพิ่มคำอธิบาย</string>
+    <string name="memory_builder_find_values" tools:ignore="MissingTranslation">ค้นหาค่า</string>
+    <string name="memory_scripts_description" tools:ignore="MissingTranslation">คำอธิบาย</string>
+    <string name="memory_scripts_new" tools:ignore="MissingTranslation">สคริปต์ใหม่</string>
+    <string name="memory_scripts_back" tools:ignore="MissingTranslation">ย้อนกลับ</string>
+    <string name="memory_scripts_edit" tools:ignore="MissingTranslation">แก้ไข</string>
+    <string name="memory_scripts_save" tools:ignore="MissingTranslation">บันทึก</string>
+    <string name="memory_scripts_saved" tools:ignore="MissingTranslation">บันทึกสคริปต์แล้ว</string>
+    <string name="memory_scripts_deleted" tools:ignore="MissingTranslation">ลบสคริปต์แล้ว</string>
+    <string name="memory_scripts_save_failed" tools:ignore="MissingTranslation">ไม่สามารถบันทึกสคริปต์ได้</string>
+    <string name="memory_scripts_editor_hint" tools:ignore="MissingTranslation">ป้อนหรือวางสคริปต์ JSON ที่ใช้การดำเนินการกับหน่วยความจำที่รองรับ การบันทึกจะไม่เรียกใช้สคริปต์</string>
+    <string name="memory_scripts_paste_hint" tools:ignore="MissingTranslation">วาง JSON ของสคริปต์</string>
+    <string name="memory_scripts_paste" tools:ignore="MissingTranslation">วาง</string>
+    <string name="memory_scripts_clipboard_invalid" tools:ignore="MissingTranslation">คลิปบอร์ดว่างเปล่าหรือเอกสารมีขนาดเกิน 64 KiB</string>
+    <string name="memory_scripts_invalid" tools:ignore="MissingTranslation">รูปแบบสคริปต์ไม่ถูกต้อง</string>
+    <string name="memory_scripts_freeze_active" tools:ignore="MissingTranslation">กำลังล็อกค่าสำหรับสคริปต์นี้</string>
+    <string name="memory_scripts_delete" tools:ignore="MissingTranslation">ลบ</string>
+    <string name="memory_scripts_delete_confirm" tools:ignore="MissingTranslation">ลบ <xliff:g id="name" example="Example">%1$s</xliff:g> หรือไม่? การล็อกค่าที่ทำงานอยู่สำหรับสคริปต์นี้จะหยุดลง</string>
+    <string name="memory_scripts_empty" tools:ignore="MissingTranslation">ไม่มีสคริปต์ที่บันทึกไว้</string>
+    <string name="memory_scripts_unsaved_title" tools:ignore="MissingTranslation">ละทิ้งสคริปต์ที่ยังไม่ได้บันทึกหรือไม่?</string>
+    <string name="memory_scripts_unsaved_message" tools:ignore="MissingTranslation">การเปลี่ยนแปลงสคริปต์ของคุณยังไม่ได้รับการบันทึก</string>
+    <string name="memory_scripts_discard" tools:ignore="MissingTranslation">ละทิ้ง</string>
+    <string name="memory_scripts_current_title" tools:ignore="MissingTranslation">อ่านล่าสุด</string>
+    <string name="memory_scripts_refresh" tools:ignore="MissingTranslation">รีเฟรช</string>
+    <string name="memory_scripts_reading" tools:ignore="MissingTranslation">กำลังอ่านค่าปัจจุบัน…</string>
+    <string name="memory_scripts_refresh_hint" tools:ignore="MissingTranslation">แตะ รีเฟรช เพื่ออ่านค่าปัจจุบันจากเกมที่กำลังเล่น</string>
+    <string name="memory_scripts_mode_toggle" tools:ignore="MissingTranslation">ล็อกค่า</string>
+    <string name="memory_scripts_mode_form" tools:ignore="MissingTranslation">ตัวแก้ไขค่า</string>
+    <string name="memory_scripts_mode_once" tools:ignore="MissingTranslation">การทำงานด่วน</string>
+    <string name="memory_scripts_mode_legacy" tools:ignore="MissingTranslation">สคริปต์ขั้นสูง</string>
+    <string name="memory_scripts_edit_values" tools:ignore="MissingTranslation">แก้ไขค่า</string>
+    <string name="memory_scripts_apply" tools:ignore="MissingTranslation">ใช้การเปลี่ยนแปลง</string>
+    <string name="memory_scripts_refresh_required" tools:ignore="MissingTranslation">รีเฟรชเพื่อตรวจสอบค่าปัจจุบันก่อนนำไปใช้</string>
+    <string name="memory_scripts_inconsistent" tools:ignore="MissingTranslation">สำเนาไม่สอดคล้องกัน: <xliff:g id="name" example="Example">%1$s</xliff:g></string>
+    <string name="memory_editor_minimize" tools:ignore="MissingTranslation">ย่อตัวแก้ไขหน่วยความจำ</string>
+    <string name="memory_scripts_choose_type" tools:ignore="MissingTranslation">สคริปต์ใหม่</string>
+    <string name="memory_scripts_choose_hint" tools:ignore="MissingTranslation">เลือกวิธีการทำงานของสคริปต์นี้</string>
+    <string name="memory_builder_json_editor" tools:ignore="MissingTranslation">ตัวแก้ไข JSON</string>
+    <string name="memory_builder_freeze_hint" tools:ignore="MissingTranslation">ล็อกค่าที่เลือกไว้ขณะเปิดใช้งาน การปิดการล็อกค่าจะไม่คืนค่าเดิมก่อนหน้า</string>
+    <string name="memory_builder_form_hint" tools:ignore="MissingTranslation">สร้างแบบฟอร์มที่อ่านค่าปัจจุบันก่อนนำการแก้ไขไปใช้</string>
+    <string name="memory_builder_actions_hint" tools:ignore="MissingTranslation">ใช้การเปลี่ยนแปลงหนึ่งครั้งทุกครั้งที่กดเรียกใช้ การบวกและลบจะใช้ค่าปัจจุบัน รวมถึงการเปลี่ยนแปลงจากการเรียกใช้ครั้งก่อน</string>
+    <string name="memory_builder_name" tools:ignore="MissingTranslation">ชื่อสคริปต์</string>
+    <string name="memory_builder_frozen_values" tools:ignore="MissingTranslation">ค่าที่ล็อกไว้</string>
+    <string name="memory_builder_fields" tools:ignore="MissingTranslation">ฟิลด์</string>
+    <string name="memory_builder_actions" tools:ignore="MissingTranslation">การทำงาน</string>
+    <string name="memory_builder_add_bookmarks" tools:ignore="MissingTranslation">เพิ่มจากบุ๊กมาร์ก</string>
+    <string name="memory_builder_empty" tools:ignore="MissingTranslation">เพิ่มบุ๊กมาร์กที่ยืนยันแล้วอย่างน้อยหนึ่งรายการ</string>
+    <string name="memory_builder_field_label" tools:ignore="MissingTranslation">ป้ายชื่อฟิลด์</string>
+    <string name="memory_builder_keep_at" tools:ignore="MissingTranslation">คงค่าไว้ที่</string>
+    <string name="memory_builder_amount" tools:ignore="MissingTranslation">ค่า / จำนวน</string>
+    <string name="memory_builder_set" tools:ignore="MissingTranslation">กำหนดค่า</string>
+    <string name="memory_builder_add" tools:ignore="MissingTranslation">บวก</string>
+    <string name="memory_builder_subtract" tools:ignore="MissingTranslation">ลบ</string>
+    <string name="memory_builder_view_json" tools:ignore="MissingTranslation">ดู JSON</string>
+    <string name="memory_builder_edit_json" tools:ignore="MissingTranslation">แก้ไข JSON</string>
+    <string name="memory_builder_search_bookmarks" tools:ignore="MissingTranslation">ค้นหาบุ๊กมาร์ก</string>
+    <string name="memory_builder_no_bookmarks" tools:ignore="MissingTranslation">ไม่พบบุ๊กมาร์กที่ยืนยันแล้วที่ตรงกัน เพิ่มบุ๊กมาร์กใน ค้นหา หรือเชื่อมโยงใหม่ใน ที่บันทึกไว้</string>
+    <string name="memory_builder_needs_relink" tools:ignore="MissingTranslation">ต้องเชื่อมโยงใหม่</string>
+    <string name="memory_builder_add_selected" tools:ignore="MissingTranslation">เพิ่มรายการที่เลือก</string>
+    <string name="memory_builder_min" tools:ignore="MissingTranslation">ค่าต่ำสุด (ไม่บังคับ)</string>
+    <string name="memory_builder_max" tools:ignore="MissingTranslation">ค่าสูงสุด (ไม่บังคับ)</string>
+    <string name="memory_builder_add_target" tools:ignore="MissingTranslation">เพิ่มเป้าหมาย</string>
+    <string name="memory_builder_freeze_short" tools:ignore="MissingTranslation">รักษาค่าที่เลือกให้คงที่</string>
+    <string name="memory_builder_form_short" tools:ignore="MissingTranslation">ปรับหลายค่าพร้อมกันในหน้าเดียว</string>
+    <string name="memory_builder_actions_short" tools:ignore="MissingTranslation">เรียกใช้คำสั่ง กำหนดค่า บวก หรือ ลบ แบบครั้งเดียว</string>
+    <string name="memory_editor_refine_scan" tools:ignore="MissingTranslation">กรองเพิ่ม</string>
+    <string name="memory_scripts_saved_count" tools:ignore="MissingTranslation">บันทึกไว้ <xliff:g id="count" example="3">%1$d</xliff:g> รายการ</string>
+    <string name="memory_scripts_empty_hint" tools:ignore="MissingTranslation">สร้างสคริปต์เพื่อแก้ไขหรือล็อกค่าขณะเล่น</string>
+    <string name="memory_builder_limits" tools:ignore="MissingTranslation">ขีดจำกัด (ไม่บังคับ)</string>
+    <string name="memory_editor_selection_limit">เลือกได้สูงสุด %1$d ค่า</string>
+    <string name="memory_saved_storage_unavailable">ไม่สามารถเข้าถึงรายการที่บันทึกไว้</string>
+    <string name="memory_bookmark_renamed">เปลี่ยนชื่อบุ๊กมาร์กแล้ว</string>
+    <string name="memory_editor_memory_unavailable">ไม่สามารถเข้าถึงหน่วยความจำ MIDlet ได้</string>
+    <string name="memory_bookmark_added">เพิ่มบุ๊กมาร์กแล้ว</string>
+    <string name="memory_bookmark_relinked">เชื่อมโยงบุ๊กมาร์กใหม่แล้ว</string>
+    <string name="memory_bookmarks_removed">นำออกจากรายการที่บันทึกแล้ว</string>
+    <string name="memory_freeze_enabled">เปิดการล็อกค่าแล้ว</string>
+    <string name="memory_freeze_unavailable">ไม่สามารถเปิดการล็อกค่าได้</string>
+    <string name="memory_list_session_only_failed">ไม่สามารถเก็บรายการนี้ไว้เฉพาะเซสชันปัจจุบันได้</string>
+    <string name="memory_list_kept_unlinked">บันทึกไว้สำหรับการเปิดครั้งถัดไปแล้ว แต่ไม่สามารถเชื่อมโยงกับเซสชันปัจจุบันได้</string>
+    <string name="memory_list_removal_unavailable">ไม่สามารถนำรายการออกขณะการเชื่อมต่อขาดหาย ลองอีกครั้ง</string>
+    <string name="memory_list_watch_removed">นำการติดตามในเซสชันออกแล้ว</string>
+    <string name="memory_list_bookmark_removal_failed">ไม่สามารถนำบุ๊กมาร์กออกได้: %1$s</string>
+    <string name="memory_list_watch_removal_failed">ไม่สามารถนำการติดตามในเซสชันออกได้: %1$s</string>
+    <string name="memory_list_removal_unknown_error">ข้อผิดพลาดที่ไม่ทราบสาเหตุ</string>
+    <string name="memory_editor_edit_freeze_failed">อัปเดตค่าแล้ว แต่ไม่สามารถเริ่มล็อกค่าได้ ตรวจสอบค่าปัจจุบันก่อนลองอีกครั้ง</string>
+    <string name="memory_scripts_freeze_inactive">การล็อกค่าของสคริปต์ปิดอยู่</string>
+    <string name="memory_bookmark_change_incomplete">ไม่สามารถเปลี่ยนบุ๊กมาร์กให้เสร็จสมบูรณ์ได้ ตรวจสอบรายการที่บันทึกไว้ก่อนลองอีกครั้ง</string>
+    <string name="memory_editor_value_updated">อัปเดตค่าแล้ว</string>
+    <string name="memory_editor_value_updated_frozen">อัปเดตค่าและเปิดการตรึงแล้ว</string>
+    <string name="memory_scripts_delete_failed">ไม่สามารถลบสคริปต์ได้ ตรวจสอบสถานะการตรึงก่อนลองอีกครั้ง</string>
+    <string name="memory_scripts_check_input">ไม่สามารถเตรียมสคริปต์ได้ ตรวจสอบค่าและบุ๊กมาร์ก</string>
+    <string name="memory_scripts_read_failed">ไม่สามารถอ่านค่าปัจจุบันได้ รีเฟรชแล้วลองอีกครั้ง</string>
+    <string name="memory_technical_details">รายละเอียดทางเทคนิค</string>
+    <string name="memory_scripts_resource_limit">สคริปต์ถึงขีดจำกัดด้านความปลอดภัยแล้ว ลดจำนวนเป้าหมายหรือหยุดการตรึงที่ไม่ได้ใช้งาน</string>
+    <string name="memory_scripts_target_changed">ไม่สามารถตรวจสอบเป้าหมายของสคริปต์ได้ รีเฟรชค่าและตรวจสอบบุ๊กมาร์ก</string>
+    <string name="memory_scripts_operation_unavailable">เป้าหมายปัจจุบันไม่รองรับการดำเนินการนี้ของสคริปต์</string>
+    <string name="memory_scripts_invalid_input">ตรวจสอบข้อมูลที่ป้อนให้สคริปต์ ป้อนค่าที่ถูกต้องภายในช่วงที่อนุญาต</string>
+    <string name="memory_scripts_value_range">มีค่าอยู่นอกช่วงที่รองรับ ตรวจสอบสคริปต์และค่าของสคริปต์</string>
+    <string name="memory_scripts_inconsistent_values">สำเนาของค่าเดียวกันไม่ตรงกัน ตรวจสอบสถานะเกมก่อนลองอีกครั้ง</string>
+    <string name="memory_scripts_wrong_midlet">สคริปต์นี้ใช้กับ MIDlet อื่น เปิด MIDlet ที่ถูกต้องหรือเลือกสคริปต์อื่น</string>
+    <string name="memory_scripts_target_not_ready">เป้าหมายของสคริปต์ยังไม่พร้อม กลับไปที่หน้าจอเกมที่เกี่ยวข้องแล้วลองอีกครั้ง</string>
+</resources>

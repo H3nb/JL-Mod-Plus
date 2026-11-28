@@ -1,0 +1,211 @@
+<?xml version="1.0" encoding="utf-8"?>
+<!-- Διοχέτευση απόδοσης, εσωτερική ανάλυση, κλιμάκωση bitmap, shaders και ενσωματωμένα οπτικά εφέ. -->
+<resources xmlns:tools="http://schemas.android.com/tools" xmlns:xliff="urn:oasis:names:tc:xliff:document:1.2">
+    <string name="identity_filter">Κανένα (ταχύτερο)</string>
+    <string name="invalid_resolution_not_saved">Μη έγκυρη ανάλυση. Η προεπιλογή δεν αποθηκεύτηκε.</string>
+    <string name="msg_error_loading_shader">Μη υποστηριζόμενο shader. Χρησιμοποιείται το προεπιλεγμένο shader.</string>
+    <string name="parallel_screen_redrawing">Ασύγχρονες ενημερώσεις οθόνης</string>
+    <string name="shader_tuning">Ρύθμιση shader</string>
+    <string name="SWAP_SIZES">Εναλλαγή πλάτους και ύψους</string>
+    <string name="fps_limit_maximum">Μέγιστο</string>
+    <string name="remove_screen_preset">Κατάργηση προεπιλογής ανάλυσης</string>
+    <string name="perf_overlay_position_help">Επιλέξτε μια γωνία.</string>
+    <string name="perf_overlay_top_left">Επάνω αριστερά</string>
+    <string name="perf_overlay_top_right">Επάνω δεξιά</string>
+    <string name="perf_overlay_bottom_left">Κάτω αριστερά</string>
+    <string name="perf_overlay_bottom_right">Κάτω δεξιά</string>
+    <string name="internal_resolution_title" tools:ignore="MissingTranslation">Ανάλυση απόδοσης</string>
+    <string name="internal_resolution_auto" tools:ignore="MissingTranslation">Αυτόματη</string>
+    <string name="internal_resolution_description" tools:ignore="MissingTranslation">Ορίζει την ανάλυση απόδοσης για τα υποστηριζόμενα γραφικά 2D και 3D. Η αυτόματη επιλογή καθορίζει την κλίμακα με βάση την περιοχή προβολής και τους περιορισμούς της συσκευής. Επανεκκινήστε το MIDlet για εφαρμογή.</string>
+    <string name="bitmap_upscaling_title" tools:ignore="MissingTranslation">Κλιμάκωση bitmap</string>
+    <string name="bitmap_upscaling_description" tools:ignore="MissingTranslation">Τα MMPX και xBR Lv3 βελτιώνουν αμετάβλητες εικόνες 2D και αμετάβλητες, αδιαφανείς υφές μοντέλων Micro3D. Οι υφές M3G παραμένουν αμετάβλητες. Επανεκκινήστε το MIDlet για εφαρμογή.</string>
+    <string name="bitmap_upscaling_nearest" tools:ignore="MissingTranslation">Πλησιέστερος γείτονας</string>
+    <string name="bitmap_upscaling_bilinear" tools:ignore="MissingTranslation">Διγραμμική</string>
+    <string name="bitmap_upscaling_mmpx" tools:ignore="MissingTranslation">MMPX</string>
+    <string name="bitmap_upscaling_edge_aware" tools:ignore="MissingTranslation">xBR Lv3</string>
+    <string name="render_shader_effects">Εφέ shader</string>
+    <string name="render_pipeline_title">Διοχέτευση απόδοσης</string>
+    <string name="render_shader_preset">Προεπιλογή shader</string>
+    <string name="render_shader_picker_help">Συνδυάστε ενσωματωμένα εφέ και τα δικά σας παλαιά shaders σε μια διατεταγμένη στοίβα εφέ.</string>
+    <string name="render_shader_requires_gles">Τα shaders αποθηκεύονται, αλλά εφαρμόζονται μόνο όταν έχει επιλεγεί OpenGL ES.</string>
+    <string name="render_shader_missing">Το επιλεγμένο shader δεν βρίσκεται στη βιβλιοθήκη. Επιλέξτε άλλη προεπιλογή ή επαναφέρετε τα αρχεία του.</string>
+    <string name="render_shader_parameters">Παράμετροι shader</string>
+    <string name="render_shader_reset_parameters">Επαναφορά παραμέτρων</string>
+    <string name="render_shader_passes">Περάσματα shader</string>
+    <string name="render_shader_pass_count"><xliff:g id="count" example="2">%1$d</xliff:g> περάσματα</string>
+    <string name="render_shader_pass_hint">Προβάλετε τα στάδια από την επιλεγμένη προεπιλογή GLSLP.</string>
+    <string name="render_pass_filter">Φιλτράρισμα εισόδου</string>
+    <string name="render_pass_output">Μέγεθος εξόδου (πλάτος × ύψος)</string>
+    <string name="render_pipeline_unavailable">Η προεπιλογή δεν είναι διαθέσιμη</string>
+    <string name="render_game_output">Έξοδος παιχνιδιού</string>
+    <string name="render_logical_screen_help">Λογικό μέγεθος που αναφέρεται στο παιχνίδι.</string>
+    <string name="render_internal_resolution">Εσωτερική ανάλυση</string>
+    <string name="render_internal_unavailable">Μόνο αρχική (1×). Υψηλότερες αναλύσεις απόδοσης δεν είναι διαθέσιμες για αυτήν τη διαμόρφωση.</string>
+    <string name="render_display_renderer">Μηχανή παρουσίασης</string>
+    <string name="render_shader_processing">Επεξεργασία shader</string>
+    <string name="render_display_scaling">Κλιμάκωση οθόνης</string>
+    <string name="render_display_viewport">Περιοχή προβολής παιχνιδιού</string>
+    <string name="render_texture_filtering">Φίλτρο κλιμάκωσης οθόνης</string>
+    <string name="render_texture_filtering_help">Επιλέγει Πλησιέστερο ή Γραμμικό για την τελική εικόνα του παιχνιδιού. Τα εφέ ενδέχεται να το παρακάμψουν.</string>
+    <string name="render_viewport_note">Το μέγεθος της περιοχής προβολής υπολογίζεται από τη διάταξη της οθόνης πριν προγραμματιστούν τα περάσματα shader. Τα βέλη δείχνουν τη ροή της εικόνας, όχι τη σειρά των υπολογισμών διάταξης.</string>
+    <string name="render_pipeline_help">Δείτε πώς φτάνει το καρέ του παιχνιδιού στην οθόνη και επεξεργαστείτε κάθε στάδιο.</string>
+    <string name="render_no_shader">Επιλέξτε μια προεπιλογή για να αλλάξετε την εμφάνιση του παιχνιδιού.</string>
+    <string name="render_shader_adjust">Προσαρμογή παραμέτρων</string>
+    <string name="render_legacy_tuning_hint">Ρυθμίστε με ακρίβεια αυτό το παλαιό εφέ.</string>
+    <string name="render_shader_customization">Προσαρμογή</string>
+    <string name="render_adjustable_count">Ρυθμιζόμενες παράμετροι: <xliff:g id="count" example="3">%1$d</xliff:g></string>
+    <string name="render_pass_summary"><xliff:g id="count" example="3">%1$d</xliff:g> στάδια · Ορίζονται από την προεπιλογή</string>
+    <string name="render_shader_preset_note">Τα στάδια shader ορίζονται από την προεπιλογή. Μπορείτε να τα επιθεωρήσετε χωρίς να αλλάξετε τη σειρά τους.</string>
+    <string name="render_parameters_hint">Μετακινήστε ένα ρυθμιστικό για να προσαρμόσετε την τιμή του. Οι αλλαγές αποθηκεύονται όταν το αφήσετε.</string>
+    <string name="render_pass_readonly">Τα στάδια εκτελούνται με αυτή τη σειρά. Το φιλτράρισμα εισόδου και η κλιμάκωση εξόδου προέρχονται από την επιλεγμένη προεπιλογή.</string>
+    <string name="render_pipeline_intro">Η διαδρομή από το framebuffer του παιχνιδιού στην οθόνη σας.</string>
+    <string name="render_native_short">Αρχική (1×)</string>
+    <string name="render_expand_passes">Εμφάνιση σταδίων</string>
+    <string name="render_collapse_passes">Απόκρυψη σταδίων</string>
+    <string name="render_view_all_passes">Λεπτομέρειες σταδίων</string>
+    <string name="render_pipeline_filter_summary">Φιλτράρισμα υφών: <xliff:g id="shader_name" example="CRT Classic">%1$s</xliff:g></string>
+    <string name="render_pipeline_note">Η διάταξη οθόνης καθορίζει την περιοχή προβολής πριν προγραμματιστούν τα περάσματα shader. Τα βήματα δείχνουν τη ροή της εικόνας.</string>
+    <string name="render_shader_change">Επιλογή άλλου εφέ</string>
+    <string name="render_custom_pipeline">Προσαρμοσμένη διοχέτευση</string>
+    <string name="render_custom_pipeline_hint">Συνδυάστε αυτόνομα shaders GLSL από τον φάκελο shaders.</string>
+    <string name="render_custom_order_help">Τα εφέ εκτελούνται από επάνω προς τα κάτω. Οι κληρονομημένες ρυθμίσεις GLSLP παραμένουν ενεργές εκτός αν αλλάξουν.</string>
+    <string name="render_custom_empty">Προσθέστε ένα shader για να ξεκινήσετε μια προσαρμοσμένη αλυσίδα.</string>
+    <string name="render_custom_stage_count"><xliff:g id="count" example="3">%1$d</xliff:g> προσαρμοσμένα στάδια shader</string>
+    <string name="render_custom_add">Προσθήκη shader</string>
+    <string name="render_custom_add_hint">Επιλέξτε μια εξωτερική αυτόνομη πηγή .glsl.</string>
+    <string name="render_custom_no_sources">Δεν βρέθηκαν παλαιά shaders. Προσθέστε αρχεία shader .ini στον φάκελο shaders και ανοίξτε ξανά τις Ρυθμίσεις.</string>
+    <string name="render_custom_scale">Έξοδος: <xliff:g id="scale" example="2">%1$d</xliff:g>× προηγούμενου σταδίου</string>
+    <string name="render_custom_output_scale">Μέγεθος εξόδου για το επόμενο στάδιο</string>
+    <string name="render_custom_final_viewport">Τελική έξοδος: προβάλλεται στην οθόνη</string>
+    <string name="render_custom_filter">Φίλτρο εισόδου: <xliff:g id="shader_name" example="CRT Classic">%1$s</xliff:g></string>
+    <string name="render_custom_up">Επάνω</string>
+    <string name="render_custom_down">Κάτω</string>
+    <string name="render_custom_remove">Κατάργηση</string>
+    <string name="render_custom_cancel">Ακύρωση</string>
+    <string name="render_custom_save">Αποθήκευση</string>
+    <string name="render_custom_default">Προεπιλογή</string>
+    <string name="render_custom_nearest">Πλησιέστερο</string>
+    <string name="render_custom_linear">Γραμμικό</string>
+    <string name="render_custom_checking">Έλεγχος αρχείων shader…</string>
+    <string name="render_active_shader">Ενεργό εφέ</string>
+    <string name="render_shader_off">Ανενεργό</string>
+    <string name="render_edit_custom_pipeline">Επεξεργασία αλυσίδας shader</string>
+    <string name="render_shader_unavailable">Μη διαθέσιμο: <xliff:g id="shader_name" example="CRT Classic">%1$s</xliff:g></string>
+    <string name="render_no_shader_sources">Δεν βρέθηκαν shaders. Προσθέστε παλαιά αρχεία shader .ini στον φάκελο shaders και ανοίξτε ξανά τις Ρυθμίσεις.</string>
+    <string name="render_shader_mode">Λειτουργία shader</string>
+    <string name="render_mode_selected">Επιλεγμένο</string>
+    <string name="render_gles_shader_default">Το OpenGL ES χρησιμοποιεί την αρχική εικόνα του παιχνιδιού όταν τα εφέ shader είναι ανενεργά.</string>
+    <string name="render_shader_off_help">Χωρίς πρόσθετα οπτικά εφέ.</string>
+    <string name="render_legacy_mode">Παλαιό shader</string>
+    <string name="render_legacy_mode_help">Επιλέξτε ένα αρχείο .ini από τον φάκελο shaders.</string>
+    <string name="render_legacy_empty">Δεν υπάρχουν χρησιμοποιήσιμοι ορισμοί shader σε αυτό το αρχείο .ini.</string>
+    <string name="render_legacy_select_variant">Επιλογή παλαιού shader</string>
+    <string name="render_legacy_variant_description">Ορισμός shader στο επιλεγμένο αρχείο .ini</string>
+    <string name="render_preset_mode">Προεπιλογή GLSLP</string>
+    <string name="render_preset_mode_help">Φόρτωση πλήρους διοχέτευσης .glslp με τα δικά της περάσματα.</string>
+    <string name="render_custom_pass_count">Αριθμός περασμάτων</string>
+    <string name="render_custom_pass_number">Πέρασμα <xliff:g id="number" example="1">%1$d</xliff:g></string>
+    <string name="render_custom_pick_file">Επιλογή αρχείου GLSL</string>
+    <string name="render_custom_add_pass">Αύξηση αριθμού περασμάτων shader</string>
+    <string name="render_custom_remove_pass">Μείωση αριθμού περασμάτων shader</string>
+    <string name="render_shader_selected_name">Ενεργό: <xliff:g id="shader_name" example="CRT Classic">%1$s</xliff:g></string>
+    <string name="render_shader_invalid_picker">Δεν είναι δυνατή η χρήση του επιλεγμένου αρχείου. Επιλέξτε ένα παλαιό αρχείο .ini μέσα στον φάκελο shaders.</string>
+    <string name="render_custom_mode">Τύπος shader</string>
+    <string name="render_custom_mode_legacy">Παλαιό</string>
+    <string name="render_custom_mode_glsl">GLSL</string>
+    <string name="render_custom_pick_legacy">Επιλογή παλαιού shader</string>
+    <string name="render_custom_preserve_size">Έξοδος: Από προεπιλογή</string>
+    <string name="render_custom_loading">Ανάγνωση περασμάτων προεπιλογής…</string>
+    <string name="render_custom_start_fresh">Έναρξη χωρίς προεπιλογή (απόρριψη κληρονομημένων ρυθμίσεων)</string>
+    <string name="render_effect_default_settings">Προεπιλεγμένες ρυθμίσεις</string>
+    <string name="render_effect_summary_more">+<xliff:g id="count" example="2">%1$d</xliff:g> ακόμη</string>
+    <string name="render_effect_legacy_author">Από <xliff:g id="shader_name" example="CRT Classic">%1$s</xliff:g></string>
+    <string name="render_effect_legacy_source">Πηγή: <xliff:g id="shader_name" example="CRT Classic">%1$s</xliff:g></string>
+    <string name="render_effect_removed">Το εφέ καταργήθηκε</string>
+    <string name="render_effect_undo">Αναίρεση</string>
+    <string name="render_effect_catalog_hint">Πατήστε ένα εφέ για να το προσθέσετε στη στοίβα.</string>
+    <string name="render_effect_user_folder_hint">Τα αρχεία INI, VSH και FSH πρέπει να βρίσκονται στον φάκελο shaders.</string>
+    <string name="render_effect_legacy_scale_note">Τα παλαιά shaders αποδίδονται στην ανάλυση της περιοχής προβολής οθόνης· οι σημαίες OutputResolution και Upscaling του .ini αγνοούνται.</string>
+    <string name="render_effect_legacy_metadata_missing">Δεν βρέθηκαν οι ρυθμίσεις από το αρχείο .ini αυτού του shader. Ο shader ενδέχεται να εξακολουθεί να λειτουργεί με τα πηγαία αρχεία του.</string>
+    <string name="render_effect_count"><xliff:g id="count" example="2">%1$d</xliff:g> ενεργά</string>
+    <string name="render_effect_add">Προσθήκη εφέ</string>
+    <string name="render_effect_builtin">Ενσωματωμένα εφέ</string>
+    <string name="render_effect_user">Τα shaders μου</string>
+    <string name="render_effect_user_add">Περιήγηση σε αρχεία .ini</string>
+    <string name="render_effect_user_empty">Δεν βρέθηκε παλαιό shader στον φάκελο shaders.</string>
+    <string name="render_effect_user_file">Επιλέξτε ένα παλαιό αρχείο .ini</string>
+    <string name="render_effect_empty">Προσθέστε ένα εφέ για να προσαρμόσετε την εμφάνιση του παιχνιδιού.</string>
+    <string name="render_effect_hint">Τα εφέ εκτελούνται από επάνω προς τα κάτω. Πατήστε παρατεταμένα και σύρετε για αναδιάταξη.</string>
+    <string name="render_effect_move_up">Μετακίνηση επάνω</string>
+    <string name="render_effect_move_down">Μετακίνηση κάτω</string>
+    <string name="render_effect_remove">Κατάργηση εφέ</string>
+    <string name="render_effect_no_parameters">Αυτό το εφέ δεν έχει ρυθμιζόμενες παραμέτρους.</string>
+    <string name="render_effect_parameter_number">Παράμετρος <xliff:g id="count" example="2">%1$d</xliff:g></string>
+    <string name="render_effect_restore">Επαναφορά παραμέτρων</string>
+    <string name="render_effect_missing">Μη διαθέσιμο: <xliff:g id="shader_name" example="CRT Classic">%1$s</xliff:g>. Αυτό το ενσωματωμένο εφέ δεν είναι διαθέσιμο σε αυτήν την έκδοση. Καταργήστε το από τη στοίβα.</string>
+    <string name="render_effect_limit">Η στοίβα υποστηρίζει έως 16 περάσματα shader (ορισμένα εφέ χρησιμοποιούν πολλαπλά περάσματα).</string>
+    <string name="render_effect_unavailable">Δεν ήταν δυνατή η εκτέλεση των εφέ shader. Εμφανίζεται η αρχική εικόνα του παιχνιδιού. Δοκιμάστε λιγότερα εφέ ή χαμηλότερη ανάλυση απόδοσης.</string>
+    <string name="render_bitmap_memory_reduced">Η κλιμάκωση bitmap εξάντλησε τη μνήμη. Θα χρησιμοποιηθούν οι αρχικές εικόνες ή μικρότερη κλίμακα. Δοκιμάστε χαμηλότερη ανάλυση απόδοσης ή ελευθερώστε μνήμη και επανεκκινήστε.</string>
+    <string name="render_texture_memory_reduced">Η κλιμάκωση υφών Micro3D απέτυχε. Θα χρησιμοποιηθούν οι αρχικές υφές. Δοκιμάστε χαμηλότερη ανάλυση απόδοσης ή ελευθερώστε μνήμη και επανεκκινήστε.</string>
+    <string name="render_resolution_reduced">Η ανάλυση απόδοσης μειώθηκε από <xliff:g id="from_scale" example="4">%1$d</xliff:g>× σε <xliff:g id="to_scale" example="2">%2$d</xliff:g>× λόγω ορίων μνήμης ή GPU. Δοκιμάστε χαμηλότερη ρύθμιση ή ελευθερώστε μνήμη και επανεκκινήστε.</string>
+    <string name="render_gpu_texture_limit">Η εικόνα του παιχνιδιού υπερβαίνει το μέγιστο μέγεθος υφής της GPU ακόμη και στο 1×. Μειώστε το μέγεθος οθόνης του MIDlet ή αλλάξτε λειτουργία γραφικών.</string>
+    <string name="render_gpu_upload_failed">Δεν ήταν δυνατή η φόρτωση της εικόνας του παιχνιδιού στη GPU. Γίνεται επανάληψη. Δοκιμάστε να κλείσετε άλλες εφαρμογές ή να αλλάξετε λειτουργία γραφικών.</string>
+    <string name="render_effect_gles">Τα εφέ αποθηκεύονται, αλλά αποδίδονται μόνο με OpenGL ES.</string>
+    <string name="render_effect_legacy_file_error">Δεν ήταν δυνατή η φόρτωση έγκυρου παλαιού shader από το επιλεγμένο αρχείο .ini.</string>
+    <string name="effect_color">Προσαρμογή χρώματος</string>
+    <string name="effect_color_desc">Ρυθμίστε φωτεινότητα, αντίθεση, κορεσμό, γάμμα, τόνο χρώματος και μονόχρωμο.</string>
+    <string name="effect_vignette">Βινιέτα</string>
+    <string name="effect_vignette_desc">Σκουραίνει τις άκρες για να εστιάσει την προσοχή στο κέντρο.</string>
+    <string name="effect_sharpen">Όξυνση</string>
+    <string name="effect_sharpen_desc">Ενισχύει τις λεπτομέρειες και τις ακμές της εικόνας.</string>
+    <string name="effect_cartoon">Απαλό καρτούν</string>
+    <string name="effect_cartoon_desc">Απλοποιεί τις διαβαθμίσεις χρώματος και προσθέτει απαλά περιγράμματα.</string>
+    <string name="effect_bloom">Λάμψη</string>
+    <string name="effect_bloom_desc">Προσθέτει απαλή λάμψη γύρω από τα φωτεινά σημεία της εικόνας.</string>
+    <string name="effect_crt_classic">Κλασικό CRT</string>
+    <string name="effect_crt_classic_desc">Μιμείται μια τηλεόραση CRT με γραμμές σάρωσης και μοτίβο RGB.</string>
+    <string name="effect_crt_beam">Στενότητα δέσμης</string>
+    <string name="effect_brightness">Φωτεινότητα</string>
+    <string name="effect_contrast">Αντίθεση</string>
+    <string name="effect_saturation">Κορεσμός</string>
+    <string name="effect_strength">Ένταση</string>
+    <string name="effect_color_levels">Επίπεδα χρώματος</string>
+    <string name="effect_edge">Ένταση ακμών</string>
+    <string name="effect_threshold">Όριο φωτεινότητας</string>
+    <string name="effect_radius">Ακτίνα θόλωσης</string>
+    <string name="effect_mask_strength">Ένταση μάσκας</string>
+    <string name="effect_scan_strength">Ένταση γραμμών σάρωσης</string>
+    <string name="effect_bright_boost">Ενίσχυση φωτεινότητας</string>
+    <string name="effect_lcd">LCD</string>
+    <string name="effect_lcd_desc">Μιμείται το πλέγμα εικονοστοιχείων και τα υποεικονοστοιχεία μιας κλασικής έγχρωμης οθόνης LCD.</string>
+    <string name="effect_lcd_grid">Ένταση πλέγματος</string>
+    <string name="effect_lcd_subpixel">Υποεικονοστοιχεία RGB</string>
+    <string name="effect_lcd_brightness">Φωτεινότητα LCD</string>
+    <string name="effect_scanlines">Ελαφριές γραμμές σάρωσης</string>
+    <string name="effect_scanlines_desc">Προσθέτει διακριτικές οριζόντιες γραμμές όπως σε οθόνη CRT.</string>
+    <string name="effect_line_width">Στενότητα γραμμής</string>
+    <string name="effect_gamma">Γάμμα</string>
+    <string name="effect_temperature">Θερμοκρασία</string>
+    <string name="effect_tint">Απόχρωση</string>
+    <string name="effect_monochrome">Μονόχρωμο</string>
+    <string name="effect_depth">Βάθος χρώματος και πρόσμειξη</string>
+    <string name="effect_depth_desc">Περιορίζει τη χρωματική παλέτα, με προαιρετική πρόσμειξη για ρετρό εμφάνιση.</string>
+    <string name="effect_depth_format">Μορφή χρώματος οθόνης</string>
+    <string name="effect_depth_rgb444">RGB444 · 4.096 χρώματα</string>
+    <string name="effect_depth_rgb565">RGB565 · 65.536 χρώματα</string>
+    <string name="effect_depth_rgb666">RGB666 · 262.144 χρώματα</string>
+    <string name="effect_dither_mode">Μοτίβο πρόσμειξης</string>
+    <string name="effect_dither_none">Ανενεργό</string>
+    <string name="effect_dither_bayer4">Bayer 4×4</string>
+    <string name="effect_dither_bayer8">Bayer 8×8</string>
+    <string name="effect_dither_strength">Ένταση πρόσμειξης</string>
+    <string name="effect_mono_display">Μονόχρωμη οθόνη</string>
+    <string name="effect_mono_display_desc">Μιμείται ασπρόμαυρες, πράσινες ή κεχριμπαρένιες οθόνες με 2 ή 4 τόνους.</string>
+    <string name="effect_mono_palette">Χρώμα LCD</string>
+    <string name="effect_mono_bw">Ασπρόμαυρο</string>
+    <string name="effect_mono_green">Πράσινο LCD</string>
+    <string name="effect_mono_amber">Κεχριμπαρί LCD</string>
+    <string name="effect_mono_tones">Αριθμός τόνων</string>
+    <string name="effect_mono_two">2 τόνοι</string>
+    <string name="effect_mono_four">4 τόνοι</string>
+</resources>

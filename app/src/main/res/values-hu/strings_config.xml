@@ -1,0 +1,356 @@
+<?xml version="1.0" encoding="utf-8"?>
+<!-- Per-MIDlet configuration, reusable profiles, camera, controller calibration, permissions, and system properties. -->
+<resources xmlns:tools="http://schemas.android.com/tools" xmlns:xliff="urn:oasis:names:tc:xliff:document:1.2">
+    <!-- %1$s is an optional quoted storage-volume name with a trailing space, or empty. -->
+    <!-- %1$s is a raw storage-volume description. -->
+    <string name="config_missing_app_storage_named">Az alkalmazás nem található.\nEllenőrizze, hogy a(z) „<xliff:g id="storage_name" example="SD card">%1$s</xliff:g>” tárolóeszköz elérhető-e, vagy hozza létre újra a parancsikont.</string>
+    <string name="config_missing_app_storage_generic">Az alkalmazás nem található.\nEllenőrizze, hogy a tárolóeszköz elérhető-e, vagy hozza létre újra a parancsikont.</string>
+    <string name="midlet_name"><b>Név: </b></string>
+    <string name="midlet_size"><b>Méret: </b></string>
+    <string name="midlet_vendor"><b>Fejlesztő: </b></string>
+    <string name="midlet_version"><b>Verzió: </b></string>
+    <string name="config_destination_graphics">Kijelző</string>
+    <string name="config_destination_rendering" tools:ignore="MissingTranslation">Grafika</string>
+    <string name="config_destination_media">Média</string>
+    <string name="config_camera_title">Kamera</string>
+    <string name="config_camera_default_title">Alapértelmezett kamera</string>
+    <string name="config_camera_rear">Hátlapi</string>
+    <string name="config_camera_front">Előlapi</string>
+    <string name="config_camera_resolution_title">Alapértelmezett felbontás</string>
+    <string name="config_camera_resolution_auto">Automatikus</string>
+    <string name="config_camera_resolution_portrait">480×640 — Álló</string>
+    <string name="config_camera_resolution_landscape">640×480 — Fekvő</string>
+    <string name="config_destination_controls">Vezérlők</string>
+    <string name="config_gamepad_test">Kontroller tesztelése</string>
+    <string name="config_gamepad_calibrate">Kontroller kalibrálása</string>
+    <string name="config_gamepad_calibrate_summary">Megméri a csatlakoztatott kontroller nyugalmi helyzetét, valamint a karok és ravaszok tartományát.</string>
+    <string name="config_gamepad_stick_directions">Digitális irányok</string>
+    <string name="config_gamepad_stick_unassigned">Nincs hozzárendelve</string>
+    <string name="config_gamepad_stick_pointer">Mutató forrása</string>
+    <string name="config_gamepad_opaque_summary">Ez a konfiguráció nem támogatott formátumú kontrolleradatokat tartalmaz. Változatlanul megmarad, és itt nem szerkeszthető.</string>
+    <string name="config_gamepad_unsupported_summary">Ez a kontroller-konfiguráció nem támogatott. Változatlanul megmarad, és itt nem szerkeszthető.</string>
+    <string name="config_gamepad_keypad_title">Virtuális billentyűzet</string>
+    <string name="config_gamepad_calibration_next">Tovább</string>
+    <string name="config_gamepad_mapping_help_title">Kontrollerkiosztás súgója</string>
+    <string name="config_gamepad_directions_four">4 irányú</string>
+    <string name="config_gamepad_directions_eight">8 irányú</string>
+    <string name="config_gamepad_pointer_off">Ki</string>
+    <string name="config_gamepad_pointer_cursor">Arányos kurzor</string>
+    <string name="config_gamepad_pointer_joystick">Érintőjoystick</string>
+    <!-- This is the same controller-identity fingerprint shown in diagnostics. -->
+    <string name="config_gamepad_calibration_profile">Kontroller-azonosító: <xliff:g id="profile_name" example="Action Games">%1$s</xliff:g></string>
+    <string name="config_gamepad_calibration_phase_neutral">Várakozás nyugalmi helyzetre</string>
+    <string name="config_gamepad_calibration_phase_stick_range">Karok tartománya</string>
+    <string name="config_gamepad_calibration_phase_trigger_range">Ravaszok tartománya</string>
+    <string name="config_gamepad_calibration_phase_review">Mentésre kész</string>
+    <string name="config_gamepad_calibration_phase_committed">Mentve</string>
+    <string name="config_gamepad_calibration_phase_cancelled">Megszakítva</string>
+    <string name="config_gamepad_calibration_waiting_controller">Csatlakoztasson támogatott analóg karral vagy ravasszal rendelkező kontrollert. A kezdéshez mozgasson meg egy kart vagy nyomjon meg egy ravaszt. A meglévő kalibrálás csak új kalibrálás mentésekor vagy visszaállításkor változik.</string>
+    <string name="config_gamepad_calibration_no_analog_ranges">Ez a kontroller nem biztosít támogatott analóg kar- vagy ravasztartományokat.</string>
+    <string name="config_gamepad_calibration_start">Tartsa az összes kart középen, az összes ravaszt pedig elengedve, amíg a nyugalmi időzítő le nem jár.</string>
+    <string name="config_gamepad_calibration_save_failed">Nem sikerült menteni a kalibrálást. Újrapróbálkozás előtt ellenőrizze az aktuális beállításokat.</string>
+    <string name="config_gamepad_calibration_no_supported_ranges">Nem találhatók támogatott analóg tartományok.</string>
+    <string name="config_gamepad_calibration_rejected">Kalibrálás elutasítva: <xliff:g id="name" example="Example">%1$s</xliff:g></string>
+    <string name="config_gamepad_calibration_neutral_instructions">Tartsa az összes észlelt kart középen, az összes észlelt ravaszt pedig elengedve, amíg a nyugalmi időzítő le nem jár.</string>
+    <string name="config_gamepad_calibration_stick_instructions">Mozgassa végig az összes észlelt kart a teljes tartományán minden irányban, majd nyomja meg a Tovább gombot.</string>
+    <string name="config_gamepad_calibration_trigger_instructions">Engedje el, majd nyomja le teljesen az összes észlelt ravaszt, végül koppintson a Tovább gombra.</string>
+    <string name="config_gamepad_calibration_review_instructions">Mentéssel lecserélheti ennek a kontrollernek a kalibrálását.</string>
+    <string name="config_gamepad_calibration_saved">Kalibrálás mentve.</string>
+    <string name="config_gamepad_calibration_cancelled">Kalibrálás megszakítva.</string>
+    <string name="config_gamepad_calibration_waiting_samples">A kalibrálás a kontroller mintáira vár.</string>
+    <string name="config_gamepad_diagnosis_header">Kontroller-diagnosztika</string>
+    <string name="config_gamepad_diagnosis_mode">Állapot: <xliff:g id="status" example="enabled">%1$s</xliff:g> · Forrás: <xliff:g id="source" example="controller">%2$s</xliff:g></string>
+    <string name="config_gamepad_diagnosis_notice">Megjegyzés: <xliff:g id="name" example="Example">%1$s</xliff:g></string>
+    <string name="config_gamepad_diagnosis_analog_settings">Analóg beállítások:</string>
+    <string name="config_gamepad_diagnosis_left_stick">Bal kar</string>
+    <string name="config_gamepad_diagnosis_right_stick">Jobb kar</string>
+    <string name="config_gamepad_diagnosis_triggers">Ravaszok</string>
+    <string name="config_gamepad_diagnosis_pointer">Mutató mód</string>
+    <string name="config_gamepad_status_enabled">engedélyezve</string>
+    <string name="config_gamepad_status_disabled">letiltva</string>
+    <string name="config_gamepad_diagnosis_source_default">alapértelmezett</string>
+    <string name="config_gamepad_diagnosis_source_controller">kontroller</string>
+    <string name="config_gamepad_diagnosis_source_explicit">kifejezett</string>
+    <string name="config_gamepad_diagnosis_device"><xliff:g id="device_name" example="Xbox Controller">%1$s</xliff:g> (#<xliff:g id="device_id" example="1">%2$d</xliff:g>)</string>
+    <string name="config_gamepad_calibration_issue_no_channels">nincs támogatott csatorna</string>
+    <string name="config_gamepad_calibration_issue_invalid_constraints">érvénytelen kalibrálási korlátok</string>
+    <string name="config_gamepad_calibration_issue_non_finite">nem véges minta</string>
+    <string name="config_gamepad_calibration_issue_insufficient_samples">kevés minta</string>
+    <string name="config_gamepad_calibration_issue_invalid_range">érvénytelen tartomány</string>
+    <string name="config_gamepad_calibration_issue_rest_outside_range">a nyugalmi érték tartományon kívül esik</string>
+    <string name="config_gamepad_calibration_issue_rest_too_noisy">a nyugalmi helyzet nem elég stabil</string>
+    <string name="config_gamepad_calibration_phase_unknown">Állapot nem érhető el</string>
+    <string name="config_gamepad_diagnosis_capabilities">Csatlakoztatott kontroller képességei:</string>
+    <string name="config_gamepad_diagnosis_descriptor">Leíró: <xliff:g id="name" example="Example">%1$s</xliff:g></string>
+    <!-- %1$s is a controller-identity fingerprint derived from its descriptor and capabilities. -->
+    <!-- It is not a handwritten signature or a cryptographic signing operation. -->
+    <string name="config_gamepad_diagnosis_signature">Azonosító: <xliff:g id="name" example="Example">%1$s</xliff:g></string>
+    <string name="config_gamepad_diagnosis_axis"><xliff:g id="axis_index" example="0">%1$d</xliff:g>. tengely [<xliff:g id="min_value" example="-1.0">%2$s</xliff:g>, <xliff:g id="max_value" example="1.0">%3$s</xliff:g>] flat=<xliff:g id="flat" example="0.05">%4$s</xliff:g> fuzz=<xliff:g id="fuzz" example="0.01">%5$s</xliff:g></string>
+    <string name="config_gamepad_diagnosis_no_controller">(nincs csatlakoztatott kontroller)</string>
+    <string name="config_gamepad_diagnosis_samples_not_sent">A bemeneti minták szándékosan nem kerülnek elküldésre a MIDlet-nek.</string>
+    <string name="config_destination_system">Rendszer</string>
+    <string name="config_screen_behavior" tools:ignore="MissingTranslation">Képernyő viselkedése</string>
+    <string name="config_screen_size">Képernyőméret</string>
+    <string name="config_select_screen_size">Képernyőméret kiválasztása</string>
+    <string name="config_current_screen_size">Jelenlegi méret: <xliff:g id="name" example="Example">%1$s</xliff:g></string>
+    <string name="config_custom_resolution">Egyéni felbontás</string>
+    <string name="profile_custom">Egyéni</string>
+    <string name="select_dialog_title">MIDlet kiválasztása</string>
+    <string name="SIZE_PRESETS">Betűméret-előbeállítások</string>
+    <string name="config_color_picker_title">Szín kiválasztása</string>
+    <string name="config_color_picker_hex">Hexadecimális szín</string>
+    <string name="config_color_picker_hint">Húzza el a színmezőket, vagy adjon meg egy hatjegyű RGB-értéket.</string>
+    <string name="config_color_picker_invalid">Adjon meg pontosan hat hexadecimális számjegyet.</string>
+    <string name="config_color_picker_saturation_value">Telítettség és fényerő</string>
+    <string name="config_color_picker_hue">Árnyalat</string>
+    <string name="config_decrease_value">Érték csökkentése</string>
+    <string name="config_increase_value">Érték növelése</string>
+    <string name="midlet_failure_recovery_title">A MIDlet váratlanul leállt</string>
+    <string name="midlet_failure_recovery_message">A MIDlet váratlanul leállt. A diagnosztikai adatok helyben mentésre kerültek. Továbbra is használhatja a JL-Mod Plus alkalmazást.</string>
+    <string name="midlet_failure_recovery_message_named">A(z) „<xliff:g id="name" example="Example">%1$s</xliff:g>” váratlanul leállt. A diagnosztikai adatok helyben mentésre kerültek. Továbbra is használhatja a JL-Mod Plus alkalmazást.</string>
+    <plurals name="config_system_properties_value">
+        <item quantity="one"><xliff:g id="count" example="3">%1$d</xliff:g> tulajdonság</item>
+        <item quantity="other"><xliff:g id="count" example="3">%1$d</xliff:g> tulajdonság</item>
+    </plurals>
+    <string name="config_search_suggestions" tools:ignore="MissingTranslation">Javasolt beállítások</string>
+    <string name="config_search_clear" tools:ignore="MissingTranslation">Keresés törlése</string>
+    <string name="config_search_title" tools:ignore="MissingTranslation">Beállítások keresése</string>
+    <string name="config_search_hint" tools:ignore="MissingTranslation">Beállítás keresése, pl. MMPX vagy tájolás</string>
+    <string name="config_search_no_results" tools:ignore="MissingTranslation">Nincs egyező beállítás</string>
+    <string name="config_search_upscaling_requires_resolution" tools:ignore="MissingTranslation">Válassza az Automatikus vagy 2×–10× opciót a Renderelési felbontás alatt a bittérképes felskálázás beállításához.</string>
+    <string name="config_search_requires_manual_scale" tools:ignore="MissingTranslation">Válassza a Kézi opciót a Méretezési mód alatt a méretarány módosításához.</string>
+    <string name="config_search_requires_custom_background" tools:ignore="MissingTranslation">Válassza az Egyéni opciót a Háttér mód alatt a háttérszín szerkesztéséhez.</string>
+    <string name="config_search_requires_gles" tools:ignore="MissingTranslation">Válassza a Hardveres gyorsítás (OpenGL ES) opciót a Grafikai mód alatt a shadereffektek beállításához.</string>
+    <string name="config_search_requires_renderer_mode" tools:ignore="MissingTranslation">Válassza a Szoftveres vagy Hardveres gyorsítás (Surface) opciót a Grafikai mód alatt az aszinkron képernyőfrissítés beállításához.</string>
+    <string name="config_font_page_title" tools:ignore="MissingTranslation">Betűtípus-beállítások</string>
+    <string name="config_display_more" tools:ignore="MissingTranslation">Szöveg és teljesítmény</string>
+    <string name="config_destination_home" tools:ignore="MissingTranslation">Kezdőlap</string>
+    <string name="config_overview_profile_draft" tools:ignore="MissingTranslation">Profilpiszkozat</string>
+    <string name="config_overview_profile_draft_summary" tools:ignore="MissingTranslation">Szerkessze ezt az újrahasználható profilt, majd mentse a módosításokat az eszköztárról.</string>
+    <string name="config_overview_quick_access" tools:ignore="MissingTranslation">Gyors elérés</string>
+    <string name="config_system_properties_editor_label">Tulajdonságok</string>
+    <string name="config_overview_enabled" tools:ignore="MissingTranslation">Be</string>
+    <string name="config_overview_disabled" tools:ignore="MissingTranslation">Ki</string>
+    <string name="config_overview_media_summary" tools:ignore="MissingTranslation">Hangbank és kamera</string>
+    <string name="config_overview_hint" tools:ignore="MissingTranslation">Válasszon egy kategóriát a játék testreszabásához. Minden beállításnak egyetlen helye van; ezek a gyorsgombok oda visznek.</string>
+    <string name="config_destination_general">Általános</string>
+    <string name="config_basic_display">MIDlet-képernyő</string>
+    <string name="config_display_appearance">Képernyő megjelenése</string>
+    <string name="config_display_rendering">Renderelés</string>
+    <string name="config_image_quality_section" tools:ignore="MissingTranslation">Képminőség</string>
+    <string name="config_frame_rate_section" tools:ignore="MissingTranslation">Képkockasebesség</string>
+    <string name="config_fps_position_title" tools:ignore="MissingTranslation">FPS pozíciója</string>
+    <string name="config_display_text">Szöveg és betűtípusok</string>
+    <string name="config_input_mapping_section" tools:ignore="MissingTranslation">Bevitel és kiosztás</string>
+    <string name="config_controls_appearance_section" tools:ignore="MissingTranslation">Vezérlők megjelenése</string>
+    <string name="config_controls_virtual_keyboard">Virtuális vezérlők</string>
+    <string name="config_controls_virtual_keyboard_colors">Virtuális vezérlők színei</string>
+    <string name="config_virtual_controls_color_preview">Színelőnézet</string>
+    <string name="config_virtual_controls_preview_normal">Felengedve</string>
+    <string name="config_virtual_controls_preview_pressed">Lenyomva</string>
+    <string name="config_controls_maintenance">Elrendezés</string>
+    <string name="config_controls_skin_help">Egyéni képekkel módosítja a billentyűzetgombok, a D-pad és az analóg kar megjelenését.</string>
+    <string name="config_controls_color_button_normal">Felengedett gomb</string>
+    <string name="config_controls_color_button_pressed">Lenyomott gomb</string>
+    <string name="config_controls_color_label_normal">Felengedett felirat</string>
+    <string name="config_controls_color_label_pressed">Lenyomott felirat</string>
+    <string name="config_controls_color_outline_short">Körvonal</string>
+    <string name="config_controls_disabled_hint">A virtuális vezérlők jelenleg ki vannak kapcsolva. Ennek ellenére itt testreszabhatja őket.</string>
+    <string name="config_controls_opacity_help" formatted="false">A virtuális vezérlők átlátszatlanságát állítja be. 0% esetén a vezérlők átlátszók, 100% esetén pedig nincs hozzáadott átlátszóság.</string>
+    <string name="config_controls_opaque_outside">Vezérlők megjelenítése átlátszóság nélkül a MIDlet-képernyőn kívül</string>
+    <string name="config_controls_opaque_outside_help">Ha ez a beállítás be van kapcsolva, a MIDlet képernyőjén teljesen kívül eső vezérlők további átlátszóság nélkül jelennek meg. A képernyőt átfedő vezérlők a beállított átlátszatlanságot használják.</string>
+    <string name="config_controls_connect_controller">Csatlakoztasson kontrollert a kalibráláshoz</string>
+    <string name="config_controls_color_skin_notice">A teljes gombos kinézet felülírhatja az alapértelmezett gombszíneket, alakot és körvonalat.</string>
+    <string name="config_current_value">Jelenlegi érték</string>
+    <string name="config_maintenance">Visszaállítás és adatok</string>
+    <string name="config_midlet_actions" tools:ignore="MissingTranslation">MIDlet-műveletek</string>
+    <string name="config_profile_maintenance" tools:ignore="MissingTranslation">Profilműveletek</string>
+    <string name="config_reset_profile_settings" tools:ignore="MissingTranslation">Profilpiszkozat visszaállítása</string>
+    <string name="config_reset_profile_settings_summary" tools:ignore="MissingTranslation">Visszaállítja a piszkozat beállításait és virtuális vezérlőit az alapértelmezettekre.</string>
+    <string name="config_system_compatibility" tools:ignore="MissingTranslation">Emulációs kompatibilitás</string>
+    <string name="config_reset_all_settings">MIDlet-konfiguráció visszaállítása</string>
+    <string name="config_reset_all_settings_summary">Visszaállítja a MIDlet beállításait és virtuális vezérlőit az alapértelmezettekre az adatok törlése nélkül.</string>
+    <string name="config_delete_app_data">MIDlet adatainak törlése</string>
+    <string name="config_delete_app_data_summary">Véglegesen törli a MIDlet adatait, beleértve a mentéseket. A beállítások megmaradnak.</string>
+    <string name="config_message_reset_settings">Visszaállítja a MIDlet konfigurációját és virtuális vezérlőit az alapértelmezettekre? A mentett adatok érintetlenek maradnak. A kapcsolt profil követése megszűnik.</string>
+    <string name="config_message_reset_profile_settings">Visszaállítja a profil beállításait és virtuális vezérlőit az alapértelmezettekre? Mentés előtt még szerkesztheti vagy megszakíthatja.</string>
+    <string name="config_message_delete_app_data">Véglegesen törli a MIDlet által létrehozott összes mentést és adatot? A MIDlet beállításai nem törlődnek.</string>
+    <string name="config_lock_custom_resolution_ratio">Képarány rögzítése</string>
+    <string name="config_swap_screen_size">Szélesség és magasság felcserélése</string>
+    <string name="profile_builtin_settings">JL-Mod alapértelmezések</string>
+    <string name="profile_default_badge_short">Alapértelmezett új MIDlet-ekhez</string>
+    <string name="profile_template_summary">Mentett MIDlet-beállítások.</string>
+    <string name="profile_name_exists">Már létezik ilyen nevű profil.</string>
+    <string name="profile_delete_template_message">Törli a(z) „<xliff:g id="profile_name" example="Action Games">%1$s</xliff:g>” profilt? Az ezt használó MIDlet-ek megtartják jelenlegi beállításaikat, de nem kapnak több frissítést.</string>
+    <string name="profile_template_operation_failed">Nem sikerült befejezni a profilműveletet.</string>
+    <string name="config_help_screen_size">Beállítja a MIDlet által használt virtuális Java ME képernyő felbontását.</string>
+    <string name="config_help_orientation">Kiválasztja a képernyő tájolását a MIDlet futása közben.</string>
+    <string name="config_help_scale_type">Válassza ki, hogyan illeszkedjen a játék a kijelzőhöz. Egyéni méretarányhoz válassza a Kézi opciót.</string>
+    <string name="config_help_scale_ratio" formatted="false">A megjelenített méretet 1% és 1000% között állítja be. 100%-nál a játék eredeti méretét használja; nagyobb értékek túllóghatnak a képernyőn.</string>
+    <string name="config_help_lock_custom_resolution_ratio">Megtartja a képarányt az egyéni felbontás szerkesztésekor.</string>
+    <string name="config_help_virtual_keyboard">Képernyővezérlőket jelenít meg ehhez a MIDlet-hez.</string>
+    <string name="config_help_touch_input">Lehetővé teszi, hogy a MIDlet érintőképernyős mutatóbemenetet kapjon.</string>
+    <string name="config_help_background">Kitölti a MIDlet-képernyő körüli kihasználatlan helyet.</string>
+    <string name="config_background_mode">Háttér mód</string>
+    <string name="config_background_custom">Egyéni</string>
+    <string name="config_background_theme">Téma</string>
+    <string name="config_background_immersive">Magával ragadó</string>
+    <string name="config_background_theme_help">A JL-Mod Plus témaszínét használja a MIDlet-képernyő körül.</string>
+    <string name="config_background_immersive_help">A MIDlet-képernyőről vett színekkel tölti ki a kihasználatlan helyet.</string>
+    <string name="config_background_dynamic">Dinamikus szín</string>
+    <string name="config_background_dynamic_help">Egyetlen egyszínű hátteret használ, amely finoman igazodik a MIDlet-képernyőhöz.</string>
+    <string name="config_background_custom_color">Háttérszín</string>
+    <string name="config_help_background_custom_color">Beállítja a MIDlet-képernyő körüli kihasználatlan hely színét.</string>
+    <string name="config_help_skin">Opcionális képet vagy keretet jelenít meg a MIDlet-képernyő körül.</string>
+    <string name="config_help_screen_gravity">Elhelyezi a MIDlet-képernyőt, ha marad kihasználatlan hely.</string>
+    <string name="config_help_screen_padding">Képpontban megadott margót ad a MIDlet-képernyő és a megjelenítési terület széle közé.</string>
+    <string name="config_help_filter">Lineáris szűréssel simítja a méretezett MIDlet-képernyőt.</string>
+    <string name="config_warning_filter_shader">A lineáris szűrés a képernyőshader feldolgozása előtt simítja a bemenetet, ami csökkentheti a kimenet élességét.</string>
+    <string name="config_help_immediate">Sorba állítás helyett azonnal feldolgozza a MIDlet-eseményeket. Javíthatja a válaszidőt, de egyes MIDlet-eknél instabilitást okozhat.</string>
+    <string name="config_help_graphics_mode">Kiválasztja a MIDlet-képernyő renderelési útvonalát. A hardveres gyorsítás javíthatja a teljesítményt, de a kompatibilitás eszközönként eltérő.</string>
+    <string name="config_help_shader">Shadert alkalmaz a MIDlet képkockájára a megjelenítés előtt.</string>
+    <string name="config_help_shader_tuning">Az elérhető beállítások a kiválasztott shadertől függenek.</string>
+    <string name="config_help_parallel_redraw">Aszinkron módon ütemezi a képkockák megjelenítését. Ez egyes eszközökön javíthatja a teljesítményt.</string>
+    <string name="config_help_force_fullscreen">Elrejti a parancssort a MIDlet indításakor. A MIDlet játék közben újra megjelenítheti.</string>
+    <string name="config_help_fps_limit">Beállítja az FPS-korlátot 1× emulációs sebességnél. A tényleges korlát követi az emulációs sebességet; a 0 (Maximum) a kijelző maximális frissítési gyakoriságát használja.</string>
+    <string name="config_timing_mode_full_guest">Emulációs idő</string>
+    <string name="config_timing_mode_real_wall">Rendszeridő</string>
+    <string name="config_help_emulation_speed">Az adott munkamenetre módosítja a MIDlet támogatott időzítőit és késleltetéseit. Emulációs idő választásakor a dátum és az idő is követi a sebességet. A médialejátszás és az Android kezelőfelülete normál sebességen marad.</string>
+    <string name="config_help_timing_mode">Kiválasztja, hogy a MIDlet emulációs időt vagy rendszeridőt használjon. A relatív késleltetések továbbra is az emulációs sebességgel skálázódnak.</string>
+    <string name="config_help_timing_unavailable">Az időbeállítások nem érhetők el ehhez a MIDlet-telepítéshez. Az engedélyezésükhöz telepítse újra vagy konvertálja újra a MIDlet-et.</string>
+    <string name="config_help_generic_color">Beállítja ennek a vizuális elemnek a színét.</string>
+    <string name="config_help_encoding">Kiválasztja a microedition.encoding tulajdonságként jelentett karakterkódolást.</string>
+    <string name="config_edit_system_properties">Rendszertulajdonságok szerkesztése</string>
+    <string name="config_help_system_properties">Beállítja a MIDlet-nek jelentett speciális Java ME tulajdonságokat.</string>
+    <string name="config_help_system_properties_long">Soronként egy tulajdonságot szerkesszen „név: érték” formátumban. A hibás értékek befolyásolhatják a kompatibilitást.</string>
+    <string name="config_system_properties_info">A legtöbb MIDlet-nél itt nincs szükség módosításra.</string>
+    <string name="config_font_sizes">Betűméretek</string>
+    <string name="config_help_font_sizes">Beállítja a kicsi, közepes és nagy Java ME betűméreteket a MIDlet számára.</string>
+    <string name="config_help_font_sizes_long">Képpontban vagy az Android betűméret-skálázása esetén skálázott egységekben adja meg a Java ME betűméreteket. Módosítsa őket együtt a kiegyensúlyozott szöveghez.</string>
+    <string name="config_font_sizes_value">Kicsi <xliff:g id="small_size" example="12">%1$s</xliff:g> · közepes <xliff:g id="medium_size" example="16">%2$s</xliff:g> · nagy <xliff:g id="large_size" example="20">%3$s</xliff:g></string>
+    <string name="config_help_font_presets">A gyakori Java ME képernyőfelbontásokhoz illeszkedő betűméreteket alkalmaz.</string>
+    <string name="config_help_font_dimensions">Alkalmazza az Android betűméret-skálázását a Java ME betűméretekre.</string>
+    <string name="config_help_font_aa">Simítja a renderelt szöveg éleit.</string>
+    <string name="config_help_key_layout">Kiválasztja a MIDlet-nek jelentett billentyűkód-sémát.</string>
+    <string name="config_help_key_mapping">Fizikai Android billentyűket és gombokat rendel a Java ME billentyűzet műveleteihez.</string>
+    <string name="config_help_vk_button_shape">Beállítja a billentyűzetgombok alapértelmezett alakját. A D-pad és az analóg kar saját alakkal rendelkezik.</string>
+    <string name="config_help_vk_feedback">Rezeg a virtuális vezérlő megnyomásakor, ha a rezgés engedélyezve van a Beállításokban.</string>
+    <string name="config_help_vk_hide_delay">Ennyi késleltetés után elrejti a vezérlőket, ha azok a MIDlet-képernyőt fedik. A 0 érték letiltja az automatikus elrejtést.</string>
+    <string name="config_help_reset_layout">Visszaállítja a virtuális vezérlők elrendezését a MIDlet többi beállításának módosítása nélkül.</string>
+    <string name="config_help_skip_resume">Az első sikeres startApp() után kihagyja a későbbi hívásokat a MIDlet folytatásakor. Csak olyan MIDlet-eknél használja, amelyek folytatáskor hibásan működnek.</string>
+    <string name="config_help_soundbank">Kiválasztja a MIDI-szintézishez használt hangbankot. Az előre rögzített hangot nem módosítja.</string>
+    <string name="profile_create_title">Profil létrehozása</string>
+    <string name="profile_rename_title">Profil átnevezése</string>
+    <string name="presets">Profilok</string>
+    <string name="preset_use">Profil használata</string>
+    <string name="preset_save_as">Mentés profilként</string>
+    <string name="preset_custom_configuration">Egyéni konfiguráció</string>
+    <string name="preset_based_on_modified">A MIDlet jelenlegi konfigurációja eltér a(z) <xliff:g id="profile_name" example="Action Games">%1$s</xliff:g> profiltól.</string>
+    <string name="preset_builtin">JL-Mod alapértelmezések</string>
+    <string name="preset_builtin_summary">Beépített MIDlet-beállítások és virtuális vezérlők.</string>
+    <string name="preset_picker_title">Profil használata</string>
+    <string name="preset_manage">Profilok kezelése</string>
+    <string name="profile_more_actions">További műveletek: <xliff:g id="profile_name" example="Action Games">%1$s</xliff:g></string>
+    <string name="profile_create_summary">Menthet újrahasználható beállítást más MIDlet-ekhez.</string>
+    <string name="preset_application_settings">MIDlet-beállítások</string>
+    <string name="preset_includes_keyboard_layout">A virtuális vezérlők elrendezését is tartalmazza.</string>
+    <string name="preset_virtual_keyboard_on">Virtuális vezérlők bekapcsolva</string>
+    <string name="preset_virtual_keyboard_off">Virtuális vezérlők kikapcsolva</string>
+    <string name="preset_apply">Alkalmazás</string>
+    <string name="preset_apply_failed_summary">Nem sikerült alkalmazni ezt a profilt. Ellenőrizze a forrást, és próbálja újra.</string>
+    <string name="preset_choose_parts">Alkalmazandó elemek kiválasztása</string>
+    <string name="preset_name">Név</string>
+    <string name="preset_save_help">Mentse el a MIDlet beállításait és – ha elérhető – a virtuális vezérlők elrendezését profilként. Ez a MIDlet ezt a profilt fogja használni, és megkapja a jövőbeli frissítéseit.</string>
+    <string name="preset_update"><xliff:g id="profile_name" example="Action Games">%1$s</xliff:g> frissítése</string>
+    <string name="preset_update_title">Frissíti a(z) <xliff:g id="profile_name" example="Action Games">%1$s</xliff:g> profilt?</string>
+    <string name="preset_update_summary">Lecseréli a(z) <xliff:g id="profile_name" example="Action Games">%1$s</xliff:g> profilt a MIDlet jelenlegi beállításaira és – ha elérhető – a virtuális vezérlők elrendezésére? Az ezt a profilt használó többi MIDlet a következő indításkor kapja meg a módosításokat.</string>
+    <string name="preset_update_confirm">Frissítés</string>
+    <string name="preset_saved_unlinked_warning">A profil mentve, de ez a MIDlet nem kap jövőbeli frissítéseket belőle.</string>
+    <string name="profile_default_fallback_notice">A(z) „<xliff:g id="profile_name" example="Action Games">%1$s</xliff:g>” alapértelmezett profil nem használható. Lehet, hogy hiányzik, hiányos vagy olvashatatlan. Mostantól a JL-Mod alapértelmezések az alapértelmezett az új MIDlet-ekhez.</string>
+    <string name="preset_discard_changes_title">Elveti a módosításokat?</string>
+    <string name="preset_discard_changes_summary">Ez a profilpiszkozat nincs mentve.</string>
+    <string name="preset_continue_editing">Szerkesztés folytatása</string>
+    <string name="preset_discard_changes">Elvetés</string>
+    <string name="preset_name_exists">Már létezik ilyen nevű profil.</string>
+    <string name="preset_invalid_name">Adjon meg érvényes profilnevet.</string>
+    <string name="preset_manager_default_section">Alapértelmezett új MIDlet-ekhez</string>
+    <string name="preset_manager_presets_section">Saját profilok</string>
+    <string name="preset_manager_keyboard_section">Mentett virtuális vezérlőelrendezések</string>
+    <string name="preset_default_policy_summary">Új MIDlet telepítésekor alkalmazva.</string>
+    <string name="preset_keyboard_layout_unavailable">A virtuális vezérlők elrendezése nem érhető el.</string>
+    <string name="edit_preset">Profil szerkesztése</string>
+    <string name="preset_edit_title">Profil szerkesztése: <xliff:g id="profile_name" example="Action Games">%1$s</xliff:g></string>
+    <string name="preset_unavailable_section">Nem érhető el</string>
+    <string name="preset_unavailable_summary">Nem sikerült betölteni ezt a profilt. Nevezze át vagy törölje.</string>
+    <string name="preset_change_default">Módosítás</string>
+    <string name="preset_default_picker_title">Alapértelmezett új MIDlet-ekhez</string>
+    <string name="profile_follows_updates">Követi a jövőbeli profilfrissítéseket.</string>
+    <string name="profile_apply_whole">Teljes profil</string>
+    <string name="profile_apply_whole_follows">Beállítások és elrendezés cseréje; jövőbeli frissítések követése.</string>
+    <string name="profile_apply_whole_without_layout">Beállítások cseréje, helyi elrendezés eltávolítása és frissítések követése.</string>
+    <string name="profile_apply_settings_only">Csak MIDlet-beállítások</string>
+    <string name="profile_apply_settings_keeps_layout">A MIDlet elrendezésének megtartása; egyéni konfiguráció használata.</string>
+    <string name="profile_apply_layout_only">Csak virtuális vezérlők elrendezése</string>
+    <string name="profile_apply_layout_keeps_settings">A MIDlet beállításainak megtartása; egyéni konfiguráció használata.</string>
+    <string name="config_analog_stick">Analóg kar</string>
+    <string name="config_analog_stick_summary">Válassza a Ki, 4 irányú, 8 irányú vagy számbillentyűzet módot az elsődleges analóg karhoz. A kontroller gombjai a billentyűkiosztást használják.</string>
+    <string name="config_analog_stick_off">Ki</string>
+    <string name="config_controller_help_body_compact">A kontroller gombjai ugyanazt a billentyűkiosztást használják, mint a billentyűzet és a telefon gombjai. Az analóg kar csak iránybemenetet küld a MIDlet-nek. Az Android Vissza gomb megtartja a megszokott működését; bármely M billentyűhöz rendelt fizikai gomb megnyitja a futó MIDlet menüjét.</string>
+    <string name="config_show_fps_title" tools:ignore="MissingTranslation">FPS megjelenítése</string>
+    <string name="config_show_fps_help" tools:ignore="MissingTranslation">Játék közben megjeleníti a képkockasebességet.</string>
+    <string name="config_search_requires_fps" tools:ignore="MissingTranslation">A pozíció módosításához kapcsolja be az FPS megjelenítése opciót.</string>
+    <string name="midlet_running_notification_title">Futó MIDlet</string>
+    <string name="midlet_running_notification_text">A(z) <xliff:g id="name" example="Example">%1$s</xliff:g> fut.</string>
+    <string name="midlet_running_notification_channel">MIDlet futtatókörnyezet</string>
+    <string name="config_gamepad_directions_numeric_v2">Számbillentyűzet</string>
+    <string name="midlet_file_permission_title">Tárhely-hozzáférés</string>
+    <string name="midlet_file_permission_read">Ez a MIDlet fájlokat szeretne olvasni.</string>
+    <string name="midlet_file_permission_write">Ez a MIDlet fájlokat szeretne létrehozni, módosítani vagy törölni.</string>
+    <string name="midlet_file_permission_allow_once">Engedélyezés egyszer</string>
+    <string name="midlet_file_permission_allow_session">Engedélyezés a MIDlet futása alatt</string>
+    <string name="midlet_file_permission_allow_always">Mindig engedélyezve</string>
+    <string name="midlet_file_permission_deny">Mindig tiltva</string>
+    <string name="midlet_permissions_settings_title">Tárhely-hozzáférési engedélyek</string>
+    <string name="midlet_permissions_read">Fájlok olvasása</string>
+    <string name="midlet_permissions_write">Fájlok módosítása</string>
+    <string name="midlet_permissions_ask">Kérdezzen rá</string>
+    <string name="midlet_permissions_allow">Mindig engedélyezve</string>
+    <string name="midlet_permissions_deny">Tiltás</string>
+    <string name="midlet_permissions_save_failed">Nem sikerült menteni a tárhelybeállításokat.</string>
+    <string name="config_avoid_camera_cutout_title">Kamerakivágás elkerülése</string>
+    <string name="config_avoid_camera_cutout_summary">Távol tartja a MIDlet-képernyőt és a virtuális vezérlőket a kamerától vagy a képernyőkivágástól.</string>
+    <string name="midlet_permissions_write_summary">Tartalmazza a fájlok létrehozását és törlését is.</string>
+    <string name="midlet_legacy_import_title">Régi Siemens mentések</string>
+    <string name="midlet_legacy_import_action">Régi mentésfájl kiválasztása</string>
+    <string name="midlet_legacy_import_summary">Régi mentésfájl másolása a MIDlet privát Siemens tárhelyére. Először állítsa le a MIDlet-et.</string>
+    <string name="midlet_legacy_import_success">A fájl a MIDlet privát tárhelyére másolva.</string>
+    <string name="midlet_legacy_import_failed">Az importálás sikertelen. Állítsa le a MIDlet-et, és győződjön meg róla, hogy a célfájl még nem létezik.</string>
+    <string name="midlet_storage_mode_title">Tárolási mód</string>
+    <string name="midlet_storage_mode_shared">Virtuális</string>
+    <string name="midlet_storage_mode_android">Android</string>
+    <string name="midlet_storage_mode_shared_summary">Megosztott mappák használata a munkamappában.</string>
+    <string name="midlet_storage_mode_android_summary">Az Android megosztott tárhelyének használata az Android engedélyeinek megfelelően. A MIDlet fájlhozzáférési engedélyei elkülönülnek a virtuális mód engedélyeitől.</string>
+    <string name="config_system_properties_reset" tools:ignore="MissingTranslation">Alapértelmezés visszaállítása</string>
+    <string name="config_system_properties_reset_title" tools:ignore="MissingTranslation">Visszaállítja a rendszertulajdonságokat?</string>
+    <string name="config_system_properties_reset_message" tools:ignore="MissingTranslation">Lecseréli a szerkesztő tartalmát a JL-Mod Plus aktuális alapértelmezéseire? A többi beállítás változatlan marad. Mentse a visszaállítás alkalmazásához.</string>
+    <string name="config_asset_add">+ Hozzáadás fájlból</string>
+    <string name="config_asset_copy_hint">A munkamappába másolva; az eredeti fájl a helyén marad.</string>
+    <string name="config_asset_name">Fájlnév</string>
+    <string name="config_asset_delete_confirmation">Törli a(z) <xliff:g id="name" example="Example">%1$s</xliff:g> fájlt a munkamappából? Más MIDlet-ek is használhatják ezt a fájlt. A máshol lévő másolatokat ez nem érinti.</string>
+    <string name="config_asset_imported">Másolva és kiválasztva: <xliff:g id="name" example="Example">%1$s</xliff:g></string>
+    <string name="config_asset_reused">Meglévő fájl kiválasztva: <xliff:g id="name" example="Example">%1$s</xliff:g></string>
+    <string name="config_asset_renamed">Átnevezve erre: <xliff:g id="name" example="Example">%1$s</xliff:g></string>
+    <string name="config_asset_deleted">Törölve: <xliff:g id="name" example="Example">%1$s</xliff:g></string>
+    <string name="config_asset_invalid">Nem támogatott vagy érvénytelen fájl.</string>
+    <string name="config_asset_operation_failed">Nem sikerült befejezni a fájlműveletet.</string>
+    <string name="config_save_failed" tools:ignore="MissingTranslation">Nem sikerült menteni a beállításokat. A módosításai továbbra is nyitva vannak — próbálja újra.</string>
+    <string name="config_asset_busy">Először fejezze be az aktuális fájlműveletet.</string>
+    <string name="config_quick_settings" tools:ignore="MissingTranslation">Gyorsbeállítások</string>
+    <string name="config_all_settings" tools:ignore="MissingTranslation">Összes beállítás</string>
+    <string name="profile_local_changes_pending" tools:ignore="MissingTranslation">A profilba nem mentett helyi módosítások</string>
+    <string name="profile_local_configuration_summary" tools:ignore="MissingTranslation">Csak ehhez a MIDlet-hez tartozó beállítások</string>
+    <string name="profile_not_following" tools:ignore="MissingTranslation"><xliff:g id="profile_name" example="Action Games">%1$s</xliff:g> alapján · Nem követi a frissítéseket</string>
+    <string name="profile_stop_following" tools:ignore="MissingTranslation">Profil követésének leállítása</string>
+    <string name="profile_follow_again" tools:ignore="MissingTranslation">Profil újbóli követése</string>
+    <string name="profile_follow_again_summary" tools:ignore="MissingTranslation">Lecseréli a MIDlet helyi beállításait és virtuális vezérlőit a legfrissebb <xliff:g id="profile_name" example="Action Games">%1$s</xliff:g> profilra, és követi a jövőbeli frissítéseit?</string>
+</resources>

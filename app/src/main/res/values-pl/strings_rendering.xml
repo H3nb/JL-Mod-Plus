@@ -1,0 +1,212 @@
+<?xml version="1.0" encoding="utf-8"?>
+<!-- Rendering pipeline, internal resolution, bitmap upscaling, shaders, and built-in visual effects. -->
+<resources xmlns:tools="http://schemas.android.com/tools" xmlns:xliff="urn:oasis:names:tc:xliff:document:1.2">
+    <string name="identity_filter">Brak (najszybszy)</string>
+    <string name="invalid_resolution_not_saved">Nieprawidłowa rozdzielczość. Nie zapisano ustawienia wstępnego.</string>
+    <string name="msg_error_loading_shader">Nieobsługiwany shader. Używany jest domyślny shader.</string>
+    <string name="parallel_screen_redrawing">Asynchroniczne odświeżanie ekranu</string>
+    <string name="shader_tuning">Dostrajanie shadera</string>
+    <string name="SWAP_SIZES">Zamień szerokość i wysokość</string>
+    <string name="fps_limit_maximum">Maksymalny</string>
+    <string name="remove_screen_preset">Usuń ustawienie rozdzielczości</string>
+    <string name="perf_overlay_position_help">Wybierz narożnik.</string>
+    <string name="perf_overlay_top_left">Lewy górny</string>
+    <string name="perf_overlay_top_right">Prawy górny</string>
+    <string name="perf_overlay_bottom_left">Lewy dolny</string>
+    <string name="perf_overlay_bottom_right">Prawy dolny</string>
+    <string name="internal_resolution_title" tools:ignore="MissingTranslation">Rozdzielczość renderowania</string>
+    <string name="internal_resolution_auto" tools:ignore="MissingTranslation">Automatycznie</string>
+    <string name="internal_resolution_description" tools:ignore="MissingTranslation">Ustawia rozdzielczość obsługiwanego renderowania 2D i 3D. Tryb automatyczny dobiera skalę na podstawie obszaru wyświetlania i ograniczeń urządzenia. Uruchom ponownie MIDlet, aby zastosować zmiany.</string>
+    <string name="bitmap_upscaling_title" tools:ignore="MissingTranslation">Skalowanie bitmap</string>
+    <string name="bitmap_upscaling_description" tools:ignore="MissingTranslation">MMPX i xBR Lv3 poprawiają jakość niemodyfikowalnych obrazów 2D oraz niemodyfikowalnych, nieprzezroczystych tekstur modeli Micro3D. Tekstury M3G pozostają bez zmian. Uruchom ponownie MIDlet, aby zastosować zmiany.</string>
+    <string name="bitmap_upscaling_nearest" tools:ignore="MissingTranslation">Najbliższy sąsiad</string>
+    <string name="bitmap_upscaling_bilinear" tools:ignore="MissingTranslation">Dwuliniowe</string>
+    <string name="bitmap_upscaling_mmpx" tools:ignore="MissingTranslation">MMPX</string>
+    <string name="bitmap_upscaling_edge_aware" tools:ignore="MissingTranslation">xBR Lv3</string>
+    <!-- Prototyping only: localized UI copy is pending design review. -->
+    <string name="render_shader_effects">Efekty shadera</string>
+    <string name="render_pipeline_title">Potok renderowania</string>
+    <string name="render_shader_preset">Ustawienie shadera</string>
+    <string name="render_shader_picker_help">Łącz wbudowane oraz własne starsze shadery w uporządkowany stos efektów.</string>
+    <string name="render_shader_requires_gles">Shadery są zapisywane, ale stosowane tylko po wybraniu OpenGL ES.</string>
+    <string name="render_shader_missing">Wybranego shadera nie ma w bibliotece. Wybierz inne ustawienie lub przywróć jego pliki.</string>
+    <string name="render_shader_parameters">Parametry shadera</string>
+    <string name="render_shader_reset_parameters">Resetuj parametry</string>
+    <string name="render_shader_passes">Przebiegi shadera</string>
+    <string name="render_shader_pass_count">Przebiegi: <xliff:g id="count" example="2">%1$d</xliff:g></string>
+    <string name="render_shader_pass_hint">Wyświetl etapy z wybranego ustawienia GLSLP.</string>
+    <string name="render_pass_filter">Filtrowanie wejścia</string>
+    <string name="render_pass_output">Rozmiar wyjścia (szerokość × wysokość)</string>
+    <string name="render_pipeline_unavailable">Ustawienie niedostępne</string>
+    <string name="render_game_output">Wyjście gry</string>
+    <string name="render_logical_screen_help">Rozmiar logiczny zgłaszany grze.</string>
+    <string name="render_internal_resolution">Rozdzielczość wewnętrzna</string>
+    <string name="render_internal_unavailable">Tylko oryginalna (1×). Wyższe rozdzielczości renderowania nie są dostępne dla tej konfiguracji.</string>
+    <string name="render_display_renderer">Renderer wyświetlania</string>
+    <string name="render_shader_processing">Przetwarzanie shadera</string>
+    <string name="render_display_scaling">Skalowanie ekranu</string>
+    <string name="render_display_viewport">Obszar widoku gry</string>
+    <string name="render_texture_filtering">Filtr skalowania ekranu</string>
+    <string name="render_texture_filtering_help">Wybiera Najbliższy lub Liniowy dla końcowego obrazu gry. Efekty mogą zastąpić to ustawienie.</string>
+    <string name="render_viewport_note">Rozmiar obszaru widoku jest ustalany na podstawie układu ekranu przed zaplanowaniem przebiegów shadera. Strzałki pokazują przepływ obrazu, a nie kolejność obliczeń układu.</string>
+    <string name="render_pipeline_help">Zobacz, jak klatka gry trafia na ekran, i edytuj poszczególne etapy.</string>
+    <string name="render_no_shader">Wybierz ustawienie, aby zmienić wygląd gry.</string>
+    <string name="render_shader_adjust">Dostosuj parametry</string>
+    <string name="render_legacy_tuning_hint">Dostrój ten starszy efekt.</string>
+    <string name="render_shader_customization">Dostosuj</string>
+    <string name="render_adjustable_count">Regulowane parametry: <xliff:g id="count" example="3">%1$d</xliff:g></string>
+    <string name="render_pass_summary">Etapy: <xliff:g id="count" example="3">%1$d</xliff:g> · Zdefiniowane przez ustawienie</string>
+    <string name="render_shader_preset_note">Etapy shadera są zdefiniowane przez ustawienie. Możesz je przeglądać bez zmiany ich kolejności.</string>
+    <string name="render_parameters_hint">Przesuń suwak, aby dostosować wartość. Zmiany są zapisywane po jego puszczeniu.</string>
+    <string name="render_pass_readonly">Etapy są wykonywane w tej kolejności. Filtrowanie wejścia i skalowanie wyjścia pochodzą z wybranego ustawienia.</string>
+    <string name="render_pipeline_intro">Ścieżka od bufora ramki gry do Twojego ekranu.</string>
+    <string name="render_native_short">Oryginalna (1×)</string>
+    <string name="render_expand_passes">Pokaż etapy</string>
+    <string name="render_collapse_passes">Ukryj etapy</string>
+    <string name="render_view_all_passes">Szczegóły etapów</string>
+    <string name="render_pipeline_filter_summary">Filtrowanie tekstur: <xliff:g id="shader_name" example="CRT Classic">%1$s</xliff:g></string>
+    <string name="render_pipeline_note">Układ ekranu określa obszar widoku przed zaplanowaniem przebiegów shadera. Kroki pokazują przepływ obrazu.</string>
+    <string name="render_shader_change">Wybierz inny efekt</string>
+    <string name="render_custom_pipeline">Niestandardowy potok</string>
+    <string name="render_custom_pipeline_hint">Łącz samodzielne shadery GLSL z folderu shaderów.</string>
+    <string name="render_custom_order_help">Efekty działają od góry do dołu. Odziedziczone ustawienia GLSLP pozostają aktywne, dopóki ich nie zmienisz.</string>
+    <string name="render_custom_empty">Dodaj shader, aby rozpocząć niestandardowy łańcuch.</string>
+    <string name="render_custom_stage_count">Niestandardowe etapy shadera: <xliff:g id="count" example="3">%1$d</xliff:g></string>
+    <string name="render_custom_add">Dodaj shader</string>
+    <string name="render_custom_add_hint">Wybierz zewnętrzny, samodzielny plik .glsl.</string>
+    <string name="render_custom_no_sources">Nie znaleziono starszych shaderów. Dodaj pliki shaderów .ini do folderu shaderów i ponownie otwórz ustawienia.</string>
+    <string name="render_custom_scale">Wyjście: <xliff:g id="scale" example="2">%1$d</xliff:g>× poprzedni etap</string>
+    <string name="render_custom_output_scale">Rozmiar wyjścia dla następnego etapu</string>
+    <string name="render_custom_final_viewport">Wyjście końcowe: wyświetlane na ekranie</string>
+    <string name="render_custom_filter">Filtr wejścia: <xliff:g id="shader_name" example="CRT Classic">%1$s</xliff:g></string>
+    <string name="render_custom_up">W górę</string>
+    <string name="render_custom_down">W dół</string>
+    <string name="render_custom_remove">Usuń</string>
+    <string name="render_custom_cancel">Anuluj</string>
+    <string name="render_custom_save">Zapisz</string>
+    <string name="render_custom_default">Domyślny</string>
+    <string name="render_custom_nearest">Najbliższy</string>
+    <string name="render_custom_linear">Liniowy</string>
+    <string name="render_custom_checking">Sprawdzanie plików shaderów…</string>
+    <string name="render_active_shader">Aktywny efekt</string>
+    <string name="render_shader_off">Wyłączone</string>
+    <string name="render_edit_custom_pipeline">Edytuj łańcuch shaderów</string>
+    <string name="render_shader_unavailable">Niedostępny: <xliff:g id="shader_name" example="CRT Classic">%1$s</xliff:g></string>
+    <string name="render_no_shader_sources">Nie znaleziono shaderów. Dodaj starsze pliki shaderów .ini do folderu shaderów, a następnie ponownie otwórz ustawienia.</string>
+    <string name="render_shader_mode">Tryb shadera</string>
+    <string name="render_mode_selected">Wybrano</string>
+    <string name="render_gles_shader_default">Gdy efekty shadera są wyłączone, OpenGL ES używa oryginalnego obrazu gry.</string>
+    <string name="render_shader_off_help">Bez dodatkowych efektów wizualnych.</string>
+    <string name="render_legacy_mode">Starszy shader</string>
+    <string name="render_legacy_mode_help">Wybierz plik .ini z folderu shaderów.</string>
+    <string name="render_legacy_empty">Brak użytecznych definicji shaderów w tym pliku .ini.</string>
+    <string name="render_legacy_select_variant">Wybierz starszy shader</string>
+    <string name="render_legacy_variant_description">Definicja shadera w wybranym pliku .ini</string>
+    <string name="render_preset_mode">Ustawienie GLSLP</string>
+    <string name="render_preset_mode_help">Wczytuje kompletny potok .glslp z własnymi przebiegami.</string>
+    <string name="render_custom_pass_count">Liczba przebiegów</string>
+    <string name="render_custom_pass_number">Przebieg <xliff:g id="number" example="1">%1$d</xliff:g></string>
+    <string name="render_custom_pick_file">Wybierz plik GLSL</string>
+    <string name="render_custom_add_pass">Zwiększ liczbę przebiegów shadera</string>
+    <string name="render_custom_remove_pass">Zmniejsz liczbę przebiegów shadera</string>
+    <string name="render_shader_selected_name">Aktywny: <xliff:g id="shader_name" example="CRT Classic">%1$s</xliff:g></string>
+    <string name="render_shader_invalid_picker">Nie można użyć wybranego pliku. Wybierz starszy plik .ini znajdujący się w folderze shaderów.</string>
+    <string name="render_custom_mode">Typ shadera</string>
+    <string name="render_custom_mode_legacy">Starszy</string>
+    <string name="render_custom_mode_glsl">GLSL</string>
+    <string name="render_custom_pick_legacy">Wybierz starszy shader</string>
+    <string name="render_custom_preserve_size">Wyjście: z ustawienia</string>
+    <string name="render_custom_loading">Odczytywanie przebiegów ustawienia…</string>
+    <string name="render_custom_start_fresh">Zacznij bez ustawienia (odrzuć odziedziczone ustawienia)</string>
+    <string name="render_effect_default_settings">Ustawienia domyślne</string>
+    <string name="render_effect_summary_more">+<xliff:g id="count" example="2">%1$d</xliff:g> więcej</string>
+    <string name="render_effect_legacy_author">Autor: <xliff:g id="shader_name" example="CRT Classic">%1$s</xliff:g></string>
+    <string name="render_effect_legacy_source">Źródło: <xliff:g id="shader_name" example="CRT Classic">%1$s</xliff:g></string>
+    <string name="render_effect_removed">Usunięto efekt</string>
+    <string name="render_effect_undo">Cofnij</string>
+    <string name="render_effect_catalog_hint">Dotknij efektu, aby dodać go do stosu.</string>
+    <string name="render_effect_user_folder_hint">Pliki INI, VSH i FSH muszą znajdować się w folderze shaderów.</string>
+    <string name="render_effect_legacy_scale_note">Starsze shadery renderują w rozdzielczości obszaru widoku ekranu; flagi OutputResolution i Upscaling z pliku .ini są ignorowane.</string>
+    <string name="render_effect_legacy_metadata_missing">Nie znaleziono ustawień z pliku .ini tego shadera. Shader może nadal działać z jego plikami źródłowymi.</string>
+    <string name="render_effect_count">Aktywne: <xliff:g id="count" example="2">%1$d</xliff:g></string>
+    <string name="render_effect_add">Dodaj efekt</string>
+    <string name="render_effect_builtin">Wbudowane efekty</string>
+    <string name="render_effect_user">Moje shadery</string>
+    <string name="render_effect_user_add">Przeglądaj pliki .ini</string>
+    <string name="render_effect_user_empty">Nie znaleziono starszego shadera w folderze shaderów.</string>
+    <string name="render_effect_user_file">Wybierz starszy plik .ini</string>
+    <string name="render_effect_empty">Dodaj efekt, aby dostosować wygląd gry.</string>
+    <string name="render_effect_hint">Efekty działają od góry do dołu. Przytrzymaj i przeciągnij, aby zmienić kolejność.</string>
+    <string name="render_effect_move_up">Przesuń w górę</string>
+    <string name="render_effect_move_down">Przesuń w dół</string>
+    <string name="render_effect_remove">Usuń efekt</string>
+    <string name="render_effect_no_parameters">Ten efekt nie ma regulowanych parametrów.</string>
+    <string name="render_effect_parameter_number">Parametr <xliff:g id="count" example="2">%1$d</xliff:g></string>
+    <string name="render_effect_restore">Resetuj parametry</string>
+    <string name="render_effect_missing">Niedostępny: <xliff:g id="shader_name" example="CRT Classic">%1$s</xliff:g>. Ten wbudowany efekt nie jest dostępny w tej wersji. Usuń go ze stosu.</string>
+    <string name="render_effect_limit">Stos obsługuje maksymalnie 16 przebiegów shadera (niektóre efekty używają wielu przebiegów).</string>
+    <string name="render_effect_unavailable">Nie udało się uruchomić efektów shadera. Wyświetlany jest oryginalny obraz gry. Użyj mniejszej liczby efektów lub niższej rozdzielczości renderowania.</string>
+    <string name="render_bitmap_memory_reduced">Skalowanie bitmap wyczerpało pamięć. Zostaną użyte oryginalne obrazy lub niższa skala. Wypróbuj niższą rozdzielczość renderowania lub zwolnij pamięć, a następnie uruchom ponownie.</string>
+    <string name="render_texture_memory_reduced">Skalowanie tekstur Micro3D nie powiodło się. Zostaną użyte oryginalne tekstury. Wypróbuj niższą rozdzielczość renderowania lub zwolnij pamięć, a następnie uruchom ponownie.</string>
+    <string name="render_resolution_reduced">Rozdzielczość renderowania została zmniejszona z <xliff:g id="from_scale" example="4">%1$d</xliff:g>× do <xliff:g id="to_scale" example="2">%2$d</xliff:g>× z powodu ograniczeń pamięci lub GPU. Wypróbuj niższe ustawienie lub zwolnij pamięć, a następnie uruchom ponownie.</string>
+    <string name="render_gpu_texture_limit">Obraz gry przekracza limit rozmiaru tekstur GPU nawet przy skali 1×. Zmniejsz rozmiar ekranu MIDletu lub zmień tryb grafiki.</string>
+    <string name="render_gpu_upload_failed">Nie udało się przesłać obrazu gry do GPU. Ponawianie próby. Spróbuj zamknąć inne aplikacje lub zmienić tryb grafiki.</string>
+    <string name="render_effect_gles">Efekty są zapisywane, ale renderowane tylko przy użyciu OpenGL ES.</string>
+    <string name="render_effect_legacy_file_error">Nie udało się wczytać prawidłowego starszego shadera z wybranego pliku .ini.</string>
+    <string name="effect_color">Regulacja kolorów</string>
+    <string name="effect_color_desc">Dostosuj jasność, kontrast, nasycenie, gammę, ton kolorów i tryb monochromatyczny.</string>
+    <string name="effect_vignette">Winieta</string>
+    <string name="effect_vignette_desc">Przyciemnia krawędzie, aby skupić uwagę na środku obrazu.</string>
+    <string name="effect_sharpen">Wyostrzenie</string>
+    <string name="effect_sharpen_desc">Uwydatnia szczegóły i krawędzie obrazu.</string>
+    <string name="effect_cartoon">Miękki komiks</string>
+    <string name="effect_cartoon_desc">Upraszcza przejścia kolorów i dodaje miękkie kontury.</string>
+    <string name="effect_bloom">Poświata</string>
+    <string name="effect_bloom_desc">Dodaje delikatną poświatę wokół jasnych obszarów obrazu.</string>
+    <string name="effect_crt_classic">Klasyczny CRT</string>
+    <string name="effect_crt_classic_desc">Imituje telewizor CRT z liniami skanowania i wzorem RGB.</string>
+    <string name="effect_crt_beam">Zwężenie wiązki</string>
+    <string name="effect_brightness">Jasność</string>
+    <string name="effect_contrast">Kontrast</string>
+    <string name="effect_saturation">Nasycenie</string>
+    <string name="effect_strength">Siła</string>
+    <string name="effect_color_levels">Poziomy kolorów</string>
+    <string name="effect_edge">Intensywność krawędzi</string>
+    <string name="effect_threshold">Próg jasności</string>
+    <string name="effect_radius">Promień rozmycia</string>
+    <string name="effect_mask_strength">Siła maski</string>
+    <string name="effect_scan_strength">Siła linii skanowania</string>
+    <string name="effect_bright_boost">Wzmocnienie jasności</string>
+    <string name="effect_lcd">LCD</string>
+    <string name="effect_lcd_desc">Imituje siatkę pikseli i subpiksele klasycznego kolorowego ekranu LCD.</string>
+    <string name="effect_lcd_grid">Siła siatki</string>
+    <string name="effect_lcd_subpixel">Subpiksele RGB</string>
+    <string name="effect_lcd_brightness">Jasność LCD</string>
+    <string name="effect_scanlines">Lekkie linie skanowania</string>
+    <string name="effect_scanlines_desc">Dodaje subtelne poziome linie podobne do ekranu CRT.</string>
+    <string name="effect_line_width">Wąskość linii</string>
+    <string name="effect_gamma">Gamma</string>
+    <string name="effect_temperature">Temperatura</string>
+    <string name="effect_tint">Odcień</string>
+    <string name="effect_monochrome">Monochromatyczny</string>
+    <string name="effect_depth">Głębia kolorów i dithering</string>
+    <string name="effect_depth_desc">Ogranicza paletę kolorów z opcjonalnym ditheringiem dla stylu retro.</string>
+    <string name="effect_depth_format">Format kolorów ekranu</string>
+    <string name="effect_depth_rgb444">RGB444 · 4 096 kolorów</string>
+    <string name="effect_depth_rgb565">RGB565 · 65 536 kolorów</string>
+    <string name="effect_depth_rgb666">RGB666 · 262 144 kolorów</string>
+    <string name="effect_dither_mode">Wzór ditheringu</string>
+    <string name="effect_dither_none">Wyłączony</string>
+    <string name="effect_dither_bayer4">Bayer 4×4</string>
+    <string name="effect_dither_bayer8">Bayer 8×8</string>
+    <string name="effect_dither_strength">Siła ditheringu</string>
+    <string name="effect_mono_display">Ekran monochromatyczny</string>
+    <string name="effect_mono_display_desc">Imituje ekrany czarno-białe, zielone lub bursztynowe z 2 lub 4 odcieniami.</string>
+    <string name="effect_mono_palette">Kolor LCD</string>
+    <string name="effect_mono_bw">Czarno-biały</string>
+    <string name="effect_mono_green">Zielony LCD</string>
+    <string name="effect_mono_amber">Bursztynowy LCD</string>
+    <string name="effect_mono_tones">Liczba odcieni</string>
+    <string name="effect_mono_two">2 odcienie</string>
+    <string name="effect_mono_four">4 odcienie</string>
+</resources>

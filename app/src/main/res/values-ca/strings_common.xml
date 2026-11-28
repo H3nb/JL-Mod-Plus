@@ -1,0 +1,47 @@
+<?xml version="1.0" encoding="utf-8"?>
+<!-- Accions d’interfície compartides, etiquetes genèriques, diàlegs i pantalla Quant a. -->
+<resources xmlns:xliff="urn:oasis:names:tc:xliff:document:1.2">
+    <string name="about">Quant a</string>
+    <string name="about_message">Executa aplicacions i jocs clàssics, organitza els MIDlets a la biblioteca i personalitza els controls, la pantalla, l’àudio i el rendiment. JL-Mod Plus és gratuït i de codi obert.</string>
+    <string name="about_subtitle">Emulador de Java ME per a Android</string>
+    <string name="about_compatibility">La compatibilitat depèn del MIDlet, del dispositiu i de les API de Java ME compatibles. Algunes aplicacions poden comportar-se de manera diferent de com ho feien als dispositius originals.</string>
+    <string name="about_lineage_title">Orígens del projecte</string>
+    <string name="about_build_title">Informació de compilació</string>
+    <string name="about_version_label">Versió</string>
+    <string name="about_build_label">Compilació</string>
+    <string name="about_revision_label">Revisió del codi font</string>
+    <string name="about_links_title">Projecte i llicències</string>
+    <string name="about_github_link_copied">No s’ha trobat cap navegador. L’enllaç de GitHub s’ha copiat al porta-retalls.</string>
+    <string name="about_github_browser_unavailable">No s’ha trobat cap navegador per obrir GitHub.</string>
+    <string name="about_lineage">JL-Mod Plus és una bifurcació independent de JL-Mod de woesss (Yury Kharchenko). JL-Mod es basa en J2ME Loader de Nikita Shakarun, que deriva de J2meLoader de NaikSoftware.</string>
+    <string name="about_evolution">JL-Mod Plus amplia aquesta base amb una interfície moderna, una biblioteca de MIDlets més potent, funcions noves i compatibilitat amb versions més recents d’Android.</string>
+    <string name="action_back">Enrere</string>
+    <string name="action_settings">Configuració</string>
+    <string name="CANCEL_CMD">Cancel·la</string>
+    <string name="change">Canvia</string>
+    <string name="choose">Tria</string>
+    <string name="close">Tanca</string>
+    <string name="cmd_menu">Menú</string>
+    <string name="CONFIRMATION_REQUIRED">Confirmació necessària</string>
+    <string name="create">Crea</string>
+    <string name="default_label"><xliff:g id="name" example="Example">%1$s</xliff:g> (predeterminat)</string>
+    <string name="dismiss">Descarta</string>
+    <string name="edit">Edita</string>
+    <string name="error">Error</string>
+    <string name="error_name">Introdueix un nom.</string>
+    <string name="exit">Surt</string>
+    <string name="help">Ajuda</string>
+    <string name="install">Instal·la</string>
+    <string name="licenses">Llicències</string>
+    <string name="licenses_unavailable">Els detalls de les llicències no estan disponibles.</string>
+    <string name="loading_info">S’està carregant la informació…</string>
+    <string name="more">Més</string>
+    <string name="not_saved_exists">Ja existeix</string>
+    <string name="reset">Restableix</string>
+    <string name="retry">Torna-ho a provar</string>
+    <string name="save">Desa</string>
+    <string name="saved">S’ha desat <xliff:g id="name" example="Example">%1$s</xliff:g></string>
+    <string name="START_CMD">Inicia</string>
+    <string name="warning">Avís</string>
+    <string name="removed">S’ha suprimit <xliff:g id="name" example="Example">%1$s</xliff:g></string>
+</resources>

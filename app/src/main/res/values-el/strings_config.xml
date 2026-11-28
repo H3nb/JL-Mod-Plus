@@ -1,0 +1,353 @@
+<?xml version="1.0" encoding="utf-8"?>
+<!-- Διαμόρφωση ανά MIDlet, επαναχρησιμοποιήσιμα προφίλ, κάμερα, βαθμονόμηση χειριστηρίου, δικαιώματα και ιδιότητες συστήματος. -->
+<resources xmlns:tools="http://schemas.android.com/tools" xmlns:xliff="urn:oasis:names:tc:xliff:document:1.2">
+    <!-- %1$s είναι η περιγραφή του τόμου αποθήκευσης. -->
+    <string name="config_missing_app_storage_named">Η εφαρμογή δεν βρέθηκε.\nΕλέγξτε αν η συσκευή αποθήκευσης «<xliff:g id="storage_name" example="SD card">%1$s</xliff:g>» είναι διαθέσιμη ή δημιουργήστε ξανά τη συντόμευση.</string>
+    <string name="config_missing_app_storage_generic">Η εφαρμογή δεν βρέθηκε.\nΕλέγξτε αν η συσκευή αποθήκευσης είναι διαθέσιμη ή δημιουργήστε ξανά τη συντόμευση.</string>
+    <string name="midlet_name"><b>Όνομα: </b></string>
+    <string name="midlet_size"><b>Μέγεθος: </b></string>
+    <string name="midlet_vendor"><b>Προμηθευτής: </b></string>
+    <string name="midlet_version"><b>Έκδοση: </b></string>
+    <string name="config_destination_graphics">Οθόνη</string>
+    <string name="config_destination_rendering" tools:ignore="MissingTranslation">Γραφικά</string>
+    <string name="config_destination_media">Πολυμέσα</string>
+    <string name="config_camera_title">Κάμερα</string>
+    <string name="config_camera_default_title">Προεπιλεγμένη κάμερα</string>
+    <string name="config_camera_rear">Πίσω</string>
+    <string name="config_camera_front">Μπροστά</string>
+    <string name="config_camera_resolution_title">Προεπιλεγμένη ανάλυση</string>
+    <string name="config_camera_resolution_auto">Αυτόματη</string>
+    <string name="config_camera_resolution_portrait">480×640 — Κατακόρυφη</string>
+    <string name="config_camera_resolution_landscape">640×480 — Οριζόντια</string>
+    <string name="config_destination_controls">Χειριστήρια</string>
+    <string name="config_gamepad_test">Δοκιμή χειριστηρίου</string>
+    <string name="config_gamepad_calibrate">Βαθμονόμηση χειριστηρίου</string>
+    <string name="config_gamepad_calibrate_summary">Μετρά την ουδέτερη θέση του συνδεδεμένου χειριστηρίου και τα εύρη των μοχλών και των σκανδάλων του.</string>
+    <string name="config_gamepad_stick_directions">Ψηφιακές κατευθύνσεις</string>
+    <string name="config_gamepad_stick_unassigned">Μη αντιστοιχισμένο</string>
+    <string name="config_gamepad_stick_pointer">Πηγή δείκτη</string>
+    <string name="config_gamepad_opaque_summary">Αυτή η διαμόρφωση περιέχει δεδομένα χειριστηρίου σε μη υποστηριζόμενη μορφή. Διατηρείται αμετάβλητη και δεν μπορεί να επεξεργαστεί εδώ.</string>
+    <string name="config_gamepad_unsupported_summary">Αυτή η διαμόρφωση χειριστηρίου δεν υποστηρίζεται. Διατηρείται αμετάβλητη και δεν μπορεί να επεξεργαστεί εδώ.</string>
+    <string name="config_gamepad_keypad_title">Εικονικό πληκτρολόγιο</string>
+    <string name="config_gamepad_calibration_next">Επόμενο</string>
+    <string name="config_gamepad_mapping_help_title">Βοήθεια αντιστοίχισης χειριστηρίου</string>
+    <string name="config_gamepad_directions_four">4 κατευθύνσεων</string>
+    <string name="config_gamepad_directions_eight">8 κατευθύνσεων</string>
+    <string name="config_gamepad_pointer_off">Ανενεργό</string>
+    <string name="config_gamepad_pointer_cursor">Αναλογικός δρομέας</string>
+    <string name="config_gamepad_pointer_joystick">Μοχλός αφής</string>
+    <!-- Αποτύπωμα ταυτότητας χειριστηρίου που εμφανίζεται στη διάγνωση. -->
+    <string name="config_gamepad_calibration_profile">Υπογραφή χειριστηρίου: <xliff:g id="profile_name" example="Action Games">%1$s</xliff:g></string>
+    <string name="config_gamepad_calibration_phase_neutral">Αναμονή για ουδέτερη θέση</string>
+    <string name="config_gamepad_calibration_phase_stick_range">Εύρος μοχλών</string>
+    <string name="config_gamepad_calibration_phase_trigger_range">Εύρος σκανδάλων</string>
+    <string name="config_gamepad_calibration_phase_review">Έτοιμο για αποθήκευση</string>
+    <string name="config_gamepad_calibration_phase_committed">Αποθηκεύτηκε</string>
+    <string name="config_gamepad_calibration_phase_cancelled">Ακυρώθηκε</string>
+    <string name="config_gamepad_calibration_waiting_controller">Συνδέστε ένα χειριστήριο με υποστηριζόμενο αναλογικό μοχλό ή σκανδάλη. Μετακινήστε έναν μοχλό ή πατήστε μια σκανδάλη για να ξεκινήσετε. Η υπάρχουσα βαθμονόμηση παραμένει αμετάβλητη, εκτός αν αποθηκεύσετε μια νέα ή την επαναφέρετε.</string>
+    <string name="config_gamepad_calibration_no_analog_ranges">Αυτό το χειριστήριο δεν παρέχει υποστηριζόμενα εύρη αναλογικού μοχλού ή σκανδάλης.</string>
+    <string name="config_gamepad_calibration_start">Διατηρήστε κάθε μοχλό στο κέντρο και κάθε σκανδάλη ελεύθερη μέχρι να ολοκληρωθεί το χρονόμετρο ουδέτερης θέσης.</string>
+    <string name="config_gamepad_calibration_save_failed">Δεν ήταν δυνατή η αποθήκευση της βαθμονόμησης. Ελέγξτε τις τρέχουσες ρυθμίσεις πριν δοκιμάσετε ξανά.</string>
+    <string name="config_gamepad_calibration_no_supported_ranges">Δεν βρέθηκαν υποστηριζόμενα αναλογικά εύρη.</string>
+    <string name="config_gamepad_calibration_rejected">Η βαθμονόμηση απορρίφθηκε: <xliff:g id="name" example="Example">%1$s</xliff:g></string>
+    <string name="config_gamepad_calibration_neutral_instructions">Διατηρήστε όλους τους εντοπισμένους μοχλούς στο κέντρο και όλες τις εντοπισμένες σκανδάλες ελεύθερες μέχρι να ολοκληρωθεί το χρονόμετρο ουδέτερης θέσης.</string>
+    <string name="config_gamepad_calibration_stick_instructions">Μετακινήστε κάθε εντοπισμένο μοχλό σε όλο το εύρος του προς όλες τις κατευθύνσεις και έπειτα πατήστε Επόμενο.</string>
+    <string name="config_gamepad_calibration_trigger_instructions">Αφήστε και πατήστε πλήρως κάθε εντοπισμένη σκανδάλη και έπειτα πατήστε Επόμενο.</string>
+    <string name="config_gamepad_calibration_review_instructions">Αποθηκεύστε για να αντικαταστήσετε τη βαθμονόμηση αυτού του χειριστηρίου.</string>
+    <string name="config_gamepad_calibration_saved">Η βαθμονόμηση αποθηκεύτηκε.</string>
+    <string name="config_gamepad_calibration_cancelled">Η βαθμονόμηση ακυρώθηκε.</string>
+    <string name="config_gamepad_calibration_waiting_samples">Η βαθμονόμηση αναμένει δείγματα από το χειριστήριο.</string>
+    <string name="config_gamepad_diagnosis_header">Διάγνωση χειριστηρίου</string>
+    <string name="config_gamepad_diagnosis_mode">Κατάσταση: <xliff:g id="status" example="enabled">%1$s</xliff:g> · Πηγή: <xliff:g id="source" example="controller">%2$s</xliff:g></string>
+    <string name="config_gamepad_diagnosis_notice">Ειδοποίηση: <xliff:g id="name" example="Example">%1$s</xliff:g></string>
+    <string name="config_gamepad_diagnosis_analog_settings">Αναλογικές ρυθμίσεις:</string>
+    <string name="config_gamepad_diagnosis_left_stick">Αριστερός μοχλός</string>
+    <string name="config_gamepad_diagnosis_right_stick">Δεξιός μοχλός</string>
+    <string name="config_gamepad_diagnosis_triggers">Σκανδάλες</string>
+    <string name="config_gamepad_diagnosis_pointer">Λειτουργία δείκτη</string>
+    <string name="config_gamepad_status_enabled">ενεργό</string>
+    <string name="config_gamepad_status_disabled">ανενεργό</string>
+    <string name="config_gamepad_diagnosis_source_default">προεπιλογή</string>
+    <string name="config_gamepad_diagnosis_source_controller">χειριστήριο</string>
+    <string name="config_gamepad_diagnosis_source_explicit">ρητή</string>
+    <string name="config_gamepad_diagnosis_device"><xliff:g id="device_name" example="Xbox Controller">%1$s</xliff:g> (#<xliff:g id="device_id" example="1">%2$d</xliff:g>)</string>
+    <string name="config_gamepad_calibration_issue_no_channels">χωρίς υποστηριζόμενα κανάλια</string>
+    <string name="config_gamepad_calibration_issue_invalid_constraints">μη έγκυροι περιορισμοί βαθμονόμησης</string>
+    <string name="config_gamepad_calibration_issue_non_finite">μη πεπερασμένο δείγμα</string>
+    <string name="config_gamepad_calibration_issue_insufficient_samples">ανεπαρκή δείγματα</string>
+    <string name="config_gamepad_calibration_issue_invalid_range">μη έγκυρο εύρος</string>
+    <string name="config_gamepad_calibration_issue_rest_outside_range">τιμή ηρεμίας εκτός εύρους</string>
+    <string name="config_gamepad_calibration_issue_rest_too_noisy">η θέση ηρεμίας δεν είναι αρκετά σταθερή</string>
+    <string name="config_gamepad_calibration_phase_unknown">Η κατάσταση δεν είναι διαθέσιμη</string>
+    <string name="config_gamepad_diagnosis_capabilities">Δυνατότητες συνδεδεμένου χειριστηρίου:</string>
+    <string name="config_gamepad_diagnosis_descriptor">Περιγραφέας: <xliff:g id="name" example="Example">%1$s</xliff:g></string>
+    <string name="config_gamepad_diagnosis_signature">Υπογραφή: <xliff:g id="name" example="Example">%1$s</xliff:g></string>
+    <string name="config_gamepad_diagnosis_axis">Άξονας <xliff:g id="axis_index" example="0">%1$d</xliff:g> [<xliff:g id="min_value" example="-1.0">%2$s</xliff:g>, <xliff:g id="max_value" example="1.0">%3$s</xliff:g>] flat=<xliff:g id="flat" example="0.05">%4$s</xliff:g> fuzz=<xliff:g id="fuzz" example="0.01">%5$s</xliff:g></string>
+    <string name="config_gamepad_diagnosis_no_controller">(κανένα συνδεδεμένο χειριστήριο)</string>
+    <string name="config_gamepad_diagnosis_samples_not_sent">Τα δείγματα εισόδου δεν αποστέλλονται σκόπιμα στο MIDlet.</string>
+    <string name="config_destination_system">Σύστημα</string>
+    <string name="config_screen_behavior" tools:ignore="MissingTranslation">Συμπεριφορά οθόνης</string>
+    <string name="config_screen_size">Μέγεθος οθόνης</string>
+    <string name="config_select_screen_size">Επιλογή μεγέθους οθόνης</string>
+    <string name="config_current_screen_size">Τρέχον μέγεθος: <xliff:g id="name" example="Example">%1$s</xliff:g></string>
+    <string name="config_custom_resolution">Προσαρμοσμένη ανάλυση</string>
+    <string name="profile_custom">Προσαρμοσμένο</string>
+    <string name="select_dialog_title">Επιλογή MIDlet</string>
+    <string name="SIZE_PRESETS">Προεπιλογές μεγέθους γραμματοσειράς</string>
+    <string name="config_color_picker_title">Επιλογή χρώματος</string>
+    <string name="config_color_picker_hex">Δεκαεξαδικό χρώμα</string>
+    <string name="config_color_picker_hint">Σύρετε τα πεδία χρώματος ή εισαγάγετε μια εξαψήφια τιμή RGB.</string>
+    <string name="config_color_picker_invalid">Εισαγάγετε ακριβώς έξι δεκαεξαδικά ψηφία.</string>
+    <string name="config_color_picker_saturation_value">Κορεσμός και φωτεινότητα</string>
+    <string name="config_color_picker_hue">Απόχρωση</string>
+    <string name="config_decrease_value">Μείωση τιμής</string>
+    <string name="config_increase_value">Αύξηση τιμής</string>
+    <string name="midlet_failure_recovery_title">Το MIDlet διακόπηκε απροσδόκητα</string>
+    <string name="midlet_failure_recovery_message">Το MIDlet διακόπηκε απροσδόκητα. Οι πληροφορίες διάγνωσης αποθηκεύτηκαν τοπικά. Μπορείτε να συνεχίσετε να χρησιμοποιείτε το JL-Mod Plus.</string>
+    <string name="midlet_failure_recovery_message_named">Το «<xliff:g id="name" example="Example">%1$s</xliff:g>» διακόπηκε απροσδόκητα. Οι πληροφορίες διάγνωσης αποθηκεύτηκαν τοπικά. Μπορείτε να συνεχίσετε να χρησιμοποιείτε το JL-Mod Plus.</string>
+    <plurals name="config_system_properties_value">
+        <item quantity="one"><xliff:g id="count" example="3">%1$d</xliff:g> ιδιότητα</item>
+        <item quantity="other"><xliff:g id="count" example="3">%1$d</xliff:g> ιδιότητες</item>
+    </plurals>
+    <string name="config_search_suggestions" tools:ignore="MissingTranslation">Προτεινόμενες ρυθμίσεις</string>
+    <string name="config_search_clear" tools:ignore="MissingTranslation">Εκκαθάριση αναζήτησης</string>
+    <string name="config_search_title" tools:ignore="MissingTranslation">Αναζήτηση ρυθμίσεων</string>
+    <string name="config_search_hint" tools:ignore="MissingTranslation">Βρείτε μια ρύθμιση, π.χ. MMPX ή προσανατολισμός</string>
+    <string name="config_search_no_results" tools:ignore="MissingTranslation">Δεν βρέθηκαν αντίστοιχες ρυθμίσεις</string>
+    <string name="config_search_upscaling_requires_resolution" tools:ignore="MissingTranslation">Επιλέξτε Αυτόματη ή 2×–10× στην Ανάλυση απόδοσης για να ρυθμίσετε την κλιμάκωση bitmap.</string>
+    <string name="config_search_requires_manual_scale" tools:ignore="MissingTranslation">Επιλέξτε Μη αυτόματη στη Λειτουργία κλιμάκωσης για να προσαρμόσετε την κλίμακα.</string>
+    <string name="config_search_requires_custom_background" tools:ignore="MissingTranslation">Επιλέξτε Προσαρμοσμένο στη Λειτουργία φόντου για να επεξεργαστείτε το χρώμα φόντου.</string>
+    <string name="config_search_requires_gles" tools:ignore="MissingTranslation">Επιλέξτε Επιτάχυνση υλικού (OpenGL ES) στη Λειτουργία γραφικών για να ρυθμίσετε τα εφέ shader.</string>
+    <string name="config_search_requires_renderer_mode" tools:ignore="MissingTranslation">Επιλέξτε Λογισμικό ή Επιτάχυνση υλικού (Surface) στη Λειτουργία γραφικών για να ρυθμίσετε τις ασύγχρονες ενημερώσεις οθόνης.</string>
+    <string name="config_font_page_title" tools:ignore="MissingTranslation">Ρυθμίσεις γραμματοσειράς</string>
+    <string name="config_display_more" tools:ignore="MissingTranslation">Κείμενο και απόδοση</string>
+    <string name="config_destination_home" tools:ignore="MissingTranslation">Αρχική</string>
+    <string name="config_overview_profile_draft" tools:ignore="MissingTranslation">Πρόχειρο προφίλ</string>
+    <string name="config_overview_profile_draft_summary" tools:ignore="MissingTranslation">Επεξεργαστείτε αυτό το επαναχρησιμοποιήσιμο προφίλ και έπειτα αποθηκεύστε τις αλλαγές σας από τη γραμμή εργαλείων.</string>
+    <string name="config_overview_quick_access" tools:ignore="MissingTranslation">Γρήγορη πρόσβαση</string>
+    <string name="config_system_properties_editor_label">Ιδιότητες</string>
+    <string name="config_overview_enabled" tools:ignore="MissingTranslation">Ενεργό</string>
+    <string name="config_overview_disabled" tools:ignore="MissingTranslation">Ανενεργό</string>
+    <string name="config_overview_media_summary" tools:ignore="MissingTranslation">Τράπεζα ήχων και κάμερα</string>
+    <string name="config_overview_hint" tools:ignore="MissingTranslation">Επιλέξτε μια κατηγορία για να προσαρμόσετε το παιχνίδι σας. Κάθε ρύθμιση έχει μία θέση· αυτές οι συντομεύσεις σας οδηγούν εκεί.</string>
+    <string name="config_destination_general">Γενικά</string>
+    <string name="config_basic_display">Οθόνη MIDlet</string>
+    <string name="config_display_appearance">Εμφάνιση οθόνης</string>
+    <string name="config_display_rendering">Απόδοση</string>
+    <string name="config_image_quality_section" tools:ignore="MissingTranslation">Ποιότητα εικόνας</string>
+    <string name="config_frame_rate_section" tools:ignore="MissingTranslation">Ρυθμός καρέ</string>
+    <string name="config_fps_position_title" tools:ignore="MissingTranslation">Θέση FPS</string>
+    <string name="config_display_text">Κείμενο και γραμματοσειρές</string>
+    <string name="config_input_mapping_section" tools:ignore="MissingTranslation">Είσοδος και αντιστοίχιση</string>
+    <string name="config_controls_appearance_section" tools:ignore="MissingTranslation">Εμφάνιση χειριστηρίων</string>
+    <string name="config_controls_virtual_keyboard">Εικονικά χειριστήρια</string>
+    <string name="config_controls_virtual_keyboard_colors">Χρώματα εικονικών χειριστηρίων</string>
+    <string name="config_virtual_controls_color_preview">Προεπισκόπηση χρωμάτων</string>
+    <string name="config_virtual_controls_preview_normal">Ελεύθερο</string>
+    <string name="config_virtual_controls_preview_pressed">Πατημένο</string>
+    <string name="config_controls_maintenance">Διάταξη</string>
+    <string name="config_controls_skin_help">Αλλάζει την εμφάνιση των κουμπιών πληκτρολογίου, του D-pad και του αναλογικού μοχλού με προσαρμοσμένες εικόνες.</string>
+    <string name="config_controls_color_button_normal">Ελεύθερο κουμπί</string>
+    <string name="config_controls_color_button_pressed">Πατημένο κουμπί</string>
+    <string name="config_controls_color_label_normal">Ελεύθερη ετικέτα</string>
+    <string name="config_controls_color_label_pressed">Πατημένη ετικέτα</string>
+    <string name="config_controls_color_outline_short">Περίγραμμα</string>
+    <string name="config_controls_disabled_hint">Τα εικονικά χειριστήρια είναι αυτήν τη στιγμή ανενεργά. Μπορείτε ωστόσο να τα προσαρμόσετε εδώ.</string>
+    <string name="config_controls_opacity_help" formatted="false">Ρυθμίζει την αδιαφάνεια των εικονικών χειριστηρίων. Στο 0% τα χειριστήρια είναι διαφανή, ενώ στο 100% δεν εφαρμόζεται πρόσθετη διαφάνεια.</string>
+    <string name="config_controls_opaque_outside">Εμφάνιση χειριστηρίων χωρίς διαφάνεια εκτός της οθόνης MIDlet</string>
+    <string name="config_controls_opaque_outside_help">Όταν είναι ενεργή αυτή η επιλογή, τα χειριστήρια που βρίσκονται εξ ολοκλήρου έξω από την οθόνη του MIDlet εμφανίζονται χωρίς πρόσθετη διαφάνεια. Όσα επικαλύπτουν την οθόνη χρησιμοποιούν την επιλεγμένη αδιαφάνεια.</string>
+    <string name="config_controls_connect_controller">Συνδέστε ένα χειριστήριο για βαθμονόμηση</string>
+    <string name="config_controls_color_skin_notice">Μια εμφάνιση πλήρους κουμπιού μπορεί να αντικαταστήσει τα προεπιλεγμένα χρώματα, το σχήμα και το περίγραμμα των κουμπιών.</string>
+    <string name="config_current_value">Τρέχουσα τιμή</string>
+    <string name="config_maintenance">Επαναφορά και δεδομένα</string>
+    <string name="config_midlet_actions" tools:ignore="MissingTranslation">Ενέργειες MIDlet</string>
+    <string name="config_profile_maintenance" tools:ignore="MissingTranslation">Ενέργειες προφίλ</string>
+    <string name="config_reset_profile_settings" tools:ignore="MissingTranslation">Επαναφορά πρόχειρου προφίλ</string>
+    <string name="config_reset_profile_settings_summary" tools:ignore="MissingTranslation">Επαναφέρει τις ρυθμίσεις και τα εικονικά χειριστήρια αυτού του πρόχειρου στις προεπιλογές.</string>
+    <string name="config_system_compatibility" tools:ignore="MissingTranslation">Συμβατότητα εξομοίωσης</string>
+    <string name="config_reset_all_settings">Επαναφορά διαμόρφωσης MIDlet</string>
+    <string name="config_reset_all_settings_summary">Επαναφέρει τις ρυθμίσεις και τα εικονικά χειριστήρια αυτού του MIDlet στις προεπιλογές χωρίς να διαγράψει τα δεδομένα του.</string>
+    <string name="config_delete_app_data">Διαγραφή δεδομένων MIDlet</string>
+    <string name="config_delete_app_data_summary">Διαγράφει οριστικά τα δεδομένα αυτού του MIDlet, συμπεριλαμβανομένων των αποθηκευμένων παιχνιδιών. Οι ρυθμίσεις του διατηρούνται.</string>
+    <string name="config_message_reset_settings">Επαναφορά της διαμόρφωσης και των εικονικών χειριστηρίων του MIDlet στις προεπιλογές; Τα αποθηκευμένα δεδομένα παραμένουν ανέπαφα. Κάθε συνδεδεμένο προφίλ θα πάψει να ακολουθείται.</string>
+    <string name="config_message_reset_profile_settings">Επαναφορά των ρυθμίσεων και των εικονικών χειριστηρίων αυτού του προφίλ στις προεπιλογές; Μπορείτε ακόμη να επεξεργαστείτε ή να ακυρώσετε πριν από την αποθήκευση.</string>
+    <string name="config_message_delete_app_data">Οριστική διαγραφή όλων των αποθηκεύσεων και δεδομένων που δημιουργήθηκαν από αυτό το MIDlet; Οι ρυθμίσεις του MIDlet δεν θα διαγραφούν.</string>
+    <string name="config_lock_custom_resolution_ratio">Κλείδωμα αναλογίας διαστάσεων</string>
+    <string name="config_swap_screen_size">Εναλλαγή πλάτους και ύψους</string>
+    <string name="profile_builtin_settings">Προεπιλογές JL-Mod</string>
+    <string name="profile_default_badge_short">Προεπιλογή για νέα MIDlet</string>
+    <string name="profile_template_summary">Αποθηκευμένες ρυθμίσεις MIDlet.</string>
+    <string name="profile_name_exists">Υπάρχει ήδη προφίλ με αυτό το όνομα.</string>
+    <string name="profile_delete_template_message">Διαγραφή του προφίλ «<xliff:g id="profile_name" example="Action Games">%1$s</xliff:g>»; Τα MIDlet που το χρησιμοποιούν θα διατηρήσουν τις τρέχουσες ρυθμίσεις τους, αλλά δεν θα λαμβάνουν μελλοντικές ενημερώσεις.</string>
+    <string name="profile_template_operation_failed">Δεν ήταν δυνατή η ολοκλήρωση της λειτουργίας προφίλ.</string>
+    <string name="config_help_screen_size">Ορίζει την εικονική ανάλυση οθόνης Java ME που χρησιμοποιεί το MIDlet.</string>
+    <string name="config_help_orientation">Επιλέγει τον προσανατολισμό οθόνης κατά την εκτέλεση του MIDlet.</string>
+    <string name="config_help_scale_type">Επιλέξτε πώς προσαρμόζεται το παιχνίδι στην οθόνη. Επιλέξτε Μη αυτόματη για να ορίσετε προσαρμοσμένη κλίμακα.</string>
+    <string name="config_help_scale_ratio" formatted="false">Προσαρμόζει το εμφανιζόμενο μέγεθος από 1% έως 1000%. Στο 100%, το παιχνίδι χρησιμοποιεί το αρχικό του μέγεθος· μεγαλύτερες τιμές ενδέχεται να εκτείνονται πέρα από την οθόνη.</string>
+    <string name="config_help_lock_custom_resolution_ratio">Διατηρεί την αναλογία διαστάσεων κατά την επεξεργασία της προσαρμοσμένης ανάλυσης.</string>
+    <string name="config_help_virtual_keyboard">Εμφανίζει χειριστήρια στην οθόνη για αυτό το MIDlet.</string>
+    <string name="config_help_touch_input">Επιτρέπει στο MIDlet να λαμβάνει είσοδο δείκτη από την οθόνη αφής.</string>
+    <string name="config_help_background">Γεμίζει τον αχρησιμοποίητο χώρο γύρω από την οθόνη του MIDlet.</string>
+    <string name="config_background_mode">Λειτουργία φόντου</string>
+    <string name="config_background_custom">Προσαρμοσμένο</string>
+    <string name="config_background_theme">Θέμα</string>
+    <string name="config_background_immersive">Καθηλωτικό</string>
+    <string name="config_background_theme_help">Χρησιμοποιεί το χρώμα θέματος του JL-Mod Plus γύρω από την οθόνη του MIDlet.</string>
+    <string name="config_background_immersive_help">Γεμίζει τον αχρησιμοποίητο χώρο με χρώματα από την οθόνη του MIDlet.</string>
+    <string name="config_background_dynamic">Δυναμικό χρώμα</string>
+    <string name="config_background_dynamic_help">Χρησιμοποιεί ένα συμπαγές χρώμα που προσαρμόζεται ομαλά στην οθόνη του MIDlet.</string>
+    <string name="config_background_custom_color">Χρώμα φόντου</string>
+    <string name="config_help_background_custom_color">Ορίζει το χρώμα του αχρησιμοποίητου χώρου γύρω από την οθόνη του MIDlet.</string>
+    <string name="config_help_skin">Εμφανίζει μια προαιρετική εικόνα ή πλαίσιο γύρω από την οθόνη του MIDlet.</string>
+    <string name="config_help_screen_gravity">Τοποθετεί την οθόνη του MIDlet όταν απομένει αχρησιμοποίητος χώρος.</string>
+    <string name="config_help_screen_padding">Προσθέτει περιθώριο σε pixel μεταξύ της οθόνης του MIDlet και του άκρου της περιοχής προβολής.</string>
+    <string name="config_help_filter">Χρησιμοποιεί γραμμικό φιλτράρισμα για εξομάλυνση της οθόνης του MIDlet κατά την κλιμάκωση.</string>
+    <string name="config_warning_filter_shader">Το γραμμικό φιλτράρισμα εξομαλύνει την είσοδο πριν την επεξεργαστεί το shader οθόνης και ενδέχεται να μειώσει την ευκρίνεια της εξόδου.</string>
+    <string name="config_help_immediate">Επεξεργάζεται τα συμβάντα του MIDlet αμέσως αντί να τα τοποθετεί σε ουρά. Μπορεί να βελτιώσει την απόκριση, αλλά ενδέχεται να αποσταθεροποιήσει ορισμένα MIDlet.</string>
+    <string name="config_help_graphics_mode">Επιλέγει τη διαδρομή απόδοσης για την οθόνη του MIDlet. Η επιτάχυνση υλικού μπορεί να βελτιώσει την απόδοση, αλλά η συμβατότητα διαφέρει ανά συσκευή.</string>
+    <string name="config_help_shader">Εφαρμόζει ένα shader στο καρέ του MIDlet πριν προβληθεί.</string>
+    <string name="config_help_shader_tuning">Τα διαθέσιμα στοιχεία ελέγχου εξαρτώνται από το επιλεγμένο shader.</string>
+    <string name="config_help_parallel_redraw">Προγραμματίζει την παρουσίαση καρέ ασύγχρονα. Αυτό μπορεί να βελτιώσει την απόδοση σε ορισμένες συσκευές.</string>
+    <string name="config_help_force_fullscreen">Αποκρύπτει τη γραμμή εντολών κατά την εκκίνηση του MIDlet. Το MIDlet ενδέχεται να την εμφανίσει ξανά κατά το παιχνίδι.</string>
+    <string name="config_help_fps_limit">Ορίζει το όριο FPS σε ταχύτητα εξομοίωσης 1×. Το πραγματικό όριο ακολουθεί την ταχύτητα εξομοίωσης· το 0 (Μέγιστο) χρησιμοποιεί τον μέγιστο ρυθμό ανανέωσης της οθόνης.</string>
+    <string name="config_timing_mode_full_guest">Χρόνος εξομοίωσης</string>
+    <string name="config_timing_mode_real_wall">Χρόνος συστήματος</string>
+    <string name="config_help_emulation_speed">Προσαρμόζει τους υποστηριζόμενους χρονοδιακόπτες και τις καθυστερήσεις του MIDlet για αυτήν την περίοδο λειτουργίας. Αν έχει επιλεγεί Χρόνος εξομοίωσης, η ημερομηνία και η ώρα ακολουθούν επίσης την ταχύτητα. Η αναπαραγωγή πολυμέσων και η διεπαφή του Android διατηρούν την κανονική τους ταχύτητα.</string>
+    <string name="config_help_timing_mode">Επιλέγει αν το MIDlet χρησιμοποιεί χρόνο εξομοίωσης ή χρόνο συστήματος. Οι σχετικές καθυστερήσεις εξακολουθούν να κλιμακώνονται με την ταχύτητα εξομοίωσης.</string>
+    <string name="config_help_timing_unavailable">Οι ρυθμίσεις χρόνου δεν είναι διαθέσιμες για αυτήν την εγκατάσταση MIDlet. Επανεγκαταστήστε ή μετατρέψτε ξανά το MIDlet για να τις ενεργοποιήσετε.</string>
+    <string name="config_help_generic_color">Ορίζει το χρώμα αυτού του οπτικού στοιχείου.</string>
+    <string name="config_help_encoding">Επιλέγει την κωδικοποίηση χαρακτήρων που αναφέρεται ως microedition.encoding.</string>
+    <string name="config_edit_system_properties">Επεξεργασία ιδιοτήτων συστήματος</string>
+    <string name="config_help_system_properties">Ορίζει προχωρημένες ιδιότητες Java ME που αναφέρονται στο MIDlet.</string>
+    <string name="config_help_system_properties_long">Επεξεργαστείτε μία ιδιότητα ανά γραμμή με μορφή «όνομα: τιμή». Εσφαλμένες τιμές μπορεί να επηρεάσουν τη συμβατότητα.</string>
+    <string name="config_system_properties_info">Τα περισσότερα MIDlet δεν χρειάζονται αλλαγές εδώ.</string>
+    <string name="config_font_sizes">Μεγέθη γραμματοσειράς</string>
+    <string name="config_help_font_sizes">Ορίζει τα μεγέθη μικρής, μεσαίας και μεγάλης γραμματοσειράς Java ME για το MIDlet.</string>
+    <string name="config_help_font_sizes_long">Ορίζει τα μεγέθη γραμματοσειράς Java ME σε pixel ή σε κλιμακωμένες μονάδες όταν είναι ενεργή η κλιμάκωση γραμματοσειράς Android. Αλλάξτε τα μαζί για ισορροπημένο κείμενο.</string>
+    <string name="config_font_sizes_value">Μικρή <xliff:g id="small_size" example="12">%1$s</xliff:g> · μεσαία <xliff:g id="medium_size" example="16">%2$s</xliff:g> · μεγάλη <xliff:g id="large_size" example="20">%3$s</xliff:g></string>
+    <string name="config_help_font_presets">Εφαρμόζει μεγέθη γραμματοσειράς κατάλληλα για κοινές αναλύσεις οθόνης Java ME.</string>
+    <string name="config_help_font_dimensions">Εφαρμόζει την κλίμακα γραμματοσειράς του Android στα μεγέθη γραμματοσειράς Java ME.</string>
+    <string name="config_help_font_aa">Εξομαλύνει τις άκρες του αποδιδόμενου κειμένου.</string>
+    <string name="config_help_key_layout">Επιλέγει το σχήμα κωδικών πλήκτρων που αναφέρεται στο MIDlet.</string>
+    <string name="config_help_key_mapping">Αντιστοιχίζει φυσικά πλήκτρα και κουμπιά Android σε ενέργειες πληκτρολογίου Java ME.</string>
+    <string name="config_help_vk_button_shape">Ορίζει το προεπιλεγμένο σχήμα κουμπιών πληκτρολογίου. Το D-pad και ο αναλογικός μοχλός έχουν τα δικά τους σχήματα.</string>
+    <string name="config_help_vk_feedback">Δονείται όταν πατιέται ένα εικονικό χειριστήριο, εφόσον η δόνηση είναι ενεργή στις Ρυθμίσεις.</string>
+    <string name="config_help_vk_hide_delay">Αποκρύπτει τα χειριστήρια μετά από αυτήν την καθυστέρηση όταν καλύπτουν την οθόνη του MIDlet. Η τιμή 0 απενεργοποιεί την αυτόματη απόκρυψη.</string>
+    <string name="config_help_reset_layout">Επαναφέρει τη διάταξη των εικονικών χειριστηρίων χωρίς να αλλάζει άλλες ρυθμίσεις του MIDlet.</string>
+    <string name="config_help_skip_resume">Μετά την πρώτη επιτυχή κλήση startApp(), παραλείπει επόμενες κλήσεις κατά τη συνέχιση του MIDlet. Χρησιμοποιήστε το μόνο για MIDlet που αποτυγχάνουν κατά τη συνέχιση.</string>
+    <string name="config_help_soundbank">Επιλέγει την τράπεζα ήχων για τη σύνθεση MIDI. Δεν επηρεάζει τον προηχογραφημένο ήχο.</string>
+    <string name="profile_create_title">Δημιουργία προφίλ</string>
+    <string name="profile_rename_title">Μετονομασία προφίλ</string>
+    <string name="presets">Προφίλ</string>
+    <string name="preset_use">Χρήση προφίλ</string>
+    <string name="preset_save_as">Αποθήκευση ως προφίλ</string>
+    <string name="preset_custom_configuration">Προσαρμοσμένη διαμόρφωση</string>
+    <string name="preset_based_on_modified">Η τρέχουσα διαμόρφωση αυτού του MIDlet διαφέρει από το <xliff:g id="profile_name" example="Action Games">%1$s</xliff:g>.</string>
+    <string name="preset_builtin">Προεπιλογές JL-Mod</string>
+    <string name="preset_builtin_summary">Ενσωματωμένες ρυθμίσεις MIDlet και εικονικά χειριστήρια.</string>
+    <string name="preset_picker_title">Χρήση προφίλ</string>
+    <string name="preset_manage">Διαχείριση προφίλ</string>
+    <string name="profile_more_actions">Περισσότερες ενέργειες για <xliff:g id="profile_name" example="Action Games">%1$s</xliff:g></string>
+    <string name="profile_create_summary">Αποθηκεύστε μια επαναχρησιμοποιήσιμη διαμόρφωση για άλλα MIDlet.</string>
+    <string name="preset_application_settings">Ρυθμίσεις MIDlet</string>
+    <string name="preset_includes_keyboard_layout">Περιλαμβάνεται διάταξη εικονικών χειριστηρίων.</string>
+    <string name="preset_virtual_keyboard_on">Εικονικά χειριστήρια ενεργά</string>
+    <string name="preset_virtual_keyboard_off">Εικονικά χειριστήρια ανενεργά</string>
+    <string name="preset_apply">Εφαρμογή</string>
+    <string name="preset_apply_failed_summary">Δεν ήταν δυνατή η εφαρμογή αυτού του προφίλ. Ελέγξτε την πηγή και δοκιμάστε ξανά.</string>
+    <string name="preset_choose_parts">Επιλέξτε τι θα εφαρμοστεί</string>
+    <string name="preset_name">Όνομα</string>
+    <string name="preset_save_help">Αποθηκεύει τις ρυθμίσεις αυτού του MIDlet και, όταν είναι διαθέσιμη, τη διάταξη εικονικών χειριστηρίων του ως προφίλ. Αυτό το MIDlet θα χρησιμοποιεί το προφίλ και θα λαμβάνει τις μελλοντικές του ενημερώσεις.</string>
+    <string name="preset_update">Ενημέρωση <xliff:g id="profile_name" example="Action Games">%1$s</xliff:g></string>
+    <string name="preset_update_title">Ενημέρωση <xliff:g id="profile_name" example="Action Games">%1$s</xliff:g>;</string>
+    <string name="preset_update_summary">Αντικαθιστά το <xliff:g id="profile_name" example="Action Games">%1$s</xliff:g> με τις τρέχουσες ρυθμίσεις αυτού του MIDlet και, αν είναι διαθέσιμη, τη διάταξη εικονικών χειριστηρίων του. Άλλα MIDlet που χρησιμοποιούν αυτό το προφίλ θα λάβουν τις αλλαγές την επόμενη φορά που θα εκκινηθούν.</string>
+    <string name="preset_update_confirm">Ενημέρωση</string>
+    <string name="preset_saved_unlinked_warning">Το προφίλ αποθηκεύτηκε, αλλά αυτό το MIDlet δεν θα λαμβάνει μελλοντικές ενημερώσεις από αυτό.</string>
+    <string name="profile_default_fallback_notice">Δεν ήταν δυνατή η χρήση του προεπιλεγμένου προφίλ «<xliff:g id="profile_name" example="Action Games">%1$s</xliff:g>». Ενδέχεται να λείπει, να είναι ελλιπές ή μη αναγνώσιμο. Οι Προεπιλογές JL-Mod είναι πλέον η προεπιλογή για νέα MIDlet.</string>
+    <string name="preset_discard_changes_title">Απόρριψη αλλαγών;</string>
+    <string name="preset_discard_changes_summary">Αυτό το πρόχειρο προφίλ δεν έχει αποθηκευτεί.</string>
+    <string name="preset_continue_editing">Συνέχεια επεξεργασίας</string>
+    <string name="preset_discard_changes">Απόρριψη</string>
+    <string name="preset_name_exists">Υπάρχει ήδη προφίλ με αυτό το όνομα.</string>
+    <string name="preset_invalid_name">Εισαγάγετε ένα έγκυρο όνομα προφίλ.</string>
+    <string name="preset_manager_default_section">Προεπιλογή για νέα MIDlet</string>
+    <string name="preset_manager_presets_section">Τα προφίλ μου</string>
+    <string name="preset_manager_keyboard_section">Αποθηκευμένες διατάξεις εικονικών χειριστηρίων</string>
+    <string name="preset_default_policy_summary">Εφαρμόζεται κατά την εγκατάσταση νέου MIDlet.</string>
+    <string name="preset_keyboard_layout_unavailable">Η διάταξη εικονικών χειριστηρίων δεν είναι διαθέσιμη.</string>
+    <string name="edit_preset">Επεξεργασία προφίλ</string>
+    <string name="preset_edit_title">Επεξεργασία προφίλ: <xliff:g id="profile_name" example="Action Games">%1$s</xliff:g></string>
+    <string name="preset_unavailable_section">Μη διαθέσιμο</string>
+    <string name="preset_unavailable_summary">Δεν ήταν δυνατή η φόρτωση αυτού του προφίλ. Μετονομάστε το ή διαγράψτε το.</string>
+    <string name="preset_change_default">Αλλαγή</string>
+    <string name="preset_default_picker_title">Προεπιλογή για νέα MIDlet</string>
+    <string name="profile_follows_updates">Ακολουθεί μελλοντικές ενημερώσεις προφίλ.</string>
+    <string name="profile_apply_whole">Ολόκληρο το προφίλ</string>
+    <string name="profile_apply_whole_follows">Αντικατάσταση ρυθμίσεων και διάταξης· παρακολούθηση μελλοντικών ενημερώσεων.</string>
+    <string name="profile_apply_whole_without_layout">Αντικατάσταση ρυθμίσεων, κατάργηση τοπικής διάταξης και παρακολούθηση ενημερώσεων.</string>
+    <string name="profile_apply_settings_only">Μόνο ρυθμίσεις MIDlet</string>
+    <string name="profile_apply_settings_keeps_layout">Διατήρηση διάταξης αυτού του MIDlet· χρήση προσαρμοσμένης διαμόρφωσης.</string>
+    <string name="profile_apply_layout_only">Μόνο διάταξη εικονικών χειριστηρίων</string>
+    <string name="profile_apply_layout_keeps_settings">Διατήρηση ρυθμίσεων αυτού του MIDlet· χρήση προσαρμοσμένης διαμόρφωσης.</string>
+    <string name="config_analog_stick">Αναλογικός μοχλός</string>
+    <string name="config_analog_stick_summary">Επιλέξτε Ανενεργό, 4 κατευθύνσεων, 8 κατευθύνσεων ή αριθμητικό πληκτρολόγιο για τον κύριο αναλογικό μοχλό. Τα κουμπιά χειριστηρίου χρησιμοποιούν τις αντιστοιχίσεις πλήκτρων.</string>
+    <string name="config_analog_stick_off">Ανενεργό</string>
+    <string name="config_controller_help_body_compact">Τα κουμπιά του χειριστηρίου χρησιμοποιούν τις ίδιες αντιστοιχίσεις πλήκτρων με το πληκτρολόγιο και τα πλήκτρα τηλεφώνου. Ο αναλογικός μοχλός στέλνει μόνο είσοδο κατεύθυνσης στο MIDlet. Το Πίσω του Android διατηρεί την κανονική του συμπεριφορά· οποιοδήποτε φυσικό κουμπί αντιστοιχισμένο στο M ανοίγει το μενού του εκτελούμενου MIDlet.</string>
+    <string name="config_show_fps_title" tools:ignore="MissingTranslation">Εμφάνιση FPS</string>
+    <string name="config_show_fps_help" tools:ignore="MissingTranslation">Εμφανίζει τον ρυθμό καρέ κατά το παιχνίδι.</string>
+    <string name="config_search_requires_fps" tools:ignore="MissingTranslation">Ενεργοποιήστε την Εμφάνιση FPS για να αλλάξετε τη θέση.</string>
+    <string name="midlet_running_notification_title">MIDlet σε εκτέλεση</string>
+    <string name="midlet_running_notification_text">Το <xliff:g id="name" example="Example">%1$s</xliff:g> εκτελείται.</string>
+    <string name="midlet_running_notification_channel">Εκτέλεση MIDlet</string>
+    <string name="config_gamepad_directions_numeric_v2">Αριθμητικό πληκτρολόγιο</string>
+    <string name="midlet_file_permission_title">Πρόσβαση στον χώρο αποθήκευσης</string>
+    <string name="midlet_file_permission_read">Αυτό το MIDlet θέλει να διαβάσει αρχεία.</string>
+    <string name="midlet_file_permission_write">Αυτό το MIDlet θέλει να δημιουργήσει, να αλλάξει ή να διαγράψει αρχεία.</string>
+    <string name="midlet_file_permission_allow_once">Να επιτρέπεται μία φορά</string>
+    <string name="midlet_file_permission_allow_session">Να επιτρέπεται όσο εκτελείται το MIDlet</string>
+    <string name="midlet_file_permission_allow_always">Να επιτρέπεται πάντα</string>
+    <string name="midlet_file_permission_deny">Απόρριψη πάντα</string>
+    <string name="midlet_permissions_settings_title">Δικαιώματα πρόσβασης αποθήκευσης</string>
+    <string name="midlet_permissions_read">Ανάγνωση αρχείων</string>
+    <string name="midlet_permissions_write">Αλλαγή αρχείων</string>
+    <string name="midlet_permissions_ask">Ερώτηση</string>
+    <string name="midlet_permissions_allow">Να επιτρέπεται πάντα</string>
+    <string name="midlet_permissions_deny">Απόρριψη</string>
+    <string name="midlet_permissions_save_failed">Δεν ήταν δυνατή η αποθήκευση των ρυθμίσεων αποθήκευσης.</string>
+    <string name="config_avoid_camera_cutout_title">Αποφυγή εγκοπής κάμερας</string>
+    <string name="config_avoid_camera_cutout_summary">Διατηρεί την οθόνη του MIDlet και τα εικονικά χειριστήρια μακριά από την εγκοπή κάμερας ή οθόνης.</string>
+    <string name="midlet_permissions_write_summary">Περιλαμβάνει τη δημιουργία και διαγραφή αρχείων.</string>
+    <string name="midlet_legacy_import_title">Παλαιές αποθηκεύσεις Siemens</string>
+    <string name="midlet_legacy_import_action">Επιλογή παλαιού αρχείου αποθήκευσης</string>
+    <string name="midlet_legacy_import_summary">Αντιγράφει ένα παλαιό αρχείο αποθήκευσης στον ιδιωτικό χώρο αποθήκευσης Siemens αυτού του MIDlet. Διακόψτε πρώτα το MIDlet.</string>
+    <string name="midlet_legacy_import_success">Το αρχείο αντιγράφηκε στον ιδιωτικό χώρο αποθήκευσης αυτού του MIDlet.</string>
+    <string name="midlet_legacy_import_failed">Η εισαγωγή απέτυχε. Διακόψτε το MIDlet και βεβαιωθείτε ότι το αρχείο προορισμού δεν υπάρχει ήδη.</string>
+    <string name="midlet_storage_mode_title">Λειτουργία αποθήκευσης</string>
+    <string name="midlet_storage_mode_shared">Εικονική</string>
+    <string name="midlet_storage_mode_android">Android</string>
+    <string name="midlet_storage_mode_shared_summary">Χρήση κοινόχρηστων φακέλων στον φάκελο εργασίας.</string>
+    <string name="midlet_storage_mode_android_summary">Χρήση του κοινόχρηστου χώρου αποθήκευσης Android σύμφωνα με τις άδειες του Android. Οι άδειες αρχείων του MIDlet είναι ξεχωριστές από εκείνες της εικονικής λειτουργίας.</string>
+    <string name="config_system_properties_reset" tools:ignore="MissingTranslation">Επαναφορά στις προεπιλογές</string>
+    <string name="config_system_properties_reset_title" tools:ignore="MissingTranslation">Επαναφορά ιδιοτήτων συστήματος;</string>
+    <string name="config_system_properties_reset_message" tools:ignore="MissingTranslation">Αντικατάσταση του περιεχομένου του επεξεργαστή με τις τρέχουσες προεπιλογές του JL-Mod Plus; Οι άλλες ρυθμίσεις θα παραμείνουν αμετάβλητες. Αποθηκεύστε για να εφαρμόσετε την επαναφορά.</string>
+    <string name="config_asset_add">+ Προσθήκη από αρχείο</string>
+    <string name="config_asset_copy_hint">Αντιγράφεται στον φάκελο εργασίας· το αρχικό αρχείο παραμένει στη θέση του.</string>
+    <string name="config_asset_name">Όνομα αρχείου</string>
+    <string name="config_asset_delete_confirmation">Διαγραφή του <xliff:g id="name" example="Example">%1$s</xliff:g> από τον φάκελο εργασίας; Άλλα MIDlet ενδέχεται να χρησιμοποιούν επίσης αυτό το αρχείο. Αντίγραφα αλλού δεν επηρεάζονται.</string>
+    <string name="config_asset_imported">Αντιγράφηκε και επιλέχθηκε: <xliff:g id="name" example="Example">%1$s</xliff:g></string>
+    <string name="config_asset_reused">Επιλέχθηκε υπάρχον αρχείο: <xliff:g id="name" example="Example">%1$s</xliff:g></string>
+    <string name="config_asset_renamed">Μετονομάστηκε σε <xliff:g id="name" example="Example">%1$s</xliff:g></string>
+    <string name="config_asset_deleted">Διαγράφηκε: <xliff:g id="name" example="Example">%1$s</xliff:g></string>
+    <string name="config_asset_invalid">Μη υποστηριζόμενο ή μη έγκυρο αρχείο.</string>
+    <string name="config_asset_operation_failed">Δεν ήταν δυνατή η ολοκλήρωση της λειτουργίας αρχείου.</string>
+    <string name="config_save_failed" tools:ignore="MissingTranslation">Δεν ήταν δυνατή η αποθήκευση των ρυθμίσεων. Οι αλλαγές σας παραμένουν ανοιχτές — δοκιμάστε ξανά.</string>
+    <string name="config_asset_busy">Ολοκληρώστε πρώτα την τρέχουσα λειτουργία αρχείου.</string>
+    <string name="config_quick_settings" tools:ignore="MissingTranslation">Γρήγορες ρυθμίσεις</string>
+    <string name="config_all_settings" tools:ignore="MissingTranslation">Όλες οι ρυθμίσεις</string>
+    <string name="profile_local_changes_pending" tools:ignore="MissingTranslation">Τοπικές αλλαγές που δεν αποθηκεύτηκαν στο προφίλ</string>
+    <string name="profile_local_configuration_summary" tools:ignore="MissingTranslation">Ρυθμίσεις μόνο για αυτό το MIDlet</string>
+    <string name="profile_not_following" tools:ignore="MissingTranslation">Βασισμένο στο <xliff:g id="profile_name" example="Action Games">%1$s</xliff:g> · Δεν ακολουθεί ενημερώσεις</string>
+    <string name="profile_stop_following" tools:ignore="MissingTranslation">Διακοπή παρακολούθησης προφίλ</string>
+    <string name="profile_follow_again" tools:ignore="MissingTranslation">Εκ νέου παρακολούθηση προφίλ</string>
+    <string name="profile_follow_again_summary" tools:ignore="MissingTranslation">Να αντικατασταθούν οι τοπικές ρυθμίσεις και τα εικονικά χειριστήρια αυτού του MIDlet με το πιο πρόσφατο προφίλ <xliff:g id="profile_name" example="Action Games">%1$s</xliff:g> και να ακολουθούνται οι μελλοντικές του ενημερώσεις;</string>
+</resources>

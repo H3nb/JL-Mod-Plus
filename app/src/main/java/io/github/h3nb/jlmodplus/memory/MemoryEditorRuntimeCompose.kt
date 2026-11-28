@@ -350,8 +350,10 @@ internal fun MemoryEditorRuntimeRoot(
                     actions.setScriptsTab()
                 }.fold(
                     onSuccess = { null },
-                    onFailure = { it.localizedMessage?.takeIf(String::isNotBlank)
-                        ?: createFailedMessage },
+                    onFailure = {
+                        android.util.Log.w("MemoryEditor", "Could not create script from bookmarks", it)
+                        createFailedMessage
+                    },
                 )
             }
         }
@@ -1471,7 +1473,7 @@ private fun RuntimeListRow(
             ?: "—"
     val name = entry.label.ifBlank {
         watch?.source?.takeIf { it.kind != MemoryEngineContract.SOURCE_UNKNOWN }
-            ?.shortFieldName ?: entry.saved?.path ?: watch?.let {
+            ?.shortFieldName ?: entry.saved?.path?.takeIf(String::isNotBlank) ?: watch?.let {
                 runtimeTypeShort(it.type)
             }.orEmpty()
     }
@@ -1511,9 +1513,9 @@ private fun RuntimeListRow(
                                 else MaterialTheme.colorScheme.primary)
                     }
                 }
-                val location = entry.saved?.path?.takeUnless { it == "Needs relink" }
+                val location = entry.saved?.takeIf { it.hasLocator }?.path?.takeIf(String::isNotBlank)
                     ?: watch?.let { runtimeCandidateLocation(it.id, it.source, it.locationText) }
-                    ?: entry.saved?.path.orEmpty()
+                    ?: stringResource(R.string.memory_builder_needs_relink)
                 Text(location, maxLines = 1, overflow = TextOverflow.Ellipsis,
                     style = runtimeMemoryMetaTextStyle(),
                     color = MaterialTheme.colorScheme.onSurfaceVariant)
@@ -1523,8 +1525,13 @@ private fun RuntimeListRow(
                     color = MaterialTheme.colorScheme.error)
                 if (entry.saved != null && value?.resolved != true &&
                     (watch == null || watch.state == MemoryEngineContract.CANDIDATE_LOST)) {
-                    Text(value?.detail?.takeIf { it.isNotBlank() }
-                        ?: stringResource(R.string.memory_bookmark_unavailable),
+                    Text(stringResource(if (!entry.saved.hasLocator) R.string.memory_bookmark_unavailable
+                    else when (value?.status) {
+                        SavedVariableStatus.NOT_READY -> R.string.memory_saved_not_ready
+                        SavedVariableStatus.INCOMPATIBLE -> R.string.memory_saved_incompatible
+                        SavedVariableStatus.FAILED -> R.string.memory_saved_failed
+                        else -> R.string.memory_bookmark_unavailable
+                    }),
                         style = MaterialTheme.typography.labelSmall,
                         color = MaterialTheme.colorScheme.onSurfaceVariant,
                         maxLines = 2)

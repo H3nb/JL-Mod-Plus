@@ -43,6 +43,9 @@ import org.junit.Test
 class MemoryScriptsComposeTest {
     @get:Rule val rule = createComposeRule()
 
+    private fun uiText(resource: Int): String =
+        InstrumentationRegistry.getInstrumentation().targetContext.getString(resource)
+
     private val sample = """
         {
           "formatVersion":1,
@@ -117,11 +120,17 @@ class MemoryScriptsComposeTest {
         }
         rule.setContent { JLModPlusTheme { MemoryEditorRuntimeRoot(ui.value, actions) } }
         rule.onAllNodesWithText("New script")[0].performClick()
-        rule.onNodeWithText("JSON Editor").performClick()
+        rule.onNodeWithText(uiText(R.string.memory_builder_json_editor)).performClick()
         rule.onNodeWithTag("memory-script-editor").performTextReplacement(sample)
         waitForJsonValidation()
         rule.onNodeWithTag("memory-script-editor").performTextReplacement("{")
         rule.onNodeWithTag("memory-script-save").assertIsNotEnabled()
+        val invalidScript = uiText(R.string.memory_scripts_invalid)
+        rule.waitUntil(timeoutMillis = 5_000) {
+            rule.onAllNodesWithText(invalidScript).fetchSemanticsNodes().isNotEmpty()
+        }
+        rule.onNodeWithText(invalidScript).assertIsDisplayed()
+        rule.onNodeWithText(uiText(R.string.memory_technical_details)).assertIsDisplayed()
         rule.onNodeWithTag("memory-script-editor").performTextReplacement(sample)
         waitForJsonValidation()
         rule.onNodeWithText("Save").performClick()
@@ -157,7 +166,7 @@ class MemoryScriptsComposeTest {
             }
         }
         rule.onAllNodesWithText("New script")[0].performClick()
-        rule.onNodeWithText("JSON Editor").performClick()
+        rule.onNodeWithText(uiText(R.string.memory_builder_json_editor)).performClick()
         rule.onNodeWithTag("memory-script-editor").performTextReplacement(sample)
         rule.onNodeWithContentDescription("Minimize Memory Editor").performClick()
         rule.runOnIdle { showing.value = true }
@@ -188,7 +197,7 @@ class MemoryScriptsComposeTest {
             }
         }
         rule.onAllNodesWithText("New script")[0].performClick()
-        rule.onNodeWithText("JSON Editor").performClick()
+        rule.onNodeWithText(uiText(R.string.memory_builder_json_editor)).performClick()
         rule.onNodeWithTag("memory-script-editor").performTextReplacement(sample)
         waitForJsonValidation()
         rule.onNodeWithText("Save").performClick()
@@ -225,7 +234,7 @@ class MemoryScriptsComposeTest {
             }
         }
         rule.onAllNodesWithText("New script")[0].performClick()
-        rule.onNodeWithText("JSON Editor").performClick()
+        rule.onNodeWithText(uiText(R.string.memory_builder_json_editor)).performClick()
         rule.onNodeWithTag("memory-script-editor").performTextReplacement(sample)
         waitForJsonValidation()
         rule.onNodeWithText("Save").performClick()
@@ -289,9 +298,9 @@ class MemoryScriptsComposeTest {
         val actions = object : TestMemoryEditorActions() {}
         rule.setContent { JLModPlusTheme { MemoryEditorRuntimeRoot(ui.value, actions) } }
         rule.onNodeWithText("Sample Coins").performClick()
-        rule.onNodeWithText("Freeze active for this script").assertIsDisplayed()
+        rule.onNodeWithText(uiText(R.string.memory_scripts_freeze_active)).assertIsDisplayed()
         rule.runOnIdle { ui.value = ui.value.copy(scriptActiveFreezes = emptyList()) }
-        rule.onNodeWithText("Freeze active for this script").assertDoesNotExist()
+        rule.onNodeWithText(uiText(R.string.memory_scripts_freeze_active)).assertDoesNotExist()
     }
 
 
@@ -378,7 +387,7 @@ class MemoryScriptsComposeTest {
                 }
             }
         }
-        rule.onNodeWithText("JSON Editor").performScrollTo().assertIsDisplayed()
+        rule.onNodeWithText(uiText(R.string.memory_builder_json_editor)).performScrollTo().assertIsDisplayed()
     }
 
     @Test fun selectedBookmarkOpensBuilderWithItsVerifiedTarget() {
@@ -431,11 +440,41 @@ class MemoryScriptsComposeTest {
             ),
         ).assertIsSelected()
         openChooser()
-        rule.onNodeWithText("Quick Actions").performClick()
+        rule.onNodeWithText(uiText(R.string.memory_scripts_mode_once)).performClick()
         rule.onNodeWithText("Coins").assertIsDisplayed()
         rule.onNodeWithTag("memory-builder-targets")
             .performScrollToNode(hasTestTag("memory-builder-value"))
         rule.onNodeWithTag("memory-builder-value").assertIsDisplayed()
+    }
+
+    @Test fun failedBookmarkScriptCreationShowsLocalizedError() {
+        val bookmark = SavedVariableRow("coin-id", "Coins", "coins", true)
+        val state = MemoryEditorUiState(
+            visible = true, connected = true, supported = true, writeSupported = true,
+            variablesTab = true, scriptsLoaded = true, runtimeToken = 92505L,
+            savedVariables = listOf(bookmark),
+        )
+        val diagnostic = "Bookmark Coins has no verified locator"
+        val actions = object : TestMemoryEditorActions() {
+            override fun captureMemoryScriptBuilderActions(
+                bookmarks: List<SavedVariableRow>,
+            ): List<MemoryScriptBuilderAction> = error(diagnostic)
+
+            override fun setScriptsTab() = throw AssertionError("Failed creation must not open Scripts")
+        }
+        rule.setContent { JLModPlusTheme { MemoryEditorRuntimeRoot(state, actions) } }
+        rule.onNodeWithContentDescription(uiText(R.string.memory_editor_select_result_value)).performClick()
+        val action = uiText(R.string.memory_scripts_create_from_bookmarks)
+        val directAction = rule.onAllNodesWithContentDescription(action)
+        if (directAction.fetchSemanticsNodes().isNotEmpty()) {
+            directAction[0].performClick()
+        } else {
+            rule.onNodeWithContentDescription(uiText(R.string.more)).performClick()
+            rule.onNodeWithText(action).performClick()
+        }
+        rule.onNodeWithText(uiText(R.string.memory_scripts_create_failed)).assertIsDisplayed()
+        rule.onNodeWithText(diagnostic).assertDoesNotExist()
+        rule.onNodeWithContentDescription(uiText(R.string.memory_variables_tab)).assertIsSelected()
     }
 
     @Test fun builderCreatesQuickActionFromBookmarkWithoutExecutingOnSave() {
@@ -477,7 +516,7 @@ class MemoryScriptsComposeTest {
         }
         rule.setContent { JLModPlusTheme { MemoryEditorRuntimeRoot(state, actions) } }
         rule.onAllNodesWithText("New script")[0].performClick()
-        rule.onNodeWithText("Quick Actions").performClick()
+        rule.onNodeWithText(uiText(R.string.memory_scripts_mode_once)).performClick()
         rule.onNodeWithTag("memory-builder-name").performTextReplacement("Add coins")
         rule.onNodeWithTag("memory-builder-targets")
             .performScrollToNode(hasText("Add target"))
@@ -530,7 +569,7 @@ class MemoryScriptsComposeTest {
         }
         rule.onNodeWithText("Run").assertIsNotEnabled()
         rule.onNodeWithText(
-            "Bookmark target is unavailable. Refresh or relink it before running.",
+            uiText(R.string.memory_recipes_target_unavailable),
         ).assertIsDisplayed()
     }
 
@@ -573,13 +612,13 @@ class MemoryScriptsComposeTest {
             }
         }
         rule.onAllNodesWithText("New script")[0].performClick()
-        rule.onNodeWithText("JSON Editor").performClick()
+        rule.onNodeWithText(uiText(R.string.memory_builder_json_editor)).performClick()
         rule.onNodeWithTag("memory-script-editor").performTextReplacement(sample)
         waitForJsonValidation()
         rule.onNodeWithText("Save").performClick()
         val editor = rule.onNodeWithTag("memory-script-editor").assertIsDisplayed()
             .fetchSemanticsNode()
         assertTrue(editor.config[SemanticsProperties.EditableText].text.contains("sample.coins"))
-        rule.onNodeWithText("Could not save script").assertIsDisplayed()
+        rule.onNodeWithText(uiText(R.string.memory_scripts_save_failed)).assertIsDisplayed()
     }
 }

@@ -348,11 +348,17 @@ class ControlSkinManagerActivity : AppCompatActivity() {
                     busy = false
                 }
             } catch (error: Exception) {
+                android.util.Log.w("ControlSkinManager", "Control skin operation failed", error)
+                val resource = errorMessageRes ?: when (error) {
+                    is ControlSkinStore.InvalidNameException -> R.string.control_skin_invalid_name
+                    is ControlSkinStore.NameConflictException -> R.string.file_picker_folder_exists
+                    is ControlSkinStore.ImageValidationException -> R.string.control_skin_image_validation_failed
+                    else -> R.string.control_skin_operation_failed
+                }
                 runOnUiThread {
                     if (!isDestroyed && !isFinishing) {
                         busy = false
-                        notifyError(if (errorMessageRes != null) getString(errorMessageRes)
-                            else error.message ?: getString(R.string.control_skin_operation_failed))
+                        notifyError(getString(resource))
                     }
                 }
             }
@@ -706,7 +712,11 @@ class ControlSkinManagerActivity : AppCompatActivity() {
             )
             DropdownMenuItem(
                 text = { Text(stringResource(R.string.control_skin_duplicate)) },
-                onClick = { onDismiss(); editName(NameAction.DUPLICATE, set.id, set.name + " Copy") },
+                onClick = {
+                    onDismiss()
+                    val name = ControlSkinSetTransfer.availableName(set.name, sets.map { it.name })
+                    editName(NameAction.DUPLICATE, set.id, name)
+                },
             )
             DropdownMenuItem(
                 text = { Text(stringResource(R.string.control_skin_export_zip)) },

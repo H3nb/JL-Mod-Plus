@@ -1,0 +1,47 @@
+<?xml version="1.0" encoding="utf-8"?>
+<!-- Shared UI actions, generic labels, dialogs, and About screen. -->
+<resources xmlns:xliff="urn:oasis:names:tc:xliff:document:1.2">
+    <string name="about">เกี่ยวกับ</string>
+    <string name="about_message">เรียกใช้แอปและเกมคลาสสิก จัดระเบียบ MIDlet ในคลังแอปของคุณ และปรับแต่งการควบคุม การแสดงผล เสียง และประสิทธิภาพ JL-Mod Plus เป็นซอฟต์แวร์ฟรีและโอเพนซอร์ส</string>
+    <string name="about_subtitle">โปรแกรมจำลอง Java ME สำหรับ Android</string>
+    <string name="about_compatibility">ความเข้ากันได้ขึ้นอยู่กับ MIDlet อุปกรณ์ และ Java ME API ที่รองรับ แอปบางตัวอาจทำงานแตกต่างจากตอนที่ใช้งานบนอุปกรณ์เดิม</string>
+    <string name="about_lineage_title">ที่มาของโปรเจกต์</string>
+    <string name="about_build_title">ข้อมูลบิลด์</string>
+    <string name="about_version_label">เวอร์ชัน</string>
+    <string name="about_build_label">บิลด์</string>
+    <string name="about_revision_label">รหัสซอร์สโค้ด</string>
+    <string name="about_links_title">โปรเจกต์และสัญญาอนุญาต</string>
+    <string name="about_github_link_copied">ไม่พบเบราว์เซอร์ คัดลอกลิงก์ GitHub ไปยังคลิปบอร์ดแล้ว</string>
+    <string name="about_github_browser_unavailable">ไม่พบเบราว์เซอร์สำหรับเปิด GitHub</string>
+    <string name="about_lineage">JL-Mod Plus เป็นฟอร์กอิสระจาก JL-Mod โดย woesss (Yury Kharchenko) ซึ่ง JL-Mod พัฒนาต่อจาก J2ME Loader โดย Nikita Shakarun ที่มีรากฐานจาก J2meLoader ของ NaikSoftware</string>
+    <string name="about_evolution">JL-Mod Plus ต่อยอดจากรากฐานดังกล่าวด้วยอินเทอร์เฟซที่ทันสมัย คลังแอป MIDlet ที่ทรงพลังขึ้น ฟีเจอร์ใหม่ และการรองรับ Android เวอร์ชันใหม่</string>
+    <string name="action_back">ย้อนกลับ</string>
+    <string name="action_settings">การตั้งค่า</string>
+    <string name="CANCEL_CMD">ยกเลิก</string>
+    <string name="change">เปลี่ยน</string>
+    <string name="choose">เลือก</string>
+    <string name="close">ปิด</string>
+    <string name="cmd_menu">เมนู</string>
+    <string name="CONFIRMATION_REQUIRED">ต้องยืนยัน</string>
+    <string name="create">สร้าง</string>
+    <string name="default_label"><xliff:g id="name" example="Example">%1$s</xliff:g> (ค่าเริ่มต้น)</string>
+    <string name="dismiss">ปิด</string>
+    <string name="edit">แก้ไข</string>
+    <string name="error">ข้อผิดพลาด</string>
+    <string name="error_name">ป้อนชื่อ</string>
+    <string name="exit">ออก</string>
+    <string name="help">ความช่วยเหลือ</string>
+    <string name="install">ติดตั้ง</string>
+    <string name="licenses">สัญญาอนุญาต</string>
+    <string name="licenses_unavailable">ไม่มีข้อมูลสัญญาอนุญาต</string>
+    <string name="loading_info">กำลังโหลดข้อมูล…</string>
+    <string name="more">เพิ่มเติม</string>
+    <string name="not_saved_exists">มีอยู่แล้ว</string>
+    <string name="reset">รีเซ็ต</string>
+    <string name="retry">ลองใหม่</string>
+    <string name="save">บันทึก</string>
+    <string name="saved">บันทึก <xliff:g id="name" example="Example">%1$s</xliff:g> แล้ว</string>
+    <string name="START_CMD">เริ่ม</string>
+    <string name="warning">คำเตือน</string>
+    <string name="removed">ลบ <xliff:g id="name" example="Example">%1$s</xliff:g> ออกแล้ว</string>
+</resources>

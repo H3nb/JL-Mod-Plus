@@ -1,0 +1,291 @@
+<?xml version="1.0" encoding="utf-8"?>
+<!-- Cerca de l’Editor de memòria, inspector, marcadors, variables desades, accions ràpides i creador de scripts. -->
+<resources xmlns:tools="http://schemas.android.com/tools" xmlns:xliff="urn:oasis:names:tc:xliff:document:1.2">
+    <string name="memory_editor_bubble">Botó flotant de l’Editor de memòria</string>
+    <string name="memory_editor_bubble_content_description">Obre l’Editor de memòria</string>
+    <string name="memory_editor_previous_results_page_action">Pàgina anterior de resultats</string>
+    <string name="memory_editor_next_results_page_action">Pàgina següent de resultats</string>
+    <string name="memory_editor">Editor de memòria</string>
+    <string name="memory_editor_search_hint">Valor</string>
+    <string name="memory_editor_next_scan">Anàlisi següent</string>
+    <string name="memory_editor_new_search">Cerca nova</string>
+    <plurals name="memory_editor_results">
+        <item quantity="one"><xliff:g id="count" example="3">%1$d</xliff:g> resultat</item>
+        <item quantity="many"><xliff:g id="count" example="3">%1$d</xliff:g> resultats</item>
+        <item quantity="other"><xliff:g id="count" example="3">%1$d</xliff:g> resultats</item>
+    </plurals>
+    <plurals name="memory_editor_candidates">
+        <item quantity="one"><xliff:g id="count" example="3">%1$d</xliff:g> candidat</item>
+        <item quantity="many"><xliff:g id="count" example="3">%1$d</xliff:g> candidats</item>
+        <item quantity="other"><xliff:g id="count" example="3">%1$d</xliff:g> candidats</item>
+    </plurals>
+    <plurals name="memory_editor_search_complete">
+        <item quantity="one">Cerca finalitzada · <xliff:g id="count" example="3">%1$d</xliff:g> candidat</item>
+        <item quantity="many">Cerca finalitzada · <xliff:g id="count" example="3">%1$d</xliff:g> candidats</item>
+        <item quantity="other">Cerca finalitzada · <xliff:g id="count" example="3">%1$d</xliff:g> candidats</item>
+    </plurals>
+    <string name="memory_editor_no_results">Sense resultats</string>
+    <string name="memory_editor_no_watch">La llista de seguiment és buida</string>
+    <string name="memory_editor_unsupported">L’Editor de memòria no està disponible per a aquest entorn d’execució.</string>
+    <string name="memory_editor_engine_unavailable">El motor de l’Editor de memòria no està disponible.</string>
+    <string name="memory_editor_engine_reconnecting">S’està reconnectant l’Editor de memòria…</string>
+    <string name="memory_editor_refresh">Actualitza</string>
+    <string name="memory_editor_undo">Desfés l’anàlisi</string>
+    <string name="memory_variables_tab">Desats</string>
+    <string name="memory_editor_back" tools:ignore="MissingTranslation">Enrere</string>
+    <string name="memory_list_keep" tools:ignore="MissingTranslation">Conserva per al proper inici</string>
+    <string name="memory_list_stop_keeping" tools:ignore="MissingTranslation">Deixa de conservar</string>
+    <string name="memory_list_kept" tools:ignore="MissingTranslation">Conservat per al proper inici</string>
+    <string name="memory_list_empty" tools:ignore="MissingTranslation">Encara no hi ha marcadors desats</string>
+    <string name="memory_list_empty_hint" tools:ignore="MissingTranslation">Afegeix als marcadors una variable de Cerca o de l’Inspector per fer-ne el seguiment aquí.</string>
+    <string name="memory_list_remove_confirm" tools:ignore="MissingTranslation">Vols suprimir-ho de Desats? S’aturarà qualsevol congelació activa.</string>
+    <string name="memory_list_add" tools:ignore="MissingTranslation">Afegeix als marcadors</string>
+    <string name="memory_bookmark_relink" tools:ignore="MissingTranslation">Torna a vincular</string>
+    <string name="memory_bookmark_relink_hint" tools:ignore="MissingTranslation">Selecciona la variable de substitució a Cerca i després tria Torna a vincular.</string>
+    <string name="memory_bookmark_relink_confirm" tools:ignore="MissingTranslation">Vols vincular aquest marcador a la variable seleccionada? S’aturarà qualsevol congelació activa en aquest marcador.</string>
+    <string name="memory_bookmark_unavailable" tools:ignore="MissingTranslation">No disponible — selecciona Torna a vincular per triar una destinació</string>
+    <string name="memory_editor_watch">Seguiment</string>
+    <string name="memory_editor_search_tab">Cerca</string>
+    <string name="memory_editor_search_known_values">Cerca valors coneguts</string>
+    <string name="memory_editor_search_unknown_values">Cerca valors desconeguts</string>
+    <string name="memory_editor_add_to_watch">Afegeix els valors seleccionats als marcadors</string>
+    <string name="memory_editor_no_candidates">No s’han trobat valors cercables</string>
+    <string name="memory_editor_edit">Edita</string>
+    <plurals name="memory_editor_edit_batch">
+        <item quantity="one">Edita <xliff:g id="count" example="3">%1$d</xliff:g> valor</item>
+        <item quantity="many">Edita <xliff:g id="count" example="3">%1$d</xliff:g> valors</item>
+        <item quantity="other">Edita <xliff:g id="count" example="3">%1$d</xliff:g> valors</item>
+    </plurals>
+    <string name="memory_editor_edit_batch_no_common_type">Els elements seleccionats no admeten el tipus de dades triat. Edita els elements compatibles per separat.</string>
+    <string name="memory_editor_save">Aplica</string>
+    <string name="memory_editor_replacement">Valor de substitució</string>
+    <string name="memory_editor_freeze">Congela</string>
+    <string name="memory_editor_remove">Suprimeix</string>
+    <string name="memory_editor_select_visible">Selecciona els visibles</string>
+    <string name="memory_editor_clear_selection">Esborra la selecció</string>
+    <plurals name="memory_editor_selected">
+        <item quantity="one"><xliff:g id="count" example="3">%1$d</xliff:g> seleccionat</item>
+        <item quantity="many"><xliff:g id="count" example="3">%1$d</xliff:g> seleccionats</item>
+        <item quantity="other"><xliff:g id="count" example="3">%1$d</xliff:g> seleccionats</item>
+    </plurals>
+    <string name="memory_editor_close">Tanca l’Editor de memòria</string>
+    <string name="memory_editor_searching">S’està cercant a la memòria…</string>
+    <string name="memory_editor_working">S’està aplicant l’operació…</string>
+    <string name="memory_editor_search_progress">Analitzats <xliff:g id="scanned_mib" example="12">%1$d</xliff:g> de <xliff:g id="total_mib" example="64">%2$d</xliff:g> MiB</string>
+    <string name="memory_editor_candidate_moved">Destinació actualitzada</string>
+    <string name="memory_editor_candidate_relocating">S’està revalidant</string>
+    <string name="memory_editor_candidate_ambiguous">Ambigu — escriptures en pausa</string>
+    <string name="memory_editor_candidate_lost">Perdut — escriptures en pausa</string>
+    <string name="memory_editor_apply">Aplica</string>
+    <string name="memory_editor_min_value">Valor mínim</string>
+    <string name="memory_editor_max_value">Valor màxim</string>
+    <string name="memory_editor_change_amount">Quantitat de canvi</string>
+    <string name="memory_editor_min_change">Canvi mínim</string>
+    <string name="memory_editor_max_change">Canvi màxim</string>
+    <string name="memory_editor_unfreeze">Descongela</string>
+    <string name="memory_editor_cancelled">Operació cancel·lada.</string>
+    <string name="memory_editor_resource_limit">L’Editor de memòria ha arribat a un límit de seguretat. Prova amb una cerca més específica o suprimeix marcadors o congelacions sense ús.</string>
+    <string name="memory_editor_identity_unsafe">No s’ha pogut verificar el valor seleccionat ni l’estat de la cerca. Actualitza els resultats o torna a obrir l’Inspector i torna-ho a provar.</string>
+    <string name="memory_editor_safety_limit">Hi ha massa valors seleccionats per a aquesta operació. Selecciona’n menys i torna-ho a provar.</string>
+    <string name="memory_editor_invalid_request">El valor o l’operació no són vàlids.</string>
+    <string name="memory_editor_freeze_paused">En pausa per seguretat</string>
+    <string name="memory_editor_predicate_between">Entre</string>
+    <string name="memory_editor_predicate_changed">Canviat</string>
+    <string name="memory_editor_predicate_unchanged">Sense canvis</string>
+    <string name="memory_editor_predicate_increased">Augmentat</string>
+    <string name="memory_editor_predicate_decreased">Disminuït</string>
+    <string name="memory_editor_predicate_increased_by">Augmentat en</string>
+    <string name="memory_editor_predicate_decreased_by">Disminuït en</string>
+    <string name="memory_editor_predicate_changed_by">Canviat en</string>
+    <string name="memory_editor_predicate_increased_range">Quantitat d’augment dins l’interval</string>
+    <string name="memory_editor_predicate_decreased_range">Quantitat de disminució dins l’interval</string>
+    <string name="memory_editor_inspector">Inspector</string>
+    <string name="memory_editor_inspect_memory">Inspecciona la memòria propera</string>
+    <string name="memory_editor_inspector_loading">S’està verificant el resultat i llegint la memòria propera…</string>
+    <string name="memory_editor_inspector_empty">Selecciona un resultat per inspeccionar la memòria propera.</string>
+    <string name="memory_editor_inspector_no_rows">No hi ha memòria propera disponible per inspeccionar.</string>
+    <string name="memory_editor_refresh_snapshot">Actualitza la instantània</string>
+    <string name="memory_editor_select_result_value">Selecciona aquest marcador</string>
+    <string name="memory_editor_freeze_after_edit">Congela en aplicar</string>
+    <string name="memory_editor_freeze_after_edit_help">Manté aquest valor bloquejat i l’afegeix als marcadors a Desats.</string>
+    <string name="memory_editor_expression_single_hint">Introdueix un valor o separa els valors de grup amb punt i coma (;).</string>
+    <string name="memory_editor_expression_group_needs_type">Tria un tipus de dades específic per a la cerca en grup.</string>
+    <plurals name="memory_editor_expression_group_hint">
+        <item quantity="one">Cerca en grup · <xliff:g id="count" example="3">%1$d</xliff:g> valor · mateix objecte Java</item>
+        <item quantity="many">Cerca en grup · <xliff:g id="count" example="3">%1$d</xliff:g> valors · mateix objecte Java</item>
+        <item quantity="other">Cerca en grup · <xliff:g id="count" example="3">%1$d</xliff:g> valors · mateix objecte Java</item>
+    </plurals>
+    <string name="memory_editor_expression_query_help">Exemples: 500 o 500;1000. La cerca en grup busca de 2 a 8 valors al mateix objecte Java.</string>
+    <string name="memory_editor_keypad_clear">Esborra</string>
+    <string name="memory_editor_peek_underlay">Mantén premut per veure el MIDlet a sota</string>
+    <string name="memory_editor_peek_underlay_active">Mostrant el MIDlet a sota</string>
+    <string name="memory_editor_no_runtime">No hi ha cap entorn d’execució de MIDlet actiu.</string>
+    <string name="memory_editor_no_search_history">No hi ha cap cerca anterior per restaurar.</string>
+    <string name="memory_editor_partial_write">L’operació d’escriptura no s’ha completat del tot. Comprova els valors actuals abans de tornar-ho a provar.</string>
+    <!-- Recomptes d’escriptura independents: confirmades, sense confirmar, omeses, no intentades i tipus de dades incompatible. -->
+    <string name="memory_editor_write_outcome">Escriptures confirmades: <xliff:g id="confirmed" example="3">%1$d</xliff:g>. Sense confirmar: <xliff:g id="unconfirmed" example="0">%2$d</xliff:g>. Omeses: <xliff:g id="skipped" example="0">%3$d</xliff:g>. No intentades: <xliff:g id="not_attempted" example="0">%4$d</xliff:g>. Omeses per tipus: <xliff:g id="skipped_by_type" example="0">%5$d</xliff:g>.</string>
+    <!-- %1$s és una explicació localitzada del resultat; %2$d a %6$d són els mateixos recomptes d’escriptura independents. -->
+    <string name="memory_editor_write_failure_outcome"><xliff:g id="reason" example="Write interrupted.">%1$s</xliff:g>\nEscriptures confirmades: <xliff:g id="confirmed" example="1">%2$d</xliff:g>. Sense confirmar: <xliff:g id="unconfirmed" example="1">%3$d</xliff:g>. Omeses: <xliff:g id="skipped" example="0">%4$d</xliff:g>. No intentades: <xliff:g id="not_attempted" example="0">%5$d</xliff:g>. Omeses per tipus: <xliff:g id="skipped_by_type" example="0">%6$d</xliff:g>.</string>
+    <!-- Recompte de resultats abans (%1$d) i després (%2$d) de l’anàlisi següent completada. -->
+    <string name="memory_editor_next_scan_result">Resultats de l’anàlisi següent: <xliff:g id="before_count" example="120">%1$d</xliff:g> → <xliff:g id="after_count" example="14">%2$d</xliff:g></string>
+    <string name="memory_editor_type_auto">Automàtic</string>
+    <string name="memory_editor_remove_candidates_title">Vols suprimir els resultats seleccionats?</string>
+    <string name="memory_editor_remove_candidates_description">Suprimeix: treu els resultats seleccionats de la llista de cerca. Els valors a la memòria del joc no canvien.\n\nReverteix i suprimeix: també restaura els valors d’abans de les darreres edicions confirmades, però només si els valors actuals encara coincideixen amb els valors resultants d’aquelles edicions. Els valors congelats i els resultats que no es poden restaurar de manera segura continuen a la llista.</string>
+    <string name="memory_editor_revert_and_remove">Reverteix i suprimeix</string>
+    <string name="memory_editor_revert_remove_commit_failed">És possible que els valors s’hagin restaurat, però no s’han pogut suprimir els resultats. Actualitza i torna-ho a provar; els valors canviats pel joc no se sobreescriuran.</string>
+    <string name="memory_editor_revert_remove_outcome">Restaurats: <xliff:g id="restored" example="2">%1$d</xliff:g>. Suprimits: <xliff:g id="removed" example="2">%2$d</xliff:g>. Conflictes: <xliff:g id="conflicts" example="0">%3$d</xliff:g>. Sense confirmar: <xliff:g id="unconfirmed" example="0">%4$d</xliff:g>. No intentats: <xliff:g id="not_attempted" example="0">%5$d</xliff:g>.</string>
+    <string name="memory_editor_set_all">Defineix-los tots</string>
+    <string name="memory_editor_increment_start">Valor inicial</string>
+    <string name="memory_editor_edit_batch_type_notice">Només es canviaran els valors amb tipus de dades coincidents.</string>
+    <string name="memory_editor_write_confirmed">Valors confirmats mitjançant lectura de memòria: <xliff:g id="count" example="3">%1$d</xliff:g>.</string>
+    <string name="memory_editor_candidate_untraced">Matriu #<xliff:g id="array_id" example="42">%1$d</xliff:g>[<xliff:g id="index" example="3">%2$d</xliff:g>] · Origen no rastrejat</string>
+    <string name="memory_editor_candidate_static"><xliff:g id="field_name" example="Player.coins">%1$s</xliff:g> · <xliff:g id="reference_kind" example="Static reference">%2$s</xliff:g></string>
+    <string name="memory_editor_candidate_instance"><xliff:g id="field_name" example="Player.hp">%1$s</xliff:g> · <xliff:g id="reference_kind" example="Instance reference">%2$s</xliff:g> · destinació #<xliff:g id="target_id" example="1">%3$d</xliff:g></string>
+    <string name="memory_editor_reference_static">Referència estàtica</string>
+    <string name="memory_editor_reference_instance">Referència d’instància</string>
+    <string name="memory_editor_path_changed">El camí de referència ha canviat des de l’anàlisi.</string>
+    <string name="memory_editor_path_incomplete">El camí de referència supera el límit d’inspecció.</string>
+    <string name="memory_editor_source_unknown">Origen no rastrejat</string>
+    <string name="memory_editor_incremental_edit">Incrementa</string>
+    <string name="memory_editor_increment_step">Pas</string>
+    <string name="memory_editor_increment_invalid">Utilitza un sol tipus enter i valors dins del seu interval.</string>
+    <!-- El títol del diàleg en lot ja mostra el nombre de valors seleccionats. -->
+    <string name="memory_editor_increment_preview">Previsualització: <xliff:g id="name" example="Example">%1$s</xliff:g></string>
+    <string name="memory_editor_panel_opacity">Opacitat del panell</string>
+    <string name="memory_editor_panel_opacity_help">Ajusta el fons per veure els valors del joc mentre cerques. El text i les icones continuen visibles.</string>
+    <string name="memory_editor_reconversion_required" tools:ignore="MissingTranslation">La conversió instal·lada d’aquest MIDlet no és compatible amb l’Editor de memòria. Tanca el joc i torna’l a convertir o a instal·lar a JL-Mod Plus.</string>
+    <string name="memory_saved_tab" tools:ignore="MissingTranslation">Desats</string>
+    <string name="memory_saved_save" tools:ignore="MissingTranslation">Desa la variable</string>
+    <string name="memory_saved_name" tools:ignore="MissingTranslation">Nom</string>
+    <string name="memory_saved_explanation" tools:ignore="MissingTranslation">Desa aquest camí de memòria verificat per a sessions futures. Els valors no s’escriuen mai automàticament.</string>
+    <string name="memory_saved_empty" tools:ignore="MissingTranslation">Encara no hi ha variables desades. Selecciona un resultat de cerca per desar-lo.</string>
+    <string name="memory_saved_not_ready" tools:ignore="MissingTranslation">No està a punt</string>
+    <string name="memory_saved_retry" tools:ignore="MissingTranslation">Torna-ho a provar</string>
+    <string name="memory_saved_rename" tools:ignore="MissingTranslation">Canvia el nom</string>
+    <string name="memory_saved_value" tools:ignore="MissingTranslation">Valor</string>
+    <string name="memory_saved_delete_confirm" tools:ignore="MissingTranslation">Vols suprimir aquesta definició desada? El valor del joc no canviarà.</string>
+    <string name="memory_saved_changed" tools:ignore="MissingTranslation">Canviat</string>
+    <string name="memory_saved_rebound" tools:ignore="MissingTranslation">Destinació actualitzada</string>
+    <string name="memory_saved_import_summary" tools:ignore="MissingTranslation">Desats: <xliff:g id="added_count" example="4">%1$d</xliff:g> afegits, <xliff:g id="existing_count" example="2">%2$d</xliff:g> ja presents</string>
+    <string name="memory_saved_incompatible" tools:ignore="MissingTranslation">Incompatible</string>
+    <string name="memory_saved_failed" tools:ignore="MissingTranslation">Error</string>
+    <string name="memory_saved_delete_many_confirm" tools:ignore="MissingTranslation">Vols suprimir <xliff:g id="count" example="3">%1$d</xliff:g> definicions desades? Els valors del joc no canviaran.</string>
+    <string name="memory_recipes_title" tools:ignore="MissingTranslation">Acció ràpida</string>
+    <string name="memory_recipes_simple_from_saved" tools:ignore="MissingTranslation">Destinació: <xliff:g id="bookmark_name" example="Coins">%1$s</xliff:g></string>
+    <string name="memory_recipes_preview" tools:ignore="MissingTranslation">Previsualitza les destinacions</string>
+    <string name="memory_recipes_stop_freeze" tools:ignore="MissingTranslation">Atura la congelació de valors</string>
+    <string name="memory_recipes_freeze" tools:ignore="MissingTranslation">Mantén congelat mentre s’executi aquest joc</string>
+    <string name="memory_recipes_run" tools:ignore="MissingTranslation">Executa</string>
+    <string name="memory_recipes_active_freezes" tools:ignore="MissingTranslation">Scripts que congelen valors</string>
+    <string name="memory_recipes_target_unavailable" tools:ignore="MissingTranslation">La destinació del marcador no està disponible. Actualitza’l o torna’l a vincular abans d’executar-lo.</string>
+    <string name="memory_recipes_preview_values" tools:ignore="MissingTranslation">Valors actuals: <xliff:g id="name" example="Example">%1$s</xliff:g></string>
+    <string name="memory_scripts_title" tools:ignore="MissingTranslation">Scripts</string>
+    <string name="memory_scripts_active" tools:ignore="MissingTranslation">Actiu</string>
+    <string name="memory_scripts_inputs" tools:ignore="MissingTranslation">Entrades</string>
+    <string name="memory_scripts_create_from_bookmarks" tools:ignore="MissingTranslation">Crea un script</string>
+    <string name="memory_scripts_create_failed" tools:ignore="MissingTranslation">No s’ha pogut iniciar un script nou.</string>
+    <string name="memory_scripts_draft_in_progress" tools:ignore="MissingTranslation">Finalitza o descarta primer l’esborrany d’script actual.</string>
+    <string name="memory_builder_open_saved" tools:ignore="MissingTranslation">Obre Desats</string>
+    <string name="memory_builder_add_description" tools:ignore="MissingTranslation">Afegeix una descripció</string>
+    <string name="memory_builder_find_values" tools:ignore="MissingTranslation">Cerca valors</string>
+    <string name="memory_scripts_description" tools:ignore="MissingTranslation">Descripció</string>
+    <string name="memory_scripts_new" tools:ignore="MissingTranslation">Script nou</string>
+    <string name="memory_scripts_back" tools:ignore="MissingTranslation">Enrere</string>
+    <string name="memory_scripts_edit" tools:ignore="MissingTranslation">Edita</string>
+    <string name="memory_scripts_save" tools:ignore="MissingTranslation">Desa</string>
+    <string name="memory_scripts_saved" tools:ignore="MissingTranslation">S’ha desat l’script</string>
+    <string name="memory_scripts_deleted" tools:ignore="MissingTranslation">S’ha suprimit l’script</string>
+    <string name="memory_scripts_save_failed" tools:ignore="MissingTranslation">No s’ha pogut desar l’script.</string>
+    <string name="memory_scripts_editor_hint" tools:ignore="MissingTranslation">Introdueix o enganxa un script JSON que utilitzi operacions de memòria compatibles. Desar l’script no l’executa.</string>
+    <string name="memory_scripts_paste_hint" tools:ignore="MissingTranslation">Enganxa el JSON de l’script</string>
+    <string name="memory_scripts_paste" tools:ignore="MissingTranslation">Enganxa</string>
+    <string name="memory_scripts_clipboard_invalid" tools:ignore="MissingTranslation">El porta-retalls és buit o el document supera els 64 KiB</string>
+    <string name="memory_scripts_invalid" tools:ignore="MissingTranslation">Format d’script no vàlid</string>
+    <string name="memory_scripts_freeze_active" tools:ignore="MissingTranslation">Aquest script congela valors</string>
+    <string name="memory_scripts_delete" tools:ignore="MissingTranslation">Suprimeix</string>
+    <string name="memory_scripts_delete_confirm" tools:ignore="MissingTranslation">Vols suprimir <xliff:g id="name" example="Example">%1$s</xliff:g>? S’aturarà qualsevol congelació activa d’aquest script.</string>
+    <string name="memory_scripts_empty" tools:ignore="MissingTranslation">No hi ha scripts desats</string>
+    <string name="memory_scripts_unsaved_title" tools:ignore="MissingTranslation">Vols descartar l’script sense desar?</string>
+    <string name="memory_scripts_unsaved_message" tools:ignore="MissingTranslation">Els canvis de l’script no s’han desat.</string>
+    <string name="memory_scripts_discard" tools:ignore="MissingTranslation">Descarta</string>
+    <string name="memory_scripts_current_title" tools:ignore="MissingTranslation">Darrera lectura</string>
+    <string name="memory_scripts_refresh" tools:ignore="MissingTranslation">Actualitza</string>
+    <string name="memory_scripts_reading" tools:ignore="MissingTranslation">S’estan llegint els valors actuals…</string>
+    <string name="memory_scripts_refresh_hint" tools:ignore="MissingTranslation">Toca Actualitza per llegir els valors actuals del joc en execució.</string>
+    <string name="memory_scripts_mode_toggle" tools:ignore="MissingTranslation">Congela valors</string>
+    <string name="memory_scripts_mode_form" tools:ignore="MissingTranslation">Editor de valors</string>
+    <string name="memory_scripts_mode_once" tools:ignore="MissingTranslation">Accions ràpides</string>
+    <string name="memory_scripts_mode_legacy" tools:ignore="MissingTranslation">Script avançat</string>
+    <string name="memory_scripts_edit_values" tools:ignore="MissingTranslation">Edita valors</string>
+    <string name="memory_scripts_apply" tools:ignore="MissingTranslation">Aplica els canvis</string>
+    <string name="memory_scripts_refresh_required" tools:ignore="MissingTranslation">Actualitza per verificar els valors actuals abans d’aplicar-los.</string>
+    <string name="memory_scripts_inconsistent" tools:ignore="MissingTranslation">Còpies incoherents: <xliff:g id="name" example="Example">%1$s</xliff:g></string>
+    <string name="memory_editor_minimize" tools:ignore="MissingTranslation">Minimitza l’Editor de memòria</string>
+    <string name="memory_scripts_choose_type" tools:ignore="MissingTranslation">Script nou</string>
+    <string name="memory_scripts_choose_hint" tools:ignore="MissingTranslation">Tria com ha de funcionar aquest script.</string>
+    <string name="memory_builder_json_editor" tools:ignore="MissingTranslation">Editor JSON</string>
+    <string name="memory_builder_freeze_hint" tools:ignore="MissingTranslation">Manté bloquejats els valors seleccionats mentre estigui activat. Desactivar la congelació no restaura els valors anteriors.</string>
+    <string name="memory_builder_form_hint" tools:ignore="MissingTranslation">Crea un formulari que llegeix els valors actuals abans d’aplicar edicions.</string>
+    <string name="memory_builder_actions_hint" tools:ignore="MissingTranslation">Aplica els canvis una vegada cada cop que premis Executa. Sumar i restar utilitzen els valors actuals, inclosos els canvis de les execucions anteriors.</string>
+    <string name="memory_builder_name" tools:ignore="MissingTranslation">Nom de l’script</string>
+    <string name="memory_builder_frozen_values" tools:ignore="MissingTranslation">Valors congelats</string>
+    <string name="memory_builder_fields" tools:ignore="MissingTranslation">Camps</string>
+    <string name="memory_builder_actions" tools:ignore="MissingTranslation">Accions</string>
+    <string name="memory_builder_add_bookmarks" tools:ignore="MissingTranslation">Afegeix des dels marcadors</string>
+    <string name="memory_builder_empty" tools:ignore="MissingTranslation">Afegeix com a mínim un marcador verificat.</string>
+    <string name="memory_builder_field_label" tools:ignore="MissingTranslation">Etiqueta del camp</string>
+    <string name="memory_builder_keep_at" tools:ignore="MissingTranslation">Mantén a</string>
+    <string name="memory_builder_amount" tools:ignore="MissingTranslation">Valor / quantitat</string>
+    <string name="memory_builder_set" tools:ignore="MissingTranslation">Defineix</string>
+    <string name="memory_builder_add" tools:ignore="MissingTranslation">Suma</string>
+    <string name="memory_builder_subtract" tools:ignore="MissingTranslation">Resta</string>
+    <string name="memory_builder_view_json" tools:ignore="MissingTranslation">Mostra el JSON</string>
+    <string name="memory_builder_edit_json" tools:ignore="MissingTranslation">Edita el JSON</string>
+    <string name="memory_builder_search_bookmarks" tools:ignore="MissingTranslation">Cerca marcadors</string>
+    <string name="memory_builder_no_bookmarks" tools:ignore="MissingTranslation">No hi ha marcadors verificats que coincideixin. Afegeix un valor als marcadors a Cerca o torna’n a vincular un a Desats.</string>
+    <string name="memory_builder_needs_relink" tools:ignore="MissingTranslation">Cal tornar a vincular</string>
+    <string name="memory_builder_add_selected" tools:ignore="MissingTranslation">Afegeix els seleccionats</string>
+    <string name="memory_builder_min" tools:ignore="MissingTranslation">Mínim (opcional)</string>
+    <string name="memory_builder_max" tools:ignore="MissingTranslation">Màxim (opcional)</string>
+    <string name="memory_builder_add_target" tools:ignore="MissingTranslation">Afegeix una destinació</string>
+    <string name="memory_builder_freeze_short" tools:ignore="MissingTranslation">Mantén constants els valors seleccionats</string>
+    <string name="memory_builder_form_short" tools:ignore="MissingTranslation">Ajusta diversos valors en un sol lloc</string>
+    <string name="memory_builder_actions_short" tools:ignore="MissingTranslation">Executa accions puntuals de Defineix, Suma o Resta</string>
+    <string name="memory_editor_refine_scan" tools:ignore="MissingTranslation">Afina</string>
+    <string name="memory_scripts_saved_count" tools:ignore="MissingTranslation"><xliff:g id="count" example="3">%1$d</xliff:g> desats</string>
+    <string name="memory_scripts_empty_hint" tools:ignore="MissingTranslation">Crea un script per editar o congelar valors mentre jugues.</string>
+    <string name="memory_builder_limits" tools:ignore="MissingTranslation">Límits (opcional)</string>
+    <string name="memory_editor_selection_limit">Selecciona com a màxim %1$d valors.</string>
+    <string name="memory_saved_storage_unavailable">No es pot accedir als elements desats.</string>
+    <string name="memory_bookmark_renamed">Marcador reanomenat</string>
+    <string name="memory_editor_memory_unavailable">La memòria del MIDlet no està disponible.</string>
+    <string name="memory_bookmark_added">Marcador afegit</string>
+    <string name="memory_bookmark_relinked">Marcador tornat a enllaçar</string>
+    <string name="memory_bookmarks_removed">Suprimit dels elements desats</string>
+    <string name="memory_freeze_enabled">Congelació activada</string>
+    <string name="memory_freeze_unavailable">No s’ha pogut activar la congelació.</string>
+    <string name="memory_list_session_only_failed">No s’ha pogut conservar l’element només per a la sessió actual.</string>
+    <string name="memory_list_kept_unlinked">Desat per al proper inici, però no s’ha pogut enllaçar amb la sessió actual.</string>
+    <string name="memory_list_removal_unavailable">No es poden suprimir elements sense connexió. Torna-ho a provar.</string>
+    <string name="memory_list_watch_removed">Seguiment de la sessió suprimit</string>
+    <string name="memory_list_bookmark_removal_failed">No s’han pogut suprimir els marcadors: %1$s</string>
+    <string name="memory_list_watch_removal_failed">No s’ha pogut suprimir el seguiment de la sessió: %1$s</string>
+    <string name="memory_list_removal_unknown_error">Error desconegut</string>
+    <string name="memory_editor_edit_freeze_failed">Valor actualitzat, però no s’ha pogut iniciar la congelació. Comprova el valor actual abans de tornar-ho a provar.</string>
+    <string name="memory_scripts_freeze_inactive">Aquest script ja no congela valors.</string>
+    <string name="memory_bookmark_change_incomplete">No s’ha pogut completar el canvi del marcador. Comprova Desats abans de tornar-ho a provar.</string>
+    <string name="memory_editor_value_updated">Valor actualitzat.</string>
+    <string name="memory_editor_value_updated_frozen">Valor actualitzat i congelació activada.</string>
+    <string name="memory_scripts_delete_failed">No s’ha pogut suprimir el script. Comprova l’estat de la congelació abans de tornar-ho a provar.</string>
+    <string name="memory_scripts_check_input">No s’ha pogut preparar el script. Comprova’n els valors i els marcadors.</string>
+    <string name="memory_scripts_read_failed">No s’han pogut llegir els valors actuals. Actualitza’ls i torna-ho a provar.</string>
+    <string name="memory_technical_details">Detalls tècnics</string>
+    <string name="memory_scripts_resource_limit">El script ha arribat a un límit de seguretat. Redueix els objectius o atura les congelacions que no utilitzes.</string>
+    <string name="memory_scripts_target_changed">No s’ha pogut verificar l’objectiu del script. Actualitza’n els valors i comprova els marcadors.</string>
+    <string name="memory_scripts_operation_unavailable">Aquesta operació del script no és compatible amb l’objectiu actual.</string>
+    <string name="memory_scripts_invalid_input">Comprova les entrades del script. Introdueix valors vàlids dins dels intervals permesos.</string>
+    <string name="memory_scripts_value_range">Un valor és fora de l’interval admès. Comprova el script i els seus valors.</string>
+    <string name="memory_scripts_inconsistent_values">Les còpies del mateix valor no coincideixen. Comprova l’estat del joc abans de tornar-ho a provar.</string>
+    <string name="memory_scripts_wrong_midlet">Aquest script és per a un altre MIDlet. Obre el MIDlet correcte o tria un altre script.</string>
+    <string name="memory_scripts_target_not_ready">L’objectiu del script encara no està a punt. Torna a la pantalla corresponent del joc i torna-ho a provar.</string>
+</resources>

@@ -1,0 +1,107 @@
+<?xml version="1.0" encoding="utf-8"?>
+<!-- Virtual keypad controls, layout editor, physical key mappings, and control skins. -->
+<resources xmlns:tools="http://schemas.android.com/tools" xmlns:xliff="urn:oasis:names:tc:xliff:document:1.2">
+    <string name="alert_map_menu">Мәзір пернесі (M) тағайындалмаған.\nОйын кезінде MIDlet мәзірін аша алмауыңыз мүмкін.</string>
+    <string name="dismiss_mapping">Перне тағайындауды жабу</string>
+    <string name="layout_edit_finish">Өңдеуді аяқтау</string>
+    <string name="layout_edit_done">Дайын</string>
+    <string name="layout_editor_grid_size">Тор өлшемі</string>
+    <string name="layout_editor_grid_coarse">Ірі (16)</string>
+    <string name="layout_editor_grid_normal">Қалыпты (24)</string>
+    <string name="layout_editor_grid_fine">Ұсақ (32)</string>
+    <string name="layout_editor_snap_on">Байланыстыру қосулы</string>
+    <string name="layout_editor_snap_off">Байланыстыру өшірулі</string>
+    <string name="layout_edit_save_changes">Виртуалды басқару өзгерістерін сақтау керек пе?</string>
+    <string name="layout_edit_discard">Болдырмау</string>
+    <string name="layout_edit_continue">Өңдеуді жалғастыру</string>
+    <string name="layout_edit_finished">Виртуалды басқаруды өңдеу аяқталды.</string>
+    <string name="virtual_controls_save_failed">Виртуалды басқару сақталмады. Қайталап көріңіз.</string>
+    <string name="layout_switch">Басқару орналасуын таңдау</string>
+    <string name="mapping_dialog_key_not_specified">Енгізулер тағайындалмаған.</string>
+    <string name="mapping_dialog_message">Осы басқару элементіне тағайындау үшін физикалық пернені немесе түймені басыңыз.</string>
+    <string name="mapping_dialog_assigned_inputs">Тағайындалған енгізулер</string>
+    <string name="mapping_dialog_add_input">Бірнеше физикалық енгізу тағайындауға болады.</string>
+    <string name="mapping_dialog_remove">Алып тастау</string>
+    <string name="mapping_dialog_title">Пернені немесе түймені басыңыз</string>
+    <string name="message_reset_layout">Виртуалды басқару орналасуын әдепкі қалпына келтіру керек пе?</string>
+    <string name="RESET_LAYOUT_CMD">Виртуалды басқару орналасуын қалпына келтіру</string>
+    <string name="saved_keyboard_layout_summary">Виртуалды басқару орналасуы сақталды.</string>
+    <string name="control_skin_title">Виртуалды басқару безендіруі</string>
+    <string name="control_skin_create" tools:ignore="MissingTranslation">Жинақ жасау</string>
+    <string name="control_skin_default" tools:ignore="MissingTranslation">Әдепкі түймелер</string>
+    <string name="control_skin_edit" tools:ignore="MissingTranslation">Өңдеу</string>
+    <string name="control_skin_rename" tools:ignore="MissingTranslation">Атын өзгерту</string>
+    <string name="control_skin_duplicate" tools:ignore="MissingTranslation">Көшірмелеу</string>
+    <string name="control_skin_delete" tools:ignore="MissingTranslation">Жою</string>
+    <string name="control_skin_import_zip" tools:ignore="MissingTranslation">ZIP импорттау</string>
+    <string name="control_skin_export_zip" tools:ignore="MissingTranslation">ZIP экспорттау</string>
+    <string name="control_skin_select_export_folder" tools:ignore="MissingTranslation">Экспорт қалтасын таңдау</string>
+    <string name="control_skin_imported" tools:ignore="MissingTranslation">Импортталды: <xliff:g id="skin_name" example="Classic Nokia">%1$s</xliff:g></string>
+    <string name="control_skin_already_available" tools:ignore="MissingTranslation">«<xliff:g id="skin_name" example="Classic Nokia">%1$s</xliff:g>» бұрыннан қолжетімді</string>
+    <string name="control_skin_exported" tools:ignore="MissingTranslation">Сақталды: <xliff:g id="skin_name" example="Classic Nokia">%1$s</xliff:g></string>
+    <string name="control_skin_archive_invalid_path" tools:ignore="MissingTranslation">Таңдалған орын қолжетімсіз.</string>
+    <string name="control_skin_archive_import_failed" tools:ignore="MissingTranslation">Басқару безендіруі импортталмады. ZIP файлында бір жарамды жинақ барына көз жеткізіңіз.</string>
+    <string name="control_skin_archive_export_failed" tools:ignore="MissingTranslation">Басқару безендіруі экспортталмады. Безендіру кітапханасынан тыс жазуға рұқсаты бар қалтаны таңдаңыз.</string>
+    <string name="control_skin_name" tools:ignore="MissingTranslation">Жинақ атауы</string>
+    <string name="control_skin_icon" tools:ignore="MissingTranslation">Тек белгіше</string>
+    <string name="control_skin_full" tools:ignore="MissingTranslation">Толық түйме</string>
+    <string name="control_skin_normal_image" tools:ignore="MissingTranslation">Қалыпты сурет</string>
+    <string name="control_skin_pressed_image" tools:ignore="MissingTranslation">Басылған сурет</string>
+    <string name="control_skin_delete_warning" tools:ignore="MissingTranslation">Осы ортақ безендіру жинағын және оның барлық суретін жою керек пе? Оны пайдаланатын MIDlet-тер келесі іске қосылғанда әдепкі басқару элементтерін пайдаланады.</string>
+    <string name="control_skin_invalid_image" tools:ignore="MissingTranslation">PNG, WebP немесе SVG суретін таңдаңыз.</string>
+    <string name="control_skin_operation_failed" tools:ignore="MissingTranslation">Басқару мұқабасының операциясын аяқтау мүмкін болмады.</string>
+    <string name="control_skin_missing" tools:ignore="MissingTranslation">Жинақ қолжетімсіз (әдепкі басқару)</string>
+    <string name="control_skin_remove_image" tools:ignore="MissingTranslation">Алып тастау</string>
+    <string name="control_skin_manage" tools:ignore="MissingTranslation">Жинақты басқару</string>
+    <string name="control_skin_manage_named" tools:ignore="MissingTranslation">«<xliff:g id="skin_name" example="Classic Nokia">%1$s</xliff:g>» жинағын басқару</string>
+    <plurals name="control_skin_count">
+        <item quantity="one"><xliff:g id="count" example="4">%1$d</xliff:g> теңшелген элемент</item>
+        <item quantity="other"><xliff:g id="count" example="4">%1$d</xliff:g> теңшелген элемент</item>
+    </plurals>
+    <string name="control_skin_empty" tools:ignore="MissingTranslation">Басқару суреттерін теңшеу үшін жинақ жасаңыз.</string>
+    <string name="control_skin_numeric" tools:ignore="MissingTranslation">Пернетақта</string>
+    <string name="control_skin_navigation" tools:ignore="MissingTranslation">Навигация</string>
+    <string name="control_skin_other" tools:ignore="MissingTranslation">Басқа түймелер</string>
+    <string name="control_skin_pressed_requires_normal" tools:ignore="MissingTranslation">Алдымен қалыпты суретті қосыңыз.</string>
+    <string name="control_skin_edit_named" tools:ignore="MissingTranslation"><xliff:g id="button_label" example="5">%1$s</xliff:g> түймесі</string>
+    <string name="control_skin_change_image" tools:ignore="MissingTranslation">Өзгерту</string>
+    <string name="control_skin_pick_image" tools:ignore="MissingTranslation">Сурет таңдау</string>
+    <string name="control_skin_soft_left" tools:ignore="MissingTranslation">Сол софт</string>
+    <string name="control_skin_soft_right" tools:ignore="MissingTranslation">Оң софт</string>
+    <string name="control_skin_fire" tools:ignore="MissingTranslation">Әрекет</string>
+    <string name="control_skin_menu" tools:ignore="MissingTranslation">Мәзір</string>
+    <string name="control_skin_movement" tools:ignore="MissingTranslation">Қозғалыс басқаруы</string>
+    <string name="control_skin_dpad" tools:ignore="MissingTranslation">D-pad</string>
+    <string name="control_skin_analog" tools:ignore="MissingTranslation">Аналогтық стик</string>
+    <string name="control_skin_dpad_base" tools:ignore="MissingTranslation">D-pad суреті</string>
+    <string name="control_skin_overlay_up" tools:ignore="MissingTranslation">Жоғары қабаты</string>
+    <string name="control_skin_overlay_down" tools:ignore="MissingTranslation">Төмен қабаты</string>
+    <string name="control_skin_overlay_left" tools:ignore="MissingTranslation">Сол қабаты</string>
+    <string name="control_skin_overlay_right" tools:ignore="MissingTranslation">Оң қабаты</string>
+    <string name="control_skin_analog_base" tools:ignore="MissingTranslation">Негізгі сурет</string>
+    <string name="control_skin_analog_thumb" tools:ignore="MissingTranslation">Стик суреті</string>
+    <string name="control_skin_analog_thumb_pressed" tools:ignore="MissingTranslation">Белсенді стик суреті</string>
+    <string name="control_skin_preview_directions" tools:ignore="MissingTranslation">Бағыттарды алдын ала көру</string>
+    <string name="control_skin_preview_direction" tools:ignore="MissingTranslation">Алдын ала көру: <xliff:g id="direction" example="Up">%1$s</xliff:g></string>
+    <string name="control_skin_builtin_preview" tools:ignore="MissingTranslation">Әдепкі</string>
+    <string name="control_skin_custom_preview" tools:ignore="MissingTranslation">Теңшелген</string>
+    <string name="layout_editor_group_on">Өлшемін бірге өзгерту</string>
+    <string name="layout_editor_group_off">Өлшемін жеке өзгерту</string>
+    <string name="layout_editor_snap_grid">Торға байланыстыру</string>
+    <string name="layout_editor_snap_controls">Түймелерге байланыстыру</string>
+    <string name="layout_editor_snap_resize">Өлшемді өзгертуде байланыстыру</string>
+    <string name="layout_editor_snap_resize_on">Өлшем байланысы: Қосулы</string>
+    <string name="layout_editor_snap_resize_off">Өлшем байланысы: Өшірулі</string>
+    <string name="layout_editor_snap_grid_on">Тор байланысы: Қосулы</string>
+    <string name="layout_editor_snap_grid_off">Тор байланысы: Өшірулі</string>
+    <string name="layout_editor_snap_controls_on">Түйме байланысы: Қосулы</string>
+    <string name="layout_editor_snap_controls_off">Түйме байланысы: Өшірулі</string>
+    <string name="layout_editor_guide_gestures">Қимылдар</string>
+    <string name="layout_editor_guide_move">Жылжыту үшін басқару элементін сүйреңіз.</string>
+    <string name="layout_editor_guide_resize">Өлшемді өзгерту үшін екі саусақты пайдаланыңыз. Енін немесе биіктігін өзгерту үшін көлденең не тігінен жылжытыңыз.</string>
+    <string name="layout_editor_guide_tools">Өңдегіш құралдары</string>
+    <string name="layout_editor_guide_done">Сақтау, болдырмау немесе өңдеуді жалғастыру үшін «Дайын» түймесін түртіңіз.</string>
+    <string name="layout_editor_guide_start">Өңдеуді бастау</string>
+    <string name="control_skin_invalid_name">1–61 таңба пайдаланыңыз: әріптер, сандар, біріктірілетін белгілер, бос орындар немесе . _ ( ) -. Әріптен не саннан бастаңыз және нүктемен аяқтамаңыз.</string>
+    <string name="control_skin_image_validation_failed">8 MiB-қа дейінгі жарамды PNG, WebP немесе SVG кескінін таңдаңыз. PNG және WebP өлшемдері 2048 × 2048 пиксельден аспауы керек.</string>
+</resources>

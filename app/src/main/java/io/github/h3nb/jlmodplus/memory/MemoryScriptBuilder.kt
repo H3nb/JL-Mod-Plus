@@ -178,6 +178,9 @@ internal fun MemoryScriptBuilderScreen(
     modifier: Modifier = Modifier,
 ) {
     val saveFailedText = stringResource(R.string.memory_scripts_save_failed)
+    val checkInputText = stringResource(R.string.memory_scripts_check_input)
+    val technicalDetails = stringResource(R.string.memory_technical_details)
+    val targetUnavailable = stringResource(R.string.memory_recipes_target_unavailable)
     val scope = rememberCoroutineScope()
     var generating by remember(draft.id) { mutableStateOf(false) }
     val currentDraft by rememberUpdatedState(draft)
@@ -206,7 +209,8 @@ internal fun MemoryScriptBuilderScreen(
             } catch (cancelled: CancellationException) {
                 throw cancelled
             } catch (failure: Exception) {
-                error = failure.message ?: saveFailedText
+                error = failure.message?.takeIf(String::isNotBlank)?.let { "$checkInputText\n$technicalDetails\n$it" }
+                    ?: checkInputText
             } finally {
                 generating = false
             }
@@ -461,7 +465,10 @@ internal fun MemoryScriptBuilderScreen(
             runCatching {
                 val captured = actions.captureMemoryScriptBuilderActions(added)
                 onDraft(draft.copy(actions = draft.actions + captured))
-            }.exceptionOrNull()?.let { it.message ?: "Could not add Bookmarks" }
+            }.exceptionOrNull()?.let {
+                android.util.Log.w("MemoryEditor", "Could not add bookmarks to script", it)
+                targetUnavailable
+            }
         })
     preview?.let { json ->
         MemoryEditorDialog(

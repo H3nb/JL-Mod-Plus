@@ -1,0 +1,470 @@
+<?xml version="1.0" encoding="utf-8"?>
+<!-- MIDlet library, collections, metadata editor, bulk/single installer, file picker, and app updates. -->
+<resources xmlns:tools="http://schemas.android.com/tools" xmlns:xliff="urn:oasis:names:tc:xliff:document:1.2">
+    <string name="action_context_delete">Verwijderen</string>
+    <string name="action_context_rename">Naam wijzigen</string>
+    <string name="action_context_shortcut">Snelkoppeling toevoegen</string>
+    <string name="action_reinstall">Opnieuw installeren</string>
+    <string name="alert_msg_workdir_not_exists">Werkmap niet gevonden:\n<xliff:g id="path" example="/storage/emulated/0/JL-Mod-Plus">%1$s</xliff:g>\nAanmaken of een andere map kiezen?</string>
+    <string name="converting_wait">JAR converteren…</string>
+    <string name="create_apps_dir_failed">Kan de werkmap niet voorbereiden op:\n<xliff:g id="path" example="/storage/emulated/0/JL-Mod-Plus">%1$s</xliff:g>\nKies een andere map.</string>
+    <string name="install_done">App geïnstalleerd.</string>
+    <string name="install_done_with_warning">App geïnstalleerd met waarschuwingen.</string>
+    <string name="installer_title">MIDlet-installatieprogramma</string>
+    <string name="installer_error_message">Kan de geselecteerde app niet installeren. Kies een geldig MIDlet-bestand en probeer het opnieuw.</string>
+    <string name="install_jar_non_matched_jad">Deze app wijkt af van de app die in de JAD wordt beschreven.\nJAD negeren en toch installeren?</string>
+    <string name="file_picker_select_file">Bestand selecteren</string>
+    <string name="file_picker_select_folder">Map selecteren</string>
+    <string name="file_picker_select_app_bundle">App-bundel selecteren</string>
+    <string name="file_picker_select_icon">Pictogram selecteren</string>
+    <string name="file_picker_navigate_back">Terug naar bovenliggende map</string>
+    <string name="file_picker_cancel">Annuleren</string>
+    <string name="file_picker_search">Zoeken</string>
+    <string name="file_picker_sort">Sorteren</string>
+    <string name="file_picker_select_all">Alle weergegeven bestanden selecteren</string>
+    <string name="file_picker_unselect_all">Selectie van alle weergegeven bestanden opheffen</string>
+    <string name="file_picker_sort_type">Mappen eerst</string>
+    <string name="file_picker_sort_name_ascending">Naam A–Z</string>
+    <string name="file_picker_sort_name_descending">Naam Z–A</string>
+    <string name="file_picker_sort_modified_newest">Wijzigingsdatum: nieuwste</string>
+    <string name="file_picker_sort_modified_oldest">Wijzigingsdatum: oudste</string>
+    <string name="file_picker_choose">Kiezen</string>
+    <string name="file_picker_current_folder">Huidige map</string>
+    <string name="file_picker_parent_folder">Bovenliggende map</string>
+    <string name="file_picker_file">Bestand</string>
+    <string name="file_picker_preview_named">Voorbeeld van <xliff:g id="name" example="Example">%1$s</xliff:g></string>
+    <string name="file_picker_preview_unavailable">Voorbeeld niet beschikbaar</string>
+    <string name="file_picker_storage_volume">Opslagvolume</string>
+    <string name="file_picker_empty">Geen overeenkomende bestanden</string>
+    <string name="file_picker_empty_folder">Geen mappen gevonden</string>
+    <string name="file_picker_no_matches">Geen resultaten</string>
+    <string name="file_picker_permission_required">Opslagmachtiging vereist</string>
+    <string name="file_picker_permission_message">Sta opslagtoegang toe om door bestanden en mappen op dit apparaat te bladeren.</string>
+    <string name="file_picker_permission_denied">Opslagtoegang is niet verleend.</string>
+    <string name="file_picker_grant_access">Toegang verlenen</string>
+    <string name="file_picker_retry">Opnieuw proberen</string>
+    <string name="file_picker_load_failed">Kan deze map niet openen.</string>
+    <string name="file_picker_create_folder">Nieuwe map</string>
+    <string name="file_picker_create_folder_title">Map maken</string>
+    <string name="file_picker_folder_name">Mapnaam</string>
+    <string name="file_picker_invalid_folder_name">Voer een geldige mapnaam in.</string>
+    <string name="file_picker_folder_exists">Er bestaat al een item met deze naam.</string>
+    <string name="file_picker_create_folder_failed">Kan de map niet maken.</string>
+    <string name="file_picker_selection_unavailable">Het geselecteerde item is niet meer beschikbaar.</string>
+    <string name="loading_apps">Apps laden</string>
+    <string name="message_delete">Deze app, bijbehorende instellingen en opslaggegevens verwijderen? Hiermee wordt de app ook uit je bibliotheek verwijderd.</string>
+    <string name="msg_no_matches">Geen resultaten voor “<xliff:g id="query" example="Bounce">%1$s</xliff:g>”</string>
+    <string name="library_destination_apps">Alle apps</string>
+    <string name="library_destination_collections">Collecties</string>
+    <string name="library_scope_picker_title" tools:ignore="MissingTranslation">Apps verkennen</string>
+    <string name="library_destination_more">Meer</string>
+    <string name="library_search_placeholder">Apps zoeken…</string>
+    <string name="library_filter_all">Alle</string>
+    <string name="library_filter_recently_opened">Recent geopend</string>
+    <string name="library_filter_recently_added">Recent toegevoegd</string>
+    <string name="library_filter_favorites">Favorieten</string>
+    <string name="library_add_to_favorites_action">Toevoegen aan favorieten</string>
+    <string name="library_remove_from_favorites_action">Verwijderen uit favorieten</string>
+    <string name="library_favorite_coming_soon">Favorieten niet beschikbaar</string>
+    <string name="library_vendor_version"><xliff:g id="vendor" example="Nokia">%1$s</xliff:g> · <xliff:g id="version" example="1.0">%2$s</xliff:g></string>
+    <string name="library_view_list">Lijst</string>
+    <string name="library_view_grid">Raster</string>
+    <string name="library_icon_ratio_title">Beeldverhouding pictogram</string>
+    <string name="library_icon_ratio_square">Vierkant (1:1)</string>
+    <string name="library_icon_ratio_portrait">Staand (3:4)</string>
+    <string name="library_icon_shape_title">Pictogramvorm</string>
+    <string name="library_icon_shape_round">Afgeronde hoeken</string>
+    <string name="library_icon_shape_square">Scherpe hoeken</string>
+    <string name="library_grid_icon_size_title" tools:ignore="MissingTranslation">Grootte rasterpictogrammen</string>
+    <string name="library_grid_icon_size_small" tools:ignore="MissingTranslation">Klein</string>
+    <string name="library_grid_icon_size_standard" tools:ignore="MissingTranslation">Standaard</string>
+    <string name="library_grid_icon_size_large" tools:ignore="MissingTranslation">Groot</string>
+    <string name="library_grid_icon_size_summary" tools:ignore="MissingTranslation">Wijzigt de pictogramgrootte en het aantal kolommen in de rasterweergave.</string>
+    <string name="library_grid_spacing_title">Rasterafstand</string>
+    <string name="library_grid_spacing_summary" tools:ignore="MissingTranslation">Geldt alleen voor de rasterweergave.</string>
+    <string name="library_grid_spacing_none">Geen (0 dp)</string>
+    <string name="library_grid_spacing_compact">Compact (4 dp)</string>
+    <string name="library_grid_spacing_standard">Standaard (8 dp)</string>
+    <string name="library_grid_spacing_spacious">Ruim (12 dp)</string>
+    <string name="library_hide_grid_titles">MIDlet-titels verbergen</string>
+    <string name="library_show_list_description">MIDlet-beschrijvingen weergeven</string>
+    <string name="library_collections_empty_title">Nog geen collecties</string>
+    <string name="library_collections_empty_message">Collecties zijn pas beschikbaar nadat de bibliotheek volledig is geladen.</string>
+    <string name="library_expand_description">Beschrijving uitvouwen</string>
+    <string name="library_collapse_description">Beschrijving samenvouwen</string>
+    <string name="no_data_for_display">Geen apps om weer te geven</string>
+    <string name="permission_request_failed">Schrijfmachtiging voor opslag is vereist.</string>
+    <string name="reinstall">Deze app is al geïnstalleerd. Opnieuw installeren?</string>
+    <string name="reinstall_newest">Deze app bijwerken naar versie <xliff:g id="version" example="2.1.0">%1$s</xliff:g>?\n\nMomenteel geïnstalleerd: <xliff:g id="current_version" example="2.0.0">%2$s</xliff:g></string>
+    <string name="reinstall_older">Deze app vervangen door versie <xliff:g id="version" example="2.1.0">%1$s</xliff:g>?\n\nMomenteel geïnstalleerd: <xliff:g id="current_version" example="2.0.0">%2$s</xliff:g>\nDe oudere versie werkt mogelijk niet goed met bestaande gegevens.</string>
+    <string name="warn_install_from_net">Dit bestand wordt van internet gedownload.</string>
+    <string name="installer_ambiguous">Meerdere geïnstalleerde apps komen overeen met dit pakket. Een aparte kopie installeren? Bestaande apps en hun gegevens blijven behouden.</string>
+    <string name="installer_separate_copy">Aparte kopie installeren</string>
+    <string name="installer_stage_download">App downloaden…</string>
+    <string name="installer_stage_wait">Wachten op een andere bewerking…</string>
+    <string name="installer_stage_save">App opslaan…</string>
+    <string name="installer_failed_download">Kan de app niet downloaden. Controleer je verbinding en downloadlink en probeer het opnieuw.</string>
+    <string name="installer_failed_storage">Kan de installatie niet voltooien. Probeer het opnieuw.</string>
+    <string name="installer_failed_conversion">Kan de app niet converteren. Controleer of het bestand compleet en ondersteund is en probeer het opnieuw.</string>
+    <string name="installer_needs_recovery">App-bestanden zijn opgeslagen, maar de bibliotheek kon niet volledig worden bijgewerkt. Vernieuw de bibliotheek voordat je het opnieuw probeert.</string>
+    <string name="installer_refresh_library">Bibliotheek vernieuwen</string>
+    <string name="installer_cancel_pending">Stoppen bij het volgende veilige punt…</string>
+    <string name="installer_retry_remaining">Onvoltooide items bekijken</string>
+    <string name="installer_not_processed">Niet verwerkt</string>
+    <string name="installer_partial_restore">App geïnstalleerd, maar gegevens of instellingen konden niet worden hersteld.</string>
+    <string name="installer_removed_leftovers">App verwijderd, maar sommige instellingen of opslaggegevens konden niet worden verwijderd.</string>
+    <string name="installer_copy_details">Details kopiëren</string>
+    <string name="installer_show_details">Details tonen</string>
+    <string name="installer_hide_details">Details verbergen</string>
+    <!-- %1$d is the number of source Java class files skipped during conversion. -->
+    <plurals name="installer_conversion_warning_summary">
+        <item quantity="one"><xliff:g id="skipped_count" example="2">%1$d</xliff:g> Java-klassebestand is overgeslagen omdat het niet kon worden gelezen. Functies die dit gebruiken werken mogelijk niet.</item>
+        <item quantity="other"><xliff:g id="skipped_count" example="2">%1$d</xliff:g> Java-klassebestanden zijn overgeslagen omdat ze niet konden worden gelezen. Functies die ze gebruiken werken mogelijk niet.</item>
+    </plurals>
+    <!-- %1$s is the source JAR entry path for the skipped class file. -->
+    <string name="installer_conversion_skipped_entry"><xliff:g id="entry_path" example="com/example/Broken.class">%1$s</xliff:g>\nProbleem: Java-klassebestand kon niet worden gelezen.\nActie: overgeslagen tijdens conversie.</string>
+    <!-- %1$d is the number of additional bounded conversion diagnostics not shown. -->
+    <plurals name="installer_conversion_omitted_details">
+        <item quantity="one"><xliff:g id="omitted_count" example="5">%1$d</xliff:g> extra conversieprobleem wordt niet weergegeven.</item>
+        <item quantity="other"><xliff:g id="omitted_count" example="5">%1$d</xliff:g> extra conversieproblemen worden niet weergegeven.</item>
+    </plurals>
+    <string name="library_collection_new">Nieuwe collectie</string>
+    <string name="library_collection_ready_empty_message">Maak collecties om apps te ordenen zonder hun bestanden te verplaatsen.</string>
+    <string name="library_collection_add_app">Toevoegen aan collectie</string>
+    <string name="library_collection_add_apps">Apps toevoegen</string>
+    <string name="library_collection_manage_apps">Apps kiezen</string>
+    <string name="library_collection_manage" tools:ignore="MissingTranslation">Collecties beheren</string>
+    <string name="library_collection_delete_confirmation" tools:ignore="MissingTranslation">“<xliff:g id="collection_name" example="Favorites">%1$s</xliff:g>” verwijderen? De apps in deze collectie blijven geïnstalleerd.</string>
+    <string name="library_collection_rename_action" tools:ignore="MissingTranslation">Naam van collectie <xliff:g id="collection_name" example="Favorites">%1$s</xliff:g> wijzigen</string>
+    <string name="library_collection_delete_action" tools:ignore="MissingTranslation">Collectie <xliff:g id="collection_name" example="Favorites">%1$s</xliff:g> verwijderen</string>
+    <string name="library_collection_select_action" tools:ignore="MissingTranslation">Collectie <xliff:g id="collection_name" example="Favorites">%1$s</xliff:g> selecteren</string>
+    <string name="library_collection_open_action" tools:ignore="MissingTranslation">Collectie <xliff:g id="collection_name" example="Favorites">%1$s</xliff:g> openen</string>
+    <string name="library_collection_rename_selected" tools:ignore="MissingTranslation">Naam van geselecteerde collectie wijzigen</string>
+    <string name="library_collection_delete_selected" tools:ignore="MissingTranslation">Geselecteerde collecties verwijderen</string>
+    <plurals name="library_collection_delete_many_confirmation">
+        <item quantity="one"><xliff:g id="count" example="3">%d</xliff:g> collectie verwijderen? Apps blijven geïnstalleerd.</item>
+        <item quantity="other"><xliff:g id="count" example="3">%d</xliff:g> collecties verwijderen? Apps blijven geïnstalleerd.</item>
+    </plurals>
+    <string name="library_notifications_title" tools:ignore="MissingTranslation">Meldingen</string>
+    <string name="library_notifications_empty_title" tools:ignore="MissingTranslation">Nog geen meldingen</string>
+    <string name="library_notifications_empty_summary" tools:ignore="MissingTranslation">Meldingen over app-updates verschijnen hier zodra ze beschikbaar zijn.</string>
+    <string name="library_collection_manage_apps_summary">Selecteer apps om op te nemen in deze collectie.</string>
+    <string name="library_collection_name">Collectienaam</string>
+    <string name="library_collection_members_empty">Geen apps in deze collectie.</string>
+    <string name="library_collection_select_title">Selecteer een collectie</string>
+    <string name="library_collection_select_message">Kies een collectie om de bijbehorende apps te bekijken.</string>
+    <string name="library_collection_remove_from_current">Verwijderen uit collectie</string>
+    <string name="library_no_matches">Geen resultaten voor “<xliff:g id="query" example="Bounce">%1$s</xliff:g>”</string>
+    <string name="library_action_share_app">App delen</string>
+    <string name="library_action_export_bundle">App-bundel exporteren</string>
+    <string name="library_action_import_bundle">App-bundel importeren</string>
+    <string name="library_action_import_bundle_summary">Herstel geëxporteerde apps samen met eventuele inbegrepen instellingen, opslaggegevens of bladwijzers.</string>
+    <string name="library_import_preparing">App-bundel lezen…</string>
+    <string name="library_import_restoring">App-gegevens herstellen…</string>
+    <string name="library_import_done">App-bundel geïmporteerd.</string>
+    <string name="library_import_done_with_warning">App-bundel geïmporteerd met waarschuwingen.</string>
+    <string name="library_import_invalid_bundle">De geselecteerde app-bundel is ongeldig, beschadigd of niet ondersteund. Kies een geldige JL-Mod Plus-app-bundel en probeer het opnieuw.</string>
+    <string name="library_import_restore_existing">Deze app is al geïnstalleerd. De opgenomen instellingen en opslaggegevens vervangen de bestaande gegevens. In nieuwere bundels worden bladwijzers samengevoegd bij import zonder instellingen, vervangen bij import met instellingen en behouden als ze niet zijn opgenomen. Herstel van instellingen uit oudere bundels kan ook bladwijzers vervangen.</string>
+    <string name="library_import_restore_failed">App geïnstalleerd, maar bundelgegevens konden niet worden hersteld. Herstellen opnieuw proberen?</string>
+    <string name="library_play_stats_summary">Keer gestart: <xliff:g id="launch_count" example="12">%1$d</xliff:g> · Totale tijd: <xliff:g id="total_time" example="2h 15m">%2$s</xliff:g></string>
+    <string name="library_share_chooser_title">App delen</string>
+    <string name="library_export_chooser_title">Exporteren</string>
+    <string name="library_export_progress">Exporteren… <xliff:g id="completed" example="3">%1$d</xliff:g>/<xliff:g id="total" example="10">%2$d</xliff:g></string>
+    <string name="library_transfer_unavailable">Kan niet exporteren.</string>
+    <string name="library_export_data_in_use">De gegevens van een van de geselecteerde apps zijn in gebruik. Sluit de geselecteerde MIDlets die actief zijn en probeer het opnieuw.</string>
+    <string name="library_export_menu_unavailable">Kan het exportmenu niet openen.</string>
+    <string name="library_back">Terug naar bibliotheek</string>
+    <string name="library_sort">Apps sorteren</string>
+    <string name="library_search_clear">Zoekopdracht wissen</string>
+    <string name="library_description_more">… Meer</string>
+    <string name="library_description_less">Minder</string>
+    <plurals name="file_picker_selected_count">
+        <item quantity="one"><xliff:g id="count" example="3">%1$d</xliff:g> geselecteerd</item>
+        <item quantity="other"><xliff:g id="count" example="3">%1$d</xliff:g> geselecteerd</item>
+    </plurals>
+    <plurals name="library_selection_count">
+        <item quantity="one"><xliff:g id="count" example="3">%1$d</xliff:g> app</item>
+        <item quantity="other"><xliff:g id="count" example="3">%1$d</xliff:g> apps</item>
+    </plurals>
+    <plurals name="library_collection_member_count">
+        <item quantity="one"><xliff:g id="count" example="3">%1$d</xliff:g> app</item>
+        <item quantity="other"><xliff:g id="count" example="3">%1$d</xliff:g> apps</item>
+    </plurals>
+    <plurals name="bulk_install_found">
+        <item quantity="one"><xliff:g id="count" example="3">%1$d</xliff:g> app gevonden</item>
+        <item quantity="other"><xliff:g id="count" example="3">%1$d</xliff:g> apps gevonden</item>
+    </plurals>
+    <plurals name="bulk_install_selected">
+        <item quantity="one"><xliff:g id="count" example="3">%1$d</xliff:g> geselecteerd</item>
+        <item quantity="other"><xliff:g id="count" example="3">%1$d</xliff:g> geselecteerd</item>
+    </plurals>
+    <plurals name="bulk_install_ready_count">
+        <item quantity="one"><xliff:g id="count" example="3">%1$d</xliff:g> gereed</item>
+        <item quantity="other"><xliff:g id="count" example="3">%1$d</xliff:g> gereed</item>
+    </plurals>
+    <plurals name="bulk_install_skipped_count">
+        <item quantity="one">Al geïnstalleerd of duplicaat: <xliff:g id="count" example="3">%1$d</xliff:g></item>
+        <item quantity="other">Al geïnstalleerd of duplicaat: <xliff:g id="count" example="3">%1$d</xliff:g></item>
+    </plurals>
+    <plurals name="bulk_install_attention_count">
+        <item quantity="one"><xliff:g id="count" example="3">%1$d</xliff:g> vereist controle</item>
+        <item quantity="other"><xliff:g id="count" example="3">%1$d</xliff:g> vereisen controle</item>
+    </plurals>
+    <plurals name="bulk_install_installed_count">
+        <item quantity="one"><xliff:g id="count" example="3">%1$d</xliff:g> geïnstalleerd</item>
+        <item quantity="other"><xliff:g id="count" example="3">%1$d</xliff:g> geïnstalleerd</item>
+    </plurals>
+    <plurals name="bulk_install_updated_count">
+        <item quantity="one"><xliff:g id="count" example="3">%1$d</xliff:g> bijgewerkt</item>
+        <item quantity="other"><xliff:g id="count" example="3">%1$d</xliff:g> bijgewerkt</item>
+    </plurals>
+    <plurals name="bulk_install_reinstalled_count">
+        <item quantity="one"><xliff:g id="count" example="3">%1$d</xliff:g> opnieuw geïnstalleerd</item>
+        <item quantity="other"><xliff:g id="count" example="3">%1$d</xliff:g> opnieuw geïnstalleerd</item>
+    </plurals>
+    <plurals name="bulk_install_skipped_result_count">
+        <item quantity="one"><xliff:g id="count" example="3">%1$d</xliff:g> overgeslagen</item>
+        <item quantity="other"><xliff:g id="count" example="3">%1$d</xliff:g> overgeslagen</item>
+    </plurals>
+    <plurals name="bulk_install_failed_count">
+        <item quantity="one"><xliff:g id="count" example="3">%1$d</xliff:g> mislukt</item>
+        <item quantity="other"><xliff:g id="count" example="3">%1$d</xliff:g> mislukt</item>
+    </plurals>
+    <plurals name="bulk_install_warning_count">
+        <item quantity="one"><xliff:g id="count" example="3">%1$d</xliff:g> waarschuwing</item>
+        <item quantity="other"><xliff:g id="count" example="3">%1$d</xliff:g> waarschuwingen</item>
+    </plurals>
+    <plurals name="bulk_install_omitted_sources">
+        <item quantity="one"><xliff:g id="count" example="3">%1$d</xliff:g> extra bestand is weggelaten om de controle responsief te houden.</item>
+        <item quantity="other"><xliff:g id="count" example="3">%1$d</xliff:g> extra bestanden zijn weggelaten om de controle responsief te houden.</item>
+    </plurals>
+    <plurals name="library_bulk_delete_confirmation">
+        <item quantity="one"><xliff:g id="count" example="3">%1$d</xliff:g> app verwijderen? De bestanden, instellingen en opslaggegevens worden uit je bibliotheek verwijderd.</item>
+        <item quantity="other"><xliff:g id="count" example="3">%1$d</xliff:g> apps verwijderen? De bestanden, instellingen en opslaggegevens worden uit je bibliotheek verwijderd.</item>
+    </plurals>
+    <plurals name="library_bulk_delete_result">
+        <item quantity="one"><xliff:g id="deleted_count" example="3">%1$d</xliff:g> app verwijderd; <xliff:g id="failed_count" example="1">%2$d</xliff:g> mislukt.</item>
+        <item quantity="other"><xliff:g id="deleted_count" example="3">%1$d</xliff:g> apps verwijderd; <xliff:g id="failed_count" example="1">%2$d</xliff:g> mislukt.</item>
+    </plurals>
+    <string name="bulk_install_title">Bulkinstallatie</string>
+    <string name="bulk_install_planning">Geselecteerde apps controleren…</string>
+    <string name="bulk_install_empty">Geen ondersteunde apps gevonden.</string>
+    <string name="bulk_install_recommended">Aanbevolen</string>
+    <string name="bulk_install_clear">Selectie wissen</string>
+    <string name="bulk_install_install_count"><xliff:g id="count" example="3">%1$d</xliff:g> installeren</string>
+    <string name="bulk_install_cancel">Annuleren</string>
+    <string name="bulk_install_close">Sluiten</string>
+    <plurals name="bulk_install_running">
+        <item quantity="one"><xliff:g id="processed" example="3">%1$d</xliff:g> app van <xliff:g id="total" example="10">%2$d</xliff:g> verwerkt</item>
+        <item quantity="other"><xliff:g id="processed" example="3">%1$d</xliff:g> apps van <xliff:g id="total" example="10">%2$d</xliff:g> verwerkt</item>
+    </plurals>
+    <string name="bulk_install_cancel_requested">Stoppen na de huidige app…</string>
+    <string name="bulk_install_complete">Bulkinstallatie voltooid</string>
+    <string name="bulk_install_cancelled">Bulkinstallatie gestopt</string>
+    <string name="bulk_install_fatal">Bulkinstallatie gestopt. Bekijk de onvoltooide items voordat je het opnieuw probeert.</string>
+    <string name="bulk_install_result_installed">Geïnstalleerd</string>
+    <string name="bulk_install_result_updated">Bijgewerkt</string>
+    <string name="bulk_install_result_reinstalled">Opnieuw geïnstalleerd</string>
+    <string name="bulk_install_result_skipped">Overgeslagen</string>
+    <string name="bulk_install_result_failed">Mislukt</string>
+    <string name="bulk_install_installed_version">Geïnstalleerd: <xliff:g id="version" example="2.1.0">%1$s</xliff:g></string>
+    <string name="bulk_install_source">Bron: <xliff:g id="name" example="Example">%1$s</xliff:g></string>
+    <string name="bulk_install_action_separate_copy">Als aparte kopie installeren</string>
+    <string name="bulk_install_action_jar_only">Alleen JAR installeren</string>
+    <string name="single_install_review_jar_only" tools:ignore="MissingTranslation">Alleen JAR bekijken</string>
+    <string name="single_install_jar_only_notice" tools:ignore="MissingTranslation">Alleen de JAR wordt geïnstalleerd. Controleer de app-naam, versie en installatiestatus voordat je doorgaat.</string>
+    <string name="single_install_running_replacement_warning" tools:ignore="MissingTranslation">Als deze app actief is, stopt de installatie deze voordat de bestanden worden vervangen. Niet-opgeslagen voortgang kan verloren gaan.</string>
+    <string name="bulk_install_status_new">Nieuw</string>
+    <string name="bulk_install_status_update">Update</string>
+    <string name="bulk_install_status_downgrade">Oudere versie</string>
+    <string name="bulk_install_status_same">Al geïnstalleerd</string>
+    <string name="bulk_install_status_reinstall">Zelfde versie, mogelijke variant</string>
+    <string name="bulk_install_status_ambiguous">Komt overeen met meerdere geïnstalleerde apps</string>
+    <string name="bulk_install_status_mismatch">JAD/JAR komt niet overeen</string>
+    <string name="bulk_install_status_duplicate">Duplicaat</string>
+    <string name="bulk_install_status_older_batch">Oudere versie in batch</string>
+    <string name="bulk_install_status_conflict">Batchconflict</string>
+    <string name="bulk_install_status_remote">Externe bron niet ondersteund</string>
+    <string name="bulk_install_status_error">Ongeldige bron</string>
+    <string name="bulk_install_reinstall_source_missing">Opgeslagen JAR is niet beschikbaar voor herinstallatie.</string>
+    <plurals name="bulk_install_reinstall_missing_apps">
+        <item quantity="one"><xliff:g id="count" example="3">%1$d</xliff:g> geselecteerde bibliotheek-app is niet meer beschikbaar.</item>
+        <item quantity="other"><xliff:g id="count" example="3">%1$d</xliff:g> geselecteerde bibliotheek-apps zijn niet meer beschikbaar.</item>
+    </plurals>
+    <string name="library_metadata_edit_title">Metagegevens bewerken</string>
+    <string name="library_metadata_icon">Pictogram</string>
+    <string name="library_metadata_name">Naam</string>
+    <string name="library_metadata_vendor">Ontwikkelaar</string>
+    <string name="library_metadata_reset_to_original">Herstellen naar origineel</string>
+    <string name="library_metadata_save">Opslaan</string>
+    <string name="library_hide_grid_titles_summary">Verberg MIDlet-namen in de rasterweergave. De lijstweergave houdt ze zichtbaar.</string>
+    <string name="library_show_list_description_summary">Toon elke MIDlet-beschrijving onder de titel en versie.</string>
+    <string name="library_indexing_progress">Bibliotheek indexeren… <xliff:g id="completed" example="3">%1$d</xliff:g>/<xliff:g id="total" example="10">%2$d</xliff:g></string>
+    <string name="library_indexing_current"><xliff:g id="name" example="Example">%1$s</xliff:g> scannen</string>
+    <string name="library_load_error_title">Bibliotheek niet beschikbaar</string>
+    <string name="library_retry">Opnieuw proberen</string>
+    <string name="library_reinstall_source_missing">De opgeslagen JAR is niet beschikbaar voor herinstallatie.</string>
+    <string name="library_action_select">Selecteren</string>
+    <string name="library_selection_select_all">Alles selecteren</string>
+    <string name="library_selection_unselect_all">Alles deselecteren</string>
+    <string name="library_selection_checkbox_description"><xliff:g id="name" example="Example">%1$s</xliff:g> selecteren</string>
+    <string name="library_selection_checked">Geselecteerd</string>
+    <string name="library_selection_unchecked">Niet geselecteerd</string>
+    <string name="library_action_settings_summary">Configureer algemeen gedrag en uiterlijk.</string>
+    <string name="library_action_crash_reports_summary">Bekijk opgeslagen diagnostische rapporten.</string>
+    <string name="library_action_about_summary">Projectoverzicht, buildinformatie en links.</string>
+    <string name="library_action_licenses_summary">Meldingen van derden en licentievoorwaarden in de app.</string>
+    <string name="library_donation_action">Ontwikkeling steunen</string>
+    <string name="library_donation_summary">Help JL-Mod Plus verder te groeien.</string>
+    <string name="library_donation_title">Steun JL-Mod Plus</string>
+    <string name="library_donation_message">JL-Mod Plus is gratis en opensource. Als je de app nuttig vindt, kun je de ontwikkeling steunen met een vrijwillige donatie.</string>
+    <string name="library_donation_provider_note">Donaties worden extern afgehandeld door Sociabuzz.</string>
+    <string name="library_donation_continue">Doorgaan naar Sociabuzz</string>
+    <string name="library_donation_not_now">Niet nu</string>
+    <string name="library_donation_link_copied">Geen browser gevonden. Sociabuzz-link gekopieerd naar klembord.</string>
+    <string name="library_donation_browser_unavailable">Geen browser gevonden om Sociabuzz te openen.</string>
+    <string name="library_bulk_delete_apps">Apps verwijderen</string>
+    <string name="library_bulk_add_collection">Toevoegen aan collectie</string>
+    <string name="library_bulk_share_apps">Apps delen</string>
+    <string name="library_bulk_reinstall_apps">Opnieuw installeren</string>
+    <string name="library_bulk_export_apps">Bundel exporteren</string>
+    <string name="library_enhanced_icons_title">Verbeterde pictogrammen</string>
+    <string name="library_enhanced_icons_summary">Past kadrering, schaal en tegelachtergrond aan zodat pictogrammen er uniformer uitzien in je bibliotheek.</string>
+    <string name="library_collections_unavailable_title">Collecties niet beschikbaar</string>
+    <string name="library_load_failed_message">Kan de bibliotheek niet laden. Probeer het opnieuw.</string>
+    <string name="bulk_install_prepare_failed">Kan de geselecteerde apps niet voorbereiden voor installatie.</string>
+    <string name="installer_existing_data_preserved">Bestaande instellingen en opslaggegevens blijven behouden.</string>
+    <string name="bulk_install_library_changed">Je bibliotheek is gewijzigd na controle. Sluit deze batch en selecteer de bestanden opnieuw.</string>
+    <string name="bulk_install_source_unavailable">Een vereist bronbestand is niet meer beschikbaar. Selecteer de bestanden opnieuw.</string>
+    <string name="bulk_install_source_changed">Het bronbestand is gewijzigd na controle. Selecteer de bestanden opnieuw.</string>
+    <string name="bulk_install_target_unverified">Kan het doel voor herinstallatie niet verifiëren. Sluit deze batch en selecteer de app opnieuw.</string>
+    <string name="bulk_install_result_restored">Hersteld</string>
+    <plurals name="bulk_install_restored_count">
+        <item quantity="one"><xliff:g id="count" example="3">%1$d</xliff:g> hersteld</item>
+        <item quantity="other"><xliff:g id="count" example="3">%1$d</xliff:g> hersteld</item>
+    </plurals>
+    <plurals name="bulk_install_reason_ambiguous_match">
+        <item quantity="one"><xliff:g id="count" example="3">%1$d</xliff:g> geïnstalleerde app komt overeen met deze bron.</item>
+        <item quantity="other"><xliff:g id="count" example="3">%1$d</xliff:g> geïnstalleerde apps komen overeen met deze bron.</item>
+    </plurals>
+    <string name="bulk_install_reason_jad_jar_mismatch">De JAD en JAR verwijzen naar verschillende apps.</string>
+    <string name="bulk_install_reason_conflicting_jads">JAD-bestanden met verschillende kenmerken verwijzen naar dezelfde JAR.</string>
+    <string name="bulk_install_reason_remote_jar">Bulkinstallatie kan geen externe JAR-bestanden downloaden.</string>
+    <string name="bulk_install_reason_missing_jar_url">MIDlet-Jar-URL ontbreekt in de JAD.</string>
+    <!-- %1$s is the exact URI scheme supplied by the JAD; do not translate it. -->
+    <string name="bulk_install_reason_unsupported_uri_scheme">De JAD verwijst naar een JAR via een niet-ondersteund URI-schema: <xliff:g id="scheme" example="http">%1$s</xliff:g>.</string>
+    <string name="bulk_install_reason_missing_parent">De JAD heeft geen bovenliggende map.</string>
+    <!-- %1$s is the exact MIDlet-Jar-URL reference, not a normalized filesystem path. -->
+    <string name="bulk_install_reason_jar_not_found">De JAR waarnaar de JAD verwijst is niet gevonden: <xliff:g id="file_path" example="game.jar">%1$s</xliff:g>.</string>
+    <string name="bulk_install_reason_duplicate_source">Deze bron is een duplicaat van een andere bron in deze batch.</string>
+    <string name="bulk_install_reason_version_conflict">Meerdere app-varianten hebben dezelfde versie.</string>
+    <string name="bulk_install_reason_older_candidate">Er staat een nieuwere versie van deze app in dezelfde batch.</string>
+    <string name="bulk_install_reason_source_error">Kan deze bron niet voorbereiden voor installatie.</string>
+    <string name="updates_title">Updates</string>
+    <string name="updates_more_summary">Controleer op nieuwe versies van JL-Mod Plus.</string>
+    <string name="updates_more_available">Er is een nieuwere versie beschikbaar.</string>
+    <string name="updates_installed_version">Geïnstalleerde versie: <xliff:g id="version" example="2.1.0">%1$s</xliff:g></string>
+    <string name="updates_build_code">Build <xliff:g id="build_code" example="247">%1$d</xliff:g></string>
+    <string name="updates_automatic">Automatisch controleren terwijl de bibliotheek actief is</string>
+    <string name="updates_not_checked">Nog niet gecontroleerd.</string>
+    <string name="updates_checking">Controleren op updates…</string>
+    <string name="updates_current">Je bent up-to-date.</string>
+    <string name="updates_no_release">Geen compatibele gepubliceerde versie beschikbaar.</string>
+    <string name="updates_not_installable">Er is een nieuwere versie beschikbaar, maar deze is niet compatibel met dit apparaat of deze installatie.</string>
+    <string name="updates_failed">Kan niet controleren op updates. Controleer je verbinding en probeer het opnieuw.</string>
+    <string name="updates_available">Update beschikbaar</string>
+    <string name="updates_view_release">Release bekijken</string>
+    <string name="updates_last_checked">Laatst gecontroleerd: <xliff:g id="timestamp" example="Today, 09:45">%1$s</xliff:g></string>
+    <string name="updates_check">Controleren op updates</string>
+    <string name="updates_notice">JL-Mod Plus <xliff:g id="version" example="2.1.0">%1$s</xliff:g> is beschikbaar. Zie Updates in Instellingen.</string>
+    <string name="updates_debug_build">Dit is een debugbuild. GitHub-release-APK’s worden afzonderlijk geïnstalleerd.</string>
+    <string name="updates_link_copied">Geen browser gevonden. Updatelink gekopieerd naar klembord.</string>
+    <string name="updates_browser_unavailable">Geen browser gevonden om de updatelink te openen.</string>
+    <string name="bulk_install_choose_files">Bestanden</string>
+    <string name="bulk_install_choose_folder">Map</string>
+    <string name="bulk_install_unreadable_archives">Onleesbare archieven: <xliff:g id="count" example="3">%1$d</xliff:g></string>
+    <string name="bulk_install_skipped_entries">Overgeslagen bestanden of archiefitems: <xliff:g id="count" example="3">%1$d</xliff:g></string>
+    <string name="bulk_install_selection_options" tools:ignore="MissingTranslation">Selectieopties</string>
+    <string name="bulk_install_show_details" tools:ignore="MissingTranslation">Details tonen</string>
+    <string name="bulk_install_hide_details" tools:ignore="MissingTranslation">Details verbergen</string>
+    <string name="bulk_install_filter_all">Alle</string>
+    <string name="bulk_install_filter_selected">Geselecteerd</string>
+    <string name="bulk_install_filter_review">Controleren</string>
+    <string name="bulk_install_empty_filter">Geen overeenkomende apps.</string>
+    <string name="platform_package_choice_title" tools:ignore="MissingTranslation">Java ME-pakket gedetecteerd</string>
+    <string name="platform_package_choice_message" tools:ignore="MissingTranslation">Deze link verwijst naar een Java ME-pakket. Wat wil je doen?</string>
+    <string name="platform_package_install" tools:ignore="MissingTranslation">Installeren in JL-Mod Plus</string>
+    <string name="platform_package_browser" tools:ignore="MissingTranslation">Openen in browser</string>
+    <string name="platform_package_unavailable" tools:ignore="MissingTranslation">Geen app gevonden om deze link te openen.</string>
+    <string name="installer_running_update_warning" tools:ignore="MissingTranslation">Deze app is momenteel actief. De installatie stopt de app voordat de bestanden worden vervangen. Niet-opgeslagen voortgang kan verloren gaan.</string>
+    <string name="library_metadata_main_icon">Hoofdpictogram</string>
+    <string name="library_metadata_follows_main">Gebruikt hoofdpictogram</string>
+    <string name="library_metadata_change">Wijzigen</string>
+    <string name="library_metadata_remove_portrait">3:4-pictogram verwijderen</string>
+    <string name="library_metadata_discard_title">Wijzigingen verwerpen?</string>
+    <string name="library_metadata_discard">Verwerpen</string>
+    <string name="library_metadata_default_description">Standaardbeschrijving</string>
+    <string name="library_metadata_other_languages">Andere talen</string>
+    <string name="library_metadata_add_language">+ Taal toevoegen</string>
+    <string name="library_metadata_language_search">Taal of taalcode zoeken</string>
+    <string name="library_metadata_remove_language">Beschrijving verwijderen</string>
+    <string name="library_metadata_language_load_failed">Kan taalbeschrijvingen niet laden. Tik op Opnieuw proberen om het nogmaals te proberen.</string>
+    <string name="updates_download_apk" tools:ignore="MissingTranslation">APK downloaden</string>
+    <string name="updates_skip_version" tools:ignore="MissingTranslation">Deze versie overslaan</string>
+    <string name="updates_dialog_message" tools:ignore="MissingTranslation">JL-Mod Plus <xliff:g id="version" example="2.1.0">%1$s</xliff:g> is beschikbaar. Je gebruikt <xliff:g id="current_version" example="2.0.0">%2$s</xliff:g>. Download de APK of bekijk de release op GitHub.</string>
+    <string name="library_bundle_components_title" tools:ignore="MissingTranslation">Bundel exporteren</string>
+    <string name="library_bundle_components_explanation" tools:ignore="MissingTranslation">Geselecteerde apps worden altijd opgenomen. Sluit de geselecteerde MIDlets die actief zijn en kies welke extra gegevens je wilt opnemen. Gedeelde skins, soundbanks en shaders worden niet opgenomen.</string>
+    <string name="library_bundle_config" tools:ignore="MissingTranslation">Configuratie</string>
+    <string name="library_bundle_save_data" tools:ignore="MissingTranslation">Opslaggegevens</string>
+    <string name="library_bundle_saved_variables" tools:ignore="MissingTranslation">Bladwijzers</string>
+    <string name="library_bundle_export" tools:ignore="MissingTranslation">Exporteren</string>
+    <string name="library_export_jar_only" tools:ignore="MissingTranslation">Alleen JAR</string>
+    <string name="library_export_jars_only" tools:ignore="MissingTranslation">Alleen JAR’s (ZIP)</string>
+    <string name="library_selection_action_delete" tools:ignore="MissingTranslation">Verwijderen</string>
+    <string name="library_selection_action_collection" tools:ignore="MissingTranslation">Collectie</string>
+    <string name="library_selection_action_export" tools:ignore="MissingTranslation">Exporteren</string>
+    <string name="library_selection_action_reinstall" tools:ignore="MissingTranslation">Opnieuw installeren</string>
+    <string name="installer_select_companion_jar" tools:ignore="MissingTranslation">Deze JAD verwijst naar een apart JAR-bestand. Selecteer de bijbehorende JAR om door te gaan. De externe bestandsprovider geeft geen toegang tot aangrenzende bestanden.</string>
+    <string name="installer_select_jar" tools:ignore="MissingTranslation">JAR selecteren</string>
+    <string name="installer_wrong_companion_jar" tools:ignore="MissingTranslation">Deze JAR komt niet overeen met de geselecteerde JAD. Kies de bijbehorende JAR om de JAD-instellingen te behouden.</string>
+    <string name="installer_choose_another_jar" tools:ignore="MissingTranslation">Andere JAR kiezen</string>
+    <string name="library_app_more_actions" tools:ignore="MissingTranslation">Meer acties voor <xliff:g id="name" example="Example">%1$s</xliff:g></string>
+    <string name="library_actions_group_customize" tools:ignore="MissingTranslation">Aanpassen</string>
+    <string name="library_actions_group_organize" tools:ignore="MissingTranslation">Ordenen</string>
+    <string name="library_actions_group_transfer" tools:ignore="MissingTranslation">Overdragen en beheren</string>
+    <string name="library_collection_more_actions" tools:ignore="MissingTranslation">Meer acties voor collectie <xliff:g id="collection_name" example="Favorites">%1$s</xliff:g></string>
+    <string name="library_settings_preferences" tools:ignore="MissingTranslation">App-voorkeuren</string>
+    <string name="library_settings_section_maintenance" tools:ignore="MissingTranslation">Updates en diagnostiek</string>
+    <string name="library_settings_section_support" tools:ignore="MissingTranslation">Over en ondersteuning</string>
+    <string name="library_details_title" tools:ignore="MissingTranslation">MIDlet-details</string>
+    <string name="library_details_description" tools:ignore="MissingTranslation">Beschrijving</string>
+    <string name="library_details_play_stats" tools:ignore="MissingTranslation">Speelstatistieken</string>
+    <string name="library_details_launches" tools:ignore="MissingTranslation">Keer gestart</string>
+    <string name="library_details_total_time" tools:ignore="MissingTranslation">Totale tijd</string>
+    <string name="library_details_last_played" tools:ignore="MissingTranslation">Laatst gespeeld</string>
+    <string name="library_details_library_info" tools:ignore="MissingTranslation">Bibliotheekinformatie</string>
+    <string name="library_details_added" tools:ignore="MissingTranslation">Toegevoegd aan bibliotheek</string>
+    <string name="library_details_collections" tools:ignore="MissingTranslation">Collecties</string>
+    <string name="library_details_none" tools:ignore="MissingTranslation">Geen</string>
+    <string name="library_details_technical" tools:ignore="MissingTranslation">Technische informatie</string>
+    <string name="library_details_profile" tools:ignore="MissingTranslation">Profiel</string>
+    <string name="library_details_configuration" tools:ignore="MissingTranslation">Configuratie</string>
+    <string name="library_details_jar_size" tools:ignore="MissingTranslation">Grootte bewaarde JAR</string>
+    <string name="library_details_entry_points" tools:ignore="MissingTranslation">MIDlet-ingangen</string>
+    <string name="library_details_original_metadata" tools:ignore="MissingTranslation">Oorspronkelijke metagegevens</string>
+    <string name="library_details_name" tools:ignore="MissingTranslation">Naam</string>
+    <string name="library_details_vendor" tools:ignore="MissingTranslation">Ontwikkelaar</string>
+    <string name="library_details_version" tools:ignore="MissingTranslation">Versie</string>
+    <string name="library_details_version_value" tools:ignore="MissingTranslation">Versie <xliff:g id="version" example="2.1.0">%1$s</xliff:g></string>
+    <string name="library_details_original_description" tools:ignore="MissingTranslation">Oorspronkelijke beschrijving</string>
+    <string name="library_details_permissions" tools:ignore="MissingTranslation">Gedeclareerde machtigingen</string>
+    <string name="library_details_required" tools:ignore="MissingTranslation">Vereist</string>
+    <string name="library_details_optional" tools:ignore="MissingTranslation">Optioneel</string>
+    <string name="library_details_no_permissions" tools:ignore="MissingTranslation">Geen machtigingen gedeclareerd</string>
+    <string name="library_details_descriptor_attributes" tools:ignore="MissingTranslation">Descriptorkenmerken</string>
+    <string name="library_details_unavailable" tools:ignore="MissingTranslation">Niet beschikbaar</string>
+    <string name="library_details_action" tools:ignore="MissingTranslation">Details</string>
+    <string name="library_details_view_details" tools:ignore="MissingTranslation">Details bekijken</string>
+    <string name="library_actions_more" tools:ignore="MissingTranslation">Meer acties</string>
+    <string name="library_actions_less" tools:ignore="MissingTranslation">Minder acties</string>
+</resources>

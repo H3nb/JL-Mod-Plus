@@ -38,6 +38,27 @@ class MemoryOperationMessagesTest {
     }
 
     @Test
+    fun confirmedInspectorEditWithFailedFreezeHasSpecificRecoveryMessage() {
+        val message = memoryOperationMessage(
+            MemoryEngineContract.RESULT_PARTIAL_WRITE,
+            MemoryEngineContract.REASON_INSPECTOR_FREEZE_START_FAILED,
+            written = 1,
+        )!!
+        assertEquals(R.string.memory_editor_edit_freeze_failed, message.resource)
+    }
+
+    @Test
+    fun staleOrMissingRecipeSnapshotRequiresRefresh() {
+        for (result in listOf(MemoryEngineContract.RESULT_INVALID_REQUEST,
+            MemoryEngineContract.RESULT_IDENTITY_UNSAFE)) {
+            assertEquals(
+                R.string.memory_scripts_refresh_required,
+                memoryOperationMessage(result, MemoryEngineContract.REASON_RECIPE_REFRESH_REQUIRED)?.resource,
+            )
+        }
+    }
+
+    @Test
     fun inspectorUnconfirmedWriteNeverClaimsThatAnyWriteSucceeded() {
         val message = memoryOperationMessage(MemoryEngineContract.RESULT_PARTIAL_WRITE, unconfirmed = 1)!!
         assertEquals(R.string.memory_editor_write_failure_outcome, message.resource)
@@ -56,6 +77,17 @@ class MemoryOperationMessagesTest {
     }
 
     @Test
+    fun partialRecipeWriteSeparatesConfirmedUnconfirmedAndUntouchedValues() {
+        val message = memoryOperationMessage(
+            MemoryEngineContract.RESULT_PARTIAL_WRITE,
+            written = 2, unconfirmed = 1, notAttempted = 4,
+        )!!
+        assertEquals(R.string.memory_editor_write_failure_outcome, message.resource)
+        assertEquals(R.string.memory_editor_partial_write, message.explanation)
+        assertEquals(listOf(2, 1, 0, 4, 0), message.arguments)
+    }
+
+    @Test
     fun confirmedWriteHasACompactReadbackMessage() {
         val message = memoryOperationMessage(MemoryEngineContract.RESULT_OK, written = 5)!!
         assertEquals(R.string.memory_editor_write_confirmed, message.resource)
@@ -71,4 +103,60 @@ class MemoryOperationMessagesTest {
         assertNull(message.explanation)
         assertEquals(listOf(0, 0, 0, 0, 3), message.arguments)
     }
+
+    @Test
+    fun scriptFailuresUseRecoveryForScriptTargetsRatherThanSearchResults() {
+        val cases = listOf(
+            MemoryEngineContract.RESULT_RESOURCE_LIMIT to R.string.memory_scripts_resource_limit,
+            MemoryEngineContract.RESULT_SAFETY_LIMIT to R.string.memory_scripts_resource_limit,
+            MemoryEngineContract.RESULT_TARGET_LOST to R.string.memory_editor_memory_unavailable,
+            MemoryEngineContract.RESULT_IDENTITY_UNSAFE to R.string.memory_scripts_target_changed,
+            MemoryEngineContract.RESULT_UNSUPPORTED to R.string.memory_scripts_operation_unavailable,
+        )
+        for ((result, resource) in cases) {
+            assertEquals(resource, memoryOperationMessage(result, script = true)!!.resource)
+        }
+        assertEquals(R.string.memory_editor_identity_unsafe,
+            memoryOperationMessage(MemoryEngineContract.RESULT_IDENTITY_UNSAFE)!!.resource)
+    }
+
+    @Test
+    fun scriptFailuresRetainWriteCountsAndSpecificRefreshReason() {
+        val outcome = memoryOperationMessage(
+            MemoryEngineContract.RESULT_IDENTITY_UNSAFE, written = 1,
+            unconfirmed = 2, notAttempted = 3, script = true,
+        )!!
+        assertEquals(R.string.memory_editor_write_failure_outcome, outcome.resource)
+        assertEquals(R.string.memory_scripts_target_changed, outcome.explanation)
+        assertEquals(listOf(1, 2, 0, 3, 0), outcome.arguments)
+        assertEquals(R.string.memory_scripts_refresh_required, memoryOperationMessage(
+            MemoryEngineContract.RESULT_IDENTITY_UNSAFE,
+            reason = MemoryEngineContract.REASON_RECIPE_REFRESH_REQUIRED, script = true,
+        )!!.resource)
+    }
+
+    @Test
+    fun scriptReasonsDistinguishRecoveryActions() {
+        val cases = listOf(
+            Triple(MemoryEngineContract.RESULT_INVALID_REQUEST,
+                MemoryEngineContract.REASON_RECIPE_INVALID_INPUT, R.string.memory_scripts_invalid_input),
+            Triple(MemoryEngineContract.RESULT_INVALID_REQUEST,
+                MemoryEngineContract.REASON_RECIPE_VALUE_RANGE, R.string.memory_scripts_value_range),
+            Triple(MemoryEngineContract.RESULT_IDENTITY_UNSAFE,
+                MemoryEngineContract.REASON_RECIPE_INCONSISTENT_VALUES, R.string.memory_scripts_inconsistent_values),
+            Triple(MemoryEngineContract.RESULT_IDENTITY_UNSAFE,
+                MemoryEngineContract.REASON_RECIPE_WRONG_MIDLET, R.string.memory_scripts_wrong_midlet),
+            Triple(MemoryEngineContract.RESULT_TARGET_LOST,
+                MemoryEngineContract.REASON_RECIPE_TARGET_NOT_READY, R.string.memory_scripts_target_not_ready),
+        )
+        for ((result, reason, resource) in cases) {
+            assertEquals(resource, memoryOperationMessage(result, reason, script = true)?.resource)
+        }
+        assertNull(memoryOperationMessage(MemoryEngineContract.RESULT_OK,
+            MemoryEngineContract.REASON_RECIPE_WRONG_MIDLET, script = true))
+        assertEquals(R.string.memory_editor_partial_write, memoryOperationMessage(
+            MemoryEngineContract.RESULT_PARTIAL_WRITE,
+            MemoryEngineContract.REASON_RECIPE_VALUE_RANGE, script = true)?.resource)
+    }
+
 }

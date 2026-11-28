@@ -1,0 +1,285 @@
+<?xml version="1.0" encoding="utf-8"?>
+<!-- Bellek Düzenleyici araması, denetleyici, yer imleri, kaydedilen değişkenler, hızlı işlemler ve betik oluşturucu. -->
+<resources xmlns:tools="http://schemas.android.com/tools" xmlns:xliff="urn:oasis:names:tc:xliff:document:1.2">
+    <string name="memory_editor_bubble">Bellek Düzenleyici kayan düğmesi</string>
+    <string name="memory_editor_bubble_content_description">Bellek Düzenleyici’yi aç</string>
+    <string name="memory_editor_previous_results_page_action">Önceki sonuç sayfası</string>
+    <string name="memory_editor_next_results_page_action">Sonraki sonuç sayfası</string>
+    <string name="memory_editor">Bellek Düzenleyici</string>
+    <string name="memory_editor_search_hint">Değer</string>
+    <string name="memory_editor_next_scan">Sonraki tarama</string>
+    <string name="memory_editor_new_search">Yeni arama</string>
+    <plurals name="memory_editor_results">
+        <item quantity="one"><xliff:g id="count" example="3">%1$d</xliff:g> sonuç</item>
+        <item quantity="other"><xliff:g id="count" example="3">%1$d</xliff:g> sonuç</item>
+    </plurals>
+    <plurals name="memory_editor_candidates">
+        <item quantity="one"><xliff:g id="count" example="3">%1$d</xliff:g> aday</item>
+        <item quantity="other"><xliff:g id="count" example="3">%1$d</xliff:g> aday</item>
+    </plurals>
+    <plurals name="memory_editor_search_complete">
+        <item quantity="one">Arama tamamlandı · <xliff:g id="count" example="3">%1$d</xliff:g> aday</item>
+        <item quantity="other">Arama tamamlandı · <xliff:g id="count" example="3">%1$d</xliff:g> aday</item>
+    </plurals>
+    <string name="memory_editor_no_results">Sonuç yok</string>
+    <string name="memory_editor_no_watch">İzleme listesi boş</string>
+    <string name="memory_editor_unsupported">Bellek Düzenleyici bu çalışma zamanında kullanılamıyor.</string>
+    <string name="memory_editor_engine_unavailable">Bellek Düzenleyici motoru kullanılamıyor.</string>
+    <string name="memory_editor_engine_reconnecting">Bellek Düzenleyici yeniden bağlanıyor…</string>
+    <string name="memory_editor_refresh">Yenile</string>
+    <string name="memory_editor_undo">Taramayı geri al</string>
+    <string name="memory_variables_tab">Kaydedilenler</string>
+    <string name="memory_editor_back" tools:ignore="MissingTranslation">Geri</string>
+    <string name="memory_list_keep" tools:ignore="MissingTranslation">Sonraki başlatma için sakla</string>
+    <string name="memory_list_stop_keeping" tools:ignore="MissingTranslation">Saklamayı durdur</string>
+    <string name="memory_list_kept" tools:ignore="MissingTranslation">Sonraki başlatma için saklandı</string>
+    <string name="memory_list_empty" tools:ignore="MissingTranslation">Henüz kaydedilen yer imi yok</string>
+    <string name="memory_list_empty_hint" tools:ignore="MissingTranslation">Burada izlemek için Arama veya Denetleyici’deki bir değişkeni yer imlerine ekleyin.</string>
+    <string name="memory_list_remove_confirm" tools:ignore="MissingTranslation">Kaydedilenler’den kaldırılsın mı? Etkin dondurma işlemleri durdurulur.</string>
+    <string name="memory_list_add" tools:ignore="MissingTranslation">Yer imi ekle</string>
+    <string name="memory_bookmark_relink" tools:ignore="MissingTranslation">Yeniden bağla</string>
+    <string name="memory_bookmark_relink_hint" tools:ignore="MissingTranslation">Arama’da yeni değişkeni seçin, ardından Yeniden bağla seçeneğini belirleyin.</string>
+    <string name="memory_bookmark_relink_confirm" tools:ignore="MissingTranslation">Bu yer imi seçilen değişkene bağlansın mı? Bu yer imindeki etkin dondurma durdurulur.</string>
+    <string name="memory_bookmark_unavailable" tools:ignore="MissingTranslation">Kullanılamıyor — hedef seçmek için Yeniden bağla’yı seçin</string>
+    <string name="memory_editor_watch">İzle</string>
+    <string name="memory_editor_search_tab">Ara</string>
+    <string name="memory_editor_search_known_values">Bilinen değerleri ara</string>
+    <string name="memory_editor_search_unknown_values">Bilinmeyen değerleri ara</string>
+    <string name="memory_editor_add_to_watch">Seçili değerleri yer imlerine ekle</string>
+    <string name="memory_editor_no_candidates">Aranabilir değer bulunamadı</string>
+    <string name="memory_editor_edit">Düzenle</string>
+    <plurals name="memory_editor_edit_batch">
+        <item quantity="one"><xliff:g id="count" example="3">%1$d</xliff:g> değeri düzenle</item>
+        <item quantity="other"><xliff:g id="count" example="3">%1$d</xliff:g> değeri düzenle</item>
+    </plurals>
+    <string name="memory_editor_edit_batch_no_common_type">Seçili öğeler seçilen veri türünü desteklemiyor. Uyumlu öğeleri ayrı ayrı düzenleyin.</string>
+    <string name="memory_editor_save">Uygula</string>
+    <string name="memory_editor_replacement">Yeni değer</string>
+    <string name="memory_editor_freeze">Dondur</string>
+    <string name="memory_editor_remove">Kaldır</string>
+    <string name="memory_editor_select_visible">Görünenleri seç</string>
+    <string name="memory_editor_clear_selection">Seçimi temizle</string>
+    <plurals name="memory_editor_selected">
+        <item quantity="one"><xliff:g id="count" example="3">%1$d</xliff:g> seçildi</item>
+        <item quantity="other"><xliff:g id="count" example="3">%1$d</xliff:g> seçildi</item>
+    </plurals>
+    <string name="memory_editor_close">Bellek Düzenleyici’yi kapat</string>
+    <string name="memory_editor_searching">Bellekte aranıyor…</string>
+    <string name="memory_editor_working">İşlem uygulanıyor…</string>
+    <string name="memory_editor_search_progress"><xliff:g id="scanned_mib" example="12">%1$d</xliff:g> / <xliff:g id="total_mib" example="64">%2$d</xliff:g> MiB tarandı</string>
+    <string name="memory_editor_candidate_moved">Hedef güncellendi</string>
+    <string name="memory_editor_candidate_relocating">Yeniden doğrulanıyor</string>
+    <string name="memory_editor_candidate_ambiguous">Belirsiz — yazma duraklatıldı</string>
+    <string name="memory_editor_candidate_lost">Kayboldu — yazma duraklatıldı</string>
+    <string name="memory_editor_apply">Uygula</string>
+    <string name="memory_editor_min_value">Minimum değer</string>
+    <string name="memory_editor_max_value">Maksimum değer</string>
+    <string name="memory_editor_change_amount">Değişim miktarı</string>
+    <string name="memory_editor_min_change">Minimum değişim</string>
+    <string name="memory_editor_max_change">Maksimum değişim</string>
+    <string name="memory_editor_unfreeze">Dondurmayı kaldır</string>
+    <string name="memory_editor_cancelled">İşlem iptal edildi.</string>
+    <string name="memory_editor_resource_limit">Bellek Düzenleyici bir güvenlik sınırına ulaştı. Daha spesifik bir arama deneyin veya kullanılmayan yer imlerini ya da dondurmaları kaldırın.</string>
+    <string name="memory_editor_identity_unsafe">Seçilen değer veya arama durumu doğrulanamadı. Sonuçları yenileyin ya da Denetleyici’yi yeniden açıp tekrar deneyin.</string>
+    <string name="memory_editor_safety_limit">Bu işlem için çok fazla değer seçildi. Daha az değer seçip yeniden deneyin.</string>
+    <string name="memory_editor_invalid_request">Değer veya işlem geçersiz.</string>
+    <string name="memory_editor_freeze_paused">Güvenlik nedeniyle duraklatıldı</string>
+    <string name="memory_editor_predicate_between">Arasında</string>
+    <string name="memory_editor_predicate_changed">Değişti</string>
+    <string name="memory_editor_predicate_unchanged">Değişmedi</string>
+    <string name="memory_editor_predicate_increased">Arttı</string>
+    <string name="memory_editor_predicate_decreased">Azaldı</string>
+    <string name="memory_editor_predicate_increased_by">Şu kadar arttı</string>
+    <string name="memory_editor_predicate_decreased_by">Şu kadar azaldı</string>
+    <string name="memory_editor_predicate_changed_by">Şu kadar değişti</string>
+    <string name="memory_editor_predicate_increased_range">Aralıkta artış miktarı</string>
+    <string name="memory_editor_predicate_decreased_range">Aralıkta azalış miktarı</string>
+    <string name="memory_editor_inspector">Denetleyici</string>
+    <string name="memory_editor_inspect_memory">Yakın belleği incele</string>
+    <string name="memory_editor_inspector_loading">Sonuç doğrulanıyor ve yakın bellek okunuyor…</string>
+    <string name="memory_editor_inspector_empty">Yakın belleği incelemek için bir sonuç seçin.</string>
+    <string name="memory_editor_inspector_no_rows">İncelenecek yakın bellek yok.</string>
+    <string name="memory_editor_refresh_snapshot">Anlık görüntüyü yenile</string>
+    <string name="memory_editor_select_result_value">Bu yer imini seç</string>
+    <string name="memory_editor_freeze_after_edit">Uyguladıktan sonra dondur</string>
+    <string name="memory_editor_freeze_after_edit_help">Bu değeri kilitli tutar ve Kaydedilenler’e yer imi olarak ekler.</string>
+    <string name="memory_editor_expression_single_hint">Tek bir değer girin veya grup değerlerini noktalı virgülle (;) ayırın.</string>
+    <string name="memory_editor_expression_group_needs_type">Grup araması için belirli bir veri türü seçin.</string>
+    <plurals name="memory_editor_expression_group_hint">
+        <item quantity="one">Grup araması · <xliff:g id="count" example="3">%1$d</xliff:g> değer · aynı Java nesnesi</item>
+        <item quantity="other">Grup araması · <xliff:g id="count" example="3">%1$d</xliff:g> değer · aynı Java nesnesi</item>
+    </plurals>
+    <string name="memory_editor_expression_query_help">Örnekler: 500 veya 500;1000. Grup araması aynı Java nesnesinde 2–8 değer arar.</string>
+    <string name="memory_editor_keypad_clear">Temizle</string>
+    <string name="memory_editor_peek_underlay">Alttaki MIDlet’i görmek için basılı tutun</string>
+    <string name="memory_editor_peek_underlay_active">Alttaki MIDlet gösteriliyor</string>
+    <string name="memory_editor_no_runtime">Etkin MIDlet çalışma zamanı yok.</string>
+    <string name="memory_editor_no_search_history">Geri yüklenecek önceki arama yok.</string>
+    <string name="memory_editor_partial_write">Yazma işlemi tam olarak tamamlanamadı. Yeniden denemeden önce geçerli değerleri kontrol edin.</string>
+    <!-- Bağımsız yazma sayımları: onaylanan, onaylanmayan, atlanan, denenmeyen ve uyumsuz veri türü. -->
+    <string name="memory_editor_write_outcome">Onaylanan yazmalar: <xliff:g id="confirmed" example="3">%1$d</xliff:g>. Onaylanmayan: <xliff:g id="unconfirmed" example="0">%2$d</xliff:g>. Atlanan: <xliff:g id="skipped" example="0">%3$d</xliff:g>. Denenmeyen: <xliff:g id="not_attempted" example="0">%4$d</xliff:g>. Tür nedeniyle atlanan: <xliff:g id="skipped_by_type" example="0">%5$d</xliff:g>.</string>
+    <!-- %1$s yerelleştirilmiş sonuç açıklamasıdır; %2$d–%6$d aynı bağımsız yazma sayımlarıdır. -->
+    <string name="memory_editor_write_failure_outcome"><xliff:g id="reason" example="Write interrupted.">%1$s</xliff:g>\nOnaylanan yazmalar: <xliff:g id="confirmed" example="1">%2$d</xliff:g>. Onaylanmayan: <xliff:g id="unconfirmed" example="1">%3$d</xliff:g>. Atlanan: <xliff:g id="skipped" example="0">%4$d</xliff:g>. Denenmeyen: <xliff:g id="not_attempted" example="0">%5$d</xliff:g>. Tür nedeniyle atlanan: <xliff:g id="skipped_by_type" example="0">%6$d</xliff:g>.</string>
+    <!-- Tamamlanan sonraki tarama öncesi (%1$d) ve sonrası (%2$d) sonuç sayıları. -->
+    <string name="memory_editor_next_scan_result">Sonraki tarama sonuçları: <xliff:g id="before_count" example="120">%1$d</xliff:g> → <xliff:g id="after_count" example="14">%2$d</xliff:g></string>
+    <string name="memory_editor_type_auto">Otomatik</string>
+    <string name="memory_editor_remove_candidates_title">Seçili sonuçlar kaldırılsın mı?</string>
+    <string name="memory_editor_remove_candidates_description">Kaldır: Seçili sonuçları arama listesinden çıkarır. Oyun belleğindeki değerler değişmez.\n\nGeri al ve kaldır: Değerleri son onaylanan düzenlemelerinden önceki durumlarına da geri yükler, ancak yalnızca mevcut değerler o düzenlemelerden sonraki değerlerle hâlâ eşleşiyorsa. Dondurulmuş değerler ve güvenli bir şekilde geri yüklenemeyen sonuçlar listede kalır.</string>
+    <string name="memory_editor_revert_and_remove">Geri al ve kaldır</string>
+    <string name="memory_editor_revert_remove_commit_failed">Değerler geri yüklenmiş olabilir ancak sonuçlar kaldırılamadı. Yenileyip tekrar deneyin; oyun tarafından değiştirilen değerlerin üzerine yazılmaz.</string>
+    <string name="memory_editor_revert_remove_outcome">Geri yüklenen: <xliff:g id="restored" example="2">%1$d</xliff:g>. Kaldırılan: <xliff:g id="removed" example="2">%2$d</xliff:g>. Çakışmalar: <xliff:g id="conflicts" example="0">%3$d</xliff:g>. Onaylanmayan: <xliff:g id="unconfirmed" example="0">%4$d</xliff:g>. Denenmeyen: <xliff:g id="not_attempted" example="0">%5$d</xliff:g>.</string>
+    <string name="memory_editor_set_all">Tümünü ayarla</string>
+    <string name="memory_editor_increment_start">Başlangıç değeri</string>
+    <string name="memory_editor_edit_batch_type_notice">Yalnızca eşleşen veri türlerine sahip değerler değiştirilir.</string>
+    <string name="memory_editor_write_confirmed">Bellek geri okumasıyla doğrulanan değerler: <xliff:g id="count" example="3">%1$d</xliff:g>.</string>
+    <string name="memory_editor_candidate_untraced">Dizi #<xliff:g id="array_id" example="42">%1$d</xliff:g>[<xliff:g id="index" example="3">%2$d</xliff:g>] · Kaynak izlenmedi</string>
+    <string name="memory_editor_candidate_static"><xliff:g id="field_name" example="Player.coins">%1$s</xliff:g> · <xliff:g id="reference_kind" example="Static reference">%2$s</xliff:g></string>
+    <string name="memory_editor_candidate_instance"><xliff:g id="field_name" example="Player.hp">%1$s</xliff:g> · <xliff:g id="reference_kind" example="Instance reference">%2$s</xliff:g> · hedef #<xliff:g id="target_id" example="1">%3$d</xliff:g></string>
+    <string name="memory_editor_reference_static">Statik başvuru</string>
+    <string name="memory_editor_reference_instance">Örnek başvurusu</string>
+    <string name="memory_editor_path_changed">Taramadan bu yana başvuru yolu değişti.</string>
+    <string name="memory_editor_path_incomplete">Başvuru yolu inceleme sınırını aşıyor.</string>
+    <string name="memory_editor_source_unknown">Kaynak izlenmedi</string>
+    <string name="memory_editor_incremental_edit">Artır</string>
+    <string name="memory_editor_increment_step">Adım</string>
+    <string name="memory_editor_increment_invalid">Tek bir tam sayı türü ve aralığı içindeki değerleri kullanın.</string>
+    <!-- Toplu iletişim kutusu başlığı zaten seçili değer sayısını gösterir. -->
+    <string name="memory_editor_increment_preview">Önizleme: <xliff:g id="name" example="Example">%1$s</xliff:g></string>
+    <string name="memory_editor_panel_opacity">Panel opaklığı</string>
+    <string name="memory_editor_panel_opacity_help">Arama yaparken oyun değerlerini görmek için arka planı ayarlayın. Metin ve simgeler görünür kalır.</string>
+    <string name="memory_editor_reconversion_required" tools:ignore="MissingTranslation">Bu MIDlet’in yüklü dönüştürmesi Bellek Düzenleyici ile uyumlu değil. Oyunu kapatın, ardından JL-Mod Plus’ta yeniden dönüştürün veya yeniden yükleyin.</string>
+    <string name="memory_saved_tab" tools:ignore="MissingTranslation">Kaydedilenler</string>
+    <string name="memory_saved_save" tools:ignore="MissingTranslation">Değişkeni kaydet</string>
+    <string name="memory_saved_name" tools:ignore="MissingTranslation">Ad</string>
+    <string name="memory_saved_explanation" tools:ignore="MissingTranslation">Bu doğrulanmış bellek yolunu sonraki oturumlar için kaydedin. Değerler hiçbir zaman otomatik olarak yazılmaz.</string>
+    <string name="memory_saved_empty" tools:ignore="MissingTranslation">Henüz kaydedilen değişken yok. Kaydetmek için bir arama sonucu seçin.</string>
+    <string name="memory_saved_not_ready" tools:ignore="MissingTranslation">Hazır değil</string>
+    <string name="memory_saved_retry" tools:ignore="MissingTranslation">Yeniden dene</string>
+    <string name="memory_saved_rename" tools:ignore="MissingTranslation">Yeniden adlandır</string>
+    <string name="memory_saved_value" tools:ignore="MissingTranslation">Değer</string>
+    <string name="memory_saved_delete_confirm" tools:ignore="MissingTranslation">Bu kaydedilen tanım kaldırılsın mı? Oyun değeri değişmeyecektir.</string>
+    <string name="memory_saved_changed" tools:ignore="MissingTranslation">Değişti</string>
+    <string name="memory_saved_rebound" tools:ignore="MissingTranslation">Hedef güncellendi</string>
+    <string name="memory_saved_import_summary" tools:ignore="MissingTranslation">Kaydedilenler: <xliff:g id="added_count" example="4">%1$d</xliff:g> eklendi, <xliff:g id="existing_count" example="2">%2$d</xliff:g> zaten mevcut</string>
+    <string name="memory_saved_incompatible" tools:ignore="MissingTranslation">Uyumsuz</string>
+    <string name="memory_saved_failed" tools:ignore="MissingTranslation">Başarısız</string>
+    <string name="memory_saved_delete_many_confirm" tools:ignore="MissingTranslation"><xliff:g id="count" example="3">%1$d</xliff:g> kaydedilen tanım kaldırılsın mı? Oyun değerleri değişmeyecektir.</string>
+    <string name="memory_recipes_title" tools:ignore="MissingTranslation">Hızlı işlem</string>
+    <string name="memory_recipes_simple_from_saved" tools:ignore="MissingTranslation">Hedef: <xliff:g id="bookmark_name" example="Coins">%1$s</xliff:g></string>
+    <string name="memory_recipes_preview" tools:ignore="MissingTranslation">Hedefleri önizle</string>
+    <string name="memory_recipes_stop_freeze" tools:ignore="MissingTranslation">Değerleri dondurmayı durdur</string>
+    <string name="memory_recipes_freeze" tools:ignore="MissingTranslation">Bu oyun çalışırken dondurulmuş tut</string>
+    <string name="memory_recipes_run" tools:ignore="MissingTranslation">Çalıştır</string>
+    <string name="memory_recipes_active_freezes" tools:ignore="MissingTranslation">Değerleri donduran betikler</string>
+    <string name="memory_recipes_target_unavailable" tools:ignore="MissingTranslation">Yer imi hedefi kullanılamıyor. Çalıştırmadan önce yenileyin veya yeniden bağlayın.</string>
+    <string name="memory_recipes_preview_values" tools:ignore="MissingTranslation">Geçerli değerler: <xliff:g id="name" example="Example">%1$s</xliff:g></string>
+    <string name="memory_scripts_title" tools:ignore="MissingTranslation">Betikler</string>
+    <string name="memory_scripts_active" tools:ignore="MissingTranslation">Etkin</string>
+    <string name="memory_scripts_inputs" tools:ignore="MissingTranslation">Girişler</string>
+    <string name="memory_scripts_create_from_bookmarks" tools:ignore="MissingTranslation">Betik oluştur</string>
+    <string name="memory_scripts_create_failed" tools:ignore="MissingTranslation">Yeni betik başlatılamadı.</string>
+    <string name="memory_scripts_draft_in_progress" tools:ignore="MissingTranslation">Önce geçerli betik taslağını bitirin veya silin.</string>
+    <string name="memory_builder_open_saved" tools:ignore="MissingTranslation">Kaydedilenler’i aç</string>
+    <string name="memory_builder_add_description" tools:ignore="MissingTranslation">Açıklama ekle</string>
+    <string name="memory_builder_find_values" tools:ignore="MissingTranslation">Değer bul</string>
+    <string name="memory_scripts_description" tools:ignore="MissingTranslation">Açıklama</string>
+    <string name="memory_scripts_new" tools:ignore="MissingTranslation">Yeni betik</string>
+    <string name="memory_scripts_back" tools:ignore="MissingTranslation">Geri</string>
+    <string name="memory_scripts_edit" tools:ignore="MissingTranslation">Düzenle</string>
+    <string name="memory_scripts_save" tools:ignore="MissingTranslation">Kaydet</string>
+    <string name="memory_scripts_saved" tools:ignore="MissingTranslation">Betik kaydedildi</string>
+    <string name="memory_scripts_deleted" tools:ignore="MissingTranslation">Betik silindi</string>
+    <string name="memory_scripts_save_failed" tools:ignore="MissingTranslation">Betik kaydedilemedi.</string>
+    <string name="memory_scripts_editor_hint" tools:ignore="MissingTranslation">Desteklenen bellek işlemlerini kullanan bir JSON betiği girin veya yapıştırın. Betiği kaydetmek onu çalıştırmaz.</string>
+    <string name="memory_scripts_paste_hint" tools:ignore="MissingTranslation">Betik JSON’unu yapıştır</string>
+    <string name="memory_scripts_paste" tools:ignore="MissingTranslation">Yapıştır</string>
+    <string name="memory_scripts_clipboard_invalid" tools:ignore="MissingTranslation">Pano boş veya belge 64 KiB sınırını aşıyor</string>
+    <string name="memory_scripts_invalid" tools:ignore="MissingTranslation">Geçersiz betik biçimi</string>
+    <string name="memory_scripts_freeze_active" tools:ignore="MissingTranslation">Bu betik değerleri donduruyor</string>
+    <string name="memory_scripts_delete" tools:ignore="MissingTranslation">Sil</string>
+    <string name="memory_scripts_delete_confirm" tools:ignore="MissingTranslation"><xliff:g id="name" example="Example">%1$s</xliff:g> silinsin mi? Bu betik için etkin tüm dondurmalar durdurulur.</string>
+    <string name="memory_scripts_empty" tools:ignore="MissingTranslation">Kaydedilen betik yok</string>
+    <string name="memory_scripts_unsaved_title" tools:ignore="MissingTranslation">Kaydedilmemiş betikten vazgeçilsin mi?</string>
+    <string name="memory_scripts_unsaved_message" tools:ignore="MissingTranslation">Betik değişiklikleriniz kaydedilmedi.</string>
+    <string name="memory_scripts_discard" tools:ignore="MissingTranslation">Vazgeç</string>
+    <string name="memory_scripts_current_title" tools:ignore="MissingTranslation">Son okuma</string>
+    <string name="memory_scripts_refresh" tools:ignore="MissingTranslation">Yenile</string>
+    <string name="memory_scripts_reading" tools:ignore="MissingTranslation">Geçerli değerler okunuyor…</string>
+    <string name="memory_scripts_refresh_hint" tools:ignore="MissingTranslation">Çalışan oyundaki geçerli değerleri okumak için Yenile’ye dokunun.</string>
+    <string name="memory_scripts_mode_toggle" tools:ignore="MissingTranslation">Değerleri dondur</string>
+    <string name="memory_scripts_mode_form" tools:ignore="MissingTranslation">Değer düzenleyici</string>
+    <string name="memory_scripts_mode_once" tools:ignore="MissingTranslation">Hızlı işlemler</string>
+    <string name="memory_scripts_mode_legacy" tools:ignore="MissingTranslation">Gelişmiş betik</string>
+    <string name="memory_scripts_edit_values" tools:ignore="MissingTranslation">Değerleri düzenle</string>
+    <string name="memory_scripts_apply" tools:ignore="MissingTranslation">Değişiklikleri uygula</string>
+    <string name="memory_scripts_refresh_required" tools:ignore="MissingTranslation">Uygulamadan önce geçerli değerleri doğrulamak için yenileyin.</string>
+    <string name="memory_scripts_inconsistent" tools:ignore="MissingTranslation">Tutarsız kopyalar: <xliff:g id="name" example="Example">%1$s</xliff:g></string>
+    <string name="memory_editor_minimize" tools:ignore="MissingTranslation">Bellek Düzenleyici’yi küçült</string>
+    <string name="memory_scripts_choose_type" tools:ignore="MissingTranslation">Yeni betik</string>
+    <string name="memory_scripts_choose_hint" tools:ignore="MissingTranslation">Bu betiğin nasıl çalışacağını seçin.</string>
+    <string name="memory_builder_json_editor" tools:ignore="MissingTranslation">JSON düzenleyici</string>
+    <string name="memory_builder_freeze_hint" tools:ignore="MissingTranslation">Etkinleştirildiğinde seçili değerleri kilitli tutar. Dondurmayı kapatmak önceki değerleri geri yüklemez.</string>
+    <string name="memory_builder_form_hint" tools:ignore="MissingTranslation">Düzenlemeleri uygulamadan önce geçerli değerleri okuyan bir form oluşturun.</string>
+    <string name="memory_builder_actions_hint" tools:ignore="MissingTranslation">Çalıştır’a her bastığınızda değişiklikleri bir kez uygular. Ekle ve Çıkar işlemleri, önceki çalıştırmalardan gelen değişiklikler dahil olmak üzere mevcut değerleri kullanır.</string>
+    <string name="memory_builder_name" tools:ignore="MissingTranslation">Betik adı</string>
+    <string name="memory_builder_frozen_values" tools:ignore="MissingTranslation">Dondurulan değerler</string>
+    <string name="memory_builder_fields" tools:ignore="MissingTranslation">Alanlar</string>
+    <string name="memory_builder_actions" tools:ignore="MissingTranslation">İşlemler</string>
+    <string name="memory_builder_add_bookmarks" tools:ignore="MissingTranslation">Yer imlerinden ekle</string>
+    <string name="memory_builder_empty" tools:ignore="MissingTranslation">En az bir doğrulanmış yer imi ekleyin.</string>
+    <string name="memory_builder_field_label" tools:ignore="MissingTranslation">Alan etiketi</string>
+    <string name="memory_builder_keep_at" tools:ignore="MissingTranslation">Şu değerde tut</string>
+    <string name="memory_builder_amount" tools:ignore="MissingTranslation">Değer / miktar</string>
+    <string name="memory_builder_set" tools:ignore="MissingTranslation">Ayarla</string>
+    <string name="memory_builder_add" tools:ignore="MissingTranslation">Ekle</string>
+    <string name="memory_builder_subtract" tools:ignore="MissingTranslation">Çıkar</string>
+    <string name="memory_builder_view_json" tools:ignore="MissingTranslation">JSON’u görüntüle</string>
+    <string name="memory_builder_edit_json" tools:ignore="MissingTranslation">JSON’u düzenle</string>
+    <string name="memory_builder_search_bookmarks" tools:ignore="MissingTranslation">Yer imlerinde ara</string>
+    <string name="memory_builder_no_bookmarks" tools:ignore="MissingTranslation">Eşleşen doğrulanmış yer imi yok. Ara’da bir değeri yer imlerine ekleyin veya Kaydedilenler’de birini yeniden bağlayın.</string>
+    <string name="memory_builder_needs_relink" tools:ignore="MissingTranslation">Yeniden bağlama gerekiyor</string>
+    <string name="memory_builder_add_selected" tools:ignore="MissingTranslation">Seçilenleri ekle</string>
+    <string name="memory_builder_min" tools:ignore="MissingTranslation">Minimum (isteğe bağlı)</string>
+    <string name="memory_builder_max" tools:ignore="MissingTranslation">Maksimum (isteğe bağlı)</string>
+    <string name="memory_builder_add_target" tools:ignore="MissingTranslation">Hedef ekle</string>
+    <string name="memory_builder_freeze_short" tools:ignore="MissingTranslation">Seçili değerleri sabit tut</string>
+    <string name="memory_builder_form_short" tools:ignore="MissingTranslation">Birden fazla değeri tek yerden ayarla</string>
+    <string name="memory_builder_actions_short" tools:ignore="MissingTranslation">Tek seferlik Ayarla, Ekle veya Çıkar işlemleri çalıştır</string>
+    <string name="memory_editor_refine_scan" tools:ignore="MissingTranslation">Daralt</string>
+    <string name="memory_scripts_saved_count" tools:ignore="MissingTranslation"><xliff:g id="count" example="3">%1$d</xliff:g> kaydedilen</string>
+    <string name="memory_scripts_empty_hint" tools:ignore="MissingTranslation">Oynarken değerleri düzenlemek veya dondurmak için bir betik oluşturun.</string>
+    <string name="memory_builder_limits" tools:ignore="MissingTranslation">Sınırlar (isteğe bağlı)</string>
+    <string name="memory_editor_selection_limit">En fazla %1$d değer seçin.</string>
+    <string name="memory_saved_storage_unavailable">Kaydedilen öğelere erişilemiyor.</string>
+    <string name="memory_bookmark_renamed">Yer işareti yeniden adlandırıldı</string>
+    <string name="memory_editor_memory_unavailable">MIDlet belleği kullanılamıyor.</string>
+    <string name="memory_bookmark_added">Yer işareti eklendi</string>
+    <string name="memory_bookmark_relinked">Yer işareti yeniden bağlandı</string>
+    <string name="memory_bookmarks_removed">Kaydedilenlerden kaldırıldı</string>
+    <string name="memory_freeze_enabled">Dondurma etkinleştirildi</string>
+    <string name="memory_freeze_unavailable">Dondurma etkinleştirilemedi.</string>
+    <string name="memory_list_session_only_failed">Bu öğe yalnızca mevcut oturum için tutulamadı.</string>
+    <string name="memory_list_kept_unlinked">Sonraki başlatma için kaydedildi ancak mevcut oturumla ilişkilendirilemedi.</string>
+    <string name="memory_list_removal_unavailable">Bağlantı kesikken öğeler kaldırılamaz. Tekrar deneyin.</string>
+    <string name="memory_list_watch_removed">Oturum takibi kaldırıldı</string>
+    <string name="memory_list_bookmark_removal_failed">Yer işaretleri kaldırılamadı: %1$s</string>
+    <string name="memory_list_watch_removal_failed">Oturum takibi kaldırılamadı: %1$s</string>
+    <string name="memory_list_removal_unknown_error">Bilinmeyen hata</string>
+    <string name="memory_editor_edit_freeze_failed">Değer güncellendi ancak dondurma başlatılamadı. Tekrar denemeden önce mevcut değeri kontrol edin.</string>
+    <string name="memory_scripts_freeze_inactive">Bu betik artık değerleri dondurmuyor.</string>
+    <string name="memory_bookmark_change_incomplete">Yer imi değişikliği tamamlanamadı. Yeniden denemeden önce kayıtlı öğeleri kontrol edin.</string>
+    <string name="memory_editor_value_updated">Değer güncellendi.</string>
+    <string name="memory_editor_value_updated_frozen">Değer güncellendi ve dondurma etkinleştirildi.</string>
+    <string name="memory_scripts_delete_failed">Betik silinemedi. Yeniden denemeden önce dondurma durumunu kontrol edin.</string>
+    <string name="memory_scripts_check_input">Betik hazırlanamadı. Değerleri ve yer imlerini kontrol edin.</string>
+    <string name="memory_scripts_read_failed">Mevcut değerler okunamadı. Yenileyip yeniden deneyin.</string>
+    <string name="memory_technical_details">Teknik ayrıntılar</string>
+    <string name="memory_scripts_resource_limit">Betik bir güvenlik sınırına ulaştı. Hedef sayısını azaltın veya kullanılmayan dondurmaları durdurun.</string>
+    <string name="memory_scripts_target_changed">Betiğin hedefi doğrulanamadı. Değerleri yenileyin ve yer imlerini kontrol edin.</string>
+    <string name="memory_scripts_operation_unavailable">Bu betik işlemi mevcut hedef için desteklenmiyor.</string>
+    <string name="memory_scripts_invalid_input">Betik girdilerini kontrol edin. İzin verilen aralıklarda geçerli değerler girin.</string>
+    <string name="memory_scripts_value_range">Bir değer desteklenen aralığın dışında. Betiği ve değerlerini kontrol edin.</string>
+    <string name="memory_scripts_inconsistent_values">Aynı değerin kopyaları uyuşmuyor. Yeniden denemeden önce oyunun durumunu kontrol edin.</string>
+    <string name="memory_scripts_wrong_midlet">Bu betik başka bir MIDlet içindir. Doğru MIDlet’i açın veya başka bir betik seçin.</string>
+    <string name="memory_scripts_target_not_ready">Betik hedefi henüz hazır değil. İlgili oyun ekranına dönüp yeniden deneyin.</string>
+</resources>

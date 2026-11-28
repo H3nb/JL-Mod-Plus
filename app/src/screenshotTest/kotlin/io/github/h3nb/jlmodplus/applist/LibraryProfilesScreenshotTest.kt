@@ -22,11 +22,9 @@ import androidx.compose.foundation.layout.padding
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.CompositionLocalProvider
 import androidx.compose.runtime.remember
-import androidx.compose.ui.platform.LocalConfiguration
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.unit.dp
-import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.tooling.preview.Preview
 import androidx.navigationevent.compose.LocalNavigationEventDispatcherOwner
 import androidx.navigationevent.compose.rememberNavigationEventDispatcherOwner
@@ -39,7 +37,6 @@ import io.github.h3nb.jlmodplus.config.ProfilesScreen
 import io.github.h3nb.jlmodplus.config.ProfilesUiState
 import io.github.h3nb.jlmodplus.librarydb.LibraryCollectionRow
 import io.github.h3nb.jlmodplus.ui.JLModPlusTheme
-import java.util.Locale
 
 private val PreviewApps = listOf(
     LibraryAppUiItem(
@@ -498,24 +495,6 @@ fun LibraryCollectionsScreenshot() {
     }
 }
 
-// The screenshot renderer currently renders @Preview(locale = "id") with English
-// resources. Supply both context and configuration to exercise Indonesian layouts.
-@Composable
-private fun IndonesianScreenshotContent(content: @Composable () -> Unit) {
-    val context = LocalContext.current
-    val localizedContext = remember(context) {
-        val config = Configuration(context.resources.configuration).apply {
-            setLocale(Locale.forLanguageTag("id"))
-        }
-        context.createConfigurationContext(config)
-    }
-    CompositionLocalProvider(
-        LocalContext provides localizedContext,
-        LocalConfiguration provides localizedContext.resources.configuration,
-        content = content,
-    )
-}
-
 @PreviewTest
 @Preview(name = "Profiles content", widthDp = 360, heightDp = 640, showBackground = true)
 @Composable
@@ -597,15 +576,13 @@ fun AboutScreenScreenshot() {
     name = "About screen Indonesian",
     widthDp = 360,
     heightDp = 640,
-    locale = "id",
+    locale = "in",
     showBackground = true,
 )
 @Composable
 fun AboutScreenIndonesianScreenshot() {
-    IndonesianScreenshotContent {
-        JLModPlusTheme(darkTheme = false) {
-            LibraryAboutScreen(onBack = {}, onLicenses = {}, onOpenGitHub = {})
-        }
+    JLModPlusTheme(darkTheme = false) {
+        LibraryAboutScreen(onBack = {}, onLicenses = {}, onOpenGitHub = {})
     }
 }
 

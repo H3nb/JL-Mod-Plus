@@ -1,0 +1,47 @@
+<?xml version="1.0" encoding="utf-8"?>
+<!-- Shared UI actions, generic labels, dialogs, and About screen. -->
+<resources xmlns:xliff="urn:oasis:names:tc:xliff:document:1.2">
+    <string name="about">Tietoja</string>
+    <string name="about_message">Käytä klassisia sovelluksia ja pelejä, järjestä MIDletit kirjastoosi sekä mukauta ohjaimia, näyttöä, ääntä ja suorituskykyä. JL-Mod Plus on ilmainen ja avointa lähdekoodia.</string>
+    <string name="about_subtitle">Java ME -emulaattori Androidille</string>
+    <string name="about_compatibility">Yhteensopivuus riippuu MIDletistä, laitteesta ja tuetuista Java ME -rajapinnoista. Jotkin sovellukset voivat toimia eri tavalla kuin alkuperäisissä laitteissa.</string>
+    <string name="about_lineage_title">Projektin tausta</string>
+    <string name="about_build_title">Koontiversion tiedot</string>
+    <string name="about_version_label">Versio</string>
+    <string name="about_build_label">Koontiversio</string>
+    <string name="about_revision_label">Lähdekoodiversio</string>
+    <string name="about_links_title">Projekti ja lisenssit</string>
+    <string name="about_github_link_copied">Selainta ei löytynyt. GitHub-linkki kopioitiin leikepöydälle.</string>
+    <string name="about_github_browser_unavailable">Selainta ei löytynyt GitHubin avaamiseksi.</string>
+    <string name="about_lineage">JL-Mod Plus on itsenäinen haara woesssin (Yury Kharchenko) JL-Modista. JL-Mod perustuu Nikita Shakarunin J2ME Loaderiin, joka pohjautuu NaikSoftwaren J2meLoaderiin.</string>
+    <string name="about_evolution">JL-Mod Plus rakentaa tälle pohjalle modernin käyttöliittymän, monipuolisemman MIDlet-kirjaston, uusia ominaisuuksia ja tuen uudemmille Android-versioille.</string>
+    <string name="action_back">Takaisin</string>
+    <string name="action_settings">Asetukset</string>
+    <string name="CANCEL_CMD">Peruuta</string>
+    <string name="change">Vaihda</string>
+    <string name="choose">Valitse</string>
+    <string name="close">Sulje</string>
+    <string name="cmd_menu">Valikko</string>
+    <string name="CONFIRMATION_REQUIRED">Vahvistus vaaditaan</string>
+    <string name="create">Luo</string>
+    <string name="default_label"><xliff:g id="name" example="Example">%1$s</xliff:g> (oletus)</string>
+    <string name="dismiss">Hylkää</string>
+    <string name="edit">Muokkaa</string>
+    <string name="error">Virhe</string>
+    <string name="error_name">Anna nimi.</string>
+    <string name="exit">Lopeta</string>
+    <string name="help">Ohje</string>
+    <string name="install">Asenna</string>
+    <string name="licenses">Lisenssit</string>
+    <string name="licenses_unavailable">Lisenssitiedot eivät ole saatavilla.</string>
+    <string name="loading_info">Ladataan tietoja…</string>
+    <string name="more">Lisää</string>
+    <string name="not_saved_exists">On jo olemassa</string>
+    <string name="reset">Palauta</string>
+    <string name="retry">Yritä uudelleen</string>
+    <string name="save">Tallenna</string>
+    <string name="saved"><xliff:g id="name" example="Example">%1$s</xliff:g> tallennettu</string>
+    <string name="START_CMD">Käynnistä</string>
+    <string name="warning">Varoitus</string>
+    <string name="removed"><xliff:g id="name" example="Example">%1$s</xliff:g> poistettu</string>
+</resources>

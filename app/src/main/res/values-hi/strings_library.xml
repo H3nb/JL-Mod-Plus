@@ -1,0 +1,470 @@
+<?xml version="1.0" encoding="utf-8"?>
+<!-- MIDlet library, collections, metadata editor, bulk/single installer, file picker, and app updates. -->
+<resources xmlns:tools="http://schemas.android.com/tools" xmlns:xliff="urn:oasis:names:tc:xliff:document:1.2">
+    <string name="action_context_delete">हटाएं</string>
+    <string name="action_context_rename">नाम बदलें</string>
+    <string name="action_context_shortcut">शॉर्टकट जोड़ें</string>
+    <string name="action_reinstall">पुनः इंस्टॉल करें</string>
+    <string name="alert_msg_workdir_not_exists">वर्किंग फ़ोल्डर नहीं मिला:\n<xliff:g id="path" example="/storage/emulated/0/JL-Mod-Plus">%1$s</xliff:g>\nक्या इसे बनाएं या कोई अन्य फ़ोल्डर चुनें?</string>
+    <string name="converting_wait">JAR रूपांतरित हो रहा है…</string>
+    <string name="create_apps_dir_failed">वर्किंग फ़ोल्डर यहां तैयार नहीं किया जा सका:\n<xliff:g id="path" example="/storage/emulated/0/JL-Mod-Plus">%1$s</xliff:g>\nकोई अन्य फ़ोल्डर चुनें।</string>
+    <string name="install_done">ऐप इंस्टॉल हो गया।</string>
+    <string name="install_done_with_warning">ऐप चेतावनियों के साथ इंस्टॉल हो गया।</string>
+    <string name="installer_title">MIDlet इंस्टॉलर</string>
+    <string name="installer_error_message">चयनित ऐप इंस्टॉल नहीं किया जा सका। एक मान्य MIDlet फ़ाइल चुनें और पुनः प्रयास करें।</string>
+    <string name="install_jar_non_matched_jad">यह ऐप JAD में वर्णित ऐप से भिन्न है।\nJAD अनदेखा करके फिर भी इंस्टॉल करें?</string>
+    <string name="file_picker_select_file">फ़ाइल चुनें</string>
+    <string name="file_picker_select_folder">फ़ोल्डर चुनें</string>
+    <string name="file_picker_select_app_bundle">ऐप बंडल चुनें</string>
+    <string name="file_picker_select_icon">आइकन चुनें</string>
+    <string name="file_picker_navigate_back">मूल फ़ोल्डर पर वापस जाएं</string>
+    <string name="file_picker_cancel">रद्द करें</string>
+    <string name="file_picker_search">खोजें</string>
+    <string name="file_picker_sort">क्रमबद्ध करें</string>
+    <string name="file_picker_select_all">दिखाई गई सभी फ़ाइलें चुनें</string>
+    <string name="file_picker_unselect_all">दिखाई गई सभी फ़ाइलों का चयन हटाएं</string>
+    <string name="file_picker_sort_type">फ़ोल्डर पहले</string>
+    <string name="file_picker_sort_name_ascending">नाम A–Z</string>
+    <string name="file_picker_sort_name_descending">नाम Z–A</string>
+    <string name="file_picker_sort_modified_newest">संशोधन तिथि: नवीनतम</string>
+    <string name="file_picker_sort_modified_oldest">संशोधन तिथि: सबसे पुरानी</string>
+    <string name="file_picker_choose">चुनें</string>
+    <string name="file_picker_current_folder">वर्तमान फ़ोल्डर</string>
+    <string name="file_picker_parent_folder">मूल फ़ोल्डर</string>
+    <string name="file_picker_file">फ़ाइल</string>
+    <string name="file_picker_preview_named"><xliff:g id="name" example="Example">%1$s</xliff:g> का पूर्वावलोकन</string>
+    <string name="file_picker_preview_unavailable">पूर्वावलोकन उपलब्ध नहीं</string>
+    <string name="file_picker_storage_volume">स्टोरेज वॉल्यूम</string>
+    <string name="file_picker_empty">कोई मेल खाती फ़ाइल नहीं</string>
+    <string name="file_picker_empty_folder">कोई फ़ोल्डर नहीं मिला</string>
+    <string name="file_picker_no_matches">कोई मिलान नहीं</string>
+    <string name="file_picker_permission_required">स्टोरेज अनुमति आवश्यक है</string>
+    <string name="file_picker_permission_message">इस डिवाइस पर फ़ाइलें और फ़ोल्डर ब्राउज़ करने के लिए स्टोरेज एक्सेस की अनुमति दें।</string>
+    <string name="file_picker_permission_denied">स्टोरेज एक्सेस नहीं दिया गया।</string>
+    <string name="file_picker_grant_access">एक्सेस दें</string>
+    <string name="file_picker_retry">पुनः प्रयास करें</string>
+    <string name="file_picker_load_failed">यह फ़ोल्डर खोला नहीं जा सका।</string>
+    <string name="file_picker_create_folder">नया फ़ोल्डर</string>
+    <string name="file_picker_create_folder_title">फ़ोल्डर बनाएं</string>
+    <string name="file_picker_folder_name">फ़ोल्डर का नाम</string>
+    <string name="file_picker_invalid_folder_name">मान्य फ़ोल्डर नाम दर्ज करें।</string>
+    <string name="file_picker_folder_exists">इस नाम का आइटम पहले से मौजूद है।</string>
+    <string name="file_picker_create_folder_failed">फ़ोल्डर बनाया नहीं जा सका।</string>
+    <string name="file_picker_selection_unavailable">चयनित आइटम अब उपलब्ध नहीं है।</string>
+    <string name="loading_apps">ऐप्स लोड हो रहे हैं</string>
+    <string name="message_delete">यह ऐप, इसकी सेटिंग्स और सेव डेटा हटाएं? इससे यह आपकी लाइब्रेरी से भी हट जाएगा।</string>
+    <string name="msg_no_matches">“<xliff:g id="query" example="Bounce">%1$s</xliff:g>” के लिए कोई मिलान नहीं</string>
+    <string name="library_destination_apps">सभी ऐप्स</string>
+    <string name="library_destination_collections">संग्रह</string>
+    <string name="library_scope_picker_title" tools:ignore="MissingTranslation">ऐप्स ब्राउज़ करें</string>
+    <string name="library_destination_more">अधिक</string>
+    <string name="library_search_placeholder">ऐप्स खोजें…</string>
+    <string name="library_filter_all">सभी</string>
+    <string name="library_filter_recently_opened">हाल ही में खोले गए</string>
+    <string name="library_filter_recently_added">हाल ही में जोड़े गए</string>
+    <string name="library_filter_favorites">पसंदीदा</string>
+    <string name="library_add_to_favorites_action">पसंदीदा में जोड़ें</string>
+    <string name="library_remove_from_favorites_action">पसंदीदा से हटाएं</string>
+    <string name="library_favorite_coming_soon">पसंदीदा उपलब्ध नहीं</string>
+    <string name="library_vendor_version"><xliff:g id="vendor" example="Nokia">%1$s</xliff:g> · <xliff:g id="version" example="1.0">%2$s</xliff:g></string>
+    <string name="library_view_list">सूची</string>
+    <string name="library_view_grid">ग्रिड</string>
+    <string name="library_icon_ratio_title">आइकन आस्पेक्ट रेशियो</string>
+    <string name="library_icon_ratio_square">वर्गाकार (1:1)</string>
+    <string name="library_icon_ratio_portrait">पोर्ट्रेट (3:4)</string>
+    <string name="library_icon_shape_title">आइकन का आकार</string>
+    <string name="library_icon_shape_round">गोल कोने</string>
+    <string name="library_icon_shape_square">तीखे कोने</string>
+    <string name="library_grid_icon_size_title" tools:ignore="MissingTranslation">ग्रिड आइकन आकार</string>
+    <string name="library_grid_icon_size_small" tools:ignore="MissingTranslation">छोटा</string>
+    <string name="library_grid_icon_size_standard" tools:ignore="MissingTranslation">मानक</string>
+    <string name="library_grid_icon_size_large" tools:ignore="MissingTranslation">बड़ा</string>
+    <string name="library_grid_icon_size_summary" tools:ignore="MissingTranslation">ग्रिड दृश्य में आइकन का आकार और कॉलम की संख्या बदलता है।</string>
+    <string name="library_grid_spacing_title">ग्रिड रिक्ति</string>
+    <string name="library_grid_spacing_summary" tools:ignore="MissingTranslation">केवल ग्रिड दृश्य पर लागू होता है।</string>
+    <string name="library_grid_spacing_none">कोई नहीं (0 dp)</string>
+    <string name="library_grid_spacing_compact">सघन (4 dp)</string>
+    <string name="library_grid_spacing_standard">मानक (8 dp)</string>
+    <string name="library_grid_spacing_spacious">विस्तृत (12 dp)</string>
+    <string name="library_hide_grid_titles">MIDlet शीर्षक छिपाएं</string>
+    <string name="library_show_list_description">MIDlet विवरण दिखाएं</string>
+    <string name="library_collections_empty_title">अभी तक कोई संग्रह नहीं</string>
+    <string name="library_collections_empty_message">लाइब्रेरी पूरी तरह लोड होने तक संग्रह उपलब्ध नहीं हैं।</string>
+    <string name="library_expand_description">विवरण विस्तारित करें</string>
+    <string name="library_collapse_description">विवरण संक्षिप्त करें</string>
+    <string name="no_data_for_display">दिखाने के लिए कोई ऐप नहीं</string>
+    <string name="permission_request_failed">स्टोरेज लेखन अनुमति आवश्यक है।</string>
+    <string name="reinstall">यह ऐप पहले से इंस्टॉल है। पुनः इंस्टॉल करें?</string>
+    <string name="reinstall_newest">इस ऐप को संस्करण <xliff:g id="version" example="2.1.0">%1$s</xliff:g> पर अपडेट करें?\n\nवर्तमान में इंस्टॉल: <xliff:g id="current_version" example="2.0.0">%2$s</xliff:g></string>
+    <string name="reinstall_older">इस ऐप को संस्करण <xliff:g id="version" example="2.1.0">%1$s</xliff:g> से बदलें?\n\nवर्तमान में इंस्टॉल: <xliff:g id="current_version" example="2.0.0">%2$s</xliff:g>\nपुराना संस्करण मौजूदा डेटा के साथ ठीक से काम न करे।</string>
+    <string name="warn_install_from_net">यह फ़ाइल इंटरनेट से डाउनलोड की जाएगी।</string>
+    <string name="installer_ambiguous">कई इंस्टॉल किए गए ऐप्स इस पैकेज से मेल खाते हैं। एक अलग प्रति इंस्टॉल करें? मौजूदा ऐप्स और उनका डेटा सुरक्षित रहेगा।</string>
+    <string name="installer_separate_copy">अलग प्रति इंस्टॉल करें</string>
+    <string name="installer_stage_download">ऐप डाउनलोड हो रहा है…</string>
+    <string name="installer_stage_wait">किसी अन्य कार्रवाई की प्रतीक्षा है…</string>
+    <string name="installer_stage_save">ऐप सहेजा जा रहा है…</string>
+    <string name="installer_failed_download">ऐप डाउनलोड नहीं हो सका। अपना कनेक्शन और डाउनलोड लिंक जांचें, फिर पुनः प्रयास करें।</string>
+    <string name="installer_failed_storage">इंस्टॉलेशन पूरा नहीं किया जा सका। पुनः प्रयास करें।</string>
+    <string name="installer_failed_conversion">ऐप रूपांतरित नहीं हो सका। सुनिश्चित करें कि फ़ाइल पूर्ण और समर्थित है, फिर पुनः प्रयास करें।</string>
+    <string name="installer_needs_recovery">ऐप फ़ाइलें सहेजी गईं, लेकिन लाइब्रेरी अपडेट पूरी नहीं हो सकी। पुनः प्रयास करने से पहले लाइब्रेरी रिफ़्रेश करें।</string>
+    <string name="installer_refresh_library">लाइब्रेरी रिफ़्रेश करें</string>
+    <string name="installer_cancel_pending">अगले सुरक्षित बिंदु पर रुक रहा है…</string>
+    <string name="installer_retry_remaining">अधूरे आइटम की समीक्षा करें</string>
+    <string name="installer_not_processed">प्रोसेस नहीं हुआ</string>
+    <string name="installer_partial_restore">ऐप इंस्टॉल हो गया, लेकिन डेटा या सेटिंग्स पुनर्स्थापित नहीं हो सकीं।</string>
+    <string name="installer_removed_leftovers">ऐप हटा दिया गया, लेकिन कुछ सेटिंग्स या सेव डेटा हटाए नहीं जा सके।</string>
+    <string name="installer_copy_details">विवरण कॉपी करें</string>
+    <string name="installer_show_details">विवरण दिखाएं</string>
+    <string name="installer_hide_details">विवरण छिपाएं</string>
+    <!-- %1$d is the number of source Java class files skipped during conversion. -->
+    <plurals name="installer_conversion_warning_summary">
+        <item quantity="one"><xliff:g id="skipped_count" example="2">%1$d</xliff:g> Java क्लास फ़ाइल छोड़ी गई क्योंकि उसे पढ़ा नहीं जा सका। इसका उपयोग करने वाली सुविधाएं काम न करें।</item>
+        <item quantity="other"><xliff:g id="skipped_count" example="2">%1$d</xliff:g> Java क्लास फ़ाइलें छोड़ी गईं क्योंकि उन्हें पढ़ा नहीं जा सका। उनका उपयोग करने वाली सुविधाएं काम न करें।</item>
+    </plurals>
+    <!-- %1$s is the source JAR entry path for the skipped class file. -->
+    <string name="installer_conversion_skipped_entry"><xliff:g id="entry_path" example="com/example/Broken.class">%1$s</xliff:g>\nसमस्या: Java क्लास फ़ाइल पढ़ी नहीं जा सकी।\nकार्रवाई: रूपांतरण के दौरान छोड़ी गई।</string>
+    <!-- %1$d is the number of additional bounded conversion diagnostics not shown. -->
+    <plurals name="installer_conversion_omitted_details">
+        <item quantity="one"><xliff:g id="omitted_count" example="5">%1$d</xliff:g> अतिरिक्त रूपांतरण समस्या नहीं दिखाई गई है।</item>
+        <item quantity="other"><xliff:g id="omitted_count" example="5">%1$d</xliff:g> अतिरिक्त रूपांतरण समस्याएं नहीं दिखाई गई हैं।</item>
+    </plurals>
+    <string name="library_collection_new">नया संग्रह</string>
+    <string name="library_collection_ready_empty_message">फ़ाइलें स्थानांतरित किए बिना ऐप्स व्यवस्थित करने के लिए संग्रह बनाएं।</string>
+    <string name="library_collection_add_app">संग्रह में जोड़ें</string>
+    <string name="library_collection_add_apps">ऐप्स जोड़ें</string>
+    <string name="library_collection_manage_apps">ऐप्स चुनें</string>
+    <string name="library_collection_manage" tools:ignore="MissingTranslation">संग्रह प्रबंधित करें</string>
+    <string name="library_collection_delete_confirmation" tools:ignore="MissingTranslation">“<xliff:g id="collection_name" example="Favorites">%1$s</xliff:g>” हटाएं? इस संग्रह के ऐप्स इंस्टॉल रहेंगे।</string>
+    <string name="library_collection_rename_action" tools:ignore="MissingTranslation">संग्रह “<xliff:g id="collection_name" example="Favorites">%1$s</xliff:g>” का नाम बदलें</string>
+    <string name="library_collection_delete_action" tools:ignore="MissingTranslation">संग्रह “<xliff:g id="collection_name" example="Favorites">%1$s</xliff:g>” हटाएं</string>
+    <string name="library_collection_select_action" tools:ignore="MissingTranslation">संग्रह “<xliff:g id="collection_name" example="Favorites">%1$s</xliff:g>” चुनें</string>
+    <string name="library_collection_open_action" tools:ignore="MissingTranslation">संग्रह “<xliff:g id="collection_name" example="Favorites">%1$s</xliff:g>” खोलें</string>
+    <string name="library_collection_rename_selected" tools:ignore="MissingTranslation">चयनित संग्रह का नाम बदलें</string>
+    <string name="library_collection_delete_selected" tools:ignore="MissingTranslation">चयनित संग्रह हटाएं</string>
+    <plurals name="library_collection_delete_many_confirmation">
+        <item quantity="one"><xliff:g id="count" example="3">%d</xliff:g> संग्रह हटाएं? ऐप्स इंस्टॉल रहेंगे।</item>
+        <item quantity="other"><xliff:g id="count" example="3">%d</xliff:g> संग्रह हटाएं? ऐप्स इंस्टॉल रहेंगे।</item>
+    </plurals>
+    <string name="library_notifications_title" tools:ignore="MissingTranslation">सूचनाएं</string>
+    <string name="library_notifications_empty_title" tools:ignore="MissingTranslation">अभी तक कोई सूचना नहीं</string>
+    <string name="library_notifications_empty_summary" tools:ignore="MissingTranslation">ऐप अपडेट की सूचनाएं उपलब्ध होने पर यहां दिखाई देंगी।</string>
+    <string name="library_collection_manage_apps_summary">इस संग्रह में शामिल करने के लिए ऐप्स चुनें।</string>
+    <string name="library_collection_name">संग्रह का नाम</string>
+    <string name="library_collection_members_empty">इस संग्रह में कोई ऐप नहीं है।</string>
+    <string name="library_collection_select_title">एक संग्रह चुनें</string>
+    <string name="library_collection_select_message">इसके ऐप्स देखने के लिए एक संग्रह चुनें।</string>
+    <string name="library_collection_remove_from_current">संग्रह से हटाएं</string>
+    <string name="library_no_matches">“<xliff:g id="query" example="Bounce">%1$s</xliff:g>” के लिए कोई मिलान नहीं</string>
+    <string name="library_action_share_app">ऐप साझा करें</string>
+    <string name="library_action_export_bundle">ऐप बंडल निर्यात करें</string>
+    <string name="library_action_import_bundle">ऐप बंडल आयात करें</string>
+    <string name="library_action_import_bundle_summary">शामिल किसी भी सेटिंग्स, सेव डेटा या बुकमार्क के साथ निर्यात किए गए ऐप्स पुनर्स्थापित करें।</string>
+    <string name="library_import_preparing">ऐप बंडल पढ़ा जा रहा है…</string>
+    <string name="library_import_restoring">ऐप डेटा पुनर्स्थापित हो रहा है…</string>
+    <string name="library_import_done">ऐप बंडल आयात हो गया।</string>
+    <string name="library_import_done_with_warning">ऐप बंडल चेतावनियों के साथ आयात हो गया।</string>
+    <string name="library_import_invalid_bundle">चयनित ऐप बंडल अमान्य, क्षतिग्रस्त या असमर्थित है। एक मान्य JL-Mod Plus ऐप बंडल चुनें और पुनः प्रयास करें।</string>
+    <string name="library_import_restore_existing">यह ऐप पहले से इंस्टॉल है। शामिल सेटिंग्स और सेव डेटा मौजूदा डेटा की जगह ले लेंगे। नए फ़ॉर्मैट के पैकेज में बुकमार्क बिना सेटिंग्स के इंपोर्ट करने पर मर्ज होते हैं, सेटिंग्स के साथ इंपोर्ट करने पर बदल जाते हैं और शामिल न होने पर पहले जैसे बने रहते हैं। पुराने पैकेज से सेटिंग्स रीस्टोर करने पर भी बुकमार्क बदल सकते हैं।</string>
+    <string name="library_import_restore_failed">ऐप इंस्टॉल हो गया, लेकिन इसका बंडल डेटा पुनर्स्थापित नहीं हो सका। पुनर्स्थापना पुनः प्रयास करें?</string>
+    <string name="library_play_stats_summary">लॉन्च: <xliff:g id="launch_count" example="12">%1$d</xliff:g> · कुल समय: <xliff:g id="total_time" example="2h 15m">%2$s</xliff:g></string>
+    <string name="library_share_chooser_title">ऐप साझा करें</string>
+    <string name="library_export_chooser_title">निर्यात करें</string>
+    <string name="library_export_progress">निर्यात हो रहा है… <xliff:g id="completed" example="3">%1$d</xliff:g>/<xliff:g id="total" example="10">%2$d</xliff:g></string>
+    <string name="library_transfer_unavailable">एक्सपोर्ट नहीं किया जा सका।</string>
+    <string name="library_export_data_in_use">चुने गए किसी ऐप का डेटा इस्तेमाल में है। चुने गए MIDlet में से जो चल रहे हैं, उन्हें बंद करें और फिर कोशिश करें।</string>
+    <string name="library_export_menu_unavailable">एक्सपोर्ट मेनू नहीं खोला जा सका।</string>
+    <string name="library_back">लाइब्रेरी पर वापस जाएं</string>
+    <string name="library_sort">ऐप्स क्रमबद्ध करें</string>
+    <string name="library_search_clear">खोज साफ़ करें</string>
+    <string name="library_description_more">… अधिक</string>
+    <string name="library_description_less">कम</string>
+    <plurals name="file_picker_selected_count">
+        <item quantity="one"><xliff:g id="count" example="3">%1$d</xliff:g> चयनित</item>
+        <item quantity="other"><xliff:g id="count" example="3">%1$d</xliff:g> चयनित</item>
+    </plurals>
+    <plurals name="library_selection_count">
+        <item quantity="one"><xliff:g id="count" example="3">%1$d</xliff:g> ऐप</item>
+        <item quantity="other"><xliff:g id="count" example="3">%1$d</xliff:g> ऐप्स</item>
+    </plurals>
+    <plurals name="library_collection_member_count">
+        <item quantity="one"><xliff:g id="count" example="3">%1$d</xliff:g> ऐप</item>
+        <item quantity="other"><xliff:g id="count" example="3">%1$d</xliff:g> ऐप्स</item>
+    </plurals>
+    <plurals name="bulk_install_found">
+        <item quantity="one"><xliff:g id="count" example="3">%1$d</xliff:g> ऐप मिला</item>
+        <item quantity="other"><xliff:g id="count" example="3">%1$d</xliff:g> ऐप्स मिले</item>
+    </plurals>
+    <plurals name="bulk_install_selected">
+        <item quantity="one"><xliff:g id="count" example="3">%1$d</xliff:g> चयनित</item>
+        <item quantity="other"><xliff:g id="count" example="3">%1$d</xliff:g> चयनित</item>
+    </plurals>
+    <plurals name="bulk_install_ready_count">
+        <item quantity="one"><xliff:g id="count" example="3">%1$d</xliff:g> तैयार</item>
+        <item quantity="other"><xliff:g id="count" example="3">%1$d</xliff:g> तैयार</item>
+    </plurals>
+    <plurals name="bulk_install_skipped_count">
+        <item quantity="one">पहले से इंस्टॉल या डुप्लिकेट: <xliff:g id="count" example="3">%1$d</xliff:g></item>
+        <item quantity="other">पहले से इंस्टॉल या डुप्लिकेट: <xliff:g id="count" example="3">%1$d</xliff:g></item>
+    </plurals>
+    <plurals name="bulk_install_attention_count">
+        <item quantity="one"><xliff:g id="count" example="3">%1$d</xliff:g> की समीक्षा आवश्यक</item>
+        <item quantity="other"><xliff:g id="count" example="3">%1$d</xliff:g> की समीक्षा आवश्यक</item>
+    </plurals>
+    <plurals name="bulk_install_installed_count">
+        <item quantity="one"><xliff:g id="count" example="3">%1$d</xliff:g> इंस्टॉल</item>
+        <item quantity="other"><xliff:g id="count" example="3">%1$d</xliff:g> इंस्टॉल</item>
+    </plurals>
+    <plurals name="bulk_install_updated_count">
+        <item quantity="one"><xliff:g id="count" example="3">%1$d</xliff:g> अपडेट</item>
+        <item quantity="other"><xliff:g id="count" example="3">%1$d</xliff:g> अपडेट</item>
+    </plurals>
+    <plurals name="bulk_install_reinstalled_count">
+        <item quantity="one"><xliff:g id="count" example="3">%1$d</xliff:g> पुनः इंस्टॉल</item>
+        <item quantity="other"><xliff:g id="count" example="3">%1$d</xliff:g> पुनः इंस्टॉल</item>
+    </plurals>
+    <plurals name="bulk_install_skipped_result_count">
+        <item quantity="one"><xliff:g id="count" example="3">%1$d</xliff:g> छोड़ा गया</item>
+        <item quantity="other"><xliff:g id="count" example="3">%1$d</xliff:g> छोड़े गए</item>
+    </plurals>
+    <plurals name="bulk_install_failed_count">
+        <item quantity="one"><xliff:g id="count" example="3">%1$d</xliff:g> विफल</item>
+        <item quantity="other"><xliff:g id="count" example="3">%1$d</xliff:g> विफल</item>
+    </plurals>
+    <plurals name="bulk_install_warning_count">
+        <item quantity="one"><xliff:g id="count" example="3">%1$d</xliff:g> चेतावनी</item>
+        <item quantity="other"><xliff:g id="count" example="3">%1$d</xliff:g> चेतावनियां</item>
+    </plurals>
+    <plurals name="bulk_install_omitted_sources">
+        <item quantity="one">समीक्षा को तेज़ बनाए रखने के लिए <xliff:g id="count" example="3">%1$d</xliff:g> अतिरिक्त फ़ाइल छोड़ी गई।</item>
+        <item quantity="other">समीक्षा को तेज़ बनाए रखने के लिए <xliff:g id="count" example="3">%1$d</xliff:g> अतिरिक्त फ़ाइलें छोड़ी गईं।</item>
+    </plurals>
+    <plurals name="library_bulk_delete_confirmation">
+        <item quantity="one"><xliff:g id="count" example="3">%1$d</xliff:g> ऐप हटाएं? इसकी फ़ाइलें, सेटिंग्स और सेव डेटा आपकी लाइब्रेरी से हट जाएंगे।</item>
+        <item quantity="other"><xliff:g id="count" example="3">%1$d</xliff:g> ऐप्स हटाएं? उनकी फ़ाइलें, सेटिंग्स और सेव डेटा आपकी लाइब्रेरी से हट जाएंगे।</item>
+    </plurals>
+    <plurals name="library_bulk_delete_result">
+        <item quantity="one"><xliff:g id="deleted_count" example="3">%1$d</xliff:g> ऐप हटाया गया; <xliff:g id="failed_count" example="1">%2$d</xliff:g> विफल।</item>
+        <item quantity="other"><xliff:g id="deleted_count" example="3">%1$d</xliff:g> ऐप्स हटाए गए; <xliff:g id="failed_count" example="1">%2$d</xliff:g> विफल।</item>
+    </plurals>
+    <string name="bulk_install_title">बल्क इंस्टॉल</string>
+    <string name="bulk_install_planning">चयनित ऐप्स जांचे जा रहे हैं…</string>
+    <string name="bulk_install_empty">कोई समर्थित ऐप नहीं मिला।</string>
+    <string name="bulk_install_recommended">अनुशंसित</string>
+    <string name="bulk_install_clear">चयन साफ़ करें</string>
+    <string name="bulk_install_install_count"><xliff:g id="count" example="3">%1$d</xliff:g> इंस्टॉल करें</string>
+    <string name="bulk_install_cancel">रद्द करें</string>
+    <string name="bulk_install_close">बंद करें</string>
+    <plurals name="bulk_install_running">
+        <item quantity="one"><xliff:g id="total" example="10">%2$d</xliff:g> में से <xliff:g id="processed" example="3">%1$d</xliff:g> ऐप प्रोसेस हुआ</item>
+        <item quantity="other"><xliff:g id="total" example="10">%2$d</xliff:g> में से <xliff:g id="processed" example="3">%1$d</xliff:g> ऐप्स प्रोसेस हुए</item>
+    </plurals>
+    <string name="bulk_install_cancel_requested">वर्तमान ऐप के बाद रुक रहा है…</string>
+    <string name="bulk_install_complete">बल्क इंस्टॉल पूरा हुआ</string>
+    <string name="bulk_install_cancelled">बल्क इंस्टॉल रोका गया</string>
+    <string name="bulk_install_fatal">बल्क इंस्टॉल रुक गया। पुनः प्रयास से पहले अधूरे आइटम की समीक्षा करें।</string>
+    <string name="bulk_install_result_installed">इंस्टॉल</string>
+    <string name="bulk_install_result_updated">अपडेट</string>
+    <string name="bulk_install_result_reinstalled">पुनः इंस्टॉल</string>
+    <string name="bulk_install_result_skipped">छोड़ा गया</string>
+    <string name="bulk_install_result_failed">विफल</string>
+    <string name="bulk_install_installed_version">इंस्टॉल किया गया: <xliff:g id="version" example="2.1.0">%1$s</xliff:g></string>
+    <string name="bulk_install_source">स्रोत: <xliff:g id="name" example="Example">%1$s</xliff:g></string>
+    <string name="bulk_install_action_separate_copy">अलग प्रति के रूप में इंस्टॉल करें</string>
+    <string name="bulk_install_action_jar_only">केवल JAR इंस्टॉल करें</string>
+    <string name="single_install_review_jar_only" tools:ignore="MissingTranslation">केवल JAR की समीक्षा करें</string>
+    <string name="single_install_jar_only_notice" tools:ignore="MissingTranslation">केवल JAR इंस्टॉल किया जाएगा। जारी रखने से पहले इसका ऐप नाम, संस्करण और इंस्टॉल किए गए ऐप की स्थिति जांचें।</string>
+    <string name="single_install_running_replacement_warning" tools:ignore="MissingTranslation">यदि यह ऐप चल रहा है, तो इसकी फ़ाइलें बदलने से पहले इसे रोक दिया जाएगा। न सहेजी गई प्रगति खो सकती है।</string>
+    <string name="bulk_install_status_new">नया</string>
+    <string name="bulk_install_status_update">अपडेट</string>
+    <string name="bulk_install_status_downgrade">पुराना संस्करण</string>
+    <string name="bulk_install_status_same">पहले से इंस्टॉल</string>
+    <string name="bulk_install_status_reinstall">समान संस्करण, संभावित वेरिएंट</string>
+    <string name="bulk_install_status_ambiguous">कई इंस्टॉल किए गए ऐप्स से मेल खाता है</string>
+    <string name="bulk_install_status_mismatch">JAD/JAR बेमेल</string>
+    <string name="bulk_install_status_duplicate">डुप्लिकेट</string>
+    <string name="bulk_install_status_older_batch">बैच में पुराना संस्करण</string>
+    <string name="bulk_install_status_conflict">बैच टकराव</string>
+    <string name="bulk_install_status_remote">रिमोट स्रोत समर्थित नहीं</string>
+    <string name="bulk_install_status_error">अमान्य स्रोत</string>
+    <string name="bulk_install_reinstall_source_missing">पुनः इंस्टॉल के लिए सहेजा गया JAR उपलब्ध नहीं है।</string>
+    <plurals name="bulk_install_reinstall_missing_apps">
+        <item quantity="one"><xliff:g id="count" example="3">%1$d</xliff:g> चयनित लाइब्रेरी ऐप अब उपलब्ध नहीं है।</item>
+        <item quantity="other"><xliff:g id="count" example="3">%1$d</xliff:g> चयनित लाइब्रेरी ऐप्स अब उपलब्ध नहीं हैं।</item>
+    </plurals>
+    <string name="library_metadata_edit_title">मेटाडेटा संपादित करें</string>
+    <string name="library_metadata_icon">आइकन</string>
+    <string name="library_metadata_name">नाम</string>
+    <string name="library_metadata_vendor">प्रकाशक</string>
+    <string name="library_metadata_reset_to_original">मूल पर रीसेट करें</string>
+    <string name="library_metadata_save">सहेजें</string>
+    <string name="library_hide_grid_titles_summary">ग्रिड दृश्य में MIDlet नाम छिपाता है। सूची दृश्य में वे दिखाई देते रहेंगे।</string>
+    <string name="library_show_list_description_summary">शीर्षक और संस्करण के नीचे प्रत्येक MIDlet का विवरण दिखाता है।</string>
+    <string name="library_indexing_progress">लाइब्रेरी इंडेक्स हो रही है… <xliff:g id="completed" example="3">%1$d</xliff:g>/<xliff:g id="total" example="10">%2$d</xliff:g></string>
+    <string name="library_indexing_current"><xliff:g id="name" example="Example">%1$s</xliff:g> स्कैन हो रहा है</string>
+    <string name="library_load_error_title">लाइब्रेरी उपलब्ध नहीं</string>
+    <string name="library_retry">पुनः प्रयास करें</string>
+    <string name="library_reinstall_source_missing">पुनः इंस्टॉल के लिए सहेजा गया JAR उपलब्ध नहीं है।</string>
+    <string name="library_action_select">चुनें</string>
+    <string name="library_selection_select_all">सभी चुनें</string>
+    <string name="library_selection_unselect_all">सभी का चयन हटाएं</string>
+    <string name="library_selection_checkbox_description"><xliff:g id="name" example="Example">%1$s</xliff:g> चुनें</string>
+    <string name="library_selection_checked">चयनित</string>
+    <string name="library_selection_unchecked">चयनित नहीं</string>
+    <string name="library_action_settings_summary">ग्लोबल व्यवहार और रूप कॉन्फ़िगर करें।</string>
+    <string name="library_action_crash_reports_summary">सहेजी गई डायग्नोस्टिक रिपोर्ट की समीक्षा करें।</string>
+    <string name="library_action_about_summary">प्रोजेक्ट अवलोकन, बिल्ड जानकारी और लिंक।</string>
+    <string name="library_action_licenses_summary">ऐप के साथ शामिल तृतीय-पक्ष सूचनाएं और लाइसेंस शर्तें।</string>
+    <string name="library_donation_action">विकास का समर्थन करें</string>
+    <string name="library_donation_summary">JL-Mod Plus को आगे बढ़ाने में मदद करें।</string>
+    <string name="library_donation_title">JL-Mod Plus का समर्थन करें</string>
+    <string name="library_donation_message">JL-Mod Plus निःशुल्क और ओपन सोर्स है। यदि यह आपको उपयोगी लगता है, तो आप स्वैच्छिक दान से इसके विकास का समर्थन कर सकते हैं।</string>
+    <string name="library_donation_provider_note">दान की प्रक्रिया बाहरी रूप से Sociabuzz द्वारा संचालित होती है।</string>
+    <string name="library_donation_continue">Sociabuzz पर जारी रखें</string>
+    <string name="library_donation_not_now">अभी नहीं</string>
+    <string name="library_donation_link_copied">कोई ब्राउज़र नहीं मिला। Sociabuzz लिंक क्लिपबोर्ड पर कॉपी हो गया।</string>
+    <string name="library_donation_browser_unavailable">Sociabuzz खोलने के लिए कोई ब्राउज़र नहीं मिला।</string>
+    <string name="library_bulk_delete_apps">ऐप्स हटाएं</string>
+    <string name="library_bulk_add_collection">संग्रह में जोड़ें</string>
+    <string name="library_bulk_share_apps">ऐप्स साझा करें</string>
+    <string name="library_bulk_reinstall_apps">पुनः इंस्टॉल करें</string>
+    <string name="library_bulk_export_apps">बंडल निर्यात करें</string>
+    <string name="library_enhanced_icons_title">उन्नत आइकन</string>
+    <string name="library_enhanced_icons_summary">आइकन फ़्रेमिंग, स्केल और टाइल बैकग्राउंड समायोजित करता है ताकि आपकी लाइब्रेरी में आइकन अधिक एकरूप दिखें।</string>
+    <string name="library_collections_unavailable_title">संग्रह उपलब्ध नहीं</string>
+    <string name="library_load_failed_message">लाइब्रेरी लोड नहीं की जा सकी। पुनः प्रयास करें।</string>
+    <string name="bulk_install_prepare_failed">चयनित ऐप्स इंस्टॉलेशन के लिए तैयार नहीं किए जा सके।</string>
+    <string name="installer_existing_data_preserved">मौजूदा सेटिंग्स और सेव डेटा सुरक्षित रहेंगे।</string>
+    <string name="bulk_install_library_changed">समीक्षा के बाद आपकी लाइब्रेरी बदल गई। यह बैच बंद करें और फ़ाइलें फिर से चुनें।</string>
+    <string name="bulk_install_source_unavailable">एक आवश्यक स्रोत फ़ाइल अब उपलब्ध नहीं है। फ़ाइलें फिर से चुनें।</string>
+    <string name="bulk_install_source_changed">समीक्षा के बाद स्रोत फ़ाइल बदल गई। फ़ाइलें फिर से चुनें।</string>
+    <string name="bulk_install_target_unverified">पुनः इंस्टॉल लक्ष्य सत्यापित नहीं हो सका। यह बैच बंद करें और ऐप फिर से चुनें।</string>
+    <string name="bulk_install_result_restored">पुनर्स्थापित</string>
+    <plurals name="bulk_install_restored_count">
+        <item quantity="one"><xliff:g id="count" example="3">%1$d</xliff:g> पुनर्स्थापित</item>
+        <item quantity="other"><xliff:g id="count" example="3">%1$d</xliff:g> पुनर्स्थापित</item>
+    </plurals>
+    <plurals name="bulk_install_reason_ambiguous_match">
+        <item quantity="one"><xliff:g id="count" example="3">%1$d</xliff:g> इंस्टॉल किया गया ऐप इस स्रोत से मेल खाता है।</item>
+        <item quantity="other"><xliff:g id="count" example="3">%1$d</xliff:g> इंस्टॉल किए गए ऐप्स इस स्रोत से मेल खाते हैं।</item>
+    </plurals>
+    <string name="bulk_install_reason_jad_jar_mismatch">JAD और JAR अलग-अलग ऐप्स की पहचान करते हैं।</string>
+    <string name="bulk_install_reason_conflicting_jads">विभिन्न एट्रिब्यूट्स वाली JAD फ़ाइलें एक ही JAR को संदर्भित करती हैं।</string>
+    <string name="bulk_install_reason_remote_jar">बल्क इंस्टॉल रिमोट JAR फ़ाइलें डाउनलोड नहीं कर सकता।</string>
+    <string name="bulk_install_reason_missing_jar_url">JAD में MIDlet-Jar-URL अनुपलब्ध है।</string>
+    <!-- %1$s is the exact URI scheme supplied by the JAD; do not translate it. -->
+    <string name="bulk_install_reason_unsupported_uri_scheme">JAD एक असमर्थित URI स्कीम का उपयोग करके JAR को संदर्भित करता है: <xliff:g id="scheme" example="http">%1$s</xliff:g>।</string>
+    <string name="bulk_install_reason_missing_parent">JAD का कोई मूल फ़ोल्डर नहीं है।</string>
+    <!-- %1$s is the exact MIDlet-Jar-URL reference, not a normalized filesystem path. -->
+    <string name="bulk_install_reason_jar_not_found">JAD द्वारा संदर्भित JAR नहीं मिला: <xliff:g id="file_path" example="game.jar">%1$s</xliff:g>।</string>
+    <string name="bulk_install_reason_duplicate_source">यह स्रोत इस बैच के किसी अन्य स्रोत का डुप्लिकेट है।</string>
+    <string name="bulk_install_reason_version_conflict">कई ऐप वेरिएंट का संस्करण एक ही है।</string>
+    <string name="bulk_install_reason_older_candidate">इसी बैच में इस ऐप का एक नया संस्करण मौजूद है।</string>
+    <string name="bulk_install_reason_source_error">इस स्रोत को इंस्टॉलेशन के लिए तैयार नहीं किया जा सका।</string>
+    <string name="updates_title">अपडेट</string>
+    <string name="updates_more_summary">JL-Mod Plus के नए संस्करणों की जांच करें।</string>
+    <string name="updates_more_available">एक नया संस्करण उपलब्ध है।</string>
+    <string name="updates_installed_version">इंस्टॉल किया गया संस्करण: <xliff:g id="version" example="2.1.0">%1$s</xliff:g></string>
+    <string name="updates_build_code">बिल्ड <xliff:g id="build_code" example="247">%1$d</xliff:g></string>
+    <string name="updates_automatic">लाइब्रेरी सक्रिय होने पर स्वतः जांचें</string>
+    <string name="updates_not_checked">अभी तक जांच नहीं हुई।</string>
+    <string name="updates_checking">अपडेट की जांच हो रही है…</string>
+    <string name="updates_current">आपका ऐप अप टू डेट है।</string>
+    <string name="updates_no_release">कोई संगत प्रकाशित रिलीज़ उपलब्ध नहीं है।</string>
+    <string name="updates_not_installable">एक नया रिलीज़ उपलब्ध है, लेकिन यह इस डिवाइस या इंस्टॉलेशन के साथ संगत नहीं है।</string>
+    <string name="updates_failed">अपडेट की जांच नहीं हो सकी। अपना कनेक्शन जांचें और पुनः प्रयास करें।</string>
+    <string name="updates_available">अपडेट उपलब्ध है</string>
+    <string name="updates_view_release">रिलीज़ देखें</string>
+    <string name="updates_last_checked">अंतिम जांच: <xliff:g id="timestamp" example="Today, 09:45">%1$s</xliff:g></string>
+    <string name="updates_check">अपडेट की जांच करें</string>
+    <string name="updates_notice">JL-Mod Plus <xliff:g id="version" example="2.1.0">%1$s</xliff:g> उपलब्ध है। “सेटिंग्स” में “अपडेट” देखें।</string>
+    <string name="updates_debug_build">यह एक डीबग बिल्ड है। GitHub रिलीज़ APK अलग से इंस्टॉल होते हैं।</string>
+    <string name="updates_link_copied">कोई ब्राउज़र नहीं मिला। अपडेट लिंक क्लिपबोर्ड पर कॉपी हो गया।</string>
+    <string name="updates_browser_unavailable">अपडेट लिंक खोलने के लिए कोई ब्राउज़र नहीं मिला।</string>
+    <string name="bulk_install_choose_files">फ़ाइलें</string>
+    <string name="bulk_install_choose_folder">फ़ोल्डर</string>
+    <string name="bulk_install_unreadable_archives">अपठनीय आर्काइव: <xliff:g id="count" example="3">%1$d</xliff:g></string>
+    <string name="bulk_install_skipped_entries">छोड़ी गई फ़ाइलें या आर्काइव प्रविष्टियां: <xliff:g id="count" example="3">%1$d</xliff:g></string>
+    <string name="bulk_install_selection_options" tools:ignore="MissingTranslation">चयन विकल्प</string>
+    <string name="bulk_install_show_details" tools:ignore="MissingTranslation">विवरण दिखाएं</string>
+    <string name="bulk_install_hide_details" tools:ignore="MissingTranslation">विवरण छिपाएं</string>
+    <string name="bulk_install_filter_all">सभी</string>
+    <string name="bulk_install_filter_selected">चयनित</string>
+    <string name="bulk_install_filter_review">समीक्षा</string>
+    <string name="bulk_install_empty_filter">कोई मेल खाता ऐप नहीं।</string>
+    <string name="platform_package_choice_title" tools:ignore="MissingTranslation">Java ME पैकेज मिला</string>
+    <string name="platform_package_choice_message" tools:ignore="MissingTranslation">यह लिंक एक Java ME पैकेज की ओर इशारा करता है। आप क्या करना चाहेंगे?</string>
+    <string name="platform_package_install" tools:ignore="MissingTranslation">JL-Mod Plus में इंस्टॉल करें</string>
+    <string name="platform_package_browser" tools:ignore="MissingTranslation">ब्राउज़र में खोलें</string>
+    <string name="platform_package_unavailable" tools:ignore="MissingTranslation">यह लिंक खोलने के लिए कोई ऐप नहीं मिला।</string>
+    <string name="installer_running_update_warning" tools:ignore="MissingTranslation">यह ऐप वर्तमान में चल रहा है। इंस्टॉल करने से इसकी फ़ाइलें बदलने से पहले यह रुक जाएगा। न सहेजी गई प्रगति खो सकती है।</string>
+    <string name="library_metadata_main_icon">मुख्य</string>
+    <string name="library_metadata_follows_main">मुख्य आइकन उपयोग करता है</string>
+    <string name="library_metadata_change">बदलें</string>
+    <string name="library_metadata_remove_portrait">3:4 आइकन हटाएं</string>
+    <string name="library_metadata_discard_title">बदलाव छोड़ें?</string>
+    <string name="library_metadata_discard">छोड़ें</string>
+    <string name="library_metadata_default_description">डिफ़ॉल्ट विवरण</string>
+    <string name="library_metadata_other_languages">अन्य भाषाएं</string>
+    <string name="library_metadata_add_language">+ भाषा जोड़ें</string>
+    <string name="library_metadata_language_search">भाषा या लोकेल कोड खोजें</string>
+    <string name="library_metadata_remove_language">विवरण हटाएं</string>
+    <string name="library_metadata_language_load_failed">भाषा विवरण लोड नहीं हो सके। पुनः प्रयास करने के लिए “पुनः प्रयास करें” पर टैप करें।</string>
+    <string name="updates_download_apk" tools:ignore="MissingTranslation">APK डाउनलोड करें</string>
+    <string name="updates_skip_version" tools:ignore="MissingTranslation">यह संस्करण छोड़ें</string>
+    <string name="updates_dialog_message" tools:ignore="MissingTranslation">JL-Mod Plus <xliff:g id="version" example="2.1.0">%1$s</xliff:g> उपलब्ध है। आप <xliff:g id="current_version" example="2.0.0">%2$s</xliff:g> उपयोग कर रहे हैं। APK डाउनलोड करें या GitHub पर रिलीज़ देखें।</string>
+    <string name="library_bundle_components_title" tools:ignore="MissingTranslation">बंडल निर्यात करें</string>
+    <string name="library_bundle_components_explanation" tools:ignore="MissingTranslation">चुने गए ऐप्स हमेशा शामिल रहते हैं। चुने गए MIDlet में से जो चल रहे हैं, उन्हें बंद करें और अतिरिक्त डेटा चुनें। साझा स्किन, साउंडबैंक और शेडर शामिल नहीं होते।</string>
+    <string name="library_bundle_config" tools:ignore="MissingTranslation">कॉन्फ़िगरेशन</string>
+    <string name="library_bundle_save_data" tools:ignore="MissingTranslation">सेव डेटा</string>
+    <string name="library_bundle_saved_variables" tools:ignore="MissingTranslation">बुकमार्क</string>
+    <string name="library_bundle_export" tools:ignore="MissingTranslation">निर्यात करें</string>
+    <string name="library_export_jar_only" tools:ignore="MissingTranslation">केवल JAR</string>
+    <string name="library_export_jars_only" tools:ignore="MissingTranslation">केवल JAR (ZIP)</string>
+    <string name="library_selection_action_delete" tools:ignore="MissingTranslation">हटाएं</string>
+    <string name="library_selection_action_collection" tools:ignore="MissingTranslation">संग्रह</string>
+    <string name="library_selection_action_export" tools:ignore="MissingTranslation">निर्यात करें</string>
+    <string name="library_selection_action_reinstall" tools:ignore="MissingTranslation">पुनः इंस्टॉल करें</string>
+    <string name="installer_select_companion_jar" tools:ignore="MissingTranslation">यह JAD एक अलग JAR फ़ाइल को संदर्भित करता है। जारी रखने के लिए मेल खाती JAR चुनें। बाहरी फ़ाइल प्रदाता निकटवर्ती फ़ाइलों तक पहुंच की अनुमति नहीं देता।</string>
+    <string name="installer_select_jar" tools:ignore="MissingTranslation">JAR चुनें</string>
+    <string name="installer_wrong_companion_jar" tools:ignore="MissingTranslation">यह JAR चयनित JAD से मेल नहीं खाती। JAD सेटिंग्स सुरक्षित रखने के लिए मेल खाती JAR चुनें।</string>
+    <string name="installer_choose_another_jar" tools:ignore="MissingTranslation">अन्य JAR चुनें</string>
+    <string name="library_app_more_actions" tools:ignore="MissingTranslation"><xliff:g id="name" example="Example">%1$s</xliff:g> के लिए अधिक कार्रवाइयां</string>
+    <string name="library_actions_group_customize" tools:ignore="MissingTranslation">कस्टमाइज़ करें</string>
+    <string name="library_actions_group_organize" tools:ignore="MissingTranslation">व्यवस्थित करें</string>
+    <string name="library_actions_group_transfer" tools:ignore="MissingTranslation">स्थानांतरण और रखरखाव</string>
+    <string name="library_collection_more_actions" tools:ignore="MissingTranslation">संग्रह “<xliff:g id="collection_name" example="Favorites">%1$s</xliff:g>” के लिए अधिक कार्रवाइयां</string>
+    <string name="library_settings_preferences" tools:ignore="MissingTranslation">ऐप प्राथमिकताएं</string>
+    <string name="library_settings_section_maintenance" tools:ignore="MissingTranslation">अपडेट और डायग्नोस्टिक्स</string>
+    <string name="library_settings_section_support" tools:ignore="MissingTranslation">जानकारी और सहायता</string>
+    <string name="library_details_title" tools:ignore="MissingTranslation">MIDlet विवरण</string>
+    <string name="library_details_description" tools:ignore="MissingTranslation">विवरण</string>
+    <string name="library_details_play_stats" tools:ignore="MissingTranslation">खेल आंकड़े</string>
+    <string name="library_details_launches" tools:ignore="MissingTranslation">लॉन्च</string>
+    <string name="library_details_total_time" tools:ignore="MissingTranslation">कुल समय</string>
+    <string name="library_details_last_played" tools:ignore="MissingTranslation">अंतिम बार खेला गया</string>
+    <string name="library_details_library_info" tools:ignore="MissingTranslation">लाइब्रेरी जानकारी</string>
+    <string name="library_details_added" tools:ignore="MissingTranslation">लाइब्रेरी में जोड़ा गया</string>
+    <string name="library_details_collections" tools:ignore="MissingTranslation">संग्रह</string>
+    <string name="library_details_none" tools:ignore="MissingTranslation">कोई नहीं</string>
+    <string name="library_details_technical" tools:ignore="MissingTranslation">तकनीकी जानकारी</string>
+    <string name="library_details_profile" tools:ignore="MissingTranslation">प्रोफ़ाइल</string>
+    <string name="library_details_configuration" tools:ignore="MissingTranslation">कॉन्फ़िगरेशन</string>
+    <string name="library_details_jar_size" tools:ignore="MissingTranslation">सहेजे गए JAR का आकार</string>
+    <string name="library_details_entry_points" tools:ignore="MissingTranslation">MIDlet प्रविष्टियां</string>
+    <string name="library_details_original_metadata" tools:ignore="MissingTranslation">मूल मेटाडेटा</string>
+    <string name="library_details_name" tools:ignore="MissingTranslation">नाम</string>
+    <string name="library_details_vendor" tools:ignore="MissingTranslation">प्रकाशक</string>
+    <string name="library_details_version" tools:ignore="MissingTranslation">संस्करण</string>
+    <string name="library_details_version_value" tools:ignore="MissingTranslation">संस्करण <xliff:g id="version" example="2.1.0">%1$s</xliff:g></string>
+    <string name="library_details_original_description" tools:ignore="MissingTranslation">मूल विवरण</string>
+    <string name="library_details_permissions" tools:ignore="MissingTranslation">घोषित अनुमतियां</string>
+    <string name="library_details_required" tools:ignore="MissingTranslation">आवश्यक</string>
+    <string name="library_details_optional" tools:ignore="MissingTranslation">वैकल्पिक</string>
+    <string name="library_details_no_permissions" tools:ignore="MissingTranslation">कोई अनुमति घोषित नहीं</string>
+    <string name="library_details_descriptor_attributes" tools:ignore="MissingTranslation">डिस्क्रिप्टर एट्रिब्यूट्स</string>
+    <string name="library_details_unavailable" tools:ignore="MissingTranslation">उपलब्ध नहीं</string>
+    <string name="library_details_action" tools:ignore="MissingTranslation">विवरण</string>
+    <string name="library_details_view_details" tools:ignore="MissingTranslation">विवरण देखें</string>
+    <string name="library_actions_more" tools:ignore="MissingTranslation">अधिक कार्रवाइयां</string>
+    <string name="library_actions_less" tools:ignore="MissingTranslation">कम कार्रवाइयां</string>
+</resources>

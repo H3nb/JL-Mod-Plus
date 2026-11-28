@@ -1,0 +1,494 @@
+<?xml version="1.0" encoding="utf-8"?>
+<!-- MIDlet library, collections, metadata editor, bulk/single installer, file picker, and app updates. -->
+<resources xmlns:tools="http://schemas.android.com/tools" xmlns:xliff="urn:oasis:names:tc:xliff:document:1.2">
+    <string name="action_context_delete">Supprimer</string>
+    <string name="action_context_rename">Renommer</string>
+    <string name="action_context_shortcut">Ajouter un raccourci</string>
+    <string name="action_reinstall">Réinstaller</string>
+    <string name="alert_msg_workdir_not_exists">Dossier de travail introuvable :\n<xliff:g id="path" example="/storage/emulated/0/JL-Mod-Plus">%1$s</xliff:g>\nLe créer ou choisir un autre dossier ?</string>
+    <string name="converting_wait">Conversion du fichier JAR…</string>
+    <string name="create_apps_dir_failed">Impossible de préparer le dossier de travail à l’emplacement :\n<xliff:g id="path" example="/storage/emulated/0/JL-Mod-Plus">%1$s</xliff:g>\nChoisissez un autre dossier.</string>
+    <string name="install_done">Application installée.</string>
+    <string name="install_done_with_warning">Application installée avec des avertissements.</string>
+    <string name="installer_title">Installateur de MIDlet</string>
+    <string name="installer_error_message">Impossible d’installer l’application sélectionnée. Choisissez un fichier MIDlet valide et réessayez.</string>
+    <string name="install_jar_non_matched_jad">Cette application diffère de celle décrite dans le fichier JAD.\nIgnorer le JAD et installer quand même ?</string>
+    <string name="file_picker_select_file">Sélectionner un fichier</string>
+    <string name="file_picker_select_folder">Sélectionner un dossier</string>
+    <string name="file_picker_select_app_bundle">Sélectionner un pack d’application</string>
+    <string name="file_picker_select_icon">Sélectionner une icône</string>
+    <string name="file_picker_navigate_back">Revenir au dossier parent</string>
+    <string name="file_picker_cancel">Annuler</string>
+    <string name="file_picker_search">Rechercher</string>
+    <string name="file_picker_sort">Trier</string>
+    <string name="file_picker_select_all">Sélectionner tous les fichiers affichés</string>
+    <string name="file_picker_unselect_all">Désélectionner tous les fichiers affichés</string>
+    <string name="file_picker_sort_type">Dossiers d’abord</string>
+    <string name="file_picker_sort_name_ascending">Nom A–Z</string>
+    <string name="file_picker_sort_name_descending">Nom Z–A</string>
+    <string name="file_picker_sort_modified_newest">Date de modification : plus récents</string>
+    <string name="file_picker_sort_modified_oldest">Date de modification : plus anciens</string>
+    <string name="file_picker_choose">Choisir</string>
+    <string name="file_picker_current_folder">Dossier actuel</string>
+    <string name="file_picker_parent_folder">Dossier parent</string>
+    <string name="file_picker_file">Fichier</string>
+    <string name="file_picker_preview_named">Aperçu de <xliff:g id="name" example="Example">%1$s</xliff:g></string>
+    <string name="file_picker_preview_unavailable">Aperçu indisponible</string>
+    <string name="file_picker_storage_volume">Volume de stockage</string>
+    <string name="file_picker_empty">Aucun fichier correspondant</string>
+    <string name="file_picker_empty_folder">Aucun dossier trouvé</string>
+    <string name="file_picker_no_matches">Aucun résultat</string>
+    <string name="file_picker_permission_required">Autorisation d’accès au stockage requise</string>
+    <string name="file_picker_permission_message">Autorisez l’accès au stockage pour parcourir les fichiers et dossiers de cet appareil.</string>
+    <string name="file_picker_permission_denied">L’accès au stockage n’a pas été accordé.</string>
+    <string name="file_picker_grant_access">Autoriser l’accès</string>
+    <string name="file_picker_retry">Réessayer</string>
+    <string name="file_picker_load_failed">Impossible d’ouvrir ce dossier.</string>
+    <string name="file_picker_create_folder">Nouveau dossier</string>
+    <string name="file_picker_create_folder_title">Créer un dossier</string>
+    <string name="file_picker_folder_name">Nom du dossier</string>
+    <string name="file_picker_invalid_folder_name">Saisissez un nom de dossier valide.</string>
+    <string name="file_picker_folder_exists">Un élément portant ce nom existe déjà.</string>
+    <string name="file_picker_create_folder_failed">Impossible de créer le dossier.</string>
+    <string name="file_picker_selection_unavailable">L’élément sélectionné n’est plus disponible.</string>
+    <string name="loading_apps">Chargement des applications</string>
+    <string name="message_delete">Supprimer cette application, ses paramètres et ses données de sauvegarde ? Elle sera également retirée de votre bibliothèque.</string>
+    <string name="msg_no_matches">Aucun résultat pour « <xliff:g id="query" example="Bounce">%1$s</xliff:g> »</string>
+    <string name="library_destination_apps">Toutes les applis</string>
+    <string name="library_destination_collections">Collections</string>
+    <string name="library_scope_picker_title" tools:ignore="MissingTranslation">Parcourir les applications</string>
+    <string name="library_destination_more">Plus</string>
+    <string name="library_search_placeholder">Rechercher des applications…</string>
+    <string name="library_filter_all">Toutes</string>
+    <string name="library_filter_recently_opened">Ouvertes récemment</string>
+    <string name="library_filter_recently_added">Ajoutées récemment</string>
+    <string name="library_filter_favorites">Favoris</string>
+    <string name="library_add_to_favorites_action">Ajouter aux favoris</string>
+    <string name="library_remove_from_favorites_action">Retirer des favoris</string>
+    <string name="library_favorite_coming_soon">Favoris indisponibles</string>
+    <string name="library_vendor_version"><xliff:g id="vendor" example="Nokia">%1$s</xliff:g> · <xliff:g id="version" example="1.0">%2$s</xliff:g></string>
+    <string name="library_view_list">Liste</string>
+    <string name="library_view_grid">Grille</string>
+    <string name="library_icon_ratio_title">Format des icônes</string>
+    <string name="library_icon_ratio_square">Carré (1:1)</string>
+    <string name="library_icon_ratio_portrait">Portrait (3:4)</string>
+    <string name="library_icon_shape_title">Forme des icônes</string>
+    <string name="library_icon_shape_round">Coins arrondis</string>
+    <string name="library_icon_shape_square">Coins droits</string>
+    <string name="library_grid_icon_size_title" tools:ignore="MissingTranslation">Taille des icônes en grille</string>
+    <string name="library_grid_icon_size_small" tools:ignore="MissingTranslation">Petite</string>
+    <string name="library_grid_icon_size_standard" tools:ignore="MissingTranslation">Standard</string>
+    <string name="library_grid_icon_size_large" tools:ignore="MissingTranslation">Grande</string>
+    <string name="library_grid_icon_size_summary" tools:ignore="MissingTranslation">Modifie la taille des icônes et le nombre de colonnes en vue Grille.</string>
+    <string name="library_grid_spacing_title">Espacement de la grille</string>
+    <string name="library_grid_spacing_summary" tools:ignore="MissingTranslation">S’applique uniquement à la vue Grille.</string>
+    <string name="library_grid_spacing_none">Aucun (0 dp)</string>
+    <string name="library_grid_spacing_compact">Compact (4 dp)</string>
+    <string name="library_grid_spacing_standard">Standard (8 dp)</string>
+    <string name="library_grid_spacing_spacious">Large (12 dp)</string>
+    <string name="library_hide_grid_titles">Masquer les titres des MIDlets</string>
+    <string name="library_show_list_description">Afficher les descriptions des MIDlets</string>
+    <string name="library_collections_empty_title">Aucune collection</string>
+    <string name="library_collections_empty_message">Les collections seront disponibles une fois la bibliothèque chargée.</string>
+    <string name="library_expand_description">Développer la description</string>
+    <string name="library_collapse_description">Réduire la description</string>
+    <string name="no_data_for_display">Aucune application à afficher</string>
+    <string name="permission_request_failed">L’autorisation d’écriture sur le stockage est requise.</string>
+    <string name="reinstall">Cette application est déjà installée. La réinstaller ?</string>
+    <string name="reinstall_newest">Mettre à jour cette application vers la version <xliff:g id="version" example="2.1.0">%1$s</xliff:g> ?\n\nVersion installée : <xliff:g id="current_version" example="2.0.0">%2$s</xliff:g></string>
+    <string name="reinstall_older">Remplacer cette application par la version <xliff:g id="version" example="2.1.0">%1$s</xliff:g> ?\n\nVersion installée : <xliff:g id="current_version" example="2.0.0">%2$s</xliff:g>\nL’ancienne version risque de ne pas fonctionner correctement avec les données existantes.</string>
+    <string name="warn_install_from_net">Ce fichier sera téléchargé depuis Internet.</string>
+    <string name="installer_ambiguous">Plusieurs applications installées correspondent à ce paquet. Installer une copie distincte ? Les applications existantes et leurs données seront conservées.</string>
+    <string name="installer_separate_copy">Installer une copie distincte</string>
+    <string name="installer_stage_download">Téléchargement de l’application…</string>
+    <string name="installer_stage_wait">En attente d’une autre opération…</string>
+    <string name="installer_stage_save">Enregistrement de l’application…</string>
+    <string name="installer_failed_download">Impossible de télécharger l’application. Vérifiez votre connexion et le lien de téléchargement, puis réessayez.</string>
+    <string name="installer_failed_storage">Impossible de terminer l’installation. Réessayez.</string>
+    <string name="installer_failed_conversion">Impossible de convertir l’application. Assurez-vous que le fichier est complet et pris en charge, puis réessayez.</string>
+    <string name="installer_needs_recovery">Les fichiers de l’application ont été enregistrés, mais la bibliothèque n’a pas pu terminer la mise à jour. Actualisez la bibliothèque avant de réessayer.</string>
+    <string name="installer_refresh_library">Actualiser la bibliothèque</string>
+    <string name="installer_cancel_pending">Arrêt au prochain point sûr…</string>
+    <string name="installer_retry_remaining">Vérifier les éléments non terminés</string>
+    <string name="installer_not_processed">Non traité</string>
+    <string name="installer_partial_restore">Application installée, mais impossible de restaurer les données ou les paramètres.</string>
+    <string name="installer_removed_leftovers">Application supprimée, mais certains paramètres ou données de sauvegarde n’ont pas pu être supprimés.</string>
+    <string name="installer_copy_details">Copier les détails</string>
+    <string name="installer_show_details">Afficher les détails</string>
+    <string name="installer_hide_details">Masquer les détails</string>
+    <!-- %1$d is the number of source Java class files skipped during conversion. -->
+    <plurals name="installer_conversion_warning_summary">
+        <item quantity="one"><xliff:g id="skipped_count" example="2">%1$d</xliff:g> fichier de classe Java a été ignoré car il était illisible. Les fonctionnalités qui l’utilisent risquent de ne pas fonctionner.</item>
+        <item quantity="many"><xliff:g id="skipped_count" example="2">%1$d</xliff:g> fichiers de classe Java ont été ignorés car ils étaient illisibles. Les fonctionnalités qui les utilisent risquent de ne pas fonctionner.</item>
+        <item quantity="other"><xliff:g id="skipped_count" example="2">%1$d</xliff:g> fichiers de classe Java ont été ignorés car ils étaient illisibles. Les fonctionnalités qui les utilisent risquent de ne pas fonctionner.</item>
+    </plurals>
+    <!-- %1$s is the source JAR entry path for the skipped class file. -->
+    <string name="installer_conversion_skipped_entry"><xliff:g id="entry_path" example="com/example/Broken.class">%1$s</xliff:g>\nProblème : le fichier de classe Java n’a pas pu être lu.\nAction : ignoré lors de la conversion.</string>
+    <!-- %1$d is the number of additional bounded conversion diagnostics not shown. -->
+    <plurals name="installer_conversion_omitted_details">
+        <item quantity="one"><xliff:g id="omitted_count" example="5">%1$d</xliff:g> autre problème de conversion n’est pas affiché.</item>
+        <item quantity="many"><xliff:g id="omitted_count" example="5">%1$d</xliff:g> autres problèmes de conversion ne sont pas affichés.</item>
+        <item quantity="other"><xliff:g id="omitted_count" example="5">%1$d</xliff:g> autres problèmes de conversion ne sont pas affichés.</item>
+    </plurals>
+    <string name="library_collection_new">Nouvelle collection</string>
+    <string name="library_collection_ready_empty_message">Créez des collections pour organiser vos applications sans déplacer leurs fichiers.</string>
+    <string name="library_collection_add_app">Ajouter à une collection</string>
+    <string name="library_collection_add_apps">Ajouter des applications</string>
+    <string name="library_collection_manage_apps">Choisir des applications</string>
+    <string name="library_collection_manage" tools:ignore="MissingTranslation">Gérer les collections</string>
+    <string name="library_collection_delete_confirmation" tools:ignore="MissingTranslation">Supprimer « <xliff:g id="collection_name" example="Favorites">%1$s</xliff:g> » ? Les applications de cette collection resteront installées.</string>
+    <string name="library_collection_rename_action" tools:ignore="MissingTranslation">Renommer la collection <xliff:g id="collection_name" example="Favorites">%1$s</xliff:g></string>
+    <string name="library_collection_delete_action" tools:ignore="MissingTranslation">Supprimer la collection <xliff:g id="collection_name" example="Favorites">%1$s</xliff:g></string>
+    <string name="library_collection_select_action" tools:ignore="MissingTranslation">Sélectionner la collection <xliff:g id="collection_name" example="Favorites">%1$s</xliff:g></string>
+    <string name="library_collection_open_action" tools:ignore="MissingTranslation">Ouvrir la collection <xliff:g id="collection_name" example="Favorites">%1$s</xliff:g></string>
+    <string name="library_collection_rename_selected" tools:ignore="MissingTranslation">Renommer la collection sélectionnée</string>
+    <string name="library_collection_delete_selected" tools:ignore="MissingTranslation">Supprimer les collections sélectionnées</string>
+    <plurals name="library_collection_delete_many_confirmation">
+        <item quantity="one">Supprimer <xliff:g id="count" example="3">%d</xliff:g> collection ? Les applications resteront installées.</item>
+        <item quantity="many">Supprimer <xliff:g id="count" example="3">%d</xliff:g> collections ? Les applications resteront installées.</item>
+        <item quantity="other">Supprimer <xliff:g id="count" example="3">%d</xliff:g> collections ? Les applications resteront installées.</item>
+    </plurals>
+    <string name="library_notifications_title" tools:ignore="MissingTranslation">Notifications</string>
+    <string name="library_notifications_empty_title" tools:ignore="MissingTranslation">Aucune notification</string>
+    <string name="library_notifications_empty_summary" tools:ignore="MissingTranslation">Les notifications de mise à jour d’application s’afficheront ici lorsqu’elles seront disponibles.</string>
+    <string name="library_collection_manage_apps_summary">Sélectionnez les applications à inclure dans cette collection.</string>
+    <string name="library_collection_name">Nom de la collection</string>
+    <string name="library_collection_members_empty">Aucune application dans cette collection.</string>
+    <string name="library_collection_select_title">Sélectionner une collection</string>
+    <string name="library_collection_select_message">Choisissez une collection pour afficher ses applications.</string>
+    <string name="library_collection_remove_from_current">Retirer de la collection</string>
+    <string name="library_no_matches">Aucun résultat pour « <xliff:g id="query" example="Bounce">%1$s</xliff:g> »</string>
+    <string name="library_action_share_app">Partager l’application</string>
+    <string name="library_action_export_bundle">Exporter le pack d’application</string>
+    <string name="library_action_import_bundle">Importer un pack d’application</string>
+    <string name="library_action_import_bundle_summary">Restaurez des applications exportées avec leurs paramètres, sauvegardes ou signets inclus.</string>
+    <string name="library_import_preparing">Lecture du pack d’application…</string>
+    <string name="library_import_restoring">Restauration des données de l’application…</string>
+    <string name="library_import_done">Pack d’application importé.</string>
+    <string name="library_import_done_with_warning">Pack d’application importé avec des avertissements.</string>
+    <string name="library_import_invalid_bundle">Le pack d’application sélectionné est non valide, endommagé ou non pris en charge. Choisissez un pack d’application JL-Mod Plus valide et réessayez.</string>
+    <string name="library_import_restore_existing">Cette application est déjà installée. Les paramètres et sauvegardes inclus remplaceront les données existantes. Dans les paquets récents, les signets sont fusionnés s’ils sont importés sans les paramètres, remplacés s’ils sont importés avec les paramètres et conservés s’ils ne sont pas inclus. La restauration des paramètres depuis un ancien paquet peut également remplacer les signets.</string>
+    <string name="library_import_restore_failed">Application installée, mais impossible de restaurer les données du pack. Réessayer la restauration ?</string>
+    <string name="library_play_stats_summary">Lancements : <xliff:g id="launch_count" example="12">%1$d</xliff:g> · Temps total : <xliff:g id="total_time" example="2h 15m">%2$s</xliff:g></string>
+    <string name="library_share_chooser_title">Partager l’application</string>
+    <string name="library_export_chooser_title">Exporter</string>
+    <string name="library_export_progress">Exportation… <xliff:g id="completed" example="3">%1$d</xliff:g>/<xliff:g id="total" example="10">%2$d</xliff:g></string>
+    <string name="library_transfer_unavailable">Impossible d’exporter.</string>
+    <string name="library_export_data_in_use">Les données de l’une des applications sélectionnées sont en cours d’utilisation. Fermez les MIDlets sélectionnés qui sont en cours d’exécution, puis réessayez.</string>
+    <string name="library_export_menu_unavailable">Impossible d’ouvrir le menu d’exportation.</string>
+    <string name="library_back">Retour à la bibliothèque</string>
+    <string name="library_sort">Trier les applications</string>
+    <string name="library_search_clear">Effacer la recherche</string>
+    <string name="library_description_more">… Plus</string>
+    <string name="library_description_less">Moins</string>
+    <plurals name="file_picker_selected_count">
+        <item quantity="one"><xliff:g id="count" example="3">%1$d</xliff:g> sélectionné</item>
+        <item quantity="many"><xliff:g id="count" example="3">%1$d</xliff:g> sélectionnés</item>
+        <item quantity="other"><xliff:g id="count" example="3">%1$d</xliff:g> sélectionnés</item>
+    </plurals>
+    <plurals name="library_selection_count">
+        <item quantity="one"><xliff:g id="count" example="3">%1$d</xliff:g> application</item>
+        <item quantity="many"><xliff:g id="count" example="3">%1$d</xliff:g> applications</item>
+        <item quantity="other"><xliff:g id="count" example="3">%1$d</xliff:g> applications</item>
+    </plurals>
+    <plurals name="library_collection_member_count">
+        <item quantity="one"><xliff:g id="count" example="3">%1$d</xliff:g> application</item>
+        <item quantity="many"><xliff:g id="count" example="3">%1$d</xliff:g> applications</item>
+        <item quantity="other"><xliff:g id="count" example="3">%1$d</xliff:g> applications</item>
+    </plurals>
+    <plurals name="bulk_install_found">
+        <item quantity="one"><xliff:g id="count" example="3">%1$d</xliff:g> application trouvée</item>
+        <item quantity="many"><xliff:g id="count" example="3">%1$d</xliff:g> applications trouvées</item>
+        <item quantity="other"><xliff:g id="count" example="3">%1$d</xliff:g> applications trouvées</item>
+    </plurals>
+    <plurals name="bulk_install_selected">
+        <item quantity="one"><xliff:g id="count" example="3">%1$d</xliff:g> sélectionnée</item>
+        <item quantity="many"><xliff:g id="count" example="3">%1$d</xliff:g> sélectionnées</item>
+        <item quantity="other"><xliff:g id="count" example="3">%1$d</xliff:g> sélectionnées</item>
+    </plurals>
+    <plurals name="bulk_install_ready_count">
+        <item quantity="one"><xliff:g id="count" example="3">%1$d</xliff:g> prête</item>
+        <item quantity="many"><xliff:g id="count" example="3">%1$d</xliff:g> prêtes</item>
+        <item quantity="other"><xliff:g id="count" example="3">%1$d</xliff:g> prêtes</item>
+    </plurals>
+    <plurals name="bulk_install_skipped_count">
+        <item quantity="one">Déjà installée ou doublon : <xliff:g id="count" example="3">%1$d</xliff:g></item>
+        <item quantity="many">Déjà installées ou doublons : <xliff:g id="count" example="3">%1$d</xliff:g></item>
+        <item quantity="other">Déjà installées ou doublons : <xliff:g id="count" example="3">%1$d</xliff:g></item>
+    </plurals>
+    <plurals name="bulk_install_attention_count">
+        <item quantity="one"><xliff:g id="count" example="3">%1$d</xliff:g> à vérifier</item>
+        <item quantity="many"><xliff:g id="count" example="3">%1$d</xliff:g> à vérifier</item>
+        <item quantity="other"><xliff:g id="count" example="3">%1$d</xliff:g> à vérifier</item>
+    </plurals>
+    <plurals name="bulk_install_installed_count">
+        <item quantity="one"><xliff:g id="count" example="3">%1$d</xliff:g> installée</item>
+        <item quantity="many"><xliff:g id="count" example="3">%1$d</xliff:g> installées</item>
+        <item quantity="other"><xliff:g id="count" example="3">%1$d</xliff:g> installées</item>
+    </plurals>
+    <plurals name="bulk_install_updated_count">
+        <item quantity="one"><xliff:g id="count" example="3">%1$d</xliff:g> mise à jour</item>
+        <item quantity="many"><xliff:g id="count" example="3">%1$d</xliff:g> mises à jour</item>
+        <item quantity="other"><xliff:g id="count" example="3">%1$d</xliff:g> mises à jour</item>
+    </plurals>
+    <plurals name="bulk_install_reinstalled_count">
+        <item quantity="one"><xliff:g id="count" example="3">%1$d</xliff:g> réinstallée</item>
+        <item quantity="many"><xliff:g id="count" example="3">%1$d</xliff:g> réinstallées</item>
+        <item quantity="other"><xliff:g id="count" example="3">%1$d</xliff:g> réinstallées</item>
+    </plurals>
+    <plurals name="bulk_install_skipped_result_count">
+        <item quantity="one"><xliff:g id="count" example="3">%1$d</xliff:g> ignorée</item>
+        <item quantity="many"><xliff:g id="count" example="3">%1$d</xliff:g> ignorées</item>
+        <item quantity="other"><xliff:g id="count" example="3">%1$d</xliff:g> ignorées</item>
+    </plurals>
+    <plurals name="bulk_install_failed_count">
+        <item quantity="one"><xliff:g id="count" example="3">%1$d</xliff:g> en échec</item>
+        <item quantity="many"><xliff:g id="count" example="3">%1$d</xliff:g> en échec</item>
+        <item quantity="other"><xliff:g id="count" example="3">%1$d</xliff:g> en échec</item>
+    </plurals>
+    <plurals name="bulk_install_warning_count">
+        <item quantity="one"><xliff:g id="count" example="3">%1$d</xliff:g> avertissement</item>
+        <item quantity="many"><xliff:g id="count" example="3">%1$d</xliff:g> avertissements</item>
+        <item quantity="other"><xliff:g id="count" example="3">%1$d</xliff:g> avertissements</item>
+    </plurals>
+    <plurals name="bulk_install_omitted_sources">
+        <item quantity="one"><xliff:g id="count" example="3">%1$d</xliff:g> fichier supplémentaire a été omis pour préserver la réactivité de la vérification.</item>
+        <item quantity="many"><xliff:g id="count" example="3">%1$d</xliff:g> fichiers supplémentaires ont été omis pour préserver la réactivité de la vérification.</item>
+        <item quantity="other"><xliff:g id="count" example="3">%1$d</xliff:g> fichiers supplémentaires ont été omis pour préserver la réactivité de la vérification.</item>
+    </plurals>
+    <plurals name="library_bulk_delete_confirmation">
+        <item quantity="one">Supprimer <xliff:g id="count" example="3">%1$d</xliff:g> application ? Ses fichiers, paramètres et données de sauvegarde seront supprimés de votre bibliothèque.</item>
+        <item quantity="many">Supprimer <xliff:g id="count" example="3">%1$d</xliff:g> applications ? Leurs fichiers, paramètres et données de sauvegarde seront supprimés de votre bibliothèque.</item>
+        <item quantity="other">Supprimer <xliff:g id="count" example="3">%1$d</xliff:g> applications ? Leurs fichiers, paramètres et données de sauvegarde seront supprimés de votre bibliothèque.</item>
+    </plurals>
+    <plurals name="library_bulk_delete_result">
+        <item quantity="one"><xliff:g id="deleted_count" example="3">%1$d</xliff:g> application supprimée ; <xliff:g id="failed_count" example="1">%2$d</xliff:g> en échec.</item>
+        <item quantity="many"><xliff:g id="deleted_count" example="3">%1$d</xliff:g> applications supprimées ; <xliff:g id="failed_count" example="1">%2$d</xliff:g> en échec.</item>
+        <item quantity="other"><xliff:g id="deleted_count" example="3">%1$d</xliff:g> applications supprimées ; <xliff:g id="failed_count" example="1">%2$d</xliff:g> en échec.</item>
+    </plurals>
+    <string name="bulk_install_title">Installation groupée</string>
+    <string name="bulk_install_planning">Vérification des applications sélectionnées…</string>
+    <string name="bulk_install_empty">Aucune application prise en charge trouvée.</string>
+    <string name="bulk_install_recommended">Recommandé</string>
+    <string name="bulk_install_clear">Effacer la sélection</string>
+    <string name="bulk_install_install_count">Installer (<xliff:g id="count" example="3">%1$d</xliff:g>)</string>
+    <string name="bulk_install_cancel">Annuler</string>
+    <string name="bulk_install_close">Fermer</string>
+    <plurals name="bulk_install_running">
+        <item quantity="one"><xliff:g id="processed" example="3">%1$d</xliff:g> application traitée sur <xliff:g id="total" example="10">%2$d</xliff:g></item>
+        <item quantity="many"><xliff:g id="processed" example="3">%1$d</xliff:g> applications traitées sur <xliff:g id="total" example="10">%2$d</xliff:g></item>
+        <item quantity="other"><xliff:g id="processed" example="3">%1$d</xliff:g> applications traitées sur <xliff:g id="total" example="10">%2$d</xliff:g></item>
+    </plurals>
+    <string name="bulk_install_cancel_requested">Arrêt après l’application en cours…</string>
+    <string name="bulk_install_complete">Installation groupée terminée</string>
+    <string name="bulk_install_cancelled">Installation groupée arrêtée</string>
+    <string name="bulk_install_fatal">Installation groupée arrêtée. Vérifiez les éléments non terminés avant de réessayer.</string>
+    <string name="bulk_install_result_installed">Installée</string>
+    <string name="bulk_install_result_updated">Mise à jour</string>
+    <string name="bulk_install_result_reinstalled">Réinstallée</string>
+    <string name="bulk_install_result_skipped">Ignorée</string>
+    <string name="bulk_install_result_failed">Échec</string>
+    <string name="bulk_install_installed_version">Installée : <xliff:g id="version" example="2.1.0">%1$s</xliff:g></string>
+    <string name="bulk_install_source">Source : <xliff:g id="name" example="Example">%1$s</xliff:g></string>
+    <string name="bulk_install_action_separate_copy">Installer comme copie distincte</string>
+    <string name="bulk_install_action_jar_only">Installer le JAR uniquement</string>
+    <string name="single_install_review_jar_only" tools:ignore="MissingTranslation">Vérifier le JAR uniquement</string>
+    <string name="single_install_jar_only_notice" tools:ignore="MissingTranslation">Seul le fichier JAR sera installé. Vérifiez le nom de l’application, sa version et son état d’installation avant de continuer.</string>
+    <string name="single_install_running_replacement_warning" tools:ignore="MissingTranslation">Si cette application est en cours d’exécution, l’installation l’arrêtera avant de remplacer ses fichiers. Toute progression non enregistrée risque d’être perdue.</string>
+    <string name="bulk_install_status_new">Nouvelle</string>
+    <string name="bulk_install_status_update">Mise à jour</string>
+    <string name="bulk_install_status_downgrade">Version antérieure</string>
+    <string name="bulk_install_status_same">Déjà installée</string>
+    <string name="bulk_install_status_reinstall">Même version, variante possible</string>
+    <string name="bulk_install_status_ambiguous">Correspond à plusieurs applications installées</string>
+    <string name="bulk_install_status_mismatch">Incompatibilité JAD/JAR</string>
+    <string name="bulk_install_status_duplicate">Doublon</string>
+    <string name="bulk_install_status_older_batch">Version antérieure dans le lot</string>
+    <string name="bulk_install_status_conflict">Conflit dans le lot</string>
+    <string name="bulk_install_status_remote">Source distante non prise en charge</string>
+    <string name="bulk_install_status_error">Source non valide</string>
+    <string name="bulk_install_reinstall_source_missing">Le JAR enregistré n’est pas disponible pour la réinstallation.</string>
+    <plurals name="bulk_install_reinstall_missing_apps">
+        <item quantity="one"><xliff:g id="count" example="3">%1$d</xliff:g> application sélectionnée dans la bibliothèque n’est plus disponible.</item>
+        <item quantity="many"><xliff:g id="count" example="3">%1$d</xliff:g> applications sélectionnées dans la bibliothèque ne sont plus disponibles.</item>
+        <item quantity="other"><xliff:g id="count" example="3">%1$d</xliff:g> applications sélectionnées dans la bibliothèque ne sont plus disponibles.</item>
+    </plurals>
+    <string name="library_metadata_edit_title">Modifier les métadonnées</string>
+    <string name="library_metadata_icon">Icône</string>
+    <string name="library_metadata_name">Nom</string>
+    <string name="library_metadata_vendor">Éditeur</string>
+    <string name="library_metadata_reset_to_original">Rétablir l’original</string>
+    <string name="library_metadata_save">Enregistrer</string>
+    <string name="library_hide_grid_titles_summary">Masquer les noms des MIDlets en vue Grille. La vue Liste les conserve visibles.</string>
+    <string name="library_show_list_description_summary">Afficher la description de chaque MIDlet sous son titre et sa version.</string>
+    <string name="library_indexing_progress">Indexation de la bibliothèque… <xliff:g id="completed" example="3">%1$d</xliff:g>/<xliff:g id="total" example="10">%2$d</xliff:g></string>
+    <string name="library_indexing_current">Analyse de <xliff:g id="name" example="Example">%1$s</xliff:g></string>
+    <string name="library_load_error_title">Bibliothèque indisponible</string>
+    <string name="library_retry">Réessayer</string>
+    <string name="library_reinstall_source_missing">Le JAR enregistré n’est pas disponible pour la réinstallation.</string>
+    <string name="library_action_select">Sélectionner</string>
+    <string name="library_selection_select_all">Tout sélectionner</string>
+    <string name="library_selection_unselect_all">Tout désélectionner</string>
+    <string name="library_selection_checkbox_description">Sélectionner <xliff:g id="name" example="Example">%1$s</xliff:g></string>
+    <string name="library_selection_checked">Sélectionné</string>
+    <string name="library_selection_unchecked">Non sélectionné</string>
+    <string name="library_action_settings_summary">Configurer le comportement global et l’apparence.</string>
+    <string name="library_action_crash_reports_summary">Consulter les rapports de diagnostic enregistrés.</string>
+    <string name="library_action_about_summary">Présentation du projet, informations de build et liens.</string>
+    <string name="library_action_licenses_summary">Mentions tierces et termes de licence inclus dans l’application.</string>
+    <string name="library_donation_action">Soutenir le développement</string>
+    <string name="library_donation_summary">Aidez JL-Mod Plus à continuer d’évoluer.</string>
+    <string name="library_donation_title">Soutenir JL-Mod Plus</string>
+    <string name="library_donation_message">JL-Mod Plus est gratuit et open source. Si vous le trouvez utile, vous pouvez soutenir son développement par un don volontaire.</string>
+    <string name="library_donation_provider_note">Les dons sont gérés en externe par Sociabuzz.</string>
+    <string name="library_donation_continue">Continuer vers Sociabuzz</string>
+    <string name="library_donation_not_now">Pas maintenant</string>
+    <string name="library_donation_link_copied">Aucun navigateur trouvé. Lien Sociabuzz copié dans le presse-papiers.</string>
+    <string name="library_donation_browser_unavailable">Aucun navigateur trouvé pour ouvrir Sociabuzz.</string>
+    <string name="library_bulk_delete_apps">Supprimer les applications</string>
+    <string name="library_bulk_add_collection">Ajouter à une collection</string>
+    <string name="library_bulk_share_apps">Partager les applications</string>
+    <string name="library_bulk_reinstall_apps">Réinstaller</string>
+    <string name="library_bulk_export_apps">Exporter le pack</string>
+    <string name="library_enhanced_icons_title">Icônes améliorées</string>
+    <string name="library_enhanced_icons_summary">Ajuste le cadrage, l’échelle et l’arrière-plan des vignettes pour rendre les icônes plus homogènes dans votre bibliothèque.</string>
+    <string name="library_collections_unavailable_title">Collections indisponibles</string>
+    <string name="library_load_failed_message">Impossible de charger la bibliothèque. Réessayez.</string>
+    <string name="bulk_install_prepare_failed">Impossible de préparer les applications sélectionnées pour l’installation.</string>
+    <string name="installer_existing_data_preserved">Les paramètres et données de sauvegarde existants seront conservés.</string>
+    <string name="bulk_install_library_changed">Votre bibliothèque a changé après la vérification. Fermez ce lot et sélectionnez de nouveau les fichiers.</string>
+    <string name="bulk_install_source_unavailable">Un fichier source requis n’est plus disponible. Sélectionnez de nouveau les fichiers.</string>
+    <string name="bulk_install_source_changed">Le fichier source a changé après la vérification. Sélectionnez de nouveau les fichiers.</string>
+    <string name="bulk_install_target_unverified">Impossible de vérifier la cible de réinstallation. Fermez ce lot et sélectionnez de nouveau l’application.</string>
+    <string name="bulk_install_result_restored">Restaurée</string>
+    <plurals name="bulk_install_restored_count">
+        <item quantity="one"><xliff:g id="count" example="3">%1$d</xliff:g> restaurée</item>
+        <item quantity="many"><xliff:g id="count" example="3">%1$d</xliff:g> restaurées</item>
+        <item quantity="other"><xliff:g id="count" example="3">%1$d</xliff:g> restaurées</item>
+    </plurals>
+    <plurals name="bulk_install_reason_ambiguous_match">
+        <item quantity="one"><xliff:g id="count" example="3">%1$d</xliff:g> application installée correspond à cette source.</item>
+        <item quantity="many"><xliff:g id="count" example="3">%1$d</xliff:g> applications installées correspondent à cette source.</item>
+        <item quantity="other"><xliff:g id="count" example="3">%1$d</xliff:g> applications installées correspondent à cette source.</item>
+    </plurals>
+    <string name="bulk_install_reason_jad_jar_mismatch">Les fichiers JAD et JAR identifient des applications différentes.</string>
+    <string name="bulk_install_reason_conflicting_jads">Des fichiers JAD aux attributs différents référencent le même JAR.</string>
+    <string name="bulk_install_reason_remote_jar">L’installation groupée ne peut pas télécharger de fichiers JAR distants.</string>
+    <string name="bulk_install_reason_missing_jar_url">L’attribut MIDlet-Jar-URL est manquant dans le JAD.</string>
+    <!-- %1$s is the exact URI scheme supplied by the JAD; do not translate it. -->
+    <string name="bulk_install_reason_unsupported_uri_scheme">Le JAD référence un JAR avec un schéma d’URI non pris en charge : <xliff:g id="scheme" example="http">%1$s</xliff:g>.</string>
+    <string name="bulk_install_reason_missing_parent">Le JAD n’a pas de dossier parent.</string>
+    <!-- %1$s is the exact MIDlet-Jar-URL reference, not a normalized filesystem path. -->
+    <string name="bulk_install_reason_jar_not_found">Le JAR référencé par le JAD est introuvable : <xliff:g id="file_path" example="game.jar">%1$s</xliff:g>.</string>
+    <string name="bulk_install_reason_duplicate_source">Cette source fait doublon avec une autre source de ce lot.</string>
+    <string name="bulk_install_reason_version_conflict">Plusieurs variantes de l’application ont la même version.</string>
+    <string name="bulk_install_reason_older_candidate">Une version plus récente de cette application figure dans le même lot.</string>
+    <string name="bulk_install_reason_source_error">Impossible de préparer cette source pour l’installation.</string>
+    <string name="updates_title">Mises à jour</string>
+    <string name="updates_more_summary">Rechercher de nouvelles versions de JL-Mod Plus.</string>
+    <string name="updates_more_available">Une version plus récente est disponible.</string>
+    <string name="updates_installed_version">Version installée : <xliff:g id="version" example="2.1.0">%1$s</xliff:g></string>
+    <string name="updates_build_code">Build <xliff:g id="build_code" example="247">%1$d</xliff:g></string>
+    <string name="updates_automatic">Vérifier automatiquement lorsque la bibliothèque est active</string>
+    <string name="updates_not_checked">Pas encore vérifié.</string>
+    <string name="updates_checking">Recherche de mises à jour…</string>
+    <string name="updates_current">Votre application est à jour.</string>
+    <string name="updates_no_release">Aucune version publiée compatible n’est disponible.</string>
+    <string name="updates_not_installable">Une version plus récente est disponible, mais elle n’est pas compatible avec cet appareil ou cette installation.</string>
+    <string name="updates_failed">Impossible de rechercher les mises à jour. Vérifiez votre connexion et réessayez.</string>
+    <string name="updates_available">Mise à jour disponible</string>
+    <string name="updates_view_release">Voir la version</string>
+    <string name="updates_last_checked">Dernière vérification : <xliff:g id="timestamp" example="Today, 09:45">%1$s</xliff:g></string>
+    <string name="updates_check">Rechercher des mises à jour</string>
+    <string name="updates_notice">JL-Mod Plus <xliff:g id="version" example="2.1.0">%1$s</xliff:g> est disponible. Consultez Mises à jour dans Paramètres.</string>
+    <string name="updates_debug_build">Il s’agit d’une version de débogage. Les APK des versions GitHub s’installent séparément.</string>
+    <string name="updates_link_copied">Aucun navigateur trouvé. Lien de mise à jour copié dans le presse-papiers.</string>
+    <string name="updates_browser_unavailable">Aucun navigateur trouvé pour ouvrir le lien de mise à jour.</string>
+    <string name="bulk_install_choose_files">Fichiers</string>
+    <string name="bulk_install_choose_folder">Dossier</string>
+    <string name="bulk_install_unreadable_archives">Archives illisibles : <xliff:g id="count" example="3">%1$d</xliff:g></string>
+    <string name="bulk_install_skipped_entries">Fichiers ou entrées d’archive ignorés : <xliff:g id="count" example="3">%1$d</xliff:g></string>
+    <string name="bulk_install_selection_options" tools:ignore="MissingTranslation">Options de sélection</string>
+    <string name="bulk_install_show_details" tools:ignore="MissingTranslation">Afficher les détails</string>
+    <string name="bulk_install_hide_details" tools:ignore="MissingTranslation">Masquer les détails</string>
+    <string name="bulk_install_filter_all">Toutes</string>
+    <string name="bulk_install_filter_selected">Sélectionnées</string>
+    <string name="bulk_install_filter_review">À vérifier</string>
+    <string name="bulk_install_empty_filter">Aucune application correspondante.</string>
+    <string name="platform_package_choice_title" tools:ignore="MissingTranslation">Paquet Java ME détecté</string>
+    <string name="platform_package_choice_message" tools:ignore="MissingTranslation">Ce lien pointe vers un paquet Java ME. Que souhaitez-vous faire ?</string>
+    <string name="platform_package_install" tools:ignore="MissingTranslation">Installer dans JL-Mod Plus</string>
+    <string name="platform_package_browser" tools:ignore="MissingTranslation">Ouvrir dans le navigateur</string>
+    <string name="platform_package_unavailable" tools:ignore="MissingTranslation">Aucune application trouvée pour ouvrir ce lien.</string>
+    <string name="installer_running_update_warning" tools:ignore="MissingTranslation">Cette application est en cours d’exécution. L’installation l’arrêtera avant de remplacer ses fichiers. Toute progression non enregistrée risque d’être perdue.</string>
+    <string name="library_metadata_main_icon">Principale</string>
+    <string name="library_metadata_follows_main">Utilise l’icône principale</string>
+    <string name="library_metadata_change">Modifier</string>
+    <string name="library_metadata_remove_portrait">Supprimer l’icône 3:4</string>
+    <string name="library_metadata_discard_title">Ignorer les modifications ?</string>
+    <string name="library_metadata_discard">Ignorer</string>
+    <string name="library_metadata_default_description">Description par défaut</string>
+    <string name="library_metadata_other_languages">Autres langues</string>
+    <string name="library_metadata_add_language">+ Ajouter une langue</string>
+    <string name="library_metadata_language_search">Rechercher une langue ou un code régional</string>
+    <string name="library_metadata_remove_language">Supprimer la description</string>
+    <string name="library_metadata_language_load_failed">Impossible de charger les descriptions par langue. Appuyez sur Réessayer pour recommencer.</string>
+    <string name="updates_download_apk" tools:ignore="MissingTranslation">Télécharger l’APK</string>
+    <string name="updates_skip_version" tools:ignore="MissingTranslation">Ignorer cette version</string>
+    <string name="updates_dialog_message" tools:ignore="MissingTranslation">JL-Mod Plus <xliff:g id="version" example="2.1.0">%1$s</xliff:g> est disponible. Vous utilisez <xliff:g id="current_version" example="2.0.0">%2$s</xliff:g>. Téléchargez l’APK ou consultez la version sur GitHub.</string>
+    <string name="library_bundle_components_title" tools:ignore="MissingTranslation">Exporter le pack</string>
+    <string name="library_bundle_components_explanation" tools:ignore="MissingTranslation">Les applications sélectionnées sont toujours incluses. Fermez celles qui sont en cours d’exécution, puis choisissez les données supplémentaires à inclure. Les habillages, banques de sons et shaders partagés ne sont pas inclus.</string>
+    <string name="library_bundle_config" tools:ignore="MissingTranslation">Configuration</string>
+    <string name="library_bundle_save_data" tools:ignore="MissingTranslation">Données de sauvegarde</string>
+    <string name="library_bundle_saved_variables" tools:ignore="MissingTranslation">Signets</string>
+    <string name="library_bundle_export" tools:ignore="MissingTranslation">Exporter</string>
+    <string name="library_export_jar_only" tools:ignore="MissingTranslation">JAR uniquement</string>
+    <string name="library_export_jars_only" tools:ignore="MissingTranslation">JAR uniquement (ZIP)</string>
+    <string name="library_selection_action_delete" tools:ignore="MissingTranslation">Supprimer</string>
+    <string name="library_selection_action_collection" tools:ignore="MissingTranslation">Collection</string>
+    <string name="library_selection_action_export" tools:ignore="MissingTranslation">Exporter</string>
+    <string name="library_selection_action_reinstall" tools:ignore="MissingTranslation">Réinstaller</string>
+    <string name="installer_select_companion_jar" tools:ignore="MissingTranslation">Ce JAD fait référence à un fichier JAR distinct. Sélectionnez le JAR correspondant pour continuer. Le fournisseur de fichiers externe n’autorise pas l’accès aux fichiers voisins.</string>
+    <string name="installer_select_jar" tools:ignore="MissingTranslation">Sélectionner un JAR</string>
+    <string name="installer_wrong_companion_jar" tools:ignore="MissingTranslation">Ce JAR ne correspond pas au JAD sélectionné. Choisissez le JAR correspondant pour conserver les paramètres du JAD.</string>
+    <string name="installer_choose_another_jar" tools:ignore="MissingTranslation">Choisir un autre JAR</string>
+    <string name="library_app_more_actions" tools:ignore="MissingTranslation">Plus d’actions pour <xliff:g id="name" example="Example">%1$s</xliff:g></string>
+    <string name="library_actions_group_customize" tools:ignore="MissingTranslation">Personnaliser</string>
+    <string name="library_actions_group_organize" tools:ignore="MissingTranslation">Organiser</string>
+    <string name="library_actions_group_transfer" tools:ignore="MissingTranslation">Transférer et gérer</string>
+    <string name="library_collection_more_actions" tools:ignore="MissingTranslation">Plus d’actions pour la collection <xliff:g id="collection_name" example="Favorites">%1$s</xliff:g></string>
+    <string name="library_settings_preferences" tools:ignore="MissingTranslation">Préférences de l’application</string>
+    <string name="library_settings_section_maintenance" tools:ignore="MissingTranslation">Mises à jour et diagnostics</string>
+    <string name="library_settings_section_support" tools:ignore="MissingTranslation">À propos et soutien</string>
+    <string name="library_details_title" tools:ignore="MissingTranslation">Détails du MIDlet</string>
+    <string name="library_details_description" tools:ignore="MissingTranslation">Description</string>
+    <string name="library_details_play_stats" tools:ignore="MissingTranslation">Statistiques de jeu</string>
+    <string name="library_details_launches" tools:ignore="MissingTranslation">Lancements</string>
+    <string name="library_details_total_time" tools:ignore="MissingTranslation">Temps total</string>
+    <string name="library_details_last_played" tools:ignore="MissingTranslation">Dernière partie</string>
+    <string name="library_details_library_info" tools:ignore="MissingTranslation">Informations de la bibliothèque</string>
+    <string name="library_details_added" tools:ignore="MissingTranslation">Ajoutée à la bibliothèque</string>
+    <string name="library_details_collections" tools:ignore="MissingTranslation">Collections</string>
+    <string name="library_details_none" tools:ignore="MissingTranslation">Aucune</string>
+    <string name="library_details_technical" tools:ignore="MissingTranslation">Informations techniques</string>
+    <string name="library_details_profile" tools:ignore="MissingTranslation">Profil</string>
+    <string name="library_details_configuration" tools:ignore="MissingTranslation">Configuration</string>
+    <string name="library_details_jar_size" tools:ignore="MissingTranslation">Taille du JAR conservé</string>
+    <string name="library_details_entry_points" tools:ignore="MissingTranslation">Entrées MIDlet</string>
+    <string name="library_details_original_metadata" tools:ignore="MissingTranslation">Métadonnées d’origine</string>
+    <string name="library_details_name" tools:ignore="MissingTranslation">Nom</string>
+    <string name="library_details_vendor" tools:ignore="MissingTranslation">Éditeur</string>
+    <string name="library_details_version" tools:ignore="MissingTranslation">Version</string>
+    <string name="library_details_version_value" tools:ignore="MissingTranslation">Version <xliff:g id="version" example="2.1.0">%1$s</xliff:g></string>
+    <string name="library_details_original_description" tools:ignore="MissingTranslation">Description d’origine</string>
+    <string name="library_details_permissions" tools:ignore="MissingTranslation">Autorisations déclarées</string>
+    <string name="library_details_required" tools:ignore="MissingTranslation">Requise</string>
+    <string name="library_details_optional" tools:ignore="MissingTranslation">Facultative</string>
+    <string name="library_details_no_permissions" tools:ignore="MissingTranslation">Aucune autorisation déclarée</string>
+    <string name="library_details_descriptor_attributes" tools:ignore="MissingTranslation">Attributs du descripteur</string>
+    <string name="library_details_unavailable" tools:ignore="MissingTranslation">Indisponible</string>
+    <string name="library_details_action" tools:ignore="MissingTranslation">Détails</string>
+    <string name="library_details_view_details" tools:ignore="MissingTranslation">Afficher les détails</string>
+    <string name="library_actions_more" tools:ignore="MissingTranslation">Plus d’actions</string>
+    <string name="library_actions_less" tools:ignore="MissingTranslation">Moins d’actions</string>
+</resources>

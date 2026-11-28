@@ -1,0 +1,211 @@
+<?xml version="1.0" encoding="utf-8"?>
+<!-- 渲染管线、内部分辨率、位图放大、着色器及内置视觉效果。 -->
+<resources xmlns:tools="http://schemas.android.com/tools" xmlns:xliff="urn:oasis:names:tc:xliff:document:1.2">
+    <string name="identity_filter">无（最快）</string>
+    <string name="invalid_resolution_not_saved">分辨率无效，未保存预设。</string>
+    <string name="msg_error_loading_shader">不支持此着色器，已改用默认着色器。</string>
+    <string name="parallel_screen_redrawing">异步画面更新</string>
+    <string name="shader_tuning">着色器微调</string>
+    <string name="SWAP_SIZES">交换宽高</string>
+    <string name="fps_limit_maximum">最高</string>
+    <string name="remove_screen_preset">移除分辨率预设</string>
+    <string name="perf_overlay_position_help">选择一个角落。</string>
+    <string name="perf_overlay_top_left">左上角</string>
+    <string name="perf_overlay_top_right">右上角</string>
+    <string name="perf_overlay_bottom_left">左下角</string>
+    <string name="perf_overlay_bottom_right">右下角</string>
+    <string name="internal_resolution_title" tools:ignore="MissingTranslation">渲染分辨率</string>
+    <string name="internal_resolution_auto" tools:ignore="MissingTranslation">自动</string>
+    <string name="internal_resolution_description" tools:ignore="MissingTranslation">设置受支持的 2D 和 3D 渲染分辨率。自动模式根据显示区域和设备限制选择缩放倍率。重新启动 MIDlet 后应用更改。</string>
+    <string name="bitmap_upscaling_title" tools:ignore="MissingTranslation">位图放大</string>
+    <string name="bitmap_upscaling_description" tools:ignore="MissingTranslation">MMPX 和 xBR Lv3 可改善不可修改的 2D 图像，以及 Micro3D 模型中不可修改的不透明纹理。M3G 纹理保持不变。重新启动 MIDlet 后应用更改。</string>
+    <string name="bitmap_upscaling_nearest" tools:ignore="MissingTranslation">最邻近插值</string>
+    <string name="bitmap_upscaling_bilinear" tools:ignore="MissingTranslation">双线性插值</string>
+    <string name="bitmap_upscaling_mmpx" tools:ignore="MissingTranslation">MMPX</string>
+    <string name="bitmap_upscaling_edge_aware" tools:ignore="MissingTranslation">xBR Lv3</string>
+    <string name="render_shader_effects">着色器效果</string>
+    <string name="render_pipeline_title">渲染管线</string>
+    <string name="render_shader_preset">着色器预设</string>
+    <string name="render_shader_picker_help">按顺序组合内置效果与自定义旧版着色器，构建效果栈。</string>
+    <string name="render_shader_requires_gles">着色器设置已保存，但仅在选择 OpenGL ES 时生效。</string>
+    <string name="render_shader_missing">应用库中未找到所选着色器。请选择其他预设或恢复其文件。</string>
+    <string name="render_shader_parameters">着色器参数</string>
+    <string name="render_shader_reset_parameters">重置参数</string>
+    <string name="render_shader_passes">着色器通道</string>
+    <string name="render_shader_pass_count"><xliff:g id="count" example="2">%1$d</xliff:g> 个通道</string>
+    <string name="render_shader_pass_hint">查看所选 GLSLP 预设包含的渲染阶段。</string>
+    <string name="render_pass_filter">输入过滤</string>
+    <string name="render_pass_output">输出尺寸（宽 × 高）</string>
+    <string name="render_pipeline_unavailable">预设不可用</string>
+    <string name="render_game_output">游戏输出</string>
+    <string name="render_logical_screen_help">向游戏报告的逻辑屏幕尺寸。</string>
+    <string name="render_internal_resolution">内部分辨率</string>
+    <string name="render_internal_unavailable">仅支持原始（1×）。当前配置下无法使用更高的渲染分辨率。</string>
+    <string name="render_display_renderer">显示渲染器</string>
+    <string name="render_shader_processing">着色器处理</string>
+    <string name="render_display_scaling">显示缩放</string>
+    <string name="render_display_viewport">游戏视口</string>
+    <string name="render_texture_filtering">画面缩放过滤</string>
+    <string name="render_texture_filtering_help">为最终游戏画面选择最邻近过滤或线性过滤。部分着色器效果可能会覆盖此项。</string>
+    <string name="render_viewport_note">系统会先根据屏幕布局确定视口尺寸，再规划着色器通道。箭头表示图像流向，而非布局计算顺序。</string>
+    <string name="render_pipeline_help">查看游戏画面输出至屏幕的处理路径，并编辑各个阶段。</string>
+    <string name="render_no_shader">选择一个预设以改变游戏画面的视觉风格。</string>
+    <string name="render_shader_adjust">调整参数</string>
+    <string name="render_legacy_tuning_hint">微调此旧版着色器效果。</string>
+    <string name="render_shader_customization">自定义</string>
+    <string name="render_adjustable_count">可调参数：<xliff:g id="count" example="3">%1$d</xliff:g> 项</string>
+    <string name="render_pass_summary"><xliff:g id="count" example="3">%1$d</xliff:g> 个阶段 · 由预设定义</string>
+    <string name="render_shader_preset_note">着色器阶段由预设定义。你可以查看各阶段详情，但无法更改其顺序。</string>
+    <string name="render_parameters_hint">拖动滑块以调整数值，松手后自动保存更改。</string>
+    <string name="render_pass_readonly">各阶段按此顺序执行。输入过滤与输出缩放均来自所选预设。</string>
+    <string name="render_pipeline_intro">从游戏帧缓冲区到屏幕显示的处理路径。</string>
+    <string name="render_native_short">原始（1×）</string>
+    <string name="render_expand_passes">展开阶段</string>
+    <string name="render_collapse_passes">收起阶段</string>
+    <string name="render_view_all_passes">阶段详情</string>
+    <string name="render_pipeline_filter_summary">纹理过滤：<xliff:g id="shader_name" example="CRT Classic">%1$s</xliff:g></string>
+    <string name="render_pipeline_note">显示布局会先确定视口尺寸，再规划着色器通道。以下步骤展示图像流向。</string>
+    <string name="render_shader_change">选择其他效果</string>
+    <string name="render_custom_pipeline">自定义管线</string>
+    <string name="render_custom_pipeline_hint">组合着色器文件夹中的独立 GLSL 着色器。</string>
+    <string name="render_custom_order_help">效果按从上到下的顺序执行。除非手动更改，否则继承的 GLSLP 设置将保持生效。</string>
+    <string name="render_custom_empty">添加着色器以创建自定义效果链。</string>
+    <string name="render_custom_stage_count"><xliff:g id="count" example="3">%1$d</xliff:g> 个自定义着色器阶段</string>
+    <string name="render_custom_add">添加着色器</string>
+    <string name="render_custom_add_hint">选择一个外部独立的 .glsl 源文件。</string>
+    <string name="render_custom_no_sources">未找到旧版着色器。请将 .ini 着色器文件放入 shaders 文件夹后重新打开设置。</string>
+    <string name="render_custom_scale">输出：上一阶段的 <xliff:g id="scale" example="2">%1$d</xliff:g>×</string>
+    <string name="render_custom_output_scale">下一阶段的输出尺寸</string>
+    <string name="render_custom_final_viewport">最终输出：显示在屏幕上</string>
+    <string name="render_custom_filter">输入过滤：<xliff:g id="shader_name" example="CRT Classic">%1$s</xliff:g></string>
+    <string name="render_custom_up">上移</string>
+    <string name="render_custom_down">下移</string>
+    <string name="render_custom_remove">移除</string>
+    <string name="render_custom_cancel">取消</string>
+    <string name="render_custom_save">保存</string>
+    <string name="render_custom_default">默认</string>
+    <string name="render_custom_nearest">最邻近</string>
+    <string name="render_custom_linear">线性</string>
+    <string name="render_custom_checking">正在检查着色器文件…</string>
+    <string name="render_active_shader">当前效果</string>
+    <string name="render_shader_off">关</string>
+    <string name="render_edit_custom_pipeline">编辑着色器链</string>
+    <string name="render_shader_unavailable">不可用：<xliff:g id="shader_name" example="CRT Classic">%1$s</xliff:g></string>
+    <string name="render_no_shader_sources">未找到着色器。请将旧版 .ini 着色器文件放入 shaders 文件夹，然后重新打开设置。</string>
+    <string name="render_shader_mode">着色器模式</string>
+    <string name="render_mode_selected">已选择</string>
+    <string name="render_gles_shader_default">关闭着色器效果时，OpenGL ES 将直接显示原始游戏画面。</string>
+    <string name="render_shader_off_help">不应用额外视觉效果。</string>
+    <string name="render_legacy_mode">旧版着色器</string>
+    <string name="render_legacy_mode_help">从 shaders 文件夹中选择一个 .ini 文件。</string>
+    <string name="render_legacy_empty">此 .ini 文件中没有可用的着色器定义。</string>
+    <string name="render_legacy_select_variant">选择旧版着色器</string>
+    <string name="render_legacy_variant_description">所选 .ini 文件中的着色器定义</string>
+    <string name="render_preset_mode">GLSLP 预设</string>
+    <string name="render_preset_mode_help">加载包含自带通道的完整 .glslp 渲染管线。</string>
+    <string name="render_custom_pass_count">通道数量</string>
+    <string name="render_custom_pass_number">通道 <xliff:g id="number" example="1">%1$d</xliff:g></string>
+    <string name="render_custom_pick_file">选择 GLSL 文件</string>
+    <string name="render_custom_add_pass">增加着色器通道数</string>
+    <string name="render_custom_remove_pass">减少着色器通道数</string>
+    <string name="render_shader_selected_name">当前：<xliff:g id="shader_name" example="CRT Classic">%1$s</xliff:g></string>
+    <string name="render_shader_invalid_picker">无法使用所选文件。请选择 shaders 文件夹内的旧版 .ini 文件。</string>
+    <string name="render_custom_mode">着色器类型</string>
+    <string name="render_custom_mode_legacy">旧版</string>
+    <string name="render_custom_mode_glsl">GLSL</string>
+    <string name="render_custom_pick_legacy">选择旧版着色器</string>
+    <string name="render_custom_preserve_size">输出：跟随预设</string>
+    <string name="render_custom_loading">正在读取预设通道…</string>
+    <string name="render_custom_start_fresh">不使用预设新建（放弃继承的设置）</string>
+    <string name="render_effect_default_settings">默认设置</string>
+    <string name="render_effect_summary_more">另含 <xliff:g id="count" example="2">%1$d</xliff:g> 项</string>
+    <string name="render_effect_legacy_author">作者：<xliff:g id="shader_name" example="CRT Classic">%1$s</xliff:g></string>
+    <string name="render_effect_legacy_source">来源：<xliff:g id="shader_name" example="CRT Classic">%1$s</xliff:g></string>
+    <string name="render_effect_removed">已移除效果</string>
+    <string name="render_effect_undo">撤销</string>
+    <string name="render_effect_catalog_hint">轻按效果即可将其添加到效果栈。</string>
+    <string name="render_effect_user_folder_hint">INI、VSH 和 FSH 文件必须位于 shaders 文件夹中。</string>
+    <string name="render_effect_legacy_scale_note">旧版着色器按屏幕视口分辨率渲染；.ini 中的 OutputResolution 和 Upscaling 标记将被忽略。</string>
+    <string name="render_effect_legacy_metadata_missing">未找到此着色器 .ini 文件中的设置。着色器仍可能使用其源文件正常运行。</string>
+    <string name="render_effect_count">已启用 <xliff:g id="count" example="2">%1$d</xliff:g> 项</string>
+    <string name="render_effect_add">添加效果</string>
+    <string name="render_effect_builtin">内置效果</string>
+    <string name="render_effect_user">我的着色器</string>
+    <string name="render_effect_user_add">浏览 .ini 文件</string>
+    <string name="render_effect_user_empty">shaders 文件夹中未找到旧版着色器。</string>
+    <string name="render_effect_user_file">选择旧版 .ini 文件</string>
+    <string name="render_effect_empty">添加效果以自定义游戏画面表现。</string>
+    <string name="render_effect_hint">效果按从上到下的顺序执行，长按并拖动可调整顺序。</string>
+    <string name="render_effect_move_up">上移</string>
+    <string name="render_effect_move_down">下移</string>
+    <string name="render_effect_remove">移除效果</string>
+    <string name="render_effect_no_parameters">此效果没有可调参数。</string>
+    <string name="render_effect_parameter_number">参数 <xliff:g id="count" example="2">%1$d</xliff:g></string>
+    <string name="render_effect_restore">重置参数</string>
+    <string name="render_effect_missing">不可用：<xliff:g id="shader_name" example="CRT Classic">%1$s</xliff:g>。当前版本不包含此内置效果，请将其从效果栈中移除。</string>
+    <string name="render_effect_limit">效果栈最多支持 16 个着色器通道（部分效果会占用多个通道）。</string>
+    <string name="render_effect_unavailable">着色器效果无法运行，已显示原始游戏画面。请尝试减少效果数量或降低渲染分辨率。</string>
+    <string name="render_bitmap_memory_reduced">位图放大内存不足，将改用原始图像或较低倍率。请尝试降低渲染分辨率或释放内存后重启。</string>
+    <string name="render_texture_memory_reduced">Micro3D 纹理放大失败，将改用原始纹理。请尝试降低渲染分辨率或释放内存后重启。</string>
+    <string name="render_resolution_reduced">受限于内存或 GPU，渲染分辨率已从 <xliff:g id="from_scale" example="4">%1$d</xliff:g>× 降至 <xliff:g id="to_scale" example="2">%2$d</xliff:g>×。请尝试调低设置或释放内存后重启。</string>
+    <string name="render_gpu_texture_limit">即使在 1× 倍率下，游戏图像也超出了 GPU 的纹理尺寸限制。请减小 MIDlet 屏幕尺寸或切换图形模式。</string>
+    <string name="render_gpu_upload_failed">无法将游戏画面上传至 GPU，正在重试。请尝试关闭其他应用或切换图形模式。</string>
+    <string name="render_effect_gles">效果设置已保存，但仅在 OpenGL ES 下渲染生效。</string>
+    <string name="render_effect_legacy_file_error">无法从所选 .ini 文件加载有效的旧版着色器。</string>
+    <string name="effect_color">色彩调节</string>
+    <string name="effect_color_desc">调整亮度、对比度、饱和度、伽马、色调及黑白效果。</string>
+    <string name="effect_vignette">暗角</string>
+    <string name="effect_vignette_desc">压暗画面边缘，将视觉焦点汇聚至中心。</string>
+    <string name="effect_sharpen">锐化</string>
+    <string name="effect_sharpen_desc">增强画面细节与边缘清晰度。</string>
+    <string name="effect_cartoon">柔和卡通</string>
+    <string name="effect_cartoon_desc">简化色彩过渡并添加柔和描边。</string>
+    <string name="effect_bloom">泛光</string>
+    <string name="effect_bloom_desc">为画面高光区域增添柔和光晕。</string>
+    <string name="effect_crt_classic">经典 CRT</string>
+    <string name="effect_crt_classic_desc">模拟经典 CRT 电视的扫描线与 RGB 荧光点阵效果。</string>
+    <string name="effect_crt_beam">扫描束窄度</string>
+    <string name="effect_brightness">亮度</string>
+    <string name="effect_contrast">对比度</string>
+    <string name="effect_saturation">饱和度</string>
+    <string name="effect_strength">强度</string>
+    <string name="effect_color_levels">色阶数</string>
+    <string name="effect_edge">边缘强度</string>
+    <string name="effect_threshold">亮度阈值</string>
+    <string name="effect_radius">模糊半径</string>
+    <string name="effect_mask_strength">栅格强度</string>
+    <string name="effect_scan_strength">扫描线强度</string>
+    <string name="effect_bright_boost">亮度补偿</string>
+    <string name="effect_lcd">LCD</string>
+    <string name="effect_lcd_desc">模拟经典彩色 LCD 屏幕的像素网格与子像素结构。</string>
+    <string name="effect_lcd_grid">网格强度</string>
+    <string name="effect_lcd_subpixel">RGB 子像素</string>
+    <string name="effect_lcd_brightness">LCD 亮度</string>
+    <string name="effect_scanlines">轻量扫描线</string>
+    <string name="effect_scanlines_desc">添加类似 CRT 显示器的细腻水平扫描线。</string>
+    <string name="effect_line_width">线条窄度</string>
+    <string name="effect_gamma">伽马</string>
+    <string name="effect_temperature">色温</string>
+    <string name="effect_tint">色调</string>
+    <string name="effect_monochrome">黑白</string>
+    <string name="effect_depth">色深与抖动</string>
+    <string name="effect_depth_desc">限制色板数量，并可搭配抖动算法呈现复古质感。</string>
+    <string name="effect_depth_format">显示色彩格式</string>
+    <string name="effect_depth_rgb444">RGB444 · 4,096 色</string>
+    <string name="effect_depth_rgb565">RGB565 · 65,536 色</string>
+    <string name="effect_depth_rgb666">RGB666 · 262,144 色</string>
+    <string name="effect_dither_mode">抖动模式</string>
+    <string name="effect_dither_none">关</string>
+    <string name="effect_dither_bayer4">Bayer 4×4</string>
+    <string name="effect_dither_bayer8">Bayer 8×8</string>
+    <string name="effect_dither_strength">抖动强度</string>
+    <string name="effect_mono_display">单色屏幕</string>
+    <string name="effect_mono_display_desc">模拟 2 阶或 4 阶色调的黑白、绿屏或琥珀屏。</string>
+    <string name="effect_mono_palette">LCD 配色</string>
+    <string name="effect_mono_bw">黑白</string>
+    <string name="effect_mono_green">绿色 LCD</string>
+    <string name="effect_mono_amber">琥珀色 LCD</string>
+    <string name="effect_mono_tones">灰阶级数</string>
+    <string name="effect_mono_two">2 阶</string>
+    <string name="effect_mono_four">4 阶</string>
+</resources>

@@ -166,18 +166,28 @@ def prepare_batch(repo_root, batch):
     configs = [c for c in report["configurations"] if c["role"] == "localized" and c["locale"] == batch["locale"]]
     if len(configs) != 1:
         raise ValueError("Expected one existing base directory for locale")
-    source_path = repo_root / "app/src/main/res/values/strings.xml"
-    target_path = repo_root / "app/src/main/res" / configs[0]["directory"] / "strings.xml"
-    source_data, target_data = source_path.read_bytes(), target_path.read_bytes()
-    if sha256(source_data) != batch["source_sha256"]:
-        raise ValueError("Stale canonical source hash")
-    source_root, target_root = _nodes(source_data), _nodes(target_data)
     resources = [r for r in report["resources"] if r["type"] in {"string", "plurals"}]
     relevant_dirs = {"values", configs[0]["directory"]}
     if any(d["directory"] in relevant_dirs for d in report["findings"]["duplicates"]):
         raise ValueError("Duplicate resource declarations")
     source = {(r["type"], r["key"]): r for r in resources if r["role"] == "source"}
     target = {(r["type"], r["key"]): r for r in resources if r["directory"] == configs[0]["directory"]}
+    identities = ({("string", key) for key in batch["strings"]}
+                  | {("plurals", key) for key in batch["plurals"]})
+    for identity in sorted(identities):
+        if identity not in source or not source[identity]["translatable"]:
+            raise ValueError(f"Unknown or invariant resource: {identity[1]}")
+    source_files = {source[identity]["file"] for identity in identities}
+    if len(source_files) > 1:
+        raise ValueError("A batch must target one canonical resource file")
+    if not source_files:
+        raise ValueError("A batch must select at least one resource")
+    source_path = repo_root / next(iter(source_files))
+    target_path = repo_root / "app/src/main/res" / configs[0]["directory"] / source_path.name
+    source_data, target_data = source_path.read_bytes(), target_path.read_bytes()
+    if sha256(source_data) != batch["source_sha256"]:
+        raise ValueError("Stale canonical source hash")
+    source_root, target_root = _nodes(source_data), _nodes(target_data)
     node_map = lambda root: {(n["attrs"].get("type", n["tag"]), n["attrs"].get("name")): n for n in root["children"]}
     source_nodes, target_nodes = node_map(source_root), node_map(target_root)
     edits, additions = [], []
@@ -190,11 +200,11 @@ def prepare_batch(repo_root, batch):
             if not src or not src["translatable"]:
                 raise ValueError(f"Unknown or invariant resource: {key}")
             if src["file"] != source_path.relative_to(repo_root).as_posix():
-                raise ValueError(f"Canonical resource is outside hashed strings.xml: {key}")
+                raise ValueError(f"Canonical resource is outside hashed source file: {key}")
             if any(r["key"] == key and r["type"] != resource_type and r["directory"] == configs[0]["directory"] for r in resources):
                 raise ValueError(f"Target resource type mismatch: {key}")
             if dst and dst["file"] != target_path.relative_to(repo_root).as_posix():
-                raise ValueError(f"Target resource is outside hashed strings.xml: {key}")
+                raise ValueError(f"Target resource is outside hashed target file: {key}")
             if dst and (dst["formatted"] != src["formatted"] or not dst["translatable"]):
                 raise ValueError(f"Target resource attribute contract mismatch: {key}")
             sn, dn = source_nodes[identity], target_nodes.get(identity)
@@ -265,7 +275,7 @@ def apply_batch(repo_root, batch, apply=False):
             os.chmod(temporary, path.stat().st_mode)
             if path.read_bytes() != current:
                 raise ValueError("Target changed after validation")
-            if sha256((repo_root / "app/src/main/res/values/strings.xml").read_bytes()) != batch["source_sha256"]:
+            if sha256((repo_root / "app/src/main/res/values" / path.name).read_bytes()) != batch["source_sha256"]:
                 raise ValueError("Canonical source changed after validation")
             os.replace(temporary, path)
         finally:

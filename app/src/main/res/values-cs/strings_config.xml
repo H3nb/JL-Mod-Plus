@@ -1,0 +1,355 @@
+<?xml version="1.0" encoding="utf-8"?>
+<!-- Konfigurace pro jednotlivé MIDlety, opakovaně použitelné profily, fotoaparát, kalibrace ovladače, oprávnění a systémové vlastnosti. -->
+<resources xmlns:tools="http://schemas.android.com/tools" xmlns:xliff="urn:oasis:names:tc:xliff:document:1.2">
+    <string name="config_missing_app_storage_named">Aplikace nebyla nalezena.\nZkontrolujte, zda je úložné zařízení „<xliff:g id="storage_name" example="SD card">%1$s</xliff:g>“ dostupné, nebo znovu vytvořte zástupce.</string>
+    <string name="config_missing_app_storage_generic">Aplikace nebyla nalezena.\nZkontrolujte, zda je úložné zařízení dostupné, nebo znovu vytvořte zástupce.</string>
+    <string name="midlet_name"><b>Název: </b></string>
+    <string name="midlet_size"><b>Velikost: </b></string>
+    <string name="midlet_vendor"><b>Vývojář: </b></string>
+    <string name="midlet_version"><b>Verze: </b></string>
+    <string name="config_destination_graphics">Displej</string>
+    <string name="config_destination_rendering" tools:ignore="MissingTranslation">Grafika</string>
+    <string name="config_destination_media">Média</string>
+    <string name="config_camera_title">Fotoaparát</string>
+    <string name="config_camera_default_title">Výchozí fotoaparát</string>
+    <string name="config_camera_rear">Zadní</string>
+    <string name="config_camera_front">Přední</string>
+    <string name="config_camera_resolution_title">Výchozí rozlišení</string>
+    <string name="config_camera_resolution_auto">Automaticky</string>
+    <string name="config_camera_resolution_portrait">480×640 — Na výšku</string>
+    <string name="config_camera_resolution_landscape">640×480 — Na šířku</string>
+    <string name="config_destination_controls">Ovládání</string>
+    <string name="config_gamepad_test">Otestovat ovladač</string>
+    <string name="config_gamepad_calibrate">Kalibrovat ovladač</string>
+    <string name="config_gamepad_calibrate_summary">Změří neutrální polohu připojeného ovladače a rozsahy jeho páček a spouští.</string>
+    <string name="config_gamepad_stick_directions">Digitální směry</string>
+    <string name="config_gamepad_stick_unassigned">Nepřiřazeno</string>
+    <string name="config_gamepad_stick_pointer">Zdroj ukazatele</string>
+    <string name="config_gamepad_opaque_summary">Tato konfigurace obsahuje data ovladače v nepodporovaném formátu. Zůstávají zachována beze změny a nelze je zde upravovat.</string>
+    <string name="config_gamepad_unsupported_summary">Tato konfigurace ovladače není podporována. Zůstává zachována beze změny a nelze ji zde upravovat.</string>
+    <string name="config_gamepad_keypad_title">Virtuální klávesnice</string>
+    <string name="config_gamepad_calibration_next">Další</string>
+    <string name="config_gamepad_mapping_help_title">Nápověda k mapování ovladače</string>
+    <string name="config_gamepad_directions_four">4 směry</string>
+    <string name="config_gamepad_directions_eight">8 směrů</string>
+    <string name="config_gamepad_pointer_off">Vypnuto</string>
+    <string name="config_gamepad_pointer_cursor">Proporcionální kurzor</string>
+    <string name="config_gamepad_pointer_joystick">Dotykový joystick</string>
+    <!-- Stejný otisk identity ovladače jako v diagnostice. -->
+    <string name="config_gamepad_calibration_profile">Identifikátor ovladače: <xliff:g id="profile_name" example="Action Games">%1$s</xliff:g></string>
+    <string name="config_gamepad_calibration_phase_neutral">Čekání na neutrální polohu</string>
+    <string name="config_gamepad_calibration_phase_stick_range">Rozsah páček</string>
+    <string name="config_gamepad_calibration_phase_trigger_range">Rozsah spouští</string>
+    <string name="config_gamepad_calibration_phase_review">Připraveno k uložení</string>
+    <string name="config_gamepad_calibration_phase_committed">Uloženo</string>
+    <string name="config_gamepad_calibration_phase_cancelled">Zrušeno</string>
+    <string name="config_gamepad_calibration_waiting_controller">Připojte ovladač s podporovanou analogovou páčkou nebo spouští. Kalibraci zahájíte pohybem páčky nebo stisknutím spouště. Stávající kalibrace se nezmění, pokud neuložíte novou nebo ji neresetujete.</string>
+    <string name="config_gamepad_calibration_no_analog_ranges">Tento ovladač neposkytuje podporované analogové rozsahy páček ani spouští.</string>
+    <string name="config_gamepad_calibration_start">Ponechte všechny páčky ve středu a všechny spouště uvolněné, dokud nedoběhne časovač neutrální polohy.</string>
+    <string name="config_gamepad_calibration_save_failed">Kalibraci se nepodařilo uložit. Před dalším pokusem zkontrolujte aktuální nastavení.</string>
+    <string name="config_gamepad_calibration_no_supported_ranges">Nebyly nalezeny žádné podporované analogové rozsahy.</string>
+    <string name="config_gamepad_calibration_rejected">Kalibrace byla odmítnuta: <xliff:g id="name" example="Example">%1$s</xliff:g></string>
+    <string name="config_gamepad_calibration_neutral_instructions">Ponechte všechny zjištěné páčky ve středu a všechny zjištěné spouště uvolněné, dokud nedoběhne časovač neutrální polohy.</string>
+    <string name="config_gamepad_calibration_stick_instructions">Pohybujte každou zjištěnou páčkou v jejím plném rozsahu všemi směry a poté stiskněte Další.</string>
+    <string name="config_gamepad_calibration_trigger_instructions">Uvolněte a zcela stiskněte každou zjištěnou spoušť a poté klepněte na Další.</string>
+    <string name="config_gamepad_calibration_review_instructions">Uložením nahradíte kalibraci tohoto ovladače.</string>
+    <string name="config_gamepad_calibration_saved">Kalibrace byla uložena.</string>
+    <string name="config_gamepad_calibration_cancelled">Kalibrace byla zrušena.</string>
+    <string name="config_gamepad_calibration_waiting_samples">Kalibrace čeká na vzorky z ovladače.</string>
+    <string name="config_gamepad_diagnosis_header">Diagnostika ovladače</string>
+    <string name="config_gamepad_diagnosis_mode">Stav: <xliff:g id="status" example="enabled">%1$s</xliff:g> · Zdroj: <xliff:g id="source" example="controller">%2$s</xliff:g></string>
+    <string name="config_gamepad_diagnosis_notice">Upozornění: <xliff:g id="name" example="Example">%1$s</xliff:g></string>
+    <string name="config_gamepad_diagnosis_analog_settings">Analogová nastavení:</string>
+    <string name="config_gamepad_diagnosis_left_stick">Levá páčka</string>
+    <string name="config_gamepad_diagnosis_right_stick">Pravá páčka</string>
+    <string name="config_gamepad_diagnosis_triggers">Spouště</string>
+    <string name="config_gamepad_diagnosis_pointer">Režim ukazatele</string>
+    <string name="config_gamepad_status_enabled">zapnuto</string>
+    <string name="config_gamepad_status_disabled">vypnuto</string>
+    <string name="config_gamepad_diagnosis_source_default">výchozí</string>
+    <string name="config_gamepad_diagnosis_source_controller">ovladač</string>
+    <string name="config_gamepad_diagnosis_source_explicit">explicitní</string>
+    <string name="config_gamepad_diagnosis_device"><xliff:g id="device_name" example="Xbox Controller">%1$s</xliff:g> (#<xliff:g id="device_id" example="1">%2$d</xliff:g>)</string>
+    <string name="config_gamepad_calibration_issue_no_channels">žádné podporované kanály</string>
+    <string name="config_gamepad_calibration_issue_invalid_constraints">neplatná omezení kalibrace</string>
+    <string name="config_gamepad_calibration_issue_non_finite">hodnota vzorku není konečné číslo</string>
+    <string name="config_gamepad_calibration_issue_insufficient_samples">nedostatek vzorků</string>
+    <string name="config_gamepad_calibration_issue_invalid_range">neplatný rozsah</string>
+    <string name="config_gamepad_calibration_issue_rest_outside_range">klidová hodnota mimo rozsah</string>
+    <string name="config_gamepad_calibration_issue_rest_too_noisy">klidová poloha není dostatečně stabilní</string>
+    <string name="config_gamepad_calibration_phase_unknown">Stav není k dispozici</string>
+    <string name="config_gamepad_diagnosis_capabilities">Možnosti připojeného ovladače:</string>
+    <string name="config_gamepad_diagnosis_descriptor">Deskriptor: <xliff:g id="name" example="Example">%1$s</xliff:g></string>
+    <!-- %1$s je otisk identity ovladače odvozený z jeho deskriptoru a možností. -->
+    <string name="config_gamepad_diagnosis_signature">Identifikátor: <xliff:g id="name" example="Example">%1$s</xliff:g></string>
+    <string name="config_gamepad_diagnosis_axis">Osa <xliff:g id="axis_index" example="0">%1$d</xliff:g> [<xliff:g id="min_value" example="-1.0">%2$s</xliff:g>, <xliff:g id="max_value" example="1.0">%3$s</xliff:g>] flat=<xliff:g id="flat" example="0.05">%4$s</xliff:g> fuzz=<xliff:g id="fuzz" example="0.01">%5$s</xliff:g></string>
+    <string name="config_gamepad_diagnosis_no_controller">(není připojen žádný ovladač)</string>
+    <string name="config_gamepad_diagnosis_samples_not_sent">Vstupní vzorky nejsou záměrně odesílány do MIDletu.</string>
+    <string name="config_destination_system">Systém</string>
+    <string name="config_screen_behavior" tools:ignore="MissingTranslation">Chování obrazovky</string>
+    <string name="config_screen_size">Velikost obrazovky</string>
+    <string name="config_select_screen_size">Vybrat velikost obrazovky</string>
+    <string name="config_current_screen_size">Aktuální velikost: <xliff:g id="name" example="Example">%1$s</xliff:g></string>
+    <string name="config_custom_resolution">Vlastní rozlišení</string>
+    <string name="profile_custom">Vlastní</string>
+    <string name="select_dialog_title">Vybrat MIDlet</string>
+    <string name="SIZE_PRESETS">Předvolby velikosti písma</string>
+    <string name="config_color_picker_title">Vybrat barvu</string>
+    <string name="config_color_picker_hex">Hexadecimální barva</string>
+    <string name="config_color_picker_hint">Přetáhněte barevná pole nebo zadejte šestimístnou hodnotu RGB.</string>
+    <string name="config_color_picker_invalid">Zadejte přesně šest hexadecimálních znaků.</string>
+    <string name="config_color_picker_saturation_value">Sytost a jas</string>
+    <string name="config_color_picker_hue">Odstín</string>
+    <string name="config_decrease_value">Snížit hodnotu</string>
+    <string name="config_increase_value">Zvýšit hodnotu</string>
+    <string name="midlet_failure_recovery_title">MIDlet se neočekávaně zastavil</string>
+    <string name="midlet_failure_recovery_message">MIDlet se neočekávaně zastavil. Diagnostické informace byly uloženy lokálně. Aplikaci JL-Mod Plus můžete dále používat.</string>
+    <string name="midlet_failure_recovery_message_named">Aplikace „<xliff:g id="name" example="Example">%1$s</xliff:g>“ se neočekávaně zastavila. Diagnostické informace byly uloženy lokálně. Aplikaci JL-Mod Plus můžete dále používat.</string>
+    <plurals name="config_system_properties_value">
+        <item quantity="one"><xliff:g id="count" example="3">%1$d</xliff:g> vlastnost</item>
+        <item quantity="few"><xliff:g id="count" example="3">%1$d</xliff:g> vlastnosti</item>
+        <item quantity="many"><xliff:g id="count" example="3">%1$d</xliff:g> vlastnosti</item>
+        <item quantity="other"><xliff:g id="count" example="3">%1$d</xliff:g> vlastností</item>
+    </plurals>
+    <string name="config_search_suggestions" tools:ignore="MissingTranslation">Doporučená nastavení</string>
+    <string name="config_search_clear" tools:ignore="MissingTranslation">Vymazat hledání</string>
+    <string name="config_search_title" tools:ignore="MissingTranslation">Hledat v nastavení</string>
+    <string name="config_search_hint" tools:ignore="MissingTranslation">Najít nastavení, např. MMPX nebo orientace</string>
+    <string name="config_search_no_results" tools:ignore="MissingTranslation">Žádná odpovídající nastavení</string>
+    <string name="config_search_upscaling_requires_resolution" tools:ignore="MissingTranslation">V části Rozlišení vykreslování vyberte Automaticky nebo 2×–10×, abyste mohli nastavit zvětšování bitmap.</string>
+    <string name="config_search_requires_manual_scale" tools:ignore="MissingTranslation">V části Režim škálování vyberte Ruční, abyste mohli upravit měřítko.</string>
+    <string name="config_search_requires_custom_background" tools:ignore="MissingTranslation">V části Režim pozadí vyberte Vlastní, abyste mohli upravit barvu pozadí.</string>
+    <string name="config_search_requires_gles" tools:ignore="MissingTranslation">V části Grafický režim vyberte Hardwarová akcelerace (OpenGL ES), abyste mohli nastavit efekty shaderů.</string>
+    <string name="config_search_requires_renderer_mode" tools:ignore="MissingTranslation">V části Grafický režim vyberte Softwarový nebo Hardwarová akcelerace (Surface), abyste mohli nastavit asynchronní aktualizace obrazovky.</string>
+    <string name="config_font_page_title" tools:ignore="MissingTranslation">Nastavení písma</string>
+    <string name="config_display_more" tools:ignore="MissingTranslation">Text a výkon</string>
+    <string name="config_destination_home" tools:ignore="MissingTranslation">Domů</string>
+    <string name="config_overview_profile_draft" tools:ignore="MissingTranslation">Koncept profilu</string>
+    <string name="config_overview_profile_draft_summary" tools:ignore="MissingTranslation">Upravte tento opakovaně použitelný profil a změny uložte na panelu nástrojů.</string>
+    <string name="config_overview_quick_access" tools:ignore="MissingTranslation">Rychlý přístup</string>
+    <string name="config_system_properties_editor_label">Vlastnosti</string>
+    <string name="config_overview_enabled" tools:ignore="MissingTranslation">Zapnuto</string>
+    <string name="config_overview_disabled" tools:ignore="MissingTranslation">Vypnuto</string>
+    <string name="config_overview_media_summary" tools:ignore="MissingTranslation">Zvuková banka a fotoaparát</string>
+    <string name="config_overview_hint" tools:ignore="MissingTranslation">Vyberte kategorii a přizpůsobte si hru. Každé nastavení má jedno místo; tyto zkratky vás tam přenesou.</string>
+    <string name="config_destination_general">Obecné</string>
+    <string name="config_basic_display">Obrazovka MIDletu</string>
+    <string name="config_display_appearance">Vzhled obrazovky</string>
+    <string name="config_display_rendering">Vykreslování</string>
+    <string name="config_image_quality_section" tools:ignore="MissingTranslation">Kvalita obrazu</string>
+    <string name="config_frame_rate_section" tools:ignore="MissingTranslation">Snímková frekvence</string>
+    <string name="config_fps_position_title" tools:ignore="MissingTranslation">Pozice FPS</string>
+    <string name="config_display_text">Text a písma</string>
+    <string name="config_input_mapping_section" tools:ignore="MissingTranslation">Vstup a mapování</string>
+    <string name="config_controls_appearance_section" tools:ignore="MissingTranslation">Vzhled ovládání</string>
+    <string name="config_controls_virtual_keyboard">Virtuální ovládání</string>
+    <string name="config_controls_virtual_keyboard_colors">Barvy virtuálního ovládání</string>
+    <string name="config_virtual_controls_color_preview">Náhled barev</string>
+    <string name="config_virtual_controls_preview_normal">Uvolněné</string>
+    <string name="config_virtual_controls_preview_pressed">Stisknuté</string>
+    <string name="config_controls_maintenance">Rozvržení</string>
+    <string name="config_controls_skin_help">Změní vzhled tlačítek klávesnice, směrového ovladače a analogové páčky pomocí vlastních obrázků.</string>
+    <string name="config_controls_color_button_normal">Uvolněné tlačítko</string>
+    <string name="config_controls_color_button_pressed">Stisknuté tlačítko</string>
+    <string name="config_controls_color_label_normal">Uvolněný popisek</string>
+    <string name="config_controls_color_label_pressed">Stisknutý popisek</string>
+    <string name="config_controls_color_outline_short">Obrys</string>
+    <string name="config_controls_disabled_hint">Virtuální ovládání je momentálně vypnuté. Stále si ho zde můžete přizpůsobit.</string>
+    <string name="config_controls_opacity_help" formatted="false">Upravuje neprůhlednost virtuálního ovládání. Při 0 % jsou ovládací prvky průhledné, při 100 % se žádná další průhlednost nepřidává.</string>
+    <string name="config_controls_opaque_outside">Zobrazit ovládání mimo obrazovku MIDletu neprůhledně</string>
+    <string name="config_controls_opaque_outside_help">Když je tato možnost zapnutá, ovládací prvky zcela mimo obrazovku MIDletu se zobrazují bez dodatečné průhlednosti. Prvky překrývající obrazovku používají nastavenou neprůhlednost.</string>
+    <string name="config_controls_connect_controller">Pro kalibraci připojte ovladač</string>
+    <string name="config_controls_color_skin_notice">Vzhled celého tlačítka může nahradit výchozí barvy, tvar a obrys tlačítek.</string>
+    <string name="config_current_value">Aktuální hodnota</string>
+    <string name="config_maintenance">Obnovení a data</string>
+    <string name="config_midlet_actions" tools:ignore="MissingTranslation">Akce MIDletu</string>
+    <string name="config_profile_maintenance" tools:ignore="MissingTranslation">Akce profilu</string>
+    <string name="config_reset_profile_settings" tools:ignore="MissingTranslation">Obnovit koncept profilu</string>
+    <string name="config_reset_profile_settings_summary" tools:ignore="MissingTranslation">Obnoví nastavení a virtuální ovládání tohoto konceptu na výchozí hodnoty.</string>
+    <string name="config_system_compatibility" tools:ignore="MissingTranslation">Kompatibilita emulace</string>
+    <string name="config_reset_all_settings">Obnovit konfiguraci MIDletu</string>
+    <string name="config_reset_all_settings_summary">Obnoví nastavení a virtuální ovládání tohoto MIDletu na výchozí hodnoty bez smazání jeho dat.</string>
+    <string name="config_delete_app_data">Smazat data MIDletu</string>
+    <string name="config_delete_app_data_summary">Trvale smaže data tohoto MIDletu včetně uložených pozic. Jeho nastavení zůstane zachováno.</string>
+    <string name="config_message_reset_settings">Obnovit konfiguraci MIDletu a virtuální ovládání na výchozí hodnoty? Uložená data zůstanou zachována. MIDlet už nebude přebírat změny z propojeného profilu.</string>
+    <string name="config_message_reset_profile_settings">Obnovit nastavení a virtuální ovládání tohoto profilu na výchozí hodnoty? Před uložením můžete úpravy dokončit nebo zrušit.</string>
+    <string name="config_message_delete_app_data">Trvale smazat všechny uložené pozice a data vytvořená tímto MIDletem? Nastavení MIDletu nebude smazáno.</string>
+    <string name="config_lock_custom_resolution_ratio">Uzamknout poměr stran</string>
+    <string name="config_swap_screen_size">Prohodit šířku a výšku</string>
+    <string name="profile_builtin_settings">Výchozí nastavení JL-Mod</string>
+    <string name="profile_default_badge_short">Výchozí pro nové MIDlety</string>
+    <string name="profile_template_summary">Uložené nastavení MIDletu.</string>
+    <string name="profile_name_exists">Profil s tímto názvem již existuje.</string>
+    <string name="profile_delete_template_message">Smazat profil „<xliff:g id="profile_name" example="Action Games">%1$s</xliff:g>“? MIDlety, které jej používají, si ponechají aktuální nastavení, ale nebudou dostávat budoucí aktualizace.</string>
+    <string name="profile_template_operation_failed">Operaci s profilem se nepodařilo dokončit.</string>
+    <string name="config_help_screen_size">Nastavuje virtuální rozlišení obrazovky Java ME používané MIDletem.</string>
+    <string name="config_help_orientation">Určuje orientaci obrazovky během běhu MIDletu.</string>
+    <string name="config_help_scale_type">Vyberte, jak se hra přizpůsobí displeji. Pro vlastní měřítko vyberte Ruční.</string>
+    <string name="config_help_scale_ratio" formatted="false">Upravuje zobrazenou velikost od 1% do 1000%. Při 100% používá hra původní velikost; vyšší hodnoty mohou přesahovat obrazovku.</string>
+    <string name="config_help_lock_custom_resolution_ratio">Při úpravě vlastního rozlišení zachovává poměr stran.</string>
+    <string name="config_help_virtual_keyboard">Zobrazuje ovládací prvky na obrazovce pro tento MIDlet.</string>
+    <string name="config_help_touch_input">Umožňuje MIDletu přijímat dotykový vstup ukazatele z obrazovky.</string>
+    <string name="config_help_background">Vyplňuje nevyužitý prostor kolem obrazovky MIDletu.</string>
+    <string name="config_background_mode">Režim pozadí</string>
+    <string name="config_background_custom">Vlastní</string>
+    <string name="config_background_theme">Motiv</string>
+    <string name="config_background_immersive">Pohlcující</string>
+    <string name="config_background_theme_help">Použije kolem obrazovky MIDletu barvu motivu JL-Mod Plus.</string>
+    <string name="config_background_immersive_help">Vyplní nevyužitý prostor barvami převzatými z obrazovky MIDletu.</string>
+    <string name="config_background_dynamic">Dynamická barva</string>
+    <string name="config_background_dynamic_help">Použije jednu plnou barvu, která se plynule přizpůsobuje obrazovce MIDletu.</string>
+    <string name="config_background_custom_color">Barva pozadí</string>
+    <string name="config_help_background_custom_color">Nastavuje barvu nevyužitého prostoru kolem obrazovky MIDletu.</string>
+    <string name="config_help_skin">Zobrazuje volitelný obrázek nebo rámeček kolem obrazovky MIDletu.</string>
+    <string name="config_help_screen_gravity">Určuje umístění obrazovky MIDletu, pokud zůstává nevyužitý prostor.</string>
+    <string name="config_help_screen_padding">Přidává odsazení v pixelech mezi obrazovkou MIDletu a okrajem zobrazovací oblasti.</string>
+    <string name="config_help_filter">Používá lineární filtrování k vyhlazení obrazovky MIDletu při škálování.</string>
+    <string name="config_warning_filter_shader">Lineární filtrování vyhlazuje vstup před zpracováním shaderem obrazovky a může snížit ostrost výstupu.</string>
+    <string name="config_help_immediate">Zpracovává události MIDletu okamžitě místo jejich zařazování do fronty. Může zlepšit odezvu, ale u některých MIDletů může způsobit nestabilitu.</string>
+    <string name="config_help_graphics_mode">Určuje cestu vykreslování obrazovky MIDletu. Hardwarová akcelerace může zlepšit výkon, ale kompatibilita závisí na zařízení.</string>
+    <string name="config_help_shader">Před zobrazením použije na snímek MIDletu shader.</string>
+    <string name="config_help_shader_tuning">Dostupné volby závisí na vybraném shaderu.</string>
+    <string name="config_help_parallel_redraw">Plánuje zobrazování snímků asynchronně. Na některých zařízeních to může zlepšit výkon.</string>
+    <string name="config_help_force_fullscreen">Při spuštění MIDletu skryje příkazový řádek. MIDlet jej může během hraní znovu zobrazit.</string>
+    <string name="config_help_fps_limit">Nastavuje limit FPS při 1× rychlosti emulace. Skutečný limit se řídí rychlostí emulace; hodnota 0 (Maximum) používá maximální obnovovací frekvenci displeje.</string>
+    <string name="config_timing_mode_full_guest">Čas emulace</string>
+    <string name="config_timing_mode_real_wall">Systémový čas</string>
+    <string name="config_help_emulation_speed">Upravuje podporované časovače a prodlevy MIDletu pro aktuální relaci. Při nastavení Čas emulace se zvolenou rychlostí mění i datum a čas v MIDletu. Přehrávání médií a rozhraní Androidu běží běžnou rychlostí.</string>
+    <string name="config_help_timing_mode">Určuje, zda MIDlet používá čas emulace, nebo systémový čas. Relativní prodlevy zůstávají škálované rychlostí emulace.</string>
+    <string name="config_help_timing_unavailable">Nastavení času není pro tuto instalaci MIDletu k dispozici. Chcete-li je povolit, MIDlet přeinstalujte nebo znovu převeďte.</string>
+    <string name="config_help_generic_color">Nastavuje barvu tohoto vizuálního prvku.</string>
+    <string name="config_help_encoding">Určuje kódování znaků hlášené jako microedition.encoding.</string>
+    <string name="config_edit_system_properties">Upravit systémové vlastnosti</string>
+    <string name="config_help_system_properties">Nastavuje pokročilé vlastnosti Java ME hlášené MIDletu.</string>
+    <string name="config_help_system_properties_long">Upravujte jednu vlastnost na řádek ve formátu „název: hodnota“. Nesprávné hodnoty mohou ovlivnit kompatibilitu.</string>
+    <string name="config_system_properties_info">Většina MIDletů zde nevyžaduje žádné změny.</string>
+    <string name="config_font_sizes">Velikosti písma</string>
+    <string name="config_help_font_sizes">Nastavuje malou, střední a velkou velikost písma Java ME pro MIDlet.</string>
+    <string name="config_help_font_sizes_long">Nastavuje velikosti písma Java ME v pixelech, nebo ve škálovaných jednotkách, pokud je zapnuto měřítko písma systému Android. Upravujte je společně, aby zůstal text vyvážený.</string>
+    <string name="config_font_sizes_value">Malé <xliff:g id="small_size" example="12">%1$s</xliff:g> · střední <xliff:g id="medium_size" example="16">%2$s</xliff:g> · velké <xliff:g id="large_size" example="20">%3$s</xliff:g></string>
+    <string name="config_help_font_presets">Použije velikosti písma vhodné pro běžná rozlišení obrazovky Java ME.</string>
+    <string name="config_help_font_dimensions">Použije měřítko písma systému Android na velikosti písma Java ME.</string>
+    <string name="config_help_font_aa">Vyhlazuje okraje vykreslovaného textu.</string>
+    <string name="config_help_key_layout">Vybere schéma kódů kláves hlášené MIDletu.</string>
+    <string name="config_help_key_mapping">Přiřazuje fyzické klávesy a tlačítka Androidu k akcím klávesnice Java ME.</string>
+    <string name="config_help_vk_button_shape">Nastavuje výchozí tvar tlačítek klávesnice. Směrový ovladač a analogová páčka mají vlastní tvary.</string>
+    <string name="config_help_vk_feedback">Zavibruje při stisknutí prvku virtuálního ovládání, pokud jsou v Nastavení povoleny vibrace.</string>
+    <string name="config_help_vk_hide_delay">Skryje ovládání po této prodlevě, pokud překrývá obrazovku MIDletu. Hodnota 0 automatické skrytí vypne.</string>
+    <string name="config_help_reset_layout">Obnoví rozvržení virtuálního ovládání beze změny ostatních nastavení MIDletu.</string>
+    <string name="config_help_skip_resume">Po prvním úspěšném volání startApp() přeskočí další volání při obnovení MIDletu. Používejte pouze u MIDletů, které při obnovení selhávají.</string>
+    <string name="config_help_soundbank">Vybere zvukovou banku pro syntézu MIDI. Nemění předem nahraný zvuk.</string>
+    <string name="profile_create_title">Vytvořit profil</string>
+    <string name="profile_rename_title">Přejmenovat profil</string>
+    <string name="presets">Profily</string>
+    <string name="preset_use">Použít profil</string>
+    <string name="preset_save_as">Uložit jako profil</string>
+    <string name="preset_custom_configuration">Vlastní konfigurace</string>
+    <string name="preset_based_on_modified">Aktuální konfigurace tohoto MIDletu se liší od profilu <xliff:g id="profile_name" example="Action Games">%1$s</xliff:g>.</string>
+    <string name="preset_builtin">Výchozí nastavení JL-Mod</string>
+    <string name="preset_builtin_summary">Vestavěné nastavení MIDletu a virtuálního ovládání.</string>
+    <string name="preset_picker_title">Použít profil</string>
+    <string name="preset_manage">Spravovat profily</string>
+    <string name="profile_more_actions">Další akce pro profil <xliff:g id="profile_name" example="Action Games">%1$s</xliff:g></string>
+    <string name="profile_create_summary">Uložte opakovaně použitelné nastavení pro další MIDlety.</string>
+    <string name="preset_application_settings">Nastavení MIDletu</string>
+    <string name="preset_includes_keyboard_layout">Obsahuje rozvržení virtuálního ovládání.</string>
+    <string name="preset_virtual_keyboard_on">Virtuální ovládání zapnuto</string>
+    <string name="preset_virtual_keyboard_off">Virtuální ovládání vypnuto</string>
+    <string name="preset_apply">Použít</string>
+    <string name="preset_apply_failed_summary">Tento profil se nepodařilo použít. Zkontrolujte zdroj a zkuste to znovu.</string>
+    <string name="preset_choose_parts">Vyberte, co použít</string>
+    <string name="preset_name">Název</string>
+    <string name="preset_save_help">Uloží nastavení tohoto MIDletu a případné rozvržení jeho virtuálního ovládání jako profil. Tento MIDlet bude profil používat a dostávat jeho budoucí aktualizace.</string>
+    <string name="preset_update">Aktualizovat <xliff:g id="profile_name" example="Action Games">%1$s</xliff:g></string>
+    <string name="preset_update_title">Aktualizovat profil <xliff:g id="profile_name" example="Action Games">%1$s</xliff:g>?</string>
+    <string name="preset_update_summary">Nahradit profil <xliff:g id="profile_name" example="Action Games">%1$s</xliff:g> aktuálním nastavením tohoto MIDletu a případným rozvržením jeho virtuálního ovládání? Ostatní MIDlety používající tento profil získají změny při příštím spuštění.</string>
+    <string name="preset_update_confirm">Aktualizovat</string>
+    <string name="preset_saved_unlinked_warning">Profil byl uložen, ale tento MIDlet už z něj nebude přebírat budoucí aktualizace.</string>
+    <string name="profile_default_fallback_notice">Výchozí profil „<xliff:g id="profile_name" example="Action Games">%1$s</xliff:g>“ nebylo možné použít. Může chybět, být neúplný nebo nečitelný. Výchozím profilem pro nové MIDlety je nyní Výchozí nastavení JL-Mod.</string>
+    <string name="preset_discard_changes_title">Zahodit změny?</string>
+    <string name="preset_discard_changes_summary">Tento koncept profilu nebyl uložen.</string>
+    <string name="preset_continue_editing">Pokračovat v úpravách</string>
+    <string name="preset_discard_changes">Zahodit</string>
+    <string name="preset_name_exists">Profil s tímto názvem již existuje.</string>
+    <string name="preset_invalid_name">Zadejte platný název profilu.</string>
+    <string name="preset_manager_default_section">Výchozí pro nové MIDlety</string>
+    <string name="preset_manager_presets_section">Moje profily</string>
+    <string name="preset_manager_keyboard_section">Uložená rozvržení virtuálního ovládání</string>
+    <string name="preset_default_policy_summary">Použije se při instalaci nového MIDletu.</string>
+    <string name="preset_keyboard_layout_unavailable">Rozvržení virtuálního ovládání není k dispozici.</string>
+    <string name="edit_preset">Upravit profil</string>
+    <string name="preset_edit_title">Upravit profil: <xliff:g id="profile_name" example="Action Games">%1$s</xliff:g></string>
+    <string name="preset_unavailable_section">Nedostupné</string>
+    <string name="preset_unavailable_summary">Tento profil se nepodařilo načíst. Přejmenujte jej nebo smažte.</string>
+    <string name="preset_change_default">Změnit</string>
+    <string name="preset_default_picker_title">Výchozí pro nové MIDlety</string>
+    <string name="profile_follows_updates">Přebírá budoucí aktualizace profilu.</string>
+    <string name="profile_apply_whole">Celý profil</string>
+    <string name="profile_apply_whole_follows">Nahradit nastavení i rozvržení a přebírat budoucí aktualizace.</string>
+    <string name="profile_apply_whole_without_layout">Nahradit nastavení, odebrat místní rozvržení a přebírat aktualizace.</string>
+    <string name="profile_apply_settings_only">Pouze nastavení MIDletu</string>
+    <string name="profile_apply_settings_keeps_layout">Ponechat rozvržení tohoto MIDletu a použít vlastní konfiguraci.</string>
+    <string name="profile_apply_layout_only">Pouze rozvržení virtuálního ovládání</string>
+    <string name="profile_apply_layout_keeps_settings">Ponechat nastavení tohoto MIDletu a použít vlastní konfiguraci.</string>
+    <string name="config_analog_stick">Analogová páčka</string>
+    <string name="config_analog_stick_summary">Pro hlavní analogovou páčku vyberte Vypnuto, 4 směry, 8 směrů nebo numerickou klávesnici. Tlačítka ovladače používají mapování kláves.</string>
+    <string name="config_analog_stick_off">Vypnuto</string>
+    <string name="config_controller_help_body_compact">Tlačítka ovladače používají stejné mapování kláves jako klávesnice a tlačítka telefonu. Analogová páčka odesílá do MIDletu pouze směrový vstup. Tlačítko Zpět systému Android si zachovává běžné chování; libovolné fyzické tlačítko namapované na M otevře nabídku běžícího MIDletu.</string>
+    <string name="config_show_fps_title" tools:ignore="MissingTranslation">Zobrazit FPS</string>
+    <string name="config_show_fps_help" tools:ignore="MissingTranslation">Zobrazuje snímkovou frekvenci během hraní.</string>
+    <string name="config_search_requires_fps" tools:ignore="MissingTranslation">Zapněte Zobrazit FPS, abyste mohli změnit pozici.</string>
+    <string name="midlet_running_notification_title">MIDlet běží</string>
+    <string name="midlet_running_notification_text">Aplikace <xliff:g id="name" example="Example">%1$s</xliff:g> běží.</string>
+    <string name="midlet_running_notification_channel">Běh MIDletu</string>
+    <string name="config_gamepad_directions_numeric_v2">Numerická klávesnice</string>
+    <string name="midlet_file_permission_title">Přístup k úložišti</string>
+    <string name="midlet_file_permission_read">Tento MIDlet chce číst soubory.</string>
+    <string name="midlet_file_permission_write">Tento MIDlet chce vytvářet, upravovat nebo mazat soubory.</string>
+    <string name="midlet_file_permission_allow_once">Povolit jednou</string>
+    <string name="midlet_file_permission_allow_session">Povolit po dobu běhu MIDletu</string>
+    <string name="midlet_file_permission_allow_always">Vždy povolit</string>
+    <string name="midlet_file_permission_deny">Vždy zakázat</string>
+    <string name="midlet_permissions_settings_title">Oprávnění přístupu k úložišti</string>
+    <string name="midlet_permissions_read">Číst soubory</string>
+    <string name="midlet_permissions_write">Upravovat soubory</string>
+    <string name="midlet_permissions_ask">Zeptat se</string>
+    <string name="midlet_permissions_allow">Vždy povolit</string>
+    <string name="midlet_permissions_deny">Zakázat</string>
+    <string name="midlet_permissions_save_failed">Nastavení úložiště se nepodařilo uložit.</string>
+    <string name="config_avoid_camera_cutout_title">Vyhnout se výřezu fotoaparátu</string>
+    <string name="config_avoid_camera_cutout_summary">Udržet obrazovku MIDletu a virtuální ovládání mimo výřez fotoaparátu nebo displeje.</string>
+    <string name="midlet_permissions_write_summary">Zahrnuje vytváření a mazání souborů.</string>
+    <string name="midlet_legacy_import_title">Starší uložené pozice Siemens</string>
+    <string name="midlet_legacy_import_action">Vybrat starý soubor s uloženou pozicí</string>
+    <string name="midlet_legacy_import_summary">Zkopíruje starý soubor s uloženou pozicí do soukromého úložiště Siemens tohoto MIDletu. Nejprve MIDlet zastavte.</string>
+    <string name="midlet_legacy_import_success">Soubor byl zkopírován do soukromého úložiště tohoto MIDletu.</string>
+    <string name="midlet_legacy_import_failed">Import selhal. Zastavte MIDlet a ujistěte se, že cílový soubor ještě neexistuje.</string>
+    <string name="midlet_storage_mode_title">Režim úložiště</string>
+    <string name="midlet_storage_mode_shared">Virtuální</string>
+    <string name="midlet_storage_mode_android">Android</string>
+    <string name="midlet_storage_mode_shared_summary">Používat sdílené složky v pracovní složce.</string>
+    <string name="midlet_storage_mode_android_summary">Používat sdílené úložiště Android v rozsahu oprávnění Androidu. Oprávnění MIDletu k souborům jsou oddělená od virtuálního režimu.</string>
+    <string name="config_system_properties_reset" tools:ignore="MissingTranslation">Obnovit výchozí</string>
+    <string name="config_system_properties_reset_title" tools:ignore="MissingTranslation">Obnovit systémové vlastnosti?</string>
+    <string name="config_system_properties_reset_message" tools:ignore="MissingTranslation">Nahradit obsah editoru aktuálními výchozími hodnotami JL-Mod Plus? Ostatní nastavení zůstanou beze změny. Obnovení projevíte uložením.</string>
+    <string name="config_asset_add">+ Přidat ze souboru</string>
+    <string name="config_asset_copy_hint">Zkopíruje se do pracovní složky; původní soubor zůstane na svém místě.</string>
+    <string name="config_asset_name">Název souboru</string>
+    <string name="config_asset_delete_confirmation">Smazat soubor <xliff:g id="name" example="Example">%1$s</xliff:g> z pracovní složky? Tento soubor mohou používat i jiné MIDlety. Kopie na jiných místech zůstanou nedotčeny.</string>
+    <string name="config_asset_imported">Zkopírováno a vybráno: <xliff:g id="name" example="Example">%1$s</xliff:g></string>
+    <string name="config_asset_reused">Vybrán existující soubor: <xliff:g id="name" example="Example">%1$s</xliff:g></string>
+    <string name="config_asset_renamed">Přejmenováno na <xliff:g id="name" example="Example">%1$s</xliff:g></string>
+    <string name="config_asset_deleted">Smazáno: <xliff:g id="name" example="Example">%1$s</xliff:g></string>
+    <string name="config_asset_invalid">Nepodporovaný nebo neplatný soubor.</string>
+    <string name="config_asset_operation_failed">Operaci se souborem se nepodařilo dokončit.</string>
+    <string name="config_save_failed" tools:ignore="MissingTranslation">Nastavení se nepodařilo uložit. Vaše změny jsou stále otevřené — zkuste to znovu.</string>
+    <string name="config_asset_busy">Nejprve dokončete aktuální operaci se souborem.</string>
+    <string name="config_quick_settings" tools:ignore="MissingTranslation">Rychlá nastavení</string>
+    <string name="config_all_settings" tools:ignore="MissingTranslation">Všechna nastavení</string>
+    <string name="profile_local_changes_pending" tools:ignore="MissingTranslation">Místní změny nebyly uloženy do profilu</string>
+    <string name="profile_local_configuration_summary" tools:ignore="MissingTranslation">Nastavení pouze pro tento MIDlet</string>
+    <string name="profile_not_following" tools:ignore="MissingTranslation">Založeno na profilu <xliff:g id="profile_name" example="Action Games">%1$s</xliff:g> · Nepřebírá aktualizace</string>
+    <string name="profile_stop_following" tools:ignore="MissingTranslation">Přestat sledovat profil</string>
+    <string name="profile_follow_again" tools:ignore="MissingTranslation">Znovu sledovat profil</string>
+    <string name="profile_follow_again_summary" tools:ignore="MissingTranslation">Nahradit místní nastavení a virtuální ovládání tohoto MIDletu nejnovějším profilem <xliff:g id="profile_name" example="Action Games">%1$s</xliff:g> a přebírat jeho budoucí aktualizace?</string>
+</resources>

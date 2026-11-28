@@ -7,6 +7,8 @@ import android.system.Os;
 import androidx.annotation.Nullable;
 import org.json.JSONObject;
 import java.io.*;
+import java.text.Normalizer;
+import java.util.regex.Pattern;
 import java.util.*;
 
 /** Workdir-global, folder-based virtual button skin sets. No runtime writes or UI state. */
@@ -27,6 +29,22 @@ public final class ControlSkinStore {
     private static final int MAX_IMAGE_BYTES = 8 * 1024 * 1024;
     private static final int MAX_DIMENSION = 2048;
     private static final String META = "skin.json";
+    static final int MAX_NAME_CODE_POINTS = 61;
+    private static final Pattern SET_NAME = Pattern.compile(
+            "[\\p{L}\\p{N}][\\p{L}\\p{N}\\p{M} ._()\\-]*");
+
+    public static final class InvalidNameException extends IOException {
+        InvalidNameException() { super("Invalid set name"); }
+    }
+
+    public static final class NameConflictException extends IOException {
+        NameConflictException() { super("Set name already in use"); }
+    }
+
+    public static final class ImageValidationException extends IOException {
+        ImageValidationException(String detail) { super(detail); }
+        ImageValidationException(String detail, Throwable cause) { super(detail, cause); }
+    }
 
     public static final class SetInfo {
         public final String id;
@@ -67,12 +85,20 @@ public final class ControlSkinStore {
         return suffix.isEmpty() ? "" : filename.substring(0, filename.length() - suffix.length());
     }
 
+    static boolean validSetName(String name) {
+        return name.codePointCount(0, name.length()) <= MAX_NAME_CODE_POINTS
+                && !name.endsWith(".") && SET_NAME.matcher(name).matches();
+    }
+
+    /** Compare canonical spellings without changing any existing folder name. */
+    static boolean sameSetName(String left, String right) {
+        return Normalizer.normalize(left, Normalizer.Form.NFC)
+                .equalsIgnoreCase(Normalizer.normalize(right, Normalizer.Form.NFC));
+    }
+
     private static String safeName(String name) throws IOException {
         String value = name.trim();
-        if (!value.matches("[\\p{L}\\p{N}][\\p{L}\\p{N} ._()\\-]{0,60}")
-                || value.equals(".") || value.equals("..") || value.endsWith(".")) {
-            throw new IOException("Invalid set name");
-        }
+        if (!validSetName(value)) throw new InvalidNameException();
         return value;
     }
 
@@ -189,14 +215,16 @@ public final class ControlSkinStore {
         return found;
     }
 
-    private static File availableFolder(File workdir, String name) throws IOException {
+    private static File availableFolder(File workdir, String name, @Nullable File source) throws IOException {
         String safe = safeName(name);
         File base = directory(workdir);
         if (!base.isDirectory() && !base.mkdirs()) throw new IOException("Cannot create skin directory");
         File[] existing = base.listFiles();
         if (existing == null) throw new IOException("Cannot list sets");
         for (File file : existing) {
-            if (file.getName().equalsIgnoreCase(safe)) throw new IOException("Set name already in use");
+            if (!file.equals(source) && sameSetName(file.getName(), safe)) {
+                throw new NameConflictException();
+            }
         }
         File target = new File(base, safe);
         checkedFolder(workdir, target);
@@ -204,7 +232,7 @@ public final class ControlSkinStore {
     }
 
     public static synchronized SetInfo create(File workdir, String name) throws IOException {
-        File folder = availableFolder(workdir, name);
+        File folder = availableFolder(workdir, name, null);
         if (!folder.mkdir()) throw new IOException("Cannot create set");
         JSONObject json = new JSONObject();
         try {
@@ -221,7 +249,7 @@ public final class ControlSkinStore {
     public static synchronized SetInfo rename(File workdir, String setId, String newName) throws IOException {
         SetInfo set = required(workdir, setId);
         if (set.name.equals(safeName(newName))) return set;
-        File destination = availableFolder(workdir, newName);
+        File destination = availableFolder(workdir, newName, set.folder);
         atomicRename(set.folder, destination);
         return new SetInfo(setId, destination);
     }
@@ -337,10 +365,14 @@ public final class ControlSkinStore {
     /** Shared image contract for interactive asset edits and full-set ZIP imports. */
     public static void validateImage(File file, String suffix) throws IOException {
         if (file.length() < 1 || file.length() > MAX_IMAGE_BYTES) {
-            throw new IOException("Image must be between 1 byte and 8 MiB");
+            throw new ImageValidationException("Image must be between 1 byte and 8 MiB");
         }
         if (".svg".equals(suffix)) {
-            SvgRasterizer.read(file);
+            try {
+                SvgRasterizer.read(file);
+            } catch (IOException failure) {
+                throw new ImageValidationException("SVG validation failed", failure);
+            }
         } else if (".png".equals(suffix) || ".webp".equals(suffix)) {
             BitmapFactory.Options options = new BitmapFactory.Options();
             options.inJustDecodeBounds = true;
@@ -349,10 +381,10 @@ public final class ControlSkinStore {
                     || options.outWidth > MAX_DIMENSION || options.outHeight > MAX_DIMENSION
                     || !("image/png".equals(options.outMimeType) && ".png".equals(suffix)
                         || "image/webp".equals(options.outMimeType) && ".webp".equals(suffix))) {
-                throw new IOException("Invalid or oversized PNG/WebP");
+                throw new ImageValidationException("Invalid or oversized PNG/WebP");
             }
         } else {
-            throw new IOException("Unsupported image format");
+            throw new ImageValidationException("Unsupported image format");
         }
     }
 
@@ -376,7 +408,7 @@ public final class ControlSkinStore {
                 byte[] bytes = new byte[8192]; int n;
                 while ((n = source.read(bytes)) != -1) {
                     size += n;
-                    if (size > MAX_IMAGE_BYTES) throw new IOException("Image exceeds 8 MB");
+                    if (size > MAX_IMAGE_BYTES) throw new ImageValidationException("Image exceeds 8 MiB");
                     out.write(bytes, 0, n);
                 }
                 out.getFD().sync();

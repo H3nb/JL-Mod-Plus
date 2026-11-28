@@ -310,9 +310,17 @@ internal fun RuntimeScriptsTab(
                         },
                     ) { Text(stringResource(R.string.memory_scripts_save)) }
                 }
-                if (draft.text.isNotBlank()) parsed?.exceptionOrNull()?.message?.let {
-                    Text(it, color = MaterialTheme.colorScheme.error,
+                if (draft.text.isNotBlank()) parsed?.exceptionOrNull()?.let { failure ->
+                    Text(stringResource(R.string.memory_scripts_invalid), color = MaterialTheme.colorScheme.error,
                         style = MaterialTheme.typography.bodySmall)
+                    failure.message?.takeIf(String::isNotBlank)?.let { detail ->
+                        Text(stringResource(R.string.memory_technical_details),
+                            style = MaterialTheme.typography.bodySmall,
+                            color = MaterialTheme.colorScheme.onSurfaceVariant)
+                        Text(detail,
+                            style = MaterialTheme.typography.bodySmall,
+                            color = MaterialTheme.colorScheme.onSurfaceVariant)
+                    }
                 }
                 localError?.let {
                     Text(it, color = MaterialTheme.colorScheme.error,

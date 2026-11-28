@@ -56,6 +56,107 @@ class ControlSkinArchiveTest {
         assertEquals(1, ControlSkinStore.list(destination).size)
     }
 
+    @Test fun unicodeNamesRoundTripAndCanonicalCollisionsDoNotOverwrite() {
+        val source = temporary.newFolder("unicode-source")
+        val destination = temporary.newFolder("unicode-destination")
+        val output = temporary.newFolder("unicode-output")
+        // Devanagari vowel signs, decomposed Latin accents, and supplementary letters.
+        val name = "किरण Cafe\u0301 𐐀"
+        val set = ControlSkinStore.create(source, name)
+        assertEquals(name, ControlSkinStore.findReadonly(source, set.id)!!.name)
+        val archive = ControlSkinArchive.export(source, set.id, output)
+        assertEquals("$name.zip", archive.name)
+        val collision = ControlSkinStore.create(destination, "किरण Café 𐐀")
+        ControlSkinStore.setMode(destination, collision.id, "fire", "full")
+        val imported = ControlSkinArchive.importZip(destination, archive, temporary.root)
+        assertEquals("$name (2)", imported.name)
+        assertEquals(set.id, imported.id)
+        assertEquals("full", ControlSkinStore.mode(collision.folder, "fire"))
+        assertEquals(name, ControlSkinStore.rename(source, set.id, name).name)
+        val renamed = ControlSkinStore.rename(source, set.id, "தமிழ்")
+        assertEquals(set.id, renamed.id)
+        assertEquals("தமிழ்", renamed.name)
+    }
+
+    @Test fun renameEquivalentSpellingsPreservesIdentityArtworkAndOtherSets() {
+        val workdir = temporary.newFolder("equivalent-rename")
+        val source = ControlSkinStore.create(workdir, "Cafe\u0301")
+        val artwork = png(Color.RED)
+        ControlSkinStore.importImage(workdir, source.id, "fire", false, artwork.inputStream(), ".png")
+        ControlSkinStore.setMode(workdir, source.id, "fire", "full")
+
+        val composed = ControlSkinStore.rename(workdir, source.id, "Café")
+        assertEquals(source.id, composed.id)
+        assertEquals("Café", composed.name)
+        val renamed = ControlSkinStore.rename(workdir, source.id, "CAFÉ")
+        assertEquals(source.id, renamed.id)
+        assertEquals("CAFÉ", renamed.name)
+        assertEquals(renamed.folder, ControlSkinStore.findReadonly(workdir, source.id)!!.folder)
+        assertArrayEquals(artwork, File(renamed.folder, "key_fire.png").readBytes())
+        assertEquals("full", ControlSkinStore.mode(renamed.folder, "fire"))
+        assertEquals(1, ControlSkinStore.list(workdir).size)
+
+        val other = ControlSkinStore.create(workdir, "Ångstrom")
+        val otherArtwork = png(Color.BLUE)
+        ControlSkinStore.importImage(workdir, other.id, "fire", false, otherArtwork.inputStream(), ".png")
+        try {
+            ControlSkinStore.rename(workdir, source.id, "Ångstrom")
+            fail("A canonically equivalent name owned by another set must be rejected")
+        } catch (_: ControlSkinStore.NameConflictException) { }
+        try {
+            ControlSkinStore.rename(workdir, source.id, "ångstrom")
+            fail("A case-insensitive name owned by another set must be rejected")
+        } catch (_: ControlSkinStore.NameConflictException) { }
+        assertEquals("CAFÉ", ControlSkinStore.findReadonly(workdir, source.id)!!.name)
+        assertEquals("Ångstrom", ControlSkinStore.findReadonly(workdir, other.id)!!.name)
+        assertArrayEquals(artwork, File(renamed.folder, "key_fire.png").readBytes())
+        assertArrayEquals(otherArtwork, File(other.folder, "key_fire.png").readBytes())
+        assertEquals(2, ControlSkinStore.list(workdir).size)
+    }
+
+    @Test fun longSupplementaryNamesKeepValidCodePointsWhenImportAddsSuffix() {
+        val source = temporary.newFolder("long-source")
+        val destination = temporary.newFolder("long-destination")
+        val label = "𐐀".repeat(61)
+        val set = ControlSkinStore.create(source, label)
+        val collision = ControlSkinStore.create(destination, label)
+        ControlSkinStore.setMode(destination, collision.id, "fire", "full")
+        val archive = ControlSkinArchive.export(source, set.id, temporary.newFolder("long-out"))
+        val imported = ControlSkinArchive.importZip(destination, archive, temporary.root)
+        assertEquals("𐐀".repeat(57) + " (2)", imported.name)
+        assertTrue(ControlSkinSetTransfer.validSetName(imported.name))
+        assertEquals(set.id, imported.id)
+    }
+
+    @Test fun duplicateNameSuggestionIsLanguageIndependentAndAvoidsKnownCollisions() {
+        val workdir = temporary.newFolder("duplicate-name")
+        val source = ControlSkinStore.create(workdir, "Cafe\u0301")
+        ControlSkinStore.create(workdir, "Café (2)")
+        val suggested = ControlSkinSetTransfer.availableName(
+            source.name, ControlSkinStore.list(workdir).map { it.name },
+        )
+        assertEquals("Cafe\u0301 (3)", suggested)
+        assertTrue(ControlSkinSetTransfer.validSetName(suggested))
+        val copy = ControlSkinStore.duplicate(workdir, source.id, suggested)
+        assertNotEquals(source.id, copy.id)
+        assertEquals(suggested, copy.name)
+
+        val longName = "𐐀".repeat(61)
+        val longSuggestion = ControlSkinSetTransfer.availableName(longName, listOf(longName))
+        assertEquals("𐐀".repeat(57) + " (2)", longSuggestion)
+        assertTrue(ControlSkinSetTransfer.validSetName(longSuggestion))
+    }
+
+    @Test fun nameValidationAllowsMarksButRejectsUnsafePaths() {
+        for (name in listOf("தமிழ்", "किरण", "Cafe\u0301", "𐐀".repeat(61))) {
+            assertTrue(name, ControlSkinSetTransfer.validSetName(name))
+        }
+        for (name in listOf("\u0301a", "../outside", "a/b", "a\\b", "a\u0000b",
+            "a\u202eb", "a.", "𐐀".repeat(62))) {
+            assertFalse(name, ControlSkinSetTransfer.validSetName(name))
+        }
+    }
+
     @Test fun collisionCreatesIndependentSetAndRepeatedImportReusesIt() {
         val source = temporary.newFolder("source")
         val set = ControlSkinStore.create(source, "Fantasy")

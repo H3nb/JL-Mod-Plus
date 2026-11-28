@@ -1,0 +1,291 @@
+<?xml version="1.0" encoding="utf-8"?>
+<!-- Memory Editor search, inspector, bookmarks, saved variables, quick actions, and script builder. -->
+<resources xmlns:tools="http://schemas.android.com/tools" xmlns:xliff="urn:oasis:names:tc:xliff:document:1.2">
+    <string name="memory_editor_bubble">Плутајуће дугме Уређивача меморије</string>
+    <string name="memory_editor_bubble_content_description">Отвори Уређивач меморије</string>
+    <string name="memory_editor_previous_results_page_action">Претходна страница резултата</string>
+    <string name="memory_editor_next_results_page_action">Следећа страница резултата</string>
+    <string name="memory_editor">Уређивач меморије</string>
+    <string name="memory_editor_search_hint">Вредност</string>
+    <string name="memory_editor_next_scan">Следеће скенирање</string>
+    <string name="memory_editor_new_search">Нова претрага</string>
+    <plurals name="memory_editor_results">
+        <item quantity="one"><xliff:g id="count" example="3">%1$d</xliff:g> резултат</item>
+        <item quantity="few"><xliff:g id="count" example="3">%1$d</xliff:g> резултата</item>
+        <item quantity="other"><xliff:g id="count" example="3">%1$d</xliff:g> резултата</item>
+    </plurals>
+    <plurals name="memory_editor_candidates">
+        <item quantity="one"><xliff:g id="count" example="3">%1$d</xliff:g> кандидат</item>
+        <item quantity="few"><xliff:g id="count" example="3">%1$d</xliff:g> кандидата</item>
+        <item quantity="other"><xliff:g id="count" example="3">%1$d</xliff:g> кандидата</item>
+    </plurals>
+    <plurals name="memory_editor_search_complete">
+        <item quantity="one">Претрага завршена · <xliff:g id="count" example="3">%1$d</xliff:g> кандидат</item>
+        <item quantity="few">Претрага завршена · <xliff:g id="count" example="3">%1$d</xliff:g> кандидата</item>
+        <item quantity="other">Претрага завршена · <xliff:g id="count" example="3">%1$d</xliff:g> кандидата</item>
+    </plurals>
+    <string name="memory_editor_no_results">Нема резултата</string>
+    <string name="memory_editor_no_watch">Надзор је празан</string>
+    <string name="memory_editor_unsupported">Уређивач меморије није доступан за ово окружење извршавања.</string>
+    <string name="memory_editor_engine_unavailable">Мотор Уређивача меморије није доступан.</string>
+    <string name="memory_editor_engine_reconnecting">Уређивач меморије се поново повезује…</string>
+    <string name="memory_editor_refresh">Освежи</string>
+    <string name="memory_editor_undo">Опозови скенирање</string>
+    <string name="memory_variables_tab">Сачувано</string>
+    <string name="memory_editor_back" tools:ignore="MissingTranslation">Назад</string>
+    <string name="memory_list_keep" tools:ignore="MissingTranslation">Задржи за следеће покретање</string>
+    <string name="memory_list_stop_keeping" tools:ignore="MissingTranslation">Престани да задржаваш</string>
+    <string name="memory_list_kept" tools:ignore="MissingTranslation">Задржано за следеће покретање</string>
+    <string name="memory_list_empty" tools:ignore="MissingTranslation">Још нема сачуваних обележивача</string>
+    <string name="memory_list_empty_hint" tools:ignore="MissingTranslation">Обележите променљиву из „Претраге” или „Инспектора” да бисте је пратили овде.</string>
+    <string name="memory_list_remove_confirm" tools:ignore="MissingTranslation">Уклонити из „Сачувано”? Сва активна замрзавања ће се зауставити.</string>
+    <string name="memory_list_add" tools:ignore="MissingTranslation">Обележи</string>
+    <string name="memory_bookmark_relink" tools:ignore="MissingTranslation">Поново повежи</string>
+    <string name="memory_bookmark_relink_hint" tools:ignore="MissingTranslation">Изаберите заменску променљиву у „Претрази”, па изаберите „Поново повежи”.</string>
+    <string name="memory_bookmark_relink_confirm" tools:ignore="MissingTranslation">Повезати овај обележивач са изабраном променљивом? Свако активно замрзавање овог обележивача ће се зауставити.</string>
+    <string name="memory_bookmark_unavailable" tools:ignore="MissingTranslation">Недоступно — изаберите „Поново повежи” да бисте изабрали циљ</string>
+    <string name="memory_editor_watch">Надзор</string>
+    <string name="memory_editor_search_tab">Претрага</string>
+    <string name="memory_editor_search_known_values">Претрага познатих вредности</string>
+    <string name="memory_editor_search_unknown_values">Претрага непознатих вредности</string>
+    <string name="memory_editor_add_to_watch">Обележи изабране вредности</string>
+    <string name="memory_editor_no_candidates">Нису пронађене вредности за претрагу</string>
+    <string name="memory_editor_edit">Уреди</string>
+    <plurals name="memory_editor_edit_batch">
+        <item quantity="one">Уреди <xliff:g id="count" example="3">%1$d</xliff:g> вредност</item>
+        <item quantity="few">Уреди <xliff:g id="count" example="3">%1$d</xliff:g> вредности</item>
+        <item quantity="other">Уреди <xliff:g id="count" example="3">%1$d</xliff:g> вредности</item>
+    </plurals>
+    <string name="memory_editor_edit_batch_no_common_type">Изабране ставке не подржавају изабрани тип података. Уредите компатибилне ставке засебно.</string>
+    <string name="memory_editor_save">Примени</string>
+    <string name="memory_editor_replacement">Заменска вредност</string>
+    <string name="memory_editor_freeze">Замрзни</string>
+    <string name="memory_editor_remove">Уклони</string>
+    <string name="memory_editor_select_visible">Изабери видљиво</string>
+    <string name="memory_editor_clear_selection">Поништи избор</string>
+    <plurals name="memory_editor_selected">
+        <item quantity="one">Изабрана <xliff:g id="count" example="3">%1$d</xliff:g> ставка</item>
+        <item quantity="few">Изабране <xliff:g id="count" example="3">%1$d</xliff:g> ставке</item>
+        <item quantity="other">Изабрано <xliff:g id="count" example="3">%1$d</xliff:g> ставки</item>
+    </plurals>
+    <string name="memory_editor_close">Затвори Уређивач меморије</string>
+    <string name="memory_editor_searching">Претрага меморије…</string>
+    <string name="memory_editor_working">Примена операције…</string>
+    <string name="memory_editor_search_progress">Скенирано <xliff:g id="scanned_mib" example="12">%1$d</xliff:g> од <xliff:g id="total_mib" example="64">%2$d</xliff:g> MiB</string>
+    <string name="memory_editor_candidate_moved">Циљ ажуриран</string>
+    <string name="memory_editor_candidate_relocating">Поновна провера</string>
+    <string name="memory_editor_candidate_ambiguous">Нејасно — уписи су паузирани</string>
+    <string name="memory_editor_candidate_lost">Изгубљено — уписи су паузирани</string>
+    <string name="memory_editor_apply">Примени</string>
+    <string name="memory_editor_min_value">Минимална вредност</string>
+    <string name="memory_editor_max_value">Максимална вредност</string>
+    <string name="memory_editor_change_amount">Износ промене</string>
+    <string name="memory_editor_min_change">Минимална промена</string>
+    <string name="memory_editor_max_change">Максимална промена</string>
+    <string name="memory_editor_unfreeze">Одмрзни</string>
+    <string name="memory_editor_cancelled">Операција је отказана.</string>
+    <string name="memory_editor_resource_limit">Уређивач меморије је достигао безбедносно ограничење. Покушајте прецизнију претрагу или уклоните некоришћене обележиваче и замрзавања.</string>
+    <string name="memory_editor_identity_unsafe">Није могуће проверити изабрану вредност или стање претраге. Освежите резултате или поново отворите „Инспектор”, па покушајте поново.</string>
+    <string name="memory_editor_safety_limit">Изабрано је превише вредности за ову операцију. Изаберите мање и покушајте поново.</string>
+    <string name="memory_editor_invalid_request">Вредност или операција нису исправни.</string>
+    <string name="memory_editor_freeze_paused">Паузирано ради безбедности</string>
+    <string name="memory_editor_predicate_between">Између</string>
+    <string name="memory_editor_predicate_changed">Промењено</string>
+    <string name="memory_editor_predicate_unchanged">Непромењено</string>
+    <string name="memory_editor_predicate_increased">Повећано</string>
+    <string name="memory_editor_predicate_decreased">Смањено</string>
+    <string name="memory_editor_predicate_increased_by">Повећано за</string>
+    <string name="memory_editor_predicate_decreased_by">Смањено за</string>
+    <string name="memory_editor_predicate_changed_by">Промењено за</string>
+    <string name="memory_editor_predicate_increased_range">Повећање у опсегу</string>
+    <string name="memory_editor_predicate_decreased_range">Смањење у опсегу</string>
+    <string name="memory_editor_inspector">Инспектор</string>
+    <string name="memory_editor_inspect_memory">Прегледај околну меморију</string>
+    <string name="memory_editor_inspector_loading">Провера резултата и читање околне меморије…</string>
+    <string name="memory_editor_inspector_empty">Изаберите резултат да бисте прегледали околну меморију.</string>
+    <string name="memory_editor_inspector_no_rows">Нема доступне околне меморије за преглед.</string>
+    <string name="memory_editor_refresh_snapshot">Освежи снимак стања</string>
+    <string name="memory_editor_select_result_value">Изабери овај обележивач</string>
+    <string name="memory_editor_freeze_after_edit">Замрзни након примене</string>
+    <string name="memory_editor_freeze_after_edit_help">Одржава ову вредност закључаном и додаје је у обележиваче у „Сачувано”.</string>
+    <string name="memory_editor_expression_single_hint">Унесите једну вредност или раздвојите групне вредности тачком-зарезом (;).</string>
+    <string name="memory_editor_expression_group_needs_type">Изаберите одређени тип података за групну претрагу.</string>
+    <plurals name="memory_editor_expression_group_hint">
+        <item quantity="one">Групна претрага · <xliff:g id="count" example="3">%1$d</xliff:g> вредност · исти Java објекат</item>
+        <item quantity="few">Групна претрага · <xliff:g id="count" example="3">%1$d</xliff:g> вредности · исти Java објекат</item>
+        <item quantity="other">Групна претрага · <xliff:g id="count" example="3">%1$d</xliff:g> вредности · исти Java објекат</item>
+    </plurals>
+    <string name="memory_editor_expression_query_help">Примери: 500 или 500;1000. Групна претрага тражи 2–8 вредности у истом Java објекту.</string>
+    <string name="memory_editor_keypad_clear">Обриши</string>
+    <string name="memory_editor_peek_underlay">Притисните и задржите да видите MIDlet испод</string>
+    <string name="memory_editor_peek_underlay_active">Приказује се MIDlet испод</string>
+    <string name="memory_editor_no_runtime">Нема активног окружења извршавања MIDlet-а.</string>
+    <string name="memory_editor_no_search_history">Нема претходне претраге за враћање.</string>
+    <string name="memory_editor_partial_write">Операција уписа није у потпуности завршена. Проверите тренутне вредности пре новог покушаја.</string>
+    <!-- Independent write counts: confirmed, unconfirmed, skipped, not attempted, and incompatible data type. -->
+    <string name="memory_editor_write_outcome">Потврђени уписи: <xliff:g id="confirmed" example="3">%1$d</xliff:g>. Непотврђени: <xliff:g id="unconfirmed" example="0">%2$d</xliff:g>. Прескочени: <xliff:g id="skipped" example="0">%3$d</xliff:g>. Није покушано: <xliff:g id="not_attempted" example="0">%4$d</xliff:g>. Прескочено због типа: <xliff:g id="skipped_by_type" example="0">%5$d</xliff:g>.</string>
+    <!-- %1$s is a localized outcome explanation; %2$d through %6$d are the same independent write counts. -->
+    <string name="memory_editor_write_failure_outcome"><xliff:g id="reason" example="Write interrupted.">%1$s</xliff:g>\nПотврђени уписи: <xliff:g id="confirmed" example="1">%2$d</xliff:g>. Непотврђени: <xliff:g id="unconfirmed" example="1">%3$d</xliff:g>. Прескочени: <xliff:g id="skipped" example="0">%4$d</xliff:g>. Није покушано: <xliff:g id="not_attempted" example="0">%5$d</xliff:g>. Прескочено због типа: <xliff:g id="skipped_by_type" example="0">%6$d</xliff:g>.</string>
+    <!-- Result counts before (%1$d) and after (%2$d) the completed next scan. -->
+    <string name="memory_editor_next_scan_result">Резултати следећег скенирања: <xliff:g id="before_count" example="120">%1$d</xliff:g> → <xliff:g id="after_count" example="14">%2$d</xliff:g></string>
+    <string name="memory_editor_type_auto">Аутоматски</string>
+    <string name="memory_editor_remove_candidates_title">Уклонити изабране резултате?</string>
+    <string name="memory_editor_remove_candidates_description">Уклони: Уклања изабране резултате са листе претраге. Вредности у меморији игре остају непромењене.\n\nВрати и уклони: Такође враћа вредности од пре последњих потврђених измена, али само ако се тренутне вредности и даље поклапају са вредностима након тих измена. Замрзнуте вредности и резултати који се не могу безбедно вратити остају на листи.</string>
+    <string name="memory_editor_revert_and_remove">Врати и уклони</string>
+    <string name="memory_editor_revert_remove_commit_failed">Вредности су можда враћене, али резултати нису могли да се уклоне. Освежите и покушајте поново; вредности које је игра променила неће бити преписане.</string>
+    <string name="memory_editor_revert_remove_outcome">Враћено: <xliff:g id="restored" example="2">%1$d</xliff:g>. Уклоњено: <xliff:g id="removed" example="2">%2$d</xliff:g>. Конфликти: <xliff:g id="conflicts" example="0">%3$d</xliff:g>. Непотврђено: <xliff:g id="unconfirmed" example="0">%4$d</xliff:g>. Није покушано: <xliff:g id="not_attempted" example="0">%5$d</xliff:g>.</string>
+    <string name="memory_editor_set_all">Подеси све</string>
+    <string name="memory_editor_increment_start">Почетна вредност</string>
+    <string name="memory_editor_edit_batch_type_notice">Промениће се само вредности са одговарајућим типом података.</string>
+    <string name="memory_editor_write_confirmed">Вредности потврђене поновним читањем меморије: <xliff:g id="count" example="3">%1$d</xliff:g>.</string>
+    <string name="memory_editor_candidate_untraced">Низ #<xliff:g id="array_id" example="42">%1$d</xliff:g>[<xliff:g id="index" example="3">%2$d</xliff:g>] · Извор није праћен</string>
+    <string name="memory_editor_candidate_static"><xliff:g id="field_name" example="Player.coins">%1$s</xliff:g> · <xliff:g id="reference_kind" example="Static reference">%2$s</xliff:g></string>
+    <string name="memory_editor_candidate_instance"><xliff:g id="field_name" example="Player.hp">%1$s</xliff:g> · <xliff:g id="reference_kind" example="Instance reference">%2$s</xliff:g> · циљ #<xliff:g id="target_id" example="1">%3$d</xliff:g></string>
+    <string name="memory_editor_reference_static">Статичка референца</string>
+    <string name="memory_editor_reference_instance">Референца инстанце</string>
+    <string name="memory_editor_path_changed">Путања референце се променила од скенирања.</string>
+    <string name="memory_editor_path_incomplete">Путања референце прелази ограничење прегледа.</string>
+    <string name="memory_editor_source_unknown">Извор није праћен</string>
+    <string name="memory_editor_incremental_edit">Повећање у корацима</string>
+    <string name="memory_editor_increment_step">Корак</string>
+    <string name="memory_editor_increment_invalid">Користите један целобројни тип и вредности унутар његовог опсега.</string>
+    <!-- The batch dialog title already shows the number of selected values. -->
+    <string name="memory_editor_increment_preview">Преглед: <xliff:g id="name" example="Example">%1$s</xliff:g></string>
+    <string name="memory_editor_panel_opacity">Непровидност панела</string>
+    <string name="memory_editor_panel_opacity_help">Подесите позадину да бисте видели вредности игре током претраге. Текст и иконе остају видљиви.</string>
+    <string name="memory_editor_reconversion_required" tools:ignore="MissingTranslation">Инсталирана конверзија овог MIDlet-а није компатибилна са Уређивачем меморије. Затворите игру, затим је поново конвертујте или инсталирајте у JL-Mod Plus-у.</string>
+    <string name="memory_saved_tab" tools:ignore="MissingTranslation">Сачувано</string>
+    <string name="memory_saved_save" tools:ignore="MissingTranslation">Сачувај променљиву</string>
+    <string name="memory_saved_name" tools:ignore="MissingTranslation">Назив</string>
+    <string name="memory_saved_explanation" tools:ignore="MissingTranslation">Сачувајте ову проверену меморијску путању за наредне сесије. Вредности се никада не уписују аутоматски.</string>
+    <string name="memory_saved_empty" tools:ignore="MissingTranslation">Још нема сачуваних променљивих. Изаберите резултат претраге да бисте га сачували.</string>
+    <string name="memory_saved_not_ready" tools:ignore="MissingTranslation">Није спремно</string>
+    <string name="memory_saved_retry" tools:ignore="MissingTranslation">Покушај поново</string>
+    <string name="memory_saved_rename" tools:ignore="MissingTranslation">Преименуј</string>
+    <string name="memory_saved_value" tools:ignore="MissingTranslation">Вредност</string>
+    <string name="memory_saved_delete_confirm" tools:ignore="MissingTranslation">Уклонити ову сачувану дефиницију? Вредност у игри се неће променити.</string>
+    <string name="memory_saved_changed" tools:ignore="MissingTranslation">Промењено</string>
+    <string name="memory_saved_rebound" tools:ignore="MissingTranslation">Циљ ажуриран</string>
+    <string name="memory_saved_import_summary" tools:ignore="MissingTranslation">Сачувано: додато <xliff:g id="added_count" example="4">%1$d</xliff:g>, већ постоји <xliff:g id="existing_count" example="2">%2$d</xliff:g></string>
+    <string name="memory_saved_incompatible" tools:ignore="MissingTranslation">Некомпатибилно</string>
+    <string name="memory_saved_failed" tools:ignore="MissingTranslation">Неуспешно</string>
+    <string name="memory_saved_delete_many_confirm" tools:ignore="MissingTranslation">Уклонити <xliff:g id="count" example="3">%1$d</xliff:g> сачуваних дефиниција? Вредности у игри се неће променити.</string>
+    <string name="memory_recipes_title" tools:ignore="MissingTranslation">Брза радња</string>
+    <string name="memory_recipes_simple_from_saved" tools:ignore="MissingTranslation">Циљ: <xliff:g id="bookmark_name" example="Coins">%1$s</xliff:g></string>
+    <string name="memory_recipes_preview" tools:ignore="MissingTranslation">Прегледај циљеве</string>
+    <string name="memory_recipes_stop_freeze" tools:ignore="MissingTranslation">Заустави замрзавање вредности</string>
+    <string name="memory_recipes_freeze" tools:ignore="MissingTranslation">Држи замрзнуто док ова игра ради</string>
+    <string name="memory_recipes_run" tools:ignore="MissingTranslation">Покрени</string>
+    <string name="memory_recipes_active_freezes" tools:ignore="MissingTranslation">Скрипте које замрзавају вредности</string>
+    <string name="memory_recipes_target_unavailable" tools:ignore="MissingTranslation">Циљ обележивача није доступан. Освежите га или поново повежите пре покретања.</string>
+    <string name="memory_recipes_preview_values" tools:ignore="MissingTranslation">Тренутне вредности: <xliff:g id="name" example="Example">%1$s</xliff:g></string>
+    <string name="memory_scripts_title" tools:ignore="MissingTranslation">Скрипте</string>
+    <string name="memory_scripts_active" tools:ignore="MissingTranslation">Активно</string>
+    <string name="memory_scripts_inputs" tools:ignore="MissingTranslation">Улази</string>
+    <string name="memory_scripts_create_from_bookmarks" tools:ignore="MissingTranslation">Направи скрипту</string>
+    <string name="memory_scripts_create_failed" tools:ignore="MissingTranslation">Није могуће започети нову скрипту.</string>
+    <string name="memory_scripts_draft_in_progress" tools:ignore="MissingTranslation">Прво завршите или одбаците тренутни нацрт скрипте.</string>
+    <string name="memory_builder_open_saved" tools:ignore="MissingTranslation">Отвори „Сачувано”</string>
+    <string name="memory_builder_add_description" tools:ignore="MissingTranslation">Додај опис</string>
+    <string name="memory_builder_find_values" tools:ignore="MissingTranslation">Пронађи вредности</string>
+    <string name="memory_scripts_description" tools:ignore="MissingTranslation">Опис</string>
+    <string name="memory_scripts_new" tools:ignore="MissingTranslation">Нова скрипта</string>
+    <string name="memory_scripts_back" tools:ignore="MissingTranslation">Назад</string>
+    <string name="memory_scripts_edit" tools:ignore="MissingTranslation">Уреди</string>
+    <string name="memory_scripts_save" tools:ignore="MissingTranslation">Сачувај</string>
+    <string name="memory_scripts_saved" tools:ignore="MissingTranslation">Скрипта је сачувана</string>
+    <string name="memory_scripts_deleted" tools:ignore="MissingTranslation">Скрипта је обрисана</string>
+    <string name="memory_scripts_save_failed" tools:ignore="MissingTranslation">Није могуће сачувати скрипту.</string>
+    <string name="memory_scripts_editor_hint" tools:ignore="MissingTranslation">Унесите или налепите JSON скрипту која користи подржане операције над меморијом. Чување скрипте је не покреће.</string>
+    <string name="memory_scripts_paste_hint" tools:ignore="MissingTranslation">Налепи JSON скрипте</string>
+    <string name="memory_scripts_paste" tools:ignore="MissingTranslation">Налепи</string>
+    <string name="memory_scripts_clipboard_invalid" tools:ignore="MissingTranslation">Привремена меморија је празна или документ прелази 64 KiB</string>
+    <string name="memory_scripts_invalid" tools:ignore="MissingTranslation">Неисправан формат скрипте</string>
+    <string name="memory_scripts_freeze_active" tools:ignore="MissingTranslation">Ова скрипта замрзава вредности</string>
+    <string name="memory_scripts_delete" tools:ignore="MissingTranslation">Обриши</string>
+    <string name="memory_scripts_delete_confirm" tools:ignore="MissingTranslation">Обрисати „<xliff:g id="name" example="Example">%1$s</xliff:g>”? Свако активно замрзавање за ову скрипту ће се зауставити.</string>
+    <string name="memory_scripts_empty" tools:ignore="MissingTranslation">Нема сачуваних скрипти</string>
+    <string name="memory_scripts_unsaved_title" tools:ignore="MissingTranslation">Одбацити несачувану скрипту?</string>
+    <string name="memory_scripts_unsaved_message" tools:ignore="MissingTranslation">Промене у скрипти нису сачуване.</string>
+    <string name="memory_scripts_discard" tools:ignore="MissingTranslation">Одбаци</string>
+    <string name="memory_scripts_current_title" tools:ignore="MissingTranslation">Последње читање</string>
+    <string name="memory_scripts_refresh" tools:ignore="MissingTranslation">Освежи</string>
+    <string name="memory_scripts_reading" tools:ignore="MissingTranslation">Читање тренутних вредности…</string>
+    <string name="memory_scripts_refresh_hint" tools:ignore="MissingTranslation">Додирните „Освежи” да бисте прочитали тренутне вредности из покренуте игре.</string>
+    <string name="memory_scripts_mode_toggle" tools:ignore="MissingTranslation">Замрзни вредности</string>
+    <string name="memory_scripts_mode_form" tools:ignore="MissingTranslation">Уређивач вредности</string>
+    <string name="memory_scripts_mode_once" tools:ignore="MissingTranslation">Брзе радње</string>
+    <string name="memory_scripts_mode_legacy" tools:ignore="MissingTranslation">Напредна скрипта</string>
+    <string name="memory_scripts_edit_values" tools:ignore="MissingTranslation">Уреди вредности</string>
+    <string name="memory_scripts_apply" tools:ignore="MissingTranslation">Примени промене</string>
+    <string name="memory_scripts_refresh_required" tools:ignore="MissingTranslation">Освежите да бисте проверили тренутне вредности пре примене.</string>
+    <string name="memory_scripts_inconsistent" tools:ignore="MissingTranslation">Неусаглашене копије: <xliff:g id="name" example="Example">%1$s</xliff:g></string>
+    <string name="memory_editor_minimize" tools:ignore="MissingTranslation">Умањи Уређивач меморије</string>
+    <string name="memory_scripts_choose_type" tools:ignore="MissingTranslation">Нова скрипта</string>
+    <string name="memory_scripts_choose_hint" tools:ignore="MissingTranslation">Изаберите како ће ова скрипта радити.</string>
+    <string name="memory_builder_json_editor" tools:ignore="MissingTranslation">JSON уређивач</string>
+    <string name="memory_builder_freeze_hint" tools:ignore="MissingTranslation">Одржава изабране вредности закључаним док је укључено. Искључивање замрзавања не враћа њихове претходне вредности.</string>
+    <string name="memory_builder_form_hint" tools:ignore="MissingTranslation">Направите образац који чита тренутне вредности пре примене измена.</string>
+    <string name="memory_builder_actions_hint" tools:ignore="MissingTranslation">Примењује промене једном при сваком притиску на „Покрени”. Сабирање и одузимање користе тренутне вредности, укључујући промене из претходних покретања.</string>
+    <string name="memory_builder_name" tools:ignore="MissingTranslation">Назив скрипте</string>
+    <string name="memory_builder_frozen_values" tools:ignore="MissingTranslation">Замрзнуте вредности</string>
+    <string name="memory_builder_fields" tools:ignore="MissingTranslation">Поља</string>
+    <string name="memory_builder_actions" tools:ignore="MissingTranslation">Радње</string>
+    <string name="memory_builder_add_bookmarks" tools:ignore="MissingTranslation">Додај из обележивача</string>
+    <string name="memory_builder_empty" tools:ignore="MissingTranslation">Додајте бар један проверени обележивач.</string>
+    <string name="memory_builder_field_label" tools:ignore="MissingTranslation">Ознака поља</string>
+    <string name="memory_builder_keep_at" tools:ignore="MissingTranslation">Задржи на</string>
+    <string name="memory_builder_amount" tools:ignore="MissingTranslation">Вредност / износ</string>
+    <string name="memory_builder_set" tools:ignore="MissingTranslation">Подеси</string>
+    <string name="memory_builder_add" tools:ignore="MissingTranslation">Додај</string>
+    <string name="memory_builder_subtract" tools:ignore="MissingTranslation">Одузми</string>
+    <string name="memory_builder_view_json" tools:ignore="MissingTranslation">Прикажи JSON</string>
+    <string name="memory_builder_edit_json" tools:ignore="MissingTranslation">Уреди JSON</string>
+    <string name="memory_builder_search_bookmarks" tools:ignore="MissingTranslation">Претражи обележиваче</string>
+    <string name="memory_builder_no_bookmarks" tools:ignore="MissingTranslation">Нема одговарајућих проверених обележивача. Обележите вредност у „Претрази” или поново повежите један у „Сачувано”.</string>
+    <string name="memory_builder_needs_relink" tools:ignore="MissingTranslation">Потребно поновно повезивање</string>
+    <string name="memory_builder_add_selected" tools:ignore="MissingTranslation">Додај изабрано</string>
+    <string name="memory_builder_min" tools:ignore="MissingTranslation">Минимум (опционо)</string>
+    <string name="memory_builder_max" tools:ignore="MissingTranslation">Максимум (опционо)</string>
+    <string name="memory_builder_add_target" tools:ignore="MissingTranslation">Додај циљ</string>
+    <string name="memory_builder_freeze_short" tools:ignore="MissingTranslation">Задржи изабране вредности непромењеним</string>
+    <string name="memory_builder_form_short" tools:ignore="MissingTranslation">Подесите више вредности на једном месту</string>
+    <string name="memory_builder_actions_short" tools:ignore="MissingTranslation">Покрените једнократне радње Подеси, Додај или Одузми</string>
+    <string name="memory_editor_refine_scan" tools:ignore="MissingTranslation">Сузи</string>
+    <string name="memory_scripts_saved_count" tools:ignore="MissingTranslation">Сачувано: <xliff:g id="count" example="3">%1$d</xliff:g></string>
+    <string name="memory_scripts_empty_hint" tools:ignore="MissingTranslation">Направите скрипту за уређивање или замрзавање вредности током играња.</string>
+    <string name="memory_builder_limits" tools:ignore="MissingTranslation">Ограничења (опционо)</string>
+    <string name="memory_editor_selection_limit">Изаберите највише %1$d вредности.</string>
+    <string name="memory_saved_storage_unavailable">Није могуће приступити сачуваним ставкама.</string>
+    <string name="memory_bookmark_renamed">Обележивач је преименован</string>
+    <string name="memory_editor_memory_unavailable">Меморија MIDlet-а није доступна.</string>
+    <string name="memory_bookmark_added">Обележивач је додат</string>
+    <string name="memory_bookmark_relinked">Обележивач је поново повезан</string>
+    <string name="memory_bookmarks_removed">Уклоњено из сачуваних ставки</string>
+    <string name="memory_freeze_enabled">Замрзавање је укључено</string>
+    <string name="memory_freeze_unavailable">Није могуће укључити замрзавање.</string>
+    <string name="memory_list_session_only_failed">Није могуће задржати ову ставку само за тренутну сесију.</string>
+    <string name="memory_list_kept_unlinked">Сачувано за следеће покретање, али није могуће повезати са тренутном сесијом.</string>
+    <string name="memory_list_removal_unavailable">Није могуће уклонити ставке док је веза прекинута. Покушајте поново.</string>
+    <string name="memory_list_watch_removed">Праћење у сесији је уклоњено</string>
+    <string name="memory_list_bookmark_removal_failed">Није могуће уклонити обележиваче: %1$s</string>
+    <string name="memory_list_watch_removal_failed">Није могуће уклонити праћење у сесији: %1$s</string>
+    <string name="memory_list_removal_unknown_error">Непозната грешка</string>
+    <string name="memory_editor_edit_freeze_failed">Вредност је ажурирана, али замрзавање није могло да се покрене. Проверите тренутну вредност пре поновног покушаја.</string>
+    <string name="memory_scripts_freeze_inactive">Ова скрипта више не замрзава вредности.</string>
+    <string name="memory_bookmark_change_incomplete">Није могуће довршити промену обележивача. Проверите сачуване ставке пре поновног покушаја.</string>
+    <string name="memory_editor_value_updated">Вредност је ажурирана.</string>
+    <string name="memory_editor_value_updated_frozen">Вредност је ажурирана и замрзавање је укључено.</string>
+    <string name="memory_scripts_delete_failed">Није могуће обрисати скрипту. Проверите стање замрзавања пре поновног покушаја.</string>
+    <string name="memory_scripts_check_input">Није могуће припремити скрипту. Проверите њене вредности и обележиваче.</string>
+    <string name="memory_scripts_read_failed">Није могуће прочитати тренутне вредности. Освежите и покушајте поново.</string>
+    <string name="memory_technical_details">Технички детаљи</string>
+    <string name="memory_scripts_resource_limit">Скрипта је достигла безбедносно ограничење. Смањите број циљева или зауставите замрзавања која не користите.</string>
+    <string name="memory_scripts_target_changed">Није могуће проверити циљ скрипте. Освежите вредности и проверите обележиваче.</string>
+    <string name="memory_scripts_operation_unavailable">Ова операција скрипте није подржана за тренутни циљ.</string>
+    <string name="memory_scripts_invalid_input">Проверите уносе скрипте. Унесите важеће вредности у дозвољеним опсезима.</string>
+    <string name="memory_scripts_value_range">Вредност је изван подржаног опсега. Проверите скрипту и њене вредности.</string>
+    <string name="memory_scripts_inconsistent_values">Копије исте вредности се не подударају. Проверите стање игре пре поновног покушаја.</string>
+    <string name="memory_scripts_wrong_midlet">Ова скрипта је намењена другом MIDlet-у. Отворите одговарајући MIDlet или изаберите другу скрипту.</string>
+    <string name="memory_scripts_target_not_ready">Циљ скрипте још није спреман. Вратите се на одговарајући екран игре и покушајте поново.</string>
+</resources>

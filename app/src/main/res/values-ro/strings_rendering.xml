@@ -1,0 +1,212 @@
+<?xml version="1.0" encoding="utf-8"?>
+<!-- Rendering pipeline, internal resolution, bitmap upscaling, shaders, and built-in visual effects. -->
+<resources xmlns:tools="http://schemas.android.com/tools" xmlns:xliff="urn:oasis:names:tc:xliff:document:1.2">
+    <string name="identity_filter">Fără (cel mai rapid)</string>
+    <string name="invalid_resolution_not_saved">Rezoluție nevalidă. Presetarea nu a fost salvată.</string>
+    <string name="msg_error_loading_shader">Shader neacceptat. Se folosește shaderul implicit.</string>
+    <string name="parallel_screen_redrawing">Actualizări asincrone ale ecranului</string>
+    <string name="shader_tuning">Reglare shader</string>
+    <string name="SWAP_SIZES">Inversează lățimea și înălțimea</string>
+    <string name="fps_limit_maximum">Maxim</string>
+    <string name="remove_screen_preset">Elimină presetarea de rezoluție</string>
+    <string name="perf_overlay_position_help">Alegeți un colț.</string>
+    <string name="perf_overlay_top_left">Stânga sus</string>
+    <string name="perf_overlay_top_right">Dreapta sus</string>
+    <string name="perf_overlay_bottom_left">Stânga jos</string>
+    <string name="perf_overlay_bottom_right">Dreapta jos</string>
+    <string name="internal_resolution_title" tools:ignore="MissingTranslation">Rezoluție de randare</string>
+    <string name="internal_resolution_auto" tools:ignore="MissingTranslation">Automat</string>
+    <string name="internal_resolution_description" tools:ignore="MissingTranslation">Setează rezoluția pentru randarea 2D și 3D acceptată. Modul automat alege un factor de scalare în funcție de zona de afișare și de limitele dispozitivului. Repornește MIDletul pentru a aplica modificările.</string>
+    <string name="bitmap_upscaling_title" tools:ignore="MissingTranslation">Scalare bitmap</string>
+    <string name="bitmap_upscaling_description" tools:ignore="MissingTranslation">MMPX și xBR Lv3 îmbunătățesc imaginile 2D nemodificabile și texturile nemodificabile și opace ale modelelor Micro3D. Texturile M3G rămân neschimbate. Repornește MIDletul pentru a aplica modificările.</string>
+    <string name="bitmap_upscaling_nearest" tools:ignore="MissingTranslation">Cel mai apropiat vecin</string>
+    <string name="bitmap_upscaling_bilinear" tools:ignore="MissingTranslation">Biliniar</string>
+    <string name="bitmap_upscaling_mmpx" tools:ignore="MissingTranslation">MMPX</string>
+    <string name="bitmap_upscaling_edge_aware" tools:ignore="MissingTranslation">xBR Lv3</string>
+    <!-- Prototyping only: localized UI copy is pending design review. -->
+    <string name="render_shader_effects">Efecte shader</string>
+    <string name="render_pipeline_title">Flux de randare</string>
+    <string name="render_shader_preset">Presetare shader</string>
+    <string name="render_shader_picker_help">Combinați efectele integrate cu propriile shadere legacy într-o stivă ordonată de efecte.</string>
+    <string name="render_shader_requires_gles">Shaderele sunt salvate, dar se aplică doar când este selectat OpenGL ES.</string>
+    <string name="render_shader_missing">Shaderul selectat nu se află în bibliotecă. Alegeți altă presetare sau restaurați fișierele acestuia.</string>
+    <string name="render_shader_parameters">Parametri shader</string>
+    <string name="render_shader_reset_parameters">Resetează parametrii</string>
+    <string name="render_shader_passes">Pași shader</string>
+    <string name="render_shader_pass_count"><xliff:g id="count" example="2">%1$d</xliff:g> pași</string>
+    <string name="render_shader_pass_hint">Vizualizați etapele din presetarea GLSLP selectată.</string>
+    <string name="render_pass_filter">Filtrare intrare</string>
+    <string name="render_pass_output">Dimensiune ieșire (lățime × înălțime)</string>
+    <string name="render_pipeline_unavailable">Presetare indisponibilă</string>
+    <string name="render_game_output">Ieșire joc</string>
+    <string name="render_logical_screen_help">Dimensiunea logică raportată jocului.</string>
+    <string name="render_internal_resolution">Rezoluție internă</string>
+    <string name="render_internal_unavailable">Doar originală (1×). Rezoluțiile de randare mai mari nu sunt disponibile pentru această configurație.</string>
+    <string name="render_display_renderer">Motor de afișare</string>
+    <string name="render_shader_processing">Procesare shader</string>
+    <string name="render_display_scaling">Scalare afișaj</string>
+    <string name="render_display_viewport">Zonă de afișare a jocului</string>
+    <string name="render_texture_filtering">Filtru de scalare a ecranului</string>
+    <string name="render_texture_filtering_help">Alege Cel mai apropiat sau Liniar pentru imaginea finală a jocului. Efectele pot suprascrie această setare.</string>
+    <string name="render_viewport_note">Dimensiunea zonei de afișare este determinată din aspectul ecranului înainte de planificarea pașilor shader. Săgețile arată fluxul imaginii, nu ordinea calculelor de aspect.</string>
+    <string name="render_pipeline_help">Vedeți cum ajunge cadrul jocului pe ecran și editați fiecare etapă.</string>
+    <string name="render_no_shader">Alegeți o presetare pentru a schimba aspectul jocului.</string>
+    <string name="render_shader_adjust">Ajustează parametrii</string>
+    <string name="render_legacy_tuning_hint">Reglați fin acest efect legacy.</string>
+    <string name="render_shader_customization">Personalizează</string>
+    <string name="render_adjustable_count">Parametri ajustabili: <xliff:g id="count" example="3">%1$d</xliff:g></string>
+    <string name="render_pass_summary"><xliff:g id="count" example="3">%1$d</xliff:g> etape · Definite de presetare</string>
+    <string name="render_shader_preset_note">Etapele shader sunt definite de presetare. Le puteți inspecta fără a le schimba ordinea.</string>
+    <string name="render_parameters_hint">Mutați un glisor pentru a-i ajusta valoarea. Modificările se salvează când eliberați glisorul.</string>
+    <string name="render_pass_readonly">Etapele rulează în această ordine. Filtrarea intrării și scalarea ieșirii provin din presetarea selectată.</string>
+    <string name="render_pipeline_intro">Traseul de la framebufferul jocului până la ecran.</string>
+    <string name="render_native_short">Originală (1×)</string>
+    <string name="render_expand_passes">Afișează etapele</string>
+    <string name="render_collapse_passes">Ascunde etapele</string>
+    <string name="render_view_all_passes">Detalii etape</string>
+    <string name="render_pipeline_filter_summary">Filtrare texturi: <xliff:g id="shader_name" example="CRT Classic">%1$s</xliff:g></string>
+    <string name="render_pipeline_note">Aspectul afișajului determină zona de afișare înainte de planificarea pașilor shader. Pașii arată fluxul imaginii.</string>
+    <string name="render_shader_change">Alege alt efect</string>
+    <string name="render_custom_pipeline">Flux personalizat</string>
+    <string name="render_custom_pipeline_hint">Combinați shadere GLSL independente din dosarul de shadere.</string>
+    <string name="render_custom_order_help">Efectele rulează de sus în jos. Setările GLSLP moștenite rămân active dacă nu sunt modificate.</string>
+    <string name="render_custom_empty">Adăugați un shader pentru a începe un lanț personalizat.</string>
+    <string name="render_custom_stage_count"><xliff:g id="count" example="3">%1$d</xliff:g> etape shader personalizate</string>
+    <string name="render_custom_add">Adaugă shader</string>
+    <string name="render_custom_add_hint">Alegeți o sursă externă independentă .glsl.</string>
+    <string name="render_custom_no_sources">Nu au fost găsite shadere legacy. Adăugați fișiere shader .ini în dosarul shaders și redeschideți setările.</string>
+    <string name="render_custom_scale">Ieșire: <xliff:g id="scale" example="2">%1$d</xliff:g>× etapa anterioară</string>
+    <string name="render_custom_output_scale">Dimensiune ieșire pentru etapa următoare</string>
+    <string name="render_custom_final_viewport">Ieșire finală: afișată pe ecran</string>
+    <string name="render_custom_filter">Filtru intrare: <xliff:g id="shader_name" example="CRT Classic">%1$s</xliff:g></string>
+    <string name="render_custom_up">Sus</string>
+    <string name="render_custom_down">Jos</string>
+    <string name="render_custom_remove">Elimină</string>
+    <string name="render_custom_cancel">Anulează</string>
+    <string name="render_custom_save">Salvează</string>
+    <string name="render_custom_default">Implicit</string>
+    <string name="render_custom_nearest">Cel mai apropiat</string>
+    <string name="render_custom_linear">Liniar</string>
+    <string name="render_custom_checking">Se verifică fișierele shader…</string>
+    <string name="render_active_shader">Efect activ</string>
+    <string name="render_shader_off">Dezactivat</string>
+    <string name="render_edit_custom_pipeline">Editează lanțul de shadere</string>
+    <string name="render_shader_unavailable">Indisponibil: <xliff:g id="shader_name" example="CRT Classic">%1$s</xliff:g></string>
+    <string name="render_no_shader_sources">Nu au fost găsite shadere. Adăugați fișiere shader legacy .ini în dosarul shaders, apoi redeschideți setările.</string>
+    <string name="render_shader_mode">Mod shader</string>
+    <string name="render_mode_selected">Selectat</string>
+    <string name="render_gles_shader_default">OpenGL ES folosește imaginea originală a jocului când efectele shader sunt dezactivate.</string>
+    <string name="render_shader_off_help">Fără efecte vizuale suplimentare.</string>
+    <string name="render_legacy_mode">Shader legacy</string>
+    <string name="render_legacy_mode_help">Alegeți un fișier .ini din dosarul shaders.</string>
+    <string name="render_legacy_empty">Nu există definiții shader utilizabile în acest fișier .ini.</string>
+    <string name="render_legacy_select_variant">Alegeți un shader legacy</string>
+    <string name="render_legacy_variant_description">Definiție shader din fișierul .ini selectat</string>
+    <string name="render_preset_mode">Presetare GLSLP</string>
+    <string name="render_preset_mode_help">Încarcă un flux .glslp complet cu propriii săi pași.</string>
+    <string name="render_custom_pass_count">Număr de pași</string>
+    <string name="render_custom_pass_number">Pasul <xliff:g id="number" example="1">%1$d</xliff:g></string>
+    <string name="render_custom_pick_file">Alege fișierul GLSL</string>
+    <string name="render_custom_add_pass">Crește numărul de pași shader</string>
+    <string name="render_custom_remove_pass">Scade numărul de pași shader</string>
+    <string name="render_shader_selected_name">Activ: <xliff:g id="shader_name" example="CRT Classic">%1$s</xliff:g></string>
+    <string name="render_shader_invalid_picker">Fișierul selectat nu poate fi utilizat. Alegeți un fișier legacy .ini din dosarul shaders.</string>
+    <string name="render_custom_mode">Tip shader</string>
+    <string name="render_custom_mode_legacy">Legacy</string>
+    <string name="render_custom_mode_glsl">GLSL</string>
+    <string name="render_custom_pick_legacy">Alege shaderul legacy</string>
+    <string name="render_custom_preserve_size">Ieșire: Din presetare</string>
+    <string name="render_custom_loading">Se citesc pașii presetării…</string>
+    <string name="render_custom_start_fresh">Începe fără presetare (renunță la setările moștenite)</string>
+    <string name="render_effect_default_settings">Setări implicite</string>
+    <string name="render_effect_summary_more">+<xliff:g id="count" example="2">%1$d</xliff:g> în plus</string>
+    <string name="render_effect_legacy_author">De <xliff:g id="shader_name" example="CRT Classic">%1$s</xliff:g></string>
+    <string name="render_effect_legacy_source">Sursă: <xliff:g id="shader_name" example="CRT Classic">%1$s</xliff:g></string>
+    <string name="render_effect_removed">Efect eliminat</string>
+    <string name="render_effect_undo">Anulează</string>
+    <string name="render_effect_catalog_hint">Atingeți un efect pentru a-l adăuga în stivă.</string>
+    <string name="render_effect_user_folder_hint">Fișierele INI, VSH și FSH trebuie să se afle în dosarul shaders.</string>
+    <string name="render_effect_legacy_scale_note">Shaderele legacy sunt randate la rezoluția zonei de afișare a ecranului; marcajele .ini OutputResolution și Upscaling sunt ignorate.</string>
+    <string name="render_effect_legacy_metadata_missing">Setările din fișierul .ini al acestui shader nu au fost găsite. Shaderul poate funcționa în continuare cu fișierele sale sursă.</string>
+    <string name="render_effect_count"><xliff:g id="count" example="2">%1$d</xliff:g> active</string>
+    <string name="render_effect_add">Adaugă efect</string>
+    <string name="render_effect_builtin">Efecte integrate</string>
+    <string name="render_effect_user">Shaderele mele</string>
+    <string name="render_effect_user_add">Răsfoiește fișiere .ini</string>
+    <string name="render_effect_user_empty">Nu a fost găsit niciun shader legacy în dosarul shaders.</string>
+    <string name="render_effect_user_file">Alegeți un fișier legacy .ini</string>
+    <string name="render_effect_empty">Adăugați un efect pentru a personaliza aspectul jocului.</string>
+    <string name="render_effect_hint">Efectele rulează de sus în jos. Țineți apăsat și trageți pentru a reordona.</string>
+    <string name="render_effect_move_up">Mută în sus</string>
+    <string name="render_effect_move_down">Mută în jos</string>
+    <string name="render_effect_remove">Elimină efectul</string>
+    <string name="render_effect_no_parameters">Acest efect nu are parametri ajustabili.</string>
+    <string name="render_effect_parameter_number">Parametru <xliff:g id="count" example="2">%1$d</xliff:g></string>
+    <string name="render_effect_restore">Resetează parametrii</string>
+    <string name="render_effect_missing">Indisponibil: <xliff:g id="shader_name" example="CRT Classic">%1$s</xliff:g>. Acest efect integrat nu este disponibil în această versiune. Eliminați-l din stivă.</string>
+    <string name="render_effect_limit">Stiva acceptă până la 16 pași shader (unele efecte folosesc mai mulți pași).</string>
+    <string name="render_effect_unavailable">Efectele shader nu au putut rula. Se afișează imaginea originală a jocului. Încercați mai puține efecte sau o rezoluție de randare mai mică.</string>
+    <string name="render_bitmap_memory_reduced">Scalarea bitmap a rămas fără memorie. Se vor folosi imaginile originale sau o scară mai mică. Încercați o rezoluție de randare mai mică sau eliberați memorie, apoi reporniți.</string>
+    <string name="render_texture_memory_reduced">Scalarea texturilor Micro3D a eșuat. Se vor folosi texturile originale. Încercați o rezoluție de randare mai mică sau eliberați memorie, apoi reporniți.</string>
+    <string name="render_resolution_reduced">Rezoluția de randare a fost redusă de la <xliff:g id="from_scale" example="4">%1$d</xliff:g>× la <xliff:g id="to_scale" example="2">%2$d</xliff:g>× din cauza limitelor de memorie sau GPU. Încercați o setare mai mică sau eliberați memorie, apoi reporniți.</string>
+    <string name="render_gpu_texture_limit">Imaginea jocului depășește limita de dimensiune a texturilor GPU chiar și la scara 1×. Redu dimensiunea ecranului MIDletului sau schimbă modul grafic.</string>
+    <string name="render_gpu_upload_failed">Imaginea jocului nu a putut fi încărcată pe GPU. Se încearcă din nou. Încercați să închideți alte aplicații sau să schimbați modul grafic.</string>
+    <string name="render_effect_gles">Efectele sunt salvate, dar sunt randate doar cu OpenGL ES.</string>
+    <string name="render_effect_legacy_file_error">Nu a putut fi încărcat un shader legacy valid din fișierul .ini selectat.</string>
+    <string name="effect_color">Ajustare culori</string>
+    <string name="effect_color_desc">Ajustează luminozitatea, contrastul, saturația, gamma, tonul de culoare și monocromia.</string>
+    <string name="effect_vignette">Vignetă</string>
+    <string name="effect_vignette_desc">Întunecă marginile pentru a atrage atenția spre centru.</string>
+    <string name="effect_sharpen">Claritate</string>
+    <string name="effect_sharpen_desc">Evidențiază detaliile și contururile din imagine.</string>
+    <string name="effect_cartoon">Cartoon Soft</string>
+    <string name="effect_cartoon_desc">Simplifică gradienții de culoare și adaugă contururi fine.</string>
+    <string name="effect_bloom">Bloom</string>
+    <string name="effect_bloom_desc">Adaugă o strălucire delicată în jurul zonelor luminoase ale imaginii.</string>
+    <string name="effect_crt_classic">CRT Clasic</string>
+    <string name="effect_crt_classic_desc">Imită un televizor CRT cu linii de scanare și un model RGB.</string>
+    <string name="effect_crt_beam">Îngustime fascicul</string>
+    <string name="effect_brightness">Luminozitate</string>
+    <string name="effect_contrast">Contrast</string>
+    <string name="effect_saturation">Saturație</string>
+    <string name="effect_strength">Intensitate</string>
+    <string name="effect_color_levels">Niveluri de culoare</string>
+    <string name="effect_edge">Intensitate contur</string>
+    <string name="effect_threshold">Prag de luminozitate</string>
+    <string name="effect_radius">Rază de estompare</string>
+    <string name="effect_mask_strength">Intensitate mască</string>
+    <string name="effect_scan_strength">Intensitate linii de scanare</string>
+    <string name="effect_bright_boost">Amplificare luminozitate</string>
+    <string name="effect_lcd">LCD</string>
+    <string name="effect_lcd_desc">Imită grila de pixeli și subpixelii unui ecran LCD color clasic.</string>
+    <string name="effect_lcd_grid">Intensitate grilă</string>
+    <string name="effect_lcd_subpixel">Subpixeli RGB</string>
+    <string name="effect_lcd_brightness">Luminozitate LCD</string>
+    <string name="effect_scanlines">Scanlines Lite</string>
+    <string name="effect_scanlines_desc">Adaugă linii orizontale discrete, ca pe un ecran CRT.</string>
+    <string name="effect_line_width">Îngustime linii</string>
+    <string name="effect_gamma">Gamma</string>
+    <string name="effect_temperature">Temperatură</string>
+    <string name="effect_tint">Nuanță</string>
+    <string name="effect_monochrome">Monocrom</string>
+    <string name="effect_depth">Adâncime de culoare și dithering</string>
+    <string name="effect_depth_desc">Limitează paleta de culori, cu dithering opțional pentru un aspect retro.</string>
+    <string name="effect_depth_format">Format culoare afișaj</string>
+    <string name="effect_depth_rgb444">RGB444 · 4.096 de culori</string>
+    <string name="effect_depth_rgb565">RGB565 · 65.536 de culori</string>
+    <string name="effect_depth_rgb666">RGB666 · 262.144 de culori</string>
+    <string name="effect_dither_mode">Model de dithering</string>
+    <string name="effect_dither_none">Dezactivat</string>
+    <string name="effect_dither_bayer4">Bayer 4×4</string>
+    <string name="effect_dither_bayer8">Bayer 8×8</string>
+    <string name="effect_dither_strength">Intensitate dithering</string>
+    <string name="effect_mono_display">Ecran monocrom</string>
+    <string name="effect_mono_display_desc">Imită ecrane alb-negru, verzi sau chihlimbar cu 2 sau 4 tonuri.</string>
+    <string name="effect_mono_palette">Culoare LCD</string>
+    <string name="effect_mono_bw">Alb-negru</string>
+    <string name="effect_mono_green">LCD verde</string>
+    <string name="effect_mono_amber">LCD chihlimbar</string>
+    <string name="effect_mono_tones">Număr de tonuri</string>
+    <string name="effect_mono_two">2 tonuri</string>
+    <string name="effect_mono_four">4 tonuri</string>
+</resources>

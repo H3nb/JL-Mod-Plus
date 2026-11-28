@@ -1,0 +1,47 @@
+<?xml version="1.0" encoding="utf-8"?>
+<!-- Κοινές ενέργειες διεπαφής, γενικές ετικέτες, παράθυρα διαλόγου και οθόνη Πληροφορίες. -->
+<resources xmlns:xliff="urn:oasis:names:tc:xliff:document:1.2">
+    <string name="about">Πληροφορίες</string>
+    <string name="about_message">Εκτελέστε κλασικές εφαρμογές και παιχνίδια, οργανώστε τα MIDlet στη βιβλιοθήκη σας και προσαρμόστε τα χειριστήρια, την οθόνη, τον ήχο και την απόδοση. Το JL-Mod Plus είναι δωρεάν και ανοιχτού κώδικα.</string>
+    <string name="about_subtitle">Εξομοιωτής Java ME για Android</string>
+    <string name="about_compatibility">Η συμβατότητα εξαρτάται από το MIDlet, τη συσκευή και τα υποστηριζόμενα API της Java ME. Ορισμένες εφαρμογές ενδέχεται να λειτουργούν διαφορετικά από ό,τι στις αρχικές συσκευές.</string>
+    <string name="about_lineage_title">Προέλευση έργου</string>
+    <string name="about_build_title">Πληροφορίες έκδοσης</string>
+    <string name="about_version_label">Έκδοση</string>
+    <string name="about_build_label">Δομή</string>
+    <string name="about_revision_label">Αναθεώρηση πηγαίου κώδικα</string>
+    <string name="about_links_title">Έργο και άδειες</string>
+    <string name="about_github_link_copied">Δεν βρέθηκε πρόγραμμα περιήγησης. Ο σύνδεσμος GitHub αντιγράφηκε στο πρόχειρο.</string>
+    <string name="about_github_browser_unavailable">Δεν βρέθηκε πρόγραμμα περιήγησης για το άνοιγμα του GitHub.</string>
+    <string name="about_lineage">Το JL-Mod Plus είναι μια ανεξάρτητη διακλάδωση του JL-Mod από τον woesss (Yury Kharchenko). Το JL-Mod βασίζεται στο J2ME Loader του Nikita Shakarun, το οποίο προέρχεται από το J2meLoader της NaikSoftware.</string>
+    <string name="about_evolution">Το JL-Mod Plus αξιοποιεί αυτή τη βάση και προσφέρει σύγχρονη διεπαφή, πιο ολοκληρωμένη βιβλιοθήκη MIDlet, νέες δυνατότητες και υποστήριξη για νεότερες εκδόσεις Android.</string>
+    <string name="action_back">Πίσω</string>
+    <string name="action_settings">Ρυθμίσεις</string>
+    <string name="CANCEL_CMD">Ακύρωση</string>
+    <string name="change">Αλλαγή</string>
+    <string name="choose">Επιλογή</string>
+    <string name="close">Κλείσιμο</string>
+    <string name="cmd_menu">Μενού</string>
+    <string name="CONFIRMATION_REQUIRED">Απαιτείται επιβεβαίωση</string>
+    <string name="create">Δημιουργία</string>
+    <string name="default_label"><xliff:g id="name" example="Example">%1$s</xliff:g> (προεπιλογή)</string>
+    <string name="dismiss">Απόρριψη</string>
+    <string name="edit">Επεξεργασία</string>
+    <string name="error">Σφάλμα</string>
+    <string name="error_name">Εισαγάγετε ένα όνομα.</string>
+    <string name="exit">Έξοδος</string>
+    <string name="help">Βοήθεια</string>
+    <string name="install">Εγκατάσταση</string>
+    <string name="licenses">Άδειες</string>
+    <string name="licenses_unavailable">Οι λεπτομέρειες αδειών δεν είναι διαθέσιμες.</string>
+    <string name="loading_info">Φόρτωση πληροφοριών…</string>
+    <string name="more">Περισσότερα</string>
+    <string name="not_saved_exists">Υπάρχει ήδη</string>
+    <string name="reset">Επαναφορά</string>
+    <string name="retry">Επανάληψη</string>
+    <string name="save">Αποθήκευση</string>
+    <string name="saved">Αποθηκεύτηκε: <xliff:g id="name" example="Example">%1$s</xliff:g></string>
+    <string name="START_CMD">Έναρξη</string>
+    <string name="warning">Προειδοποίηση</string>
+    <string name="removed">Καταργήθηκε: <xliff:g id="name" example="Example">%1$s</xliff:g></string>
+</resources>

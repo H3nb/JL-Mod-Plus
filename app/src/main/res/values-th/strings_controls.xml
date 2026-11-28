@@ -1,0 +1,106 @@
+<?xml version="1.0" encoding="utf-8"?>
+<!-- Virtual keypad controls, layout editor, physical key mappings, and control skins. -->
+<resources xmlns:tools="http://schemas.android.com/tools" xmlns:xliff="urn:oasis:names:tc:xliff:document:1.2">
+    <string name="alert_map_menu">ยังไม่ได้กำหนดปุ่มเมนู (M)\nคุณอาจไม่สามารถเปิดเมนูของ MIDlet ขณะเล่นได้</string>
+    <string name="dismiss_mapping">ปิดการกำหนดปุ่ม</string>
+    <string name="layout_edit_finish">แก้ไขเสร็จสิ้น</string>
+    <string name="layout_edit_done">เสร็จสิ้น</string>
+    <string name="layout_editor_grid_size">ขนาดเส้นกริด</string>
+    <string name="layout_editor_grid_coarse">หยาบ (16)</string>
+    <string name="layout_editor_grid_normal">ปกติ (24)</string>
+    <string name="layout_editor_grid_fine">ละเอียด (32)</string>
+    <string name="layout_editor_snap_on">เปิดการดูดแนว</string>
+    <string name="layout_editor_snap_off">ปิดการดูดแนว</string>
+    <string name="layout_edit_save_changes">บันทึกการเปลี่ยนแปลงปุ่มควบคุมเสมือนหรือไม่?</string>
+    <string name="layout_edit_discard">ละทิ้ง</string>
+    <string name="layout_edit_continue">แก้ไขต่อ</string>
+    <string name="layout_edit_finished">แก้ไขปุ่มควบคุมเสมือนเสร็จสิ้นแล้ว</string>
+    <string name="virtual_controls_save_failed">ไม่สามารถบันทึกปุ่มควบคุมเสมือนได้ โปรดลองอีกครั้ง</string>
+    <string name="layout_switch">เลือกเลย์เอาต์ปุ่มควบคุม</string>
+    <string name="mapping_dialog_key_not_specified">ยังไม่ได้กำหนดอินพุต</string>
+    <string name="mapping_dialog_message">กดแป้นหรือปุ่มจริงบนอุปกรณ์เพื่อกำหนดให้ปุ่มควบคุมนี้</string>
+    <string name="mapping_dialog_assigned_inputs">อินพุตที่กำหนดไว้</string>
+    <string name="mapping_dialog_add_input">คุณสามารถกำหนดอินพุตจริงได้มากกว่าหนึ่งปุ่ม</string>
+    <string name="mapping_dialog_remove">นำออก</string>
+    <string name="mapping_dialog_title">กดแป้นหรือปุ่ม</string>
+    <string name="message_reset_layout">รีเซ็ตเลย์เอาต์ปุ่มควบคุมเสมือนกลับเป็นค่าเริ่มต้นหรือไม่?</string>
+    <string name="RESET_LAYOUT_CMD">รีเซ็ตเลย์เอาต์ปุ่มควบคุมเสมือน</string>
+    <string name="saved_keyboard_layout_summary">บันทึกเลย์เอาต์ปุ่มควบคุมเสมือนแล้ว</string>
+    <string name="control_skin_title">สกินปุ่มควบคุมเสมือน</string>
+    <string name="control_skin_create" tools:ignore="MissingTranslation">สร้างชุด</string>
+    <string name="control_skin_default" tools:ignore="MissingTranslation">ปุ่มเริ่มต้น</string>
+    <string name="control_skin_edit" tools:ignore="MissingTranslation">แก้ไข</string>
+    <string name="control_skin_rename" tools:ignore="MissingTranslation">เปลี่ยนชื่อ</string>
+    <string name="control_skin_duplicate" tools:ignore="MissingTranslation">ทำสำเนา</string>
+    <string name="control_skin_delete" tools:ignore="MissingTranslation">ลบ</string>
+    <string name="control_skin_import_zip" tools:ignore="MissingTranslation">นำเข้า ZIP</string>
+    <string name="control_skin_export_zip" tools:ignore="MissingTranslation">ส่งออก ZIP</string>
+    <string name="control_skin_select_export_folder" tools:ignore="MissingTranslation">เลือกโฟลเดอร์ส่งออก</string>
+    <string name="control_skin_imported" tools:ignore="MissingTranslation">นำเข้า <xliff:g id="skin_name" example="Classic Nokia">%1$s</xliff:g> แล้ว</string>
+    <string name="control_skin_already_available" tools:ignore="MissingTranslation"><xliff:g id="skin_name" example="Classic Nokia">%1$s</xliff:g> มีอยู่แล้ว</string>
+    <string name="control_skin_exported" tools:ignore="MissingTranslation">บันทึก <xliff:g id="skin_name" example="Classic Nokia">%1$s</xliff:g> แล้ว</string>
+    <string name="control_skin_archive_invalid_path" tools:ignore="MissingTranslation">ตำแหน่งที่เลือกไม่พร้อมใช้งาน</string>
+    <string name="control_skin_archive_import_failed" tools:ignore="MissingTranslation">ไม่สามารถนำเข้าสกินปุ่มควบคุมได้ ตรวจสอบว่าไฟล์ ZIP มีชุดสกินที่ถูกต้องหนึ่งชุด</string>
+    <string name="control_skin_archive_export_failed" tools:ignore="MissingTranslation">ไม่สามารถส่งออกสกินปุ่มควบคุมได้ เลือกโฟลเดอร์ที่เขียนได้ซึ่งอยู่นอกคลังสกิน</string>
+    <string name="control_skin_name" tools:ignore="MissingTranslation">ชื่อชุด</string>
+    <string name="control_skin_icon" tools:ignore="MissingTranslation">ไอคอนเท่านั้น</string>
+    <string name="control_skin_full" tools:ignore="MissingTranslation">ปุ่มเต็ม</string>
+    <string name="control_skin_normal_image" tools:ignore="MissingTranslation">รูปภาพปกติ</string>
+    <string name="control_skin_pressed_image" tools:ignore="MissingTranslation">รูปภาพขณะกด</string>
+    <string name="control_skin_delete_warning" tools:ignore="MissingTranslation">ลบชุดสกินที่ใช้ร่วมกันนี้และรูปภาพทั้งหมดหรือไม่? MIDlet ที่ใช้ชุดนี้จะกลับไปใช้ปุ่มควบคุมเริ่มต้นเมื่อเปิดใช้งานครั้งถัดไป</string>
+    <string name="control_skin_invalid_image" tools:ignore="MissingTranslation">เลือกรูปภาพ PNG, WebP หรือ SVG</string>
+    <string name="control_skin_operation_failed" tools:ignore="MissingTranslation">ไม่สามารถดำเนินการกับสกินปุ่มควบคุมให้เสร็จสมบูรณ์ได้</string>
+    <string name="control_skin_missing" tools:ignore="MissingTranslation">ชุดไม่พร้อมใช้งาน (ใช้ปุ่มควบคุมเริ่มต้น)</string>
+    <string name="control_skin_remove_image" tools:ignore="MissingTranslation">นำออก</string>
+    <string name="control_skin_manage" tools:ignore="MissingTranslation">จัดการชุด</string>
+    <string name="control_skin_manage_named" tools:ignore="MissingTranslation">จัดการ <xliff:g id="skin_name" example="Classic Nokia">%1$s</xliff:g></string>
+    <plurals name="control_skin_count">
+        <item quantity="other">ปุ่มควบคุมที่ปรับแต่ง <xliff:g id="count" example="4">%1$d</xliff:g> รายการ</item>
+    </plurals>
+    <string name="control_skin_empty" tools:ignore="MissingTranslation">สร้างชุดเพื่อปรับแต่งรูปภาพปุ่มควบคุม</string>
+    <string name="control_skin_numeric" tools:ignore="MissingTranslation">แป้นตัวเลข</string>
+    <string name="control_skin_navigation" tools:ignore="MissingTranslation">การนำทาง</string>
+    <string name="control_skin_other" tools:ignore="MissingTranslation">ปุ่มอื่นๆ</string>
+    <string name="control_skin_pressed_requires_normal" tools:ignore="MissingTranslation">เพิ่มรูปภาพปกติก่อน</string>
+    <string name="control_skin_edit_named" tools:ignore="MissingTranslation">ปุ่ม <xliff:g id="button_label" example="5">%1$s</xliff:g></string>
+    <string name="control_skin_change_image" tools:ignore="MissingTranslation">เปลี่ยน</string>
+    <string name="control_skin_pick_image" tools:ignore="MissingTranslation">เลือกรูปภาพ</string>
+    <string name="control_skin_soft_left" tools:ignore="MissingTranslation">ซอฟต์คีย์ซ้าย</string>
+    <string name="control_skin_soft_right" tools:ignore="MissingTranslation">ซอฟต์คีย์ขวา</string>
+    <string name="control_skin_fire" tools:ignore="MissingTranslation">ตกลง / ยิง</string>
+    <string name="control_skin_menu" tools:ignore="MissingTranslation">เมนู</string>
+    <string name="control_skin_movement" tools:ignore="MissingTranslation">ปุ่มควบคุมทิศทาง</string>
+    <string name="control_skin_dpad" tools:ignore="MissingTranslation">D-pad</string>
+    <string name="control_skin_analog" tools:ignore="MissingTranslation">อนาล็อกสติ๊ก</string>
+    <string name="control_skin_dpad_base" tools:ignore="MissingTranslation">รูปภาพ D-pad</string>
+    <string name="control_skin_overlay_up" tools:ignore="MissingTranslation">ภาพซ้อนทิศขึ้น</string>
+    <string name="control_skin_overlay_down" tools:ignore="MissingTranslation">ภาพซ้อนทิศลง</string>
+    <string name="control_skin_overlay_left" tools:ignore="MissingTranslation">ภาพซ้อนทิศซ้าย</string>
+    <string name="control_skin_overlay_right" tools:ignore="MissingTranslation">ภาพซ้อนทิศขวา</string>
+    <string name="control_skin_analog_base" tools:ignore="MissingTranslation">รูปภาพฐาน</string>
+    <string name="control_skin_analog_thumb" tools:ignore="MissingTranslation">รูปภาพก้านสติ๊ก</string>
+    <string name="control_skin_analog_thumb_pressed" tools:ignore="MissingTranslation">รูปภาพก้านสติ๊กขณะใช้งาน</string>
+    <string name="control_skin_preview_directions" tools:ignore="MissingTranslation">แสดงตัวอย่างทิศทาง</string>
+    <string name="control_skin_preview_direction" tools:ignore="MissingTranslation">ตัวอย่าง: <xliff:g id="direction" example="Up">%1$s</xliff:g></string>
+    <string name="control_skin_builtin_preview" tools:ignore="MissingTranslation">เริ่มต้น</string>
+    <string name="control_skin_custom_preview" tools:ignore="MissingTranslation">กำหนดเอง</string>
+    <string name="layout_editor_group_on">ปรับขนาดพร้อมกัน</string>
+    <string name="layout_editor_group_off">ปรับขนาดทีละปุ่ม</string>
+    <string name="layout_editor_snap_grid">ดูดติดเส้นกริด</string>
+    <string name="layout_editor_snap_controls">ดูดติดปุ่มอื่น</string>
+    <string name="layout_editor_snap_resize">ดูดแนวขณะปรับขนาด</string>
+    <string name="layout_editor_snap_resize_on">ดูดแนวปรับขนาด: เปิด</string>
+    <string name="layout_editor_snap_resize_off">ดูดแนวปรับขนาด: ปิด</string>
+    <string name="layout_editor_snap_grid_on">ดูดติดกริด: เปิด</string>
+    <string name="layout_editor_snap_grid_off">ดูดติดกริด: ปิด</string>
+    <string name="layout_editor_snap_controls_on">ดูดติดปุ่ม: เปิด</string>
+    <string name="layout_editor_snap_controls_off">ดูดติดปุ่ม: ปิด</string>
+    <string name="layout_editor_guide_gestures">ท่าทางสัมผัส</string>
+    <string name="layout_editor_guide_move">ลากปุ่มควบคุมเพื่อย้ายตำแหน่ง</string>
+    <string name="layout_editor_guide_resize">ใช้สองนิ้วเพื่อปรับขนาด เลื่อนในแนวนอนหรือแนวตั้งเพื่อเปลี่ยนความกว้างหรือความสูง</string>
+    <string name="layout_editor_guide_tools">เครื่องมือแก้ไข</string>
+    <string name="layout_editor_guide_done">แตะ เสร็จสิ้น เพื่อบันทึก ละทิ้ง หรือแก้ไขต่อ</string>
+    <string name="layout_editor_guide_start">เริ่มแก้ไข</string>
+    <string name="control_skin_invalid_name">ใช้ 1–61 อักขระ ได้แก่ ตัวอักษร ตัวเลข เครื่องหมายประกอบอักขระ ช่องว่าง หรือ . _ ( ) - ขึ้นต้นด้วยตัวอักษรหรือตัวเลข และห้ามลงท้ายด้วยจุด</string>
+    <string name="control_skin_image_validation_failed">เลือกรูป PNG, WebP หรือ SVG ที่ถูกต้อง ขนาดไม่เกิน 8 MiB รูป PNG และ WebP ต้องมีขนาดไม่เกิน 2048 × 2048 พิกเซล</string>
+</resources>

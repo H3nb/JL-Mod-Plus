@@ -1,0 +1,279 @@
+<?xml version="1.0" encoding="utf-8"?>
+<!-- メモリエディターの検索、インスペクター、ブックマーク、保存済み変数、クイックアクション、スクリプトビルダー -->
+<resources xmlns:tools="http://schemas.android.com/tools" xmlns:xliff="urn:oasis:names:tc:xliff:document:1.2">
+    <string name="memory_editor_bubble">メモリエディターのフローティングボタン</string>
+    <string name="memory_editor_bubble_content_description">メモリエディターを開く</string>
+    <string name="memory_editor_previous_results_page_action">前の結果ページ</string>
+    <string name="memory_editor_next_results_page_action">次の結果ページ</string>
+    <string name="memory_editor">メモリエディター</string>
+    <string name="memory_editor_search_hint">値</string>
+    <string name="memory_editor_next_scan">次のスキャン</string>
+    <string name="memory_editor_new_search">新規検索</string>
+    <plurals name="memory_editor_results">
+        <item quantity="other"><xliff:g id="count" example="3">%1$d</xliff:g> 件の結果</item>
+    </plurals>
+    <plurals name="memory_editor_candidates">
+        <item quantity="other"><xliff:g id="count" example="3">%1$d</xliff:g> 件の候補</item>
+    </plurals>
+    <plurals name="memory_editor_search_complete">
+        <item quantity="other">検索完了 · 候補 <xliff:g id="count" example="3">%1$d</xliff:g> 件</item>
+    </plurals>
+    <string name="memory_editor_no_results">結果がありません</string>
+    <string name="memory_editor_no_watch">ウォッチリストは空です</string>
+    <string name="memory_editor_unsupported">このランタイムではメモリエディターを利用できません。</string>
+    <string name="memory_editor_engine_unavailable">メモリエディターエンジンを利用できません。</string>
+    <string name="memory_editor_engine_reconnecting">メモリエディターに再接続中…</string>
+    <string name="memory_editor_refresh">更新</string>
+    <string name="memory_editor_undo">スキャンを元に戻す</string>
+    <string name="memory_variables_tab">保存済み</string>
+    <string name="memory_editor_back" tools:ignore="MissingTranslation">戻る</string>
+    <string name="memory_list_keep" tools:ignore="MissingTranslation">次回起動時も保持</string>
+    <string name="memory_list_stop_keeping" tools:ignore="MissingTranslation">保持を解除</string>
+    <string name="memory_list_kept" tools:ignore="MissingTranslation">次回起動時も保持</string>
+    <string name="memory_list_empty" tools:ignore="MissingTranslation">保存済みのブックマークはまだありません</string>
+    <string name="memory_list_empty_hint" tools:ignore="MissingTranslation">「検索」または「インスペクター」で変数をブックマークすると、ここで追跡できます。</string>
+    <string name="memory_list_remove_confirm" tools:ignore="MissingTranslation">「保存済み」から削除しますか？有効な固定はすべて停止します。</string>
+    <string name="memory_list_add" tools:ignore="MissingTranslation">ブックマーク</string>
+    <string name="memory_bookmark_relink" tools:ignore="MissingTranslation">再リンク</string>
+    <string name="memory_bookmark_relink_hint" tools:ignore="MissingTranslation">「検索」で置き換え先の変数を選択してから、「再リンク」を選んでください。</string>
+    <string name="memory_bookmark_relink_confirm" tools:ignore="MissingTranslation">このブックマークを選択した変数にリンクしますか？このブックマークの有効な固定は停止します。</string>
+    <string name="memory_bookmark_unavailable" tools:ignore="MissingTranslation">利用不可 —「再リンク」を選んで対象を指定してください</string>
+    <string name="memory_editor_watch">ウォッチ</string>
+    <string name="memory_editor_search_tab">検索</string>
+    <string name="memory_editor_search_known_values">既知の値を検索</string>
+    <string name="memory_editor_search_unknown_values">不明な値を検索</string>
+    <string name="memory_editor_add_to_watch">選択した値をブックマーク</string>
+    <string name="memory_editor_no_candidates">検索可能な値が見つかりませんでした</string>
+    <string name="memory_editor_edit">編集</string>
+    <plurals name="memory_editor_edit_batch">
+        <item quantity="other"><xliff:g id="count" example="3">%1$d</xliff:g> 個の値を編集</item>
+    </plurals>
+    <string name="memory_editor_edit_batch_no_common_type">選択した項目は指定のデータ型に対応していません。互換性のある項目ごとに編集してください。</string>
+    <string name="memory_editor_save">適用</string>
+    <string name="memory_editor_replacement">変更後の値</string>
+    <string name="memory_editor_freeze">固定</string>
+    <string name="memory_editor_remove">削除</string>
+    <string name="memory_editor_select_visible">表示中の項目を選択</string>
+    <string name="memory_editor_clear_selection">選択を解除</string>
+    <plurals name="memory_editor_selected">
+        <item quantity="other"><xliff:g id="count" example="3">%1$d</xliff:g> 件を選択中</item>
+    </plurals>
+    <string name="memory_editor_close">メモリエディターを閉じる</string>
+    <string name="memory_editor_searching">メモリを検索中…</string>
+    <string name="memory_editor_working">操作を適用中…</string>
+    <string name="memory_editor_search_progress"><xliff:g id="scanned_mib" example="12">%1$d</xliff:g> / <xliff:g id="total_mib" example="64">%2$d</xliff:g> MiB をスキャン済み</string>
+    <string name="memory_editor_candidate_moved">対象を更新しました</string>
+    <string name="memory_editor_candidate_relocating">再検証中</string>
+    <string name="memory_editor_candidate_ambiguous">あいまい — 書き込みを一時停止</string>
+    <string name="memory_editor_candidate_lost">消失 — 書き込みを一時停止</string>
+    <string name="memory_editor_apply">適用</string>
+    <string name="memory_editor_min_value">最小値</string>
+    <string name="memory_editor_max_value">最大値</string>
+    <string name="memory_editor_change_amount">変化量</string>
+    <string name="memory_editor_min_change">最小変化量</string>
+    <string name="memory_editor_max_change">最大変化量</string>
+    <string name="memory_editor_unfreeze">固定を解除</string>
+    <string name="memory_editor_cancelled">操作をキャンセルしました。</string>
+    <string name="memory_editor_resource_limit">メモリエディターが安全上限に達しました。検索条件を絞り込むか、不要なブックマークや固定を削除してください。</string>
+    <string name="memory_editor_identity_unsafe">選択した値または検索状態を検証できませんでした。結果を更新するかインスペクターを開き直して、もう一度お試しください。</string>
+    <string name="memory_editor_safety_limit">この操作に対して選択された値が多すぎます。選択数を減らしてもう一度お試しください。</string>
+    <string name="memory_editor_invalid_request">値または操作が無効です。</string>
+    <string name="memory_editor_freeze_paused">安全のため一時停止中</string>
+    <string name="memory_editor_predicate_between">範囲内</string>
+    <string name="memory_editor_predicate_changed">変化した</string>
+    <string name="memory_editor_predicate_unchanged">変化なし</string>
+    <string name="memory_editor_predicate_increased">増加した</string>
+    <string name="memory_editor_predicate_decreased">減少した</string>
+    <string name="memory_editor_predicate_increased_by">指定量だけ増加</string>
+    <string name="memory_editor_predicate_decreased_by">指定量だけ減少</string>
+    <string name="memory_editor_predicate_changed_by">指定量だけ変化</string>
+    <string name="memory_editor_predicate_increased_range">増加量が範囲内</string>
+    <string name="memory_editor_predicate_decreased_range">減少量が範囲内</string>
+    <string name="memory_editor_inspector">インスペクター</string>
+    <string name="memory_editor_inspect_memory">周辺のメモリを調査</string>
+    <string name="memory_editor_inspector_loading">結果を検証し、周辺のメモリを読み取っています…</string>
+    <string name="memory_editor_inspector_empty">周辺のメモリを調査するには結果を選択してください。</string>
+    <string name="memory_editor_inspector_no_rows">調査できる周辺のメモリがありません。</string>
+    <string name="memory_editor_refresh_snapshot">スナップショットを更新</string>
+    <string name="memory_editor_select_result_value">このブックマークを選択</string>
+    <string name="memory_editor_freeze_after_edit">適用後に固定する</string>
+    <string name="memory_editor_freeze_after_edit_help">この値を固定し、「保存済み」にブックマークします。</string>
+    <string name="memory_editor_expression_single_hint">値を 1 つ入力するか、グループ検索の値をセミコロン（;）で区切って入力してください。</string>
+    <string name="memory_editor_expression_group_needs_type">グループ検索ではデータ型を指定してください。</string>
+    <plurals name="memory_editor_expression_group_hint">
+        <item quantity="other">グループ検索 · <xliff:g id="count" example="3">%1$d</xliff:g> 個の値 · 同一 Java オブジェクト</item>
+    </plurals>
+    <string name="memory_editor_expression_query_help">例: 500 または 500;1000。グループ検索では、同一の Java オブジェクト内にある 2〜8 個の値を検索します。</string>
+    <string name="memory_editor_keypad_clear">クリア</string>
+    <string name="memory_editor_peek_underlay">長押しして背面の MIDlet を表示</string>
+    <string name="memory_editor_peek_underlay_active">背面の MIDlet を表示中</string>
+    <string name="memory_editor_no_runtime">実行中の MIDlet ランタイムがありません。</string>
+    <string name="memory_editor_no_search_history">復元できる以前の検索がありません。</string>
+    <string name="memory_editor_partial_write">書き込み操作が完全には完了しませんでした。現在の値を確認してからもう一度お試しください。</string>
+    <!-- 独立した書き込み件数: 確認済み、未確認、スキップ、未実行、型不一致によるスキップ -->
+    <string name="memory_editor_write_outcome">書き込み確認済み: <xliff:g id="confirmed" example="3">%1$d</xliff:g>、未確認: <xliff:g id="unconfirmed" example="0">%2$d</xliff:g>、スキップ: <xliff:g id="skipped" example="0">%3$d</xliff:g>、未実行: <xliff:g id="not_attempted" example="0">%4$d</xliff:g>、型不一致でスキップ: <xliff:g id="skipped_by_type" example="0">%5$d</xliff:g>。</string>
+    <!-- %1$s はローカライズ済みの理由説明。%2$d〜%6$d は同じ独立カウント -->
+    <string name="memory_editor_write_failure_outcome"><xliff:g id="reason" example="Write interrupted.">%1$s</xliff:g>\n書き込み確認済み: <xliff:g id="confirmed" example="1">%2$d</xliff:g>、未確認: <xliff:g id="unconfirmed" example="1">%3$d</xliff:g>、スキップ: <xliff:g id="skipped" example="0">%4$d</xliff:g>、未実行: <xliff:g id="not_attempted" example="0">%5$d</xliff:g>、型不一致でスキップ: <xliff:g id="skipped_by_type" example="0">%6$d</xliff:g>。</string>
+    <!-- 次のスキャン前 (%1$d) と後 (%2$d) の結果数 -->
+    <string name="memory_editor_next_scan_result">次のスキャン結果: <xliff:g id="before_count" example="120">%1$d</xliff:g> → <xliff:g id="after_count" example="14">%2$d</xliff:g></string>
+    <string name="memory_editor_type_auto">自動</string>
+    <string name="memory_editor_remove_candidates_title">選択した結果を削除しますか？</string>
+    <string name="memory_editor_remove_candidates_description">削除: 選択した結果を検索一覧から取り除きます。ゲームメモリ内の値は変更されません。\n\n元に戻して削除: 現在の値が最後に確認された編集後の値とまだ一致する場合に限り、編集前の値に戻します。固定中の値や安全に復元できない結果は一覧に残ります。</string>
+    <string name="memory_editor_revert_and_remove">元に戻して削除</string>
+    <string name="memory_editor_revert_remove_commit_failed">値は復元された可能性がありますが、結果を一覧から削除できませんでした。更新してからもう一度お試しください。ゲーム側で変更された値は上書きされません。</string>
+    <string name="memory_editor_revert_remove_outcome">復元済み: <xliff:g id="restored" example="2">%1$d</xliff:g>、削除済み: <xliff:g id="removed" example="2">%2$d</xliff:g>、競合: <xliff:g id="conflicts" example="0">%3$d</xliff:g>、未確認: <xliff:g id="unconfirmed" example="0">%4$d</xliff:g>、未実行: <xliff:g id="not_attempted" example="0">%5$d</xliff:g>。</string>
+    <string name="memory_editor_set_all">一括設定</string>
+    <string name="memory_editor_increment_start">開始値</string>
+    <string name="memory_editor_edit_batch_type_notice">データ型が一致する値のみが変更されます。</string>
+    <string name="memory_editor_write_confirmed">メモリ再読み取りで確認された値: <xliff:g id="count" example="3">%1$d</xliff:g> 件。</string>
+    <string name="memory_editor_candidate_untraced">配列 #<xliff:g id="array_id" example="42">%1$d</xliff:g>[<xliff:g id="index" example="3">%2$d</xliff:g>] · 参照元未追跡</string>
+    <string name="memory_editor_candidate_static"><xliff:g id="field_name" example="Player.coins">%1$s</xliff:g> · <xliff:g id="reference_kind" example="Static reference">%2$s</xliff:g></string>
+    <string name="memory_editor_candidate_instance"><xliff:g id="field_name" example="Player.hp">%1$s</xliff:g> · <xliff:g id="reference_kind" example="Instance reference">%2$s</xliff:g> · 対象 #<xliff:g id="target_id" example="1">%3$d</xliff:g></string>
+    <string name="memory_editor_reference_static">静的参照</string>
+    <string name="memory_editor_reference_instance">インスタンス参照</string>
+    <string name="memory_editor_path_changed">スキャン後に参照パスが変更されました。</string>
+    <string name="memory_editor_path_incomplete">参照パスが調査の上限を超えています。</string>
+    <string name="memory_editor_source_unknown">参照元未追跡</string>
+    <string name="memory_editor_incremental_edit">連番設定</string>
+    <string name="memory_editor_increment_step">増分</string>
+    <string name="memory_editor_increment_invalid">単一の整数型とその範囲内の値を指定してください。</string>
+    <!-- 一括編集ダイアログのタイトルにはすでに選択数が表示される -->
+    <string name="memory_editor_increment_preview">プレビュー: <xliff:g id="name" example="Example">%1$s</xliff:g></string>
+    <string name="memory_editor_panel_opacity">パネルの不透明度</string>
+    <string name="memory_editor_panel_opacity_help">背景の透明度を調整し、検索しながらゲーム内の値を確認できます。文字とアイコンは表示されたままになります。</string>
+    <string name="memory_editor_reconversion_required" tools:ignore="MissingTranslation">この MIDlet のインストール済み変換データはメモリエディターに対応していません。ゲームを閉じてから、JL-Mod Plus で再変換または再インストールしてください。</string>
+    <string name="memory_saved_tab" tools:ignore="MissingTranslation">保存済み</string>
+    <string name="memory_saved_save" tools:ignore="MissingTranslation">変数を保存</string>
+    <string name="memory_saved_name" tools:ignore="MissingTranslation">名前</string>
+    <string name="memory_saved_explanation" tools:ignore="MissingTranslation">検証済みのメモリパスを今後のセッション用に保存します。値が自動的に書き込まれることはありません。</string>
+    <string name="memory_saved_empty" tools:ignore="MissingTranslation">保存済みの変数はまだありません。検索結果を選択して保存してください。</string>
+    <string name="memory_saved_not_ready" tools:ignore="MissingTranslation">未準備</string>
+    <string name="memory_saved_retry" tools:ignore="MissingTranslation">再試行</string>
+    <string name="memory_saved_rename" tools:ignore="MissingTranslation">名前を変更</string>
+    <string name="memory_saved_value" tools:ignore="MissingTranslation">値</string>
+    <string name="memory_saved_delete_confirm" tools:ignore="MissingTranslation">この保存済み定義を削除しますか？ゲーム内の値は変更されません。</string>
+    <string name="memory_saved_changed" tools:ignore="MissingTranslation">変更あり</string>
+    <string name="memory_saved_rebound" tools:ignore="MissingTranslation">対象を更新しました</string>
+    <string name="memory_saved_import_summary" tools:ignore="MissingTranslation">保存済み: <xliff:g id="added_count" example="4">%1$d</xliff:g> 件を追加、<xliff:g id="existing_count" example="2">%2$d</xliff:g> 件は既存</string>
+    <string name="memory_saved_incompatible" tools:ignore="MissingTranslation">非対応</string>
+    <string name="memory_saved_failed" tools:ignore="MissingTranslation">失敗</string>
+    <string name="memory_saved_delete_many_confirm" tools:ignore="MissingTranslation"><xliff:g id="count" example="3">%1$d</xliff:g> 件の保存済み定義を削除しますか？ゲーム内の値は変更されません。</string>
+    <string name="memory_recipes_title" tools:ignore="MissingTranslation">クイックアクション</string>
+    <string name="memory_recipes_simple_from_saved" tools:ignore="MissingTranslation">対象: <xliff:g id="bookmark_name" example="Coins">%1$s</xliff:g></string>
+    <string name="memory_recipes_preview" tools:ignore="MissingTranslation">対象をプレビュー</string>
+    <string name="memory_recipes_stop_freeze" tools:ignore="MissingTranslation">値の固定を停止</string>
+    <string name="memory_recipes_freeze" tools:ignore="MissingTranslation">このゲームの実行中は固定を維持</string>
+    <string name="memory_recipes_run" tools:ignore="MissingTranslation">実行</string>
+    <string name="memory_recipes_active_freezes" tools:ignore="MissingTranslation">値を固定中のスクリプト</string>
+    <string name="memory_recipes_target_unavailable" tools:ignore="MissingTranslation">ブックマークの対象が利用できません。実行前に更新するか再リンクしてください。</string>
+    <string name="memory_recipes_preview_values" tools:ignore="MissingTranslation">現在の値: <xliff:g id="name" example="Example">%1$s</xliff:g></string>
+    <string name="memory_scripts_title" tools:ignore="MissingTranslation">スクリプト</string>
+    <string name="memory_scripts_active" tools:ignore="MissingTranslation">有効</string>
+    <string name="memory_scripts_inputs" tools:ignore="MissingTranslation">入力</string>
+    <string name="memory_scripts_create_from_bookmarks" tools:ignore="MissingTranslation">スクリプトを作成</string>
+    <string name="memory_scripts_create_failed" tools:ignore="MissingTranslation">新しいスクリプトを開始できませんでした。</string>
+    <string name="memory_scripts_draft_in_progress" tools:ignore="MissingTranslation">先に現在のスクリプト下書きを完了するか破棄してください。</string>
+    <string name="memory_builder_open_saved" tools:ignore="MissingTranslation">保存済みを開く</string>
+    <string name="memory_builder_add_description" tools:ignore="MissingTranslation">説明を追加</string>
+    <string name="memory_builder_find_values" tools:ignore="MissingTranslation">値を検索</string>
+    <string name="memory_scripts_description" tools:ignore="MissingTranslation">説明</string>
+    <string name="memory_scripts_new" tools:ignore="MissingTranslation">新規スクリプト</string>
+    <string name="memory_scripts_back" tools:ignore="MissingTranslation">戻る</string>
+    <string name="memory_scripts_edit" tools:ignore="MissingTranslation">編集</string>
+    <string name="memory_scripts_save" tools:ignore="MissingTranslation">保存</string>
+    <string name="memory_scripts_saved" tools:ignore="MissingTranslation">スクリプトを保存しました</string>
+    <string name="memory_scripts_deleted" tools:ignore="MissingTranslation">スクリプトを削除しました</string>
+    <string name="memory_scripts_save_failed" tools:ignore="MissingTranslation">スクリプトを保存できませんでした。</string>
+    <string name="memory_scripts_editor_hint" tools:ignore="MissingTranslation">対応するメモリ操作を使った JSON スクリプトを入力または貼り付けてください。保存してもスクリプトは実行されません。</string>
+    <string name="memory_scripts_paste_hint" tools:ignore="MissingTranslation">スクリプト JSON を貼り付け</string>
+    <string name="memory_scripts_paste" tools:ignore="MissingTranslation">貼り付け</string>
+    <string name="memory_scripts_clipboard_invalid" tools:ignore="MissingTranslation">クリップボードが空か、ドキュメントが 64 KiB を超えています</string>
+    <string name="memory_scripts_invalid" tools:ignore="MissingTranslation">無効なスクリプト形式です</string>
+    <string name="memory_scripts_freeze_active" tools:ignore="MissingTranslation">このスクリプトは値を固定しています</string>
+    <string name="memory_scripts_delete" tools:ignore="MissingTranslation">削除</string>
+    <string name="memory_scripts_delete_confirm" tools:ignore="MissingTranslation"><xliff:g id="name" example="Example">%1$s</xliff:g> を削除しますか？このスクリプトで有効な固定はすべて停止します。</string>
+    <string name="memory_scripts_empty" tools:ignore="MissingTranslation">保存済みのスクリプトはありません</string>
+    <string name="memory_scripts_unsaved_title" tools:ignore="MissingTranslation">未保存のスクリプトを破棄しますか？</string>
+    <string name="memory_scripts_unsaved_message" tools:ignore="MissingTranslation">スクリプトへの変更は保存されていません。</string>
+    <string name="memory_scripts_discard" tools:ignore="MissingTranslation">破棄</string>
+    <string name="memory_scripts_current_title" tools:ignore="MissingTranslation">前回の読み取り</string>
+    <string name="memory_scripts_refresh" tools:ignore="MissingTranslation">更新</string>
+    <string name="memory_scripts_reading" tools:ignore="MissingTranslation">現在の値を読み取り中…</string>
+    <string name="memory_scripts_refresh_hint" tools:ignore="MissingTranslation">「更新」をタップすると、実行中のゲームから現在の値を読み取ります。</string>
+    <string name="memory_scripts_mode_toggle" tools:ignore="MissingTranslation">値の固定</string>
+    <string name="memory_scripts_mode_form" tools:ignore="MissingTranslation">値エディター</string>
+    <string name="memory_scripts_mode_once" tools:ignore="MissingTranslation">クイックアクション</string>
+    <string name="memory_scripts_mode_legacy" tools:ignore="MissingTranslation">高度なスクリプト</string>
+    <string name="memory_scripts_edit_values" tools:ignore="MissingTranslation">値を編集</string>
+    <string name="memory_scripts_apply" tools:ignore="MissingTranslation">変更を適用</string>
+    <string name="memory_scripts_refresh_required" tools:ignore="MissingTranslation">適用する前に「更新」して現在の値を確認してください。</string>
+    <string name="memory_scripts_inconsistent" tools:ignore="MissingTranslation">一致しないコピー: <xliff:g id="name" example="Example">%1$s</xliff:g></string>
+    <string name="memory_editor_minimize" tools:ignore="MissingTranslation">メモリエディターを最小化</string>
+    <string name="memory_scripts_choose_type" tools:ignore="MissingTranslation">新規スクリプト</string>
+    <string name="memory_scripts_choose_hint" tools:ignore="MissingTranslation">このスクリプトの動作方法を選択してください。</string>
+    <string name="memory_builder_json_editor" tools:ignore="MissingTranslation">JSON エディター</string>
+    <string name="memory_builder_freeze_hint" tools:ignore="MissingTranslation">有効な間、選択した値を固定し続けます。固定をオフにしても元の値には戻りません。</string>
+    <string name="memory_builder_form_hint" tools:ignore="MissingTranslation">編集を適用する前に現在の値を読み取るフォームを作成します。</string>
+    <string name="memory_builder_actions_hint" tools:ignore="MissingTranslation">「実行」を押すたびに変更を一度適用します。加算と減算には、前回までの変更が反映された現在の値が使われます。</string>
+    <string name="memory_builder_name" tools:ignore="MissingTranslation">スクリプト名</string>
+    <string name="memory_builder_frozen_values" tools:ignore="MissingTranslation">固定する値</string>
+    <string name="memory_builder_fields" tools:ignore="MissingTranslation">フィールド</string>
+    <string name="memory_builder_actions" tools:ignore="MissingTranslation">アクション</string>
+    <string name="memory_builder_add_bookmarks" tools:ignore="MissingTranslation">ブックマークから追加</string>
+    <string name="memory_builder_empty" tools:ignore="MissingTranslation">検証済みのブックマークを 1 つ以上追加してください。</string>
+    <string name="memory_builder_field_label" tools:ignore="MissingTranslation">フィールド名</string>
+    <string name="memory_builder_keep_at" tools:ignore="MissingTranslation">固定する値</string>
+    <string name="memory_builder_amount" tools:ignore="MissingTranslation">値 / 数量</string>
+    <string name="memory_builder_set" tools:ignore="MissingTranslation">設定</string>
+    <string name="memory_builder_add" tools:ignore="MissingTranslation">加算</string>
+    <string name="memory_builder_subtract" tools:ignore="MissingTranslation">減算</string>
+    <string name="memory_builder_view_json" tools:ignore="MissingTranslation">JSON を表示</string>
+    <string name="memory_builder_edit_json" tools:ignore="MissingTranslation">JSON を編集</string>
+    <string name="memory_builder_search_bookmarks" tools:ignore="MissingTranslation">ブックマークを検索</string>
+    <string name="memory_builder_no_bookmarks" tools:ignore="MissingTranslation">一致する検証済みブックマークがありません。「検索」で値をブックマークするか、「保存済み」で再リンクしてください。</string>
+    <string name="memory_builder_needs_relink" tools:ignore="MissingTranslation">再リンクが必要</string>
+    <string name="memory_builder_add_selected" tools:ignore="MissingTranslation">選択項目を追加</string>
+    <string name="memory_builder_min" tools:ignore="MissingTranslation">最小値（任意）</string>
+    <string name="memory_builder_max" tools:ignore="MissingTranslation">最大値（任意）</string>
+    <string name="memory_builder_add_target" tools:ignore="MissingTranslation">対象を追加</string>
+    <string name="memory_builder_freeze_short" tools:ignore="MissingTranslation">選択した値を指定の数値に固定</string>
+    <string name="memory_builder_form_short" tools:ignore="MissingTranslation">複数の値をまとめて調整</string>
+    <string name="memory_builder_actions_short" tools:ignore="MissingTranslation">設定・加算・減算の単発アクションを実行</string>
+    <string name="memory_editor_refine_scan" tools:ignore="MissingTranslation">絞り込み</string>
+    <string name="memory_scripts_saved_count" tools:ignore="MissingTranslation"><xliff:g id="count" example="3">%1$d</xliff:g> 件保存済み</string>
+    <string name="memory_scripts_empty_hint" tools:ignore="MissingTranslation">スクリプトを作成すると、プレイ中に値を編集・固定できます。</string>
+    <string name="memory_builder_limits" tools:ignore="MissingTranslation">上限・下限（任意）</string>
+    <string name="memory_editor_selection_limit">選択できる値は最大%1$d個です。</string>
+    <string name="memory_saved_storage_unavailable">保存済みの項目にアクセスできません。</string>
+    <string name="memory_bookmark_renamed">ブックマーク名を変更しました</string>
+    <string name="memory_editor_memory_unavailable">MIDletのメモリを利用できません。</string>
+    <string name="memory_bookmark_added">ブックマークを追加しました</string>
+    <string name="memory_bookmark_relinked">ブックマークを再リンクしました</string>
+    <string name="memory_bookmarks_removed">保存済みから削除しました</string>
+    <string name="memory_freeze_enabled">固定を有効にしました</string>
+    <string name="memory_freeze_unavailable">固定を有効にできませんでした。</string>
+    <string name="memory_list_session_only_failed">この項目を現在のセッションのみに保持できませんでした。</string>
+    <string name="memory_list_kept_unlinked">次回起動用に保存しましたが、現在のセッションにリンクできませんでした。</string>
+    <string name="memory_list_removal_unavailable">接続が切断されているため項目を削除できません。もう一度お試しください。</string>
+    <string name="memory_list_watch_removed">セッション内の追跡を解除しました</string>
+    <string name="memory_list_bookmark_removal_failed">ブックマークを削除できませんでした：%1$s</string>
+    <string name="memory_list_watch_removal_failed">セッション内の追跡を解除できませんでした：%1$s</string>
+    <string name="memory_list_removal_unknown_error">不明なエラー</string>
+    <string name="memory_editor_edit_freeze_failed">値を更新しましたが、固定を開始できませんでした。再試行する前に現在の値を確認してください。</string>
+    <string name="memory_scripts_freeze_inactive">このスクリプトによる値の固定は終了しました。</string>
+    <string name="memory_bookmark_change_incomplete">ブックマークの変更を完了できませんでした。再試行する前に保存済み項目を確認してください。</string>
+    <string name="memory_editor_value_updated">値を更新しました。</string>
+    <string name="memory_editor_value_updated_frozen">値を更新し、固定を有効にしました。</string>
+    <string name="memory_scripts_delete_failed">スクリプトを削除できませんでした。再試行する前に固定の状態を確認してください。</string>
+    <string name="memory_scripts_check_input">スクリプトを準備できませんでした。値とブックマークを確認してください。</string>
+    <string name="memory_scripts_read_failed">現在の値を読み取れませんでした。更新してからもう一度お試しください。</string>
+    <string name="memory_technical_details">技術的な詳細</string>
+    <string name="memory_scripts_resource_limit">スクリプトが安全上の制限に達しました。対象を減らすか、使用していない固定を解除してください。</string>
+    <string name="memory_scripts_target_changed">スクリプトの対象を確認できませんでした。値を更新し、ブックマークを確認してください。</string>
+    <string name="memory_scripts_operation_unavailable">このスクリプト操作は現在の対象に対応していません。</string>
+    <string name="memory_scripts_invalid_input">スクリプトの入力を確認してください。許容範囲内の有効な値を入力してください。</string>
+    <string name="memory_scripts_value_range">値が対応範囲を超えています。スクリプトとその値を確認してください。</string>
+    <string name="memory_scripts_inconsistent_values">同じ値のコピーが一致していません。ゲームの状態を確認してから再試行してください。</string>
+    <string name="memory_scripts_wrong_midlet">このスクリプトは別の MIDlet 用です。正しい MIDlet を開くか、別のスクリプトを選択してください。</string>
+    <string name="memory_scripts_target_not_ready">スクリプトの対象がまだ準備できていません。ゲームの該当画面に戻ってから再試行してください。</string>
+</resources>

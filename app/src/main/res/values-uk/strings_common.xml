@@ -1,0 +1,47 @@
+<?xml version="1.0" encoding="utf-8"?>
+<!-- Shared UI actions, generic labels, dialogs, and About screen. -->
+<resources xmlns:xliff="urn:oasis:names:tc:xliff:document:1.2">
+    <string name="about">Про додаток</string>
+    <string name="about_message">Запускайте класичні додатки та ігри, упорядковуйте MIDlet у своїй бібліотеці й налаштовуйте керування, екран, звук і продуктивність. JL-Mod Plus — безкоштовний проєкт із відкритим кодом.</string>
+    <string name="about_subtitle">Емулятор Java ME для Android</string>
+    <string name="about_compatibility">Сумісність залежить від MIDlet, пристрою та підтримуваних API Java ME. Деякі додатки можуть працювати інакше, ніж на оригінальних пристроях.</string>
+    <string name="about_lineage_title">Походження проєкту</string>
+    <string name="about_build_title">Інформація про збірку</string>
+    <string name="about_version_label">Версія</string>
+    <string name="about_build_label">Збірка</string>
+    <string name="about_revision_label">Ревізія коду</string>
+    <string name="about_links_title">Проєкт і ліцензії</string>
+    <string name="about_github_link_copied">Браузер не знайдено. Посилання на GitHub скопійовано в буфер обміну.</string>
+    <string name="about_github_browser_unavailable">Браузер для відкриття GitHub не знайдено.</string>
+    <string name="about_lineage">JL-Mod Plus — незалежне відгалуження JL-Mod від woesss (Юрія Харченка). JL-Mod створено на основі J2ME Loader Микити Шакаруна, який бере початок від J2meLoader від NaikSoftware.</string>
+    <string name="about_evolution">JL-Mod Plus розвиває цю основу, пропонуючи сучасний інтерфейс, розширену бібліотеку MIDlet, нові можливості та підтримку новіших версій Android.</string>
+    <string name="action_back">Назад</string>
+    <string name="action_settings">Налаштування</string>
+    <string name="CANCEL_CMD">Скасувати</string>
+    <string name="change">Змінити</string>
+    <string name="choose">Вибрати</string>
+    <string name="close">Закрити</string>
+    <string name="cmd_menu">Меню</string>
+    <string name="CONFIRMATION_REQUIRED">Потрібне підтвердження</string>
+    <string name="create">Створити</string>
+    <string name="default_label"><xliff:g id="name" example="Example">%1$s</xliff:g> (за замовчуванням)</string>
+    <string name="dismiss">Закрити</string>
+    <string name="edit">Редагувати</string>
+    <string name="error">Помилка</string>
+    <string name="error_name">Введіть назву.</string>
+    <string name="exit">Вихід</string>
+    <string name="help">Довідка</string>
+    <string name="install">Встановити</string>
+    <string name="licenses">Ліцензії</string>
+    <string name="licenses_unavailable">Відомості про ліцензії недоступні.</string>
+    <string name="loading_info">Завантаження інформації…</string>
+    <string name="more">Ще</string>
+    <string name="not_saved_exists">Уже існує</string>
+    <string name="reset">Скинути</string>
+    <string name="retry">Повторити</string>
+    <string name="save">Зберегти</string>
+    <string name="saved">Збережено: <xliff:g id="name" example="Example">%1$s</xliff:g></string>
+    <string name="START_CMD">Запустити</string>
+    <string name="warning">Попередження</string>
+    <string name="removed">Вилучено: <xliff:g id="name" example="Example">%1$s</xliff:g></string>
+</resources>

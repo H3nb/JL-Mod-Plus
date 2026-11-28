@@ -1,0 +1,518 @@
+<?xml version="1.0" encoding="utf-8"?>
+<!-- Knihovna MIDletů, kolekce, editor metadat, hromadná a jednotlivá instalace, výběr souborů a aktualizace aplikace. -->
+<resources xmlns:tools="http://schemas.android.com/tools" xmlns:xliff="urn:oasis:names:tc:xliff:document:1.2">
+    <string name="action_context_delete">Smazat</string>
+    <string name="action_context_rename">Přejmenovat</string>
+    <string name="action_context_shortcut">Přidat zástupce</string>
+    <string name="action_reinstall">Přeinstalovat</string>
+    <string name="alert_msg_workdir_not_exists">Pracovní složka nebyla nalezena:\n<xliff:g id="path" example="/storage/emulated/0/JL-Mod-Plus">%1$s</xliff:g>\nChcete ji vytvořit, nebo vybrat jinou složku?</string>
+    <string name="converting_wait">Převod souboru JAR…</string>
+    <string name="create_apps_dir_failed">Pracovní složku se nepodařilo připravit v umístění:\n<xliff:g id="path" example="/storage/emulated/0/JL-Mod-Plus">%1$s</xliff:g>\nVyberte jinou složku.</string>
+    <string name="install_done">Aplikace byla nainstalována.</string>
+    <string name="install_done_with_warning">Aplikace byla nainstalována s upozorněními.</string>
+    <string name="installer_title">Instalátor MIDletů</string>
+    <string name="installer_error_message">Vybranou aplikaci se nepodařilo nainstalovat. Vyberte platný soubor MIDletu a zkuste to znovu.</string>
+    <string name="install_jar_non_matched_jad">Tato aplikace se liší od aplikace popsané v souboru JAD.\nIgnorovat JAD a přesto nainstalovat?</string>
+    <string name="file_picker_select_file">Vybrat soubor</string>
+    <string name="file_picker_select_folder">Vybrat složku</string>
+    <string name="file_picker_select_app_bundle">Vybrat balíček aplikace</string>
+    <string name="file_picker_select_icon">Vybrat ikonu</string>
+    <string name="file_picker_navigate_back">Zpět do nadřazené složky</string>
+    <string name="file_picker_cancel">Zrušit</string>
+    <string name="file_picker_search">Hledat</string>
+    <string name="file_picker_sort">Seřadit</string>
+    <string name="file_picker_select_all">Vybrat všechny zobrazené soubory</string>
+    <string name="file_picker_unselect_all">Zrušit výběr všech zobrazených souborů</string>
+    <string name="file_picker_sort_type">Složky na začátku</string>
+    <string name="file_picker_sort_name_ascending">Název A–Z</string>
+    <string name="file_picker_sort_name_descending">Název Z–A</string>
+    <string name="file_picker_sort_modified_newest">Datum změny: nejnovější</string>
+    <string name="file_picker_sort_modified_oldest">Datum změny: nejstarší</string>
+    <string name="file_picker_choose">Vybrat</string>
+    <string name="file_picker_current_folder">Aktuální složka</string>
+    <string name="file_picker_parent_folder">Nadřazená složka</string>
+    <string name="file_picker_file">Soubor</string>
+    <string name="file_picker_preview_named">Náhled: <xliff:g id="name" example="Example">%1$s</xliff:g></string>
+    <string name="file_picker_preview_unavailable">Náhled není k dispozici</string>
+    <string name="file_picker_storage_volume">Svazek úložiště</string>
+    <string name="file_picker_empty">Žádné odpovídající soubory</string>
+    <string name="file_picker_empty_folder">Nebyly nalezeny žádné složky</string>
+    <string name="file_picker_no_matches">Žádné shody</string>
+    <string name="file_picker_permission_required">Vyžadováno oprávnění k úložišti</string>
+    <string name="file_picker_permission_message">Povolte přístup k úložišti, abyste mohli procházet soubory a složky v tomto zařízení.</string>
+    <string name="file_picker_permission_denied">Přístup k úložišti nebyl udělen.</string>
+    <string name="file_picker_grant_access">Udělit přístup</string>
+    <string name="file_picker_retry">Zkusit znovu</string>
+    <string name="file_picker_load_failed">Tuto složku se nepodařilo otevřít.</string>
+    <string name="file_picker_create_folder">Nová složka</string>
+    <string name="file_picker_create_folder_title">Vytvořit složku</string>
+    <string name="file_picker_folder_name">Název složky</string>
+    <string name="file_picker_invalid_folder_name">Zadejte platný název složky.</string>
+    <string name="file_picker_folder_exists">Položka s tímto názvem již existuje.</string>
+    <string name="file_picker_create_folder_failed">Složku se nepodařilo vytvořit.</string>
+    <string name="file_picker_selection_unavailable">Vybraná položka již není k dispozici.</string>
+    <string name="loading_apps">Načítání aplikací</string>
+    <string name="message_delete">Smazat tuto aplikaci, její nastavení a uložená data? Tím ji také odeberete z knihovny.</string>
+    <string name="msg_no_matches">Žádné výsledky pro „<xliff:g id="query" example="Bounce">%1$s</xliff:g>“</string>
+    <string name="library_destination_apps">Všechny aplikace</string>
+    <string name="library_destination_collections">Kolekce</string>
+    <string name="library_scope_picker_title" tools:ignore="MissingTranslation">Procházet aplikace</string>
+    <string name="library_destination_more">Další</string>
+    <string name="library_search_placeholder">Hledat aplikace…</string>
+    <string name="library_filter_all">Vše</string>
+    <string name="library_filter_recently_opened">Nedávno otevřené</string>
+    <string name="library_filter_recently_added">Nedávno přidané</string>
+    <string name="library_filter_favorites">Oblíbené</string>
+    <string name="library_add_to_favorites_action">Přidat do oblíbených</string>
+    <string name="library_remove_from_favorites_action">Odebrat z oblíbených</string>
+    <string name="library_favorite_coming_soon">Oblíbené nejsou k dispozici</string>
+    <string name="library_vendor_version"><xliff:g id="vendor" example="Nokia">%1$s</xliff:g> · <xliff:g id="version" example="1.0">%2$s</xliff:g></string>
+    <string name="library_view_list">Seznam</string>
+    <string name="library_view_grid">Mřížka</string>
+    <string name="library_icon_ratio_title">Poměr stran ikon</string>
+    <string name="library_icon_ratio_square">Čtvercový (1:1)</string>
+    <string name="library_icon_ratio_portrait">Na výšku (3:4)</string>
+    <string name="library_icon_shape_title">Tvar ikon</string>
+    <string name="library_icon_shape_round">Zaoblené rohy</string>
+    <string name="library_icon_shape_square">Ostré rohy</string>
+    <string name="library_grid_icon_size_title" tools:ignore="MissingTranslation">Velikost ikon v mřížce</string>
+    <string name="library_grid_icon_size_small" tools:ignore="MissingTranslation">Malé</string>
+    <string name="library_grid_icon_size_standard" tools:ignore="MissingTranslation">Standardní</string>
+    <string name="library_grid_icon_size_large" tools:ignore="MissingTranslation">Velké</string>
+    <string name="library_grid_icon_size_summary" tools:ignore="MissingTranslation">Změní velikost ikon a počet sloupců v zobrazení mřížky.</string>
+    <string name="library_grid_spacing_title">Rozestupy v mřížce</string>
+    <string name="library_grid_spacing_summary" tools:ignore="MissingTranslation">Platí pouze pro zobrazení mřížky.</string>
+    <string name="library_grid_spacing_none">Žádné (0 dp)</string>
+    <string name="library_grid_spacing_compact">Kompaktní (4 dp)</string>
+    <string name="library_grid_spacing_standard">Standardní (8 dp)</string>
+    <string name="library_grid_spacing_spacious">Prostorné (12 dp)</string>
+    <string name="library_hide_grid_titles">Skrýt názvy MIDletů</string>
+    <string name="library_show_list_description">Zobrazit popisy MIDletů</string>
+    <string name="library_collections_empty_title">Zatím žádné kolekce</string>
+    <string name="library_collections_empty_message">Kolekce nejsou k dispozici, dokud se knihovna nenačte.</string>
+    <string name="library_expand_description">Rozbalit popis</string>
+    <string name="library_collapse_description">Sbalit popis</string>
+    <string name="no_data_for_display">Žádné aplikace k zobrazení</string>
+    <string name="permission_request_failed">Vyžadováno oprávnění k zápisu do úložiště.</string>
+    <string name="reinstall">Tato aplikace je již nainstalována. Chcete ji přeinstalovat?</string>
+    <string name="reinstall_newest">Aktualizovat tuto aplikaci na verzi <xliff:g id="version" example="2.1.0">%1$s</xliff:g>?\n\nAktuálně nainstalováno: <xliff:g id="current_version" example="2.0.0">%2$s</xliff:g></string>
+    <string name="reinstall_older">Nahradit tuto aplikaci verzí <xliff:g id="version" example="2.1.0">%1$s</xliff:g>?\n\nAktuálně nainstalováno: <xliff:g id="current_version" example="2.0.0">%2$s</xliff:g>\nStarší verze nemusí správně fungovat se stávajícími daty.</string>
+    <string name="warn_install_from_net">Tento soubor bude stažen z internetu.</string>
+    <string name="installer_ambiguous">Tomuto balíčku odpovídá několik nainstalovaných aplikací. Chcete nainstalovat samostatnou kopii? Stávající aplikace a jejich data zůstanou zachována.</string>
+    <string name="installer_separate_copy">Instalovat samostatnou kopii</string>
+    <string name="installer_stage_download">Stahování aplikace…</string>
+    <string name="installer_stage_wait">Čekání na jinou operaci…</string>
+    <string name="installer_stage_save">Ukládání aplikace…</string>
+    <string name="installer_failed_download">Aplikaci se nepodařilo stáhnout. Zkontrolujte připojení a odkaz ke stažení a zkuste to znovu.</string>
+    <string name="installer_failed_storage">Instalaci se nepodařilo dokončit. Zkuste to znovu.</string>
+    <string name="installer_failed_conversion">Aplikaci se nepodařilo převést. Ověřte, že je soubor úplný a podporovaný, a zkuste to znovu.</string>
+    <string name="installer_needs_recovery">Soubory aplikace byly uloženy, ale knihovnu se nepodařilo aktualizovat. Před dalším pokusem knihovnu obnovte.</string>
+    <string name="installer_refresh_library">Obnovit knihovnu</string>
+    <string name="installer_cancel_pending">Zastavování v dalším bezpečném bodě…</string>
+    <string name="installer_retry_remaining">Zkontrolovat nedokončené položky</string>
+    <string name="installer_not_processed">Nezpracováno</string>
+    <string name="installer_partial_restore">Aplikace byla nainstalována, ale data nebo nastavení se nepodařilo obnovit.</string>
+    <string name="installer_removed_leftovers">Aplikace byla odebrána, ale některá nastavení nebo uložená data se nepodařilo smazat.</string>
+    <string name="installer_copy_details">Kopírovat podrobnosti</string>
+    <string name="installer_show_details">Zobrazit podrobnosti</string>
+    <string name="installer_hide_details">Skrýt podrobnosti</string>
+    <!-- %1$d je počet zdrojových souborů tříd Java přeskočených při převodu. -->
+    <plurals name="installer_conversion_warning_summary">
+        <item quantity="one">Byl přeskočen <xliff:g id="skipped_count" example="2">%1$d</xliff:g> soubor třídy Java, protože jej nebylo možné přečíst. Funkce, které jej používají, nemusí fungovat.</item>
+        <item quantity="few">Byly přeskočeny <xliff:g id="skipped_count" example="2">%1$d</xliff:g> soubory tříd Java, protože je nebylo možné přečíst. Funkce, které je používají, nemusí fungovat.</item>
+        <item quantity="many">Bylo přeskočeno <xliff:g id="skipped_count" example="2">%1$d</xliff:g> souboru třídy Java, protože jej nebylo možné přečíst. Funkce, které jej používají, nemusí fungovat.</item>
+        <item quantity="other">Bylo přeskočeno <xliff:g id="skipped_count" example="2">%1$d</xliff:g> souborů tříd Java, protože je nebylo možné přečíst. Funkce, které je používají, nemusí fungovat.</item>
+    </plurals>
+    <!-- %1$s je cesta položky ve zdrojovém archivu JAR pro přeskočený soubor třídy. -->
+    <string name="installer_conversion_skipped_entry"><xliff:g id="entry_path" example="com/example/Broken.class">%1$s</xliff:g>\nProblém: Soubor třídy Java nebylo možné přečíst.\nAkce: Přeskočeno během převodu.</string>
+    <!-- %1$d je počet dalších nezobrazených diagnostických záznamů převodu. -->
+    <plurals name="installer_conversion_omitted_details">
+        <item quantity="one"><xliff:g id="omitted_count" example="5">%1$d</xliff:g> další problém při převodu není zobrazen.</item>
+        <item quantity="few"><xliff:g id="omitted_count" example="5">%1$d</xliff:g> další problémy při převodu nejsou zobrazeny.</item>
+        <item quantity="many"><xliff:g id="omitted_count" example="5">%1$d</xliff:g> dalšího problému při převodu není zobrazeno.</item>
+        <item quantity="other"><xliff:g id="omitted_count" example="5">%1$d</xliff:g> dalších problémů při převodu není zobrazeno.</item>
+    </plurals>
+    <string name="library_collection_new">Nová kolekce</string>
+    <string name="library_collection_ready_empty_message">Vytvářejte kolekce a organizujte aplikace bez přesouvání jejich souborů.</string>
+    <string name="library_collection_add_app">Přidat do kolekce</string>
+    <string name="library_collection_add_apps">Přidat aplikace</string>
+    <string name="library_collection_manage_apps">Vybrat aplikace</string>
+    <string name="library_collection_manage" tools:ignore="MissingTranslation">Spravovat kolekce</string>
+    <string name="library_collection_delete_confirmation" tools:ignore="MissingTranslation">Smazat kolekci „<xliff:g id="collection_name" example="Favorites">%1$s</xliff:g>“? Aplikace v této kolekci zůstanou nainstalované.</string>
+    <string name="library_collection_rename_action" tools:ignore="MissingTranslation">Přejmenovat kolekci <xliff:g id="collection_name" example="Favorites">%1$s</xliff:g></string>
+    <string name="library_collection_delete_action" tools:ignore="MissingTranslation">Smazat kolekci <xliff:g id="collection_name" example="Favorites">%1$s</xliff:g></string>
+    <string name="library_collection_select_action" tools:ignore="MissingTranslation">Vybrat kolekci <xliff:g id="collection_name" example="Favorites">%1$s</xliff:g></string>
+    <string name="library_collection_open_action" tools:ignore="MissingTranslation">Otevřít kolekci <xliff:g id="collection_name" example="Favorites">%1$s</xliff:g></string>
+    <string name="library_collection_rename_selected" tools:ignore="MissingTranslation">Přejmenovat vybranou kolekci</string>
+    <string name="library_collection_delete_selected" tools:ignore="MissingTranslation">Smazat vybrané kolekce</string>
+    <plurals name="library_collection_delete_many_confirmation">
+        <item quantity="one">Smazat <xliff:g id="count" example="3">%d</xliff:g> kolekci? Aplikace zůstanou nainstalované.</item>
+        <item quantity="few">Smazat <xliff:g id="count" example="3">%d</xliff:g> kolekce? Aplikace zůstanou nainstalované.</item>
+        <item quantity="many">Smazat <xliff:g id="count" example="3">%d</xliff:g> kolekce? Aplikace zůstanou nainstalované.</item>
+        <item quantity="other">Smazat <xliff:g id="count" example="3">%d</xliff:g> kolekcí? Aplikace zůstanou nainstalované.</item>
+    </plurals>
+    <string name="library_notifications_title" tools:ignore="MissingTranslation">Oznámení</string>
+    <string name="library_notifications_empty_title" tools:ignore="MissingTranslation">Zatím žádná oznámení</string>
+    <string name="library_notifications_empty_summary" tools:ignore="MissingTranslation">Zde se zobrazí oznámení o aktualizacích aplikace, až budou k dispozici.</string>
+    <string name="library_collection_manage_apps_summary">Vyberte aplikace, které chcete zahrnout do této kolekce.</string>
+    <string name="library_collection_name">Název kolekce</string>
+    <string name="library_collection_members_empty">V této kolekci nejsou žádné aplikace.</string>
+    <string name="library_collection_select_title">Vybrat kolekci</string>
+    <string name="library_collection_select_message">Vyberte kolekci pro zobrazení jejích aplikací.</string>
+    <string name="library_collection_remove_from_current">Odebrat z kolekce</string>
+    <string name="library_no_matches">Žádné výsledky pro „<xliff:g id="query" example="Bounce">%1$s</xliff:g>“</string>
+    <string name="library_action_share_app">Sdílet aplikaci</string>
+    <string name="library_action_export_bundle">Exportovat balíček aplikace</string>
+    <string name="library_action_import_bundle">Importovat balíček aplikace</string>
+    <string name="library_action_import_bundle_summary">Obnovte exportované aplikace společně se všemi zahrnutými nastaveními, uloženými daty nebo záložkami.</string>
+    <string name="library_import_preparing">Načítání balíčku aplikace…</string>
+    <string name="library_import_restoring">Obnovování dat aplikace…</string>
+    <string name="library_import_done">Balíček aplikace byl importován.</string>
+    <string name="library_import_done_with_warning">Balíček aplikace byl importován s upozorněními.</string>
+    <string name="library_import_invalid_bundle">Vybraný balíček aplikace je neplatný, poškozený nebo nepodporovaný. Vyberte platný balíček aplikace JL-Mod Plus a zkuste to znovu.</string>
+    <string name="library_import_restore_existing">Tato aplikace je již nainstalována. Zahrnuté nastavení a uložená data nahradí stávající data. U novějších balíčků se záložky při importu bez nastavení sloučí, při importu s nastavením nahradí a pokud nejsou zahrnuty, zůstanou zachovány. Obnovení nastavení ze starších balíčků může také nahradit záložky.</string>
+    <string name="library_import_restore_failed">Aplikace byla nainstalována, ale data jejího balíčku se nepodařilo obnovit. Zkusit obnovení znovu?</string>
+    <string name="library_play_stats_summary">Spuštění: <xliff:g id="launch_count" example="12">%1$d</xliff:g> · Celkový čas: <xliff:g id="total_time" example="2h 15m">%2$s</xliff:g></string>
+    <string name="library_share_chooser_title">Sdílet aplikaci</string>
+    <string name="library_export_chooser_title">Exportovat</string>
+    <string name="library_export_progress">Exportování… <xliff:g id="completed" example="3">%1$d</xliff:g>/<xliff:g id="total" example="10">%2$d</xliff:g></string>
+    <string name="library_transfer_unavailable">Export se nezdařil.</string>
+    <string name="library_export_data_in_use">Data jedné z vybraných aplikací se právě používají. Ukončete vybrané MIDlety, které právě běží, a zkuste to znovu.</string>
+    <string name="library_export_menu_unavailable">Nepodařilo se otevřít nabídku exportu.</string>
+    <string name="library_back">Zpět do knihovny</string>
+    <string name="library_sort">Seřadit aplikace</string>
+    <string name="library_search_clear">Vymazat hledání</string>
+    <string name="library_description_more">… Více</string>
+    <string name="library_description_less">Méně</string>
+    <plurals name="file_picker_selected_count">
+        <item quantity="one">Vybrána <xliff:g id="count" example="3">%1$d</xliff:g></item>
+        <item quantity="few">Vybrány <xliff:g id="count" example="3">%1$d</xliff:g></item>
+        <item quantity="many">Vybráno <xliff:g id="count" example="3">%1$d</xliff:g></item>
+        <item quantity="other">Vybráno <xliff:g id="count" example="3">%1$d</xliff:g></item>
+    </plurals>
+    <plurals name="library_selection_count">
+        <item quantity="one"><xliff:g id="count" example="3">%1$d</xliff:g> aplikace</item>
+        <item quantity="few"><xliff:g id="count" example="3">%1$d</xliff:g> aplikace</item>
+        <item quantity="many"><xliff:g id="count" example="3">%1$d</xliff:g> aplikace</item>
+        <item quantity="other"><xliff:g id="count" example="3">%1$d</xliff:g> aplikací</item>
+    </plurals>
+    <plurals name="library_collection_member_count">
+        <item quantity="one"><xliff:g id="count" example="3">%1$d</xliff:g> aplikace</item>
+        <item quantity="few"><xliff:g id="count" example="3">%1$d</xliff:g> aplikace</item>
+        <item quantity="many"><xliff:g id="count" example="3">%1$d</xliff:g> aplikace</item>
+        <item quantity="other"><xliff:g id="count" example="3">%1$d</xliff:g> aplikací</item>
+    </plurals>
+    <plurals name="bulk_install_found">
+        <item quantity="one">Nalezena <xliff:g id="count" example="3">%1$d</xliff:g> aplikace</item>
+        <item quantity="few">Nalezeny <xliff:g id="count" example="3">%1$d</xliff:g> aplikace</item>
+        <item quantity="many">Nalezeno <xliff:g id="count" example="3">%1$d</xliff:g> aplikace</item>
+        <item quantity="other">Nalezeno <xliff:g id="count" example="3">%1$d</xliff:g> aplikací</item>
+    </plurals>
+    <plurals name="bulk_install_selected">
+        <item quantity="one">Vybrána <xliff:g id="count" example="3">%1$d</xliff:g></item>
+        <item quantity="few">Vybrány <xliff:g id="count" example="3">%1$d</xliff:g></item>
+        <item quantity="many">Vybráno <xliff:g id="count" example="3">%1$d</xliff:g></item>
+        <item quantity="other">Vybráno <xliff:g id="count" example="3">%1$d</xliff:g></item>
+    </plurals>
+    <plurals name="bulk_install_ready_count">
+        <item quantity="one">Připravena: <xliff:g id="count" example="3">%1$d</xliff:g></item>
+        <item quantity="few">Připraveny: <xliff:g id="count" example="3">%1$d</xliff:g></item>
+        <item quantity="many">Připraveno: <xliff:g id="count" example="3">%1$d</xliff:g></item>
+        <item quantity="other">Připraveno: <xliff:g id="count" example="3">%1$d</xliff:g></item>
+    </plurals>
+    <plurals name="bulk_install_skipped_count">
+        <item quantity="one">Již nainstalováno nebo duplicitní: <xliff:g id="count" example="3">%1$d</xliff:g></item>
+        <item quantity="few">Již nainstalováno nebo duplicitní: <xliff:g id="count" example="3">%1$d</xliff:g></item>
+        <item quantity="many">Již nainstalováno nebo duplicitní: <xliff:g id="count" example="3">%1$d</xliff:g></item>
+        <item quantity="other">Již nainstalováno nebo duplicitní: <xliff:g id="count" example="3">%1$d</xliff:g></item>
+    </plurals>
+    <plurals name="bulk_install_attention_count">
+        <item quantity="one"><xliff:g id="count" example="3">%1$d</xliff:g> vyžaduje kontrolu</item>
+        <item quantity="few"><xliff:g id="count" example="3">%1$d</xliff:g> vyžadují kontrolu</item>
+        <item quantity="many"><xliff:g id="count" example="3">%1$d</xliff:g> vyžaduje kontrolu</item>
+        <item quantity="other"><xliff:g id="count" example="3">%1$d</xliff:g> vyžaduje kontrolu</item>
+    </plurals>
+    <plurals name="bulk_install_installed_count">
+        <item quantity="one">Nainstalována: <xliff:g id="count" example="3">%1$d</xliff:g></item>
+        <item quantity="few">Nainstalovány: <xliff:g id="count" example="3">%1$d</xliff:g></item>
+        <item quantity="many">Nainstalováno: <xliff:g id="count" example="3">%1$d</xliff:g></item>
+        <item quantity="other">Nainstalováno: <xliff:g id="count" example="3">%1$d</xliff:g></item>
+    </plurals>
+    <plurals name="bulk_install_updated_count">
+        <item quantity="one">Aktualizována: <xliff:g id="count" example="3">%1$d</xliff:g></item>
+        <item quantity="few">Aktualizovány: <xliff:g id="count" example="3">%1$d</xliff:g></item>
+        <item quantity="many">Aktualizováno: <xliff:g id="count" example="3">%1$d</xliff:g></item>
+        <item quantity="other">Aktualizováno: <xliff:g id="count" example="3">%1$d</xliff:g></item>
+    </plurals>
+    <plurals name="bulk_install_reinstalled_count">
+        <item quantity="one">Přeinstalována: <xliff:g id="count" example="3">%1$d</xliff:g></item>
+        <item quantity="few">Přeinstalovány: <xliff:g id="count" example="3">%1$d</xliff:g></item>
+        <item quantity="many">Přeinstalováno: <xliff:g id="count" example="3">%1$d</xliff:g></item>
+        <item quantity="other">Přeinstalováno: <xliff:g id="count" example="3">%1$d</xliff:g></item>
+    </plurals>
+    <plurals name="bulk_install_skipped_result_count">
+        <item quantity="one">Přeskočena: <xliff:g id="count" example="3">%1$d</xliff:g></item>
+        <item quantity="few">Přeskočeny: <xliff:g id="count" example="3">%1$d</xliff:g></item>
+        <item quantity="many">Přeskočeno: <xliff:g id="count" example="3">%1$d</xliff:g></item>
+        <item quantity="other">Přeskočeno: <xliff:g id="count" example="3">%1$d</xliff:g></item>
+    </plurals>
+    <plurals name="bulk_install_failed_count">
+        <item quantity="one">Selhalo: <xliff:g id="count" example="3">%1$d</xliff:g></item>
+        <item quantity="few">Selhalo: <xliff:g id="count" example="3">%1$d</xliff:g></item>
+        <item quantity="many">Selhalo: <xliff:g id="count" example="3">%1$d</xliff:g></item>
+        <item quantity="other">Selhalo: <xliff:g id="count" example="3">%1$d</xliff:g></item>
+    </plurals>
+    <plurals name="bulk_install_warning_count">
+        <item quantity="one"><xliff:g id="count" example="3">%1$d</xliff:g> upozornění</item>
+        <item quantity="few"><xliff:g id="count" example="3">%1$d</xliff:g> upozornění</item>
+        <item quantity="many"><xliff:g id="count" example="3">%1$d</xliff:g> upozornění</item>
+        <item quantity="other"><xliff:g id="count" example="3">%1$d</xliff:g> upozornění</item>
+    </plurals>
+    <plurals name="bulk_install_omitted_sources">
+        <item quantity="one">Aby zůstala kontrola plynulá, byl vynechán <xliff:g id="count" example="3">%1$d</xliff:g> další soubor.</item>
+        <item quantity="few">Aby zůstala kontrola plynulá, byly vynechány <xliff:g id="count" example="3">%1$d</xliff:g> další soubory.</item>
+        <item quantity="many">Aby zůstala kontrola plynulá, bylo vynecháno <xliff:g id="count" example="3">%1$d</xliff:g> dalšího souboru.</item>
+        <item quantity="other">Aby zůstala kontrola plynulá, bylo vynecháno <xliff:g id="count" example="3">%1$d</xliff:g> dalších souborů.</item>
+    </plurals>
+    <plurals name="library_bulk_delete_confirmation">
+        <item quantity="one">Smazat <xliff:g id="count" example="3">%1$d</xliff:g> aplikaci? Její soubory, nastavení a uložená data budou z knihovny odebrány.</item>
+        <item quantity="few">Smazat <xliff:g id="count" example="3">%1$d</xliff:g> aplikace? Jejich soubory, nastavení a uložená data budou z knihovny odebrány.</item>
+        <item quantity="many">Smazat <xliff:g id="count" example="3">%1$d</xliff:g> aplikace? Její soubory, nastavení a uložená data budou z knihovny odebrány.</item>
+        <item quantity="other">Smazat <xliff:g id="count" example="3">%1$d</xliff:g> aplikací? Jejich soubory, nastavení a uložená data budou z knihovny odebrány.</item>
+    </plurals>
+    <plurals name="library_bulk_delete_result">
+        <item quantity="one">Smazána <xliff:g id="deleted_count" example="3">%1$d</xliff:g> aplikace; selhalo: <xliff:g id="failed_count" example="1">%2$d</xliff:g>.</item>
+        <item quantity="few">Smazány <xliff:g id="deleted_count" example="3">%1$d</xliff:g> aplikace; selhalo: <xliff:g id="failed_count" example="1">%2$d</xliff:g>.</item>
+        <item quantity="many">Smazáno <xliff:g id="deleted_count" example="3">%1$d</xliff:g> aplikace; selhalo: <xliff:g id="failed_count" example="1">%2$d</xliff:g>.</item>
+        <item quantity="other">Smazáno <xliff:g id="deleted_count" example="3">%1$d</xliff:g> aplikací; selhalo: <xliff:g id="failed_count" example="1">%2$d</xliff:g>.</item>
+    </plurals>
+    <string name="bulk_install_title">Hromadná instalace</string>
+    <string name="bulk_install_planning">Kontrola vybraných aplikací…</string>
+    <string name="bulk_install_empty">Nebyly nalezeny žádné podporované aplikace.</string>
+    <string name="bulk_install_recommended">Doporučeno</string>
+    <string name="bulk_install_clear">Zrušit výběr</string>
+    <string name="bulk_install_install_count">Instalovat (<xliff:g id="count" example="3">%1$d</xliff:g>)</string>
+    <string name="bulk_install_cancel">Zrušit</string>
+    <string name="bulk_install_close">Zavřít</string>
+    <plurals name="bulk_install_running">
+        <item quantity="one">Zpracována <xliff:g id="processed" example="3">%1$d</xliff:g> aplikace z <xliff:g id="total" example="10">%2$d</xliff:g></item>
+        <item quantity="few">Zpracovány <xliff:g id="processed" example="3">%1$d</xliff:g> aplikace z <xliff:g id="total" example="10">%2$d</xliff:g></item>
+        <item quantity="many">Zpracováno <xliff:g id="processed" example="3">%1$d</xliff:g> aplikace z <xliff:g id="total" example="10">%2$d</xliff:g></item>
+        <item quantity="other">Zpracováno <xliff:g id="processed" example="3">%1$d</xliff:g> aplikací z <xliff:g id="total" example="10">%2$d</xliff:g></item>
+    </plurals>
+    <string name="bulk_install_cancel_requested">Zastaví se po aktuální aplikaci…</string>
+    <string name="bulk_install_complete">Hromadná instalace byla dokončena</string>
+    <string name="bulk_install_cancelled">Hromadná instalace byla zastavena</string>
+    <string name="bulk_install_fatal">Hromadná instalace byla zastavena. Před dalším pokusem zkontrolujte nedokončené položky.</string>
+    <string name="bulk_install_result_installed">Nainstalováno</string>
+    <string name="bulk_install_result_updated">Aktualizováno</string>
+    <string name="bulk_install_result_reinstalled">Přeinstalováno</string>
+    <string name="bulk_install_result_skipped">Přeskočeno</string>
+    <string name="bulk_install_result_failed">Selhalo</string>
+    <string name="bulk_install_installed_version">Nainstalováno: <xliff:g id="version" example="2.1.0">%1$s</xliff:g></string>
+    <string name="bulk_install_source">Zdroj: <xliff:g id="name" example="Example">%1$s</xliff:g></string>
+    <string name="bulk_install_action_separate_copy">Instalovat jako samostatnou kopii</string>
+    <string name="bulk_install_action_jar_only">Instalovat pouze JAR</string>
+    <string name="single_install_review_jar_only" tools:ignore="MissingTranslation">Zkontrolovat pouze JAR</string>
+    <string name="single_install_jar_only_notice" tools:ignore="MissingTranslation">Bude nainstalován pouze soubor JAR. Před pokračováním zkontrolujte název aplikace, verzi a stav instalace.</string>
+    <string name="single_install_running_replacement_warning" tools:ignore="MissingTranslation">Pokud tato aplikace běží, instalace ji před nahrazením souborů zastaví. Neuložený postup může být ztracen.</string>
+    <string name="bulk_install_status_new">Nová</string>
+    <string name="bulk_install_status_update">Aktualizace</string>
+    <string name="bulk_install_status_downgrade">Starší verze</string>
+    <string name="bulk_install_status_same">Již nainstalováno</string>
+    <string name="bulk_install_status_reinstall">Stejná verze, možná varianta</string>
+    <string name="bulk_install_status_ambiguous">Odpovídá více nainstalovaným aplikacím</string>
+    <string name="bulk_install_status_mismatch">Neshoda JAD/JAR</string>
+    <string name="bulk_install_status_duplicate">Duplicita</string>
+    <string name="bulk_install_status_older_batch">Starší verze v dávce</string>
+    <string name="bulk_install_status_conflict">Konflikt v dávce</string>
+    <string name="bulk_install_status_remote">Vzdálený zdroj není podporován</string>
+    <string name="bulk_install_status_error">Neplatný zdroj</string>
+    <string name="bulk_install_reinstall_source_missing">Uložený soubor JAR není pro přeinstalaci k dispozici.</string>
+    <plurals name="bulk_install_reinstall_missing_apps">
+        <item quantity="one"><xliff:g id="count" example="3">%1$d</xliff:g> vybraná aplikace z knihovny již není k dispozici.</item>
+        <item quantity="few"><xliff:g id="count" example="3">%1$d</xliff:g> vybrané aplikace z knihovny již nejsou k dispozici.</item>
+        <item quantity="many"><xliff:g id="count" example="3">%1$d</xliff:g> vybrané aplikace z knihovny již není k dispozici.</item>
+        <item quantity="other"><xliff:g id="count" example="3">%1$d</xliff:g> vybraných aplikací z knihovny již není k dispozici.</item>
+    </plurals>
+    <string name="library_metadata_edit_title">Upravit metadata</string>
+    <string name="library_metadata_icon">Ikona</string>
+    <string name="library_metadata_name">Název</string>
+    <string name="library_metadata_vendor">Vývojář</string>
+    <string name="library_metadata_reset_to_original">Obnovit původní</string>
+    <string name="library_metadata_save">Uložit</string>
+    <string name="library_hide_grid_titles_summary">Skryje názvy MIDletů v zobrazení mřížky. V zobrazení seznamu zůstanou viditelné.</string>
+    <string name="library_show_list_description_summary">Zobrazí popis každého MIDletu pod jeho názvem a verzí.</string>
+    <string name="library_indexing_progress">Indexování knihovny… <xliff:g id="completed" example="3">%1$d</xliff:g>/<xliff:g id="total" example="10">%2$d</xliff:g></string>
+    <string name="library_indexing_current">Skenování: <xliff:g id="name" example="Example">%1$s</xliff:g></string>
+    <string name="library_load_error_title">Knihovna není k dispozici</string>
+    <string name="library_retry">Zkusit znovu</string>
+    <string name="library_reinstall_source_missing">Uložený soubor JAR není pro přeinstalaci k dispozici.</string>
+    <string name="library_action_select">Vybrat</string>
+    <string name="library_selection_select_all">Vybrat vše</string>
+    <string name="library_selection_unselect_all">Zrušit výběr všeho</string>
+    <string name="library_selection_checkbox_description">Vybrat <xliff:g id="name" example="Example">%1$s</xliff:g></string>
+    <string name="library_selection_checked">Vybráno</string>
+    <string name="library_selection_unchecked">Nevybráno</string>
+    <string name="library_action_settings_summary">Upravte globální chování a vzhled aplikace.</string>
+    <string name="library_action_crash_reports_summary">Zkontrolujte uložené diagnostické zprávy.</string>
+    <string name="library_action_about_summary">Přehled projektu, informace o sestavení a odkazy.</string>
+    <string name="library_action_licenses_summary">Oznámení a licenční podmínky třetích stran obsažené v aplikaci.</string>
+    <string name="library_donation_action">Podpořit vývoj</string>
+    <string name="library_donation_summary">Pomozte rozvoji aplikace JL-Mod Plus.</string>
+    <string name="library_donation_title">Podpořit JL-Mod Plus</string>
+    <string name="library_donation_message">JL-Mod Plus je bezplatná aplikace s otevřeným zdrojovým kódem. Pokud vám pomáhá, můžete její vývoj podpořit dobrovolným příspěvkem.</string>
+    <string name="library_donation_provider_note">Příspěvky zpracovává externí služba Sociabuzz.</string>
+    <string name="library_donation_continue">Pokračovat na Sociabuzz</string>
+    <string name="library_donation_not_now">Teď ne</string>
+    <string name="library_donation_link_copied">Nebyl nalezen žádný prohlížeč. Odkaz na Sociabuzz byl zkopírován do schránky.</string>
+    <string name="library_donation_browser_unavailable">Nebyl nalezen žádný prohlížeč pro otevření Sociabuzz.</string>
+    <string name="library_bulk_delete_apps">Smazat aplikace</string>
+    <string name="library_bulk_add_collection">Přidat do kolekce</string>
+    <string name="library_bulk_share_apps">Sdílet aplikace</string>
+    <string name="library_bulk_reinstall_apps">Přeinstalovat</string>
+    <string name="library_bulk_export_apps">Exportovat balíček</string>
+    <string name="library_enhanced_icons_title">Vylepšené ikony</string>
+    <string name="library_enhanced_icons_summary">Upraví ořez, měřítko a pozadí dlaždic ikon, aby v knihovně působily jednotněji.</string>
+    <string name="library_collections_unavailable_title">Kolekce nejsou k dispozici</string>
+    <string name="library_load_failed_message">Knihovnu se nepodařilo načíst. Zkuste to znovu.</string>
+    <string name="bulk_install_prepare_failed">Vybrané aplikace se nepodařilo připravit k instalaci.</string>
+    <string name="installer_existing_data_preserved">Stávající nastavení a uložená data zůstanou zachována.</string>
+    <string name="bulk_install_library_changed">Knihovna se po kontrole změnila. Zavřete tuto dávku a vyberte soubory znovu.</string>
+    <string name="bulk_install_source_unavailable">Požadovaný zdrojový soubor již není k dispozici. Vyberte soubory znovu.</string>
+    <string name="bulk_install_source_changed">Zdrojový soubor se po kontrole změnil. Vyberte soubory znovu.</string>
+    <string name="bulk_install_target_unverified">Cíl přeinstalace se nepodařilo ověřit. Zavřete tuto dávku a vyberte aplikaci znovu.</string>
+    <string name="bulk_install_result_restored">Obnoveno</string>
+    <plurals name="bulk_install_restored_count">
+        <item quantity="one">Obnovena: <xliff:g id="count" example="3">%1$d</xliff:g></item>
+        <item quantity="few">Obnoveny: <xliff:g id="count" example="3">%1$d</xliff:g></item>
+        <item quantity="many">Obnoveno: <xliff:g id="count" example="3">%1$d</xliff:g></item>
+        <item quantity="other">Obnoveno: <xliff:g id="count" example="3">%1$d</xliff:g></item>
+    </plurals>
+    <plurals name="bulk_install_reason_ambiguous_match">
+        <item quantity="one">Tomuto zdroji odpovídá <xliff:g id="count" example="3">%1$d</xliff:g> nainstalovaná aplikace.</item>
+        <item quantity="few">Tomuto zdroji odpovídají <xliff:g id="count" example="3">%1$d</xliff:g> nainstalované aplikace.</item>
+        <item quantity="many">Tomuto zdroji odpovídá <xliff:g id="count" example="3">%1$d</xliff:g> nainstalované aplikace.</item>
+        <item quantity="other">Tomuto zdroji odpovídá <xliff:g id="count" example="3">%1$d</xliff:g> nainstalovaných aplikací.</item>
+    </plurals>
+    <string name="bulk_install_reason_jad_jar_mismatch">Soubory JAD a JAR určují různé aplikace.</string>
+    <string name="bulk_install_reason_conflicting_jads">Soubory JAD s různými atributy odkazují na stejný soubor JAR.</string>
+    <string name="bulk_install_reason_remote_jar">Hromadná instalace nemůže stahovat vzdálené soubory JAR.</string>
+    <string name="bulk_install_reason_missing_jar_url">V souboru JAD chybí atribut MIDlet-Jar-URL.</string>
+    <!-- %1$s je přesné schéma URI zadané souborem JAD; nepřekládat. -->
+    <string name="bulk_install_reason_unsupported_uri_scheme">Soubor JAD odkazuje na JAR pomocí nepodporovaného schématu URI: <xliff:g id="scheme" example="http">%1$s</xliff:g>.</string>
+    <string name="bulk_install_reason_missing_parent">Soubor JAD nemá nadřazenou složku.</string>
+    <!-- %1$s je přesný odkaz MIDlet-Jar-URL, nikoli normalizovaná cesta v souborovém systému. -->
+    <string name="bulk_install_reason_jar_not_found">Soubor JAR odkazovaný ze souboru JAD nebyl nalezen: <xliff:g id="file_path" example="game.jar">%1$s</xliff:g>.</string>
+    <string name="bulk_install_reason_duplicate_source">Tento zdroj duplikuje jiný zdroj v této dávce.</string>
+    <string name="bulk_install_reason_version_conflict">Více variant aplikace má stejnou verzi.</string>
+    <string name="bulk_install_reason_older_candidate">Ve stejné dávce je novější verze této aplikace.</string>
+    <string name="bulk_install_reason_source_error">Tento zdroj se nepodařilo připravit k instalaci.</string>
+    <string name="updates_title">Aktualizace</string>
+    <string name="updates_more_summary">Zkontrolujte nové verze aplikace JL-Mod Plus.</string>
+    <string name="updates_more_available">Je k dispozici novější verze.</string>
+    <string name="updates_installed_version">Nainstalovaná verze: <xliff:g id="version" example="2.1.0">%1$s</xliff:g></string>
+    <string name="updates_build_code">Sestavení <xliff:g id="build_code" example="247">%1$d</xliff:g></string>
+    <string name="updates_automatic">Kontrolovat automaticky při aktivní knihovně</string>
+    <string name="updates_not_checked">Zatím nezkontrolováno.</string>
+    <string name="updates_checking">Kontrola aktualizací…</string>
+    <string name="updates_current">Používáte nejnovější verzi.</string>
+    <string name="updates_no_release">Není k dispozici žádné kompatibilní zveřejněné vydání.</string>
+    <string name="updates_not_installable">Je k dispozici novější vydání, ale není kompatibilní s tímto zařízením nebo instalací.</string>
+    <string name="updates_failed">Aktualizace se nepodařilo zkontrolovat. Zkontrolujte připojení a zkuste to znovu.</string>
+    <string name="updates_available">Je k dispozici aktualizace</string>
+    <string name="updates_view_release">Zobrazit vydání</string>
+    <string name="updates_last_checked">Naposledy zkontrolováno: <xliff:g id="timestamp" example="Today, 09:45">%1$s</xliff:g></string>
+    <string name="updates_check">Zkontrolovat aktualizace</string>
+    <string name="updates_notice">Je k dispozici JL-Mod Plus <xliff:g id="version" example="2.1.0">%1$s</xliff:g>. Podívejte se do části Aktualizace v Nastavení.</string>
+    <string name="updates_debug_build">Toto je ladicí sestavení. Soubory APK z vydání na GitHubu se instalují samostatně.</string>
+    <string name="updates_link_copied">Nebyl nalezen žádný prohlížeč. Odkaz na aktualizaci byl zkopírován do schránky.</string>
+    <string name="updates_browser_unavailable">Nebyl nalezen žádný prohlížeč pro otevření odkazu na aktualizaci.</string>
+    <string name="bulk_install_choose_files">Soubory</string>
+    <string name="bulk_install_choose_folder">Složka</string>
+    <string name="bulk_install_unreadable_archives">Nečitelné archivy: <xliff:g id="count" example="3">%1$d</xliff:g></string>
+    <string name="bulk_install_skipped_entries">Přeskočené soubory nebo položky archivů: <xliff:g id="count" example="3">%1$d</xliff:g></string>
+    <string name="bulk_install_selection_options" tools:ignore="MissingTranslation">Možnosti výběru</string>
+    <string name="bulk_install_show_details" tools:ignore="MissingTranslation">Zobrazit podrobnosti</string>
+    <string name="bulk_install_hide_details" tools:ignore="MissingTranslation">Skrýt podrobnosti</string>
+    <string name="bulk_install_filter_all">Vše</string>
+    <string name="bulk_install_filter_selected">Vybrané</string>
+    <string name="bulk_install_filter_review">Ke kontrole</string>
+    <string name="bulk_install_empty_filter">Žádné odpovídající aplikace.</string>
+    <string name="platform_package_choice_title" tools:ignore="MissingTranslation">Zjištěn balíček Java ME</string>
+    <string name="platform_package_choice_message" tools:ignore="MissingTranslation">Tento odkaz vede na balíček Java ME. Co chcete udělat?</string>
+    <string name="platform_package_install" tools:ignore="MissingTranslation">Instalovat v JL-Mod Plus</string>
+    <string name="platform_package_browser" tools:ignore="MissingTranslation">Otevřít v prohlížeči</string>
+    <string name="platform_package_unavailable" tools:ignore="MissingTranslation">Nebyla nalezena žádná aplikace pro otevření tohoto odkazu.</string>
+    <string name="installer_running_update_warning" tools:ignore="MissingTranslation">Tato aplikace právě běží. Instalace ji před nahrazením souborů zastaví. Neuložený postup může být ztracen.</string>
+    <string name="library_metadata_main_icon">Hlavní</string>
+    <string name="library_metadata_follows_main">Používá hlavní ikonu</string>
+    <string name="library_metadata_change">Změnit</string>
+    <string name="library_metadata_remove_portrait">Odebrat ikonu 3:4</string>
+    <string name="library_metadata_discard_title">Zahodit změny?</string>
+    <string name="library_metadata_discard">Zahodit</string>
+    <string name="library_metadata_default_description">Výchozí popis</string>
+    <string name="library_metadata_other_languages">Další jazyky</string>
+    <string name="library_metadata_add_language">+ Přidat jazyk</string>
+    <string name="library_metadata_language_search">Hledat jazyk nebo kód národního prostředí</string>
+    <string name="library_metadata_remove_language">Odebrat popis</string>
+    <string name="library_metadata_language_load_failed">Popisy jazyků se nepodařilo načíst. Klepnutím na Zkusit znovu akci opakujte.</string>
+    <string name="updates_download_apk" tools:ignore="MissingTranslation">Stáhnout APK</string>
+    <string name="updates_skip_version" tools:ignore="MissingTranslation">Přeskočit tuto verzi</string>
+    <string name="updates_dialog_message" tools:ignore="MissingTranslation">Je k dispozici JL-Mod Plus <xliff:g id="version" example="2.1.0">%1$s</xliff:g>. Používáte verzi <xliff:g id="current_version" example="2.0.0">%2$s</xliff:g>. Stáhněte si soubor APK nebo si zobrazte vydání na GitHubu.</string>
+    <string name="library_bundle_components_title" tools:ignore="MissingTranslation">Exportovat balíček</string>
+    <string name="library_bundle_components_explanation" tools:ignore="MissingTranslation">Vybrané aplikace jsou vždy zahrnuty. Ukončete vybrané MIDlety, které právě běží, a zvolte další data k exportu. Sdílené vzhledy, zvukové banky ani shadery se nezahrnují.</string>
+    <string name="library_bundle_config" tools:ignore="MissingTranslation">Konfigurace</string>
+    <string name="library_bundle_save_data" tools:ignore="MissingTranslation">Uložená data</string>
+    <string name="library_bundle_saved_variables" tools:ignore="MissingTranslation">Záložky</string>
+    <string name="library_bundle_export" tools:ignore="MissingTranslation">Exportovat</string>
+    <string name="library_export_jar_only" tools:ignore="MissingTranslation">Pouze JAR</string>
+    <string name="library_export_jars_only" tools:ignore="MissingTranslation">Pouze JAR (ZIP)</string>
+    <string name="library_selection_action_delete" tools:ignore="MissingTranslation">Smazat</string>
+    <string name="library_selection_action_collection" tools:ignore="MissingTranslation">Kolekce</string>
+    <string name="library_selection_action_export" tools:ignore="MissingTranslation">Exportovat</string>
+    <string name="library_selection_action_reinstall" tools:ignore="MissingTranslation">Přeinstalovat</string>
+    <string name="installer_select_companion_jar" tools:ignore="MissingTranslation">Tento soubor JAD odkazuje na samostatný soubor JAR. Pro pokračování vyberte odpovídající soubor JAR. Externí poskytovatel souborů neumožňuje přístup k sousedním souborům.</string>
+    <string name="installer_select_jar" tools:ignore="MissingTranslation">Vybrat JAR</string>
+    <string name="installer_wrong_companion_jar" tools:ignore="MissingTranslation">Tento soubor JAR neodpovídá vybranému souboru JAD. Chcete-li zachovat nastavení JAD, vyberte odpovídající soubor JAR.</string>
+    <string name="installer_choose_another_jar" tools:ignore="MissingTranslation">Vybrat jiný JAR</string>
+    <string name="library_app_more_actions" tools:ignore="MissingTranslation">Další akce pro <xliff:g id="name" example="Example">%1$s</xliff:g></string>
+    <string name="library_actions_group_customize" tools:ignore="MissingTranslation">Přizpůsobit</string>
+    <string name="library_actions_group_organize" tools:ignore="MissingTranslation">Uspořádat</string>
+    <string name="library_actions_group_transfer" tools:ignore="MissingTranslation">Přenos a údržba</string>
+    <string name="library_collection_more_actions" tools:ignore="MissingTranslation">Další akce pro kolekci <xliff:g id="collection_name" example="Favorites">%1$s</xliff:g></string>
+    <string name="library_settings_preferences" tools:ignore="MissingTranslation">Předvolby aplikace</string>
+    <string name="library_settings_section_maintenance" tools:ignore="MissingTranslation">Aktualizace a diagnostika</string>
+    <string name="library_settings_section_support" tools:ignore="MissingTranslation">O aplikaci a podpora</string>
+    <string name="library_details_title" tools:ignore="MissingTranslation">Podrobnosti MIDletu</string>
+    <string name="library_details_description" tools:ignore="MissingTranslation">Popis</string>
+    <string name="library_details_play_stats" tools:ignore="MissingTranslation">Statistiky hraní</string>
+    <string name="library_details_launches" tools:ignore="MissingTranslation">Spuštění</string>
+    <string name="library_details_total_time" tools:ignore="MissingTranslation">Celkový čas</string>
+    <string name="library_details_last_played" tools:ignore="MissingTranslation">Naposledy hráno</string>
+    <string name="library_details_library_info" tools:ignore="MissingTranslation">Informace v knihovně</string>
+    <string name="library_details_added" tools:ignore="MissingTranslation">Přidáno do knihovny</string>
+    <string name="library_details_collections" tools:ignore="MissingTranslation">Kolekce</string>
+    <string name="library_details_none" tools:ignore="MissingTranslation">Žádné</string>
+    <string name="library_details_technical" tools:ignore="MissingTranslation">Technické informace</string>
+    <string name="library_details_profile" tools:ignore="MissingTranslation">Profil</string>
+    <string name="library_details_configuration" tools:ignore="MissingTranslation">Konfigurace</string>
+    <string name="library_details_jar_size" tools:ignore="MissingTranslation">Velikost uchovaného JAR</string>
+    <string name="library_details_entry_points" tools:ignore="MissingTranslation">Vstupní body MIDletu</string>
+    <string name="library_details_original_metadata" tools:ignore="MissingTranslation">Původní metadata</string>
+    <string name="library_details_name" tools:ignore="MissingTranslation">Název</string>
+    <string name="library_details_vendor" tools:ignore="MissingTranslation">Vývojář</string>
+    <string name="library_details_version" tools:ignore="MissingTranslation">Verze</string>
+    <string name="library_details_version_value" tools:ignore="MissingTranslation">Verze <xliff:g id="version" example="2.1.0">%1$s</xliff:g></string>
+    <string name="library_details_original_description" tools:ignore="MissingTranslation">Původní popis</string>
+    <string name="library_details_permissions" tools:ignore="MissingTranslation">Deklarovaná oprávnění</string>
+    <string name="library_details_required" tools:ignore="MissingTranslation">Vyžadováno</string>
+    <string name="library_details_optional" tools:ignore="MissingTranslation">Volitelné</string>
+    <string name="library_details_no_permissions" tools:ignore="MissingTranslation">Nejsou deklarována žádná oprávnění</string>
+    <string name="library_details_descriptor_attributes" tools:ignore="MissingTranslation">Atributy deskriptoru</string>
+    <string name="library_details_unavailable" tools:ignore="MissingTranslation">Nedostupné</string>
+    <string name="library_details_action" tools:ignore="MissingTranslation">Podrobnosti</string>
+    <string name="library_details_view_details" tools:ignore="MissingTranslation">Zobrazit podrobnosti</string>
+    <string name="library_actions_more" tools:ignore="MissingTranslation">Další akce</string>
+    <string name="library_actions_less" tools:ignore="MissingTranslation">Méně akcí</string>
+</resources>

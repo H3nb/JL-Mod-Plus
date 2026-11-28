@@ -1,0 +1,285 @@
+<?xml version="1.0" encoding="utf-8"?>
+<!-- Αναζήτηση Επεξεργαστή μνήμης, επιθεωρητής, σελιδοδείκτες, αποθηκευμένες μεταβλητές, γρήγορες ενέργειες και δημιουργός σεναρίων. -->
+<resources xmlns:tools="http://schemas.android.com/tools" xmlns:xliff="urn:oasis:names:tc:xliff:document:1.2">
+    <string name="memory_editor_bubble">Αιωρούμενο κουμπί Επεξεργαστή μνήμης</string>
+    <string name="memory_editor_bubble_content_description">Άνοιγμα Επεξεργαστή μνήμης</string>
+    <string name="memory_editor_previous_results_page_action">Προηγούμενη σελίδα αποτελεσμάτων</string>
+    <string name="memory_editor_next_results_page_action">Επόμενη σελίδα αποτελεσμάτων</string>
+    <string name="memory_editor">Επεξεργαστής μνήμης</string>
+    <string name="memory_editor_search_hint">Τιμή</string>
+    <string name="memory_editor_next_scan">Επόμενη σάρωση</string>
+    <string name="memory_editor_new_search">Νέα αναζήτηση</string>
+    <plurals name="memory_editor_results">
+        <item quantity="one"><xliff:g id="count" example="3">%1$d</xliff:g> αποτέλεσμα</item>
+        <item quantity="other"><xliff:g id="count" example="3">%1$d</xliff:g> αποτελέσματα</item>
+    </plurals>
+    <plurals name="memory_editor_candidates">
+        <item quantity="one"><xliff:g id="count" example="3">%1$d</xliff:g> υποψήφιο</item>
+        <item quantity="other"><xliff:g id="count" example="3">%1$d</xliff:g> υποψήφια</item>
+    </plurals>
+    <plurals name="memory_editor_search_complete">
+        <item quantity="one">Η αναζήτηση ολοκληρώθηκε · <xliff:g id="count" example="3">%1$d</xliff:g> υποψήφιο</item>
+        <item quantity="other">Η αναζήτηση ολοκληρώθηκε · <xliff:g id="count" example="3">%1$d</xliff:g> υποψήφια</item>
+    </plurals>
+    <string name="memory_editor_no_results">Χωρίς αποτελέσματα</string>
+    <string name="memory_editor_no_watch">Η παρακολούθηση είναι κενή</string>
+    <string name="memory_editor_unsupported">Ο Επεξεργαστής μνήμης δεν είναι διαθέσιμος για αυτό το περιβάλλον εκτέλεσης.</string>
+    <string name="memory_editor_engine_unavailable">Η μηχανή του Επεξεργαστή μνήμης δεν είναι διαθέσιμη.</string>
+    <string name="memory_editor_engine_reconnecting">Επανασύνδεση Επεξεργαστή μνήμης…</string>
+    <string name="memory_editor_refresh">Ανανέωση</string>
+    <string name="memory_editor_undo">Αναίρεση σάρωσης</string>
+    <string name="memory_variables_tab">Αποθηκευμένα</string>
+    <string name="memory_editor_back" tools:ignore="MissingTranslation">Πίσω</string>
+    <string name="memory_list_keep" tools:ignore="MissingTranslation">Διατήρηση για την επόμενη εκκίνηση</string>
+    <string name="memory_list_stop_keeping" tools:ignore="MissingTranslation">Διακοπή διατήρησης</string>
+    <string name="memory_list_kept" tools:ignore="MissingTranslation">Διατηρείται για την επόμενη εκκίνηση</string>
+    <string name="memory_list_empty" tools:ignore="MissingTranslation">Δεν υπάρχουν αποθηκευμένοι σελιδοδείκτες ακόμη</string>
+    <string name="memory_list_empty_hint" tools:ignore="MissingTranslation">Προσθέστε σε σελιδοδείκτη μια μεταβλητή από την Αναζήτηση ή τον Επιθεωρητή για να την παρακολουθείτε εδώ.</string>
+    <string name="memory_list_remove_confirm" tools:ignore="MissingTranslation">Κατάργηση από τα Αποθηκευμένα; Τυχόν ενεργά παγώματα θα σταματήσουν.</string>
+    <string name="memory_list_add" tools:ignore="MissingTranslation">Σελιδοδείκτης</string>
+    <string name="memory_bookmark_relink" tools:ignore="MissingTranslation">Επανασύνδεση</string>
+    <string name="memory_bookmark_relink_hint" tools:ignore="MissingTranslation">Επιλέξτε τη μεταβλητή αντικατάστασης στην Αναζήτηση και έπειτα επιλέξτε Επανασύνδεση.</string>
+    <string name="memory_bookmark_relink_confirm" tools:ignore="MissingTranslation">Σύνδεση αυτού του σελιδοδείκτη με την επιλεγμένη μεταβλητή; Τυχόν ενεργό πάγωμα σε αυτόν τον σελιδοδείκτη θα σταματήσει.</string>
+    <string name="memory_bookmark_unavailable" tools:ignore="MissingTranslation">Μη διαθέσιμο — επιλέξτε Επανασύνδεση για να ορίσετε προορισμό</string>
+    <string name="memory_editor_watch">Παρακολούθηση</string>
+    <string name="memory_editor_search_tab">Αναζήτηση</string>
+    <string name="memory_editor_search_known_values">Αναζήτηση γνωστών τιμών</string>
+    <string name="memory_editor_search_unknown_values">Αναζήτηση άγνωστων τιμών</string>
+    <string name="memory_editor_add_to_watch">Προσθήκη επιλεγμένων τιμών στους σελιδοδείκτες</string>
+    <string name="memory_editor_no_candidates">Δεν βρέθηκαν αναζητήσιμες τιμές</string>
+    <string name="memory_editor_edit">Επεξεργασία</string>
+    <plurals name="memory_editor_edit_batch">
+        <item quantity="one">Επεξεργασία <xliff:g id="count" example="3">%1$d</xliff:g> τιμής</item>
+        <item quantity="other">Επεξεργασία <xliff:g id="count" example="3">%1$d</xliff:g> τιμών</item>
+    </plurals>
+    <string name="memory_editor_edit_batch_no_common_type">Τα επιλεγμένα στοιχεία δεν υποστηρίζουν τον επιλεγμένο τύπο δεδομένων. Επεξεργαστείτε τα συμβατά στοιχεία ξεχωριστά.</string>
+    <string name="memory_editor_save">Εφαρμογή</string>
+    <string name="memory_editor_replacement">Τιμή αντικατάστασης</string>
+    <string name="memory_editor_freeze">Πάγωμα</string>
+    <string name="memory_editor_remove">Κατάργηση</string>
+    <string name="memory_editor_select_visible">Επιλογή ορατών</string>
+    <string name="memory_editor_clear_selection">Εκκαθάριση επιλογής</string>
+    <plurals name="memory_editor_selected">
+        <item quantity="one"><xliff:g id="count" example="3">%1$d</xliff:g> επιλεγμένο</item>
+        <item quantity="other"><xliff:g id="count" example="3">%1$d</xliff:g> επιλεγμένα</item>
+    </plurals>
+    <string name="memory_editor_close">Κλείσιμο Επεξεργαστή μνήμης</string>
+    <string name="memory_editor_searching">Αναζήτηση στη μνήμη…</string>
+    <string name="memory_editor_working">Εφαρμογή λειτουργίας…</string>
+    <string name="memory_editor_search_progress">Σαρώθηκαν <xliff:g id="scanned_mib" example="12">%1$d</xliff:g> από <xliff:g id="total_mib" example="64">%2$d</xliff:g> MiB</string>
+    <string name="memory_editor_candidate_moved">Ο προορισμός ενημερώθηκε</string>
+    <string name="memory_editor_candidate_relocating">Επανεπικύρωση</string>
+    <string name="memory_editor_candidate_ambiguous">Ασαφές — οι εγγραφές σε παύση</string>
+    <string name="memory_editor_candidate_lost">Χάθηκε — οι εγγραφές σε παύση</string>
+    <string name="memory_editor_apply">Εφαρμογή</string>
+    <string name="memory_editor_min_value">Ελάχιστη τιμή</string>
+    <string name="memory_editor_max_value">Μέγιστη τιμή</string>
+    <string name="memory_editor_change_amount">Ποσό αλλαγής</string>
+    <string name="memory_editor_min_change">Ελάχιστη αλλαγή</string>
+    <string name="memory_editor_max_change">Μέγιστη αλλαγή</string>
+    <string name="memory_editor_unfreeze">Αποπάγωμα</string>
+    <string name="memory_editor_cancelled">Η λειτουργία ακυρώθηκε.</string>
+    <string name="memory_editor_resource_limit">Ο Επεξεργαστής μνήμης έφτασε σε όριο ασφαλείας. Δοκιμάστε πιο συγκεκριμένη αναζήτηση ή καταργήστε αχρησιμοποίητους σελιδοδείκτες ή παγώματα.</string>
+    <string name="memory_editor_identity_unsafe">Δεν ήταν δυνατή η επαλήθευση της επιλεγμένης τιμής ή της κατάστασης αναζήτησης. Ανανεώστε τα αποτελέσματα ή ανοίξτε ξανά τον Επιθεωρητή και δοκιμάστε ξανά.</string>
+    <string name="memory_editor_safety_limit">Έχουν επιλεγεί πάρα πολλές τιμές για αυτήν τη λειτουργία. Επιλέξτε λιγότερες και δοκιμάστε ξανά.</string>
+    <string name="memory_editor_invalid_request">Η τιμή ή η λειτουργία δεν είναι έγκυρη.</string>
+    <string name="memory_editor_freeze_paused">Σε παύση για ασφάλεια</string>
+    <string name="memory_editor_predicate_between">Μεταξύ</string>
+    <string name="memory_editor_predicate_changed">Άλλαξε</string>
+    <string name="memory_editor_predicate_unchanged">Αμετάβλητη</string>
+    <string name="memory_editor_predicate_increased">Αυξήθηκε</string>
+    <string name="memory_editor_predicate_decreased">Μειώθηκε</string>
+    <string name="memory_editor_predicate_increased_by">Αυξήθηκε κατά</string>
+    <string name="memory_editor_predicate_decreased_by">Μειώθηκε κατά</string>
+    <string name="memory_editor_predicate_changed_by">Άλλαξε κατά</string>
+    <string name="memory_editor_predicate_increased_range">Ποσό αύξησης εντός εύρους</string>
+    <string name="memory_editor_predicate_decreased_range">Ποσό μείωσης εντός εύρους</string>
+    <string name="memory_editor_inspector">Επιθεωρητής</string>
+    <string name="memory_editor_inspect_memory">Επιθεώρηση γειτονικής μνήμης</string>
+    <string name="memory_editor_inspector_loading">Επαλήθευση του αποτελέσματος και ανάγνωση γειτονικής μνήμης…</string>
+    <string name="memory_editor_inspector_empty">Επιλέξτε ένα αποτέλεσμα για να επιθεωρήσετε τη γειτονική μνήμη.</string>
+    <string name="memory_editor_inspector_no_rows">Δεν υπάρχει διαθέσιμη γειτονική μνήμη για επιθεώρηση.</string>
+    <string name="memory_editor_refresh_snapshot">Ανανέωση στιγμιότυπου</string>
+    <string name="memory_editor_select_result_value">Επιλογή αυτού του σελιδοδείκτη</string>
+    <string name="memory_editor_freeze_after_edit">Πάγωμα μετά την εφαρμογή</string>
+    <string name="memory_editor_freeze_after_edit_help">Διατηρεί αυτήν την τιμή κλειδωμένη και την αποθηκεύει ως σελιδοδείκτη στα Αποθηκευμένα.</string>
+    <string name="memory_editor_expression_single_hint">Εισαγάγετε μία τιμή ή διαχωρίστε τιμές ομάδας με ελληνικό ερωτηματικό (;).</string>
+    <string name="memory_editor_expression_group_needs_type">Επιλέξτε συγκεκριμένο τύπο δεδομένων για ομαδική αναζήτηση.</string>
+    <plurals name="memory_editor_expression_group_hint">
+        <item quantity="one">Ομαδική αναζήτηση · <xliff:g id="count" example="3">%1$d</xliff:g> τιμή · ίδιο αντικείμενο Java</item>
+        <item quantity="other">Ομαδική αναζήτηση · <xliff:g id="count" example="3">%1$d</xliff:g> τιμές · ίδιο αντικείμενο Java</item>
+    </plurals>
+    <string name="memory_editor_expression_query_help">Παραδείγματα: 500 ή 500;1000. Η ομαδική αναζήτηση ψάχνει 2–8 τιμές στο ίδιο αντικείμενο Java.</string>
+    <string name="memory_editor_keypad_clear">Εκκαθάριση</string>
+    <string name="memory_editor_peek_underlay">Πατήστε παρατεταμένα για να δείτε το MIDlet από κάτω</string>
+    <string name="memory_editor_peek_underlay_active">Εμφάνιση του MIDlet από κάτω</string>
+    <string name="memory_editor_no_runtime">Δεν υπάρχει ενεργό περιβάλλον εκτέλεσης MIDlet.</string>
+    <string name="memory_editor_no_search_history">Δεν υπάρχει προηγούμενη αναζήτηση για επαναφορά.</string>
+    <string name="memory_editor_partial_write">Η λειτουργία εγγραφής δεν ολοκληρώθηκε πλήρως. Ελέγξτε τις τρέχουσες τιμές πριν δοκιμάσετε ξανά.</string>
+    <!-- Ανεξάρτητοι αριθμοί εγγραφών: επιβεβαιωμένες, ανεπιβεβαίωτες, παραλειφθείσες, μη επιχειρηθείσες και ασύμβατος τύπος δεδομένων. -->
+    <string name="memory_editor_write_outcome">Επιβεβαιωμένες εγγραφές: <xliff:g id="confirmed" example="3">%1$d</xliff:g>. Ανεπιβεβαίωτες: <xliff:g id="unconfirmed" example="0">%2$d</xliff:g>. Παραλείφθηκαν: <xliff:g id="skipped" example="0">%3$d</xliff:g>. Δεν επιχειρήθηκαν: <xliff:g id="not_attempted" example="0">%4$d</xliff:g>. Παραλείφθηκαν λόγω τύπου: <xliff:g id="skipped_by_type" example="0">%5$d</xliff:g>.</string>
+    <!-- %1$s είναι μια μεταφρασμένη εξήγηση αποτελέσματος· %2$d έως %6$d είναι οι ίδιοι ανεξάρτητοι αριθμοί εγγραφών. -->
+    <string name="memory_editor_write_failure_outcome"><xliff:g id="reason" example="Write interrupted.">%1$s</xliff:g>\nΕπιβεβαιωμένες εγγραφές: <xliff:g id="confirmed" example="1">%2$d</xliff:g>. Ανεπιβεβαίωτες: <xliff:g id="unconfirmed" example="1">%3$d</xliff:g>. Παραλείφθηκαν: <xliff:g id="skipped" example="0">%4$d</xliff:g>. Δεν επιχειρήθηκαν: <xliff:g id="not_attempted" example="0">%5$d</xliff:g>. Παραλείφθηκαν λόγω τύπου: <xliff:g id="skipped_by_type" example="0">%6$d</xliff:g>.</string>
+    <!-- Αριθμός αποτελεσμάτων πριν (%1$d) και μετά (%2$d) την ολοκληρωμένη επόμενη σάρωση. -->
+    <string name="memory_editor_next_scan_result">Αποτελέσματα επόμενης σάρωσης: <xliff:g id="before_count" example="120">%1$d</xliff:g> → <xliff:g id="after_count" example="14">%2$d</xliff:g></string>
+    <string name="memory_editor_type_auto">Αυτόματο</string>
+    <string name="memory_editor_remove_candidates_title">Κατάργηση επιλεγμένων αποτελεσμάτων;</string>
+    <string name="memory_editor_remove_candidates_description">Κατάργηση: Αφαιρεί τα επιλεγμένα αποτελέσματα από τη λίστα αναζήτησης. Οι τιμές στη μνήμη του παιχνιδιού παραμένουν αμετάβλητες.\n\nΕπαναφορά και κατάργηση: Επαναφέρει επίσης τις τιμές πριν από τις τελευταίες επιβεβαιωμένες επεξεργασίες τους, αλλά μόνο αν οι τρέχουσες τιμές εξακολουθούν να συμφωνούν με τις τιμές μετά από αυτές τις επεξεργασίες. Οι παγωμένες τιμές και τα αποτελέσματα που δεν μπορούν να επαναφερθούν με ασφάλεια παραμένουν στη λίστα.</string>
+    <string name="memory_editor_revert_and_remove">Επαναφορά και κατάργηση</string>
+    <string name="memory_editor_revert_remove_commit_failed">Οι τιμές ενδέχεται να επαναφέρθηκαν, αλλά δεν ήταν δυνατή η κατάργηση των αποτελεσμάτων. Ανανεώστε και δοκιμάστε ξανά· οι τιμές που άλλαξε το παιχνίδι δεν θα αντικατασταθούν.</string>
+    <string name="memory_editor_revert_remove_outcome">Επαναφέρθηκαν: <xliff:g id="restored" example="2">%1$d</xliff:g>. Καταργήθηκαν: <xliff:g id="removed" example="2">%2$d</xliff:g>. Διενέξεις: <xliff:g id="conflicts" example="0">%3$d</xliff:g>. Ανεπιβεβαίωτες: <xliff:g id="unconfirmed" example="0">%4$d</xliff:g>. Δεν επιχειρήθηκαν: <xliff:g id="not_attempted" example="0">%5$d</xliff:g>.</string>
+    <string name="memory_editor_set_all">Ορισμός όλων</string>
+    <string name="memory_editor_increment_start">Αρχική τιμή</string>
+    <string name="memory_editor_edit_batch_type_notice">Θα αλλάξουν μόνο οι τιμές με αντίστοιχο τύπο δεδομένων.</string>
+    <string name="memory_editor_write_confirmed">Τιμές που επιβεβαιώθηκαν με επανανάγνωση μνήμης: <xliff:g id="count" example="3">%1$d</xliff:g>.</string>
+    <string name="memory_editor_candidate_untraced">Πίνακας #<xliff:g id="array_id" example="42">%1$d</xliff:g>[<xliff:g id="index" example="3">%2$d</xliff:g>] · Μη εντοπισμένη πηγή</string>
+    <string name="memory_editor_candidate_static"><xliff:g id="field_name" example="Player.coins">%1$s</xliff:g> · <xliff:g id="reference_kind" example="Static reference">%2$s</xliff:g></string>
+    <string name="memory_editor_candidate_instance"><xliff:g id="field_name" example="Player.hp">%1$s</xliff:g> · <xliff:g id="reference_kind" example="Instance reference">%2$s</xliff:g> · προορισμός #<xliff:g id="target_id" example="1">%3$d</xliff:g></string>
+    <string name="memory_editor_reference_static">Στατική αναφορά</string>
+    <string name="memory_editor_reference_instance">Αναφορά στιγμιότυπου</string>
+    <string name="memory_editor_path_changed">Η διαδρομή αναφοράς άλλαξε από τη σάρωση.</string>
+    <string name="memory_editor_path_incomplete">Η διαδρομή αναφοράς υπερβαίνει το όριο επιθεώρησης.</string>
+    <string name="memory_editor_source_unknown">Μη εντοπισμένη πηγή</string>
+    <string name="memory_editor_incremental_edit">Αύξηση</string>
+    <string name="memory_editor_increment_step">Βήμα</string>
+    <string name="memory_editor_increment_invalid">Χρησιμοποιήστε έναν τύπο ακεραίου και τιμές εντός του εύρους του.</string>
+    <!-- Ο τίτλος του ομαδικού διαλόγου εμφανίζει ήδη τον αριθμό των επιλεγμένων τιμών. -->
+    <string name="memory_editor_increment_preview">Προεπισκόπηση: <xliff:g id="name" example="Example">%1$s</xliff:g></string>
+    <string name="memory_editor_panel_opacity">Αδιαφάνεια πίνακα</string>
+    <string name="memory_editor_panel_opacity_help">Προσαρμόστε το φόντο για να βλέπετε τις τιμές του παιχνιδιού κατά την αναζήτηση. Το κείμενο και τα εικονίδια παραμένουν ορατά.</string>
+    <string name="memory_editor_reconversion_required" tools:ignore="MissingTranslation">Η εγκατεστημένη μετατροπή αυτού του MIDlet δεν είναι συμβατή με τον Επεξεργαστή μνήμης. Κλείστε το παιχνίδι και μετατρέψτε το ξανά ή επανεγκαταστήστε το στο JL-Mod Plus.</string>
+    <string name="memory_saved_tab" tools:ignore="MissingTranslation">Αποθηκευμένα</string>
+    <string name="memory_saved_save" tools:ignore="MissingTranslation">Αποθήκευση μεταβλητής</string>
+    <string name="memory_saved_name" tools:ignore="MissingTranslation">Όνομα</string>
+    <string name="memory_saved_explanation" tools:ignore="MissingTranslation">Αποθηκεύστε αυτήν την επαληθευμένη διαδρομή μνήμης για μελλοντικές συνεδρίες. Οι τιμές δεν εγγράφονται ποτέ αυτόματα.</string>
+    <string name="memory_saved_empty" tools:ignore="MissingTranslation">Δεν υπάρχουν αποθηκευμένες μεταβλητές ακόμη. Επιλέξτε ένα αποτέλεσμα αναζήτησης για να το αποθηκεύσετε.</string>
+    <string name="memory_saved_not_ready" tools:ignore="MissingTranslation">Δεν είναι έτοιμο</string>
+    <string name="memory_saved_retry" tools:ignore="MissingTranslation">Επανάληψη</string>
+    <string name="memory_saved_rename" tools:ignore="MissingTranslation">Μετονομασία</string>
+    <string name="memory_saved_value" tools:ignore="MissingTranslation">Τιμή</string>
+    <string name="memory_saved_delete_confirm" tools:ignore="MissingTranslation">Κατάργηση αυτού του αποθηκευμένου ορισμού; Η τιμή στο παιχνίδι δεν θα αλλάξει.</string>
+    <string name="memory_saved_changed" tools:ignore="MissingTranslation">Άλλαξε</string>
+    <string name="memory_saved_rebound" tools:ignore="MissingTranslation">Ο προορισμός ενημερώθηκε</string>
+    <string name="memory_saved_import_summary" tools:ignore="MissingTranslation">Αποθηκευμένα: <xliff:g id="added_count" example="4">%1$d</xliff:g> προστέθηκαν, <xliff:g id="existing_count" example="2">%2$d</xliff:g> υπήρχαν ήδη</string>
+    <string name="memory_saved_incompatible" tools:ignore="MissingTranslation">Ασύμβατο</string>
+    <string name="memory_saved_failed" tools:ignore="MissingTranslation">Απέτυχε</string>
+    <string name="memory_saved_delete_many_confirm" tools:ignore="MissingTranslation">Κατάργηση <xliff:g id="count" example="3">%1$d</xliff:g> αποθηκευμένων ορισμών; Οι τιμές του παιχνιδιού δεν θα αλλάξουν.</string>
+    <string name="memory_recipes_title" tools:ignore="MissingTranslation">Γρήγορη ενέργεια</string>
+    <string name="memory_recipes_simple_from_saved" tools:ignore="MissingTranslation">Προορισμός: <xliff:g id="bookmark_name" example="Coins">%1$s</xliff:g></string>
+    <string name="memory_recipes_preview" tools:ignore="MissingTranslation">Προεπισκόπηση προορισμών</string>
+    <string name="memory_recipes_stop_freeze" tools:ignore="MissingTranslation">Διακοπή παγώματος τιμών</string>
+    <string name="memory_recipes_freeze" tools:ignore="MissingTranslation">Διατήρηση παγώματος όσο εκτελείται αυτό το παιχνίδι</string>
+    <string name="memory_recipes_run" tools:ignore="MissingTranslation">Εκτέλεση</string>
+    <string name="memory_recipes_active_freezes" tools:ignore="MissingTranslation">Σενάρια που παγώνουν τιμές</string>
+    <string name="memory_recipes_target_unavailable" tools:ignore="MissingTranslation">Ο προορισμός του σελιδοδείκτη δεν είναι διαθέσιμος. Ανανεώστε τον ή επανασυνδέστε τον πριν από την εκτέλεση.</string>
+    <string name="memory_recipes_preview_values" tools:ignore="MissingTranslation">Τρέχουσες τιμές: <xliff:g id="name" example="Example">%1$s</xliff:g></string>
+    <string name="memory_scripts_title" tools:ignore="MissingTranslation">Σενάρια</string>
+    <string name="memory_scripts_active" tools:ignore="MissingTranslation">Ενεργό</string>
+    <string name="memory_scripts_inputs" tools:ignore="MissingTranslation">Είσοδοι</string>
+    <string name="memory_scripts_create_from_bookmarks" tools:ignore="MissingTranslation">Δημιουργία σεναρίου</string>
+    <string name="memory_scripts_create_failed" tools:ignore="MissingTranslation">Δεν ήταν δυνατή η έναρξη νέου σεναρίου.</string>
+    <string name="memory_scripts_draft_in_progress" tools:ignore="MissingTranslation">Ολοκληρώστε ή απορρίψτε πρώτα το τρέχον πρόχειρο σεναρίου.</string>
+    <string name="memory_builder_open_saved" tools:ignore="MissingTranslation">Άνοιγμα Αποθηκευμένων</string>
+    <string name="memory_builder_add_description" tools:ignore="MissingTranslation">Προσθήκη περιγραφής</string>
+    <string name="memory_builder_find_values" tools:ignore="MissingTranslation">Εύρεση τιμών</string>
+    <string name="memory_scripts_description" tools:ignore="MissingTranslation">Περιγραφή</string>
+    <string name="memory_scripts_new" tools:ignore="MissingTranslation">Νέο σενάριο</string>
+    <string name="memory_scripts_back" tools:ignore="MissingTranslation">Πίσω</string>
+    <string name="memory_scripts_edit" tools:ignore="MissingTranslation">Επεξεργασία</string>
+    <string name="memory_scripts_save" tools:ignore="MissingTranslation">Αποθήκευση</string>
+    <string name="memory_scripts_saved" tools:ignore="MissingTranslation">Το σενάριο αποθηκεύτηκε</string>
+    <string name="memory_scripts_deleted" tools:ignore="MissingTranslation">Το σενάριο διαγράφηκε</string>
+    <string name="memory_scripts_save_failed" tools:ignore="MissingTranslation">Δεν ήταν δυνατή η αποθήκευση του σεναρίου.</string>
+    <string name="memory_scripts_editor_hint" tools:ignore="MissingTranslation">Εισαγάγετε ή επικολλήστε ένα σενάριο JSON με υποστηριζόμενες λειτουργίες μνήμης. Η αποθήκευση δεν το εκτελεί.</string>
+    <string name="memory_scripts_paste_hint" tools:ignore="MissingTranslation">Επικόλληση JSON σεναρίου</string>
+    <string name="memory_scripts_paste" tools:ignore="MissingTranslation">Επικόλληση</string>
+    <string name="memory_scripts_clipboard_invalid" tools:ignore="MissingTranslation">Το πρόχειρο είναι κενό ή το έγγραφο υπερβαίνει τα 64 KiB</string>
+    <string name="memory_scripts_invalid" tools:ignore="MissingTranslation">Μη έγκυρη μορφή σεναρίου</string>
+    <string name="memory_scripts_freeze_active" tools:ignore="MissingTranslation">Αυτό το σενάριο παγώνει τιμές</string>
+    <string name="memory_scripts_delete" tools:ignore="MissingTranslation">Διαγραφή</string>
+    <string name="memory_scripts_delete_confirm" tools:ignore="MissingTranslation">Διαγραφή του <xliff:g id="name" example="Example">%1$s</xliff:g>; Τυχόν ενεργό πάγωμα για αυτό το σενάριο θα σταματήσει.</string>
+    <string name="memory_scripts_empty" tools:ignore="MissingTranslation">Δεν υπάρχουν αποθηκευμένα σενάρια</string>
+    <string name="memory_scripts_unsaved_title" tools:ignore="MissingTranslation">Απόρριψη μη αποθηκευμένου σεναρίου;</string>
+    <string name="memory_scripts_unsaved_message" tools:ignore="MissingTranslation">Οι αλλαγές του σεναρίου σας δεν έχουν αποθηκευτεί.</string>
+    <string name="memory_scripts_discard" tools:ignore="MissingTranslation">Απόρριψη</string>
+    <string name="memory_scripts_current_title" tools:ignore="MissingTranslation">Τελευταία ανάγνωση</string>
+    <string name="memory_scripts_refresh" tools:ignore="MissingTranslation">Ανανέωση</string>
+    <string name="memory_scripts_reading" tools:ignore="MissingTranslation">Ανάγνωση τρεχουσών τιμών…</string>
+    <string name="memory_scripts_refresh_hint" tools:ignore="MissingTranslation">Πατήστε Ανανέωση για να διαβάσετε τις τρέχουσες τιμές από το εκτελούμενο παιχνίδι.</string>
+    <string name="memory_scripts_mode_toggle" tools:ignore="MissingTranslation">Πάγωμα τιμών</string>
+    <string name="memory_scripts_mode_form" tools:ignore="MissingTranslation">Επεξεργαστής τιμών</string>
+    <string name="memory_scripts_mode_once" tools:ignore="MissingTranslation">Γρήγορες ενέργειες</string>
+    <string name="memory_scripts_mode_legacy" tools:ignore="MissingTranslation">Προχωρημένο σενάριο</string>
+    <string name="memory_scripts_edit_values" tools:ignore="MissingTranslation">Επεξεργασία τιμών</string>
+    <string name="memory_scripts_apply" tools:ignore="MissingTranslation">Εφαρμογή αλλαγών</string>
+    <string name="memory_scripts_refresh_required" tools:ignore="MissingTranslation">Ανανεώστε για να επαληθεύσετε τις τρέχουσες τιμές πριν από την εφαρμογή.</string>
+    <string name="memory_scripts_inconsistent" tools:ignore="MissingTranslation">Ασυνεπή αντίγραφα: <xliff:g id="name" example="Example">%1$s</xliff:g></string>
+    <string name="memory_editor_minimize" tools:ignore="MissingTranslation">Ελαχιστοποίηση Επεξεργαστή μνήμης</string>
+    <string name="memory_scripts_choose_type" tools:ignore="MissingTranslation">Νέο σενάριο</string>
+    <string name="memory_scripts_choose_hint" tools:ignore="MissingTranslation">Επιλέξτε πώς θα λειτουργεί αυτό το σενάριο.</string>
+    <string name="memory_builder_json_editor" tools:ignore="MissingTranslation">Επεξεργαστής JSON</string>
+    <string name="memory_builder_freeze_hint" tools:ignore="MissingTranslation">Διατηρεί τις επιλεγμένες τιμές κλειδωμένες όσο είναι ενεργό. Η απενεργοποίηση του παγώματος δεν επαναφέρει τις προηγούμενες τιμές τους.</string>
+    <string name="memory_builder_form_hint" tools:ignore="MissingTranslation">Δημιουργήστε μια φόρμα που διαβάζει τις τρέχουσες τιμές πριν εφαρμόσει επεξεργασίες.</string>
+    <string name="memory_builder_actions_hint" tools:ignore="MissingTranslation">Εφαρμόζει αλλαγές μία φορά με κάθε πάτημα της επιλογής Εκτέλεση. Η πρόσθεση και η αφαίρεση χρησιμοποιούν τις τρέχουσες τιμές, μαζί με τις αλλαγές από προηγούμενες εκτελέσεις.</string>
+    <string name="memory_builder_name" tools:ignore="MissingTranslation">Όνομα σεναρίου</string>
+    <string name="memory_builder_frozen_values" tools:ignore="MissingTranslation">Παγωμένες τιμές</string>
+    <string name="memory_builder_fields" tools:ignore="MissingTranslation">Πεδία</string>
+    <string name="memory_builder_actions" tools:ignore="MissingTranslation">Ενέργειες</string>
+    <string name="memory_builder_add_bookmarks" tools:ignore="MissingTranslation">Προσθήκη από σελιδοδείκτες</string>
+    <string name="memory_builder_empty" tools:ignore="MissingTranslation">Προσθέστε τουλάχιστον έναν επαληθευμένο σελιδοδείκτη.</string>
+    <string name="memory_builder_field_label" tools:ignore="MissingTranslation">Ετικέτα πεδίου</string>
+    <string name="memory_builder_keep_at" tools:ignore="MissingTranslation">Διατήρηση σε</string>
+    <string name="memory_builder_amount" tools:ignore="MissingTranslation">Τιμή / ποσό</string>
+    <string name="memory_builder_set" tools:ignore="MissingTranslation">Ορισμός</string>
+    <string name="memory_builder_add" tools:ignore="MissingTranslation">Πρόσθεση</string>
+    <string name="memory_builder_subtract" tools:ignore="MissingTranslation">Αφαίρεση</string>
+    <string name="memory_builder_view_json" tools:ignore="MissingTranslation">Προβολή JSON</string>
+    <string name="memory_builder_edit_json" tools:ignore="MissingTranslation">Επεξεργασία JSON</string>
+    <string name="memory_builder_search_bookmarks" tools:ignore="MissingTranslation">Αναζήτηση σελιδοδεικτών</string>
+    <string name="memory_builder_no_bookmarks" tools:ignore="MissingTranslation">Δεν υπάρχουν αντίστοιχοι επαληθευμένοι σελιδοδείκτες. Προσθέστε μια τιμή σε σελιδοδείκτη στην Αναζήτηση ή επανασυνδέστε έναν στα Αποθηκευμένα.</string>
+    <string name="memory_builder_needs_relink" tools:ignore="MissingTranslation">Απαιτείται επανασύνδεση</string>
+    <string name="memory_builder_add_selected" tools:ignore="MissingTranslation">Προσθήκη επιλεγμένων</string>
+    <string name="memory_builder_min" tools:ignore="MissingTranslation">Ελάχιστο (προαιρετικό)</string>
+    <string name="memory_builder_max" tools:ignore="MissingTranslation">Μέγιστο (προαιρετικό)</string>
+    <string name="memory_builder_add_target" tools:ignore="MissingTranslation">Προσθήκη προορισμού</string>
+    <string name="memory_builder_freeze_short" tools:ignore="MissingTranslation">Διατήρηση επιλεγμένων τιμών σταθερών</string>
+    <string name="memory_builder_form_short" tools:ignore="MissingTranslation">Προσαρμογή πολλών τιμών σε ένα σημείο</string>
+    <string name="memory_builder_actions_short" tools:ignore="MissingTranslation">Εκτέλεση εφάπαξ ενεργειών Ορισμού, Πρόσθεσης ή Αφαίρεσης</string>
+    <string name="memory_editor_refine_scan" tools:ignore="MissingTranslation">Περιορισμός</string>
+    <string name="memory_scripts_saved_count" tools:ignore="MissingTranslation"><xliff:g id="count" example="3">%1$d</xliff:g> αποθηκευμένα</string>
+    <string name="memory_scripts_empty_hint" tools:ignore="MissingTranslation">Δημιουργήστε ένα σενάριο για να επεξεργάζεστε ή να παγώνετε τιμές κατά το παιχνίδι.</string>
+    <string name="memory_builder_limits" tools:ignore="MissingTranslation">Όρια (προαιρετικό)</string>
+    <string name="memory_editor_selection_limit">Επιλέξτε έως %1$d τιμές.</string>
+    <string name="memory_saved_storage_unavailable">Δεν είναι δυνατή η πρόσβαση στα αποθηκευμένα στοιχεία.</string>
+    <string name="memory_bookmark_renamed">Ο σελιδοδείκτης μετονομάστηκε</string>
+    <string name="memory_editor_memory_unavailable">Η μνήμη του MIDlet δεν είναι διαθέσιμη.</string>
+    <string name="memory_bookmark_added">Ο σελιδοδείκτης προστέθηκε</string>
+    <string name="memory_bookmark_relinked">Ο σελιδοδείκτης συνδέθηκε ξανά</string>
+    <string name="memory_bookmarks_removed">Καταργήθηκε από τα αποθηκευμένα</string>
+    <string name="memory_freeze_enabled">Το πάγωμα ενεργοποιήθηκε</string>
+    <string name="memory_freeze_unavailable">Δεν ήταν δυνατή η ενεργοποίηση του παγώματος.</string>
+    <string name="memory_list_session_only_failed">Δεν ήταν δυνατή η διατήρηση του στοιχείου μόνο για την τρέχουσα συνεδρία.</string>
+    <string name="memory_list_kept_unlinked">Αποθηκεύτηκε για την επόμενη εκκίνηση, αλλά δεν συνδέθηκε με την τρέχουσα συνεδρία.</string>
+    <string name="memory_list_removal_unavailable">Δεν είναι δυνατή η κατάργηση στοιχείων χωρίς σύνδεση. Δοκιμάστε ξανά.</string>
+    <string name="memory_list_watch_removed">Η παρακολούθηση συνεδρίας καταργήθηκε</string>
+    <string name="memory_list_bookmark_removal_failed">Δεν ήταν δυνατή η κατάργηση των σελιδοδεικτών: %1$s</string>
+    <string name="memory_list_watch_removal_failed">Δεν ήταν δυνατή η κατάργηση της παρακολούθησης συνεδρίας: %1$s</string>
+    <string name="memory_list_removal_unknown_error">Άγνωστο σφάλμα</string>
+    <string name="memory_editor_edit_freeze_failed">Η τιμή ενημερώθηκε, αλλά δεν ήταν δυνατή η έναρξη του παγώματος. Ελέγξτε την τρέχουσα τιμή πριν δοκιμάσετε ξανά.</string>
+    <string name="memory_scripts_freeze_inactive">Το σενάριο δεν παγώνει πλέον τιμές.</string>
+    <string name="memory_bookmark_change_incomplete">Δεν ήταν δυνατή η ολοκλήρωση της αλλαγής του σελιδοδείκτη. Ελέγξτε τα Αποθηκευμένα πριν δοκιμάσετε ξανά.</string>
+    <string name="memory_editor_value_updated">Η τιμή ενημερώθηκε.</string>
+    <string name="memory_editor_value_updated_frozen">Η τιμή ενημερώθηκε και το πάγωμα ενεργοποιήθηκε.</string>
+    <string name="memory_scripts_delete_failed">Δεν ήταν δυνατή η διαγραφή του σεναρίου. Ελέγξτε την κατάσταση παγώματος πριν δοκιμάσετε ξανά.</string>
+    <string name="memory_scripts_check_input">Δεν ήταν δυνατή η προετοιμασία του σεναρίου. Ελέγξτε τις τιμές και τους σελιδοδείκτες του.</string>
+    <string name="memory_scripts_read_failed">Δεν ήταν δυνατή η ανάγνωση των τρεχουσών τιμών. Ανανεώστε και δοκιμάστε ξανά.</string>
+    <string name="memory_technical_details">Τεχνικές λεπτομέρειες</string>
+    <string name="memory_scripts_resource_limit">Το σενάριο έφτασε σε όριο ασφαλείας. Μειώστε τους στόχους ή διακόψτε τα παγώματα που δεν χρησιμοποιείτε.</string>
+    <string name="memory_scripts_target_changed">Δεν ήταν δυνατή η επαλήθευση του στόχου του σεναρίου. Ανανεώστε τις τιμές και ελέγξτε τους σελιδοδείκτες.</string>
+    <string name="memory_scripts_operation_unavailable">Αυτή η λειτουργία του σεναρίου δεν υποστηρίζεται για τον τρέχοντα στόχο.</string>
+    <string name="memory_scripts_invalid_input">Ελέγξτε τις εισόδους του σεναρίου. Εισαγάγετε έγκυρες τιμές εντός των επιτρεπόμενων ορίων.</string>
+    <string name="memory_scripts_value_range">Μια τιμή είναι εκτός του υποστηριζόμενου εύρους. Ελέγξτε το σενάριο και τις τιμές του.</string>
+    <string name="memory_scripts_inconsistent_values">Τα αντίγραφα της ίδιας τιμής δεν συμφωνούν. Ελέγξτε την κατάσταση του παιχνιδιού πριν δοκιμάσετε ξανά.</string>
+    <string name="memory_scripts_wrong_midlet">Αυτό το σενάριο προορίζεται για άλλο MIDlet. Ανοίξτε το σωστό MIDlet ή επιλέξτε άλλο σενάριο.</string>
+    <string name="memory_scripts_target_not_ready">Ο στόχος του σεναρίου δεν είναι έτοιμος. Επιστρέψτε στη σχετική οθόνη του παιχνιδιού και δοκιμάστε ξανά.</string>
+</resources>

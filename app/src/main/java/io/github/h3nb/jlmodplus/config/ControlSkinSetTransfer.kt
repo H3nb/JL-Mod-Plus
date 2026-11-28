@@ -19,11 +19,20 @@ internal object ControlSkinSetTransfer {
     private const val METADATA = "skin.json"
     private val extensions = setOf("png", "webp", "svg")
 
-    fun validSetName(name: String): Boolean =
-        name.length in 1..61 && name != "." && name != ".." &&
-            !name.endsWith('.') && name.first().isLetterOrDigit() &&
-            name.all { it.isLetterOrDigit() || it == ' ' || it == '.' ||
-                it == '_' || it == '(' || it == ')' || it == '-' }
+    fun validSetName(name: String): Boolean = ControlSkinStore.validSetName(name)
+
+    fun availableName(label: String, existingNames: Collection<String>): String {
+        var name = label
+        var index = 2
+        while (existingNames.any { ControlSkinStore.sameSetName(it, name) }) {
+            val suffix = " (" + index++ + ")"
+            val length = minOf(label.codePointCount(0, label.length),
+                ControlSkinStore.MAX_NAME_CODE_POINTS - suffix.length)
+            name = label.substring(0, label.offsetByCodePoints(0, length))
+                .trimEnd(' ', '.') + suffix
+        }
+        return name
+    }
 
     fun validAssetName(name: String): Boolean {
         if (name == METADATA) return true
@@ -83,12 +92,8 @@ internal object ControlSkinSetTransfer {
             }
             val installedId = if (original == null) sourceId else UUID.randomUUID().toString()
             val label = sourceName?.takeIf(::validSetName) ?: "Imported control skin"
-            var name = label
-            var index = 2
-            while (root.listFiles()?.any { it.name.equals(name, ignoreCase = true) } == true) {
-                val suffix = " (" + index++ + ")"
-                name = label.take(61 - suffix.length).trimEnd(' ', '.') + suffix
-            }
+            val existing = root.listFiles() ?: throw IOException("Cannot list control skin sets")
+            val name = availableName(label, existing.map(File::getName))
             val stage = File(root, ".skin-" + UUID.randomUUID() + ".tmp")
             val target = File(root, name)
             if (!stage.mkdir()) throw IOException("Cannot stage imported control skin")

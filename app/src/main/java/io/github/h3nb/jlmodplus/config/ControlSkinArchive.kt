@@ -206,7 +206,7 @@ internal object ControlSkinArchive {
             val stem = if (index == 1) name else name + " (" + index + ")"
             index++
             val target = File(directory, stem + ".zip")
-            if (directory.listFiles()?.any { it.name.equals(target.name, ignoreCase = true) } == true) {
+            if (directory.listFiles()?.any { ControlSkinStore.sameSetName(it.name, target.name) } == true) {
                 continue
             }
             try {

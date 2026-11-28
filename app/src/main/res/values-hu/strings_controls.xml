@@ -1,0 +1,107 @@
+<?xml version="1.0" encoding="utf-8"?>
+<!-- Virtual keypad controls, layout editor, physical key mappings, and control skins. -->
+<resources xmlns:tools="http://schemas.android.com/tools" xmlns:xliff="urn:oasis:names:tc:xliff:document:1.2">
+    <string name="alert_map_menu">A Menü billentyű (M) nincs hozzárendelve.\nElőfordulhat, hogy játék közben nem tudja megnyitni a MIDlet menüjét.</string>
+    <string name="dismiss_mapping">Kiosztás bezárása</string>
+    <string name="layout_edit_finish">Szerkesztés befejezése</string>
+    <string name="layout_edit_done">Kész</string>
+    <string name="layout_editor_grid_size">Rácsméret</string>
+    <string name="layout_editor_grid_coarse">Durva (16)</string>
+    <string name="layout_editor_grid_normal">Normál (24)</string>
+    <string name="layout_editor_grid_fine">Finom (32)</string>
+    <string name="layout_editor_snap_on">Illesztés bekapcsolva</string>
+    <string name="layout_editor_snap_off">Illesztés kikapcsolva</string>
+    <string name="layout_edit_save_changes">Menti a virtuális vezérlők módosításait?</string>
+    <string name="layout_edit_discard">Elvetés</string>
+    <string name="layout_edit_continue">Szerkesztés folytatása</string>
+    <string name="layout_edit_finished">A virtuális vezérlők szerkesztése befejeződött.</string>
+    <string name="virtual_controls_save_failed">Nem sikerült menteni a virtuális vezérlőket. Próbálja újra.</string>
+    <string name="layout_switch">Vezérlőelrendezés kiválasztása</string>
+    <string name="mapping_dialog_key_not_specified">Nincs hozzárendelt bemenet.</string>
+    <string name="mapping_dialog_message">Nyomjon meg egy fizikai billentyűt vagy gombot a vezérlőhöz való hozzárendeléshez.</string>
+    <string name="mapping_dialog_assigned_inputs">Hozzárendelt bemenetek</string>
+    <string name="mapping_dialog_add_input">Több fizikai bemenetet is hozzárendelhet.</string>
+    <string name="mapping_dialog_remove">Eltávolítás</string>
+    <string name="mapping_dialog_title">Nyomjon meg egy billentyűt vagy gombot</string>
+    <string name="message_reset_layout">Visszaállítja a virtuális vezérlők elrendezését az alapértelmezettre?</string>
+    <string name="RESET_LAYOUT_CMD">Virtuális vezérlők elrendezésének visszaállítása</string>
+    <string name="saved_keyboard_layout_summary">A virtuális vezérlők elrendezése mentve.</string>
+    <string name="control_skin_title">Virtuális vezérlők kinézete</string>
+    <string name="control_skin_create" tools:ignore="MissingTranslation">Készlet létrehozása</string>
+    <string name="control_skin_default" tools:ignore="MissingTranslation">Alapértelmezett gombok</string>
+    <string name="control_skin_edit" tools:ignore="MissingTranslation">Szerkesztés</string>
+    <string name="control_skin_rename" tools:ignore="MissingTranslation">Átnevezés</string>
+    <string name="control_skin_duplicate" tools:ignore="MissingTranslation">Duplikálás</string>
+    <string name="control_skin_delete" tools:ignore="MissingTranslation">Törlés</string>
+    <string name="control_skin_import_zip" tools:ignore="MissingTranslation">ZIP importálása</string>
+    <string name="control_skin_export_zip" tools:ignore="MissingTranslation">ZIP exportálása</string>
+    <string name="control_skin_select_export_folder" tools:ignore="MissingTranslation">Exportálási mappa kiválasztása</string>
+    <string name="control_skin_imported" tools:ignore="MissingTranslation">Importálva: <xliff:g id="skin_name" example="Classic Nokia">%1$s</xliff:g></string>
+    <string name="control_skin_already_available" tools:ignore="MissingTranslation">A(z) <xliff:g id="skin_name" example="Classic Nokia">%1$s</xliff:g> már elérhető</string>
+    <string name="control_skin_exported" tools:ignore="MissingTranslation">Mentve: <xliff:g id="skin_name" example="Classic Nokia">%1$s</xliff:g></string>
+    <string name="control_skin_archive_invalid_path" tools:ignore="MissingTranslation">A kiválasztott hely nem érhető el.</string>
+    <string name="control_skin_archive_import_failed" tools:ignore="MissingTranslation">Nem sikerült importálni a vezérlőkinézetet. Győződjön meg róla, hogy a ZIP pontosan egy érvényes készletet tartalmaz.</string>
+    <string name="control_skin_archive_export_failed" tools:ignore="MissingTranslation">Nem sikerült exportálni a vezérlőkinézetet. Válasszon írható mappát a kinézetkönyvtáron kívül.</string>
+    <string name="control_skin_name" tools:ignore="MissingTranslation">Készlet neve</string>
+    <string name="control_skin_icon" tools:ignore="MissingTranslation">Csak ikon</string>
+    <string name="control_skin_full" tools:ignore="MissingTranslation">Teljes gomb</string>
+    <string name="control_skin_normal_image" tools:ignore="MissingTranslation">Normál kép</string>
+    <string name="control_skin_pressed_image" tools:ignore="MissingTranslation">Lenyomott kép</string>
+    <string name="control_skin_delete_warning" tools:ignore="MissingTranslation">Törli ezt a megosztott kinézetkészletet és az összes képét? Az ezt használó MIDlet-ek a következő indításkor az alapértelmezett vezérlőket használják.</string>
+    <string name="control_skin_invalid_image" tools:ignore="MissingTranslation">Válasszon PNG-, WebP- vagy SVG-képet.</string>
+    <string name="control_skin_operation_failed" tools:ignore="MissingTranslation">Nem sikerült befejezni a vezérlők megjelenésével kapcsolatos műveletet.</string>
+    <string name="control_skin_missing" tools:ignore="MissingTranslation">Nem elérhető készlet (alapértelmezett vezérlők)</string>
+    <string name="control_skin_remove_image" tools:ignore="MissingTranslation">Eltávolítás</string>
+    <string name="control_skin_manage" tools:ignore="MissingTranslation">Készlet kezelése</string>
+    <string name="control_skin_manage_named" tools:ignore="MissingTranslation"><xliff:g id="skin_name" example="Classic Nokia">%1$s</xliff:g> kezelése</string>
+    <plurals name="control_skin_count">
+        <item quantity="one"><xliff:g id="count" example="4">%1$d</xliff:g> testreszabott vezérlő</item>
+        <item quantity="other"><xliff:g id="count" example="4">%1$d</xliff:g> testreszabott vezérlő</item>
+    </plurals>
+    <string name="control_skin_empty" tools:ignore="MissingTranslation">Hozzon létre egy készletet a vezérlőképek testreszabásához.</string>
+    <string name="control_skin_numeric" tools:ignore="MissingTranslation">Billentyűzet</string>
+    <string name="control_skin_navigation" tools:ignore="MissingTranslation">Navigáció</string>
+    <string name="control_skin_other" tools:ignore="MissingTranslation">Egyéb gombok</string>
+    <string name="control_skin_pressed_requires_normal" tools:ignore="MissingTranslation">Először adjon hozzá egy normál képet.</string>
+    <string name="control_skin_edit_named" tools:ignore="MissingTranslation"><xliff:g id="button_label" example="5">%1$s</xliff:g> gomb</string>
+    <string name="control_skin_change_image" tools:ignore="MissingTranslation">Módosítás</string>
+    <string name="control_skin_pick_image" tools:ignore="MissingTranslation">Kép kiválasztása</string>
+    <string name="control_skin_soft_left" tools:ignore="MissingTranslation">Bal funkció</string>
+    <string name="control_skin_soft_right" tools:ignore="MissingTranslation">Jobb funkció</string>
+    <string name="control_skin_fire" tools:ignore="MissingTranslation">Akció</string>
+    <string name="control_skin_menu" tools:ignore="MissingTranslation">Menü</string>
+    <string name="control_skin_movement" tools:ignore="MissingTranslation">Mozgásvezérlők</string>
+    <string name="control_skin_dpad" tools:ignore="MissingTranslation">D-pad</string>
+    <string name="control_skin_analog" tools:ignore="MissingTranslation">Analóg kar</string>
+    <string name="control_skin_dpad_base" tools:ignore="MissingTranslation">D-pad képe</string>
+    <string name="control_skin_overlay_up" tools:ignore="MissingTranslation">Felfelé réteg</string>
+    <string name="control_skin_overlay_down" tools:ignore="MissingTranslation">Lefelé réteg</string>
+    <string name="control_skin_overlay_left" tools:ignore="MissingTranslation">Balra réteg</string>
+    <string name="control_skin_overlay_right" tools:ignore="MissingTranslation">Jobbra réteg</string>
+    <string name="control_skin_analog_base" tools:ignore="MissingTranslation">Alapkép</string>
+    <string name="control_skin_analog_thumb" tools:ignore="MissingTranslation">Kar képe</string>
+    <string name="control_skin_analog_thumb_pressed" tools:ignore="MissingTranslation">Aktív kar képe</string>
+    <string name="control_skin_preview_directions" tools:ignore="MissingTranslation">Irányok előnézete</string>
+    <string name="control_skin_preview_direction" tools:ignore="MissingTranslation">Előnézet: <xliff:g id="direction" example="Up">%1$s</xliff:g></string>
+    <string name="control_skin_builtin_preview" tools:ignore="MissingTranslation">Alapértelmezett</string>
+    <string name="control_skin_custom_preview" tools:ignore="MissingTranslation">Testreszabott</string>
+    <string name="layout_editor_group_on">Átméretezés együtt</string>
+    <string name="layout_editor_group_off">Átméretezés külön</string>
+    <string name="layout_editor_snap_grid">Illesztés a rácshoz</string>
+    <string name="layout_editor_snap_controls">Illesztés a gombokhoz</string>
+    <string name="layout_editor_snap_resize">Illesztés átméretezéskor</string>
+    <string name="layout_editor_snap_resize_on">Átméretezési illesztés: Be</string>
+    <string name="layout_editor_snap_resize_off">Átméretezési illesztés: Ki</string>
+    <string name="layout_editor_snap_grid_on">Rácsillesztés: Be</string>
+    <string name="layout_editor_snap_grid_off">Rácsillesztés: Ki</string>
+    <string name="layout_editor_snap_controls_on">Gombillesztés: Be</string>
+    <string name="layout_editor_snap_controls_off">Gombillesztés: Ki</string>
+    <string name="layout_editor_guide_gestures">Gesztusok</string>
+    <string name="layout_editor_guide_move">Húzzon el egy vezérlőt az áthelyezéséhez.</string>
+    <string name="layout_editor_guide_resize">Használjon két ujjat az átméretezéshez. Mozgassa vízszintesen vagy függőlegesen a szélesség vagy a magasság módosításához.</string>
+    <string name="layout_editor_guide_tools">Szerkesztőeszközök</string>
+    <string name="layout_editor_guide_done">Koppintson a Kész gombra a mentéshez, elvetéshez vagy a szerkesztés folytatásához.</string>
+    <string name="layout_editor_guide_start">Szerkesztés indítása</string>
+    <string name="control_skin_invalid_name">Használjon 1–61 karaktert: betűt, számjegyet, kombináló jelet, szóközt vagy . _ ( ) - jelet. Betűvel vagy számjeggyel kezdje, és ne ponttal zárja.</string>
+    <string name="control_skin_image_validation_failed">Válasszon érvényes, legfeljebb 8 MiB méretű PNG-, WebP- vagy SVG-képet. A PNG és WebP képek mérete legfeljebb 2048 × 2048 képpont lehet.</string>
+</resources>

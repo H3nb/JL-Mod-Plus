@@ -1,0 +1,47 @@
+<?xml version="1.0" encoding="utf-8"?>
+<!-- Shared UI actions, generic labels, dialogs, and About screen. -->
+<resources xmlns:xliff="urn:oasis:names:tc:xliff:document:1.2">
+    <string name="about">Despre</string>
+    <string name="about_message">Rulați aplicații și jocuri clasice, organizați MIDlet-urile în bibliotecă și personalizați controalele, afișajul, sunetul și performanța. JL-Mod Plus este gratuit și open source.</string>
+    <string name="about_subtitle">Emulator Java ME pentru Android</string>
+    <string name="about_compatibility">Compatibilitatea depinde de MIDlet, de dispozitiv și de API-urile Java ME acceptate. Unele aplicații pot funcționa diferit față de modul în care funcționau pe dispozitivele originale.</string>
+    <string name="about_lineage_title">Originea proiectului</string>
+    <string name="about_build_title">Informații despre versiune</string>
+    <string name="about_version_label">Versiune</string>
+    <string name="about_build_label">Build</string>
+    <string name="about_revision_label">Revizie sursă</string>
+    <string name="about_links_title">Proiect și licențe</string>
+    <string name="about_github_link_copied">Nu a fost găsit niciun browser. Linkul GitHub a fost copiat în clipboard.</string>
+    <string name="about_github_browser_unavailable">Nu a fost găsit niciun browser pentru a deschide GitHub.</string>
+    <string name="about_lineage">JL-Mod Plus este o ramificare independentă a JL-Mod realizat de woesss (Yury Kharchenko). JL-Mod se bazează pe J2ME Loader de Nikita Shakarun, care provine din J2meLoader de la NaikSoftware.</string>
+    <string name="about_evolution">JL-Mod Plus dezvoltă această bază cu o interfață modernă, o bibliotecă de MIDlet-uri mai complexă, funcții noi și compatibilitate cu versiunile mai noi de Android.</string>
+    <string name="action_back">Înapoi</string>
+    <string name="action_settings">Setări</string>
+    <string name="CANCEL_CMD">Anulează</string>
+    <string name="change">Schimbă</string>
+    <string name="choose">Alege</string>
+    <string name="close">Închide</string>
+    <string name="cmd_menu">Meniu</string>
+    <string name="CONFIRMATION_REQUIRED">Confirmare necesară</string>
+    <string name="create">Creează</string>
+    <string name="default_label"><xliff:g id="name" example="Example">%1$s</xliff:g> (implicit)</string>
+    <string name="dismiss">Închide</string>
+    <string name="edit">Editează</string>
+    <string name="error">Eroare</string>
+    <string name="error_name">Introduceți un nume.</string>
+    <string name="exit">Ieșire</string>
+    <string name="help">Ajutor</string>
+    <string name="install">Instalează</string>
+    <string name="licenses">Licențe</string>
+    <string name="licenses_unavailable">Detaliile despre licențe nu sunt disponibile.</string>
+    <string name="loading_info">Se încarcă informațiile…</string>
+    <string name="more">Mai multe</string>
+    <string name="not_saved_exists">Există deja</string>
+    <string name="reset">Resetează</string>
+    <string name="retry">Încearcă din nou</string>
+    <string name="save">Salvează</string>
+    <string name="saved"><xliff:g id="name" example="Example">%1$s</xliff:g> a fost salvat</string>
+    <string name="START_CMD">Pornește</string>
+    <string name="warning">Avertisment</string>
+    <string name="removed"><xliff:g id="name" example="Example">%1$s</xliff:g> a fost eliminat</string>
+</resources>

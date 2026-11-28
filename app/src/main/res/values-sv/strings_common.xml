@@ -1,0 +1,47 @@
+<?xml version="1.0" encoding="utf-8"?>
+<!-- Shared UI actions, generic labels, dialogs, and About screen. -->
+<resources xmlns:xliff="urn:oasis:names:tc:xliff:document:1.2">
+    <string name="about">Om</string>
+    <string name="about_message">Kör klassiska appar och spel, organisera MIDlets i ditt bibliotek och anpassa kontroller, skärm, ljud och prestanda. JL-Mod Plus är kostnadsfritt och bygger på öppen källkod.</string>
+    <string name="about_subtitle">Java ME-emulator för Android</string>
+    <string name="about_compatibility">Kompatibiliteten beror på MIDlet, enhet och vilka Java ME-API:er som stöds. Vissa appar kan fungera annorlunda än på sina ursprungliga enheter.</string>
+    <string name="about_lineage_title">Projektets ursprung</string>
+    <string name="about_build_title">Versionsinformation</string>
+    <string name="about_version_label">Version</string>
+    <string name="about_build_label">Bygge</string>
+    <string name="about_revision_label">Källkodsrevision</string>
+    <string name="about_links_title">Projekt och licenser</string>
+    <string name="about_github_link_copied">Ingen webbläsare hittades. GitHub-länken har kopierats till urklipp.</string>
+    <string name="about_github_browser_unavailable">Ingen webbläsare hittades för att öppna GitHub.</string>
+    <string name="about_lineage">JL-Mod Plus är en fristående förgrening av JL-Mod av woesss (Yury Kharchenko). JL-Mod baseras på J2ME Loader av Nikita Shakarun, som i sin tur härstammar från NaikSoftwares J2meLoader.</string>
+    <string name="about_evolution">JL-Mod Plus bygger vidare på den grunden med ett modernt gränssnitt, ett mer kraftfullt MIDlet-bibliotek, nya funktioner och stöd för nyare Android-versioner.</string>
+    <string name="action_back">Tillbaka</string>
+    <string name="action_settings">Inställningar</string>
+    <string name="CANCEL_CMD">Avbryt</string>
+    <string name="change">Ändra</string>
+    <string name="choose">Välj</string>
+    <string name="close">Stäng</string>
+    <string name="cmd_menu">Meny</string>
+    <string name="CONFIRMATION_REQUIRED">Bekräftelse krävs</string>
+    <string name="create">Skapa</string>
+    <string name="default_label"><xliff:g id="name" example="Example">%1$s</xliff:g> (standard)</string>
+    <string name="dismiss">Stäng</string>
+    <string name="edit">Redigera</string>
+    <string name="error">Fel</string>
+    <string name="error_name">Ange ett namn.</string>
+    <string name="exit">Avsluta</string>
+    <string name="help">Hjälp</string>
+    <string name="install">Installera</string>
+    <string name="licenses">Licenser</string>
+    <string name="licenses_unavailable">Licensinformation är inte tillgänglig.</string>
+    <string name="loading_info">Läser in information…</string>
+    <string name="more">Mer</string>
+    <string name="not_saved_exists">Finns redan</string>
+    <string name="reset">Återställ</string>
+    <string name="retry">Försök igen</string>
+    <string name="save">Spara</string>
+    <string name="saved">Sparade <xliff:g id="name" example="Example">%1$s</xliff:g></string>
+    <string name="START_CMD">Starta</string>
+    <string name="warning">Varning</string>
+    <string name="removed">Tog bort <xliff:g id="name" example="Example">%1$s</xliff:g></string>
+</resources>

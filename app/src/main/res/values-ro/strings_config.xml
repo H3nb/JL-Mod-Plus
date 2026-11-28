@@ -1,0 +1,357 @@
+<?xml version="1.0" encoding="utf-8"?>
+<!-- Per-MIDlet configuration, reusable profiles, camera, controller calibration, permissions, and system properties. -->
+<resources xmlns:tools="http://schemas.android.com/tools" xmlns:xliff="urn:oasis:names:tc:xliff:document:1.2">
+    <!-- %1$s is an optional quoted storage-volume name with a trailing space, or empty. -->
+    <!-- %1$s is a raw storage-volume description. -->
+    <string name="config_missing_app_storage_named">Aplicația nu a fost găsită.\nVerificați dacă dispozitivul de stocare „<xliff:g id="storage_name" example="SD card">%1$s</xliff:g>” este disponibil sau recreați comanda rapidă.</string>
+    <string name="config_missing_app_storage_generic">Aplicația nu a fost găsită.\nVerificați dacă dispozitivul de stocare este disponibil sau recreați comanda rapidă.</string>
+    <string name="midlet_name"><b>Nume: </b></string>
+    <string name="midlet_size"><b>Dimensiune: </b></string>
+    <string name="midlet_vendor"><b>Producător: </b></string>
+    <string name="midlet_version"><b>Versiune: </b></string>
+    <string name="config_destination_graphics">Afișaj</string>
+    <string name="config_destination_rendering" tools:ignore="MissingTranslation">Grafică</string>
+    <string name="config_destination_media">Media</string>
+    <string name="config_camera_title">Cameră</string>
+    <string name="config_camera_default_title">Cameră implicită</string>
+    <string name="config_camera_rear">Spate</string>
+    <string name="config_camera_front">Frontală</string>
+    <string name="config_camera_resolution_title">Rezoluție implicită</string>
+    <string name="config_camera_resolution_auto">Automat</string>
+    <string name="config_camera_resolution_portrait">480×640 — Portret</string>
+    <string name="config_camera_resolution_landscape">640×480 — Peisaj</string>
+    <string name="config_destination_controls">Controale</string>
+    <string name="config_gamepad_test">Testează controlerul</string>
+    <string name="config_gamepad_calibrate">Calibrează controlerul</string>
+    <string name="config_gamepad_calibrate_summary">Măsoară poziția neutră a controlerului conectat și intervalele stickurilor și trăgacelor sale.</string>
+    <string name="config_gamepad_stick_directions">Direcții digitale</string>
+    <string name="config_gamepad_stick_unassigned">Neatribuit</string>
+    <string name="config_gamepad_stick_pointer">Sursă pointer</string>
+    <string name="config_gamepad_opaque_summary">Această configurație conține date de controler într-un format neacceptat. Este păstrată neschimbată și nu poate fi editată aici.</string>
+    <string name="config_gamepad_unsupported_summary">Această configurație de controler nu este acceptată. Este păstrată neschimbată și nu poate fi editată aici.</string>
+    <string name="config_gamepad_keypad_title">Tastatură virtuală</string>
+    <string name="config_gamepad_calibration_next">Înainte</string>
+    <string name="config_gamepad_mapping_help_title">Ajutor pentru maparea controlerului</string>
+    <string name="config_gamepad_directions_four">4 direcții</string>
+    <string name="config_gamepad_directions_eight">8 direcții</string>
+    <string name="config_gamepad_pointer_off">Dezactivat</string>
+    <string name="config_gamepad_pointer_cursor">Cursor proporțional</string>
+    <string name="config_gamepad_pointer_joystick">Joystick tactil</string>
+    <!-- This is the same controller-identity fingerprint shown in diagnostics. -->
+    <string name="config_gamepad_calibration_profile">Semnătură controler: <xliff:g id="profile_name" example="Action Games">%1$s</xliff:g></string>
+    <string name="config_gamepad_calibration_phase_neutral">Se așteaptă poziția neutră</string>
+    <string name="config_gamepad_calibration_phase_stick_range">Interval stick</string>
+    <string name="config_gamepad_calibration_phase_trigger_range">Interval trăgaci</string>
+    <string name="config_gamepad_calibration_phase_review">Gata de salvare</string>
+    <string name="config_gamepad_calibration_phase_committed">Salvat</string>
+    <string name="config_gamepad_calibration_phase_cancelled">Anulat</string>
+    <string name="config_gamepad_calibration_waiting_controller">Conectați un controler cu un stick analogic sau un trăgaci compatibil. Mișcați un stick sau apăsați un trăgaci pentru a începe. Calibrarea actuală rămâne neschimbată dacă nu salvați una nouă sau nu o resetați.</string>
+    <string name="config_gamepad_calibration_no_analog_ranges">Acest controler nu oferă intervale analogice compatibile pentru stick sau trăgaci.</string>
+    <string name="config_gamepad_calibration_start">Mențineți toate stickurile centrate și toate trăgacele eliberate până la expirarea cronometrului de poziție neutră.</string>
+    <string name="config_gamepad_calibration_save_failed">Calibrarea nu a putut fi salvată. Verificați setările actuale înainte de a încerca din nou.</string>
+    <string name="config_gamepad_calibration_no_supported_ranges">Nu au fost găsite intervale analogice compatibile.</string>
+    <string name="config_gamepad_calibration_rejected">Calibrare respinsă: <xliff:g id="name" example="Example">%1$s</xliff:g></string>
+    <string name="config_gamepad_calibration_neutral_instructions">Mențineți toate stickurile detectate centrate și toate trăgacele detectate eliberate până la expirarea cronometrului de poziție neutră.</string>
+    <string name="config_gamepad_calibration_stick_instructions">Mișcați fiecare stick detectat pe întregul său interval în toate direcțiile, apoi apăsați Înainte.</string>
+    <string name="config_gamepad_calibration_trigger_instructions">Eliberați și apăsați complet fiecare trăgaci detectat, apoi atingeți Înainte.</string>
+    <string name="config_gamepad_calibration_review_instructions">Salvați pentru a înlocui calibrarea acestui controler.</string>
+    <string name="config_gamepad_calibration_saved">Calibrare salvată.</string>
+    <string name="config_gamepad_calibration_cancelled">Calibrare anulată.</string>
+    <string name="config_gamepad_calibration_waiting_samples">Calibrarea așteaptă eșantioane de la controler.</string>
+    <string name="config_gamepad_diagnosis_header">Diagnosticare controler</string>
+    <string name="config_gamepad_diagnosis_mode">Stare: <xliff:g id="status" example="enabled">%1$s</xliff:g> · Sursă: <xliff:g id="source" example="controller">%2$s</xliff:g></string>
+    <string name="config_gamepad_diagnosis_notice">Notă: <xliff:g id="name" example="Example">%1$s</xliff:g></string>
+    <string name="config_gamepad_diagnosis_analog_settings">Setări analogice:</string>
+    <string name="config_gamepad_diagnosis_left_stick">Stick stâng</string>
+    <string name="config_gamepad_diagnosis_right_stick">Stick drept</string>
+    <string name="config_gamepad_diagnosis_triggers">Trăgace</string>
+    <string name="config_gamepad_diagnosis_pointer">Mod pointer</string>
+    <string name="config_gamepad_status_enabled">activat</string>
+    <string name="config_gamepad_status_disabled">dezactivat</string>
+    <string name="config_gamepad_diagnosis_source_default">implicit</string>
+    <string name="config_gamepad_diagnosis_source_controller">controler</string>
+    <string name="config_gamepad_diagnosis_source_explicit">explicit</string>
+    <string name="config_gamepad_diagnosis_device"><xliff:g id="device_name" example="Xbox Controller">%1$s</xliff:g> (#<xliff:g id="device_id" example="1">%2$d</xliff:g>)</string>
+    <string name="config_gamepad_calibration_issue_no_channels">niciun canal compatibil</string>
+    <string name="config_gamepad_calibration_issue_invalid_constraints">constrângeri de calibrare nevalide</string>
+    <string name="config_gamepad_calibration_issue_non_finite">eșantion nefinit</string>
+    <string name="config_gamepad_calibration_issue_insufficient_samples">eșantioane insuficiente</string>
+    <string name="config_gamepad_calibration_issue_invalid_range">interval nevalid</string>
+    <string name="config_gamepad_calibration_issue_rest_outside_range">valoarea de repaus este în afara intervalului</string>
+    <string name="config_gamepad_calibration_issue_rest_too_noisy">poziția de repaus nu este suficient de stabilă</string>
+    <string name="config_gamepad_calibration_phase_unknown">Stare indisponibilă</string>
+    <string name="config_gamepad_diagnosis_capabilities">Capacitățile controlerului conectat:</string>
+    <string name="config_gamepad_diagnosis_descriptor">Descriptor: <xliff:g id="name" example="Example">%1$s</xliff:g></string>
+    <!-- %1$s is a controller-identity fingerprint derived from its descriptor and capabilities. -->
+    <!-- It is not a handwritten signature or a cryptographic signing operation. -->
+    <string name="config_gamepad_diagnosis_signature">Semnătură: <xliff:g id="name" example="Example">%1$s</xliff:g></string>
+    <string name="config_gamepad_diagnosis_axis">Axa <xliff:g id="axis_index" example="0">%1$d</xliff:g> [<xliff:g id="min_value" example="-1.0">%2$s</xliff:g>, <xliff:g id="max_value" example="1.0">%3$s</xliff:g>] flat=<xliff:g id="flat" example="0.05">%4$s</xliff:g> fuzz=<xliff:g id="fuzz" example="0.01">%5$s</xliff:g></string>
+    <string name="config_gamepad_diagnosis_no_controller">(niciun controler conectat)</string>
+    <string name="config_gamepad_diagnosis_samples_not_sent">Eșantioanele de intrare nu sunt trimise în mod intenționat către MIDlet.</string>
+    <string name="config_destination_system">Sistem</string>
+    <string name="config_screen_behavior" tools:ignore="MissingTranslation">Comportament ecran</string>
+    <string name="config_screen_size">Dimensiune ecran</string>
+    <string name="config_select_screen_size">Selectați dimensiunea ecranului</string>
+    <string name="config_current_screen_size">Dimensiune curentă: <xliff:g id="name" example="Example">%1$s</xliff:g></string>
+    <string name="config_custom_resolution">Rezoluție personalizată</string>
+    <string name="profile_custom">Personalizat</string>
+    <string name="select_dialog_title">Selectați MIDlet-ul</string>
+    <string name="SIZE_PRESETS">Presetări dimensiune font</string>
+    <string name="config_color_picker_title">Alegeți culoarea</string>
+    <string name="config_color_picker_hex">Culoare hex</string>
+    <string name="config_color_picker_hint">Trageți câmpurile de culoare sau introduceți o valoare RGB din șase cifre.</string>
+    <string name="config_color_picker_invalid">Introduceți exact șase cifre hexazecimale.</string>
+    <string name="config_color_picker_saturation_value">Saturație și luminozitate</string>
+    <string name="config_color_picker_hue">Nuanță</string>
+    <string name="config_decrease_value">Micșorează valoarea</string>
+    <string name="config_increase_value">Mărește valoarea</string>
+    <string name="midlet_failure_recovery_title">MIDlet-ul s-a oprit neașteptat</string>
+    <string name="midlet_failure_recovery_message">MIDlet-ul s-a oprit neașteptat. Informațiile de diagnosticare au fost salvate local. Puteți continua să utilizați JL-Mod Plus.</string>
+    <string name="midlet_failure_recovery_message_named">„<xliff:g id="name" example="Example">%1$s</xliff:g>” s-a oprit neașteptat. Informațiile de diagnosticare au fost salvate local. Puteți continua să utilizați JL-Mod Plus.</string>
+    <plurals name="config_system_properties_value">
+        <item quantity="one"><xliff:g id="count" example="3">%1$d</xliff:g> proprietate</item>
+        <item quantity="few"><xliff:g id="count" example="3">%1$d</xliff:g> proprietăți</item>
+        <item quantity="other"><xliff:g id="count" example="3">%1$d</xliff:g> de proprietăți</item>
+    </plurals>
+    <string name="config_search_suggestions" tools:ignore="MissingTranslation">Setări sugerate</string>
+    <string name="config_search_clear" tools:ignore="MissingTranslation">Șterge căutarea</string>
+    <string name="config_search_title" tools:ignore="MissingTranslation">Caută în setări</string>
+    <string name="config_search_hint" tools:ignore="MissingTranslation">Căutați o setare, de ex. MMPX sau orientare</string>
+    <string name="config_search_no_results" tools:ignore="MissingTranslation">Nicio setare potrivită</string>
+    <string name="config_search_upscaling_requires_resolution" tools:ignore="MissingTranslation">Alegeți Automat sau 2×–10× la Rezoluție de randare pentru a configura scalarea bitmap.</string>
+    <string name="config_search_requires_manual_scale" tools:ignore="MissingTranslation">Alegeți Manual la Mod de scalare pentru a ajusta scara.</string>
+    <string name="config_search_requires_custom_background" tools:ignore="MissingTranslation">Alegeți Personalizat la Mod de fundal pentru a edita culoarea de fundal.</string>
+    <string name="config_search_requires_gles" tools:ignore="MissingTranslation">Alegeți Accelerare hardware (OpenGL ES) la Mod grafic pentru a configura efectele shader.</string>
+    <string name="config_search_requires_renderer_mode" tools:ignore="MissingTranslation">Alegeți Software sau Accelerare hardware (Surface) la Mod grafic pentru a configura actualizările asincrone ale ecranului.</string>
+    <string name="config_font_page_title" tools:ignore="MissingTranslation">Setări font</string>
+    <string name="config_display_more" tools:ignore="MissingTranslation">Text și performanță</string>
+    <string name="config_destination_home" tools:ignore="MissingTranslation">Acasă</string>
+    <string name="config_overview_profile_draft" tools:ignore="MissingTranslation">Ciornă profil</string>
+    <string name="config_overview_profile_draft_summary" tools:ignore="MissingTranslation">Editați acest profil reutilizabil, apoi salvați modificările din bara de instrumente.</string>
+    <string name="config_overview_quick_access" tools:ignore="MissingTranslation">Acces rapid</string>
+    <string name="config_system_properties_editor_label">Proprietăți</string>
+    <string name="config_overview_enabled" tools:ignore="MissingTranslation">Activat</string>
+    <string name="config_overview_disabled" tools:ignore="MissingTranslation">Dezactivat</string>
+    <string name="config_overview_media_summary" tools:ignore="MissingTranslation">Bancă de sunete și cameră</string>
+    <string name="config_overview_hint" tools:ignore="MissingTranslation">Alegeți o categorie pentru a personaliza jocul. Fiecare setare are un singur loc; aceste comenzi rapide vă duc direct acolo.</string>
+    <string name="config_destination_general">General</string>
+    <string name="config_basic_display">Ecran MIDlet</string>
+    <string name="config_display_appearance">Aspectul ecranului</string>
+    <string name="config_display_rendering">Randare</string>
+    <string name="config_image_quality_section" tools:ignore="MissingTranslation">Calitatea imaginii</string>
+    <string name="config_frame_rate_section" tools:ignore="MissingTranslation">Rată de cadre</string>
+    <string name="config_fps_position_title" tools:ignore="MissingTranslation">Poziție FPS</string>
+    <string name="config_display_text">Text și fonturi</string>
+    <string name="config_input_mapping_section" tools:ignore="MissingTranslation">Intrare și mapare</string>
+    <string name="config_controls_appearance_section" tools:ignore="MissingTranslation">Aspectul controalelor</string>
+    <string name="config_controls_virtual_keyboard">Controale virtuale</string>
+    <string name="config_controls_virtual_keyboard_colors">Culori controale virtuale</string>
+    <string name="config_virtual_controls_color_preview">Previzualizare culori</string>
+    <string name="config_virtual_controls_preview_normal">Eliberat</string>
+    <string name="config_virtual_controls_preview_pressed">Apăsat</string>
+    <string name="config_controls_maintenance">Aspect</string>
+    <string name="config_controls_skin_help">Schimbă aspectul butoanelor tastaturii, al D-pad-ului și al stickului analogic folosind imagini personalizate.</string>
+    <string name="config_controls_color_button_normal">Buton eliberat</string>
+    <string name="config_controls_color_button_pressed">Buton apăsat</string>
+    <string name="config_controls_color_label_normal">Etichetă eliberată</string>
+    <string name="config_controls_color_label_pressed">Etichetă apăsată</string>
+    <string name="config_controls_color_outline_short">Contur</string>
+    <string name="config_controls_disabled_hint">Controalele virtuale sunt momentan dezactivate. Le puteți personaliza în continuare aici.</string>
+    <string name="config_controls_opacity_help" formatted="false">Ajustează opacitatea controalelor virtuale. La 0%, controalele sunt transparente, iar la 100% nu se aplică transparență suplimentară.</string>
+    <string name="config_controls_opaque_outside">Afișează controalele fără transparență în afara ecranului MIDlet</string>
+    <string name="config_controls_opaque_outside_help">Când opțiunea este activată, controalele aflate în întregime în afara ecranului MIDlet-ului sunt afișate fără transparență suplimentară. Cele care se suprapun peste ecran folosesc opacitatea selectată.</string>
+    <string name="config_controls_connect_controller">Conectați un controler pentru calibrare</string>
+    <string name="config_controls_color_skin_notice">Un skin de tip buton complet poate înlocui culorile, forma și conturul implicite ale butoanelor.</string>
+    <string name="config_current_value">Valoare curentă</string>
+    <string name="config_maintenance">Resetare și date</string>
+    <string name="config_midlet_actions" tools:ignore="MissingTranslation">Acțiuni MIDlet</string>
+    <string name="config_profile_maintenance" tools:ignore="MissingTranslation">Acțiuni profil</string>
+    <string name="config_reset_profile_settings" tools:ignore="MissingTranslation">Resetează ciorna profilului</string>
+    <string name="config_reset_profile_settings_summary" tools:ignore="MissingTranslation">Restaurează setările și controalele virtuale ale acestei ciorne la valorile implicite.</string>
+    <string name="config_system_compatibility" tools:ignore="MissingTranslation">Compatibilitate emulare</string>
+    <string name="config_reset_all_settings">Resetează configurația MIDlet</string>
+    <string name="config_reset_all_settings_summary">Restaurează setările și controalele virtuale ale acestui MIDlet la valorile implicite fără a-i șterge datele.</string>
+    <string name="config_delete_app_data">Șterge datele MIDlet</string>
+    <string name="config_delete_app_data_summary">Șterge definitiv datele acestui MIDlet, inclusiv salvările. Setările sale vor fi păstrate.</string>
+    <string name="config_message_reset_settings">Restaurați configurația MIDlet și controalele virtuale la valorile implicite? Datele salvate rămân intacte. Orice profil asociat nu va mai fi urmărit.</string>
+    <string name="config_message_reset_profile_settings">Resetați setările și controalele virtuale ale acestui profil la valorile implicite? Puteți în continuare să editați sau să anulați înainte de salvare.</string>
+    <string name="config_message_delete_app_data">Ștergeți definitiv toate salvările și datele create de acest MIDlet? Setările MIDlet nu vor fi șterse.</string>
+    <string name="config_lock_custom_resolution_ratio">Blochează raportul de aspect</string>
+    <string name="config_swap_screen_size">Inversează lățimea și înălțimea</string>
+    <string name="profile_builtin_settings">Setări implicite JL-Mod</string>
+    <string name="profile_default_badge_short">Implicit pentru MIDlet-uri noi</string>
+    <string name="profile_template_summary">Setări MIDlet salvate.</string>
+    <string name="profile_name_exists">Există deja un profil cu acest nume.</string>
+    <string name="profile_delete_template_message">Ștergeți profilul „<xliff:g id="profile_name" example="Action Games">%1$s</xliff:g>”? MIDlet-urile care îl folosesc își vor păstra setările curente, dar nu vor mai primi actualizări viitoare.</string>
+    <string name="profile_template_operation_failed">Operațiunea asupra profilului nu a putut fi finalizată.</string>
+    <string name="config_help_screen_size">Setează rezoluția virtuală a ecranului Java ME utilizată de MIDlet.</string>
+    <string name="config_help_orientation">Alege orientarea ecranului în timp ce rulează MIDlet-ul.</string>
+    <string name="config_help_scale_type">Alegeți cum se potrivește jocul pe ecran. Selectați Manual pentru a seta o scară personalizată.</string>
+    <string name="config_help_scale_ratio" formatted="false">Ajustează dimensiunea afișată între 1% și 1000%. La 100%, jocul folosește dimensiunea originală; valorile mai mari pot depăși ecranul.</string>
+    <string name="config_help_lock_custom_resolution_ratio">Păstrează raportul de aspect în timpul editării rezoluției personalizate.</string>
+    <string name="config_help_virtual_keyboard">Afișează controale pe ecran pentru acest MIDlet.</string>
+    <string name="config_help_touch_input">Permite MIDlet-ului să primească intrări de tip pointer de pe ecranul tactil.</string>
+    <string name="config_help_background">Umple spațiul neutilizat din jurul ecranului MIDlet.</string>
+    <string name="config_background_mode">Mod de fundal</string>
+    <string name="config_background_custom">Personalizat</string>
+    <string name="config_background_theme">Temă</string>
+    <string name="config_background_immersive">Imersiv</string>
+    <string name="config_background_theme_help">Folosește culoarea temei JL-Mod Plus în jurul ecranului MIDlet.</string>
+    <string name="config_background_immersive_help">Umple spațiul neutilizat cu culori prelevate din ecranul MIDlet.</string>
+    <string name="config_background_dynamic">Culoare dinamică</string>
+    <string name="config_background_dynamic_help">Folosește o singură culoare uniformă care se adaptează lin la ecranul MIDlet.</string>
+    <string name="config_background_custom_color">Culoare de fundal</string>
+    <string name="config_help_background_custom_color">Setează culoarea spațiului neutilizat din jurul ecranului MIDlet.</string>
+    <string name="config_help_skin">Afișează o imagine opțională sau o ramă în jurul ecranului MIDlet.</string>
+    <string name="config_help_screen_gravity">Poziționează ecranul MIDlet atunci când rămâne spațiu neutilizat.</string>
+    <string name="config_help_screen_padding">Adaugă margine interioară în pixeli între ecranul MIDlet și marginea zonei de afișare.</string>
+    <string name="config_help_filter">Folosește filtrarea liniară pentru a netezi ecranul MIDlet la scalare.</string>
+    <string name="config_warning_filter_shader">Filtrarea liniară netezește intrarea înainte de procesarea de către shaderul de ecran și poate reduce claritatea ieșirii.</string>
+    <string name="config_help_immediate">Procesează evenimentele MIDlet imediat în loc să le pună în coadă. Poate îmbunătăți timpul de răspuns, dar poate destabiliza unele MIDlet-uri.</string>
+    <string name="config_help_graphics_mode">Alege calea de randare pentru ecranul MIDlet. Accelerarea hardware poate îmbunătăți performanța, dar compatibilitatea variază în funcție de dispozitiv.</string>
+    <string name="config_help_shader">Aplică un shader cadrului MIDlet înainte ca acesta să fie afișat.</string>
+    <string name="config_help_shader_tuning">Controalele disponibile depind de shaderul selectat.</string>
+    <string name="config_help_parallel_redraw">Programează afișarea cadrelor în mod asincron. Acest lucru poate îmbunătăți performanța pe unele dispozitive.</string>
+    <string name="config_help_force_fullscreen">Ascunde bara de comenzi la pornirea MIDlet-ului. MIDlet-ul o poate afișa din nou în timpul jocului.</string>
+    <string name="config_help_fps_limit">Setează limita FPS la viteza de emulare 1×. Limita efectivă urmărește viteza de emulare; 0 (Maxim) folosește rata maximă de reîmprospătare a ecranului.</string>
+    <string name="config_timing_mode_full_guest">Timp de emulare</string>
+    <string name="config_timing_mode_real_wall">Timp de sistem</string>
+    <string name="config_help_emulation_speed">Ajustează temporizatoarele și întârzierile acceptate ale MIDlet-ului pentru această sesiune. Dacă este selectat Timp de emulare, data și ora urmează și ele viteza aleasă. Redarea media și interfața Android își păstrează viteza normală.</string>
+    <string name="config_help_timing_mode">Alege dacă MIDlet-ul folosește timpul de emulare sau timpul de sistem. Întârzierile relative rămân scalate cu viteza de emulare.</string>
+    <string name="config_help_timing_unavailable">Setările de timp nu sunt disponibile pentru această instalare MIDlet. Reinstalați sau reconvertiți MIDlet-ul pentru a le activa.</string>
+    <string name="config_help_generic_color">Setează culoarea acestui element vizual.</string>
+    <string name="config_help_encoding">Alege codificarea de caractere raportată ca microedition.encoding.</string>
+    <string name="config_edit_system_properties">Editează proprietățile de sistem</string>
+    <string name="config_help_system_properties">Setează proprietăți avansate Java ME raportate către MIDlet.</string>
+    <string name="config_help_system_properties_long">Editați câte o proprietate pe rând în formatul „nume: valoare”. Valorile incorecte pot afecta compatibilitatea.</string>
+    <string name="config_system_properties_info">Majoritatea MIDlet-urilor nu au nevoie de modificări aici.</string>
+    <string name="config_font_sizes">Dimensiuni font</string>
+    <string name="config_help_font_sizes">Setează dimensiunile mic, mediu și mare ale fonturilor Java ME pentru MIDlet.</string>
+    <string name="config_help_font_sizes_long">Setează dimensiunile fonturilor Java ME în pixeli sau în unități scalate când este activată scara fontului Android. Modificați-le împreună pentru a păstra echilibrul textului.</string>
+    <string name="config_font_sizes_value">Mic <xliff:g id="small_size" example="12">%1$s</xliff:g> · mediu <xliff:g id="medium_size" example="16">%2$s</xliff:g> · mare <xliff:g id="large_size" example="20">%3$s</xliff:g></string>
+    <string name="config_help_font_presets">Aplică dimensiuni de font potrivite pentru rezoluțiile uzuale de ecran Java ME.</string>
+    <string name="config_help_font_dimensions">Aplică scara fontului Android dimensiunilor fonturilor Java ME.</string>
+    <string name="config_help_font_aa">Netezește marginile textului randat.</string>
+    <string name="config_help_key_layout">Selectează schema de coduri de taste raportată către MIDlet.</string>
+    <string name="config_help_key_mapping">Mapează tastele și butoanele fizice Android la acțiunile tastaturii Java ME.</string>
+    <string name="config_help_vk_button_shape">Setează forma implicită a butoanelor tastaturii. D-pad-ul și stickul analogic au propriile forme.</string>
+    <string name="config_help_vk_feedback">Vibrează la apăsarea unui control virtual dacă vibrațiile sunt activate în Setări.</string>
+    <string name="config_help_vk_hide_delay">Ascunde controalele după această întârziere când acoperă ecranul MIDlet. Valoarea 0 dezactivează ascunderea automată.</string>
+    <string name="config_help_reset_layout">Restaurează aspectul controalelor virtuale fără a modifica alte setări MIDlet.</string>
+    <string name="config_help_skip_resume">După primul apel reușit startApp(), omite apelurile ulterioare la reluarea MIDlet-ului. Folosiți doar pentru MIDlet-uri care eșuează la reluare.</string>
+    <string name="config_help_soundbank">Alege banca de sunete pentru sinteza MIDI. Nu modifică sunetul preînregistrat.</string>
+    <string name="profile_create_title">Creează profil</string>
+    <string name="profile_rename_title">Redenumește profilul</string>
+    <string name="presets">Profiluri</string>
+    <string name="preset_use">Folosește profil</string>
+    <string name="preset_save_as">Salvează ca profil</string>
+    <string name="preset_custom_configuration">Configurație personalizată</string>
+    <string name="preset_based_on_modified">Configurația curentă a acestui MIDlet diferă de <xliff:g id="profile_name" example="Action Games">%1$s</xliff:g>.</string>
+    <string name="preset_builtin">Setări implicite JL-Mod</string>
+    <string name="preset_builtin_summary">Setări MIDlet și controale virtuale integrate.</string>
+    <string name="preset_picker_title">Folosește profil</string>
+    <string name="preset_manage">Gestionează profilurile</string>
+    <string name="profile_more_actions">Mai multe acțiuni pentru <xliff:g id="profile_name" example="Action Games">%1$s</xliff:g></string>
+    <string name="profile_create_summary">Salvați o configurație reutilizabilă pentru alte MIDlet-uri.</string>
+    <string name="preset_application_settings">Setări MIDlet</string>
+    <string name="preset_includes_keyboard_layout">Include aspectul controalelor virtuale.</string>
+    <string name="preset_virtual_keyboard_on">Controale virtuale activate</string>
+    <string name="preset_virtual_keyboard_off">Controale virtuale dezactivate</string>
+    <string name="preset_apply">Aplică</string>
+    <string name="preset_apply_failed_summary">Acest profil nu a putut fi aplicat. Verificați sursa și încercați din nou.</string>
+    <string name="preset_choose_parts">Alegeți ce să aplicați</string>
+    <string name="preset_name">Nume</string>
+    <string name="preset_save_help">Salvați setările acestui MIDlet și, când este disponibil, aspectul controalelor sale virtuale ca profil. Acest MIDlet va folosi profilul și va primi actualizările sale viitoare.</string>
+    <string name="preset_update">Actualizează <xliff:g id="profile_name" example="Action Games">%1$s</xliff:g></string>
+    <string name="preset_update_title">Actualizați <xliff:g id="profile_name" example="Action Games">%1$s</xliff:g>?</string>
+    <string name="preset_update_summary">Înlocuiți <xliff:g id="profile_name" example="Action Games">%1$s</xliff:g> cu setările curente ale acestui MIDlet și, dacă este disponibil, cu aspectul controalelor sale virtuale. Alte MIDlet-uri care folosesc acest profil vor primi modificările la următoarea pornire.</string>
+    <string name="preset_update_confirm">Actualizează</string>
+    <string name="preset_saved_unlinked_warning">Profilul a fost salvat, dar acest MIDlet nu va primi actualizări viitoare de la el.</string>
+    <string name="profile_default_fallback_notice">Profilul implicit „<xliff:g id="profile_name" example="Action Games">%1$s</xliff:g>” nu a putut fi utilizat. Este posibil să lipsească, să fie incomplet sau ilizibil. Setări implicite JL-Mod este acum profilul implicit pentru MIDlet-uri noi.</string>
+    <string name="preset_discard_changes_title">Renunțați la modificări?</string>
+    <string name="preset_discard_changes_summary">Această ciornă de profil nu a fost salvată.</string>
+    <string name="preset_continue_editing">Continuă editarea</string>
+    <string name="preset_discard_changes">Renunță</string>
+    <string name="preset_name_exists">Există deja un profil cu acest nume.</string>
+    <string name="preset_invalid_name">Introduceți un nume de profil valid.</string>
+    <string name="preset_manager_default_section">Implicit pentru MIDlet-uri noi</string>
+    <string name="preset_manager_presets_section">Profilurile mele</string>
+    <string name="preset_manager_keyboard_section">Aspecte salvate ale controalelor virtuale</string>
+    <string name="preset_default_policy_summary">Se aplică la instalarea unui MIDlet nou.</string>
+    <string name="preset_keyboard_layout_unavailable">Aspectul controalelor virtuale nu este disponibil.</string>
+    <string name="edit_preset">Editează profilul</string>
+    <string name="preset_edit_title">Editează profilul: <xliff:g id="profile_name" example="Action Games">%1$s</xliff:g></string>
+    <string name="preset_unavailable_section">Indisponibil</string>
+    <string name="preset_unavailable_summary">Acest profil nu a putut fi încărcat. Redenumiți-l sau ștergeți-l.</string>
+    <string name="preset_change_default">Schimbă</string>
+    <string name="preset_default_picker_title">Implicit pentru MIDlet-uri noi</string>
+    <string name="profile_follows_updates">Urmărește actualizările viitoare ale profilului.</string>
+    <string name="profile_apply_whole">Întregul profil</string>
+    <string name="profile_apply_whole_follows">Înlocuiește setările și aspectul; urmărește actualizările viitoare.</string>
+    <string name="profile_apply_whole_without_layout">Înlocuiește setările, elimină aspectul local și urmărește actualizările.</string>
+    <string name="profile_apply_settings_only">Doar setările MIDlet</string>
+    <string name="profile_apply_settings_keeps_layout">Păstrează aspectul acestui MIDlet; folosește o configurație personalizată.</string>
+    <string name="profile_apply_layout_only">Doar aspectul controalelor virtuale</string>
+    <string name="profile_apply_layout_keeps_settings">Păstrează setările acestui MIDlet; folosește o configurație personalizată.</string>
+    <string name="config_analog_stick">Stick analogic</string>
+    <string name="config_analog_stick_summary">Alegeți Dezactivat, 4 direcții, 8 direcții sau tastatură numerică pentru stickul analogic principal. Butoanele controlerului folosesc atribuirile de taste.</string>
+    <string name="config_analog_stick_off">Dezactivat</string>
+    <string name="config_controller_help_body_compact">Butoanele controlerului folosesc aceleași atribuiri de taste ca tastatura și tastele telefonului. Stickul analogic trimite către MIDlet doar intrări direcționale. Butonul Înapoi al Android își păstrează comportamentul normal; orice buton fizic atribuit tastei M deschide meniul MIDlet din runtime.</string>
+    <string name="config_show_fps_title" tools:ignore="MissingTranslation">Afișează FPS</string>
+    <string name="config_show_fps_help" tools:ignore="MissingTranslation">Afișează rata de cadre în timpul jocului.</string>
+    <string name="config_search_requires_fps" tools:ignore="MissingTranslation">Activați Afișează FPS pentru a schimba poziția.</string>
+    <string name="midlet_running_notification_title">MIDlet activ</string>
+    <string name="midlet_running_notification_text"><xliff:g id="name" example="Example">%1$s</xliff:g> rulează.</string>
+    <string name="midlet_running_notification_channel">Runtime MIDlet</string>
+    <string name="config_gamepad_directions_numeric_v2">Tastatură numerică</string>
+    <string name="midlet_file_permission_title">Acces la stocare</string>
+    <string name="midlet_file_permission_read">Acest MIDlet dorește să citească fișiere.</string>
+    <string name="midlet_file_permission_write">Acest MIDlet dorește să creeze, să modifice sau să șteargă fișiere.</string>
+    <string name="midlet_file_permission_allow_once">Permite o dată</string>
+    <string name="midlet_file_permission_allow_session">Permite cât timp rulează MIDlet-ul</string>
+    <string name="midlet_file_permission_allow_always">Permite întotdeauna</string>
+    <string name="midlet_file_permission_deny">Refuză întotdeauna</string>
+    <string name="midlet_permissions_settings_title">Permisiuni de acces la stocare</string>
+    <string name="midlet_permissions_read">Citire fișiere</string>
+    <string name="midlet_permissions_write">Modificare fișiere</string>
+    <string name="midlet_permissions_ask">Întreabă</string>
+    <string name="midlet_permissions_allow">Permite întotdeauna</string>
+    <string name="midlet_permissions_deny">Refuză</string>
+    <string name="midlet_permissions_save_failed">Setările de stocare nu au putut fi salvate.</string>
+    <string name="config_avoid_camera_cutout_title">Evită decupajul camerei</string>
+    <string name="config_avoid_camera_cutout_summary">Menține ecranul MIDlet și controalele virtuale în afara decupajului camerei sau al ecranului.</string>
+    <string name="midlet_permissions_write_summary">Include crearea și ștergerea fișierelor.</string>
+    <string name="midlet_legacy_import_title">Salvări vechi Siemens</string>
+    <string name="midlet_legacy_import_action">Alegeți un fișier vechi de salvare</string>
+    <string name="midlet_legacy_import_summary">Copiați un fișier vechi de salvare în spațiul privat Siemens al acestui MIDlet. Opriți mai întâi MIDlet-ul.</string>
+    <string name="midlet_legacy_import_success">Fișier copiat în spațiul privat al acestui MIDlet.</string>
+    <string name="midlet_legacy_import_failed">Importul a eșuat. Opriți MIDlet-ul și asigurați-vă că fișierul destinație nu există deja.</string>
+    <string name="midlet_storage_mode_title">Mod de stocare</string>
+    <string name="midlet_storage_mode_shared">Virtual</string>
+    <string name="midlet_storage_mode_android">Android</string>
+    <string name="midlet_storage_mode_shared_summary">Folosește dosare partajate din dosarul de lucru.</string>
+    <string name="midlet_storage_mode_android_summary">Folosește spațiul de stocare partajat al Android în limitele permisiunilor Android. Permisiunile MIDlet-ului pentru accesul la fișiere sunt separate de cele din modul virtual.</string>
+    <string name="config_system_properties_reset" tools:ignore="MissingTranslation">Resetează la valorile implicite</string>
+    <string name="config_system_properties_reset_title" tools:ignore="MissingTranslation">Resetați proprietățile de sistem?</string>
+    <string name="config_system_properties_reset_message" tools:ignore="MissingTranslation">Înlocuiți conținutul editorului cu valorile implicite curente JL-Mod Plus? Celelalte setări vor rămâne neschimbate. Salvați pentru a aplica resetarea.</string>
+    <string name="config_asset_add">+ Adaugă din fișier</string>
+    <string name="config_asset_copy_hint">Copiat în dosarul de lucru; fișierul original rămâne la locul său.</string>
+    <string name="config_asset_name">Nume fișier</string>
+    <string name="config_asset_delete_confirmation">Ștergeți <xliff:g id="name" example="Example">%1$s</xliff:g> din dosarul de lucru? Este posibil ca și alte MIDlet-uri să folosească acest fișier. Copiile din alte locații nu sunt afectate.</string>
+    <string name="config_asset_imported">Copiat și selectat: <xliff:g id="name" example="Example">%1$s</xliff:g></string>
+    <string name="config_asset_reused">Fișier existent selectat: <xliff:g id="name" example="Example">%1$s</xliff:g></string>
+    <string name="config_asset_renamed">Redenumit în <xliff:g id="name" example="Example">%1$s</xliff:g></string>
+    <string name="config_asset_deleted"><xliff:g id="name" example="Example">%1$s</xliff:g> a fost șters</string>
+    <string name="config_asset_invalid">Fișier neacceptat sau nevalid.</string>
+    <string name="config_asset_operation_failed">Operațiunea asupra fișierului nu a putut fi finalizată.</string>
+    <string name="config_save_failed" tools:ignore="MissingTranslation">Setările nu au putut fi salvate. Modificările dvs. sunt încă deschise — încercați din nou.</string>
+    <string name="config_asset_busy">Finalizați mai întâi operațiunea curentă asupra fișierului.</string>
+    <string name="config_quick_settings" tools:ignore="MissingTranslation">Setări rapide</string>
+    <string name="config_all_settings" tools:ignore="MissingTranslation">Toate setările</string>
+    <string name="profile_local_changes_pending" tools:ignore="MissingTranslation">Modificări locale nesalvate în profil</string>
+    <string name="profile_local_configuration_summary" tools:ignore="MissingTranslation">Setări doar pentru acest MIDlet</string>
+    <string name="profile_not_following" tools:ignore="MissingTranslation">Bazat pe <xliff:g id="profile_name" example="Action Games">%1$s</xliff:g> · Nu urmărește actualizările</string>
+    <string name="profile_stop_following" tools:ignore="MissingTranslation">Nu mai urmări profilul</string>
+    <string name="profile_follow_again" tools:ignore="MissingTranslation">Urmărește profilul din nou</string>
+    <string name="profile_follow_again_summary" tools:ignore="MissingTranslation">Înlocuiți setările locale și controalele virtuale ale acestui MIDlet cu cea mai recentă versiune a profilului <xliff:g id="profile_name" example="Action Games">%1$s</xliff:g> și urmăriți actualizările viitoare?</string>
+</resources>

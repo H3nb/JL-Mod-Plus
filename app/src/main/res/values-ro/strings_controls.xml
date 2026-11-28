@@ -1,0 +1,108 @@
+<?xml version="1.0" encoding="utf-8"?>
+<!-- Virtual keypad controls, layout editor, physical key mappings, and control skins. -->
+<resources xmlns:tools="http://schemas.android.com/tools" xmlns:xliff="urn:oasis:names:tc:xliff:document:1.2">
+    <string name="alert_map_menu">Tasta Meniu (M) nu este atribuită.\nEste posibil să nu puteți deschide meniul MIDlet-ului în timpul jocului.</string>
+    <string name="dismiss_mapping">Închide atribuirea</string>
+    <string name="layout_edit_finish">Finalizează editarea</string>
+    <string name="layout_edit_done">Gata</string>
+    <string name="layout_editor_grid_size">Dimensiune grilă</string>
+    <string name="layout_editor_grid_coarse">Mare (16)</string>
+    <string name="layout_editor_grid_normal">Normală (24)</string>
+    <string name="layout_editor_grid_fine">Fină (32)</string>
+    <string name="layout_editor_snap_on">Aliniere activată</string>
+    <string name="layout_editor_snap_off">Aliniere dezactivată</string>
+    <string name="layout_edit_save_changes">Salvați modificările aduse controalelor virtuale?</string>
+    <string name="layout_edit_discard">Renunță</string>
+    <string name="layout_edit_continue">Continuă editarea</string>
+    <string name="layout_edit_finished">Editarea controalelor virtuale s-a încheiat.</string>
+    <string name="virtual_controls_save_failed">Controalele virtuale nu au putut fi salvate. Încercați din nou.</string>
+    <string name="layout_switch">Alege aspectul controalelor</string>
+    <string name="mapping_dialog_key_not_specified">Nicio intrare atribuită.</string>
+    <string name="mapping_dialog_message">Apăsați o tastă fizică sau un buton pentru a-l atribui acestui control.</string>
+    <string name="mapping_dialog_assigned_inputs">Intrări atribuite</string>
+    <string name="mapping_dialog_add_input">Puteți atribui mai multe intrări fizice.</string>
+    <string name="mapping_dialog_remove">Elimină</string>
+    <string name="mapping_dialog_title">Apăsați o tastă sau un buton</string>
+    <string name="message_reset_layout">Resetați aspectul controalelor virtuale la valorile implicite?</string>
+    <string name="RESET_LAYOUT_CMD">Resetează aspectul controalelor virtuale</string>
+    <string name="saved_keyboard_layout_summary">Aspectul controalelor virtuale a fost salvat.</string>
+    <string name="control_skin_title">Skin pentru controale virtuale</string>
+    <string name="control_skin_create" tools:ignore="MissingTranslation">Creează set</string>
+    <string name="control_skin_default" tools:ignore="MissingTranslation">Butoane implicite</string>
+    <string name="control_skin_edit" tools:ignore="MissingTranslation">Editează</string>
+    <string name="control_skin_rename" tools:ignore="MissingTranslation">Redenumește</string>
+    <string name="control_skin_duplicate" tools:ignore="MissingTranslation">Duplică</string>
+    <string name="control_skin_delete" tools:ignore="MissingTranslation">Șterge</string>
+    <string name="control_skin_import_zip" tools:ignore="MissingTranslation">Importă ZIP</string>
+    <string name="control_skin_export_zip" tools:ignore="MissingTranslation">Exportă ZIP</string>
+    <string name="control_skin_select_export_folder" tools:ignore="MissingTranslation">Alege dosarul de export</string>
+    <string name="control_skin_imported" tools:ignore="MissingTranslation"><xliff:g id="skin_name" example="Classic Nokia">%1$s</xliff:g> a fost importat</string>
+    <string name="control_skin_already_available" tools:ignore="MissingTranslation"><xliff:g id="skin_name" example="Classic Nokia">%1$s</xliff:g> este deja disponibil</string>
+    <string name="control_skin_exported" tools:ignore="MissingTranslation"><xliff:g id="skin_name" example="Classic Nokia">%1$s</xliff:g> a fost salvat</string>
+    <string name="control_skin_archive_invalid_path" tools:ignore="MissingTranslation">Locația selectată nu este disponibilă.</string>
+    <string name="control_skin_archive_import_failed" tools:ignore="MissingTranslation">Skinul de controale nu a putut fi importat. Asigurați-vă că arhiva ZIP conține un singur set valid.</string>
+    <string name="control_skin_archive_export_failed" tools:ignore="MissingTranslation">Skinul de controale nu a putut fi exportat. Alegeți un dosar cu permisiune de scriere din afara bibliotecii de skinuri.</string>
+    <string name="control_skin_name" tools:ignore="MissingTranslation">Nume set</string>
+    <string name="control_skin_icon" tools:ignore="MissingTranslation">Doar pictogramă</string>
+    <string name="control_skin_full" tools:ignore="MissingTranslation">Buton complet</string>
+    <string name="control_skin_normal_image" tools:ignore="MissingTranslation">Imagine normală</string>
+    <string name="control_skin_pressed_image" tools:ignore="MissingTranslation">Imagine la apăsare</string>
+    <string name="control_skin_delete_warning" tools:ignore="MissingTranslation">Ștergeți acest set de skinuri partajat și toate imaginile sale? MIDlet-urile care îl folosesc vor reveni la controalele implicite la următoarea pornire.</string>
+    <string name="control_skin_invalid_image" tools:ignore="MissingTranslation">Alegeți o imagine PNG, WebP sau SVG.</string>
+    <string name="control_skin_operation_failed" tools:ignore="MissingTranslation">Operația asupra aspectului comenzilor nu a putut fi finalizată.</string>
+    <string name="control_skin_missing" tools:ignore="MissingTranslation">Set indisponibil (controale implicite)</string>
+    <string name="control_skin_remove_image" tools:ignore="MissingTranslation">Elimină</string>
+    <string name="control_skin_manage" tools:ignore="MissingTranslation">Gestionează setul</string>
+    <string name="control_skin_manage_named" tools:ignore="MissingTranslation">Gestionează <xliff:g id="skin_name" example="Classic Nokia">%1$s</xliff:g></string>
+    <plurals name="control_skin_count">
+        <item quantity="one"><xliff:g id="count" example="4">%1$d</xliff:g> control personalizat</item>
+        <item quantity="few"><xliff:g id="count" example="4">%1$d</xliff:g> controale personalizate</item>
+        <item quantity="other"><xliff:g id="count" example="4">%1$d</xliff:g> de controale personalizate</item>
+    </plurals>
+    <string name="control_skin_empty" tools:ignore="MissingTranslation">Creați un set pentru a personaliza imaginile controalelor.</string>
+    <string name="control_skin_numeric" tools:ignore="MissingTranslation">Tastatură numerică</string>
+    <string name="control_skin_navigation" tools:ignore="MissingTranslation">Navigare</string>
+    <string name="control_skin_other" tools:ignore="MissingTranslation">Alte butoane</string>
+    <string name="control_skin_pressed_requires_normal" tools:ignore="MissingTranslation">Adăugați mai întâi o imagine normală.</string>
+    <string name="control_skin_edit_named" tools:ignore="MissingTranslation">Butonul <xliff:g id="button_label" example="5">%1$s</xliff:g></string>
+    <string name="control_skin_change_image" tools:ignore="MissingTranslation">Schimbă</string>
+    <string name="control_skin_pick_image" tools:ignore="MissingTranslation">Alege imaginea</string>
+    <string name="control_skin_soft_left" tools:ignore="MissingTranslation">Tastă funcțională stângă</string>
+    <string name="control_skin_soft_right" tools:ignore="MissingTranslation">Tastă funcțională dreaptă</string>
+    <string name="control_skin_fire" tools:ignore="MissingTranslation">Acțiune</string>
+    <string name="control_skin_menu" tools:ignore="MissingTranslation">Meniu</string>
+    <string name="control_skin_movement" tools:ignore="MissingTranslation">Controale de mișcare</string>
+    <string name="control_skin_dpad" tools:ignore="MissingTranslation">D-pad</string>
+    <string name="control_skin_analog" tools:ignore="MissingTranslation">Stick analogic</string>
+    <string name="control_skin_dpad_base" tools:ignore="MissingTranslation">Imagine D-pad</string>
+    <string name="control_skin_overlay_up" tools:ignore="MissingTranslation">Suprapunere sus</string>
+    <string name="control_skin_overlay_down" tools:ignore="MissingTranslation">Suprapunere jos</string>
+    <string name="control_skin_overlay_left" tools:ignore="MissingTranslation">Suprapunere stânga</string>
+    <string name="control_skin_overlay_right" tools:ignore="MissingTranslation">Suprapunere dreapta</string>
+    <string name="control_skin_analog_base" tools:ignore="MissingTranslation">Imagine de bază</string>
+    <string name="control_skin_analog_thumb" tools:ignore="MissingTranslation">Imagine buton stick</string>
+    <string name="control_skin_analog_thumb_pressed" tools:ignore="MissingTranslation">Imagine buton stick activ</string>
+    <string name="control_skin_preview_directions" tools:ignore="MissingTranslation">Previzualizare direcții</string>
+    <string name="control_skin_preview_direction" tools:ignore="MissingTranslation">Previzualizare <xliff:g id="direction" example="Up">%1$s</xliff:g></string>
+    <string name="control_skin_builtin_preview" tools:ignore="MissingTranslation">Implicit</string>
+    <string name="control_skin_custom_preview" tools:ignore="MissingTranslation">Personalizat</string>
+    <string name="layout_editor_group_on">Redimensionare împreună</string>
+    <string name="layout_editor_group_off">Redimensionare individuală</string>
+    <string name="layout_editor_snap_grid">Aliniere la grilă</string>
+    <string name="layout_editor_snap_controls">Aliniere la butoane</string>
+    <string name="layout_editor_snap_resize">Aliniere la redimensionare</string>
+    <string name="layout_editor_snap_resize_on">Aliniere la redimensionare: Activată</string>
+    <string name="layout_editor_snap_resize_off">Aliniere la redimensionare: Dezactivată</string>
+    <string name="layout_editor_snap_grid_on">Aliniere la grilă: Activată</string>
+    <string name="layout_editor_snap_grid_off">Aliniere la grilă: Dezactivată</string>
+    <string name="layout_editor_snap_controls_on">Aliniere la butoane: Activată</string>
+    <string name="layout_editor_snap_controls_off">Aliniere la butoane: Dezactivată</string>
+    <string name="layout_editor_guide_gestures">Gesturi</string>
+    <string name="layout_editor_guide_move">Trageți un control pentru a-l muta.</string>
+    <string name="layout_editor_guide_resize">Folosiți două degete pentru redimensionare. Mișcați orizontal sau vertical pentru a schimba lățimea ori înălțimea.</string>
+    <string name="layout_editor_guide_tools">Instrumente de editare</string>
+    <string name="layout_editor_guide_done">Atingeți Gata pentru a salva, a renunța sau a continua editarea.</string>
+    <string name="layout_editor_guide_start">Începe editarea</string>
+    <string name="control_skin_invalid_name">Folosiți 1–61 de caractere: litere, cifre, semne combinante, spații sau . _ ( ) -. Începeți cu o literă sau o cifră și nu terminați cu punct.</string>
+    <string name="control_skin_image_validation_failed">Alegeți o imagine PNG, WebP sau SVG validă de până la 8 MiB. PNG și WebP nu trebuie să depășească 2048 × 2048 pixeli.</string>
+</resources>

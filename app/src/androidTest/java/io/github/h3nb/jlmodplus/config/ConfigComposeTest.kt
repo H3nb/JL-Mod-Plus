@@ -734,8 +734,14 @@ class ConfigComposeTest {
             JLModPlusTheme { ConfigScreen(sampleState(), events) }
         }
         composeRule.onNodeWithTag("config_quick_fps").assertDoesNotExist()
+        val original = uiString(R.string.render_native_short)
         composeRule.onNodeWithTag("config_quick_renderresolution").performScrollTo().performClick()
         composeRule.onNode(isDialog()).assertExists()
+        composeRule.onNode(
+            hasText(original) and hasAnyAncestor(isDialog()),
+        ).assertIsSelected().performClick()
+        assertEquals(1, events.lastForm?.internalResolutionScale)
+        composeRule.onNodeWithTag("config_quick_renderresolution").performClick()
         composeRule.onNode(
             hasText("3×") and hasAnyAncestor(isDialog()),
         ).performClick()

@@ -1,0 +1,212 @@
+<?xml version="1.0" encoding="utf-8"?>
+<!-- Rendering pipeline, internal resolution, bitmap upscaling, shaders, and built-in visual effects. -->
+<resources xmlns:tools="http://schemas.android.com/tools" xmlns:xliff="urn:oasis:names:tc:xliff:document:1.2">
+    <string name="identity_filter">없음(가장 빠름)</string>
+    <string name="invalid_resolution_not_saved">잘못된 해상도입니다. 프리셋이 저장되지 않았습니다.</string>
+    <string name="msg_error_loading_shader">지원되지 않는 셰이더입니다. 기본 셰이더를 사용합니다.</string>
+    <string name="parallel_screen_redrawing">비동기 화면 업데이트</string>
+    <string name="shader_tuning">셰이더 미세 조정</string>
+    <string name="SWAP_SIZES">너비 및 높이 바꾸기</string>
+    <string name="fps_limit_maximum">최대</string>
+    <string name="remove_screen_preset">해상도 프리셋 제거</string>
+    <string name="perf_overlay_position_help">모서리를 선택하세요.</string>
+    <string name="perf_overlay_top_left">왼쪽 상단</string>
+    <string name="perf_overlay_top_right">오른쪽 상단</string>
+    <string name="perf_overlay_bottom_left">왼쪽 하단</string>
+    <string name="perf_overlay_bottom_right">오른쪽 하단</string>
+    <string name="internal_resolution_title" tools:ignore="MissingTranslation">렌더링 해상도</string>
+    <string name="internal_resolution_auto" tools:ignore="MissingTranslation">자동</string>
+    <string name="internal_resolution_description" tools:ignore="MissingTranslation">지원되는 2D 및 3D 렌더링의 해상도를 설정합니다. 자동 모드는 표시 영역과 기기의 한도에 따라 배율을 선택합니다. 변경사항을 적용하려면 MIDlet을 다시 시작하세요.</string>
+    <string name="bitmap_upscaling_title" tools:ignore="MissingTranslation">비트맵 업스케일링</string>
+    <string name="bitmap_upscaling_description" tools:ignore="MissingTranslation">MMPX와 xBR Lv3는 변경할 수 없는 2D 이미지와 변경할 수 없는 불투명 Micro3D 모델 텍스처의 품질을 개선합니다. M3G 텍스처는 변경되지 않습니다. 변경사항을 적용하려면 MIDlet을 다시 시작하세요.</string>
+    <string name="bitmap_upscaling_nearest" tools:ignore="MissingTranslation">최근접 이웃</string>
+    <string name="bitmap_upscaling_bilinear" tools:ignore="MissingTranslation">이중 선형</string>
+    <string name="bitmap_upscaling_mmpx" tools:ignore="MissingTranslation">MMPX</string>
+    <string name="bitmap_upscaling_edge_aware" tools:ignore="MissingTranslation">xBR Lv3</string>
+    <!-- Prototyping only: localized UI copy is pending design review. -->
+    <string name="render_shader_effects">셰이더 효과</string>
+    <string name="render_pipeline_title">렌더링 파이프라인</string>
+    <string name="render_shader_preset">셰이더 프리셋</string>
+    <string name="render_shader_picker_help">기본 제공 효과와 사용자 레거시 셰이더를 순서가 있는 효과 스택으로 조합합니다.</string>
+    <string name="render_shader_requires_gles">셰이더는 저장되지만 OpenGL ES를 선택한 경우에만 적용됩니다.</string>
+    <string name="render_shader_missing">선택한 셰이더가 라이브러리에 없습니다. 다른 프리셋을 선택하거나 파일을 복원하세요.</string>
+    <string name="render_shader_parameters">셰이더 매개변수</string>
+    <string name="render_shader_reset_parameters">매개변수 초기화</string>
+    <string name="render_shader_passes">셰이더 패스</string>
+    <string name="render_shader_pass_count">패스 <xliff:g id="count" example="2">%1$d</xliff:g>개</string>
+    <string name="render_shader_pass_hint">선택한 GLSLP 프리셋의 단계를 확인합니다.</string>
+    <string name="render_pass_filter">입력 필터링</string>
+    <string name="render_pass_output">출력 크기(너비 × 높이)</string>
+    <string name="render_pipeline_unavailable">프리셋을 사용할 수 없음</string>
+    <string name="render_game_output">게임 출력</string>
+    <string name="render_logical_screen_help">게임에 보고되는 논리적 화면 크기입니다.</string>
+    <string name="render_internal_resolution">내부 해상도</string>
+    <string name="render_internal_unavailable">원본(1×) 전용입니다. 이 구성에서는 더 높은 렌더링 해상도를 사용할 수 없습니다.</string>
+    <string name="render_display_renderer">표시 렌더러</string>
+    <string name="render_shader_processing">셰이더 처리</string>
+    <string name="render_display_scaling">화면 크기 조절</string>
+    <string name="render_display_viewport">게임 뷰포트</string>
+    <string name="render_texture_filtering">화면 크기 조절 필터</string>
+    <string name="render_texture_filtering_help">완성된 게임 이미지에 최근접 또는 선형 필터를 선택합니다. 효과에 따라 재정의될 수 있습니다.</string>
+    <string name="render_viewport_note">뷰포트 크기는 셰이더 패스가 계획되기 전에 화면 레이아웃에서 결정됩니다. 화살표는 레이아웃 계산 순서가 아닌 이미지 흐름을 나타냅니다.</string>
+    <string name="render_pipeline_help">게임 프레임이 화면에 표시되는 과정을 확인하고 각 단계를 편집합니다.</string>
+    <string name="render_no_shader">게임 화면을 바꾸려면 프리셋을 선택하세요.</string>
+    <string name="render_shader_adjust">매개변수 조절</string>
+    <string name="render_legacy_tuning_hint">이 레거시 효과를 미세 조정합니다.</string>
+    <string name="render_shader_customization">사용자 지정</string>
+    <string name="render_adjustable_count">조절 가능한 매개변수: <xliff:g id="count" example="3">%1$d</xliff:g>개</string>
+    <string name="render_pass_summary"><xliff:g id="count" example="3">%1$d</xliff:g>단계 · 프리셋에서 정의됨</string>
+    <string name="render_shader_preset_note">셰이더 단계는 프리셋에서 정의됩니다. 순서를 변경하지 않고 각 단계를 확인할 수 있습니다.</string>
+    <string name="render_parameters_hint">슬라이더를 움직여 값을 조절하세요. 손을 떼면 변경사항이 저장됩니다.</string>
+    <string name="render_pass_readonly">단계는 이 순서대로 실행됩니다. 입력 필터링과 출력 크기 조절은 선택한 프리셋의 설정을 따릅니다.</string>
+    <string name="render_pipeline_intro">게임 프레임버퍼에서 화면으로 이어지는 경로입니다.</string>
+    <string name="render_native_short">원본(1×)</string>
+    <string name="render_expand_passes">단계 표시</string>
+    <string name="render_collapse_passes">단계 숨기기</string>
+    <string name="render_view_all_passes">단계 세부정보</string>
+    <string name="render_pipeline_filter_summary">텍스처 필터링: <xliff:g id="shader_name" example="CRT Classic">%1$s</xliff:g></string>
+    <string name="render_pipeline_note">디스플레이 레이아웃은 셰이더 패스가 계획되기 전에 뷰포트를 결정합니다. 각 단계는 이미지 흐름을 나타냅니다.</string>
+    <string name="render_shader_change">다른 효과 선택</string>
+    <string name="render_custom_pipeline">사용자 지정 파이프라인</string>
+    <string name="render_custom_pipeline_hint">셰이더 폴더의 독립형 GLSL 셰이더를 조합합니다.</string>
+    <string name="render_custom_order_help">효과는 위에서 아래로 실행됩니다. 상속된 GLSLP 설정은 변경하지 않는 한 유지됩니다.</string>
+    <string name="render_custom_empty">셰이더를 추가하여 사용자 지정 체인을 시작하세요.</string>
+    <string name="render_custom_stage_count">사용자 지정 셰이더 단계 <xliff:g id="count" example="3">%1$d</xliff:g>개</string>
+    <string name="render_custom_add">셰이더 추가</string>
+    <string name="render_custom_add_hint">외부 독립형 .glsl 소스를 선택하세요.</string>
+    <string name="render_custom_no_sources">레거시 셰이더를 찾을 수 없습니다. shaders 폴더에 .ini 셰이더 파일을 추가한 다음 설정을 다시 여세요.</string>
+    <string name="render_custom_scale">출력: 이전 단계의 <xliff:g id="scale" example="2">%1$d</xliff:g>×</string>
+    <string name="render_custom_output_scale">다음 단계의 출력 크기</string>
+    <string name="render_custom_final_viewport">최종 출력: 화면에 표시됨</string>
+    <string name="render_custom_filter">입력 필터: <xliff:g id="shader_name" example="CRT Classic">%1$s</xliff:g></string>
+    <string name="render_custom_up">위로</string>
+    <string name="render_custom_down">아래로</string>
+    <string name="render_custom_remove">제거</string>
+    <string name="render_custom_cancel">취소</string>
+    <string name="render_custom_save">저장</string>
+    <string name="render_custom_default">기본값</string>
+    <string name="render_custom_nearest">최근접</string>
+    <string name="render_custom_linear">선형</string>
+    <string name="render_custom_checking">셰이더 파일 확인 중…</string>
+    <string name="render_active_shader">활성 효과</string>
+    <string name="render_shader_off">꺼짐</string>
+    <string name="render_edit_custom_pipeline">셰이더 체인 편집</string>
+    <string name="render_shader_unavailable">사용할 수 없음: <xliff:g id="shader_name" example="CRT Classic">%1$s</xliff:g></string>
+    <string name="render_no_shader_sources">셰이더를 찾을 수 없습니다. shaders 폴더에 레거시 .ini 셰이더 파일을 추가한 다음 설정을 다시 여세요.</string>
+    <string name="render_shader_mode">셰이더 모드</string>
+    <string name="render_mode_selected">선택됨</string>
+    <string name="render_gles_shader_default">셰이더 효과가 꺼져 있으면 OpenGL ES는 원본 게임 이미지를 사용합니다.</string>
+    <string name="render_shader_off_help">추가 시각 효과를 적용하지 않습니다.</string>
+    <string name="render_legacy_mode">레거시 셰이더</string>
+    <string name="render_legacy_mode_help">shaders 폴더에서 .ini 파일을 선택하세요.</string>
+    <string name="render_legacy_empty">이 .ini 파일에 사용할 수 있는 셰이더 정의가 없습니다.</string>
+    <string name="render_legacy_select_variant">레거시 셰이더 선택</string>
+    <string name="render_legacy_variant_description">선택한 .ini 파일의 셰이더 정의</string>
+    <string name="render_preset_mode">GLSLP 프리셋</string>
+    <string name="render_preset_mode_help">자체 패스가 포함된 전체 .glslp 파이프라인을 불러옵니다.</string>
+    <string name="render_custom_pass_count">패스 수</string>
+    <string name="render_custom_pass_number">패스 <xliff:g id="number" example="1">%1$d</xliff:g></string>
+    <string name="render_custom_pick_file">GLSL 파일 선택</string>
+    <string name="render_custom_add_pass">셰이더 패스 수 늘리기</string>
+    <string name="render_custom_remove_pass">셰이더 패스 수 줄이기</string>
+    <string name="render_shader_selected_name">활성: <xliff:g id="shader_name" example="CRT Classic">%1$s</xliff:g></string>
+    <string name="render_shader_invalid_picker">선택한 파일을 사용할 수 없습니다. shaders 폴더 내의 레거시 .ini 파일을 선택하세요.</string>
+    <string name="render_custom_mode">셰이더 유형</string>
+    <string name="render_custom_mode_legacy">레거시</string>
+    <string name="render_custom_mode_glsl">GLSL</string>
+    <string name="render_custom_pick_legacy">레거시 셰이더 선택</string>
+    <string name="render_custom_preserve_size">출력: 프리셋 기준</string>
+    <string name="render_custom_loading">프리셋 패스 읽는 중…</string>
+    <string name="render_custom_start_fresh">프리셋 없이 시작(상속된 설정 버리기)</string>
+    <string name="render_effect_default_settings">기본 설정</string>
+    <string name="render_effect_summary_more">+<xliff:g id="count" example="2">%1$d</xliff:g>개 더보기</string>
+    <string name="render_effect_legacy_author">제작: <xliff:g id="shader_name" example="CRT Classic">%1$s</xliff:g></string>
+    <string name="render_effect_legacy_source">소스: <xliff:g id="shader_name" example="CRT Classic">%1$s</xliff:g></string>
+    <string name="render_effect_removed">효과 제거됨</string>
+    <string name="render_effect_undo">실행 취소</string>
+    <string name="render_effect_catalog_hint">효과를 탭하여 스택에 추가하세요.</string>
+    <string name="render_effect_user_folder_hint">INI, VSH 및 FSH 파일은 shaders 폴더에 있어야 합니다.</string>
+    <string name="render_effect_legacy_scale_note">레거시 셰이더는 화면 뷰포트 해상도로 렌더링되며, .ini 파일의 OutputResolution 및 Upscaling 플래그는 무시됩니다.</string>
+    <string name="render_effect_legacy_metadata_missing">이 셰이더의 .ini 파일에서 설정을 찾을 수 없습니다. 소스 파일을 사용해 셰이더가 계속 작동할 수도 있습니다.</string>
+    <string name="render_effect_count"><xliff:g id="count" example="2">%1$d</xliff:g>개 활성</string>
+    <string name="render_effect_add">효과 추가</string>
+    <string name="render_effect_builtin">기본 제공 효과</string>
+    <string name="render_effect_user">내 셰이더</string>
+    <string name="render_effect_user_add">.ini 파일 찾아보기</string>
+    <string name="render_effect_user_empty">shaders 폴더에서 레거시 셰이더를 찾을 수 없습니다.</string>
+    <string name="render_effect_user_file">레거시 .ini 파일 선택</string>
+    <string name="render_effect_empty">효과를 추가하여 게임 화면을 원하는 대로 꾸며 보세요.</string>
+    <string name="render_effect_hint">효과는 위에서 아래로 실행됩니다. 길게 누르고 드래그하여 순서를 변경하세요.</string>
+    <string name="render_effect_move_up">위로 이동</string>
+    <string name="render_effect_move_down">아래로 이동</string>
+    <string name="render_effect_remove">효과 제거</string>
+    <string name="render_effect_no_parameters">이 효과에는 조절 가능한 매개변수가 없습니다.</string>
+    <string name="render_effect_parameter_number">매개변수 <xliff:g id="count" example="2">%1$d</xliff:g></string>
+    <string name="render_effect_restore">매개변수 초기화</string>
+    <string name="render_effect_missing">사용할 수 없음: <xliff:g id="shader_name" example="CRT Classic">%1$s</xliff:g>. 이 기본 제공 효과는 현재 버전에서 지원되지 않습니다. 스택에서 제거하세요.</string>
+    <string name="render_effect_limit">스택은 최대 16개의 셰이더 패스를 지원합니다(일부 효과는 여러 패스를 사용함).</string>
+    <string name="render_effect_unavailable">셰이더 효과를 실행할 수 없어 원본 게임 이미지를 표시합니다. 효과 수를 줄이거나 렌더링 해상도를 낮춰 보세요.</string>
+    <string name="render_bitmap_memory_reduced">비트맵 업스케일링 중 메모리가 부족해져 원본 이미지 또는 더 낮은 배율을 사용합니다. 렌더링 해상도를 낮추거나 메모리를 확보한 후 다시 시작하세요.</string>
+    <string name="render_texture_memory_reduced">Micro3D 텍스처 업스케일링에 실패하여 원본 텍스처를 사용합니다. 렌더링 해상도를 낮추거나 메모리를 확보한 후 다시 시작하세요.</string>
+    <string name="render_resolution_reduced">메모리 또는 GPU 제한으로 인해 렌더링 해상도가 <xliff:g id="from_scale" example="4">%1$d</xliff:g>×에서 <xliff:g id="to_scale" example="2">%2$d</xliff:g>×로 낮아졌습니다. 더 낮은 설정을 선택하거나 메모리를 확보한 후 다시 시작하세요.</string>
+    <string name="render_gpu_texture_limit">1× 배율에서도 게임 이미지가 GPU의 텍스처 크기 한도를 초과합니다. MIDlet 화면 크기를 줄이거나 그래픽 모드를 변경하세요.</string>
+    <string name="render_gpu_upload_failed">게임 이미지를 GPU에 업로드할 수 없어 다시 시도하고 있습니다. 다른 앱을 닫거나 그래픽 모드를 변경해 보세요.</string>
+    <string name="render_effect_gles">효과는 저장되지만 OpenGL ES를 사용하는 경우에만 렌더링됩니다.</string>
+    <string name="render_effect_legacy_file_error">선택한 .ini 파일에서 유효한 레거시 셰이더를 불러올 수 없습니다.</string>
+    <string name="effect_color">색상 조정</string>
+    <string name="effect_color_desc">밝기, 대비, 채도, 감마, 색조 및 흑백 효과를 조절합니다.</string>
+    <string name="effect_vignette">비네트</string>
+    <string name="effect_vignette_desc">가장자리를 어둡게 처리하여 화면 중앙에 시선을 집중시킵니다.</string>
+    <string name="effect_sharpen">선명하게</string>
+    <string name="effect_sharpen_desc">이미지의 디테일과 윤곽선을 강조합니다.</string>
+    <string name="effect_cartoon">카툰 소프트</string>
+    <string name="effect_cartoon_desc">색상 그라데이션을 단순화하고 부드러운 윤곽선을 추가합니다.</string>
+    <string name="effect_bloom">블룸</string>
+    <string name="effect_bloom_desc">이미지의 밝은 영역 주위에 부드러운 빛 번짐을 추가합니다.</string>
+    <string name="effect_crt_classic">CRT 클래식</string>
+    <string name="effect_crt_classic_desc">주사선과 RGB 패턴으로 CRT TV 화면을 재현합니다.</string>
+    <string name="effect_crt_beam">빔 좁기</string>
+    <string name="effect_brightness">밝기</string>
+    <string name="effect_contrast">대비</string>
+    <string name="effect_saturation">채도</string>
+    <string name="effect_strength">강도</string>
+    <string name="effect_color_levels">색상 단계</string>
+    <string name="effect_edge">윤곽선 강도</string>
+    <string name="effect_threshold">밝기 임계값</string>
+    <string name="effect_radius">블러 반경</string>
+    <string name="effect_mask_strength">마스크 강도</string>
+    <string name="effect_scan_strength">주사선 강도</string>
+    <string name="effect_bright_boost">밝기 증폭</string>
+    <string name="effect_lcd">LCD</string>
+    <string name="effect_lcd_desc">클래식 컬러 LCD의 픽셀 격자와 서브픽셀을 재현합니다.</string>
+    <string name="effect_lcd_grid">격자 강도</string>
+    <string name="effect_lcd_subpixel">RGB 서브픽셀</string>
+    <string name="effect_lcd_brightness">LCD 밝기</string>
+    <string name="effect_scanlines">스캔라인 라이트</string>
+    <string name="effect_scanlines_desc">CRT 디스플레이처럼 은은한 가로선을 추가합니다.</string>
+    <string name="effect_line_width">선 좁기</string>
+    <string name="effect_gamma">감마</string>
+    <string name="effect_temperature">색온도</string>
+    <string name="effect_tint">색조</string>
+    <string name="effect_monochrome">흑백</string>
+    <string name="effect_depth">색상 깊이 및 디더링</string>
+    <string name="effect_depth_desc">색상 팔레트를 제한하고 선택적 디더링으로 레트로 느낌을 연출합니다.</string>
+    <string name="effect_depth_format">디스플레이 색상 형식</string>
+    <string name="effect_depth_rgb444">RGB444 · 4,096색</string>
+    <string name="effect_depth_rgb565">RGB565 · 65,536색</string>
+    <string name="effect_depth_rgb666">RGB666 · 262,144색</string>
+    <string name="effect_dither_mode">디더링 패턴</string>
+    <string name="effect_dither_none">꺼짐</string>
+    <string name="effect_dither_bayer4">Bayer 4×4</string>
+    <string name="effect_dither_bayer8">Bayer 8×8</string>
+    <string name="effect_dither_strength">디더링 강도</string>
+    <string name="effect_mono_display">단색 디스플레이</string>
+    <string name="effect_mono_display_desc">2단계 또는 4단계 톤으로 흑백, 녹색 또는 호박색 화면을 재현합니다.</string>
+    <string name="effect_mono_palette">LCD 색상</string>
+    <string name="effect_mono_bw">흑백</string>
+    <string name="effect_mono_green">녹색 LCD</string>
+    <string name="effect_mono_amber">호박색 LCD</string>
+    <string name="effect_mono_tones">톤 수</string>
+    <string name="effect_mono_two">2단계 톤</string>
+    <string name="effect_mono_four">4단계 톤</string>
+</resources>

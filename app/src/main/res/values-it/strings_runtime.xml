@@ -1,0 +1,118 @@
+<?xml version="1.0" encoding="utf-8"?>
+<!-- Active MIDlet runtime session, screenshots, logs, crash recovery, and diagnostic reports. -->
+<resources xmlns:tools="http://schemas.android.com/tools" xmlns:xliff="urn:oasis:names:tc:xliff:document:1.2">
+    <string name="action_keyboard_ime">Tastiera (IME)</string>
+    <string name="action_lock_orientation">Blocca rotazione schermo</string>
+    <string name="runtime_replacement_failed">Impossibile arrestare il MIDlet in esecuzione. Riprova ad aprire quello nuovo.</string>
+    <string name="runtime_restart" tools:ignore="MissingTranslation">Riavvia</string>
+    <string name="runtime_restart_confirmation" tools:ignore="MissingTranslation">Riavviare questo MIDlet? I progressi non salvati potrebbero andare persi.</string>
+    <string name="FORCE_CLOSE_CONFIRMATION">Arrestare questo MIDlet? I progressi non salvati potrebbero andare persi.</string>
+    <string name="runtime_preset_save_destination">Salva in</string>
+    <string name="runtime_preset_apply_destination">Applica a</string>
+    <string name="runtime_preset_this_midlet_only">Solo questo MIDlet</string>
+    <string name="runtime_preset_update_destination">Aggiorna <xliff:g id="profile_name" example="Action Games">%1$s</xliff:g></string>
+    <string name="runtime_preset_local_explanation">Verranno modificati solo i controlli virtuali di questo MIDlet.</string>
+    <string name="runtime_preset_update_explanation">Aggiorna il layout dei controlli virtuali in <xliff:g id="profile_name" example="Action Games">%1$s</xliff:g>.\nGli altri MIDlet collegati a questo profilo riceveranno il nuovo layout al prossimo avvio.</string>
+    <string name="runtime_layout_apply_title">Applicare <xliff:g id="name" example="Example">%1$s</xliff:g>?</string>
+    <string name="runtime_apply">Applica</string>
+    <string name="runtime_preset_update_failed">Salvato per questo MIDlet, ma non è stato possibile aggiornare <xliff:g id="profile_name" example="Action Games">%1$s</xliff:g>.</string>
+    <string name="runtime_preset_update_unlinked"><xliff:g id="profile_name" example="Action Games">%1$s</xliff:g> è stato aggiornato, ma questo MIDlet non riceverà più aggiornamenti futuri da questo profilo.</string>
+    <string name="msg_immediate_mode_disabled">L’elaborazione immediata è stata disattivata perché i callback degli eventi erano nidificati troppo in profondità.</string>
+    <string name="msg_press_again_to_close">Premi di nuovo per chiudere</string>
+    <string name="save_log">Salva log</string>
+    <string name="take_screenshot">Acquisisci screenshot</string>
+    <!-- Crash-report UI remains translatable; locales without coverage fall back to default English. -->
+    <string name="crash_reports">Report diagnostici</string>
+    <string name="diagnostic_report">Report diagnostico</string>
+    <string name="view_reports">Visualizza report diagnostici</string>
+    <string name="crash_reports_empty">Nessun report diagnostico locale</string>
+    <string name="crash_reports_loading">Caricamento report diagnostici</string>
+    <string name="crash_report_midlet_failure">Errore sessione MIDlet</string>
+    <string name="crash_report_java_report">Report diagnostico Java</string>
+    <string name="crash_report_process_exit">Report chiusura processo</string>
+    <string name="crash_report_list_subtitle"><xliff:g id="report_type" example="Java crash">%1$s</xliff:g> · <xliff:g id="timestamp" example="Nov 25, 09:40">%2$s</xliff:g></string>
+    <plurals name="crash_reports_selected_count">
+        <item quantity="one"><xliff:g id="count" example="3">%1$d</xliff:g> selezionato</item>
+        <item quantity="many"><xliff:g id="count" example="3">%1$d</xliff:g> selezionati</item>
+        <item quantity="other"><xliff:g id="count" example="3">%1$d</xliff:g> selezionati</item>
+    </plurals>
+    <string name="copy_report">Copia</string>
+    <string name="report_on_github">Segnala su GitHub</string>
+    <string name="delete_report">Elimina</string>
+    <string name="share_selected_reports" tools:ignore="MissingTranslation">Condividi report selezionati</string>
+    <string name="delete_selected_reports">Elimina report selezionati</string>
+    <string name="crash_report_copied">Report copiato</string>
+    <string name="crash_report_bundle_preparing">Preparazione pacchetto diagnostico…</string>
+    <string name="crash_report_bundle_ready_title">Pacchetto diagnostico pronto</string>
+    <string name="crash_report_bundle_ready_message"><xliff:g id="name" example="Example">%1$s</xliff:g>\n\nSalvato in Download → JL-Mod Plus Diagnostics.\n\nVerifica che il file non contenga informazioni sensibili, poi allegalo prima di inviare la segnalazione su GitHub. Il file diventa pubblico non appena viene allegato.</string>
+    <string name="locate_bundle">Individua pacchetto</string>
+    <string name="open_github">Apri GitHub</string>
+    <string name="crash_report_bundle_failed">Impossibile preparare il pacchetto diagnostico.</string>
+    <string name="crash_report_locate_failed">Nessun selettore di file disponibile per individuare il pacchetto diagnostico.</string>
+    <string name="crash_report_bundle_cleanup_failed">Impossibile rimuovere il pacchetto generato. Il report diagnostico è stato conservato.</string>
+    <string name="crash_report_github_unavailable">Nessun browser o app trovato per aprire il modulo di segnalazione su GitHub.</string>
+    <string name="crash_report_delete_title">Eliminare il report diagnostico?</string>
+    <string name="crash_report_delete_message">Questa operazione rimuove definitivamente il report diagnostico e gli eventuali pacchetti generati da questo dispositivo. I file già caricati altrove non vengono interessati.</string>
+    <plurals name="crash_reports_batch_delete_title">
+        <item quantity="one">Eliminare <xliff:g id="count" example="3">%1$d</xliff:g> report diagnostico?</item>
+        <item quantity="many">Eliminare <xliff:g id="count" example="3">%1$d</xliff:g> report diagnostici?</item>
+        <item quantity="other">Eliminare <xliff:g id="count" example="3">%1$d</xliff:g> report diagnostici?</item>
+    </plurals>
+    <string name="crash_reports_batch_delete_message">Questa operazione rimuove definitivamente i report diagnostici selezionati e gli eventuali pacchetti generati da questo dispositivo. I file già caricati altrove non vengono interessati.</string>
+    <string name="crash_report_delete_failed">Impossibile eliminare il report.</string>
+    <string name="crash_report_unavailable">Questo report non è più disponibile.</string>
+    <string name="process_exit_recovery_title">Chiusura imprevista del processo</string>
+    <string name="process_exit_recovery_message">JL-Mod Plus si è interrotto in modo imprevisto nella sessione precedente (<xliff:g id="reason" example="Java crash">%1$s</xliff:g>). I dettagli diagnostici sono stati salvati localmente.</string>
+    <string name="process_exit_recovery_message_midlet">Un processo MIDlet si è interrotto in modo imprevisto nella sessione precedente (<xliff:g id="reason" example="Java crash">%1$s</xliff:g>). I dettagli diagnostici sono stati salvati localmente.</string>
+    <string name="process_exit_recovery_message_named"><xliff:g id="app_name" example="Bounce Tales">%1$s</xliff:g> si è interrotto in modo imprevisto nella sessione precedente (<xliff:g id="reason" example="Native crash">%2$s</xliff:g>). I dettagli diagnostici sono stati salvati localmente.</string>
+    <string name="select_all_reports">Seleziona tutti i report</string>
+    <string name="clear_report_selection">Deseleziona report</string>
+    <string name="runtime_memory_button_short" tools:ignore="MissingTranslation">Pulsante memoria</string>
+    <string name="runtime_action_on" tools:ignore="MissingTranslation">Attivo</string>
+    <string name="runtime_action_off" tools:ignore="MissingTranslation">Disattivo</string>
+    <string name="reconverting_wait">Questo MIDlet richiede una conversione di compatibilità una tantum prima dell’avvio.</string>
+    <string name="reconversion_done_with_warning">Conversione di compatibilità completata con avvisi.</string>
+    <string name="reconversion_error_summary">Impossibile convertire automaticamente questo MIDlet.</string>
+    <string name="runtime_invalid_intent">Richiesta di avvio non valida: percorso del MIDlet mancante.</string>
+    <string name="runtime_storage_in_use">Lo spazio di archiviazione del MIDlet è già in uso da un altro runtime.</string>
+    <string name="runtime_installation_changed">Impossibile preparare questo MIDlet per l’avvio.</string>
+    <string name="runtime_storage_unavailable">Impossibile preparare lo spazio di archiviazione del MIDlet.</string>
+    <string name="runtime_no_midlets">Nessun MIDlet trovato in questa app.</string>
+    <!-- Runtime grouped controls derive body, accent, outline, icon, and selected-icon colors from the existing virtual-control appearance settings. -->
+    <string name="runtime_virtual_controls_title">Controlli virtuali</string>
+    <string name="runtime_virtual_controls_dpad">D-pad</string>
+    <string name="runtime_virtual_controls_analog">Stick analogico</string>
+    <string name="runtime_virtual_controls_edit">Modifica layout</string>
+    <string name="runtime_virtual_controls_edit_guide_title">Guida alla modifica del layout</string>
+    <string name="runtime_virtual_controls_edit_guide_message">Trascina i controlli per spostarli. Per i pulsanti, muovi due dita in orizzontale o in verticale per cambiare larghezza o altezza, oppure in diagonale per cambiarle entrambe. Avvicina o allontana due dita per ridimensionare proporzionalmente il D-pad o lo stick analogico. Tocca Fine quando hai terminato.</string>
+    <string name="runtime_virtual_controls_edit_guide_dont_show_again">Non mostrare più</string>
+    <string name="runtime_virtual_controls_switch_layout">Scegli layout controlli</string>
+    <string name="runtime_virtual_controls_show_controls">Scegli controlli visibili</string>
+    <string name="runtime_virtual_controls_template_dpad_standard">D-pad standard</string>
+    <string name="runtime_virtual_controls_template_analog_standard">Stick analogico standard</string>
+    <string name="screenshot_save_failed">Impossibile salvare lo screenshot.</string>
+    <!-- %1$s is the saved screenshot's filesystem path. New key replaces the legacy prefix contract. -->
+    <string name="screenshot_saved_path">Screenshot salvato in <xliff:g id="path" example="Pictures/Bounce Tales/Screenshot_20261125-103000.png">%1$s</xliff:g></string>
+    <!-- Deliberate English fallback until reviewed translations are available. -->
+    <string name="log_save_success" tools:ignore="MissingTranslation"><xliff:g id="name" example="Example">%1$s</xliff:g> salvato in Download → JL-Mod Plus Diagnostics.</string>
+    <string name="log_save_partial" tools:ignore="MissingTranslation">Log parziale salvato come <xliff:g id="name" example="Example">%1$s</xliff:g> in Download → JL-Mod Plus Diagnostics.</string>
+    <string name="log_save_empty" tools:ignore="MissingTranslation">Nessun record di log dell’app disponibile nel buffer Android.</string>
+    <string name="log_save_timeout" tools:ignore="MissingTranslation">Raccolta del log scaduta. Nessun file salvato.</string>
+    <string name="log_save_failed">Impossibile salvare il log.</string>
+    <string name="runtime_midlet_list_failed">Impossibile leggere l’elenco dei MIDlet di questa app.</string>
+    <string name="diagnostic_reason_java_crash">Crash Java</string>
+    <string name="diagnostic_reason_native_crash">Crash nativo</string>
+    <string name="diagnostic_reason_anr">L’app non risponde</string>
+    <string name="diagnostic_reason_signal">Terminazione da segnale</string>
+    <string name="diagnostic_reason_unknown">Causa sconosciuta</string>
+    <string name="crash_reports_delete_failed">Impossibile eliminare alcuni report diagnostici. Altri potrebbero essere stati rimossi.</string>
+    <string name="crash_reports_bundle_cleanup_failed">Impossibile rimuovere alcuni pacchetti generati. I report diagnostici corrispondenti sono stati conservati. Altri report potrebbero essere stati eliminati.</string>
+    <string name="runtime_chrome_update_failed">Impossibile aggiornare le impostazioni dello schermo. Riprova.</string>
+    <string name="runtime_fullscreen_update_failed">Impossibile accedere all’impostazione schermo intero. Riprova.</string>
+    <string name="runtime_camera_use_front">Usa fotocamera anteriore</string>
+    <string name="runtime_camera_use_rear">Usa fotocamera posteriore</string>
+    <string name="runtime_camera_switch_failed">Impossibile cambiare fotocamera.</string>
+    <string name="runtime_camera_switch_recording" tools:ignore="MissingTranslation">Interrompi la registrazione prima di cambiare fotocamera.</string>
+    <string name="date_field_not_set" tools:ignore="MissingTranslation">Non impostato</string>
+    <string name="date_field_use_displayed_value" tools:ignore="MissingTranslation">Usa questo valore</string>
+</resources>

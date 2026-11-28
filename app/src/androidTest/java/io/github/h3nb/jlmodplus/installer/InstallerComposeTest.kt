@@ -65,6 +65,31 @@ class InstallerComposeTest {
     val composeRule = createComposeRule()
 
     @Test
+    fun bulkPreparationFailureSeparatesLocalizedMessageFromDiagnosticDetail() {
+        val diagnostic = "Example backend failure: invalid archive"
+        composeRule.setContent {
+            JLModPlusTheme {
+                BulkInstallSurface(
+                    state = BulkInstallViewModel.State.Error(diagnosticDetail = diagnostic),
+                    onToggle = {},
+                    onRecommended = {},
+                    onClear = {},
+                    onInstall = {},
+                    onRetry = {},
+                    onCancel = {},
+                    onClose = {},
+                )
+            }
+        }
+        composeRule.onNodeWithText(uiString(R.string.bulk_install_prepare_failed)).assertIsDisplayed()
+        composeRule.onAllNodesWithText(diagnostic).assertCountEquals(0)
+        composeRule.onNodeWithText(uiString(R.string.installer_show_details)).performClick()
+        composeRule.onNodeWithText(diagnostic).assertIsDisplayed()
+        composeRule.onNodeWithText(uiString(R.string.installer_hide_details)).performClick()
+        composeRule.onAllNodesWithText(diagnostic).assertCountEquals(0)
+    }
+
+    @Test
     fun oneDiscoveredMidletUsesSingleInstallConfirmation() {
         var installs = 0
         val jar = File("demo.jar")

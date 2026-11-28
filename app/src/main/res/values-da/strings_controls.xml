@@ -1,0 +1,107 @@
+<?xml version="1.0" encoding="utf-8"?>
+<!-- Virtual keypad controls, layout editor, physical key mappings, and control skins. -->
+<resources xmlns:tools="http://schemas.android.com/tools" xmlns:xliff="urn:oasis:names:tc:xliff:document:1.2">
+    <string name="alert_map_menu">Menutasten (M) er ikke tildelt.\nDu kan muligvis ikke åbne MIDlet-menuen, mens du spiller.</string>
+    <string name="dismiss_mapping">Luk tildeling</string>
+    <string name="layout_edit_finish">Afslut redigering</string>
+    <string name="layout_edit_done">Udført</string>
+    <string name="layout_editor_grid_size">Gitterstørrelse</string>
+    <string name="layout_editor_grid_coarse">Groft (16)</string>
+    <string name="layout_editor_grid_normal">Normalt (24)</string>
+    <string name="layout_editor_grid_fine">Fint (32)</string>
+    <string name="layout_editor_snap_on">Fastgørelse til</string>
+    <string name="layout_editor_snap_off">Fastgørelse fra</string>
+    <string name="layout_edit_save_changes">Vil du gemme ændringerne i de virtuelle kontroller?</string>
+    <string name="layout_edit_discard">Kasser</string>
+    <string name="layout_edit_continue">Fortsæt redigering</string>
+    <string name="layout_edit_finished">Redigering af virtuelle kontroller er fuldført.</string>
+    <string name="virtual_controls_save_failed">De virtuelle kontroller kunne ikke gemmes. Prøv igen.</string>
+    <string name="layout_switch">Vælg kontrollayout</string>
+    <string name="mapping_dialog_key_not_specified">Ingen input tildelt.</string>
+    <string name="mapping_dialog_message">Tryk på en fysisk tast eller knap for at tildele den til denne kontrol.</string>
+    <string name="mapping_dialog_assigned_inputs">Tildelte input</string>
+    <string name="mapping_dialog_add_input">Du kan tildele mere end ét fysisk input.</string>
+    <string name="mapping_dialog_remove">Fjern</string>
+    <string name="mapping_dialog_title">Tryk på en tast eller knap</string>
+    <string name="message_reset_layout">Vil du nulstille layoutet for virtuelle kontroller til standard?</string>
+    <string name="RESET_LAYOUT_CMD">Nulstil layout for virtuelle kontroller</string>
+    <string name="saved_keyboard_layout_summary">Layout for virtuelle kontroller er gemt.</string>
+    <string name="control_skin_title">Skin til virtuelle kontroller</string>
+    <string name="control_skin_create" tools:ignore="MissingTranslation">Opret sæt</string>
+    <string name="control_skin_default" tools:ignore="MissingTranslation">Standardknapper</string>
+    <string name="control_skin_edit" tools:ignore="MissingTranslation">Rediger</string>
+    <string name="control_skin_rename" tools:ignore="MissingTranslation">Omdøb</string>
+    <string name="control_skin_duplicate" tools:ignore="MissingTranslation">Dupliker</string>
+    <string name="control_skin_delete" tools:ignore="MissingTranslation">Slet</string>
+    <string name="control_skin_import_zip" tools:ignore="MissingTranslation">Importer ZIP</string>
+    <string name="control_skin_export_zip" tools:ignore="MissingTranslation">Eksporter ZIP</string>
+    <string name="control_skin_select_export_folder" tools:ignore="MissingTranslation">Vælg eksportmappe</string>
+    <string name="control_skin_imported" tools:ignore="MissingTranslation">Importerede <xliff:g id="skin_name" example="Classic Nokia">%1$s</xliff:g></string>
+    <string name="control_skin_already_available" tools:ignore="MissingTranslation"><xliff:g id="skin_name" example="Classic Nokia">%1$s</xliff:g> er allerede tilgængelig</string>
+    <string name="control_skin_exported" tools:ignore="MissingTranslation">Gemte <xliff:g id="skin_name" example="Classic Nokia">%1$s</xliff:g></string>
+    <string name="control_skin_archive_invalid_path" tools:ignore="MissingTranslation">Den valgte placering er ikke tilgængelig.</string>
+    <string name="control_skin_archive_import_failed" tools:ignore="MissingTranslation">Kontrolskinnet kunne ikke importeres. Kontroller, at ZIP-filen indeholder ét gyldigt sæt.</string>
+    <string name="control_skin_archive_export_failed" tools:ignore="MissingTranslation">Kontrolskinnet kunne ikke eksporteres. Vælg en skrivbar mappe uden for skinbiblioteket.</string>
+    <string name="control_skin_name" tools:ignore="MissingTranslation">Navn på sæt</string>
+    <string name="control_skin_icon" tools:ignore="MissingTranslation">Kun ikon</string>
+    <string name="control_skin_full" tools:ignore="MissingTranslation">Fuld knap</string>
+    <string name="control_skin_normal_image" tools:ignore="MissingTranslation">Normalt billede</string>
+    <string name="control_skin_pressed_image" tools:ignore="MissingTranslation">Billede ved tryk</string>
+    <string name="control_skin_delete_warning" tools:ignore="MissingTranslation">Vil du slette dette delte skinsæt og alle dets billeder? MIDlets, der bruger det, vender tilbage til standardkontrollerne, næste gang de startes.</string>
+    <string name="control_skin_invalid_image" tools:ignore="MissingTranslation">Vælg et PNG-, WebP- eller SVG-billede.</string>
+    <string name="control_skin_operation_failed" tools:ignore="MissingTranslation">Handlingen for kontroltemaet kunne ikke fuldføres.</string>
+    <string name="control_skin_missing" tools:ignore="MissingTranslation">Utilgængeligt sæt (standardkontroller)</string>
+    <string name="control_skin_remove_image" tools:ignore="MissingTranslation">Fjern</string>
+    <string name="control_skin_manage" tools:ignore="MissingTranslation">Administrer sæt</string>
+    <string name="control_skin_manage_named" tools:ignore="MissingTranslation">Administrer <xliff:g id="skin_name" example="Classic Nokia">%1$s</xliff:g></string>
+    <plurals name="control_skin_count">
+        <item quantity="one"><xliff:g id="count" example="4">%1$d</xliff:g> tilpasset kontrol</item>
+        <item quantity="other"><xliff:g id="count" example="4">%1$d</xliff:g> tilpassede kontroller</item>
+    </plurals>
+    <string name="control_skin_empty" tools:ignore="MissingTranslation">Opret et sæt for at tilpasse kontrolbilleder.</string>
+    <string name="control_skin_numeric" tools:ignore="MissingTranslation">Tastatur</string>
+    <string name="control_skin_navigation" tools:ignore="MissingTranslation">Navigation</string>
+    <string name="control_skin_other" tools:ignore="MissingTranslation">Andre knapper</string>
+    <string name="control_skin_pressed_requires_normal" tools:ignore="MissingTranslation">Tilføj først et normalt billede.</string>
+    <string name="control_skin_edit_named" tools:ignore="MissingTranslation">Knap <xliff:g id="button_label" example="5">%1$s</xliff:g></string>
+    <string name="control_skin_change_image" tools:ignore="MissingTranslation">Skift</string>
+    <string name="control_skin_pick_image" tools:ignore="MissingTranslation">Vælg billede</string>
+    <string name="control_skin_soft_left" tools:ignore="MissingTranslation">Funktion V</string>
+    <string name="control_skin_soft_right" tools:ignore="MissingTranslation">Funktion H</string>
+    <string name="control_skin_fire" tools:ignore="MissingTranslation">Handling</string>
+    <string name="control_skin_menu" tools:ignore="MissingTranslation">Menu</string>
+    <string name="control_skin_movement" tools:ignore="MissingTranslation">Bevægelseskontroller</string>
+    <string name="control_skin_dpad" tools:ignore="MissingTranslation">D-pad</string>
+    <string name="control_skin_analog" tools:ignore="MissingTranslation">Analog styrepind</string>
+    <string name="control_skin_dpad_base" tools:ignore="MissingTranslation">D-pad-billede</string>
+    <string name="control_skin_overlay_up" tools:ignore="MissingTranslation">Overlejring op</string>
+    <string name="control_skin_overlay_down" tools:ignore="MissingTranslation">Overlejring ned</string>
+    <string name="control_skin_overlay_left" tools:ignore="MissingTranslation">Overlejring venstre</string>
+    <string name="control_skin_overlay_right" tools:ignore="MissingTranslation">Overlejring højre</string>
+    <string name="control_skin_analog_base" tools:ignore="MissingTranslation">Baggrundsbillede</string>
+    <string name="control_skin_analog_thumb" tools:ignore="MissingTranslation">Styrepindbillede</string>
+    <string name="control_skin_analog_thumb_pressed" tools:ignore="MissingTranslation">Aktivt styrepindbillede</string>
+    <string name="control_skin_preview_directions" tools:ignore="MissingTranslation">Forhåndsvis retninger</string>
+    <string name="control_skin_preview_direction" tools:ignore="MissingTranslation">Forhåndsvis <xliff:g id="direction" example="Up">%1$s</xliff:g></string>
+    <string name="control_skin_builtin_preview" tools:ignore="MissingTranslation">Standard</string>
+    <string name="control_skin_custom_preview" tools:ignore="MissingTranslation">Tilpasset</string>
+    <string name="layout_editor_group_on">Tilpas størrelse samlet</string>
+    <string name="layout_editor_group_off">Tilpas størrelse enkeltvis</string>
+    <string name="layout_editor_snap_grid">Fastgør til gitter</string>
+    <string name="layout_editor_snap_controls">Fastgør til knapper</string>
+    <string name="layout_editor_snap_resize">Fastgør ved størrelsesændring</string>
+    <string name="layout_editor_snap_resize_on">Fastgør størrelse: Til</string>
+    <string name="layout_editor_snap_resize_off">Fastgør størrelse: Fra</string>
+    <string name="layout_editor_snap_grid_on">Gitterfastgørelse: Til</string>
+    <string name="layout_editor_snap_grid_off">Gitterfastgørelse: Fra</string>
+    <string name="layout_editor_snap_controls_on">Knapfastgørelse: Til</string>
+    <string name="layout_editor_snap_controls_off">Knapfastgørelse: Fra</string>
+    <string name="layout_editor_guide_gestures">Bevægelser</string>
+    <string name="layout_editor_guide_move">Træk en kontrol for at flytte den.</string>
+    <string name="layout_editor_guide_resize">Brug to fingre til at ændre størrelsen. Bevæg vandret eller lodret for at ændre bredde eller højde.</string>
+    <string name="layout_editor_guide_tools">Redigeringsværktøjer</string>
+    <string name="layout_editor_guide_done">Tryk på Udført for at gemme, kassere eller fortsætte redigeringen.</string>
+    <string name="layout_editor_guide_start">Start redigering</string>
+    <string name="control_skin_invalid_name">Brug 1–61 tegn: bogstaver, tal, kombinerende tegn, mellemrum eller . _ ( ) -. Begynd med et bogstav eller tal, og slut ikke med et punktum.</string>
+    <string name="control_skin_image_validation_failed">Vælg et gyldigt PNG-, WebP- eller SVG-billede på op til 8 MiB. PNG og WebP må ikke overstige 2048 × 2048 pixels.</string>
+</resources>

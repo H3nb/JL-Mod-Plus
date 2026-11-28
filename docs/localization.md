@@ -104,8 +104,8 @@ Examples, conditional on verified behavior:
 ## Languages and completeness
 
 English is the canonical source language and ultimate Android fallback in the
-unqualified resources. Its physical catalog is
-`app/src/main/res/values/strings.xml`. Canonical English expresses the established
+unqualified resources. Its physical catalogs are the feature-based
+`app/src/main/res/values/strings_*.xml` files. Canonical English expresses the established
 semantic contract; it does not define backend behavior independently.
 
 English must be natural product English, direct and concrete. Avoid unnecessary
@@ -260,9 +260,14 @@ locale.
 
 **Resource architecture and evolution:**
 
-- One human-language `strings.xml` catalog per locale, containing both `<string>`
-  and `<plurals>`. Keep English complete, Indonesian fully supported, and every
-  shipped locale structurally complete and subject to ongoing language review.
+- Group app-owned `<string>` and `<plurals>` resources into matching feature
+  catalogs: `strings_common.xml`, `strings_config.xml`, `strings_controls.xml`,
+  `strings_library.xml`, `strings_memory.xml`, `strings_rendering.xml`,
+  `strings_runtime.xml`, and `strings_settings.xml`. Keep genuinely invariant
+  resources in the unqualified `strings_untranslatable.xml` only. Resource identity
+  is the type and key, not the file name. Use the owning feature's catalog and
+  preserve its placement across locales. Keep every shipped locale complete
+  and subject to ongoing language review.
 - Structural arrays may remain in `arrays.xml`. Visible labels reference localized
   strings where appropriate; machine array values stay stable and non-translatable.
 - Android native Resources remain the localization engine. Do not add a
@@ -282,10 +287,10 @@ Current implementation evidence (verify against the source before relying on it)
   supported locales. Mark genuinely invariant values `translatable="false"`
   rather than suppressing this check globally. The deterministic inventory
   remains the source for exact string/plural identity and placeholder QA.
-- English [default resources](../app/src/main/res/values/strings.xml),
-  [Indonesian resources](../app/src/main/res/values-in/strings.xml), and the
-  other shipped base locale catalogs use `strings.xml` for app-owned strings
-  and plurals; structural and configuration-specific resources remain separate.
+- English [default resources](../app/src/main/res/values/),
+  [Indonesian resources](../app/src/main/res/values-in/), and the other shipped
+  base locales use matching feature catalogs; structural and configuration-specific
+  resources remain separate.
   Catalog presence is not linguistic certification. Every locale remains subject
   to evidence-based semantic, grammar, terminology, and accessibility review.
   Android fallback is a safety mechanism, not an accepted substitute for
@@ -337,7 +342,7 @@ overrides, remain separate and do not inflate base locale coverage. This bounded
 parser does not implement the full Android qualifier grammar.
 
 The schema-versioned JSON records facts and report-only findings: coverage,
-fragmentation, typed extras, duplicates within an exact configuration, type
+fragmentation (multiple physical catalogs, expected for the modular layout), typed extras, duplicates within an exact configuration, type
 differences, default invariants, localized invariant declarations, and ordinary
 string argument mismatches. Indexed argument order may differ; clear comparisons
 use argument index/type families, not width, precision, or occurrence count.
@@ -367,6 +372,7 @@ not authorize a resource rewrite.
 | MIDlet | Java ME application executed by the emulator. | MIDlet | JL-Mod Plus itself or its runtime host. | Yes, technical term. |
 | Profile | Named reusable MIDlet configuration, optionally including virtual-control layout. | Profil | Current installed configuration, built-in defaults, linked ownership, Java ME platform profiles, or controller calibration profiles. | No; preserve the supplied profile name. |
 | Preset | Preconfigured option/set, such as controller mappings or font sizes. Named MIDlet presets are presented as Profile/Profil despite internal `preset_*` keys. | `preset` for generic options; Profil for named MIDlet configuration. | Do not introduce a second visible name for the Profile concept, infer live linkage from the word, or restore `prasetel` solely as an Indonesianized form. | Yes for generic `preset`; preserve supplied profile names. |
+| Default / built-in | A default is the value or option used when no explicit alternative applies; a built-in option is supplied by JL-Mod Plus or the system. | Default for a selectable or fallback value (e.g. profil default, deskripsi default); bawaan for built-in settings or controls. | Original MIDlet metadata, which may be restored independently of a user-editable default. | Default may be retained when it avoids ambiguity. |
 | Virtual Controls | App-provided touch buttons, D-pad, and analog stick. | Kontrol virtual | Android IME, physical gamepad controls, guest input fields, or guest display. | No. |
 | Layout | Arrangement/geometry of virtual controls when used in that context; qualify as Virtual Controls Layout when needed. | Tata letak; tata letak kontrol virtual when qualified. | Key-code layout is a separate concept; inspect which arrangement a surface controls. | No. |
 | Collection | Named Library grouping whose membership references installed apps. | Koleksi | Filesystem folders, moving/deleting installed files, or Favorites. | No; preserve the supplied collection name. |

@@ -1,0 +1,118 @@
+<?xml version="1.0" encoding="utf-8"?>
+<!-- Active MIDlet runtime session, screenshots, logs, crash recovery, and diagnostic reports. -->
+<resources xmlns:tools="http://schemas.android.com/tools" xmlns:xliff="urn:oasis:names:tc:xliff:document:1.2">
+    <string name="action_keyboard_ime">מקלדת (IME)</string>
+    <string name="action_lock_orientation">נעילת סיבוב מסך</string>
+    <string name="runtime_replacement_failed">לא ניתן לעצור את ה-MIDlet הפעיל. יש לנסות לפתוח את החדש שוב.</string>
+    <string name="runtime_restart" tools:ignore="MissingTranslation">הפעלה מחדש</string>
+    <string name="runtime_restart_confirmation" tools:ignore="MissingTranslation">להפעיל מחדש את ה-MIDlet הזה? התקדמות שלא נשמרה עלולה ללכת לאיבוד.</string>
+    <string name="FORCE_CLOSE_CONFIRMATION">לעצור את ה-MIDlet הזה? התקדמות שלא נשמרה עלולה ללכת לאיבוד.</string>
+    <string name="runtime_preset_save_destination">שמירה אל</string>
+    <string name="runtime_preset_apply_destination">החלה על</string>
+    <string name="runtime_preset_this_midlet_only">רק ל-MIDlet זה</string>
+    <string name="runtime_preset_update_destination">עדכון “<xliff:g id="profile_name" example="Action Games">%1$s</xliff:g>”</string>
+    <string name="runtime_preset_local_explanation">רק הפקדים הווירטואליים של MIDlet זה ישתנו.</string>
+    <string name="runtime_preset_update_explanation">עדכון פריסת הפקדים הווירטואליים בפרופיל “<xliff:g id="profile_name" example="Action Games">%1$s</xliff:g>”.\nיישומי MIDlet אחרים המקושרים לפרופיל זה יקבלו את הפריסה החדשה בהפעלה הבאה שלהם.</string>
+    <string name="runtime_layout_apply_title">להחיל את “<xliff:g id="name" example="Example">%1$s</xliff:g>”?</string>
+    <string name="runtime_apply">החלה</string>
+    <string name="runtime_preset_update_failed">נשמר עבור MIDlet זה, אך לא ניתן לעדכן את “<xliff:g id="profile_name" example="Action Games">%1$s</xliff:g>”.</string>
+    <string name="runtime_preset_update_unlinked">“<xliff:g id="profile_name" example="Action Games">%1$s</xliff:g>” עודכן, אך MIDlet זה לא יקבל ממנו עדכונים עתידיים.</string>
+    <string name="msg_immediate_mode_disabled">עיבוד מיידי הושבת מכיוון שקריאות חוזרות של אירועים קוננו עמוק מדי.</string>
+    <string name="msg_press_again_to_close">יש ללחוץ שוב לסגירה</string>
+    <string name="save_log">שמירת יומן</string>
+    <string name="take_screenshot">צילום מסך</string>
+    <!-- Crash-report UI remains translatable; locales without coverage fall back to default English. -->
+    <string name="crash_reports">דוחות אבחון</string>
+    <string name="diagnostic_report">דוח אבחון</string>
+    <string name="view_reports">הצגת דוחות אבחון</string>
+    <string name="crash_reports_empty">אין דוחות אבחון מקומיים</string>
+    <string name="crash_reports_loading">טוען דוחות אבחון</string>
+    <string name="crash_report_midlet_failure">כשל בהפעלת MIDlet</string>
+    <string name="crash_report_java_report">דוח אבחון Java</string>
+    <string name="crash_report_process_exit">דוח יציאת תהליך</string>
+    <string name="crash_report_list_subtitle"><xliff:g id="report_type" example="Java crash">%1$s</xliff:g> · <xliff:g id="timestamp" example="Nov 25, 09:40">%2$s</xliff:g></string>
+    <plurals name="crash_reports_selected_count">
+        <item quantity="one">נבחר פריט <xliff:g id="count" example="3">%1$d</xliff:g></item>
+        <item quantity="two">נבחרו <xliff:g id="count" example="3">%1$d</xliff:g> פריטים</item>
+        <item quantity="other">נבחרו <xliff:g id="count" example="3">%1$d</xliff:g> פריטים</item>
+    </plurals>
+    <string name="copy_report">העתקה</string>
+    <string name="report_on_github">דיווח ב-GitHub</string>
+    <string name="delete_report">מחיקה</string>
+    <string name="share_selected_reports" tools:ignore="MissingTranslation">שיתוף דוחות נבחרים</string>
+    <string name="delete_selected_reports">מחיקת דוחות נבחרים</string>
+    <string name="crash_report_copied">הדוח הועתק</string>
+    <string name="crash_report_bundle_preparing">מכין חבילת אבחון…</string>
+    <string name="crash_report_bundle_ready_title">חבילת האבחון מוכנה</string>
+    <string name="crash_report_bundle_ready_message"><xliff:g id="name" example="Example">%1$s</xliff:g>\n\nנשמר בתיקייה הורדות ← JL-Mod Plus Diagnostics.\n\nיש לבדוק אם הקובץ מכיל מידע רגיש, ולאחר מכן לצרף אותו לפני שליחת הדיווח ב-GitHub. הקובץ יהפוך לציבורי ברגע שיצורף.</string>
+    <string name="locate_bundle">איתור החבילה</string>
+    <string name="open_github">פתיחת GitHub</string>
+    <string name="crash_report_bundle_failed">לא ניתן להכין את חבילת האבחון.</string>
+    <string name="crash_report_locate_failed">לא נמצא בוחר קבצים זמין לאיתור חבילת האבחון.</string>
+    <string name="crash_report_bundle_cleanup_failed">לא ניתן להסיר את החבילה שנוצרה. דוח האבחון נשמר.</string>
+    <string name="crash_report_github_unavailable">לא נמצאו דפדפן או אפליקציה לפתיחת טופס הדיווח ב-GitHub.</string>
+    <string name="crash_report_delete_title">למחוק את דוח האבחון?</string>
+    <string name="crash_report_delete_message">פעולה זו מסירה לצמיתות את דוח האבחון וכל חבילה שנוצרה ממכשיר זה. קבצים שכבר הועלו למקום אחר אינם מושפעים.</string>
+    <plurals name="crash_reports_batch_delete_title">
+        <item quantity="one">למחוק דוח אבחון <xliff:g id="count" example="3">%1$d</xliff:g>?</item>
+        <item quantity="two">למחוק <xliff:g id="count" example="3">%1$d</xliff:g> דוחות אבחון?</item>
+        <item quantity="other">למחוק <xliff:g id="count" example="3">%1$d</xliff:g> דוחות אבחון?</item>
+    </plurals>
+    <string name="crash_reports_batch_delete_message">פעולה זו מסירה לצמיתות את דוחות האבחון שנבחרו וכל חבילה שנוצרה ממכשיר זה. קבצים שכבר הועלו למקום אחר אינם מושפעים.</string>
+    <string name="crash_report_delete_failed">לא ניתן למחוק את הדוח.</string>
+    <string name="crash_report_unavailable">דוח זה אינו זמין עוד.</string>
+    <string name="process_exit_recovery_title">יציאה בלתי צפויה של התהליך</string>
+    <string name="process_exit_recovery_message">JL-Mod Plus נעצר באופן בלתי צפוי בהפעלה הקודמת (<xliff:g id="reason" example="Java crash">%1$s</xliff:g>). פרטי האבחון נשמרו במכשיר.</string>
+    <string name="process_exit_recovery_message_midlet">תהליך MIDlet נעצר באופן בלתי צפוי בהפעלה הקודמת (<xliff:g id="reason" example="Java crash">%1$s</xliff:g>). פרטי האבחון נשמרו במכשיר.</string>
+    <string name="process_exit_recovery_message_named">“<xliff:g id="app_name" example="Bounce Tales">%1$s</xliff:g>” נעצר באופן בלתי צפוי בהפעלה הקודמת (<xliff:g id="reason" example="Native crash">%2$s</xliff:g>). פרטי האבחון נשמרו במכשיר.</string>
+    <string name="select_all_reports">בחירת כל הדוחות</string>
+    <string name="clear_report_selection">ניקוי בחירת הדוחות</string>
+    <string name="runtime_memory_button_short" tools:ignore="MissingTranslation">לחצן זיכרון</string>
+    <string name="runtime_action_on" tools:ignore="MissingTranslation">פעיל</string>
+    <string name="runtime_action_off" tools:ignore="MissingTranslation">כבוי</string>
+    <string name="reconverting_wait">MIDlet זה דורש המרת תאימות חד-פעמית לפני שניתן יהיה להפעיל אותו.</string>
+    <string name="reconversion_done_with_warning">המרת התאימות הושלמה עם אזהרות.</string>
+    <string name="reconversion_error_summary">לא ניתן להמיר MIDlet זה באופן אוטומטי.</string>
+    <string name="runtime_invalid_intent">בקשת הפעלה לא תקינה: נתיב ה-MIDlet חסר.</string>
+    <string name="runtime_storage_in_use">אחסון ה-MIDlet כבר נמצא בשימוש על ידי סביבת ריצה אחרת.</string>
+    <string name="runtime_installation_changed">לא ניתן להכין MIDlet זה להפעלה.</string>
+    <string name="runtime_storage_unavailable">לא ניתן להכין את אחסון ה-MIDlet.</string>
+    <string name="runtime_no_midlets">לא נמצאו יישומי MIDlet באפליקציה זו.</string>
+    <!-- Runtime grouped controls derive body, accent, outline, icon, and selected-icon colors from the existing virtual-control appearance settings. -->
+    <string name="runtime_virtual_controls_title">פקדים וירטואליים</string>
+    <string name="runtime_virtual_controls_dpad">מקשי כיוון</string>
+    <string name="runtime_virtual_controls_analog">סטיק אנלוגי</string>
+    <string name="runtime_virtual_controls_edit">עריכת פריסה</string>
+    <string name="runtime_virtual_controls_edit_guide_title">מדריך עריכת פריסה</string>
+    <string name="runtime_virtual_controls_edit_guide_message">יש לגרור פקדים כדי להזיז אותם. בלחצנים, הזזת שתי אצבעות אופקית או אנכית משנה את הרוחב או הגובה, והזזה אלכסונית משנה את שניהם. יש לצבוט כדי לשנות את גודל מקשי הכיוון או הסטיק האנלוגי באופן יחסי. בסיום יש להקיש על “סיום”.</string>
+    <string name="runtime_virtual_controls_edit_guide_dont_show_again">אל תציג שוב</string>
+    <string name="runtime_virtual_controls_switch_layout">בחירת פריסת פקדים</string>
+    <string name="runtime_virtual_controls_show_controls">בחירת פקדים מוצגים</string>
+    <string name="runtime_virtual_controls_template_dpad_standard">מקשי כיוון רגילים</string>
+    <string name="runtime_virtual_controls_template_analog_standard">סטיק אנלוגי רגיל</string>
+    <string name="screenshot_save_failed">לא ניתן לשמור את צילום המסך.</string>
+    <!-- %1$s is the saved screenshot's filesystem path. New key replaces the legacy prefix contract. -->
+    <string name="screenshot_saved_path">צילום המסך נשמר בנתיב <xliff:g id="path" example="Pictures/Bounce Tales/Screenshot_20261125-103000.png">%1$s</xliff:g></string>
+    <!-- Deliberate English fallback until reviewed translations are available. -->
+    <string name="log_save_success" tools:ignore="MissingTranslation">הקובץ “<xliff:g id="name" example="Example">%1$s</xliff:g>” נשמר בתיקייה הורדות ← JL-Mod Plus Diagnostics.</string>
+    <string name="log_save_partial" tools:ignore="MissingTranslation">יומן חלקי נשמר בשם “<xliff:g id="name" example="Example">%1$s</xliff:g>” בתיקייה הורדות ← JL-Mod Plus Diagnostics.</string>
+    <string name="log_save_empty" tools:ignore="MissingTranslation">אין רשומות יומן אפליקציה זמינות במאגר של Android.</string>
+    <string name="log_save_timeout" tools:ignore="MissingTranslation">תם הזמן הקצוב לאיסוף היומן. לא נשמר קובץ.</string>
+    <string name="log_save_failed">לא ניתן לשמור את היומן.</string>
+    <string name="runtime_midlet_list_failed">לא ניתן לקרוא את רשימת ה-MIDlet של אפליקציה זו.</string>
+    <string name="diagnostic_reason_java_crash">קריסת Java</string>
+    <string name="diagnostic_reason_native_crash">קריסה בשכבה המקורית</string>
+    <string name="diagnostic_reason_anr">האפליקציה אינה מגיבה</string>
+    <string name="diagnostic_reason_signal">סיום באות מערכת</string>
+    <string name="diagnostic_reason_unknown">סיבה לא ידועה</string>
+    <string name="crash_reports_delete_failed">לא ניתן למחוק חלק מדוחות האבחון. ייתכן שדוחות אחרים הוסרו.</string>
+    <string name="crash_reports_bundle_cleanup_failed">לא ניתן להסיר חלק מהחבילות שנוצרו. דוחות האבחון המשויכים אליהן נשמרו. ייתכן שדוחות אחרים נמחקו.</string>
+    <string name="runtime_chrome_update_failed">לא ניתן לעדכן את הגדרות התצוגה. יש לנסות שוב.</string>
+    <string name="runtime_fullscreen_update_failed">לא ניתן לגשת להגדרת המסך המלא. יש לנסות שוב.</string>
+    <string name="runtime_camera_use_front">שימוש במצלמה קדמית</string>
+    <string name="runtime_camera_use_rear">שימוש במצלמה אחורית</string>
+    <string name="runtime_camera_switch_failed">לא ניתן להחליף מצלמה.</string>
+    <string name="runtime_camera_switch_recording" tools:ignore="MissingTranslation">יש לעצור את ההקלטה לפני החלפת המצלמה.</string>
+    <string name="date_field_not_set" tools:ignore="MissingTranslation">לא הוגדר</string>
+    <string name="date_field_use_displayed_value" tools:ignore="MissingTranslation">שימוש בערך זה</string>
+</resources>

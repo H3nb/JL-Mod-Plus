@@ -1,0 +1,107 @@
+<?xml version="1.0" encoding="utf-8"?>
+<!-- Virtual keypad controls, layout editor, physical key mappings, and control skins. -->
+<resources xmlns:xliff="urn:oasis:names:tc:xliff:document:1.2">
+    <string name="alert_map_menu">Menu key (M) isn’t assigned.\nYou may not be able to open the MIDlet menu while playing.</string>
+    <string name="dismiss_mapping">Close mapping</string>
+    <string name="layout_edit_finish">Finish editing</string>
+    <string name="layout_edit_done">Done</string>
+    <string name="layout_editor_grid_size">Grid size</string>
+    <string name="layout_editor_grid_coarse">Coarse (16)</string>
+    <string name="layout_editor_grid_normal">Normal (24)</string>
+    <string name="layout_editor_grid_fine">Fine (32)</string>
+    <string name="layout_editor_snap_on">Snap on</string>
+    <string name="layout_editor_snap_off">Snap off</string>
+    <string name="layout_edit_save_changes">Save changes to virtual controls?</string>
+    <string name="layout_edit_discard">Discard</string>
+    <string name="layout_edit_continue">Continue editing</string>
+    <string name="layout_edit_finished">Virtual controls editing is complete.</string>
+    <string name="virtual_controls_save_failed">Couldn’t save virtual controls. Try again.</string>
+    <string name="layout_switch">Choose control layout</string>
+    <string name="mapping_dialog_key_not_specified">No inputs assigned.</string>
+    <string name="mapping_dialog_message">Press a physical key or button to assign it to this control.</string>
+    <string name="mapping_dialog_assigned_inputs">Assigned inputs</string>
+    <string name="mapping_dialog_add_input">You can assign more than one physical input.</string>
+    <string name="mapping_dialog_remove">Remove</string>
+    <string name="mapping_dialog_title">Press a key or button</string>
+    <string name="message_reset_layout">Reset the virtual controls layout to its default?</string>
+    <string name="RESET_LAYOUT_CMD">Reset virtual controls layout</string>
+    <string name="saved_keyboard_layout_summary">Saved virtual controls layout.</string>
+    <string name="control_skin_title">Virtual control skin</string>
+    <string name="control_skin_create">Create set</string>
+    <string name="control_skin_default">Default buttons</string>
+    <string name="control_skin_edit">Edit</string>
+    <string name="control_skin_rename">Rename</string>
+    <string name="control_skin_duplicate">Duplicate</string>
+    <string name="control_skin_delete">Delete</string>
+    <string name="control_skin_import_zip">Import ZIP</string>
+    <string name="control_skin_export_zip">Export ZIP</string>
+    <string name="control_skin_select_export_folder">Choose export folder</string>
+    <string name="control_skin_imported">Imported <xliff:g id="skin_name" example="Classic Nokia">%1$s</xliff:g></string>
+    <string name="control_skin_already_available"><xliff:g id="skin_name" example="Classic Nokia">%1$s</xliff:g> is already available</string>
+    <string name="control_skin_exported">Saved <xliff:g id="skin_name" example="Classic Nokia">%1$s</xliff:g></string>
+    <string name="control_skin_archive_invalid_path">Selected location is unavailable.</string>
+    <string name="control_skin_archive_import_failed">Couldn’t import control skin. Make sure the ZIP contains exactly one valid skin set.</string>
+    <string name="control_skin_archive_export_failed">Couldn’t export control skin. Choose a writable folder outside the skin library.</string>
+    <string name="control_skin_name">Set name</string>
+    <string name="control_skin_icon">Icon only</string>
+    <string name="control_skin_full">Full button</string>
+    <string name="control_skin_normal_image">Normal image</string>
+    <string name="control_skin_pressed_image">Pressed image</string>
+    <string name="control_skin_delete_warning">Delete this shared skin set and all its images? MIDlets using it will use built-in controls the next time they start.</string>
+    <string name="control_skin_invalid_image">Choose a PNG, WebP, or SVG image.</string>
+    <string name="control_skin_operation_failed">Couldn’t complete the control skin operation.</string>
+    <string name="control_skin_missing">Unavailable set (default controls)</string>
+    <string name="control_skin_remove_image">Remove</string>
+    <string name="control_skin_manage">Manage set</string>
+    <string name="control_skin_manage_named">Manage <xliff:g id="skin_name" example="Classic Nokia">%1$s</xliff:g></string>
+    <plurals name="control_skin_count">
+        <item quantity="one"><xliff:g id="count" example="4">%1$d</xliff:g> customized control</item>
+        <item quantity="other"><xliff:g id="count" example="4">%1$d</xliff:g> customized controls</item>
+    </plurals>
+    <string name="control_skin_empty">Create a set to customize control images.</string>
+    <string name="control_skin_numeric">Keypad</string>
+    <string name="control_skin_navigation">Navigation</string>
+    <string name="control_skin_other">Other buttons</string>
+    <string name="control_skin_pressed_requires_normal">Add a normal image first.</string>
+    <string name="control_skin_edit_named">Button <xliff:g id="button_label" example="5">%1$s</xliff:g></string>
+    <string name="control_skin_change_image">Change</string>
+    <string name="control_skin_pick_image">Choose image</string>
+    <string name="control_skin_soft_left">Soft L</string>
+    <string name="control_skin_soft_right">Soft R</string>
+    <string name="control_skin_fire">Fire</string>
+    <string name="control_skin_menu">Menu</string>
+    <string name="control_skin_movement">Movement controls</string>
+    <string name="control_skin_dpad">D-pad</string>
+    <string name="control_skin_analog">Analog stick</string>
+    <string name="control_skin_dpad_base">D-pad image</string>
+    <string name="control_skin_overlay_up">Up overlay</string>
+    <string name="control_skin_overlay_down">Down overlay</string>
+    <string name="control_skin_overlay_left">Left overlay</string>
+    <string name="control_skin_overlay_right">Right overlay</string>
+    <string name="control_skin_analog_base">Base image</string>
+    <string name="control_skin_analog_thumb">Thumb image</string>
+    <string name="control_skin_analog_thumb_pressed">Active thumb image</string>
+    <string name="control_skin_preview_directions">Preview directions</string>
+    <string name="control_skin_preview_direction">Preview <xliff:g id="direction" example="Up">%1$s</xliff:g></string>
+    <string name="control_skin_builtin_preview">Default</string>
+    <string name="control_skin_custom_preview">Customized</string>
+    <string name="layout_editor_group_on">Resize together</string>
+    <string name="layout_editor_group_off">Resize individually</string>
+    <string name="layout_editor_snap_grid">Snap to grid</string>
+    <string name="layout_editor_snap_controls">Snap to buttons</string>
+    <string name="layout_editor_snap_resize">Snap while resizing</string>
+    <string name="layout_editor_snap_resize_on">Resize snap: On</string>
+    <string name="layout_editor_snap_resize_off">Resize snap: Off</string>
+    <string name="layout_editor_snap_grid_on">Grid snap: On</string>
+    <string name="layout_editor_snap_grid_off">Grid snap: Off</string>
+    <string name="layout_editor_snap_controls_on">Button snap: On</string>
+    <string name="layout_editor_snap_controls_off">Button snap: Off</string>
+    <string name="layout_editor_guide_gestures">Gestures</string>
+    <string name="layout_editor_guide_move">Drag a control to move it.</string>
+    <string name="layout_editor_guide_resize">Use two fingers to resize. Move horizontally or vertically to change width or height.</string>
+    <string name="layout_editor_guide_tools">Editor tools</string>
+    <string name="layout_editor_guide_done">Tap Done to save, discard, or continue editing.</string>
+    <string name="layout_editor_guide_start">Start editing</string>
+    <string name="control_skin_invalid_name">Use 1–61 characters: letters, numbers, combining marks, spaces, or . _ ( ) -. Start with a letter or number and don’t end with a period.</string>
+    <string name="control_skin_image_validation_failed">Choose a valid PNG, WebP, or SVG image up to 8 MiB. PNG and WebP must be no larger than 2048 × 2048 pixels.</string>
+</resources>

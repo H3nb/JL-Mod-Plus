@@ -1,0 +1,494 @@
+<?xml version="1.0" encoding="utf-8"?>
+<!-- MIDlet library, collections, metadata editor, bulk/single installer, file picker, and app updates. -->
+<resources xmlns:tools="http://schemas.android.com/tools" xmlns:xliff="urn:oasis:names:tc:xliff:document:1.2">
+    <string name="action_context_delete">Șterge</string>
+    <string name="action_context_rename">Redenumește</string>
+    <string name="action_context_shortcut">Adaugă comandă rapidă</string>
+    <string name="action_reinstall">Reinstalează</string>
+    <string name="alert_msg_workdir_not_exists">Dosarul de lucru nu a fost găsit:\n<xliff:g id="path" example="/storage/emulated/0/JL-Mod-Plus">%1$s</xliff:g>\nÎl creați sau alegeți alt dosar?</string>
+    <string name="converting_wait">Se convertește JAR…</string>
+    <string name="create_apps_dir_failed">Dosarul de lucru nu a putut fi pregătit la:\n<xliff:g id="path" example="/storage/emulated/0/JL-Mod-Plus">%1$s</xliff:g>\nAlegeți alt dosar.</string>
+    <string name="install_done">Aplicația a fost instalată.</string>
+    <string name="install_done_with_warning">Aplicația a fost instalată cu avertismente.</string>
+    <string name="installer_title">Program de instalare MIDlet</string>
+    <string name="installer_error_message">Aplicația selectată nu a putut fi instalată. Alegeți un fișier MIDlet valid și încercați din nou.</string>
+    <string name="install_jar_non_matched_jad">Această aplicație diferă de cea descrisă în JAD.\nIgnorați JAD și instalați oricum?</string>
+    <string name="file_picker_select_file">Selectați fișierul</string>
+    <string name="file_picker_select_folder">Selectați dosarul</string>
+    <string name="file_picker_select_app_bundle">Selectați pachetul de aplicație</string>
+    <string name="file_picker_select_icon">Selectați pictograma</string>
+    <string name="file_picker_navigate_back">Înapoi la dosarul părinte</string>
+    <string name="file_picker_cancel">Anulează</string>
+    <string name="file_picker_search">Caută</string>
+    <string name="file_picker_sort">Sortează</string>
+    <string name="file_picker_select_all">Selectează toate fișierele afișate</string>
+    <string name="file_picker_unselect_all">Deselectează toate fișierele afișate</string>
+    <string name="file_picker_sort_type">Dosarele primele</string>
+    <string name="file_picker_sort_name_ascending">Nume A–Z</string>
+    <string name="file_picker_sort_name_descending">Nume Z–A</string>
+    <string name="file_picker_sort_modified_newest">Data modificării: cele mai noi</string>
+    <string name="file_picker_sort_modified_oldest">Data modificării: cele mai vechi</string>
+    <string name="file_picker_choose">Alege</string>
+    <string name="file_picker_current_folder">Dosar curent</string>
+    <string name="file_picker_parent_folder">Dosar părinte</string>
+    <string name="file_picker_file">Fișier</string>
+    <string name="file_picker_preview_named">Previzualizează <xliff:g id="name" example="Example">%1$s</xliff:g></string>
+    <string name="file_picker_preview_unavailable">Previzualizare indisponibilă</string>
+    <string name="file_picker_storage_volume">Volum de stocare</string>
+    <string name="file_picker_empty">Niciun fișier potrivit</string>
+    <string name="file_picker_empty_folder">Nu au fost găsite dosare</string>
+    <string name="file_picker_no_matches">Nicio potrivire</string>
+    <string name="file_picker_permission_required">Este necesară permisiunea de stocare</string>
+    <string name="file_picker_permission_message">Permiteți accesul la stocare pentru a răsfoi fișierele și dosarele de pe acest dispozitiv.</string>
+    <string name="file_picker_permission_denied">Accesul la stocare nu a fost acordat.</string>
+    <string name="file_picker_grant_access">Acordă acces</string>
+    <string name="file_picker_retry">Încearcă din nou</string>
+    <string name="file_picker_load_failed">Acest dosar nu a putut fi deschis.</string>
+    <string name="file_picker_create_folder">Dosar nou</string>
+    <string name="file_picker_create_folder_title">Creează dosar</string>
+    <string name="file_picker_folder_name">Nume dosar</string>
+    <string name="file_picker_invalid_folder_name">Introduceți un nume de dosar valid.</string>
+    <string name="file_picker_folder_exists">Există deja un element cu acest nume.</string>
+    <string name="file_picker_create_folder_failed">Dosarul nu a putut fi creat.</string>
+    <string name="file_picker_selection_unavailable">Elementul selectat nu mai este disponibil.</string>
+    <string name="loading_apps">Se încarcă aplicațiile</string>
+    <string name="message_delete">Ștergeți această aplicație, setările ei și datele salvate? Aceasta va fi eliminată și din bibliotecă.</string>
+    <string name="msg_no_matches">Nicio potrivire pentru „<xliff:g id="query" example="Bounce">%1$s</xliff:g>”</string>
+    <string name="library_destination_apps">Toate aplicațiile</string>
+    <string name="library_destination_collections">Colecții</string>
+    <string name="library_scope_picker_title" tools:ignore="MissingTranslation">Răsfoiește aplicațiile</string>
+    <string name="library_destination_more">Mai multe</string>
+    <string name="library_search_placeholder">Caută aplicații…</string>
+    <string name="library_filter_all">Toate</string>
+    <string name="library_filter_recently_opened">Deschise recent</string>
+    <string name="library_filter_recently_added">Adăugate recent</string>
+    <string name="library_filter_favorites">Favorite</string>
+    <string name="library_add_to_favorites_action">Adaugă la favorite</string>
+    <string name="library_remove_from_favorites_action">Elimină din favorite</string>
+    <string name="library_favorite_coming_soon">Favoritele nu sunt disponibile</string>
+    <string name="library_vendor_version"><xliff:g id="vendor" example="Nokia">%1$s</xliff:g> · <xliff:g id="version" example="1.0">%2$s</xliff:g></string>
+    <string name="library_view_list">Listă</string>
+    <string name="library_view_grid">Grilă</string>
+    <string name="library_icon_ratio_title">Raport de aspect pictogramă</string>
+    <string name="library_icon_ratio_square">Pătrat (1:1)</string>
+    <string name="library_icon_ratio_portrait">Portret (3:4)</string>
+    <string name="library_icon_shape_title">Forma pictogramei</string>
+    <string name="library_icon_shape_round">Colțuri rotunjite</string>
+    <string name="library_icon_shape_square">Colțuri drepte</string>
+    <string name="library_grid_icon_size_title" tools:ignore="MissingTranslation">Dimensiune pictograme grilă</string>
+    <string name="library_grid_icon_size_small" tools:ignore="MissingTranslation">Mică</string>
+    <string name="library_grid_icon_size_standard" tools:ignore="MissingTranslation">Standard</string>
+    <string name="library_grid_icon_size_large" tools:ignore="MissingTranslation">Mare</string>
+    <string name="library_grid_icon_size_summary" tools:ignore="MissingTranslation">Modifică dimensiunea pictogramelor și numărul de coloane în vizualizarea grilă.</string>
+    <string name="library_grid_spacing_title">Spațiere grilă</string>
+    <string name="library_grid_spacing_summary" tools:ignore="MissingTranslation">Se aplică doar vizualizării grilă.</string>
+    <string name="library_grid_spacing_none">Fără (0 dp)</string>
+    <string name="library_grid_spacing_compact">Compactă (4 dp)</string>
+    <string name="library_grid_spacing_standard">Standard (8 dp)</string>
+    <string name="library_grid_spacing_spacious">Spațioasă (12 dp)</string>
+    <string name="library_hide_grid_titles">Ascunde titlurile MIDlet</string>
+    <string name="library_show_list_description">Afișează descrierile MIDlet</string>
+    <string name="library_collections_empty_title">Nicio colecție încă</string>
+    <string name="library_collections_empty_message">Colecțiile nu sunt disponibile până când biblioteca nu termină de încărcat.</string>
+    <string name="library_expand_description">Extinde descrierea</string>
+    <string name="library_collapse_description">Restrânge descrierea</string>
+    <string name="no_data_for_display">Nicio aplicație de afișat</string>
+    <string name="permission_request_failed">Este necesară permisiunea de scriere în stocare.</string>
+    <string name="reinstall">Această aplicație este deja instalată. O reinstalați?</string>
+    <string name="reinstall_newest">Actualizați această aplicație la versiunea <xliff:g id="version" example="2.1.0">%1$s</xliff:g>?\n\nInstalat curent: <xliff:g id="current_version" example="2.0.0">%2$s</xliff:g></string>
+    <string name="reinstall_older">Înlocuiți această aplicație cu versiunea <xliff:g id="version" example="2.1.0">%1$s</xliff:g>?\n\nInstalat curent: <xliff:g id="current_version" example="2.0.0">%2$s</xliff:g>\nVersiunea mai veche s-ar putea să nu funcționeze corect cu datele existente.</string>
+    <string name="warn_install_from_net">Acest fișier va fi descărcat de pe internet.</string>
+    <string name="installer_ambiguous">Mai multe aplicații instalate corespund acestui pachet. Instalați o copie separată? Aplicațiile existente și datele lor vor fi păstrate.</string>
+    <string name="installer_separate_copy">Instalează o copie separată</string>
+    <string name="installer_stage_download">Se descarcă aplicația…</string>
+    <string name="installer_stage_wait">Se așteaptă altă operațiune…</string>
+    <string name="installer_stage_save">Se salvează aplicația…</string>
+    <string name="installer_failed_download">Aplicația nu a putut fi descărcată. Verificați conexiunea și linkul de descărcare, apoi încercați din nou.</string>
+    <string name="installer_failed_storage">Instalarea nu a putut fi finalizată. Încercați din nou.</string>
+    <string name="installer_failed_conversion">Aplicația nu a putut fi convertită. Asigurați-vă că fișierul este complet și acceptat, apoi încercați din nou.</string>
+    <string name="installer_needs_recovery">Fișierele aplicației au fost salvate, dar biblioteca nu a putut finaliza actualizarea. Reîmprospătați biblioteca înainte de a încerca din nou.</string>
+    <string name="installer_refresh_library">Reîmprospătează biblioteca</string>
+    <string name="installer_cancel_pending">Se oprește la următorul punct sigur…</string>
+    <string name="installer_retry_remaining">Verifică elementele nefinalizate</string>
+    <string name="installer_not_processed">Neprocesat</string>
+    <string name="installer_partial_restore">Aplicația a fost instalată, dar datele sau setările nu au putut fi restaurate.</string>
+    <string name="installer_removed_leftovers">Aplicația a fost eliminată, dar unele setări sau date salvate nu au putut fi șterse.</string>
+    <string name="installer_copy_details">Copiază detaliile</string>
+    <string name="installer_show_details">Afișează detaliile</string>
+    <string name="installer_hide_details">Ascunde detaliile</string>
+    <!-- %1$d is the number of source Java class files skipped during conversion. -->
+    <plurals name="installer_conversion_warning_summary">
+        <item quantity="one"><xliff:g id="skipped_count" example="2">%1$d</xliff:g> fișier de clasă Java a fost omis deoarece nu a putut fi citit. Funcțiile care îl folosesc s-ar putea să nu funcționeze.</item>
+        <item quantity="few"><xliff:g id="skipped_count" example="2">%1$d</xliff:g> fișiere de clasă Java au fost omise deoarece nu au putut fi citite. Funcțiile care le folosesc s-ar putea să nu funcționeze.</item>
+        <item quantity="other"><xliff:g id="skipped_count" example="2">%1$d</xliff:g> de fișiere de clasă Java au fost omise deoarece nu au putut fi citite. Funcțiile care le folosesc s-ar putea să nu funcționeze.</item>
+    </plurals>
+    <!-- %1$s is the source JAR entry path for the skipped class file. -->
+    <string name="installer_conversion_skipped_entry"><xliff:g id="entry_path" example="com/example/Broken.class">%1$s</xliff:g>\nProblemă: Fișierul de clasă Java nu a putut fi citit.\nAcțiune: Omis în timpul conversiei.</string>
+    <!-- %1$d is the number of additional bounded conversion diagnostics not shown. -->
+    <plurals name="installer_conversion_omitted_details">
+        <item quantity="one"><xliff:g id="omitted_count" example="5">%1$d</xliff:g> problemă suplimentară de conversie nu este afișată.</item>
+        <item quantity="few"><xliff:g id="omitted_count" example="5">%1$d</xliff:g> probleme suplimentare de conversie nu sunt afișate.</item>
+        <item quantity="other"><xliff:g id="omitted_count" example="5">%1$d</xliff:g> de probleme suplimentare de conversie nu sunt afișate.</item>
+    </plurals>
+    <string name="library_collection_new">Colecție nouă</string>
+    <string name="library_collection_ready_empty_message">Creați colecții pentru a organiza aplicațiile fără a le muta fișierele.</string>
+    <string name="library_collection_add_app">Adaugă în colecție</string>
+    <string name="library_collection_add_apps">Adaugă aplicații</string>
+    <string name="library_collection_manage_apps">Alege aplicații</string>
+    <string name="library_collection_manage" tools:ignore="MissingTranslation">Gestionează colecțiile</string>
+    <string name="library_collection_delete_confirmation" tools:ignore="MissingTranslation">Ștergeți „<xliff:g id="collection_name" example="Favorites">%1$s</xliff:g>”? Aplicațiile din această colecție vor rămâne instalate.</string>
+    <string name="library_collection_rename_action" tools:ignore="MissingTranslation">Redenumește colecția <xliff:g id="collection_name" example="Favorites">%1$s</xliff:g></string>
+    <string name="library_collection_delete_action" tools:ignore="MissingTranslation">Șterge colecția <xliff:g id="collection_name" example="Favorites">%1$s</xliff:g></string>
+    <string name="library_collection_select_action" tools:ignore="MissingTranslation">Selectează colecția <xliff:g id="collection_name" example="Favorites">%1$s</xliff:g></string>
+    <string name="library_collection_open_action" tools:ignore="MissingTranslation">Deschide colecția <xliff:g id="collection_name" example="Favorites">%1$s</xliff:g></string>
+    <string name="library_collection_rename_selected" tools:ignore="MissingTranslation">Redenumește colecția selectată</string>
+    <string name="library_collection_delete_selected" tools:ignore="MissingTranslation">Șterge colecțiile selectate</string>
+    <plurals name="library_collection_delete_many_confirmation">
+        <item quantity="one">Ștergeți <xliff:g id="count" example="3">%d</xliff:g> colecție? Aplicațiile vor rămâne instalate.</item>
+        <item quantity="few">Ștergeți <xliff:g id="count" example="3">%d</xliff:g> colecții? Aplicațiile vor rămâne instalate.</item>
+        <item quantity="other">Ștergeți <xliff:g id="count" example="3">%d</xliff:g> de colecții? Aplicațiile vor rămâne instalate.</item>
+    </plurals>
+    <string name="library_notifications_title" tools:ignore="MissingTranslation">Notificări</string>
+    <string name="library_notifications_empty_title" tools:ignore="MissingTranslation">Nicio notificare încă</string>
+    <string name="library_notifications_empty_summary" tools:ignore="MissingTranslation">Notificările privind actualizările aplicației vor apărea aici când sunt disponibile.</string>
+    <string name="library_collection_manage_apps_summary">Selectați aplicațiile de inclus în această colecție.</string>
+    <string name="library_collection_name">Nume colecție</string>
+    <string name="library_collection_members_empty">Nicio aplicație în această colecție.</string>
+    <string name="library_collection_select_title">Selectați o colecție</string>
+    <string name="library_collection_select_message">Alegeți o colecție pentru a-i vedea aplicațiile.</string>
+    <string name="library_collection_remove_from_current">Elimină din colecție</string>
+    <string name="library_no_matches">Nicio potrivire pentru „<xliff:g id="query" example="Bounce">%1$s</xliff:g>”</string>
+    <string name="library_action_share_app">Trimite aplicația</string>
+    <string name="library_action_export_bundle">Exportă pachet de aplicație</string>
+    <string name="library_action_import_bundle">Importă pachet de aplicație</string>
+    <string name="library_action_import_bundle_summary">Restaurați aplicațiile exportate împreună cu setările, datele salvate sau marcajele incluse.</string>
+    <string name="library_import_preparing">Se citește pachetul de aplicație…</string>
+    <string name="library_import_restoring">Se restaurează datele aplicației…</string>
+    <string name="library_import_done">Pachetul de aplicație a fost importat.</string>
+    <string name="library_import_done_with_warning">Pachetul de aplicație a fost importat cu avertismente.</string>
+    <string name="library_import_invalid_bundle">Pachetul de aplicație selectat este nevalid, deteriorat sau neacceptat. Alegeți un pachet de aplicație JL-Mod Plus valid și încercați din nou.</string>
+    <string name="library_import_restore_existing">Această aplicație este deja instalată. Setările și datele salvate incluse le vor înlocui pe cele existente. În pachetele mai noi, marcajele sunt îmbinate dacă sunt importate fără setări, înlocuite dacă sunt importate împreună cu setările și păstrate dacă nu sunt incluse. Restaurarea setărilor din pachete mai vechi poate înlocui și marcajele.</string>
+    <string name="library_import_restore_failed">Aplicația a fost instalată, dar datele din pachet nu au putut fi restaurate. Încercați din nou restaurarea?</string>
+    <string name="library_play_stats_summary">Lansări: <xliff:g id="launch_count" example="12">%1$d</xliff:g> · Timp total: <xliff:g id="total_time" example="2h 15m">%2$s</xliff:g></string>
+    <string name="library_share_chooser_title">Trimite aplicația</string>
+    <string name="library_export_chooser_title">Exportă</string>
+    <string name="library_export_progress">Se exportă… <xliff:g id="completed" example="3">%1$d</xliff:g>/<xliff:g id="total" example="10">%2$d</xliff:g></string>
+    <string name="library_transfer_unavailable">Exportul nu a reușit.</string>
+    <string name="library_export_data_in_use">Datele uneia dintre aplicațiile selectate sunt în uz. Închideți MIDlet-urile selectate care rulează și încercați din nou.</string>
+    <string name="library_export_menu_unavailable">Meniul de export nu a putut fi deschis.</string>
+    <string name="library_back">Înapoi la bibliotecă</string>
+    <string name="library_sort">Sortează aplicațiile</string>
+    <string name="library_search_clear">Șterge căutarea</string>
+    <string name="library_description_more">… Mai mult</string>
+    <string name="library_description_less">Mai puțin</string>
+    <plurals name="file_picker_selected_count">
+        <item quantity="one"><xliff:g id="count" example="3">%1$d</xliff:g> selectat</item>
+        <item quantity="few"><xliff:g id="count" example="3">%1$d</xliff:g> selectate</item>
+        <item quantity="other"><xliff:g id="count" example="3">%1$d</xliff:g> selectate</item>
+    </plurals>
+    <plurals name="library_selection_count">
+        <item quantity="one"><xliff:g id="count" example="3">%1$d</xliff:g> aplicație</item>
+        <item quantity="few"><xliff:g id="count" example="3">%1$d</xliff:g> aplicații</item>
+        <item quantity="other"><xliff:g id="count" example="3">%1$d</xliff:g> de aplicații</item>
+    </plurals>
+    <plurals name="library_collection_member_count">
+        <item quantity="one"><xliff:g id="count" example="3">%1$d</xliff:g> aplicație</item>
+        <item quantity="few"><xliff:g id="count" example="3">%1$d</xliff:g> aplicații</item>
+        <item quantity="other"><xliff:g id="count" example="3">%1$d</xliff:g> de aplicații</item>
+    </plurals>
+    <plurals name="bulk_install_found">
+        <item quantity="one"><xliff:g id="count" example="3">%1$d</xliff:g> aplicație găsită</item>
+        <item quantity="few"><xliff:g id="count" example="3">%1$d</xliff:g> aplicații găsite</item>
+        <item quantity="other"><xliff:g id="count" example="3">%1$d</xliff:g> de aplicații găsite</item>
+    </plurals>
+    <plurals name="bulk_install_selected">
+        <item quantity="one"><xliff:g id="count" example="3">%1$d</xliff:g> selectată</item>
+        <item quantity="few"><xliff:g id="count" example="3">%1$d</xliff:g> selectate</item>
+        <item quantity="other"><xliff:g id="count" example="3">%1$d</xliff:g> selectate</item>
+    </plurals>
+    <plurals name="bulk_install_ready_count">
+        <item quantity="one"><xliff:g id="count" example="3">%1$d</xliff:g> pregătită</item>
+        <item quantity="few"><xliff:g id="count" example="3">%1$d</xliff:g> pregătite</item>
+        <item quantity="other"><xliff:g id="count" example="3">%1$d</xliff:g> pregătite</item>
+    </plurals>
+    <plurals name="bulk_install_skipped_count">
+        <item quantity="one">Deja instalată sau duplicat: <xliff:g id="count" example="3">%1$d</xliff:g></item>
+        <item quantity="few">Deja instalate sau duplicate: <xliff:g id="count" example="3">%1$d</xliff:g></item>
+        <item quantity="other">Deja instalate sau duplicate: <xliff:g id="count" example="3">%1$d</xliff:g></item>
+    </plurals>
+    <plurals name="bulk_install_attention_count">
+        <item quantity="one"><xliff:g id="count" example="3">%1$d</xliff:g> necesită verificare</item>
+        <item quantity="few"><xliff:g id="count" example="3">%1$d</xliff:g> necesită verificare</item>
+        <item quantity="other"><xliff:g id="count" example="3">%1$d</xliff:g> necesită verificare</item>
+    </plurals>
+    <plurals name="bulk_install_installed_count">
+        <item quantity="one"><xliff:g id="count" example="3">%1$d</xliff:g> instalată</item>
+        <item quantity="few"><xliff:g id="count" example="3">%1$d</xliff:g> instalate</item>
+        <item quantity="other"><xliff:g id="count" example="3">%1$d</xliff:g> instalate</item>
+    </plurals>
+    <plurals name="bulk_install_updated_count">
+        <item quantity="one"><xliff:g id="count" example="3">%1$d</xliff:g> actualizată</item>
+        <item quantity="few"><xliff:g id="count" example="3">%1$d</xliff:g> actualizate</item>
+        <item quantity="other"><xliff:g id="count" example="3">%1$d</xliff:g> actualizate</item>
+    </plurals>
+    <plurals name="bulk_install_reinstalled_count">
+        <item quantity="one"><xliff:g id="count" example="3">%1$d</xliff:g> reinstalată</item>
+        <item quantity="few"><xliff:g id="count" example="3">%1$d</xliff:g> reinstalate</item>
+        <item quantity="other"><xliff:g id="count" example="3">%1$d</xliff:g> reinstalate</item>
+    </plurals>
+    <plurals name="bulk_install_skipped_result_count">
+        <item quantity="one"><xliff:g id="count" example="3">%1$d</xliff:g> omisă</item>
+        <item quantity="few"><xliff:g id="count" example="3">%1$d</xliff:g> omise</item>
+        <item quantity="other"><xliff:g id="count" example="3">%1$d</xliff:g> omise</item>
+    </plurals>
+    <plurals name="bulk_install_failed_count">
+        <item quantity="one"><xliff:g id="count" example="3">%1$d</xliff:g> eșuată</item>
+        <item quantity="few"><xliff:g id="count" example="3">%1$d</xliff:g> eșuate</item>
+        <item quantity="other"><xliff:g id="count" example="3">%1$d</xliff:g> eșuate</item>
+    </plurals>
+    <plurals name="bulk_install_warning_count">
+        <item quantity="one"><xliff:g id="count" example="3">%1$d</xliff:g> avertisment</item>
+        <item quantity="few"><xliff:g id="count" example="3">%1$d</xliff:g> avertismente</item>
+        <item quantity="other"><xliff:g id="count" example="3">%1$d</xliff:g> de avertismente</item>
+    </plurals>
+    <plurals name="bulk_install_omitted_sources">
+        <item quantity="one"><xliff:g id="count" example="3">%1$d</xliff:g> fișier suplimentar a fost omis pentru a menține verificarea rapidă.</item>
+        <item quantity="few"><xliff:g id="count" example="3">%1$d</xliff:g> fișiere suplimentare au fost omise pentru a menține verificarea rapidă.</item>
+        <item quantity="other"><xliff:g id="count" example="3">%1$d</xliff:g> de fișiere suplimentare au fost omise pentru a menține verificarea rapidă.</item>
+    </plurals>
+    <plurals name="library_bulk_delete_confirmation">
+        <item quantity="one">Ștergeți <xliff:g id="count" example="3">%1$d</xliff:g> aplicație? Fișierele, setările și datele sale salvate vor fi eliminate din bibliotecă.</item>
+        <item quantity="few">Ștergeți <xliff:g id="count" example="3">%1$d</xliff:g> aplicații? Fișierele, setările și datele lor salvate vor fi eliminate din bibliotecă.</item>
+        <item quantity="other">Ștergeți <xliff:g id="count" example="3">%1$d</xliff:g> de aplicații? Fișierele, setările și datele lor salvate vor fi eliminate din bibliotecă.</item>
+    </plurals>
+    <plurals name="library_bulk_delete_result">
+        <item quantity="one"><xliff:g id="deleted_count" example="3">%1$d</xliff:g> aplicație ștearsă; <xliff:g id="failed_count" example="1">%2$d</xliff:g> eșuate.</item>
+        <item quantity="few"><xliff:g id="deleted_count" example="3">%1$d</xliff:g> aplicații șterse; <xliff:g id="failed_count" example="1">%2$d</xliff:g> eșuate.</item>
+        <item quantity="other"><xliff:g id="deleted_count" example="3">%1$d</xliff:g> de aplicații șterse; <xliff:g id="failed_count" example="1">%2$d</xliff:g> eșuate.</item>
+    </plurals>
+    <string name="bulk_install_title">Instalare în bloc</string>
+    <string name="bulk_install_planning">Se verifică aplicațiile selectate…</string>
+    <string name="bulk_install_empty">Nu au fost găsite aplicații compatibile.</string>
+    <string name="bulk_install_recommended">Recomandat</string>
+    <string name="bulk_install_clear">Deselectează</string>
+    <string name="bulk_install_install_count">Instalează <xliff:g id="count" example="3">%1$d</xliff:g></string>
+    <string name="bulk_install_cancel">Anulează</string>
+    <string name="bulk_install_close">Închide</string>
+    <plurals name="bulk_install_running">
+        <item quantity="one">Procesată <xliff:g id="processed" example="3">%1$d</xliff:g> aplicație din <xliff:g id="total" example="10">%2$d</xliff:g></item>
+        <item quantity="few">Procesate <xliff:g id="processed" example="3">%1$d</xliff:g> aplicații din <xliff:g id="total" example="10">%2$d</xliff:g></item>
+        <item quantity="other">Procesate <xliff:g id="processed" example="3">%1$d</xliff:g> de aplicații din <xliff:g id="total" example="10">%2$d</xliff:g></item>
+    </plurals>
+    <string name="bulk_install_cancel_requested">Se oprește după aplicația curentă…</string>
+    <string name="bulk_install_complete">Instalare în bloc finalizată</string>
+    <string name="bulk_install_cancelled">Instalare în bloc oprită</string>
+    <string name="bulk_install_fatal">Instalarea în bloc s-a oprit. Verificați elementele nefinalizate înainte de a încerca din nou.</string>
+    <string name="bulk_install_result_installed">Instalată</string>
+    <string name="bulk_install_result_updated">Actualizată</string>
+    <string name="bulk_install_result_reinstalled">Reinstalată</string>
+    <string name="bulk_install_result_skipped">Omisă</string>
+    <string name="bulk_install_result_failed">Eșuată</string>
+    <string name="bulk_install_installed_version">Instalat: <xliff:g id="version" example="2.1.0">%1$s</xliff:g></string>
+    <string name="bulk_install_source">Sursă: <xliff:g id="name" example="Example">%1$s</xliff:g></string>
+    <string name="bulk_install_action_separate_copy">Instalează ca copie separată</string>
+    <string name="bulk_install_action_jar_only">Instalează doar JAR</string>
+    <string name="single_install_review_jar_only" tools:ignore="MissingTranslation">Verifică doar JAR</string>
+    <string name="single_install_jar_only_notice" tools:ignore="MissingTranslation">Va fi instalat doar fișierul JAR. Verificați numele aplicației, versiunea și starea de instalare înainte de a continua.</string>
+    <string name="single_install_running_replacement_warning" tools:ignore="MissingTranslation">Dacă această aplicație rulează, instalarea o va opri înainte de a-i înlocui fișierele. Progresul nesalvat se poate pierde.</string>
+    <string name="bulk_install_status_new">Nouă</string>
+    <string name="bulk_install_status_update">Actualizare</string>
+    <string name="bulk_install_status_downgrade">Versiune mai veche</string>
+    <string name="bulk_install_status_same">Deja instalată</string>
+    <string name="bulk_install_status_reinstall">Aceeași versiune, posibilă variantă</string>
+    <string name="bulk_install_status_ambiguous">Corespunde mai multor aplicații instalate</string>
+    <string name="bulk_install_status_mismatch">Nepotrivire JAD/JAR</string>
+    <string name="bulk_install_status_duplicate">Duplicat</string>
+    <string name="bulk_install_status_older_batch">Versiune mai veche în lot</string>
+    <string name="bulk_install_status_conflict">Conflict în lot</string>
+    <string name="bulk_install_status_remote">Sursa la distanță nu este acceptată</string>
+    <string name="bulk_install_status_error">Sursă nevalidă</string>
+    <string name="bulk_install_reinstall_source_missing">Fișierul JAR salvat nu este disponibil pentru reinstalare.</string>
+    <plurals name="bulk_install_reinstall_missing_apps">
+        <item quantity="one"><xliff:g id="count" example="3">%1$d</xliff:g> aplicație selectată din bibliotecă nu mai este disponibilă.</item>
+        <item quantity="few"><xliff:g id="count" example="3">%1$d</xliff:g> aplicații selectate din bibliotecă nu mai sunt disponibile.</item>
+        <item quantity="other"><xliff:g id="count" example="3">%1$d</xliff:g> de aplicații selectate din bibliotecă nu mai sunt disponibile.</item>
+    </plurals>
+    <string name="library_metadata_edit_title">Editează metadatele</string>
+    <string name="library_metadata_icon">Pictogramă</string>
+    <string name="library_metadata_name">Nume</string>
+    <string name="library_metadata_vendor">Producător</string>
+    <string name="library_metadata_reset_to_original">Resetează la original</string>
+    <string name="library_metadata_save">Salvează</string>
+    <string name="library_hide_grid_titles_summary">Ascunde numele MIDlet-urilor în vizualizarea grilă. Vizualizarea listă le păstrează vizibile.</string>
+    <string name="library_show_list_description_summary">Afișează descrierea fiecărui MIDlet sub titlul și versiunea sa.</string>
+    <string name="library_indexing_progress">Se indexează biblioteca… <xliff:g id="completed" example="3">%1$d</xliff:g>/<xliff:g id="total" example="10">%2$d</xliff:g></string>
+    <string name="library_indexing_current">Se scanează <xliff:g id="name" example="Example">%1$s</xliff:g></string>
+    <string name="library_load_error_title">Bibliotecă indisponibilă</string>
+    <string name="library_retry">Încearcă din nou</string>
+    <string name="library_reinstall_source_missing">Fișierul JAR salvat nu este disponibil pentru reinstalare.</string>
+    <string name="library_action_select">Selectează</string>
+    <string name="library_selection_select_all">Selectează tot</string>
+    <string name="library_selection_unselect_all">Deselectează tot</string>
+    <string name="library_selection_checkbox_description">Selectează <xliff:g id="name" example="Example">%1$s</xliff:g></string>
+    <string name="library_selection_checked">Selectat</string>
+    <string name="library_selection_unchecked">Neselectat</string>
+    <string name="library_action_settings_summary">Configurați comportamentul și aspectul global.</string>
+    <string name="library_action_crash_reports_summary">Consultați rapoartele de diagnosticare salvate.</string>
+    <string name="library_action_about_summary">Prezentarea proiectului, informații despre versiune și linkuri.</string>
+    <string name="library_action_licenses_summary">Notificări ale terților și termeni de licență incluși în aplicație.</string>
+    <string name="library_donation_action">Susține dezvoltarea</string>
+    <string name="library_donation_summary">Ajutați JL-Mod Plus să crească în continuare.</string>
+    <string name="library_donation_title">Susțineți JL-Mod Plus</string>
+    <string name="library_donation_message">JL-Mod Plus este gratuit și open source. Dacă îl considerați util, puteți susține dezvoltarea lui printr-o donație voluntară.</string>
+    <string name="library_donation_provider_note">Donațiile sunt procesate extern de Sociabuzz.</string>
+    <string name="library_donation_continue">Continuă pe Sociabuzz</string>
+    <string name="library_donation_not_now">Nu acum</string>
+    <string name="library_donation_link_copied">Nu a fost găsit niciun browser. Linkul Sociabuzz a fost copiat în clipboard.</string>
+    <string name="library_donation_browser_unavailable">Nu a fost găsit niciun browser pentru a deschide Sociabuzz.</string>
+    <string name="library_bulk_delete_apps">Șterge aplicațiile</string>
+    <string name="library_bulk_add_collection">Adaugă în colecție</string>
+    <string name="library_bulk_share_apps">Trimite aplicațiile</string>
+    <string name="library_bulk_reinstall_apps">Reinstalează</string>
+    <string name="library_bulk_export_apps">Exportă pachet</string>
+    <string name="library_enhanced_icons_title">Pictograme îmbunătățite</string>
+    <string name="library_enhanced_icons_summary">Ajustează încadrarea, scara și fundalul dalelor astfel încât pictogramele să arate mai uniform în bibliotecă.</string>
+    <string name="library_collections_unavailable_title">Colecții indisponibile</string>
+    <string name="library_load_failed_message">Biblioteca nu a putut fi încărcată. Încercați din nou.</string>
+    <string name="bulk_install_prepare_failed">Aplicațiile selectate nu au putut fi pregătite pentru instalare.</string>
+    <string name="installer_existing_data_preserved">Setările existente și datele salvate vor fi păstrate.</string>
+    <string name="bulk_install_library_changed">Biblioteca s-a modificat după verificare. Închideți acest lot și selectați fișierele din nou.</string>
+    <string name="bulk_install_source_unavailable">Un fișier sursă necesar nu mai este disponibil. Selectați fișierele din nou.</string>
+    <string name="bulk_install_source_changed">Fișierul sursă s-a modificat după verificare. Selectați fișierele din nou.</string>
+    <string name="bulk_install_target_unverified">Ținta de reinstalare nu a putut fi verificată. Închideți acest lot și selectați aplicația din nou.</string>
+    <string name="bulk_install_result_restored">Restaurată</string>
+    <plurals name="bulk_install_restored_count">
+        <item quantity="one"><xliff:g id="count" example="3">%1$d</xliff:g> restaurată</item>
+        <item quantity="few"><xliff:g id="count" example="3">%1$d</xliff:g> restaurate</item>
+        <item quantity="other"><xliff:g id="count" example="3">%1$d</xliff:g> restaurate</item>
+    </plurals>
+    <plurals name="bulk_install_reason_ambiguous_match">
+        <item quantity="one"><xliff:g id="count" example="3">%1$d</xliff:g> aplicație instalată corespunde acestei surse.</item>
+        <item quantity="few"><xliff:g id="count" example="3">%1$d</xliff:g> aplicații instalate corespund acestei surse.</item>
+        <item quantity="other"><xliff:g id="count" example="3">%1$d</xliff:g> de aplicații instalate corespund acestei surse.</item>
+    </plurals>
+    <string name="bulk_install_reason_jad_jar_mismatch">Fișierele JAD și JAR identifică aplicații diferite.</string>
+    <string name="bulk_install_reason_conflicting_jads">Fișiere JAD cu atribute diferite fac referire la același JAR.</string>
+    <string name="bulk_install_reason_remote_jar">Instalarea în bloc nu poate descărca fișiere JAR la distanță.</string>
+    <string name="bulk_install_reason_missing_jar_url">Din fișierul JAD lipsește MIDlet-Jar-URL.</string>
+    <!-- %1$s is the exact URI scheme supplied by the JAD; do not translate it. -->
+    <string name="bulk_install_reason_unsupported_uri_scheme">Fișierul JAD face referire la un JAR folosind o schemă URI neacceptată: <xliff:g id="scheme" example="http">%1$s</xliff:g>.</string>
+    <string name="bulk_install_reason_missing_parent">Fișierul JAD nu are un dosar părinte.</string>
+    <!-- %1$s is the exact MIDlet-Jar-URL reference, not a normalized filesystem path. -->
+    <string name="bulk_install_reason_jar_not_found">Fișierul JAR la care face referire JAD nu a fost găsit: <xliff:g id="file_path" example="game.jar">%1$s</xliff:g>.</string>
+    <string name="bulk_install_reason_duplicate_source">Această sursă duplică o altă sursă din acest lot.</string>
+    <string name="bulk_install_reason_version_conflict">Mai multe variante ale aplicației au aceeași versiune.</string>
+    <string name="bulk_install_reason_older_candidate">În același lot există o versiune mai nouă a acestei aplicații.</string>
+    <string name="bulk_install_reason_source_error">Această sursă nu a putut fi pregătită pentru instalare.</string>
+    <string name="updates_title">Actualizări</string>
+    <string name="updates_more_summary">Verificați dacă există versiuni noi ale JL-Mod Plus.</string>
+    <string name="updates_more_available">Este disponibilă o versiune mai nouă.</string>
+    <string name="updates_installed_version">Versiune instalată: <xliff:g id="version" example="2.1.0">%1$s</xliff:g></string>
+    <string name="updates_build_code">Build <xliff:g id="build_code" example="247">%1$d</xliff:g></string>
+    <string name="updates_automatic">Verifică automat când biblioteca este activă</string>
+    <string name="updates_not_checked">Încă neverificat.</string>
+    <string name="updates_checking">Se verifică actualizările…</string>
+    <string name="updates_current">Aveți cea mai recentă versiune.</string>
+    <string name="updates_no_release">Nu este disponibilă nicio versiune publicată compatibilă.</string>
+    <string name="updates_not_installable">Este disponibilă o versiune mai nouă, dar nu este compatibilă cu acest dispozitiv sau cu această instalare.</string>
+    <string name="updates_failed">Actualizările nu au putut fi verificate. Verificați conexiunea și încercați din nou.</string>
+    <string name="updates_available">Actualizare disponibilă</string>
+    <string name="updates_view_release">Vezi versiunea</string>
+    <string name="updates_last_checked">Ultima verificare: <xliff:g id="timestamp" example="Today, 09:45">%1$s</xliff:g></string>
+    <string name="updates_check">Verifică actualizările</string>
+    <string name="updates_notice">JL-Mod Plus <xliff:g id="version" example="2.1.0">%1$s</xliff:g> este disponibil. Consultați Actualizări în Setări.</string>
+    <string name="updates_debug_build">Aceasta este o versiune de depanare. Fișierele APK din versiunile GitHub se instalează separat.</string>
+    <string name="updates_link_copied">Nu a fost găsit niciun browser. Linkul de actualizare a fost copiat în clipboard.</string>
+    <string name="updates_browser_unavailable">Nu a fost găsit niciun browser pentru a deschide linkul de actualizare.</string>
+    <string name="bulk_install_choose_files">Fișiere</string>
+    <string name="bulk_install_choose_folder">Dosar</string>
+    <string name="bulk_install_unreadable_archives">Arhive ilizibile: <xliff:g id="count" example="3">%1$d</xliff:g></string>
+    <string name="bulk_install_skipped_entries">Fișiere sau intrări de arhivă omise: <xliff:g id="count" example="3">%1$d</xliff:g></string>
+    <string name="bulk_install_selection_options" tools:ignore="MissingTranslation">Opțiuni de selecție</string>
+    <string name="bulk_install_show_details" tools:ignore="MissingTranslation">Afișează detaliile</string>
+    <string name="bulk_install_hide_details" tools:ignore="MissingTranslation">Ascunde detaliile</string>
+    <string name="bulk_install_filter_all">Toate</string>
+    <string name="bulk_install_filter_selected">Selectate</string>
+    <string name="bulk_install_filter_review">De verificat</string>
+    <string name="bulk_install_empty_filter">Nicio aplicație potrivită.</string>
+    <string name="platform_package_choice_title" tools:ignore="MissingTranslation">Pachet Java ME detectat</string>
+    <string name="platform_package_choice_message" tools:ignore="MissingTranslation">Acest link indică spre un pachet Java ME. Ce doriți să faceți?</string>
+    <string name="platform_package_install" tools:ignore="MissingTranslation">Instalează în JL-Mod Plus</string>
+    <string name="platform_package_browser" tools:ignore="MissingTranslation">Deschide în browser</string>
+    <string name="platform_package_unavailable" tools:ignore="MissingTranslation">Nu a fost găsită nicio aplicație pentru a deschide acest link.</string>
+    <string name="installer_running_update_warning" tools:ignore="MissingTranslation">Această aplicație rulează în prezent. Instalarea o va opri înainte de a-i înlocui fișierele. Progresul nesalvat se poate pierde.</string>
+    <string name="library_metadata_main_icon">Principală</string>
+    <string name="library_metadata_follows_main">Folosește pictograma principală</string>
+    <string name="library_metadata_change">Schimbă</string>
+    <string name="library_metadata_remove_portrait">Elimină pictograma 3:4</string>
+    <string name="library_metadata_discard_title">Renunțați la modificări?</string>
+    <string name="library_metadata_discard">Renunță</string>
+    <string name="library_metadata_default_description">Descriere implicită</string>
+    <string name="library_metadata_other_languages">Alte limbi</string>
+    <string name="library_metadata_add_language">+ Adaugă limbă</string>
+    <string name="library_metadata_language_search">Căutați limba sau codul de localizare</string>
+    <string name="library_metadata_remove_language">Elimină descrierea</string>
+    <string name="library_metadata_language_load_failed">Descrierile lingvistice nu au putut fi încărcate. Atingeți Încearcă din nou.</string>
+    <string name="updates_download_apk" tools:ignore="MissingTranslation">Descarcă APK</string>
+    <string name="updates_skip_version" tools:ignore="MissingTranslation">Omite această versiune</string>
+    <string name="updates_dialog_message" tools:ignore="MissingTranslation">JL-Mod Plus <xliff:g id="version" example="2.1.0">%1$s</xliff:g> este disponibil. Folosiți versiunea <xliff:g id="current_version" example="2.0.0">%2$s</xliff:g>. Descărcați APK-ul sau vizualizați versiunea pe GitHub.</string>
+    <string name="library_bundle_components_title" tools:ignore="MissingTranslation">Exportă pachet</string>
+    <string name="library_bundle_components_explanation" tools:ignore="MissingTranslation">Aplicațiile selectate sunt incluse întotdeauna. Închideți MIDlet-urile selectate care rulează, apoi alegeți datele suplimentare. Skinurile, băncile de sunete și shaderele partajate nu sunt incluse.</string>
+    <string name="library_bundle_config" tools:ignore="MissingTranslation">Configurație</string>
+    <string name="library_bundle_save_data" tools:ignore="MissingTranslation">Date salvate</string>
+    <string name="library_bundle_saved_variables" tools:ignore="MissingTranslation">Marcaje</string>
+    <string name="library_bundle_export" tools:ignore="MissingTranslation">Exportă</string>
+    <string name="library_export_jar_only" tools:ignore="MissingTranslation">Doar JAR</string>
+    <string name="library_export_jars_only" tools:ignore="MissingTranslation">Doar JAR (ZIP)</string>
+    <string name="library_selection_action_delete" tools:ignore="MissingTranslation">Șterge</string>
+    <string name="library_selection_action_collection" tools:ignore="MissingTranslation">Colecție</string>
+    <string name="library_selection_action_export" tools:ignore="MissingTranslation">Exportă</string>
+    <string name="library_selection_action_reinstall" tools:ignore="MissingTranslation">Reinstalează</string>
+    <string name="installer_select_companion_jar" tools:ignore="MissingTranslation">Acest JAD face referire la un fișier JAR separat. Selectați JAR-ul corespunzător pentru a continua. Furnizorul extern de fișiere nu permite accesul la fișierele învecinate.</string>
+    <string name="installer_select_jar" tools:ignore="MissingTranslation">Selectează JAR</string>
+    <string name="installer_wrong_companion_jar" tools:ignore="MissingTranslation">Acest JAR nu corespunde cu JAD-ul selectat. Alegeți JAR-ul corespunzător pentru a păstra setările JAD.</string>
+    <string name="installer_choose_another_jar" tools:ignore="MissingTranslation">Alege alt JAR</string>
+    <string name="library_app_more_actions" tools:ignore="MissingTranslation">Mai multe acțiuni pentru <xliff:g id="name" example="Example">%1$s</xliff:g></string>
+    <string name="library_actions_group_customize" tools:ignore="MissingTranslation">Personalizează</string>
+    <string name="library_actions_group_organize" tools:ignore="MissingTranslation">Organizează</string>
+    <string name="library_actions_group_transfer" tools:ignore="MissingTranslation">Transfer și întreținere</string>
+    <string name="library_collection_more_actions" tools:ignore="MissingTranslation">Mai multe acțiuni pentru colecția <xliff:g id="collection_name" example="Favorites">%1$s</xliff:g></string>
+    <string name="library_settings_preferences" tools:ignore="MissingTranslation">Preferințe aplicație</string>
+    <string name="library_settings_section_maintenance" tools:ignore="MissingTranslation">Actualizări și diagnosticare</string>
+    <string name="library_settings_section_support" tools:ignore="MissingTranslation">Despre și susținere</string>
+    <string name="library_details_title" tools:ignore="MissingTranslation">Detalii MIDlet</string>
+    <string name="library_details_description" tools:ignore="MissingTranslation">Descriere</string>
+    <string name="library_details_play_stats" tools:ignore="MissingTranslation">Statistici de joc</string>
+    <string name="library_details_launches" tools:ignore="MissingTranslation">Lansări</string>
+    <string name="library_details_total_time" tools:ignore="MissingTranslation">Timp total</string>
+    <string name="library_details_last_played" tools:ignore="MissingTranslation">Ultimul joc</string>
+    <string name="library_details_library_info" tools:ignore="MissingTranslation">Informații bibliotecă</string>
+    <string name="library_details_added" tools:ignore="MissingTranslation">Adăugat în bibliotecă</string>
+    <string name="library_details_collections" tools:ignore="MissingTranslation">Colecții</string>
+    <string name="library_details_none" tools:ignore="MissingTranslation">Niciuna</string>
+    <string name="library_details_technical" tools:ignore="MissingTranslation">Informații tehnice</string>
+    <string name="library_details_profile" tools:ignore="MissingTranslation">Profil</string>
+    <string name="library_details_configuration" tools:ignore="MissingTranslation">Configurație</string>
+    <string name="library_details_jar_size" tools:ignore="MissingTranslation">Dimensiune JAR păstrat</string>
+    <string name="library_details_entry_points" tools:ignore="MissingTranslation">Intrări MIDlet</string>
+    <string name="library_details_original_metadata" tools:ignore="MissingTranslation">Metadate originale</string>
+    <string name="library_details_name" tools:ignore="MissingTranslation">Nume</string>
+    <string name="library_details_vendor" tools:ignore="MissingTranslation">Producător</string>
+    <string name="library_details_version" tools:ignore="MissingTranslation">Versiune</string>
+    <string name="library_details_version_value" tools:ignore="MissingTranslation">Versiunea <xliff:g id="version" example="2.1.0">%1$s</xliff:g></string>
+    <string name="library_details_original_description" tools:ignore="MissingTranslation">Descriere originală</string>
+    <string name="library_details_permissions" tools:ignore="MissingTranslation">Permisiuni declarate</string>
+    <string name="library_details_required" tools:ignore="MissingTranslation">Obligatorii</string>
+    <string name="library_details_optional" tools:ignore="MissingTranslation">Opționale</string>
+    <string name="library_details_no_permissions" tools:ignore="MissingTranslation">Nicio permisiune declarată</string>
+    <string name="library_details_descriptor_attributes" tools:ignore="MissingTranslation">Atribute descriptor</string>
+    <string name="library_details_unavailable" tools:ignore="MissingTranslation">Indisponibil</string>
+    <string name="library_details_action" tools:ignore="MissingTranslation">Detalii</string>
+    <string name="library_details_view_details" tools:ignore="MissingTranslation">Vezi detaliile</string>
+    <string name="library_actions_more" tools:ignore="MissingTranslation">Mai multe acțiuni</string>
+    <string name="library_actions_less" tools:ignore="MissingTranslation">Mai puține acțiuni</string>
+</resources>

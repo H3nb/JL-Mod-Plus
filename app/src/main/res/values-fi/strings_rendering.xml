@@ -1,0 +1,212 @@
+<?xml version="1.0" encoding="utf-8"?>
+<!-- Rendering pipeline, internal resolution, bitmap upscaling, shaders, and built-in visual effects. -->
+<resources xmlns:tools="http://schemas.android.com/tools" xmlns:xliff="urn:oasis:names:tc:xliff:document:1.2">
+    <string name="identity_filter">Ei mitään (nopein)</string>
+    <string name="invalid_resolution_not_saved">Virheellinen tarkkuus. Esiasetusta ei tallennettu.</string>
+    <string name="msg_error_loading_shader">Varjostinta ei tueta. Käytetään oletusvarjostinta.</string>
+    <string name="parallel_screen_redrawing">Asynkroniset näytön päivitykset</string>
+    <string name="shader_tuning">Varjostimen hienosäätö</string>
+    <string name="SWAP_SIZES">Vaihda leveys ja korkeus</string>
+    <string name="fps_limit_maximum">Enimmäismäärä</string>
+    <string name="remove_screen_preset">Poista tarkkuusesiasetus</string>
+    <string name="perf_overlay_position_help">Valitse kulma.</string>
+    <string name="perf_overlay_top_left">Ylävasen</string>
+    <string name="perf_overlay_top_right">Yläoikea</string>
+    <string name="perf_overlay_bottom_left">Alavasen</string>
+    <string name="perf_overlay_bottom_right">Alaoikea</string>
+    <string name="internal_resolution_title" tools:ignore="MissingTranslation">Renderöintitarkkuus</string>
+    <string name="internal_resolution_auto" tools:ignore="MissingTranslation">Automaattinen</string>
+    <string name="internal_resolution_description" tools:ignore="MissingTranslation">Asettaa tuetun 2D- ja 3D-grafiikan renderöintitarkkuuden. Automaattinen asetus valitsee kertoimen näyttöalueen ja laitteen rajoitusten mukaan. Ota muutos käyttöön käynnistämällä MIDlet uudelleen.</string>
+    <string name="bitmap_upscaling_title" tools:ignore="MissingTranslation">Bittikarttojen skaalaus</string>
+    <string name="bitmap_upscaling_description" tools:ignore="MissingTranslation">MMPX ja xBR Lv3 parantavat muuttumattomia 2D-kuvia ja muuttumattomia, läpinäkymättömiä Micro3D-mallien tekstuureja. M3G-tekstuurit säilyvät ennallaan. Ota muutos käyttöön käynnistämällä MIDlet uudelleen.</string>
+    <string name="bitmap_upscaling_nearest" tools:ignore="MissingTranslation">Lähin naapuri</string>
+    <string name="bitmap_upscaling_bilinear" tools:ignore="MissingTranslation">Bilineaarinen</string>
+    <string name="bitmap_upscaling_mmpx" tools:ignore="MissingTranslation">MMPX</string>
+    <string name="bitmap_upscaling_edge_aware" tools:ignore="MissingTranslation">xBR Lv3</string>
+    <!-- Prototyping only: localized UI copy is pending design review. -->
+    <string name="render_shader_effects">Varjostintehosteet</string>
+    <string name="render_pipeline_title">Renderöintiputki</string>
+    <string name="render_shader_preset">Varjostinesiasetus</string>
+    <string name="render_shader_picker_help">Yhdistä sisäänrakennettuja ja omia legacy-varjostimia järjestettyyn tehostepinoon.</string>
+    <string name="render_shader_requires_gles">Varjostimet tallennetaan, mutta niitä käytetään vain, kun OpenGL ES on valittuna.</string>
+    <string name="render_shader_missing">Valittua varjostinta ei löydy kirjastosta. Valitse toinen esiasetus tai palauta sen tiedostot.</string>
+    <string name="render_shader_parameters">Varjostinparametrit</string>
+    <string name="render_shader_reset_parameters">Palauta parametrit</string>
+    <string name="render_shader_passes">Varjostinvaiheet</string>
+    <string name="render_shader_pass_count"><xliff:g id="count" example="2">%1$d</xliff:g> vaihetta</string>
+    <string name="render_shader_pass_hint">Tarkastele valitun GLSLP-esiasetuksen vaiheita.</string>
+    <string name="render_pass_filter">Syötteen suodatus</string>
+    <string name="render_pass_output">Tuloskoko (leveys × korkeus)</string>
+    <string name="render_pipeline_unavailable">Esiasetus ei saatavilla</string>
+    <string name="render_game_output">Pelin kuvalähtö</string>
+    <string name="render_logical_screen_help">Pelille ilmoitettu looginen koko.</string>
+    <string name="render_internal_resolution">Sisäinen tarkkuus</string>
+    <string name="render_internal_unavailable">Vain alkuperäinen (1×). Suuremmat renderöintitarkkuudet eivät ole käytettävissä tällä määrityksellä.</string>
+    <string name="render_display_renderer">Esitysrenderöijä</string>
+    <string name="render_shader_processing">Varjostinkäsittely</string>
+    <string name="render_display_scaling">Näytön skaalaus</string>
+    <string name="render_display_viewport">Pelin näyttöalue</string>
+    <string name="render_texture_filtering">Näytön skaalaussuodatin</string>
+    <string name="render_texture_filtering_help">Valitsee Lähin- tai Lineaarinen-suodatuksen lopulliselle pelikuvalle. Tehosteet voivat korvata sen.</string>
+    <string name="render_viewport_note">Näyttöalueen koko määritetään näytön asettelusta ennen varjostinvaiheiden suunnittelua. Nuolet osoittavat kuvan kulkusuunnan, eivät asettelulaskennan järjestystä.</string>
+    <string name="render_pipeline_help">Näe, miten peliruutu kulkee näytölle, ja muokkaa jokaista vaihetta.</string>
+    <string name="render_no_shader">Valitse esiasetus muuttaaksesi pelin ulkoasua.</string>
+    <string name="render_shader_adjust">Säädä parametreja</string>
+    <string name="render_legacy_tuning_hint">Hienosäädä tätä legacy-tehostetta.</string>
+    <string name="render_shader_customization">Mukauta</string>
+    <string name="render_adjustable_count">Säädettäviä parametreja: <xliff:g id="count" example="3">%1$d</xliff:g></string>
+    <string name="render_pass_summary"><xliff:g id="count" example="3">%1$d</xliff:g> vaihetta · Esiasetuksen määrittämä</string>
+    <string name="render_shader_preset_note">Varjostinvaiheet määräytyvät esiasetuksesta. Voit tarkastella niitä muuttamatta niiden järjestystä.</string>
+    <string name="render_parameters_hint">Säädä arvoa liukusäätimellä. Muutokset tallennetaan, kun vapautat sen.</string>
+    <string name="render_pass_readonly">Vaiheet suoritetaan tässä järjestyksessä. Syötteen suodatus ja tuloksen skaalaus tulevat valitusta esiasetuksesta.</string>
+    <string name="render_pipeline_intro">Reitti pelin kuvapuskurista näytöllesi.</string>
+    <string name="render_native_short">Alkuperäinen (1×)</string>
+    <string name="render_expand_passes">Näytä vaiheet</string>
+    <string name="render_collapse_passes">Piilota vaiheet</string>
+    <string name="render_view_all_passes">Vaiheiden tiedot</string>
+    <string name="render_pipeline_filter_summary">Tekstuurisuodatus: <xliff:g id="shader_name" example="CRT Classic">%1$s</xliff:g></string>
+    <string name="render_pipeline_note">Näytön asettelu määrittää näyttöalueen ennen varjostinvaiheiden suunnittelua. Vaiheet osoittavat kuvan kulun.</string>
+    <string name="render_shader_change">Valitse toinen tehoste</string>
+    <string name="render_custom_pipeline">Mukautettu putki</string>
+    <string name="render_custom_pipeline_hint">Yhdistä erillisiä GLSL-varjostimia varjostinkansiostasi.</string>
+    <string name="render_custom_order_help">Tehosteet suoritetaan ylhäältä alas. Perityt GLSLP-asetukset pysyvät voimassa, ellei niitä muuteta.</string>
+    <string name="render_custom_empty">Aloita mukautettu ketju lisäämällä varjostin.</string>
+    <string name="render_custom_stage_count"><xliff:g id="count" example="3">%1$d</xliff:g> mukautettua varjostinvaihetta</string>
+    <string name="render_custom_add">Lisää varjostin</string>
+    <string name="render_custom_add_hint">Valitse ulkoinen erillinen .glsl-lähde.</string>
+    <string name="render_custom_no_sources">Legacy-varjostimia ei löytynyt. Lisää .ini-varjostintiedostoja shaders-kansioon ja avaa asetukset uudelleen.</string>
+    <string name="render_custom_scale">Tulos: <xliff:g id="scale" example="2">%1$d</xliff:g>× edellinen vaihe</string>
+    <string name="render_custom_output_scale">Tuloskoko seuraavalle vaiheelle</string>
+    <string name="render_custom_final_viewport">Lopullinen tulos: esitetään näytöllä</string>
+    <string name="render_custom_filter">Syötesuodatin: <xliff:g id="shader_name" example="CRT Classic">%1$s</xliff:g></string>
+    <string name="render_custom_up">Ylös</string>
+    <string name="render_custom_down">Alas</string>
+    <string name="render_custom_remove">Poista</string>
+    <string name="render_custom_cancel">Peruuta</string>
+    <string name="render_custom_save">Tallenna</string>
+    <string name="render_custom_default">Oletus</string>
+    <string name="render_custom_nearest">Lähin</string>
+    <string name="render_custom_linear">Lineaarinen</string>
+    <string name="render_custom_checking">Tarkistetaan varjostintiedostoja…</string>
+    <string name="render_active_shader">Aktiivinen tehoste</string>
+    <string name="render_shader_off">Pois</string>
+    <string name="render_edit_custom_pipeline">Muokkaa varjostinketjua</string>
+    <string name="render_shader_unavailable">Ei saatavilla: <xliff:g id="shader_name" example="CRT Classic">%1$s</xliff:g></string>
+    <string name="render_no_shader_sources">Varjostimia ei löytynyt. Lisää legacy .ini -varjostintiedostoja shaders-kansioon ja avaa asetukset uudelleen.</string>
+    <string name="render_shader_mode">Varjostintila</string>
+    <string name="render_mode_selected">Valittu</string>
+    <string name="render_gles_shader_default">OpenGL ES käyttää alkuperäistä pelikuvaa, kun varjostintehosteet ovat pois päältä.</string>
+    <string name="render_shader_off_help">Ei ylimääräisiä visuaalisia tehosteita.</string>
+    <string name="render_legacy_mode">Legacy-varjostin</string>
+    <string name="render_legacy_mode_help">Valitse .ini-tiedosto shaders-kansiosta.</string>
+    <string name="render_legacy_empty">Tässä .ini-tiedostossa ei ole käyttökelpoisia varjostinmäärityksiä.</string>
+    <string name="render_legacy_select_variant">Valitse legacy-varjostin</string>
+    <string name="render_legacy_variant_description">Varjostinmääritys valitussa .ini-tiedostossa</string>
+    <string name="render_preset_mode">GLSLP-esiasetus</string>
+    <string name="render_preset_mode_help">Lataa täydellinen .glslp-putki omine vaiheineen.</string>
+    <string name="render_custom_pass_count">Vaiheiden määrä</string>
+    <string name="render_custom_pass_number">Vaihe <xliff:g id="number" example="1">%1$d</xliff:g></string>
+    <string name="render_custom_pick_file">Valitse GLSL-tiedosto</string>
+    <string name="render_custom_add_pass">Lisää varjostinvaiheiden määrää</string>
+    <string name="render_custom_remove_pass">Vähennä varjostinvaiheiden määrää</string>
+    <string name="render_shader_selected_name">Aktiivinen: <xliff:g id="shader_name" example="CRT Classic">%1$s</xliff:g></string>
+    <string name="render_shader_invalid_picker">Valittua tiedostoa ei voi käyttää. Valitse legacy .ini -tiedosto shaders-kansiosta.</string>
+    <string name="render_custom_mode">Varjostintyyppi</string>
+    <string name="render_custom_mode_legacy">Legacy</string>
+    <string name="render_custom_mode_glsl">GLSL</string>
+    <string name="render_custom_pick_legacy">Valitse legacy-varjostin</string>
+    <string name="render_custom_preserve_size">Tulos: esiasetuksesta</string>
+    <string name="render_custom_loading">Luetaan esiasetuksen vaiheita…</string>
+    <string name="render_custom_start_fresh">Aloita ilman esiasetusta (hylkää perityt asetukset)</string>
+    <string name="render_effect_default_settings">Oletusasetukset</string>
+    <string name="render_effect_summary_more">+<xliff:g id="count" example="2">%1$d</xliff:g> muuta</string>
+    <string name="render_effect_legacy_author">Tekijä: <xliff:g id="shader_name" example="CRT Classic">%1$s</xliff:g></string>
+    <string name="render_effect_legacy_source">Lähde: <xliff:g id="shader_name" example="CRT Classic">%1$s</xliff:g></string>
+    <string name="render_effect_removed">Tehoste poistettu</string>
+    <string name="render_effect_undo">Kumoa</string>
+    <string name="render_effect_catalog_hint">Lisää tehoste pinoon napauttamalla.</string>
+    <string name="render_effect_user_folder_hint">INI-, VSH- ja FSH-tiedostojen on oltava shaders-kansiossa.</string>
+    <string name="render_effect_legacy_scale_note">Legacy-varjostimet renderöidään näytön näyttöalueen tarkkuudella; .ini-tiedoston OutputResolution- ja Upscaling-liput ohitetaan.</string>
+    <string name="render_effect_legacy_metadata_missing">Tämän varjostimen .ini-tiedoston asetuksia ei löytynyt. Varjostin saattaa silti toimia lähdetiedostojensa avulla.</string>
+    <string name="render_effect_count"><xliff:g id="count" example="2">%1$d</xliff:g> aktiivista</string>
+    <string name="render_effect_add">Lisää tehoste</string>
+    <string name="render_effect_builtin">Sisäänrakennetut tehosteet</string>
+    <string name="render_effect_user">Omat varjostimet</string>
+    <string name="render_effect_user_add">Selaa .ini-tiedostoja</string>
+    <string name="render_effect_user_empty">Legacy-varjostinta ei löytynyt shaders-kansiosta.</string>
+    <string name="render_effect_user_file">Valitse legacy .ini -tiedosto</string>
+    <string name="render_effect_empty">Mukauta pelin ulkoasua lisäämällä tehoste.</string>
+    <string name="render_effect_hint">Tehosteet suoritetaan ylhäältä alas. Muuta järjestystä painamalla pitkään ja vetämällä.</string>
+    <string name="render_effect_move_up">Siirrä ylös</string>
+    <string name="render_effect_move_down">Siirrä alas</string>
+    <string name="render_effect_remove">Poista tehoste</string>
+    <string name="render_effect_no_parameters">Tällä tehosteella ei ole säädettäviä parametreja.</string>
+    <string name="render_effect_parameter_number">Parametri <xliff:g id="count" example="2">%1$d</xliff:g></string>
+    <string name="render_effect_restore">Palauta parametrit</string>
+    <string name="render_effect_missing">Ei saatavilla: <xliff:g id="shader_name" example="CRT Classic">%1$s</xliff:g>. Tämä sisäänrakennettu tehoste ei ole saatavilla tässä versiossa. Poista se pinosta.</string>
+    <string name="render_effect_limit">Pino tukee enintään 16 varjostinvaihetta (jotkin tehosteet käyttävät useita vaiheita).</string>
+    <string name="render_effect_unavailable">Varjostintehosteita ei voitu suorittaa. Näytetään alkuperäinen pelikuva. Kokeile vähemmän tehosteita tai pienempää renderöintitarkkuutta.</string>
+    <string name="render_bitmap_memory_reduced">Bittikarttojen skaalauksen muisti loppui. Käytetään alkuperäisiä kuvia tai pienempää skaalausta. Kokeile pienempää renderöintitarkkuutta tai vapauta muistia ja käynnistä uudelleen.</string>
+    <string name="render_texture_memory_reduced">Micro3D-tekstuurien skaalaus epäonnistui. Käytetään alkuperäisiä tekstuureja. Kokeile pienempää renderöintitarkkuutta tai vapauta muistia ja käynnistä uudelleen.</string>
+    <string name="render_resolution_reduced">Renderöintitarkkuus laskettiin tasolta <xliff:g id="from_scale" example="4">%1$d</xliff:g>× tasolle <xliff:g id="to_scale" example="2">%2$d</xliff:g>× muisti- tai GPU-rajoitusten vuoksi. Kokeile pienempää asetusta tai vapauta muistia ja käynnistä uudelleen.</string>
+    <string name="render_gpu_texture_limit">Pelikuva ylittää GPU:n tekstuurikokorajan jopa 1×-kertoimella. Pienennä MIDletin näytön kokoa tai vaihda grafiikkatilaa.</string>
+    <string name="render_gpu_upload_failed">Pelikuvaa ei voitu siirtää GPU:lle. Yritetään uudelleen. Kokeile sulkea muita sovelluksia tai vaihtaa grafiikkatilaa.</string>
+    <string name="render_effect_gles">Tehosteet tallennetaan, mutta ne renderöidään vain OpenGL ES:llä.</string>
+    <string name="render_effect_legacy_file_error">Valitusta .ini-tiedostosta ei voitu ladata kelvollista legacy-varjostinta.</string>
+    <string name="effect_color">Värisäätö</string>
+    <string name="effect_color_desc">Säädä kirkkautta, kontrastia, värikylläisyyttä, gammaa, värisävyä ja yksivärisyyttä.</string>
+    <string name="effect_vignette">Vinjetti</string>
+    <string name="effect_vignette_desc">Tummentaa reunoja ja ohjaa huomion keskelle.</string>
+    <string name="effect_sharpen">Terävöitys</string>
+    <string name="effect_sharpen_desc">Korostaa kuvan yksityiskohtia ja reunoja.</string>
+    <string name="effect_cartoon">Pehmeä sarjakuva</string>
+    <string name="effect_cartoon_desc">Yksinkertaistaa väriliukuja ja lisää pehmeät ääriviivat.</string>
+    <string name="effect_bloom">Hehku</string>
+    <string name="effect_bloom_desc">Lisää pehmeän hehkun kuvan kirkkaiden kohtien ympärille.</string>
+    <string name="effect_crt_classic">CRT Classic</string>
+    <string name="effect_crt_classic_desc">Jäljittelee kuvaputkitelevisiota juovilla ja RGB-kuviolla.</string>
+    <string name="effect_crt_beam">Säteen kapeus</string>
+    <string name="effect_brightness">Kirkkaus</string>
+    <string name="effect_contrast">Kontrasti</string>
+    <string name="effect_saturation">Värikylläisyys</string>
+    <string name="effect_strength">Voimakkuus</string>
+    <string name="effect_color_levels">Väritasot</string>
+    <string name="effect_edge">Reunojen voimakkuus</string>
+    <string name="effect_threshold">Kirkkauskynnys</string>
+    <string name="effect_radius">Sumennussäde</string>
+    <string name="effect_mask_strength">Maskin voimakkuus</string>
+    <string name="effect_scan_strength">Juovien voimakkuus</string>
+    <string name="effect_bright_boost">Kirkkauden tehostus</string>
+    <string name="effect_lcd">LCD</string>
+    <string name="effect_lcd_desc">Jäljittelee klassisen värillisen LCD-näytön pikseliruudukkoa ja alipikseleitä.</string>
+    <string name="effect_lcd_grid">Ruudukon voimakkuus</string>
+    <string name="effect_lcd_subpixel">RGB-alipikselit</string>
+    <string name="effect_lcd_brightness">LCD-kirkkaus</string>
+    <string name="effect_scanlines">Scanlines Lite</string>
+    <string name="effect_scanlines_desc">Lisää hienovaraisia vaakajuovia kuvaputkinäytön tapaan.</string>
+    <string name="effect_line_width">Viivan kapeus</string>
+    <string name="effect_gamma">Gamma</string>
+    <string name="effect_temperature">Värilämpötila</string>
+    <string name="effect_tint">Sävy</string>
+    <string name="effect_monochrome">Yksivärinen</string>
+    <string name="effect_depth">Värisyvyys ja rasterointi</string>
+    <string name="effect_depth_desc">Rajoittaa väripalettia ja tarjoaa valinnaisen rasteroinnin retrotunnelmaa varten.</string>
+    <string name="effect_depth_format">Näytön värimuoto</string>
+    <string name="effect_depth_rgb444">RGB444 · 4 096 väriä</string>
+    <string name="effect_depth_rgb565">RGB565 · 65 536 väriä</string>
+    <string name="effect_depth_rgb666">RGB666 · 262 144 väriä</string>
+    <string name="effect_dither_mode">Rasterointikuvio</string>
+    <string name="effect_dither_none">Pois</string>
+    <string name="effect_dither_bayer4">Bayer 4×4</string>
+    <string name="effect_dither_bayer8">Bayer 8×8</string>
+    <string name="effect_dither_strength">Rasteroinnin voimakkuus</string>
+    <string name="effect_mono_display">Yksivärinäyttö</string>
+    <string name="effect_mono_display_desc">Jäljittelee mustavalkoisia, vihreitä tai meripihkaisia näyttöjä 2 tai 4 sävyllä.</string>
+    <string name="effect_mono_palette">LCD-väri</string>
+    <string name="effect_mono_bw">Mustavalkoinen</string>
+    <string name="effect_mono_green">Vihreä LCD</string>
+    <string name="effect_mono_amber">Meripihka-LCD</string>
+    <string name="effect_mono_tones">Sävyjen määrä</string>
+    <string name="effect_mono_two">2 sävyä</string>
+    <string name="effect_mono_four">4 sävyä</string>
+</resources>

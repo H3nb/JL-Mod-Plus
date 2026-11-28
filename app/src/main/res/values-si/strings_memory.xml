@@ -1,0 +1,285 @@
+<?xml version="1.0" encoding="utf-8"?>
+<!-- Memory Editor search, inspector, bookmarks, saved variables, quick actions, and script builder. -->
+<resources xmlns:tools="http://schemas.android.com/tools" xmlns:xliff="urn:oasis:names:tc:xliff:document:1.2">
+    <string name="memory_editor_bubble">මතක සංස්කාරක පාවෙන බොත්තම</string>
+    <string name="memory_editor_bubble_content_description">මතක සංස්කාරකය විවෘත කරන්න</string>
+    <string name="memory_editor_previous_results_page_action">පෙර ප්‍රතිඵල පිටුව</string>
+    <string name="memory_editor_next_results_page_action">ඊළඟ ප්‍රතිඵල පිටුව</string>
+    <string name="memory_editor">මතක සංස්කාරකය</string>
+    <string name="memory_editor_search_hint">අගය</string>
+    <string name="memory_editor_next_scan">ඊළඟ ස්කෑන් කිරීම</string>
+    <string name="memory_editor_new_search">නව සෙවීම</string>
+    <plurals name="memory_editor_results">
+        <item quantity="one">ප්‍රතිඵලය <xliff:g id="count" example="3">%1$d</xliff:g></item>
+        <item quantity="other">ප්‍රතිඵල <xliff:g id="count" example="3">%1$d</xliff:g></item>
+    </plurals>
+    <plurals name="memory_editor_candidates">
+        <item quantity="one">විය හැකි ඉලක්කය <xliff:g id="count" example="3">%1$d</xliff:g></item>
+        <item quantity="other">විය හැකි ඉලක්ක <xliff:g id="count" example="3">%1$d</xliff:g></item>
+    </plurals>
+    <plurals name="memory_editor_search_complete">
+        <item quantity="one">සෙවීම අවසන් · විය හැකි ඉලක්කය <xliff:g id="count" example="3">%1$d</xliff:g></item>
+        <item quantity="other">සෙවීම අවසන් · විය හැකි ඉලක්ක <xliff:g id="count" example="3">%1$d</xliff:g></item>
+    </plurals>
+    <string name="memory_editor_no_results">ප්‍රතිඵල නොමැත</string>
+    <string name="memory_editor_no_watch">නිරීක්ෂණ ලැයිස්තුව හිස්ය</string>
+    <string name="memory_editor_unsupported">මෙම ධාවන පරිසරය තුළ මතක සංස්කාරකය භාවිතා කළ නොහැක.</string>
+    <string name="memory_editor_engine_unavailable">මතක සංස්කාරක එන්ජිම ලබා ගත නොහැක.</string>
+    <string name="memory_editor_engine_reconnecting">මතක සංස්කාරකය නැවත සම්බන්ධ වෙමින්…</string>
+    <string name="memory_editor_refresh">නැවුම් කරන්න</string>
+    <string name="memory_editor_undo">ස්කෑන් කිරීම අහෝසි කරන්න</string>
+    <string name="memory_variables_tab">සුරැකි</string>
+    <string name="memory_editor_back" tools:ignore="MissingTranslation">ආපසු</string>
+    <string name="memory_list_keep" tools:ignore="MissingTranslation">ඊළඟ දියත් කිරීමට තබා ගන්න</string>
+    <string name="memory_list_stop_keeping" tools:ignore="MissingTranslation">තබා ගැනීම නවත්වන්න</string>
+    <string name="memory_list_kept" tools:ignore="MissingTranslation">ඊළඟ දියත් කිරීමට තබා ඇත</string>
+    <string name="memory_list_empty" tools:ignore="MissingTranslation">තවම සුරැකි පිටුසන් නොමැත</string>
+    <string name="memory_list_empty_hint" tools:ignore="MissingTranslation">මෙහි නිරීක්ෂණය කිරීමට “සෙවීම” හෝ “පරීක්ෂකය” වෙතින් විචල්‍යයක් පිටුසන් කරන්න.</string>
+    <string name="memory_list_remove_confirm" tools:ignore="MissingTranslation">“සුරැකි” වෙතින් ඉවත් කරන්නද? ඕනෑම සක්‍රිය ස්ථිර කිරීමක් නතර වනු ඇත.</string>
+    <string name="memory_list_add" tools:ignore="MissingTranslation">පිටුසන් කරන්න</string>
+    <string name="memory_bookmark_relink" tools:ignore="MissingTranslation">නැවත සම්බන්ධ කරන්න</string>
+    <string name="memory_bookmark_relink_hint" tools:ignore="MissingTranslation">“සෙවීම” තුළ ප්‍රතිස්ථාපන විචල්‍යය තෝරා, ඉන්පසු “නැවත සම්බන්ධ කරන්න” තෝරන්න.</string>
+    <string name="memory_bookmark_relink_confirm" tools:ignore="MissingTranslation">මෙම පිටුසන තෝරාගත් විචල්‍යයට සම්බන්ධ කරන්නද? මෙම පිටුසනේ ඇති ඕනෑම සක්‍රිය ස්ථිර කිරීමක් නතර වනු ඇත.</string>
+    <string name="memory_bookmark_unavailable" tools:ignore="MissingTranslation">ලබා ගත නොහැක — ඉලක්කයක් තේරීමට “නැවත සම්බන්ධ කරන්න” තෝරන්න</string>
+    <string name="memory_editor_watch">නිරීක්ෂණය</string>
+    <string name="memory_editor_search_tab">සෙවීම</string>
+    <string name="memory_editor_search_known_values">දන්නා අගයන් සොයන්න</string>
+    <string name="memory_editor_search_unknown_values">නොදන්නා අගයන් සොයන්න</string>
+    <string name="memory_editor_add_to_watch">තෝරාගත් අගයන් පිටුසන් කරන්න</string>
+    <string name="memory_editor_no_candidates">සෙවිය හැකි අගයන් හමු නොවීය</string>
+    <string name="memory_editor_edit">සංස්කරණය කරන්න</string>
+    <plurals name="memory_editor_edit_batch">
+        <item quantity="one">අගය <xliff:g id="count" example="3">%1$d</xliff:g> සංස්කරණය කරන්න</item>
+        <item quantity="other">අගයන් <xliff:g id="count" example="3">%1$d</xliff:g> සංස්කරණය කරන්න</item>
+    </plurals>
+    <string name="memory_editor_edit_batch_no_common_type">තෝරාගත් අයිතම තෝරාගත් දත්ත වර්ගයට සහාය නොදක්වයි. ගැළපෙන අයිතම වෙන වෙනම සංස්කරණය කරන්න.</string>
+    <string name="memory_editor_save">යොදන්න</string>
+    <string name="memory_editor_replacement">ආදේශක අගය</string>
+    <string name="memory_editor_freeze">ස්ථිර කරන්න</string>
+    <string name="memory_editor_remove">ඉවත් කරන්න</string>
+    <string name="memory_editor_select_visible">දෘශ්‍යමාන ඒවා තෝරන්න</string>
+    <string name="memory_editor_clear_selection">තේරීම හිස් කරන්න</string>
+    <plurals name="memory_editor_selected">
+        <item quantity="one"><xliff:g id="count" example="3">%1$d</xliff:g> තෝරා ඇත</item>
+        <item quantity="other"><xliff:g id="count" example="3">%1$d</xliff:g> තෝරා ඇත</item>
+    </plurals>
+    <string name="memory_editor_close">මතක සංස්කාරකය වසන්න</string>
+    <string name="memory_editor_searching">මතකය සොයමින්…</string>
+    <string name="memory_editor_working">මෙහෙයුම යොදමින්…</string>
+    <string name="memory_editor_search_progress"><xliff:g id="total_mib" example="64">%2$d</xliff:g> MiB වලින් <xliff:g id="scanned_mib" example="12">%1$d</xliff:g> ස්කෑන් කරන ලදී</string>
+    <string name="memory_editor_candidate_moved">ඉලක්කය යාවත්කාලීන විය</string>
+    <string name="memory_editor_candidate_relocating">නැවත සත්‍යාපනය වෙමින්</string>
+    <string name="memory_editor_candidate_ambiguous">අපැහැදිලි — ලිවීම් විරාම ගන්වා ඇත</string>
+    <string name="memory_editor_candidate_lost">නැතිවිය — ලිවීම් විරාම ගන්වා ඇත</string>
+    <string name="memory_editor_apply">යොදන්න</string>
+    <string name="memory_editor_min_value">අවම අගය</string>
+    <string name="memory_editor_max_value">උපරිම අගය</string>
+    <string name="memory_editor_change_amount">වෙනස් වූ ප්‍රමාණය</string>
+    <string name="memory_editor_min_change">අවම වෙනස</string>
+    <string name="memory_editor_max_change">උපරිම වෙනස</string>
+    <string name="memory_editor_unfreeze">ස්ථිර කිරීම ඉවත් කරන්න</string>
+    <string name="memory_editor_cancelled">මෙහෙයුම අවලංගු කරන ලදී.</string>
+    <string name="memory_editor_resource_limit">මතක සංස්කාරකය ආරක්ෂිත සීමාවකට ළඟා විය. වඩාත් නිශ්චිත සෙවීමක් උත්සාහ කරන්න, නැතහොත් භාවිතා නොකළ පිටුසන් හෝ ස්ථිර කිරීම් ඉවත් කරන්න.</string>
+    <string name="memory_editor_identity_unsafe">තෝරාගත් අගය හෝ සෙවුම් තත්ත්වය සත්‍යාපනය කිරීමට නොහැකි විය. ප්‍රතිඵල නැවුම් කරන්න හෝ පරීක්ෂකය නැවත විවෘත කර උත්සාහ කරන්න.</string>
+    <string name="memory_editor_safety_limit">මෙම මෙහෙයුම සඳහා අගයන් ඕනෑවට වඩා තෝරා ඇත. අඩු ප්‍රමාණයක් තෝරා නැවත උත්සාහ කරන්න.</string>
+    <string name="memory_editor_invalid_request">අගය හෝ මෙහෙයුම වලංගු නොවේ.</string>
+    <string name="memory_editor_freeze_paused">ආරක්ෂාව සඳහා විරාම ගන්වා ඇත</string>
+    <string name="memory_editor_predicate_between">අතර</string>
+    <string name="memory_editor_predicate_changed">වෙනස් වූ</string>
+    <string name="memory_editor_predicate_unchanged">නොවෙනස් වූ</string>
+    <string name="memory_editor_predicate_increased">වැඩි වූ</string>
+    <string name="memory_editor_predicate_decreased">අඩු වූ</string>
+    <string name="memory_editor_predicate_increased_by">වැඩි වූ ප්‍රමාණය</string>
+    <string name="memory_editor_predicate_decreased_by">අඩු වූ ප්‍රමාණය</string>
+    <string name="memory_editor_predicate_changed_by">වෙනස් වූ ප්‍රමාණය</string>
+    <string name="memory_editor_predicate_increased_range">පරාසය තුළ වැඩි වීම</string>
+    <string name="memory_editor_predicate_decreased_range">පරාසය තුළ අඩු වීම</string>
+    <string name="memory_editor_inspector">පරීක්ෂකය</string>
+    <string name="memory_editor_inspect_memory">ආසන්න මතකය පරීක්ෂා කරන්න</string>
+    <string name="memory_editor_inspector_loading">ප්‍රතිඵලය සත්‍යාපනය කර ආසන්න මතකය කියවමින්…</string>
+    <string name="memory_editor_inspector_empty">ආසන්න මතකය පරීක්ෂා කිරීමට ප්‍රතිඵලයක් තෝරන්න.</string>
+    <string name="memory_editor_inspector_no_rows">පරීක්ෂා කිරීමට ආසන්න මතකයක් නොමැත.</string>
+    <string name="memory_editor_refresh_snapshot">ස්නැප්ෂොට් නැවුම් කරන්න</string>
+    <string name="memory_editor_select_result_value">මෙම පිටුසන තෝරන්න</string>
+    <string name="memory_editor_freeze_after_edit">යෙදීමෙන් පසු ස්ථිර කරන්න</string>
+    <string name="memory_editor_freeze_after_edit_help">මෙම අගය අගුළු දමා තබා “සුරැකි” තුළ පිටුසන් කරයි.</string>
+    <string name="memory_editor_expression_single_hint">එක් අගයක් ඇතුළත් කරන්න, නැතහොත් කණ්ඩායම් අගයන් අර්ධ කොමා (;) වලින් වෙන් කරන්න.</string>
+    <string name="memory_editor_expression_group_needs_type">කණ්ඩායම් සෙවීම සඳහා නිශ්චිත දත්ත වර්ගයක් තෝරන්න.</string>
+    <plurals name="memory_editor_expression_group_hint">
+        <item quantity="one">කණ්ඩායම් සෙවීම · අගය <xliff:g id="count" example="3">%1$d</xliff:g> · එකම Java වස්තුව</item>
+        <item quantity="other">කණ්ඩායම් සෙවීම · අගයන් <xliff:g id="count" example="3">%1$d</xliff:g> · එකම Java වස්තුව</item>
+    </plurals>
+    <string name="memory_editor_expression_query_help">උදාහරණ: 500 හෝ 500;1000. කණ්ඩායම් සෙවීම එකම Java වස්තුව තුළ අගයන් 2–8 ක් සොයයි.</string>
+    <string name="memory_editor_keypad_clear">හිස් කරන්න</string>
+    <string name="memory_editor_peek_underlay">පහළ MIDlet බැලීමට ඔබාගෙන සිටින්න</string>
+    <string name="memory_editor_peek_underlay_active">පහළ MIDlet පෙන්වමින්</string>
+    <string name="memory_editor_no_runtime">සක්‍රිය MIDlet ධාවන පරිසරයක් නොමැත.</string>
+    <string name="memory_editor_no_search_history">ප්‍රතිස්ථාපනය කිරීමට පෙර සෙවීමක් නොමැත.</string>
+    <string name="memory_editor_partial_write">ලිවීමේ මෙහෙයුම සම්පූර්ණයෙන්ම අවසන් නොවීය. නැවත උත්සාහ කිරීමට පෙර වත්මන් අගයන් පරීක්ෂා කරන්න.</string>
+    <!-- Independent write counts: confirmed, unconfirmed, skipped, not attempted, and incompatible data type. -->
+    <string name="memory_editor_write_outcome">තහවුරු කළ ලිවීම්: <xliff:g id="confirmed" example="3">%1$d</xliff:g>. තහවුරු නොකළ: <xliff:g id="unconfirmed" example="0">%2$d</xliff:g>. මඟහැරි: <xliff:g id="skipped" example="0">%3$d</xliff:g>. උත්සාහ නොකළ: <xliff:g id="not_attempted" example="0">%4$d</xliff:g>. වර්ගය අනුව මඟහැරි: <xliff:g id="skipped_by_type" example="0">%5$d</xliff:g>.</string>
+    <!-- %1$s is a localized outcome explanation; %2$d through %6$d are the same independent write counts. -->
+    <string name="memory_editor_write_failure_outcome"><xliff:g id="reason" example="Write interrupted.">%1$s</xliff:g>\nතහවුරු කළ ලිවීම්: <xliff:g id="confirmed" example="1">%2$d</xliff:g>. තහවුරු නොකළ: <xliff:g id="unconfirmed" example="1">%3$d</xliff:g>. මඟහැරි: <xliff:g id="skipped" example="0">%4$d</xliff:g>. උත්සාහ නොකළ: <xliff:g id="not_attempted" example="0">%5$d</xliff:g>. වර්ගය අනුව මඟහැරි: <xliff:g id="skipped_by_type" example="0">%6$d</xliff:g>.</string>
+    <!-- Result counts before (%1$d) and after (%2$d) the completed next scan. -->
+    <string name="memory_editor_next_scan_result">ඊළඟ ස්කෑන් ප්‍රතිඵල: <xliff:g id="before_count" example="120">%1$d</xliff:g> → <xliff:g id="after_count" example="14">%2$d</xliff:g></string>
+    <string name="memory_editor_type_auto">ස්වයංක්‍රීය</string>
+    <string name="memory_editor_remove_candidates_title">තෝරාගත් ප්‍රතිඵල ඉවත් කරන්නද?</string>
+    <string name="memory_editor_remove_candidates_description">ඉවත් කරන්න: තෝරාගත් ප්‍රතිඵල සෙවුම් ලැයිස්තුවෙන් ඉවත් කරයි. ක්‍රීඩා මතකයේ අගයන් නොවෙනස්ව පවතී.\n\nප්‍රතිවර්තනය කර ඉවත් කරන්න: අවසන් තහවුරු කළ සංස්කරණයට පෙර තිබූ අගයන් ද ප්‍රතිස්ථාපනය කරයි, නමුත් වත්මන් අගයන් එම සංස්කරණයෙන් පසු අගයන් සමඟ තවමත් ගැළපේ නම් පමණි. ස්ථිර කළ අගයන් සහ ආරක්ෂිතව ප්‍රතිස්ථාපනය කළ නොහැකි ප්‍රතිඵල ලැයිස්තුවේ පවතී.</string>
+    <string name="memory_editor_revert_and_remove">ප්‍රතිවර්තනය කර ඉවත් කරන්න</string>
+    <string name="memory_editor_revert_remove_commit_failed">අගයන් ප්‍රතිස්ථාපනය වී තිබිය හැකි නමුත් ප්‍රතිඵල ඉවත් කිරීමට නොහැකි විය. නැවුම් කර නැවත උත්සාහ කරන්න; ක්‍රීඩාව වෙනස් කළ අගයන් උඩින් ලියනු නොලැබේ.</string>
+    <string name="memory_editor_revert_remove_outcome">ප්‍රතිස්ථාපනය කළ: <xliff:g id="restored" example="2">%1$d</xliff:g>. ඉවත් කළ: <xliff:g id="removed" example="2">%2$d</xliff:g>. ගැටුම්: <xliff:g id="conflicts" example="0">%3$d</xliff:g>. තහවුරු නොකළ: <xliff:g id="unconfirmed" example="0">%4$d</xliff:g>. උත්සාහ නොකළ: <xliff:g id="not_attempted" example="0">%5$d</xliff:g>.</string>
+    <string name="memory_editor_set_all">සියල්ල සකසන්න</string>
+    <string name="memory_editor_increment_start">ආරම්භක අගය</string>
+    <string name="memory_editor_edit_batch_type_notice">ගැළපෙන දත්ත වර්ග ඇති අගයන් පමණක් වෙනස් වේ.</string>
+    <string name="memory_editor_write_confirmed">මතක නැවත කියවීමෙන් තහවුරු කළ අගයන්: <xliff:g id="count" example="3">%1$d</xliff:g>.</string>
+    <string name="memory_editor_candidate_untraced">අරාව #<xliff:g id="array_id" example="42">%1$d</xliff:g>[<xliff:g id="index" example="3">%2$d</xliff:g>] · මූලාශ්‍රය සොයා නොගැනිණි</string>
+    <string name="memory_editor_candidate_static"><xliff:g id="field_name" example="Player.coins">%1$s</xliff:g> · <xliff:g id="reference_kind" example="Static reference">%2$s</xliff:g></string>
+    <string name="memory_editor_candidate_instance"><xliff:g id="field_name" example="Player.hp">%1$s</xliff:g> · <xliff:g id="reference_kind" example="Instance reference">%2$s</xliff:g> · ඉලක්කය #<xliff:g id="target_id" example="1">%3$d</xliff:g></string>
+    <string name="memory_editor_reference_static">ස්ථිතික යොමුව</string>
+    <string name="memory_editor_reference_instance">අවස්ථා යොමුව</string>
+    <string name="memory_editor_path_changed">ස්කෑන් කිරීමෙන් පසු යොමු මාර්ගය වෙනස් වී ඇත.</string>
+    <string name="memory_editor_path_incomplete">යොමු මාර්ගය පරීක්ෂණ සීමාව ඉක්මවයි.</string>
+    <string name="memory_editor_source_unknown">මූලාශ්‍රය සොයා නොගැනිණි</string>
+    <string name="memory_editor_incremental_edit">ක්‍රමික වැඩි කිරීම</string>
+    <string name="memory_editor_increment_step">අගයන් අතර වෙනස</string>
+    <string name="memory_editor_increment_invalid">එක් පූර්ණ සංඛ්‍යා වර්ගයක් සහ එහි පරාසය තුළ අගයන් භාවිතා කරන්න.</string>
+    <!-- The batch dialog title already shows the number of selected values. -->
+    <string name="memory_editor_increment_preview">පෙරදසුන: <xliff:g id="name" example="Example">%1$s</xliff:g></string>
+    <string name="memory_editor_panel_opacity">පැනල පාරාන්ධතාව</string>
+    <string name="memory_editor_panel_opacity_help">සෙවීමේදී ක්‍රීඩා අගයන් බැලීමට පසුබිම සීරුමාරු කරන්න. පෙළ සහ නිරූපක දෘශ්‍යමානව පවතී.</string>
+    <string name="memory_editor_reconversion_required" tools:ignore="MissingTranslation">මෙම MIDlet හි ස්ථාපිත පරිවර්තනය මතක සංස්කාරකය සමඟ නොගැළපේ. ක්‍රීඩාව වසා, ඉන්පසු JL-Mod Plus හි එය නැවත පරිවර්තනය හෝ නැවත ස්ථාපනය කරන්න.</string>
+    <string name="memory_saved_tab" tools:ignore="MissingTranslation">සුරැකි</string>
+    <string name="memory_saved_save" tools:ignore="MissingTranslation">විචල්‍යය සුරකින්න</string>
+    <string name="memory_saved_name" tools:ignore="MissingTranslation">නම</string>
+    <string name="memory_saved_explanation" tools:ignore="MissingTranslation">පසු සැසි සඳහා මෙම සත්‍යාපිත මතක මාර්ගය සුරකින්න. අගයන් කිසි විටෙක ස්වයංක්‍රීයව ලියනු නොලැබේ.</string>
+    <string name="memory_saved_empty" tools:ignore="MissingTranslation">තවම සුරැකි විචල්‍ය නොමැත. එය සුරැකීමට සෙවුම් ප්‍රතිඵලයක් තෝරන්න.</string>
+    <string name="memory_saved_not_ready" tools:ignore="MissingTranslation">සූදානම් නැත</string>
+    <string name="memory_saved_retry" tools:ignore="MissingTranslation">නැවත උත්සාහ කරන්න</string>
+    <string name="memory_saved_rename" tools:ignore="MissingTranslation">නැවත නම් කරන්න</string>
+    <string name="memory_saved_value" tools:ignore="MissingTranslation">අගය</string>
+    <string name="memory_saved_delete_confirm" tools:ignore="MissingTranslation">මෙම සුරැකි අර්ථ දැක්වීම ඉවත් කරන්නද? ක්‍රීඩා අගය වෙනස් නොවේ.</string>
+    <string name="memory_saved_changed" tools:ignore="MissingTranslation">වෙනස් විය</string>
+    <string name="memory_saved_rebound" tools:ignore="MissingTranslation">ඉලක්කය යාවත්කාලීන විය</string>
+    <string name="memory_saved_import_summary" tools:ignore="MissingTranslation">සුරැකි: <xliff:g id="added_count" example="4">%1$d</xliff:g> එක් කළා, <xliff:g id="existing_count" example="2">%2$d</xliff:g> දැනටමත් පවතී</string>
+    <string name="memory_saved_incompatible" tools:ignore="MissingTranslation">නොගැළපේ</string>
+    <string name="memory_saved_failed" tools:ignore="MissingTranslation">අසාර්ථකයි</string>
+    <string name="memory_saved_delete_many_confirm" tools:ignore="MissingTranslation">සුරැකි අර්ථ දැක්වීම් <xliff:g id="count" example="3">%1$d</xliff:g> ඉවත් කරන්නද? ක්‍රීඩා අගයන් වෙනස් නොවේ.</string>
+    <string name="memory_recipes_title" tools:ignore="MissingTranslation">ඉක්මන් ක්‍රියාව</string>
+    <string name="memory_recipes_simple_from_saved" tools:ignore="MissingTranslation">ඉලක්කය: <xliff:g id="bookmark_name" example="Coins">%1$s</xliff:g></string>
+    <string name="memory_recipes_preview" tools:ignore="MissingTranslation">ඉලක්ක පෙරදසුන</string>
+    <string name="memory_recipes_stop_freeze" tools:ignore="MissingTranslation">අගයන් ස්ථිර කිරීම නවත්වන්න</string>
+    <string name="memory_recipes_freeze" tools:ignore="MissingTranslation">මෙම ක්‍රීඩාව ධාවනය වන අතරතුර ස්ථිර කර තබන්න</string>
+    <string name="memory_recipes_run" tools:ignore="MissingTranslation">ධාවනය කරන්න</string>
+    <string name="memory_recipes_active_freezes" tools:ignore="MissingTranslation">අගයන් ස්ථිර කරන ස්ක්‍රිප්ට්</string>
+    <string name="memory_recipes_target_unavailable" tools:ignore="MissingTranslation">පිටුසන් ඉලක්කය ලබා ගත නොහැක. ධාවනය කිරීමට පෙර එය නැවුම් කරන්න හෝ නැවත සම්බන්ධ කරන්න.</string>
+    <string name="memory_recipes_preview_values" tools:ignore="MissingTranslation">වත්මන් අගයන්: <xliff:g id="name" example="Example">%1$s</xliff:g></string>
+    <string name="memory_scripts_title" tools:ignore="MissingTranslation">ස්ක්‍රිප්ට්</string>
+    <string name="memory_scripts_active" tools:ignore="MissingTranslation">සක්‍රිය</string>
+    <string name="memory_scripts_inputs" tools:ignore="MissingTranslation">ආදාන</string>
+    <string name="memory_scripts_create_from_bookmarks" tools:ignore="MissingTranslation">ස්ක්‍රිප්ට් සාදන්න</string>
+    <string name="memory_scripts_create_failed" tools:ignore="MissingTranslation">නව ස්ක්‍රිප්ට් එකක් ඇරඹීමට නොහැකි විය.</string>
+    <string name="memory_scripts_draft_in_progress" tools:ignore="MissingTranslation">පළමුව වත්මන් ස්ක්‍රිප්ට් කෙටුම්පත අවසන් කරන්න හෝ ඉවතලන්න.</string>
+    <string name="memory_builder_open_saved" tools:ignore="MissingTranslation">“සුරැකි” විවෘත කරන්න</string>
+    <string name="memory_builder_add_description" tools:ignore="MissingTranslation">විස්තරය එක් කරන්න</string>
+    <string name="memory_builder_find_values" tools:ignore="MissingTranslation">අගයන් සොයන්න</string>
+    <string name="memory_scripts_description" tools:ignore="MissingTranslation">විස්තරය</string>
+    <string name="memory_scripts_new" tools:ignore="MissingTranslation">නව ස්ක්‍රිප්ට්</string>
+    <string name="memory_scripts_back" tools:ignore="MissingTranslation">ආපසු</string>
+    <string name="memory_scripts_edit" tools:ignore="MissingTranslation">සංස්කරණය කරන්න</string>
+    <string name="memory_scripts_save" tools:ignore="MissingTranslation">සුරකින්න</string>
+    <string name="memory_scripts_saved" tools:ignore="MissingTranslation">ස්ක්‍රිප්ට් සුරකින ලදී</string>
+    <string name="memory_scripts_deleted" tools:ignore="MissingTranslation">ස්ක්‍රිප්ට් මකන ලදී</string>
+    <string name="memory_scripts_save_failed" tools:ignore="MissingTranslation">ස්ක්‍රිප්ට් සුරැකීමට නොහැකි විය.</string>
+    <string name="memory_scripts_editor_hint" tools:ignore="MissingTranslation">සහාය දක්වන මතක මෙහෙයුම් භාවිතා කරන JSON ස්ක්‍රිප්ට් එකක් ඇතුළත් කරන්න හෝ අලවන්න. සුරැකීමෙන් ස්ක්‍රිප්ට් එක ධාවනය නොවේ.</string>
+    <string name="memory_scripts_paste_hint" tools:ignore="MissingTranslation">ස්ක්‍රිප්ට් JSON අලවන්න</string>
+    <string name="memory_scripts_paste" tools:ignore="MissingTranslation">අලවන්න</string>
+    <string name="memory_scripts_clipboard_invalid" tools:ignore="MissingTranslation">පසුරු පුවරුව හිස්ය නැතහොත් ලේඛනය 64 KiB ඉක්මවයි</string>
+    <string name="memory_scripts_invalid" tools:ignore="MissingTranslation">වලංගු නොවන ස්ක්‍රිප්ට් ආකෘතිය</string>
+    <string name="memory_scripts_freeze_active" tools:ignore="MissingTranslation">මෙම ස්ක්‍රිප්ට් එක අගයන් ස්ථිර කරමින් පවතී</string>
+    <string name="memory_scripts_delete" tools:ignore="MissingTranslation">මකන්න</string>
+    <string name="memory_scripts_delete_confirm" tools:ignore="MissingTranslation">“<xliff:g id="name" example="Example">%1$s</xliff:g>” මකන්නද? මෙම ස්ක්‍රිප්ට් සඳහා ඇති ඕනෑම සක්‍රිය ස්ථිර කිරීමක් නතර වනු ඇත.</string>
+    <string name="memory_scripts_empty" tools:ignore="MissingTranslation">සුරැකි ස්ක්‍රිප්ට් නොමැත</string>
+    <string name="memory_scripts_unsaved_title" tools:ignore="MissingTranslation">නොසුරැකි ස්ක්‍රිප්ට් ඉවතලන්නද?</string>
+    <string name="memory_scripts_unsaved_message" tools:ignore="MissingTranslation">ඔබේ ස්ක්‍රිප්ට් වෙනස්කම් සුරැකී නැත.</string>
+    <string name="memory_scripts_discard" tools:ignore="MissingTranslation">ඉවතලන්න</string>
+    <string name="memory_scripts_current_title" tools:ignore="MissingTranslation">අවසන් වරට කියවූ</string>
+    <string name="memory_scripts_refresh" tools:ignore="MissingTranslation">නැවුම් කරන්න</string>
+    <string name="memory_scripts_reading" tools:ignore="MissingTranslation">වත්මන් අගයන් කියවමින්…</string>
+    <string name="memory_scripts_refresh_hint" tools:ignore="MissingTranslation">ධාවනය වන ක්‍රීඩාවෙන් වත්මන් අගයන් කියවීමට “නැවුම් කරන්න” තට්ටු කරන්න.</string>
+    <string name="memory_scripts_mode_toggle" tools:ignore="MissingTranslation">අගයන් ස්ථිර කරන්න</string>
+    <string name="memory_scripts_mode_form" tools:ignore="MissingTranslation">අගය සංස්කාරකය</string>
+    <string name="memory_scripts_mode_once" tools:ignore="MissingTranslation">ඉක්මන් ක්‍රියා</string>
+    <string name="memory_scripts_mode_legacy" tools:ignore="MissingTranslation">උසස් ස්ක්‍රිප්ට්</string>
+    <string name="memory_scripts_edit_values" tools:ignore="MissingTranslation">අගයන් සංස්කරණය කරන්න</string>
+    <string name="memory_scripts_apply" tools:ignore="MissingTranslation">වෙනස්කම් යොදන්න</string>
+    <string name="memory_scripts_refresh_required" tools:ignore="MissingTranslation">යෙදීමට පෙර වත්මන් අගයන් සත්‍යාපනය කිරීමට නැවුම් කරන්න.</string>
+    <string name="memory_scripts_inconsistent" tools:ignore="MissingTranslation">නොගැළපෙන පිටපත්: <xliff:g id="name" example="Example">%1$s</xliff:g></string>
+    <string name="memory_editor_minimize" tools:ignore="MissingTranslation">මතක සංස්කාරකය කුඩා කරන්න</string>
+    <string name="memory_scripts_choose_type" tools:ignore="MissingTranslation">නව ස්ක්‍රිප්ට්</string>
+    <string name="memory_scripts_choose_hint" tools:ignore="MissingTranslation">මෙම ස්ක්‍රිප්ට් ක්‍රියා කළ යුතු ආකාරය තෝරන්න.</string>
+    <string name="memory_builder_json_editor" tools:ignore="MissingTranslation">JSON සංස්කාරකය</string>
+    <string name="memory_builder_freeze_hint" tools:ignore="MissingTranslation">සබල කර ඇති විට තෝරාගත් අගයන් අගුළු දමා තබයි. ස්ථිර කිරීම අක්‍රිය කිරීමෙන් ඒවායේ පෙර අගයන් ප්‍රතිස්ථාපනය නොවේ.</string>
+    <string name="memory_builder_form_hint" tools:ignore="MissingTranslation">සංස්කරණ යෙදීමට පෙර වත්මන් අගයන් කියවන පෝරමයක් සාදන්න.</string>
+    <string name="memory_builder_actions_hint" tools:ignore="MissingTranslation">“ධාවනය කරන්න” එබූ සෑම වරකම වෙනස්කම් එක් වරක් යොදයි. එකතු කිරීම සහ අඩු කිරීම පෙර ධාවනවල වෙනස්කම් ඇතුළුව වත්මන් අගයන් භාවිතා කරයි.</string>
+    <string name="memory_builder_name" tools:ignore="MissingTranslation">ස්ක්‍රිප්ට් නම</string>
+    <string name="memory_builder_frozen_values" tools:ignore="MissingTranslation">ස්ථිර කළ අගයන්</string>
+    <string name="memory_builder_fields" tools:ignore="MissingTranslation">ක්ෂේත්‍ර</string>
+    <string name="memory_builder_actions" tools:ignore="MissingTranslation">ක්‍රියා</string>
+    <string name="memory_builder_add_bookmarks" tools:ignore="MissingTranslation">පිටුසන් වලින් එක් කරන්න</string>
+    <string name="memory_builder_empty" tools:ignore="MissingTranslation">අවම වශයෙන් එක් සත්‍යාපිත පිටුසනක්වත් එක් කරන්න.</string>
+    <string name="memory_builder_field_label" tools:ignore="MissingTranslation">ක්ෂේත්‍ර ලේබලය</string>
+    <string name="memory_builder_keep_at" tools:ignore="MissingTranslation">තබා ගන්නා අගය</string>
+    <string name="memory_builder_amount" tools:ignore="MissingTranslation">අගය / ප්‍රමාණය</string>
+    <string name="memory_builder_set" tools:ignore="MissingTranslation">සකසන්න</string>
+    <string name="memory_builder_add" tools:ignore="MissingTranslation">එක් කරන්න</string>
+    <string name="memory_builder_subtract" tools:ignore="MissingTranslation">අඩු කරන්න</string>
+    <string name="memory_builder_view_json" tools:ignore="MissingTranslation">JSON බලන්න</string>
+    <string name="memory_builder_edit_json" tools:ignore="MissingTranslation">JSON සංස්කරණය කරන්න</string>
+    <string name="memory_builder_search_bookmarks" tools:ignore="MissingTranslation">පිටුසන් සොයන්න</string>
+    <string name="memory_builder_no_bookmarks" tools:ignore="MissingTranslation">ගැළපෙන සත්‍යාපිත පිටුසන් නොමැත. “සෙවීම” තුළ අගයක් පිටුසන් කරන්න හෝ “සුරැකි” තුළ එකක් නැවත සම්බන්ධ කරන්න.</string>
+    <string name="memory_builder_needs_relink" tools:ignore="MissingTranslation">නැවත සම්බන්ධ කළ යුතුයි</string>
+    <string name="memory_builder_add_selected" tools:ignore="MissingTranslation">තෝරාගත් ඒවා එක් කරන්න</string>
+    <string name="memory_builder_min" tools:ignore="MissingTranslation">අවම (විකල්ප)</string>
+    <string name="memory_builder_max" tools:ignore="MissingTranslation">උපරිම (විකල්ප)</string>
+    <string name="memory_builder_add_target" tools:ignore="MissingTranslation">ඉලක්කය එක් කරන්න</string>
+    <string name="memory_builder_freeze_short" tools:ignore="MissingTranslation">තෝරාගත් අගයන් නොවෙනස්ව තබා ගන්න</string>
+    <string name="memory_builder_form_short" tools:ignore="MissingTranslation">අගයන් කිහිපයක් එකම ස්ථානයකින් සීරුමාරු කරන්න</string>
+    <string name="memory_builder_actions_short" tools:ignore="MissingTranslation">එක් වරක් සැකසීම, එක් කිරීම හෝ අඩු කිරීමේ ක්‍රියා ධාවනය කරන්න</string>
+    <string name="memory_editor_refine_scan" tools:ignore="MissingTranslation">ප්‍රතිඵල සීමා කරන්න</string>
+    <string name="memory_scripts_saved_count" tools:ignore="MissingTranslation"><xliff:g id="count" example="3">%1$d</xliff:g> සුරකින ලදී</string>
+    <string name="memory_scripts_empty_hint" tools:ignore="MissingTranslation">ක්‍රීඩා කරන අතරතුර අගයන් සංස්කරණය කිරීමට හෝ ස්ථිර කිරීමට ස්ක්‍රිප්ට් එකක් සාදන්න.</string>
+    <string name="memory_builder_limits" tools:ignore="MissingTranslation">සීමාවන් (විකල්ප)</string>
+    <string name="memory_editor_selection_limit">අගයන් %1$dක් දක්වා තෝරන්න.</string>
+    <string name="memory_saved_storage_unavailable">සුරැකි අයිතම වෙත ප්‍රවේශ විය නොහැක.</string>
+    <string name="memory_bookmark_renamed">පිටු සලකුණේ නම වෙනස් කරන ලදී</string>
+    <string name="memory_editor_memory_unavailable">MIDlet මතකය ලබා ගත නොහැක.</string>
+    <string name="memory_bookmark_added">පිටු සලකුණ එක් කරන ලදී</string>
+    <string name="memory_bookmark_relinked">පිටු සලකුණ නැවත සම්බන්ධ කරන ලදී</string>
+    <string name="memory_bookmarks_removed">සුරැකි අයිතමවලින් ඉවත් කරන ලදී</string>
+    <string name="memory_freeze_enabled">අගය ස්ථිර කිරීම සක්‍රියයි</string>
+    <string name="memory_freeze_unavailable">අගය ස්ථිර කිරීම සක්‍රිය කළ නොහැකි විය.</string>
+    <string name="memory_list_session_only_failed">මෙම අයිතමය වත්මන් සැසිය සඳහා පමණක් තබාගත නොහැකි විය.</string>
+    <string name="memory_list_kept_unlinked">ඊළඟ ආරම්භය සඳහා සුරකින ලදී, නමුත් වත්මන් සැසියට සම්බන්ධ කළ නොහැකි විය.</string>
+    <string name="memory_list_removal_unavailable">සම්බන්ධතාව විසන්ධි වී ඇති විට අයිතම ඉවත් කළ නොහැක. නැවත උත්සාහ කරන්න.</string>
+    <string name="memory_list_watch_removed">සැසියේ ලුහුබැඳීම ඉවත් කරන ලදී</string>
+    <string name="memory_list_bookmark_removal_failed">පිටු සලකුණු ඉවත් කළ නොහැකි විය: %1$s</string>
+    <string name="memory_list_watch_removal_failed">සැසියේ ලුහුබැඳීම ඉවත් කළ නොහැකි විය: %1$s</string>
+    <string name="memory_list_removal_unknown_error">නොදන්නා දෝෂයකි</string>
+    <string name="memory_editor_edit_freeze_failed">අගය යාවත්කාලීන කරන ලදී, නමුත් අගය ස්ථිර කිරීම ආරම්භ කළ නොහැකි විය. නැවත උත්සාහ කිරීමට පෙර වත්මන් අගය පරීක්ෂා කරන්න.</string>
+    <string name="memory_scripts_freeze_inactive">මෙම ස්ක්‍රිප්ට් එක තවදුරටත් අගයන් ස්ථිර නොකරයි.</string>
+    <string name="memory_bookmark_change_incomplete">පිටුසන වෙනස් කිරීම සම්පූර්ණ කළ නොහැකි විය. නැවත උත්සාහ කිරීමට පෙර සුරැකි අයිතම පරීක්ෂා කරන්න.</string>
+    <string name="memory_editor_value_updated">අගය යාවත්කාලීන කළා.</string>
+    <string name="memory_editor_value_updated_frozen">අගය යාවත්කාලීන කර කැටි කිරීම සක්‍රිය කළා.</string>
+    <string name="memory_scripts_delete_failed">ස්ක්‍රිප්ට් එක මකා දැමිය නොහැකි විය. නැවත උත්සාහ කිරීමට පෙර එහි කැටි කිරීමේ තත්ත්වය පරීක්ෂා කරන්න.</string>
+    <string name="memory_scripts_check_input">ස්ක්‍රිප්ට් එක සූදානම් කළ නොහැකි විය. එහි අගයන් සහ පිටුසන් පරීක්ෂා කරන්න.</string>
+    <string name="memory_scripts_read_failed">වත්මන් අගයන් කියවිය නොහැකි විය. නැවුම් කර නැවත උත්සාහ කරන්න.</string>
+    <string name="memory_technical_details">තාක්ෂණික විස්තර</string>
+    <string name="memory_scripts_resource_limit">ස්ක්‍රිප්ට් එක ආරක්ෂිත සීමාවකට ළඟා වී ඇත. ඉලක්ක ගණන අඩු කරන්න හෝ භාවිත නොකරන කැටි කිරීම් නවත්වන්න.</string>
+    <string name="memory_scripts_target_changed">ස්ක්‍රිප්ට් ඉලක්කය තහවුරු කළ නොහැකි විය. අගයන් නැවුම් කර පිටුසන් පරීක්ෂා කරන්න.</string>
+    <string name="memory_scripts_operation_unavailable">වත්මන් ඉලක්කය සඳහා මෙම ස්ක්‍රිප්ට් මෙහෙයුමට සහාය නොදක්වයි.</string>
+    <string name="memory_scripts_invalid_input">ස්ක්‍රිප්ට් ආදාන පරීක්ෂා කරන්න. අවසර ලත් පරාස තුළ වලංගු අගයන් ඇතුළත් කරන්න.</string>
+    <string name="memory_scripts_value_range">අගයක් සහාය දක්වන පරාසයෙන් පිටත ඇත. ස්ක්‍රිප්ට් එක සහ එහි අගයන් පරීක්ෂා කරන්න.</string>
+    <string name="memory_scripts_inconsistent_values">එකම අගයේ පිටපත් නොගැළපේ. නැවත උත්සාහ කිරීමට පෙර ක්‍රීඩාවේ තත්ත්වය පරීක්ෂා කරන්න.</string>
+    <string name="memory_scripts_wrong_midlet">මෙම ස්ක්‍රිප්ට් එක වෙනත් MIDlet එකක් සඳහාය. නිවැරදි MIDlet එක විවෘත කරන්න හෝ වෙනත් ස්ක්‍රිප්ට් එකක් තෝරන්න.</string>
+    <string name="memory_scripts_target_not_ready">ස්ක්‍රිප්ට් ඉලක්කය තවම සූදානම් නැත. ක්‍රීඩාවේ අදාළ තිරයට ආපසු ගොස් නැවත උත්සාහ කරන්න.</string>
+</resources>

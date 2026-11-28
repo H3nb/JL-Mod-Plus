@@ -1,0 +1,106 @@
+<?xml version="1.0" encoding="utf-8"?>
+<!-- 仮想キーパッドコントロール、レイアウトエディター、物理キーマッピング、コントロールスキン -->
+<resources xmlns:tools="http://schemas.android.com/tools" xmlns:xliff="urn:oasis:names:tc:xliff:document:1.2">
+    <string name="alert_map_menu">メニューキー（M）が割り当てられていません。\nプレイ中に MIDlet メニューを開けない場合があります。</string>
+    <string name="dismiss_mapping">マッピングを閉じる</string>
+    <string name="layout_edit_finish">編集を終了</string>
+    <string name="layout_edit_done">完了</string>
+    <string name="layout_editor_grid_size">グリッドサイズ</string>
+    <string name="layout_editor_grid_coarse">粗い（16）</string>
+    <string name="layout_editor_grid_normal">標準（24）</string>
+    <string name="layout_editor_grid_fine">細かい（32）</string>
+    <string name="layout_editor_snap_on">スナップ: オン</string>
+    <string name="layout_editor_snap_off">スナップ: オフ</string>
+    <string name="layout_edit_save_changes">仮想コントロールの変更を保存しますか？</string>
+    <string name="layout_edit_discard">破棄</string>
+    <string name="layout_edit_continue">編集を続ける</string>
+    <string name="layout_edit_finished">仮想コントロールの編集が完了しました。</string>
+    <string name="virtual_controls_save_failed">仮想コントロールを保存できませんでした。もう一度お試しください。</string>
+    <string name="layout_switch">コントロールレイアウトを選択</string>
+    <string name="mapping_dialog_key_not_specified">入力が割り当てられていません。</string>
+    <string name="mapping_dialog_message">このコントロールに割り当てる物理キーまたはボタンを押してください。</string>
+    <string name="mapping_dialog_assigned_inputs">割り当て済みの入力</string>
+    <string name="mapping_dialog_add_input">複数の物理入力を割り当てることができます。</string>
+    <string name="mapping_dialog_remove">削除</string>
+    <string name="mapping_dialog_title">キーまたはボタンを押してください</string>
+    <string name="message_reset_layout">仮想コントロールのレイアウトをデフォルトにリセットしますか？</string>
+    <string name="RESET_LAYOUT_CMD">仮想コントロールのレイアウトをリセット</string>
+    <string name="saved_keyboard_layout_summary">仮想コントロールのレイアウトを保存しました。</string>
+    <string name="control_skin_title">仮想コントロールスキン</string>
+    <string name="control_skin_create" tools:ignore="MissingTranslation">セットを作成</string>
+    <string name="control_skin_default" tools:ignore="MissingTranslation">デフォルトボタン</string>
+    <string name="control_skin_edit" tools:ignore="MissingTranslation">編集</string>
+    <string name="control_skin_rename" tools:ignore="MissingTranslation">名前を変更</string>
+    <string name="control_skin_duplicate" tools:ignore="MissingTranslation">複製</string>
+    <string name="control_skin_delete" tools:ignore="MissingTranslation">削除</string>
+    <string name="control_skin_import_zip" tools:ignore="MissingTranslation">ZIP をインポート</string>
+    <string name="control_skin_export_zip" tools:ignore="MissingTranslation">ZIP をエクスポート</string>
+    <string name="control_skin_select_export_folder" tools:ignore="MissingTranslation">エクスポート先フォルダーを選択</string>
+    <string name="control_skin_imported" tools:ignore="MissingTranslation"><xliff:g id="skin_name" example="Classic Nokia">%1$s</xliff:g> をインポートしました</string>
+    <string name="control_skin_already_available" tools:ignore="MissingTranslation"><xliff:g id="skin_name" example="Classic Nokia">%1$s</xliff:g> はすでに利用可能です</string>
+    <string name="control_skin_exported" tools:ignore="MissingTranslation"><xliff:g id="skin_name" example="Classic Nokia">%1$s</xliff:g> を保存しました</string>
+    <string name="control_skin_archive_invalid_path" tools:ignore="MissingTranslation">選択した場所は利用できません。</string>
+    <string name="control_skin_archive_import_failed" tools:ignore="MissingTranslation">コントロールスキンをインポートできませんでした。ZIP に有効なセットが 1 つ含まれていることを確認してください。</string>
+    <string name="control_skin_archive_export_failed" tools:ignore="MissingTranslation">コントロールスキンをエクスポートできませんでした。スキンライブラリ外の書き込み可能なフォルダーを選択してください。</string>
+    <string name="control_skin_name" tools:ignore="MissingTranslation">セット名</string>
+    <string name="control_skin_icon" tools:ignore="MissingTranslation">アイコンのみ</string>
+    <string name="control_skin_full" tools:ignore="MissingTranslation">ボタン全体</string>
+    <string name="control_skin_normal_image" tools:ignore="MissingTranslation">通常時の画像</string>
+    <string name="control_skin_pressed_image" tools:ignore="MissingTranslation">押下時の画像</string>
+    <string name="control_skin_delete_warning" tools:ignore="MissingTranslation">この共有スキンセットとすべての画像を削除しますか？このセットを使用している MIDlet は次回起動時にデフォルトのコントロールに戻ります。</string>
+    <string name="control_skin_invalid_image" tools:ignore="MissingTranslation">PNG、WebP、または SVG 画像を選択してください。</string>
+    <string name="control_skin_operation_failed" tools:ignore="MissingTranslation">操作スキンの処理を完了できませんでした。</string>
+    <string name="control_skin_missing" tools:ignore="MissingTranslation">利用できないセット（デフォルトコントロール）</string>
+    <string name="control_skin_remove_image" tools:ignore="MissingTranslation">削除</string>
+    <string name="control_skin_manage" tools:ignore="MissingTranslation">セットを管理</string>
+    <string name="control_skin_manage_named" tools:ignore="MissingTranslation"><xliff:g id="skin_name" example="Classic Nokia">%1$s</xliff:g> を管理</string>
+    <plurals name="control_skin_count">
+        <item quantity="other"><xliff:g id="count" example="4">%1$d</xliff:g> 個のカスタマイズ済みコントロール</item>
+    </plurals>
+    <string name="control_skin_empty" tools:ignore="MissingTranslation">コントロール画像をカスタマイズするには、セットを作成してください。</string>
+    <string name="control_skin_numeric" tools:ignore="MissingTranslation">キーパッド</string>
+    <string name="control_skin_navigation" tools:ignore="MissingTranslation">ナビゲーション</string>
+    <string name="control_skin_other" tools:ignore="MissingTranslation">その他のボタン</string>
+    <string name="control_skin_pressed_requires_normal" tools:ignore="MissingTranslation">先に通常時の画像を追加してください。</string>
+    <string name="control_skin_edit_named" tools:ignore="MissingTranslation">ボタン <xliff:g id="button_label" example="5">%1$s</xliff:g></string>
+    <string name="control_skin_change_image" tools:ignore="MissingTranslation">変更</string>
+    <string name="control_skin_pick_image" tools:ignore="MissingTranslation">画像を選択</string>
+    <string name="control_skin_soft_left" tools:ignore="MissingTranslation">左ソフト</string>
+    <string name="control_skin_soft_right" tools:ignore="MissingTranslation">右ソフト</string>
+    <string name="control_skin_fire" tools:ignore="MissingTranslation">決定</string>
+    <string name="control_skin_menu" tools:ignore="MissingTranslation">メニュー</string>
+    <string name="control_skin_movement" tools:ignore="MissingTranslation">移動コントロール</string>
+    <string name="control_skin_dpad" tools:ignore="MissingTranslation">方向キー</string>
+    <string name="control_skin_analog" tools:ignore="MissingTranslation">アナログスティック</string>
+    <string name="control_skin_dpad_base" tools:ignore="MissingTranslation">方向キーの画像</string>
+    <string name="control_skin_overlay_up" tools:ignore="MissingTranslation">上オーバーレイ</string>
+    <string name="control_skin_overlay_down" tools:ignore="MissingTranslation">下オーバーレイ</string>
+    <string name="control_skin_overlay_left" tools:ignore="MissingTranslation">左オーバーレイ</string>
+    <string name="control_skin_overlay_right" tools:ignore="MissingTranslation">右オーバーレイ</string>
+    <string name="control_skin_analog_base" tools:ignore="MissingTranslation">ベース画像</string>
+    <string name="control_skin_analog_thumb" tools:ignore="MissingTranslation">スティック画像</string>
+    <string name="control_skin_analog_thumb_pressed" tools:ignore="MissingTranslation">操作時のスティック画像</string>
+    <string name="control_skin_preview_directions" tools:ignore="MissingTranslation">方向プレビュー</string>
+    <string name="control_skin_preview_direction" tools:ignore="MissingTranslation"><xliff:g id="direction" example="Up">%1$s</xliff:g> をプレビュー</string>
+    <string name="control_skin_builtin_preview" tools:ignore="MissingTranslation">デフォルト</string>
+    <string name="control_skin_custom_preview" tools:ignore="MissingTranslation">カスタマイズ済み</string>
+    <string name="layout_editor_group_on">一括リサイズ</string>
+    <string name="layout_editor_group_off">個別リサイズ</string>
+    <string name="layout_editor_snap_grid">グリッドにスナップ</string>
+    <string name="layout_editor_snap_controls">ボタンにスナップ</string>
+    <string name="layout_editor_snap_resize">リサイズ時にスナップ</string>
+    <string name="layout_editor_snap_resize_on">リサイズスナップ: オン</string>
+    <string name="layout_editor_snap_resize_off">リサイズスナップ: オフ</string>
+    <string name="layout_editor_snap_grid_on">グリッドスナップ: オン</string>
+    <string name="layout_editor_snap_grid_off">グリッドスナップ: オフ</string>
+    <string name="layout_editor_snap_controls_on">ボタンスナップ: オン</string>
+    <string name="layout_editor_snap_controls_off">ボタンスナップ: オフ</string>
+    <string name="layout_editor_guide_gestures">ジェスチャー</string>
+    <string name="layout_editor_guide_move">コントロールをドラッグして移動します。</string>
+    <string name="layout_editor_guide_resize">2 本指でサイズを変更します。横または縦に動かすと幅や高さを調整できます。</string>
+    <string name="layout_editor_guide_tools">編集ツール</string>
+    <string name="layout_editor_guide_done">「完了」をタップすると、保存・破棄・編集の続行を選べます。</string>
+    <string name="layout_editor_guide_start">編集を開始</string>
+    <string name="control_skin_invalid_name">文字、数字、結合文字、スペース、または . _ ( ) - を使って、1～61 文字で指定してください。先頭は文字または数字にし、末尾にピリオドを使用しないでください。</string>
+    <string name="control_skin_image_validation_failed">8 MiB 以下の有効な PNG、WebP、SVG 画像を選択してください。PNG と WebP は 2048 × 2048 ピクセル以下にしてください。</string>
+</resources>

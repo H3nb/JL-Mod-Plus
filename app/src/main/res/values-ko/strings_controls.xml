@@ -1,0 +1,106 @@
+<?xml version="1.0" encoding="utf-8"?>
+<!-- Virtual keypad controls, layout editor, physical key mappings, and control skins. -->
+<resources xmlns:tools="http://schemas.android.com/tools" xmlns:xliff="urn:oasis:names:tc:xliff:document:1.2">
+    <string name="alert_map_menu">메뉴 키(M)가 할당되지 않았습니다.\n플레이 중에 MIDlet 메뉴를 열지 못할 수 있습니다.</string>
+    <string name="dismiss_mapping">매핑 닫기</string>
+    <string name="layout_edit_finish">편집 마침</string>
+    <string name="layout_edit_done">완료</string>
+    <string name="layout_editor_grid_size">격자 크기</string>
+    <string name="layout_editor_grid_coarse">넓게 (16)</string>
+    <string name="layout_editor_grid_normal">보통 (24)</string>
+    <string name="layout_editor_grid_fine">좁게 (32)</string>
+    <string name="layout_editor_snap_on">맞춤 켜짐</string>
+    <string name="layout_editor_snap_off">맞춤 꺼짐</string>
+    <string name="layout_edit_save_changes">가상 컨트롤 변경사항을 저장할까요?</string>
+    <string name="layout_edit_discard">버리기</string>
+    <string name="layout_edit_continue">계속 편집</string>
+    <string name="layout_edit_finished">가상 컨트롤 편집을 완료했습니다.</string>
+    <string name="virtual_controls_save_failed">가상 컨트롤을 저장할 수 없습니다. 다시 시도하세요.</string>
+    <string name="layout_switch">컨트롤 레이아웃 선택</string>
+    <string name="mapping_dialog_key_not_specified">할당된 입력이 없습니다.</string>
+    <string name="mapping_dialog_message">이 컨트롤에 할당할 물리 키 또는 버튼을 누르세요.</string>
+    <string name="mapping_dialog_assigned_inputs">할당된 입력</string>
+    <string name="mapping_dialog_add_input">물리 입력을 두 개 이상 할당할 수 있습니다.</string>
+    <string name="mapping_dialog_remove">제거</string>
+    <string name="mapping_dialog_title">키 또는 버튼 누르기</string>
+    <string name="message_reset_layout">가상 컨트롤 레이아웃을 기본값으로 초기화할까요?</string>
+    <string name="RESET_LAYOUT_CMD">가상 컨트롤 레이아웃 초기화</string>
+    <string name="saved_keyboard_layout_summary">가상 컨트롤 레이아웃을 저장했습니다.</string>
+    <string name="control_skin_title">가상 컨트롤 스킨</string>
+    <string name="control_skin_create" tools:ignore="MissingTranslation">세트 만들기</string>
+    <string name="control_skin_default" tools:ignore="MissingTranslation">기본 버튼</string>
+    <string name="control_skin_edit" tools:ignore="MissingTranslation">편집</string>
+    <string name="control_skin_rename" tools:ignore="MissingTranslation">이름 변경</string>
+    <string name="control_skin_duplicate" tools:ignore="MissingTranslation">복제</string>
+    <string name="control_skin_delete" tools:ignore="MissingTranslation">삭제</string>
+    <string name="control_skin_import_zip" tools:ignore="MissingTranslation">ZIP 가져오기</string>
+    <string name="control_skin_export_zip" tools:ignore="MissingTranslation">ZIP 내보내기</string>
+    <string name="control_skin_select_export_folder" tools:ignore="MissingTranslation">내보낼 폴더 선택</string>
+    <string name="control_skin_imported" tools:ignore="MissingTranslation"><xliff:g id="skin_name" example="Classic Nokia">%1$s</xliff:g> 가져옴</string>
+    <string name="control_skin_already_available" tools:ignore="MissingTranslation"><xliff:g id="skin_name" example="Classic Nokia">%1$s</xliff:g> 세트가 이미 있습니다</string>
+    <string name="control_skin_exported" tools:ignore="MissingTranslation"><xliff:g id="skin_name" example="Classic Nokia">%1$s</xliff:g> 저장됨</string>
+    <string name="control_skin_archive_invalid_path" tools:ignore="MissingTranslation">선택한 위치를 사용할 수 없습니다.</string>
+    <string name="control_skin_archive_import_failed" tools:ignore="MissingTranslation">컨트롤 스킨을 가져올 수 없습니다. ZIP 파일에 유효한 세트 하나가 포함되어 있는지 확인하세요.</string>
+    <string name="control_skin_archive_export_failed" tools:ignore="MissingTranslation">컨트롤 스킨을 내보낼 수 없습니다. 스킨 라이브러리 외부의 쓰기 가능한 폴더를 선택하세요.</string>
+    <string name="control_skin_name" tools:ignore="MissingTranslation">세트 이름</string>
+    <string name="control_skin_icon" tools:ignore="MissingTranslation">아이콘만</string>
+    <string name="control_skin_full" tools:ignore="MissingTranslation">전체 버튼</string>
+    <string name="control_skin_normal_image" tools:ignore="MissingTranslation">기본 이미지</string>
+    <string name="control_skin_pressed_image" tools:ignore="MissingTranslation">누른 상태 이미지</string>
+    <string name="control_skin_delete_warning" tools:ignore="MissingTranslation">이 공유 스킨 세트와 모든 이미지를 삭제할까요? 이 세트를 사용하는 MIDlet은 다음 실행 시 기본 컨트롤로 돌아갑니다.</string>
+    <string name="control_skin_invalid_image" tools:ignore="MissingTranslation">PNG, WebP 또는 SVG 이미지를 선택하세요.</string>
+    <string name="control_skin_operation_failed" tools:ignore="MissingTranslation">컨트롤 스킨 작업을 완료할 수 없습니다.</string>
+    <string name="control_skin_missing" tools:ignore="MissingTranslation">사용할 수 없는 세트(기본 컨트롤)</string>
+    <string name="control_skin_remove_image" tools:ignore="MissingTranslation">제거</string>
+    <string name="control_skin_manage" tools:ignore="MissingTranslation">세트 관리</string>
+    <string name="control_skin_manage_named" tools:ignore="MissingTranslation"><xliff:g id="skin_name" example="Classic Nokia">%1$s</xliff:g> 관리</string>
+    <plurals name="control_skin_count">
+        <item quantity="other">사용자 지정 컨트롤 <xliff:g id="count" example="4">%1$d</xliff:g>개</item>
+    </plurals>
+    <string name="control_skin_empty" tools:ignore="MissingTranslation">컨트롤 이미지를 사용자 지정하려면 세트를 만드세요.</string>
+    <string name="control_skin_numeric" tools:ignore="MissingTranslation">키패드</string>
+    <string name="control_skin_navigation" tools:ignore="MissingTranslation">탐색</string>
+    <string name="control_skin_other" tools:ignore="MissingTranslation">기타 버튼</string>
+    <string name="control_skin_pressed_requires_normal" tools:ignore="MissingTranslation">먼저 기본 이미지를 추가하세요.</string>
+    <string name="control_skin_edit_named" tools:ignore="MissingTranslation"><xliff:g id="button_label" example="5">%1$s</xliff:g> 버튼</string>
+    <string name="control_skin_change_image" tools:ignore="MissingTranslation">변경</string>
+    <string name="control_skin_pick_image" tools:ignore="MissingTranslation">이미지 선택</string>
+    <string name="control_skin_soft_left" tools:ignore="MissingTranslation">왼쪽 소프트키</string>
+    <string name="control_skin_soft_right" tools:ignore="MissingTranslation">오른쪽 소프트키</string>
+    <string name="control_skin_fire" tools:ignore="MissingTranslation">확인</string>
+    <string name="control_skin_menu" tools:ignore="MissingTranslation">메뉴</string>
+    <string name="control_skin_movement" tools:ignore="MissingTranslation">이동 컨트롤</string>
+    <string name="control_skin_dpad" tools:ignore="MissingTranslation">방향 패드</string>
+    <string name="control_skin_analog" tools:ignore="MissingTranslation">아날로그 스틱</string>
+    <string name="control_skin_dpad_base" tools:ignore="MissingTranslation">방향 패드 이미지</string>
+    <string name="control_skin_overlay_up" tools:ignore="MissingTranslation">위쪽 오버레이</string>
+    <string name="control_skin_overlay_down" tools:ignore="MissingTranslation">아래쪽 오버레이</string>
+    <string name="control_skin_overlay_left" tools:ignore="MissingTranslation">왼쪽 오버레이</string>
+    <string name="control_skin_overlay_right" tools:ignore="MissingTranslation">오른쪽 오버레이</string>
+    <string name="control_skin_analog_base" tools:ignore="MissingTranslation">베이스 이미지</string>
+    <string name="control_skin_analog_thumb" tools:ignore="MissingTranslation">스틱 이미지</string>
+    <string name="control_skin_analog_thumb_pressed" tools:ignore="MissingTranslation">활성 스틱 이미지</string>
+    <string name="control_skin_preview_directions" tools:ignore="MissingTranslation">방향 미리보기</string>
+    <string name="control_skin_preview_direction" tools:ignore="MissingTranslation"><xliff:g id="direction" example="Up">%1$s</xliff:g> 미리보기</string>
+    <string name="control_skin_builtin_preview" tools:ignore="MissingTranslation">기본값</string>
+    <string name="control_skin_custom_preview" tools:ignore="MissingTranslation">사용자 지정</string>
+    <string name="layout_editor_group_on">함께 크기 조절</string>
+    <string name="layout_editor_group_off">개별 크기 조절</string>
+    <string name="layout_editor_snap_grid">격자에 맞춤</string>
+    <string name="layout_editor_snap_controls">버튼에 맞춤</string>
+    <string name="layout_editor_snap_resize">크기 조절 시 맞춤</string>
+    <string name="layout_editor_snap_resize_on">크기 조절 맞춤: 켜짐</string>
+    <string name="layout_editor_snap_resize_off">크기 조절 맞춤: 꺼짐</string>
+    <string name="layout_editor_snap_grid_on">격자 맞춤: 켜짐</string>
+    <string name="layout_editor_snap_grid_off">격자 맞춤: 꺼짐</string>
+    <string name="layout_editor_snap_controls_on">버튼 맞춤: 켜짐</string>
+    <string name="layout_editor_snap_controls_off">버튼 맞춤: 꺼짐</string>
+    <string name="layout_editor_guide_gestures">제스처</string>
+    <string name="layout_editor_guide_move">컨트롤을 드래그하여 이동합니다.</string>
+    <string name="layout_editor_guide_resize">두 손가락으로 크기를 조절합니다. 가로 또는 세로로 움직여 너비나 높이를 변경할 수 있습니다.</string>
+    <string name="layout_editor_guide_tools">편집 도구</string>
+    <string name="layout_editor_guide_done">완료를 탭하여 저장, 버리기 또는 계속 편집할 수 있습니다.</string>
+    <string name="layout_editor_guide_start">편집 시작</string>
+    <string name="control_skin_invalid_name">문자, 숫자, 결합 문자, 공백 또는 . _ ( ) - 기호를 1~61자 사용하세요. 문자나 숫자로 시작하고 마침표로 끝내지 마세요.</string>
+    <string name="control_skin_image_validation_failed">8 MiB 이하의 유효한 PNG, WebP 또는 SVG 이미지를 선택하세요. PNG와 WebP는 2048 × 2048픽셀 이하여야 합니다.</string>
+</resources>

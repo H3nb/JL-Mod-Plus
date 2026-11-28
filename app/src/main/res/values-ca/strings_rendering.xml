@@ -1,0 +1,211 @@
+<?xml version="1.0" encoding="utf-8"?>
+<!-- Canalització de renderització, resolució interna, escalament de mapes de bits, shaders i efectes visuals integrats. -->
+<resources xmlns:tools="http://schemas.android.com/tools" xmlns:xliff="urn:oasis:names:tc:xliff:document:1.2">
+    <string name="identity_filter">Cap (més ràpid)</string>
+    <string name="invalid_resolution_not_saved">Resolució no vàlida. El preajust no s’ha desat.</string>
+    <string name="msg_error_loading_shader">Shader no compatible. S’utilitza el shader predeterminat.</string>
+    <string name="parallel_screen_redrawing">Actualitzacions de pantalla asíncrones</string>
+    <string name="shader_tuning">Ajust del shader</string>
+    <string name="SWAP_SIZES">Intercanvia amplada i alçada</string>
+    <string name="fps_limit_maximum">Màxim</string>
+    <string name="remove_screen_preset">Suprimeix la resolució predefinida</string>
+    <string name="perf_overlay_position_help">Tria una cantonada.</string>
+    <string name="perf_overlay_top_left">Superior esquerra</string>
+    <string name="perf_overlay_top_right">Superior dreta</string>
+    <string name="perf_overlay_bottom_left">Inferior esquerra</string>
+    <string name="perf_overlay_bottom_right">Inferior dreta</string>
+    <string name="internal_resolution_title" tools:ignore="MissingTranslation">Resolució de renderització</string>
+    <string name="internal_resolution_auto" tools:ignore="MissingTranslation">Automàtica</string>
+    <string name="internal_resolution_description" tools:ignore="MissingTranslation">Defineix la resolució de renderització dels gràfics 2D i 3D compatibles. L’opció automàtica tria una escala segons l’àrea de visualització i els límits del dispositiu. Reinicia el MIDlet per aplicar el canvi.</string>
+    <string name="bitmap_upscaling_title" tools:ignore="MissingTranslation">Escalament de mapes de bits</string>
+    <string name="bitmap_upscaling_description" tools:ignore="MissingTranslation">MMPX i xBR Lv3 milloren les imatges 2D immutables i les textures immutables i opaques dels models Micro3D. Les textures M3G no canvien. Reinicia el MIDlet per aplicar el canvi.</string>
+    <string name="bitmap_upscaling_nearest" tools:ignore="MissingTranslation">Veí més proper</string>
+    <string name="bitmap_upscaling_bilinear" tools:ignore="MissingTranslation">Bilineal</string>
+    <string name="bitmap_upscaling_mmpx" tools:ignore="MissingTranslation">MMPX</string>
+    <string name="bitmap_upscaling_edge_aware" tools:ignore="MissingTranslation">xBR Lv3</string>
+    <string name="render_shader_effects">Efectes de shader</string>
+    <string name="render_pipeline_title">Canalització de renderització</string>
+    <string name="render_shader_preset">Preajust de shader</string>
+    <string name="render_shader_picker_help">Combina efectes integrats i els teus shaders heretats en una pila ordenada.</string>
+    <string name="render_shader_requires_gles">Els shaders es desen, però només s’apliquen quan OpenGL ES està seleccionat.</string>
+    <string name="render_shader_missing">El shader seleccionat no és a la biblioteca. Tria un altre preajust o restaura’n els fitxers.</string>
+    <string name="render_shader_parameters">Paràmetres del shader</string>
+    <string name="render_shader_reset_parameters">Restableix els paràmetres</string>
+    <string name="render_shader_passes">Passades de shader</string>
+    <string name="render_shader_pass_count"><xliff:g id="count" example="2">%1$d</xliff:g> passades</string>
+    <string name="render_shader_pass_hint">Consulta les etapes del preajust GLSLP seleccionat.</string>
+    <string name="render_pass_filter">Filtratge d’entrada</string>
+    <string name="render_pass_output">Mida de sortida (amplada × alçada)</string>
+    <string name="render_pipeline_unavailable">Preajust no disponible</string>
+    <string name="render_game_output">Sortida del joc</string>
+    <string name="render_logical_screen_help">Mida lògica notificada al joc.</string>
+    <string name="render_internal_resolution">Resolució interna</string>
+    <string name="render_internal_unavailable">Només original (1×). Les resolucions de renderització més altes no estan disponibles amb aquesta configuració.</string>
+    <string name="render_display_renderer">Renderitzador de presentació</string>
+    <string name="render_shader_processing">Processament de shaders</string>
+    <string name="render_display_scaling">Escalament de pantalla</string>
+    <string name="render_display_viewport">Àrea de visualització del joc</string>
+    <string name="render_texture_filtering">Filtre d’escala de pantalla</string>
+    <string name="render_texture_filtering_help">Tria Més proper o Lineal per a la imatge final del joc. Els efectes poden anul·lar-lo.</string>
+    <string name="render_viewport_note">La mida de l’àrea de visualització es calcula a partir de la disposició de la pantalla abans de planificar les passades de shader. Les fletxes mostren el flux de la imatge, no l’ordre de càlcul de la disposició.</string>
+    <string name="render_pipeline_help">Observa com arriba el fotograma del joc a la pantalla i edita cada etapa.</string>
+    <string name="render_no_shader">Tria un preajust per canviar l’aspecte del joc.</string>
+    <string name="render_shader_adjust">Ajusta els paràmetres</string>
+    <string name="render_legacy_tuning_hint">Ajusta amb precisió aquest efecte heretat.</string>
+    <string name="render_shader_customization">Personalitza</string>
+    <string name="render_adjustable_count">Paràmetres ajustables: <xliff:g id="count" example="3">%1$d</xliff:g></string>
+    <string name="render_pass_summary"><xliff:g id="count" example="3">%1$d</xliff:g> etapes · Definides pel preajust</string>
+    <string name="render_shader_preset_note">Les etapes del shader les defineix el preajust. Pots inspeccionar-les sense canviar-ne l’ordre.</string>
+    <string name="render_parameters_hint">Mou un control lliscant per ajustar-ne el valor. Els canvis es desen quan el deixes anar.</string>
+    <string name="render_pass_readonly">Les etapes s’executen en aquest ordre. El filtratge d’entrada i l’escala de sortida provenen del preajust seleccionat.</string>
+    <string name="render_pipeline_intro">El recorregut des de la memòria intermèdia de fotogrames del joc fins a la pantalla.</string>
+    <string name="render_native_short">Original (1×)</string>
+    <string name="render_expand_passes">Mostra les etapes</string>
+    <string name="render_collapse_passes">Amaga les etapes</string>
+    <string name="render_view_all_passes">Detalls de les etapes</string>
+    <string name="render_pipeline_filter_summary">Filtratge de textures: <xliff:g id="shader_name" example="CRT Classic">%1$s</xliff:g></string>
+    <string name="render_pipeline_note">La disposició de la pantalla determina l’àrea de visualització abans de planificar les passades de shader. Els passos mostren el flux de la imatge.</string>
+    <string name="render_shader_change">Tria un altre efecte</string>
+    <string name="render_custom_pipeline">Canalització personalitzada</string>
+    <string name="render_custom_pipeline_hint">Combina shaders GLSL independents de la carpeta de shaders.</string>
+    <string name="render_custom_order_help">Els efectes s’executen de dalt a baix. La configuració GLSLP heretada continua activa llevat que la canviïs.</string>
+    <string name="render_custom_empty">Afegeix un shader per començar una cadena personalitzada.</string>
+    <string name="render_custom_stage_count"><xliff:g id="count" example="3">%1$d</xliff:g> etapes de shader personalitzades</string>
+    <string name="render_custom_add">Afegeix un shader</string>
+    <string name="render_custom_add_hint">Tria una font .glsl independent externa.</string>
+    <string name="render_custom_no_sources">No s’han trobat shaders heretats. Afegeix fitxers de shader .ini a la carpeta de shaders i torna a obrir Configuració.</string>
+    <string name="render_custom_scale">Sortida: <xliff:g id="scale" example="2">%1$d</xliff:g>× l’etapa anterior</string>
+    <string name="render_custom_output_scale">Mida de sortida per a l’etapa següent</string>
+    <string name="render_custom_final_viewport">Sortida final: mostrada a la pantalla</string>
+    <string name="render_custom_filter">Filtre d’entrada: <xliff:g id="shader_name" example="CRT Classic">%1$s</xliff:g></string>
+    <string name="render_custom_up">Amunt</string>
+    <string name="render_custom_down">Avall</string>
+    <string name="render_custom_remove">Suprimeix</string>
+    <string name="render_custom_cancel">Cancel·la</string>
+    <string name="render_custom_save">Desa</string>
+    <string name="render_custom_default">Predeterminat</string>
+    <string name="render_custom_nearest">Més proper</string>
+    <string name="render_custom_linear">Lineal</string>
+    <string name="render_custom_checking">S’estan comprovant els fitxers de shader…</string>
+    <string name="render_active_shader">Efecte actiu</string>
+    <string name="render_shader_off">Desactivat</string>
+    <string name="render_edit_custom_pipeline">Edita la cadena de shaders</string>
+    <string name="render_shader_unavailable">No disponible: <xliff:g id="shader_name" example="CRT Classic">%1$s</xliff:g></string>
+    <string name="render_no_shader_sources">No s’han trobat shaders. Afegeix fitxers de shader .ini heretats a la carpeta de shaders i torna a obrir Configuració.</string>
+    <string name="render_shader_mode">Mode de shader</string>
+    <string name="render_mode_selected">Seleccionat</string>
+    <string name="render_gles_shader_default">OpenGL ES utilitza la imatge original del joc quan els efectes de shader estan desactivats.</string>
+    <string name="render_shader_off_help">Sense efectes visuals addicionals.</string>
+    <string name="render_legacy_mode">Shader heretat</string>
+    <string name="render_legacy_mode_help">Tria un fitxer .ini de la carpeta de shaders.</string>
+    <string name="render_legacy_empty">No hi ha definicions de shader utilitzables en aquest fitxer .ini.</string>
+    <string name="render_legacy_select_variant">Tria un shader heretat</string>
+    <string name="render_legacy_variant_description">Definició de shader al fitxer .ini seleccionat</string>
+    <string name="render_preset_mode">Preajust GLSLP</string>
+    <string name="render_preset_mode_help">Carrega una canalització .glslp completa amb les seves pròpies passades.</string>
+    <string name="render_custom_pass_count">Nombre de passades</string>
+    <string name="render_custom_pass_number">Passada <xliff:g id="number" example="1">%1$d</xliff:g></string>
+    <string name="render_custom_pick_file">Tria un fitxer GLSL</string>
+    <string name="render_custom_add_pass">Augmenta el nombre de passades de shader</string>
+    <string name="render_custom_remove_pass">Redueix el nombre de passades de shader</string>
+    <string name="render_shader_selected_name">Actiu: <xliff:g id="shader_name" example="CRT Classic">%1$s</xliff:g></string>
+    <string name="render_shader_invalid_picker">No es pot utilitzar el fitxer seleccionat. Tria un fitxer .ini heretat dins de la carpeta de shaders.</string>
+    <string name="render_custom_mode">Tipus de shader</string>
+    <string name="render_custom_mode_legacy">Heretat</string>
+    <string name="render_custom_mode_glsl">GLSL</string>
+    <string name="render_custom_pick_legacy">Tria un shader heretat</string>
+    <string name="render_custom_preserve_size">Sortida: del preajust</string>
+    <string name="render_custom_loading">S’estan llegint les passades del preajust…</string>
+    <string name="render_custom_start_fresh">Comença sense preajust (descarta la configuració heretada)</string>
+    <string name="render_effect_default_settings">Configuració predeterminada</string>
+    <string name="render_effect_summary_more">+<xliff:g id="count" example="2">%1$d</xliff:g> més</string>
+    <string name="render_effect_legacy_author">De <xliff:g id="shader_name" example="CRT Classic">%1$s</xliff:g></string>
+    <string name="render_effect_legacy_source">Origen: <xliff:g id="shader_name" example="CRT Classic">%1$s</xliff:g></string>
+    <string name="render_effect_removed">S’ha suprimit l’efecte</string>
+    <string name="render_effect_undo">Desfés</string>
+    <string name="render_effect_catalog_hint">Toca un efecte per afegir-lo a la pila.</string>
+    <string name="render_effect_user_folder_hint">Els fitxers INI, VSH i FSH han de ser a la carpeta de shaders.</string>
+    <string name="render_effect_legacy_scale_note">Els shaders heretats es renderitzen a la resolució de l’àrea de visualització de la pantalla; els indicadors OutputResolution i Upscaling del fitxer .ini s’ignoren.</string>
+    <string name="render_effect_legacy_metadata_missing">No s’ha trobat la configuració del fitxer .ini d’aquest shader. És possible que el shader encara funcioni amb els seus fitxers font.</string>
+    <string name="render_effect_count"><xliff:g id="count" example="2">%1$d</xliff:g> actius</string>
+    <string name="render_effect_add">Afegeix un efecte</string>
+    <string name="render_effect_builtin">Efectes integrats</string>
+    <string name="render_effect_user">Els meus shaders</string>
+    <string name="render_effect_user_add">Explora fitxers .ini</string>
+    <string name="render_effect_user_empty">No s’ha trobat cap shader heretat a la carpeta de shaders.</string>
+    <string name="render_effect_user_file">Tria un fitxer .ini heretat</string>
+    <string name="render_effect_empty">Afegeix un efecte per personalitzar l’aspecte del joc.</string>
+    <string name="render_effect_hint">Els efectes s’executen de dalt a baix. Mantén premut i arrossega per reordenar.</string>
+    <string name="render_effect_move_up">Mou amunt</string>
+    <string name="render_effect_move_down">Mou avall</string>
+    <string name="render_effect_remove">Suprimeix l’efecte</string>
+    <string name="render_effect_no_parameters">Aquest efecte no té paràmetres ajustables.</string>
+    <string name="render_effect_parameter_number">Paràmetre <xliff:g id="count" example="2">%1$d</xliff:g></string>
+    <string name="render_effect_restore">Restableix els paràmetres</string>
+    <string name="render_effect_missing">No disponible: <xliff:g id="shader_name" example="CRT Classic">%1$s</xliff:g>. Aquest efecte integrat no està disponible en aquesta versió. Suprimeix-lo de la pila.</string>
+    <string name="render_effect_limit">La pila admet fins a 16 passades de shader (alguns efectes utilitzen diverses passades).</string>
+    <string name="render_effect_unavailable">No s’han pogut executar els efectes de shader. Es mostra la imatge original del joc. Prova amb menys efectes o amb una resolució de renderització més baixa.</string>
+    <string name="render_bitmap_memory_reduced">L’escalament de mapes de bits s’ha quedat sense memòria. S’utilitzaran les imatges originals o una escala més baixa. Prova amb una resolució de renderització més baixa o allibera memòria i reinicia.</string>
+    <string name="render_texture_memory_reduced">Ha fallat l’escalament de textures Micro3D. S’utilitzaran les textures originals. Prova amb una resolució de renderització més baixa o allibera memòria i reinicia.</string>
+    <string name="render_resolution_reduced">La resolució de renderització s’ha reduït de <xliff:g id="from_scale" example="4">%1$d</xliff:g>× a <xliff:g id="to_scale" example="2">%2$d</xliff:g>× per límits de memòria o de GPU. Prova amb un valor més baix o allibera memòria i reinicia.</string>
+    <string name="render_gpu_texture_limit">La imatge del joc supera el límit de mida de textures de la GPU fins i tot a 1×. Redueix la mida de la pantalla del MIDlet o canvia el mode gràfic.</string>
+    <string name="render_gpu_upload_failed">No s’ha pogut carregar la imatge del joc a la GPU. S’està tornant a provar. Prova de tancar altres aplicacions o canviar el mode gràfic.</string>
+    <string name="render_effect_gles">Els efectes es desen, però només es renderitzen amb OpenGL ES.</string>
+    <string name="render_effect_legacy_file_error">No s’ha pogut carregar un shader heretat vàlid des del fitxer .ini seleccionat.</string>
+    <string name="effect_color">Ajust del color</string>
+    <string name="effect_color_desc">Ajusta la brillantor, el contrast, la saturació, la gamma, el to de color i el mode monocrom.</string>
+    <string name="effect_vignette">Vinyeta</string>
+    <string name="effect_vignette_desc">Enfosqueix les vores per centrar l’atenció al mig.</string>
+    <string name="effect_sharpen">Nitidesa</string>
+    <string name="effect_sharpen_desc">Realça els detalls i les vores de la imatge.</string>
+    <string name="effect_cartoon">Cartoon suau</string>
+    <string name="effect_cartoon_desc">Simplifica els degradats de color i afegeix contorns suaus.</string>
+    <string name="effect_bloom">Resplendor</string>
+    <string name="effect_bloom_desc">Afegeix una resplendor suau al voltant de les zones brillants de la imatge.</string>
+    <string name="effect_crt_classic">CRT clàssic</string>
+    <string name="effect_crt_classic_desc">Imita un televisor CRT amb línies d’escaneig i un patró RGB.</string>
+    <string name="effect_crt_beam">Estretor del feix</string>
+    <string name="effect_brightness">Brillantor</string>
+    <string name="effect_contrast">Contrast</string>
+    <string name="effect_saturation">Saturació</string>
+    <string name="effect_strength">Intensitat</string>
+    <string name="effect_color_levels">Nivells de color</string>
+    <string name="effect_edge">Intensitat de les vores</string>
+    <string name="effect_threshold">Llindar de brillantor</string>
+    <string name="effect_radius">Radi de desenfocament</string>
+    <string name="effect_mask_strength">Intensitat de la màscara</string>
+    <string name="effect_scan_strength">Intensitat de les línies d’escaneig</string>
+    <string name="effect_bright_boost">Realç de brillantor</string>
+    <string name="effect_lcd">LCD</string>
+    <string name="effect_lcd_desc">Imita la quadrícula de píxels i els subpíxels d’una pantalla LCD en color clàssica.</string>
+    <string name="effect_lcd_grid">Intensitat de la quadrícula</string>
+    <string name="effect_lcd_subpixel">Subpíxels RGB</string>
+    <string name="effect_lcd_brightness">Brillantor LCD</string>
+    <string name="effect_scanlines">Línies d’escaneig lleugeres</string>
+    <string name="effect_scanlines_desc">Afegeix línies horitzontals subtils com en una pantalla CRT.</string>
+    <string name="effect_line_width">Estretor de línia</string>
+    <string name="effect_gamma">Gamma</string>
+    <string name="effect_temperature">Temperatura</string>
+    <string name="effect_tint">Matís</string>
+    <string name="effect_monochrome">Monocrom</string>
+    <string name="effect_depth">Profunditat de color i tramat</string>
+    <string name="effect_depth_desc">Limita la paleta de colors amb tramat opcional per a un aspecte retro.</string>
+    <string name="effect_depth_format">Format de color de pantalla</string>
+    <string name="effect_depth_rgb444">RGB444 · 4.096 colors</string>
+    <string name="effect_depth_rgb565">RGB565 · 65.536 colors</string>
+    <string name="effect_depth_rgb666">RGB666 · 262.144 colors</string>
+    <string name="effect_dither_mode">Patró de tramat</string>
+    <string name="effect_dither_none">Desactivat</string>
+    <string name="effect_dither_bayer4">Bayer 4×4</string>
+    <string name="effect_dither_bayer8">Bayer 8×8</string>
+    <string name="effect_dither_strength">Intensitat del tramat</string>
+    <string name="effect_mono_display">Pantalla monocroma</string>
+    <string name="effect_mono_display_desc">Imita pantalles en blanc i negre, verdes o ambre amb 2 o 4 tons.</string>
+    <string name="effect_mono_palette">Color LCD</string>
+    <string name="effect_mono_bw">Blanc i negre</string>
+    <string name="effect_mono_green">LCD verd</string>
+    <string name="effect_mono_amber">LCD ambre</string>
+    <string name="effect_mono_tones">Nombre de tons</string>
+    <string name="effect_mono_two">2 tons</string>
+    <string name="effect_mono_four">4 tons</string>
+</resources>

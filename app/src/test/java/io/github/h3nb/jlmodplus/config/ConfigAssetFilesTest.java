@@ -136,7 +136,7 @@ public class ConfigAssetFilesTest {
         try {
             ConfigAssetFiles.importFile(root, ConfigAssetFiles.Kind.SOUNDBANK, source);
             fail("invalid content must be rejected");
-        } catch (IOException expected) {
+        } catch (ConfigAssetFiles.InvalidAssetException expected) {
             assertEquals(0, ConfigAssetFiles.directory(root,
                     ConfigAssetFiles.Kind.SOUNDBANK).list().length);
         }

@@ -1,0 +1,47 @@
+<?xml version="1.0" encoding="utf-8"?>
+<!-- Shared UI actions, generic labels, dialogs, and About screen. -->
+<resources xmlns:xliff="urn:oasis:names:tc:xliff:document:1.2">
+    <string name="about">Om</string>
+    <string name="about_message">Kør klassiske apps og spil, organiser MIDlets i dit bibliotek, og tilpas kontroller, skærm, lyd og ydeevne. JL-Mod Plus er gratis og open source.</string>
+    <string name="about_subtitle">Java ME-emulator til Android</string>
+    <string name="about_compatibility">Kompatibiliteten afhænger af MIDlet’en, enheden og de understøttede Java ME-API’er. Nogle apps fungerer muligvis anderledes end på de oprindelige enheder.</string>
+    <string name="about_lineage_title">Projektets oprindelse</string>
+    <string name="about_build_title">Build-oplysninger</string>
+    <string name="about_version_label">Version</string>
+    <string name="about_build_label">Build</string>
+    <string name="about_revision_label">Kilderevision</string>
+    <string name="about_links_title">Projekt og licenser</string>
+    <string name="about_github_link_copied">Ingen browser fundet. GitHub-linket er kopieret til udklipsholderen.</string>
+    <string name="about_github_browser_unavailable">Ingen browser fundet til at åbne GitHub.</string>
+    <string name="about_lineage">JL-Mod Plus er en uafhængig fork af JL-Mod af woesss (Yury Kharchenko). JL-Mod er baseret på J2ME Loader af Nikita Shakarun, som stammer fra NaikSoftwares J2meLoader.</string>
+    <string name="about_evolution">JL-Mod Plus bygger videre på det grundlag med en moderne brugerflade, et mere avanceret MIDlet-bibliotek, nye funktioner og understøttelse af nyere Android-versioner.</string>
+    <string name="action_back">Tilbage</string>
+    <string name="action_settings">Indstillinger</string>
+    <string name="CANCEL_CMD">Annuller</string>
+    <string name="change">Skift</string>
+    <string name="choose">Vælg</string>
+    <string name="close">Luk</string>
+    <string name="cmd_menu">Menu</string>
+    <string name="CONFIRMATION_REQUIRED">Bekræftelse påkrævet</string>
+    <string name="create">Opret</string>
+    <string name="default_label"><xliff:g id="name" example="Example">%1$s</xliff:g> (standard)</string>
+    <string name="dismiss">Afvis</string>
+    <string name="edit">Rediger</string>
+    <string name="error">Fejl</string>
+    <string name="error_name">Angiv et navn.</string>
+    <string name="exit">Afslut</string>
+    <string name="help">Hjælp</string>
+    <string name="install">Installer</string>
+    <string name="licenses">Licenser</string>
+    <string name="licenses_unavailable">Licensoplysninger er ikke tilgængelige.</string>
+    <string name="loading_info">Indlæser oplysninger…</string>
+    <string name="more">Mere</string>
+    <string name="not_saved_exists">Findes allerede</string>
+    <string name="reset">Nulstil</string>
+    <string name="retry">Prøv igen</string>
+    <string name="save">Gem</string>
+    <string name="saved">Gemte <xliff:g id="name" example="Example">%1$s</xliff:g></string>
+    <string name="START_CMD">Start</string>
+    <string name="warning">Advarsel</string>
+    <string name="removed">Fjernede <xliff:g id="name" example="Example">%1$s</xliff:g></string>
+</resources>

@@ -1,0 +1,116 @@
+<?xml version="1.0" encoding="utf-8"?>
+<!-- Active MIDlet runtime session, screenshots, logs, crash recovery, and diagnostic reports. -->
+<resources xmlns:tools="http://schemas.android.com/tools" xmlns:xliff="urn:oasis:names:tc:xliff:document:1.2">
+    <string name="action_keyboard_ime">Toetsenbord (IME)</string>
+    <string name="action_lock_orientation">Schermrotatie vergrendelen</string>
+    <string name="runtime_replacement_failed">Kan de actieve MIDlet niet stoppen. Probeer de nieuwe opnieuw te openen.</string>
+    <string name="runtime_restart" tools:ignore="MissingTranslation">Opnieuw starten</string>
+    <string name="runtime_restart_confirmation" tools:ignore="MissingTranslation">Deze MIDlet opnieuw starten? Niet-opgeslagen voortgang kan verloren gaan.</string>
+    <string name="FORCE_CLOSE_CONFIRMATION">Deze MIDlet stoppen? Niet-opgeslagen voortgang kan verloren gaan.</string>
+    <string name="runtime_preset_save_destination">Opslaan in</string>
+    <string name="runtime_preset_apply_destination">Toepassen op</string>
+    <string name="runtime_preset_this_midlet_only">Alleen deze MIDlet</string>
+    <string name="runtime_preset_update_destination"><xliff:g id="profile_name" example="Action Games">%1$s</xliff:g> bijwerken</string>
+    <string name="runtime_preset_local_explanation">Alleen de virtuele bediening van deze MIDlet wordt gewijzigd.</string>
+    <string name="runtime_preset_update_explanation">Werk de indeling van de virtuele bediening in <xliff:g id="profile_name" example="Action Games">%1$s</xliff:g> bij.\nAndere MIDlets die aan dit profiel zijn gekoppeld, krijgen de nieuwe indeling bij de volgende start.</string>
+    <string name="runtime_layout_apply_title"><xliff:g id="name" example="Example">%1$s</xliff:g> toepassen?</string>
+    <string name="runtime_apply">Toepassen</string>
+    <string name="runtime_preset_update_failed">Opgeslagen voor deze MIDlet, maar <xliff:g id="profile_name" example="Action Games">%1$s</xliff:g> kon niet worden bijgewerkt.</string>
+    <string name="runtime_preset_update_unlinked"><xliff:g id="profile_name" example="Action Games">%1$s</xliff:g> is bijgewerkt, maar deze MIDlet ontvangt geen toekomstige updates meer van dit profiel.</string>
+    <string name="msg_immediate_mode_disabled">Directe verwerking is uitgeschakeld omdat event-callbacks te diep genest waren.</string>
+    <string name="msg_press_again_to_close">Druk nogmaals om te sluiten</string>
+    <string name="save_log">Logboek opslaan</string>
+    <string name="take_screenshot">Screenshot maken</string>
+    <!-- Crash-report UI remains translatable; locales without coverage fall back to default English. -->
+    <string name="crash_reports">Diagnostische rapporten</string>
+    <string name="diagnostic_report">Diagnostisch rapport</string>
+    <string name="view_reports">Diagnostische rapporten bekijken</string>
+    <string name="crash_reports_empty">Geen lokale diagnostische rapporten</string>
+    <string name="crash_reports_loading">Diagnostische rapporten laden</string>
+    <string name="crash_report_midlet_failure">MIDlet-sessiefout</string>
+    <string name="crash_report_java_report">Java-diagnostisch rapport</string>
+    <string name="crash_report_process_exit">Procesafsluitingsrapport</string>
+    <string name="crash_report_list_subtitle"><xliff:g id="report_type" example="Java crash">%1$s</xliff:g> · <xliff:g id="timestamp" example="Nov 25, 09:40">%2$s</xliff:g></string>
+    <plurals name="crash_reports_selected_count">
+        <item quantity="one"><xliff:g id="count" example="3">%1$d</xliff:g> geselecteerd</item>
+        <item quantity="other"><xliff:g id="count" example="3">%1$d</xliff:g> geselecteerd</item>
+    </plurals>
+    <string name="copy_report">Kopiëren</string>
+    <string name="report_on_github">Melden op GitHub</string>
+    <string name="delete_report">Verwijderen</string>
+    <string name="share_selected_reports" tools:ignore="MissingTranslation">Geselecteerde rapporten delen</string>
+    <string name="delete_selected_reports">Geselecteerde rapporten verwijderen</string>
+    <string name="crash_report_copied">Rapport gekopieerd</string>
+    <string name="crash_report_bundle_preparing">Diagnostisch pakket voorbereiden…</string>
+    <string name="crash_report_bundle_ready_title">Diagnostisch pakket gereed</string>
+    <string name="crash_report_bundle_ready_message"><xliff:g id="name" example="Example">%1$s</xliff:g>\n\nOpgeslagen in Downloads → JL-Mod Plus Diagnostics.\n\nControleer het bestand op gevoelige informatie en voeg het toe voordat je het GitHub-issue indient. Het bestand wordt openbaar zodra je het toevoegt.</string>
+    <string name="locate_bundle">Pakket zoeken</string>
+    <string name="open_github">GitHub openen</string>
+    <string name="crash_report_bundle_failed">Kan het diagnostische pakket niet voorbereiden.</string>
+    <string name="crash_report_locate_failed">Geen bestandskiezer beschikbaar om het diagnostische pakket te zoeken.</string>
+    <string name="crash_report_bundle_cleanup_failed">Het gegenereerde pakket kon niet worden verwijderd. Het diagnostische rapport is behouden.</string>
+    <string name="crash_report_github_unavailable">Geen browser of app gevonden om het GitHub-issueformulier te openen.</string>
+    <string name="crash_report_delete_title">Diagnostisch rapport verwijderen?</string>
+    <string name="crash_report_delete_message">Hiermee worden het diagnostische rapport en eventuele gegenereerde pakketten permanent van dit apparaat verwijderd. Bestanden die al elders zijn geüpload, blijven behouden.</string>
+    <plurals name="crash_reports_batch_delete_title">
+        <item quantity="one"><xliff:g id="count" example="3">%1$d</xliff:g> diagnostisch rapport verwijderen?</item>
+        <item quantity="other"><xliff:g id="count" example="3">%1$d</xliff:g> diagnostische rapporten verwijderen?</item>
+    </plurals>
+    <string name="crash_reports_batch_delete_message">Hiermee worden de geselecteerde diagnostische rapporten en eventuele gegenereerde pakketten permanent van dit apparaat verwijderd. Bestanden die al elders zijn geüpload, blijven behouden.</string>
+    <string name="crash_report_delete_failed">Kan het rapport niet verwijderen.</string>
+    <string name="crash_report_unavailable">Dit rapport is niet meer beschikbaar.</string>
+    <string name="process_exit_recovery_title">Onverwachte procesafsluiting</string>
+    <string name="process_exit_recovery_message">JL-Mod Plus is in de vorige sessie onverwacht gestopt (<xliff:g id="reason" example="Java crash">%1$s</xliff:g>). Diagnostische gegevens zijn lokaal opgeslagen.</string>
+    <string name="process_exit_recovery_message_midlet">Een MIDlet-proces is in de vorige sessie onverwacht gestopt (<xliff:g id="reason" example="Java crash">%1$s</xliff:g>). Diagnostische gegevens zijn lokaal opgeslagen.</string>
+    <string name="process_exit_recovery_message_named"><xliff:g id="app_name" example="Bounce Tales">%1$s</xliff:g> is in de vorige sessie onverwacht gestopt (<xliff:g id="reason" example="Native crash">%2$s</xliff:g>). Diagnostische gegevens zijn lokaal opgeslagen.</string>
+    <string name="select_all_reports">Alle rapporten selecteren</string>
+    <string name="clear_report_selection">Rapportselectie wissen</string>
+    <string name="runtime_memory_button_short" tools:ignore="MissingTranslation">Geheugenknop</string>
+    <string name="runtime_action_on" tools:ignore="MissingTranslation">Aan</string>
+    <string name="runtime_action_off" tools:ignore="MissingTranslation">Uit</string>
+    <string name="reconverting_wait">Deze MIDlet vereist een eenmalige compatibiliteitsconversie voordat deze kan starten.</string>
+    <string name="reconversion_done_with_warning">Compatibiliteitsconversie voltooid met waarschuwingen.</string>
+    <string name="reconversion_error_summary">Kan deze MIDlet niet automatisch converteren.</string>
+    <string name="runtime_invalid_intent">Ongeldig startverzoek: het MIDlet-pad ontbreekt.</string>
+    <string name="runtime_storage_in_use">MIDlet-opslag is al in gebruik door een andere runtime.</string>
+    <string name="runtime_installation_changed">Kan deze MIDlet niet voorbereiden om te starten.</string>
+    <string name="runtime_storage_unavailable">Kan MIDlet-opslag niet voorbereiden.</string>
+    <string name="runtime_no_midlets">Geen MIDlets gevonden in deze app.</string>
+    <!-- Runtime grouped controls derive body, accent, outline, icon, and selected-icon colors from the existing virtual-control appearance settings. -->
+    <string name="runtime_virtual_controls_title">Virtuele bediening</string>
+    <string name="runtime_virtual_controls_dpad">D-pad</string>
+    <string name="runtime_virtual_controls_analog">Analoge stick</string>
+    <string name="runtime_virtual_controls_edit">Indeling bewerken</string>
+    <string name="runtime_virtual_controls_edit_guide_title">Handleiding indeling bewerken</string>
+    <string name="runtime_virtual_controls_edit_guide_message">Sleep bedieningselementen om ze te verplaatsen. Beweeg voor knoppen twee vingers horizontaal of verticaal om de breedte of hoogte te wijzigen, of diagonaal om beide te wijzigen. Knijp om de D-pad of analoge stick proportioneel te schalen. Tik op Gereed wanneer je klaar bent.</string>
+    <string name="runtime_virtual_controls_edit_guide_dont_show_again">Niet meer weergeven</string>
+    <string name="runtime_virtual_controls_switch_layout">Bedieningsindeling kiezen</string>
+    <string name="runtime_virtual_controls_show_controls">Zichtbare bediening kiezen</string>
+    <string name="runtime_virtual_controls_template_dpad_standard">Standaard D-pad</string>
+    <string name="runtime_virtual_controls_template_analog_standard">Standaard analoge stick</string>
+    <string name="screenshot_save_failed">Kan screenshot niet opslaan.</string>
+    <!-- %1$s is the saved screenshot's filesystem path. New key replaces the legacy prefix contract. -->
+    <string name="screenshot_saved_path">Screenshot opgeslagen in <xliff:g id="path" example="Pictures/Bounce Tales/Screenshot_20261125-103000.png">%1$s</xliff:g></string>
+    <!-- Deliberate English fallback until reviewed translations are available. -->
+    <string name="log_save_success" tools:ignore="MissingTranslation"><xliff:g id="name" example="Example">%1$s</xliff:g> opgeslagen in Downloads → JL-Mod Plus Diagnostics.</string>
+    <string name="log_save_partial" tools:ignore="MissingTranslation">Gedeeltelijk logboek opgeslagen als <xliff:g id="name" example="Example">%1$s</xliff:g> in Downloads → JL-Mod Plus Diagnostics.</string>
+    <string name="log_save_empty" tools:ignore="MissingTranslation">Er zijn geen app-logrecords beschikbaar in de Android-buffer.</string>
+    <string name="log_save_timeout" tools:ignore="MissingTranslation">Time-out bij het verzamelen van het logboek. Er is geen bestand opgeslagen.</string>
+    <string name="log_save_failed">Kan logboek niet opslaan.</string>
+    <string name="runtime_midlet_list_failed">Kan de MIDlet-lijst van deze app niet lezen.</string>
+    <string name="diagnostic_reason_java_crash">Java-crash</string>
+    <string name="diagnostic_reason_native_crash">Native crash</string>
+    <string name="diagnostic_reason_anr">App reageert niet</string>
+    <string name="diagnostic_reason_signal">Beëindiging door signaal</string>
+    <string name="diagnostic_reason_unknown">Onbekende oorzaak</string>
+    <string name="crash_reports_delete_failed">Sommige diagnostische rapporten konden niet worden verwijderd. Andere zijn mogelijk wel verwijderd.</string>
+    <string name="crash_reports_bundle_cleanup_failed">Sommige gegenereerde pakketten konden niet worden verwijderd. De bijbehorende diagnostische rapporten zijn behouden. Andere rapporten zijn mogelijk verwijderd.</string>
+    <string name="runtime_chrome_update_failed">Kan weergave-instellingen niet bijwerken. Probeer het opnieuw.</string>
+    <string name="runtime_fullscreen_update_failed">Kan geen toegang krijgen tot de instelling voor volledig scherm. Probeer het opnieuw.</string>
+    <string name="runtime_camera_use_front">Camera aan voorzijde gebruiken</string>
+    <string name="runtime_camera_use_rear">Camera aan achterzijde gebruiken</string>
+    <string name="runtime_camera_switch_failed">Kan niet wisselen van camera.</string>
+    <string name="runtime_camera_switch_recording" tools:ignore="MissingTranslation">Stop de opname voordat je van camera wisselt.</string>
+    <string name="date_field_not_set" tools:ignore="MissingTranslation">Niet ingesteld</string>
+    <string name="date_field_use_displayed_value" tools:ignore="MissingTranslation">Deze waarde gebruiken</string>
+</resources>

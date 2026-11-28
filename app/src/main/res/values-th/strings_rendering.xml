@@ -1,0 +1,212 @@
+<?xml version="1.0" encoding="utf-8"?>
+<!-- Rendering pipeline, internal resolution, bitmap upscaling, shaders, and built-in visual effects. -->
+<resources xmlns:tools="http://schemas.android.com/tools" xmlns:xliff="urn:oasis:names:tc:xliff:document:1.2">
+    <string name="identity_filter">ไม่มี (เร็วที่สุด)</string>
+    <string name="invalid_resolution_not_saved">ความละเอียดไม่ถูกต้อง ไม่ได้บันทึกค่าที่ตั้งไว้</string>
+    <string name="msg_error_loading_shader">ไม่รองรับเชดเดอร์นี้ กำลังใช้เชดเดอร์เริ่มต้น</string>
+    <string name="parallel_screen_redrawing">อัปเดตหน้าจอแบบอะซิงโครนัส</string>
+    <string name="shader_tuning">ปรับแต่งเชดเดอร์</string>
+    <string name="SWAP_SIZES">สลับความกว้างและความสูง</string>
+    <string name="fps_limit_maximum">สูงสุด</string>
+    <string name="remove_screen_preset">ลบค่าความละเอียดที่ตั้งไว้</string>
+    <string name="perf_overlay_position_help">เลือกมุมหน้าจอ</string>
+    <string name="perf_overlay_top_left">บนซ้าย</string>
+    <string name="perf_overlay_top_right">บนขวา</string>
+    <string name="perf_overlay_bottom_left">ล่างซ้าย</string>
+    <string name="perf_overlay_bottom_right">ล่างขวา</string>
+    <string name="internal_resolution_title" tools:ignore="MissingTranslation">ความละเอียดการเรนเดอร์</string>
+    <string name="internal_resolution_auto" tools:ignore="MissingTranslation">อัตโนมัติ</string>
+    <string name="internal_resolution_description" tools:ignore="MissingTranslation">กำหนดความละเอียดสำหรับการเรนเดอร์ 2D และ 3D ที่รองรับ โหมดอัตโนมัติจะเลือกอัตราส่วนตามพื้นที่แสดงผลและข้อจำกัดของอุปกรณ์ เริ่ม MIDlet ใหม่เพื่อใช้การเปลี่ยนแปลง</string>
+    <string name="bitmap_upscaling_title" tools:ignore="MissingTranslation">การเพิ่มความละเอียดบิตแมป</string>
+    <string name="bitmap_upscaling_description" tools:ignore="MissingTranslation">MMPX และ xBR Lv3 ช่วยปรับปรุงภาพ 2D ที่แก้ไขไม่ได้และเท็กซ์เจอร์แบบทึบที่แก้ไขไม่ได้ของโมเดล Micro3D โดยไม่เปลี่ยนเท็กซ์เจอร์ M3G เริ่ม MIDlet ใหม่เพื่อใช้การเปลี่ยนแปลง</string>
+    <string name="bitmap_upscaling_nearest" tools:ignore="MissingTranslation">Nearest neighbor</string>
+    <string name="bitmap_upscaling_bilinear" tools:ignore="MissingTranslation">Bilinear</string>
+    <string name="bitmap_upscaling_mmpx" tools:ignore="MissingTranslation">MMPX</string>
+    <string name="bitmap_upscaling_edge_aware" tools:ignore="MissingTranslation">xBR Lv3</string>
+    <!-- Prototyping only: localized UI copy is pending design review. -->
+    <string name="render_shader_effects">เอฟเฟกต์เชดเดอร์</string>
+    <string name="render_pipeline_title">ไปป์ไลน์การเรนเดอร์</string>
+    <string name="render_shader_preset">พรีเซ็ตเชดเดอร์</string>
+    <string name="render_shader_picker_help">รวมเชดเดอร์ในตัวและเชดเดอร์รุ่นเก่าของคุณเข้าด้วยกันเป็นลำดับเอฟเฟกต์</string>
+    <string name="render_shader_requires_gles">บันทึกเชดเดอร์ไว้แล้ว แต่จะทำงานเมื่อเลือก OpenGL ES เท่านั้น</string>
+    <string name="render_shader_missing">ไม่พบเชดเดอร์ที่เลือกในคลัง เลือกพรีเซ็ตอื่นหรือกู้คืนไฟล์ของเชดเดอร์นั้น</string>
+    <string name="render_shader_parameters">พารามิเตอร์เชดเดอร์</string>
+    <string name="render_shader_reset_parameters">รีเซ็ตพารามิเตอร์</string>
+    <string name="render_shader_passes">รอบการทำงานของเชดเดอร์</string>
+    <string name="render_shader_pass_count"><xliff:g id="count" example="2">%1$d</xliff:g> รอบ</string>
+    <string name="render_shader_pass_hint">ดูขั้นตอนต่างๆ จากพรีเซ็ต GLSLP ที่เลือก</string>
+    <string name="render_pass_filter">การกรองอินพุต</string>
+    <string name="render_pass_output">ขนาดเอาต์พุต (กว้าง × สูง)</string>
+    <string name="render_pipeline_unavailable">พรีเซ็ตไม่พร้อมใช้งาน</string>
+    <string name="render_game_output">เอาต์พุตของเกม</string>
+    <string name="render_logical_screen_help">ขนาดหน้าจอเชิงตรรกะที่รายงานให้เกมทราบ</string>
+    <string name="render_internal_resolution">ความละเอียดภายใน</string>
+    <string name="render_internal_unavailable">ต้นฉบับ (1×) เท่านั้น ไม่สามารถใช้ความละเอียดการเรนเดอร์ที่สูงขึ้นกับการกำหนดค่านี้ได้</string>
+    <string name="render_display_renderer">ตัวเรนเดอร์การแสดงผล</string>
+    <string name="render_shader_processing">การประมวลผลเชดเดอร์</string>
+    <string name="render_display_scaling">การปรับขนาดการแสดงผล</string>
+    <string name="render_display_viewport">พื้นที่แสดงผลเกม</string>
+    <string name="render_texture_filtering">ตัวกรองการปรับขนาดหน้าจอ</string>
+    <string name="render_texture_filtering_help">เลือกระหว่าง Nearest หรือ Linear สำหรับภาพเกมขั้นสุดท้าย เอฟเฟกต์อาจเขียนทับค่านี้</string>
+    <string name="render_viewport_note">ขนาดพื้นที่แสดงผลจะถูกกำหนดจากเลย์เอาต์หน้าจอก่อนวางแผนรอบเชดเดอร์ ลูกศรแสดงทิศทางของภาพ ไม่ใช่ลำดับการคำนวณเลย์เอาต์</string>
+    <string name="render_pipeline_help">ดูขั้นตอนที่เฟรมของเกมถูกส่งไปยังหน้าจอและแก้ไขแต่ละขั้น</string>
+    <string name="render_no_shader">เลือกพรีเซ็ตเพื่อเปลี่ยนลักษณะการแสดงผลของเกม</string>
+    <string name="render_shader_adjust">ปรับพารามิเตอร์</string>
+    <string name="render_legacy_tuning_hint">ปรับแต่งเอฟเฟกต์รุ่นเก่านี้</string>
+    <string name="render_shader_customization">ปรับแต่ง</string>
+    <string name="render_adjustable_count">พารามิเตอร์ที่ปรับได้: <xliff:g id="count" example="3">%1$d</xliff:g></string>
+    <string name="render_pass_summary"><xliff:g id="count" example="3">%1$d</xliff:g> ขั้นตอน · กำหนดโดยพรีเซ็ต</string>
+    <string name="render_shader_preset_note">ขั้นตอนของเชดเดอร์ถูกกำหนดโดยพรีเซ็ต คุณสามารถตรวจสอบได้โดยไม่เปลี่ยนลำดับ</string>
+    <string name="render_parameters_hint">เลื่อนแถบเพื่อปรับค่า การเปลี่ยนแปลงจะถูกบันทึกเมื่อคุณปล่อยนิ้ว</string>
+    <string name="render_pass_readonly">ขั้นตอนจะทำงานตามลำดับนี้ การกรองอินพุตและการปรับขนาดเอาต์พุตมาจากพรีเซ็ตที่เลือก</string>
+    <string name="render_pipeline_intro">เส้นทางจากเฟรมบัฟเฟอร์ของเกมไปยังหน้าจอของคุณ</string>
+    <string name="render_native_short">ต้นฉบับ (1×)</string>
+    <string name="render_expand_passes">แสดงขั้นตอน</string>
+    <string name="render_collapse_passes">ซ่อนขั้นตอน</string>
+    <string name="render_view_all_passes">รายละเอียดขั้นตอน</string>
+    <string name="render_pipeline_filter_summary">การกรองเทกซ์เจอร์: <xliff:g id="shader_name" example="CRT Classic">%1$s</xliff:g></string>
+    <string name="render_pipeline_note">เลย์เอาต์การแสดงผลจะกำหนดพื้นที่แสดงผลก่อนวางแผนรอบเชดเดอร์ ขั้นตอนเหล่านี้แสดงทิศทางของภาพ</string>
+    <string name="render_shader_change">เลือกเอฟเฟกต์อื่น</string>
+    <string name="render_custom_pipeline">ไปป์ไลน์กำหนดเอง</string>
+    <string name="render_custom_pipeline_hint">รวมเชดเดอร์ GLSL แบบสแตนด์อโลนจากโฟลเดอร์ shaders ของคุณ</string>
+    <string name="render_custom_order_help">เอฟเฟกต์ทำงานจากบนลงล่าง การตั้งค่า GLSLP ที่สืบทอดมาจะยังคงมีผลเว้นแต่จะถูกแก้ไข</string>
+    <string name="render_custom_empty">เพิ่มเชดเดอร์เพื่อเริ่มต้นลำดับแบบกำหนดเอง</string>
+    <string name="render_custom_stage_count">ขั้นตอนเชดเดอร์กำหนดเอง <xliff:g id="count" example="3">%1$d</xliff:g> ขั้น</string>
+    <string name="render_custom_add">เพิ่มเชดเดอร์</string>
+    <string name="render_custom_add_hint">เลือกไฟล์ต้นฉบับ .glsl แบบสแตนด์อโลนจากภายนอก</string>
+    <string name="render_custom_no_sources">ไม่พบเชดเดอร์รุ่นเก่า เพิ่มไฟล์เชดเดอร์ .ini ลงในโฟลเดอร์ shaders แล้วเปิดการตั้งค่าอีกครั้ง</string>
+    <string name="render_custom_scale">เอาต์พุต: <xliff:g id="scale" example="2">%1$d</xliff:g>× ของขั้นก่อนหน้า</string>
+    <string name="render_custom_output_scale">ขนาดเอาต์พุตสำหรับขั้นถัดไป</string>
+    <string name="render_custom_final_viewport">เอาต์พุตสุดท้าย: แสดงผลบนหน้าจอ</string>
+    <string name="render_custom_filter">ตัวกรองอินพุต: <xliff:g id="shader_name" example="CRT Classic">%1$s</xliff:g></string>
+    <string name="render_custom_up">ขึ้น</string>
+    <string name="render_custom_down">ลง</string>
+    <string name="render_custom_remove">นำออก</string>
+    <string name="render_custom_cancel">ยกเลิก</string>
+    <string name="render_custom_save">บันทึก</string>
+    <string name="render_custom_default">ค่าเริ่มต้น</string>
+    <string name="render_custom_nearest">Nearest</string>
+    <string name="render_custom_linear">Linear</string>
+    <string name="render_custom_checking">กำลังตรวจสอบไฟล์เชดเดอร์…</string>
+    <string name="render_active_shader">เอฟเฟกต์ที่ใช้งาน</string>
+    <string name="render_shader_off">ปิด</string>
+    <string name="render_edit_custom_pipeline">แก้ไขลำดับเชดเดอร์</string>
+    <string name="render_shader_unavailable">ไม่พร้อมใช้งาน: <xliff:g id="shader_name" example="CRT Classic">%1$s</xliff:g></string>
+    <string name="render_no_shader_sources">ไม่พบเชดเดอร์ เพิ่มไฟล์เชดเดอร์รุ่นเก่า .ini ลงในโฟลเดอร์ shaders แล้วเปิดการตั้งค่าอีกครั้ง</string>
+    <string name="render_shader_mode">โหมดเชดเดอร์</string>
+    <string name="render_mode_selected">เลือกแล้ว</string>
+    <string name="render_gles_shader_default">OpenGL ES จะใช้ภาพต้นฉบับของเกมเมื่อปิดเอฟเฟกต์เชดเดอร์</string>
+    <string name="render_shader_off_help">ไม่มีเอฟเฟกต์ภาพเพิ่มเติม</string>
+    <string name="render_legacy_mode">เชดเดอร์รุ่นเก่า</string>
+    <string name="render_legacy_mode_help">เลือกไฟล์ .ini จากโฟลเดอร์ shaders</string>
+    <string name="render_legacy_empty">ไม่มีคำจำกัดความเชดเดอร์ที่ใช้งานได้ในไฟล์ .ini นี้</string>
+    <string name="render_legacy_select_variant">เลือกเชดเดอร์รุ่นเก่า</string>
+    <string name="render_legacy_variant_description">คำจำกัดความเชดเดอร์ในไฟล์ .ini ที่เลือก</string>
+    <string name="render_preset_mode">พรีเซ็ต GLSLP</string>
+    <string name="render_preset_mode_help">โหลดไปป์ไลน์ .glslp ฉบับสมบูรณ์พร้อมรอบการทำงานในตัว</string>
+    <string name="render_custom_pass_count">จำนวนรอบ</string>
+    <string name="render_custom_pass_number">รอบที่ <xliff:g id="number" example="1">%1$d</xliff:g></string>
+    <string name="render_custom_pick_file">เลือกไฟล์ GLSL</string>
+    <string name="render_custom_add_pass">เพิ่มจำนวนรอบเชดเดอร์</string>
+    <string name="render_custom_remove_pass">ลดจำนวนรอบเชดเดอร์</string>
+    <string name="render_shader_selected_name">ใช้งานอยู่: <xliff:g id="shader_name" example="CRT Classic">%1$s</xliff:g></string>
+    <string name="render_shader_invalid_picker">ไม่สามารถใช้ไฟล์ที่เลือกได้ เลือกไฟล์ .ini รุ่นเก่าภายในโฟลเดอร์ shaders</string>
+    <string name="render_custom_mode">ประเภทเชดเดอร์</string>
+    <string name="render_custom_mode_legacy">รุ่นเก่า</string>
+    <string name="render_custom_mode_glsl">GLSL</string>
+    <string name="render_custom_pick_legacy">เลือกเชดเดอร์รุ่นเก่า</string>
+    <string name="render_custom_preserve_size">เอาต์พุต: ตามพรีเซ็ต</string>
+    <string name="render_custom_loading">กำลังอ่านรอบการทำงานของพรีเซ็ต…</string>
+    <string name="render_custom_start_fresh">เริ่มโดยไม่ใช้พรีเซ็ต (ละทิ้งการตั้งค่าที่สืบทอดมา)</string>
+    <string name="render_effect_default_settings">การตั้งค่าเริ่มต้น</string>
+    <string name="render_effect_summary_more">+อีก <xliff:g id="count" example="2">%1$d</xliff:g></string>
+    <string name="render_effect_legacy_author">โดย <xliff:g id="shader_name" example="CRT Classic">%1$s</xliff:g></string>
+    <string name="render_effect_legacy_source">แหล่งที่มา: <xliff:g id="shader_name" example="CRT Classic">%1$s</xliff:g></string>
+    <string name="render_effect_removed">นำเอฟเฟกต์ออกแล้ว</string>
+    <string name="render_effect_undo">เลิกทำ</string>
+    <string name="render_effect_catalog_hint">แตะเอฟเฟกต์เพื่อเพิ่มลงในรายการ</string>
+    <string name="render_effect_user_folder_hint">ไฟล์ INI, VSH และ FSH ต้องอยู่ในโฟลเดอร์ shaders</string>
+    <string name="render_effect_legacy_scale_note">เชดเดอร์รุ่นเก่าจะเรนเดอร์ที่ความละเอียดของพื้นที่แสดงผล โดยจะละเว้นแฟล็ก OutputResolution และ Upscaling ในไฟล์ .ini</string>
+    <string name="render_effect_legacy_metadata_missing">ไม่พบการตั้งค่าจากไฟล์ .ini ของเชดเดอร์นี้ แต่เชดเดอร์อาจยังทำงานได้โดยใช้ไฟล์ต้นฉบับ</string>
+    <string name="render_effect_count">ใช้งาน <xliff:g id="count" example="2">%1$d</xliff:g> รายการ</string>
+    <string name="render_effect_add">เพิ่มเอฟเฟกต์</string>
+    <string name="render_effect_builtin">เอฟเฟกต์ในตัว</string>
+    <string name="render_effect_user">เชดเดอร์ของฉัน</string>
+    <string name="render_effect_user_add">เรียกดูไฟล์ .ini</string>
+    <string name="render_effect_user_empty">ไม่พบเชดเดอร์รุ่นเก่าในโฟลเดอร์ shaders</string>
+    <string name="render_effect_user_file">เลือกไฟล์ .ini รุ่นเก่า</string>
+    <string name="render_effect_empty">เพิ่มเอฟเฟกต์เพื่อปรับแต่งภาพของเกม</string>
+    <string name="render_effect_hint">เอฟเฟกต์ทำงานจากบนลงล่าง กดค้างแล้วลากเพื่อจัดลำดับใหม่</string>
+    <string name="render_effect_move_up">เลื่อนขึ้น</string>
+    <string name="render_effect_move_down">เลื่อนลง</string>
+    <string name="render_effect_remove">นำเอฟเฟกต์ออก</string>
+    <string name="render_effect_no_parameters">เอฟเฟกต์นี้ไม่มีพารามิเตอร์ที่ปรับได้</string>
+    <string name="render_effect_parameter_number">พารามิเตอร์ที่ <xliff:g id="count" example="2">%1$d</xliff:g></string>
+    <string name="render_effect_restore">รีเซ็ตพารามิเตอร์</string>
+    <string name="render_effect_missing">ไม่พร้อมใช้งาน: <xliff:g id="shader_name" example="CRT Classic">%1$s</xliff:g> เอฟเฟกต์ในตัวนี้ไม่มีอยู่ในเวอร์ชันนี้ โปรดนำออกจากรายการ</string>
+    <string name="render_effect_limit">รายการรองรับรอบเชดเดอร์ได้สูงสุด 16 รอบ (บางเอฟเฟกต์ใช้หลายรอบ)</string>
+    <string name="render_effect_unavailable">ไม่สามารถเรียกใช้เอฟเฟกต์เชดเดอร์ได้ กำลังแสดงภาพต้นฉบับของเกม ลองลดจำนวนเอฟเฟกต์หรือลดความละเอียดการเรนเดอร์</string>
+    <string name="render_bitmap_memory_reduced">การเพิ่มความละเอียดบิตแมปมีหน่วยความจำไม่เพียงพอ จะใช้ภาพต้นฉบับหรืออัตราส่วนที่ต่ำลงแทน ลองลดความละเอียดการเรนเดอร์หรือเพิ่มพื้นที่หน่วยความจำ แล้วรีสตาร์ท</string>
+    <string name="render_texture_memory_reduced">การเพิ่มความละเอียดเทกซ์เจอร์ Micro3D ล้มเหลว จะใช้เทกซ์เจอร์ต้นฉบับแทน ลองลดความละเอียดการเรนเดอร์หรือเพิ่มพื้นที่หน่วยความจำ แล้วรีสตาร์ท</string>
+    <string name="render_resolution_reduced">ลดความละเอียดการเรนเดอร์จาก <xliff:g id="from_scale" example="4">%1$d</xliff:g>× เป็น <xliff:g id="to_scale" example="2">%2$d</xliff:g>× เนื่องจากข้อจำกัดด้านหน่วยความจำหรือ GPU ลองใช้ค่าที่ต่ำกว่าหรือเพิ่มพื้นที่หน่วยความจำ แล้วรีสตาร์ท</string>
+    <string name="render_gpu_texture_limit">ภาพเกมมีขนาดเกินขีดจำกัดของเท็กซ์เจอร์ GPU แม้ที่อัตราส่วน 1× ลดขนาดหน้าจอ MIDlet หรือเปลี่ยนโหมดกราฟิก</string>
+    <string name="render_gpu_upload_failed">ไม่สามารถอัปโหลดภาพเกมไปยัง GPU ได้ กำลังลองใหม่ ลองปิดแอปอื่นหรือเปลี่ยนโหมดกราฟิก</string>
+    <string name="render_effect_gles">บันทึกเอฟเฟกต์ไว้แล้ว แต่จะเรนเดอร์เฉพาะเมื่อใช้ OpenGL ES เท่านั้น</string>
+    <string name="render_effect_legacy_file_error">ไม่สามารถโหลดเชดเดอร์รุ่นเก่าที่ถูกต้องจากไฟล์ .ini ที่เลือกได้</string>
+    <string name="effect_color">ปรับแต่งสี</string>
+    <string name="effect_color_desc">ปรับความสว่าง คอนทราสต์ ความอิ่มตัว แกมมา โทนสี และขาวดำ</string>
+    <string name="effect_vignette">ขอบมืด (Vignette)</string>
+    <string name="effect_vignette_desc">ทำให้ขอบภาพมืดลงเพื่อดึงสายตาไปยังกึ่งกลาง</string>
+    <string name="effect_sharpen">เพิ่มความคมชัด</string>
+    <string name="effect_sharpen_desc">เน้นรายละเอียดและขอบของภาพให้คมชัดขึ้น</string>
+    <string name="effect_cartoon">การ์ตูนนุ่มนวล</string>
+    <string name="effect_cartoon_desc">ลดความซับซ้อนของการไล่ระดับสีและเพิ่มเส้นขอบแบบนุ่มนวล</string>
+    <string name="effect_bloom">แสงฟุ้ง (Bloom)</string>
+    <string name="effect_bloom_desc">เพิ่มแสงเรืองรองนุ่มนวลรอบส่วนที่สว่างของภาพ</string>
+    <string name="effect_crt_classic">CRT คลาสสิก</string>
+    <string name="effect_crt_classic_desc">จำลองทีวีจอ CRT พร้อมเส้นสแกนไลน์และรูปแบบสี RGB</string>
+    <string name="effect_crt_beam">ความแคบของลำแสง</string>
+    <string name="effect_brightness">ความสว่าง</string>
+    <string name="effect_contrast">คอนทราสต์</string>
+    <string name="effect_saturation">ความอิ่มตัวของสี</string>
+    <string name="effect_strength">ความเข้ม</string>
+    <string name="effect_color_levels">ระดับสี</string>
+    <string name="effect_edge">ความเข้มเส้นขอบ</string>
+    <string name="effect_threshold">เกณฑ์ความสว่าง</string>
+    <string name="effect_radius">รัศมีความเบลอ</string>
+    <string name="effect_mask_strength">ความเข้มของมาสก์</string>
+    <string name="effect_scan_strength">ความเข้มของสแกนไลน์</string>
+    <string name="effect_bright_boost">การเร่งความสว่าง</string>
+    <string name="effect_lcd">LCD</string>
+    <string name="effect_lcd_desc">จำลองตารางพิกเซลและซับพิกเซลของหน้าจอ LCD สีแบบคลาสสิก</string>
+    <string name="effect_lcd_grid">ความเข้มของตาราง</string>
+    <string name="effect_lcd_subpixel">ซับพิกเซล RGB</string>
+    <string name="effect_lcd_brightness">ความสว่าง LCD</string>
+    <string name="effect_scanlines">สแกนไลน์แบบเบา</string>
+    <string name="effect_scanlines_desc">เพิ่มเส้นแนวนอนจางๆ คล้ายหน้าจอ CRT</string>
+    <string name="effect_line_width">ความแคบของเส้น</string>
+    <string name="effect_gamma">แกมมา</string>
+    <string name="effect_temperature">อุณหภูมิสี</string>
+    <string name="effect_tint">โทนสี</string>
+    <string name="effect_monochrome">ขาวดำ</string>
+    <string name="effect_depth">ความลึกสีและการเกลี่ยสี</string>
+    <string name="effect_depth_desc">จำกัดจานสีพร้อมตัวเลือกการเกลี่ยสี (dithering) เพื่อภาพสไตล์ย้อนยุค</string>
+    <string name="effect_depth_format">รูปแบบสีของหน้าจอ</string>
+    <string name="effect_depth_rgb444">RGB444 · 4,096 สี</string>
+    <string name="effect_depth_rgb565">RGB565 · 65,536 สี</string>
+    <string name="effect_depth_rgb666">RGB666 · 262,144 สี</string>
+    <string name="effect_dither_mode">รูปแบบการเกลี่ยสี</string>
+    <string name="effect_dither_none">ปิด</string>
+    <string name="effect_dither_bayer4">Bayer 4×4</string>
+    <string name="effect_dither_bayer8">Bayer 8×8</string>
+    <string name="effect_dither_strength">ความเข้มการเกลี่ยสี</string>
+    <string name="effect_mono_display">หน้าจอสีเดียว</string>
+    <string name="effect_mono_display_desc">จำลองหน้าจอขาวดำ เขียว หรือเหลืองอำพันแบบ 2 หรือ 4 โทน</string>
+    <string name="effect_mono_palette">สีของ LCD</string>
+    <string name="effect_mono_bw">ขาวดำ</string>
+    <string name="effect_mono_green">LCD เขียว</string>
+    <string name="effect_mono_amber">LCD อำพัน</string>
+    <string name="effect_mono_tones">จำนวนโทนสี</string>
+    <string name="effect_mono_two">2 โทน</string>
+    <string name="effect_mono_four">4 โทน</string>
+</resources>

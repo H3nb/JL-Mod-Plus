@@ -4,6 +4,8 @@
  */
 package io.github.h3nb.jlmodplus.memory
 
+import io.github.h3nb.jlmodplus.R
+
 import org.junit.jupiter.api.Assertions.assertArrayEquals
 import org.junit.jupiter.api.Assertions.assertEquals
 import org.junit.jupiter.api.Assertions.assertFalse
@@ -286,20 +288,33 @@ class MemoryEditorModelsTest {
     }
 
     @Test fun mixedRemovalFeedbackPreservesIndependentBackendFailures() {
-        val success = memoryListRemovalOutcome(null, null)
+        fun outcome(savedError: String?, watchError: String?): MemoryListRemovalOutcome =
+            memoryListRemovalOutcome(savedError, watchError) { resource, detail ->
+                when (resource) {
+                    R.string.memory_bookmarks_removed -> {
+                        assertEquals(null, detail)
+                        "saved removed"
+                    }
+                    R.string.memory_list_watch_removed -> {
+                        assertEquals(null, detail)
+                        "watch removed"
+                    }
+                    R.string.memory_list_bookmark_removal_failed -> "saved failed: $detail"
+                    R.string.memory_list_watch_removal_failed -> "watch failed: $detail"
+                    else -> error("Unexpected resource: $resource")
+                }
+            }
+        val success = outcome(null, null)
         assertFalse(success.isError)
-        assertEquals("Bookmark removed; Session tracking removed", success.message)
-        val savedFailed = memoryListRemovalOutcome("Storage refused", null)
+        assertEquals("saved removed\nwatch removed", success.message)
+        val savedFailed = outcome("Storage refused", null)
         assertTrue(savedFailed.isError)
-        assertTrue(savedFailed.message.contains("Bookmark removal failed: Storage refused"))
-        assertTrue(savedFailed.message.contains("Session tracking removed"))
-        val watchFailed = memoryListRemovalOutcome(null, "Owner missing")
+        assertEquals("saved failed: Storage refused\nwatch removed", savedFailed.message)
+        val watchFailed = outcome(null, "Owner missing")
         assertTrue(watchFailed.isError)
-        assertTrue(watchFailed.message.contains("Bookmark removed"))
-        assertTrue(watchFailed.message.contains("Session tracking removal failed: Owner missing"))
-        val bothFailed = memoryListRemovalOutcome("I/O", "Session ended")
+        assertEquals("saved removed\nwatch failed: Owner missing", watchFailed.message)
+        val bothFailed = outcome("I/O", "Session ended")
         assertTrue(bothFailed.isError)
-        assertTrue(bothFailed.message.contains("Bookmark removal failed: I/O"))
-        assertTrue(bothFailed.message.contains("Session tracking removal failed: Session ended"))
+        assertEquals("saved failed: I/O\nwatch failed: Session ended", bothFailed.message)
     }
 }

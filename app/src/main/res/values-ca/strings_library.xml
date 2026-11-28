@@ -1,0 +1,494 @@
+<?xml version="1.0" encoding="utf-8"?>
+<!-- Biblioteca de MIDlets, col·leccions, editor de metadades, instal·lador per lots/individual, selector de fitxers i actualitzacions de l’aplicació. -->
+<resources xmlns:tools="http://schemas.android.com/tools" xmlns:xliff="urn:oasis:names:tc:xliff:document:1.2">
+    <string name="action_context_delete">Suprimeix</string>
+    <string name="action_context_rename">Canvia el nom</string>
+    <string name="action_context_shortcut">Afegeix una drecera</string>
+    <string name="action_reinstall">Reinstal·la</string>
+    <string name="alert_msg_workdir_not_exists">No s’ha trobat la carpeta de treball:\n<xliff:g id="path" example="/storage/emulated/0/JL-Mod-Plus">%1$s</xliff:g>\nVols crear-la o triar una altra carpeta?</string>
+    <string name="converting_wait">S’està convertint el JAR…</string>
+    <string name="create_apps_dir_failed">No s’ha pogut preparar la carpeta de treball a:\n<xliff:g id="path" example="/storage/emulated/0/JL-Mod-Plus">%1$s</xliff:g>\nTria una altra carpeta.</string>
+    <string name="install_done">Aplicació instal·lada.</string>
+    <string name="install_done_with_warning">Aplicació instal·lada amb avisos.</string>
+    <string name="installer_title">Instal·lador de MIDlets</string>
+    <string name="installer_error_message">No s’ha pogut instal·lar l’aplicació seleccionada. Tria un fitxer MIDlet vàlid i torna-ho a provar.</string>
+    <string name="install_jar_non_matched_jad">Aquesta aplicació difereix de la descrita al JAD.\nVols ignorar el JAD i instal·lar-la igualment?</string>
+    <string name="file_picker_select_file">Selecciona un fitxer</string>
+    <string name="file_picker_select_folder">Selecciona una carpeta</string>
+    <string name="file_picker_select_app_bundle">Selecciona un paquet d’aplicació</string>
+    <string name="file_picker_select_icon">Selecciona una icona</string>
+    <string name="file_picker_navigate_back">Torna a la carpeta superior</string>
+    <string name="file_picker_cancel">Cancel·la</string>
+    <string name="file_picker_search">Cerca</string>
+    <string name="file_picker_sort">Ordena</string>
+    <string name="file_picker_select_all">Selecciona tots els fitxers que es mostren</string>
+    <string name="file_picker_unselect_all">Desselecciona tots els fitxers que es mostren</string>
+    <string name="file_picker_sort_type">Primer les carpetes</string>
+    <string name="file_picker_sort_name_ascending">Nom A–Z</string>
+    <string name="file_picker_sort_name_descending">Nom Z–A</string>
+    <string name="file_picker_sort_modified_newest">Data de modificació: més recent</string>
+    <string name="file_picker_sort_modified_oldest">Data de modificació: més antiga</string>
+    <string name="file_picker_choose">Tria</string>
+    <string name="file_picker_current_folder">Carpeta actual</string>
+    <string name="file_picker_parent_folder">Carpeta superior</string>
+    <string name="file_picker_file">Fitxer</string>
+    <string name="file_picker_preview_named">Previsualització de <xliff:g id="name" example="Example">%1$s</xliff:g></string>
+    <string name="file_picker_preview_unavailable">Previsualització no disponible</string>
+    <string name="file_picker_storage_volume">Volum d’emmagatzematge</string>
+    <string name="file_picker_empty">No hi ha fitxers coincidents</string>
+    <string name="file_picker_empty_folder">No s’ha trobat cap carpeta</string>
+    <string name="file_picker_no_matches">Sense coincidències</string>
+    <string name="file_picker_permission_required">Cal permís d’emmagatzematge</string>
+    <string name="file_picker_permission_message">Permet l’accés a l’emmagatzematge per explorar fitxers i carpetes en aquest dispositiu.</string>
+    <string name="file_picker_permission_denied">No s’ha concedit accés a l’emmagatzematge.</string>
+    <string name="file_picker_grant_access">Concedeix accés</string>
+    <string name="file_picker_retry">Torna-ho a provar</string>
+    <string name="file_picker_load_failed">No s’ha pogut obrir aquesta carpeta.</string>
+    <string name="file_picker_create_folder">Carpeta nova</string>
+    <string name="file_picker_create_folder_title">Crea una carpeta</string>
+    <string name="file_picker_folder_name">Nom de la carpeta</string>
+    <string name="file_picker_invalid_folder_name">Introdueix un nom de carpeta vàlid.</string>
+    <string name="file_picker_folder_exists">Ja existeix un element amb aquest nom.</string>
+    <string name="file_picker_create_folder_failed">No s’ha pogut crear la carpeta.</string>
+    <string name="file_picker_selection_unavailable">L’element seleccionat ja no està disponible.</string>
+    <string name="loading_apps">S’estan carregant les aplicacions</string>
+    <string name="message_delete">Vols suprimir aquesta aplicació, la seva configuració i les dades desades? Això també la treu de la biblioteca.</string>
+    <string name="msg_no_matches">Sense coincidències per a «<xliff:g id="query" example="Bounce">%1$s</xliff:g>»</string>
+    <string name="library_destination_apps">Totes les aplicacions</string>
+    <string name="library_destination_collections">Col·leccions</string>
+    <string name="library_scope_picker_title" tools:ignore="MissingTranslation">Explora aplicacions</string>
+    <string name="library_destination_more">Més</string>
+    <string name="library_search_placeholder">Cerca aplicacions…</string>
+    <string name="library_filter_all">Totes</string>
+    <string name="library_filter_recently_opened">Obertes recentment</string>
+    <string name="library_filter_recently_added">Afegides recentment</string>
+    <string name="library_filter_favorites">Preferides</string>
+    <string name="library_add_to_favorites_action">Afegeix a preferides</string>
+    <string name="library_remove_from_favorites_action">Suprimeix de preferides</string>
+    <string name="library_favorite_coming_soon">Preferides no disponibles</string>
+    <string name="library_vendor_version"><xliff:g id="vendor" example="Nokia">%1$s</xliff:g> · <xliff:g id="version" example="1.0">%2$s</xliff:g></string>
+    <string name="library_view_list">Llista</string>
+    <string name="library_view_grid">Quadrícula</string>
+    <string name="library_icon_ratio_title">Relació d’aspecte de les icones</string>
+    <string name="library_icon_ratio_square">Quadrada (1:1)</string>
+    <string name="library_icon_ratio_portrait">Vertical (3:4)</string>
+    <string name="library_icon_shape_title">Forma de les icones</string>
+    <string name="library_icon_shape_round">Cantonades arrodonides</string>
+    <string name="library_icon_shape_square">Cantonades rectes</string>
+    <string name="library_grid_icon_size_title" tools:ignore="MissingTranslation">Mida de les icones en quadrícula</string>
+    <string name="library_grid_icon_size_small" tools:ignore="MissingTranslation">Petita</string>
+    <string name="library_grid_icon_size_standard" tools:ignore="MissingTranslation">Estàndard</string>
+    <string name="library_grid_icon_size_large" tools:ignore="MissingTranslation">Gran</string>
+    <string name="library_grid_icon_size_summary" tools:ignore="MissingTranslation">Canvia la mida de les icones i el nombre de columnes a la vista de quadrícula.</string>
+    <string name="library_grid_spacing_title">Espaiat de la quadrícula</string>
+    <string name="library_grid_spacing_summary" tools:ignore="MissingTranslation">Només s’aplica a la vista de quadrícula.</string>
+    <string name="library_grid_spacing_none">Cap (0 dp)</string>
+    <string name="library_grid_spacing_compact">Compacte (4 dp)</string>
+    <string name="library_grid_spacing_standard">Estàndard (8 dp)</string>
+    <string name="library_grid_spacing_spacious">Ampli (12 dp)</string>
+    <string name="library_hide_grid_titles">Amaga els títols dels MIDlets</string>
+    <string name="library_show_list_description">Mostra les descripcions dels MIDlets</string>
+    <string name="library_collections_empty_title">Encara no hi ha col·leccions</string>
+    <string name="library_collections_empty_message">Les col·leccions no estan disponibles fins que la biblioteca acabi de carregar-se.</string>
+    <string name="library_expand_description">Desplega la descripció</string>
+    <string name="library_collapse_description">Replega la descripció</string>
+    <string name="no_data_for_display">No hi ha aplicacions per mostrar</string>
+    <string name="permission_request_failed">Cal permís d’escriptura a l’emmagatzematge.</string>
+    <string name="reinstall">Aquesta aplicació ja està instal·lada. Vols reinstal·lar-la?</string>
+    <string name="reinstall_newest">Vols actualitzar aquesta aplicació a la versió <xliff:g id="version" example="2.1.0">%1$s</xliff:g>?\n\nInstal·lada actualment: <xliff:g id="current_version" example="2.0.0">%2$s</xliff:g></string>
+    <string name="reinstall_older">Vols substituir aquesta aplicació per la versió <xliff:g id="version" example="2.1.0">%1$s</xliff:g>?\n\nInstal·lada actualment: <xliff:g id="current_version" example="2.0.0">%2$s</xliff:g>\nÉs possible que la versió anterior no funcioni correctament amb les dades existents.</string>
+    <string name="warn_install_from_net">Aquest fitxer es baixarà d’Internet.</string>
+    <string name="installer_ambiguous">Diverses aplicacions instal·lades coincideixen amb aquest paquet. Vols instal·lar-ne una còpia independent? Es conservaran les aplicacions existents i les seves dades.</string>
+    <string name="installer_separate_copy">Instal·la una còpia independent</string>
+    <string name="installer_stage_download">S’està baixant l’aplicació…</string>
+    <string name="installer_stage_wait">S’està esperant una altra operació…</string>
+    <string name="installer_stage_save">S’està desant l’aplicació…</string>
+    <string name="installer_failed_download">No s’ha pogut baixar l’aplicació. Comprova la connexió i l’enllaç de baixada i torna-ho a provar.</string>
+    <string name="installer_failed_storage">No s’ha pogut completar la instal·lació. Torna-ho a provar.</string>
+    <string name="installer_failed_conversion">No s’ha pogut convertir l’aplicació. Assegura’t que el fitxer estigui complet i sigui compatible i torna-ho a provar.</string>
+    <string name="installer_needs_recovery">Els fitxers de l’aplicació s’han desat, però no s’ha pogut acabar d’actualitzar la biblioteca. Actualitza la biblioteca abans de tornar-ho a provar.</string>
+    <string name="installer_refresh_library">Actualitza la biblioteca</string>
+    <string name="installer_cancel_pending">S’està aturant al proper punt segur…</string>
+    <string name="installer_retry_remaining">Revisa els elements sense acabar</string>
+    <string name="installer_not_processed">Sense processar</string>
+    <string name="installer_partial_restore">Aplicació instal·lada, però no s’han pogut restaurar les dades ni la configuració.</string>
+    <string name="installer_removed_leftovers">Aplicació suprimida, però no s’han pogut eliminar alguns paràmetres o dades desades.</string>
+    <string name="installer_copy_details">Copia els detalls</string>
+    <string name="installer_show_details">Mostra els detalls</string>
+    <string name="installer_hide_details">Amaga els detalls</string>
+    <!-- %1$d és el nombre de fitxers de classe Java omesos durant la conversió. -->
+    <plurals name="installer_conversion_warning_summary">
+        <item quantity="one">S’ha omès <xliff:g id="skipped_count" example="2">%1$d</xliff:g> fitxer de classe Java perquè no s’ha pogut llegir. És possible que les funcions que l’utilitzen no funcionin.</item>
+        <item quantity="many">S’han omès <xliff:g id="skipped_count" example="2">%1$d</xliff:g> fitxers de classe Java perquè no s’han pogut llegir. És possible que les funcions que els utilitzen no funcionin.</item>
+        <item quantity="other">S’han omès <xliff:g id="skipped_count" example="2">%1$d</xliff:g> fitxers de classe Java perquè no s’han pogut llegir. És possible que les funcions que els utilitzen no funcionin.</item>
+    </plurals>
+    <!-- %1$s és el camí d’entrada del JAR font del fitxer de classe omès. -->
+    <string name="installer_conversion_skipped_entry"><xliff:g id="entry_path" example="com/example/Broken.class">%1$s</xliff:g>\nProblema: no s’ha pogut llegir el fitxer de classe Java.\nAcció: omès durant la conversió.</string>
+    <!-- %1$d és el nombre de diagnòstics de conversió addicionals no mostrats. -->
+    <plurals name="installer_conversion_omitted_details">
+        <item quantity="one">No es mostra <xliff:g id="omitted_count" example="5">%1$d</xliff:g> problema de conversió addicional.</item>
+        <item quantity="many">No es mostren <xliff:g id="omitted_count" example="5">%1$d</xliff:g> problemes de conversió addicionals.</item>
+        <item quantity="other">No es mostren <xliff:g id="omitted_count" example="5">%1$d</xliff:g> problemes de conversió addicionals.</item>
+    </plurals>
+    <string name="library_collection_new">Col·lecció nova</string>
+    <string name="library_collection_ready_empty_message">Crea col·leccions per organitzar aplicacions sense moure’n els fitxers.</string>
+    <string name="library_collection_add_app">Afegeix a una col·lecció</string>
+    <string name="library_collection_add_apps">Afegeix aplicacions</string>
+    <string name="library_collection_manage_apps">Tria aplicacions</string>
+    <string name="library_collection_manage" tools:ignore="MissingTranslation">Gestiona les col·leccions</string>
+    <string name="library_collection_delete_confirmation" tools:ignore="MissingTranslation">Vols suprimir «<xliff:g id="collection_name" example="Favorites">%1$s</xliff:g>»? Les aplicacions d’aquesta col·lecció continuaran instal·lades.</string>
+    <string name="library_collection_rename_action" tools:ignore="MissingTranslation">Canvia el nom de la col·lecció <xliff:g id="collection_name" example="Favorites">%1$s</xliff:g></string>
+    <string name="library_collection_delete_action" tools:ignore="MissingTranslation">Suprimeix la col·lecció <xliff:g id="collection_name" example="Favorites">%1$s</xliff:g></string>
+    <string name="library_collection_select_action" tools:ignore="MissingTranslation">Selecciona la col·lecció <xliff:g id="collection_name" example="Favorites">%1$s</xliff:g></string>
+    <string name="library_collection_open_action" tools:ignore="MissingTranslation">Obre la col·lecció <xliff:g id="collection_name" example="Favorites">%1$s</xliff:g></string>
+    <string name="library_collection_rename_selected" tools:ignore="MissingTranslation">Canvia el nom de la col·lecció seleccionada</string>
+    <string name="library_collection_delete_selected" tools:ignore="MissingTranslation">Suprimeix les col·leccions seleccionades</string>
+    <plurals name="library_collection_delete_many_confirmation">
+        <item quantity="one">Vols suprimir <xliff:g id="count" example="3">%d</xliff:g> col·lecció? Les aplicacions continuaran instal·lades.</item>
+        <item quantity="many">Vols suprimir <xliff:g id="count" example="3">%d</xliff:g> col·leccions? Les aplicacions continuaran instal·lades.</item>
+        <item quantity="other">Vols suprimir <xliff:g id="count" example="3">%d</xliff:g> col·leccions? Les aplicacions continuaran instal·lades.</item>
+    </plurals>
+    <string name="library_notifications_title" tools:ignore="MissingTranslation">Notificacions</string>
+    <string name="library_notifications_empty_title" tools:ignore="MissingTranslation">Encara no hi ha notificacions</string>
+    <string name="library_notifications_empty_summary" tools:ignore="MissingTranslation">Les notificacions d’actualització de l’aplicació apareixeran aquí quan estiguin disponibles.</string>
+    <string name="library_collection_manage_apps_summary">Selecciona les aplicacions que vols incloure en aquesta col·lecció.</string>
+    <string name="library_collection_name">Nom de la col·lecció</string>
+    <string name="library_collection_members_empty">No hi ha cap aplicació en aquesta col·lecció.</string>
+    <string name="library_collection_select_title">Selecciona una col·lecció</string>
+    <string name="library_collection_select_message">Tria una col·lecció per veure’n les aplicacions.</string>
+    <string name="library_collection_remove_from_current">Suprimeix de la col·lecció</string>
+    <string name="library_no_matches">Sense coincidències per a «<xliff:g id="query" example="Bounce">%1$s</xliff:g>»</string>
+    <string name="library_action_share_app">Comparteix l’aplicació</string>
+    <string name="library_action_export_bundle">Exporta el paquet d’aplicació</string>
+    <string name="library_action_import_bundle">Importa un paquet d’aplicació</string>
+    <string name="library_action_import_bundle_summary">Restaura aplicacions exportades juntament amb la configuració, les dades desades o els marcadors inclosos.</string>
+    <string name="library_import_preparing">S’està llegint el paquet d’aplicació…</string>
+    <string name="library_import_restoring">S’estan restaurant les dades de l’aplicació…</string>
+    <string name="library_import_done">S’ha importat el paquet d’aplicació.</string>
+    <string name="library_import_done_with_warning">Paquet d’aplicació importat amb avisos.</string>
+    <string name="library_import_invalid_bundle">El paquet d’aplicació seleccionat no és vàlid, està malmès o no és compatible. Tria un paquet d’aplicació vàlid de JL-Mod Plus i torna-ho a provar.</string>
+    <string name="library_import_restore_existing">Aquesta aplicació ja està instal·lada. La configuració i les dades desades incloses substituiran les dades existents. En els paquets més nous, els marcadors es combinen si s’importen sense la configuració, se substitueixen si s’importen amb la configuració i es conserven si no s’hi inclouen. Restaurar la configuració d’un paquet antic també pot substituir els marcadors.</string>
+    <string name="library_import_restore_failed">Aplicació instal·lada, però no s’han pogut restaurar les dades del paquet. Vols tornar a provar de restaurar-les?</string>
+    <string name="library_play_stats_summary">Inicis: <xliff:g id="launch_count" example="12">%1$d</xliff:g> · Temps total: <xliff:g id="total_time" example="2h 15m">%2$s</xliff:g></string>
+    <string name="library_share_chooser_title">Comparteix l’aplicació</string>
+    <string name="library_export_chooser_title">Exporta</string>
+    <string name="library_export_progress">S’està exportant… <xliff:g id="completed" example="3">%1$d</xliff:g>/<xliff:g id="total" example="10">%2$d</xliff:g></string>
+    <string name="library_transfer_unavailable">No s’ha pogut exportar.</string>
+    <string name="library_export_data_in_use">Les dades d’una de les aplicacions seleccionades estan en ús. Tanca els MIDlets seleccionats que estiguin en execució i torna-ho a provar.</string>
+    <string name="library_export_menu_unavailable">No s’ha pogut obrir el menú d’exportació.</string>
+    <string name="library_back">Torna a la biblioteca</string>
+    <string name="library_sort">Ordena les aplicacions</string>
+    <string name="library_search_clear">Esborra la cerca</string>
+    <string name="library_description_more">… Més</string>
+    <string name="library_description_less">Menys</string>
+    <plurals name="file_picker_selected_count">
+        <item quantity="one"><xliff:g id="count" example="3">%1$d</xliff:g> seleccionat</item>
+        <item quantity="many"><xliff:g id="count" example="3">%1$d</xliff:g> seleccionats</item>
+        <item quantity="other"><xliff:g id="count" example="3">%1$d</xliff:g> seleccionats</item>
+    </plurals>
+    <plurals name="library_selection_count">
+        <item quantity="one"><xliff:g id="count" example="3">%1$d</xliff:g> aplicació</item>
+        <item quantity="many"><xliff:g id="count" example="3">%1$d</xliff:g> aplicacions</item>
+        <item quantity="other"><xliff:g id="count" example="3">%1$d</xliff:g> aplicacions</item>
+    </plurals>
+    <plurals name="library_collection_member_count">
+        <item quantity="one"><xliff:g id="count" example="3">%1$d</xliff:g> aplicació</item>
+        <item quantity="many"><xliff:g id="count" example="3">%1$d</xliff:g> aplicacions</item>
+        <item quantity="other"><xliff:g id="count" example="3">%1$d</xliff:g> aplicacions</item>
+    </plurals>
+    <plurals name="bulk_install_found">
+        <item quantity="one">S’ha trobat <xliff:g id="count" example="3">%1$d</xliff:g> aplicació</item>
+        <item quantity="many">S’han trobat <xliff:g id="count" example="3">%1$d</xliff:g> aplicacions</item>
+        <item quantity="other">S’han trobat <xliff:g id="count" example="3">%1$d</xliff:g> aplicacions</item>
+    </plurals>
+    <plurals name="bulk_install_selected">
+        <item quantity="one"><xliff:g id="count" example="3">%1$d</xliff:g> seleccionada</item>
+        <item quantity="many"><xliff:g id="count" example="3">%1$d</xliff:g> seleccionades</item>
+        <item quantity="other"><xliff:g id="count" example="3">%1$d</xliff:g> seleccionades</item>
+    </plurals>
+    <plurals name="bulk_install_ready_count">
+        <item quantity="one"><xliff:g id="count" example="3">%1$d</xliff:g> a punt</item>
+        <item quantity="many"><xliff:g id="count" example="3">%1$d</xliff:g> a punt</item>
+        <item quantity="other"><xliff:g id="count" example="3">%1$d</xliff:g> a punt</item>
+    </plurals>
+    <plurals name="bulk_install_skipped_count">
+        <item quantity="one">Ja instal·lada o duplicada: <xliff:g id="count" example="3">%1$d</xliff:g></item>
+        <item quantity="many">Ja instal·lades o duplicades: <xliff:g id="count" example="3">%1$d</xliff:g></item>
+        <item quantity="other">Ja instal·lades o duplicades: <xliff:g id="count" example="3">%1$d</xliff:g></item>
+    </plurals>
+    <plurals name="bulk_install_attention_count">
+        <item quantity="one"><xliff:g id="count" example="3">%1$d</xliff:g> requereix revisió</item>
+        <item quantity="many"><xliff:g id="count" example="3">%1$d</xliff:g> requereixen revisió</item>
+        <item quantity="other"><xliff:g id="count" example="3">%1$d</xliff:g> requereixen revisió</item>
+    </plurals>
+    <plurals name="bulk_install_installed_count">
+        <item quantity="one"><xliff:g id="count" example="3">%1$d</xliff:g> instal·lada</item>
+        <item quantity="many"><xliff:g id="count" example="3">%1$d</xliff:g> instal·lades</item>
+        <item quantity="other"><xliff:g id="count" example="3">%1$d</xliff:g> instal·lades</item>
+    </plurals>
+    <plurals name="bulk_install_updated_count">
+        <item quantity="one"><xliff:g id="count" example="3">%1$d</xliff:g> actualitzada</item>
+        <item quantity="many"><xliff:g id="count" example="3">%1$d</xliff:g> actualitzades</item>
+        <item quantity="other"><xliff:g id="count" example="3">%1$d</xliff:g> actualitzades</item>
+    </plurals>
+    <plurals name="bulk_install_reinstalled_count">
+        <item quantity="one"><xliff:g id="count" example="3">%1$d</xliff:g> reinstal·lada</item>
+        <item quantity="many"><xliff:g id="count" example="3">%1$d</xliff:g> reinstal·lades</item>
+        <item quantity="other"><xliff:g id="count" example="3">%1$d</xliff:g> reinstal·lades</item>
+    </plurals>
+    <plurals name="bulk_install_skipped_result_count">
+        <item quantity="one"><xliff:g id="count" example="3">%1$d</xliff:g> omesa</item>
+        <item quantity="many"><xliff:g id="count" example="3">%1$d</xliff:g> omeses</item>
+        <item quantity="other"><xliff:g id="count" example="3">%1$d</xliff:g> omeses</item>
+    </plurals>
+    <plurals name="bulk_install_failed_count">
+        <item quantity="one"><xliff:g id="count" example="3">%1$d</xliff:g> amb error</item>
+        <item quantity="many"><xliff:g id="count" example="3">%1$d</xliff:g> amb error</item>
+        <item quantity="other"><xliff:g id="count" example="3">%1$d</xliff:g> amb error</item>
+    </plurals>
+    <plurals name="bulk_install_warning_count">
+        <item quantity="one"><xliff:g id="count" example="3">%1$d</xliff:g> avís</item>
+        <item quantity="many"><xliff:g id="count" example="3">%1$d</xliff:g> avisos</item>
+        <item quantity="other"><xliff:g id="count" example="3">%1$d</xliff:g> avisos</item>
+    </plurals>
+    <plurals name="bulk_install_omitted_sources">
+        <item quantity="one">S’ha omès <xliff:g id="count" example="3">%1$d</xliff:g> fitxer addicional per mantenir àgil la revisió.</item>
+        <item quantity="many">S’han omès <xliff:g id="count" example="3">%1$d</xliff:g> fitxers addicionals per mantenir àgil la revisió.</item>
+        <item quantity="other">S’han omès <xliff:g id="count" example="3">%1$d</xliff:g> fitxers addicionals per mantenir àgil la revisió.</item>
+    </plurals>
+    <plurals name="library_bulk_delete_confirmation">
+        <item quantity="one">Vols suprimir <xliff:g id="count" example="3">%1$d</xliff:g> aplicació? Els seus fitxers, configuració i dades desades es trauran de la biblioteca.</item>
+        <item quantity="many">Vols suprimir <xliff:g id="count" example="3">%1$d</xliff:g> aplicacions? Els seus fitxers, configuració i dades desades es trauran de la biblioteca.</item>
+        <item quantity="other">Vols suprimir <xliff:g id="count" example="3">%1$d</xliff:g> aplicacions? Els seus fitxers, configuració i dades desades es trauran de la biblioteca.</item>
+    </plurals>
+    <plurals name="library_bulk_delete_result">
+        <item quantity="one">S’ha suprimit <xliff:g id="deleted_count" example="3">%1$d</xliff:g> aplicació; <xliff:g id="failed_count" example="1">%2$d</xliff:g> amb error.</item>
+        <item quantity="many">S’han suprimit <xliff:g id="deleted_count" example="3">%1$d</xliff:g> aplicacions; <xliff:g id="failed_count" example="1">%2$d</xliff:g> amb error.</item>
+        <item quantity="other">S’han suprimit <xliff:g id="deleted_count" example="3">%1$d</xliff:g> aplicacions; <xliff:g id="failed_count" example="1">%2$d</xliff:g> amb error.</item>
+    </plurals>
+    <string name="bulk_install_title">Instal·lació per lots</string>
+    <string name="bulk_install_planning">S’estan comprovant les aplicacions seleccionades…</string>
+    <string name="bulk_install_empty">No s’ha trobat cap aplicació compatible.</string>
+    <string name="bulk_install_recommended">Recomanat</string>
+    <string name="bulk_install_clear">Esborra la selecció</string>
+    <string name="bulk_install_install_count">Instal·la’n <xliff:g id="count" example="3">%1$d</xliff:g></string>
+    <string name="bulk_install_cancel">Cancel·la</string>
+    <string name="bulk_install_close">Tanca</string>
+    <plurals name="bulk_install_running">
+        <item quantity="one">S’ha processat <xliff:g id="processed" example="3">%1$d</xliff:g> aplicació de <xliff:g id="total" example="10">%2$d</xliff:g></item>
+        <item quantity="many">S’han processat <xliff:g id="processed" example="3">%1$d</xliff:g> aplicacions de <xliff:g id="total" example="10">%2$d</xliff:g></item>
+        <item quantity="other">S’han processat <xliff:g id="processed" example="3">%1$d</xliff:g> aplicacions de <xliff:g id="total" example="10">%2$d</xliff:g></item>
+    </plurals>
+    <string name="bulk_install_cancel_requested">S’està aturant després de l’aplicació actual…</string>
+    <string name="bulk_install_complete">Instal·lació per lots completada</string>
+    <string name="bulk_install_cancelled">Instal·lació per lots aturada</string>
+    <string name="bulk_install_fatal">Instal·lació per lots aturada. Revisa els elements sense acabar abans de tornar-ho a provar.</string>
+    <string name="bulk_install_result_installed">Instal·lada</string>
+    <string name="bulk_install_result_updated">Actualitzada</string>
+    <string name="bulk_install_result_reinstalled">Reinstal·lada</string>
+    <string name="bulk_install_result_skipped">Omesa</string>
+    <string name="bulk_install_result_failed">Error</string>
+    <string name="bulk_install_installed_version">Instal·lada: <xliff:g id="version" example="2.1.0">%1$s</xliff:g></string>
+    <string name="bulk_install_source">Origen: <xliff:g id="name" example="Example">%1$s</xliff:g></string>
+    <string name="bulk_install_action_separate_copy">Instal·la com a còpia independent</string>
+    <string name="bulk_install_action_jar_only">Instal·la només el JAR</string>
+    <string name="single_install_review_jar_only" tools:ignore="MissingTranslation">Revisa només el JAR</string>
+    <string name="single_install_jar_only_notice" tools:ignore="MissingTranslation">Només s’instal·larà el JAR. Revisa el nom de l’aplicació, la versió i l’estat d’instal·lació abans de continuar.</string>
+    <string name="single_install_running_replacement_warning" tools:ignore="MissingTranslation">Si aquesta aplicació s’està executant, la instal·lació l’aturarà abans de substituir-ne els fitxers. El progrés no desat es pot perdre.</string>
+    <string name="bulk_install_status_new">Nova</string>
+    <string name="bulk_install_status_update">Actualització</string>
+    <string name="bulk_install_status_downgrade">Versió anterior</string>
+    <string name="bulk_install_status_same">Ja instal·lada</string>
+    <string name="bulk_install_status_reinstall">Mateixa versió, possible variant</string>
+    <string name="bulk_install_status_ambiguous">Coincideix amb diverses aplicacions instal·lades</string>
+    <string name="bulk_install_status_mismatch">No coincideixen JAD i JAR</string>
+    <string name="bulk_install_status_duplicate">Duplicada</string>
+    <string name="bulk_install_status_older_batch">Versió anterior al lot</string>
+    <string name="bulk_install_status_conflict">Conflicte de lot</string>
+    <string name="bulk_install_status_remote">Origen remot no compatible</string>
+    <string name="bulk_install_status_error">Origen no vàlid</string>
+    <string name="bulk_install_reinstall_source_missing">El JAR desat no està disponible per reinstal·lar.</string>
+    <plurals name="bulk_install_reinstall_missing_apps">
+        <item quantity="one"><xliff:g id="count" example="3">%1$d</xliff:g> aplicació seleccionada de la biblioteca ja no està disponible.</item>
+        <item quantity="many"><xliff:g id="count" example="3">%1$d</xliff:g> aplicacions seleccionades de la biblioteca ja no estan disponibles.</item>
+        <item quantity="other"><xliff:g id="count" example="3">%1$d</xliff:g> aplicacions seleccionades de la biblioteca ja no estan disponibles.</item>
+    </plurals>
+    <string name="library_metadata_edit_title">Edita les metadades</string>
+    <string name="library_metadata_icon">Icona</string>
+    <string name="library_metadata_name">Nom</string>
+    <string name="library_metadata_vendor">Proveïdor</string>
+    <string name="library_metadata_reset_to_original">Restableix a l’original</string>
+    <string name="library_metadata_save">Desa</string>
+    <string name="library_hide_grid_titles_summary">Amaga els noms dels MIDlets a la vista de quadrícula. La vista de llista els manté visibles.</string>
+    <string name="library_show_list_description_summary">Mostra la descripció de cada MIDlet sota el títol i la versió.</string>
+    <string name="library_indexing_progress">S’està indexant la biblioteca… <xliff:g id="completed" example="3">%1$d</xliff:g>/<xliff:g id="total" example="10">%2$d</xliff:g></string>
+    <string name="library_indexing_current">S’està analitzant <xliff:g id="name" example="Example">%1$s</xliff:g></string>
+    <string name="library_load_error_title">Biblioteca no disponible</string>
+    <string name="library_retry">Torna-ho a provar</string>
+    <string name="library_reinstall_source_missing">El JAR desat no està disponible per reinstal·lar.</string>
+    <string name="library_action_select">Selecciona</string>
+    <string name="library_selection_select_all">Selecciona-ho tot</string>
+    <string name="library_selection_unselect_all">Desselecciona-ho tot</string>
+    <string name="library_selection_checkbox_description">Selecciona <xliff:g id="name" example="Example">%1$s</xliff:g></string>
+    <string name="library_selection_checked">Seleccionat</string>
+    <string name="library_selection_unchecked">No seleccionat</string>
+    <string name="library_action_settings_summary">Configura el comportament global i l’aparença.</string>
+    <string name="library_action_crash_reports_summary">Revisa els informes de diagnòstic desats.</string>
+    <string name="library_action_about_summary">Visió general del projecte, informació de compilació i enllaços.</string>
+    <string name="library_action_licenses_summary">Avisos de tercers i condicions de llicència inclosos amb l’aplicació.</string>
+    <string name="library_donation_action">Dona suport al desenvolupament</string>
+    <string name="library_donation_summary">Ajuda a fer créixer JL-Mod Plus.</string>
+    <string name="library_donation_title">Dona suport a JL-Mod Plus</string>
+    <string name="library_donation_message">JL-Mod Plus és gratuït i de codi obert. Si et resulta útil, pots donar suport al seu desenvolupament amb una donació voluntària.</string>
+    <string name="library_donation_provider_note">Les donacions es gestionen externament a través de Sociabuzz.</string>
+    <string name="library_donation_continue">Continua a Sociabuzz</string>
+    <string name="library_donation_not_now">Ara no</string>
+    <string name="library_donation_link_copied">No s’ha trobat cap navegador. L’enllaç de Sociabuzz s’ha copiat al porta-retalls.</string>
+    <string name="library_donation_browser_unavailable">No s’ha trobat cap navegador per obrir Sociabuzz.</string>
+    <string name="library_bulk_delete_apps">Suprimeix aplicacions</string>
+    <string name="library_bulk_add_collection">Afegeix a una col·lecció</string>
+    <string name="library_bulk_share_apps">Comparteix aplicacions</string>
+    <string name="library_bulk_reinstall_apps">Reinstal·la</string>
+    <string name="library_bulk_export_apps">Exporta el paquet</string>
+    <string name="library_enhanced_icons_title">Icones millorades</string>
+    <string name="library_enhanced_icons_summary">Ajusta l’enquadrament, l’escala i el fons dels mosaics perquè les icones es vegin més uniformes a la biblioteca.</string>
+    <string name="library_collections_unavailable_title">Col·leccions no disponibles</string>
+    <string name="library_load_failed_message">No s’ha pogut carregar la biblioteca. Torna-ho a provar.</string>
+    <string name="bulk_install_prepare_failed">No s’han pogut preparar les aplicacions seleccionades per a la instal·lació.</string>
+    <string name="installer_existing_data_preserved">Es conservaran la configuració i les dades desades existents.</string>
+    <string name="bulk_install_library_changed">La biblioteca ha canviat després de la revisió. Tanca aquest lot i torna a seleccionar els fitxers.</string>
+    <string name="bulk_install_source_unavailable">Un fitxer font necessari ja no està disponible. Torna a seleccionar els fitxers.</string>
+    <string name="bulk_install_source_changed">El fitxer font ha canviat després de la revisió. Torna a seleccionar els fitxers.</string>
+    <string name="bulk_install_target_unverified">No s’ha pogut verificar la destinació de reinstal·lació. Tanca aquest lot i torna a seleccionar l’aplicació.</string>
+    <string name="bulk_install_result_restored">Restaurada</string>
+    <plurals name="bulk_install_restored_count">
+        <item quantity="one"><xliff:g id="count" example="3">%1$d</xliff:g> restaurada</item>
+        <item quantity="many"><xliff:g id="count" example="3">%1$d</xliff:g> restaurades</item>
+        <item quantity="other"><xliff:g id="count" example="3">%1$d</xliff:g> restaurades</item>
+    </plurals>
+    <plurals name="bulk_install_reason_ambiguous_match">
+        <item quantity="one"><xliff:g id="count" example="3">%1$d</xliff:g> aplicació instal·lada coincideix amb aquest origen.</item>
+        <item quantity="many"><xliff:g id="count" example="3">%1$d</xliff:g> aplicacions instal·lades coincideixen amb aquest origen.</item>
+        <item quantity="other"><xliff:g id="count" example="3">%1$d</xliff:g> aplicacions instal·lades coincideixen amb aquest origen.</item>
+    </plurals>
+    <string name="bulk_install_reason_jad_jar_mismatch">El JAD i el JAR identifiquen aplicacions diferents.</string>
+    <string name="bulk_install_reason_conflicting_jads">Fitxers JAD amb atributs diferents fan referència al mateix JAR.</string>
+    <string name="bulk_install_reason_remote_jar">La instal·lació per lots no pot baixar fitxers JAR remots.</string>
+    <string name="bulk_install_reason_missing_jar_url">Falta MIDlet-Jar-URL al JAD.</string>
+    <!-- %1$s és l’esquema URI exacte proporcionat pel JAD; no el tradueixis. -->
+    <string name="bulk_install_reason_unsupported_uri_scheme">El JAD fa referència a un JAR mitjançant un esquema URI no compatible: <xliff:g id="scheme" example="http">%1$s</xliff:g>.</string>
+    <string name="bulk_install_reason_missing_parent">El JAD no té carpeta superior.</string>
+    <!-- %1$s és la referència exacta MIDlet-Jar-URL, no un camí normalitzat del sistema de fitxers. -->
+    <string name="bulk_install_reason_jar_not_found">No s’ha trobat el JAR al qual fa referència el JAD: <xliff:g id="file_path" example="game.jar">%1$s</xliff:g>.</string>
+    <string name="bulk_install_reason_duplicate_source">Aquest origen duplica un altre origen d’aquest lot.</string>
+    <string name="bulk_install_reason_version_conflict">Diverses variants de l’aplicació tenen la mateixa versió.</string>
+    <string name="bulk_install_reason_older_candidate">Hi ha una versió més recent d’aquesta aplicació al mateix lot.</string>
+    <string name="bulk_install_reason_source_error">No s’ha pogut preparar aquest origen per a la instal·lació.</string>
+    <string name="updates_title">Actualitzacions</string>
+    <string name="updates_more_summary">Cerca noves versions de JL-Mod Plus.</string>
+    <string name="updates_more_available">Hi ha una versió més recent disponible.</string>
+    <string name="updates_installed_version">Versió instal·lada: <xliff:g id="version" example="2.1.0">%1$s</xliff:g></string>
+    <string name="updates_build_code">Compilació <xliff:g id="build_code" example="247">%1$d</xliff:g></string>
+    <string name="updates_automatic">Comprova automàticament mentre la biblioteca estigui activa</string>
+    <string name="updates_not_checked">Encara no s’ha comprovat.</string>
+    <string name="updates_checking">S’estan cercant actualitzacions…</string>
+    <string name="updates_current">Tens la darrera versió.</string>
+    <string name="updates_no_release">No hi ha cap versió publicada compatible disponible.</string>
+    <string name="updates_not_installable">Hi ha una versió més recent disponible, però no és compatible amb aquest dispositiu ni amb aquesta instal·lació.</string>
+    <string name="updates_failed">No s’han pogut cercar actualitzacions. Comprova la connexió i torna-ho a provar.</string>
+    <string name="updates_available">Actualització disponible</string>
+    <string name="updates_view_release">Mostra la versió</string>
+    <string name="updates_last_checked">Darrera comprovació: <xliff:g id="timestamp" example="Today, 09:45">%1$s</xliff:g></string>
+    <string name="updates_check">Cerca actualitzacions</string>
+    <string name="updates_notice">JL-Mod Plus <xliff:g id="version" example="2.1.0">%1$s</xliff:g> està disponible. Consulta Actualitzacions a Configuració.</string>
+    <string name="updates_debug_build">Aquesta és una compilació de depuració. Els APK de versions de GitHub s’instal·len per separat.</string>
+    <string name="updates_link_copied">No s’ha trobat cap navegador. L’enllaç d’actualització s’ha copiat al porta-retalls.</string>
+    <string name="updates_browser_unavailable">No s’ha trobat cap navegador per obrir l’enllaç d’actualització.</string>
+    <string name="bulk_install_choose_files">Fitxers</string>
+    <string name="bulk_install_choose_folder">Carpeta</string>
+    <string name="bulk_install_unreadable_archives">Arxius comprimits il·legibles: <xliff:g id="count" example="3">%1$d</xliff:g></string>
+    <string name="bulk_install_skipped_entries">Fitxers o entrades omesos: <xliff:g id="count" example="3">%1$d</xliff:g></string>
+    <string name="bulk_install_selection_options" tools:ignore="MissingTranslation">Opcions de selecció</string>
+    <string name="bulk_install_show_details" tools:ignore="MissingTranslation">Mostra els detalls</string>
+    <string name="bulk_install_hide_details" tools:ignore="MissingTranslation">Amaga els detalls</string>
+    <string name="bulk_install_filter_all">Totes</string>
+    <string name="bulk_install_filter_selected">Seleccionades</string>
+    <string name="bulk_install_filter_review">Revisió</string>
+    <string name="bulk_install_empty_filter">No hi ha aplicacions coincidents.</string>
+    <string name="platform_package_choice_title" tools:ignore="MissingTranslation">Paquet Java ME detectat</string>
+    <string name="platform_package_choice_message" tools:ignore="MissingTranslation">Aquest enllaç apunta a un paquet Java ME. Què vols fer?</string>
+    <string name="platform_package_install" tools:ignore="MissingTranslation">Instal·la a JL-Mod Plus</string>
+    <string name="platform_package_browser" tools:ignore="MissingTranslation">Obre al navegador</string>
+    <string name="platform_package_unavailable" tools:ignore="MissingTranslation">No s’ha trobat cap aplicació per obrir aquest enllaç.</string>
+    <string name="installer_running_update_warning" tools:ignore="MissingTranslation">Aquesta aplicació s’està executant actualment. La instal·lació l’aturarà abans de substituir-ne els fitxers. El progrés no desat es pot perdre.</string>
+    <string name="library_metadata_main_icon">Principal</string>
+    <string name="library_metadata_follows_main">Utilitza la icona principal</string>
+    <string name="library_metadata_change">Canvia</string>
+    <string name="library_metadata_remove_portrait">Suprimeix la icona 3:4</string>
+    <string name="library_metadata_discard_title">Vols descartar els canvis?</string>
+    <string name="library_metadata_discard">Descarta</string>
+    <string name="library_metadata_default_description">Descripció predeterminada</string>
+    <string name="library_metadata_other_languages">Altres idiomes</string>
+    <string name="library_metadata_add_language">+ Afegeix un idioma</string>
+    <string name="library_metadata_language_search">Cerca un idioma o codi regional</string>
+    <string name="library_metadata_remove_language">Suprimeix la descripció</string>
+    <string name="library_metadata_language_load_failed">No s’han pogut carregar les descripcions per idioma. Toca Torna-ho a provar.</string>
+    <string name="updates_download_apk" tools:ignore="MissingTranslation">Baixa l’APK</string>
+    <string name="updates_skip_version" tools:ignore="MissingTranslation">Omet aquesta versió</string>
+    <string name="updates_dialog_message" tools:ignore="MissingTranslation">JL-Mod Plus <xliff:g id="version" example="2.1.0">%1$s</xliff:g> està disponible. Estàs utilitzant <xliff:g id="current_version" example="2.0.0">%2$s</xliff:g>. Baixa l’APK o consulta la versió a GitHub.</string>
+    <string name="library_bundle_components_title" tools:ignore="MissingTranslation">Exporta el paquet</string>
+    <string name="library_bundle_components_explanation" tools:ignore="MissingTranslation">Les aplicacions seleccionades s’hi inclouen sempre. Tanca els MIDlets seleccionats que estiguin en execució i tria les dades addicionals. No s’hi inclouen els aspectes, els bancs de sons ni els shaders compartits.</string>
+    <string name="library_bundle_config" tools:ignore="MissingTranslation">Configuració</string>
+    <string name="library_bundle_save_data" tools:ignore="MissingTranslation">Dades desades</string>
+    <string name="library_bundle_saved_variables" tools:ignore="MissingTranslation">Marcadors</string>
+    <string name="library_bundle_export" tools:ignore="MissingTranslation">Exporta</string>
+    <string name="library_export_jar_only" tools:ignore="MissingTranslation">Només JAR</string>
+    <string name="library_export_jars_only" tools:ignore="MissingTranslation">Només JAR (ZIP)</string>
+    <string name="library_selection_action_delete" tools:ignore="MissingTranslation">Suprimeix</string>
+    <string name="library_selection_action_collection" tools:ignore="MissingTranslation">Col·lecció</string>
+    <string name="library_selection_action_export" tools:ignore="MissingTranslation">Exporta</string>
+    <string name="library_selection_action_reinstall" tools:ignore="MissingTranslation">Reinstal·la</string>
+    <string name="installer_select_companion_jar" tools:ignore="MissingTranslation">Aquest JAD fa referència a un fitxer JAR independent. Selecciona el JAR corresponent per continuar. El proveïdor de fitxers extern no permet accedir als fitxers veïns.</string>
+    <string name="installer_select_jar" tools:ignore="MissingTranslation">Selecciona el JAR</string>
+    <string name="installer_wrong_companion_jar" tools:ignore="MissingTranslation">Aquest JAR no coincideix amb el JAD seleccionat. Tria el JAR corresponent per conservar la configuració del JAD.</string>
+    <string name="installer_choose_another_jar" tools:ignore="MissingTranslation">Tria un altre JAR</string>
+    <string name="library_app_more_actions" tools:ignore="MissingTranslation">Més accions per a <xliff:g id="name" example="Example">%1$s</xliff:g></string>
+    <string name="library_actions_group_customize" tools:ignore="MissingTranslation">Personalitza</string>
+    <string name="library_actions_group_organize" tools:ignore="MissingTranslation">Organitza</string>
+    <string name="library_actions_group_transfer" tools:ignore="MissingTranslation">Transfereix i mantén</string>
+    <string name="library_collection_more_actions" tools:ignore="MissingTranslation">Més accions per a la col·lecció <xliff:g id="collection_name" example="Favorites">%1$s</xliff:g></string>
+    <string name="library_settings_preferences" tools:ignore="MissingTranslation">Preferències de l’aplicació</string>
+    <string name="library_settings_section_maintenance" tools:ignore="MissingTranslation">Actualitzacions i diagnòstics</string>
+    <string name="library_settings_section_support" tools:ignore="MissingTranslation">Quant a i suport</string>
+    <string name="library_details_title" tools:ignore="MissingTranslation">Detalls del MIDlet</string>
+    <string name="library_details_description" tools:ignore="MissingTranslation">Descripció</string>
+    <string name="library_details_play_stats" tools:ignore="MissingTranslation">Estadístiques de joc</string>
+    <string name="library_details_launches" tools:ignore="MissingTranslation">Inicis</string>
+    <string name="library_details_total_time" tools:ignore="MissingTranslation">Temps total</string>
+    <string name="library_details_last_played" tools:ignore="MissingTranslation">Última vegada jugat</string>
+    <string name="library_details_library_info" tools:ignore="MissingTranslation">Informació de la biblioteca</string>
+    <string name="library_details_added" tools:ignore="MissingTranslation">Afegit a la biblioteca</string>
+    <string name="library_details_collections" tools:ignore="MissingTranslation">Col·leccions</string>
+    <string name="library_details_none" tools:ignore="MissingTranslation">Cap</string>
+    <string name="library_details_technical" tools:ignore="MissingTranslation">Informació tècnica</string>
+    <string name="library_details_profile" tools:ignore="MissingTranslation">Perfil</string>
+    <string name="library_details_configuration" tools:ignore="MissingTranslation">Configuració</string>
+    <string name="library_details_jar_size" tools:ignore="MissingTranslation">Mida del JAR conservat</string>
+    <string name="library_details_entry_points" tools:ignore="MissingTranslation">Entrades del MIDlet</string>
+    <string name="library_details_original_metadata" tools:ignore="MissingTranslation">Metadades originals</string>
+    <string name="library_details_name" tools:ignore="MissingTranslation">Nom</string>
+    <string name="library_details_vendor" tools:ignore="MissingTranslation">Proveïdor</string>
+    <string name="library_details_version" tools:ignore="MissingTranslation">Versió</string>
+    <string name="library_details_version_value" tools:ignore="MissingTranslation">Versió <xliff:g id="version" example="2.1.0">%1$s</xliff:g></string>
+    <string name="library_details_original_description" tools:ignore="MissingTranslation">Descripció original</string>
+    <string name="library_details_permissions" tools:ignore="MissingTranslation">Permisos declarats</string>
+    <string name="library_details_required" tools:ignore="MissingTranslation">Obligatoris</string>
+    <string name="library_details_optional" tools:ignore="MissingTranslation">Opcionals</string>
+    <string name="library_details_no_permissions" tools:ignore="MissingTranslation">Cap permís declarat</string>
+    <string name="library_details_descriptor_attributes" tools:ignore="MissingTranslation">Atributs del descriptor</string>
+    <string name="library_details_unavailable" tools:ignore="MissingTranslation">No disponible</string>
+    <string name="library_details_action" tools:ignore="MissingTranslation">Detalls</string>
+    <string name="library_details_view_details" tools:ignore="MissingTranslation">Mostra els detalls</string>
+    <string name="library_actions_more" tools:ignore="MissingTranslation">Més accions</string>
+    <string name="library_actions_less" tools:ignore="MissingTranslation">Menys accions</string>
+</resources>

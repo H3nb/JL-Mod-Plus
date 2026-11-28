@@ -1,0 +1,518 @@
+<?xml version="1.0" encoding="utf-8"?>
+<!-- MIDlet library, collections, metadata editor, bulk/single installer, file picker, and app updates. -->
+<resources xmlns:tools="http://schemas.android.com/tools" xmlns:xliff="urn:oasis:names:tc:xliff:document:1.2">
+    <string name="action_context_delete">Видалити</string>
+    <string name="action_context_rename">Перейменувати</string>
+    <string name="action_context_shortcut">Додати ярлик</string>
+    <string name="action_reinstall">Перевстановити</string>
+    <string name="alert_msg_workdir_not_exists">Робочу папку не знайдено:\n<xliff:g id="path" example="/storage/emulated/0/JL-Mod-Plus">%1$s</xliff:g>\nСтворити її чи вибрати іншу папку?</string>
+    <string name="converting_wait">Перетворення JAR…</string>
+    <string name="create_apps_dir_failed">Не вдалося підготувати робочу папку за шляхом:\n<xliff:g id="path" example="/storage/emulated/0/JL-Mod-Plus">%1$s</xliff:g>\nВиберіть іншу папку.</string>
+    <string name="install_done">Додаток установлено.</string>
+    <string name="install_done_with_warning">Додаток установлено з попередженнями.</string>
+    <string name="installer_title">Установлювач MIDlet</string>
+    <string name="installer_error_message">Не вдалося встановити вибраний додаток. Виберіть коректний файл MIDlet і спробуйте ще раз.</string>
+    <string name="install_jar_non_matched_jad">Цей додаток відрізняється від описаного в JAD.\nПроігнорувати JAD і встановити все одно?</string>
+    <string name="file_picker_select_file">Вибрати файл</string>
+    <string name="file_picker_select_folder">Вибрати папку</string>
+    <string name="file_picker_select_app_bundle">Вибрати пакет додатка</string>
+    <string name="file_picker_select_icon">Вибрати значок</string>
+    <string name="file_picker_navigate_back">Назад до батьківської папки</string>
+    <string name="file_picker_cancel">Скасувати</string>
+    <string name="file_picker_search">Пошук</string>
+    <string name="file_picker_sort">Сортування</string>
+    <string name="file_picker_select_all">Вибрати всі відображені файли</string>
+    <string name="file_picker_unselect_all">Скасувати вибір усіх відображених файлів</string>
+    <string name="file_picker_sort_type">Спочатку папки</string>
+    <string name="file_picker_sort_name_ascending">Назва А–Я</string>
+    <string name="file_picker_sort_name_descending">Назва Я–А</string>
+    <string name="file_picker_sort_modified_newest">Дата зміни: найновіші</string>
+    <string name="file_picker_sort_modified_oldest">Дата зміни: найстаріші</string>
+    <string name="file_picker_choose">Вибрати</string>
+    <string name="file_picker_current_folder">Поточна папка</string>
+    <string name="file_picker_parent_folder">Батьківська папка</string>
+    <string name="file_picker_file">Файл</string>
+    <string name="file_picker_preview_named">Переглянути «<xliff:g id="name" example="Example">%1$s</xliff:g>»</string>
+    <string name="file_picker_preview_unavailable">Попередній перегляд недоступний</string>
+    <string name="file_picker_storage_volume">Том сховища</string>
+    <string name="file_picker_empty">Немає відповідних файлів</string>
+    <string name="file_picker_empty_folder">Папок не знайдено</string>
+    <string name="file_picker_no_matches">Немає збігів</string>
+    <string name="file_picker_permission_required">Потрібен дозвіл на доступ до сховища</string>
+    <string name="file_picker_permission_message">Надайте доступ до сховища, щоб переглядати файли та папки на цьому пристрої.</string>
+    <string name="file_picker_permission_denied">Доступ до сховища не надано.</string>
+    <string name="file_picker_grant_access">Надати доступ</string>
+    <string name="file_picker_retry">Повторити</string>
+    <string name="file_picker_load_failed">Не вдалося відкрити цю папку.</string>
+    <string name="file_picker_create_folder">Нова папка</string>
+    <string name="file_picker_create_folder_title">Створити папку</string>
+    <string name="file_picker_folder_name">Назва папки</string>
+    <string name="file_picker_invalid_folder_name">Введіть коректну назву папки.</string>
+    <string name="file_picker_folder_exists">Елемент із такою назвою вже існує.</string>
+    <string name="file_picker_create_folder_failed">Не вдалося створити папку.</string>
+    <string name="file_picker_selection_unavailable">Вибраний елемент більше недоступний.</string>
+    <string name="loading_apps">Завантаження додатків</string>
+    <string name="message_delete">Видалити цей додаток, його налаштування та збережені дані? Це також вилучить його з бібліотеки.</string>
+    <string name="msg_no_matches">Немає збігів для «<xliff:g id="query" example="Bounce">%1$s</xliff:g>»</string>
+    <string name="library_destination_apps">Усі додатки</string>
+    <string name="library_destination_collections">Колекції</string>
+    <string name="library_scope_picker_title" tools:ignore="MissingTranslation">Огляд додатків</string>
+    <string name="library_destination_more">Ще</string>
+    <string name="library_search_placeholder">Пошук додатків…</string>
+    <string name="library_filter_all">Усі</string>
+    <string name="library_filter_recently_opened">Нещодавно відкриті</string>
+    <string name="library_filter_recently_added">Нещодавно додані</string>
+    <string name="library_filter_favorites">Вибрані</string>
+    <string name="library_add_to_favorites_action">Додати у вибрані</string>
+    <string name="library_remove_from_favorites_action">Вилучити з вибраних</string>
+    <string name="library_favorite_coming_soon">Вибрані недоступні</string>
+    <string name="library_vendor_version"><xliff:g id="vendor" example="Nokia">%1$s</xliff:g> · <xliff:g id="version" example="1.0">%2$s</xliff:g></string>
+    <string name="library_view_list">Список</string>
+    <string name="library_view_grid">Сітка</string>
+    <string name="library_icon_ratio_title">Пропорції значка</string>
+    <string name="library_icon_ratio_square">Квадрат (1:1)</string>
+    <string name="library_icon_ratio_portrait">Книжкові (3:4)</string>
+    <string name="library_icon_shape_title">Форма значка</string>
+    <string name="library_icon_shape_round">Заокруглені кути</string>
+    <string name="library_icon_shape_square">Прямі кути</string>
+    <string name="library_grid_icon_size_title" tools:ignore="MissingTranslation">Розмір значків у сітці</string>
+    <string name="library_grid_icon_size_small" tools:ignore="MissingTranslation">Малий</string>
+    <string name="library_grid_icon_size_standard" tools:ignore="MissingTranslation">Стандартний</string>
+    <string name="library_grid_icon_size_large" tools:ignore="MissingTranslation">Великий</string>
+    <string name="library_grid_icon_size_summary" tools:ignore="MissingTranslation">Змінює розмір значків і кількість стовпців у режимі сітки.</string>
+    <string name="library_grid_spacing_title">Інтервал сітки</string>
+    <string name="library_grid_spacing_summary" tools:ignore="MissingTranslation">Застосовується лише в режимі сітки.</string>
+    <string name="library_grid_spacing_none">Немає (0 dp)</string>
+    <string name="library_grid_spacing_compact">Компактний (4 dp)</string>
+    <string name="library_grid_spacing_standard">Стандартний (8 dp)</string>
+    <string name="library_grid_spacing_spacious">Просторий (12 dp)</string>
+    <string name="library_hide_grid_titles">Приховувати назви MIDlet</string>
+    <string name="library_show_list_description">Показувати описи MIDlet</string>
+    <string name="library_collections_empty_title">Ще немає колекцій</string>
+    <string name="library_collections_empty_message">Колекції стануть доступні після завершення завантаження бібліотеки.</string>
+    <string name="library_expand_description">Розгорнути опис</string>
+    <string name="library_collapse_description">Згорнути опис</string>
+    <string name="no_data_for_display">Немає додатків для відображення</string>
+    <string name="permission_request_failed">Потрібен дозвіл на запис у сховище.</string>
+    <string name="reinstall">Цей додаток уже встановлено. Перевстановити його?</string>
+    <string name="reinstall_newest">Оновити цей додаток до версії <xliff:g id="version" example="2.1.0">%1$s</xliff:g>?\n\nЗараз установлено: <xliff:g id="current_version" example="2.0.0">%2$s</xliff:g></string>
+    <string name="reinstall_older">Замінити цей додаток версією <xliff:g id="version" example="2.1.0">%1$s</xliff:g>?\n\nЗараз установлено: <xliff:g id="current_version" example="2.0.0">%2$s</xliff:g>\nСтаріша версія може некоректно працювати з наявними даними.</string>
+    <string name="warn_install_from_net">Цей файл буде завантажено з інтернету.</string>
+    <string name="installer_ambiguous">Кілька встановлених додатків відповідають цьому пакету. Встановити окрему копію? Наявні додатки та їхні дані збережуться.</string>
+    <string name="installer_separate_copy">Встановити окрему копію</string>
+    <string name="installer_stage_download">Завантаження додатка…</string>
+    <string name="installer_stage_wait">Очікування іншої операції…</string>
+    <string name="installer_stage_save">Збереження додатка…</string>
+    <string name="installer_failed_download">Не вдалося завантажити додаток. Перевірте з’єднання та посилання для завантаження і спробуйте ще раз.</string>
+    <string name="installer_failed_storage">Не вдалося завершити встановлення. Спробуйте ще раз.</string>
+    <string name="installer_failed_conversion">Не вдалося перетворити додаток. Переконайтеся, що файл повний і підтримується, та спробуйте ще раз.</string>
+    <string name="installer_needs_recovery">Файли додатка збережено, але бібліотеці не вдалося завершити оновлення. Оновіть бібліотеку перед повторною спробою.</string>
+    <string name="installer_refresh_library">Оновити бібліотеку</string>
+    <string name="installer_cancel_pending">Зупинка в найближчій безпечній точці…</string>
+    <string name="installer_retry_remaining">Переглянути незавершені елементи</string>
+    <string name="installer_not_processed">Не оброблено</string>
+    <string name="installer_partial_restore">Додаток установлено, але не вдалося відновити дані або налаштування.</string>
+    <string name="installer_removed_leftovers">Додаток видалено, але деякі налаштування або збережені дані не вдалося видалити.</string>
+    <string name="installer_copy_details">Копіювати деталі</string>
+    <string name="installer_show_details">Показати деталі</string>
+    <string name="installer_hide_details">Приховати деталі</string>
+    <!-- %1$d is the number of source Java class files skipped during conversion. -->
+    <plurals name="installer_conversion_warning_summary">
+        <item quantity="one"><xliff:g id="skipped_count" example="2">%1$d</xliff:g> файл класу Java пропущено, оскільки його не вдалося прочитати. Функції, що його використовують, можуть не працювати.</item>
+        <item quantity="few"><xliff:g id="skipped_count" example="2">%1$d</xliff:g> файли класів Java пропущено, оскільки їх не вдалося прочитати. Функції, що їх використовують, можуть не працювати.</item>
+        <item quantity="many"><xliff:g id="skipped_count" example="2">%1$d</xliff:g> файлів класів Java пропущено, оскільки їх не вдалося прочитати. Функції, що їх використовують, можуть не працювати.</item>
+        <item quantity="other"><xliff:g id="skipped_count" example="2">%1$d</xliff:g> файлів класів Java пропущено, оскільки їх не вдалося прочитати. Функції, що їх використовують, можуть не працювати.</item>
+    </plurals>
+    <!-- %1$s is the source JAR entry path for the skipped class file. -->
+    <string name="installer_conversion_skipped_entry"><xliff:g id="entry_path" example="com/example/Broken.class">%1$s</xliff:g>\nПроблема: не вдалося прочитати файл класу Java.\nДія: пропущено під час перетворення.</string>
+    <!-- %1$d is the number of additional bounded conversion diagnostics not shown. -->
+    <plurals name="installer_conversion_omitted_details">
+        <item quantity="one"><xliff:g id="omitted_count" example="5">%1$d</xliff:g> додаткова проблема перетворення не показана.</item>
+        <item quantity="few"><xliff:g id="omitted_count" example="5">%1$d</xliff:g> додаткові проблеми перетворення не показані.</item>
+        <item quantity="many"><xliff:g id="omitted_count" example="5">%1$d</xliff:g> додаткових проблем перетворення не показано.</item>
+        <item quantity="other"><xliff:g id="omitted_count" example="5">%1$d</xliff:g> додаткових проблем перетворення не показано.</item>
+    </plurals>
+    <string name="library_collection_new">Нова колекція</string>
+    <string name="library_collection_ready_empty_message">Створюйте колекції, щоб упорядковувати додатки без переміщення їхніх файлів.</string>
+    <string name="library_collection_add_app">Додати до колекції</string>
+    <string name="library_collection_add_apps">Додати додатки</string>
+    <string name="library_collection_manage_apps">Вибрати додатки</string>
+    <string name="library_collection_manage" tools:ignore="MissingTranslation">Керувати колекціями</string>
+    <string name="library_collection_delete_confirmation" tools:ignore="MissingTranslation">Видалити «<xliff:g id="collection_name" example="Favorites">%1$s</xliff:g>»? Додатки в цій колекції залишаться встановленими.</string>
+    <string name="library_collection_rename_action" tools:ignore="MissingTranslation">Перейменувати колекцію «<xliff:g id="collection_name" example="Favorites">%1$s</xliff:g>»</string>
+    <string name="library_collection_delete_action" tools:ignore="MissingTranslation">Видалити колекцію «<xliff:g id="collection_name" example="Favorites">%1$s</xliff:g>»</string>
+    <string name="library_collection_select_action" tools:ignore="MissingTranslation">Вибрати колекцію «<xliff:g id="collection_name" example="Favorites">%1$s</xliff:g>»</string>
+    <string name="library_collection_open_action" tools:ignore="MissingTranslation">Відкрити колекцію «<xliff:g id="collection_name" example="Favorites">%1$s</xliff:g>»</string>
+    <string name="library_collection_rename_selected" tools:ignore="MissingTranslation">Перейменувати вибрану колекцію</string>
+    <string name="library_collection_delete_selected" tools:ignore="MissingTranslation">Видалити вибрані колекції</string>
+    <plurals name="library_collection_delete_many_confirmation">
+        <item quantity="one">Видалити <xliff:g id="count" example="3">%d</xliff:g> колекцію? Додатки залишаться встановленими.</item>
+        <item quantity="few">Видалити <xliff:g id="count" example="3">%d</xliff:g> колекції? Додатки залишаться встановленими.</item>
+        <item quantity="many">Видалити <xliff:g id="count" example="3">%d</xliff:g> колекцій? Додатки залишаться встановленими.</item>
+        <item quantity="other">Видалити <xliff:g id="count" example="3">%d</xliff:g> колекцій? Додатки залишаться встановленими.</item>
+    </plurals>
+    <string name="library_notifications_title" tools:ignore="MissingTranslation">Сповіщення</string>
+    <string name="library_notifications_empty_title" tools:ignore="MissingTranslation">Ще немає сповіщень</string>
+    <string name="library_notifications_empty_summary" tools:ignore="MissingTranslation">Тут з’являтимуться сповіщення про оновлення додатка, коли вони будуть доступні.</string>
+    <string name="library_collection_manage_apps_summary">Виберіть додатки, які потрібно додати до цієї колекції.</string>
+    <string name="library_collection_name">Назва колекції</string>
+    <string name="library_collection_members_empty">У цій колекції немає додатків.</string>
+    <string name="library_collection_select_title">Виберіть колекцію</string>
+    <string name="library_collection_select_message">Виберіть колекцію, щоб переглянути її додатки.</string>
+    <string name="library_collection_remove_from_current">Вилучити з колекції</string>
+    <string name="library_no_matches">Немає збігів для «<xliff:g id="query" example="Bounce">%1$s</xliff:g>»</string>
+    <string name="library_action_share_app">Поділитися додатком</string>
+    <string name="library_action_export_bundle">Експортувати пакет додатка</string>
+    <string name="library_action_import_bundle">Імпортувати пакет додатка</string>
+    <string name="library_action_import_bundle_summary">Відновіть експортовані додатки разом із доданими налаштуваннями, збереженими даними або закладками.</string>
+    <string name="library_import_preparing">Читання пакета додатка…</string>
+    <string name="library_import_restoring">Відновлення даних додатка…</string>
+    <string name="library_import_done">Пакет додатка імпортовано.</string>
+    <string name="library_import_done_with_warning">Пакет додатка імпортовано з попередженнями.</string>
+    <string name="library_import_invalid_bundle">Вибраний пакет додатка недійсний, пошкоджений або не підтримується. Виберіть коректний пакет додатка JL-Mod Plus і спробуйте ще раз.</string>
+    <string name="library_import_restore_existing">Цей додаток уже встановлено. Налаштування та збережені дані з пакета замінять наявні дані. У пакетах нового формату закладки об’єднуються під час імпорту без налаштувань, замінюються під час імпорту з налаштуваннями й зберігаються, якщо їх немає в пакеті. Відновлення налаштувань зі старіших пакетів також може замінити закладки.</string>
+    <string name="library_import_restore_failed">Додаток установлено, але не вдалося відновити дані з пакета. Повторити відновлення?</string>
+    <string name="library_play_stats_summary">Запусків: <xliff:g id="launch_count" example="12">%1$d</xliff:g> · Загальний час: <xliff:g id="total_time" example="2h 15m">%2$s</xliff:g></string>
+    <string name="library_share_chooser_title">Поділитися додатком</string>
+    <string name="library_export_chooser_title">Експорт</string>
+    <string name="library_export_progress">Експорт… <xliff:g id="completed" example="3">%1$d</xliff:g>/<xliff:g id="total" example="10">%2$d</xliff:g></string>
+    <string name="library_transfer_unavailable">Не вдалося виконати експорт.</string>
+    <string name="library_export_data_in_use">Дані однієї з вибраних програм використовуються. Закрийте вибрані MIDlet, які зараз запущені, і спробуйте ще раз.</string>
+    <string name="library_export_menu_unavailable">Не вдалося відкрити меню експорту.</string>
+    <string name="library_back">Назад до бібліотеки</string>
+    <string name="library_sort">Сортувати додатки</string>
+    <string name="library_search_clear">Очистити пошук</string>
+    <string name="library_description_more">… Більше</string>
+    <string name="library_description_less">Менше</string>
+    <plurals name="file_picker_selected_count">
+        <item quantity="one">Вибрано <xliff:g id="count" example="3">%1$d</xliff:g></item>
+        <item quantity="few">Вибрано <xliff:g id="count" example="3">%1$d</xliff:g></item>
+        <item quantity="many">Вибрано <xliff:g id="count" example="3">%1$d</xliff:g></item>
+        <item quantity="other">Вибрано <xliff:g id="count" example="3">%1$d</xliff:g></item>
+    </plurals>
+    <plurals name="library_selection_count">
+        <item quantity="one"><xliff:g id="count" example="3">%1$d</xliff:g> додаток</item>
+        <item quantity="few"><xliff:g id="count" example="3">%1$d</xliff:g> додатки</item>
+        <item quantity="many"><xliff:g id="count" example="3">%1$d</xliff:g> додатків</item>
+        <item quantity="other"><xliff:g id="count" example="3">%1$d</xliff:g> додатків</item>
+    </plurals>
+    <plurals name="library_collection_member_count">
+        <item quantity="one"><xliff:g id="count" example="3">%1$d</xliff:g> додаток</item>
+        <item quantity="few"><xliff:g id="count" example="3">%1$d</xliff:g> додатки</item>
+        <item quantity="many"><xliff:g id="count" example="3">%1$d</xliff:g> додатків</item>
+        <item quantity="other"><xliff:g id="count" example="3">%1$d</xliff:g> додатків</item>
+    </plurals>
+    <plurals name="bulk_install_found">
+        <item quantity="one">Знайдено <xliff:g id="count" example="3">%1$d</xliff:g> додаток</item>
+        <item quantity="few">Знайдено <xliff:g id="count" example="3">%1$d</xliff:g> додатки</item>
+        <item quantity="many">Знайдено <xliff:g id="count" example="3">%1$d</xliff:g> додатків</item>
+        <item quantity="other">Знайдено <xliff:g id="count" example="3">%1$d</xliff:g> додатків</item>
+    </plurals>
+    <plurals name="bulk_install_selected">
+        <item quantity="one">Вибрано <xliff:g id="count" example="3">%1$d</xliff:g></item>
+        <item quantity="few">Вибрано <xliff:g id="count" example="3">%1$d</xliff:g></item>
+        <item quantity="many">Вибрано <xliff:g id="count" example="3">%1$d</xliff:g></item>
+        <item quantity="other">Вибрано <xliff:g id="count" example="3">%1$d</xliff:g></item>
+    </plurals>
+    <plurals name="bulk_install_ready_count">
+        <item quantity="one">Готово: <xliff:g id="count" example="3">%1$d</xliff:g></item>
+        <item quantity="few">Готово: <xliff:g id="count" example="3">%1$d</xliff:g></item>
+        <item quantity="many">Готово: <xliff:g id="count" example="3">%1$d</xliff:g></item>
+        <item quantity="other">Готово: <xliff:g id="count" example="3">%1$d</xliff:g></item>
+    </plurals>
+    <plurals name="bulk_install_skipped_count">
+        <item quantity="one">Уже встановлено або дублікат: <xliff:g id="count" example="3">%1$d</xliff:g></item>
+        <item quantity="few">Уже встановлено або дублікати: <xliff:g id="count" example="3">%1$d</xliff:g></item>
+        <item quantity="many">Уже встановлено або дублікати: <xliff:g id="count" example="3">%1$d</xliff:g></item>
+        <item quantity="other">Уже встановлено або дублікати: <xliff:g id="count" example="3">%1$d</xliff:g></item>
+    </plurals>
+    <plurals name="bulk_install_attention_count">
+        <item quantity="one"><xliff:g id="count" example="3">%1$d</xliff:g> потребує перевірки</item>
+        <item quantity="few"><xliff:g id="count" example="3">%1$d</xliff:g> потребують перевірки</item>
+        <item quantity="many"><xliff:g id="count" example="3">%1$d</xliff:g> потребують перевірки</item>
+        <item quantity="other"><xliff:g id="count" example="3">%1$d</xliff:g> потребують перевірки</item>
+    </plurals>
+    <plurals name="bulk_install_installed_count">
+        <item quantity="one">Установлено: <xliff:g id="count" example="3">%1$d</xliff:g></item>
+        <item quantity="few">Установлено: <xliff:g id="count" example="3">%1$d</xliff:g></item>
+        <item quantity="many">Установлено: <xliff:g id="count" example="3">%1$d</xliff:g></item>
+        <item quantity="other">Установлено: <xliff:g id="count" example="3">%1$d</xliff:g></item>
+    </plurals>
+    <plurals name="bulk_install_updated_count">
+        <item quantity="one">Оновлено: <xliff:g id="count" example="3">%1$d</xliff:g></item>
+        <item quantity="few">Оновлено: <xliff:g id="count" example="3">%1$d</xliff:g></item>
+        <item quantity="many">Оновлено: <xliff:g id="count" example="3">%1$d</xliff:g></item>
+        <item quantity="other">Оновлено: <xliff:g id="count" example="3">%1$d</xliff:g></item>
+    </plurals>
+    <plurals name="bulk_install_reinstalled_count">
+        <item quantity="one">Перевстановлено: <xliff:g id="count" example="3">%1$d</xliff:g></item>
+        <item quantity="few">Перевстановлено: <xliff:g id="count" example="3">%1$d</xliff:g></item>
+        <item quantity="many">Перевстановлено: <xliff:g id="count" example="3">%1$d</xliff:g></item>
+        <item quantity="other">Перевстановлено: <xliff:g id="count" example="3">%1$d</xliff:g></item>
+    </plurals>
+    <plurals name="bulk_install_skipped_result_count">
+        <item quantity="one">Пропущено: <xliff:g id="count" example="3">%1$d</xliff:g></item>
+        <item quantity="few">Пропущено: <xliff:g id="count" example="3">%1$d</xliff:g></item>
+        <item quantity="many">Пропущено: <xliff:g id="count" example="3">%1$d</xliff:g></item>
+        <item quantity="other">Пропущено: <xliff:g id="count" example="3">%1$d</xliff:g></item>
+    </plurals>
+    <plurals name="bulk_install_failed_count">
+        <item quantity="one">Помилок: <xliff:g id="count" example="3">%1$d</xliff:g></item>
+        <item quantity="few">Помилок: <xliff:g id="count" example="3">%1$d</xliff:g></item>
+        <item quantity="many">Помилок: <xliff:g id="count" example="3">%1$d</xliff:g></item>
+        <item quantity="other">Помилок: <xliff:g id="count" example="3">%1$d</xliff:g></item>
+    </plurals>
+    <plurals name="bulk_install_warning_count">
+        <item quantity="one"><xliff:g id="count" example="3">%1$d</xliff:g> попередження</item>
+        <item quantity="few"><xliff:g id="count" example="3">%1$d</xliff:g> попередження</item>
+        <item quantity="many"><xliff:g id="count" example="3">%1$d</xliff:g> попереджень</item>
+        <item quantity="other"><xliff:g id="count" example="3">%1$d</xliff:g> попереджень</item>
+    </plurals>
+    <plurals name="bulk_install_omitted_sources">
+        <item quantity="one"><xliff:g id="count" example="3">%1$d</xliff:g> додатковий файл пропущено, щоб перевірка працювала плавно.</item>
+        <item quantity="few"><xliff:g id="count" example="3">%1$d</xliff:g> додаткові файли пропущено, щоб перевірка працювала плавно.</item>
+        <item quantity="many"><xliff:g id="count" example="3">%1$d</xliff:g> додаткових файлів пропущено, щоб перевірка працювала плавно.</item>
+        <item quantity="other"><xliff:g id="count" example="3">%1$d</xliff:g> додаткових файлів пропущено, щоб перевірка працювала плавно.</item>
+    </plurals>
+    <plurals name="library_bulk_delete_confirmation">
+        <item quantity="one">Видалити <xliff:g id="count" example="3">%1$d</xliff:g> додаток? Його файли, налаштування та збережені дані буде вилучено з бібліотеки.</item>
+        <item quantity="few">Видалити <xliff:g id="count" example="3">%1$d</xliff:g> додатки? Їхні файли, налаштування та збережені дані буде вилучено з бібліотеки.</item>
+        <item quantity="many">Видалити <xliff:g id="count" example="3">%1$d</xliff:g> додатків? Їхні файли, налаштування та збережені дані буде вилучено з бібліотеки.</item>
+        <item quantity="other">Видалити <xliff:g id="count" example="3">%1$d</xliff:g> додатків? Їхні файли, налаштування та збережені дані буде вилучено з бібліотеки.</item>
+    </plurals>
+    <plurals name="library_bulk_delete_result">
+        <item quantity="one">Видалено <xliff:g id="deleted_count" example="3">%1$d</xliff:g> додаток; помилок: <xliff:g id="failed_count" example="1">%2$d</xliff:g>.</item>
+        <item quantity="few">Видалено <xliff:g id="deleted_count" example="3">%1$d</xliff:g> додатки; помилок: <xliff:g id="failed_count" example="1">%2$d</xliff:g>.</item>
+        <item quantity="many">Видалено <xliff:g id="deleted_count" example="3">%1$d</xliff:g> додатків; помилок: <xliff:g id="failed_count" example="1">%2$d</xliff:g>.</item>
+        <item quantity="other">Видалено <xliff:g id="deleted_count" example="3">%1$d</xliff:g> додатків; помилок: <xliff:g id="failed_count" example="1">%2$d</xliff:g>.</item>
+    </plurals>
+    <string name="bulk_install_title">Пакетне встановлення</string>
+    <string name="bulk_install_planning">Перевірка вибраних додатків…</string>
+    <string name="bulk_install_empty">Підтримуваних додатків не знайдено.</string>
+    <string name="bulk_install_recommended">Рекомендовано</string>
+    <string name="bulk_install_clear">Скасувати вибір</string>
+    <string name="bulk_install_install_count">Встановити (<xliff:g id="count" example="3">%1$d</xliff:g>)</string>
+    <string name="bulk_install_cancel">Скасувати</string>
+    <string name="bulk_install_close">Закрити</string>
+    <plurals name="bulk_install_running">
+        <item quantity="one">Оброблено <xliff:g id="processed" example="3">%1$d</xliff:g> додаток із <xliff:g id="total" example="10">%2$d</xliff:g></item>
+        <item quantity="few">Оброблено <xliff:g id="processed" example="3">%1$d</xliff:g> додатки з <xliff:g id="total" example="10">%2$d</xliff:g></item>
+        <item quantity="many">Оброблено <xliff:g id="processed" example="3">%1$d</xliff:g> додатків із <xliff:g id="total" example="10">%2$d</xliff:g></item>
+        <item quantity="other">Оброблено <xliff:g id="processed" example="3">%1$d</xliff:g> додатків із <xliff:g id="total" example="10">%2$d</xliff:g></item>
+    </plurals>
+    <string name="bulk_install_cancel_requested">Зупинка після поточного додатка…</string>
+    <string name="bulk_install_complete">Пакетне встановлення завершено</string>
+    <string name="bulk_install_cancelled">Пакетне встановлення зупинено</string>
+    <string name="bulk_install_fatal">Пакетне встановлення зупинено. Перегляньте незавершені елементи перед повторною спробою.</string>
+    <string name="bulk_install_result_installed">Установлено</string>
+    <string name="bulk_install_result_updated">Оновлено</string>
+    <string name="bulk_install_result_reinstalled">Перевстановлено</string>
+    <string name="bulk_install_result_skipped">Пропущено</string>
+    <string name="bulk_install_result_failed">Помилка</string>
+    <string name="bulk_install_installed_version">Установлено: <xliff:g id="version" example="2.1.0">%1$s</xliff:g></string>
+    <string name="bulk_install_source">Джерело: <xliff:g id="name" example="Example">%1$s</xliff:g></string>
+    <string name="bulk_install_action_separate_copy">Встановити як окрему копію</string>
+    <string name="bulk_install_action_jar_only">Встановити лише JAR</string>
+    <string name="single_install_review_jar_only" tools:ignore="MissingTranslation">Перевірити лише JAR</string>
+    <string name="single_install_jar_only_notice" tools:ignore="MissingTranslation">Буде встановлено лише JAR. Перевірте назву додатка, версію та статус встановлення перед продовженням.</string>
+    <string name="single_install_running_replacement_warning" tools:ignore="MissingTranslation">Якщо цей додаток запущено, установлення зупинить його перед заміною файлів. Незбережений прогрес може бути втрачено.</string>
+    <string name="bulk_install_status_new">Новий</string>
+    <string name="bulk_install_status_update">Оновлення</string>
+    <string name="bulk_install_status_downgrade">Старіша версія</string>
+    <string name="bulk_install_status_same">Уже встановлено</string>
+    <string name="bulk_install_status_reinstall">Та сама версія, можливий варіант</string>
+    <string name="bulk_install_status_ambiguous">Збігається з кількома встановленими додатками</string>
+    <string name="bulk_install_status_mismatch">Невідповідність JAD і JAR</string>
+    <string name="bulk_install_status_duplicate">Дублікат</string>
+    <string name="bulk_install_status_older_batch">Старіша версія в пакеті</string>
+    <string name="bulk_install_status_conflict">Конфлікт у пакеті</string>
+    <string name="bulk_install_status_remote">Віддалене джерело не підтримується</string>
+    <string name="bulk_install_status_error">Некоректне джерело</string>
+    <string name="bulk_install_reinstall_source_missing">Збережений JAR недоступний для перевстановлення.</string>
+    <plurals name="bulk_install_reinstall_missing_apps">
+        <item quantity="one"><xliff:g id="count" example="3">%1$d</xliff:g> вибраний додаток із бібліотеки більше недоступний.</item>
+        <item quantity="few"><xliff:g id="count" example="3">%1$d</xliff:g> вибрані додатки з бібліотеки більше недоступні.</item>
+        <item quantity="many"><xliff:g id="count" example="3">%1$d</xliff:g> вибраних додатків із бібліотеки більше недоступні.</item>
+        <item quantity="other"><xliff:g id="count" example="3">%1$d</xliff:g> вибраних додатків із бібліотеки більше недоступні.</item>
+    </plurals>
+    <string name="library_metadata_edit_title">Редагувати метадані</string>
+    <string name="library_metadata_icon">Значок</string>
+    <string name="library_metadata_name">Назва</string>
+    <string name="library_metadata_vendor">Виробник</string>
+    <string name="library_metadata_reset_to_original">Скинути до оригіналу</string>
+    <string name="library_metadata_save">Зберегти</string>
+    <string name="library_hide_grid_titles_summary">Приховує назви MIDlet у режимі сітки. У режимі списку вони залишаються видимими.</string>
+    <string name="library_show_list_description_summary">Показує опис кожного MIDlet під його назвою та версією.</string>
+    <string name="library_indexing_progress">Індексація бібліотеки… <xliff:g id="completed" example="3">%1$d</xliff:g>/<xliff:g id="total" example="10">%2$d</xliff:g></string>
+    <string name="library_indexing_current">Сканування «<xliff:g id="name" example="Example">%1$s</xliff:g>»</string>
+    <string name="library_load_error_title">Бібліотека недоступна</string>
+    <string name="library_retry">Повторити</string>
+    <string name="library_reinstall_source_missing">Збережений JAR недоступний для перевстановлення.</string>
+    <string name="library_action_select">Вибрати</string>
+    <string name="library_selection_select_all">Вибрати все</string>
+    <string name="library_selection_unselect_all">Скасувати все</string>
+    <string name="library_selection_checkbox_description">Вибрати «<xliff:g id="name" example="Example">%1$s</xliff:g>»</string>
+    <string name="library_selection_checked">Вибрано</string>
+    <string name="library_selection_unchecked">Не вибрано</string>
+    <string name="library_action_settings_summary">Налаштуйте глобальну поведінку та вигляд.</string>
+    <string name="library_action_crash_reports_summary">Перегляньте збережені звіти діагностики.</string>
+    <string name="library_action_about_summary">Огляд проєкту, відомості про збірку та посилання.</string>
+    <string name="library_action_licenses_summary">Повідомлення третіх сторін і умови ліцензій, що входять до додатка.</string>
+    <string name="library_donation_action">Підтримати розробку</string>
+    <string name="library_donation_summary">Допоможіть JL-Mod Plus розвиватися далі.</string>
+    <string name="library_donation_title">Підтримати JL-Mod Plus</string>
+    <string name="library_donation_message">JL-Mod Plus — безкоштовний проєкт із відкритим кодом. Якщо він для вас корисний, ви можете підтримати його розробку добровільним внеском.</string>
+    <string name="library_donation_provider_note">Внески обробляються на зовнішній платформі Sociabuzz.</string>
+    <string name="library_donation_continue">Перейти до Sociabuzz</string>
+    <string name="library_donation_not_now">Не зараз</string>
+    <string name="library_donation_link_copied">Браузер не знайдено. Посилання на Sociabuzz скопійовано в буфер обміну.</string>
+    <string name="library_donation_browser_unavailable">Браузер для відкриття Sociabuzz не знайдено.</string>
+    <string name="library_bulk_delete_apps">Видалити додатки</string>
+    <string name="library_bulk_add_collection">Додати до колекції</string>
+    <string name="library_bulk_share_apps">Поділитися додатками</string>
+    <string name="library_bulk_reinstall_apps">Перевстановити</string>
+    <string name="library_bulk_export_apps">Експортувати пакет</string>
+    <string name="library_enhanced_icons_title">Покращені значки</string>
+    <string name="library_enhanced_icons_summary">Коригує кадрування, масштаб і фон плиток, щоб значки виглядали однорідніше в бібліотеці.</string>
+    <string name="library_collections_unavailable_title">Колекції недоступні</string>
+    <string name="library_load_failed_message">Не вдалося завантажити бібліотеку. Спробуйте ще раз.</string>
+    <string name="bulk_install_prepare_failed">Не вдалося підготувати вибрані додатки до встановлення.</string>
+    <string name="installer_existing_data_preserved">Наявні налаштування та збережені дані буде збережено.</string>
+    <string name="bulk_install_library_changed">Бібліотека змінилася після перевірки. Закрийте цей пакет і виберіть файли знову.</string>
+    <string name="bulk_install_source_unavailable">Необхідний вихідний файл більше недоступний. Виберіть файли знову.</string>
+    <string name="bulk_install_source_changed">Вихідний файл змінився після перевірки. Виберіть файли знову.</string>
+    <string name="bulk_install_target_unverified">Не вдалося перевірити ціль перевстановлення. Закрийте цей пакет і виберіть додаток знову.</string>
+    <string name="bulk_install_result_restored">Відновлено</string>
+    <plurals name="bulk_install_restored_count">
+        <item quantity="one">Відновлено: <xliff:g id="count" example="3">%1$d</xliff:g></item>
+        <item quantity="few">Відновлено: <xliff:g id="count" example="3">%1$d</xliff:g></item>
+        <item quantity="many">Відновлено: <xliff:g id="count" example="3">%1$d</xliff:g></item>
+        <item quantity="other">Відновлено: <xliff:g id="count" example="3">%1$d</xliff:g></item>
+    </plurals>
+    <plurals name="bulk_install_reason_ambiguous_match">
+        <item quantity="one"><xliff:g id="count" example="3">%1$d</xliff:g> установлений додаток відповідає цьому джерелу.</item>
+        <item quantity="few"><xliff:g id="count" example="3">%1$d</xliff:g> установлені додатки відповідають цьому джерелу.</item>
+        <item quantity="many"><xliff:g id="count" example="3">%1$d</xliff:g> установлених додатків відповідають цьому джерелу.</item>
+        <item quantity="other"><xliff:g id="count" example="3">%1$d</xliff:g> установлених додатків відповідають цьому джерелу.</item>
+    </plurals>
+    <string name="bulk_install_reason_jad_jar_mismatch">JAD і JAR вказують на різні додатки.</string>
+    <string name="bulk_install_reason_conflicting_jads">Файли JAD із різними атрибутами посилаються на той самий JAR.</string>
+    <string name="bulk_install_reason_remote_jar">Пакетне встановлення не може завантажувати віддалені файли JAR.</string>
+    <string name="bulk_install_reason_missing_jar_url">У JAD відсутній параметр MIDlet-Jar-URL.</string>
+    <!-- %1$s is the exact URI scheme supplied by the JAD; do not translate it. -->
+    <string name="bulk_install_reason_unsupported_uri_scheme">JAD посилається на JAR через непідтримувану схему URI: <xliff:g id="scheme" example="http">%1$s</xliff:g>.</string>
+    <string name="bulk_install_reason_missing_parent">У JAD немає батьківської папки.</string>
+    <!-- %1$s is the exact MIDlet-Jar-URL reference, not a normalized filesystem path. -->
+    <string name="bulk_install_reason_jar_not_found">JAR, на який посилається JAD, не знайдено: <xliff:g id="file_path" example="game.jar">%1$s</xliff:g>.</string>
+    <string name="bulk_install_reason_duplicate_source">Це джерело дублює інше джерело в цьому пакеті.</string>
+    <string name="bulk_install_reason_version_conflict">Кілька варіантів додатка мають однакову версію.</string>
+    <string name="bulk_install_reason_older_candidate">У цьому самому пакеті є новіша версія цього додатка.</string>
+    <string name="bulk_install_reason_source_error">Не вдалося підготувати це джерело до встановлення.</string>
+    <string name="updates_title">Оновлення</string>
+    <string name="updates_more_summary">Перевіряйте наявність нових версій JL-Mod Plus.</string>
+    <string name="updates_more_available">Доступна новіша версія.</string>
+    <string name="updates_installed_version">Установлена версія: <xliff:g id="version" example="2.1.0">%1$s</xliff:g></string>
+    <string name="updates_build_code">Збірка <xliff:g id="build_code" example="247">%1$d</xliff:g></string>
+    <string name="updates_automatic">Перевіряти автоматично, коли бібліотека активна</string>
+    <string name="updates_not_checked">Ще не перевірялося.</string>
+    <string name="updates_checking">Перевірка оновлень…</string>
+    <string name="updates_current">Установлено актуальну версію.</string>
+    <string name="updates_no_release">Немає сумісного опублікованого випуску.</string>
+    <string name="updates_not_installable">Доступний новіший випуск, але він несумісний із цим пристроєм або інсталяцією.</string>
+    <string name="updates_failed">Не вдалося перевірити оновлення. Перевірте з’єднання та спробуйте ще раз.</string>
+    <string name="updates_available">Доступне оновлення</string>
+    <string name="updates_view_release">Переглянути випуск</string>
+    <string name="updates_last_checked">Остання перевірка: <xliff:g id="timestamp" example="Today, 09:45">%1$s</xliff:g></string>
+    <string name="updates_check">Перевірити оновлення</string>
+    <string name="updates_notice">Доступний JL-Mod Plus <xliff:g id="version" example="2.1.0">%1$s</xliff:g>. Відкрийте «Оновлення» в Налаштуваннях.</string>
+    <string name="updates_debug_build">Це налагоджувальна збірка. APK-файли випусків із GitHub встановлюються окремо.</string>
+    <string name="updates_link_copied">Браузер не знайдено. Посилання на оновлення скопійовано в буфер обміну.</string>
+    <string name="updates_browser_unavailable">Браузер для відкриття посилання на оновлення не знайдено.</string>
+    <string name="bulk_install_choose_files">Файли</string>
+    <string name="bulk_install_choose_folder">Папка</string>
+    <string name="bulk_install_unreadable_archives">Нечитабельні архіви: <xliff:g id="count" example="3">%1$d</xliff:g></string>
+    <string name="bulk_install_skipped_entries">Пропущені файли або елементи архіву: <xliff:g id="count" example="3">%1$d</xliff:g></string>
+    <string name="bulk_install_selection_options" tools:ignore="MissingTranslation">Параметри вибору</string>
+    <string name="bulk_install_show_details" tools:ignore="MissingTranslation">Показати деталі</string>
+    <string name="bulk_install_hide_details" tools:ignore="MissingTranslation">Приховати деталі</string>
+    <string name="bulk_install_filter_all">Усі</string>
+    <string name="bulk_install_filter_selected">Вибрані</string>
+    <string name="bulk_install_filter_review">Перевірка</string>
+    <string name="bulk_install_empty_filter">Немає відповідних додатків.</string>
+    <string name="platform_package_choice_title" tools:ignore="MissingTranslation">Виявлено пакет Java ME</string>
+    <string name="platform_package_choice_message" tools:ignore="MissingTranslation">Це посилання веде на пакет Java ME. Що ви хочете зробити?</string>
+    <string name="platform_package_install" tools:ignore="MissingTranslation">Встановити в JL-Mod Plus</string>
+    <string name="platform_package_browser" tools:ignore="MissingTranslation">Відкрити в браузері</string>
+    <string name="platform_package_unavailable" tools:ignore="MissingTranslation">Не знайдено додаток для відкриття цього посилання.</string>
+    <string name="installer_running_update_warning" tools:ignore="MissingTranslation">Цей додаток зараз запущено. Установлення зупинить його перед заміною файлів. Незбережений прогрес може бути втрачено.</string>
+    <string name="library_metadata_main_icon">Основний</string>
+    <string name="library_metadata_follows_main">Використовує основний значок</string>
+    <string name="library_metadata_change">Змінити</string>
+    <string name="library_metadata_remove_portrait">Вилучити значок 3:4</string>
+    <string name="library_metadata_discard_title">Відхилити зміни?</string>
+    <string name="library_metadata_discard">Відхилити</string>
+    <string name="library_metadata_default_description">Опис за замовчуванням</string>
+    <string name="library_metadata_other_languages">Інші мови</string>
+    <string name="library_metadata_add_language">+ Додати мову</string>
+    <string name="library_metadata_language_search">Пошук мови або коду локалі</string>
+    <string name="library_metadata_remove_language">Вилучити опис</string>
+    <string name="library_metadata_language_load_failed">Не вдалося завантажити мовні описи. Натисніть «Повторити», щоб спробувати ще раз.</string>
+    <string name="updates_download_apk" tools:ignore="MissingTranslation">Завантажити APK</string>
+    <string name="updates_skip_version" tools:ignore="MissingTranslation">Пропустити цю версію</string>
+    <string name="updates_dialog_message" tools:ignore="MissingTranslation">Доступний JL-Mod Plus <xliff:g id="version" example="2.1.0">%1$s</xliff:g>. Ви використовуєте <xliff:g id="current_version" example="2.0.0">%2$s</xliff:g>. Завантажте APK або перегляньте випуск на GitHub.</string>
+    <string name="library_bundle_components_title" tools:ignore="MissingTranslation">Експорт пакета</string>
+    <string name="library_bundle_components_explanation" tools:ignore="MissingTranslation">Вибрані додатки завжди включаються. Закрийте вибрані MIDlet, які зараз запущені, а потім виберіть додаткові дані. Спільні оформлення, банки звуків і шейдери не включаються.</string>
+    <string name="library_bundle_config" tools:ignore="MissingTranslation">Конфігурація</string>
+    <string name="library_bundle_save_data" tools:ignore="MissingTranslation">Збережені дані</string>
+    <string name="library_bundle_saved_variables" tools:ignore="MissingTranslation">Закладки</string>
+    <string name="library_bundle_export" tools:ignore="MissingTranslation">Експортувати</string>
+    <string name="library_export_jar_only" tools:ignore="MissingTranslation">Лише JAR</string>
+    <string name="library_export_jars_only" tools:ignore="MissingTranslation">Лише JAR (ZIP)</string>
+    <string name="library_selection_action_delete" tools:ignore="MissingTranslation">Видалити</string>
+    <string name="library_selection_action_collection" tools:ignore="MissingTranslation">Колекція</string>
+    <string name="library_selection_action_export" tools:ignore="MissingTranslation">Експортувати</string>
+    <string name="library_selection_action_reinstall" tools:ignore="MissingTranslation">Перевстановити</string>
+    <string name="installer_select_companion_jar" tools:ignore="MissingTranslation">Цей JAD посилається на окремий файл JAR. Виберіть відповідний JAR, щоб продовжити. Зовнішній постачальник файлів не дозволяє доступ до сусідніх файлів.</string>
+    <string name="installer_select_jar" tools:ignore="MissingTranslation">Вибрати JAR</string>
+    <string name="installer_wrong_companion_jar" tools:ignore="MissingTranslation">Цей JAR не відповідає вибраному JAD. Виберіть відповідний JAR, щоб зберегти налаштування JAD.</string>
+    <string name="installer_choose_another_jar" tools:ignore="MissingTranslation">Вибрати інший JAR</string>
+    <string name="library_app_more_actions" tools:ignore="MissingTranslation">Інші дії для «<xliff:g id="name" example="Example">%1$s</xliff:g>»</string>
+    <string name="library_actions_group_customize" tools:ignore="MissingTranslation">Налаштувати</string>
+    <string name="library_actions_group_organize" tools:ignore="MissingTranslation">Упорядкувати</string>
+    <string name="library_actions_group_transfer" tools:ignore="MissingTranslation">Перенесення та обслуговування</string>
+    <string name="library_collection_more_actions" tools:ignore="MissingTranslation">Інші дії для колекції «<xliff:g id="collection_name" example="Favorites">%1$s</xliff:g>»</string>
+    <string name="library_settings_preferences" tools:ignore="MissingTranslation">Параметри додатка</string>
+    <string name="library_settings_section_maintenance" tools:ignore="MissingTranslation">Оновлення та діагностика</string>
+    <string name="library_settings_section_support" tools:ignore="MissingTranslation">Про додаток і підтримка</string>
+    <string name="library_details_title" tools:ignore="MissingTranslation">Відомості про MIDlet</string>
+    <string name="library_details_description" tools:ignore="MissingTranslation">Опис</string>
+    <string name="library_details_play_stats" tools:ignore="MissingTranslation">Статистика гри</string>
+    <string name="library_details_launches" tools:ignore="MissingTranslation">Запуски</string>
+    <string name="library_details_total_time" tools:ignore="MissingTranslation">Загальний час</string>
+    <string name="library_details_last_played" tools:ignore="MissingTranslation">Останній запуск</string>
+    <string name="library_details_library_info" tools:ignore="MissingTranslation">Інформація в бібліотеці</string>
+    <string name="library_details_added" tools:ignore="MissingTranslation">Додано до бібліотеки</string>
+    <string name="library_details_collections" tools:ignore="MissingTranslation">Колекції</string>
+    <string name="library_details_none" tools:ignore="MissingTranslation">Немає</string>
+    <string name="library_details_technical" tools:ignore="MissingTranslation">Технічна інформація</string>
+    <string name="library_details_profile" tools:ignore="MissingTranslation">Профіль</string>
+    <string name="library_details_configuration" tools:ignore="MissingTranslation">Конфігурація</string>
+    <string name="library_details_jar_size" tools:ignore="MissingTranslation">Розмір збереженого JAR</string>
+    <string name="library_details_entry_points" tools:ignore="MissingTranslation">Точки входу MIDlet</string>
+    <string name="library_details_original_metadata" tools:ignore="MissingTranslation">Оригінальні метадані</string>
+    <string name="library_details_name" tools:ignore="MissingTranslation">Назва</string>
+    <string name="library_details_vendor" tools:ignore="MissingTranslation">Виробник</string>
+    <string name="library_details_version" tools:ignore="MissingTranslation">Версія</string>
+    <string name="library_details_version_value" tools:ignore="MissingTranslation">Версія <xliff:g id="version" example="2.1.0">%1$s</xliff:g></string>
+    <string name="library_details_original_description" tools:ignore="MissingTranslation">Оригінальний опис</string>
+    <string name="library_details_permissions" tools:ignore="MissingTranslation">Оголошені дозволи</string>
+    <string name="library_details_required" tools:ignore="MissingTranslation">Обов’язковий</string>
+    <string name="library_details_optional" tools:ignore="MissingTranslation">Необов’язковий</string>
+    <string name="library_details_no_permissions" tools:ignore="MissingTranslation">Дозволи не оголошено</string>
+    <string name="library_details_descriptor_attributes" tools:ignore="MissingTranslation">Атрибути дескриптора</string>
+    <string name="library_details_unavailable" tools:ignore="MissingTranslation">Недоступно</string>
+    <string name="library_details_action" tools:ignore="MissingTranslation">Деталі</string>
+    <string name="library_details_view_details" tools:ignore="MissingTranslation">Переглянути деталі</string>
+    <string name="library_actions_more" tools:ignore="MissingTranslation">Більше дій</string>
+    <string name="library_actions_less" tools:ignore="MissingTranslation">Менше дій</string>
+</resources>

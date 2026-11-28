@@ -1,0 +1,285 @@
+<?xml version="1.0" encoding="utf-8"?>
+<!-- Memory Editor search, inspector, bookmarks, saved variables, quick actions, and script builder. -->
+<resources xmlns:tools="http://schemas.android.com/tools" xmlns:xliff="urn:oasis:names:tc:xliff:document:1.2">
+    <string name="memory_editor_bubble">Flytende knapp for minneredigering</string>
+    <string name="memory_editor_bubble_content_description">Åpne minneredigering</string>
+    <string name="memory_editor_previous_results_page_action">Forrige resultatside</string>
+    <string name="memory_editor_next_results_page_action">Neste resultatside</string>
+    <string name="memory_editor">Minneredigering</string>
+    <string name="memory_editor_search_hint">Verdi</string>
+    <string name="memory_editor_next_scan">Neste søk</string>
+    <string name="memory_editor_new_search">Nytt søk</string>
+    <plurals name="memory_editor_results">
+        <item quantity="one"><xliff:g id="count" example="3">%1$d</xliff:g> resultat</item>
+        <item quantity="other"><xliff:g id="count" example="3">%1$d</xliff:g> resultater</item>
+    </plurals>
+    <plurals name="memory_editor_candidates">
+        <item quantity="one"><xliff:g id="count" example="3">%1$d</xliff:g> kandidat</item>
+        <item quantity="other"><xliff:g id="count" example="3">%1$d</xliff:g> kandidater</item>
+    </plurals>
+    <plurals name="memory_editor_search_complete">
+        <item quantity="one">Søk fullført · <xliff:g id="count" example="3">%1$d</xliff:g> kandidat</item>
+        <item quantity="other">Søk fullført · <xliff:g id="count" example="3">%1$d</xliff:g> kandidater</item>
+    </plurals>
+    <string name="memory_editor_no_results">Ingen resultater</string>
+    <string name="memory_editor_no_watch">Overvåkingslisten er tom</string>
+    <string name="memory_editor_unsupported">Minneredigering er ikke tilgjengelig for denne kjøretiden.</string>
+    <string name="memory_editor_engine_unavailable">Motoren for minneredigering er ikke tilgjengelig.</string>
+    <string name="memory_editor_engine_reconnecting">Minneredigering kobler til på nytt…</string>
+    <string name="memory_editor_refresh">Oppdater</string>
+    <string name="memory_editor_undo">Angre søk</string>
+    <string name="memory_variables_tab">Lagrede</string>
+    <string name="memory_editor_back" tools:ignore="MissingTranslation">Tilbake</string>
+    <string name="memory_list_keep" tools:ignore="MissingTranslation">Behold til neste oppstart</string>
+    <string name="memory_list_stop_keeping" tools:ignore="MissingTranslation">Slutt å beholde</string>
+    <string name="memory_list_kept" tools:ignore="MissingTranslation">Beholdt til neste oppstart</string>
+    <string name="memory_list_empty" tools:ignore="MissingTranslation">Ingen lagrede bokmerker ennå</string>
+    <string name="memory_list_empty_hint" tools:ignore="MissingTranslation">Bokmerk en variabel fra «Søk» eller «Inspektør» for å følge den her.</string>
+    <string name="memory_list_remove_confirm" tools:ignore="MissingTranslation">Vil du fjerne fra «Lagrede»? Eventuell aktiv frysing stopper.</string>
+    <string name="memory_list_add" tools:ignore="MissingTranslation">Bokmerk</string>
+    <string name="memory_bookmark_relink" tools:ignore="MissingTranslation">Koble til på nytt</string>
+    <string name="memory_bookmark_relink_hint" tools:ignore="MissingTranslation">Velg erstatningsvariabelen under «Søk», og velg deretter «Koble til på nytt».</string>
+    <string name="memory_bookmark_relink_confirm" tools:ignore="MissingTranslation">Vil du koble dette bokmerket til den valgte variabelen? Eventuell aktiv frysing på dette bokmerket stopper.</string>
+    <string name="memory_bookmark_unavailable" tools:ignore="MissingTranslation">Utilgjengelig — velg «Koble til på nytt» for å velge et mål</string>
+    <string name="memory_editor_watch">Overvåking</string>
+    <string name="memory_editor_search_tab">Søk</string>
+    <string name="memory_editor_search_known_values">Søk etter kjente verdier</string>
+    <string name="memory_editor_search_unknown_values">Søk etter ukjente verdier</string>
+    <string name="memory_editor_add_to_watch">Bokmerk valgte verdier</string>
+    <string name="memory_editor_no_candidates">Fant ingen søkbare verdier</string>
+    <string name="memory_editor_edit">Rediger</string>
+    <plurals name="memory_editor_edit_batch">
+        <item quantity="one">Rediger <xliff:g id="count" example="3">%1$d</xliff:g> verdi</item>
+        <item quantity="other">Rediger <xliff:g id="count" example="3">%1$d</xliff:g> verdier</item>
+    </plurals>
+    <string name="memory_editor_edit_batch_no_common_type">Valgte elementer støtter ikke den valgte datatypen. Rediger kompatible elementer separat.</string>
+    <string name="memory_editor_save">Bruk</string>
+    <string name="memory_editor_replacement">Erstatningsverdi</string>
+    <string name="memory_editor_freeze">Frys</string>
+    <string name="memory_editor_remove">Fjern</string>
+    <string name="memory_editor_select_visible">Velg synlige</string>
+    <string name="memory_editor_clear_selection">Fjern valg</string>
+    <plurals name="memory_editor_selected">
+        <item quantity="one"><xliff:g id="count" example="3">%1$d</xliff:g> valgt</item>
+        <item quantity="other"><xliff:g id="count" example="3">%1$d</xliff:g> valgt</item>
+    </plurals>
+    <string name="memory_editor_close">Lukk minneredigering</string>
+    <string name="memory_editor_searching">Søker i minnet…</string>
+    <string name="memory_editor_working">Utfører operasjon…</string>
+    <string name="memory_editor_search_progress">Skannet <xliff:g id="scanned_mib" example="12">%1$d</xliff:g> av <xliff:g id="total_mib" example="64">%2$d</xliff:g> MiB</string>
+    <string name="memory_editor_candidate_moved">Mål oppdatert</string>
+    <string name="memory_editor_candidate_relocating">Verifiserer på nytt</string>
+    <string name="memory_editor_candidate_ambiguous">Tvetydig — skriving satt på pause</string>
+    <string name="memory_editor_candidate_lost">Tapt — skriving satt på pause</string>
+    <string name="memory_editor_apply">Bruk</string>
+    <string name="memory_editor_min_value">Minimumsverdi</string>
+    <string name="memory_editor_max_value">Maksimumsverdi</string>
+    <string name="memory_editor_change_amount">Endringsbeløp</string>
+    <string name="memory_editor_min_change">Minimumsendring</string>
+    <string name="memory_editor_max_change">Maksimumsendring</string>
+    <string name="memory_editor_unfreeze">Opphev frysing</string>
+    <string name="memory_editor_cancelled">Operasjonen ble avbrutt.</string>
+    <string name="memory_editor_resource_limit">Minneredigering nådde en sikkerhetsgrense. Prøv et mer spesifikt søk, eller fjern ubrukte bokmerker eller frosne verdier.</string>
+    <string name="memory_editor_identity_unsafe">Kunne ikke verifisere den valgte verdien eller søketilstanden. Oppdater resultatene eller åpne Inspektør på nytt, og prøv igjen.</string>
+    <string name="memory_editor_safety_limit">For mange verdier er valgt for denne operasjonen. Velg færre og prøv på nytt.</string>
+    <string name="memory_editor_invalid_request">Verdien eller operasjonen er ugyldig.</string>
+    <string name="memory_editor_freeze_paused">Satt på pause av sikkerhetsgrunner</string>
+    <string name="memory_editor_predicate_between">Mellom</string>
+    <string name="memory_editor_predicate_changed">Endret</string>
+    <string name="memory_editor_predicate_unchanged">Uendret</string>
+    <string name="memory_editor_predicate_increased">Økt</string>
+    <string name="memory_editor_predicate_decreased">Redusert</string>
+    <string name="memory_editor_predicate_increased_by">Økt med</string>
+    <string name="memory_editor_predicate_decreased_by">Redusert med</string>
+    <string name="memory_editor_predicate_changed_by">Endret med</string>
+    <string name="memory_editor_predicate_increased_range">Økning innenfor område</string>
+    <string name="memory_editor_predicate_decreased_range">Reduksjon innenfor område</string>
+    <string name="memory_editor_inspector">Inspektør</string>
+    <string name="memory_editor_inspect_memory">Inspiser nærliggende minne</string>
+    <string name="memory_editor_inspector_loading">Verifiserer resultatet og leser nærliggende minne…</string>
+    <string name="memory_editor_inspector_empty">Velg et resultat for å inspisere nærliggende minne.</string>
+    <string name="memory_editor_inspector_no_rows">Ingen nærliggende minne er tilgjengelig for inspeksjon.</string>
+    <string name="memory_editor_refresh_snapshot">Oppdater øyeblikksbilde</string>
+    <string name="memory_editor_select_result_value">Velg dette bokmerket</string>
+    <string name="memory_editor_freeze_after_edit">Frys etter bruk</string>
+    <string name="memory_editor_freeze_after_edit_help">Holder denne verdien låst og lagrer den som bokmerke under «Lagrede».</string>
+    <string name="memory_editor_expression_single_hint">Skriv inn én verdi, eller skill gruppeverdier med semikolon (;).</string>
+    <string name="memory_editor_expression_group_needs_type">Velg en bestemt datatype for gruppesøk.</string>
+    <plurals name="memory_editor_expression_group_hint">
+        <item quantity="one">Gruppesøk · <xliff:g id="count" example="3">%1$d</xliff:g> verdi · samme Java-objekt</item>
+        <item quantity="other">Gruppesøk · <xliff:g id="count" example="3">%1$d</xliff:g> verdier · samme Java-objekt</item>
+    </plurals>
+    <string name="memory_editor_expression_query_help">Eksempler: 500 eller 500;1000. Gruppesøk leter etter 2–8 verdier i samme Java-objekt.</string>
+    <string name="memory_editor_keypad_clear">Tøm</string>
+    <string name="memory_editor_peek_underlay">Hold inne for å se MIDlet-en under</string>
+    <string name="memory_editor_peek_underlay_active">Viser MIDlet-en under</string>
+    <string name="memory_editor_no_runtime">Ingen aktiv MIDlet-kjøretid.</string>
+    <string name="memory_editor_no_search_history">Ingen tidligere søk å gjenopprette.</string>
+    <string name="memory_editor_partial_write">Skriveoperasjonen ble ikke fullført. Kontroller gjeldende verdier før du prøver på nytt.</string>
+    <!-- Independent write counts: confirmed, unconfirmed, skipped, not attempted, and incompatible data type. -->
+    <string name="memory_editor_write_outcome">Bekreftede skrivinger: <xliff:g id="confirmed" example="3">%1$d</xliff:g>. Ubekreftede: <xliff:g id="unconfirmed" example="0">%2$d</xliff:g>. Hoppet over: <xliff:g id="skipped" example="0">%3$d</xliff:g>. Ikke forsøkt: <xliff:g id="not_attempted" example="0">%4$d</xliff:g>. Hoppet over etter type: <xliff:g id="skipped_by_type" example="0">%5$d</xliff:g>.</string>
+    <!-- %1$s is a localized outcome explanation; %2$d through %6$d are the same independent write counts. -->
+    <string name="memory_editor_write_failure_outcome"><xliff:g id="reason" example="Write interrupted.">%1$s</xliff:g>\nBekreftede skrivinger: <xliff:g id="confirmed" example="1">%2$d</xliff:g>. Ubekreftede: <xliff:g id="unconfirmed" example="1">%3$d</xliff:g>. Hoppet over: <xliff:g id="skipped" example="0">%4$d</xliff:g>. Ikke forsøkt: <xliff:g id="not_attempted" example="0">%5$d</xliff:g>. Hoppet over etter type: <xliff:g id="skipped_by_type" example="0">%6$d</xliff:g>.</string>
+    <!-- Result counts before (%1$d) and after (%2$d) the completed next scan. -->
+    <string name="memory_editor_next_scan_result">Resultater fra neste søk: <xliff:g id="before_count" example="120">%1$d</xliff:g> → <xliff:g id="after_count" example="14">%2$d</xliff:g></string>
+    <string name="memory_editor_type_auto">Automatisk</string>
+    <string name="memory_editor_remove_candidates_title">Vil du fjerne valgte resultater?</string>
+    <string name="memory_editor_remove_candidates_description">Fjern: Tar bort de valgte resultatene fra søkelisten. Verdier i spillminnet forblir uendret.\n\nTilbakestill og fjern: Gjenoppretter også verdier fra før siste bekreftede redigering, men bare hvis de nåværende verdiene fortsatt samsvarer med verdiene etter den redigeringen. Frosne verdier og resultater som ikke kan gjenopprettes på en trygg måte blir stående i listen.</string>
+    <string name="memory_editor_revert_and_remove">Tilbakestill og fjern</string>
+    <string name="memory_editor_revert_remove_commit_failed">Verdier kan ha blitt gjenopprettet, men resultater kunne ikke fjernes. Oppdater og prøv på nytt; verdier endret av spillet blir ikke overskrevet.</string>
+    <string name="memory_editor_revert_remove_outcome">Gjenopprettet: <xliff:g id="restored" example="2">%1$d</xliff:g>. Fjernet: <xliff:g id="removed" example="2">%2$d</xliff:g>. Konflikter: <xliff:g id="conflicts" example="0">%3$d</xliff:g>. Ubekreftede: <xliff:g id="unconfirmed" example="0">%4$d</xliff:g>. Ikke forsøkt: <xliff:g id="not_attempted" example="0">%5$d</xliff:g>.</string>
+    <string name="memory_editor_set_all">Angi alle</string>
+    <string name="memory_editor_increment_start">Startverdi</string>
+    <string name="memory_editor_edit_batch_type_notice">Bare verdier med samsvarende datatype blir endret.</string>
+    <string name="memory_editor_write_confirmed">Verdier bekreftet ved tilbakelesing fra minnet: <xliff:g id="count" example="3">%1$d</xliff:g>.</string>
+    <string name="memory_editor_candidate_untraced">Matrise #<xliff:g id="array_id" example="42">%1$d</xliff:g>[<xliff:g id="index" example="3">%2$d</xliff:g>] · Kilde ikke sporet</string>
+    <string name="memory_editor_candidate_static"><xliff:g id="field_name" example="Player.coins">%1$s</xliff:g> · <xliff:g id="reference_kind" example="Static reference">%2$s</xliff:g></string>
+    <string name="memory_editor_candidate_instance"><xliff:g id="field_name" example="Player.hp">%1$s</xliff:g> · <xliff:g id="reference_kind" example="Instance reference">%2$s</xliff:g> · mål #<xliff:g id="target_id" example="1">%3$d</xliff:g></string>
+    <string name="memory_editor_reference_static">Statisk referanse</string>
+    <string name="memory_editor_reference_instance">Instansreferanse</string>
+    <string name="memory_editor_path_changed">Referansebanen har endret seg siden skanningen.</string>
+    <string name="memory_editor_path_incomplete">Referansebanen overskrider inspeksjonsgrensen.</string>
+    <string name="memory_editor_source_unknown">Kilde ikke sporet</string>
+    <string name="memory_editor_incremental_edit">Trinnvis økning</string>
+    <string name="memory_editor_increment_step">Trinn</string>
+    <string name="memory_editor_increment_invalid">Bruk én heltallstype og verdier innenfor dens område.</string>
+    <!-- The batch dialog title already shows the number of selected values. -->
+    <string name="memory_editor_increment_preview">Forhåndsvisning: <xliff:g id="name" example="Example">%1$s</xliff:g></string>
+    <string name="memory_editor_panel_opacity">Panelugjennomsiktighet</string>
+    <string name="memory_editor_panel_opacity_help">Juster bakgrunnen for å se spillverdier mens du søker. Tekst og ikoner forblir synlige.</string>
+    <string name="memory_editor_reconversion_required" tools:ignore="MissingTranslation">Den installerte konverteringen av denne MIDlet-en er ikke kompatibel med minneredigering. Lukk spillet, og konverter eller installer det på nytt i JL-Mod Plus.</string>
+    <string name="memory_saved_tab" tools:ignore="MissingTranslation">Lagrede</string>
+    <string name="memory_saved_save" tools:ignore="MissingTranslation">Lagre variabel</string>
+    <string name="memory_saved_name" tools:ignore="MissingTranslation">Navn</string>
+    <string name="memory_saved_explanation" tools:ignore="MissingTranslation">Lagre denne verifiserte minnebanen for senere økter. Verdier skrives aldri automatisk.</string>
+    <string name="memory_saved_empty" tools:ignore="MissingTranslation">Ingen lagrede variabler ennå. Velg et søkeresultat for å lagre det.</string>
+    <string name="memory_saved_not_ready" tools:ignore="MissingTranslation">Ikke klar</string>
+    <string name="memory_saved_retry" tools:ignore="MissingTranslation">Prøv på nytt</string>
+    <string name="memory_saved_rename" tools:ignore="MissingTranslation">Gi nytt navn</string>
+    <string name="memory_saved_value" tools:ignore="MissingTranslation">Verdi</string>
+    <string name="memory_saved_delete_confirm" tools:ignore="MissingTranslation">Vil du fjerne denne lagrede definisjonen? Spillverdien endres ikke.</string>
+    <string name="memory_saved_changed" tools:ignore="MissingTranslation">Endret</string>
+    <string name="memory_saved_rebound" tools:ignore="MissingTranslation">Mål oppdatert</string>
+    <string name="memory_saved_import_summary" tools:ignore="MissingTranslation">Lagrede: <xliff:g id="added_count" example="4">%1$d</xliff:g> lagt til, <xliff:g id="existing_count" example="2">%2$d</xliff:g> finnes allerede</string>
+    <string name="memory_saved_incompatible" tools:ignore="MissingTranslation">Inkompatibel</string>
+    <string name="memory_saved_failed" tools:ignore="MissingTranslation">Mislyktes</string>
+    <string name="memory_saved_delete_many_confirm" tools:ignore="MissingTranslation">Vil du fjerne <xliff:g id="count" example="3">%1$d</xliff:g> lagrede definisjoner? Spillverdier endres ikke.</string>
+    <string name="memory_recipes_title" tools:ignore="MissingTranslation">Hurtighandling</string>
+    <string name="memory_recipes_simple_from_saved" tools:ignore="MissingTranslation">Mål: <xliff:g id="bookmark_name" example="Coins">%1$s</xliff:g></string>
+    <string name="memory_recipes_preview" tools:ignore="MissingTranslation">Forhåndsvis mål</string>
+    <string name="memory_recipes_stop_freeze" tools:ignore="MissingTranslation">Stopp frysing av verdier</string>
+    <string name="memory_recipes_freeze" tools:ignore="MissingTranslation">Hold frosset mens dette spillet kjører</string>
+    <string name="memory_recipes_run" tools:ignore="MissingTranslation">Kjør</string>
+    <string name="memory_recipes_active_freezes" tools:ignore="MissingTranslation">Skript som fryser verdier</string>
+    <string name="memory_recipes_target_unavailable" tools:ignore="MissingTranslation">Bokmerkemålet er ikke tilgjengelig. Oppdater eller koble det til på nytt før du kjører.</string>
+    <string name="memory_recipes_preview_values" tools:ignore="MissingTranslation">Gjeldende verdier: <xliff:g id="name" example="Example">%1$s</xliff:g></string>
+    <string name="memory_scripts_title" tools:ignore="MissingTranslation">Skript</string>
+    <string name="memory_scripts_active" tools:ignore="MissingTranslation">Aktiv</string>
+    <string name="memory_scripts_inputs" tools:ignore="MissingTranslation">Inndata</string>
+    <string name="memory_scripts_create_from_bookmarks" tools:ignore="MissingTranslation">Opprett skript</string>
+    <string name="memory_scripts_create_failed" tools:ignore="MissingTranslation">Kunne ikke starte et nytt skript.</string>
+    <string name="memory_scripts_draft_in_progress" tools:ignore="MissingTranslation">Fullfør eller forkast gjeldende skriptutkast først.</string>
+    <string name="memory_builder_open_saved" tools:ignore="MissingTranslation">Åpne Lagrede</string>
+    <string name="memory_builder_add_description" tools:ignore="MissingTranslation">Legg til beskrivelse</string>
+    <string name="memory_builder_find_values" tools:ignore="MissingTranslation">Finn verdier</string>
+    <string name="memory_scripts_description" tools:ignore="MissingTranslation">Beskrivelse</string>
+    <string name="memory_scripts_new" tools:ignore="MissingTranslation">Nytt skript</string>
+    <string name="memory_scripts_back" tools:ignore="MissingTranslation">Tilbake</string>
+    <string name="memory_scripts_edit" tools:ignore="MissingTranslation">Rediger</string>
+    <string name="memory_scripts_save" tools:ignore="MissingTranslation">Lagre</string>
+    <string name="memory_scripts_saved" tools:ignore="MissingTranslation">Skript lagret</string>
+    <string name="memory_scripts_deleted" tools:ignore="MissingTranslation">Skript slettet</string>
+    <string name="memory_scripts_save_failed" tools:ignore="MissingTranslation">Kunne ikke lagre skriptet.</string>
+    <string name="memory_scripts_editor_hint" tools:ignore="MissingTranslation">Skriv inn eller lim inn et JSON-skript som bruker støttede minneoperasjoner. Lagring kjører ikke skriptet.</string>
+    <string name="memory_scripts_paste_hint" tools:ignore="MissingTranslation">Lim inn skript-JSON</string>
+    <string name="memory_scripts_paste" tools:ignore="MissingTranslation">Lim inn</string>
+    <string name="memory_scripts_clipboard_invalid" tools:ignore="MissingTranslation">Utklippstavlen er tom eller dokumentet overskrider 64 KiB</string>
+    <string name="memory_scripts_invalid" tools:ignore="MissingTranslation">Ugyldig skriptformat</string>
+    <string name="memory_scripts_freeze_active" tools:ignore="MissingTranslation">Dette skriptet fryser verdier</string>
+    <string name="memory_scripts_delete" tools:ignore="MissingTranslation">Slett</string>
+    <string name="memory_scripts_delete_confirm" tools:ignore="MissingTranslation">Vil du slette «<xliff:g id="name" example="Example">%1$s</xliff:g>»? Eventuell aktiv frysing for dette skriptet stopper.</string>
+    <string name="memory_scripts_empty" tools:ignore="MissingTranslation">Ingen skript lagret</string>
+    <string name="memory_scripts_unsaved_title" tools:ignore="MissingTranslation">Vil du forkaste ulagret skript?</string>
+    <string name="memory_scripts_unsaved_message" tools:ignore="MissingTranslation">Endringene i skriptet er ikke lagret.</string>
+    <string name="memory_scripts_discard" tools:ignore="MissingTranslation">Forkast</string>
+    <string name="memory_scripts_current_title" tools:ignore="MissingTranslation">Sist lest</string>
+    <string name="memory_scripts_refresh" tools:ignore="MissingTranslation">Oppdater</string>
+    <string name="memory_scripts_reading" tools:ignore="MissingTranslation">Leser gjeldende verdier…</string>
+    <string name="memory_scripts_refresh_hint" tools:ignore="MissingTranslation">Trykk på «Oppdater» for å lese gjeldende verdier fra spillet som kjører.</string>
+    <string name="memory_scripts_mode_toggle" tools:ignore="MissingTranslation">Frys verdier</string>
+    <string name="memory_scripts_mode_form" tools:ignore="MissingTranslation">Verdiredigering</string>
+    <string name="memory_scripts_mode_once" tools:ignore="MissingTranslation">Hurtighandlinger</string>
+    <string name="memory_scripts_mode_legacy" tools:ignore="MissingTranslation">Avansert skript</string>
+    <string name="memory_scripts_edit_values" tools:ignore="MissingTranslation">Rediger verdier</string>
+    <string name="memory_scripts_apply" tools:ignore="MissingTranslation">Bruk endringer</string>
+    <string name="memory_scripts_refresh_required" tools:ignore="MissingTranslation">Oppdater for å verifisere gjeldende verdier før du bruker endringer.</string>
+    <string name="memory_scripts_inconsistent" tools:ignore="MissingTranslation">Inkonsekvente kopier: <xliff:g id="name" example="Example">%1$s</xliff:g></string>
+    <string name="memory_editor_minimize" tools:ignore="MissingTranslation">Minimer minneredigering</string>
+    <string name="memory_scripts_choose_type" tools:ignore="MissingTranslation">Nytt skript</string>
+    <string name="memory_scripts_choose_hint" tools:ignore="MissingTranslation">Velg hvordan dette skriptet skal fungere.</string>
+    <string name="memory_builder_json_editor" tools:ignore="MissingTranslation">JSON-redigering</string>
+    <string name="memory_builder_freeze_hint" tools:ignore="MissingTranslation">Holder valgte verdier låst mens det er aktivert. Å slå av Frys gjenoppretter ikke de tidligere verdiene.</string>
+    <string name="memory_builder_form_hint" tools:ignore="MissingTranslation">Bygg et skjema som leser gjeldende verdier før redigeringer brukes.</string>
+    <string name="memory_builder_actions_hint" tools:ignore="MissingTranslation">Bruk endringer én gang hver gang du trykker på «Kjør». Legg til og Trekk fra bruker gjeldende verdier, inkludert endringer fra tidligere kjøringer.</string>
+    <string name="memory_builder_name" tools:ignore="MissingTranslation">Skriptnavn</string>
+    <string name="memory_builder_frozen_values" tools:ignore="MissingTranslation">Frosne verdier</string>
+    <string name="memory_builder_fields" tools:ignore="MissingTranslation">Felter</string>
+    <string name="memory_builder_actions" tools:ignore="MissingTranslation">Handlinger</string>
+    <string name="memory_builder_add_bookmarks" tools:ignore="MissingTranslation">Legg til fra bokmerker</string>
+    <string name="memory_builder_empty" tools:ignore="MissingTranslation">Legg til minst ett verifisert bokmerke.</string>
+    <string name="memory_builder_field_label" tools:ignore="MissingTranslation">Feltetikett</string>
+    <string name="memory_builder_keep_at" tools:ignore="MissingTranslation">Hold på</string>
+    <string name="memory_builder_amount" tools:ignore="MissingTranslation">Verdi / beløp</string>
+    <string name="memory_builder_set" tools:ignore="MissingTranslation">Angi</string>
+    <string name="memory_builder_add" tools:ignore="MissingTranslation">Legg til</string>
+    <string name="memory_builder_subtract" tools:ignore="MissingTranslation">Trekk fra</string>
+    <string name="memory_builder_view_json" tools:ignore="MissingTranslation">Vis JSON</string>
+    <string name="memory_builder_edit_json" tools:ignore="MissingTranslation">Rediger JSON</string>
+    <string name="memory_builder_search_bookmarks" tools:ignore="MissingTranslation">Søk i bokmerker</string>
+    <string name="memory_builder_no_bookmarks" tools:ignore="MissingTranslation">Ingen samsvarende verifiserte bokmerker. Bokmerk en verdi under «Søk» eller koble til en på nytt under «Lagrede».</string>
+    <string name="memory_builder_needs_relink" tools:ignore="MissingTranslation">Må kobles til på nytt</string>
+    <string name="memory_builder_add_selected" tools:ignore="MissingTranslation">Legg til valgte</string>
+    <string name="memory_builder_min" tools:ignore="MissingTranslation">Minimum (valgfritt)</string>
+    <string name="memory_builder_max" tools:ignore="MissingTranslation">Maksimum (valgfritt)</string>
+    <string name="memory_builder_add_target" tools:ignore="MissingTranslation">Legg til mål</string>
+    <string name="memory_builder_freeze_short" tools:ignore="MissingTranslation">Hold valgte verdier konstante</string>
+    <string name="memory_builder_form_short" tools:ignore="MissingTranslation">Juster flere verdier på ett sted</string>
+    <string name="memory_builder_actions_short" tools:ignore="MissingTranslation">Kjør engangshandlinger for å angi, legge til eller trekke fra</string>
+    <string name="memory_editor_refine_scan" tools:ignore="MissingTranslation">Avgrens</string>
+    <string name="memory_scripts_saved_count" tools:ignore="MissingTranslation"><xliff:g id="count" example="3">%1$d</xliff:g> lagret</string>
+    <string name="memory_scripts_empty_hint" tools:ignore="MissingTranslation">Opprett et skript for å redigere eller fryse verdier mens du spiller.</string>
+    <string name="memory_builder_limits" tools:ignore="MissingTranslation">Grenser (valgfritt)</string>
+    <string name="memory_editor_selection_limit">Velg opptil %1$d verdier.</string>
+    <string name="memory_saved_storage_unavailable">Får ikke tilgang til lagrede elementer.</string>
+    <string name="memory_bookmark_renamed">Bokmerket har fått nytt navn</string>
+    <string name="memory_editor_memory_unavailable">MIDlet-minnet er ikke tilgjengelig.</string>
+    <string name="memory_bookmark_added">Bokmerke lagt til</string>
+    <string name="memory_bookmark_relinked">Bokmerke koblet til på nytt</string>
+    <string name="memory_bookmarks_removed">Fjernet fra lagrede elementer</string>
+    <string name="memory_freeze_enabled">Frysing aktivert</string>
+    <string name="memory_freeze_unavailable">Kunne ikke aktivere frysing.</string>
+    <string name="memory_list_session_only_failed">Kunne ikke beholde elementet bare for gjeldende økt.</string>
+    <string name="memory_list_kept_unlinked">Lagret for neste oppstart, men kunne ikke kobles til gjeldende økt.</string>
+    <string name="memory_list_removal_unavailable">Kan ikke fjerne elementer når forbindelsen er brutt. Prøv igjen.</string>
+    <string name="memory_list_watch_removed">Sporing i økten fjernet</string>
+    <string name="memory_list_bookmark_removal_failed">Kunne ikke fjerne bokmerker: %1$s</string>
+    <string name="memory_list_watch_removal_failed">Kunne ikke fjerne sporing i økten: %1$s</string>
+    <string name="memory_list_removal_unknown_error">Ukjent feil</string>
+    <string name="memory_editor_edit_freeze_failed">Verdien er oppdatert, men frysing kunne ikke startes. Kontroller gjeldende verdi før du prøver igjen.</string>
+    <string name="memory_scripts_freeze_inactive">Dette skriptet fryser ikke lenger verdier.</string>
+    <string name="memory_bookmark_change_incomplete">Kunne ikke fullføre endringen av bokmerket. Sjekk Lagret før du prøver på nytt.</string>
+    <string name="memory_editor_value_updated">Verdien er oppdatert.</string>
+    <string name="memory_editor_value_updated_frozen">Verdien er oppdatert og frysing er aktivert.</string>
+    <string name="memory_scripts_delete_failed">Kunne ikke slette skriptet. Sjekk frysestatusen før du prøver på nytt.</string>
+    <string name="memory_scripts_check_input">Kunne ikke klargjøre skriptet. Sjekk verdiene og bokmerkene.</string>
+    <string name="memory_scripts_read_failed">Kunne ikke lese gjeldende verdier. Oppdater og prøv på nytt.</string>
+    <string name="memory_technical_details">Tekniske detaljer</string>
+    <string name="memory_scripts_resource_limit">Skriptet har nådd en sikkerhetsgrense. Reduser antall mål eller stopp frysing som ikke er i bruk.</string>
+    <string name="memory_scripts_target_changed">Kunne ikke bekrefte skriptets mål. Oppdater verdiene og sjekk bokmerkene.</string>
+    <string name="memory_scripts_operation_unavailable">Denne skriptoperasjonen støttes ikke for gjeldende mål.</string>
+    <string name="memory_scripts_invalid_input">Kontroller inndataene til skriptet. Skriv inn gyldige verdier innenfor de tillatte områdene.</string>
+    <string name="memory_scripts_value_range">En verdi er utenfor det støttede området. Kontroller skriptet og verdiene.</string>
+    <string name="memory_scripts_inconsistent_values">Kopier av samme verdi samsvarer ikke. Sjekk spilltilstanden før du prøver på nytt.</string>
+    <string name="memory_scripts_wrong_midlet">Dette skriptet er for en annen MIDlet. Åpne riktig MIDlet eller velg et annet skript.</string>
+    <string name="memory_scripts_target_not_ready">Skriptets mål er ikke klart ennå. Gå tilbake til den aktuelle spillskjermen og prøv på nytt.</string>
+</resources>

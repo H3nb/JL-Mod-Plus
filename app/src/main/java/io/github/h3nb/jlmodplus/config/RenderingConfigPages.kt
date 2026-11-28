@@ -227,7 +227,10 @@ internal fun RenderingSettingsPage(
                             page = EffectPage.CATALOG
                         }
                     }
-                }.onFailure { error = it.message ?: legacyError }
+                }.onFailure {
+                    android.util.Log.w("RenderingConfig", "Could not read legacy shader", it)
+                    error = legacyError
+                }
             }
         } else if (result.isNotEmpty()) {
             error = legacyError

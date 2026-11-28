@@ -1,0 +1,47 @@
+<?xml version="1.0" encoding="utf-8"?>
+<!-- Shared UI actions, generic labels, dialogs, and About screen. -->
+<resources xmlns:xliff="urn:oasis:names:tc:xliff:document:1.2">
+    <string name="about">Informazioni</string>
+    <string name="about_message">Esegui app e giochi classici, organizza i MIDlet nella tua libreria e personalizza controlli, schermo, audio e prestazioni. JL-Mod Plus è gratuito e open source.</string>
+    <string name="about_subtitle">Emulatore Java ME per Android</string>
+    <string name="about_compatibility">La compatibilità dipende dal MIDlet, dal dispositivo e dalle API Java ME supportate. Alcune app potrebbero funzionare diversamente rispetto ai dispositivi originali.</string>
+    <string name="about_lineage_title">Origini del progetto</string>
+    <string name="about_build_title">Informazioni sulla build</string>
+    <string name="about_version_label">Versione</string>
+    <string name="about_build_label">Build</string>
+    <string name="about_revision_label">Revisione sorgente</string>
+    <string name="about_links_title">Progetto e licenze</string>
+    <string name="about_github_link_copied">Nessun browser trovato. Link GitHub copiato negli appunti.</string>
+    <string name="about_github_browser_unavailable">Nessun browser trovato per aprire GitHub.</string>
+    <string name="about_lineage">JL-Mod Plus è un fork indipendente di JL-Mod di woesss (Yury Kharchenko). JL-Mod è basato su J2ME Loader di Nikita Shakarun, che a sua volta deriva da J2meLoader di NaikSoftware.</string>
+    <string name="about_evolution">JL-Mod Plus si sviluppa su queste basi con un’interfaccia moderna, una libreria MIDlet più completa, nuove funzioni e il supporto per le versioni più recenti di Android.</string>
+    <string name="action_back">Indietro</string>
+    <string name="action_settings">Impostazioni</string>
+    <string name="CANCEL_CMD">Annulla</string>
+    <string name="change">Cambia</string>
+    <string name="choose">Scegli</string>
+    <string name="close">Chiudi</string>
+    <string name="cmd_menu">Menu</string>
+    <string name="CONFIRMATION_REQUIRED">Conferma richiesta</string>
+    <string name="create">Crea</string>
+    <string name="default_label"><xliff:g id="name" example="Example">%1$s</xliff:g> (predefinito)</string>
+    <string name="dismiss">Ignora</string>
+    <string name="edit">Modifica</string>
+    <string name="error">Errore</string>
+    <string name="error_name">Inserisci un nome.</string>
+    <string name="exit">Esci</string>
+    <string name="help">Guida</string>
+    <string name="install">Installa</string>
+    <string name="licenses">Licenze</string>
+    <string name="licenses_unavailable">Dettagli della licenza non disponibili.</string>
+    <string name="loading_info">Caricamento informazioni…</string>
+    <string name="more">Altro</string>
+    <string name="not_saved_exists">Esiste già</string>
+    <string name="reset">Ripristina</string>
+    <string name="retry">Riprova</string>
+    <string name="save">Salva</string>
+    <string name="saved"><xliff:g id="name" example="Example">%1$s</xliff:g> salvato</string>
+    <string name="START_CMD">Avvia</string>
+    <string name="warning">Avviso</string>
+    <string name="removed"><xliff:g id="name" example="Example">%1$s</xliff:g> rimosso</string>
+</resources>

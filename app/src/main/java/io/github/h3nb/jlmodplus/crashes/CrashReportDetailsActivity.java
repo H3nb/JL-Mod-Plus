@@ -295,20 +295,25 @@ public class CrashReportDetailsActivity extends AppCompatActivity {
 		Context appContext = getApplicationContext();
 		LocalDiagnosticRepository.Record target = record;
 		new Thread(() -> {
-			LocalDiagnosticRepository.DeleteResult result =
-					LocalDiagnosticRepository.deleteWithArtifacts(appContext, target);
+			int failureMessage;
+			try {
+				LocalDiagnosticRepository.DeleteResult result =
+						LocalDiagnosticRepository.deleteWithArtifacts(appContext, target);
+				failureMessage = result.sourceDeleted ? 0 : result.bundleDeleted
+						? R.string.crash_report_delete_failed
+						: R.string.crash_report_bundle_cleanup_failed;
+			} catch (RuntimeException error) {
+				android.util.Log.w("CrashReportDetailsActivity", "Unable to delete diagnostic", error);
+				failureMessage = R.string.crash_report_delete_failed;
+			}
+			int message = failureMessage;
 			runOnUiThread(() -> {
-				if (!result.sourceDeleted) {
+				if (message != 0) {
 					deletingRecord = false;
 					if (!isFinishing() && !isDestroyed()) {
-						ThemedToast.show(
-								this, R.string.crash_report_delete_failed, Toast.LENGTH_LONG);
+						ThemedToast.show(this, message, Toast.LENGTH_LONG);
 					}
 					return;
-				}
-				if (!result.bundleDeleted && !isFinishing() && !isDestroyed()) {
-					ThemedToast.show(
-							this, R.string.crash_report_bundle_cleanup_failed, Toast.LENGTH_LONG);
 				}
 				finish();
 			});

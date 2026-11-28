@@ -1,0 +1,356 @@
+<?xml version="1.0" encoding="utf-8"?>
+<!-- Per-MIDlet configuration, reusable profiles, camera, controller calibration, permissions, and system properties. -->
+<resources xmlns:tools="http://schemas.android.com/tools" xmlns:xliff="urn:oasis:names:tc:xliff:document:1.2">
+    <!-- %1$s is an optional quoted storage-volume name with a trailing space, or empty. -->
+    <!-- %1$s is a raw storage-volume description. -->
+    <string name="config_missing_app_storage_named">Program nie gevind nie.\nKyk of die bergingstoestel “<xliff:g id="storage_name" example="SD card">%1$s</xliff:g>” beskikbaar is, of skep die kortpad weer.</string>
+    <string name="config_missing_app_storage_generic">Program nie gevind nie.\nKyk of die bergingstoestel beskikbaar is, of skep die kortpad weer.</string>
+    <string name="midlet_name"><b>Naam: </b></string>
+    <string name="midlet_size"><b>Grootte: </b></string>
+    <string name="midlet_vendor"><b>Verskaffer: </b></string>
+    <string name="midlet_version"><b>Weergawe: </b></string>
+    <string name="config_destination_graphics">Skerm</string>
+    <string name="config_destination_rendering" tools:ignore="MissingTranslation">Grafika</string>
+    <string name="config_destination_media">Media</string>
+    <string name="config_camera_title">Kamera</string>
+    <string name="config_camera_default_title">Verstekkamera</string>
+    <string name="config_camera_rear">Agter</string>
+    <string name="config_camera_front">Voor</string>
+    <string name="config_camera_resolution_title">Verstekresolusie</string>
+    <string name="config_camera_resolution_auto">Outomaties</string>
+    <string name="config_camera_resolution_portrait">480×640 — Portret</string>
+    <string name="config_camera_resolution_landscape">640×480 — Landskap</string>
+    <string name="config_destination_controls">Kontroles</string>
+    <string name="config_gamepad_test">Toets beheerder</string>
+    <string name="config_gamepad_calibrate">Kalibreer beheerder</string>
+    <string name="config_gamepad_calibrate_summary">Meet die gekoppelde beheerder se neutrale posisie en die reekse van sy stokke en snellers.</string>
+    <string name="config_gamepad_stick_directions">Digitale rigtings</string>
+    <string name="config_gamepad_stick_unassigned">Nie toegewys nie</string>
+    <string name="config_gamepad_stick_pointer">Wyserbron</string>
+    <string name="config_gamepad_opaque_summary">Hierdie opstelling bevat beheerderdata in ’n onondersteunde formaat. Dit bly onveranderd behoue en kan nie hier geredigeer word nie.</string>
+    <string name="config_gamepad_unsupported_summary">Hierdie beheerderopstelling word nie ondersteun nie. Dit bly onveranderd behoue en kan nie hier geredigeer word nie.</string>
+    <string name="config_gamepad_keypad_title">Virtuele sleutelbord</string>
+    <string name="config_gamepad_calibration_next">Volgende</string>
+    <string name="config_gamepad_mapping_help_title">Hulp vir beheerderkartering</string>
+    <string name="config_gamepad_directions_four">4-rigting</string>
+    <string name="config_gamepad_directions_eight">8-rigting</string>
+    <string name="config_gamepad_pointer_off">Af</string>
+    <string name="config_gamepad_pointer_cursor">Eweredige wyser</string>
+    <string name="config_gamepad_pointer_joystick">Raak-stuurstok</string>
+    <!-- This is the same controller-identity fingerprint shown in diagnostics. -->
+    <string name="config_gamepad_calibration_profile">Beheerderhandtekening: <xliff:g id="profile_name" example="Action Games">%1$s</xliff:g></string>
+    <string name="config_gamepad_calibration_phase_neutral">Wag vir neutraal</string>
+    <string name="config_gamepad_calibration_phase_stick_range">Stokreeks</string>
+    <string name="config_gamepad_calibration_phase_trigger_range">Snellerreeks</string>
+    <string name="config_gamepad_calibration_phase_review">Gereed om te stoor</string>
+    <string name="config_gamepad_calibration_phase_committed">Gestoor</string>
+    <string name="config_gamepad_calibration_phase_cancelled">Gekanselleer</string>
+    <string name="config_gamepad_calibration_waiting_controller">Koppel ’n beheerder met ’n ondersteunde analoogstok of sneller. Beweeg ’n stok of druk ’n sneller om te begin. Die bestaande kalibrering bly onveranderd tensy jy ’n nuwe een stoor of dit terugstel.</string>
+    <string name="config_gamepad_calibration_no_analog_ranges">Hierdie beheerder verskaf nie ondersteunde analoogstok- of snellerreekse nie.</string>
+    <string name="config_gamepad_calibration_start">Hou elke stok gesentreer en elke sneller losgelaat totdat die neutrale tydhouer voltooi is.</string>
+    <string name="config_gamepad_calibration_save_failed">Kon nie kalibrering stoor nie. Gaan die huidige instellings na voordat jy weer probeer.</string>
+    <string name="config_gamepad_calibration_no_supported_ranges">Geen ondersteunde analoogreekse gevind nie.</string>
+    <string name="config_gamepad_calibration_rejected">Kalibrering afgekeur: <xliff:g id="name" example="Example">%1$s</xliff:g></string>
+    <string name="config_gamepad_calibration_neutral_instructions">Hou alle bespeurde stokke gesentreer en alle bespeurde snellers losgelaat totdat die neutrale tydhouer voltooi is.</string>
+    <string name="config_gamepad_calibration_stick_instructions">Beweeg elke bespeurde stok deur sy volle reeks in alle rigtings, en druk dan Volgende.</string>
+    <string name="config_gamepad_calibration_trigger_instructions">Laat elke bespeurde sneller los, druk dit heeltemal in en tik dan op Volgende.</string>
+    <string name="config_gamepad_calibration_review_instructions">Stoor om die kalibrering vir hierdie beheerder te vervang.</string>
+    <string name="config_gamepad_calibration_saved">Kalibrering gestoor.</string>
+    <string name="config_gamepad_calibration_cancelled">Kalibrering gekanselleer.</string>
+    <string name="config_gamepad_calibration_waiting_samples">Kalibrering wag vir beheerdermonsters.</string>
+    <string name="config_gamepad_diagnosis_header">Beheerderdiagnostiek</string>
+    <string name="config_gamepad_diagnosis_mode">Status: <xliff:g id="status" example="enabled">%1$s</xliff:g> · Bron: <xliff:g id="source" example="controller">%2$s</xliff:g></string>
+    <string name="config_gamepad_diagnosis_notice">Kennisgewing: <xliff:g id="name" example="Example">%1$s</xliff:g></string>
+    <string name="config_gamepad_diagnosis_analog_settings">Analooginstellings:</string>
+    <string name="config_gamepad_diagnosis_left_stick">Linkerstok</string>
+    <string name="config_gamepad_diagnosis_right_stick">Regterstok</string>
+    <string name="config_gamepad_diagnosis_triggers">Snellers</string>
+    <string name="config_gamepad_diagnosis_pointer">Wysermodus</string>
+    <string name="config_gamepad_status_enabled">geaktiveer</string>
+    <string name="config_gamepad_status_disabled">gedeaktiveer</string>
+    <string name="config_gamepad_diagnosis_source_default">verstek</string>
+    <string name="config_gamepad_diagnosis_source_controller">beheerder</string>
+    <string name="config_gamepad_diagnosis_source_explicit">eksplisiet</string>
+    <string name="config_gamepad_diagnosis_device"><xliff:g id="device_name" example="Xbox Controller">%1$s</xliff:g> (#<xliff:g id="device_id" example="1">%2$d</xliff:g>)</string>
+    <string name="config_gamepad_calibration_issue_no_channels">geen ondersteunde kanale nie</string>
+    <string name="config_gamepad_calibration_issue_invalid_constraints">ongeldige kalibreringsbeperkings</string>
+    <string name="config_gamepad_calibration_issue_non_finite">nie-eindige monster</string>
+    <string name="config_gamepad_calibration_issue_insufficient_samples">onvoldoende monsters</string>
+    <string name="config_gamepad_calibration_issue_invalid_range">ongeldige reeks</string>
+    <string name="config_gamepad_calibration_issue_rest_outside_range">ruswaarde buite reeks</string>
+    <string name="config_gamepad_calibration_issue_rest_too_noisy">rusposisie is nie stabiel genoeg nie</string>
+    <string name="config_gamepad_calibration_phase_unknown">Status nie beskikbaar nie</string>
+    <string name="config_gamepad_diagnosis_capabilities">Gekoppelde beheerder se vermoëns:</string>
+    <string name="config_gamepad_diagnosis_descriptor">Beskrywer: <xliff:g id="name" example="Example">%1$s</xliff:g></string>
+    <!-- %1$s is a controller-identity fingerprint derived from its descriptor and capabilities. -->
+    <!-- It is not a handwritten signature or a cryptographic signing operation. -->
+    <string name="config_gamepad_diagnosis_signature">Handtekening: <xliff:g id="name" example="Example">%1$s</xliff:g></string>
+    <string name="config_gamepad_diagnosis_axis">As <xliff:g id="axis_index" example="0">%1$d</xliff:g> [<xliff:g id="min_value" example="-1.0">%2$s</xliff:g>, <xliff:g id="max_value" example="1.0">%3$s</xliff:g>] flat=<xliff:g id="flat" example="0.05">%4$s</xliff:g> fuzz=<xliff:g id="fuzz" example="0.01">%5$s</xliff:g></string>
+    <string name="config_gamepad_diagnosis_no_controller">(geen gekoppelde beheerder nie)</string>
+    <string name="config_gamepad_diagnosis_samples_not_sent">Invoermonsters word doelbewus nie na die MIDlet gestuur nie.</string>
+    <string name="config_destination_system">Stelsel</string>
+    <string name="config_screen_behavior" tools:ignore="MissingTranslation">Skermgedrag</string>
+    <string name="config_screen_size">Skermgrootte</string>
+    <string name="config_select_screen_size">Kies skermgrootte</string>
+    <string name="config_current_screen_size">Huidige grootte: <xliff:g id="name" example="Example">%1$s</xliff:g></string>
+    <string name="config_custom_resolution">Gepasmaakte resolusie</string>
+    <string name="profile_custom">Gepasmaak</string>
+    <string name="select_dialog_title">Kies MIDlet</string>
+    <string name="SIZE_PRESETS">Fontgrootte-voorinstellings</string>
+    <string name="config_color_picker_title">Kies kleur</string>
+    <string name="config_color_picker_hex">Heksadesimale kleur</string>
+    <string name="config_color_picker_hint">Sleep die kleurvelde of voer ’n sessyfer-RGB-waarde in.</string>
+    <string name="config_color_picker_invalid">Voer presies ses heksadesimale syfers in.</string>
+    <string name="config_color_picker_saturation_value">Versadiging en helderheid</string>
+    <string name="config_color_picker_hue">Kleurtoon</string>
+    <string name="config_decrease_value">Verminder waarde</string>
+    <string name="config_increase_value">Vermeerder waarde</string>
+    <string name="midlet_failure_recovery_title">MIDlet het onverwags gestop</string>
+    <string name="midlet_failure_recovery_message">Die MIDlet het onverwags gestop. Diagnostiese inligting is plaaslik gestoor. Jy kan voortgaan om JL-Mod Plus te gebruik.</string>
+    <string name="midlet_failure_recovery_message_named">“<xliff:g id="name" example="Example">%1$s</xliff:g>” het onverwags gestop. Diagnostiese inligting is plaaslik gestoor. Jy kan voortgaan om JL-Mod Plus te gebruik.</string>
+    <plurals name="config_system_properties_value">
+        <item quantity="one"><xliff:g id="count" example="3">%1$d</xliff:g> eienskap</item>
+        <item quantity="other"><xliff:g id="count" example="3">%1$d</xliff:g> eienskappe</item>
+    </plurals>
+    <string name="config_search_suggestions" tools:ignore="MissingTranslation">Voorgestelde instellings</string>
+    <string name="config_search_clear" tools:ignore="MissingTranslation">Maak soektog skoon</string>
+    <string name="config_search_title" tools:ignore="MissingTranslation">Deursoek instellings</string>
+    <string name="config_search_hint" tools:ignore="MissingTranslation">Vind ’n instelling, bv. MMPX of oriëntasie</string>
+    <string name="config_search_no_results" tools:ignore="MissingTranslation">Geen ooreenstemmende instellings nie</string>
+    <string name="config_search_upscaling_requires_resolution" tools:ignore="MissingTranslation">Kies Outomaties of 2×–10× onder Weergawe-resolusie om biskaart-opskaling op te stel.</string>
+    <string name="config_search_requires_manual_scale" tools:ignore="MissingTranslation">Kies Handmatig onder Skaalmodus om die skaal aan te pas.</string>
+    <string name="config_search_requires_custom_background" tools:ignore="MissingTranslation">Kies Gepasmaak onder Agtergrondmodus om die agtergrondkleur te redigeer.</string>
+    <string name="config_search_requires_gles" tools:ignore="MissingTranslation">Kies Hardewareversnelling (OpenGL ES) onder Grafiese modus om shader-effekte op te stel.</string>
+    <string name="config_search_requires_renderer_mode" tools:ignore="MissingTranslation">Kies Sagteware of Hardewareversnelling (Surface) onder Grafiese modus om asinchroniese skermopdaterings op te stel.</string>
+    <string name="config_font_page_title" tools:ignore="MissingTranslation">Fontinstellings</string>
+    <string name="config_display_more" tools:ignore="MissingTranslation">Teks en werkverrigting</string>
+    <string name="config_destination_home" tools:ignore="MissingTranslation">Tuis</string>
+    <string name="config_overview_profile_draft" tools:ignore="MissingTranslation">Profielkonsep</string>
+    <string name="config_overview_profile_draft_summary" tools:ignore="MissingTranslation">Redigeer hierdie herbruikbare profiel en stoor jou veranderinge vanaf die nutsbalk.</string>
+    <string name="config_overview_quick_access" tools:ignore="MissingTranslation">Vinnige toegang</string>
+    <string name="config_system_properties_editor_label">Eienskappe</string>
+    <string name="config_overview_enabled" tools:ignore="MissingTranslation">Aan</string>
+    <string name="config_overview_disabled" tools:ignore="MissingTranslation">Af</string>
+    <string name="config_overview_media_summary" tools:ignore="MissingTranslation">Klankbank en kamera</string>
+    <string name="config_overview_hint" tools:ignore="MissingTranslation">Kies ’n kategorie om jou spel aan te pas. Elke instelling het een tuiste; hierdie kortpaaie neem jou daarheen.</string>
+    <string name="config_destination_general">Algemeen</string>
+    <string name="config_basic_display">MIDlet-skerm</string>
+    <string name="config_display_appearance">Skermvoorkoms</string>
+    <string name="config_display_rendering">Weergawe</string>
+    <string name="config_image_quality_section" tools:ignore="MissingTranslation">Beeldgehalte</string>
+    <string name="config_frame_rate_section" tools:ignore="MissingTranslation">Raamtempo</string>
+    <string name="config_fps_position_title" tools:ignore="MissingTranslation">FPS-posisie</string>
+    <string name="config_display_text">Teks en fonte</string>
+    <string name="config_input_mapping_section" tools:ignore="MissingTranslation">Invoer en kartering</string>
+    <string name="config_controls_appearance_section" tools:ignore="MissingTranslation">Kontrolevoorkoms</string>
+    <string name="config_controls_virtual_keyboard">Virtuele kontroles</string>
+    <string name="config_controls_virtual_keyboard_colors">Kleure vir virtuele kontroles</string>
+    <string name="config_virtual_controls_color_preview">Kleurvoorskou</string>
+    <string name="config_virtual_controls_preview_normal">Losgelaat</string>
+    <string name="config_virtual_controls_preview_pressed">Gedruk</string>
+    <string name="config_controls_maintenance">Uitleg</string>
+    <string name="config_controls_skin_help">Verander die voorkoms van sleutelbordknoppies, die D-pad en die analoogstok met gepasmaakte beelde.</string>
+    <string name="config_controls_color_button_normal">Losgelaate knoppie</string>
+    <string name="config_controls_color_button_pressed">Gedrukte knoppie</string>
+    <string name="config_controls_color_label_normal">Losgelaate etiket</string>
+    <string name="config_controls_color_label_pressed">Gedrukte etiket</string>
+    <string name="config_controls_color_outline_short">Buiterand</string>
+    <string name="config_controls_disabled_hint">Virtuele kontroles is tans af. Jy kan hulle steeds hier aanpas.</string>
+    <string name="config_controls_opacity_help" formatted="false">Pas die ondeursigtigheid van virtuele kontroles aan. By 0% is die kontroles deursigtig; by 100% word geen ekstra deursigtigheid toegepas nie.</string>
+    <string name="config_controls_opaque_outside">Wys kontroles sonder deursigtigheid buite die MIDlet-skerm</string>
+    <string name="config_controls_opaque_outside_help">Wanneer dié opsie aan is, word kontroles wat heeltemal buite die MIDlet-skerm lê sonder ekstra deursigtigheid vertoon. Kontroles wat die skerm oorvleuel, gebruik die gekose ondeursigtigheid.</string>
+    <string name="config_controls_connect_controller">Koppel ’n beheerder om te kalibreer</string>
+    <string name="config_controls_color_skin_notice">’n Volle knoppie-omslag kan die verstekknoppiekleure, -vorm en -buiterand vervang.</string>
+    <string name="config_current_value">Huidige waarde</string>
+    <string name="config_maintenance">Terugstel en data</string>
+    <string name="config_midlet_actions" tools:ignore="MissingTranslation">MIDlet-aksies</string>
+    <string name="config_profile_maintenance" tools:ignore="MissingTranslation">Profielaksies</string>
+    <string name="config_reset_profile_settings" tools:ignore="MissingTranslation">Stel profielkonsep terug</string>
+    <string name="config_reset_profile_settings_summary" tools:ignore="MissingTranslation">Herstel hierdie konsep se instellings en virtuele kontroles na verstekwaardes.</string>
+    <string name="config_system_compatibility" tools:ignore="MissingTranslation">Emulasieversoenbaarheid</string>
+    <string name="config_reset_all_settings">Stel MIDlet-opstelling terug</string>
+    <string name="config_reset_all_settings_summary">Herstel hierdie MIDlet se instellings en virtuele kontroles na hul verstekwaardes sonder om sy data uit te vee.</string>
+    <string name="config_delete_app_data">Vee MIDlet-data uit</string>
+    <string name="config_delete_app_data_summary">Vee hierdie MIDlet se data, insluitend stoordata, permanent uit. Sy instellings sal behoue bly.</string>
+    <string name="config_message_reset_settings">Herstel die MIDlet-opstelling en virtuele kontroles na verstekwaardes? Gestoorde data bly behoue. Enige gekoppelde profiel sal nie meer gevolg word nie.</string>
+    <string name="config_message_reset_profile_settings">Stel hierdie profiel se instellings en virtuele kontroles terug na verstekwaardes? Jy kan steeds redigeer of kanselleer voordat jy stoor.</string>
+    <string name="config_message_delete_app_data">Vee alle stoordata en data wat deur hierdie MIDlet geskep is permanent uit? MIDlet-instellings sal nie uitgevee word nie.</string>
+    <string name="config_lock_custom_resolution_ratio">Sluit aspekverhouding</string>
+    <string name="config_swap_screen_size">Ruil breedte en hoogte om</string>
+    <string name="profile_builtin_settings">JL-Mod-verstekwaardes</string>
+    <string name="profile_default_badge_short">Verstek vir nuwe MIDlets</string>
+    <string name="profile_template_summary">Gestoorde MIDlet-instellings.</string>
+    <string name="profile_name_exists">’n Profiel met hierdie naam bestaan reeds.</string>
+    <string name="profile_delete_template_message">Vee profiel “<xliff:g id="profile_name" example="Action Games">%1$s</xliff:g>” uit? MIDlets wat dit gebruik, sal hul huidige instellings behou maar nie toekomstige opdaterings ontvang nie.</string>
+    <string name="profile_template_operation_failed">Kon nie die profielbewerking voltooi nie.</string>
+    <string name="config_help_screen_size">Stel die virtuele Java ME-skermresolusie wat deur die MIDlet gebruik word.</string>
+    <string name="config_help_orientation">Kies die skermoriëntasie terwyl die MIDlet loop.</string>
+    <string name="config_help_scale_type">Kies hoe die spel op die skerm pas. Kies Handmatig om ’n gepasmaakte skaal te stel.</string>
+    <string name="config_help_scale_ratio" formatted="false">Pas die vertoonde grootte van 1% tot 1000% aan. Teen 100% gebruik die spel sy oorspronklike grootte; groter waardes kan buite die skerm uitsteek.</string>
+    <string name="config_help_lock_custom_resolution_ratio">Behou die aspekverhouding tydens redigering van die gepasmaakte resolusie.</string>
+    <string name="config_help_virtual_keyboard">Wys kontroles op die skerm vir hierdie MIDlet.</string>
+    <string name="config_help_touch_input">Laat die MIDlet toe om wyserinvoer vanaf die raakskerm te ontvang.</string>
+    <string name="config_help_background">Vul ongebruikte spasie rondom die MIDlet-skerm.</string>
+    <string name="config_background_mode">Agtergrondmodus</string>
+    <string name="config_background_custom">Gepasmaak</string>
+    <string name="config_background_theme">Tema</string>
+    <string name="config_background_immersive">Meesleurend</string>
+    <string name="config_background_theme_help">Gebruik die JL-Mod Plus-temakleur rondom die MIDlet-skerm.</string>
+    <string name="config_background_immersive_help">Vul ongebruikte spasie met kleure wat van die MIDlet-skerm geneem word.</string>
+    <string name="config_background_dynamic">Dinamiese kleur</string>
+    <string name="config_background_dynamic_help">Gebruik een soliede kleur wat glad by die MIDlet-skerm aanpas.</string>
+    <string name="config_background_custom_color">Agtergrondkleur</string>
+    <string name="config_help_background_custom_color">Stel die kleur van ongebruikte spasie rondom die MIDlet-skerm.</string>
+    <string name="config_help_skin">Wys ’n opsionele beeld of raam rondom die MIDlet-skerm.</string>
+    <string name="config_help_screen_gravity">Plaas die MIDlet-skerm wanneer ongebruikte spasie oorbly.</string>
+    <string name="config_help_screen_padding">Voeg vulling in piksels tussen die MIDlet-skerm en die rand van die vertoonarea by.</string>
+    <string name="config_help_filter">Gebruik lineêre filtering om die MIDlet-skerm glad te maak wanneer dit geskaal word.</string>
+    <string name="config_warning_filter_shader">Lineêre filtering maak die invoer glad voordat die skermshader dit verwerk en kan uitvoerskerpte verminder.</string>
+    <string name="config_help_immediate">Verwerk MIDlet-gebeurtenisse onmiddellik in plaas daarvan om dit in ’n tou te plaas. Kan reaksiespoed verbeter maar sommige MIDlets onstabiel maak.</string>
+    <string name="config_help_graphics_mode">Kies die weergawepad vir die MIDlet-skerm. Hardewareversnelling kan werkverrigting verbeter, maar versoenbaarheid wissel per toestel.</string>
+    <string name="config_help_shader">Pas ’n shader op die MIDlet-raam toe voordat dit vertoon word.</string>
+    <string name="config_help_shader_tuning">Beskikbare kontroles hang af van die gekose shader.</string>
+    <string name="config_help_parallel_redraw">Skeduleer raamaanbieding asinchronies. Dit kan werkverrigting op sommige toestelle verbeter.</string>
+    <string name="config_help_force_fullscreen">Versteek die opdragbalk wanneer die MIDlet begin. Die MIDlet kan dit tydens spel weer wys.</string>
+    <string name="config_help_fps_limit">Stel die FPS-limiet teen 1×-emulasiespoed. Die effektiewe limiet volg emulasiespoed; 0 (Maksimum) gebruik die skerm se maksimum verversingstempo.</string>
+    <string name="config_timing_mode_full_guest">Emulasietyd</string>
+    <string name="config_timing_mode_real_wall">Stelseltyd</string>
+    <string name="config_help_emulation_speed">Pas ondersteunde MIDlet-tydhouers en vertragings vir hierdie sessie aan. Met Emulasietyd gekies, volg datum en tyd ook die spoed. Mediaterugspeel en die Android-koppelvlak bly teen normale spoed.</string>
+    <string name="config_help_timing_mode">Kies of die MIDlet emulasietyd of stelseltyd gebruik. Relatiewe vertragings bly geskaal met emulasiespoed.</string>
+    <string name="config_help_timing_unavailable">Tydinstellings is nie vir hierdie MIDlet-installasie beskikbaar nie. Herinstalleer of skakel die MIDlet weer om om dit te aktiveer.</string>
+    <string name="config_help_generic_color">Stel die kleur van hierdie visuele element.</string>
+    <string name="config_help_encoding">Kies die karakterenkodering wat as microedition.encoding gerapporteer word.</string>
+    <string name="config_edit_system_properties">Redigeer stelseleienskappe</string>
+    <string name="config_help_system_properties">Stel gevorderde Java ME-eienskappe wat aan die MIDlet gerapporteer word.</string>
+    <string name="config_help_system_properties_long">Redigeer een eienskap per reël as “naam: waarde”. Verkeerde waardes kan versoenbaarheid beïnvloed.</string>
+    <string name="config_system_properties_info">Die meeste MIDlets benodig geen veranderinge hier nie.</string>
+    <string name="config_font_sizes">Fontgroottes</string>
+    <string name="config_help_font_sizes">Stel die klein, medium en groot Java ME-fontgroottes vir die MIDlet.</string>
+    <string name="config_help_font_sizes_long">Stel Java ME-fontgroottes in piksels, of geskaalde eenhede wanneer Android-fontskaal geaktiveer is. Verander hulle saam om teks gebalanseerd te hou.</string>
+    <string name="config_font_sizes_value">Klein <xliff:g id="small_size" example="12">%1$s</xliff:g> · medium <xliff:g id="medium_size" example="16">%2$s</xliff:g> · groot <xliff:g id="large_size" example="20">%3$s</xliff:g></string>
+    <string name="config_help_font_presets">Pas fontgroottes toe wat geskik is vir algemene Java ME-skermresolusies.</string>
+    <string name="config_help_font_dimensions">Pas Android se fontskaal op Java ME-fontgroottes toe.</string>
+    <string name="config_help_font_aa">Maak die rande van weergegewe teks glad.</string>
+    <string name="config_help_key_layout">Kies die sleutelkode-skema wat aan die MIDlet gerapporteer word.</string>
+    <string name="config_help_key_mapping">Karter fisieke Android-sleutels en -knoppies na Java ME-sleutelbordaksies.</string>
+    <string name="config_help_vk_button_shape">Stel die versteksleutelbordknoppie-vorm. Die D-pad en analoogstok het hul eie vorms.</string>
+    <string name="config_help_vk_feedback">Vibreer wanneer ’n virtuele kontrole gedruk word as vibrasie in Instellings geaktiveer is.</string>
+    <string name="config_help_vk_hide_delay">Versteek kontroles na hierdie vertraging wanneer hulle die MIDlet-skerm bedek. ’n Waarde van 0 deaktiveer outoversteek.</string>
+    <string name="config_help_reset_layout">Herstel die uitleg van virtuele kontroles sonder om ander MIDlet-instellings te verander.</string>
+    <string name="config_help_skip_resume">Slaan latere oproepe oor wanneer die MIDlet hervat ná die eerste suksesvolle startApp(). Gebruik slegs vir MIDlets wat misluk by hervatting.</string>
+    <string name="config_help_soundbank">Kies die klankbank vir MIDI-sintese. Dit verander nie vooraf opgeneemde oudio nie.</string>
+    <string name="profile_create_title">Skep profiel</string>
+    <string name="profile_rename_title">Hernoem profiel</string>
+    <string name="presets">Profiele</string>
+    <string name="preset_use">Gebruik profiel</string>
+    <string name="preset_save_as">Stoor as profiel</string>
+    <string name="preset_custom_configuration">Gepasmaakte opstelling</string>
+    <string name="preset_based_on_modified">Hierdie MIDlet se huidige opstelling verskil van <xliff:g id="profile_name" example="Action Games">%1$s</xliff:g>.</string>
+    <string name="preset_builtin">JL-Mod-verstekwaardes</string>
+    <string name="preset_builtin_summary">Ingeboude MIDlet-instellings en virtuele kontroles.</string>
+    <string name="preset_picker_title">Gebruik profiel</string>
+    <string name="preset_manage">Bestuur profiele</string>
+    <string name="profile_more_actions">Meer aksies vir <xliff:g id="profile_name" example="Action Games">%1$s</xliff:g></string>
+    <string name="profile_create_summary">Stoor ’n herbruikbare opstelling vir ander MIDlets.</string>
+    <string name="preset_application_settings">MIDlet-instellings</string>
+    <string name="preset_includes_keyboard_layout">Uitleg van virtuele kontroles ingesluit.</string>
+    <string name="preset_virtual_keyboard_on">Virtuele kontroles geaktiveer</string>
+    <string name="preset_virtual_keyboard_off">Virtuele kontroles gedeaktiveer</string>
+    <string name="preset_apply">Pas toe</string>
+    <string name="preset_apply_failed_summary">Kon nie hierdie profiel toepas nie. Gaan die bron na en probeer weer.</string>
+    <string name="preset_choose_parts">Kies wat om toe te pas</string>
+    <string name="preset_name">Naam</string>
+    <string name="preset_save_help">Stoor hierdie MIDlet se instellings en, waar beskikbaar, sy uitleg van virtuele kontroles as ’n profiel. Hierdie MIDlet sal die profiel gebruik en toekomstige opdaterings daarvan ontvang.</string>
+    <string name="preset_update">Dateer <xliff:g id="profile_name" example="Action Games">%1$s</xliff:g> op</string>
+    <string name="preset_update_title">Dateer <xliff:g id="profile_name" example="Action Games">%1$s</xliff:g> op?</string>
+    <string name="preset_update_summary">Vervang <xliff:g id="profile_name" example="Action Games">%1$s</xliff:g> met hierdie MIDlet se huidige instellings en, indien beskikbaar, sy uitleg van virtuele kontroles? Ander MIDlets wat hierdie profiel gebruik, sal die veranderinge kry wanneer hulle volgende keer begin.</string>
+    <string name="preset_update_confirm">Dateer op</string>
+    <string name="preset_saved_unlinked_warning">Profiel gestoor, maar hierdie MIDlet sal nie toekomstige opdaterings daarvan ontvang nie.</string>
+    <string name="profile_default_fallback_notice">Verstekprofiel “<xliff:g id="profile_name" example="Action Games">%1$s</xliff:g>” kon nie gebruik word nie. Dit ontbreek dalk, is onvolledig of onleesbaar. JL-Mod-verstekwaardes is nou die verstek vir nuwe MIDlets.</string>
+    <string name="preset_discard_changes_title">Gooi veranderinge weg?</string>
+    <string name="preset_discard_changes_summary">Hierdie profielkonsep is nie gestoor nie.</string>
+    <string name="preset_continue_editing">Gaan voort met redigering</string>
+    <string name="preset_discard_changes">Gooi weg</string>
+    <string name="preset_name_exists">’n Profiel met hierdie naam bestaan reeds.</string>
+    <string name="preset_invalid_name">Voer ’n geldige profielnaam in.</string>
+    <string name="preset_manager_default_section">Verstek vir nuwe MIDlets</string>
+    <string name="preset_manager_presets_section">My profiele</string>
+    <string name="preset_manager_keyboard_section">Gestoorde uitlegte van virtuele kontroles</string>
+    <string name="preset_default_policy_summary">Toegepas wanneer ’n nuwe MIDlet geïnstalleer word.</string>
+    <string name="preset_keyboard_layout_unavailable">Uitleg van virtuele kontroles is nie beskikbaar nie.</string>
+    <string name="edit_preset">Redigeer profiel</string>
+    <string name="preset_edit_title">Redigeer profiel: <xliff:g id="profile_name" example="Action Games">%1$s</xliff:g></string>
+    <string name="preset_unavailable_section">Nie beskikbaar nie</string>
+    <string name="preset_unavailable_summary">Kon nie hierdie profiel laai nie. Hernoem of vee dit uit.</string>
+    <string name="preset_change_default">Verander</string>
+    <string name="preset_default_picker_title">Verstek vir nuwe MIDlets</string>
+    <string name="profile_follows_updates">Volg toekomstige profielopdaterings.</string>
+    <string name="profile_apply_whole">Hele profiel</string>
+    <string name="profile_apply_whole_follows">Vervang instellings en uitleg; volg toekomstige opdaterings.</string>
+    <string name="profile_apply_whole_without_layout">Vervang instellings, verwyder die plaaslike uitleg en volg opdaterings.</string>
+    <string name="profile_apply_settings_only">Slegs MIDlet-instellings</string>
+    <string name="profile_apply_settings_keeps_layout">Behou hierdie MIDlet se uitleg; gebruik ’n gepasmaakte opstelling.</string>
+    <string name="profile_apply_layout_only">Slegs uitleg van virtuele kontroles</string>
+    <string name="profile_apply_layout_keeps_settings">Behou hierdie MIDlet se instellings; gebruik ’n gepasmaakte opstelling.</string>
+    <string name="config_analog_stick">Analoogstok</string>
+    <string name="config_analog_stick_summary">Kies Af, 4-rigting, 8-rigting of syfersleutelbord vir die primêre analoogstok. Beheerderknoppies gebruik sleutelkarterings.</string>
+    <string name="config_analog_stick_off">Af</string>
+    <string name="config_controller_help_body_compact">Beheerderknoppies gebruik dieselfde sleutelkarterings as sleutelbord- en foonsleutels. Die analoogstok stuur slegs rigtinginvoer na die MIDlet. Android-Terug behou sy normale gedrag; enige fisieke knoppie wat na M gekarteer is, maak die looptyd-MIDlet-kieslys oop.</string>
+    <string name="config_show_fps_title" tools:ignore="MissingTranslation">Wys FPS</string>
+    <string name="config_show_fps_help" tools:ignore="MissingTranslation">Vertoon die raamtempo tydens spel.</string>
+    <string name="config_search_requires_fps" tools:ignore="MissingTranslation">Skakel Wys FPS aan om die posisie te verander.</string>
+    <string name="midlet_running_notification_title">MIDlet loop tans</string>
+    <string name="midlet_running_notification_text"><xliff:g id="name" example="Example">%1$s</xliff:g> loop tans.</string>
+    <string name="midlet_running_notification_channel">MIDlet-looptyd</string>
+    <string name="config_gamepad_directions_numeric_v2">Syfersleutelbord</string>
+    <string name="midlet_file_permission_title">Bergingstoegang</string>
+    <string name="midlet_file_permission_read">Hierdie MIDlet wil lêers lees.</string>
+    <string name="midlet_file_permission_write">Hierdie MIDlet wil lêers skep, verander of uitvee.</string>
+    <string name="midlet_file_permission_allow_once">Laat een keer toe</string>
+    <string name="midlet_file_permission_allow_session">Laat toe terwyl die MIDlet loop</string>
+    <string name="midlet_file_permission_allow_always">Laat altyd toe</string>
+    <string name="midlet_file_permission_deny">Weier altyd</string>
+    <string name="midlet_permissions_settings_title">Toestemmings vir bergingstoegang</string>
+    <string name="midlet_permissions_read">Lees lêers</string>
+    <string name="midlet_permissions_write">Verander lêers</string>
+    <string name="midlet_permissions_ask">Vra</string>
+    <string name="midlet_permissions_allow">Laat altyd toe</string>
+    <string name="midlet_permissions_deny">Weier</string>
+    <string name="midlet_permissions_save_failed">Kon nie bergingsinstellings stoor nie.</string>
+    <string name="config_avoid_camera_cutout_title">Vermy kamera-uitsnyding</string>
+    <string name="config_avoid_camera_cutout_summary">Hou die MIDlet-skerm en virtuele kontroles weg van die kamera of skermuitsnyding.</string>
+    <string name="midlet_permissions_write_summary">Sluit die skep en uitvee van lêers in.</string>
+    <string name="midlet_legacy_import_title">Verouderde Siemens-stoordata</string>
+    <string name="midlet_legacy_import_action">Kies ’n ou stoorlêer</string>
+    <string name="midlet_legacy_import_summary">Kopieer ’n ou stoorlêer na hierdie MIDlet se private Siemens-berging. Stop die MIDlet eers.</string>
+    <string name="midlet_legacy_import_success">Lêer na hierdie MIDlet se private berging gekopieer.</string>
+    <string name="midlet_legacy_import_failed">Invoer het misluk. Stop die MIDlet en maak seker die bestemmingslêer bestaan nie reeds nie.</string>
+    <string name="midlet_storage_mode_title">Bergingsmodus</string>
+    <string name="midlet_storage_mode_shared">Virtueel</string>
+    <string name="midlet_storage_mode_android">Android</string>
+    <string name="midlet_storage_mode_shared_summary">Gebruik gedeelde gidse in die werkgids.</string>
+    <string name="midlet_storage_mode_android_summary">Gebruik gedeelde Android-berging, onderhewig aan Android-toestemmings. MIDlet-lêertoestemmings is apart van dié in virtuele modus.</string>
+    <string name="config_system_properties_reset" tools:ignore="MissingTranslation">Stel terug na verstek</string>
+    <string name="config_system_properties_reset_title" tools:ignore="MissingTranslation">Stel stelseleienskappe terug?</string>
+    <string name="config_system_properties_reset_message" tools:ignore="MissingTranslation">Vervang die redigeerder se inhoud met die huidige JL-Mod Plus-verstekwaardes? Ander instellings bly onveranderd. Stoor om die terugstelling toe te pas.</string>
+    <string name="config_asset_add">+ Voeg uit lêer by</string>
+    <string name="config_asset_copy_hint">Na die werkgids gekopieer; die oorspronklike lêer bly waar dit is.</string>
+    <string name="config_asset_name">Lêernaam</string>
+    <string name="config_asset_delete_confirmation">Vee <xliff:g id="name" example="Example">%1$s</xliff:g> uit die werkgids uit? Ander MIDlets kan ook hierdie lêer gebruik. Kopieë elders word nie geraak nie.</string>
+    <string name="config_asset_imported">Gekopieer en gekies: <xliff:g id="name" example="Example">%1$s</xliff:g></string>
+    <string name="config_asset_reused">Bestaande lêer gekies: <xliff:g id="name" example="Example">%1$s</xliff:g></string>
+    <string name="config_asset_renamed">Hernoem na <xliff:g id="name" example="Example">%1$s</xliff:g></string>
+    <string name="config_asset_deleted"><xliff:g id="name" example="Example">%1$s</xliff:g> uitgevee</string>
+    <string name="config_asset_invalid">Onondersteunde of ongeldige lêer.</string>
+    <string name="config_asset_operation_failed">Kon nie die lêerbewerking voltooi nie.</string>
+    <string name="config_save_failed" tools:ignore="MissingTranslation">Kon nie instellings stoor nie. Jou veranderinge is steeds oop — probeer weer.</string>
+    <string name="config_asset_busy">Voltooi eers die huidige lêerbewerking.</string>
+    <string name="config_quick_settings" tools:ignore="MissingTranslation">Vinnige instellings</string>
+    <string name="config_all_settings" tools:ignore="MissingTranslation">Alle instellings</string>
+    <string name="profile_local_changes_pending" tools:ignore="MissingTranslation">Plaaslike veranderinge nie in die profiel gestoor nie</string>
+    <string name="profile_local_configuration_summary" tools:ignore="MissingTranslation">Instellings slegs vir hierdie MIDlet</string>
+    <string name="profile_not_following" tools:ignore="MissingTranslation">Gebaseer op <xliff:g id="profile_name" example="Action Games">%1$s</xliff:g> · Volg nie opdaterings nie</string>
+    <string name="profile_stop_following" tools:ignore="MissingTranslation">Hou op profiel volg</string>
+    <string name="profile_follow_again" tools:ignore="MissingTranslation">Volg profiel weer</string>
+    <string name="profile_follow_again_summary" tools:ignore="MissingTranslation">Vervang hierdie MIDlet se plaaslike instellings en virtuele kontroles met die nuutste <xliff:g id="profile_name" example="Action Games">%1$s</xliff:g>-profiel en volg toekomstige opdaterings daarvan?</string>
+</resources>

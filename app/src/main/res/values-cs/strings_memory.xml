@@ -1,0 +1,297 @@
+<?xml version="1.0" encoding="utf-8"?>
+<!-- Editor paměti: hledání, inspektor, záložky, uložené proměnné, rychlé akce a tvůrce skriptů. -->
+<resources xmlns:tools="http://schemas.android.com/tools" xmlns:xliff="urn:oasis:names:tc:xliff:document:1.2">
+    <string name="memory_editor_bubble">Plovoucí tlačítko Editoru paměti</string>
+    <string name="memory_editor_bubble_content_description">Otevřít Editor paměti</string>
+    <string name="memory_editor_previous_results_page_action">Předchozí stránka výsledků</string>
+    <string name="memory_editor_next_results_page_action">Další stránka výsledků</string>
+    <string name="memory_editor">Editor paměti</string>
+    <string name="memory_editor_search_hint">Hodnota</string>
+    <string name="memory_editor_next_scan">Další sken</string>
+    <string name="memory_editor_new_search">Nové hledání</string>
+    <plurals name="memory_editor_results">
+        <item quantity="one"><xliff:g id="count" example="3">%1$d</xliff:g> výsledek</item>
+        <item quantity="few"><xliff:g id="count" example="3">%1$d</xliff:g> výsledky</item>
+        <item quantity="many"><xliff:g id="count" example="3">%1$d</xliff:g> výsledku</item>
+        <item quantity="other"><xliff:g id="count" example="3">%1$d</xliff:g> výsledků</item>
+    </plurals>
+    <plurals name="memory_editor_candidates">
+        <item quantity="one"><xliff:g id="count" example="3">%1$d</xliff:g> kandidát</item>
+        <item quantity="few"><xliff:g id="count" example="3">%1$d</xliff:g> kandidáti</item>
+        <item quantity="many"><xliff:g id="count" example="3">%1$d</xliff:g> kandidáta</item>
+        <item quantity="other"><xliff:g id="count" example="3">%1$d</xliff:g> kandidátů</item>
+    </plurals>
+    <plurals name="memory_editor_search_complete">
+        <item quantity="one">Hledání dokončeno · <xliff:g id="count" example="3">%1$d</xliff:g> kandidát</item>
+        <item quantity="few">Hledání dokončeno · <xliff:g id="count" example="3">%1$d</xliff:g> kandidáti</item>
+        <item quantity="many">Hledání dokončeno · <xliff:g id="count" example="3">%1$d</xliff:g> kandidáta</item>
+        <item quantity="other">Hledání dokončeno · <xliff:g id="count" example="3">%1$d</xliff:g> kandidátů</item>
+    </plurals>
+    <string name="memory_editor_no_results">Žádné výsledky</string>
+    <string name="memory_editor_no_watch">Sledování je prázdné</string>
+    <string name="memory_editor_unsupported">Editor paměti není pro toto běhové prostředí k dispozici.</string>
+    <string name="memory_editor_engine_unavailable">Engine Editoru paměti není k dispozici.</string>
+    <string name="memory_editor_engine_reconnecting">Editor paměti se znovu připojuje…</string>
+    <string name="memory_editor_refresh">Obnovit</string>
+    <string name="memory_editor_undo">Vrátit sken zpět</string>
+    <string name="memory_variables_tab">Uložené</string>
+    <string name="memory_editor_back" tools:ignore="MissingTranslation">Zpět</string>
+    <string name="memory_list_keep" tools:ignore="MissingTranslation">Ponechat pro příští spuštění</string>
+    <string name="memory_list_stop_keeping" tools:ignore="MissingTranslation">Přestat ponechávat</string>
+    <string name="memory_list_kept" tools:ignore="MissingTranslation">Ponecháno pro příští spuštění</string>
+    <string name="memory_list_empty" tools:ignore="MissingTranslation">Zatím žádné uložené záložky</string>
+    <string name="memory_list_empty_hint" tools:ignore="MissingTranslation">Přidejte si proměnnou z Hledání nebo Inspektoru do záložek, abyste ji mohli sledovat zde.</string>
+    <string name="memory_list_remove_confirm" tools:ignore="MissingTranslation">Odebrat z Uložených? Všechna aktivní zmrazení se zastaví.</string>
+    <string name="memory_list_add" tools:ignore="MissingTranslation">Přidat do záložek</string>
+    <string name="memory_bookmark_relink" tools:ignore="MissingTranslation">Znovu propojit</string>
+    <string name="memory_bookmark_relink_hint" tools:ignore="MissingTranslation">Vyberte náhradní proměnnou v Hledání a poté zvolte Znovu propojit.</string>
+    <string name="memory_bookmark_relink_confirm" tools:ignore="MissingTranslation">Propojit tuto záložku s vybranou proměnnou? Případné aktivní zmrazení této záložky se zastaví.</string>
+    <string name="memory_bookmark_unavailable" tools:ignore="MissingTranslation">Nedostupné — zvolte Znovu propojit a vyberte cíl</string>
+    <string name="memory_editor_watch">Sledování</string>
+    <string name="memory_editor_search_tab">Hledání</string>
+    <string name="memory_editor_search_known_values">Hledat známé hodnoty</string>
+    <string name="memory_editor_search_unknown_values">Hledat neznámé hodnoty</string>
+    <string name="memory_editor_add_to_watch">Přidat vybrané hodnoty do záložek</string>
+    <string name="memory_editor_no_candidates">Nebyly nalezeny žádné prohledávatelné hodnoty</string>
+    <string name="memory_editor_edit">Upravit</string>
+    <plurals name="memory_editor_edit_batch">
+        <item quantity="one">Upravit <xliff:g id="count" example="3">%1$d</xliff:g> hodnotu</item>
+        <item quantity="few">Upravit <xliff:g id="count" example="3">%1$d</xliff:g> hodnoty</item>
+        <item quantity="many">Upravit <xliff:g id="count" example="3">%1$d</xliff:g> hodnoty</item>
+        <item quantity="other">Upravit <xliff:g id="count" example="3">%1$d</xliff:g> hodnot</item>
+    </plurals>
+    <string name="memory_editor_edit_batch_no_common_type">Vybrané položky nepodporují zvolený datový typ. Kompatibilní položky upravte samostatně.</string>
+    <string name="memory_editor_save">Použít</string>
+    <string name="memory_editor_replacement">Nová hodnota</string>
+    <string name="memory_editor_freeze">Zmrazit</string>
+    <string name="memory_editor_remove">Odebrat</string>
+    <string name="memory_editor_select_visible">Vybrat viditelné</string>
+    <string name="memory_editor_clear_selection">Zrušit výběr</string>
+    <plurals name="memory_editor_selected">
+        <item quantity="one">Vybrána <xliff:g id="count" example="3">%1$d</xliff:g></item>
+        <item quantity="few">Vybrány <xliff:g id="count" example="3">%1$d</xliff:g></item>
+        <item quantity="many">Vybráno <xliff:g id="count" example="3">%1$d</xliff:g></item>
+        <item quantity="other">Vybráno <xliff:g id="count" example="3">%1$d</xliff:g></item>
+    </plurals>
+    <string name="memory_editor_close">Zavřít Editor paměti</string>
+    <string name="memory_editor_searching">Prohledávání paměti…</string>
+    <string name="memory_editor_working">Provádění operace…</string>
+    <string name="memory_editor_search_progress">Prohledáno <xliff:g id="scanned_mib" example="12">%1$d</xliff:g> z <xliff:g id="total_mib" example="64">%2$d</xliff:g> MiB</string>
+    <string name="memory_editor_candidate_moved">Cíl aktualizován</string>
+    <string name="memory_editor_candidate_relocating">Opětovné ověřování</string>
+    <string name="memory_editor_candidate_ambiguous">Nejednoznačné — zápisy pozastaveny</string>
+    <string name="memory_editor_candidate_lost">Ztraceno — zápisy pozastaveny</string>
+    <string name="memory_editor_apply">Použít</string>
+    <string name="memory_editor_min_value">Minimální hodnota</string>
+    <string name="memory_editor_max_value">Maximální hodnota</string>
+    <string name="memory_editor_change_amount">Velikost změny</string>
+    <string name="memory_editor_min_change">Minimální změna</string>
+    <string name="memory_editor_max_change">Maximální změna</string>
+    <string name="memory_editor_unfreeze">Zrušit zmrazení</string>
+    <string name="memory_editor_cancelled">Operace byla zrušena.</string>
+    <string name="memory_editor_resource_limit">Editor paměti dosáhl bezpečnostního limitu. Zkuste přesnější hledání nebo odeberte nepoužívané záložky či zmrazení.</string>
+    <string name="memory_editor_identity_unsafe">Vybranou hodnotu nebo stav hledání se nepodařilo ověřit. Obnovte výsledky nebo znovu otevřete Inspektor a zkuste to znovu.</string>
+    <string name="memory_editor_safety_limit">Pro tuto operaci je vybráno příliš mnoho hodnot. Vyberte jich méně a zkuste to znovu.</string>
+    <string name="memory_editor_invalid_request">Hodnota nebo operace je neplatná.</string>
+    <string name="memory_editor_freeze_paused">Pozastaveno z bezpečnostních důvodů</string>
+    <string name="memory_editor_predicate_between">Mezi</string>
+    <string name="memory_editor_predicate_changed">Změněno</string>
+    <string name="memory_editor_predicate_unchanged">Nezměněno</string>
+    <string name="memory_editor_predicate_increased">Zvýšeno</string>
+    <string name="memory_editor_predicate_decreased">Sníženo</string>
+    <string name="memory_editor_predicate_increased_by">Zvýšeno o</string>
+    <string name="memory_editor_predicate_decreased_by">Sníženo o</string>
+    <string name="memory_editor_predicate_changed_by">Změněno o</string>
+    <string name="memory_editor_predicate_increased_range">Zvýšení v rozsahu</string>
+    <string name="memory_editor_predicate_decreased_range">Snížení v rozsahu</string>
+    <string name="memory_editor_inspector">Inspektor</string>
+    <string name="memory_editor_inspect_memory">Prozkoumat okolní paměť</string>
+    <string name="memory_editor_inspector_loading">Ověřování výsledku a čtení okolní paměti…</string>
+    <string name="memory_editor_inspector_empty">Vyberte výsledek pro zobrazení okolní paměti.</string>
+    <string name="memory_editor_inspector_no_rows">Není k dispozici žádná okolní paměť k prozkoumání.</string>
+    <string name="memory_editor_refresh_snapshot">Obnovit snímek</string>
+    <string name="memory_editor_select_result_value">Vybrat tuto záložku</string>
+    <string name="memory_editor_freeze_after_edit">Zmrazit po použití</string>
+    <string name="memory_editor_freeze_after_edit_help">Udrží tuto hodnotu uzamčenou a uloží ji do záložek v sekci Uložené.</string>
+    <string name="memory_editor_expression_single_hint">Zadejte jednu hodnotu, nebo oddělte hodnoty skupinového hledání středníkem (;).</string>
+    <string name="memory_editor_expression_group_needs_type">Pro skupinové hledání vyberte konkrétní datový typ.</string>
+    <plurals name="memory_editor_expression_group_hint">
+        <item quantity="one">Skupinové hledání · <xliff:g id="count" example="3">%1$d</xliff:g> hodnota · stejný objekt Java</item>
+        <item quantity="few">Skupinové hledání · <xliff:g id="count" example="3">%1$d</xliff:g> hodnoty · stejný objekt Java</item>
+        <item quantity="many">Skupinové hledání · <xliff:g id="count" example="3">%1$d</xliff:g> hodnoty · stejný objekt Java</item>
+        <item quantity="other">Skupinové hledání · <xliff:g id="count" example="3">%1$d</xliff:g> hodnot · stejný objekt Java</item>
+    </plurals>
+    <string name="memory_editor_expression_query_help">Příklady: 500 nebo 500;1000. Skupinové hledání hledá 2–8 hodnot ve stejném objektu Java.</string>
+    <string name="memory_editor_keypad_clear">Vymazat</string>
+    <string name="memory_editor_peek_underlay">Podržením zobrazíte MIDlet pod oknem</string>
+    <string name="memory_editor_peek_underlay_active">Zobrazen MIDlet pod oknem</string>
+    <string name="memory_editor_no_runtime">Žádný aktivní běh MIDletu.</string>
+    <string name="memory_editor_no_search_history">Žádné předchozí hledání k obnovení.</string>
+    <string name="memory_editor_partial_write">Operace zápisu nebyla plně dokončena. Před dalším pokusem zkontrolujte aktuální hodnoty.</string>
+    <!-- Nezávislé počty zápisů: potvrzené, nepotvrzené, přeskočené, neprovedené a nekompatibilní datový typ. -->
+    <string name="memory_editor_write_outcome">Potvrzené zápisy: <xliff:g id="confirmed" example="3">%1$d</xliff:g>. Nepotvrzené: <xliff:g id="unconfirmed" example="0">%2$d</xliff:g>. Přeskočené: <xliff:g id="skipped" example="0">%3$d</xliff:g>. Neprovedené: <xliff:g id="not_attempted" example="0">%4$d</xliff:g>. Přeskočené kvůli typu: <xliff:g id="skipped_by_type" example="0">%5$d</xliff:g>.</string>
+    <!-- %1$s je lokalizovaný popis důvodu; %2$d až %6$d jsou stejné nezávislé počty zápisů. -->
+    <string name="memory_editor_write_failure_outcome"><xliff:g id="reason" example="Write interrupted.">%1$s</xliff:g>\nPotvrzené zápisy: <xliff:g id="confirmed" example="1">%2$d</xliff:g>. Nepotvrzené: <xliff:g id="unconfirmed" example="1">%3$d</xliff:g>. Přeskočené: <xliff:g id="skipped" example="0">%4$d</xliff:g>. Neprovedené: <xliff:g id="not_attempted" example="0">%5$d</xliff:g>. Přeskočené kvůli typu: <xliff:g id="skipped_by_type" example="0">%6$d</xliff:g>.</string>
+    <!-- Počty výsledků před (%1$d) a po (%2$d) dokončeném dalším skenu. -->
+    <string name="memory_editor_next_scan_result">Výsledky dalšího skenu: <xliff:g id="before_count" example="120">%1$d</xliff:g> → <xliff:g id="after_count" example="14">%2$d</xliff:g></string>
+    <string name="memory_editor_type_auto">Automaticky</string>
+    <string name="memory_editor_remove_candidates_title">Odebrat vybrané výsledky?</string>
+    <string name="memory_editor_remove_candidates_description">Odebrat: Odstraní vybrané výsledky ze seznamu hledání. Hodnoty v paměti hry zůstanou beze změny.\n\nVrátit a odebrat: Obnoví také hodnoty před jejich poslední potvrzenou úpravou, ale pouze pokud aktuální hodnoty stále odpovídají hodnotám po této úpravě. Zmrazené hodnoty a výsledky, které nelze bezpečně obnovit, zůstanou v seznamu.</string>
+    <string name="memory_editor_revert_and_remove">Vrátit a odebrat</string>
+    <string name="memory_editor_revert_remove_commit_failed">Hodnoty mohly být obnoveny, ale výsledky se nepodařilo odebrat. Obnovte seznam a zkuste to znovu; hodnoty změněné hrou nebudou přepsány.</string>
+    <string name="memory_editor_revert_remove_outcome">Obnoveno: <xliff:g id="restored" example="2">%1$d</xliff:g>. Odebráno: <xliff:g id="removed" example="2">%2$d</xliff:g>. Konflikty: <xliff:g id="conflicts" example="0">%3$d</xliff:g>. Nepotvrzené: <xliff:g id="unconfirmed" example="0">%4$d</xliff:g>. Neprovedené: <xliff:g id="not_attempted" example="0">%5$d</xliff:g>.</string>
+    <string name="memory_editor_set_all">Nastavit vše</string>
+    <string name="memory_editor_increment_start">Počáteční hodnota</string>
+    <string name="memory_editor_edit_batch_type_notice">Změní se pouze hodnoty se shodným datovým typem.</string>
+    <string name="memory_editor_write_confirmed">Hodnoty potvrzené zpětným čtením paměti: <xliff:g id="count" example="3">%1$d</xliff:g>.</string>
+    <string name="memory_editor_candidate_untraced">Pole #<xliff:g id="array_id" example="42">%1$d</xliff:g>[<xliff:g id="index" example="3">%2$d</xliff:g>] · Zdroj nevysledován</string>
+    <string name="memory_editor_candidate_static"><xliff:g id="field_name" example="Player.coins">%1$s</xliff:g> · <xliff:g id="reference_kind" example="Static reference">%2$s</xliff:g></string>
+    <string name="memory_editor_candidate_instance"><xliff:g id="field_name" example="Player.hp">%1$s</xliff:g> · <xliff:g id="reference_kind" example="Instance reference">%2$s</xliff:g> · cíl #<xliff:g id="target_id" example="1">%3$d</xliff:g></string>
+    <string name="memory_editor_reference_static">Statický odkaz</string>
+    <string name="memory_editor_reference_instance">Odkaz na instanci</string>
+    <string name="memory_editor_path_changed">Cesta odkazu se od skenování změnila.</string>
+    <string name="memory_editor_path_incomplete">Cesta odkazu překračuje limit kontroly.</string>
+    <string name="memory_editor_source_unknown">Zdroj nevysledován</string>
+    <string name="memory_editor_incremental_edit">Krokově</string>
+    <string name="memory_editor_increment_step">Krok</string>
+    <string name="memory_editor_increment_invalid">Použijte jeden celočíselný typ a hodnoty v jeho rozsahu.</string>
+    <!-- Titulek hromadného dialogu již zobrazuje počet vybraných hodnot. -->
+    <string name="memory_editor_increment_preview">Náhled: <xliff:g id="name" example="Example">%1$s</xliff:g></string>
+    <string name="memory_editor_panel_opacity">Neprůhlednost panelu</string>
+    <string name="memory_editor_panel_opacity_help">Upravte průhlednost pozadí, abyste během hledání viděli hodnoty ve hře. Text a ikony zůstanou viditelné.</string>
+    <string name="memory_editor_reconversion_required" tools:ignore="MissingTranslation">Nainstalovaný převod tohoto MIDletu není kompatibilní s Editorem paměti. Zavřete hru a poté ji v aplikaci JL-Mod Plus znovu převeďte nebo přeinstalujte.</string>
+    <string name="memory_saved_tab" tools:ignore="MissingTranslation">Uložené</string>
+    <string name="memory_saved_save" tools:ignore="MissingTranslation">Uložit proměnnou</string>
+    <string name="memory_saved_name" tools:ignore="MissingTranslation">Název</string>
+    <string name="memory_saved_explanation" tools:ignore="MissingTranslation">Uložte tuto ověřenou cestu v paměti pro pozdější relace. Hodnoty se nikdy nezapisují automaticky.</string>
+    <string name="memory_saved_empty" tools:ignore="MissingTranslation">Zatím žádné uložené proměnné. Vyberte výsledek hledání a uložte jej.</string>
+    <string name="memory_saved_not_ready" tools:ignore="MissingTranslation">Nepřipraveno</string>
+    <string name="memory_saved_retry" tools:ignore="MissingTranslation">Zkusit znovu</string>
+    <string name="memory_saved_rename" tools:ignore="MissingTranslation">Přejmenovat</string>
+    <string name="memory_saved_value" tools:ignore="MissingTranslation">Hodnota</string>
+    <string name="memory_saved_delete_confirm" tools:ignore="MissingTranslation">Odebrat tuto uloženou definici? Hodnota ve hře se nezmění.</string>
+    <string name="memory_saved_changed" tools:ignore="MissingTranslation">Změněno</string>
+    <string name="memory_saved_rebound" tools:ignore="MissingTranslation">Cíl aktualizován</string>
+    <string name="memory_saved_import_summary" tools:ignore="MissingTranslation">Uložené: přidáno <xliff:g id="added_count" example="4">%1$d</xliff:g>, již existuje <xliff:g id="existing_count" example="2">%2$d</xliff:g></string>
+    <string name="memory_saved_incompatible" tools:ignore="MissingTranslation">Nekompatibilní</string>
+    <string name="memory_saved_failed" tools:ignore="MissingTranslation">Selhalo</string>
+    <string name="memory_saved_delete_many_confirm" tools:ignore="MissingTranslation">Odebrat uložené definice (<xliff:g id="count" example="3">%1$d</xliff:g>)? Hodnoty ve hře se nezmění.</string>
+    <string name="memory_recipes_title" tools:ignore="MissingTranslation">Rychlá akce</string>
+    <string name="memory_recipes_simple_from_saved" tools:ignore="MissingTranslation">Cíl: <xliff:g id="bookmark_name" example="Coins">%1$s</xliff:g></string>
+    <string name="memory_recipes_preview" tools:ignore="MissingTranslation">Náhled cílů</string>
+    <string name="memory_recipes_stop_freeze" tools:ignore="MissingTranslation">Zastavit zmrazování hodnot</string>
+    <string name="memory_recipes_freeze" tools:ignore="MissingTranslation">Ponechat zmrazené po dobu běhu hry</string>
+    <string name="memory_recipes_run" tools:ignore="MissingTranslation">Spustit</string>
+    <string name="memory_recipes_active_freezes" tools:ignore="MissingTranslation">Skripty zmrazující hodnoty</string>
+    <string name="memory_recipes_target_unavailable" tools:ignore="MissingTranslation">Cíl záložky není k dispozici. Před spuštěním jej obnovte nebo znovu propojte.</string>
+    <string name="memory_recipes_preview_values" tools:ignore="MissingTranslation">Aktuální hodnoty: <xliff:g id="name" example="Example">%1$s</xliff:g></string>
+    <string name="memory_scripts_title" tools:ignore="MissingTranslation">Skripty</string>
+    <string name="memory_scripts_active" tools:ignore="MissingTranslation">Aktivní</string>
+    <string name="memory_scripts_inputs" tools:ignore="MissingTranslation">Vstupy</string>
+    <string name="memory_scripts_create_from_bookmarks" tools:ignore="MissingTranslation">Vytvořit skript</string>
+    <string name="memory_scripts_create_failed" tools:ignore="MissingTranslation">Nový skript se nepodařilo založit.</string>
+    <string name="memory_scripts_draft_in_progress" tools:ignore="MissingTranslation">Nejprve dokončete nebo zahoďte aktuální koncept skriptu.</string>
+    <string name="memory_builder_open_saved" tools:ignore="MissingTranslation">Otevřít Uložené</string>
+    <string name="memory_builder_add_description" tools:ignore="MissingTranslation">Přidat popis</string>
+    <string name="memory_builder_find_values" tools:ignore="MissingTranslation">Najít hodnoty</string>
+    <string name="memory_scripts_description" tools:ignore="MissingTranslation">Popis</string>
+    <string name="memory_scripts_new" tools:ignore="MissingTranslation">Nový skript</string>
+    <string name="memory_scripts_back" tools:ignore="MissingTranslation">Zpět</string>
+    <string name="memory_scripts_edit" tools:ignore="MissingTranslation">Upravit</string>
+    <string name="memory_scripts_save" tools:ignore="MissingTranslation">Uložit</string>
+    <string name="memory_scripts_saved" tools:ignore="MissingTranslation">Skript byl uložen</string>
+    <string name="memory_scripts_deleted" tools:ignore="MissingTranslation">Skript byl smazán</string>
+    <string name="memory_scripts_save_failed" tools:ignore="MissingTranslation">Skript se nepodařilo uložit.</string>
+    <string name="memory_scripts_editor_hint" tools:ignore="MissingTranslation">Zadejte nebo vložte skript JSON s podporovanými operacemi s pamětí. Uložením se skript nespustí.</string>
+    <string name="memory_scripts_paste_hint" tools:ignore="MissingTranslation">Vložit JSON skriptu</string>
+    <string name="memory_scripts_paste" tools:ignore="MissingTranslation">Vložit</string>
+    <string name="memory_scripts_clipboard_invalid" tools:ignore="MissingTranslation">Schránka je prázdná nebo dokument přesahuje 64 KiB</string>
+    <string name="memory_scripts_invalid" tools:ignore="MissingTranslation">Neplatný formát skriptu</string>
+    <string name="memory_scripts_freeze_active" tools:ignore="MissingTranslation">Tento skript zmrazuje hodnoty</string>
+    <string name="memory_scripts_delete" tools:ignore="MissingTranslation">Smazat</string>
+    <string name="memory_scripts_delete_confirm" tools:ignore="MissingTranslation">Smazat „<xliff:g id="name" example="Example">%1$s</xliff:g>“? Případné aktivní zmrazení tohoto skriptu se zastaví.</string>
+    <string name="memory_scripts_empty" tools:ignore="MissingTranslation">Žádné uložené skripty</string>
+    <string name="memory_scripts_unsaved_title" tools:ignore="MissingTranslation">Zahodit neuložený skript?</string>
+    <string name="memory_scripts_unsaved_message" tools:ignore="MissingTranslation">Změny skriptu nebyly uloženy.</string>
+    <string name="memory_scripts_discard" tools:ignore="MissingTranslation">Zahodit</string>
+    <string name="memory_scripts_current_title" tools:ignore="MissingTranslation">Poslední načtení</string>
+    <string name="memory_scripts_refresh" tools:ignore="MissingTranslation">Obnovit</string>
+    <string name="memory_scripts_reading" tools:ignore="MissingTranslation">Načítání aktuálních hodnot…</string>
+    <string name="memory_scripts_refresh_hint" tools:ignore="MissingTranslation">Klepnutím na Obnovit načtete aktuální hodnoty z běžící hry.</string>
+    <string name="memory_scripts_mode_toggle" tools:ignore="MissingTranslation">Zmrazit hodnoty</string>
+    <string name="memory_scripts_mode_form" tools:ignore="MissingTranslation">Editor hodnot</string>
+    <string name="memory_scripts_mode_once" tools:ignore="MissingTranslation">Rychlé akce</string>
+    <string name="memory_scripts_mode_legacy" tools:ignore="MissingTranslation">Pokročilý skript</string>
+    <string name="memory_scripts_edit_values" tools:ignore="MissingTranslation">Upravit hodnoty</string>
+    <string name="memory_scripts_apply" tools:ignore="MissingTranslation">Použít změny</string>
+    <string name="memory_scripts_refresh_required" tools:ignore="MissingTranslation">Před použitím změn obnovte a ověřte aktuální hodnoty.</string>
+    <string name="memory_scripts_inconsistent" tools:ignore="MissingTranslation">Nekonzistentní kopie: <xliff:g id="name" example="Example">%1$s</xliff:g></string>
+    <string name="memory_editor_minimize" tools:ignore="MissingTranslation">Minimalizovat Editor paměti</string>
+    <string name="memory_scripts_choose_type" tools:ignore="MissingTranslation">Nový skript</string>
+    <string name="memory_scripts_choose_hint" tools:ignore="MissingTranslation">Vyberte, jak má tento skript fungovat.</string>
+    <string name="memory_builder_json_editor" tools:ignore="MissingTranslation">Editor JSON</string>
+    <string name="memory_builder_freeze_hint" tools:ignore="MissingTranslation">Po dobu zapnutí udržuje vybrané hodnoty uzamčené. Vypnutím zmrazení se původní hodnoty neobnoví.</string>
+    <string name="memory_builder_form_hint" tools:ignore="MissingTranslation">Vytvořte formulář, který před použitím úprav načte aktuální hodnoty.</string>
+    <string name="memory_builder_actions_hint" tools:ignore="MissingTranslation">Použije změny jednou při každém stisknutí Spustit. Přičtení a odečtení vychází z aktuálních hodnot, včetně změn z předchozích spuštění.</string>
+    <string name="memory_builder_name" tools:ignore="MissingTranslation">Název skriptu</string>
+    <string name="memory_builder_frozen_values" tools:ignore="MissingTranslation">Zmrazené hodnoty</string>
+    <string name="memory_builder_fields" tools:ignore="MissingTranslation">Pole</string>
+    <string name="memory_builder_actions" tools:ignore="MissingTranslation">Akce</string>
+    <string name="memory_builder_add_bookmarks" tools:ignore="MissingTranslation">Přidat ze záložek</string>
+    <string name="memory_builder_empty" tools:ignore="MissingTranslation">Přidejte alespoň jednu ověřenou záložku.</string>
+    <string name="memory_builder_field_label" tools:ignore="MissingTranslation">Popisek pole</string>
+    <string name="memory_builder_keep_at" tools:ignore="MissingTranslation">Udržovat na</string>
+    <string name="memory_builder_amount" tools:ignore="MissingTranslation">Hodnota / množství</string>
+    <string name="memory_builder_set" tools:ignore="MissingTranslation">Nastavit</string>
+    <string name="memory_builder_add" tools:ignore="MissingTranslation">Přičíst</string>
+    <string name="memory_builder_subtract" tools:ignore="MissingTranslation">Odečíst</string>
+    <string name="memory_builder_view_json" tools:ignore="MissingTranslation">Zobrazit JSON</string>
+    <string name="memory_builder_edit_json" tools:ignore="MissingTranslation">Upravit JSON</string>
+    <string name="memory_builder_search_bookmarks" tools:ignore="MissingTranslation">Hledat v záložkách</string>
+    <string name="memory_builder_no_bookmarks" tools:ignore="MissingTranslation">Žádné odpovídající ověřené záložky. Přidejte hodnotu do záložek v Hledání nebo ji znovu propojte v sekci Uložené.</string>
+    <string name="memory_builder_needs_relink" tools:ignore="MissingTranslation">Vyžaduje opětovné propojení</string>
+    <string name="memory_builder_add_selected" tools:ignore="MissingTranslation">Přidat vybrané</string>
+    <string name="memory_builder_min" tools:ignore="MissingTranslation">Minimum (volitelné)</string>
+    <string name="memory_builder_max" tools:ignore="MissingTranslation">Maximum (volitelné)</string>
+    <string name="memory_builder_add_target" tools:ignore="MissingTranslation">Přidat cíl</string>
+    <string name="memory_builder_freeze_short" tools:ignore="MissingTranslation">Udržet vybrané hodnoty neměnné</string>
+    <string name="memory_builder_form_short" tools:ignore="MissingTranslation">Upravit více hodnot na jednom místě</string>
+    <string name="memory_builder_actions_short" tools:ignore="MissingTranslation">Spouštět jednorázové akce Nastavit, Přičíst nebo Odečíst</string>
+    <string name="memory_editor_refine_scan" tools:ignore="MissingTranslation">Upřesnit</string>
+    <string name="memory_scripts_saved_count" tools:ignore="MissingTranslation">Uloženo: <xliff:g id="count" example="3">%1$d</xliff:g></string>
+    <string name="memory_scripts_empty_hint" tools:ignore="MissingTranslation">Vytvořte skript pro úpravu nebo zmrazení hodnot během hraní.</string>
+    <string name="memory_builder_limits" tools:ignore="MissingTranslation">Limity (volitelné)</string>
+    <string name="memory_editor_selection_limit">Vyberte nejvýše %1$d hodnot.</string>
+    <string name="memory_saved_storage_unavailable">K uloženým položkám nelze získat přístup.</string>
+    <string name="memory_bookmark_renamed">Záložka přejmenována</string>
+    <string name="memory_editor_memory_unavailable">Paměť MIDletu není dostupná.</string>
+    <string name="memory_bookmark_added">Záložka přidána</string>
+    <string name="memory_bookmark_relinked">Záložka znovu propojena</string>
+    <string name="memory_bookmarks_removed">Odebráno z uložených</string>
+    <string name="memory_freeze_enabled">Zmrazení zapnuto</string>
+    <string name="memory_freeze_unavailable">Zmrazení se nepodařilo zapnout.</string>
+    <string name="memory_list_session_only_failed">Položku se nepodařilo ponechat jen pro aktuální relaci.</string>
+    <string name="memory_list_kept_unlinked">Uloženo pro příští spuštění, ale nepodařilo se propojit s aktuální relací.</string>
+    <string name="memory_list_removal_unavailable">Bez připojení nelze položky odebrat. Zkuste to znovu.</string>
+    <string name="memory_list_watch_removed">Sledování relace odebráno</string>
+    <string name="memory_list_bookmark_removal_failed">Záložky se nepodařilo odebrat: %1$s</string>
+    <string name="memory_list_watch_removal_failed">Sledování relace se nepodařilo odebrat: %1$s</string>
+    <string name="memory_list_removal_unknown_error">Neznámá chyba</string>
+    <string name="memory_editor_edit_freeze_failed">Hodnota byla aktualizována, ale zmrazení se nepodařilo spustit. Před dalším pokusem zkontrolujte aktuální hodnotu.</string>
+    <string name="memory_scripts_freeze_inactive">Tento skript již nezmrazuje hodnoty.</string>
+    <string name="memory_bookmark_change_incomplete">Změnu záložky se nepodařilo dokončit. Před dalším pokusem zkontrolujte sekci Uložené.</string>
+    <string name="memory_editor_value_updated">Hodnota aktualizována.</string>
+    <string name="memory_editor_value_updated_frozen">Hodnota aktualizována a zmrazení zapnuto.</string>
+    <string name="memory_scripts_delete_failed">Skript se nepodařilo smazat. Před dalším pokusem zkontrolujte stav jeho zmrazení.</string>
+    <string name="memory_scripts_check_input">Skript se nepodařilo připravit. Zkontrolujte jeho hodnoty a záložky.</string>
+    <string name="memory_scripts_read_failed">Aktuální hodnoty se nepodařilo načíst. Obnovte je a zkuste to znovu.</string>
+    <string name="memory_technical_details">Technické podrobnosti</string>
+    <string name="memory_scripts_resource_limit">Skript dosáhl bezpečnostního limitu. Omezte počet cílů nebo ukončete nepoužívaná zmrazení.</string>
+    <string name="memory_scripts_target_changed">Cíl skriptu se nepodařilo ověřit. Obnovte hodnoty a zkontrolujte záložky.</string>
+    <string name="memory_scripts_operation_unavailable">Tato operace skriptu není pro aktuální cíl podporována.</string>
+    <string name="memory_scripts_invalid_input">Zkontrolujte vstupy skriptu. Zadejte platné hodnoty v povolených rozsazích.</string>
+    <string name="memory_scripts_value_range">Hodnota je mimo podporovaný rozsah. Zkontrolujte skript a jeho hodnoty.</string>
+    <string name="memory_scripts_inconsistent_values">Kopie stejné hodnoty se neshodují. Před dalším pokusem zkontrolujte stav hry.</string>
+    <string name="memory_scripts_wrong_midlet">Tento skript je určen pro jiný MIDlet. Otevřete správný MIDlet nebo vyberte jiný skript.</string>
+    <string name="memory_scripts_target_not_ready">Cíl skriptu není připraven. Vraťte se na příslušnou obrazovku hry a zkuste to znovu.</string>
+</resources>

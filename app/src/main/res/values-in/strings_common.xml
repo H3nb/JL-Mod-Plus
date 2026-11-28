@@ -1,0 +1,47 @@
+<?xml version="1.0" encoding="utf-8"?>
+<!-- Shared UI actions, generic labels, dialogs, and About screen. -->
+<resources xmlns:xliff="urn:oasis:names:tc:xliff:document:1.2">
+    <string name="about">Tentang</string>
+    <string name="about_message">Jalankan aplikasi dan game klasik, kelola MIDlet di pustaka, serta sesuaikan kontrol, tampilan, audio, dan performa. JL-Mod Plus adalah aplikasi gratis dengan kode sumber terbuka.</string>
+    <string name="about_subtitle">Emulator Java ME untuk Android</string>
+    <string name="about_compatibility">Kompatibilitas bergantung pada MIDlet, perangkat, dan API Java ME yang didukung. Beberapa aplikasi mungkin berjalan berbeda dari saat digunakan di perangkat aslinya.</string>
+    <string name="about_lineage_title">Asal-usul proyek</string>
+    <string name="about_build_title">Informasi build</string>
+    <string name="about_version_label">Versi</string>
+    <string name="about_build_label">Build</string>
+    <string name="about_revision_label">Revisi kode sumber</string>
+    <string name="about_links_title">Proyek dan lisensi</string>
+    <string name="about_github_link_copied">Browser tidak ditemukan. Tautan GitHub disalin ke papan klip.</string>
+    <string name="about_github_browser_unavailable">Tidak ada browser yang dapat membuka GitHub.</string>
+    <string name="about_lineage">JL-Mod Plus adalah fork independen dari JL-Mod karya woesss (Yury Kharchenko). JL-Mod berbasis J2ME Loader karya Nikita Shakarun, yang berakar dari J2meLoader karya NaikSoftware.</string>
+    <string name="about_evolution">JL-Mod Plus melanjutkan pengembangan tersebut dengan antarmuka modern, pengelolaan MIDlet yang lebih lengkap, fitur baru, serta dukungan untuk versi Android yang lebih baru.</string>
+    <string name="action_back">Kembali</string>
+    <string name="action_settings">Setelan</string>
+    <string name="CANCEL_CMD">Batal</string>
+    <string name="change">Ubah</string>
+    <string name="choose">Pilih</string>
+    <string name="close">Tutup</string>
+    <string name="cmd_menu">Menu</string>
+    <string name="CONFIRMATION_REQUIRED">Konfirmasi diperlukan</string>
+    <string name="create">Buat</string>
+    <string name="default_label"><xliff:g id="name" example="Example">%1$s</xliff:g> (bawaan)</string>
+    <string name="dismiss">Tutup</string>
+    <string name="edit">Edit</string>
+    <string name="error">Kesalahan</string>
+    <string name="error_name">Masukkan nama.</string>
+    <string name="exit">Keluar</string>
+    <string name="help">Bantuan</string>
+    <string name="install">Instal</string>
+    <string name="licenses">Lisensi</string>
+    <string name="licenses_unavailable">Detail lisensi tidak tersedia.</string>
+    <string name="loading_info">Memuat informasi…</string>
+    <string name="more">Lainnya</string>
+    <string name="not_saved_exists">Sudah ada</string>
+    <string name="reset">Reset</string>
+    <string name="retry">Coba lagi</string>
+    <string name="save">Simpan</string>
+    <string name="saved"><xliff:g id="name" example="Example">%1$s</xliff:g> tersimpan</string>
+    <string name="START_CMD">Mulai</string>
+    <string name="warning">Peringatan</string>
+    <string name="removed"><xliff:g id="name" example="Example">%1$s</xliff:g> dihapus</string>
+</resources>

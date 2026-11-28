@@ -1,0 +1,356 @@
+<?xml version="1.0" encoding="utf-8"?>
+<!-- Per-MIDlet configuration, reusable profiles, camera, controller calibration, permissions, and system properties. -->
+<resources xmlns:tools="http://schemas.android.com/tools" xmlns:xliff="urn:oasis:names:tc:xliff:document:1.2">
+    <!-- %1$s is an optional quoted storage-volume name with a trailing space, or empty. -->
+    <!-- %1$s is a raw storage-volume description. -->
+    <string name="config_missing_app_storage_named">Қолданба табылмады.\n«<xliff:g id="storage_name" example="SD card">%1$s</xliff:g>» сақтау құрылғысының қолжетімділігін тексеріңіз немесе таңбашаны қайта жасаңыз.</string>
+    <string name="config_missing_app_storage_generic">Қолданба табылмады.\nСақтау құрылғысының қолжетімділігін тексеріңіз немесе таңбашаны қайта жасаңыз.</string>
+    <string name="midlet_name"><b>Атауы: </b></string>
+    <string name="midlet_size"><b>Өлшемі: </b></string>
+    <string name="midlet_vendor"><b>Өндіруші: </b></string>
+    <string name="midlet_version"><b>Нұсқа: </b></string>
+    <string name="config_destination_graphics">Экран</string>
+    <string name="config_destination_rendering" tools:ignore="MissingTranslation">Графика</string>
+    <string name="config_destination_media">Медиа</string>
+    <string name="config_camera_title">Камера</string>
+    <string name="config_camera_default_title">Әдепкі камера</string>
+    <string name="config_camera_rear">Артқы</string>
+    <string name="config_camera_front">Алдыңғы</string>
+    <string name="config_camera_resolution_title">Әдепкі ажыратымдылық</string>
+    <string name="config_camera_resolution_auto">Авто</string>
+    <string name="config_camera_resolution_portrait">480×640 — Тік</string>
+    <string name="config_camera_resolution_landscape">640×480 — Көлденең</string>
+    <string name="config_destination_controls">Басқару</string>
+    <string name="config_gamepad_test">Контроллерді тексеру</string>
+    <string name="config_gamepad_calibrate">Контроллерді калибрлеу</string>
+    <string name="config_gamepad_calibrate_summary">Қосылған контроллердің бейтарап күйін және стиктер мен триггерлердің ауқымын өлшейді.</string>
+    <string name="config_gamepad_stick_directions">Цифрлық бағыттар</string>
+    <string name="config_gamepad_stick_unassigned">Тағайындалмаған</string>
+    <string name="config_gamepad_stick_pointer">Меңзер көзі</string>
+    <string name="config_gamepad_opaque_summary">Бұл конфигурацияда қолдау көрсетілмейтін пішімдегі контроллер деректері бар. Олар өзгеріссіз сақталады және мұнда өңделмейді.</string>
+    <string name="config_gamepad_unsupported_summary">Бұл контроллер конфигурациясына қолдау көрсетілмейді. Ол өзгеріссіз сақталады және мұнда өңделмейді.</string>
+    <string name="config_gamepad_keypad_title">Виртуалды пернетақта</string>
+    <string name="config_gamepad_calibration_next">Келесі</string>
+    <string name="config_gamepad_mapping_help_title">Контроллер тағайындау анықтамасы</string>
+    <string name="config_gamepad_directions_four">4 бағыт</string>
+    <string name="config_gamepad_directions_eight">8 бағыт</string>
+    <string name="config_gamepad_pointer_off">Өшірулі</string>
+    <string name="config_gamepad_pointer_cursor">Пропорционалды курсор</string>
+    <string name="config_gamepad_pointer_joystick">Сенсорлық джойстик</string>
+    <!-- This is the same controller-identity fingerprint shown in diagnostics. -->
+    <string name="config_gamepad_calibration_profile">Контроллер қолтаңбасы: <xliff:g id="profile_name" example="Action Games">%1$s</xliff:g></string>
+    <string name="config_gamepad_calibration_phase_neutral">Бейтарап күй күтілуде</string>
+    <string name="config_gamepad_calibration_phase_stick_range">Стик ауқымы</string>
+    <string name="config_gamepad_calibration_phase_trigger_range">Триггер ауқымы</string>
+    <string name="config_gamepad_calibration_phase_review">Сақтауға дайын</string>
+    <string name="config_gamepad_calibration_phase_committed">Сақталды</string>
+    <string name="config_gamepad_calibration_phase_cancelled">Бас тартылды</string>
+    <string name="config_gamepad_calibration_waiting_controller">Қолдау көрсетілетін аналогтық стигі немесе триггері бар контроллерді қосыңыз. Бастау үшін стикті жылжытыңыз немесе триггерді басыңыз. Жаңа калибрлеуді сақтамасаңыз немесе оны бастапқы күйіне қайтармасаңыз, ағымдағы калибрлеу өзгермейді.</string>
+    <string name="config_gamepad_calibration_no_analog_ranges">Бұл контроллер қолдау көрсетілетін аналогтық стик немесе триггер ауқымдарын бермейді.</string>
+    <string name="config_gamepad_calibration_start">Бейтарап таймер аяқталғанша барлық стикті ортада, ал триггерлерді бос күйде ұстаңыз.</string>
+    <string name="config_gamepad_calibration_save_failed">Калибрлеу сақталмады. Қайталап көрмес бұрын ағымдағы параметрлерді тексеріңіз.</string>
+    <string name="config_gamepad_calibration_no_supported_ranges">Қолдау көрсетілетін аналогтық ауқымдар табылмады.</string>
+    <string name="config_gamepad_calibration_rejected">Калибрлеу қабылданбады: <xliff:g id="name" example="Example">%1$s</xliff:g></string>
+    <string name="config_gamepad_calibration_neutral_instructions">Бейтарап таймер аяқталғанша анықталған барлық стикті ортада, ал триггерлерді бос күйде ұстаңыз.</string>
+    <string name="config_gamepad_calibration_stick_instructions">Анықталған әр стикті барлық бағытта толық ауқыммен жылжытып, «Келесі» түймесін басыңыз.</string>
+    <string name="config_gamepad_calibration_trigger_instructions">Анықталған әр триггерді босатып, соңына дейін басыңыз, содан кейін «Келесі» түймесін түртіңіз.</string>
+    <string name="config_gamepad_calibration_review_instructions">Осы контроллердің калибрлеуін ауыстыру үшін сақтаңыз.</string>
+    <string name="config_gamepad_calibration_saved">Калибрлеу сақталды.</string>
+    <string name="config_gamepad_calibration_cancelled">Калибрлеуден бас тартылды.</string>
+    <string name="config_gamepad_calibration_waiting_samples">Калибрлеу контроллер үлгілерін күтуде.</string>
+    <string name="config_gamepad_diagnosis_header">Контроллер диагностикасы</string>
+    <string name="config_gamepad_diagnosis_mode">Күйі: <xliff:g id="status" example="enabled">%1$s</xliff:g> · Көзі: <xliff:g id="source" example="controller">%2$s</xliff:g></string>
+    <string name="config_gamepad_diagnosis_notice">Ескертпе: <xliff:g id="name" example="Example">%1$s</xliff:g></string>
+    <string name="config_gamepad_diagnosis_analog_settings">Аналогтық параметрлер:</string>
+    <string name="config_gamepad_diagnosis_left_stick">Сол стик</string>
+    <string name="config_gamepad_diagnosis_right_stick">Оң стик</string>
+    <string name="config_gamepad_diagnosis_triggers">Триггерлер</string>
+    <string name="config_gamepad_diagnosis_pointer">Меңзер режимі</string>
+    <string name="config_gamepad_status_enabled">қосулы</string>
+    <string name="config_gamepad_status_disabled">өшірулі</string>
+    <string name="config_gamepad_diagnosis_source_default">әдепкі</string>
+    <string name="config_gamepad_diagnosis_source_controller">контроллер</string>
+    <string name="config_gamepad_diagnosis_source_explicit">нақты</string>
+    <string name="config_gamepad_diagnosis_device"><xliff:g id="device_name" example="Xbox Controller">%1$s</xliff:g> (#<xliff:g id="device_id" example="1">%2$d</xliff:g>)</string>
+    <string name="config_gamepad_calibration_issue_no_channels">қолдау көрсетілетін арналар жоқ</string>
+    <string name="config_gamepad_calibration_issue_invalid_constraints">жарамсыз калибрлеу шектеулері</string>
+    <string name="config_gamepad_calibration_issue_non_finite">өлшеу мәні ақырлы сан емес</string>
+    <string name="config_gamepad_calibration_issue_insufficient_samples">үлгілер жеткіліксіз</string>
+    <string name="config_gamepad_calibration_issue_invalid_range">жарамсыз ауқым</string>
+    <string name="config_gamepad_calibration_issue_rest_outside_range">тыныштық мәні ауқымнан тыс</string>
+    <string name="config_gamepad_calibration_issue_rest_too_noisy">тыныштық күйі жеткілікті тұрақты емес</string>
+    <string name="config_gamepad_calibration_phase_unknown">Күйі қолжетімсіз</string>
+    <string name="config_gamepad_diagnosis_capabilities">Қосылған контроллер мүмкіндіктері:</string>
+    <string name="config_gamepad_diagnosis_descriptor">Дескриптор: <xliff:g id="name" example="Example">%1$s</xliff:g></string>
+    <!-- %1$s is a controller-identity fingerprint derived from its descriptor and capabilities. -->
+    <!-- It is not a handwritten signature or a cryptographic signing operation. -->
+    <string name="config_gamepad_diagnosis_signature">Қолтаңба: <xliff:g id="name" example="Example">%1$s</xliff:g></string>
+    <string name="config_gamepad_diagnosis_axis">Ось <xliff:g id="axis_index" example="0">%1$d</xliff:g> [<xliff:g id="min_value" example="-1.0">%2$s</xliff:g>, <xliff:g id="max_value" example="1.0">%3$s</xliff:g>] flat=<xliff:g id="flat" example="0.05">%4$s</xliff:g> fuzz=<xliff:g id="fuzz" example="0.01">%5$s</xliff:g></string>
+    <string name="config_gamepad_diagnosis_no_controller">(қосылған контроллер жоқ)</string>
+    <string name="config_gamepad_diagnosis_samples_not_sent">Енгізу үлгілері MIDlet-ке әдейі жіберілмейді.</string>
+    <string name="config_destination_system">Жүйе</string>
+    <string name="config_screen_behavior" tools:ignore="MissingTranslation">Экран әрекеті</string>
+    <string name="config_screen_size">Экран өлшемі</string>
+    <string name="config_select_screen_size">Экран өлшемін таңдау</string>
+    <string name="config_current_screen_size">Ағымдағы өлшем: <xliff:g id="name" example="Example">%1$s</xliff:g></string>
+    <string name="config_custom_resolution">Теңшелген ажыратымдылық</string>
+    <string name="profile_custom">Теңшелген</string>
+    <string name="select_dialog_title">MIDlet таңдау</string>
+    <string name="SIZE_PRESETS">Қаріп өлшемі үлгілері</string>
+    <string name="config_color_picker_title">Түс таңдау</string>
+    <string name="config_color_picker_hex">Hex түсі</string>
+    <string name="config_color_picker_hint">Түс өрістерін сүйреңіз немесе алты таңбалы RGB мәнін енгізіңіз.</string>
+    <string name="config_color_picker_invalid">Дәл алты он алтылық цифр енгізіңіз.</string>
+    <string name="config_color_picker_saturation_value">Қанықтық және жарықтық</string>
+    <string name="config_color_picker_hue">Реңк</string>
+    <string name="config_decrease_value">Мәнді азайту</string>
+    <string name="config_increase_value">Мәнді арттыру</string>
+    <string name="midlet_failure_recovery_title">MIDlet күтпеген жерден тоқтады</string>
+    <string name="midlet_failure_recovery_message">MIDlet күтпеген жерден тоқтады. Диагностика ақпараты жергілікті түрде сақталды. JL-Mod Plus пайдалануды жалғастыра аласыз.</string>
+    <string name="midlet_failure_recovery_message_named">«<xliff:g id="name" example="Example">%1$s</xliff:g>» күтпеген жерден тоқтады. Диагностика ақпараты жергілікті түрде сақталды. JL-Mod Plus пайдалануды жалғастыра аласыз.</string>
+    <plurals name="config_system_properties_value">
+        <item quantity="one"><xliff:g id="count" example="3">%1$d</xliff:g> сипат</item>
+        <item quantity="other"><xliff:g id="count" example="3">%1$d</xliff:g> сипат</item>
+    </plurals>
+    <string name="config_search_suggestions" tools:ignore="MissingTranslation">Ұсынылған параметрлер</string>
+    <string name="config_search_clear" tools:ignore="MissingTranslation">Іздеуді тазалау</string>
+    <string name="config_search_title" tools:ignore="MissingTranslation">Параметрлерді іздеу</string>
+    <string name="config_search_hint" tools:ignore="MissingTranslation">Параметрді табыңыз, мыс., MMPX немесе бағдар</string>
+    <string name="config_search_no_results" tools:ignore="MissingTranslation">Сәйкес параметрлер жоқ</string>
+    <string name="config_search_upscaling_requires_resolution" tools:ignore="MissingTranslation">Растрлық масштабтауды баптау үшін «Рендеринг ажыратымдылығы» бөлімінде «Авто» немесе 2×–10× таңдаңыз.</string>
+    <string name="config_search_requires_manual_scale" tools:ignore="MissingTranslation">Масштабты реттеу үшін «Масштабтау режимі» бөлімінде «Қолмен» опциясын таңдаңыз.</string>
+    <string name="config_search_requires_custom_background" tools:ignore="MissingTranslation">Фон түсін өңдеу үшін «Фон режимі» бөлімінде «Теңшелген» опциясын таңдаңыз.</string>
+    <string name="config_search_requires_gles" tools:ignore="MissingTranslation">Шейдер әсерлерін баптау үшін «Графика режимі» бөлімінде «Аппараттық үдету (OpenGL ES)» опциясын таңдаңыз.</string>
+    <string name="config_search_requires_renderer_mode" tools:ignore="MissingTranslation">Асинхронды экран жаңартуларын баптау үшін «Графика режимі» бөлімінде «Бағдарламалық» немесе «Аппараттық үдету (Surface)» опциясын таңдаңыз.</string>
+    <string name="config_font_page_title" tools:ignore="MissingTranslation">Қаріп параметрлері</string>
+    <string name="config_display_more" tools:ignore="MissingTranslation">Мәтін және өнімділік</string>
+    <string name="config_destination_home" tools:ignore="MissingTranslation">Басты бет</string>
+    <string name="config_overview_profile_draft" tools:ignore="MissingTranslation">Профиль жобасы</string>
+    <string name="config_overview_profile_draft_summary" tools:ignore="MissingTranslation">Осы қайта пайдаланылатын профильді өңдеп, өзгерістерді құралдар жолағынан сақтаңыз.</string>
+    <string name="config_overview_quick_access" tools:ignore="MissingTranslation">Жылдам қолжетімділік</string>
+    <string name="config_system_properties_editor_label">Сипаттар</string>
+    <string name="config_overview_enabled" tools:ignore="MissingTranslation">Қосулы</string>
+    <string name="config_overview_disabled" tools:ignore="MissingTranslation">Өшірулі</string>
+    <string name="config_overview_media_summary" tools:ignore="MissingTranslation">Дыбыс банкі және камера</string>
+    <string name="config_overview_hint" tools:ignore="MissingTranslation">Ойынды теңшеу үшін санатты таңдаңыз. Әр параметрдің өз орны бар; бұл таңбашалар сізді тікелей сол жерге апарады.</string>
+    <string name="config_destination_general">Жалпы</string>
+    <string name="config_basic_display">MIDlet экраны</string>
+    <string name="config_display_appearance">Экран көрінісі</string>
+    <string name="config_display_rendering">Рендеринг</string>
+    <string name="config_image_quality_section" tools:ignore="MissingTranslation">Кескін сапасы</string>
+    <string name="config_frame_rate_section" tools:ignore="MissingTranslation">Кадр жиілігі</string>
+    <string name="config_fps_position_title" tools:ignore="MissingTranslation">FPS орны</string>
+    <string name="config_display_text">Мәтін және қаріптер</string>
+    <string name="config_input_mapping_section" tools:ignore="MissingTranslation">Енгізу және тағайындау</string>
+    <string name="config_controls_appearance_section" tools:ignore="MissingTranslation">Басқару көрінісі</string>
+    <string name="config_controls_virtual_keyboard">Виртуалды басқару</string>
+    <string name="config_controls_virtual_keyboard_colors">Виртуалды басқару түстері</string>
+    <string name="config_virtual_controls_color_preview">Түсті алдын ала көру</string>
+    <string name="config_virtual_controls_preview_normal">Басылмаған</string>
+    <string name="config_virtual_controls_preview_pressed">Басылған</string>
+    <string name="config_controls_maintenance">Орналасу</string>
+    <string name="config_controls_skin_help">Пернетақта түймелерінің, D-pad және аналогтық стиктің көрінісін теңшелген суреттермен өзгертеді.</string>
+    <string name="config_controls_color_button_normal">Басылмаған түйме</string>
+    <string name="config_controls_color_button_pressed">Басылған түйме</string>
+    <string name="config_controls_color_label_normal">Басылмаған күйдегі белгі</string>
+    <string name="config_controls_color_label_pressed">Басылған белгі</string>
+    <string name="config_controls_color_outline_short">Жиек</string>
+    <string name="config_controls_disabled_hint">Виртуалды басқару қазір өшірулі. Оны осында әлі де теңшей аласыз.</string>
+    <string name="config_controls_opacity_help" formatted="false">Виртуалды басқару элементтерінің мөлдірсіздігін реттейді. 0% мәнінде элементтер мөлдір болады, ал 100% мәнінде қосымша мөлдірлік қолданылмайды.</string>
+    <string name="config_controls_opaque_outside">MIDlet экранынан тыс басқаруды мөлдірліксіз көрсету</string>
+    <string name="config_controls_opaque_outside_help">Бұл параметр қосылса, MIDlet экранынан толық тыс орналасқан басқару элементтері қосымша мөлдірліксіз көрсетіледі. Экранмен қабаттасатын элементтер таңдалған мөлдірсіздікті қолданады.</string>
+    <string name="config_controls_connect_controller">Калибрлеу үшін контроллерді қосыңыз</string>
+    <string name="config_controls_color_skin_notice">Толық түйме безендіруі әдепкі түйме түстерін, пішінін және жиегін ауыстыруы мүмкін.</string>
+    <string name="config_current_value">Ағымдағы мән</string>
+    <string name="config_maintenance">Қалпына келтіру және деректер</string>
+    <string name="config_midlet_actions" tools:ignore="MissingTranslation">MIDlet әрекеттері</string>
+    <string name="config_profile_maintenance" tools:ignore="MissingTranslation">Профиль әрекеттері</string>
+    <string name="config_reset_profile_settings" tools:ignore="MissingTranslation">Профиль жобасын қалпына келтіру</string>
+    <string name="config_reset_profile_settings_summary" tools:ignore="MissingTranslation">Осы жобаның параметрлері мен виртуалды басқаруын әдепкі қалпына келтіру.</string>
+    <string name="config_system_compatibility" tools:ignore="MissingTranslation">Эмуляция үйлесімділігі</string>
+    <string name="config_reset_all_settings">MIDlet конфигурациясын қалпына келтіру</string>
+    <string name="config_reset_all_settings_summary">Бұл MIDlet-тің деректерін жоймай, параметрлері мен виртуалды басқаруын әдепкі қалпына келтіру.</string>
+    <string name="config_delete_app_data">MIDlet деректерін жою</string>
+    <string name="config_delete_app_data_summary">Бұл MIDlet-тің деректерін, соның ішінде сақтауларын біржола жою. Параметрлері сақталады.</string>
+    <string name="config_message_reset_settings">MIDlet конфигурациясы мен виртуалды басқаруды әдепкі қалпына келтіру керек пе? Сақталған деректер өзгермейді. Байланыстырылған профильді бақылау тоқтатылады.</string>
+    <string name="config_message_reset_profile_settings">Осы профильдің параметрлері мен виртуалды басқаруын әдепкі қалпына келтіру керек пе? Сақтамас бұрын өңдей немесе бас тарта аласыз.</string>
+    <string name="config_message_delete_app_data">Осы MIDlet жасаған барлық сақтау мен деректі біржола жою керек пе? MIDlet параметрлері жойылмайды.</string>
+    <string name="config_lock_custom_resolution_ratio">Арақатынасты бекіту</string>
+    <string name="config_swap_screen_size">Ені мен биіктігін ауыстыру</string>
+    <string name="profile_builtin_settings">JL-Mod әдепкілері</string>
+    <string name="profile_default_badge_short">Жаңа MIDlet-тер үшін әдепкі</string>
+    <string name="profile_template_summary">Сақталған MIDlet параметрлері.</string>
+    <string name="profile_name_exists">Мұндай атаулы профиль бұрыннан бар.</string>
+    <string name="profile_delete_template_message">«<xliff:g id="profile_name" example="Action Games">%1$s</xliff:g>» профилін жою керек пе? Оны пайдаланатын MIDlet-тер ағымдағы параметрлерін сақтайды, бірақ болашақ жаңартуларды алмайды.</string>
+    <string name="profile_template_operation_failed">Профиль әрекеті орындалмады.</string>
+    <string name="config_help_screen_size">MIDlet пайдаланатын виртуалды Java ME экран ажыратымдылығын орнатады.</string>
+    <string name="config_help_orientation">MIDlet жұмыс істеп тұрғанда экран бағдарын таңдайды.</string>
+    <string name="config_help_scale_type">Ойынның экранға қалай сыятынын таңдаңыз. Теңшелген масштаб орнату үшін «Қолмен» опциясын таңдаңыз.</string>
+    <string name="config_help_scale_ratio" formatted="false">Көрсету өлшемін 1%-дан 1000%-ға дейін реттейді. 100% кезінде ойын түпнұсқа өлшемін пайдаланады; үлкенірек мәндер экраннан асып кетуі мүмкін.</string>
+    <string name="config_help_lock_custom_resolution_ratio">Теңшелген ажыратымдылықты өңдеу кезінде арақатынасты сақтайды.</string>
+    <string name="config_help_virtual_keyboard">Осы MIDlet үшін экрандық басқару элементтерін көрсетеді.</string>
+    <string name="config_help_touch_input">MIDlet-ке сенсорлық экраннан меңзер енгізуін қабылдауға мүмкіндік береді.</string>
+    <string name="config_help_background">MIDlet экранының айналасындағы бос орынды толтырады.</string>
+    <string name="config_background_mode">Фон режимі</string>
+    <string name="config_background_custom">Теңшелген</string>
+    <string name="config_background_theme">Тақырып</string>
+    <string name="config_background_immersive">Иммерсивті</string>
+    <string name="config_background_theme_help">MIDlet экранының айналасында JL-Mod Plus тақырып түсін пайдаланады.</string>
+    <string name="config_background_immersive_help">Бос орынды MIDlet экранынан алынған түстермен толтырады.</string>
+    <string name="config_background_dynamic">Динамикалық түс</string>
+    <string name="config_background_dynamic_help">MIDlet экранына бірқалыпты бейімделетін бірыңғай түсті пайдаланады.</string>
+    <string name="config_background_custom_color">Фон түсі</string>
+    <string name="config_help_background_custom_color">MIDlet экранының айналасындағы бос орын түсін орнатады.</string>
+    <string name="config_help_skin">MIDlet экранының айналасында қосымша сурет немесе жақтау көрсетеді.</string>
+    <string name="config_help_screen_gravity">Бос орын қалғанда MIDlet экранын орналастырады.</string>
+    <string name="config_help_screen_padding">MIDlet экраны мен көрсету аймағының шеті арасына пиксельмен шегініс қосады.</string>
+    <string name="config_help_filter">Масштабтау кезінде MIDlet экранын тегістеу үшін сызықтық сүзгілеуді пайдаланады.</string>
+    <string name="config_warning_filter_shader">Сызықтық сүзгілеу экран шейдері өңдемес бұрын кірісті тегістейді және шығыс айқындығын төмендетуі мүмкін.</string>
+    <string name="config_help_immediate">MIDlet оқиғаларын кезекке қоймай, дереу өңдейді. Жауап жылдамдығын арттыруы мүмкін, бірақ кейбір MIDlet-терді тұрақсыз етуі ықтимал.</string>
+    <string name="config_help_graphics_mode">MIDlet экранын рендерлеу жолын таңдайды. Аппараттық үдету өнімділікті арттыруы мүмкін, бірақ үйлесімділік құрылғыға байланысты.</string>
+    <string name="config_help_shader">Көрсетілмес бұрын MIDlet кадрына шейдер қолданады.</string>
+    <string name="config_help_shader_tuning">Қолжетімді басқару элементтері таңдалған шейдерге байланысты.</string>
+    <string name="config_help_parallel_redraw">Кадр көрсетуін асинхронды түрде жоспарлайды. Бұл кейбір құрылғыларда өнімділікті арттыруы мүмкін.</string>
+    <string name="config_help_force_fullscreen">MIDlet іске қосылғанда пәрмендер жолағын жасырады. Ойын кезінде MIDlet оны қайта көрсетуі мүмкін.</string>
+    <string name="config_help_fps_limit">1× эмуляция жылдамдығындағы FPS шегін орнатады. Нақты шек эмуляция жылдамдығына ілеседі; 0 (Максимум) экранның ең жоғары жаңарту жиілігін пайдаланады.</string>
+    <string name="config_timing_mode_full_guest">Эмуляция уақыты</string>
+    <string name="config_timing_mode_real_wall">Жүйе уақыты</string>
+    <string name="config_help_emulation_speed">Осы сеанс үшін MIDlet-тің қолдау көрсетілетін таймерлері мен кідірістерін реттейді. Эмуляция уақыты таңдалса, күн мен уақыт та таңдалған жылдамдыққа сәйкес өзгереді. Мультимедиа ойнату мен Android интерфейсі қалыпты жылдамдықта қалады.</string>
+    <string name="config_help_timing_mode">MIDlet эмуляция уақытын немесе жүйе уақытын пайдаланатынын таңдайды. Салыстырмалы кідірістер эмуляция жылдамдығымен масштабтала береді.</string>
+    <string name="config_help_timing_unavailable">Бұл MIDlet орнатылымы үшін уақыт параметрлері қолжетімсіз. Оларды қосу үшін MIDlet-ті қайта орнатыңыз немесе қайта түрлендіріңіз.</string>
+    <string name="config_help_generic_color">Осы визуалды элементтің түсін орнатады.</string>
+    <string name="config_help_encoding">microedition.encoding ретінде хабарланатын таңбалар кодтауын таңдайды.</string>
+    <string name="config_edit_system_properties">Жүйелік сипаттарды өңдеу</string>
+    <string name="config_help_system_properties">MIDlet-ке хабарланатын кеңейтілген Java ME сипаттарын орнатады.</string>
+    <string name="config_help_system_properties_long">Әр жолға бір сипатты «атау: мән» түрінде енгізіңіз. Қате мәндер үйлесімділікке әсер етуі мүмкін.</string>
+    <string name="config_system_properties_info">Көпшілік MIDlet үшін мұнда өзгеріс қажет емес.</string>
+    <string name="config_font_sizes">Қаріп өлшемдері</string>
+    <string name="config_help_font_sizes">MIDlet үшін кіші, орташа және үлкен Java ME қаріп өлшемдерін орнатады.</string>
+    <string name="config_help_font_sizes_long">Java ME қаріп өлшемдерін пиксельмен немесе Android қаріп масштабы қосулы болса, масштабталған бірліктермен орнатады. Мәтін теңгерімді болуы үшін оларды бірге өзгертіңіз.</string>
+    <string name="config_font_sizes_value">Кіші <xliff:g id="small_size" example="12">%1$s</xliff:g> · орташа <xliff:g id="medium_size" example="16">%2$s</xliff:g> · үлкен <xliff:g id="large_size" example="20">%3$s</xliff:g></string>
+    <string name="config_help_font_presets">Кең таралған Java ME экран ажыратымдылықтарына сәйкес қаріп өлшемдерін қолданады.</string>
+    <string name="config_help_font_dimensions">Java ME қаріп өлшемдеріне Android қаріп масштабын қолданады.</string>
+    <string name="config_help_font_aa">Рендерленген мәтіннің шеттерін тегістейді.</string>
+    <string name="config_help_key_layout">MIDlet-ке хабарланатын перне кодтарының схемасын таңдайды.</string>
+    <string name="config_help_key_mapping">Физикалық Android пернелері мен түймелерін Java ME пернетақта әрекеттеріне тағайындайды.</string>
+    <string name="config_help_vk_button_shape">Пернетақта түймелерінің әдепкі пішінін орнатады. D-pad пен аналогтық стиктің өз пішіндері бар.</string>
+    <string name="config_help_vk_feedback">Параметрлерде діріл қосулы болса, виртуалды басқару элементін басқанда дірілдейді.</string>
+    <string name="config_help_vk_hide_delay">Басқару элементтері MIDlet экранын жапқанда осы кідірістен кейін жасырады. 0 мәні автоматты жасыруды өшіреді.</string>
+    <string name="config_help_reset_layout">Басқа MIDlet параметрлерін өзгертпей, виртуалды басқару орналасуын қалпына келтіреді.</string>
+    <string name="config_help_skip_resume">Алғашқы сәтті startApp() шақыруынан кейін MIDlet жалғастырылғанда кейінгі шақыруларды өткізіп жібереді. Тек жалғастыруда істен шығатын MIDlet-тер үшін қолданыңыз.</string>
+    <string name="config_help_soundbank">MIDI синтезіне арналған дыбыс банкін таңдайды. Алдын ала жазылған дыбысқа әсер етпейді.</string>
+    <string name="profile_create_title">Профиль жасау</string>
+    <string name="profile_rename_title">Профиль атын өзгерту</string>
+    <string name="presets">Профильдер</string>
+    <string name="preset_use">Профильді қолдану</string>
+    <string name="preset_save_as">Профиль ретінде сақтау</string>
+    <string name="preset_custom_configuration">Теңшелген конфигурация</string>
+    <string name="preset_based_on_modified">Осы MIDlet-тің ағымдағы конфигурациясы «<xliff:g id="profile_name" example="Action Games">%1$s</xliff:g>» профилінен өзгеше.</string>
+    <string name="preset_builtin">JL-Mod әдепкілері</string>
+    <string name="preset_builtin_summary">Кірістірілген MIDlet параметрлері және виртуалды басқару.</string>
+    <string name="preset_picker_title">Профильді қолдану</string>
+    <string name="preset_manage">Профильдерді басқару</string>
+    <string name="profile_more_actions">«<xliff:g id="profile_name" example="Action Games">%1$s</xliff:g>» үшін басқа әрекеттер</string>
+    <string name="profile_create_summary">Басқа MIDlet-тер үшін қайта пайдаланылатын баптауды сақтаңыз.</string>
+    <string name="preset_application_settings">MIDlet параметрлері</string>
+    <string name="preset_includes_keyboard_layout">Виртуалды басқару орналасуы қамтылған.</string>
+    <string name="preset_virtual_keyboard_on">Виртуалды басқару қосулы</string>
+    <string name="preset_virtual_keyboard_off">Виртуалды басқару өшірулі</string>
+    <string name="preset_apply">Қолдану</string>
+    <string name="preset_apply_failed_summary">Бұл профиль қолданылмады. Көзін тексеріп, қайталап көріңіз.</string>
+    <string name="preset_choose_parts">Нені қолдану керегін таңдаңыз</string>
+    <string name="preset_name">Атауы</string>
+    <string name="preset_save_help">Осы MIDlet-тің параметрлерін және қолжетімді болса, виртуалды басқару орналасуын профиль ретінде сақтаңыз. Бұл MIDlet профильді пайдаланып, оның болашақ жаңартуларын алады.</string>
+    <string name="preset_update">«<xliff:g id="profile_name" example="Action Games">%1$s</xliff:g>» жаңарту</string>
+    <string name="preset_update_title">«<xliff:g id="profile_name" example="Action Games">%1$s</xliff:g>» жаңарту керек пе?</string>
+    <string name="preset_update_summary">«<xliff:g id="profile_name" example="Action Games">%1$s</xliff:g>» профилін осы MIDlet-тің ағымдағы параметрлерімен және қолжетімді болса, виртуалды басқару орналасуымен ауыстыру керек пе? Осы профильді пайдаланатын басқа MIDlet-тер өзгерістерді келесі іске қосылғанда алады.</string>
+    <string name="preset_update_confirm">Жаңарту</string>
+    <string name="preset_saved_unlinked_warning">Профиль сақталды, бірақ бұл MIDlet оның болашақ жаңартуларын алмайды.</string>
+    <string name="profile_default_fallback_notice">«<xliff:g id="profile_name" example="Action Games">%1$s</xliff:g>» әдепкі профилі пайдаланылмады. Ол жоқ, толық емес немесе оқылмайтын болуы мүмкін. Енді жаңа MIDlet-тер үшін «JL-Mod әдепкілері» әдепкі болады.</string>
+    <string name="preset_discard_changes_title">Өзгерістерді болдырмау керек пе?</string>
+    <string name="preset_discard_changes_summary">Бұл профиль жобасы сақталмаған.</string>
+    <string name="preset_continue_editing">Өңдеуді жалғастыру</string>
+    <string name="preset_discard_changes">Болдырмау</string>
+    <string name="preset_name_exists">Мұндай атаулы профиль бұрыннан бар.</string>
+    <string name="preset_invalid_name">Жарамды профиль атауын енгізіңіз.</string>
+    <string name="preset_manager_default_section">Жаңа MIDlet-тер үшін әдепкі</string>
+    <string name="preset_manager_presets_section">Менің профильдерім</string>
+    <string name="preset_manager_keyboard_section">Сақталған виртуалды басқару орналасулары</string>
+    <string name="preset_default_policy_summary">Жаңа MIDlet орнатылғанда қолданылады.</string>
+    <string name="preset_keyboard_layout_unavailable">Виртуалды басқару орналасуы қолжетімсіз.</string>
+    <string name="edit_preset">Профильді өңдеу</string>
+    <string name="preset_edit_title">Профильді өңдеу: <xliff:g id="profile_name" example="Action Games">%1$s</xliff:g></string>
+    <string name="preset_unavailable_section">Қолжетімсіз</string>
+    <string name="preset_unavailable_summary">Бұл профиль жүктелмеді. Атын өзгертіңіз немесе жойыңыз.</string>
+    <string name="preset_change_default">Өзгерту</string>
+    <string name="preset_default_picker_title">Жаңа MIDlet-тер үшін әдепкі</string>
+    <string name="profile_follows_updates">Профильдің болашақ жаңартуларын бақылайды.</string>
+    <string name="profile_apply_whole">Бүкіл профиль</string>
+    <string name="profile_apply_whole_follows">Параметрлер мен орналасуды ауыстыру; болашақ жаңартуларды бақылау.</string>
+    <string name="profile_apply_whole_without_layout">Параметрлерді ауыстыру, жергілікті орналасуды алып тастау және жаңартуларды бақылау.</string>
+    <string name="profile_apply_settings_only">Тек MIDlet параметрлері</string>
+    <string name="profile_apply_settings_keeps_layout">Осы MIDlet орналасуын сақтау; теңшелген конфигурацияны қолдану.</string>
+    <string name="profile_apply_layout_only">Тек виртуалды басқару орналасуы</string>
+    <string name="profile_apply_layout_keeps_settings">Осы MIDlet параметрлерін сақтау; теңшелген конфигурацияны қолдану.</string>
+    <string name="config_analog_stick">Аналогтық стик</string>
+    <string name="config_analog_stick_summary">Негізгі аналогтық стик үшін «Өшірулі», «4 бағыт», «8 бағыт» немесе «Сандық пернетақта» опциясын таңдаңыз. Контроллер түймелері перне тағайындауларын пайдаланады.</string>
+    <string name="config_analog_stick_off">Өшірулі</string>
+    <string name="config_controller_help_body_compact">Контроллер түймелері пернетақта мен телефон пернелері сияқты перне тағайындауларын пайдаланады. Аналогтық стик MIDlet-ке тек бағыт енгізулерін жібереді. Android «Артқа» түймесі қалыпты жұмыс істейді; M пернесіне тағайындалған кез келген физикалық түйме іске қосулы MIDlet мәзірін ашады.</string>
+    <string name="config_show_fps_title" tools:ignore="MissingTranslation">FPS көрсету</string>
+    <string name="config_show_fps_help" tools:ignore="MissingTranslation">Ойын кезінде кадр жиілігін көрсетеді.</string>
+    <string name="config_search_requires_fps" tools:ignore="MissingTranslation">Орнын өзгерту үшін «FPS көрсету» параметрін қосыңыз.</string>
+    <string name="midlet_running_notification_title">MIDlet іске қосулы</string>
+    <string name="midlet_running_notification_text">«<xliff:g id="name" example="Example">%1$s</xliff:g>» жұмыс істеп тұр.</string>
+    <string name="midlet_running_notification_channel">MIDlet орындау ортасы</string>
+    <string name="config_gamepad_directions_numeric_v2">Сандық пернетақта</string>
+    <string name="midlet_file_permission_title">Сақтау орнына қол жеткізу</string>
+    <string name="midlet_file_permission_read">Бұл MIDlet файлдарды оқығысы келеді.</string>
+    <string name="midlet_file_permission_write">Бұл MIDlet файлдарды жасағысы, өзгерткісі немесе жойғысы келеді.</string>
+    <string name="midlet_file_permission_allow_once">Бір рет рұқсат беру</string>
+    <string name="midlet_file_permission_allow_session">MIDlet жұмыс істеп тұрғанда рұқсат беру</string>
+    <string name="midlet_file_permission_allow_always">Әрқашан рұқсат беру</string>
+    <string name="midlet_file_permission_deny">Әрқашан тыйым салу</string>
+    <string name="midlet_permissions_settings_title">Сақтау орнына қол жеткізу рұқсаттары</string>
+    <string name="midlet_permissions_read">Файлдарды оқу</string>
+    <string name="midlet_permissions_write">Файлдарды өзгерту</string>
+    <string name="midlet_permissions_ask">Сұрау</string>
+    <string name="midlet_permissions_allow">Әрқашан рұқсат беру</string>
+    <string name="midlet_permissions_deny">Тыйым салу</string>
+    <string name="midlet_permissions_save_failed">Сақтау параметрлері сақталмады.</string>
+    <string name="config_avoid_camera_cutout_title">Камера ойығын айналып өту</string>
+    <string name="config_avoid_camera_cutout_summary">MIDlet экранын және виртуалды басқаруды камера немесе экран ойығынан тыс ұстау.</string>
+    <string name="midlet_permissions_write_summary">Файлдарды жасау мен жоюды қамтиды.</string>
+    <string name="midlet_legacy_import_title">Ескі Siemens сақтаулары</string>
+    <string name="midlet_legacy_import_action">Ескі сақтау файлын таңдау</string>
+    <string name="midlet_legacy_import_summary">Ескі сақтау файлын осы MIDlet-тің жеке Siemens сақтау орнына көшіріңіз. Алдымен MIDlet-ті тоқтатыңыз.</string>
+    <string name="midlet_legacy_import_success">Файл осы MIDlet-тің жеке сақтау орнына көшірілді.</string>
+    <string name="midlet_legacy_import_failed">Импорт сәтсіз аяқталды. MIDlet-ті тоқтатып, мақсатты файлдың бұрыннан жоқ екеніне көз жеткізіңіз.</string>
+    <string name="midlet_storage_mode_title">Сақтау режимі</string>
+    <string name="midlet_storage_mode_shared">Виртуалды</string>
+    <string name="midlet_storage_mode_android">Android</string>
+    <string name="midlet_storage_mode_shared_summary">Жұмыс қалтасындағы ортақ қалталарды пайдалану.</string>
+    <string name="midlet_storage_mode_android_summary">Android рұқсаттары шегінде Android жүйесінің ортақ сақтау орнын пайдалану. MIDlet файлдарына қол жеткізу рұқсаттары виртуалды режимнен бөлек реттеледі.</string>
+    <string name="config_system_properties_reset" tools:ignore="MissingTranslation">Әдепкіге қайтару</string>
+    <string name="config_system_properties_reset_title" tools:ignore="MissingTranslation">Жүйелік сипаттарды қалпына келтіру керек пе?</string>
+    <string name="config_system_properties_reset_message" tools:ignore="MissingTranslation">Өңдегіш мазмұнын ағымдағы JL-Mod Plus әдепкі мәндерімен ауыстыру керек пе? Басқа параметрлер өзгермейді. Қалпына келтіруді қолдану үшін сақтаңыз.</string>
+    <string name="config_asset_add">+ Файлдан қосу</string>
+    <string name="config_asset_copy_hint">Жұмыс қалтасына көшіріледі; түпнұсқа файл өз орнында қалады.</string>
+    <string name="config_asset_name">Файл атауы</string>
+    <string name="config_asset_delete_confirmation">«<xliff:g id="name" example="Example">%1$s</xliff:g>» файлын жұмыс қалтасынан жою керек пе? Бұл файлды басқа MIDlet-тер де пайдалануы мүмкін. Басқа жердегі көшірмелерге әсер етпейді.</string>
+    <string name="config_asset_imported">Көшірілді және таңдалды: <xliff:g id="name" example="Example">%1$s</xliff:g></string>
+    <string name="config_asset_reused">Бар файл таңдалды: <xliff:g id="name" example="Example">%1$s</xliff:g></string>
+    <string name="config_asset_renamed">Атауы «<xliff:g id="name" example="Example">%1$s</xliff:g>» болып өзгертілді</string>
+    <string name="config_asset_deleted">Жойылды: <xliff:g id="name" example="Example">%1$s</xliff:g></string>
+    <string name="config_asset_invalid">Қолдау көрсетілмейтін немесе жарамсыз файл.</string>
+    <string name="config_asset_operation_failed">Файл әрекеті аяқталмады.</string>
+    <string name="config_save_failed" tools:ignore="MissingTranslation">Параметрлер сақталмады. Өзгерістеріңіз әлі ашық — қайталап көріңіз.</string>
+    <string name="config_asset_busy">Алдымен ағымдағы файл әрекетін аяқтаңыз.</string>
+    <string name="config_quick_settings" tools:ignore="MissingTranslation">Жылдам параметрлер</string>
+    <string name="config_all_settings" tools:ignore="MissingTranslation">Барлық параметрлер</string>
+    <string name="profile_local_changes_pending" tools:ignore="MissingTranslation">Профильге сақталмаған жергілікті өзгерістер</string>
+    <string name="profile_local_configuration_summary" tools:ignore="MissingTranslation">Тек осы MIDlet параметрлері</string>
+    <string name="profile_not_following" tools:ignore="MissingTranslation">«<xliff:g id="profile_name" example="Action Games">%1$s</xliff:g>» негізінде · Жаңартулар бақыланбайды</string>
+    <string name="profile_stop_following" tools:ignore="MissingTranslation">Профильді бақылауды тоқтату</string>
+    <string name="profile_follow_again" tools:ignore="MissingTranslation">Профильді қайта бақылау</string>
+    <string name="profile_follow_again_summary" tools:ignore="MissingTranslation">Осы MIDlet-тің жергілікті параметрлері мен виртуалды басқаруын соңғы «<xliff:g id="profile_name" example="Action Games">%1$s</xliff:g>» профилімен ауыстырып, оның болашақ жаңартуларын бақылау керек пе?</string>
+</resources>

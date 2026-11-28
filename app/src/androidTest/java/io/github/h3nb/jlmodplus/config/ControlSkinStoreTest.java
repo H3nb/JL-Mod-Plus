@@ -54,12 +54,23 @@ public class ControlSkinStoreTest {
         try {
             ControlSkinStore.create(workdir, "retro nokia");
             fail("case-insensitive duplicate");
-        } catch (java.io.IOException expected) { }
+        } catch (ControlSkinStore.NameConflictException expected) { }
         try {
             ControlSkinStore.create(workdir, "../elsewhere");
             fail("directory traversal");
-        } catch (java.io.IOException expected) { }
+        } catch (ControlSkinStore.InvalidNameException expected) { }
         assertEquals(1, ControlSkinStore.list(workdir).size());
+    }
+
+    @Test public void invalidImageHasTypedValidationFailure() throws Exception {
+        File invalid = temp.newFile("invalid.png");
+        try (FileOutputStream out = new FileOutputStream(invalid)) {
+            out.write("not a PNG".getBytes(StandardCharsets.UTF_8));
+        }
+        try {
+            ControlSkinStore.validateImage(invalid, ".png");
+            fail("invalid image");
+        } catch (ControlSkinStore.ImageValidationException expected) { }
     }
 
     @Test public void invalidModesAndKeysCannotBePublished() throws Exception {

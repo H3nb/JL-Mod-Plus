@@ -1,0 +1,47 @@
+<?xml version="1.0" encoding="utf-8"?>
+<!-- Shared UI actions, generic labels, dialogs, and About screen. -->
+<resources xmlns:xliff="urn:oasis:names:tc:xliff:document:1.2">
+    <string name="about">Meer oor</string>
+    <string name="about_message">Laat loop klassieke programme en speletjies, organiseer MIDlets in jou biblioteek, en pas kontroles, skerm, oudio en werkverrigting aan. JL-Mod Plus is gratis en oopbron.</string>
+    <string name="about_subtitle">Java ME-emulator vir Android</string>
+    <string name="about_compatibility">Versoenbaarheid hang af van die MIDlet, toestel en gesteunde Java ME-API’s. Sommige programme kan anders werk as op die toestelle waarvoor hulle oorspronklik bedoel was.</string>
+    <string name="about_lineage_title">Oorsprong van die projek</string>
+    <string name="about_build_title">Bou-inligting</string>
+    <string name="about_version_label">Weergawe</string>
+    <string name="about_build_label">Bou</string>
+    <string name="about_revision_label">Bronhersiening</string>
+    <string name="about_links_title">Projek en lisensies</string>
+    <string name="about_github_link_copied">Geen blaaier gevind nie. GitHub-skakel is na die knipbord gekopieer.</string>
+    <string name="about_github_browser_unavailable">Geen blaaier gevind om GitHub oop te maak nie.</string>
+    <string name="about_lineage">JL-Mod Plus is ’n onafhanklike vertakking van JL-Mod deur woesss (Yury Kharchenko). JL-Mod is gebaseer op J2ME Loader deur Nikita Shakarun, wat terugstrek na NaikSoftware se J2meLoader.</string>
+    <string name="about_evolution">JL-Mod Plus bou voort op daardie grondslag met ’n moderne koppelvlak, ’n kragtiger MIDlet-biblioteek, nuwe kenmerke en ondersteuning vir nuwer Android-weergawes.</string>
+    <string name="action_back">Terug</string>
+    <string name="action_settings">Instellings</string>
+    <string name="CANCEL_CMD">Kanselleer</string>
+    <string name="change">Verander</string>
+    <string name="choose">Kies</string>
+    <string name="close">Maak toe</string>
+    <string name="cmd_menu">Kieslys</string>
+    <string name="CONFIRMATION_REQUIRED">Bevestiging vereis</string>
+    <string name="create">Skep</string>
+    <string name="default_label"><xliff:g id="name" example="Example">%1$s</xliff:g> (verstek)</string>
+    <string name="dismiss">Maak toe</string>
+    <string name="edit">Redigeer</string>
+    <string name="error">Fout</string>
+    <string name="error_name">Voer ’n naam in.</string>
+    <string name="exit">Sluit af</string>
+    <string name="help">Hulp</string>
+    <string name="install">Installeer</string>
+    <string name="licenses">Lisensies</string>
+    <string name="licenses_unavailable">Lisensiebesonderhede is nie beskikbaar nie.</string>
+    <string name="loading_info">Laai tans inligting…</string>
+    <string name="more">Meer</string>
+    <string name="not_saved_exists">Bestaan reeds</string>
+    <string name="reset">Stel terug</string>
+    <string name="retry">Probeer weer</string>
+    <string name="save">Stoor</string>
+    <string name="saved"><xliff:g id="name" example="Example">%1$s</xliff:g> gestoor</string>
+    <string name="START_CMD">Begin</string>
+    <string name="warning">Waarskuwing</string>
+    <string name="removed"><xliff:g id="name" example="Example">%1$s</xliff:g> verwyder</string>
+</resources>
