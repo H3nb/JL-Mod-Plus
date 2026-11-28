@@ -215,14 +215,16 @@ public final class ControlSkinStore {
         return found;
     }
 
-    private static File availableFolder(File workdir, String name) throws IOException {
+    private static File availableFolder(File workdir, String name, @Nullable File source) throws IOException {
         String safe = safeName(name);
         File base = directory(workdir);
         if (!base.isDirectory() && !base.mkdirs()) throw new IOException("Cannot create skin directory");
         File[] existing = base.listFiles();
         if (existing == null) throw new IOException("Cannot list sets");
         for (File file : existing) {
-            if (sameSetName(file.getName(), safe)) throw new NameConflictException();
+            if (!file.equals(source) && sameSetName(file.getName(), safe)) {
+                throw new NameConflictException();
+            }
         }
         File target = new File(base, safe);
         checkedFolder(workdir, target);
@@ -230,7 +232,7 @@ public final class ControlSkinStore {
     }
 
     public static synchronized SetInfo create(File workdir, String name) throws IOException {
-        File folder = availableFolder(workdir, name);
+        File folder = availableFolder(workdir, name, null);
         if (!folder.mkdir()) throw new IOException("Cannot create set");
         JSONObject json = new JSONObject();
         try {
@@ -247,7 +249,7 @@ public final class ControlSkinStore {
     public static synchronized SetInfo rename(File workdir, String setId, String newName) throws IOException {
         SetInfo set = required(workdir, setId);
         if (set.name.equals(safeName(newName))) return set;
-        File destination = availableFolder(workdir, newName);
+        File destination = availableFolder(workdir, newName, set.folder);
         atomicRename(set.folder, destination);
         return new SetInfo(setId, destination);
     }

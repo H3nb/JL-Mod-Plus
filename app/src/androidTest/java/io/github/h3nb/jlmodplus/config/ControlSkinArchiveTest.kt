@@ -78,6 +78,42 @@ class ControlSkinArchiveTest {
         assertEquals("தமிழ்", renamed.name)
     }
 
+    @Test fun renameEquivalentSpellingsPreservesIdentityArtworkAndOtherSets() {
+        val workdir = temporary.newFolder("equivalent-rename")
+        val source = ControlSkinStore.create(workdir, "Cafe\u0301")
+        val artwork = png(Color.RED)
+        ControlSkinStore.importImage(workdir, source.id, "fire", false, artwork.inputStream(), ".png")
+        ControlSkinStore.setMode(workdir, source.id, "fire", "full")
+
+        val composed = ControlSkinStore.rename(workdir, source.id, "Café")
+        assertEquals(source.id, composed.id)
+        assertEquals("Café", composed.name)
+        val renamed = ControlSkinStore.rename(workdir, source.id, "CAFÉ")
+        assertEquals(source.id, renamed.id)
+        assertEquals("CAFÉ", renamed.name)
+        assertEquals(renamed.folder, ControlSkinStore.findReadonly(workdir, source.id)!!.folder)
+        assertArrayEquals(artwork, File(renamed.folder, "key_fire.png").readBytes())
+        assertEquals("full", ControlSkinStore.mode(renamed.folder, "fire"))
+        assertEquals(1, ControlSkinStore.list(workdir).size)
+
+        val other = ControlSkinStore.create(workdir, "Ångstrom")
+        val otherArtwork = png(Color.BLUE)
+        ControlSkinStore.importImage(workdir, other.id, "fire", false, otherArtwork.inputStream(), ".png")
+        try {
+            ControlSkinStore.rename(workdir, source.id, "Ångstrom")
+            fail("A canonically equivalent name owned by another set must be rejected")
+        } catch (_: ControlSkinStore.NameConflictException) { }
+        try {
+            ControlSkinStore.rename(workdir, source.id, "ångstrom")
+            fail("A case-insensitive name owned by another set must be rejected")
+        } catch (_: ControlSkinStore.NameConflictException) { }
+        assertEquals("CAFÉ", ControlSkinStore.findReadonly(workdir, source.id)!!.name)
+        assertEquals("Ångstrom", ControlSkinStore.findReadonly(workdir, other.id)!!.name)
+        assertArrayEquals(artwork, File(renamed.folder, "key_fire.png").readBytes())
+        assertArrayEquals(otherArtwork, File(other.folder, "key_fire.png").readBytes())
+        assertEquals(2, ControlSkinStore.list(workdir).size)
+    }
+
     @Test fun longSupplementaryNamesKeepValidCodePointsWhenImportAddsSuffix() {
         val source = temporary.newFolder("long-source")
         val destination = temporary.newFolder("long-destination")
