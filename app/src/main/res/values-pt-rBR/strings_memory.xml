@@ -173,10 +173,10 @@
     <string name="memory_recipes_title" tools:ignore="MissingTranslation">Ação rápida</string>
     <string name="memory_recipes_simple_from_saved" tools:ignore="MissingTranslation">Destino: <xliff:g id="bookmark_name" example="Coins">%1$s</xliff:g></string>
     <string name="memory_recipes_preview" tools:ignore="MissingTranslation">Visualizar destinos</string>
-    <string name="memory_recipes_stop_freeze" tools:ignore="MissingTranslation">Parar congelamento do script</string>
+    <string name="memory_recipes_stop_freeze" tools:ignore="MissingTranslation">Parar de congelar valores</string>
     <string name="memory_recipes_freeze" tools:ignore="MissingTranslation">Manter congelado enquanto o jogo estiver em execução</string>
     <string name="memory_recipes_run" tools:ignore="MissingTranslation">Executar</string>
-    <string name="memory_recipes_active_freezes" tools:ignore="MissingTranslation">Congelamentos de script ativos</string>
+    <string name="memory_recipes_active_freezes" tools:ignore="MissingTranslation">Scripts que congelam valores</string>
     <string name="memory_recipes_target_unavailable" tools:ignore="MissingTranslation">O destino do marcador está indisponível. Atualize ou revincule-o antes de executar.</string>
     <string name="memory_recipes_preview_values" tools:ignore="MissingTranslation">Valores atuais: <xliff:g id="name" example="Example">%1$s</xliff:g></string>
     <string name="memory_scripts_title" tools:ignore="MissingTranslation">Scripts</string>
@@ -201,7 +201,7 @@
     <string name="memory_scripts_paste" tools:ignore="MissingTranslation">Colar</string>
     <string name="memory_scripts_clipboard_invalid" tools:ignore="MissingTranslation">A área de transferência está vazia ou o documento excede 64 KiB</string>
     <string name="memory_scripts_invalid" tools:ignore="MissingTranslation">Formato de script inválido</string>
-    <string name="memory_scripts_freeze_active" tools:ignore="MissingTranslation">Congelamento ativo para este script</string>
+    <string name="memory_scripts_freeze_active" tools:ignore="MissingTranslation">Este script está congelando valores</string>
     <string name="memory_scripts_delete" tools:ignore="MissingTranslation">Excluir</string>
     <string name="memory_scripts_delete_confirm" tools:ignore="MissingTranslation">Excluir <xliff:g id="name" example="Example">%1$s</xliff:g>? Qualquer congelamento ativo para este script será interrompido.</string>
     <string name="memory_scripts_empty" tools:ignore="MissingTranslation">Nenhum script salvo</string>
@@ -248,7 +248,7 @@
     <string name="memory_builder_min" tools:ignore="MissingTranslation">Mínimo (opcional)</string>
     <string name="memory_builder_max" tools:ignore="MissingTranslation">Máximo (opcional)</string>
     <string name="memory_builder_add_target" tools:ignore="MissingTranslation">Adicionar destino</string>
-    <string name="memory_builder_freeze_short" tools:ignore="MissingTranslation">Manter valores selecionados em quantidades fixas</string>
+    <string name="memory_builder_freeze_short" tools:ignore="MissingTranslation">Manter os valores selecionados constantes</string>
     <string name="memory_builder_form_short" tools:ignore="MissingTranslation">Ajustar vários valores em um só lugar</string>
     <string name="memory_builder_actions_short" tools:ignore="MissingTranslation">Executar ações únicas de Definir, Adicionar ou Subtrair</string>
     <string name="memory_editor_refine_scan" tools:ignore="MissingTranslation">Refinar</string>
@@ -272,7 +272,7 @@
     <string name="memory_list_watch_removal_failed">Não foi possível remover o monitoramento da sessão: %1$s</string>
     <string name="memory_list_removal_unknown_error">Erro desconhecido</string>
     <string name="memory_editor_edit_freeze_failed">Valor atualizado, mas não foi possível iniciar o congelamento. Verifique o valor atual antes de tentar novamente.</string>
-    <string name="memory_scripts_freeze_inactive">O congelamento do script está desativado.</string>
+    <string name="memory_scripts_freeze_inactive">Este script não está mais congelando valores.</string>
     <string name="memory_bookmark_change_incomplete">Não foi possível concluir a alteração do marcador. Confira os itens salvos antes de tentar novamente.</string>
     <string name="memory_editor_value_updated">Valor atualizado.</string>
     <string name="memory_editor_value_updated_frozen">Valor atualizado e congelamento ativado.</string>

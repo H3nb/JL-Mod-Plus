@@ -167,10 +167,10 @@
     <string name="memory_recipes_title" tools:ignore="MissingTranslation">Snelle actie</string>
     <string name="memory_recipes_simple_from_saved" tools:ignore="MissingTranslation">Doel: <xliff:g id="bookmark_name" example="Coins">%1$s</xliff:g></string>
     <string name="memory_recipes_preview" tools:ignore="MissingTranslation">Voorbeeld doelen</string>
-    <string name="memory_recipes_stop_freeze" tools:ignore="MissingTranslation">Scriptbevriezing stoppen</string>
+    <string name="memory_recipes_stop_freeze" tools:ignore="MissingTranslation">Stop met bevriezen van waarden</string>
     <string name="memory_recipes_freeze" tools:ignore="MissingTranslation">Bevroren houden zolang deze game actief is</string>
     <string name="memory_recipes_run" tools:ignore="MissingTranslation">Uitvoeren</string>
-    <string name="memory_recipes_active_freezes" tools:ignore="MissingTranslation">Actieve scriptbevriezingen</string>
+    <string name="memory_recipes_active_freezes" tools:ignore="MissingTranslation">Scripts die waarden bevriezen</string>
     <string name="memory_recipes_target_unavailable" tools:ignore="MissingTranslation">Bladwijzerdoel is niet beschikbaar. Vernieuw het of koppel het opnieuw voordat je uitvoert.</string>
     <string name="memory_recipes_preview_values" tools:ignore="MissingTranslation">Huidige waarden: <xliff:g id="name" example="Example">%1$s</xliff:g></string>
     <string name="memory_scripts_title" tools:ignore="MissingTranslation">Scripts</string>
@@ -195,7 +195,7 @@
     <string name="memory_scripts_paste" tools:ignore="MissingTranslation">Plakken</string>
     <string name="memory_scripts_clipboard_invalid" tools:ignore="MissingTranslation">Klembord is leeg of het document is groter dan 64 KiB</string>
     <string name="memory_scripts_invalid" tools:ignore="MissingTranslation">Ongeldige scriptindeling</string>
-    <string name="memory_scripts_freeze_active" tools:ignore="MissingTranslation">Bevriezing actief voor dit script</string>
+    <string name="memory_scripts_freeze_active" tools:ignore="MissingTranslation">Dit script bevriest waarden</string>
     <string name="memory_scripts_delete" tools:ignore="MissingTranslation">Verwijderen</string>
     <string name="memory_scripts_delete_confirm" tools:ignore="MissingTranslation"><xliff:g id="name" example="Example">%1$s</xliff:g> verwijderen? Een actieve bevriezing voor dit script wordt gestopt.</string>
     <string name="memory_scripts_empty" tools:ignore="MissingTranslation">Geen opgeslagen scripts</string>
@@ -242,7 +242,7 @@
     <string name="memory_builder_min" tools:ignore="MissingTranslation">Minimum (optioneel)</string>
     <string name="memory_builder_max" tools:ignore="MissingTranslation">Maximum (optioneel)</string>
     <string name="memory_builder_add_target" tools:ignore="MissingTranslation">Doel toevoegen</string>
-    <string name="memory_builder_freeze_short" tools:ignore="MissingTranslation">Geselecteerde waarden op vaste bedragen houden</string>
+    <string name="memory_builder_freeze_short" tools:ignore="MissingTranslation">Geselecteerde waarden constant houden</string>
     <string name="memory_builder_form_short" tools:ignore="MissingTranslation">Meerdere waarden op één plek aanpassen</string>
     <string name="memory_builder_actions_short" tools:ignore="MissingTranslation">Eenmalige acties Instellen, Optellen of Aftrekken uitvoeren</string>
     <string name="memory_editor_refine_scan" tools:ignore="MissingTranslation">Verfijnen</string>
@@ -266,7 +266,7 @@
     <string name="memory_list_watch_removal_failed">Sessietracking kon niet worden verwijderd: %1$s</string>
     <string name="memory_list_removal_unknown_error">Onbekende fout</string>
     <string name="memory_editor_edit_freeze_failed">Waarde bijgewerkt, maar bevriezing kon niet worden gestart. Controleer de huidige waarde voordat je het opnieuw probeert.</string>
-    <string name="memory_scripts_freeze_inactive">Scriptbevriezing is uitgeschakeld.</string>
+    <string name="memory_scripts_freeze_inactive">Dit script bevriest geen waarden meer.</string>
     <string name="memory_bookmark_change_incomplete">De wijziging van de bladwijzer kon niet worden voltooid. Controleer Opgeslagen voordat je het opnieuw probeert.</string>
     <string name="memory_editor_value_updated">Waarde bijgewerkt.</string>
     <string name="memory_editor_value_updated_frozen">Waarde bijgewerkt en bevriezing ingeschakeld.</string>

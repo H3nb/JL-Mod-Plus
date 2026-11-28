@@ -161,10 +161,10 @@
     <string name="memory_recipes_title" tools:ignore="MissingTranslation">快速動作</string>
     <string name="memory_recipes_simple_from_saved" tools:ignore="MissingTranslation">目標：<xliff:g id="bookmark_name" example="Coins">%1$s</xliff:g></string>
     <string name="memory_recipes_preview" tools:ignore="MissingTranslation">預覽目標</string>
-    <string name="memory_recipes_stop_freeze" tools:ignore="MissingTranslation">停止指令碼鎖定</string>
+    <string name="memory_recipes_stop_freeze" tools:ignore="MissingTranslation">停止鎖定數值</string>
     <string name="memory_recipes_freeze" tools:ignore="MissingTranslation">在此遊戲執行期間保持鎖定</string>
     <string name="memory_recipes_run" tools:ignore="MissingTranslation">執行</string>
-    <string name="memory_recipes_active_freezes" tools:ignore="MissingTranslation">作用中的指令碼鎖定</string>
+    <string name="memory_recipes_active_freezes" tools:ignore="MissingTranslation">正在鎖定數值的指令碼</string>
     <string name="memory_recipes_target_unavailable" tools:ignore="MissingTranslation">書籤目標無法使用，請先重新整理或重新連結再執行。</string>
     <string name="memory_recipes_preview_values" tools:ignore="MissingTranslation">目前數值：<xliff:g id="name" example="Example">%1$s</xliff:g></string>
     <string name="memory_scripts_title" tools:ignore="MissingTranslation">指令碼</string>
@@ -189,7 +189,7 @@
     <string name="memory_scripts_paste" tools:ignore="MissingTranslation">貼上</string>
     <string name="memory_scripts_clipboard_invalid" tools:ignore="MissingTranslation">剪貼簿為空或文件大小超過 64 KiB</string>
     <string name="memory_scripts_invalid" tools:ignore="MissingTranslation">指令碼格式無效</string>
-    <string name="memory_scripts_freeze_active" tools:ignore="MissingTranslation">此指令碼的鎖定功能作用中</string>
+    <string name="memory_scripts_freeze_active" tools:ignore="MissingTranslation">此指令碼正在鎖定數值</string>
     <string name="memory_scripts_delete" tools:ignore="MissingTranslation">刪除</string>
     <string name="memory_scripts_delete_confirm" tools:ignore="MissingTranslation">要刪除「<xliff:g id="name" example="Example">%1$s</xliff:g>」嗎？此指令碼任何進行中的鎖定將會停止。</string>
     <string name="memory_scripts_empty" tools:ignore="MissingTranslation">尚未儲存任何指令碼</string>
@@ -260,7 +260,7 @@
     <string name="memory_list_watch_removal_failed">無法移除工作階段追蹤：%1$s</string>
     <string name="memory_list_removal_unknown_error">未知錯誤</string>
     <string name="memory_editor_edit_freeze_failed">數值已更新，但無法啟動數值鎖定。請先檢查目前的數值，再試一次。</string>
-    <string name="memory_scripts_freeze_inactive">指令碼數值鎖定已關閉。</string>
+    <string name="memory_scripts_freeze_inactive">此指令碼已停止鎖定數值。</string>
     <string name="memory_bookmark_change_incomplete">無法完成書籤變更。請先檢查已儲存的項目，再試一次。</string>
     <string name="memory_editor_value_updated">已更新數值。</string>
     <string name="memory_editor_value_updated_frozen">已更新數值並啟用凍結。</string>

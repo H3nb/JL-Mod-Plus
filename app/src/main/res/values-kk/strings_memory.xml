@@ -167,10 +167,10 @@
     <string name="memory_recipes_title" tools:ignore="MissingTranslation">Жылдам әрекет</string>
     <string name="memory_recipes_simple_from_saved" tools:ignore="MissingTranslation">Нысан: <xliff:g id="bookmark_name" example="Coins">%1$s</xliff:g></string>
     <string name="memory_recipes_preview" tools:ignore="MissingTranslation">Нысандарды алдын ала көру</string>
-    <string name="memory_recipes_stop_freeze" tools:ignore="MissingTranslation">Скрипт бекітуін тоқтату</string>
+    <string name="memory_recipes_stop_freeze" tools:ignore="MissingTranslation">Мәндерді бекітуді тоқтату</string>
     <string name="memory_recipes_freeze" tools:ignore="MissingTranslation">Ойын істеп тұрғанда бекітілген күйде ұстау</string>
     <string name="memory_recipes_run" tools:ignore="MissingTranslation">Іске қосу</string>
-    <string name="memory_recipes_active_freezes" tools:ignore="MissingTranslation">Белсенді скрипт бекітулері</string>
+    <string name="memory_recipes_active_freezes" tools:ignore="MissingTranslation">Мәндерді бекітетін скрипттер</string>
     <string name="memory_recipes_target_unavailable" tools:ignore="MissingTranslation">Бетбелгі нысаны қолжетімсіз. Іске қоспас бұрын оны жаңартыңыз немесе қайта байланыстырыңыз.</string>
     <string name="memory_recipes_preview_values" tools:ignore="MissingTranslation">Ағымдағы мәндер: <xliff:g id="name" example="Example">%1$s</xliff:g></string>
     <string name="memory_scripts_title" tools:ignore="MissingTranslation">Скрипттер</string>
@@ -195,7 +195,7 @@
     <string name="memory_scripts_paste" tools:ignore="MissingTranslation">Қою</string>
     <string name="memory_scripts_clipboard_invalid" tools:ignore="MissingTranslation">Алмасу буфері бос немесе құжат 64 KiB-тан асады</string>
     <string name="memory_scripts_invalid" tools:ignore="MissingTranslation">Жарамсыз скрипт пішімі</string>
-    <string name="memory_scripts_freeze_active" tools:ignore="MissingTranslation">Бұл скрипт үшін бекіту белсенді</string>
+    <string name="memory_scripts_freeze_active" tools:ignore="MissingTranslation">Бұл скрипт мәндерді бекітіп тұр</string>
     <string name="memory_scripts_delete" tools:ignore="MissingTranslation">Жою</string>
     <string name="memory_scripts_delete_confirm" tools:ignore="MissingTranslation">«<xliff:g id="name" example="Example">%1$s</xliff:g>» жою керек пе? Бұл скрипт үшін белсенді бекіту тоқтайды.</string>
     <string name="memory_scripts_empty" tools:ignore="MissingTranslation">Сақталған скрипттер жоқ</string>
@@ -266,7 +266,7 @@
     <string name="memory_list_watch_removal_failed">Сеанстағы бақылауды тоқтату мүмкін болмады: %1$s</string>
     <string name="memory_list_removal_unknown_error">Белгісіз қате</string>
     <string name="memory_editor_edit_freeze_failed">Мән жаңартылды, бірақ оны бекіту басталмады. Қайталап көрмес бұрын ағымдағы мәнді тексеріңіз.</string>
-    <string name="memory_scripts_freeze_inactive">Скрипт арқылы бекіту өшірулі.</string>
+    <string name="memory_scripts_freeze_inactive">Бұл скрипт енді мәндерді бекітпейді.</string>
     <string name="memory_bookmark_change_incomplete">Бетбелгіні өзгертуді аяқтау мүмкін болмады. Қайталап көрмес бұрын сақталған элементтерді тексеріңіз.</string>
     <string name="memory_editor_value_updated">Мән жаңартылды.</string>
     <string name="memory_editor_value_updated_frozen">Мән жаңартылып, бекіту қосылды.</string>

@@ -173,10 +173,10 @@
     <string name="memory_recipes_title" tools:ignore="MissingTranslation">Acțiune rapidă</string>
     <string name="memory_recipes_simple_from_saved" tools:ignore="MissingTranslation">Țintă: <xliff:g id="bookmark_name" example="Coins">%1$s</xliff:g></string>
     <string name="memory_recipes_preview" tools:ignore="MissingTranslation">Previzualizează țintele</string>
-    <string name="memory_recipes_stop_freeze" tools:ignore="MissingTranslation">Oprește înghețarea scriptului</string>
+    <string name="memory_recipes_stop_freeze" tools:ignore="MissingTranslation">Oprește înghețarea valorilor</string>
     <string name="memory_recipes_freeze" tools:ignore="MissingTranslation">Menține înghețat cât timp rulează jocul</string>
     <string name="memory_recipes_run" tools:ignore="MissingTranslation">Rulează</string>
-    <string name="memory_recipes_active_freezes" tools:ignore="MissingTranslation">Înghețări active ale scripturilor</string>
+    <string name="memory_recipes_active_freezes" tools:ignore="MissingTranslation">Scripturi care îngheață valori</string>
     <string name="memory_recipes_target_unavailable" tools:ignore="MissingTranslation">Ținta marcajului nu este disponibilă. Reîmprospătați-o sau reconectați-o înainte de rulare.</string>
     <string name="memory_recipes_preview_values" tools:ignore="MissingTranslation">Valori curente: <xliff:g id="name" example="Example">%1$s</xliff:g></string>
     <string name="memory_scripts_title" tools:ignore="MissingTranslation">Scripturi</string>
@@ -201,7 +201,7 @@
     <string name="memory_scripts_paste" tools:ignore="MissingTranslation">Lipește</string>
     <string name="memory_scripts_clipboard_invalid" tools:ignore="MissingTranslation">Clipboardul este gol sau documentul depășește 64 KiB</string>
     <string name="memory_scripts_invalid" tools:ignore="MissingTranslation">Format de script nevalid</string>
-    <string name="memory_scripts_freeze_active" tools:ignore="MissingTranslation">Înghețare activă pentru acest script</string>
+    <string name="memory_scripts_freeze_active" tools:ignore="MissingTranslation">Acest script îngheață valori</string>
     <string name="memory_scripts_delete" tools:ignore="MissingTranslation">Șterge</string>
     <string name="memory_scripts_delete_confirm" tools:ignore="MissingTranslation">Ștergeți <xliff:g id="name" example="Example">%1$s</xliff:g>? Orice înghețare activă pentru acest script va fi oprită.</string>
     <string name="memory_scripts_empty" tools:ignore="MissingTranslation">Niciun script salvat</string>
@@ -248,7 +248,7 @@
     <string name="memory_builder_min" tools:ignore="MissingTranslation">Minim (opțional)</string>
     <string name="memory_builder_max" tools:ignore="MissingTranslation">Maxim (opțional)</string>
     <string name="memory_builder_add_target" tools:ignore="MissingTranslation">Adaugă țintă</string>
-    <string name="memory_builder_freeze_short" tools:ignore="MissingTranslation">Menține valorile selectate la sume fixe</string>
+    <string name="memory_builder_freeze_short" tools:ignore="MissingTranslation">Menține constante valorile selectate</string>
     <string name="memory_builder_form_short" tools:ignore="MissingTranslation">Ajustează mai multe valori într-un singur loc</string>
     <string name="memory_builder_actions_short" tools:ignore="MissingTranslation">Rulează acțiuni unice de tip Setează, Adună sau Scade</string>
     <string name="memory_editor_refine_scan" tools:ignore="MissingTranslation">Rafinează</string>
@@ -272,7 +272,7 @@
     <string name="memory_list_watch_removal_failed">Monitorizarea sesiunii nu a putut fi eliminată: %1$s</string>
     <string name="memory_list_removal_unknown_error">Eroare necunoscută</string>
     <string name="memory_editor_edit_freeze_failed">Valoarea a fost actualizată, dar înghețarea nu a putut fi pornită. Verificați valoarea actuală înainte de a încerca din nou.</string>
-    <string name="memory_scripts_freeze_inactive">Înghețarea prin script este dezactivată.</string>
+    <string name="memory_scripts_freeze_inactive">Acest script nu mai îngheață valori.</string>
     <string name="memory_bookmark_change_incomplete">Modificarea marcajului nu a putut fi finalizată. Verificați elementele salvate înainte de a încerca din nou.</string>
     <string name="memory_editor_value_updated">Valoare actualizată.</string>
     <string name="memory_editor_value_updated_frozen">Valoare actualizată și înghețare activată.</string>

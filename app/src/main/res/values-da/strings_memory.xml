@@ -167,10 +167,10 @@
     <string name="memory_recipes_title" tools:ignore="MissingTranslation">Hurtighandling</string>
     <string name="memory_recipes_simple_from_saved" tools:ignore="MissingTranslation">Mål: <xliff:g id="bookmark_name" example="Coins">%1$s</xliff:g></string>
     <string name="memory_recipes_preview" tools:ignore="MissingTranslation">Forhåndsvis mål</string>
-    <string name="memory_recipes_stop_freeze" tools:ignore="MissingTranslation">Stop scriptfrysning</string>
+    <string name="memory_recipes_stop_freeze" tools:ignore="MissingTranslation">Stop fastfrysning af værdier</string>
     <string name="memory_recipes_freeze" tools:ignore="MissingTranslation">Hold frosset, mens dette spil kører</string>
     <string name="memory_recipes_run" tools:ignore="MissingTranslation">Kør</string>
-    <string name="memory_recipes_active_freezes" tools:ignore="MissingTranslation">Aktive scriptfrysninger</string>
+    <string name="memory_recipes_active_freezes" tools:ignore="MissingTranslation">Scripts, der fastfryser værdier</string>
     <string name="memory_recipes_target_unavailable" tools:ignore="MissingTranslation">Bogmærkemålet er ikke tilgængeligt. Opdater eller tilknyt det igen, før du kører.</string>
     <string name="memory_recipes_preview_values" tools:ignore="MissingTranslation">Aktuelle værdier: <xliff:g id="name" example="Example">%1$s</xliff:g></string>
     <string name="memory_scripts_title" tools:ignore="MissingTranslation">Scripts</string>
@@ -195,7 +195,7 @@
     <string name="memory_scripts_paste" tools:ignore="MissingTranslation">Indsæt</string>
     <string name="memory_scripts_clipboard_invalid" tools:ignore="MissingTranslation">Udklipsholderen er tom, eller dokumentet overstiger 64 KiB</string>
     <string name="memory_scripts_invalid" tools:ignore="MissingTranslation">Ugyldigt scriptformat</string>
-    <string name="memory_scripts_freeze_active" tools:ignore="MissingTranslation">Frysning aktiv for dette script</string>
+    <string name="memory_scripts_freeze_active" tools:ignore="MissingTranslation">Dette script fastfryser værdier</string>
     <string name="memory_scripts_delete" tools:ignore="MissingTranslation">Slet</string>
     <string name="memory_scripts_delete_confirm" tools:ignore="MissingTranslation">Vil du slette <xliff:g id="name" example="Example">%1$s</xliff:g>? Eventuel aktiv frysning for dette script stopper.</string>
     <string name="memory_scripts_empty" tools:ignore="MissingTranslation">Ingen gemte scripts</string>
@@ -242,7 +242,7 @@
     <string name="memory_builder_min" tools:ignore="MissingTranslation">Minimum (valgfrit)</string>
     <string name="memory_builder_max" tools:ignore="MissingTranslation">Maksimum (valgfrit)</string>
     <string name="memory_builder_add_target" tools:ignore="MissingTranslation">Tilføj mål</string>
-    <string name="memory_builder_freeze_short" tools:ignore="MissingTranslation">Hold valgte værdier på faste beløb</string>
+    <string name="memory_builder_freeze_short" tools:ignore="MissingTranslation">Hold valgte værdier konstante</string>
     <string name="memory_builder_form_short" tools:ignore="MissingTranslation">Juster flere værdier ét sted</string>
     <string name="memory_builder_actions_short" tools:ignore="MissingTranslation">Kør engangshandlinger: Angiv, Læg til eller Træk fra</string>
     <string name="memory_editor_refine_scan" tools:ignore="MissingTranslation">Afgræns</string>
@@ -266,7 +266,7 @@
     <string name="memory_list_watch_removal_failed">Kunne ikke fjerne sporing i sessionen: %1$s</string>
     <string name="memory_list_removal_unknown_error">Ukendt fejl</string>
     <string name="memory_editor_edit_freeze_failed">Værdien er opdateret, men fastfrysningen kunne ikke startes. Kontrollér den aktuelle værdi, før du prøver igen.</string>
-    <string name="memory_scripts_freeze_inactive">Scriptets fastfrysning er slået fra.</string>
+    <string name="memory_scripts_freeze_inactive">Dette script fastfryser ikke længere værdier.</string>
     <string name="memory_bookmark_change_incomplete">Bogmærkeændringen kunne ikke fuldføres. Kontrollér Gemte, før du prøver igen.</string>
     <string name="memory_editor_value_updated">Værdi opdateret.</string>
     <string name="memory_editor_value_updated_frozen">Værdi opdateret og frysning aktiveret.</string>

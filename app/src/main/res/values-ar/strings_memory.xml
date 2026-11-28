@@ -191,10 +191,10 @@
     <string name="memory_recipes_title" tools:ignore="MissingTranslation">إجراء سريع</string>
     <string name="memory_recipes_simple_from_saved" tools:ignore="MissingTranslation">الهدف: <xliff:g id="bookmark_name" example="Coins">%1$s</xliff:g></string>
     <string name="memory_recipes_preview" tools:ignore="MissingTranslation">معاينة الأهداف</string>
-    <string name="memory_recipes_stop_freeze" tools:ignore="MissingTranslation">إيقاف تجميد البرنامج النصي</string>
+    <string name="memory_recipes_stop_freeze" tools:ignore="MissingTranslation">إيقاف تجميد القيم</string>
     <string name="memory_recipes_freeze" tools:ignore="MissingTranslation">الإبقاء مجمّدًا أثناء تشغيل هذه اللعبة</string>
     <string name="memory_recipes_run" tools:ignore="MissingTranslation">تشغيل</string>
-    <string name="memory_recipes_active_freezes" tools:ignore="MissingTranslation">عمليات التجميد النشطة للبرامج النصية</string>
+    <string name="memory_recipes_active_freezes" tools:ignore="MissingTranslation">برامج نصية تجمّد القيم</string>
     <string name="memory_recipes_target_unavailable" tools:ignore="MissingTranslation">هدف الإشارة المرجعية غير متوفر. حدّثه أو أعد ربطه قبل التشغيل.</string>
     <string name="memory_recipes_preview_values" tools:ignore="MissingTranslation">القيم الحالية: <xliff:g id="name" example="Example">%1$s</xliff:g></string>
     <string name="memory_scripts_title" tools:ignore="MissingTranslation">البرامج النصية</string>
@@ -219,7 +219,7 @@
     <string name="memory_scripts_paste" tools:ignore="MissingTranslation">لصق</string>
     <string name="memory_scripts_clipboard_invalid" tools:ignore="MissingTranslation">الحافظة فارغة أو يتجاوز المستند 64 KiB</string>
     <string name="memory_scripts_invalid" tools:ignore="MissingTranslation">تنسيق البرنامج النصي غير صالح</string>
-    <string name="memory_scripts_freeze_active" tools:ignore="MissingTranslation">التجميد نشط لهذا البرنامج النصي</string>
+    <string name="memory_scripts_freeze_active" tools:ignore="MissingTranslation">هذا البرنامج النصي يجمّد القيم</string>
     <string name="memory_scripts_delete" tools:ignore="MissingTranslation">حذف</string>
     <string name="memory_scripts_delete_confirm" tools:ignore="MissingTranslation">هل تريد حذف <xliff:g id="name" example="Example">%1$s</xliff:g>؟ سيتوقف أي تجميد نشط لهذا البرنامج النصي.</string>
     <string name="memory_scripts_empty" tools:ignore="MissingTranslation">لا توجد برامج نصية محفوظة</string>
@@ -266,7 +266,7 @@
     <string name="memory_builder_min" tools:ignore="MissingTranslation">الحد الأدنى (اختياري)</string>
     <string name="memory_builder_max" tools:ignore="MissingTranslation">الحد الأقصى (اختياري)</string>
     <string name="memory_builder_add_target" tools:ignore="MissingTranslation">إضافة هدف</string>
-    <string name="memory_builder_freeze_short" tools:ignore="MissingTranslation">إبقاء القيم المحددة عند مقادير ثابتة</string>
+    <string name="memory_builder_freeze_short" tools:ignore="MissingTranslation">إبقاء القيم المحددة ثابتة</string>
     <string name="memory_builder_form_short" tools:ignore="MissingTranslation">ضبط عدة قيم في مكان واحد</string>
     <string name="memory_builder_actions_short" tools:ignore="MissingTranslation">تشغيل إجراءات تعيين أو إضافة أو طرح لمرة واحدة</string>
     <string name="memory_editor_refine_scan" tools:ignore="MissingTranslation">تصفية</string>
@@ -290,7 +290,7 @@
     <string name="memory_list_watch_removal_failed">تعذّرت إزالة تتبع الجلسة: %1$s</string>
     <string name="memory_list_removal_unknown_error">خطأ غير معروف</string>
     <string name="memory_editor_edit_freeze_failed">تم تحديث القيمة، لكن تعذّر بدء التجميد. تحقّق من القيمة الحالية قبل المحاولة مجددًا.</string>
-    <string name="memory_scripts_freeze_inactive">تجميد البرنامج النصي غير مفعّل.</string>
+    <string name="memory_scripts_freeze_inactive">توقف هذا البرنامج النصي عن تجميد القيم.</string>
     <string name="memory_bookmark_change_incomplete">تعذّر إكمال تغيير الإشارة المرجعية. تحقّق من المحفوظات قبل إعادة المحاولة.</string>
     <string name="memory_editor_value_updated">تم تحديث القيمة.</string>
     <string name="memory_editor_value_updated_frozen">تم تحديث القيمة وتفعيل التجميد.</string>

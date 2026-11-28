@@ -161,10 +161,10 @@
     <string name="memory_recipes_title" tools:ignore="MissingTranslation">Thao tác nhanh</string>
     <string name="memory_recipes_simple_from_saved" tools:ignore="MissingTranslation">Mục tiêu: <xliff:g id="bookmark_name" example="Coins">%1$s</xliff:g></string>
     <string name="memory_recipes_preview" tools:ignore="MissingTranslation">Xem trước mục tiêu</string>
-    <string name="memory_recipes_stop_freeze" tools:ignore="MissingTranslation">Dừng đóng băng tập lệnh</string>
+    <string name="memory_recipes_stop_freeze" tools:ignore="MissingTranslation">Dừng đóng băng giá trị</string>
     <string name="memory_recipes_freeze" tools:ignore="MissingTranslation">Giữ đóng băng khi trò chơi này đang chạy</string>
     <string name="memory_recipes_run" tools:ignore="MissingTranslation">Chạy</string>
-    <string name="memory_recipes_active_freezes" tools:ignore="MissingTranslation">Các mục đóng băng tập lệnh đang bật</string>
+    <string name="memory_recipes_active_freezes" tools:ignore="MissingTranslation">Các tập lệnh đang đóng băng giá trị</string>
     <string name="memory_recipes_target_unavailable" tools:ignore="MissingTranslation">Mục tiêu dấu trang không khả dụng. Hãy làm mới hoặc liên kết lại trước khi chạy.</string>
     <string name="memory_recipes_preview_values" tools:ignore="MissingTranslation">Giá trị hiện tại: <xliff:g id="name" example="Example">%1$s</xliff:g></string>
     <string name="memory_scripts_title" tools:ignore="MissingTranslation">Tập lệnh</string>
@@ -189,7 +189,7 @@
     <string name="memory_scripts_paste" tools:ignore="MissingTranslation">Dán</string>
     <string name="memory_scripts_clipboard_invalid" tools:ignore="MissingTranslation">Bộ nhớ tạm trống hoặc tài liệu vượt quá 64 KiB</string>
     <string name="memory_scripts_invalid" tools:ignore="MissingTranslation">Định dạng tập lệnh không hợp lệ</string>
-    <string name="memory_scripts_freeze_active" tools:ignore="MissingTranslation">Đang bật đóng băng cho tập lệnh này</string>
+    <string name="memory_scripts_freeze_active" tools:ignore="MissingTranslation">Tập lệnh này đang đóng băng các giá trị</string>
     <string name="memory_scripts_delete" tools:ignore="MissingTranslation">Xóa</string>
     <string name="memory_scripts_delete_confirm" tools:ignore="MissingTranslation">Xóa <xliff:g id="name" example="Example">%1$s</xliff:g>? Mọi thao tác đóng băng đang hoạt động cho tập lệnh này sẽ dừng lại.</string>
     <string name="memory_scripts_empty" tools:ignore="MissingTranslation">Chưa lưu tập lệnh nào</string>
@@ -260,7 +260,7 @@
     <string name="memory_list_watch_removal_failed">Không thể xóa theo dõi trong phiên: %1$s</string>
     <string name="memory_list_removal_unknown_error">Lỗi không xác định</string>
     <string name="memory_editor_edit_freeze_failed">Đã cập nhật giá trị nhưng không thể bắt đầu đóng băng. Kiểm tra giá trị hiện tại trước khi thử lại.</string>
-    <string name="memory_scripts_freeze_inactive">Tính năng đóng băng của tập lệnh đã tắt.</string>
+    <string name="memory_scripts_freeze_inactive">Tập lệnh này không còn đóng băng giá trị nào.</string>
     <string name="memory_bookmark_change_incomplete">Không thể hoàn tất thay đổi dấu trang. Kiểm tra các mục đã lưu trước khi thử lại.</string>
     <string name="memory_editor_value_updated">Đã cập nhật giá trị.</string>
     <string name="memory_editor_value_updated_frozen">Đã cập nhật giá trị và bật đóng băng.</string>

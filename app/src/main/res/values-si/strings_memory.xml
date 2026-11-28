@@ -167,10 +167,10 @@
     <string name="memory_recipes_title" tools:ignore="MissingTranslation">ඉක්මන් ක්‍රියාව</string>
     <string name="memory_recipes_simple_from_saved" tools:ignore="MissingTranslation">ඉලක්කය: <xliff:g id="bookmark_name" example="Coins">%1$s</xliff:g></string>
     <string name="memory_recipes_preview" tools:ignore="MissingTranslation">ඉලක්ක පෙරදසුන</string>
-    <string name="memory_recipes_stop_freeze" tools:ignore="MissingTranslation">ස්ක්‍රිප්ට් ස්ථිර කිරීම නවත්වන්න</string>
+    <string name="memory_recipes_stop_freeze" tools:ignore="MissingTranslation">අගයන් ස්ථිර කිරීම නවත්වන්න</string>
     <string name="memory_recipes_freeze" tools:ignore="MissingTranslation">මෙම ක්‍රීඩාව ධාවනය වන අතරතුර ස්ථිර කර තබන්න</string>
     <string name="memory_recipes_run" tools:ignore="MissingTranslation">ධාවනය කරන්න</string>
-    <string name="memory_recipes_active_freezes" tools:ignore="MissingTranslation">සක්‍රිය ස්ක්‍රිප්ට් ස්ථිර කිරීම්</string>
+    <string name="memory_recipes_active_freezes" tools:ignore="MissingTranslation">අගයන් ස්ථිර කරන ස්ක්‍රිප්ට්</string>
     <string name="memory_recipes_target_unavailable" tools:ignore="MissingTranslation">පිටුසන් ඉලක්කය ලබා ගත නොහැක. ධාවනය කිරීමට පෙර එය නැවුම් කරන්න හෝ නැවත සම්බන්ධ කරන්න.</string>
     <string name="memory_recipes_preview_values" tools:ignore="MissingTranslation">වත්මන් අගයන්: <xliff:g id="name" example="Example">%1$s</xliff:g></string>
     <string name="memory_scripts_title" tools:ignore="MissingTranslation">ස්ක්‍රිප්ට්</string>
@@ -195,7 +195,7 @@
     <string name="memory_scripts_paste" tools:ignore="MissingTranslation">අලවන්න</string>
     <string name="memory_scripts_clipboard_invalid" tools:ignore="MissingTranslation">පසුරු පුවරුව හිස්ය නැතහොත් ලේඛනය 64 KiB ඉක්මවයි</string>
     <string name="memory_scripts_invalid" tools:ignore="MissingTranslation">වලංගු නොවන ස්ක්‍රිප්ට් ආකෘතිය</string>
-    <string name="memory_scripts_freeze_active" tools:ignore="MissingTranslation">මෙම ස්ක්‍රිප්ට් සඳහා ස්ථිර කිරීම සක්‍රියයි</string>
+    <string name="memory_scripts_freeze_active" tools:ignore="MissingTranslation">මෙම ස්ක්‍රිප්ට් එක අගයන් ස්ථිර කරමින් පවතී</string>
     <string name="memory_scripts_delete" tools:ignore="MissingTranslation">මකන්න</string>
     <string name="memory_scripts_delete_confirm" tools:ignore="MissingTranslation">“<xliff:g id="name" example="Example">%1$s</xliff:g>” මකන්නද? මෙම ස්ක්‍රිප්ට් සඳහා ඇති ඕනෑම සක්‍රිය ස්ථිර කිරීමක් නතර වනු ඇත.</string>
     <string name="memory_scripts_empty" tools:ignore="MissingTranslation">සුරැකි ස්ක්‍රිප්ට් නොමැත</string>
@@ -242,7 +242,7 @@
     <string name="memory_builder_min" tools:ignore="MissingTranslation">අවම (විකල්ප)</string>
     <string name="memory_builder_max" tools:ignore="MissingTranslation">උපරිම (විකල්ප)</string>
     <string name="memory_builder_add_target" tools:ignore="MissingTranslation">ඉලක්කය එක් කරන්න</string>
-    <string name="memory_builder_freeze_short" tools:ignore="MissingTranslation">තෝරාගත් අගයන් ස්ථිර ප්‍රමාණවල තබා ගන්න</string>
+    <string name="memory_builder_freeze_short" tools:ignore="MissingTranslation">තෝරාගත් අගයන් නොවෙනස්ව තබා ගන්න</string>
     <string name="memory_builder_form_short" tools:ignore="MissingTranslation">අගයන් කිහිපයක් එකම ස්ථානයකින් සීරුමාරු කරන්න</string>
     <string name="memory_builder_actions_short" tools:ignore="MissingTranslation">එක් වරක් සැකසීම, එක් කිරීම හෝ අඩු කිරීමේ ක්‍රියා ධාවනය කරන්න</string>
     <string name="memory_editor_refine_scan" tools:ignore="MissingTranslation">ප්‍රතිඵල සීමා කරන්න</string>
@@ -266,7 +266,7 @@
     <string name="memory_list_watch_removal_failed">සැසියේ ලුහුබැඳීම ඉවත් කළ නොහැකි විය: %1$s</string>
     <string name="memory_list_removal_unknown_error">නොදන්නා දෝෂයකි</string>
     <string name="memory_editor_edit_freeze_failed">අගය යාවත්කාලීන කරන ලදී, නමුත් අගය ස්ථිර කිරීම ආරම්භ කළ නොහැකි විය. නැවත උත්සාහ කිරීමට පෙර වත්මන් අගය පරීක්ෂා කරන්න.</string>
-    <string name="memory_scripts_freeze_inactive">ස්ක්‍රිප්ට් මඟින් අගයන් ස්ථිර කිරීම අක්‍රියයි.</string>
+    <string name="memory_scripts_freeze_inactive">මෙම ස්ක්‍රිප්ට් එක තවදුරටත් අගයන් ස්ථිර නොකරයි.</string>
     <string name="memory_bookmark_change_incomplete">පිටුසන වෙනස් කිරීම සම්පූර්ණ කළ නොහැකි විය. නැවත උත්සාහ කිරීමට පෙර සුරැකි අයිතම පරීක්ෂා කරන්න.</string>
     <string name="memory_editor_value_updated">අගය යාවත්කාලීන කළා.</string>
     <string name="memory_editor_value_updated_frozen">අගය යාවත්කාලීන කර කැටි කිරීම සක්‍රිය කළා.</string>

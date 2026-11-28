@@ -167,10 +167,10 @@
     <string name="memory_recipes_title">Quick action</string>
     <string name="memory_recipes_simple_from_saved">Target: <xliff:g id="bookmark_name" example="Coins">%1$s</xliff:g></string>
     <string name="memory_recipes_preview">Preview targets</string>
-    <string name="memory_recipes_stop_freeze">Stop script freeze</string>
+    <string name="memory_recipes_stop_freeze">Stop freezing values</string>
     <string name="memory_recipes_freeze">Keep frozen while this game runs</string>
     <string name="memory_recipes_run">Run</string>
-    <string name="memory_recipes_active_freezes">Active script freezes</string>
+    <string name="memory_recipes_active_freezes">Scripts freezing values</string>
     <string name="memory_recipes_target_unavailable">The bookmark’s target is unavailable. Refresh or relink the bookmark before running the script.</string>
     <string name="memory_recipes_preview_values">Current values: <xliff:g id="name" example="Example">%1$s</xliff:g></string>
     <string name="memory_scripts_title">Scripts</string>
@@ -266,7 +266,7 @@
     <string name="memory_list_watch_removal_failed">Couldn’t remove session tracking: %1$s</string>
     <string name="memory_list_removal_unknown_error">Unknown error</string>
     <string name="memory_editor_edit_freeze_failed">Value updated, but freeze couldn’t start. Check the current value before trying again.</string>
-    <string name="memory_scripts_freeze_inactive">Script freeze is off.</string>
+    <string name="memory_scripts_freeze_inactive">This script is no longer freezing values.</string>
     <string name="memory_bookmark_change_incomplete">Couldn’t complete the bookmark change. Check Saved before trying again.</string>
     <string name="memory_editor_value_updated">Value updated.</string>
     <string name="memory_editor_value_updated_frozen">Value updated and freeze enabled.</string>

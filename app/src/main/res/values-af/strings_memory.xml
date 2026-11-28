@@ -167,10 +167,10 @@
     <string name="memory_recipes_title" tools:ignore="MissingTranslation">Vinnige aksie</string>
     <string name="memory_recipes_simple_from_saved" tools:ignore="MissingTranslation">Teiken: <xliff:g id="bookmark_name" example="Coins">%1$s</xliff:g></string>
     <string name="memory_recipes_preview" tools:ignore="MissingTranslation">Voorskou teikens</string>
-    <string name="memory_recipes_stop_freeze" tools:ignore="MissingTranslation">Stop skripvriesing</string>
+    <string name="memory_recipes_stop_freeze" tools:ignore="MissingTranslation">Hou op om waardes te vries</string>
     <string name="memory_recipes_freeze" tools:ignore="MissingTranslation">Hou gevries terwyl hierdie spel loop</string>
     <string name="memory_recipes_run" tools:ignore="MissingTranslation">Laat loop</string>
-    <string name="memory_recipes_active_freezes" tools:ignore="MissingTranslation">Aktiewe skripvriesings</string>
+    <string name="memory_recipes_active_freezes" tools:ignore="MissingTranslation">Skripte wat waardes vries</string>
     <string name="memory_recipes_target_unavailable" tools:ignore="MissingTranslation">Boekmerkteiken is nie beskikbaar nie. Herlaai of herskakel dit voordat jy dit laat loop.</string>
     <string name="memory_recipes_preview_values" tools:ignore="MissingTranslation">Huidige waardes: <xliff:g id="name" example="Example">%1$s</xliff:g></string>
     <string name="memory_scripts_title" tools:ignore="MissingTranslation">Skripte</string>
@@ -195,7 +195,7 @@
     <string name="memory_scripts_paste" tools:ignore="MissingTranslation">Plak</string>
     <string name="memory_scripts_clipboard_invalid" tools:ignore="MissingTranslation">Knipbord is leeg of die dokument oorskry 64 KiB</string>
     <string name="memory_scripts_invalid" tools:ignore="MissingTranslation">Ongeldige skripformaat</string>
-    <string name="memory_scripts_freeze_active" tools:ignore="MissingTranslation">Vriesing aktief vir hierdie skrip</string>
+    <string name="memory_scripts_freeze_active" tools:ignore="MissingTranslation">Hierdie skrip vries waardes</string>
     <string name="memory_scripts_delete" tools:ignore="MissingTranslation">Vee uit</string>
     <string name="memory_scripts_delete_confirm" tools:ignore="MissingTranslation">Vee <xliff:g id="name" example="Example">%1$s</xliff:g> uit? Enige aktiewe vriesing vir hierdie skrip sal stop.</string>
     <string name="memory_scripts_empty" tools:ignore="MissingTranslation">Geen skripte gestoor nie</string>
@@ -242,7 +242,7 @@
     <string name="memory_builder_min" tools:ignore="MissingTranslation">Minimum (opsioneel)</string>
     <string name="memory_builder_max" tools:ignore="MissingTranslation">Maksimum (opsioneel)</string>
     <string name="memory_builder_add_target" tools:ignore="MissingTranslation">Voeg teiken by</string>
-    <string name="memory_builder_freeze_short" tools:ignore="MissingTranslation">Hou gekose waardes op vaste bedrae</string>
+    <string name="memory_builder_freeze_short" tools:ignore="MissingTranslation">Hou gekose waardes konstant</string>
     <string name="memory_builder_form_short" tools:ignore="MissingTranslation">Pas verskeie waardes op een plek aan</string>
     <string name="memory_builder_actions_short" tools:ignore="MissingTranslation">Laat eenmalige Stel-, Tel by- of Trek af-aksies loop</string>
     <string name="memory_editor_refine_scan" tools:ignore="MissingTranslation">Verfyn</string>
@@ -266,7 +266,7 @@
     <string name="memory_list_watch_removal_failed">Kon nie sessienasporing verwyder nie: %1$s</string>
     <string name="memory_list_removal_unknown_error">Onbekende fout</string>
     <string name="memory_editor_edit_freeze_failed">Waarde opgedateer, maar bevriesing kon nie begin nie. Kontroleer die huidige waarde voordat jy weer probeer.</string>
-    <string name="memory_scripts_freeze_inactive">Skripbevriesing is af.</string>
+    <string name="memory_scripts_freeze_inactive">Hierdie skrip vries nie meer waardes nie.</string>
     <string name="memory_bookmark_change_incomplete">Kon nie die boekmerkwysiging voltooi nie. Gaan Gestoor na voordat jy weer probeer.</string>
     <string name="memory_editor_value_updated">Waarde bygewerk.</string>
     <string name="memory_editor_value_updated_frozen">Waarde bygewerk en vriesing geaktiveer.</string>

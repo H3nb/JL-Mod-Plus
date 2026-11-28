@@ -173,10 +173,10 @@
     <string name="memory_recipes_title" tools:ignore="MissingTranslation">Acció ràpida</string>
     <string name="memory_recipes_simple_from_saved" tools:ignore="MissingTranslation">Destinació: <xliff:g id="bookmark_name" example="Coins">%1$s</xliff:g></string>
     <string name="memory_recipes_preview" tools:ignore="MissingTranslation">Previsualitza les destinacions</string>
-    <string name="memory_recipes_stop_freeze" tools:ignore="MissingTranslation">Atura la congelació de l’script</string>
+    <string name="memory_recipes_stop_freeze" tools:ignore="MissingTranslation">Atura la congelació de valors</string>
     <string name="memory_recipes_freeze" tools:ignore="MissingTranslation">Mantén congelat mentre s’executi aquest joc</string>
     <string name="memory_recipes_run" tools:ignore="MissingTranslation">Executa</string>
-    <string name="memory_recipes_active_freezes" tools:ignore="MissingTranslation">Congelacions de scripts actives</string>
+    <string name="memory_recipes_active_freezes" tools:ignore="MissingTranslation">Scripts que congelen valors</string>
     <string name="memory_recipes_target_unavailable" tools:ignore="MissingTranslation">La destinació del marcador no està disponible. Actualitza’l o torna’l a vincular abans d’executar-lo.</string>
     <string name="memory_recipes_preview_values" tools:ignore="MissingTranslation">Valors actuals: <xliff:g id="name" example="Example">%1$s</xliff:g></string>
     <string name="memory_scripts_title" tools:ignore="MissingTranslation">Scripts</string>
@@ -201,7 +201,7 @@
     <string name="memory_scripts_paste" tools:ignore="MissingTranslation">Enganxa</string>
     <string name="memory_scripts_clipboard_invalid" tools:ignore="MissingTranslation">El porta-retalls és buit o el document supera els 64 KiB</string>
     <string name="memory_scripts_invalid" tools:ignore="MissingTranslation">Format d’script no vàlid</string>
-    <string name="memory_scripts_freeze_active" tools:ignore="MissingTranslation">Congelació activa per a aquest script</string>
+    <string name="memory_scripts_freeze_active" tools:ignore="MissingTranslation">Aquest script congela valors</string>
     <string name="memory_scripts_delete" tools:ignore="MissingTranslation">Suprimeix</string>
     <string name="memory_scripts_delete_confirm" tools:ignore="MissingTranslation">Vols suprimir <xliff:g id="name" example="Example">%1$s</xliff:g>? S’aturarà qualsevol congelació activa d’aquest script.</string>
     <string name="memory_scripts_empty" tools:ignore="MissingTranslation">No hi ha scripts desats</string>
@@ -248,7 +248,7 @@
     <string name="memory_builder_min" tools:ignore="MissingTranslation">Mínim (opcional)</string>
     <string name="memory_builder_max" tools:ignore="MissingTranslation">Màxim (opcional)</string>
     <string name="memory_builder_add_target" tools:ignore="MissingTranslation">Afegeix una destinació</string>
-    <string name="memory_builder_freeze_short" tools:ignore="MissingTranslation">Mantén els valors seleccionats en quantitats fixes</string>
+    <string name="memory_builder_freeze_short" tools:ignore="MissingTranslation">Mantén constants els valors seleccionats</string>
     <string name="memory_builder_form_short" tools:ignore="MissingTranslation">Ajusta diversos valors en un sol lloc</string>
     <string name="memory_builder_actions_short" tools:ignore="MissingTranslation">Executa accions puntuals de Defineix, Suma o Resta</string>
     <string name="memory_editor_refine_scan" tools:ignore="MissingTranslation">Afina</string>
@@ -272,7 +272,7 @@
     <string name="memory_list_watch_removal_failed">No s’ha pogut suprimir el seguiment de la sessió: %1$s</string>
     <string name="memory_list_removal_unknown_error">Error desconegut</string>
     <string name="memory_editor_edit_freeze_failed">Valor actualitzat, però no s’ha pogut iniciar la congelació. Comprova el valor actual abans de tornar-ho a provar.</string>
-    <string name="memory_scripts_freeze_inactive">La congelació del script està desactivada.</string>
+    <string name="memory_scripts_freeze_inactive">Aquest script ja no congela valors.</string>
     <string name="memory_bookmark_change_incomplete">No s’ha pogut completar el canvi del marcador. Comprova Desats abans de tornar-ho a provar.</string>
     <string name="memory_editor_value_updated">Valor actualitzat.</string>
     <string name="memory_editor_value_updated_frozen">Valor actualitzat i congelació activada.</string>

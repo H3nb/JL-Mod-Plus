@@ -167,10 +167,10 @@
     <string name="memory_recipes_title" tools:ignore="MissingTranslation">Pikatoiminto</string>
     <string name="memory_recipes_simple_from_saved" tools:ignore="MissingTranslation">Kohde: <xliff:g id="bookmark_name" example="Coins">%1$s</xliff:g></string>
     <string name="memory_recipes_preview" tools:ignore="MissingTranslation">Esikatsele kohteita</string>
-    <string name="memory_recipes_stop_freeze" tools:ignore="MissingTranslation">Pysäytä skriptin jäädytys</string>
+    <string name="memory_recipes_stop_freeze" tools:ignore="MissingTranslation">Lopeta arvojen jäädytys</string>
     <string name="memory_recipes_freeze" tools:ignore="MissingTranslation">Pidä jäädytettynä pelin ollessa käynnissä</string>
     <string name="memory_recipes_run" tools:ignore="MissingTranslation">Suorita</string>
-    <string name="memory_recipes_active_freezes" tools:ignore="MissingTranslation">Aktiiviset skriptijäädytykset</string>
+    <string name="memory_recipes_active_freezes" tools:ignore="MissingTranslation">Arvoja jäädyttävät skriptit</string>
     <string name="memory_recipes_target_unavailable" tools:ignore="MissingTranslation">Kirjanmerkin kohde ei ole saatavilla. Päivitä tai linkitä se uudelleen ennen suorittamista.</string>
     <string name="memory_recipes_preview_values" tools:ignore="MissingTranslation">Nykyiset arvot: <xliff:g id="name" example="Example">%1$s</xliff:g></string>
     <string name="memory_scripts_title" tools:ignore="MissingTranslation">Skriptit</string>
@@ -195,7 +195,7 @@
     <string name="memory_scripts_paste" tools:ignore="MissingTranslation">Liitä</string>
     <string name="memory_scripts_clipboard_invalid" tools:ignore="MissingTranslation">Leikepöytä on tyhjä tai asiakirja ylittää 64 KiB</string>
     <string name="memory_scripts_invalid" tools:ignore="MissingTranslation">Virheellinen skriptimuoto</string>
-    <string name="memory_scripts_freeze_active" tools:ignore="MissingTranslation">Jäädytys aktiivinen tälle skriptille</string>
+    <string name="memory_scripts_freeze_active" tools:ignore="MissingTranslation">Tämä skripti jäädyttää arvoja</string>
     <string name="memory_scripts_delete" tools:ignore="MissingTranslation">Poista</string>
     <string name="memory_scripts_delete_confirm" tools:ignore="MissingTranslation">Poistetaanko <xliff:g id="name" example="Example">%1$s</xliff:g>? Tämän skriptin aktiivinen jäädytys pysäytetään.</string>
     <string name="memory_scripts_empty" tools:ignore="MissingTranslation">Ei tallennettuja skriptejä</string>
@@ -242,7 +242,7 @@
     <string name="memory_builder_min" tools:ignore="MissingTranslation">Vähimmäisarvo (valinnainen)</string>
     <string name="memory_builder_max" tools:ignore="MissingTranslation">Enimmäisarvo (valinnainen)</string>
     <string name="memory_builder_add_target" tools:ignore="MissingTranslation">Lisää kohde</string>
-    <string name="memory_builder_freeze_short" tools:ignore="MissingTranslation">Pidä valitut arvot kiinteissä lukemissa</string>
+    <string name="memory_builder_freeze_short" tools:ignore="MissingTranslation">Pidä valitut arvot vakioina</string>
     <string name="memory_builder_form_short" tools:ignore="MissingTranslation">Säädä useita arvoja samassa paikassa</string>
     <string name="memory_builder_actions_short" tools:ignore="MissingTranslation">Suorita kertaluonteisia Aseta-, Lisää- tai Vähennä-toimintoja</string>
     <string name="memory_editor_refine_scan" tools:ignore="MissingTranslation">Tarkenna</string>
@@ -266,7 +266,7 @@
     <string name="memory_list_watch_removal_failed">Istunnon seurantaa ei voitu poistaa: %1$s</string>
     <string name="memory_list_removal_unknown_error">Tuntematon virhe</string>
     <string name="memory_editor_edit_freeze_failed">Arvo päivitettiin, mutta jäädytystä ei voitu aloittaa. Tarkista nykyinen arvo ennen uutta yritystä.</string>
-    <string name="memory_scripts_freeze_inactive">Skriptin jäädytys ei ole käytössä.</string>
+    <string name="memory_scripts_freeze_inactive">Tämä skripti ei enää jäädytä arvoja.</string>
     <string name="memory_bookmark_change_incomplete">Kirjanmerkin muutosta ei voitu viimeistellä. Tarkista Tallennetut ennen uutta yritystä.</string>
     <string name="memory_editor_value_updated">Arvo päivitetty.</string>
     <string name="memory_editor_value_updated_frozen">Arvo päivitetty ja jäädytys käytössä.</string>

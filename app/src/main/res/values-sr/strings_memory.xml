@@ -173,10 +173,10 @@
     <string name="memory_recipes_title" tools:ignore="MissingTranslation">Брза радња</string>
     <string name="memory_recipes_simple_from_saved" tools:ignore="MissingTranslation">Циљ: <xliff:g id="bookmark_name" example="Coins">%1$s</xliff:g></string>
     <string name="memory_recipes_preview" tools:ignore="MissingTranslation">Прегледај циљеве</string>
-    <string name="memory_recipes_stop_freeze" tools:ignore="MissingTranslation">Заустави замрзавање скрипте</string>
+    <string name="memory_recipes_stop_freeze" tools:ignore="MissingTranslation">Заустави замрзавање вредности</string>
     <string name="memory_recipes_freeze" tools:ignore="MissingTranslation">Држи замрзнуто док ова игра ради</string>
     <string name="memory_recipes_run" tools:ignore="MissingTranslation">Покрени</string>
-    <string name="memory_recipes_active_freezes" tools:ignore="MissingTranslation">Активна замрзавања скрипти</string>
+    <string name="memory_recipes_active_freezes" tools:ignore="MissingTranslation">Скрипте које замрзавају вредности</string>
     <string name="memory_recipes_target_unavailable" tools:ignore="MissingTranslation">Циљ обележивача није доступан. Освежите га или поново повежите пре покретања.</string>
     <string name="memory_recipes_preview_values" tools:ignore="MissingTranslation">Тренутне вредности: <xliff:g id="name" example="Example">%1$s</xliff:g></string>
     <string name="memory_scripts_title" tools:ignore="MissingTranslation">Скрипте</string>
@@ -201,7 +201,7 @@
     <string name="memory_scripts_paste" tools:ignore="MissingTranslation">Налепи</string>
     <string name="memory_scripts_clipboard_invalid" tools:ignore="MissingTranslation">Привремена меморија је празна или документ прелази 64 KiB</string>
     <string name="memory_scripts_invalid" tools:ignore="MissingTranslation">Неисправан формат скрипте</string>
-    <string name="memory_scripts_freeze_active" tools:ignore="MissingTranslation">Замрзавање је активно за ову скрипту</string>
+    <string name="memory_scripts_freeze_active" tools:ignore="MissingTranslation">Ова скрипта замрзава вредности</string>
     <string name="memory_scripts_delete" tools:ignore="MissingTranslation">Обриши</string>
     <string name="memory_scripts_delete_confirm" tools:ignore="MissingTranslation">Обрисати „<xliff:g id="name" example="Example">%1$s</xliff:g>”? Свако активно замрзавање за ову скрипту ће се зауставити.</string>
     <string name="memory_scripts_empty" tools:ignore="MissingTranslation">Нема сачуваних скрипти</string>
@@ -248,7 +248,7 @@
     <string name="memory_builder_min" tools:ignore="MissingTranslation">Минимум (опционо)</string>
     <string name="memory_builder_max" tools:ignore="MissingTranslation">Максимум (опционо)</string>
     <string name="memory_builder_add_target" tools:ignore="MissingTranslation">Додај циљ</string>
-    <string name="memory_builder_freeze_short" tools:ignore="MissingTranslation">Одржава изабране вредности на фиксним износима</string>
+    <string name="memory_builder_freeze_short" tools:ignore="MissingTranslation">Задржи изабране вредности непромењеним</string>
     <string name="memory_builder_form_short" tools:ignore="MissingTranslation">Подесите више вредности на једном месту</string>
     <string name="memory_builder_actions_short" tools:ignore="MissingTranslation">Покрените једнократне радње Подеси, Додај или Одузми</string>
     <string name="memory_editor_refine_scan" tools:ignore="MissingTranslation">Сузи</string>
@@ -272,7 +272,7 @@
     <string name="memory_list_watch_removal_failed">Није могуће уклонити праћење у сесији: %1$s</string>
     <string name="memory_list_removal_unknown_error">Непозната грешка</string>
     <string name="memory_editor_edit_freeze_failed">Вредност је ажурирана, али замрзавање није могло да се покрене. Проверите тренутну вредност пре поновног покушаја.</string>
-    <string name="memory_scripts_freeze_inactive">Замрзавање скриптом је искључено.</string>
+    <string name="memory_scripts_freeze_inactive">Ова скрипта више не замрзава вредности.</string>
     <string name="memory_bookmark_change_incomplete">Није могуће довршити промену обележивача. Проверите сачуване ставке пре поновног покушаја.</string>
     <string name="memory_editor_value_updated">Вредност је ажурирана.</string>
     <string name="memory_editor_value_updated_frozen">Вредност је ажурирана и замрзавање је укључено.</string>

@@ -167,10 +167,10 @@
     <string name="memory_recipes_title" tools:ignore="MissingTranslation">দ্রুত কাজ</string>
     <string name="memory_recipes_simple_from_saved" tools:ignore="MissingTranslation">লক্ষ্য: <xliff:g id="bookmark_name" example="Coins">%1$s</xliff:g></string>
     <string name="memory_recipes_preview" tools:ignore="MissingTranslation">লক্ষ্য প্রিভিউ</string>
-    <string name="memory_recipes_stop_freeze" tools:ignore="MissingTranslation">স্ক্রিপ্ট ফ্রিজ বন্ধ করুন</string>
+    <string name="memory_recipes_stop_freeze" tools:ignore="MissingTranslation">মান ফ্রিজ করা বন্ধ করুন</string>
     <string name="memory_recipes_freeze" tools:ignore="MissingTranslation">এই গেম চলাকালীন ফ্রিজ করে রাখুন</string>
     <string name="memory_recipes_run" tools:ignore="MissingTranslation">চালান</string>
-    <string name="memory_recipes_active_freezes" tools:ignore="MissingTranslation">সক্রিয় স্ক্রিপ্ট ফ্রিজ</string>
+    <string name="memory_recipes_active_freezes" tools:ignore="MissingTranslation">মান ফ্রিজ করছে এমন স্ক্রিপ্ট</string>
     <string name="memory_recipes_target_unavailable" tools:ignore="MissingTranslation">বুকমার্কের লক্ষ্য উপলব্ধ নয়। চালানোর আগে রিফ্রেশ করুন বা পুনরায় লিংক করুন।</string>
     <string name="memory_recipes_preview_values" tools:ignore="MissingTranslation">বর্তমান মান: <xliff:g id="name" example="Example">%1$s</xliff:g></string>
     <string name="memory_scripts_title" tools:ignore="MissingTranslation">স্ক্রিপ্ট</string>
@@ -195,7 +195,7 @@
     <string name="memory_scripts_paste" tools:ignore="MissingTranslation">পেস্ট করুন</string>
     <string name="memory_scripts_clipboard_invalid" tools:ignore="MissingTranslation">ক্লিপবোর্ড খালি অথবা ডকুমেন্টের আকার 64 KiB-এর বেশি</string>
     <string name="memory_scripts_invalid" tools:ignore="MissingTranslation">অবৈধ স্ক্রিপ্ট ফরম্যাট</string>
-    <string name="memory_scripts_freeze_active" tools:ignore="MissingTranslation">এই স্ক্রিপ্টের জন্য ফ্রিজ সক্রিয় রয়েছে</string>
+    <string name="memory_scripts_freeze_active" tools:ignore="MissingTranslation">এই স্ক্রিপ্ট মানগুলো ফ্রিজ করছে</string>
     <string name="memory_scripts_delete" tools:ignore="MissingTranslation">মুছুন</string>
     <string name="memory_scripts_delete_confirm" tools:ignore="MissingTranslation"><xliff:g id="name" example="Example">%1$s</xliff:g> মুছবেন? এই স্ক্রিপ্টের সক্রিয় যেকোনো ফ্রিজ বন্ধ হয়ে যাবে।</string>
     <string name="memory_scripts_empty" tools:ignore="MissingTranslation">কোনো স্ক্রিপ্ট সেভ করা নেই</string>
@@ -242,7 +242,7 @@
     <string name="memory_builder_min" tools:ignore="MissingTranslation">সর্বনিম্ন (ঐচ্ছিক)</string>
     <string name="memory_builder_max" tools:ignore="MissingTranslation">সর্বোচ্চ (ঐচ্ছিক)</string>
     <string name="memory_builder_add_target" tools:ignore="MissingTranslation">লক্ষ্য যোগ করুন</string>
-    <string name="memory_builder_freeze_short" tools:ignore="MissingTranslation">নির্বাচিত মানগুলো নির্দিষ্ট পরিমাণে স্থির রাখুন</string>
+    <string name="memory_builder_freeze_short" tools:ignore="MissingTranslation">নির্বাচিত মানগুলো স্থির রাখুন</string>
     <string name="memory_builder_form_short" tools:ignore="MissingTranslation">একই জায়গায় একাধিক মান সামঞ্জস্য করুন</string>
     <string name="memory_builder_actions_short" tools:ignore="MissingTranslation">এককালীন সেট করুন, যোগ করুন বা বিয়োগ করুন কাজ চালান</string>
     <string name="memory_editor_refine_scan" tools:ignore="MissingTranslation">ফলাফল ছাঁটাই করুন</string>
@@ -266,7 +266,7 @@
     <string name="memory_list_watch_removal_failed">সেশনের ট্র্যাকিং সরানো যায়নি: %1$s</string>
     <string name="memory_list_removal_unknown_error">অজানা ত্রুটি</string>
     <string name="memory_editor_edit_freeze_failed">মান আপডেট হয়েছে, কিন্তু ফ্রিজ চালু করা যায়নি। আবার চেষ্টা করার আগে বর্তমান মান পরীক্ষা করুন।</string>
-    <string name="memory_scripts_freeze_inactive">স্ক্রিপ্টের ফ্রিজ বন্ধ আছে।</string>
+    <string name="memory_scripts_freeze_inactive">এই স্ক্রিপ্ট আর মান ফ্রিজ করছে না।</string>
     <string name="memory_bookmark_change_incomplete">বুকমার্ক পরিবর্তন সম্পূর্ণ করা যায়নি। আবার চেষ্টা করার আগে সেভ করা আইটেমগুলো দেখুন।</string>
     <string name="memory_editor_value_updated">মান আপডেট করা হয়েছে।</string>
     <string name="memory_editor_value_updated_frozen">মান আপডেট করা হয়েছে এবং ফ্রিজ চালু হয়েছে।</string>

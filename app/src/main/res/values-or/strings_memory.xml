@@ -167,10 +167,10 @@
     <string name="memory_recipes_title" tools:ignore="MissingTranslation">ଦ୍ରୁତ କାର୍ଯ୍ୟ</string>
     <string name="memory_recipes_simple_from_saved" tools:ignore="MissingTranslation">ଲକ୍ଷ୍ୟ: <xliff:g id="bookmark_name" example="Coins">%1$s</xliff:g></string>
     <string name="memory_recipes_preview" tools:ignore="MissingTranslation">ଲକ୍ଷ୍ୟ ପ୍ରିଭ୍ୟୁ କରନ୍ତୁ</string>
-    <string name="memory_recipes_stop_freeze" tools:ignore="MissingTranslation">ସ୍କ୍ରିପ୍ଟ୍ ଫ୍ରିଜ୍ ବନ୍ଦ କରନ୍ତୁ</string>
+    <string name="memory_recipes_stop_freeze" tools:ignore="MissingTranslation">ମୂଲ୍ୟ ଫ୍ରିଜ୍ କରିବା ବନ୍ଦ କରନ୍ତୁ</string>
     <string name="memory_recipes_freeze" tools:ignore="MissingTranslation">ଏହି ଗେମ୍ ଚାଲିଥିବା ପର୍ଯ୍ୟନ୍ତ ଫ୍ରିଜ୍ ରଖନ୍ତୁ</string>
     <string name="memory_recipes_run" tools:ignore="MissingTranslation">ଚଲାନ୍ତୁ</string>
-    <string name="memory_recipes_active_freezes" tools:ignore="MissingTranslation">ସକ୍ରିୟ ସ୍କ୍ରିପ୍ଟ୍ ଫ୍ରିଜ୍</string>
+    <string name="memory_recipes_active_freezes" tools:ignore="MissingTranslation">ମୂଲ୍ୟ ଫ୍ରିଜ୍ କରୁଥିବା ସ୍କ୍ରିପ୍ଟ୍</string>
     <string name="memory_recipes_target_unavailable" tools:ignore="MissingTranslation">ବୁକମାର୍କ୍ ଲକ୍ଷ୍ୟ ଉପଲବ୍ଧ ନାହିଁ। ଚଲାଇବା ପୂର୍ବରୁ ଏହାକୁ ରିଫ୍ରେସ୍ କିମ୍ବା ପୁନଃ-ଲିଙ୍କ୍ କରନ୍ତୁ।</string>
     <string name="memory_recipes_preview_values" tools:ignore="MissingTranslation">ବର୍ତ୍ତମାନର ମୂଲ୍ୟ: <xliff:g id="name" example="Example">%1$s</xliff:g></string>
     <string name="memory_scripts_title" tools:ignore="MissingTranslation">ସ୍କ୍ରିପ୍ଟ୍</string>
@@ -195,7 +195,7 @@
     <string name="memory_scripts_paste" tools:ignore="MissingTranslation">ପେଷ୍ଟ କରନ୍ତୁ</string>
     <string name="memory_scripts_clipboard_invalid" tools:ignore="MissingTranslation">କ୍ଲିପବୋର୍ଡ ଖାଲି ଅଛି କିମ୍ବା ଡକ୍ୟୁମେଣ୍ଟ 64 KiB ରୁ ଅଧିକ</string>
     <string name="memory_scripts_invalid" tools:ignore="MissingTranslation">ଅବୈଧ ସ୍କ୍ରିପ୍ଟ୍ ଫର୍ମାଟ୍</string>
-    <string name="memory_scripts_freeze_active" tools:ignore="MissingTranslation">ଏହି ସ୍କ୍ରିପ୍ଟ୍ ପାଇଁ ଫ୍ରିଜ୍ ସକ୍ରିୟ ଅଛି</string>
+    <string name="memory_scripts_freeze_active" tools:ignore="MissingTranslation">ଏହି ସ୍କ୍ରିପ୍ଟ୍ ମୂଲ୍ୟଗୁଡ଼ିକୁ ଫ୍ରିଜ୍ କରୁଛି</string>
     <string name="memory_scripts_delete" tools:ignore="MissingTranslation">ଡିଲିଟ୍ କରନ୍ତୁ</string>
     <string name="memory_scripts_delete_confirm" tools:ignore="MissingTranslation"><xliff:g id="name" example="Example">%1$s</xliff:g> ଡିଲିଟ୍ କରିବେ କି? ଏହି ସ୍କ୍ରିପ୍ଟ୍ ପାଇଁ ଥିବା ଯେକୌଣସି ସକ୍ରିୟ ଫ୍ରିଜ୍ ବନ୍ଦ ହୋଇଯିବ।</string>
     <string name="memory_scripts_empty" tools:ignore="MissingTranslation">କୌଣସି ସ୍କ୍ରିପ୍ଟ୍ ସେଭ୍ ହୋଇନାହିଁ</string>
@@ -242,7 +242,7 @@
     <string name="memory_builder_min" tools:ignore="MissingTranslation">ସର୍ବନିମ୍ନ (ବୈକଳ୍ପିକ)</string>
     <string name="memory_builder_max" tools:ignore="MissingTranslation">ସର୍ବାଧିକ (ବୈକଳ୍ପିକ)</string>
     <string name="memory_builder_add_target" tools:ignore="MissingTranslation">ଲକ୍ଷ୍ୟ ଯୋଗ କରନ୍ତୁ</string>
-    <string name="memory_builder_freeze_short" tools:ignore="MissingTranslation">ଚୟନିତ ମୂଲ୍ୟଗୁଡ଼ିକୁ ନିର୍ଦ୍ଦିଷ୍ଟ ପରିମାଣରେ ରଖନ୍ତୁ</string>
+    <string name="memory_builder_freeze_short" tools:ignore="MissingTranslation">ଚୟନିତ ମୂଲ୍ୟଗୁଡ଼ିକୁ ସ୍ଥିର ରଖନ୍ତୁ</string>
     <string name="memory_builder_form_short" tools:ignore="MissingTranslation">ଗୋଟିଏ ସ୍ଥାନରେ ଏକାଧିକ ମୂଲ୍ୟ ଆଡଜଷ୍ଟ୍ କରନ୍ତୁ</string>
     <string name="memory_builder_actions_short" tools:ignore="MissingTranslation">ଏକକାଳୀନ ସେଟ୍, ଯୋଗ କିମ୍ବା ବିୟୋଗ କାର୍ଯ୍ୟ ଚଲାନ୍ତୁ</string>
     <string name="memory_editor_refine_scan" tools:ignore="MissingTranslation">ଫଳାଫଳ ସୀମିତ କରନ୍ତୁ</string>
@@ -266,7 +266,7 @@
     <string name="memory_list_watch_removal_failed">ସେସନ୍ ଟ୍ରାକିଂ ଅପସାରଣ କରିହେଲା ନାହିଁ: %1$s</string>
     <string name="memory_list_removal_unknown_error">ଅଜଣା ତ୍ରୁଟି</string>
     <string name="memory_editor_edit_freeze_failed">ମୂଲ୍ୟ ଅପଡେଟ୍ ହେଲା, କିନ୍ତୁ ଫ୍ରିଜ୍ ଆରମ୍ଭ କରିହେଲା ନାହିଁ। ପୁଣି ଚେଷ୍ଟା କରିବା ପୂର୍ବରୁ ବର୍ତ୍ତମାନର ମୂଲ୍ୟ ଯାଞ୍ଚ କରନ୍ତୁ।</string>
-    <string name="memory_scripts_freeze_inactive">ସ୍କ୍ରିପ୍ଟର ଫ୍ରିଜ୍ ବନ୍ଦ ଅଛି।</string>
+    <string name="memory_scripts_freeze_inactive">ଏହି ସ୍କ୍ରିପ୍ଟ୍ ଆଉ ମୂଲ୍ୟଗୁଡ଼ିକୁ ଫ୍ରିଜ୍ କରୁନାହିଁ।</string>
     <string name="memory_bookmark_change_incomplete">ବୁକମାର୍କ୍ ପରିବର୍ତ୍ତନ ସମ୍ପୂର୍ଣ୍ଣ ହୋଇପାରିଲା ନାହିଁ। ପୁଣି ଚେଷ୍ଟା କରିବା ପୂର୍ବରୁ ସେଭ୍ ହୋଇଥିବା ଆଇଟମ୍ ଦେଖନ୍ତୁ।</string>
     <string name="memory_editor_value_updated">ମୂଲ୍ୟ ଅପଡେଟ୍ ହୋଇଛି।</string>
     <string name="memory_editor_value_updated_frozen">ମୂଲ୍ୟ ଅପଡେଟ୍ ହୋଇଛି ଏବଂ ଫ୍ରିଜ୍ ସକ୍ରିୟ ହୋଇଛି।</string>

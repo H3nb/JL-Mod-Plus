@@ -167,10 +167,10 @@
     <string name="memory_recipes_title" tools:ignore="MissingTranslation">त्वरित कार्रवाई</string>
     <string name="memory_recipes_simple_from_saved" tools:ignore="MissingTranslation">लक्ष्य: <xliff:g id="bookmark_name" example="Coins">%1$s</xliff:g></string>
     <string name="memory_recipes_preview" tools:ignore="MissingTranslation">लक्ष्यों का पूर्वावलोकन</string>
-    <string name="memory_recipes_stop_freeze" tools:ignore="MissingTranslation">स्क्रिप्ट फ़्रीज़ रोकें</string>
+    <string name="memory_recipes_stop_freeze" tools:ignore="MissingTranslation">मानों को फ़्रीज़ करना बंद करें</string>
     <string name="memory_recipes_freeze" tools:ignore="MissingTranslation">जब तक यह गेम चले, फ़्रीज़ रखें</string>
     <string name="memory_recipes_run" tools:ignore="MissingTranslation">चलाएं</string>
-    <string name="memory_recipes_active_freezes" tools:ignore="MissingTranslation">सक्रिय स्क्रिप्ट फ़्रीज़</string>
+    <string name="memory_recipes_active_freezes" tools:ignore="MissingTranslation">मानों को फ़्रीज़ करने वाली स्क्रिप्ट</string>
     <string name="memory_recipes_target_unavailable" tools:ignore="MissingTranslation">बुकमार्क लक्ष्य उपलब्ध नहीं है। चलाने से पहले इसे रिफ़्रेश करें या पुनः लिंक करें।</string>
     <string name="memory_recipes_preview_values" tools:ignore="MissingTranslation">वर्तमान मान: <xliff:g id="name" example="Example">%1$s</xliff:g></string>
     <string name="memory_scripts_title" tools:ignore="MissingTranslation">स्क्रिप्ट</string>
@@ -195,7 +195,7 @@
     <string name="memory_scripts_paste" tools:ignore="MissingTranslation">पेस्ट करें</string>
     <string name="memory_scripts_clipboard_invalid" tools:ignore="MissingTranslation">क्लिपबोर्ड खाली है या दस्तावेज़ 64 KiB से बड़ा है</string>
     <string name="memory_scripts_invalid" tools:ignore="MissingTranslation">अमान्य स्क्रिप्ट फ़ॉर्मैट</string>
-    <string name="memory_scripts_freeze_active" tools:ignore="MissingTranslation">इस स्क्रिप्ट के लिए फ़्रीज़ सक्रिय है</string>
+    <string name="memory_scripts_freeze_active" tools:ignore="MissingTranslation">यह स्क्रिप्ट मानों को फ़्रीज़ कर रही है</string>
     <string name="memory_scripts_delete" tools:ignore="MissingTranslation">हटाएं</string>
     <string name="memory_scripts_delete_confirm" tools:ignore="MissingTranslation">“<xliff:g id="name" example="Example">%1$s</xliff:g>” हटाएं? इस स्क्रिप्ट के लिए कोई भी सक्रिय फ़्रीज़ बंद हो जाएगा।</string>
     <string name="memory_scripts_empty" tools:ignore="MissingTranslation">कोई स्क्रिप्ट सहेजी नहीं गई</string>
@@ -242,7 +242,7 @@
     <string name="memory_builder_min" tools:ignore="MissingTranslation">न्यूनतम (वैकल्पिक)</string>
     <string name="memory_builder_max" tools:ignore="MissingTranslation">अधिकतम (वैकल्पिक)</string>
     <string name="memory_builder_add_target" tools:ignore="MissingTranslation">लक्ष्य जोड़ें</string>
-    <string name="memory_builder_freeze_short" tools:ignore="MissingTranslation">चयनित मानों को निश्चित मात्रा पर रखें</string>
+    <string name="memory_builder_freeze_short" tools:ignore="MissingTranslation">चयनित मान स्थिर रखें</string>
     <string name="memory_builder_form_short" tools:ignore="MissingTranslation">कई मानों को एक स्थान पर समायोजित करें</string>
     <string name="memory_builder_actions_short" tools:ignore="MissingTranslation">एक बार की सेट करें, जोड़ें या घटाएं कार्रवाइयां चलाएं</string>
     <string name="memory_editor_refine_scan" tools:ignore="MissingTranslation">परिष्कृत करें</string>
@@ -266,7 +266,7 @@
     <string name="memory_list_watch_removal_failed">सत्र की ट्रैकिंग नहीं हटाई जा सकी: %1$s</string>
     <string name="memory_list_removal_unknown_error">अज्ञात गड़बड़ी</string>
     <string name="memory_editor_edit_freeze_failed">मान अपडेट किया गया, लेकिन फ़्रीज़ शुरू नहीं हो सका। दोबारा कोशिश करने से पहले मौजूदा मान जांचें।</string>
-    <string name="memory_scripts_freeze_inactive">स्क्रिप्ट का फ़्रीज़ बंद है।</string>
+    <string name="memory_scripts_freeze_inactive">यह स्क्रिप्ट अब मानों को फ़्रीज़ नहीं कर रही है।</string>
     <string name="memory_bookmark_change_incomplete">बुकमार्क में बदलाव पूरा नहीं हो सका। फिर कोशिश करने से पहले सहेजे गए आइटम देखें।</string>
     <string name="memory_editor_value_updated">मान अपडेट हो गया।</string>
     <string name="memory_editor_value_updated_frozen">मान अपडेट हो गया और फ़्रीज़ चालू हो गया।</string>

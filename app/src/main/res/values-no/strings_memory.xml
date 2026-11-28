@@ -167,10 +167,10 @@
     <string name="memory_recipes_title" tools:ignore="MissingTranslation">Hurtighandling</string>
     <string name="memory_recipes_simple_from_saved" tools:ignore="MissingTranslation">Mål: <xliff:g id="bookmark_name" example="Coins">%1$s</xliff:g></string>
     <string name="memory_recipes_preview" tools:ignore="MissingTranslation">Forhåndsvis mål</string>
-    <string name="memory_recipes_stop_freeze" tools:ignore="MissingTranslation">Stopp skriptfrysing</string>
+    <string name="memory_recipes_stop_freeze" tools:ignore="MissingTranslation">Stopp frysing av verdier</string>
     <string name="memory_recipes_freeze" tools:ignore="MissingTranslation">Hold frosset mens dette spillet kjører</string>
     <string name="memory_recipes_run" tools:ignore="MissingTranslation">Kjør</string>
-    <string name="memory_recipes_active_freezes" tools:ignore="MissingTranslation">Aktive skriptfrysinger</string>
+    <string name="memory_recipes_active_freezes" tools:ignore="MissingTranslation">Skript som fryser verdier</string>
     <string name="memory_recipes_target_unavailable" tools:ignore="MissingTranslation">Bokmerkemålet er ikke tilgjengelig. Oppdater eller koble det til på nytt før du kjører.</string>
     <string name="memory_recipes_preview_values" tools:ignore="MissingTranslation">Gjeldende verdier: <xliff:g id="name" example="Example">%1$s</xliff:g></string>
     <string name="memory_scripts_title" tools:ignore="MissingTranslation">Skript</string>
@@ -195,7 +195,7 @@
     <string name="memory_scripts_paste" tools:ignore="MissingTranslation">Lim inn</string>
     <string name="memory_scripts_clipboard_invalid" tools:ignore="MissingTranslation">Utklippstavlen er tom eller dokumentet overskrider 64 KiB</string>
     <string name="memory_scripts_invalid" tools:ignore="MissingTranslation">Ugyldig skriptformat</string>
-    <string name="memory_scripts_freeze_active" tools:ignore="MissingTranslation">Frys er aktiv for dette skriptet</string>
+    <string name="memory_scripts_freeze_active" tools:ignore="MissingTranslation">Dette skriptet fryser verdier</string>
     <string name="memory_scripts_delete" tools:ignore="MissingTranslation">Slett</string>
     <string name="memory_scripts_delete_confirm" tools:ignore="MissingTranslation">Vil du slette «<xliff:g id="name" example="Example">%1$s</xliff:g>»? Eventuell aktiv frysing for dette skriptet stopper.</string>
     <string name="memory_scripts_empty" tools:ignore="MissingTranslation">Ingen skript lagret</string>
@@ -242,7 +242,7 @@
     <string name="memory_builder_min" tools:ignore="MissingTranslation">Minimum (valgfritt)</string>
     <string name="memory_builder_max" tools:ignore="MissingTranslation">Maksimum (valgfritt)</string>
     <string name="memory_builder_add_target" tools:ignore="MissingTranslation">Legg til mål</string>
-    <string name="memory_builder_freeze_short" tools:ignore="MissingTranslation">Hold valgte verdier på faste beløp</string>
+    <string name="memory_builder_freeze_short" tools:ignore="MissingTranslation">Hold valgte verdier konstante</string>
     <string name="memory_builder_form_short" tools:ignore="MissingTranslation">Juster flere verdier på ett sted</string>
     <string name="memory_builder_actions_short" tools:ignore="MissingTranslation">Kjør engangshandlinger for å angi, legge til eller trekke fra</string>
     <string name="memory_editor_refine_scan" tools:ignore="MissingTranslation">Avgrens</string>
@@ -266,7 +266,7 @@
     <string name="memory_list_watch_removal_failed">Kunne ikke fjerne sporing i økten: %1$s</string>
     <string name="memory_list_removal_unknown_error">Ukjent feil</string>
     <string name="memory_editor_edit_freeze_failed">Verdien er oppdatert, men frysing kunne ikke startes. Kontroller gjeldende verdi før du prøver igjen.</string>
-    <string name="memory_scripts_freeze_inactive">Frysing med skriptet er slått av.</string>
+    <string name="memory_scripts_freeze_inactive">Dette skriptet fryser ikke lenger verdier.</string>
     <string name="memory_bookmark_change_incomplete">Kunne ikke fullføre endringen av bokmerket. Sjekk Lagret før du prøver på nytt.</string>
     <string name="memory_editor_value_updated">Verdien er oppdatert.</string>
     <string name="memory_editor_value_updated_frozen">Verdien er oppdatert og frysing er aktivert.</string>

@@ -173,10 +173,10 @@
     <string name="memory_recipes_title" tools:ignore="MissingTranslation">פעולה מהירה</string>
     <string name="memory_recipes_simple_from_saved" tools:ignore="MissingTranslation">יעד: <xliff:g id="bookmark_name" example="Coins">%1$s</xliff:g></string>
     <string name="memory_recipes_preview" tools:ignore="MissingTranslation">תצוגה מקדימה של יעדים</string>
-    <string name="memory_recipes_stop_freeze" tools:ignore="MissingTranslation">עצירת הקפאת סקריפט</string>
+    <string name="memory_recipes_stop_freeze" tools:ignore="MissingTranslation">הפסקת הקפאת ערכים</string>
     <string name="memory_recipes_freeze" tools:ignore="MissingTranslation">שמירה בהקפאה בזמן שהמשחק פועל</string>
     <string name="memory_recipes_run" tools:ignore="MissingTranslation">הפעלה</string>
-    <string name="memory_recipes_active_freezes" tools:ignore="MissingTranslation">הקפאות סקריפט פעילות</string>
+    <string name="memory_recipes_active_freezes" tools:ignore="MissingTranslation">סקריפטים שמקפיאים ערכים</string>
     <string name="memory_recipes_target_unavailable" tools:ignore="MissingTranslation">יעד הסימנייה אינו זמין. יש לרענן או לקשר אותו מחדש לפני ההפעלה.</string>
     <string name="memory_recipes_preview_values" tools:ignore="MissingTranslation">ערכים נוכחיים: <xliff:g id="name" example="Example">%1$s</xliff:g></string>
     <string name="memory_scripts_title" tools:ignore="MissingTranslation">סקריפטים</string>
@@ -201,7 +201,7 @@
     <string name="memory_scripts_paste" tools:ignore="MissingTranslation">הדבקה</string>
     <string name="memory_scripts_clipboard_invalid" tools:ignore="MissingTranslation">הלוח ריק או שהמסמך חורג מ-64 KiB</string>
     <string name="memory_scripts_invalid" tools:ignore="MissingTranslation">פורמט סקריפט לא תקין</string>
-    <string name="memory_scripts_freeze_active" tools:ignore="MissingTranslation">הקפאה פעילה עבור סקריפט זה</string>
+    <string name="memory_scripts_freeze_active" tools:ignore="MissingTranslation">סקריפט זה מקפיא ערכים</string>
     <string name="memory_scripts_delete" tools:ignore="MissingTranslation">מחיקה</string>
     <string name="memory_scripts_delete_confirm" tools:ignore="MissingTranslation">למחוק את “<xliff:g id="name" example="Example">%1$s</xliff:g>”? כל הקפאה פעילה עבור סקריפט זה תיעצר.</string>
     <string name="memory_scripts_empty" tools:ignore="MissingTranslation">לא נשמרו סקריפטים</string>
@@ -248,7 +248,7 @@
     <string name="memory_builder_min" tools:ignore="MissingTranslation">מינימום (אופציונלי)</string>
     <string name="memory_builder_max" tools:ignore="MissingTranslation">מקסימום (אופציונלי)</string>
     <string name="memory_builder_add_target" tools:ignore="MissingTranslation">הוספת יעד</string>
-    <string name="memory_builder_freeze_short" tools:ignore="MissingTranslation">שמירה על ערכים נבחרים בכמויות קבועות</string>
+    <string name="memory_builder_freeze_short" tools:ignore="MissingTranslation">שמירה על ערכים נבחרים קבועים</string>
     <string name="memory_builder_form_short" tools:ignore="MissingTranslation">התאמת מספר ערכים במקום אחד</string>
     <string name="memory_builder_actions_short" tools:ignore="MissingTranslation">הפעלת פעולות חד-פעמיות של הגדרה, הוספה או הפחתה</string>
     <string name="memory_editor_refine_scan" tools:ignore="MissingTranslation">מיקוד</string>
@@ -272,7 +272,7 @@
     <string name="memory_list_watch_removal_failed">לא ניתן להסיר את המעקב בהפעלה: %1$s</string>
     <string name="memory_list_removal_unknown_error">שגיאה לא ידועה</string>
     <string name="memory_editor_edit_freeze_failed">הערך עודכן, אך לא ניתן היה להתחיל את ההקפאה. יש לבדוק את הערך הנוכחי לפני ניסיון נוסף.</string>
-    <string name="memory_scripts_freeze_inactive">ההקפאה של הסקריפט כבויה.</string>
+    <string name="memory_scripts_freeze_inactive">סקריפט זה כבר לא מקפיא ערכים.</string>
     <string name="memory_bookmark_change_incomplete">לא ניתן היה להשלים את השינוי בסימנייה. יש לבדוק את הפריטים השמורים לפני ניסיון נוסף.</string>
     <string name="memory_editor_value_updated">הערך עודכן.</string>
     <string name="memory_editor_value_updated_frozen">הערך עודכן וההקפאה הופעלה.</string>

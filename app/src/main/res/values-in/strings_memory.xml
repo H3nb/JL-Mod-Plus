@@ -260,7 +260,7 @@
     <string name="memory_list_watch_removal_failed">Tidak dapat menghentikan pelacakan sesi: %1$s</string>
     <string name="memory_list_removal_unknown_error">Kesalahan tidak diketahui</string>
     <string name="memory_editor_edit_freeze_failed">Nilai telah diubah, tetapi pembekuan tidak dapat dimulai. Periksa nilai saat ini sebelum mencoba lagi.</string>
-    <string name="memory_scripts_freeze_inactive">Pembekuan skrip tidak aktif.</string>
+    <string name="memory_scripts_freeze_inactive">Skrip tidak lagi membekukan nilai.</string>
     <string name="memory_bookmark_change_incomplete">Perubahan penanda tidak dapat diselesaikan. Periksa Tersimpan sebelum mencoba lagi.</string>
     <string name="memory_editor_value_updated">Nilai diperbarui.</string>
     <string name="memory_editor_value_updated_frozen">Nilai diperbarui dan pembekuan diaktifkan.</string>

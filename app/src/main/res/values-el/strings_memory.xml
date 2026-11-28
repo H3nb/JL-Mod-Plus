@@ -167,10 +167,10 @@
     <string name="memory_recipes_title" tools:ignore="MissingTranslation">Γρήγορη ενέργεια</string>
     <string name="memory_recipes_simple_from_saved" tools:ignore="MissingTranslation">Προορισμός: <xliff:g id="bookmark_name" example="Coins">%1$s</xliff:g></string>
     <string name="memory_recipes_preview" tools:ignore="MissingTranslation">Προεπισκόπηση προορισμών</string>
-    <string name="memory_recipes_stop_freeze" tools:ignore="MissingTranslation">Διακοπή παγώματος σεναρίου</string>
+    <string name="memory_recipes_stop_freeze" tools:ignore="MissingTranslation">Διακοπή παγώματος τιμών</string>
     <string name="memory_recipes_freeze" tools:ignore="MissingTranslation">Διατήρηση παγώματος όσο εκτελείται αυτό το παιχνίδι</string>
     <string name="memory_recipes_run" tools:ignore="MissingTranslation">Εκτέλεση</string>
-    <string name="memory_recipes_active_freezes" tools:ignore="MissingTranslation">Ενεργά παγώματα σεναρίων</string>
+    <string name="memory_recipes_active_freezes" tools:ignore="MissingTranslation">Σενάρια που παγώνουν τιμές</string>
     <string name="memory_recipes_target_unavailable" tools:ignore="MissingTranslation">Ο προορισμός του σελιδοδείκτη δεν είναι διαθέσιμος. Ανανεώστε τον ή επανασυνδέστε τον πριν από την εκτέλεση.</string>
     <string name="memory_recipes_preview_values" tools:ignore="MissingTranslation">Τρέχουσες τιμές: <xliff:g id="name" example="Example">%1$s</xliff:g></string>
     <string name="memory_scripts_title" tools:ignore="MissingTranslation">Σενάρια</string>
@@ -195,7 +195,7 @@
     <string name="memory_scripts_paste" tools:ignore="MissingTranslation">Επικόλληση</string>
     <string name="memory_scripts_clipboard_invalid" tools:ignore="MissingTranslation">Το πρόχειρο είναι κενό ή το έγγραφο υπερβαίνει τα 64 KiB</string>
     <string name="memory_scripts_invalid" tools:ignore="MissingTranslation">Μη έγκυρη μορφή σεναρίου</string>
-    <string name="memory_scripts_freeze_active" tools:ignore="MissingTranslation">Ενεργό πάγωμα για αυτό το σενάριο</string>
+    <string name="memory_scripts_freeze_active" tools:ignore="MissingTranslation">Αυτό το σενάριο παγώνει τιμές</string>
     <string name="memory_scripts_delete" tools:ignore="MissingTranslation">Διαγραφή</string>
     <string name="memory_scripts_delete_confirm" tools:ignore="MissingTranslation">Διαγραφή του <xliff:g id="name" example="Example">%1$s</xliff:g>; Τυχόν ενεργό πάγωμα για αυτό το σενάριο θα σταματήσει.</string>
     <string name="memory_scripts_empty" tools:ignore="MissingTranslation">Δεν υπάρχουν αποθηκευμένα σενάρια</string>
@@ -242,7 +242,7 @@
     <string name="memory_builder_min" tools:ignore="MissingTranslation">Ελάχιστο (προαιρετικό)</string>
     <string name="memory_builder_max" tools:ignore="MissingTranslation">Μέγιστο (προαιρετικό)</string>
     <string name="memory_builder_add_target" tools:ignore="MissingTranslation">Προσθήκη προορισμού</string>
-    <string name="memory_builder_freeze_short" tools:ignore="MissingTranslation">Διατήρηση επιλεγμένων τιμών σε σταθερά ποσά</string>
+    <string name="memory_builder_freeze_short" tools:ignore="MissingTranslation">Διατήρηση επιλεγμένων τιμών σταθερών</string>
     <string name="memory_builder_form_short" tools:ignore="MissingTranslation">Προσαρμογή πολλών τιμών σε ένα σημείο</string>
     <string name="memory_builder_actions_short" tools:ignore="MissingTranslation">Εκτέλεση εφάπαξ ενεργειών Ορισμού, Πρόσθεσης ή Αφαίρεσης</string>
     <string name="memory_editor_refine_scan" tools:ignore="MissingTranslation">Περιορισμός</string>
@@ -266,7 +266,7 @@
     <string name="memory_list_watch_removal_failed">Δεν ήταν δυνατή η κατάργηση της παρακολούθησης συνεδρίας: %1$s</string>
     <string name="memory_list_removal_unknown_error">Άγνωστο σφάλμα</string>
     <string name="memory_editor_edit_freeze_failed">Η τιμή ενημερώθηκε, αλλά δεν ήταν δυνατή η έναρξη του παγώματος. Ελέγξτε την τρέχουσα τιμή πριν δοκιμάσετε ξανά.</string>
-    <string name="memory_scripts_freeze_inactive">Το πάγωμα από το σενάριο είναι ανενεργό.</string>
+    <string name="memory_scripts_freeze_inactive">Το σενάριο δεν παγώνει πλέον τιμές.</string>
     <string name="memory_bookmark_change_incomplete">Δεν ήταν δυνατή η ολοκλήρωση της αλλαγής του σελιδοδείκτη. Ελέγξτε τα Αποθηκευμένα πριν δοκιμάσετε ξανά.</string>
     <string name="memory_editor_value_updated">Η τιμή ενημερώθηκε.</string>
     <string name="memory_editor_value_updated_frozen">Η τιμή ενημερώθηκε και το πάγωμα ενεργοποιήθηκε.</string>

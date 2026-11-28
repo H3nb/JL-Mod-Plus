@@ -179,10 +179,10 @@
     <string name="memory_recipes_title" tools:ignore="MissingTranslation">Szybka akcja</string>
     <string name="memory_recipes_simple_from_saved" tools:ignore="MissingTranslation">Cel: <xliff:g id="bookmark_name" example="Coins">%1$s</xliff:g></string>
     <string name="memory_recipes_preview" tools:ignore="MissingTranslation">Podgląd celów</string>
-    <string name="memory_recipes_stop_freeze" tools:ignore="MissingTranslation">Zatrzymaj zamrożenie skryptu</string>
+    <string name="memory_recipes_stop_freeze" tools:ignore="MissingTranslation">Zatrzymaj zamrażanie wartości</string>
     <string name="memory_recipes_freeze" tools:ignore="MissingTranslation">Utrzymuj zamrożenie podczas działania tej gry</string>
     <string name="memory_recipes_run" tools:ignore="MissingTranslation">Uruchom</string>
-    <string name="memory_recipes_active_freezes" tools:ignore="MissingTranslation">Aktywne zamrożenia skryptów</string>
+    <string name="memory_recipes_active_freezes" tools:ignore="MissingTranslation">Skrypty zamrażające wartości</string>
     <string name="memory_recipes_target_unavailable" tools:ignore="MissingTranslation">Cel zakładki jest niedostępny. Odśwież go lub połącz ponownie przed uruchomieniem.</string>
     <string name="memory_recipes_preview_values" tools:ignore="MissingTranslation">Bieżące wartości: <xliff:g id="name" example="Example">%1$s</xliff:g></string>
     <string name="memory_scripts_title" tools:ignore="MissingTranslation">Skrypty</string>
@@ -207,7 +207,7 @@
     <string name="memory_scripts_paste" tools:ignore="MissingTranslation">Wklej</string>
     <string name="memory_scripts_clipboard_invalid" tools:ignore="MissingTranslation">Schowek jest pusty lub dokument przekracza 64 KiB</string>
     <string name="memory_scripts_invalid" tools:ignore="MissingTranslation">Nieprawidłowy format skryptu</string>
-    <string name="memory_scripts_freeze_active" tools:ignore="MissingTranslation">Zamrożenie aktywne dla tego skryptu</string>
+    <string name="memory_scripts_freeze_active" tools:ignore="MissingTranslation">Ten skrypt zamraża wartości</string>
     <string name="memory_scripts_delete" tools:ignore="MissingTranslation">Usuń</string>
     <string name="memory_scripts_delete_confirm" tools:ignore="MissingTranslation">Usunąć <xliff:g id="name" example="Example">%1$s</xliff:g>? Każde aktywne zamrożenie tego skryptu zostanie zatrzymane.</string>
     <string name="memory_scripts_empty" tools:ignore="MissingTranslation">Brak zapisanych skryptów</string>
@@ -278,7 +278,7 @@
     <string name="memory_list_watch_removal_failed">Nie udało się usunąć śledzenia w sesji: %1$s</string>
     <string name="memory_list_removal_unknown_error">Nieznany błąd</string>
     <string name="memory_editor_edit_freeze_failed">Wartość zaktualizowano, ale nie udało się rozpocząć zamrażania. Sprawdź bieżącą wartość przed ponowną próbą.</string>
-    <string name="memory_scripts_freeze_inactive">Zamrażanie przez skrypt jest wyłączone.</string>
+    <string name="memory_scripts_freeze_inactive">Ten skrypt nie zamraża już wartości.</string>
     <string name="memory_bookmark_change_incomplete">Nie udało się ukończyć zmiany zakładki. Przed ponowną próbą sprawdź Zapisane.</string>
     <string name="memory_editor_value_updated">Zaktualizowano wartość.</string>
     <string name="memory_editor_value_updated_frozen">Zaktualizowano wartość i włączono zamrożenie.</string>

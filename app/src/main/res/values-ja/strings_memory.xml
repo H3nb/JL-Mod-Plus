@@ -161,10 +161,10 @@
     <string name="memory_recipes_title" tools:ignore="MissingTranslation">クイックアクション</string>
     <string name="memory_recipes_simple_from_saved" tools:ignore="MissingTranslation">対象: <xliff:g id="bookmark_name" example="Coins">%1$s</xliff:g></string>
     <string name="memory_recipes_preview" tools:ignore="MissingTranslation">対象をプレビュー</string>
-    <string name="memory_recipes_stop_freeze" tools:ignore="MissingTranslation">スクリプトの固定を停止</string>
+    <string name="memory_recipes_stop_freeze" tools:ignore="MissingTranslation">値の固定を停止</string>
     <string name="memory_recipes_freeze" tools:ignore="MissingTranslation">このゲームの実行中は固定を維持</string>
     <string name="memory_recipes_run" tools:ignore="MissingTranslation">実行</string>
-    <string name="memory_recipes_active_freezes" tools:ignore="MissingTranslation">有効なスクリプト固定</string>
+    <string name="memory_recipes_active_freezes" tools:ignore="MissingTranslation">値を固定中のスクリプト</string>
     <string name="memory_recipes_target_unavailable" tools:ignore="MissingTranslation">ブックマークの対象が利用できません。実行前に更新するか再リンクしてください。</string>
     <string name="memory_recipes_preview_values" tools:ignore="MissingTranslation">現在の値: <xliff:g id="name" example="Example">%1$s</xliff:g></string>
     <string name="memory_scripts_title" tools:ignore="MissingTranslation">スクリプト</string>
@@ -189,7 +189,7 @@
     <string name="memory_scripts_paste" tools:ignore="MissingTranslation">貼り付け</string>
     <string name="memory_scripts_clipboard_invalid" tools:ignore="MissingTranslation">クリップボードが空か、ドキュメントが 64 KiB を超えています</string>
     <string name="memory_scripts_invalid" tools:ignore="MissingTranslation">無効なスクリプト形式です</string>
-    <string name="memory_scripts_freeze_active" tools:ignore="MissingTranslation">このスクリプトの固定が有効です</string>
+    <string name="memory_scripts_freeze_active" tools:ignore="MissingTranslation">このスクリプトは値を固定しています</string>
     <string name="memory_scripts_delete" tools:ignore="MissingTranslation">削除</string>
     <string name="memory_scripts_delete_confirm" tools:ignore="MissingTranslation"><xliff:g id="name" example="Example">%1$s</xliff:g> を削除しますか？このスクリプトで有効な固定はすべて停止します。</string>
     <string name="memory_scripts_empty" tools:ignore="MissingTranslation">保存済みのスクリプトはありません</string>
@@ -260,7 +260,7 @@
     <string name="memory_list_watch_removal_failed">セッション内の追跡を解除できませんでした：%1$s</string>
     <string name="memory_list_removal_unknown_error">不明なエラー</string>
     <string name="memory_editor_edit_freeze_failed">値を更新しましたが、固定を開始できませんでした。再試行する前に現在の値を確認してください。</string>
-    <string name="memory_scripts_freeze_inactive">スクリプトによる固定は無効です。</string>
+    <string name="memory_scripts_freeze_inactive">このスクリプトによる値の固定は終了しました。</string>
     <string name="memory_bookmark_change_incomplete">ブックマークの変更を完了できませんでした。再試行する前に保存済み項目を確認してください。</string>
     <string name="memory_editor_value_updated">値を更新しました。</string>
     <string name="memory_editor_value_updated_frozen">値を更新し、固定を有効にしました。</string>

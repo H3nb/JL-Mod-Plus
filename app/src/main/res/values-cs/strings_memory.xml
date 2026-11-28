@@ -179,10 +179,10 @@
     <string name="memory_recipes_title" tools:ignore="MissingTranslation">Rychlá akce</string>
     <string name="memory_recipes_simple_from_saved" tools:ignore="MissingTranslation">Cíl: <xliff:g id="bookmark_name" example="Coins">%1$s</xliff:g></string>
     <string name="memory_recipes_preview" tools:ignore="MissingTranslation">Náhled cílů</string>
-    <string name="memory_recipes_stop_freeze" tools:ignore="MissingTranslation">Zastavit zmrazení skriptu</string>
+    <string name="memory_recipes_stop_freeze" tools:ignore="MissingTranslation">Zastavit zmrazování hodnot</string>
     <string name="memory_recipes_freeze" tools:ignore="MissingTranslation">Ponechat zmrazené po dobu běhu hry</string>
     <string name="memory_recipes_run" tools:ignore="MissingTranslation">Spustit</string>
-    <string name="memory_recipes_active_freezes" tools:ignore="MissingTranslation">Aktivní zmrazení skriptů</string>
+    <string name="memory_recipes_active_freezes" tools:ignore="MissingTranslation">Skripty zmrazující hodnoty</string>
     <string name="memory_recipes_target_unavailable" tools:ignore="MissingTranslation">Cíl záložky není k dispozici. Před spuštěním jej obnovte nebo znovu propojte.</string>
     <string name="memory_recipes_preview_values" tools:ignore="MissingTranslation">Aktuální hodnoty: <xliff:g id="name" example="Example">%1$s</xliff:g></string>
     <string name="memory_scripts_title" tools:ignore="MissingTranslation">Skripty</string>
@@ -207,7 +207,7 @@
     <string name="memory_scripts_paste" tools:ignore="MissingTranslation">Vložit</string>
     <string name="memory_scripts_clipboard_invalid" tools:ignore="MissingTranslation">Schránka je prázdná nebo dokument přesahuje 64 KiB</string>
     <string name="memory_scripts_invalid" tools:ignore="MissingTranslation">Neplatný formát skriptu</string>
-    <string name="memory_scripts_freeze_active" tools:ignore="MissingTranslation">Zmrazení tohoto skriptu je aktivní</string>
+    <string name="memory_scripts_freeze_active" tools:ignore="MissingTranslation">Tento skript zmrazuje hodnoty</string>
     <string name="memory_scripts_delete" tools:ignore="MissingTranslation">Smazat</string>
     <string name="memory_scripts_delete_confirm" tools:ignore="MissingTranslation">Smazat „<xliff:g id="name" example="Example">%1$s</xliff:g>“? Případné aktivní zmrazení tohoto skriptu se zastaví.</string>
     <string name="memory_scripts_empty" tools:ignore="MissingTranslation">Žádné uložené skripty</string>
@@ -254,7 +254,7 @@
     <string name="memory_builder_min" tools:ignore="MissingTranslation">Minimum (volitelné)</string>
     <string name="memory_builder_max" tools:ignore="MissingTranslation">Maximum (volitelné)</string>
     <string name="memory_builder_add_target" tools:ignore="MissingTranslation">Přidat cíl</string>
-    <string name="memory_builder_freeze_short" tools:ignore="MissingTranslation">Udržet vybrané hodnoty na pevných hodnotách</string>
+    <string name="memory_builder_freeze_short" tools:ignore="MissingTranslation">Udržet vybrané hodnoty neměnné</string>
     <string name="memory_builder_form_short" tools:ignore="MissingTranslation">Upravit více hodnot na jednom místě</string>
     <string name="memory_builder_actions_short" tools:ignore="MissingTranslation">Spouštět jednorázové akce Nastavit, Přičíst nebo Odečíst</string>
     <string name="memory_editor_refine_scan" tools:ignore="MissingTranslation">Upřesnit</string>
@@ -278,7 +278,7 @@
     <string name="memory_list_watch_removal_failed">Sledování relace se nepodařilo odebrat: %1$s</string>
     <string name="memory_list_removal_unknown_error">Neznámá chyba</string>
     <string name="memory_editor_edit_freeze_failed">Hodnota byla aktualizována, ale zmrazení se nepodařilo spustit. Před dalším pokusem zkontrolujte aktuální hodnotu.</string>
-    <string name="memory_scripts_freeze_inactive">Zmrazení skriptem je vypnuté.</string>
+    <string name="memory_scripts_freeze_inactive">Tento skript již nezmrazuje hodnoty.</string>
     <string name="memory_bookmark_change_incomplete">Změnu záložky se nepodařilo dokončit. Před dalším pokusem zkontrolujte sekci Uložené.</string>
     <string name="memory_editor_value_updated">Hodnota aktualizována.</string>
     <string name="memory_editor_value_updated_frozen">Hodnota aktualizována a zmrazení zapnuto.</string>

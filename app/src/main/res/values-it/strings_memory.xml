@@ -173,10 +173,10 @@
     <string name="memory_recipes_title" tools:ignore="MissingTranslation">Azione rapida</string>
     <string name="memory_recipes_simple_from_saved" tools:ignore="MissingTranslation">Destinazione: <xliff:g id="bookmark_name" example="Coins">%1$s</xliff:g></string>
     <string name="memory_recipes_preview" tools:ignore="MissingTranslation">Anteprima destinazioni</string>
-    <string name="memory_recipes_stop_freeze" tools:ignore="MissingTranslation">Interrompi blocco script</string>
+    <string name="memory_recipes_stop_freeze" tools:ignore="MissingTranslation">Interrompi il blocco dei valori</string>
     <string name="memory_recipes_freeze" tools:ignore="MissingTranslation">Mantieni bloccato durante l’esecuzione di questo gioco</string>
     <string name="memory_recipes_run" tools:ignore="MissingTranslation">Esegui</string>
-    <string name="memory_recipes_active_freezes" tools:ignore="MissingTranslation">Blocchi script attivi</string>
+    <string name="memory_recipes_active_freezes" tools:ignore="MissingTranslation">Script che bloccano valori</string>
     <string name="memory_recipes_target_unavailable" tools:ignore="MissingTranslation">La destinazione del segnalibro non è disponibile. Aggiornala o ricollegala prima dell’esecuzione.</string>
     <string name="memory_recipes_preview_values" tools:ignore="MissingTranslation">Valori attuali: <xliff:g id="name" example="Example">%1$s</xliff:g></string>
     <string name="memory_scripts_title" tools:ignore="MissingTranslation">Script</string>
@@ -201,7 +201,7 @@
     <string name="memory_scripts_paste" tools:ignore="MissingTranslation">Incolla</string>
     <string name="memory_scripts_clipboard_invalid" tools:ignore="MissingTranslation">Gli appunti sono vuoti o il documento supera i 64 KiB</string>
     <string name="memory_scripts_invalid" tools:ignore="MissingTranslation">Formato script non valido</string>
-    <string name="memory_scripts_freeze_active" tools:ignore="MissingTranslation">Blocco attivo per questo script</string>
+    <string name="memory_scripts_freeze_active" tools:ignore="MissingTranslation">Questo script blocca i valori</string>
     <string name="memory_scripts_delete" tools:ignore="MissingTranslation">Elimina</string>
     <string name="memory_scripts_delete_confirm" tools:ignore="MissingTranslation">Eliminare <xliff:g id="name" example="Example">%1$s</xliff:g>? Eventuali blocchi attivi per questo script verranno interrotti.</string>
     <string name="memory_scripts_empty" tools:ignore="MissingTranslation">Nessuno script salvato</string>
@@ -248,7 +248,7 @@
     <string name="memory_builder_min" tools:ignore="MissingTranslation">Minimo (facoltativo)</string>
     <string name="memory_builder_max" tools:ignore="MissingTranslation">Massimo (facoltativo)</string>
     <string name="memory_builder_add_target" tools:ignore="MissingTranslation">Aggiungi destinazione</string>
-    <string name="memory_builder_freeze_short" tools:ignore="MissingTranslation">Mantieni i valori selezionati a importi fissi</string>
+    <string name="memory_builder_freeze_short" tools:ignore="MissingTranslation">Mantieni costanti i valori selezionati</string>
     <string name="memory_builder_form_short" tools:ignore="MissingTranslation">Regola più valori in un unico posto</string>
     <string name="memory_builder_actions_short" tools:ignore="MissingTranslation">Esegui azioni una tantum Imposta, Aggiungi o Sottrai</string>
     <string name="memory_editor_refine_scan" tools:ignore="MissingTranslation">Affina</string>
@@ -272,7 +272,7 @@
     <string name="memory_list_watch_removal_failed">Impossibile rimuovere il monitoraggio della sessione: %1$s</string>
     <string name="memory_list_removal_unknown_error">Errore sconosciuto</string>
     <string name="memory_editor_edit_freeze_failed">Valore aggiornato, ma non è stato possibile avviare il blocco. Controlla il valore attuale prima di riprovare.</string>
-    <string name="memory_scripts_freeze_inactive">Il blocco dello script è disattivato.</string>
+    <string name="memory_scripts_freeze_inactive">Questo script non blocca più i valori.</string>
     <string name="memory_bookmark_change_incomplete">Impossibile completare la modifica del segnalibro. Controlla Salvati prima di riprovare.</string>
     <string name="memory_editor_value_updated">Valore aggiornato.</string>
     <string name="memory_editor_value_updated_frozen">Valore aggiornato e blocco attivato.</string>

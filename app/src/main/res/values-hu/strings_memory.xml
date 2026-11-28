@@ -167,10 +167,10 @@
     <string name="memory_recipes_title" tools:ignore="MissingTranslation">Gyorsművelet</string>
     <string name="memory_recipes_simple_from_saved" tools:ignore="MissingTranslation">Cél: <xliff:g id="bookmark_name" example="Coins">%1$s</xliff:g></string>
     <string name="memory_recipes_preview" tools:ignore="MissingTranslation">Célok előnézete</string>
-    <string name="memory_recipes_stop_freeze" tools:ignore="MissingTranslation">Szkript-befagyasztás leállítása</string>
+    <string name="memory_recipes_stop_freeze" tools:ignore="MissingTranslation">Értékek befagyasztásának leállítása</string>
     <string name="memory_recipes_freeze" tools:ignore="MissingTranslation">Befagyasztva tartás a játék futása közben</string>
     <string name="memory_recipes_run" tools:ignore="MissingTranslation">Futtatás</string>
-    <string name="memory_recipes_active_freezes" tools:ignore="MissingTranslation">Aktív szkript-befagyasztások</string>
+    <string name="memory_recipes_active_freezes" tools:ignore="MissingTranslation">Értékeket befagyasztó szkriptek</string>
     <string name="memory_recipes_target_unavailable" tools:ignore="MissingTranslation">A könyvjelző célja nem érhető el. Frissítse vagy csatolja újra futtatás előtt.</string>
     <string name="memory_recipes_preview_values" tools:ignore="MissingTranslation">Jelenlegi értékek: <xliff:g id="name" example="Example">%1$s</xliff:g></string>
     <string name="memory_scripts_title" tools:ignore="MissingTranslation">Szkriptek</string>
@@ -195,7 +195,7 @@
     <string name="memory_scripts_paste" tools:ignore="MissingTranslation">Beillesztés</string>
     <string name="memory_scripts_clipboard_invalid" tools:ignore="MissingTranslation">A vágólap üres, vagy a dokumentum meghaladja a 64 KiB méretet</string>
     <string name="memory_scripts_invalid" tools:ignore="MissingTranslation">Érvénytelen szkriptformátum</string>
-    <string name="memory_scripts_freeze_active" tools:ignore="MissingTranslation">Befagyasztás aktív ehhez a szkripthez</string>
+    <string name="memory_scripts_freeze_active" tools:ignore="MissingTranslation">Ez a szkript értékeket fagyaszt be</string>
     <string name="memory_scripts_delete" tools:ignore="MissingTranslation">Törlés</string>
     <string name="memory_scripts_delete_confirm" tools:ignore="MissingTranslation">Törli a(z) <xliff:g id="name" example="Example">%1$s</xliff:g> szkriptet? Minden aktív befagyasztása leáll.</string>
     <string name="memory_scripts_empty" tools:ignore="MissingTranslation">Nincsenek mentett szkriptek</string>
@@ -242,7 +242,7 @@
     <string name="memory_builder_min" tools:ignore="MissingTranslation">Minimum (opcionális)</string>
     <string name="memory_builder_max" tools:ignore="MissingTranslation">Maximum (opcionális)</string>
     <string name="memory_builder_add_target" tools:ignore="MissingTranslation">Cél hozzáadása</string>
-    <string name="memory_builder_freeze_short" tools:ignore="MissingTranslation">Kijelölt értékek rögzítése állandó szinten</string>
+    <string name="memory_builder_freeze_short" tools:ignore="MissingTranslation">Kijelölt értékek állandó szinten tartása</string>
     <string name="memory_builder_form_short" tools:ignore="MissingTranslation">Több érték módosítása egy helyen</string>
     <string name="memory_builder_actions_short" tools:ignore="MissingTranslation">Egyszeri Beállítás, Hozzáadás vagy Kivonás műveletek futtatása</string>
     <string name="memory_editor_refine_scan" tools:ignore="MissingTranslation">Pontosítás</string>
@@ -266,7 +266,7 @@
     <string name="memory_list_watch_removal_failed">Nem sikerült eltávolítani a munkamenet-követést: %1$s</string>
     <string name="memory_list_removal_unknown_error">Ismeretlen hiba</string>
     <string name="memory_editor_edit_freeze_failed">Az érték frissült, de a befagyasztás nem indult el. Újabb próbálkozás előtt ellenőrizd az aktuális értéket.</string>
-    <string name="memory_scripts_freeze_inactive">A szkript befagyasztása ki van kapcsolva.</string>
+    <string name="memory_scripts_freeze_inactive">Ez a szkript már nem fagyaszt be értékeket.</string>
     <string name="memory_bookmark_change_incomplete">Nem sikerült befejezni a könyvjelző módosítását. Újrapróbálkozás előtt ellenőrizze a Mentett elemeket.</string>
     <string name="memory_editor_value_updated">Érték frissítve.</string>
     <string name="memory_editor_value_updated_frozen">Érték frissítve, rögzítés bekapcsolva.</string>

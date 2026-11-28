@@ -167,10 +167,10 @@
     <string name="memory_recipes_title" tools:ignore="MissingTranslation">اقدام سریع</string>
     <string name="memory_recipes_simple_from_saved" tools:ignore="MissingTranslation">هدف: <xliff:g id="bookmark_name" example="Coins">%1$s</xliff:g></string>
     <string name="memory_recipes_preview" tools:ignore="MissingTranslation">پیش‌نمایش هدف‌ها</string>
-    <string name="memory_recipes_stop_freeze" tools:ignore="MissingTranslation">توقف ثابت کردن اسکریپت</string>
+    <string name="memory_recipes_stop_freeze" tools:ignore="MissingTranslation">توقف ثابت نگه داشتن مقادیر</string>
     <string name="memory_recipes_freeze" tools:ignore="MissingTranslation">ثابت نگه داشتن هنگام اجرای این بازی</string>
     <string name="memory_recipes_run" tools:ignore="MissingTranslation">اجرا</string>
-    <string name="memory_recipes_active_freezes" tools:ignore="MissingTranslation">موارد ثابت کردن فعال اسکریپت</string>
+    <string name="memory_recipes_active_freezes" tools:ignore="MissingTranslation">اسکریپت‌هایی که مقادیر را ثابت نگه می‌دارند</string>
     <string name="memory_recipes_target_unavailable" tools:ignore="MissingTranslation">هدف نشانک در دسترس نیست. پیش از اجرا آن را بازخوانی یا پیوند مجدد کنید.</string>
     <string name="memory_recipes_preview_values" tools:ignore="MissingTranslation">مقادیر فعلی: <xliff:g id="name" example="Example">%1$s</xliff:g></string>
     <string name="memory_scripts_title" tools:ignore="MissingTranslation">اسکریپت‌ها</string>
@@ -195,7 +195,7 @@
     <string name="memory_scripts_paste" tools:ignore="MissingTranslation">جای‌گذاری</string>
     <string name="memory_scripts_clipboard_invalid" tools:ignore="MissingTranslation">کلیپ‌بورد خالی است یا حجم سند از 64 KiB بیشتر است</string>
     <string name="memory_scripts_invalid" tools:ignore="MissingTranslation">قالب اسکریپت نامعتبر است</string>
-    <string name="memory_scripts_freeze_active" tools:ignore="MissingTranslation">ثابت کردن برای این اسکریپت فعال است</string>
+    <string name="memory_scripts_freeze_active" tools:ignore="MissingTranslation">این اسکریپت مقادیر را ثابت نگه می‌دارد</string>
     <string name="memory_scripts_delete" tools:ignore="MissingTranslation">حذف</string>
     <string name="memory_scripts_delete_confirm" tools:ignore="MissingTranslation"><xliff:g id="name" example="Example">%1$s</xliff:g> حذف شود؟ هر ثابت کردن فعالی برای این اسکریپت متوقف خواهد شد.</string>
     <string name="memory_scripts_empty" tools:ignore="MissingTranslation">اسکریپتی ذخیره نشده است</string>
@@ -242,7 +242,7 @@
     <string name="memory_builder_min" tools:ignore="MissingTranslation">حداقل (اختیاری)</string>
     <string name="memory_builder_max" tools:ignore="MissingTranslation">حداکثر (اختیاری)</string>
     <string name="memory_builder_add_target" tools:ignore="MissingTranslation">افزودن هدف</string>
-    <string name="memory_builder_freeze_short" tools:ignore="MissingTranslation">ثابت نگه داشتن مقادیر انتخاب‌شده در میزان مشخص</string>
+    <string name="memory_builder_freeze_short" tools:ignore="MissingTranslation">ثابت نگه داشتن مقادیر انتخاب‌شده</string>
     <string name="memory_builder_form_short" tools:ignore="MissingTranslation">تنظیم چند مقدار در یک جا</string>
     <string name="memory_builder_actions_short" tools:ignore="MissingTranslation">اجرای یک‌باره اقدام‌های تنظیم، افزودن یا کسر کردن</string>
     <string name="memory_editor_refine_scan" tools:ignore="MissingTranslation">پالایش</string>
@@ -266,7 +266,7 @@
     <string name="memory_list_watch_removal_failed">حذف ردیابی نشست ممکن نبود: %1$s</string>
     <string name="memory_list_removal_unknown_error">خطای ناشناخته</string>
     <string name="memory_editor_edit_freeze_failed">مقدار به‌روزرسانی شد، اما ثابت‌سازی آغاز نشد. پیش از تلاش مجدد، مقدار فعلی را بررسی کنید.</string>
-    <string name="memory_scripts_freeze_inactive">ثابت‌سازی اسکریپت غیرفعال است.</string>
+    <string name="memory_scripts_freeze_inactive">این اسکریپت دیگر مقادیر را ثابت نگه نمی‌دارد.</string>
     <string name="memory_bookmark_change_incomplete">تغییر نشانک کامل نشد. پیش از تلاش دوباره، بخش ذخیره‌شده‌ها را بررسی کنید.</string>
     <string name="memory_editor_value_updated">مقدار به‌روز شد.</string>
     <string name="memory_editor_value_updated_frozen">مقدار به‌روز و قفل کردن فعال شد.</string>

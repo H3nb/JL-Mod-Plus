@@ -179,10 +179,10 @@
     <string name="memory_recipes_title" tools:ignore="MissingTranslation">Швидка дія</string>
     <string name="memory_recipes_simple_from_saved" tools:ignore="MissingTranslation">Ціль: <xliff:g id="bookmark_name" example="Coins">%1$s</xliff:g></string>
     <string name="memory_recipes_preview" tools:ignore="MissingTranslation">Переглянути цілі</string>
-    <string name="memory_recipes_stop_freeze" tools:ignore="MissingTranslation">Зупинити заморожування скрипта</string>
+    <string name="memory_recipes_stop_freeze" tools:ignore="MissingTranslation">Зупинити заморожування значень</string>
     <string name="memory_recipes_freeze" tools:ignore="MissingTranslation">Тримати замороженим під час роботи цієї гри</string>
     <string name="memory_recipes_run" tools:ignore="MissingTranslation">Запустити</string>
-    <string name="memory_recipes_active_freezes" tools:ignore="MissingTranslation">Активні заморожування скриптів</string>
+    <string name="memory_recipes_active_freezes" tools:ignore="MissingTranslation">Скрипти, що заморожують значення</string>
     <string name="memory_recipes_target_unavailable" tools:ignore="MissingTranslation">Ціль закладки недоступна. Оновіть або переприв’яжіть її перед запуском.</string>
     <string name="memory_recipes_preview_values" tools:ignore="MissingTranslation">Поточні значення: <xliff:g id="name" example="Example">%1$s</xliff:g></string>
     <string name="memory_scripts_title" tools:ignore="MissingTranslation">Скрипти</string>
@@ -207,7 +207,7 @@
     <string name="memory_scripts_paste" tools:ignore="MissingTranslation">Вставити</string>
     <string name="memory_scripts_clipboard_invalid" tools:ignore="MissingTranslation">Буфер обміну порожній або документ перевищує 64 KiB</string>
     <string name="memory_scripts_invalid" tools:ignore="MissingTranslation">Некоректний формат скрипта</string>
-    <string name="memory_scripts_freeze_active" tools:ignore="MissingTranslation">Для цього скрипта активне заморожування</string>
+    <string name="memory_scripts_freeze_active" tools:ignore="MissingTranslation">Цей скрипт заморожує значення</string>
     <string name="memory_scripts_delete" tools:ignore="MissingTranslation">Видалити</string>
     <string name="memory_scripts_delete_confirm" tools:ignore="MissingTranslation">Видалити «<xliff:g id="name" example="Example">%1$s</xliff:g>»? Активне заморожування для цього скрипта буде зупинено.</string>
     <string name="memory_scripts_empty" tools:ignore="MissingTranslation">Немає збережених скриптів</string>
@@ -278,7 +278,7 @@
     <string name="memory_list_watch_removal_failed">Не вдалося вилучити відстеження в сеансі: %1$s</string>
     <string name="memory_list_removal_unknown_error">Невідома помилка</string>
     <string name="memory_editor_edit_freeze_failed">Значення оновлено, але не вдалося почати замороження. Перевірте поточне значення перед повторною спробою.</string>
-    <string name="memory_scripts_freeze_inactive">Замороження скриптом вимкнено.</string>
+    <string name="memory_scripts_freeze_inactive">Цей скрипт більше не заморожує значення.</string>
     <string name="memory_bookmark_change_incomplete">Не вдалося завершити зміну закладки. Перевірте збережені елементи перед повторною спробою.</string>
     <string name="memory_editor_value_updated">Значення оновлено.</string>
     <string name="memory_editor_value_updated_frozen">Значення оновлено й заморожування ввімкнено.</string>

@@ -157,10 +157,10 @@
     <string name="memory_recipes_title" tools:ignore="MissingTranslation">快捷操作</string>
     <string name="memory_recipes_simple_from_saved" tools:ignore="MissingTranslation">目标：<xliff:g id="bookmark_name" example="Coins">%1$s</xliff:g></string>
     <string name="memory_recipes_preview" tools:ignore="MissingTranslation">预览目标</string>
-    <string name="memory_recipes_stop_freeze" tools:ignore="MissingTranslation">停止脚本锁定</string>
+    <string name="memory_recipes_stop_freeze" tools:ignore="MissingTranslation">停止锁定数值</string>
     <string name="memory_recipes_freeze" tools:ignore="MissingTranslation">在此游戏运行期间保持锁定</string>
     <string name="memory_recipes_run" tools:ignore="MissingTranslation">运行</string>
-    <string name="memory_recipes_active_freezes" tools:ignore="MissingTranslation">生效中的脚本锁定</string>
+    <string name="memory_recipes_active_freezes" tools:ignore="MissingTranslation">正在锁定数值的脚本</string>
     <string name="memory_recipes_target_unavailable" tools:ignore="MissingTranslation">书签目标不可用，运行前请先刷新或重新关联。</string>
     <string name="memory_recipes_preview_values" tools:ignore="MissingTranslation">当前数值：<xliff:g id="name" example="Example">%1$s</xliff:g></string>
     <string name="memory_scripts_title" tools:ignore="MissingTranslation">脚本</string>
@@ -185,7 +185,7 @@
     <string name="memory_scripts_paste" tools:ignore="MissingTranslation">粘贴</string>
     <string name="memory_scripts_clipboard_invalid" tools:ignore="MissingTranslation">剪贴板为空，或文档大小超过 64 KiB</string>
     <string name="memory_scripts_invalid" tools:ignore="MissingTranslation">脚本格式无效</string>
-    <string name="memory_scripts_freeze_active" tools:ignore="MissingTranslation">此脚本的锁定已生效</string>
+    <string name="memory_scripts_freeze_active" tools:ignore="MissingTranslation">此脚本正在锁定数值</string>
     <string name="memory_scripts_delete" tools:ignore="MissingTranslation">删除</string>
     <string name="memory_scripts_delete_confirm" tools:ignore="MissingTranslation">确定删除“<xliff:g id="name" example="Example">%1$s</xliff:g>”吗？此脚本所有生效中的锁定都将停止。</string>
     <string name="memory_scripts_empty" tools:ignore="MissingTranslation">暂无已保存的脚本</string>
@@ -256,7 +256,7 @@
     <string name="memory_list_watch_removal_failed">无法移除会话跟踪：%1$s</string>
     <string name="memory_list_removal_unknown_error">未知错误</string>
     <string name="memory_editor_edit_freeze_failed">数值已更新，但无法启动数值锁定。请先检查当前数值，再重试。</string>
-    <string name="memory_scripts_freeze_inactive">脚本数值锁定已关闭。</string>
+    <string name="memory_scripts_freeze_inactive">此脚本已停止锁定数值。</string>
     <string name="memory_bookmark_change_incomplete">无法完成书签更改。请先检查已保存的内容，再重试。</string>
     <string name="memory_editor_value_updated">值已更新。</string>
     <string name="memory_editor_value_updated_frozen">值已更新，冻结已启用。</string>

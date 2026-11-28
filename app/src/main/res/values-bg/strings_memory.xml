@@ -167,10 +167,10 @@
     <string name="memory_recipes_title" tools:ignore="MissingTranslation">Бързо действие</string>
     <string name="memory_recipes_simple_from_saved" tools:ignore="MissingTranslation">Цел: <xliff:g id="bookmark_name" example="Coins">%1$s</xliff:g></string>
     <string name="memory_recipes_preview" tools:ignore="MissingTranslation">Преглед на целите</string>
-    <string name="memory_recipes_stop_freeze" tools:ignore="MissingTranslation">Спиране на замразяването от скрипта</string>
+    <string name="memory_recipes_stop_freeze" tools:ignore="MissingTranslation">Спиране на замразяването на стойности</string>
     <string name="memory_recipes_freeze" tools:ignore="MissingTranslation">Задържане замразено, докато играта работи</string>
     <string name="memory_recipes_run" tools:ignore="MissingTranslation">Изпълнение</string>
-    <string name="memory_recipes_active_freezes" tools:ignore="MissingTranslation">Активни замразявания от скриптове</string>
+    <string name="memory_recipes_active_freezes" tools:ignore="MissingTranslation">Скриптове, които замразяват стойности</string>
     <string name="memory_recipes_target_unavailable" tools:ignore="MissingTranslation">Целта на отметката не е налична. Опреснете или я свържете повторно преди изпълнение.</string>
     <string name="memory_recipes_preview_values" tools:ignore="MissingTranslation">Текущи стойности: <xliff:g id="name" example="Example">%1$s</xliff:g></string>
     <string name="memory_scripts_title" tools:ignore="MissingTranslation">Скриптове</string>
@@ -195,7 +195,7 @@
     <string name="memory_scripts_paste" tools:ignore="MissingTranslation">Поставяне</string>
     <string name="memory_scripts_clipboard_invalid" tools:ignore="MissingTranslation">Клипбордът е празен или документът надвишава 64 KiB</string>
     <string name="memory_scripts_invalid" tools:ignore="MissingTranslation">Невалиден формат на скрипта</string>
-    <string name="memory_scripts_freeze_active" tools:ignore="MissingTranslation">Замразяването е активно за този скрипт</string>
+    <string name="memory_scripts_freeze_active" tools:ignore="MissingTranslation">Този скрипт замразява стойности</string>
     <string name="memory_scripts_delete" tools:ignore="MissingTranslation">Изтриване</string>
     <string name="memory_scripts_delete_confirm" tools:ignore="MissingTranslation">Да се изтрие ли <xliff:g id="name" example="Example">%1$s</xliff:g>? Всяко активно замразяване за този скрипт ще спре.</string>
     <string name="memory_scripts_empty" tools:ignore="MissingTranslation">Няма запазени скриптове</string>
@@ -242,7 +242,7 @@
     <string name="memory_builder_min" tools:ignore="MissingTranslation">Минимум (по избор)</string>
     <string name="memory_builder_max" tools:ignore="MissingTranslation">Максимум (по избор)</string>
     <string name="memory_builder_add_target" tools:ignore="MissingTranslation">Добавяне на цел</string>
-    <string name="memory_builder_freeze_short" tools:ignore="MissingTranslation">Задържа избраните стойности на фиксирани нива</string>
+    <string name="memory_builder_freeze_short" tools:ignore="MissingTranslation">Задържане на избраните стойности постоянни</string>
     <string name="memory_builder_form_short" tools:ignore="MissingTranslation">Регулирайте няколко стойности на едно място</string>
     <string name="memory_builder_actions_short" tools:ignore="MissingTranslation">Изпълнявайте еднократни действия „Задаване“, „Добавяне“ или „Изваждане“</string>
     <string name="memory_editor_refine_scan" tools:ignore="MissingTranslation">Уточняване</string>
@@ -266,7 +266,7 @@
     <string name="memory_list_watch_removal_failed">Проследяването за сесията не можа да бъде премахнато: %1$s</string>
     <string name="memory_list_removal_unknown_error">Неизвестна грешка</string>
     <string name="memory_editor_edit_freeze_failed">Стойността е обновена, но замразяването не можа да започне. Проверете текущата стойност, преди да опитате отново.</string>
-    <string name="memory_scripts_freeze_inactive">Замразяването от скрипта е изключено.</string>
+    <string name="memory_scripts_freeze_inactive">Този скрипт вече не замразява стойности.</string>
     <string name="memory_bookmark_change_incomplete">Промяната на отметката не бе завършена. Проверете „Запазени“, преди да опитате отново.</string>
     <string name="memory_editor_value_updated">Стойността е актуализирана.</string>
     <string name="memory_editor_value_updated_frozen">Стойността е актуализирана и замразяването е включено.</string>
