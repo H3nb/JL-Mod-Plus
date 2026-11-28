@@ -146,6 +146,7 @@ public class Graphics implements
 			canvas.clipRect(image.getBounds(), Region.Op.REPLACE);
 		}
 		canvas.save();
+		canvas.clipRect(image.getBounds());
 	}
 
 	void onDisplayTargetResized(int previousWidth, int previousHeight) {
@@ -397,9 +398,13 @@ public class Graphics implements
 		return font;
 	}
 
+	private static int clipEnd(int origin, int extent) {
+		return (int) Math.min(Integer.MAX_VALUE, (long) origin + Math.max(0, extent));
+	}
+
 	public void setClip(int x, int y, int width, int height) {
 		synchronized (this.image) {
-			clip.set(x, y, width <= 0 ? x : x + width, height <= 0 ? y : y + height);
+			clip.set(x, y, clipEnd(x, width), clipEnd(y, height));
 			resetCanvasState();
 			canvas.translate(translateX, translateY);
 			canvas.clipRect(clip);
@@ -409,7 +414,7 @@ public class Graphics implements
 
 	public void clipRect(int x, int y, int width, int height) {
 		synchronized (this.image) {
-			clip.set(x, y, width <= 0 ? x : x + width, height <= 0 ? y : y + height);
+			clip.set(x, y, clipEnd(x, width), clipEnd(y, height));
 			canvas.clipRect(clip);
 			canvas.getClipBounds(clip);
 		}

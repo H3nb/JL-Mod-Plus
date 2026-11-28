@@ -10,6 +10,8 @@ adb shell settings put secure immersive_mode_confirmations confirmed
 selectors=(
   'javax.microedition.lcdui.graphics.AmbientColorSamplerTest'
   'javax.microedition.lcdui.GraphicsArgumentValidationTest'
+  'javax.microedition.lcdui.PaintBufferPoolTest'
+  'javax.microedition.lcdui.GraphicsCanvasStateTest#replacementClipNeverExposesPaddedBackingAndHandlesOverflow'
   'javax.microedition.lcdui.MutableImageScaleCompatibilityTest#invalidArrayReadAndWriteDoNotPartiallyModifyPixels'
   'javax.microedition.lcdui.MutableImageScaleCompatibilityTest#siemensTwoBitPixelsRoundTrip'
   'javax.microedition.lcdui.InternalResolutionGraphicsTest#renderTargetSnapshotCapturesTranslationAndLogicalContent'

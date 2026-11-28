@@ -215,10 +215,11 @@ public abstract class Canvas extends Displayable {
 	private long notifiedShowGeneration;
 	private volatile boolean visible;
 	private boolean sizeChangedCalled;
-	// One serialized guest paint runs at a time. A PaintEvent pins its snapshot
-	// while the UI may prepare the next scratch backing.
-	private static volatile Image offscreen;
+	private static final PaintBufferPool PAINT_BUFFERS = new PaintBufferPool();
+	// Publication metadata belongs to this Canvas and is guarded by bufferLock.
 	private Image offscreenCopy;
+	private int paintBackingHeight;
+	private long frameContentRevision;
 	private volatile long publishedFrameSequence;
 	private volatile FrameMetrics fpsMetrics;
 	private volatile long performanceGeneration;
@@ -1142,12 +1143,7 @@ public abstract class Canvas extends Displayable {
 				if (next.getWidth() != width || next.getHeight() != height) {
 					next.setSize(width, height);
 				}
-				Image nextPaint = offscreen;
-				if (nextPaint == null || nextPaint.getPixelScale() != scale
-						|| nextPaint.getBitmap().getWidth() < physicalWidth
-						|| nextPaint.getBitmap().getHeight() < maxHeight * scale) {
-					nextPaint = Image.createDisplayTarget(width, maxHeight, scale);
-				}
+				PAINT_BUFFERS.prepare(width, maxHeight, scale);
 
 				// All allocations precede the GameCanvas rebind. On failure
 				// the previous published and paint buffers remain available.
@@ -1157,7 +1153,7 @@ public abstract class Canvas extends Displayable {
 				try {
 					onDisplayTargetResized();
 					offscreenCopy = next;
-					offscreen = nextPaint;
+					paintBackingHeight = maxHeight;
 				} catch (OutOfMemoryError error) {
 					internalResolutionScale = previousScale;
 					lastInternalResolutionScale = previousMutableScale;
@@ -1371,7 +1367,8 @@ public abstract class Canvas extends Displayable {
 		}
 		limitFps();
 		synchronized (bufferLock) {
-			if (Thread.holdsLock(paintEvent)) {
+			if (!visible) return;
+			if (Thread.holdsLock(paintEvent) && paintEvent.paintingTarget != null) {
 				paintEvent.paintingTarget.getSingleGraphics().flush(image, x, y, width, height);
 				return;
 			}
@@ -1458,6 +1455,7 @@ public abstract class Canvas extends Displayable {
 	}
 
 	private void publishFrameLocked() {
+		frameContentRevision++;
 		long sequence = presentationMailbox.publish();
 		if (sequence == 0L) {
 			return;
@@ -2081,6 +2079,8 @@ public abstract class Canvas extends Displayable {
 
 		@Override
 		public synchronized void process() {
+			// serviceRepaints() can be called reentrantly by guest paint code.
+			if (paintingTarget != null) return;
 			if (!visible) {
 				synchronized (clip) {
 					isPending = false;
@@ -2100,20 +2100,35 @@ public abstract class Canvas extends Displayable {
 			if (l >= r || t >= b) {
 				return;
 			}
-			int paintWidth = width;
-			int paintHeight = height;
-			int paintMaxHeight = maxHeight;
-			int paintScale = internalResolutionScale;
-			Image snapshot = offscreen;
-			if (snapshot == null || snapshot.getPixelScale() != paintScale
-					|| snapshot.getBitmap().getWidth() < paintWidth * paintScale
-					|| snapshot.getBitmap().getHeight() < paintMaxHeight * paintScale) {
-				snapshot = Image.createDisplayTarget(paintWidth, paintMaxHeight, paintScale);
-				offscreen = snapshot;
+			Image publicationTarget;
+			long contentRevision;
+			long visibilityGeneration;
+			PaintBufferPool.Scratch scratch = null;
+			int paintScale = 1;
+			try {
+				synchronized (bufferLock) {
+					if (!visible || offscreenCopy == null) return;
+					publicationTarget = offscreenCopy;
+					contentRevision = frameContentRevision;
+					visibilityGeneration = performanceGeneration;
+					paintScale = publicationTarget.getPixelScale();
+					l = Math.max(0, l);
+					t = Math.max(0, t);
+					r = Math.min(r, publicationTarget.getWidth());
+					b = Math.min(b, publicationTarget.getHeight());
+					if (l >= r || t >= b) return;
+					scratch = PAINT_BUFFERS.acquire(publicationTarget.getWidth(),
+							paintBackingHeight, paintScale);
+					scratch.restore(publicationTarget, contentRevision);
+				}
+			} catch (OutOfMemoryError error) {
+				if (scratch != null) PAINT_BUFFERS.release(scratch);
+				if (paintScale == 1) throw error;
+				int reducedScale = paintScale - 1;
+				ViewHandler.postEvent(() -> capInternalResolution(reducedScale));
+				return;
 			}
-			if (snapshot.getWidth() != paintWidth || snapshot.getHeight() != paintHeight) {
-				snapshot.setSize(paintWidth, paintHeight);
-			}
+			Image snapshot = scratch.image;
 			paintingTarget = snapshot;
 			try {
 				Graphics g = snapshot.getSingleGraphics();
@@ -2130,8 +2145,19 @@ public abstract class Canvas extends Displayable {
 					MidletThread.exitGuestExecution(enteredGuest);
 				}
 				synchronized (bufferLock) {
-					snapshot.copyTo(offscreenCopy);
+					// A paint started for an old size or visibility interval cannot
+					// overwrite its replacement. Resize/show already schedules repaint.
+					if (!visible || publicationTarget != offscreenCopy
+							|| visibilityGeneration != performanceGeneration) return;
+					boolean unchanged = contentRevision == frameContentRevision;
+					if (unchanged) {
+						snapshot.copyTo(publicationTarget);
+					} else {
+						// Preserve concurrent direct flushes outside this repaint.
+						publicationTarget.getSingleGraphics().flush(snapshot, l, t, r - l, b - t);
+					}
 					publishFrameLocked();
+					if (unchanged) scratch.markPublished(publicationTarget, frameContentRevision);
 				}
 				if (surface == null || !surface.isValid()) {
 					return;
@@ -2139,6 +2165,7 @@ public abstract class Canvas extends Displayable {
 				requestFlushToScreen();
 			} finally {
 				paintingTarget = null;
+				PAINT_BUFFERS.release(scratch);
 			}
 		}
 

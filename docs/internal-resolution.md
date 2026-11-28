@@ -93,9 +93,14 @@ the old frame is not written into the new backing buffer; the next MIDlet
 repaint supplies the new frame. Native RGBA8888 readback rejects invalid
 destination rectangles and unsupported Bitmap formats before accessing pixels.
 Operations through retained Java ME Graphics objects share the buffer Image
-monitor with its resize/rebind operation. Each guest paint retains its own
-scratch-buffer reference until the frame is published, so host resizes can
-stage another buffer without waiting for the guest paint event.
+monitor with its resize/rebind operation. A guest paint exclusively claims
+the shared idle scratch surface until it finishes; resizing can stage a
+replacement without touching the active surface. The Canvas publication
+lock captures the published target, content revision and visibility interval
+before calling guest code. A superseded paint is not published into a new
+target or visibility interval. The scratch is restored from the published
+frame after an owner change, abandoned paint or direct flush; steady-state
+painting reuses coherent pixels without another full-frame copy.
 
 The published frame, scratch surface and GameCanvas buffer are allocated
 before the new density is published. If a high-density allocation fails,
