@@ -34,9 +34,8 @@ import javax.microedition.lcdui.Image;
  */
 class Platform {
 
-	private static boolean libraryLoaded = false;
 	private static ExecutorService executor;
-	private static Thread m3gThread;
+	private static volatile Thread m3gThread;
 
 	//------------------------------------------------------------------
 	// Package private methods
@@ -73,19 +72,15 @@ class Platform {
 	 * @return true if either lcdui or eswt toolkit is initialized and ui thread is accessible
 	 * otherwise false
 	 */
-	static boolean uiThreadAvailable() {
-		if (executor != null) {
-			return true;
-		}
-		executor = Executors.newSingleThreadExecutor(r -> {
-			m3gThread = new Thread(r, "M3G");
-			return m3gThread;
-		});
-		// UI thread is available, so load native library if not already loaded
-		if (!libraryLoaded) {
+	static synchronized boolean uiThreadAvailable() {
+		if (executor == null) {
+			// A racing caller must not observe an executor before JNI is available.
 			System.loadLibrary("c++_shared");
 			System.loadLibrary("javam3g");
-			libraryLoaded = true;
+			executor = Executors.newSingleThreadExecutor(r -> {
+				m3gThread = new Thread(r, "M3G");
+				return m3gThread;
+			});
 		}
 		return true;
 	}

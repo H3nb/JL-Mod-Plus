@@ -83,8 +83,9 @@ public class Graphics3D {
 		if (render != null) {
 			throw new IllegalStateException("Target already bound");
 		}
-		render = Render.getRender();
-		render.bind(graphics);
+		Render next = Render.getRender();
+		next.bind(graphics);
+		render = next;
 		this.graphics = graphics;
 	}
 
@@ -169,10 +170,12 @@ public class Graphics3D {
 			render = null;
 			return;
 		}
-		if (render != null) {
-			render.release();
+		try {
+			if (render != null) render.release();
+		} finally {
+			render = null;
+			this.graphics = null;
 		}
-		render = null;
 	}
 
 	public final void renderFigure(Figure figure, int x, int y,

@@ -98,6 +98,7 @@ gles_selectors=(
   'io.github.h3nb.jlmodplus.micro3d.Micro3dInternalResolutionTest#independentRenderContextsSurviveOtherRendererResize'
   'io.github.h3nb.jlmodplus.micro3d.Micro3dInternalResolutionTest#offscreenTextureTargetResetsThePreviousHdReconstructionScale'
   'javax.microedition.m3g.M3GRuntimeTest#unscaledSpriteKeepsLogicalSizeAcrossTargetRebinds'
+  'com.mexa.opgl.OpglTargetLifecycleTest#releaseWritesOnlyTheBitmapCapturedAtBind'
 )
 
 # Tests that mutate process-global/application-global state run in their own instrumentation

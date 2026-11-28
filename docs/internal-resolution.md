@@ -79,6 +79,11 @@ GL ID. Each renderer owns its shader programs and passes its target density
 to texture upload; resizing its pbuffer does not recreate the shader programs
 or change another renderer's reconstruction density.
 
+**MEXA / OpenGL:** the pbuffer and raw GL calls retain their existing physical
+framebuffer semantics. Readback retains the bitmap captured at bind time,
+even if the LCDUI image is resized before release. Logical framebuffer
+virtualization is not part of this change.
+
 ## Memory and compatibility
 
 The requested internal scale is capped at 10× with a maximum backing

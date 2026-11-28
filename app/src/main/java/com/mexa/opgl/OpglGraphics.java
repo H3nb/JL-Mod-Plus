@@ -416,6 +416,8 @@ public class OpglGraphics {
 	private final ExecutorService executor;
 
 	private Graphics graphics;
+	// Owned by the renderer thread; retain the actual bitmap bound to the pbuffer.
+	private Bitmap targetBitmap;
 	private int width;
 	private int height;
 	private EGLSurface eglWindowSurface;
@@ -426,6 +428,7 @@ public class OpglGraphics {
 		egl.eglInitialize(eglDisplay, null);
 
 		int[] configAttrs = {
+				EGL10.EGL_SURFACE_TYPE, EGL10.EGL_PBUFFER_BIT,
 				EGL10.EGL_RED_SIZE, 8,
 				EGL10.EGL_GREEN_SIZE, 8,
 				EGL10.EGL_BLUE_SIZE, 8,
@@ -454,45 +457,52 @@ public class OpglGraphics {
 	public void bind(Object target) {
 		if (target == null) {
 			throw new NullPointerException("target is NULL");
-		} else if (target == graphics) {
-			throw new IllegalStateException();
 		} else if (!(target instanceof Graphics)) {
 			throw new IllegalArgumentException();
 		}
-		asyncExec(() -> {
-			graphics = (Graphics) target;
-			Bitmap bitmap = graphics.getBitmap();
+		Graphics nextGraphics = (Graphics) target;
+		// Capture on the caller: the worker must not acquire an image monitor
+		// held by a guest waiting for a synchronous GL operation.
+		Bitmap bitmap = nextGraphics.captureRenderTarget().bitmap;
+		syncExec(() -> {
+			if (nextGraphics == graphics) throw new IllegalStateException();
 			int width = bitmap.getWidth();
 			int height = bitmap.getHeight();
 			if (width != this.width || height != this.height || eglWindowSurface == null) {
-				this.width = width;
-				this.height = height;
-
-				if (eglWindowSurface != null) {
-					egl.eglMakeCurrent(eglDisplay, EGL10.EGL_NO_SURFACE, EGL10.EGL_NO_SURFACE, EGL10.EGL_NO_CONTEXT);
-					egl.eglDestroySurface(eglDisplay, eglWindowSurface);
-				}
-
 				int[] surface_attribs = {
 						EGL10.EGL_WIDTH, width,
 						EGL10.EGL_HEIGHT, height,
-						EGL10.EGL_LARGEST_PBUFFER, 1,
 						EGL10.EGL_NONE};
-				eglWindowSurface = egl.eglCreatePbufferSurface(eglDisplay, eglConfig, surface_attribs);
-
-				egl.eglMakeCurrent(eglDisplay, eglWindowSurface, eglWindowSurface, eglContext);
+				EGLSurface next = egl.eglCreatePbufferSurface(eglDisplay, eglConfig, surface_attribs);
+				if (next == null || next.equals(EGL10.EGL_NO_SURFACE)) {
+					throw new IllegalStateException("MEXA pbuffer: " + GLUtils.getEGLErrorString(egl.eglGetError()));
+				}
+				if (!egl.eglMakeCurrent(eglDisplay, next, next, eglContext)) {
+					int error = egl.eglGetError();
+					egl.eglDestroySurface(eglDisplay, next);
+					throw new IllegalStateException("MEXA make current: " + GLUtils.getEGLErrorString(error));
+				}
+				EGLSurface previous = eglWindowSurface;
+				eglWindowSurface = next;
+				this.width = width;
+				this.height = height;
+				if (previous != null) egl.eglDestroySurface(eglDisplay, previous);
 				gl.glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT | GL_STENCIL_BUFFER_BIT);
 			}
+			graphics = nextGraphics;
+			targetBitmap = bitmap;
 		});
 	}
 
 	public void release() {
 		syncExec(() -> {
-			if (graphics == null || width <= 0 || height <= 0) {
-				return;
+			if (targetBitmap == null) return;
+			try {
+				GLESUtils.blit(0, 0, width, height, targetBitmap);
+			} finally {
+				graphics = null;
+				targetBitmap = null;
 			}
-			GLESUtils.blit(0, 0, width, height, graphics.getBitmap());
-			graphics = null;
 		});
 	}
 
@@ -1053,7 +1063,13 @@ public class OpglGraphics {
 	private void syncExec(Runnable task) {
 		try {
 			executor.submit(task).get();
-		} catch (ExecutionException | InterruptedException e) {
+		} catch (ExecutionException e) {
+			Throwable cause = e.getCause();
+			if (cause instanceof RuntimeException runtime) throw runtime;
+			if (cause instanceof Error error) throw error;
+			throw new RuntimeException(cause);
+		} catch (InterruptedException e) {
+			Thread.currentThread().interrupt();
 			throw new RuntimeException(e);
 		}
 	}
